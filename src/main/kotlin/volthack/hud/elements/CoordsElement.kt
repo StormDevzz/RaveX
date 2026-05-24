@@ -14,7 +14,7 @@ class CoordsElement : HUDElement("Coords") {
         x = 4
         y = 200
         cachedWidth = 150
-        cachedHeight = GUIFontRenderer.height * 2 + 4
+        cachedHeight = 22
         enabled = false
     }
 
