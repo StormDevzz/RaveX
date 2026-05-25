@@ -20,7 +20,7 @@ public class MixinEntityRenderer<T extends net.minecraft.world.entity.Entity, S 
     }
 
     @Inject(method = "shouldShowName", at = @At("HEAD"), cancellable = true)
-    private void onShouldShowName(S state, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+    private void onShouldShowName(T entity, double distance, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
         if (volthack.modules.render.NameTags.INSTANCE.getEnabled()) {
             cir.setReturnValue(false);
         }
