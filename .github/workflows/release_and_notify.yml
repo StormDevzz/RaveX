@@ -1,4 +1,4 @@
-name: Discord Notifier
+name: VoltHack CI/CD & Discord Notifier
 
 on:
   push:
@@ -6,30 +6,30 @@ on:
     types: [opened, closed, reopened, edited]
 
 jobs:
-  notify:
+  build-and-release:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
-      # Step 1: Checkout code (only for pushes, so we can compile)
+      # Step 1: Checkout code
       - name: Checkout Code
-        if: github.event_name == 'push'
         uses: actions/checkout@v4
 
-      # Step 2: Setup Java (needed to run gradle)
+      # Step 2: Setup Java
       - name: Setup Java
-        if: github.event_name == 'push'
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: temurin
 
-      # Step 3: Setup Gradle caching and environment
+      # Step 3: Setup Gradle
       - name: Setup Gradle
-        if: github.event_name == 'push'
         uses: gradle/actions/setup-gradle@v4
 
       # Step 4: Compile/Build VoltHack and capture metrics
       - name: Compile VoltHack
-        if: github.event_name == 'push'
         id: compile
         run: |
           echo "Starting compilation check..."
@@ -59,11 +59,59 @@ jobs:
             echo "build_status=failed" >> $GITHUB_OUTPUT
             echo "build_duration=$DURATION" >> $GITHUB_OUTPUT
             echo "Compilation Failed!"
+            exit 1
           fi
 
-      # Step 5: Send Git push notification + Compilation results to Discord (ALWAYS RUNS ON PUSH)
-      - name: Git Log Notification
-        if: always() && github.event_name == 'push'
+      # Step 5: Manage Release (Delete existing, create new - runs ONLY on main/master push after compile success)
+      - name: Manage Release
+        if: (github.ref_name == 'main' || github.ref_name == 'master') && steps.compile.outputs.build_status == 'success'
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Starting Release Management..."
+          
+          # Extract version from properties
+          VERSION=$(grep mod_version gradle.properties | cut -d= -f2 | tr -d ' ')
+          TAG="volthack${VERSION//./}"
+          JAR=$(ls build/libs/*.jar 2>/dev/null | grep -v sources | grep -v slim | head -1 || true)
+          
+          if [ -z "$JAR" ] || [ ! -f "$JAR" ]; then
+            echo "Error: Compiled JAR not found!"
+            echo "release_status=failed_no_jar" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "Version: $VERSION, Tag: $TAG, Jar: $JAR"
+          
+          # Delete existing release & tag to clean up previous versions
+          DELETE_STATUS="skipped"
+          if gh release delete "$TAG" --yes 2>/dev/null; then
+            DELETE_STATUS="deleted/cleaned"
+            echo "Deleted existing GitHub release for tag $TAG."
+          fi
+          if git push --delete origin "$TAG" 2>/dev/null; then
+            DELETE_STATUS="deleted/cleaned"
+            echo "Deleted remote git tag $TAG."
+          fi
+          echo "delete_status=$DELETE_STATUS" >> $GITHUB_OUTPUT
+          
+          # Create new release with compile artifact attached
+          echo "Creating new release..."
+          if gh release create "$TAG" "$JAR" --title "VoltHack $VERSION" --notes "VoltHack $VERSION" --latest; then
+            echo "release_status=created" >> $GITHUB_OUTPUT
+            echo "release_tag=$TAG" >> $GITHUB_OUTPUT
+            echo "release_version=$VERSION" >> $GITHUB_OUTPUT
+            echo "New Release Created Successfully!"
+          else
+            echo "release_status=failed_creation" >> $GITHUB_OUTPUT
+            echo "Error: Failed to create GitHub release."
+            exit 1
+          fi
+
+      # Step 6: Send Git push notification + Compilation + Release results to Discord (ALWAYS RUNS ON PUSH)
+      - name: Send Push & CI/CD Notification to Discord
+        if: always()
         env:
           WEBHOOK_URL: ${{ secrets.GIT_LOG }}
           COMPARE_URL: ${{ github.event.compare }}
@@ -82,6 +130,12 @@ jobs:
           BUILD_DURATION: ${{ steps.compile.outputs.build_duration }}
           JAR_NAME: ${{ steps.compile.outputs.jar_name }}
           JAR_SIZE: ${{ steps.compile.outputs.jar_size }}
+          
+          # Release status outputs
+          RELEASE_OUTCOME: ${{ steps.release.outcome }}
+          RELEASE_VERSION: ${{ steps.release.outputs.release_version }}
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+          DELETE_STATUS: ${{ steps.release.outputs.delete_status }}
         run: |
           if [ -z "$WEBHOOK_URL" ]; then
             echo "GIT_LOG secret is not set. Skipping notification."
@@ -90,7 +144,7 @@ jobs:
           
           REPO="${{ github.repository }}"
           
-          # Discord rejects webhooks with empty/invalid URLs. Sanitize everything:
+          # Sanitize compare and pusher URLs to avoid Discord 400 Bad Request on empty strings
           if [ -z "$COMPARE_URL" ] || [ "$COMPARE_URL" = "null" ] || [ "$COMPARE_URL" = "" ]; then
             COMPARE_URL="https://github.com/$REPO"
           fi
@@ -109,10 +163,8 @@ jobs:
           if [ "$COMMITS_JSON" = "null" ] || [ -z "$COMMITS_JSON" ] || [ "$COMMITS_JSON" = "[]" ]; then
             if [ -n "$HEAD_COMMIT_ID" ]; then
               SHORT_ID="${HEAD_COMMIT_ID:0:7}"
-              # Sanitize commit message to prevent breaks
               SAFE_MSG=$(echo "$HEAD_COMMIT_MSG" | head -n 1)
               
-              # Sanitize URL fallbacks
               if [ -z "$HEAD_COMMIT_URL" ] || [ "$HEAD_COMMIT_URL" = "null" ] || [ "$HEAD_COMMIT_URL" = "" ]; then
                 HEAD_COMMIT_URL="https://github.com/$REPO/commit/$HEAD_COMMIT_ID"
               fi
@@ -146,6 +198,25 @@ jobs:
             COLOR=16724787 # Volt Neon Red
           fi
           
+          # Format release status info block dynamically
+          if [ "$RELEASE_OUTCOME" = "success" ]; then
+            RELEASE_STR="🚀 RE-CREATED (\`$RELEASE_VERSION\` / \`$RELEASE_TAG\`)"
+            if [ "$DELETE_STATUS" = "deleted/cleaned" ]; then
+              RELEASE_STR="$RELEASE_STR (Existing old release cleaned up)"
+            fi
+          elif [ "$RELEASE_OUTCOME" = "failure" ]; then
+            RELEASE_STR="❌ FAILED (Check Action Logs)"
+            COLOR=16724787 # Volt Neon Red
+          elif [ "$RELEASE_OUTCOME" = "skipped" ]; then
+            if [ "$BUILD_STATUS" = "success" ]; then
+              RELEASE_STR="⏭️ SKIPPED (Not main/master branch)"
+            else
+              RELEASE_STR="⏭️ SKIPPED (Compilation Failed)"
+            fi
+          else
+            RELEASE_STR="⏭️ SKIPPED"
+          fi
+          
           PAYLOAD=$(jq -n \
             --arg title "New Push to $BRANCH ($COMMIT_COUNT Commits)" \
             --arg url "$COMPARE_URL" \
@@ -156,6 +227,7 @@ jobs:
             --arg pusher_icon "$PUSHER_ICON" \
             --arg status "$STATUS_STR" \
             --arg artifact "$ARTIFACT_STR" \
+            --arg release "$RELEASE_STR" \
             --arg run_url "$RUN_URL" \
             --arg timestamp "$TIMESTAMP" \
             --argint color "$COLOR" \
@@ -169,6 +241,7 @@ jobs:
                   { name: "Repository", value: $repo, inline: true },
                   { name: "Pusher", value: ("[" + $pusher + "](" + $pusher_url + ")"), inline: true },
                   { name: "Compilation Status", value: $status, inline: true },
+                  { name: "Release Management", value: $release, inline: false },
                   { name: "Build Artifact", value: $artifact, inline: false },
                   { name: "GitHub Actions Run Logs", value: ("⚡ [View Workflow Run Logs](" + $run_url + ")"), inline: false }
                 ],
@@ -198,9 +271,11 @@ jobs:
             exit 1
           fi
 
-      # Step 6: Send Issues notifications to Discord
-      - name: Git Issues Notification
-        if: github.event_name == 'issues'
+  issues-notify:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Issue Discord Embed
         env:
           WEBHOOK_URL: ${{ secrets.GIT_ISSUES }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
