@@ -20,8 +20,15 @@ object Trajectories : Module("Trajectories", "Predicts and renders the flight pa
     }
 
     private fun transform(vec: Vec3, matrix: org.joml.Matrix4f): org.joml.Vector3f {
+        val mc = Minecraft.getInstance()
+        val cam = mc.gameRenderer.mainCamera.position()
         val dest = org.joml.Vector3f()
-        matrix.transformPosition(vec.x.toFloat(), vec.y.toFloat(), vec.z.toFloat(), dest)
+        matrix.transformPosition(
+            (vec.x - cam.x).toFloat(),
+            (vec.y - cam.y).toFloat(),
+            (vec.z - cam.z).toFloat(),
+            dest
+        )
         return dest
     }
 
@@ -44,12 +51,17 @@ object Trajectories : Module("Trajectories", "Predicts and renders the flight pa
 
         if (item is BowItem) {
             val charge = player.useItemRemainingTicks
-            val useTicks = if (charge > 0) 72000 - charge else 0
+            var useTicks = if (charge > 0) 72000 - charge else 0
+            if (useTicks <= 0) {
+                useTicks = 20 // Default to full charge for predicting path before releasing/charging
+            }
             var power = useTicks.toFloat() / 20.0f
             power = (power * power + power * 2.0f) / 3.0f
-            if (power < 0.1f) return
             if (power > 1.0f) power = 1.0f
             vel = power * 3.0f
+            gravity = 0.05f
+        } else if (item is CrossbowItem) {
+            vel = 3.15f
             gravity = 0.05f
         } else if (item is SnowballItem || item is EggItem || item is EnderpearlItem) {
             vel = 1.5f
@@ -158,6 +170,6 @@ object Trajectories : Module("Trajectories", "Predicts and renders the flight pa
 
     private fun isProjectile(stack: ItemStack): Boolean {
         val item = stack.item
-        return item is BowItem || item is EnderpearlItem || item is SnowballItem || item is EggItem || item is ThrowablePotionItem
+        return item is BowItem || item is CrossbowItem || item is EnderpearlItem || item is SnowballItem || item is EggItem || item is ThrowablePotionItem
     }
 }

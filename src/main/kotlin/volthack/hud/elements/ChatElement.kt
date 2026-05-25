@@ -19,6 +19,14 @@ class ChatElement : HUDElement("Chat") {
     private val messages = LinkedList<ChatMessage>()
     private var scrollPos = 0
 
+    init {
+        x = 10
+        y = 300
+        cachedWidth = 320
+        cachedHeight = 180
+        enabled = false
+    }
+
     data class ChatMessage(val text: String, val timestamp: Long = System.currentTimeMillis())
 
     fun addMessage(text: String) {

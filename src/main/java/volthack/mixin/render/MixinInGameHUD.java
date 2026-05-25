@@ -42,4 +42,11 @@ public abstract class MixinInGameHUD {
             ci.cancel();
         }
     }
+
+    @Inject(method = "renderScoreboard", at = @At("HEAD"), cancellable = true)
+    private void onRenderScoreboard(GuiGraphics guiGraphics, net.minecraft.world.scores.Objective objective, CallbackInfo ci) {
+        if (volthack.modules.render.NoRender.INSTANCE.getEnabled() && volthack.modules.render.NoRender.INSTANCE.getScoreboard()) {
+            ci.cancel();
+        }
+    }
 }

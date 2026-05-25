@@ -25,8 +25,15 @@ object Tracers : Module("Tracers", "Draws lines pointing to nearby entities", Ca
     }
 
     private fun transform(vec: Vec3, matrix: org.joml.Matrix4f): org.joml.Vector3f {
+        val mc = Minecraft.getInstance()
+        val cam = mc.gameRenderer.mainCamera.position()
         val dest = org.joml.Vector3f()
-        matrix.transformPosition(vec.x.toFloat(), vec.y.toFloat(), vec.z.toFloat(), dest)
+        matrix.transformPosition(
+            (vec.x - cam.x).toFloat(),
+            (vec.y - cam.y).toFloat(),
+            (vec.z - cam.z).toFloat(),
+            dest
+        )
         return dest
     }
 

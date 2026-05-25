@@ -18,6 +18,14 @@ class ArrayListElement : HUDElement("ArrayList") {
     private var cachedScreenW = 0
     private var lastEnabledCount = -1
 
+    init {
+        x = 600
+        y = 10
+        cachedWidth = 100
+        cachedHeight = 150
+        enabled = false
+    }
+
     private fun rebuild() {
         val enabled = ModuleManager.getAll().filter { it.enabled }
         if (enabled.isEmpty()) {

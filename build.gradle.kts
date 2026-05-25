@@ -20,9 +20,7 @@ dependencies {
     modImplementation(libs.fabric.loader)
 
     implementation(libs.kotlin.stdlib)
-    include(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
-    include(libs.kotlin.reflect)
     implementation(libs.discord.ipc)
     include(libs.discord.ipc)
 }

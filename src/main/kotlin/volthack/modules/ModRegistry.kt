@@ -67,6 +67,10 @@ object ModRegistry {
         BoneMeal,
         FakePlayer,
         StashFinder,
+        HighwayMake,
+        AutoBreed,
+        AutoNameTag,
+        AutoShearer,
 
         // Player
         ElytraSwap,
@@ -74,6 +78,14 @@ object ModRegistry {
         AntiHunger,
         AutoReconnect,
         DiscordStatusModule,
+        AutoFix,
+        Replenish,
+        AutoRespawn,
+        FastBreak,
+        AirPlace,
+        AutoEat,
+        MultiTask,
+        Reach,
 
         // Misc
         AutoAuth,
@@ -85,7 +97,8 @@ object ModRegistry {
         PingSpoof,
         HandShake,
         PacketLogger,
-        Language
+        Language,
+        TabUtils
     )
 
     fun register() {

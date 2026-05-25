@@ -10,5 +10,5 @@ object NoRender : Module("NoRender", "Disables rendering of specific visual over
     val weather by boolean("Weather", false, "Disable weather rendering")
     val worldBorder by boolean("World Border", false, "Disable world border rendering")
     val breakParticles by boolean("Break Particles", false, "Disable block breaking/destruction particles")
-
+    val scoreboard by boolean("Scoreboard", false, "Disable scoreboard rendering")
 }

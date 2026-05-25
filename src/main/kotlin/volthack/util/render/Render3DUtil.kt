@@ -9,8 +9,10 @@ import org.joml.Matrix4f
 object Render3DUtil {
 
     private fun transform(x: Double, y: Double, z: Double, matrix: Matrix4f): org.joml.Vector3f {
+        val mc = Minecraft.getInstance()
+        val cam = mc.gameRenderer.mainCamera.position()
         val dest = org.joml.Vector3f()
-        matrix.transformPosition(x.toFloat(), y.toFloat(), z.toFloat(), dest)
+        matrix.transformPosition((x - cam.x).toFloat(), (y - cam.y).toFloat(), (z - cam.z).toFloat(), dest)
         return dest
     }
 
