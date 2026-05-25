@@ -9,6 +9,59 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout code (only for pushes, so we can compile)
+      - name: Checkout Code
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
+      # Step 2: Setup Java (needed to run gradle)
+      - name: Setup Java
+        if: github.event_name == 'push'
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      # Step 3: Setup Gradle caching and environment
+      - name: Setup Gradle
+        if: github.event_name == 'push'
+        uses: gradle/actions/setup-gradle@v4
+
+      # Step 4: Compile/Build VoltHack and capture metrics
+      - name: Compile VoltHack
+        if: github.event_name == 'push'
+        id: compile
+        run: |
+          echo "Starting compilation check..."
+          START_TIME=$(date +%s)
+          
+          if ./gradlew build; then
+            END_TIME=$(date +%s)
+            DURATION=$((END_TIME - START_TIME))
+            echo "build_status=success" >> $GITHUB_OUTPUT
+            echo "build_duration=$DURATION" >> $GITHUB_OUTPUT
+            
+            # Find the generated mod jar
+            JAR_FILE=$(ls build/libs/*.jar 2>/dev/null | grep -v sources | grep -v slim | head -1 || true)
+            if [ -f "$JAR_FILE" ]; then
+              JAR_NAME=$(basename "$JAR_FILE")
+              JAR_SIZE=$(du -h "$JAR_FILE" | cut -f1)
+              echo "jar_name=$JAR_NAME" >> $GITHUB_OUTPUT
+              echo "jar_size=$JAR_SIZE" >> $GITHUB_OUTPUT
+            else
+              echo "jar_name=Not Found" >> $GITHUB_OUTPUT
+              echo "jar_size=N/A" >> $GITHUB_OUTPUT
+            fi
+            echo "Compilation Succeeded!"
+          else
+            END_TIME=$(date +%s)
+            DURATION=$((END_TIME - START_TIME))
+            echo "build_status=failed" >> $GITHUB_OUTPUT
+            echo "build_duration=$DURATION" >> $GITHUB_OUTPUT
+            echo "Compilation Failed!"
+          fi
+
+      # Step 5: Send Git push notification + Compilation results to Discord
       - name: Git Log Notification
         if: github.event_name == 'push'
         env:
@@ -16,6 +69,13 @@ jobs:
           COMPARE_URL: ${{ github.event.compare }}
           BRANCH: ${{ github.ref_name }}
           PUSHER: ${{ github.actor }}
+          RUN_ID: ${{ github.run_id }}
+          
+          # Compile status outputs
+          BUILD_STATUS: ${{ steps.compile.outputs.build_status }}
+          BUILD_DURATION: ${{ steps.compile.outputs.build_duration }}
+          JAR_NAME: ${{ steps.compile.outputs.jar_name }}
+          JAR_SIZE: ${{ steps.compile.outputs.jar_size }}
         run: |
           if [ -z "$WEBHOOK_URL" ]; then
             echo "GIT_LOG secret is not set. Skipping notification."
@@ -26,33 +86,54 @@ jobs:
           COMMITS_JSON='${{ toJson(github.event.commits) }}'
           if [ "$COMMITS_JSON" = "null" ] || [ -z "$COMMITS_JSON" ]; then
             COMMIT_LIST="No new commits."
+            COMMIT_COUNT=0
           else
             COMMIT_LIST=$(echo "$COMMITS_JSON" | jq -r '.[] | "- [`" + .id[0:7] + "`](" + .url + ") " + (.message | split("\n")[0]) + " - **" + .author.name + "**"' 2>/dev/null || echo "No new commits.")
+            COMMIT_COUNT=$(echo "$COMMITS_JSON" | jq 'length')
           fi
           
           REPO="${{ github.repository }}"
           PUSHER_URL="https://github.com/$PUSHER"
           PUSHER_ICON="https://github.com/${PUSHER}.png"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          RUN_URL="https://github.com/$REPO/actions/runs/$RUN_ID"
+          
+          # Format compile status info block
+          if [ "$BUILD_STATUS" = "success" ]; then
+            STATUS_STR="✅ SUCCESS (${BUILD_DURATION}s)"
+            ARTIFACT_STR="📦 \`$JAR_NAME\` (${JAR_SIZE})"
+            COLOR=3796756 # Volt Neon Green
+          else
+            STATUS_STR="❌ FAILED (${BUILD_DURATION}s)"
+            ARTIFACT_STR="⚠️ Build failed, no artifact generated."
+            COLOR=16724787 # Volt Neon Red
+          fi
           
           PAYLOAD=$(jq -n \
-            --arg title "New commits pushed to $BRANCH" \
+            --arg title "New Push to $BRANCH ($COMMIT_COUNT Commits)" \
             --arg url "$COMPARE_URL" \
             --arg desc "$COMMIT_LIST" \
             --arg repo "$REPO" \
             --arg pusher "$PUSHER" \
             --arg pusher_url "$PUSHER_URL" \
             --arg pusher_icon "$PUSHER_ICON" \
+            --arg status "$STATUS_STR" \
+            --arg artifact "$ARTIFACT_STR" \
+            --arg run_url "$RUN_URL" \
             --arg timestamp "$TIMESTAMP" \
+            --argint color "$COLOR" \
             '{
               embeds: [{
                 title: $title,
                 url: $url,
                 description: $desc,
-                color: 3796756,
+                color: $color,
                 fields: [
                   { name: "Repository", value: $repo, inline: true },
-                  { name: "Pusher", value: ("[" + $pusher + "](" + $pusher_url + ")"), inline: true }
+                  { name: "Pusher", value: ("[" + $pusher + "](" + $pusher_url + ")"), inline: true },
+                  { name: "Compilation Status", value: $status, inline: true },
+                  { name: "Build Artifact", value: $artifact, inline: false },
+                  { name: "GitHub Actions Run Logs", value: ("⚡ [View Workflow Run Logs](" + $run_url + ")"), inline: false }
                 ],
                 author: {
                   name: $pusher,
@@ -60,7 +141,7 @@ jobs:
                   icon_url: $pusher_icon
                 },
                 footer: {
-                  text: "VoltHack Git Logs"
+                  text: "VoltHack Logs & Build CI"
                 },
                 timestamp: $timestamp
               }]
@@ -68,6 +149,7 @@ jobs:
             
           curl -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
 
+      # Step 6: Send Issues notifications to Discord (identical to previous step)
       - name: Git Issues Notification
         if: github.event_name == 'issues'
         env:
