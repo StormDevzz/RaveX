@@ -19,6 +19,7 @@ object SettingWidget {
     private var inputAnim = 0f
 
     var expandedColorSetting: Setting.Color? = null
+    var expandedModeSetting: Setting.Mode? = null
 
     private val PRESET_COLORS = intArrayOf(
         0xFFFF6B6B.toInt(), // Soft Red
@@ -45,6 +46,7 @@ object SettingWidget {
         return when (setting) {
             is Setting.Float, is Setting.Int -> 32
             is Setting.Color -> if (expandedColorSetting == setting) 94 else 26
+            is Setting.Mode -> if (expandedModeSetting == setting) 26 + setting.modes.size * 18 else 26
             else -> 26
         }
     }
@@ -197,6 +199,7 @@ object SettingWidget {
         dragging = null
         hoveredSetting = null
         expandedColorSetting = null
+        expandedModeSetting = null
     }
 
     private fun checkFocusLoss(mx: Int, my: Int, x: Int, y: Int, w: Int, h: Int) {
@@ -300,12 +303,28 @@ object SettingWidget {
     }
 
     private fun renderMode(ctx: GuiGraphics, s: Setting.Mode, x: Int, y: Int, width: Int) {
-        ctx.fill(x, y, x + width, y + 26, 0x10000000.toInt())
+        val isExpanded = expandedModeSetting == s
+        val h = if (isExpanded) 26 + s.modes.size * 18 else 26
+        
+        ctx.fill(x, y, x + width, y + h, 0x10000000.toInt())
         GUIFontRenderer.draw(ctx, s.name, (x + 4).toFloat(), (y + 4).toFloat(), VoltHackTheme.textSecondary)
         val idx = s.modes.indexOf(s.value).coerceAtLeast(0)
         GUIFontRenderer.draw(ctx, "${idx + 1}/${s.modes.size}", (x + width - 32).toFloat(),
             (y + 4).toFloat(), VoltHackTheme.textDisabled)
         GUIFontRenderer.draw(ctx, s.value, (x + 4).toFloat(), (y + 14).toFloat(), VoltHackTheme.accent)
+        
+        if (isExpanded) {
+            for (i in s.modes.indices) {
+                val m = s.modes[i]
+                val mY = y + 26 + i * 18
+                val isCurrent = m == s.value
+                val slotBg = if (isCurrent) VoltHackTheme.accentGlow else 0x1A000000.toInt()
+                ctx.fill(x + 4, mY, x + width - 4, mY + 16, slotBg)
+                
+                val textColor = if (isCurrent) VoltHackTheme.accent else VoltHackTheme.textSecondary
+                GUIFontRenderer.draw(ctx, m, (x + 8).toFloat(), (mY + 4).toFloat(), textColor)
+            }
+        }
     }
 
     private fun renderColor(ctx: GuiGraphics, s: Setting.Color, x: Int, y: Int, width: Int) {
@@ -418,14 +437,23 @@ object SettingWidget {
 
     private fun clickMode(mx: Int, my: Int, s: Setting.Mode, x: Int, y: Int, width: Int, button: Int): Boolean {
         if (my in y..y + 26) {
-            val idx = s.modes.indexOf(s.value).coerceAtLeast(0)
             if (button == 1) {
-                s.value = s.modes[(idx - 1 + s.modes.size) % s.modes.size]
+                expandedModeSetting = if (expandedModeSetting == s) null else s
             } else {
+                val idx = s.modes.indexOf(s.value).coerceAtLeast(0)
                 s.value = s.modes[(idx + 1) % s.modes.size]
             }
             return true
         }
+        
+        if (expandedModeSetting == s && my in y + 26..y + 26 + s.modes.size * 18) {
+            val clickedIdx = (my - y - 26) / 18
+            if (clickedIdx in s.modes.indices) {
+                s.value = s.modes[clickedIdx]
+                return true
+            }
+        }
+        
         return false
     }
 

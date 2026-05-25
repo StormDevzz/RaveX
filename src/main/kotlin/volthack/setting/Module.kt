@@ -10,7 +10,8 @@ abstract class Module(
     val name: String,
     val description: String = "",
     val category: Category,
-    val autoEnable: AutoEnable = AutoEnable.NORMAL
+    val autoEnable: AutoEnable = AutoEnable.NORMAL,
+    val toggleable: Boolean = true
 ) {
     var enabled = false
     var bindKey: Int = 0
@@ -20,6 +21,7 @@ abstract class Module(
     var onStateChanged: ((Module) -> Unit)? = null
 
     fun toggle() {
+        if (!toggleable) return
         if (enabled) {
             if (autoEnable == AutoEnable.ALWAYS) return
             disable()
@@ -30,6 +32,7 @@ abstract class Module(
     }
 
     fun enable() {
+        if (!toggleable) return
         if (enabled) return
         enabled = true
         onEnable()
@@ -65,8 +68,12 @@ abstract class Module(
     protected fun boolean(
         name: String,
         default: kotlin.Boolean = false,
-        description: String = ""
-    ) = Setting.Boolean(name, description, default).also { settings.add(it) }
+        description: String = "",
+        onChanged: ((kotlin.Boolean) -> Unit)? = null
+    ) = Setting.Boolean(name, description, default).also { 
+        if (onChanged != null) it.onChanged = onChanged
+        settings.add(it) 
+    }
 
     protected fun float(
         name: String,
@@ -74,35 +81,55 @@ abstract class Module(
         min: kotlin.Float = 0f,
         max: kotlin.Float = 1f,
         step: kotlin.Float = 0.1f,
-        description: String = ""
-    ) = Setting.Float(name, description, default, min, max, step).also { settings.add(it) }
+        description: String = "",
+        onChanged: ((kotlin.Float) -> Unit)? = null
+    ) = Setting.Float(name, description, default, min, max, step).also { 
+        if (onChanged != null) it.onChanged = onChanged
+        settings.add(it) 
+    }
 
     protected fun int(
         name: String,
         default: kotlin.Int = 0,
         min: kotlin.Int = 0,
         max: kotlin.Int = 10,
-        description: String = ""
-    ) = Setting.Int(name, description, default, min, max).also { settings.add(it) }
+        description: String = "",
+        onChanged: ((kotlin.Int) -> Unit)? = null
+    ) = Setting.Int(name, description, default, min, max).also { 
+        if (onChanged != null) it.onChanged = onChanged
+        settings.add(it) 
+    }
 
     protected fun mode(
         name: String,
         modes: List<String>,
         default: String = modes.firstOrNull() ?: "",
-        description: String = ""
-    ) = Setting.Mode(name, description, default, modes).also { settings.add(it) }
+        description: String = "",
+        onChanged: ((String) -> Unit)? = null
+    ) = Setting.Mode(name, description, default, modes).also { 
+        if (onChanged != null) it.onChanged = onChanged
+        settings.add(it) 
+    }
 
     protected fun color(
         name: String,
         default: kotlin.Int = 0xFFFFFFFF.toInt(),
-        description: String = ""
-    ) = Setting.Color(name, description, default).also { settings.add(it) }
+        description: String = "",
+        onChanged: ((kotlin.Int) -> Unit)? = null
+    ) = Setting.Color(name, description, default).also { 
+        if (onChanged != null) it.onChanged = onChanged
+        settings.add(it) 
+    }
 
     protected fun text(
         name: String,
         default: kotlin.String = "",
-        description: String = ""
-    ) = Setting.StringSetting(name, description, default).also { settings.add(it) }
+        description: String = "",
+        onChanged: ((kotlin.String) -> Unit)? = null
+    ) = Setting.StringSetting(name, description, default).also { 
+        if (onChanged != null) it.onChanged = onChanged
+        settings.add(it) 
+    }
 }
 
 enum class Category(val displayName: String) {

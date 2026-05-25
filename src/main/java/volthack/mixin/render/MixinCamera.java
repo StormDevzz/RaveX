@@ -49,4 +49,11 @@ public abstract class MixinCamera {
         focusedEntity.yRotO = voltHack_origYawO;
         focusedEntity.xRotO = voltHack_origPitchO;
     }
+
+    @Inject(method = "getMaxZoom", at = @At("HEAD"), cancellable = true)
+    private void onGetMaxZoom(float startingDistance, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Float> cir) {
+        if (volthack.modules.render.ViewClip.INSTANCE.getEnabled()) {
+            cir.setReturnValue(startingDistance);
+        }
+    }
 }

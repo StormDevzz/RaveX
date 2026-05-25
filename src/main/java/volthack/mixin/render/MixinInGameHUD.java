@@ -11,12 +11,20 @@ import volthack.hud.HUDManager;
 
 @Mixin(Gui.class)
 public abstract class MixinInGameHUD {
+    @Inject(method = "render", at = @At("HEAD"))
+    private void onRenderHead(GuiGraphics context, DeltaTracker tickCounter, CallbackInfo ci) {
+        if (volthack.modules.render.Ambience.INSTANCE.getEnabled()) {
+            volthack.modules.render.Ambience.INSTANCE.renderScreen(context);
+        }
+    }
+
     @Inject(method = "render", at = @At("TAIL"))
     private void onRender(GuiGraphics context, DeltaTracker tickCounter, CallbackInfo ci) {
         HUDManager.INSTANCE.render(context);
         volthack.util.render.NotificationManager.INSTANCE.render(context);
         volthack.modules.render.ESP.INSTANCE.render2D(context);
         volthack.modules.render.NameTags.INSTANCE.render2D(context);
+        volthack.modules.render.Spawner.INSTANCE.render2D(context);
     }
 
     @Inject(method = "renderHotbarAndDecorations(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V", at = @At("HEAD"), cancellable = true)

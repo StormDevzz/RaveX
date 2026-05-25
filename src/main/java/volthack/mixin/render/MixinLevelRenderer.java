@@ -65,4 +65,11 @@ public class MixinLevelRenderer {
             projectionMatrix
         ));
     }
+
+    @Inject(method = "addWeatherPass", at = @At("HEAD"), cancellable = true)
+    private void onAddWeatherPass(com.mojang.blaze3d.framegraph.FrameGraphBuilder frameGraphBuilder, com.mojang.blaze3d.buffers.GpuBufferSlice gpuBufferSlice, CallbackInfo ci) {
+        if (volthack.modules.render.NoRender.INSTANCE.getEnabled() && volthack.modules.render.NoRender.INSTANCE.getWeather()) {
+            ci.cancel();
+        }
+    }
 }

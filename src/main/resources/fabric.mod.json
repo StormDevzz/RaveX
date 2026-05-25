@@ -4,7 +4,7 @@
     "version": "${version}",
     "name": "VoltHack",
     "description": "VoltHack Minecraft Client by StormDevzz",
-    "authors": [{"name": "StormDevzz", "role": "Organization"}],
+    "authors": ["StormDevzz"],
     "contact": {
         "homepage": "https://github.com/StormDevzz",
         "sources": "https://github.com/StormDevzz/VoltHack",

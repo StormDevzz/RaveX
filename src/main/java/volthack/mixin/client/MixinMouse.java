@@ -14,7 +14,7 @@ public class MixinMouse {
         InputManager.INSTANCE.onMouse(button, action);
     }
 
-    @Inject(method = "method_1598", at = @At("HEAD"))
+    @Inject(method = "onScroll", at = @At("HEAD"))
     private void onScrollRaw(long window, double xoffset, double yoffset, CallbackInfo ci) {
         InputManager.INSTANCE.onScroll(yoffset);
     }

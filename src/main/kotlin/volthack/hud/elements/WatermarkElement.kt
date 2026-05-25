@@ -38,7 +38,7 @@ class WatermarkElement : HUDElement("Watermark") {
         downloading = true
         thread {
             try {
-                val conn = URL(url).openConnection()
+                val conn = java.net.URI.create(url).toURL().openConnection()
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0")
                 conn.connectTimeout = 3000
                 conn.readTimeout = 3000
@@ -93,7 +93,7 @@ class WatermarkElement : HUDElement("Watermark") {
         ctx.fill(x, y, x + cachedWidth, y + 1, customColor)
 
         var cx = x + 8
-        if (hasAvatar && texVal != null) {
+        if (hasAvatar) {
             // 9-argument blit: Identifier, x, y, u, v, width, height, textureWidth, textureHeight
             ctx.blit(
                 texVal,

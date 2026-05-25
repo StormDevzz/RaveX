@@ -56,20 +56,18 @@ object TargetESP : Module("TargetESP", "Highlights target with a 3D rotating rin
         val camera = mc.gameRenderer.mainCamera
 
         val partialTicks = event.partialTicks
-        val cameraPos = camera.position()
-        val renderX = target.xo + (target.x - target.xo) * partialTicks - cameraPos.x
-        val renderY = target.yo + (target.y - target.yo) * partialTicks - cameraPos.y
-        val renderZ = target.zo + (target.z - target.zo) * partialTicks - cameraPos.z
+        val worldX = target.xo + (target.x - target.xo) * partialTicks
+        val worldY = target.yo + (target.y - target.yo) * partialTicks
+        val worldZ = target.zo + (target.z - target.zo) * partialTicks
 
         val time = System.currentTimeMillis()
-
         val scaleY = target.bbHeight
         val heightProgress = (sin((time * 0.001 * heightSpeed) * PI) * 0.5 + 0.5)
         val yOffset = heightProgress * scaleY
-
         val radius = (target.bbWidth / 2.0f) + radiusOffset
 
         val baseColor = if (colorMode == "Rainbow") {
+            val time = System.currentTimeMillis()
             val hue = (time * 0.001f) % 1.0f
             java.awt.Color.HSBtoRGB(hue, 0.8f, 1.0f)
         } else {
@@ -81,10 +79,11 @@ object TargetESP : Module("TargetESP", "Highlights target with a 3D rotating rin
         val b = (baseColor and 255)
         val alpha = (baseColor shr 24 and 255).let { if (it == 0) 255 else it }
 
-        val spinAngle = (time * 0.001 * spinSpeed)
+        val spinAngle = (System.currentTimeMillis() * 0.001 * spinSpeed)
 
         Render3DUtil.drawRing(
-            renderX, renderY + yOffset, renderZ,
+            event.modelViewMatrix,
+            worldX, worldY + yOffset, worldZ,
             radius,
             r, g, b, alpha,
             spinAngle,

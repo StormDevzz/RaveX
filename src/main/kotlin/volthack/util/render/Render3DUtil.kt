@@ -4,10 +4,18 @@ import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.rendertype.RenderTypes
+import org.joml.Matrix4f
 
 object Render3DUtil {
 
+    private fun transform(x: Double, y: Double, z: Double, matrix: Matrix4f): org.joml.Vector3f {
+        val dest = org.joml.Vector3f()
+        matrix.transformPosition(x.toFloat(), y.toFloat(), z.toFloat(), dest)
+        return dest
+    }
+
     fun drawBlockOutline(
+        modelView: Matrix4f,
         x: Double, y: Double, z: Double,
         width: Float, height: Float,
         r: Int, g: Int, b: Int, a: Int,
@@ -22,9 +30,6 @@ object Render3DUtil {
 
         val hw = width / 2.0
         val color = argb(r, g, b, a)
-        val nx = 0.0f
-        val ny = 1.0f
-        val nz = 0.0f
 
         val corners = arrayOf(
             doubleArrayOf(x - hw, y, z - hw), doubleArrayOf(x + hw, y, z - hw),
@@ -42,16 +47,20 @@ object Render3DUtil {
         for (edge in edges) {
             val p1 = corners[edge[0]]
             val p2 = corners[edge[1]]
-            val ex = (p2[0] - p1[0]).toFloat()
-            val ey = (p2[1] - p1[1]).toFloat()
-            val ez = (p2[2] - p1[2]).toFloat()
+            
+            val c1 = transform(p1[0], p1[1], p1[2], modelView)
+            val c2 = transform(p2[0], p2[1], p2[2], modelView)
+            
+            val ex = c2.x - c1.x
+            val ey = c2.y - c1.y
+            val ez = c2.z - c1.z
             val len = Math.sqrt((ex * ex + ey * ey + ez * ez).toDouble()).toFloat()
             if (len > 0.001f) {
-                consumer.addVertex(pose, p1[0].toFloat(), p1[1].toFloat(), p1[2].toFloat())
+                consumer.addVertex(pose, c1.x, c1.y, c1.z)
                     .setColor(color)
                     .setNormal(pose, ex / len, ey / len, ez / len)
                     .setLineWidth(lineWidth)
-                consumer.addVertex(pose, p2[0].toFloat(), p2[1].toFloat(), p2[2].toFloat())
+                consumer.addVertex(pose, c2.x, c2.y, c2.z)
                     .setColor(color)
                     .setNormal(pose, ex / len, ey / len, ez / len)
                     .setLineWidth(lineWidth)
@@ -62,6 +71,7 @@ object Render3DUtil {
     }
 
     fun drawRing(
+        modelView: Matrix4f,
         x: Double, y: Double, z: Double,
         radius: Float,
         r: Int, g: Int, b: Int, a: Int,
@@ -83,7 +93,10 @@ object Render3DUtil {
             val angle = (i * 2 * Math.PI / segments) + spinAngle
             val dx = Math.cos(angle) * radius
             val dz = Math.sin(angle) * radius
-            consumer.addVertex(pose, (x + dx).toFloat(), y.toFloat(), (z + dz).toFloat())
+            
+            val c = transform(x + dx, y, z + dz, modelView)
+            
+            consumer.addVertex(pose, c.x, c.y, c.z)
                 .setColor(color)
                 .setNormal(pose, nx, ny, nz)
                 .setLineWidth(2.0f)
@@ -93,6 +106,7 @@ object Render3DUtil {
     }
 
     fun drawBand(
+        modelView: Matrix4f,
         x: Double, y: Double, z: Double,
         radius: Float, height: Float,
         r: Int, g: Int, b: Int, a: Int,
@@ -116,24 +130,29 @@ object Render3DUtil {
             val dx2 = Math.cos(angle2) * radius
             val dz2 = Math.sin(angle2) * radius
 
-            val ex = ((x + dx2) - (x + dx1)).toFloat()
-            val ez = ((z + dz2) - (z + dz1)).toFloat()
+            val c1 = transform(x + dx1, y, z + dz1, modelView)
+            val c1h = transform(x + dx1, y + height, z + dz1, modelView)
+            val c2h = transform(x + dx2, y + height, z + dz2, modelView)
+            val c2 = transform(x + dx2, y, z + dz2, modelView)
+
+            val ex = c2.x - c1.x
+            val ez = c2.z - c1.z
             val len = Math.sqrt((ex * ex + ez * ez).toDouble()).toFloat()
             val nLen = if (len > 0.001f) len else 1.0f
 
-            consumer.addVertex(pose, (x + dx1).toFloat(), y.toFloat(), (z + dz1).toFloat())
+            consumer.addVertex(pose, c1.x, c1.y, c1.z)
                 .setColor(color)
                 .setNormal(pose, ex / nLen, 0.0f, ez / nLen)
                 .setLineWidth(1.0f)
-            consumer.addVertex(pose, (x + dx1).toFloat(), (y + height).toFloat(), (z + dz1).toFloat())
+            consumer.addVertex(pose, c1h.x, c1h.y, c1h.z)
                 .setColor(color)
                 .setNormal(pose, ex / nLen, 0.0f, ez / nLen)
                 .setLineWidth(1.0f)
-            consumer.addVertex(pose, (x + dx2).toFloat(), (y + height).toFloat(), (z + dz2).toFloat())
+            consumer.addVertex(pose, c2h.x, c2h.y, c2h.z)
                 .setColor(color)
                 .setNormal(pose, ex / nLen, 0.0f, ez / nLen)
                 .setLineWidth(1.0f)
-            consumer.addVertex(pose, (x + dx2).toFloat(), y.toFloat(), (z + dz2).toFloat())
+            consumer.addVertex(pose, c2.x, c2.y, c2.z)
                 .setColor(color)
                 .setNormal(pose, ex / nLen, 0.0f, ez / nLen)
                 .setLineWidth(1.0f)
@@ -143,6 +162,7 @@ object Render3DUtil {
     }
 
     fun drawGlowBand(
+        modelView: Matrix4f,
         x: Double, y: Double, z: Double,
         radius: Float, height: Float,
         r: Int, g: Int, b: Int, a: Int,
@@ -165,24 +185,29 @@ object Render3DUtil {
             val dx2 = Math.cos(angle2) * radius
             val dz2 = Math.sin(angle2) * radius
 
-            val ex = ((x + dx2) - (x + dx1)).toFloat()
-            val ez = ((z + dz2) - (z + dz1)).toFloat()
+            val c1 = transform(x + dx1, y, z + dz1, modelView)
+            val c1h = transform(x + dx1, y + height, z + dz1, modelView)
+            val c2h = transform(x + dx2, y + height, z + dz2, modelView)
+            val c2 = transform(x + dx2, y, z + dz2, modelView)
+
+            val ex = c2.x - c1.x
+            val ez = c2.z - c1.z
             val len = Math.sqrt((ex * ex + ez * ez).toDouble()).toFloat()
             val nLen = if (len > 0.001f) len else 1.0f
 
-            consumer.addVertex(pose, (x + dx1).toFloat(), y.toFloat(), (z + dz1).toFloat())
+            consumer.addVertex(pose, c1.x, c1.y, c1.z)
                 .setColor(argb(r, g, b, (a * 0.6f).toInt()))
                 .setNormal(pose, ex / nLen, 0.0f, ez / nLen)
                 .setLineWidth(1.0f)
-            consumer.addVertex(pose, (x + dx1).toFloat(), (y + height).toFloat(), (z + dz1).toFloat())
+            consumer.addVertex(pose, c1h.x, c1h.y, c1h.z)
                 .setColor(argb(r, g, b, 0))
                 .setNormal(pose, ex / nLen, 0.0f, ez / nLen)
                 .setLineWidth(1.0f)
-            consumer.addVertex(pose, (x + dx2).toFloat(), (y + height).toFloat(), (z + dz2).toFloat())
+            consumer.addVertex(pose, c2h.x, c2h.y, c2h.z)
                 .setColor(argb(r, g, b, 0))
                 .setNormal(pose, ex / nLen, 0.0f, ez / nLen)
                 .setLineWidth(1.0f)
-            consumer.addVertex(pose, (x + dx2).toFloat(), y.toFloat(), (z + dz2).toFloat())
+            consumer.addVertex(pose, c2.x, c2.y, c2.z)
                 .setColor(argb(r, g, b, (a * 0.6f).toInt()))
                 .setNormal(pose, ex / nLen, 0.0f, ez / nLen)
                 .setLineWidth(1.0f)

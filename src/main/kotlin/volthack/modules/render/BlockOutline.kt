@@ -50,9 +50,9 @@ object BlockOutline : Module("BlockOutline", "Highlights the block you are looki
         val camera = mc.gameRenderer.mainCamera
         val camPos = camera.position()
 
-        val renderX = pos.x - camPos.x + 0.5
-        val renderY = pos.y - camPos.y
-        val renderZ = pos.z - camPos.z + 0.5
+        val worldX = pos.x.toDouble() + 0.5
+        val worldY = pos.y.toDouble()
+        val worldZ = pos.z.toDouble() + 0.5
 
         val baseColor = getCurrentColor()
 
@@ -63,7 +63,8 @@ object BlockOutline : Module("BlockOutline", "Highlights the block you are looki
 
         if ((mode == "Outline" || mode == "Both") && throughWalls) {
             Render3DUtil.drawBlockOutline(
-                renderX, renderY, renderZ,
+                event.modelViewMatrix,
+                worldX, worldY, worldZ,
                 1.0f, 1.0f,
                 r, g, b, a,
                 throughWalls,
@@ -73,7 +74,8 @@ object BlockOutline : Module("BlockOutline", "Highlights the block you are looki
 
         if (mode == "Full" || mode == "Both") {
             Render3DUtil.drawBand(
-                renderX, renderY, renderZ,
+                event.modelViewMatrix,
+                worldX, worldY, worldZ,
                 0.4f, 1.0f,
                 r, g, b, (a * 0.25f).toInt(),
                 0.0,

@@ -8,7 +8,17 @@ sealed class Setting<T>(
     val description: String = "",
     defaultValue: T
 ) : ReadWriteProperty<Any?, T> {
+    var onChanged: ((T) -> Unit)? = null
+
     var value: T = defaultValue
+        set(newValue) {
+            val changed = field != newValue
+            field = newValue
+            if (changed) {
+                onChanged?.invoke(newValue)
+            }
+        }
+
     private var condition: () -> kotlin.Boolean = { true }
 
     fun showIf(cond: () -> kotlin.Boolean) { condition = cond }

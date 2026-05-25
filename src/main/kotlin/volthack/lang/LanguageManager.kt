@@ -18,7 +18,6 @@ object LanguageManager {
 
     fun initialize() {
         load("en_us")
-        load("ru_ru")
         customDir.toFile().mkdirs()
         VoltHack.LOGGER.info("Language manager ready: ${entries.size} entries loaded")
     }
@@ -45,5 +44,7 @@ object LanguageManager {
 
     fun setLanguage(lang: String) {
         currentLang = lang
+        entries.clear()
+        load(lang)
     }
 }

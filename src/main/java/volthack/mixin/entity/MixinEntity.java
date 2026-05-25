@@ -18,13 +18,13 @@ public abstract class MixinEntity {
         }
     }
 
-    @Inject(method = "isCrouching()Z", at = @At("HEAD"), cancellable = true)
-    private void onIsCrouching(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
-        if (volthack.modules.render.ShiftInterp.INSTANCE.getEnabled() && (Object) this instanceof net.minecraft.world.entity.player.Player) {
-            net.minecraft.world.entity.player.Player player = (net.minecraft.world.entity.player.Player) (Object) this;
-            if (volthack.modules.render.ShiftInterp.INSTANCE.shouldCrouch(player)) {
-                cir.setReturnValue(true);
-            }
-        }
-    }
+//    @Inject(method = "isCrouching()Z", at = @At("HEAD"), cancellable = true)
+//    private void onIsCrouching(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+//        if (volthack.modules.render.ShiftInterp.INSTANCE.getEnabled() && (Object) this instanceof net.minecraft.world.entity.player.Player) {
+//            net.minecraft.world.entity.player.Player player = (net.minecraft.world.entity.player.Player) (Object) this;
+//            if (volthack.modules.render.ShiftInterp.INSTANCE.shouldCrouch(player)) {
+//                cir.setReturnValue(true);
+//            }
+//        }
+//    }
 }
