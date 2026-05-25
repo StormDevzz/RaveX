@@ -61,15 +61,21 @@ jobs:
             echo "Compilation Failed!"
           fi
 
-      # Step 5: Send Git push notification + Compilation results to Discord
+      # Step 5: Send Git push notification + Compilation results to Discord (ALWAYS RUNS ON PUSH)
       - name: Git Log Notification
-        if: github.event_name == 'push'
+        if: always() && github.event_name == 'push'
         env:
           WEBHOOK_URL: ${{ secrets.GIT_LOG }}
           COMPARE_URL: ${{ github.event.compare }}
           BRANCH: ${{ github.ref_name }}
           PUSHER: ${{ github.actor }}
           RUN_ID: ${{ github.run_id }}
+          
+          # Head commit fallback details
+          HEAD_COMMIT_ID: ${{ github.event.head_commit.id }}
+          HEAD_COMMIT_URL: ${{ github.event.head_commit.url }}
+          HEAD_COMMIT_MSG: ${{ github.event.head_commit.message }}
+          HEAD_COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
           
           # Compile status outputs
           BUILD_STATUS: ${{ steps.compile.outputs.build_status }}
@@ -84,9 +90,17 @@ jobs:
           
           # Parse and format commits list
           COMMITS_JSON='${{ toJson(github.event.commits) }}'
-          if [ "$COMMITS_JSON" = "null" ] || [ -z "$COMMITS_JSON" ]; then
-            COMMIT_LIST="No new commits."
-            COMMIT_COUNT=0
+          if [ "$COMMITS_JSON" = "null" ] || [ -z "$COMMITS_JSON" ] || [ "$COMMITS_JSON" = "[]" ]; then
+            # Fallback to head_commit (ensures info is ALWAYS written, even for identical commits or branch updates)
+            if [ -n "$HEAD_COMMIT_ID" ]; then
+              SHORT_ID="${HEAD_COMMIT_ID:0:7}"
+              FIRST_LINE=$(echo "$HEAD_COMMIT_MSG" | head -n 1)
+              COMMIT_LIST="- [\`$SHORT_ID\`]($HEAD_COMMIT_URL) $FIRST_LINE - **$HEAD_COMMIT_AUTHOR**"
+              COMMIT_COUNT=1
+            else
+              COMMIT_LIST="No commit details available (branch/tag synchronization)."
+              COMMIT_COUNT=0
+            fi
           else
             COMMIT_LIST=$(echo "$COMMITS_JSON" | jq -r '.[] | "- [`" + .id[0:7] + "`](" + .url + ") " + (.message | split("\n")[0]) + " - **" + .author.name + "**"' 2>/dev/null || echo "No new commits.")
             COMMIT_COUNT=$(echo "$COMMITS_JSON" | jq 'length')
@@ -98,8 +112,12 @@ jobs:
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           RUN_URL="https://github.com/$REPO/actions/runs/$RUN_ID"
           
-          # Format compile status info block
-          if [ "$BUILD_STATUS" = "success" ]; then
+          # Format compile status info block dynamically
+          if [ -z "$BUILD_STATUS" ]; then
+            STATUS_STR="⚠️ SKIPPED (Setup Error)"
+            ARTIFACT_STR="Build skipped due to setup/checkout environment failure."
+            COLOR=16776960 # Volt Neon Yellow
+          elif [ "$BUILD_STATUS" = "success" ]; then
             STATUS_STR="✅ SUCCESS (${BUILD_DURATION}s)"
             ARTIFACT_STR="📦 \`$JAR_NAME\` (${JAR_SIZE})"
             COLOR=3796756 # Volt Neon Green
@@ -149,7 +167,7 @@ jobs:
             
           curl -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
 
-      # Step 6: Send Issues notifications to Discord (identical to previous step)
+      # Step 6: Send Issues notifications to Discord
       - name: Git Issues Notification
         if: github.event_name == 'issues'
         env:
