@@ -29,7 +29,7 @@
         "render.MixinLevelRenderer",
         "render.MixinClientLevel",
         "render.MixinWorldBorderRenderer",
-        "render.MixinLocalPlayer",
+        "render.MixinPlayer",
         "render.MixinLivingEntity",
         "render.MixinMultiPlayerGameMode",
         "entity.MixinEntity",
