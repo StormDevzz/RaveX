@@ -95,7 +95,7 @@ end
 
 -- ── Export ───────────────────────────────────────────────────────
 
-ravex.version = "1.0.0"
+ravex.version = "1.0"
 ravex.NAME = "RaveX"
 
 return ravex

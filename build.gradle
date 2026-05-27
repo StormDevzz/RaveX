@@ -3,11 +3,11 @@ plugins {
 }
 
 base {
-    archivesName = property("archives_name") as String
+    archivesName = property("archives_name")
 }
 
-version = property("mod_version") as String
-group = property("maven_group") as String
+version = property("mod_version")
+group = property("maven_group")
 
 repositories {
     mavenCentral()
@@ -32,7 +32,7 @@ loom {
     }
 
     runs {
-        named("client") {
+        client {
             client()
             configName = "Client"
             ideConfigGenerated(true)
@@ -53,20 +53,21 @@ loom {
     }
 }
 
-val mcVersion: String = property("minecraft_version") as String
-val loaderVersion: String = property("loader_version") as String
+def mcVersion = property("minecraft_version")
+def loaderVersion = property("loader_version")
 
-tasks.processResources {
-    val props = mapOf(
-        "version" to version,
-        "minecraft_version" to mcVersion,
-        "loader_version" to loaderVersion
-    )
-
-    inputs.properties(props)
+processResources {
+    inputs.properties([
+        "version"          : version,
+        "minecraft_version": mcVersion,
+        "loader_version"   : loaderVersion
+    ])
 
     filesMatching("fabric.mod.json") {
-        expand(props)
+        expand([
+            "version"          : version,
+            "minecraft_version": mcVersion,
+            "loader_version"   : loaderVersion
+        ])
     }
 }
-
