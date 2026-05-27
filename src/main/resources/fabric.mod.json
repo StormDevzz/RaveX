@@ -1,21 +1,21 @@
 {
     "schemaVersion": 1,
-    "id": "volthack",
+    "id": "ravex",
     "version": "${version}",
-    "name": "VoltHack",
-    "description": "VoltHack Minecraft Client by StormDevzz",
+    "name": "RaveX",
+    "description": "RaveX Minecraft Client by StormDevzz",
     "authors": ["StormDevzz"],
     "contact": {
         "homepage": "https://github.com/StormDevzz",
-        "sources": "https://github.com/StormDevzz/VoltHack",
-        "issues": "https://github.com/StormDevzz/VoltHack/issues"
+        "sources": "https://github.com/StormDevzz/RaveX",
+        "issues": "https://github.com/StormDevzz/RaveX/issues"
     },
     "environment": "client",
     "entrypoints": {
-        "client": ["volthack.VoltHack"]
+        "client": ["ravex.RaveX"]
     },
-    "mixins": ["volthack.mixins.json"],
-    "accessWidener": "volthack.accesswidener",
+    "mixins": ["ravex.mixins.json"],
+    "accessWidener": "ravex.accesswidener",
     "depends": {
         "fabricloader": ">=${loader_version}",
         "minecraft": ">=${minecraft_version}"

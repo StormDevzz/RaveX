@@ -1,0 +1,79 @@
+package ravex.modules;
+
+import ravex.parameter.Parameter;
+import ravex.utility.sound.SoundUtility;
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class Module {
+    private final String name;
+    private final Category category;
+    private boolean enabled;
+    private int keyBind = org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN;
+    private final List<Parameter<?>> parameters = new ArrayList<>();
+
+    public Module(String name, Category category) {
+        this.name = name;
+        this.category = category;
+        this.enabled = false;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public String getDescription() {
+        return ravex.descriptions.ClickGuiDescriptions.getDescription(name);
+    }
+
+    public boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        if (this.enabled != enabled) {
+            this.enabled = enabled;
+            if (enabled) {
+                onEnable();
+                SoundUtility.playEnable();
+                if (ravex.modules.render.Notifications.INSTANCE != null) {
+                    ravex.modules.render.Notifications.notifyToggle(this, true);
+                }
+            } else {
+                onDisable();
+                SoundUtility.playDisable();
+                if (ravex.modules.render.Notifications.INSTANCE != null) {
+                    ravex.modules.render.Notifications.notifyToggle(this, false);
+                }
+            }
+        }
+    }
+
+    public void toggle() {
+        setEnabled(!enabled);
+    }
+
+    public int getKeyBind() {
+        return keyBind;
+    }
+
+    public void setKeyBind(int keyBind) {
+        this.keyBind = keyBind;
+    }
+
+    public List<Parameter<?>> getParameters() {
+        return parameters;
+    }
+
+    protected void addParameter(Parameter<?> p) {
+        parameters.add(p);
+    }
+
+    protected void onEnable() {}
+    protected void onDisable() {}
+    public void onTick() {}
+}

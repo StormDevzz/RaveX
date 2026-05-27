@@ -1,9 +1,0 @@
-accessWidener v2 named
-
-# Minecraft
-accessible class net/minecraft/client/Minecraft
-accessible class net/minecraft/client/Options
-accessible field net/minecraft/client/Options framerateLimit Lnet/minecraft/client/OptionInstance;
-accessible method net/minecraft/client/gui/screens/Screen addRenderableWidget (Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;
-
-

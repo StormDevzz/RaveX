@@ -23,13 +23,15 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.discord.ipc)
     include(libs.discord.ipc)
+    implementation("org.luaj:luaj-jse:3.0.1")
+    include("org.luaj:luaj-jse:3.0.1")
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/volthack.accesswidener")
+    accessWidenerPath = file("src/main/resources/ravex.accesswidener")
 
     mixin {
-        defaultRefmapName = "volthack.refmap.json"
+        defaultRefmapName = "ravex.refmap.json"
     }
 
     runs {
