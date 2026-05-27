@@ -9,4 +9,5 @@ find_package(JNI REQUIRED)
 
 add_subdirectory(common)
 add_subdirectory(optimizer)
+add_subdirectory(antiafk)
 add_subdirectory(jni)

@@ -7,21 +7,30 @@ import ravex.parameter.ModeParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import java.util.List;
-import java.io.*;
 
 public class Optimizer extends Module {
     public static final Optimizer INSTANCE = new Optimizer();
 
-    public final ModeParameter gcMode    = new ModeParameter("GC Mode", "Soft",
+    public final ModeParameter    gcMode       = new ModeParameter("GC Mode", "Aggressive",
             List.of("Soft", "Normal", "Aggressive"));
-    public final BooleanParameter notify = new BooleanParameter("Chat Notify", false);
-    public final BooleanParameter useNative = new BooleanParameter("Native C++", true);
+    public final BooleanParameter notify       = new BooleanParameter("Chat Notify", true);
+    public final BooleanParameter useNative    = new BooleanParameter("Native C++", true);
+
+    private boolean nativeAvailable = false;
 
     private Optimizer() {
         super("Optimizer", Category.MISC);
         addParameter(gcMode);
         addParameter(notify);
         addParameter(useNative);
+    }
+
+    static {
+        try {
+            System.loadLibrary("ravex_jni");
+        } catch (UnsatisfiedLinkError e) {
+            System.err.println("[RaveX] libravex_jni.so not loaded");
+        }
     }
 
     @Override
@@ -35,16 +44,22 @@ public class Optimizer extends Module {
         String mode = gcMode.getValue();
 
         if (useNative.getValue()) {
-            String result = runNativeOptimizer(mode);
-            if (result != null && notify.getValue() && mc.player != null) {
-                mc.player.displayClientMessage(
-                    Component.literal("§7[§cRaveX§7] §a" + result), false);
+            try {
+                String result = nativeOptimize(mode);
+                if (result != null && notify.getValue() && mc.player != null) {
+                    mc.player.displayClientMessage(
+                        Component.literal("§7[§cRaveX§7] §a" + result), false);
+                }
+                return;
+            } catch (UnsatisfiedLinkError e) {
+                nativeAvailable = false;
             }
-            return;
         }
 
         switch (mode) {
-            case "Aggressive" -> { System.gc(); System.gc(); System.gc(); }
+            case "Aggressive" -> {
+                System.gc(); System.gc(); System.gc();
+            }
             case "Normal" -> System.gc();
             case "Soft" -> {
                 Runtime rt = Runtime.getRuntime();
@@ -63,58 +78,11 @@ public class Optimizer extends Module {
         }
     }
 
-    private String runNativeOptimizer(String mode) {
-        try {
-            File bin = findBinary();
-            if (bin == null || !bin.exists()) return null;
-
-            Process proc = new ProcessBuilder(bin.getAbsolutePath())
-                .redirectErrorStream(true).start();
-
-            try (BufferedWriter writer = new BufferedWriter(
-                    new OutputStreamWriter(proc.getOutputStream()))) {
-                writer.write("optimize " + mode);
-                writer.newLine();
-                writer.flush();
-                writer.write("exit");
-                writer.newLine();
-                writer.flush();
-            }
-
-            String line;
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(proc.getInputStream()))) {
-                line = reader.readLine();
-            }
-
-            proc.waitFor();
-            if (line == null) return null;
-
-            if (line.contains("\"message\"")) {
-                int start = line.indexOf("\"message\":\"") + 11;
-                int end = line.indexOf("\"", start);
-                return line.substring(start, end).replace("\\\"", "\"");
-            }
-            return "Native optimizer: OK";
-        } catch (Exception e) {
-            return null;
-        }
+    public boolean isNativeAvailable() {
+        return nativeAvailable;
     }
 
-    private File findBinary() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc == null) return null;
-
-        File gameDir = mc.gameDirectory;
-        File[] candidates = {
-            new File("src/main/resources/optimizer"),
-            new File(gameDir, "ravex/optimizer"),
-            new File(System.getProperty("user.dir"), "optimizer"),
-            new File("/usr/local/bin/ravex-optimizer")
-        };
-        for (File f : candidates) {
-            if (f.exists()) return f;
-        }
-        return null;
-    }
+    private static native String nativeOptimize(String mode);
+    private static native long   nativeFreeMemory();
+    private static native String[] nativeListTechniques();
 }

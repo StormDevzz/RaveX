@@ -5,6 +5,7 @@ import ravex.modules.render.ESP;
 import ravex.modules.player.AutoTool;
 import ravex.modules.misc.AntiAfk;
 import ravex.modules.world.BoneMeal;
+import ravex.modules.world.Scaffold;
 import ravex.modules.render.ClickGui;
 import ravex.modules.render.Notifications;
 import ravex.modules.misc.VisualRange;
@@ -68,6 +69,7 @@ public class ModuleManager {
 
         // ── World ────────────────────────────────────────────────────────────────
         clickGuiModules.add(BoneMeal.INSTANCE);
+        clickGuiModules.add(Scaffold.INSTANCE);
 
         // ── HUD modules ──────────────────────────────────────────────────────────
         hudModules.add(new HudModule("Watermark", 10, 10, 80, 14) {
