@@ -1,21 +1,28 @@
 package ravex.utility.render.animate;
 
 public class FadeAnimation {
-    private float alpha = 0.0f;
+    private float prevAlpha = 0.0f;
+    private float currentAlpha = 0.0f;
 
     public float update(boolean active, float speed) {
+        prevAlpha = currentAlpha;
         float target = active ? 1.0f : 0.0f;
-        alpha += (target - alpha) * speed;
-        if (alpha < 0.001f) alpha = 0.0f;
-        if (alpha > 0.999f) alpha = 1.0f;
-        return alpha;
+        currentAlpha += (target - currentAlpha) * speed;
+        if (currentAlpha < 0.001f) currentAlpha = 0.0f;
+        if (currentAlpha > 0.999f) currentAlpha = 1.0f;
+        return currentAlpha;
+    }
+
+    public float getAlpha(float partialTicks) {
+        return prevAlpha + (currentAlpha - prevAlpha) * partialTicks;
     }
 
     public float getAlpha() {
-        return alpha;
+        return currentAlpha;
     }
 
     public void reset() {
-        alpha = 0.0f;
+        prevAlpha = 0.0f;
+        currentAlpha = 0.0f;
     }
 }

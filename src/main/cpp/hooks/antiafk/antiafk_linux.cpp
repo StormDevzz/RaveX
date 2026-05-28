@@ -26,8 +26,8 @@ public:
             return false;
         }
 
-        int opcode, firstEvent, firstError;
-        if (!XTestQueryExtension(display_, &opcode, &firstEvent, &firstError)) {
+        int opcode, firstEvent, firstError, extVal;
+        if (!XTestQueryExtension(display_, &opcode, &firstEvent, &firstError, &extVal)) {
             std::cerr << "[AntiAFK:Linux] XTest extension not available" << std::endl;
             XCloseDisplay(display_);
             display_ = nullptr;
