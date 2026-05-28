@@ -1,0 +1,2 @@
+/usr/bin/ar qc libravex_antiafk.a CMakeFiles/ravex_antiafk.dir/antiafk.cpp.o CMakeFiles/ravex_antiafk.dir/antiafk_linux.cpp.o
+/usr/bin/ranlib libravex_antiafk.a

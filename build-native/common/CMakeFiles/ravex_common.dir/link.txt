@@ -1,0 +1,2 @@
+/usr/bin/ar qc libravex_common.a CMakeFiles/ravex_common.dir/memory.cpp.o
+/usr/bin/ranlib libravex_common.a

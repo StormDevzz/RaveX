@@ -5,7 +5,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ravex.modules.ModuleManager;
-import ravex.utility.misc.GithubUtility;
 import net.minecraft.client.Minecraft;
 
 public class RaveX implements ClientModInitializer {
@@ -23,32 +22,23 @@ public class RaveX implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("===== Initializing RaveX client v" + version + " =====");
-
-        // 1. Initialize ModuleManager
-        LOGGER.info("Initializing ModuleManager...");
+        LOGGER.info("===== RaveX client v" + version + " starting =====");
+        System.out.println("[RaveX-Java] Successful initialization!");
         ModuleManager.INSTANCE.init();
-        LOGGER.info("Successfully registered " + ModuleManager.INSTANCE.getModules().size() + " modules!");
-
-
-        LOGGER.info("Connecting to Github API...");
-        new Thread(GithubUtility::checkUpdates).start();
-
+        System.out.println("[RaveX-Java] Loading complete");
         LOGGER.info("===== RaveX successfully initialized! =====");
     }
 
     public static void onClientTick() {
         ModuleManager.INSTANCE.onTick();
-        ravex.utility.lua.LuaManager.INSTANCE.onTick(); // fire Lua timers (e.g. RichPresence)
+        ravex.utility.lua.LuaManager.INSTANCE.onTick();
 
-        // Direct, bulletproof GLFW right shift key press checking!
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.getWindow() != null) {
             com.mojang.blaze3d.platform.Window window = mc.getWindow();
             boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
             
             if (isDown && !rightShiftWasDown) {
-                // Key pressed event!
                 if (mc.screen == null) {
                     mc.setScreen(new ravex.gui.clickgui.ClickGUI());
                 } else if (mc.screen instanceof ravex.gui.clickgui.ClickGUI) {

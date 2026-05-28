@@ -56,4 +56,18 @@ public abstract class MixinEntity {
             }
         }
     }
+
+    @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
+    private void onTurn(double yRot, double xRot, CallbackInfo ci) {
+        Entity self = (Entity) (Object) this;
+        if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
+
+        if (ravex.modules.render.FreeCam.INSTANCE.getEnabled()) {
+            ravex.modules.render.FreeCam.INSTANCE.turn(yRot, xRot);
+            ci.cancel();
+        } else if (ravex.modules.render.FreeLook.INSTANCE.getEnabled()) {
+            ravex.modules.render.FreeLook.INSTANCE.turn(yRot, xRot);
+            ci.cancel();
+        }
+    }
 }

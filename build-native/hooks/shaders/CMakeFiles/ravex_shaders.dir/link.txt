@@ -1,0 +1,2 @@
+/usr/bin/ar qc libravex_shaders.a CMakeFiles/ravex_shaders.dir/color_shader.cpp.o
+/usr/bin/ranlib libravex_shaders.a

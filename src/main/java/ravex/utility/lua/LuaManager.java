@@ -33,6 +33,17 @@ public class LuaManager {
     private final Map<String, LuaTimer> luaTimers = new ConcurrentHashMap<>();
     private final AtomicInteger tickCounter = new AtomicInteger(0);
 
+    // Ключ для XOR расшифровки скриптов — тот же, что используется при сборке
+    private static final String SCRIPT_KEY = "RaveX_ScriptKey_2025";
+    private static boolean nativeAvailable = false;
+
+    static {
+        try {
+            ravex.utility.misc.NativeLoader.load();
+            nativeAvailable = true;
+        } catch (Throwable ignored) {}
+    }
+
     private SocketChannel discordChannel = null;
     private OutputStream  discordOut     = null;
     private long discordNonce = 1;
@@ -45,23 +56,29 @@ public class LuaManager {
 
     public void initEngine() {
         globals = JsePlatform.standardGlobals();
+        globals.STDOUT = System.out;
+        
+        // Redefine global print to ensure output goes to the active redirected System.out stream
+        globals.set("print", new org.luaj.vm2.lib.VarArgFunction() {
+            @Override public org.luaj.vm2.Varargs invoke(org.luaj.vm2.Varargs args) {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 1; i <= args.narg(); i++) {
+                    if (i > 1) sb.append("\t");
+                    sb.append(args.arg(i).tojstring());
+                }
+                System.out.println(sb.toString());
+                System.out.flush();
+                return LuaValue.NONE;
+            }
+        });
+
         registerClientLib();
         registerPlayerLib();
         registerModulesLib();
         registerDiscordLib();
         registerTimerLib();
 
-        try (InputStream in = LuaManager.class.getResourceAsStream("/lua/init.lua")) {
-            if (in != null) {
-                String code = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-                globals.load(code, "init.lua").call();
-                ravex.RaveX.LOGGER.info("[Lua] init.lua loaded successfully.");
-            } else {
-                ravex.RaveX.LOGGER.warn("[Lua] init.lua not found in resources.");
-            }
-        } catch (Exception e) {
-            ravex.RaveX.LOGGER.error("[Lua] Failed to load init.lua: " + e.getMessage());
-        }
+        loadEncryptedScripts();
     }
 
     public Globals getGlobals() {
@@ -204,9 +221,9 @@ public class LuaManager {
         lib.set("setHighlightPos", new org.luaj.vm2.lib.VarArgFunction() {
             @Override public org.luaj.vm2.Varargs invoke(org.luaj.vm2.Varargs args) {
                 if (args.narg() < 3 || args.arg(1).isnil() || args.arg(2).isnil() || args.arg(3).isnil()) {
-                    ravex.modules.player.AirPlace.highlightPos = null;
+                    ravex.modules.player.AirPlace.luaHighlightPos = null;
                 } else {
-                    ravex.modules.player.AirPlace.highlightPos = new net.minecraft.world.phys.Vec3(
+                    ravex.modules.player.AirPlace.luaHighlightPos = new net.minecraft.world.phys.Vec3(
                         args.arg(1).todouble(), args.arg(2).todouble(), args.arg(3).todouble()
                     );
                 }
@@ -484,34 +501,48 @@ public class LuaManager {
         }
     }
 
-    public void loadAndRunScripts() {
-        Minecraft mc = Minecraft.getInstance();
-        File scriptsFolder = new File(mc.gameDirectory, "ravex/scripts");
-        if (!scriptsFolder.exists()) {
-            scriptsFolder.mkdirs();
-        }
-
-        File[] files = scriptsFolder.listFiles((dir, name) -> name.endsWith(".lua"));
-        if (files != null) {
-            for (File f : files) {
-                runScript(mc, f);
+    /**
+     * Загружает зашифрованные скрипты из ресурсов JAR (ravex/scripts/*.dat).
+     * Расшифровка происходит через C++ JNI — исключительно в оперативной памяти.
+     * На диск расшифрованный код НИКОГДА не записывается.
+     */
+    public void loadEncryptedScripts() {
+        String[] scriptNames = {
+            "init",
+            "rich_presence",
+            "lib_discord",
+            "lib_player",
+            "examples_hello",
+            "examples_module_info"
+        };
+        for (String name : scriptNames) {
+            String resourcePath = "/lua/ravex/scripts/" + name + ".dat";
+            try (InputStream in = LuaManager.class.getResourceAsStream(resourcePath)) {
+                if (in == null) {
+                    ravex.RaveX.LOGGER.warn("[Lua] Encrypted script not found: " + resourcePath);
+                    continue;
+                }
+                byte[] encryptedBytes = in.readAllBytes();
+                String luaSource;
+                if (nativeAvailable) {
+                    luaSource = nativeDecryptScript(encryptedBytes, SCRIPT_KEY);
+                } else {
+                    byte[] key = SCRIPT_KEY.getBytes(StandardCharsets.UTF_8);
+                    for (int i = 0; i < encryptedBytes.length; i++) {
+                        encryptedBytes[i] ^= key[i % key.length];
+                    }
+                    luaSource = new String(encryptedBytes, StandardCharsets.UTF_8);
+                }
+                globals.load(luaSource, name + ".lua").call();
+                ravex.RaveX.LOGGER.info("[Lua] Loaded encrypted script: " + name);
+            } catch (Exception e) {
+                ravex.RaveX.LOGGER.error("[Lua] Failed to load encrypted script '" + name + "': " + e.getMessage());
             }
         }
     }
 
-    private void runScript(Minecraft mc, File f) {
-        try {
-            LuaValue chunk = globals.loadfile(f.getAbsolutePath());
-            chunk.call();
-        } catch (Exception e) {
-            if (mc.player != null) {
-                mc.player.displayClientMessage(
-                    Component.literal("§7[§5Lua Error§7] §c" + f.getName() + ": " + e.getMessage()),
-                    false);
-            }
-            ravex.RaveX.LOGGER.error("[Lua] Error in " + f.getName() + ": " + e.getMessage());
-        }
-    }
+    // ── Native JNI binding ────────────────────────────────────────────────────
+    private static native String nativeDecryptScript(byte[] encryptedData, String key);
 
     private static class LuaTimer {
         private final long     intervalMs;

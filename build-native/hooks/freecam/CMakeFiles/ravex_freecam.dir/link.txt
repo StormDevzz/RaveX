@@ -1,0 +1,2 @@
+/usr/bin/ar qc libravex_freecam.a CMakeFiles/ravex_freecam.dir/freecam.cpp.o CMakeFiles/ravex_freecam.dir/camera_correction.cpp.o
+/usr/bin/ranlib libravex_freecam.a

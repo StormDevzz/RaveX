@@ -1,0 +1,2 @@
+/usr/bin/ar qc libravex_math.a CMakeFiles/ravex_math.dir/wave_math.cpp.o
+/usr/bin/ranlib libravex_math.a

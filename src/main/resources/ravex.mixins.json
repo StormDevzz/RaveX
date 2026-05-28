@@ -21,6 +21,7 @@
         "render.MixinDeltaTrackerTimer",
         "render.MixinLivingEntityRenderer",
         "render.MixinItemInHandRenderer",
+        "render.MixinPerspectiveProjectionMatrixBuffer",
         "render.MixinModel",
         "render.MixinEndCrystalRenderer",
         "render.MixinFogRenderer",
@@ -39,6 +40,7 @@
         "movement.MixinGuiWalk",
         "movement.MixinNoSlowDown",
         "movement.MixinVelocity",
+        "movement.MixinLocalPlayer",
         "player.MixinNoInteract",
         "world.MixinBlock"
     ],

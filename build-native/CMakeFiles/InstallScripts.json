@@ -1,0 +1,14 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/abrakadam/VoltHack/build-native/cmake_install.cmake",
+		"/home/abrakadam/VoltHack/build-native/common/cmake_install.cmake",
+		"/home/abrakadam/VoltHack/build-native/hooks/antiafk/cmake_install.cmake",
+		"/home/abrakadam/VoltHack/build-native/math/cmake_install.cmake",
+		"/home/abrakadam/VoltHack/build-native/hooks/shaders/cmake_install.cmake",
+		"/home/abrakadam/VoltHack/build-native/hooks/freecam/cmake_install.cmake",
+		"/home/abrakadam/VoltHack/build-native/loader/cmake_install.cmake",
+		"/home/abrakadam/VoltHack/build-native/jni/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

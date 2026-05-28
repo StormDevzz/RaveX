@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/script_enc.dir/link.d CMakeFiles/script_enc.dir/main.cpp.o -o script_enc  -lstdc++fs
