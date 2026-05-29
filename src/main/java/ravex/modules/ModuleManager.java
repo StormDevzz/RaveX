@@ -27,6 +27,9 @@ import ravex.modules.render.NameTags;
 import ravex.modules.render.NoBob;
 import ravex.modules.render.Notifications;
 import ravex.modules.render.Shaders;
+import ravex.modules.render.Glint;
+import ravex.modules.render.Sounds;
+import ravex.modules.render.ViewClip;
 import ravex.modules.world.BoneMeal;
 import ravex.modules.world.Scaffold;
 
@@ -58,6 +61,9 @@ public class ModuleManager {
         clickGuiModules.add(Shaders.INSTANCE);
         clickGuiModules.add(FreeLook.INSTANCE);
         clickGuiModules.add(FreeCam.INSTANCE);
+        clickGuiModules.add(ViewClip.INSTANCE);
+        clickGuiModules.add(Glint.INSTANCE);
+        clickGuiModules.add(Sounds.INSTANCE);
 
         // ── Player ──────────────────────────────────────────────────────────────
         clickGuiModules.add(AutoTool.INSTANCE);
@@ -70,12 +76,16 @@ public class ModuleManager {
         clickGuiModules.add(GuiWalk.INSTANCE);
         clickGuiModules.add(NoSlowDown.INSTANCE);
         clickGuiModules.add(Velocity.INSTANCE);
+        clickGuiModules.add(ravex.modules.movement.Step.INSTANCE);
+        clickGuiModules.add(ravex.modules.movement.ReverseStep.INSTANCE);
 
         // ── Misc ─────────────────────────────────────────────────────────────────
         clickGuiModules.add(AntiAfk.INSTANCE);
         clickGuiModules.add(VisualRange.INSTANCE);
         clickGuiModules.add(Optimizer.INSTANCE);
         clickGuiModules.add(AutoEat.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.Spammer.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.Commands.INSTANCE);
 
         // ── World ────────────────────────────────────────────────────────────────
         clickGuiModules.add(BoneMeal.INSTANCE);

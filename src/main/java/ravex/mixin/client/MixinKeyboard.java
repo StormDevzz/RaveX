@@ -15,24 +15,6 @@ import ravex.modules.ModuleManager;
 public class MixinKeyboard {
     @Inject(method = "keyPress", at = @At("HEAD"))
     private void onKeyPress(long window, int key, KeyEvent event, CallbackInfo ci) {
-        if (event.input() == 1) { // 1 = GLFW_PRESS
-            // Check global modules keybinds!
-            for (Module m : ModuleManager.INSTANCE.getModules()) {
-                if (m.getKeyBind() != GLFW.GLFW_KEY_UNKNOWN && m.getKeyBind() == event.key()) {
-                    m.toggle();
-                }
-            }
-
-            if (event.key() == GLFW.GLFW_KEY_RIGHT_SHIFT) {
-                Minecraft mc = Minecraft.getInstance();
-                if (mc.player != null) {
-                    if (mc.screen == null) {
-                        mc.setScreen(new ravex.gui.clickgui.ClickGUI());
-                    } else if (mc.screen instanceof ravex.gui.clickgui.ClickGUI) {
-                        mc.setScreen(null);
-                    }
-                }
-            }
-        }
+        // Handled in RaveX.onClientTick for maximum reliability in-game!
     }
 }

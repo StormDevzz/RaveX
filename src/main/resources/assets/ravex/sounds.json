@@ -2,25 +2,43 @@
   "enable": {
     "category": "master",
     "sounds": [
-      "ravex:enable"
+      "enable"
     ]
   },
   "disable": {
     "category": "master",
     "sounds": [
-      "ravex:disable"
+      "disable"
     ]
   },
   "settings_open": {
     "category": "master",
     "sounds": [
-      "ravex:settings_open"
+      "settings_open"
     ]
   },
   "settings_close": {
     "category": "master",
     "sounds": [
-      "ravex:settings_close"
+      "settings_close"
+    ]
+  },
+  "gui_open": {
+    "category": "master",
+    "sounds": [
+      "gui_open"
+    ]
+  },
+  "gui_close": {
+    "category": "master",
+    "sounds": [
+      "gui_close"
+    ]
+  },
+  "failure": {
+    "category": "master",
+    "sounds": [
+      "settings_close"
     ]
   }
 }

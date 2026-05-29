@@ -45,8 +45,8 @@ public class FreeLook extends Module {
 
     public void turn(double yRot, double xRot) {
         // Direct, crisp looking controls matching vanilla mouse handler feeling exactly
-        lookYaw += (float) (yRot * 0.15D);
-        lookPitch += (float) (xRot * 0.15D);
+        lookYaw += (float) yRot;
+        lookPitch += (float) xRot;
         
         // Clamp pitch to avoid turning upside down
         lookPitch = Math.max(-90.0f, Math.min(90.0f, lookPitch));

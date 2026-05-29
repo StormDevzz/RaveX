@@ -84,9 +84,9 @@ public class FreeCam extends Module {
             }
         }
 
-        // Java Fallback (vanilla sensitivity behavior scaled by 0.15)
-        this.yaw += (float) (yRot * 0.15D);
-        this.pitch += (float) (xRot * 0.15D);
+        // Java Fallback (vanilla sensitivity behavior)
+        this.yaw += (float) yRot;
+        this.pitch += (float) xRot;
         this.pitch = Math.max(-90.0f, Math.min(90.0f, this.pitch));
     }
 
@@ -107,7 +107,7 @@ public class FreeCam extends Module {
 
         if (nativeAvailable) {
             try {
-                nativeUpdatePosition(keyUp, keyDown, keyLeft, keyRight, keyJump, keyShift, moveSpeed, smoothVal);
+                nativeUpdatePosition(keyUp, keyDown, keyRight, keyLeft, keyJump, keyShift, moveSpeed, smoothVal);
                 syncFromNative();
                 mc.player.setDeltaMovement(0, 0, 0);
                 return;
@@ -140,12 +140,12 @@ public class FreeCam extends Module {
             dz -= cosYaw * moveSpeed;
         }
         if (keyLeft) {
-            dx -= cosYaw * moveSpeed;
-            dz -= sinYaw * moveSpeed;
-        }
-        if (keyRight) {
             dx += cosYaw * moveSpeed;
             dz += sinYaw * moveSpeed;
+        }
+        if (keyRight) {
+            dx -= cosYaw * moveSpeed;
+            dz -= sinYaw * moveSpeed;
         }
         if (keyJump) {
             dy += moveSpeed;

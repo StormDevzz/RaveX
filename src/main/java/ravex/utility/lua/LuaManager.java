@@ -262,6 +262,16 @@ public class LuaManager {
             }
         });
 
+        lib.set("sendChat", new OneArgFunction() {
+            @Override public LuaValue call(LuaValue arg) {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null && mc.player.connection != null) {
+                    mc.player.connection.sendChat(arg.checkjstring());
+                }
+                return LuaValue.NIL;
+            }
+        });
+
         globals.set("player", lib);
     }
 
@@ -513,7 +523,8 @@ public class LuaManager {
             "lib_discord",
             "lib_player",
             "examples_hello",
-            "examples_module_info"
+            "examples_module_info",
+            "spammer"
         };
         for (String name : scriptNames) {
             String resourcePath = "/lua/ravex/scripts/" + name + ".dat";

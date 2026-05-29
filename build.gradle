@@ -6,7 +6,20 @@ base {
     archivesName = property("archives_name")
 }
 
-version = property("mod_version")
+def getGitHash = { ->
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+            standardOutput = stdout
+        }
+        return stdout.toString().trim()
+    } catch (Exception e) {
+        return "dev"
+    }
+}
+
+version = "${property("mod_version")}-build.${getGitHash()}"
 group = property("maven_group")
 
 repositories {
@@ -59,10 +72,20 @@ task runLoader(type: JavaExec) {
     workingDir = rootProject.projectDir
 }
 
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+            'Main-Class': 'ravex.loader.RaveXLoader'
+        )
+    }
+}
+
 def mcVersion = property("minecraft_version")
 def loaderVersion = property("loader_version")
 
 processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     inputs.properties([
         "version"          : version,
         "minecraft_version": mcVersion,
@@ -75,5 +98,14 @@ processResources {
             "minecraft_version": mcVersion,
             "loader_version"   : loaderVersion
         ])
+    }
+
+    // Force copying resources to classes directory to bypass Fabric Loader classpath issues in dev!
+    doLast {
+        copy {
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            from "src/main/resources"
+            into "${layout.buildDirectory.get().asFile}/classes/java/main"
+        }
     }
 }

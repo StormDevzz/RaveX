@@ -152,7 +152,12 @@ void SystemChecks::readTopProcesses(std::vector<ProcessInfo>& out) {
         while (std::getline(sf, line)) {
             if (line.find("Name:") == 0) {
                 pi.name = line.substr(5);
-                pi.name.erase(0, pi.name.find_first_not_of(" \t"));
+                size_t pos = pi.name.find_first_not_of(" \t");
+                if (pos != std::string::npos) {
+                    pi.name.erase(0, pos);
+                } else {
+                    pi.name.clear();
+                }
             } else if (line.find("VmRSS:") == 0) {
                 unsigned long kb;
                 if (sscanf(line.c_str(), "VmRSS: %lu kB", &kb) == 1) {

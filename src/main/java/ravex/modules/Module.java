@@ -30,11 +30,21 @@ public abstract class Module {
         return ravex.descriptions.ClickGuiDescriptions.getDescription(name);
     }
 
+    private ravex.parameter.ModuleCondition enableCondition = () -> true;
+
     public boolean getEnabled() {
         return enabled;
     }
 
+    public void setEnableCondition(ravex.parameter.ModuleCondition condition) {
+        this.enableCondition = condition;
+    }
+
     public void setEnabled(boolean enabled) {
+        if (enabled && !enableCondition.canEnable()) {
+            SoundUtility.playFailure();
+            return;
+        }
         if (this.enabled != enabled) {
             this.enabled = enabled;
             if (enabled) {

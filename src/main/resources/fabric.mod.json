@@ -13,7 +13,8 @@
     "environment": "client",
     "entrypoints": {
         "main": ["ravex.RaveXCommon"],
-        "client": ["ravex.RaveX"]
+        "client": ["ravex.RaveX"],
+        "preLaunch": ["ravex.RaveXPreLaunch"]
     },
     "mixins": ["ravex.mixins.json"],
     "accessWidener": "ravex.accesswidener",

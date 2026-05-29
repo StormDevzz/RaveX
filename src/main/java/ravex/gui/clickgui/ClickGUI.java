@@ -43,6 +43,7 @@ public class ClickGUI extends Screen {
         for (int i = 0; i < categories.length; i++) {
             panels.add(new CategoryPanel(categories[i], startX + i * (100 + spacing), startY));
         }
+        ravex.utility.sound.SoundUtility.playGuiOpen();
     }
 
     @Override
@@ -275,6 +276,8 @@ public class ClickGUI extends Screen {
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
+            ravex.utility.sound.SoundUtility.playGuiClose();
+            ravex.manager.ConfigManager.INSTANCE.save("default");
         }
     }
 }

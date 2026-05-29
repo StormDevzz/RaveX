@@ -1,0 +1,25 @@
+package ravex.modules.render;
+
+import ravex.modules.Category;
+import ravex.modules.Module;
+import ravex.parameter.BooleanParameter;
+import ravex.parameter.ColorParameter;
+
+/**
+ * Glint Module
+ * Allows customizing the enchantment glint color for items and armor separately.
+ */
+public class Glint extends Module {
+    public static final Glint INSTANCE = new Glint();
+
+    public final BooleanParameter items = new BooleanParameter("Items", true);
+    public final BooleanParameter armor = new BooleanParameter("Armor", true);
+    public final ColorParameter color = new ColorParameter("Color", 0xFFFF00FF); // Default beautiful purple
+
+    private Glint() {
+        super("Glint", Category.RENDER);
+        addParameter(items);
+        addParameter(armor);
+        addParameter(color);
+    }
+}

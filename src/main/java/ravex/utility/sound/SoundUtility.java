@@ -16,11 +16,17 @@ public class SoundUtility {
     private static final Identifier DISABLE_ID        = id("disable");
     private static final Identifier SETTINGS_OPEN_ID  = id("settings_open");
     private static final Identifier SETTINGS_CLOSE_ID = id("settings_close");
+    private static final Identifier GUI_OPEN_ID       = id("gui_open");
+    private static final Identifier GUI_CLOSE_ID      = id("gui_close");
+    private static final Identifier FAILURE_ID        = id("failure");
 
     public static SoundEvent ENABLE;
     public static SoundEvent DISABLE;
     public static SoundEvent SETTINGS_OPEN;
     public static SoundEvent SETTINGS_CLOSE;
+    public static SoundEvent GUI_OPEN;
+    public static SoundEvent GUI_CLOSE;
+    public static SoundEvent FAILURE;
 
     private static Identifier id(String name) {
         return Identifier.fromNamespaceAndPath("ravex", name);
@@ -42,6 +48,9 @@ public class SoundUtility {
             DISABLE       = Registry.register(BuiltInRegistries.SOUND_EVENT, DISABLE_ID,       SoundEvent.createVariableRangeEvent(DISABLE_ID));
             SETTINGS_OPEN = Registry.register(BuiltInRegistries.SOUND_EVENT, SETTINGS_OPEN_ID, SoundEvent.createVariableRangeEvent(SETTINGS_OPEN_ID));
             SETTINGS_CLOSE= Registry.register(BuiltInRegistries.SOUND_EVENT, SETTINGS_CLOSE_ID,SoundEvent.createVariableRangeEvent(SETTINGS_CLOSE_ID));
+            GUI_OPEN      = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_OPEN_ID,      SoundEvent.createVariableRangeEvent(GUI_OPEN_ID));
+            GUI_CLOSE     = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_CLOSE_ID,     SoundEvent.createVariableRangeEvent(GUI_CLOSE_ID));
+            FAILURE       = Registry.register(BuiltInRegistries.SOUND_EVENT, FAILURE_ID,       SoundEvent.createVariableRangeEvent(FAILURE_ID));
 
             ravex.RaveX.LOGGER.info("[RaveX] SoundUtility: Sound events registered successfully.");
         } catch (Exception e) {
@@ -61,60 +70,81 @@ public class SoundUtility {
      *  Returns true if the registry WAS frozen (and was unfrozen). */
     @SuppressWarnings("unchecked")
     private static boolean unfreezeIfNeeded(Registry<?> registry) {
+        boolean unfrozen = false;
         try {
-            java.lang.reflect.Field frozenField = null;
             for (Class<?> c = registry.getClass(); c != null; c = c.getSuperclass()) {
-                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
-                    if (f.getName().equals("frozen") && f.getType() == boolean.class) {
-                        frozenField = f;
-                        break;
+                if (c.getName().contains("MappedRegistry") || c.getName().contains("class_2370")) {
+                    for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                        if (f.getType() == boolean.class) {
+                            f.setAccessible(true);
+                            if ((boolean) f.get(registry)) {
+                                f.set(registry, false);
+                                ravex.RaveX.LOGGER.warn("[RaveX] SoundUtility: Unfroze MappedRegistry field: " + f.getName());
+                                unfrozen = true;
+                            }
+                        }
                     }
-                }
-                if (frozenField != null) break;
-            }
-            if (frozenField != null) {
-                frozenField.setAccessible(true);
-                if ((boolean) frozenField.get(registry)) {
-                    frozenField.set(registry, false);
-                    ravex.RaveX.LOGGER.warn("[RaveX] SoundUtility: Unfroze SOUND_EVENT registry for registration.");
-                    return true;  // was frozen
                 }
             }
         } catch (Exception e) {
             ravex.RaveX.LOGGER.warn("[RaveX] SoundUtility: Could not unfreeze registry: " + e.getMessage());
         }
-        return false;  // was not frozen
+        return unfrozen;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Playback helpers
     // ─────────────────────────────────────────────────────────────────────────
 
-    public static void playEnable()        { play(ENABLE_ID,         1.0f); }
-    public static void playDisable()       { play(DISABLE_ID,        1.0f); }
-    public static void playSettingsOpen()  { play(SETTINGS_OPEN_ID,  0.8f); }
-    public static void playSettingsClose() { play(SETTINGS_CLOSE_ID, 0.8f); }
+    public static void playEnable()        { play(ENABLE,         1.0f); }
+    public static void playDisable()       { play(DISABLE,        1.0f); }
+    public static void playSettingsOpen()  { play(SETTINGS_OPEN,  0.8f); }
+    public static void playSettingsClose() { play(SETTINGS_CLOSE, 0.8f); }
+    public static void playGuiOpen()       { play(GUI_OPEN,       1.0f); }
+    public static void playGuiClose()      { play(GUI_CLOSE,      1.0f); }
+    public static void playFailure()       { play(FAILURE,        1.2f); }
 
-    private static void play(Identifier loc, float volume) {
+    private static void play(SoundEvent soundEvent, float volume) {
+        ravex.RaveX.LOGGER.info("[DEBUG-Sound] Attempting to play sound event: " + (soundEvent != null ? soundEvent.location() : "null") + " with base volume: " + volume);
+        if (soundEvent == null) {
+            ravex.RaveX.LOGGER.warn("[DEBUG-Sound] Play failed: soundEvent is null!");
+            return;
+        }
         try {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc == null || mc.getSoundManager() == null) return;
+            // 1. Check if Sounds module is active
+            if (ravex.modules.render.Sounds.INSTANCE != null && !ravex.modules.render.Sounds.INSTANCE.getEnabled()) {
+                ravex.RaveX.LOGGER.info("[DEBUG-Sound] Play cancelled: Sounds module is disabled.");
+                return;
+            }
 
-            SimpleSoundInstance sound = new SimpleSoundInstance(
-                loc,
-                SoundSource.MASTER,
-                volume,
-                1.0f,
-                RandomSource.create(),
-                false,
-                0,
-                SoundInstance.Attenuation.NONE,
-                0.0, 0.0, 0.0,
-                true
-            );
+            // 2. Retrieve and apply volume multiplier from Sounds module
+            float multiplier = 1.0f;
+            if (ravex.modules.render.Sounds.INSTANCE != null) {
+                multiplier = ravex.modules.render.Sounds.INSTANCE.volume.getValue().floatValue();
+            }
+            float finalVolume = volume * multiplier;
+            ravex.RaveX.LOGGER.info("[DEBUG-Sound] Applied volume multiplier: " + multiplier + " -> final volume: " + finalVolume);
+            if (finalVolume <= 0.0f) {
+                ravex.RaveX.LOGGER.info("[DEBUG-Sound] Play cancelled: final volume is <= 0.");
+                return;
+            }
+
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null) {
+                ravex.RaveX.LOGGER.warn("[DEBUG-Sound] Play failed: Minecraft instance is null!");
+                return;
+            }
+            if (mc.getSoundManager() == null) {
+                ravex.RaveX.LOGGER.warn("[DEBUG-Sound] Play failed: SoundManager is null!");
+                return;
+            }
+
+            SimpleSoundInstance sound = SimpleSoundInstance.forUI(soundEvent, 1.0f, finalVolume);
+            ravex.RaveX.LOGGER.info("[DEBUG-Sound] Created SimpleSoundInstance for sound event: " + soundEvent.location());
             mc.getSoundManager().play(sound);
+            ravex.RaveX.LOGGER.info("[DEBUG-Sound] Sound successfully dispatched to Minecraft SoundManager.");
         } catch (Exception e) {
-            ravex.RaveX.LOGGER.warn("[RaveX] Sound play error: " + e.getMessage());
+            ravex.RaveX.LOGGER.error("[DEBUG-Sound] Exception caught while playing sound: " + e.getMessage(), e);
         }
     }
 }
