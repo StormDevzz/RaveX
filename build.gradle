@@ -80,7 +80,6 @@ jar {
         )
     }
 }
-
 def mcVersion = property("minecraft_version")
 def loaderVersion = property("loader_version")
 

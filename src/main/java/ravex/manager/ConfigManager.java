@@ -16,10 +16,19 @@ import java.util.List;
 
 public class ConfigManager {
     public static final ConfigManager INSTANCE = new ConfigManager();
-    private final File configDir = new File("ravex/configs");
+    private final File configDir;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     private ConfigManager() {
+        File baseDir = null;
+        try {
+            baseDir = net.minecraft.client.Minecraft.getInstance().gameDirectory;
+        } catch (Throwable ignored) {}
+        
+        if (baseDir == null) {
+            baseDir = new File(".");
+        }
+        configDir = new File(baseDir, "ravex/configs");
         if (!configDir.exists()) {
             configDir.mkdirs();
         }

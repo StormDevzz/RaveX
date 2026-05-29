@@ -63,7 +63,7 @@ public class MixinTitleScreen {
             ravexSplashText = "RaveX Client!";
         }
 
-        // Try to fetch dynamic online splashes from GitHub using our network utility
+        // Try to fetch online splashes
         ravex.utility.network.Github.fetchRawContent("StormDevzz", "RaveX", "main", "splashes.txt")
                 .thenAccept(content -> {
                     if (content != null && !content.isBlank()) {
@@ -78,12 +78,9 @@ public class MixinTitleScreen {
                         }
                     }
                 })
-                .exceptionally(ex -> {
-                    // Silently fail if offline or unavailable, fallback remains active
-                    return null;
-                });
+                .exceptionally(ex -> null);
 
-        // Hide vanilla splash to let us draw our custom glowing red splash
+        // Hide vanilla splash
         this.splash = null;
     }
 
@@ -94,54 +91,42 @@ public class MixinTitleScreen {
         if (font == null)
             return;
 
-        // Screen dimensions
         int width = mc.getWindow().getGuiScaledWidth();
         int height = mc.getWindow().getGuiScaledHeight();
 
-        // ─────────────────────────────────────────────────────────────────────────
-        // Premium Custom Red Bouncing Splash Text with Dynamic Sway & Color Wave
-        // ─────────────────────────────────────────────────────────────────────────
         if (ravexSplashText != null && !ravexSplashText.isEmpty()) {
             long millis = System.currentTimeMillis();
 
-            // 1. Smooth, premium breathing scale pulse (no high frequency jitter!)
-            float basePulse = (float) Math.sin((double) (millis % 1500L) / 1500.0 * Math.PI * 2.0); // elegant 1.5s wave
-            float scale = 1.8F - Math.abs(basePulse * 0.15F); // subtle scale pulse
+            float basePulse = (float) Math.sin((double) (millis % 1500L) / 1500.0 * Math.PI * 2.0);
+            float scale = 1.8F - Math.abs(basePulse * 0.15F);
             scale = scale * 100.0F / (float) (font.width(ravexSplashText) + 32);
 
-            // 2. Slow, breathing crimson-to-rose color shift (3.5 second cycle)
             double wave = Math.sin((double) (millis % 3500L) / 3500.0 * Math.PI * 2.0);
-            int r = (int) (225 + wave * 30); // 195 to 255
-            int g = (int) (40 + wave * 25);   // 15 to 65 (soft crimson-rose warmth)
-            int b = (int) (60 + wave * 30);   // 30 to 90 (elegant soft rose tone)
+            int r = (int) (225 + wave * 30);
+            int g = (int) (40 + wave * 25);
+            int b = (int) (60 + wave * 30);
             int activeRedColor = 0xFF000000 | (r << 16) | (g << 8) | b;
-            int shadowColor = 0xAA200505; // Dark red shadow for neon depth
+            int shadowColor = 0xAA200505;
 
-            // 3. Pose Transformations using 2D Matrix3x2fStack
             var pose = graphics.pose();
             pose.pushMatrix();
 
-            // Translate to splash position (Vanilla-aligned, no frantic jitter shaking)
             pose.translate((float) (width / 2 + 90), 70.0F);
 
-            // Gentle, slow sway/rotation over time (4.0 second cycle)
             float rotationAngle = -20.0F + (float) Math.sin((double) (millis % 4000L) / 4000.0 * Math.PI * 2.0) * 2.0F;
             pose.rotate((float) Math.toRadians(rotationAngle));
             pose.scale(scale, scale);
 
-            // Render drop shadow & glowing text
-            graphics.drawCenteredString(font, ravexSplashText, 1, -7, shadowColor); // 3D Shadow
-            graphics.drawCenteredString(font, ravexSplashText, 0, -8, activeRedColor); // Silky Smooth Red Splash
+            graphics.drawCenteredString(font, ravexSplashText, 1, -7, shadowColor);
+            graphics.drawCenteredString(font, ravexSplashText, 0, -8, activeRedColor);
 
             pose.popMatrix();
         }
 
-        // Top Left Info Panel
-        graphics.drawString(font, "RaveX Client", 8, 8, 0xFFE53935, true); // Red Brand Color
+        graphics.drawString(font, "RaveX Client", 8, 8, 0xFFE53935, true);
         graphics.drawString(font, "Logged in as: §f" + mc.getUser().getName(), 8, 20, 0xFF888888, true);
         graphics.drawString(font, "Build: §7" + ravex.RaveX.version, 8, 32, 0xFF888888, true);
 
-        // Bottom Right Custom Splash / Info
         String quoteLine1 = "§7\"The ultimate utility client\"";
         String quoteLine2 = "§fRaveX Client | Premium Edition";
 
