@@ -15,9 +15,12 @@ import net.minecraft.world.phys.Vec3;
 
 public class AirPlace extends Module {
     public static final AirPlace INSTANCE = new AirPlace();
-
-    // Compatibility field for Lua scripts to override/set the highlight position
-    public static Vec3 luaHighlightPos = null;
+    
+    // Static animation states for MixinLevelRenderer to query
+    public static Vec3 highlightPos = null;
+    public static float renderAlpha = 0.0f;
+    public static double renderSize = 0.0;
+    public static double renderYOffset = 0.0;
 
     // Render configuration parameter
     public final BooleanParameter render = new BooleanParameter("Render", true);
@@ -37,7 +40,10 @@ public class AirPlace extends Module {
 
     @Override
     protected void onEnable() {
-        luaHighlightPos = null;
+        highlightPos = null;
+        renderAlpha = 0.0f;
+        renderSize = 0.0;
+        renderYOffset = 0.0;
         slideAnim.reset();
         fadeAnim.reset();
         sizeAnim.reset();
@@ -46,13 +52,14 @@ public class AirPlace extends Module {
 
     @Override
     protected void onDisable() {
-        luaHighlightPos = null;
+        highlightPos = null;
     }
 
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
+            highlightPos = null;
             return;
         }
 
@@ -65,8 +72,11 @@ public class AirPlace extends Module {
 
         if (hand == null) {
             // Smoothly fade out when not holding blocks
-            fadeAnim.update(false, 0.15f);
-            sizeAnim.update(false, 0.15f);
+            renderAlpha = fadeAnim.update(false, 0.15f);
+            renderSize = sizeAnim.update(false, 0.15f);
+            if (renderAlpha <= 0.01f) {
+                highlightPos = null;
+            }
             return;
         }
 
@@ -85,13 +95,15 @@ public class AirPlace extends Module {
 
         // 3. Update animations smoothly
         if (render.getValue()) {
-            fadeAnim.update(true, 0.15f);
-            sizeAnim.update(true, 0.15f);
-            double renderYOffset = bounceAnim.update(0.05, 0.04);
-            slideAnim.update(targetPos.getX(), targetPos.getY() + renderYOffset, targetPos.getZ(), 0.25);
+            renderAlpha = fadeAnim.update(true, 0.15f);
+            renderSize = sizeAnim.update(true, 0.15f);
+            renderYOffset = bounceAnim.update(0.05, 0.04);
+            highlightPos = slideAnim.update(targetPos.getX(), targetPos.getY() + renderYOffset, targetPos.getZ(), 0.25);
         } else {
-            fadeAnim.update(false, 0.15f);
-            sizeAnim.update(false, 0.15f);
+            // Instantly hide
+            highlightPos = null;
+            renderAlpha = 0.0f;
+            renderSize = 0.0;
         }
 
         // 4. Place blocks if right-click key is pressed down, with a 200ms safe interval
@@ -107,21 +119,5 @@ public class AirPlace extends Module {
                 lastPlaceTime = now;
             }
         }
-    }
-
-    // ── Getters for interpolated render properties ──────────────────────
-    public float getRenderAlpha(float partialTicks) {
-        return fadeAnim.getAlpha(partialTicks);
-    }
-
-    public double getRenderSize(float partialTicks) {
-        return sizeAnim.getSize(partialTicks);
-    }
-
-    public Vec3 getHighlightPos(float partialTicks) {
-        if (luaHighlightPos != null) {
-            return luaHighlightPos;
-        }
-        return slideAnim.getPos(partialTicks);
     }
 }

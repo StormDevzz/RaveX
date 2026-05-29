@@ -53,12 +53,6 @@ loom {
     }
 }
 
-task runLoader(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'ravex.loader.RaveXLoader'
-    workingDir = rootProject.projectDir
-}
-
 def mcVersion = property("minecraft_version")
 def loaderVersion = property("loader_version")
 
