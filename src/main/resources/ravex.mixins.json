@@ -42,7 +42,6 @@
         "movement.MixinGuiWalk",
         "movement.MixinNoSlowDown",
         "movement.MixinVelocity",
-        "movement.MixinLocalPlayer",
         "player.MixinNoInteract",
         "world.MixinBlock"
     ],

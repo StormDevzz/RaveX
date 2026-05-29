@@ -5,20 +5,14 @@ add_library(ravex_jni SHARED
 target_link_libraries(ravex_jni PRIVATE
     ravex_common
     ravex_antiafk
-    ravex_math
-    ravex_shaders
-    ravex_freecam
     ${JNI_LIBRARIES}
 )
 
 target_include_directories(ravex_jni PRIVATE
     ${JNI_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/common
-    ${CMAKE_SOURCE_DIR}/hooks/antiafk
-    ${CMAKE_SOURCE_DIR}/hooks/optimizer
-    ${CMAKE_SOURCE_DIR}/math
-    ${CMAKE_SOURCE_DIR}/hooks/shaders
-    ${CMAKE_SOURCE_DIR}/hooks/freecam
+    ${CMAKE_SOURCE_DIR}/antiafk
+    ${CMAKE_SOURCE_DIR}/optimizer
 )
 
 if(WIN32)

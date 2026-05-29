@@ -2,18 +2,15 @@ package ravex.utility.sound;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 
 public class SoundUtility {
 
-    private static final Identifier ENABLE_ID         = id("enable");
-    private static final Identifier DISABLE_ID        = id("disable");
+    private static final Identifier ENABLE_ID        = id("enable");
+    private static final Identifier DISABLE_ID       = id("disable");
     private static final Identifier SETTINGS_OPEN_ID  = id("settings_open");
     private static final Identifier SETTINGS_CLOSE_ID = id("settings_close");
     private static final Identifier GUI_OPEN_ID       = id("gui_open");
@@ -32,32 +29,23 @@ public class SoundUtility {
         return Identifier.fromNamespaceAndPath("ravex", name);
     }
 
-    /**
-     * Register custom sound events.
-     * Called from RaveXCommon.onInitialize() — which runs before Minecraft's
-     * Bootstrap freezes BuiltInRegistries.  If somehow the registry is already
-     * frozen (e.g. in a dev-run ordering quirk) we unfreeze it temporarily
-     * via reflection so the sounds always get registered.
-     */
     public static void register() {
         boolean wasUnfrozen = false;
         try {
             wasUnfrozen = unfreezeIfNeeded(BuiltInRegistries.SOUND_EVENT);
 
-            ENABLE        = Registry.register(BuiltInRegistries.SOUND_EVENT, ENABLE_ID,        SoundEvent.createVariableRangeEvent(ENABLE_ID));
-            DISABLE       = Registry.register(BuiltInRegistries.SOUND_EVENT, DISABLE_ID,       SoundEvent.createVariableRangeEvent(DISABLE_ID));
+            ENABLE = Registry.register(BuiltInRegistries.SOUND_EVENT, ENABLE_ID, SoundEvent.createVariableRangeEvent(ENABLE_ID));
+            DISABLE = Registry.register(BuiltInRegistries.SOUND_EVENT, DISABLE_ID, SoundEvent.createVariableRangeEvent(DISABLE_ID));
             SETTINGS_OPEN = Registry.register(BuiltInRegistries.SOUND_EVENT, SETTINGS_OPEN_ID, SoundEvent.createVariableRangeEvent(SETTINGS_OPEN_ID));
-            SETTINGS_CLOSE= Registry.register(BuiltInRegistries.SOUND_EVENT, SETTINGS_CLOSE_ID,SoundEvent.createVariableRangeEvent(SETTINGS_CLOSE_ID));
+            SETTINGS_CLOSE = Registry.register(BuiltInRegistries.SOUND_EVENT, SETTINGS_CLOSE_ID, SoundEvent.createVariableRangeEvent(SETTINGS_CLOSE_ID));
             GUI_OPEN      = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_OPEN_ID,      SoundEvent.createVariableRangeEvent(GUI_OPEN_ID));
             GUI_CLOSE     = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_CLOSE_ID,     SoundEvent.createVariableRangeEvent(GUI_CLOSE_ID));
             FAILURE       = Registry.register(BuiltInRegistries.SOUND_EVENT, FAILURE_ID,       SoundEvent.createVariableRangeEvent(FAILURE_ID));
 
-            ravex.RaveX.LOGGER.info("[RaveX] SoundUtility: Sound events registered successfully.");
+            ravex.RaveX.LOGGER.info("[RaveX] SoundUtility: Custom sound events successfully registered!");
         } catch (Exception e) {
-            ravex.RaveX.LOGGER.error("[RaveX] SoundUtility: Failed to register sound events: " + e.getMessage());
+            ravex.RaveX.LOGGER.error("[RaveX] SoundUtility: Failed to register custom sound events: " + e.getMessage());
         } finally {
-            // IMPORTANT: always re-freeze the registry after we're done —
-            // otherwise Minecraft's tag system crashes with 'Tags already present before freezing'.
             if (wasUnfrozen) {
                 try {
                     BuiltInRegistries.SOUND_EVENT.freeze();
@@ -70,26 +58,29 @@ public class SoundUtility {
      *  Returns true if the registry WAS frozen (and was unfrozen). */
     @SuppressWarnings("unchecked")
     private static boolean unfreezeIfNeeded(Registry<?> registry) {
-        boolean unfrozen = false;
         try {
+            java.lang.reflect.Field frozenField = null;
             for (Class<?> c = registry.getClass(); c != null; c = c.getSuperclass()) {
-                if (c.getName().contains("MappedRegistry") || c.getName().contains("class_2370")) {
-                    for (java.lang.reflect.Field f : c.getDeclaredFields()) {
-                        if (f.getType() == boolean.class) {
-                            f.setAccessible(true);
-                            if ((boolean) f.get(registry)) {
-                                f.set(registry, false);
-                                ravex.RaveX.LOGGER.warn("[RaveX] SoundUtility: Unfroze MappedRegistry field: " + f.getName());
-                                unfrozen = true;
-                            }
-                        }
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    if (f.getName().equals("frozen") && f.getType() == boolean.class) {
+                        frozenField = f;
+                        break;
                     }
+                }
+                if (frozenField != null) break;
+            }
+            if (frozenField != null) {
+                frozenField.setAccessible(true);
+                if ((boolean) frozenField.get(registry)) {
+                    frozenField.set(registry, false);
+                    ravex.RaveX.LOGGER.warn("[RaveX] SoundUtility: Unfroze SOUND_EVENT registry for registration.");
+                    return true;
                 }
             }
         } catch (Exception e) {
             ravex.RaveX.LOGGER.warn("[RaveX] SoundUtility: Could not unfreeze registry: " + e.getMessage());
         }
-        return unfrozen;
+        return false;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -144,7 +135,7 @@ public class SoundUtility {
             mc.getSoundManager().play(sound);
             ravex.RaveX.LOGGER.info("[DEBUG-Sound] Sound successfully dispatched to Minecraft SoundManager.");
         } catch (Exception e) {
-            ravex.RaveX.LOGGER.error("[DEBUG-Sound] Exception caught while playing sound: " + e.getMessage(), e);
+            ravex.RaveX.LOGGER.warn("[RaveX] Sound play error: " + e.getMessage());
         }
     }
 }
