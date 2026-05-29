@@ -8,11 +8,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_package(JNI REQUIRED)
 
 add_subdirectory(common)
-# add_subdirectory(hooks/optimizer)
-add_subdirectory(hooks/antiafk)
-add_subdirectory(math)
-add_subdirectory(hooks/shaders)
-add_subdirectory(hooks/freecam)
-add_subdirectory(loader)
+add_subdirectory(optimizer)
+add_subdirectory(antiafk)
 add_subdirectory(jni)
-

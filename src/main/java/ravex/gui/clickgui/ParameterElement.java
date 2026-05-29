@@ -7,7 +7,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.parameter.DependencyParameter;
+
 
 public class ParameterElement {
     private final Parameter<?> parameter;
@@ -21,21 +21,12 @@ public class ParameterElement {
         return parameter;
     }
 
-    private Parameter<?> getActualParameter() {
-        Parameter<?> p = this.parameter;
-        while (p instanceof DependencyParameter<?,?> dp) {
-            p = dp.getDelegate();
-        }
-        return p;
-    }
-
     public int getHeight() {
         if (!parameter.isVisible()) return 0;
-        Parameter<?> actual = getActualParameter();
-        if (actual instanceof NumberParameter) {
+        if (parameter instanceof NumberParameter) {
             return 16;
         }
-        if (actual instanceof ColorParameter) {
+        if (parameter instanceof ColorParameter) {
             return 12;
         }
         return 12;
@@ -46,9 +37,8 @@ public class ParameterElement {
         graphics.fill(x, y, x + width, y + height, paramBg);
 
         int activeColor = ColorUtility.getActiveColor();
-        Parameter<?> actual = getActualParameter();
 
-        if (actual instanceof BooleanParameter bp) {
+        if (parameter instanceof BooleanParameter bp) {
             // Draw Parameter Label on the left
             graphics.drawString(font, bp.getName(), x + 6, y + 2, 0xFF9E9EB0, false);
 
@@ -64,7 +54,7 @@ public class ParameterElement {
             int knobX = bp.getValue() ? (swX + swW - 6) : (swX + 1);
             graphics.fill(knobX, swY + 1, knobX + 5, swY + swH - 1, 0xFFFFFFFF);
 
-        } else if (actual instanceof ModeParameter mp) {
+        } else if (parameter instanceof ModeParameter mp) {
             // Draw Parameter Label on the left
             graphics.drawString(font, mp.getName(), x + 6, y + 2, 0xFF9E9EB0, false);
 
@@ -73,7 +63,7 @@ public class ParameterElement {
             int mw = font.width(modeVal);
             graphics.drawString(font, modeVal, x + width - mw - 6, y + 2, activeColor, false);
 
-        } else if (actual instanceof NumberParameter np) {
+        } else if (parameter instanceof NumberParameter np) {
             // Slider toolbar layout
             double min = np.getMin();
             double max = np.getMax();
@@ -115,7 +105,7 @@ public class ParameterElement {
             // Draw sliding knob handle
             int knobX = slX + fillW - 2;
             graphics.fill(knobX, slY - 2, knobX + 4, slY + slH + 2, 0xFFFFFFFF);
-        } else if (actual instanceof ColorParameter cp) {
+        } else if (parameter instanceof ColorParameter cp) {
             // Label
             graphics.drawString(font, cp.getName(), x + 6, y + 2, 0xFF9E9EB0, false);
             // Colour chip on the right
@@ -135,7 +125,7 @@ public class ParameterElement {
             graphics.fill(chipX + 8, chipY - 1, chipX + 9, chipY + 9, border);
         } else {
             // Fallback for general parameters
-            String text = actual.getName() + ": " + actual.getValue();
+            String text = parameter.getName() + ": " + parameter.getValue();
             if (text.length() > 18) {
                 text = text.substring(0, 16) + "..";
             }
@@ -146,23 +136,22 @@ public class ParameterElement {
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int y, int width, int height) {
         if (!parameter.isVisible()) return false;
         
-        Parameter<?> actual = getActualParameter();
         if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
-            if (actual instanceof BooleanParameter bp) {
+            if (parameter instanceof BooleanParameter bp) {
                 bp.setValue(!bp.getValue());
                 playSound();
                 return true;
-            } else if (actual instanceof ModeParameter mp) {
+            } else if (parameter instanceof ModeParameter mp) {
                 var modes = mp.getModes();
                 int idx = modes.indexOf(mp.getValue());
                 int next = (idx + 1) % modes.size();
                 mp.setValue(modes.get(next));
                 playSound();
                 return true;
-            } else if (actual instanceof NumberParameter np) {
+            } else if (parameter instanceof NumberParameter np) {
                 isDragging = true;
                 return true;
-            } else if (actual instanceof ColorParameter cp) {
+            } else if (parameter instanceof ColorParameter cp) {
                 ClickGUI.activeColorParameter = cp;
                 ClickGUI.activeColorPalette = new ColorPaletteModal(cp);
                 playSound();

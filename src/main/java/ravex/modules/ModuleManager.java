@@ -1,34 +1,31 @@
 package ravex.modules;
 
-import ravex.modules.combat.AimAssist;
 import ravex.modules.combat.KillAura;
-import ravex.modules.combat.MaceSwap;
-import ravex.modules.combat.Trigger;
+import ravex.modules.render.ESP;
+import ravex.modules.player.AutoTool;
 import ravex.modules.misc.AntiAfk;
-import ravex.modules.misc.AutoEat;
-import ravex.modules.misc.Optimizer;
+import ravex.modules.world.BoneMeal;
+import ravex.modules.world.Scaffold;
+import ravex.modules.render.ClickGui;
+import ravex.modules.render.Notifications;
 import ravex.modules.misc.VisualRange;
+import ravex.modules.render.NoBob;
+import ravex.modules.render.Ambient;
+import ravex.modules.combat.AimAssist;
+import ravex.modules.render.CustomFog;
+import ravex.modules.render.NameTags;
+import ravex.modules.combat.Trigger;
+import ravex.modules.combat.MaceSwap;
+import ravex.modules.render.Hud;
+import ravex.modules.misc.Optimizer;
+import ravex.modules.misc.AutoEat;
+import ravex.modules.player.RichPresence;
+import ravex.modules.player.NoInteract;
+import ravex.modules.player.SourceFiller;
+import ravex.modules.player.AirPlace;
 import ravex.modules.movement.GuiWalk;
 import ravex.modules.movement.NoSlowDown;
 import ravex.modules.movement.Velocity;
-import ravex.modules.player.AirPlace;
-import ravex.modules.player.AutoTool;
-import ravex.modules.player.NoInteract;
-import ravex.modules.player.RichPresence;
-import ravex.modules.player.SourceFiller;
-import ravex.modules.render.Ambient;
-import ravex.modules.render.ClickGui;
-import ravex.modules.render.CustomFog;
-import ravex.modules.render.ESP;
-import ravex.modules.render.FreeCam;
-import ravex.modules.render.FreeLook;
-import ravex.modules.render.Hud;
-import ravex.modules.render.NameTags;
-import ravex.modules.render.NoBob;
-import ravex.modules.render.Notifications;
-import ravex.modules.render.Shaders;
-import ravex.modules.world.BoneMeal;
-import ravex.modules.world.Scaffold;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,9 +52,6 @@ public class ModuleManager {
         clickGuiModules.add(Ambient.INSTANCE);
         clickGuiModules.add(CustomFog.INSTANCE);
         clickGuiModules.add(Hud.INSTANCE);
-        clickGuiModules.add(Shaders.INSTANCE);
-        clickGuiModules.add(FreeLook.INSTANCE);
-        clickGuiModules.add(FreeCam.INSTANCE);
 
         // ── Player ──────────────────────────────────────────────────────────────
         clickGuiModules.add(AutoTool.INSTANCE);

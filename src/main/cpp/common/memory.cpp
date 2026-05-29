@@ -14,7 +14,6 @@
 #include <sched.h>
 #include <malloc.h>
 #include <fcntl.h>
-#include <sys/mman.h>
 
 namespace ravex {
 

@@ -16,7 +16,7 @@ public class Optimizer extends Module {
     public final BooleanParameter notify       = new BooleanParameter("Chat Notify", true);
     public final BooleanParameter useNative    = new BooleanParameter("Native C++", true);
 
-    private boolean nativeAvailable = ravex.utility.misc.NativeLoader.isNativeAvailable();
+    private boolean nativeAvailable = false;
 
     private Optimizer() {
         super("Optimizer", Category.MISC);
@@ -26,7 +26,11 @@ public class Optimizer extends Module {
     }
 
     static {
-        ravex.utility.misc.NativeLoader.load();
+        try {
+            System.loadLibrary("ravex_jni");
+        } catch (UnsatisfiedLinkError e) {
+            System.err.println("[RaveX] libravex_jni.so not loaded");
+        }
     }
 
     @Override

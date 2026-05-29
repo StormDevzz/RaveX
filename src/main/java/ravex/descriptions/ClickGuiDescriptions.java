@@ -35,9 +35,6 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("SourceFiller",  "Automatically places sponges to dry nearby water.");
         DESCRIPTIONS.put("AirPlace",      "Place blocks in the air smoothly.");
         DESCRIPTIONS.put("Scaffold",      "Vanilla-like helper to automatically place blocks under your feet.");
-        DESCRIPTIONS.put("Shaders",       "Renders players and items with JNI-optimized volumetric waves and custom pulsing color gradients.");
-        DESCRIPTIONS.put("FreeLook",      "Decouples camera rotation in third-person view with wall-collision protections.");
-        DESCRIPTIONS.put("FreeCam",       "Spectator-mode camera flying with smooth camera rotation and movement controls.");
     }
 
     public static String getDescription(String moduleName) {

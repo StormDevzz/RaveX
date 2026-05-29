@@ -33,6 +33,9 @@ public class ClickGUI extends Screen {
     private String searchBeforeEdit = "";
     private int searchCursorCounter = 0;
 
+    private boolean macrosHovered;
+    private boolean profilesHovered;
+
     public ClickGUI() {
         super(Component.literal("RaveX ClickGUI"));
         this.initTime = System.currentTimeMillis();
@@ -63,6 +66,19 @@ public class ClickGUI extends Screen {
 
         graphics.fill(tipsX - 10, tipsY - 5, tipsX + tipsW + 10, tipsY + 13, 0x88050508);
         graphics.drawString(this.font, tips, tipsX, tipsY, 0xFF858599, false);
+
+        int mgX = 10;
+        int mgY = this.height - 38;
+        int mgW = 56;
+        int mgH = 14;
+        macrosHovered = mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
+        profilesHovered = mouseX >= mgX + mgW + 4 && mouseX <= mgX + mgW * 2 + 4 && mouseY >= mgY && mouseY <= mgY + mgH;
+        int macroBg = macrosHovered ? ColorUtility.getActiveColor() : 0x8810101A;
+        int profileBg = profilesHovered ? ColorUtility.getActiveColor() : 0x8810101A;
+        graphics.fill(mgX, mgY, mgX + mgW, mgY + mgH, macroBg);
+        graphics.fill(mgX + mgW + 4, mgY, mgX + mgW * 2 + 4, mgY + mgH, profileBg);
+        graphics.drawString(this.font, "Macros", mgX + 4, mgY + 3, 0xFFD0D0E0, false);
+        graphics.drawString(this.font, "Profiles", mgX + mgW + 8, mgY + 3, 0xFFD0D0E0, false);
 
         hoveredDescription = null;
 
@@ -197,6 +213,20 @@ public class ClickGUI extends Screen {
 
         if (bindingModuleButton != null) {
             return super.mouseClicked(event, handled);
+        }
+
+        int mgX = 10;
+        int mgY = this.height - 38;
+        int mgW = 56;
+        int mgH = 14;
+
+        if (event.x() >= mgX && event.x() <= mgX + mgW && event.y() >= mgY && event.y() <= mgY + mgH) {
+            this.minecraft.setScreen(new MacroScreen(this));
+            return true;
+        }
+        if (event.x() >= mgX + mgW + 4 && event.x() <= mgX + mgW * 2 + 4 && event.y() >= mgY && event.y() <= mgY + mgH) {
+            this.minecraft.setScreen(new ProfilesScreen(this));
+            return true;
         }
 
         for (CategoryPanel panel : panels) {

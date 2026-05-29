@@ -30,7 +30,11 @@ public class AntiAfk extends Module {
     }
 
     static {
-        ravex.utility.misc.NativeLoader.load();
+        try {
+            System.loadLibrary("ravex_jni");
+        } catch (UnsatisfiedLinkError e) {
+            System.err.println("[RaveX] libravex_jni.so not loaded, using fallback");
+        }
     }
 
     @Override
