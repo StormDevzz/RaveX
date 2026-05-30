@@ -1,4 +1,5 @@
 #include "color_shader.h"
+#include <cmath>
 
 namespace ravex::shaders {
     int blendColors(int color1, int color2, float ratio) {
@@ -18,5 +19,9 @@ namespace ravex::shaders {
         int b = (int)(b1 + (b2 - b1) * ratio);
 
         return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    float calculateWave(float time, float x, float z) {
+        return std::sin(time + x * 0.5f + z * 0.5f) * 0.03f;
     }
 }

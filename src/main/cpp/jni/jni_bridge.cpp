@@ -2,6 +2,7 @@
 #include "../optimizer/optimizer.h"
 #include "../antiafk/antiafk.h"
 #include "../common/memory.h"
+#include "../hooks/shaders/color_shader.h"
 
 #include <cstring>
 #include <vector>
@@ -85,3 +86,22 @@ JNIEXPORT jboolean JNICALL
 Java_ravex_modules_misc_AntiAfk_nativeHasXTest(JNIEnv*, jclass) {
     return ravex::AntiAfk::hasXTest() ? JNI_TRUE : JNI_FALSE;
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  SHADERS JNI BINDINGS
+// ═════════════════════════════════════════════════════════════════════════════
+
+extern "C" {
+
+JNIEXPORT jfloat JNICALL
+Java_ravex_modules_render_Shaders_nativeCalculateWave(JNIEnv*, jclass, jfloat time, jfloat x, jfloat z) {
+    return ravex::shaders::calculateWave(time, x, z);
+}
+
+JNIEXPORT jint JNICALL
+Java_ravex_modules_render_Shaders_nativeBlendColors(JNIEnv*, jclass, jint color1, jint color2, jfloat ratio) {
+    return ravex::shaders::blendColors(color1, color2, ratio);
+}
+
+}
+

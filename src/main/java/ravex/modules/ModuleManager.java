@@ -65,6 +65,7 @@ public class ModuleManager {
         clickGuiModules.add(ViewClip.INSTANCE);
         clickGuiModules.add(Glint.INSTANCE);
         clickGuiModules.add(Sounds.INSTANCE);
+        clickGuiModules.add(ravex.modules.render.ItemPhysics.INSTANCE);
 
         // ── Player ──────────────────────────────────────────────────────────────
         clickGuiModules.add(AutoTool.INSTANCE);
@@ -79,6 +80,7 @@ public class ModuleManager {
         clickGuiModules.add(Velocity.INSTANCE);
         clickGuiModules.add(ravex.modules.movement.Step.INSTANCE);
         clickGuiModules.add(ravex.modules.movement.ReverseStep.INSTANCE);
+        clickGuiModules.add(ravex.modules.movement.NoWeb.INSTANCE);
 
         // ── Misc ─────────────────────────────────────────────────────────────────
         clickGuiModules.add(AntiAfk.INSTANCE);
