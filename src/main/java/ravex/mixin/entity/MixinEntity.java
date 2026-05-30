@@ -38,6 +38,10 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
+        if (ravex.modules.movement.NoWeb.INSTANCE.getEnabled()) {
+            return;
+        }
+
         if (ravex.modules.movement.NoSlowDown.INSTANCE.getEnabled() && ravex.modules.movement.NoSlowDown.INSTANCE.cobwebs.getValue()) {
             ci.cancel();
         }

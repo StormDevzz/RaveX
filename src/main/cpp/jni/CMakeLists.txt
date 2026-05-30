@@ -5,6 +5,7 @@ add_library(ravex_jni SHARED
 target_link_libraries(ravex_jni PRIVATE
     ravex_common
     ravex_antiafk
+    ravex_shaders
     ${JNI_LIBRARIES}
 )
 
@@ -13,6 +14,7 @@ target_include_directories(ravex_jni PRIVATE
     ${CMAKE_SOURCE_DIR}/common
     ${CMAKE_SOURCE_DIR}/antiafk
     ${CMAKE_SOURCE_DIR}/optimizer
+    ${CMAKE_SOURCE_DIR}/hooks/shaders
 )
 
 if(WIN32)

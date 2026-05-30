@@ -43,6 +43,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("ReverseStep",   "Fast pull down.");
         DESCRIPTIONS.put("Spammer",       "Spam chat from text or file.");
         DESCRIPTIONS.put("Commands",      "Client command processor.");
+        DESCRIPTIONS.put("ItemPhysics",   "Realistic physical rotation and flat rendering for dropped items.");
     }
 
     public static String getDescription(String moduleName) {

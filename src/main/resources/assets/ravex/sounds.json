@@ -1,44 +1,30 @@
 {
   "enable": {
     "category": "master",
-    "sounds": [
-      { "name": "ravex:enable", "stream": false }
-    ]
+    "sounds": [ "ravex:enable" ]
   },
   "disable": {
     "category": "master",
-    "sounds": [
-      { "name": "ravex:disable", "stream": false }
-    ]
+    "sounds": [ "ravex:disable" ]
   },
   "settings_open": {
     "category": "master",
-    "sounds": [
-      { "name": "ravex:settings_open", "stream": false }
-    ]
+    "sounds": [ "ravex:settings_open" ]
   },
   "settings_close": {
     "category": "master",
-    "sounds": [
-      { "name": "ravex:settings_close", "stream": false }
-    ]
+    "sounds": [ "ravex:settings_close" ]
   },
   "gui_open": {
     "category": "master",
-    "sounds": [
-      { "name": "ravex:gui_open", "stream": false }
-    ]
+    "sounds": [ "ravex:gui_open" ]
   },
   "gui_close": {
     "category": "master",
-    "sounds": [
-      { "name": "ravex:gui_close", "stream": false }
-    ]
+    "sounds": [ "ravex:gui_close" ]
   },
   "failure": {
     "category": "master",
-    "sounds": [
-      { "name": "ravex:settings_close", "stream": false }
-    ]
+    "sounds": [ "ravex:settings_close" ]
   }
 }

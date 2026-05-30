@@ -12,8 +12,12 @@ import ravex.parameter.ColorParameter;
 public class Shaders extends Module {
     public static final Shaders INSTANCE = new Shaders();
 
+    public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInitial(() -> false);
+    public static final ThreadLocal<Boolean> RENDERING_HAND = ThreadLocal.withInitial(() -> false);
+
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter hands = new BooleanParameter("Hands", true);
+    public final BooleanParameter throughWalls = new BooleanParameter("Through Walls", false);
     public final ColorParameter fillColor = new ColorParameter("Color", 0x77FF00A4); // default cool translucent violet/magenta
 
     private static boolean nativeAvailable;
@@ -27,6 +31,7 @@ public class Shaders extends Module {
         super("Shaders", Category.RENDER);
         addParameter(players);
         addParameter(hands);
+        addParameter(throughWalls);
         addParameter(fillColor);
     }
 
