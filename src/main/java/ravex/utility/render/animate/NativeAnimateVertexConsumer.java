@@ -7,48 +7,39 @@ import org.joml.Matrix4fc;
 import org.joml.Matrix3x2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import ravex.modules.render.Shaders;
 
 /**
  * NativeAnimateVertexConsumer
- * Intercepts vertex output streams for players/hands to apply high-performance wave displacements and color blending.
+ * Intercepts vertex output streams for players to apply JNI custom pulsing color gradients and silhouette glowing.
+ * Wave displacement is strictly forced to 0.0f to stabilize player rendering and prevent dimensional warping or shaking.
  */
 public class NativeAnimateVertexConsumer implements VertexConsumer {
     private final VertexConsumer delegate;
     private final int fillColor;
-    private final float time;
-    private final float pulse;
-    private final boolean isHand;
 
     public NativeAnimateVertexConsumer(VertexConsumer delegate, int fillColor) {
-        this(delegate, fillColor, false);
+        this.delegate = delegate;
+        this.fillColor = fillColor;
     }
 
     public NativeAnimateVertexConsumer(VertexConsumer delegate, int fillColor, boolean isHand) {
         this.delegate = delegate;
         this.fillColor = fillColor;
-        this.time = (float) ((System.currentTimeMillis() % 100000) / 1000.0);
-        this.pulse = (float) (Math.sin(time * 3.0f) * 0.4f + 0.6f);
-        this.isHand = isHand;
     }
 
     @Override
     public VertexConsumer addVertex(float x, float y, float z) {
-        // For hands and first-person held items, disable vertex wave displacement to prevent any shaking or rotation jittering
-        float wave = isHand ? 0.0f : Shaders.calculateWave(time * 2.0f, x, z);
-        delegate.addVertex(x + wave, y, z + wave);
+        // Force wave displacement to 0.0f to keep high-fidelity silhouette rendering perfectly stable
+        delegate.addVertex(x, y, z);
         return this;
     }
 
     @Override
     public VertexConsumer setColor(int r, int g, int b, int a) {
-        int baseColor = (a << 24) | (r << 16) | (g << 8) | b;
-        int blended = Shaders.blendColors(baseColor, fillColor, pulse);
-
-        int na = (blended >> 24) & 0xFF;
-        int nr = (blended >> 16) & 0xFF;
-        int ng = (blended >> 8) & 0xFF;
-        int nb = blended & 0xFF;
+        int na = (fillColor >> 24) & 0xFF;
+        int nr = (fillColor >> 16) & 0xFF;
+        int ng = (fillColor >> 8) & 0xFF;
+        int nb = fillColor & 0xFF;
 
         delegate.setColor(nr, ng, nb, na);
         return this;
@@ -56,20 +47,16 @@ public class NativeAnimateVertexConsumer implements VertexConsumer {
 
     @Override
     public VertexConsumer setColor(int color) {
-        int blended = Shaders.blendColors(color, fillColor, pulse);
-        delegate.setColor(blended);
+        delegate.setColor(fillColor);
         return this;
     }
 
     @Override
     public VertexConsumer setColor(float r, float g, float b, float a) {
-        int baseColor = ((int)(a * 255) << 24) | ((int)(r * 255) << 16) | ((int)(g * 255) << 8) | (int)(b * 255);
-        int blended = Shaders.blendColors(baseColor, fillColor, pulse);
-
-        float na = ((blended >> 24) & 0xFF) / 255.0f;
-        float nr = ((blended >> 16) & 0xFF) / 255.0f;
-        float ng = ((blended >> 8) & 0xFF) / 255.0f;
-        float nb = (blended & 0xFF) / 255.0f;
+        float na = ((fillColor >> 24) & 0xFF) / 255.0f;
+        float nr = ((fillColor >> 16) & 0xFF) / 255.0f;
+        float ng = ((fillColor >> 8) & 0xFF) / 255.0f;
+        float nb = (fillColor & 0xFF) / 255.0f;
 
         delegate.setColor(nr, ng, nb, na);
         return this;
@@ -119,36 +106,30 @@ public class NativeAnimateVertexConsumer implements VertexConsumer {
 
     @Override
     public VertexConsumer addVertex(Matrix4fc matrix, float x, float y, float z) {
-        float wave = isHand ? 0.0f : Shaders.calculateWave(time * 2.0f, x, z);
-        delegate.addVertex(matrix, x + wave, y, z + wave);
+        delegate.addVertex(matrix, x, y, z);
         return this;
     }
 
     @Override
     public void addVertex(float x, float y, float z, int color, float u, float v, int overlay, int light, float normalX, float normalY, float normalZ) {
-        float wave = isHand ? 0.0f : Shaders.calculateWave(time * 2.0f, x, z);
-        int blended = Shaders.blendColors(color, fillColor, pulse);
-        delegate.addVertex(x + wave, y, z + wave, blended, u, v, overlay, light, normalX, normalY, normalZ);
+        delegate.addVertex(x, y, z, fillColor, u, v, overlay, light, normalX, normalY, normalZ);
     }
 
     @Override
     public VertexConsumer addVertex(Pose pose, float x, float y, float z) {
-        float wave = isHand ? 0.0f : Shaders.calculateWave(time * 2.0f, x, z);
-        delegate.addVertex(pose, x + wave, y, z + wave);
+        delegate.addVertex(pose, x, y, z);
         return this;
     }
 
     @Override
     public VertexConsumer addVertex(Pose pose, Vector3f vec) {
-        float wave = isHand ? 0.0f : Shaders.calculateWave(time * 2.0f, vec.x(), vec.z());
-        delegate.addVertex(pose, new Vector3f(vec.x() + wave, vec.y(), vec.z() + wave));
+        delegate.addVertex(pose, vec);
         return this;
     }
 
     @Override
     public VertexConsumer addVertex(Vector3fc vec) {
-        float wave = isHand ? 0.0f : Shaders.calculateWave(time * 2.0f, vec.x(), vec.z());
-        delegate.addVertex(new org.joml.Vector3f(vec.x() + wave, vec.y(), vec.z() + wave));
+        delegate.addVertex(vec);
         return this;
     }
 

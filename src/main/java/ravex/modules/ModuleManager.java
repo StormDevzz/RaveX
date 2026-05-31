@@ -24,9 +24,28 @@ import ravex.modules.player.NoInteract;
 import ravex.modules.player.SourceFiller;
 import ravex.modules.player.AirPlace;
 import ravex.modules.player.AutoArmor;
+import ravex.modules.player.AutoMend;
+import ravex.modules.player.FastUse;
+import ravex.modules.player.AutoRespawn;
 import ravex.modules.movement.GuiWalk;
 import ravex.modules.movement.NoSlowDown;
 import ravex.modules.movement.Velocity;
+import ravex.modules.misc.PacketLogger;
+import ravex.modules.movement.LongJump;
+import ravex.modules.misc.AutoLog;
+import ravex.modules.combat.WebAura;
+import ravex.modules.combat.AutoWeapon;
+import ravex.modules.combat.MaceAura;
+import ravex.modules.player.Offhand;
+import ravex.modules.player.MainHand;
+import ravex.modules.combat.Hitboxes;
+import ravex.modules.movement.Sleepy;
+import ravex.modules.combat.Reach;
+import ravex.modules.movement.NoPush;
+import ravex.modules.movement.AutoSprint;
+import ravex.modules.movement.Spider;
+import ravex.modules.player.FastBreak;
+import ravex.modules.player.InstaBreak;
 
 import ravex.modules.render.FreeCam;
 import ravex.modules.render.FreeLook;
@@ -50,6 +69,13 @@ public class ModuleManager {
         clickGuiModules.add(AimAssist.INSTANCE);
         clickGuiModules.add(Trigger.INSTANCE);
         clickGuiModules.add(MaceSwap.INSTANCE);
+        clickGuiModules.add(WebAura.INSTANCE);
+        clickGuiModules.add(AutoWeapon.INSTANCE);
+        clickGuiModules.add(MaceAura.INSTANCE);
+        clickGuiModules.add(Hitboxes.INSTANCE);
+        clickGuiModules.add(Offhand.INSTANCE);
+        clickGuiModules.add(MainHand.INSTANCE);
+        clickGuiModules.add(Reach.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ESP.INSTANCE);
@@ -76,6 +102,11 @@ public class ModuleManager {
         clickGuiModules.add(SourceFiller.INSTANCE);
         clickGuiModules.add(AirPlace.INSTANCE);
         clickGuiModules.add(AutoArmor.INSTANCE);
+        clickGuiModules.add(AutoMend.INSTANCE);
+        clickGuiModules.add(FastUse.INSTANCE);
+        clickGuiModules.add(AutoRespawn.INSTANCE);
+        clickGuiModules.add(FastBreak.INSTANCE);
+        clickGuiModules.add(InstaBreak.INSTANCE);
 
         // ── Movement ────────────────────────────────────────────────────────────
         clickGuiModules.add(GuiWalk.INSTANCE);
@@ -85,27 +116,45 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.movement.ReverseStep.INSTANCE);
         clickGuiModules.add(ravex.modules.movement.NoWeb.INSTANCE);
         clickGuiModules.add(ravex.modules.movement.AutoWalk.INSTANCE);
-        clickGuiModules.add(ravex.modules.movement.AutoSprint.INSTANCE);
+        clickGuiModules.add(ravex.modules.movement.AntiVoid.INSTANCE);
+        clickGuiModules.add(LongJump.INSTANCE);
+        clickGuiModules.add(Sleepy.INSTANCE);
+        clickGuiModules.add(NoPush.INSTANCE);
+        clickGuiModules.add(AutoSprint.INSTANCE);
+        clickGuiModules.add(Spider.INSTANCE);
 
         // ── Misc ─────────────────────────────────────────────────────────────────
         clickGuiModules.add(AntiAfk.INSTANCE);
         clickGuiModules.add(VisualRange.INSTANCE);
         clickGuiModules.add(Optimizer.INSTANCE);
         clickGuiModules.add(AutoEat.INSTANCE);
+        clickGuiModules.add(PacketLogger.INSTANCE);
+        clickGuiModules.add(AutoLog.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Spammer.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Commands.INSTANCE);
 
         // ── World ────────────────────────────────────────────────────────────────
         clickGuiModules.add(BoneMeal.INSTANCE);
         clickGuiModules.add(Scaffold.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.AntiHunger.INSTANCE);
+        clickGuiModules.add(ravex.modules.world.AutoSign.INSTANCE);
+        clickGuiModules.add(ravex.modules.world.AutoShear.INSTANCE);
+        clickGuiModules.add(ravex.modules.world.AutoNameTag.INSTANCE);
+        clickGuiModules.add(ravex.modules.world.AutoMount.INSTANCE);
+        clickGuiModules.add(ravex.modules.world.FakePlayer.INSTANCE);
+
+        // ── Exploit ──────────────────────────────────────────────────────────────
+        clickGuiModules.add(ravex.modules.exploit.RideExploit.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.PacketCanceller.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.HandshakeSpoof.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.GhostHand.INSTANCE);
 
         // ── HUD modules ──────────────────────────────────────────────────────────
         hudModules.add(new HudModule("Watermark", 10, 10, 80, 14) {
             @Override
             public void render(net.minecraft.client.gui.GuiGraphics graphics, float partialTicks) {
                 if (!Hud.INSTANCE.getEnabled()) return;
-                var font = net.minecraft.client.Minecraft.getInstance().font;
-                graphics.drawString(font, "RaveX v1.0", getX(), getY(),
+                ravex.utility.render.FontRenderUtility.drawString(graphics, "RaveX v1.0", getX(), getY(),
                         ravex.gui.clickgui.ColorUtility.getActiveColor(), true);
             }
         });
@@ -114,11 +163,10 @@ public class ModuleManager {
             @Override
             public void render(net.minecraft.client.gui.GuiGraphics graphics, float partialTicks) {
                 if (!Hud.INSTANCE.getEnabled()) return;
-                var font = net.minecraft.client.Minecraft.getInstance().font;
                 int currentY = getY();
                 for (Module m : clickGuiModules) {
                     if (m.getEnabled()) {
-                        graphics.drawString(font, m.getName(), getX(), currentY, 0xFF8F8FA0, true);
+                        ravex.utility.render.FontRenderUtility.drawString(graphics, m.getName(), getX(), currentY, 0xFF8F8FA0, true);
                         currentY += 10;
                     }
                 }
@@ -129,12 +177,11 @@ public class ModuleManager {
             @Override
             public void render(net.minecraft.client.gui.GuiGraphics graphics, float partialTicks) {
                 if (!Hud.INSTANCE.getEnabled()) return;
-                var font = net.minecraft.client.Minecraft.getInstance().font;
                 var player = net.minecraft.client.Minecraft.getInstance().player;
                 if (player != null) {
                     String coordText = String.format("XYZ: %.1f / %.1f / %.1f",
                             player.getX(), player.getY(), player.getZ());
-                    graphics.drawString(font, coordText, getX(), getY(), 0xFFD0D0E0, true);
+                    ravex.utility.render.FontRenderUtility.drawString(graphics, coordText, getX(), getY(), 0xFFD0D0E0, true);
                 }
             }
         });
@@ -143,9 +190,8 @@ public class ModuleManager {
             @Override
             public void render(net.minecraft.client.gui.GuiGraphics graphics, float partialTicks) {
                 if (!Hud.INSTANCE.getEnabled()) return;
-                var font = net.minecraft.client.Minecraft.getInstance().font;
                 String fpsText = "FPS: " + net.minecraft.client.Minecraft.getInstance().getFps();
-                graphics.drawString(font, fpsText, getX(), getY(), 0xFFD0D0E0, true);
+                ravex.utility.render.FontRenderUtility.drawString(graphics, fpsText, getX(), getY(), 0xFFD0D0E0, true);
             }
         });
     }

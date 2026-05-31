@@ -12,6 +12,11 @@ import ravex.modules.movement.NoSlowDown;
 public class MixinBlock {
     @Inject(method = "getFriction", at = @At("RETURN"), cancellable = true)
     private void onGetFriction(CallbackInfoReturnable<Float> cir) {
+        if (ravex.modules.movement.Sleepy.INSTANCE.getEnabled()) {
+            cir.setReturnValue(0.98F);
+            return;
+        }
+
         if (NoSlowDown.INSTANCE.getEnabled() && NoSlowDown.INSTANCE.blocks.getValue()) {
             Block self = (Block) (Object) this;
             if (self == Blocks.ICE || self == Blocks.PACKED_ICE || self == Blocks.BLUE_ICE || self == Blocks.FROSTED_ICE) {

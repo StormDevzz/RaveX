@@ -2,13 +2,18 @@ package ravex.modules.movement;
 
 import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.parameter.ModeParameter;
 import net.minecraft.client.Minecraft;
+import java.util.List;
 
 public class AutoSprint extends Module {
     public static final AutoSprint INSTANCE = new AutoSprint();
 
+    public final ModeParameter mode = new ModeParameter("Mode", "Rage", List.of("Legit", "Rage"));
+
     private AutoSprint() {
         super("AutoSprint", Category.MOVEMENT);
+        addParameter(mode);
     }
 
     @Override
@@ -16,19 +21,12 @@ public class AutoSprint extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        if (mc.player.isSprinting()) return;
-        if (mc.player.isUsingItem()) return;
-        if (!mc.options.keyUp.isDown()) return;
-        if (mc.player.getFoodData().getFoodLevel() <= 6 && !mc.player.isCreative()) return;
-
-        mc.player.setSprinting(true);
-    }
-
-    @Override
-    protected void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            mc.player.setSprinting(false);
+        if ("Rage".equals(mode.getValue())) {
+            mc.player.setSprinting(true);
+        } else {
+            if (mc.player.input.hasForwardImpulse() && !mc.player.isUsingItem() && !mc.player.isShiftKeyDown()) {
+                mc.player.setSprinting(true);
+            }
         }
     }
 }

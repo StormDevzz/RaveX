@@ -8,6 +8,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import ravex.profile.Profile;
 import ravex.profile.ProfileManager;
+import ravex.utility.render.FontRenderUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,11 +45,11 @@ public class ProfilesScreen extends Screen {
 
         int activeColor = ColorUtility.getActiveColor();
 
-        graphics.drawString(this.font, "Profile Manager", 20, 12, 0xFFFFFFFF, true);
-        graphics.drawString(this.font, "Save and load module configurations", 20, 24, 0xFF8F8FA0, false);
+        FontRenderUtility.drawString(graphics, "Profile Manager", 20, 12, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, "Save and load module configurations", 20, 24, 0xFF8F8FA0, false);
 
         if (statusTimer > 0 && !statusMessage.isEmpty()) {
-            graphics.drawString(this.font, statusMessage, 20, 38, 0xFFAAFFAA, false);
+            FontRenderUtility.drawString(graphics, statusMessage, 20, 38, 0xFFAAFFAA, false);
         }
 
         int listX = 20;
@@ -65,17 +66,17 @@ public class ProfilesScreen extends Screen {
             int bg = i == selectedIndex ? 0xFF202035 : (hovered ? 0xFF181828 : 0xFF0D0D14);
             graphics.fill(listX + 2, y, listX + listW - 2, y + itemH, bg);
 
-            graphics.drawString(this.font, p.getName(), listX + 6, y + 4, 0xFFD0D0E0, false);
+            FontRenderUtility.drawString(graphics, p.getName(), listX + 6, y + 4, 0xFFD0D0E0, false);
 
             int modCount = p.getModuleStates().size();
             String info = modCount + " modules";
-            int iw = this.font.width(info);
-            graphics.drawString(this.font, info, listX + listW - iw - 8, y + 4, 0xFF707080, false);
+            int iw = FontRenderUtility.getStringWidth(info);
+            FontRenderUtility.drawString(graphics, info, listX + listW - iw - 8, y + 4, 0xFF707080, false);
 
             y += itemH;
         }
         if (profiles.isEmpty()) {
-            graphics.drawString(this.font, "No profiles yet. Capture current config to create one.", listX + 6, listY + 8, 0xFF505060, false);
+            FontRenderUtility.drawString(graphics, "No profiles yet. Capture current config to create one.", listX + 6, listY + 8, 0xFF505060, false);
         }
 
         if (creatingNew) {
@@ -97,7 +98,7 @@ public class ProfilesScreen extends Screen {
         graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + dlgH, 0xF510101A);
         graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + 1, activeColor);
 
-        graphics.drawString(this.font, "Save Profile As:", dlgX + 10, dlgY + 10, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, "Save Profile As:", dlgX + 10, dlgY + 10, 0xFFFFFFFF, true);
 
         int inputX = dlgX + 10;
         int inputY = dlgY + 32;
@@ -105,7 +106,7 @@ public class ProfilesScreen extends Screen {
         int inputH = 16;
         graphics.fill(inputX, inputY, inputX + inputW, inputY + inputH, 0xFF1A1A28);
         String display = newName.isEmpty() ? "Profile name..." : newName;
-        graphics.drawString(this.font, display, inputX + 4, inputY + 3, newName.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
+        FontRenderUtility.drawString(graphics, display, inputX + 4, inputY + 3, newName.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
 
         int btnY = dlgY + 60;
         int btnW = 80;
@@ -113,11 +114,11 @@ public class ProfilesScreen extends Screen {
 
         boolean saveHov = mouseX >= dlgX + 15 && mouseX <= dlgX + 15 + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
         graphics.fill(dlgX + 15, btnY, dlgX + 15 + btnW, btnY + btnH, saveHov ? activeColor : 0xFF202035);
-        graphics.drawString(this.font, "Save", dlgX + 15 + (btnW - this.font.width("Save")) / 2, btnY + 3, 0xFFFFFFFF, false);
+        FontRenderUtility.drawString(graphics, "Save", dlgX + 15 + (btnW - FontRenderUtility.getStringWidth("Save")) / 2, btnY + 3, 0xFFFFFFFF, false);
 
         boolean cancelHov = mouseX >= dlgX + dlgW - 15 - btnW && mouseX <= dlgX + dlgW - 15 && mouseY >= btnY && mouseY <= btnY + btnH;
         graphics.fill(dlgX + dlgW - 15 - btnW, btnY, dlgX + dlgW - 15, btnY + btnH, cancelHov ? 0xFF303035 : 0xFF14141E);
-        graphics.drawString(this.font, "Cancel", dlgX + dlgW - 15 - btnW + (btnW - this.font.width("Cancel")) / 2, btnY + 3, 0xFFD0D0E0, false);
+        FontRenderUtility.drawString(graphics, "Cancel", dlgX + dlgW - 15 - btnW + (btnW - FontRenderUtility.getStringWidth("Cancel")) / 2, btnY + 3, 0xFFD0D0E0, false);
     }
 
     private static class ToolbarButton {
@@ -150,13 +151,13 @@ public class ProfilesScreen extends Screen {
             boolean isPrimary = b.id == 0 || b.id == 1;
             int bg = hovered ? (isPrimary ? activeColor : 0xFF202035) : (isPrimary ? 0xFF252540 : 0xFF0D0D14);
             graphics.fill(bx, tbY, bx + btnW, tbY + btnH, bg);
-            graphics.drawString(this.font, b.label, bx + (btnW - this.font.width(b.label)) / 2, tbY + 6, 0xFFD0D0E0, false);
+            FontRenderUtility.drawString(graphics, b.label, bx + (btnW - FontRenderUtility.getStringWidth(b.label)) / 2, tbY + 6, 0xFFD0D0E0, false);
         }
 
         int backX = this.width - 100;
         boolean backHov = mouseX >= backX && mouseX <= backX + btnW && mouseY >= tbY && mouseY <= tbY + btnH;
         graphics.fill(backX, tbY, backX + btnW, tbY + btnH, backHov ? 0xFF303035 : 0xFF0D0D14);
-        graphics.drawString(this.font, "Back", backX + (btnW - this.font.width("Back")) / 2, tbY + 6, 0xFFD0D0E0, false);
+        FontRenderUtility.drawString(graphics, "Back", backX + (btnW - FontRenderUtility.getStringWidth("Back")) / 2, tbY + 6, 0xFFD0D0E0, false);
     }
 
     @Override

@@ -16,7 +16,6 @@ public class Shaders extends Module {
     public static final ThreadLocal<Boolean> RENDERING_HAND = ThreadLocal.withInitial(() -> false);
 
     public final BooleanParameter players = new BooleanParameter("Players", true);
-    public final BooleanParameter hands = new BooleanParameter("Hands", true);
     public final BooleanParameter throughWalls = new BooleanParameter("Through Walls", false);
     public final ColorParameter fillColor = new ColorParameter("Color", 0x77FF00A4); // default cool translucent violet/magenta
 
@@ -30,7 +29,6 @@ public class Shaders extends Module {
     private Shaders() {
         super("Shaders", Category.RENDER);
         addParameter(players);
-        addParameter(hands);
         addParameter(throughWalls);
         addParameter(fillColor);
     }
@@ -56,7 +54,7 @@ public class Shaders extends Module {
                 nativeAvailable = false;
             }
         }
-        return (float) (Math.sin(time + x * 0.5f + z * 0.5f) * 0.03f);
+        return (float) (Math.sin(time) * 0.012f);
     }
 
     public static int blendColors(int color1, int color2, float ratio) {

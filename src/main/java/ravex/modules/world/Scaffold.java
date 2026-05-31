@@ -3,8 +3,11 @@ package ravex.modules.world;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.utility.render.animate.FadeAnimation;
+import ravex.utility.render.animate.SizeAnimation;
+import ravex.utility.render.animate.SlideAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -26,14 +29,19 @@ public class Scaffold extends Module {
     public final BooleanParameter silentRot = new BooleanParameter("Silent Rot", true);
     public final BooleanParameter keepY = new BooleanParameter("Keep Y", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
+    public final BooleanParameter animate = new BooleanParameter("Animate", true);
+    public final ColorParameter highlightColor = new ColorParameter("Color", 0xFFFF33CC);
 
     public static Vec3 highlightPos = null;
     public static float renderAlpha = 0.0f;
+    public static double renderSize = 0.0;
     public static float renderR = 1.0f;
     public static float renderG = 0.2f;
     public static float renderB = 0.8f;
 
     private final FadeAnimation fadeAnim = new FadeAnimation();
+    private final SizeAnimation sizeAnim = new SizeAnimation();
+    private final SlideAnimation slideAnim = new SlideAnimation();
     private BlockPos currentTarget = null;
     private int lastSlot = -1;
     private double targetY = -1;
@@ -45,6 +53,8 @@ public class Scaffold extends Module {
         addParameter(silentRot);
         addParameter(keepY);
         addParameter(render);
+        addParameter(animate);
+        addParameter(highlightColor);
     }
 
     @Override
@@ -57,14 +67,18 @@ public class Scaffold extends Module {
         }
         highlightPos = null;
         renderAlpha = 0.0f;
+        renderSize = 0.0;
         currentTarget = null;
         fadeAnim.reset();
+        sizeAnim.reset();
+        slideAnim.reset();
     }
 
     @Override
     protected void onDisable() {
         highlightPos = null;
         renderAlpha = 0.0f;
+        renderSize = 0.0;
         currentTarget = null;
     }
 
@@ -87,15 +101,14 @@ public class Scaffold extends Module {
         if (slot == -1) {
             currentTarget = null;
             renderAlpha = fadeAnim.update(false, 0.25f);
-            if (renderAlpha <= 0.01f) {
-                highlightPos = null;
-            }
+            renderSize = sizeAnim.update(false, 0.15);
+            if (renderAlpha <= 0.01f) highlightPos = null;
             return;
         }
 
         BlockPos below = BlockPos.containing(
-            p.getX(), 
-            (keepY.getValue() && targetY != -1) ? (targetY - 1) : (p.getY() - 1), 
+            p.getX(),
+            (keepY.getValue() && targetY != -1) ? (targetY - 1) : (p.getY() - 1),
             p.getZ()
         );
 
@@ -108,28 +121,38 @@ public class Scaffold extends Module {
                 0,
                 dz > 0.05 ? 1 : (dz < -0.05 ? -1 : 0)
             );
-            if (isAir(dirOffset)) {
-                targetPos = dirOffset;
-            }
+            if (isAir(dirOffset)) targetPos = dirOffset;
         }
 
         if (!isAir(targetPos)) {
             currentTarget = null;
             renderAlpha = fadeAnim.update(false, 0.25f);
-            if (renderAlpha <= 0.01f) {
-                highlightPos = null;
-            }
+            renderSize = sizeAnim.update(false, 0.15);
+            if (renderAlpha <= 0.01f) highlightPos = null;
             return;
         }
 
         currentTarget = targetPos;
 
         if (render.getValue()) {
-            renderAlpha = fadeAnim.update(true, 0.25f);
-            highlightPos = Vec3.atLowerCornerOf(targetPos);
+            int hc = highlightColor.getValue();
+            renderR = ((hc >> 16) & 0xFF) / 255.0f;
+            renderG = ((hc >> 8) & 0xFF) / 255.0f;
+            renderB = (hc & 0xFF) / 255.0f;
+
+            if (animate.getValue()) {
+                renderAlpha = fadeAnim.update(true, 0.25f);
+                renderSize = sizeAnim.update(true, 0.15);
+                highlightPos = slideAnim.update(targetPos.getX(), targetPos.getY(), targetPos.getZ(), 0.25);
+            } else {
+                renderAlpha = 1.0f;
+                renderSize = 1.0;
+                highlightPos = Vec3.atLowerCornerOf(targetPos);
+            }
         } else {
             highlightPos = null;
             renderAlpha = 0.0f;
+            renderSize = 0.0;
         }
 
         BlockPos neighbor = null;
@@ -165,9 +188,7 @@ public class Scaffold extends Module {
         mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
         p.swing(InteractionHand.MAIN_HAND);
 
-        if (slot != prevSlot) {
-            p.getInventory().setSelectedSlot(prevSlot);
-        }
+        if (slot != prevSlot) p.getInventory().setSelectedSlot(prevSlot);
     }
 
     private boolean isAir(BlockPos pos) {

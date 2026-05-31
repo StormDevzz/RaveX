@@ -25,11 +25,7 @@ public class MixinItemStackRenderState {
         boolean renderHand = Shaders.RENDERING_HAND.get();
 
         if (Shaders.INSTANCE.getEnabled() && (renderPlayer || renderHand)) {
-            // Apply pulsing custom color shader to player held items!
-            float time = (float) ((System.currentTimeMillis() % 100000) / 1000.0);
-            float pulse = (float) (Math.sin(time * 3.0f) * 0.4f + 0.6f);
-            int shaderColor = Shaders.INSTANCE.fillColor.getValue();
-            return Shaders.blendColors(tint, shaderColor, pulse);
+            return Shaders.INSTANCE.fillColor.getValue();
         }
         return tint;
     }

@@ -5,9 +5,11 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -61,12 +63,24 @@ public abstract class MixinInGameHUD {
                 Vec3 sideProj = mc.gameRenderer.projectPointToScreen(sidePos);
 
                 if (baseProj != null && headProj != null && sideProj != null) {
-                    // Only render entities in front of camera (z < 1.0 means in front)
-                    if (baseProj.z < 1.0 && headProj.z < 1.0) {
-                        int bx = (int) baseProj.x;
-                        int by = (int) baseProj.y;
-                        int hy = (int) headProj.y;
-                        int sx = (int) sideProj.x;
+                    // Check if entity is in front of the camera using dot product
+                    Vec3 dir = target.getPosition(pt).subtract(cameraPos).normalize();
+                    Vec3 look = mc.player.getViewVector(pt);
+                    double dot = dir.dot(look);
+
+                    if (dot > 0.0) {
+                        // Project NDC [-1, 1] coordinates into actual scaled screen pixels
+                        double sx_base = (baseProj.x + 1.0) / 2.0 * context.guiWidth();
+                        double sy_base = (1.0 - baseProj.y) / 2.0 * context.guiHeight();
+                        double sx_head = (headProj.x + 1.0) / 2.0 * context.guiWidth();
+                        double sy_head = (1.0 - headProj.y) / 2.0 * context.guiHeight();
+                        double sx_side = (sideProj.x + 1.0) / 2.0 * context.guiWidth();
+                        double sy_side = (1.0 - sideProj.y) / 2.0 * context.guiHeight();
+
+                        int bx = (int) sx_base;
+                        int by = (int) sy_base;
+                        int hy = (int) sy_head;
+                        int sx = (int) sx_side;
 
                         // Box dimensions: height from foot to head, width from entity hitbox side projection
                         int boxH = Math.abs(by - hy);
@@ -99,13 +113,78 @@ public abstract class MixinInGameHUD {
                             int maxHealth = (int) Math.ceil(target.getMaxHealth());
                             String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
                             int tw = mc.font.width(tagText);
-                            // Center above head projection point
-                            int tx = (int) headProj.x - (tw / 2);
-                            int ty = y - 13; // 13px above the top of the box
+                            int textY = y - 13; // 13px above the top of the box
 
-                            context.fill(tx - 3, ty - 1, tx + tw + 3, ty + 9, 0xBB000000);
-                            context.fill(tx - 3, ty - 1, tx + tw + 3, ty, isPlayer ? 0xFFFF5555 : 0xFF55FF55); // colored top line
-                            context.drawString(mc.font, tagText, tx, ty, 0xFFFFFFFF, false);
+                            boolean showArmor = NameTags.INSTANCE.armor.getValue();
+                            boolean showHands = NameTags.INSTANCE.handItems.getValue();
+
+                            if (!showArmor && !showHands) {
+                                int tx = bx - (tw / 2);
+                                context.fill(tx - 3, textY - 1, tx + tw + 3, textY + 9, 0xBB000000);
+                                context.fill(tx - 3, textY - 1, tx + tw + 3, textY, isPlayer ? 0xFFFF5555 : 0xFF55FF55);
+                                context.drawString(mc.font, tagText, tx, textY, 0xFFFFFFFF, false);
+                            } else {
+                                ItemStack mainHand = target.getMainHandItem();
+                                ItemStack offHand = target.getOffhandItem();
+                                ItemStack boots = target.getItemBySlot(EquipmentSlot.FEET);
+                                ItemStack leggings = target.getItemBySlot(EquipmentSlot.LEGS);
+                                ItemStack chestplate = target.getItemBySlot(EquipmentSlot.CHEST);
+                                ItemStack helmet = target.getItemBySlot(EquipmentSlot.HEAD);
+
+                                int is = 16;
+                                int gap = 2;
+
+                                // Main row width
+                                int mainRowW = tw;
+                                if (showHands && !mainHand.isEmpty()) mainRowW += is + gap;
+                                if (showHands && !offHand.isEmpty()) mainRowW += gap + is;
+
+                                // Armor row width
+                                int armorW = 0;
+                                if (showArmor) {
+                                    if (!boots.isEmpty()) armorW += is + gap;
+                                    if (!leggings.isEmpty()) armorW += is + gap;
+                                    if (!chestplate.isEmpty()) armorW += is + gap;
+                                    if (!helmet.isEmpty()) armorW += is + gap;
+                                    if (armorW > 0) armorW -= gap;
+                                }
+
+                                int totalW = Math.max(mainRowW, armorW);
+                                int armorRowY = textY - is - gap;
+
+                                // Background
+                                int bgLeft = bx - totalW / 2 - 3;
+                                int bgTop = showArmor && armorW > 0 ? armorRowY - 1 : textY - 1;
+                                int bgRight = bx + totalW / 2 + 3;
+                                int bgBottom = textY + 9;
+
+                                context.fill(bgLeft, bgTop, bgRight, bgBottom, 0xBB000000);
+                                context.fill(bgLeft, bgTop, bgRight, bgTop + 1, isPlayer ? 0xFFFF5555 : 0xFF55FF55);
+
+                                // Armor items
+                                if (showArmor && armorW > 0) {
+                                    int ax = bx - armorW / 2;
+                                    for (ItemStack stack : new ItemStack[]{boots, leggings, chestplate, helmet}) {
+                                        if (!stack.isEmpty()) {
+                                            context.renderItem(stack, ax, armorRowY);
+                                            ax += is + gap;
+                                        }
+                                    }
+                                }
+
+                                // Main hand + text + offhand
+                                int rx = bx - mainRowW / 2;
+                                if (showHands && !mainHand.isEmpty()) {
+                                    context.renderItem(mainHand, rx, textY);
+                                    rx += is + gap;
+                                }
+                                context.drawString(mc.font, tagText, rx, textY, 0xFFFFFFFF, false);
+                                rx += tw;
+                                if (showHands && !offHand.isEmpty()) {
+                                    rx += gap;
+                                    context.renderItem(offHand, rx, textY);
+                                }
+                            }
                         }
                     }
             }

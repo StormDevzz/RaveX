@@ -60,4 +60,66 @@ public abstract class MixinEntity {
             }
         }
     }
+
+    @Inject(method = "isLocalClientAuthoritative()Z", at = @At("HEAD"), cancellable = true)
+    private void onIsLocalClientAuthoritative(CallbackInfoReturnable<Boolean> cir) {
+        Entity self = (Entity)(Object)this;
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player != null && self.getControllingPassenger() == mc.player) {
+            if (ravex.modules.exploit.RideExploit.INSTANCE.getEnabled()) {
+                cir.setReturnValue(true);
+            }
+        }
+    }
+
+    @Inject(method = "getBoundingBox", at = @At("RETURN"), cancellable = true)
+    private void onGetBoundingBox(CallbackInfoReturnable<net.minecraft.world.phys.AABB> cir) {
+        if (ravex.modules.combat.Hitboxes.INSTANCE.getEnabled()) {
+            Entity self = (Entity)(Object)this;
+            if (self != net.minecraft.client.Minecraft.getInstance().player && self instanceof LivingEntity) {
+                boolean isRaytracing = false;
+                for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+                    String className = element.getClassName();
+                    String methodName = element.getMethodName();
+                    if (className.contains("ProjectileUtil") || className.contains("GameRenderer") || methodName.contains("pick")) {
+                        isRaytracing = true;
+                        break;
+                    }
+                }
+                if (isRaytracing) {
+                    double size = ravex.modules.combat.Hitboxes.INSTANCE.size.getValue();
+                    if (cir.getReturnValue() != null) {
+                        cir.setReturnValue(cir.getReturnValue().inflate(size));
+                    }
+                }
+            }
+        }
+    }
+
+    @Inject(method = "push(DDD)V", at = @At("HEAD"), cancellable = true)
+    private void onPushVelocity(double x, double y, double z, CallbackInfo ci) {
+        if (ravex.modules.movement.NoPush.INSTANCE.getEnabled()) {
+            Entity self = (Entity)(Object)this;
+            if (self instanceof net.minecraft.client.player.LocalPlayer) {
+                String m = ravex.modules.movement.NoPush.INSTANCE.mode.getValue();
+                if ("All".equals(m)) {
+                    ci.cancel();
+                } else if ("Water".equals(m) && ravex.modules.movement.NoPush.INSTANCE.water.getValue()) {
+                    ci.cancel();
+                }
+            }
+        }
+    }
+
+    @Inject(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"), cancellable = true)
+    private void onPushEntity(Entity other, CallbackInfo ci) {
+        if (ravex.modules.movement.NoPush.INSTANCE.getEnabled()) {
+            Entity self = (Entity)(Object)this;
+            if (self instanceof net.minecraft.client.player.LocalPlayer) {
+                if (ravex.modules.movement.NoPush.INSTANCE.shouldCancelPush(self, other)) {
+                    ci.cancel();
+                }
+            }
+        }
+    }
 }

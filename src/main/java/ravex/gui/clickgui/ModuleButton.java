@@ -1,8 +1,8 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.Font;
 import ravex.modules.Module;
+import ravex.utility.render.FontRenderUtility;
 import ravex.parameter.Parameter;
 import ravex.utility.sound.SoundUtility;
 import java.util.ArrayList;
@@ -23,13 +23,13 @@ public class ModuleButton {
         }
     }
 
-    public void render(GuiGraphics graphics, Font font, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut) {
-        render(graphics, font, x, y, width, mouseX, mouseY, currentYOut, "");
+    public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut) {
+        render(graphics, x, y, width, mouseX, mouseY, currentYOut, "");
     }
 
-    public void render(GuiGraphics graphics, Font font, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut, String searchQuery) {
+    public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut, String searchQuery) {
         int currentY = currentYOut[0];
-        boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + 14;
+        boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + 18;
 
         if (hovered) {
             ClickGUI.hoveredDescription = module.getDescription();
@@ -43,7 +43,27 @@ public class ModuleButton {
             bg = blendColors(bg, ColorUtility.getActiveColor(), 0.15f);
         }
 
-        graphics.fill(x, currentY, x + width, currentY + 14, bg);
+        graphics.fill(x, currentY, x + width, currentY + 18, bg);
+
+        int activeColor = ColorUtility.getActiveColor();
+        int accentColor = module.getEnabled() ? activeColor : 0xFF3A3A45;
+        graphics.fill(x, currentY, x + 3, currentY + 18, accentColor);
+        if (module.getEnabled()) {
+            graphics.fill(x + 3, currentY, x + width, currentY + 1, ColorUtility.withAlpha(activeColor, 25));
+        }
+
+        if (ravex.modules.render.ClickGui.INSTANCE.moduleOutlines.getValue()) {
+            int borderCol = ravex.modules.render.ClickGui.INSTANCE.moduleOutlineColor.getValue();
+            graphics.fill(x, currentY, x + width, currentY + 1, borderCol);
+            graphics.fill(x, currentY + 17, x + width, currentY + 18, borderCol);
+            graphics.fill(x, currentY, x + 1, currentY + 18, borderCol);
+            graphics.fill(x + width - 1, currentY, x + width, currentY + 18, borderCol);
+        } else {
+            graphics.fill(x + 3, currentY + 17, x + width, currentY + 18, ColorUtility.withAlpha(accentColor, 40));
+            if (module.getEnabled()) {
+                graphics.fill(x + 3, currentY + 1, x + width, currentY + 2, ColorUtility.withAlpha(activeColor, 10));
+            }
+        }
 
         String displayName = module.getName();
         if (ClickGUI.bindingModuleButton == this) {
@@ -62,9 +82,9 @@ public class ModuleButton {
         }
 
         if (searchQuery != null && !searchQuery.isEmpty() && !module.getName().isEmpty()) {
-            renderHighlightedName(graphics, font, displayName, x + 6, currentY + 3, textColor, searchQuery);
+            renderHighlightedName(graphics, displayName, x + 9, currentY + 5, textColor, searchQuery);
         } else {
-            graphics.drawString(font, displayName, x + 6, currentY + 3, textColor, false);
+            FontRenderUtility.drawString(graphics, displayName, x + 9, currentY + 5, textColor, true);
         }
 
         int visibleCount = 0;
@@ -77,10 +97,10 @@ public class ModuleButton {
         }
 
         if (visibleCount > 0) {
-            graphics.drawString(font, expanded ? "-" : "+", x + width - 12, currentY + 3, 0xFF606080, false);
+            FontRenderUtility.drawString(graphics, expanded ? "−" : "+", x + width - 12, currentY + 5, 0xFF606080, true);
         }
 
-        currentY += 14;
+        currentY += 18;
 
         long now = System.currentTimeMillis();
         long delta = now - lastUpdateTime;
@@ -102,6 +122,7 @@ public class ModuleButton {
             int boxBorder = ColorUtility.getActiveColor();
             graphics.fill(x + 4, currentY, x + width - 4, currentY + totalDrawHeight, boxBg);
             graphics.fill(x + 4, currentY, x + 6, currentY + totalDrawHeight, boxBorder);
+            graphics.fill(x + 4, currentY + totalDrawHeight - 1, x + width - 4, currentY + totalDrawHeight, ColorUtility.withAlpha(boxBorder, 40));
 
             graphics.enableScissor(x + 4, currentY, x + width - 4, currentY + totalDrawHeight);
 
@@ -109,7 +130,7 @@ public class ModuleButton {
             for (ParameterElement pe : parameterElements) {
                 if (pe.getParameter().isVisible()) {
                     int pHeight = pe.getHeight();
-                    pe.render(graphics, font, x + 6, py, width - 10, pHeight, mouseX, mouseY);
+                    pe.render(graphics, x + 6, py, width - 10, pHeight, mouseX, mouseY);
                     py += pHeight;
                 }
             }
@@ -121,7 +142,7 @@ public class ModuleButton {
         currentYOut[0] = currentY;
     }
 
-    private void renderHighlightedName(GuiGraphics graphics, Font font, String text, int x, int y, int baseColor, String query) {
+    private void renderHighlightedName(GuiGraphics graphics, String text, int x, int y, int baseColor, String query) {
         String lower = text.toLowerCase();
         String qLower = query.toLowerCase();
         int queryLen = qLower.length();
@@ -131,21 +152,21 @@ public class ModuleButton {
         while (i < text.length()) {
             int matchIdx = lower.indexOf(qLower, i);
             if (matchIdx == -1) {
-                graphics.drawString(font, text.substring(i), currentX, y, baseColor, false);
+                FontRenderUtility.drawString(graphics, text.substring(i), currentX, y, baseColor, true);
                 break;
             }
 
             if (matchIdx > i) {
                 String before = text.substring(i, matchIdx);
-                graphics.drawString(font, before, currentX, y, baseColor, false);
-                currentX += font.width(before);
+                FontRenderUtility.drawString(graphics, before, currentX, y, baseColor, true);
+                currentX += FontRenderUtility.getStringWidth(before);
             }
 
             String matched = text.substring(matchIdx, Math.min(matchIdx + queryLen, text.length()));
             int highlightColor = 0xFFFFFF80;
-            graphics.fill(currentX - 1, y - 1, currentX + font.width(matched) + 1, y + 10, 0x44FFAA00);
-            graphics.drawString(font, matched, currentX, y, highlightColor, false);
-            currentX += font.width(matched);
+            graphics.fill(currentX - 1, y - 1, currentX + FontRenderUtility.getStringWidth(matched) + 1, y + 10, 0x44FFAA00);
+            FontRenderUtility.drawString(graphics, matched, currentX, y, highlightColor, true);
+            currentX += FontRenderUtility.getStringWidth(matched);
 
             i = matchIdx + queryLen;
         }
@@ -172,7 +193,7 @@ public class ModuleButton {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int[] currentYOut, net.minecraft.client.Minecraft mc) {
         int currentY = currentYOut[0];
-        int height = 14;
+        int height = 18;
 
         int visibleCount = 0;
         int expandedHeight = 0;
@@ -183,7 +204,7 @@ public class ModuleButton {
             }
         }
 
-        if (mouseX >= x && mouseX <= x + 100 && mouseY >= currentY && mouseY <= currentY + height) {
+        if (mouseX >= x && mouseX <= x + 120 && mouseY >= currentY && mouseY <= currentY + height) {
             if (button == 0) {
                 module.toggle();
             } else if (button == 1 && visibleCount > 0) {
@@ -213,7 +234,7 @@ public class ModuleButton {
             for (ParameterElement pe : parameterElements) {
                 if (pe.getParameter().isVisible()) {
                     int pHeight = pe.getHeight();
-                    if (pe.mouseClicked(mouseX, mouseY, button, x + 6, currentY, 100 - 10, pHeight)) {
+                    if (pe.mouseClicked(mouseX, mouseY, button, x + 6, currentY, 120 - 10, pHeight)) {
                         currentYOut[0] = currentY + pHeight;
                         return true;
                     }

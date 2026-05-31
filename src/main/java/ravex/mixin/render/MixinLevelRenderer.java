@@ -29,31 +29,34 @@ public class MixinLevelRenderer {
         boolean bool2,
         CallbackInfo ci
     ) {
-        renderHighlights(camera);
+        renderHighlights(camera, modelViewMatrix);
     }
 
-    private void renderHighlights(net.minecraft.client.Camera camera) {
+    private void renderHighlights(net.minecraft.client.Camera camera, org.joml.Matrix4f modelViewMatrix) {
         Vec3 hp = null;
         float alpha = 0.0f;
         float r = 0.2f;
         float g = 0.8f;
         float b = 1.0f;
 
+        double size = 1.0;
+
         if (ravex.modules.player.AirPlace.INSTANCE.getEnabled()) {
             hp = ravex.modules.player.AirPlace.highlightPos;
             alpha = ravex.modules.player.AirPlace.renderAlpha;
+            size = ravex.modules.player.AirPlace.renderSize;
             r = ravex.modules.player.AirPlace.renderR;
             g = ravex.modules.player.AirPlace.renderG;
             b = ravex.modules.player.AirPlace.renderB;
         } else if (ravex.modules.world.Scaffold.INSTANCE.getEnabled()) {
             hp = ravex.modules.world.Scaffold.highlightPos;
             alpha = ravex.modules.world.Scaffold.renderAlpha;
+            size = ravex.modules.world.Scaffold.renderSize;
             r = ravex.modules.world.Scaffold.renderR;
             g = ravex.modules.world.Scaffold.renderG;
             b = ravex.modules.world.Scaffold.renderB;
         }
 
-        System.out.println("[RaveX] renderHighlights: hp=" + hp + " alpha=" + alpha);
         if (hp == null || alpha <= 0.01f) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -61,8 +64,7 @@ public class MixinLevelRenderer {
 
         try {
             Vec3 camPos = camera.position();
-            Matrix4f matrix = new Matrix4f()
-                .rotate(camera.rotation())
+            Matrix4f matrix = new Matrix4f(modelViewMatrix)
                 .translate(
                     (float)(hp.x - camPos.x),
                     (float)(hp.y - camPos.y),
@@ -72,9 +74,9 @@ public class MixinLevelRenderer {
             float filledAlpha = alpha * 0.3f;
             float lineAlpha = alpha * 0.95f;
 
-            Render3DUtils.renderFilledBox(matrix, 1.0, r, g, b, filledAlpha);
-            Render3DUtils.renderWireframe(matrix, 1.0, r, g, b, lineAlpha);
-            Render3DUtils.renderWireframe(matrix, 1.02, r, g, b, lineAlpha * 0.4f);
+            Render3DUtils.renderFilledBox(matrix, size, r, g, b, filledAlpha);
+            Render3DUtils.renderWireframe(matrix, size, r, g, b, lineAlpha);
+            Render3DUtils.renderWireframe(matrix, size * 1.02, r, g, b, lineAlpha * 0.4f);
         } catch (Exception e) {
             System.out.println("[RaveX] Highlight error: " + e.getMessage());
         }

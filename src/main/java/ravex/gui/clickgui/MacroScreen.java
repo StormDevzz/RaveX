@@ -1,6 +1,7 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.Minecraft;
+import ravex.utility.render.FontRenderUtility;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -56,11 +57,11 @@ public class MacroScreen extends Screen {
 
         int activeColor = ColorUtility.getActiveColor();
 
-        graphics.drawString(this.font, "Macro Editor", 20, 12, 0xFFFFFFFF, true);
-        graphics.drawString(this.font, "Add macros with keybinds that execute multiple actions", 20, 24, 0xFF8F8FA0, false);
+        FontRenderUtility.drawString(graphics, "Macro Editor", 20, 12, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, "Add macros with keybinds that execute multiple actions", 20, 24, 0xFF8F8FA0, false);
 
         if (statusTimer > 0 && !statusMessage.isEmpty()) {
-            graphics.drawString(this.font, statusMessage, 20, 38, 0xFFAAFFAA, false);
+            FontRenderUtility.drawString(graphics, statusMessage, 20, 38, 0xFFAAFFAA, false);
         }
 
         int listX = 20;
@@ -78,17 +79,17 @@ public class MacroScreen extends Screen {
             graphics.fill(listX + 2, y, listX + listW - 2, y + itemH, bg);
 
             String keyName = m.getKeyBind() > 0 ? " [" + getKeyName(m.getKeyBind()) + "]" : "";
-            graphics.drawString(this.font, m.getName() + keyName, listX + 6, y + 5, 0xFFD0D0E0, false);
+            FontRenderUtility.drawString(graphics, m.getName() + keyName, listX + 6, y + 5, 0xFFD0D0E0, false);
 
             int actionCount = m.getActions().size();
             String countStr = actionCount + " action" + (actionCount != 1 ? "s" : "");
-            int cw = this.font.width(countStr);
-            graphics.drawString(this.font, countStr, listX + listW - cw - 8, y + 5, 0xFF707080, false);
+            int cw = FontRenderUtility.getStringWidth(countStr);
+            FontRenderUtility.drawString(graphics, countStr, listX + listW - cw - 8, y + 5, 0xFF707080, false);
 
             y += itemH;
         }
         if (macros.isEmpty()) {
-            graphics.drawString(this.font, "No macros yet. Click \"Create\" to add one.", listX + 6, listY + 8, 0xFF505060, false);
+            FontRenderUtility.drawString(graphics, "No macros yet. Click \"Create\" to add one.", listX + 6, listY + 8, 0xFF505060, false);
         }
 
         if (creatingNew) {
@@ -112,15 +113,15 @@ public class MacroScreen extends Screen {
         graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + dlgH, 0xF510101A);
         graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + 1, ColorUtility.getActiveColor());
 
-        graphics.drawString(this.font, "New Macro", dlgX + 10, dlgY + 10, 0xFFFFFFFF, true);
-        graphics.drawString(this.font, "Name:", dlgX + 10, dlgY + 32, 0xFF9E9EB0, false);
+        FontRenderUtility.drawString(graphics, "New Macro", dlgX + 10, dlgY + 10, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, "Name:", dlgX + 10, dlgY + 32, 0xFF9E9EB0, false);
 
         int inputX = dlgX + 10;
         int inputY = dlgY + 46;
         int inputW = dlgW - 20;
         int inputH = 16;
         graphics.fill(inputX, inputY, inputX + inputW, inputY + inputH, 0xFF1A1A28);
-        graphics.drawString(this.font, newName.isEmpty() ? "MyMacro" : newName, inputX + 4, inputY + 3, newName.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
+        FontRenderUtility.drawString(graphics, newName.isEmpty() ? "MyMacro" : newName, inputX + 4, inputY + 3, newName.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
 
         int btnY = dlgY + 70;
         int btnW = 70;
@@ -128,11 +129,11 @@ public class MacroScreen extends Screen {
 
         boolean okHovered = mouseX >= dlgX + 20 && mouseX <= dlgX + 20 + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
         graphics.fill(dlgX + 20, btnY, dlgX + 20 + btnW, btnY + btnH, okHovered ? ColorUtility.getActiveColor() : 0xFF202035);
-        graphics.drawString(this.font, "Create", dlgX + 20 + (btnW - this.font.width("Create")) / 2, btnY + 3, 0xFFFFFFFF, false);
+        FontRenderUtility.drawString(graphics, "Create", dlgX + 20 + (btnW - FontRenderUtility.getStringWidth("Create")) / 2, btnY + 3, 0xFFFFFFFF, false);
 
         boolean cancelHovered = mouseX >= dlgX + dlgW - 20 - btnW && mouseX <= dlgX + dlgW - 20 && mouseY >= btnY && mouseY <= btnY + btnH;
         graphics.fill(dlgX + dlgW - 20 - btnW, btnY, dlgX + dlgW - 20, btnY + btnH, cancelHovered ? 0xFF303035 : 0xFF14141E);
-        graphics.drawString(this.font, "Cancel", dlgX + dlgW - 20 - btnW + (btnW - this.font.width("Cancel")) / 2, btnY + 3, 0xFFD0D0E0, false);
+        FontRenderUtility.drawString(graphics, "Cancel", dlgX + dlgW - 20 - btnW + (btnW - FontRenderUtility.getStringWidth("Cancel")) / 2, btnY + 3, 0xFFD0D0E0, false);
     }
 
     private void renderActionEditor(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -147,42 +148,42 @@ public class MacroScreen extends Screen {
         graphics.fill(edX, edY, edX + edW, edY + edH, 0xF510101A);
         graphics.fill(edX, edY, edX + edW, edY + 1, ColorUtility.getActiveColor());
 
-        graphics.drawString(this.font, "Editing: " + m.getName(), edX + 10, edY + 8, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, "Editing: " + m.getName(), edX + 10, edY + 8, 0xFFFFFFFF, true);
 
         int actionY = edY + 28;
         for (int i = 0; i < m.getActions().size(); i++) {
             MacroAction a = m.getActions().get(i);
             boolean hovered = mouseX >= edX + 4 && mouseX <= edX + edW - 30 && mouseY >= actionY && mouseY <= actionY + 14;
             graphics.fill(edX + 4, actionY, edX + edW - 30, actionY + 14, hovered ? 0xFF202035 : 0xFF14141E);
-            graphics.drawString(this.font, i + 1 + ". " + a.getDisplayString(), edX + 8, actionY + 3, 0xFFB0B0C0, false);
+            FontRenderUtility.drawString(graphics, i + 1 + ". " + a.getDisplayString(), edX + 8, actionY + 3, 0xFFB0B0C0, false);
 
             boolean delHov = mouseX >= edX + edW - 26 && mouseX <= edX + edW - 6 && mouseY >= actionY + 1 && mouseY <= actionY + 13;
             graphics.fill(edX + edW - 26, actionY + 1, edX + edW - 6, actionY + 13, delHov ? 0xFF553333 : 0xFF1A1A28);
-            graphics.drawString(this.font, "X", edX + edW - 18, actionY + 3, 0xFFFF6666, false);
+            FontRenderUtility.drawString(graphics, "X", edX + edW - 18, actionY + 3, 0xFFFF6666, false);
 
             actionY += 16;
         }
 
         int addY = actionY + 6;
-        graphics.drawString(this.font, "Add Action:", edX + 8, addY, 0xFF9E9EB0, false);
+        FontRenderUtility.drawString(graphics, "Add Action:", edX + 8, addY, 0xFF9E9EB0, false);
         int addInputY = addY + 14;
 
         String typeLabel = "Type: " + ACTION_TYPES[actionTypeIndex];
-        graphics.drawString(this.font, typeLabel, edX + 8, addInputY, 0xFFD0D0E0, false);
+        FontRenderUtility.drawString(graphics, typeLabel, edX + 8, addInputY, 0xFFD0D0E0, false);
 
         int inputY = addInputY + 14;
         int inputW = edW - 20;
         graphics.fill(edX + 6, inputY, edX + 6 + inputW, inputY + 16, 0xFF1A1A28);
-        graphics.drawString(this.font, actionInput.isEmpty() ? "Enter value..." : actionInput, edX + 10, inputY + 3, actionInput.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
+        FontRenderUtility.drawString(graphics, actionInput.isEmpty() ? "Enter value..." : actionInput, edX + 10, inputY + 3, actionInput.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
 
         int addBtnY = inputY + 22;
         boolean addHov = mouseX >= edX + 10 && mouseX <= edX + 90 && mouseY >= addBtnY && mouseY <= addBtnY + 14;
         graphics.fill(edX + 10, addBtnY, edX + 90, addBtnY + 14, addHov ? ColorUtility.getActiveColor() : 0xFF202035);
-        graphics.drawString(this.font, "Add Action", edX + 18, addBtnY + 3, 0xFFFFFFFF, false);
+        FontRenderUtility.drawString(graphics, "Add Action", edX + 18, addBtnY + 3, 0xFFFFFFFF, false);
 
         boolean doneHov = mouseX >= edX + edW - 80 && mouseX <= edX + edW - 10 && mouseY >= addBtnY && mouseY <= addBtnY + 14;
         graphics.fill(edX + edW - 80, addBtnY, edX + edW - 10, addBtnY + 14, doneHov ? 0xFF303035 : 0xFF14141E);
-        graphics.drawString(this.font, "Done", edX + edW - 60, addBtnY + 3, 0xFFD0D0E0, false);
+        FontRenderUtility.drawString(graphics, "Done", edX + edW - 60, addBtnY + 3, 0xFFD0D0E0, false);
     }
 
     private void renderToolbar(GuiGraphics graphics, int mouseX, int mouseY, int activeColor) {
@@ -198,7 +199,7 @@ public class MacroScreen extends Screen {
             boolean hovered = mouseX >= bx && mouseX <= bx + btnW && mouseY >= tbY && mouseY <= tbY + btnH;
             int bg = hovered ? (i == 0 ? activeColor : 0xFF202035) : (i == 0 ? 0xFF252540 : 0xFF0D0D14);
             graphics.fill(bx, tbY, bx + btnW, tbY + btnH, bg);
-            graphics.drawString(this.font, texts[i], bx + (btnW - this.font.width(texts[i])) / 2, tbY + 6, 0xFFD0D0E0, false);
+            FontRenderUtility.drawString(graphics, texts[i], bx + (btnW - FontRenderUtility.getStringWidth(texts[i])) / 2, tbY + 6, 0xFFD0D0E0, false);
         }
 
         if (selectedIndex >= 0 && selectedIndex < macros.size()) {
@@ -207,11 +208,11 @@ public class MacroScreen extends Screen {
             int kx = this.width - 220;
             boolean bindHovered = mouseX >= kx && mouseX <= kx + 120 && mouseY >= tbY && mouseY <= tbY + btnH;
             graphics.fill(kx, tbY, kx + 120, tbY + btnH, bindHovered || bindingKey ? activeColor : 0xFF14141E);
-            graphics.drawString(this.font, bindingKey ? "Press a key..." : keyText, kx + 8, tbY + 6, 0xFFFFFFFF, false);
+            FontRenderUtility.drawString(graphics, bindingKey ? "Press a key..." : keyText, kx + 8, tbY + 6, 0xFFFFFFFF, false);
 
             boolean actionsHovered = mouseX >= this.width - 90 && mouseX <= this.width - 20 && mouseY >= tbY && mouseY <= tbY + btnH;
             graphics.fill(this.width - 90, tbY, this.width - 20, tbY + btnH, actionsHovered ? 0xFF303050 : 0xFF14141E);
-            graphics.drawString(this.font, "Actions", this.width - 80, tbY + 6, 0xFFD0D0E0, false);
+            FontRenderUtility.drawString(graphics, "Actions", this.width - 80, tbY + 6, 0xFFD0D0E0, false);
         }
     }
 

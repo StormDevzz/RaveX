@@ -10,7 +10,7 @@ public class Hud extends Module {
     public final BooleanParameter hudEditor = new BooleanParameter("HudEditor", false);
 
     private Hud() {
-        super("Hud", Category.RENDER);
+        super("Hud", Category.CLIENT);
         addParameter(hudEditor);
         setEnabled(true);
     }

@@ -22,6 +22,6 @@ namespace ravex::shaders {
     }
 
     float calculateWave(float time, float x, float z) {
-        return std::sin(time + x * 0.5f + z * 0.5f) * 0.03f;
+        return std::sin(time) * 0.012f;
     }
 }

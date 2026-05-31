@@ -100,13 +100,5 @@ processResources {
         ])
     }
 
-    // Force copying resources to classes directory to bypass Fabric Loader classpath issues in dev!
-    doLast {
-        copy {
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-            from "src/main/resources"
-            into "${layout.buildDirectory.get().asFile}/classes/java/main"
-        }
-    }
 }
 //Xiaomi 10SPro 

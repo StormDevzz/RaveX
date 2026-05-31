@@ -8,6 +8,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.CharacterEvent;
 import org.lwjgl.glfw.GLFW;
 import ravex.modules.Category;
+import ravex.utility.render.FontRenderUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ public class ClickGUI extends Screen {
     public static String searchQuery = "";
     public static ravex.parameter.ColorParameter activeColorParameter = null;
     public static ColorPaletteModal activeColorPalette = null;
+    public static ParameterElement activeStringParameterElement = null;
 
     private final List<CategoryPanel> panels = new ArrayList<>();
     private final long initTime;
@@ -44,14 +46,70 @@ public class ClickGUI extends Screen {
         int spacing = 15;
         Category[] categories = Category.values();
         for (int i = 0; i < categories.length; i++) {
-            panels.add(new CategoryPanel(categories[i], startX + i * (100 + spacing), startY));
+            panels.add(new CategoryPanel(categories[i], startX + i * (120 + spacing), startY));
         }
         ravex.utility.sound.SoundUtility.playGuiOpen();
     }
 
     @Override
+    protected void init() {
+        float spacing = 2;
+        float panelW = 120;
+        int numPanels = panels.size();
+        float totalW = numPanels * panelW + (numPanels - 1) * spacing;
+        float startX = (this.width - totalW) / 2;
+        float startY = (this.height - 200) / 2;
+
+        for (int i = 0; i < numPanels; i++) {
+            CategoryPanel panel = panels.get(i);
+            panel.setX((int)(startX + i * (panelW + spacing)));
+            panel.setY((int)startY);
+        }
+    }
+
+    @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    private float getResponsiveScale() {
+        int numPanels = panels.size();
+        if (numPanels == 0) return 1.0f;
+
+        float panelW = 120f;
+        float spacing = 2f;
+        float totalW = numPanels * panelW + (numPanels - 1) * spacing;
+        float totalH = 16f + 18f * 18 + 60f; // header + modules + padding
+
+        float marginX = 30f;
+        float marginY = 50f;
+        float availW = this.width - marginX * 2;
+        float availH = this.height - marginY * 2;
+
+        if (availW <= 0 || availH <= 0) return 0.5f;
+
+        float scaleW = availW / totalW;
+        float scaleH = availH / totalH;
+        float scale = Math.min(scaleW, scaleH);
+
+        return Math.max(0.4f, Math.min(1.0f, scale));
+    }
+
+    private float getAdaptiveScale() {
+        long elapsed = System.currentTimeMillis() - initTime;
+        float animProgress = Math.min(1.0f, elapsed / 180.0f);
+        float animScale = animProgress * (2.0f - animProgress);
+
+        if (closing) {
+            long closingElapsed = System.currentTimeMillis() - closingStartTime;
+            if (closingElapsed < 130) {
+                float closingProgress = Math.max(0.0f, 1.0f - (closingElapsed / 130.0f));
+                animScale = closingProgress * (2.0f - closingProgress);
+            }
+        }
+
+        float responsiveScale = getResponsiveScale();
+        return animScale * responsiveScale;
     }
 
     @Override
@@ -60,53 +118,71 @@ public class ClickGUI extends Screen {
             graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.BACKGROUND_START, ColorUtility.BACKGROUND_END);
         }
 
-        String tips = "Right Shift / Esc to Close  •  Middle Click to Bind  •  Right Click to Configure Settings";
-        int tipsW = this.font.width(tips);
+        String tips = "Esc/Shift — close  •  MMB — bind  •  RMB — settings";
+        int tipsW = FontRenderUtility.getStringWidth(tips);
         int tipsX = (this.width - tipsW) / 2;
-        int tipsY = this.height - 20;
+        int tipsY = this.height - 18;
 
-        graphics.fill(tipsX - 10, tipsY - 5, tipsX + tipsW + 10, tipsY + 13, 0x88050508);
-        graphics.drawString(this.font, tips, tipsX, tipsY, 0xFF858599, false);
+        int tipBg = ColorUtility.withAlpha(ColorUtility.getActiveColor(), 15);
+        graphics.fillGradient(tipsX - 14, tipsY - 5, tipsX + tipsW + 14, tipsY + 12, tipBg, 0x22050508);
+        graphics.fill(tipsX - 14, tipsY + 7, tipsX + tipsW + 14, tipsY + 8, ColorUtility.withAlpha(ColorUtility.getActiveColor(), 40));
+        FontRenderUtility.drawString(graphics, tips, tipsX, tipsY - 1, 0xFF858599, true);
 
-        int mgX = 10;
-        int mgY = this.height - 38;
-        int mgW = 56;
-        int mgH = 14;
+        float btnScale = Math.max(0.7f, getResponsiveScale());
+        int mgW = (int)(60 * btnScale);
+        int mgH = (int)(16 * btnScale);
+        int mgX = Math.max(4, (int)(10 * btnScale));
+        int mgY = this.height - (int)(40 * btnScale);
         macrosHovered = mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
-        profilesHovered = mouseX >= mgX + mgW + 4 && mouseX <= mgX + mgW * 2 + 4 && mouseY >= mgY && mouseY <= mgY + mgH;
-        int macroBg = macrosHovered ? ColorUtility.getActiveColor() : 0x8810101A;
-        int profileBg = profilesHovered ? ColorUtility.getActiveColor() : 0x8810101A;
-        graphics.fill(mgX, mgY, mgX + mgW, mgY + mgH, macroBg);
-        graphics.fill(mgX + mgW + 4, mgY, mgX + mgW * 2 + 4, mgY + mgH, profileBg);
-        graphics.drawString(this.font, "Macros", mgX + 4, mgY + 3, 0xFFD0D0E0, false);
-        graphics.drawString(this.font, "Profiles", mgX + mgW + 8, mgY + 3, 0xFFD0D0E0, false);
+        profilesHovered = mouseX >= mgX + mgW + 6 && mouseX <= mgX + mgW * 2 + 6 && mouseY >= mgY && mouseY <= mgY + mgH;
+        int activeColor = ColorUtility.getActiveColor();
+        int macroBg = macrosHovered ? activeColor : 0xAA0E0E1C;
+        int profileBg = profilesHovered ? activeColor : 0xAA0E0E1C;
+
+        for (int s = 2; s > 0; s--) {
+            int sa = (int)(15 * (1f - s/2f));
+            graphics.fill(mgX + s, mgY + s, mgX + mgW - s, mgY + mgH + s, (sa << 24));
+            graphics.fill(mgX + mgW + 6 + s, mgY + s, mgX + mgW * 2 + 6 - s, mgY + mgH + s, (sa << 24));
+        }
+        graphics.fillGradient(mgX, mgY, mgX + mgW, mgY + mgH, macroBg, ColorUtility.darker(macroBg, 0.7f));
+        graphics.fillGradient(mgX + mgW + 6, mgY, mgX + mgW * 2 + 6, mgY + mgH, profileBg, ColorUtility.darker(profileBg, 0.7f));
+        graphics.fill(mgX + mgW + 6, mgY + 1, mgX + mgW + 7, mgY + mgH - 1, ColorUtility.withAlpha(activeColor, 80));
+        if (macrosHovered) {
+            graphics.fill(mgX, mgY + mgH - 1, mgX + mgW, mgY + mgH, activeColor);
+        }
+        if (profilesHovered) {
+            graphics.fill(mgX + mgW + 6, mgY + mgH - 1, mgX + mgW * 2 + 6, mgY + mgH, activeColor);
+        }
+
+        int textY = mgY + (mgH - 8) / 2;
+        FontRenderUtility.drawString(graphics, "Macros", mgX + 8, textY, 0xFFD0D0E0, true);
+        FontRenderUtility.drawString(graphics, "Profiles", mgX + mgW + 14, textY, 0xFFD0D0E0, true);
 
         hoveredDescription = null;
 
-        long elapsed = System.currentTimeMillis() - initTime;
-        float animProgress = Math.min(1.0f, elapsed / 180.0f);
-        float scale = animProgress * (2.0f - animProgress);
-
-        if (closing) {
-            long closingElapsed = System.currentTimeMillis() - closingStartTime;
-            if (closingElapsed >= 130) {
-                this.minecraft.setScreen(null);
-                return;
-            }
-            float closingProgress = Math.max(0.0f, 1.0f - (closingElapsed / 130.0f));
-            scale = closingProgress * (2.0f - closingProgress);
+        float finalScale = getAdaptiveScale();
+        if (closing && (System.currentTimeMillis() - closingStartTime >= 130)) {
+            this.minecraft.setScreen(null);
+            return;
         }
+
+        float cx = this.width / 2.0f;
+        float cy = this.height / 2.0f;
+
+        int mx = (int) ((mouseX - cx) / finalScale + cx);
+        int my = (int) ((mouseY - cy) / finalScale + cy);
+
+        // Render search bar in unscaled space so it's always accessible
+        renderSearchBar(graphics, mouseX, mouseY);
 
         var pose = graphics.pose();
         pose.pushMatrix();
-        pose.translate(this.width / 2.0f, this.height / 2.0f);
-        pose.scale(scale, scale);
-        pose.translate(-this.width / 2.0f, -this.height / 2.0f);
-
-        renderSearchBar(graphics, mouseX, mouseY);
+        pose.translate(cx, cy);
+        pose.scale(finalScale, finalScale);
+        pose.translate(-cx, -cy);
 
         for (CategoryPanel panel : panels) {
-            panel.render(graphics, this.font, mouseX, mouseY, searchQuery);
+            panel.render(graphics, mx, my, searchQuery);
         }
 
         pose.popMatrix();
@@ -121,7 +197,7 @@ public class ClickGUI extends Screen {
         if (tooltipAlpha > 0.02f && !activeTooltipText.isEmpty()) {
             int tx = mouseX + 12;
             int ty = mouseY + 12;
-            int tw = this.font.width(activeTooltipText) + 8;
+            int tw = FontRenderUtility.getStringWidth(activeTooltipText) + 8;
             int th = 16;
 
             if (tx + tw > this.width) tx = mouseX - tw - 4;
@@ -134,21 +210,21 @@ public class ClickGUI extends Screen {
 
             graphics.fill(tx, ty, tx + tw, ty + th, bg);
             graphics.fill(tx, ty, tx + tw, ty + 1, border);
-            graphics.drawString(this.font, activeTooltipText, tx + 4, ty + 4, textCol, false);
+            FontRenderUtility.drawString(graphics, activeTooltipText, tx + 4, ty + 4, textCol, true);
         }
 
         if (activeColorPalette != null) {
-            activeColorPalette.render(graphics, this.font, mouseX, mouseY, this.width, this.height);
+            activeColorPalette.render(graphics, mouseX, mouseY, this.width, this.height);
         }
 
         super.render(graphics, mouseX, mouseY, partialTicks);
     }
 
     private void renderSearchBar(GuiGraphics graphics, int mouseX, int mouseY) {
-        int barX = this.width / 2 - 120;
-        int barY = 12;
-        int barW = 240;
-        int barH = 22;
+        int barW = Math.min(280, this.width - 60);
+        int barX = (this.width - barW) / 2;
+        int barY = 14;
+        int barH = 26;
 
         long now = System.currentTimeMillis();
         long delta = now - searchLastUpdate;
@@ -156,32 +232,48 @@ public class ClickGUI extends Screen {
         if (delta > 100) delta = 16;
 
         if (searchFocused) {
-            searchAnimProgress = Math.min(1.0f, searchAnimProgress + delta * 0.01f);
+            searchAnimProgress = Math.min(1.0f, searchAnimProgress + delta * 0.012f);
             searchCursorCounter++;
         } else {
-            searchAnimProgress = Math.max(0.0f, searchAnimProgress - delta * 0.015f);
+            searchAnimProgress = Math.max(0.0f, searchAnimProgress - delta * 0.018f);
         }
 
         int glowColor = ColorUtility.getActiveColor();
-        int baseColor = 0xFF0D0D1A;
-
-        int animWidth = (int)(barW * (0.5f + 0.5f * searchAnimProgress)) + (int)(barW * 0.5f * (1f - searchAnimProgress));
-        int expandedW = Math.max(barW, animWidth);
+        float eased = searchAnimProgress * searchAnimProgress * (3f - 2f * searchAnimProgress);
+        int expandedW = barW + (int)(60 * eased);
         int actualX = barX - (expandedW - barW) / 2;
 
-        graphics.fill(actualX, barY, actualX + expandedW, barY + barH, 0xFF0A0A14);
+        for (int s = 3; s > 0; s--) {
+            int sa = (int)(15 * (1f - s/3f));
+            graphics.fill(actualX + s, barY + s, actualX + expandedW - s, barY + barH + s, (sa << 24));
+        }
+        graphics.fillGradient(actualX, barY, actualX + expandedW, barY + barH, 0xFF0B0B1A, 0xFF14142E);
+        graphics.fill(actualX, barY + barH - 2, actualX + expandedW, barY + barH - 1, ColorUtility.withAlpha(glowColor, 40 + (int)(60 * eased)));
         graphics.fill(actualX, barY + barH - 1, actualX + expandedW, barY + barH, glowColor);
+
+        int searchIconSize = 10;
+        int iconX = actualX + 10;
+        int iconY = barY + (barH - searchIconSize) / 2 + 1;
+        for (int dy = 0; dy < searchIconSize; dy++) {
+            float dist = Math.abs(dy - searchIconSize / 2f) / (searchIconSize / 2f);
+            int dx = (int)(4 * dist);
+            graphics.fill(iconX + dx, iconY + dy, iconX + searchIconSize - dx, iconY + dy + 1, ColorUtility.withAlpha(glowColor, 80 + (int)(40 * eased)));
+        }
 
         String searchText = searchQuery;
         if (searchText.isEmpty() && !searchFocused) {
-            graphics.drawString(this.font, "\uD83D\uDD0D Search modules...", actualX + 8, barY + 7, 0xFF505060, false);
+            FontRenderUtility.drawString(graphics, "Search modules\u2026", actualX + 24, barY + 9, 0xFF505068, true);
         } else {
-            graphics.drawString(this.font, "\uD83D\uDD0D " + searchText, actualX + 8, barY + 7, 0xFFC0C0D0, false);
-            if (searchFocused && (searchCursorCounter / 20) % 2 == 0) {
-                int textW = this.font.width(searchText);
-                graphics.fill(actualX + 18 + textW, barY + 6, actualX + 20 + textW, barY + 16, 0xFFC0C0D0);
+            FontRenderUtility.drawString(graphics, searchText, actualX + 24, barY + 9, 0xFFC0C0D0, true);
+            if (searchFocused) {
+                int textW = FontRenderUtility.getStringWidth(searchText);
+                float cursorBlink = (float)Math.sin(searchCursorCounter * 0.1f);
+                int cursorAlpha = (int)(150 + 105 * cursorBlink * cursorBlink * cursorBlink);
+                graphics.fill(actualX + 24 + textW, barY + 8, actualX + 26 + textW, barY + 19, (cursorAlpha << 24) | (glowColor & 0xFFFFFF));
             }
         }
+
+        graphics.fill(actualX + 22, barY + 7, actualX + 24, barY + 19, ColorUtility.withAlpha(glowColor, 80));
 
         int resultCount = 0;
         if (!searchQuery.isEmpty()) {
@@ -189,9 +281,10 @@ public class ClickGUI extends Screen {
                 resultCount += panel.getMatchCount(searchQuery);
             }
             if (resultCount > 0) {
-                String countText = resultCount + " found";
-                int cw = this.font.width(countText);
-                graphics.drawString(this.font, countText, actualX + expandedW - cw - 8, barY + 7, 0xFF707080, false);
+                String countText = resultCount + (resultCount == 1 ? " result" : " results");
+                int cw = FontRenderUtility.getStringWidth(countText);
+                FontRenderUtility.drawString(graphics, countText, actualX + expandedW - cw - 10, barY + 9, 0xFF606080, true);
+                graphics.fill(actualX + expandedW - cw - 14, barY + 8, actualX + expandedW - cw - 12, barY + 19, ColorUtility.withAlpha(glowColor, 60));
             }
         }
     }
@@ -202,9 +295,16 @@ public class ClickGUI extends Screen {
             return activeColorPalette.mouseClicked(event.x(), event.y(), event.button());
         }
 
-        int barX = this.width / 2 - 120;
+        float finalScale = getAdaptiveScale();
+        float cx = this.width / 2.0f;
+        float cy = this.height / 2.0f;
+
+        double mx = (event.x() - cx) / finalScale + cx;
+        double my = (event.y() - cy) / finalScale + cy;
+
+        int barW = Math.min(240, this.width - 60);
+        int barX = (this.width - barW) / 2;
         int barY = 12;
-        int barW = 240;
         int barH = 22;
 
         if (event.x() >= barX && event.x() <= barX + barW && event.y() >= barY && event.y() <= barY + barH) {
@@ -216,10 +316,11 @@ public class ClickGUI extends Screen {
             return super.mouseClicked(event, handled);
         }
 
-        int mgX = 10;
-        int mgY = this.height - 38;
-        int mgW = 56;
-        int mgH = 14;
+        float btnScale = Math.max(0.7f, getResponsiveScale());
+        int mgW = (int)(56 * btnScale);
+        int mgH = (int)(14 * btnScale);
+        int mgX = Math.max(4, (int)(10 * btnScale));
+        int mgY = this.height - (int)(38 * btnScale);
 
         if (event.x() >= mgX && event.x() <= mgX + mgW && event.y() >= mgY && event.y() <= mgY + mgH) {
             this.minecraft.setScreen(new MacroScreen(this));
@@ -231,7 +332,7 @@ public class ClickGUI extends Screen {
         }
 
         for (CategoryPanel panel : panels) {
-            if (panel.mouseClicked(event.x(), event.y(), event.button(), this.minecraft)) {
+            if (panel.mouseClicked(mx, my, event.button(), this.minecraft)) {
                 return true;
             }
         }
@@ -258,6 +359,22 @@ public class ClickGUI extends Screen {
                     net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(),
                     0.5f, 1.5f
                 );
+            }
+            return true;
+        }
+
+        if (activeStringParameterElement != null) {
+            ravex.parameter.StringParameter sp = (ravex.parameter.StringParameter) activeStringParameterElement.getParameter();
+            if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER) {
+                activeStringParameterElement = null;
+                return true;
+            }
+            if (key == GLFW.GLFW_KEY_BACKSPACE) {
+                String val = sp.getValue();
+                if (!val.isEmpty()) {
+                    sp.setValue(val.substring(0, val.length() - 1));
+                }
+                return true;
             }
             return true;
         }
@@ -291,6 +408,14 @@ public class ClickGUI extends Screen {
         if (activeColorPalette != null) {
             return true;
         }
+        if (activeStringParameterElement != null) {
+            ravex.parameter.StringParameter sp = (ravex.parameter.StringParameter) activeStringParameterElement.getParameter();
+            String text = event.codepointAsString();
+            if (!text.isEmpty() && text.charAt(0) >= 32 && text.charAt(0) < 127) {
+                sp.setValue(sp.getValue() + text);
+            }
+            return true;
+        }
         if (searchFocused) {
             String text = event.codepointAsString();
             if (!text.isEmpty() && text.charAt(0) >= 32 && text.charAt(0) < 127) {
@@ -303,6 +428,7 @@ public class ClickGUI extends Screen {
 
     @Override
     public void onClose() {
+        activeStringParameterElement = null;
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();

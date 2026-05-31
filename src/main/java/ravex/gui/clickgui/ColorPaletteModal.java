@@ -1,9 +1,9 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.Minecraft;
 import ravex.parameter.ColorParameter;
+import ravex.utility.render.FontRenderUtility;
 import org.lwjgl.glfw.GLFW;
 
 public class ColorPaletteModal {
@@ -96,7 +96,7 @@ public class ColorPaletteModal {
         return 0xff000000 | (r << 16) | (g << 8) | b;
     }
 
-    public void render(GuiGraphics graphics, Font font, int mouseX, int mouseY, int screenWidth, int screenHeight) {
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, int screenWidth, int screenHeight) {
         // Modal coordinates (centered)
         int mx = (screenWidth - modalWidth) / 2;
         int my = (screenHeight - modalHeight) / 2;
@@ -159,7 +159,7 @@ public class ColorPaletteModal {
         graphics.fill(mx + modalWidth, my - 1, mx + modalWidth + 1, my + modalHeight + 1, activeColor);
 
         // Header Title
-        graphics.drawString(font, parameter.getName() + " Palette", mx + 12, my + 10, 0xFFE5E5F0, false);
+        FontRenderUtility.drawString(graphics, parameter.getName() + " Palette", mx + 12, my + 10, 0xFFE5E5F0, false);
         
         // Horizontal divider line
         graphics.fill(mx + 10, my + 23, mx + modalWidth - 10, my + 24, 0xFF252535);
@@ -269,12 +269,12 @@ public class ColorPaletteModal {
 
         // Hex Code text label
         String hex = String.format("#%08X", getArgb());
-        int hw = font.width(hex);
-        graphics.drawString(font, hex, previewX + (previewW - hw) / 2, previewY + previewH + 6, 0xFFAAAAAA, false);
+        int hw = FontRenderUtility.getStringWidth(hex);
+        FontRenderUtility.drawString(graphics, hex, previewX + (previewW - hw) / 2, previewY + previewH + 6, 0xFFAAAAAA, false);
 
         // Curated Presets
         int presetY = my + 203;
-        graphics.drawString(font, "Presets", mx + 15, presetY - 10, 0xFF75758A, false);
+        FontRenderUtility.drawString(graphics, "Presets", mx + 15, presetY - 10, 0xFF75758A, false);
         
         int[] presets = {
             0xFFFFFFFF, // White
@@ -318,8 +318,8 @@ public class ColorPaletteModal {
         graphics.fill(btnX - 1, btnY - 1, btnX, btnY + btnH + 1, btnBorder);
         graphics.fill(btnX + btnW, btnY - 1, btnX + btnW + 1, btnY + btnH + 1, btnBorder);
         
-        int bw = font.width("Apply");
-        graphics.drawString(font, "Apply", btnX + (btnW - bw) / 2, btnY + 3, btnHovered ? 0xFFFFFFFF : 0xFFD0D0E8, false);
+        int bw = FontRenderUtility.getStringWidth("Apply");
+        FontRenderUtility.drawString(graphics, "Apply", btnX + (btnW - bw) / 2, btnY + 3, btnHovered ? 0xFFFFFFFF : 0xFFD0D0E8, false);
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {

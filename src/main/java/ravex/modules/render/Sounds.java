@@ -10,7 +10,7 @@ public class Sounds extends Module {
     public final NumberParameter volume = new NumberParameter("Volume", 1.0, 0.0, 1.0, 0.1);
 
     private Sounds() {
-        super("Sounds", Category.RENDER);
+        super("Sounds", Category.CLIENT);
         addParameter(volume);
         setEnabled(true); // Enabled by default so sounds are active right away!
     }

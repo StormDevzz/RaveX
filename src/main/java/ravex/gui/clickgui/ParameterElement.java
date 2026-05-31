@@ -1,8 +1,8 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.Font;
 import ravex.parameter.Parameter;
+import ravex.utility.render.FontRenderUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -12,6 +12,9 @@ import ravex.parameter.NumberParameter;
 public class ParameterElement {
     private final Parameter<?> parameter;
     private boolean isDragging = false;
+    private float toggleAnimProgress = 0f;
+    private long toggleLastUpdate = 0;
+    private long modeExpandedAt = 0;
 
     public ParameterElement(Parameter<?> parameter) {
         this.parameter = parameter;
@@ -24,63 +27,148 @@ public class ParameterElement {
     public int getHeight() {
         if (!parameter.isVisible()) return 0;
         if (parameter instanceof NumberParameter) {
-            return 16;
+            return 28;
         }
         if (parameter instanceof ColorParameter) {
-            return 12;
+            return 22;
         }
-        return 12;
+        if (parameter instanceof ModeParameter mp && mp.isExpanded()) {
+            return 22 + 18 * mp.getModes().size();
+        }
+        return 22;
     }
 
-    public void render(GuiGraphics graphics, Font font, int x, int y, int width, int height, int mouseX, int mouseY) {
-        int paramBg = 0xFF0D0D13;
-        graphics.fill(x, y, x + width, y + height, paramBg);
+    public void render(GuiGraphics graphics, int x, int y, int width, int height, int mouseX, int mouseY) {
+        long now = System.currentTimeMillis();
+        if (toggleLastUpdate == 0) toggleLastUpdate = now;
+        long delta = now - toggleLastUpdate;
+        toggleLastUpdate = now;
+        if (delta > 100) delta = 16;
 
         int activeColor = ColorUtility.getActiveColor();
+        boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
+
+        int bg = hovered ? 0xFF111122 : 0xFF0D0D18;
+        graphics.fill(x, y, x + width, y + height, bg);
+
+        int leftAccent = ColorUtility.withAlpha(activeColor, 30);
+        graphics.fill(x, y, x + 2, y + height, leftAccent);
 
         if (parameter instanceof BooleanParameter bp) {
-            // Draw Parameter Label on the left
-            graphics.drawString(font, bp.getName(), x + 6, y + 2, 0xFF9E9EB0, false);
+            int textCol = bp.getValue() ? 0xFFD0D0E0 : 0xFF9090A0;
+            FontRenderUtility.drawString(graphics, bp.getName(), x + 8, y + 7, textCol, true);
 
-            // Draw Toggle Switch Pill on the right
-            int swW = 16;
-            int swH = 8;
-            int swX = x + width - swW - 8;
+            int swW = 30;
+            int swH = 14;
+            int swX = x + width - swW - 7;
             int swY = y + (height - swH) / 2;
 
-            int trackCol = bp.getValue() ? activeColor : 0xFF2A2A35;
-            graphics.fill(swX, swY, swX + swW, swY + swH, trackCol);
+            if (bp.getValue()) {
+                toggleAnimProgress = Math.min(1.0f, toggleAnimProgress + delta * 0.012f);
+            } else {
+                toggleAnimProgress = Math.max(0.0f, toggleAnimProgress - delta * 0.012f);
+            }
 
-            int knobX = bp.getValue() ? (swX + swW - 6) : (swX + 1);
-            graphics.fill(knobX, swY + 1, knobX + 5, swY + swH - 1, 0xFFFFFFFF);
+            int knobSize = 10;
+            int knobRange = swW - knobSize - 3;
+            int knobX = swX + 2 + (int)(toggleAnimProgress * knobRange);
+            int knobY2 = swY + 2;
+
+            int trackR = ((activeColor >> 16) & 0xFF);
+            int trackG = ((activeColor >> 8) & 0xFF);
+            int trackB = (activeColor & 0xFF);
+            int trackOn = (0xCC << 24) | (trackR << 16) | (trackG << 8) | trackB;
+            int trackOff = 0xFF2A2A38;
+            int trackColor = lerpColor(trackOff, trackOn, toggleAnimProgress);
+
+            int sh = 2;
+            for (int s = sh; s > 0; s--) {
+                int sa = (int)(12 * (1f - s/(float)sh));
+                graphics.fill(swX + s, swY + s + 1, swX + swW - s, swY + swH + s, (sa << 24));
+            }
+
+            for (int i = 0; i < swH; i++) {
+                float t = (i + 0.5f) / swH;
+                float edge = Math.min(t, 1f - t) * 2f;
+                int inset = (int)(swH/2 * (1f - edge * edge));
+                if (inset < 0) inset = 0;
+                graphics.fill(swX + inset, swY + i, swX + swW - inset, swY + i + 1, trackColor);
+            }
+
+            for (int i = 0; i < knobSize; i++) {
+                float t = (i + 0.5f) / knobSize;
+                float edge = Math.min(t, 1f - t) * 2f;
+                int inset = (int)(knobSize/2 * (1f - edge * edge));
+                if (inset < 0) inset = 0;
+                int kcol = (int)(0xFF * (0.85f + 0.15f * toggleAnimProgress));
+                int knobCol = (0xFF << 24) | (kcol << 16) | (kcol << 8) | kcol;
+                if (i == 0 || i == knobSize - 1) {
+                    int borderInset = knobSize/2 - 1;
+                    graphics.fill(knobX + borderInset, knobY2 + i, knobX + knobSize - borderInset, knobY2 + i + 1, 0xFFE0E0E0);
+                } else {
+                    graphics.fill(knobX + inset, knobY2 + i, knobX + knobSize - inset, knobY2 + i + 1, knobCol);
+                }
+            }
+
+            if (toggleAnimProgress > 0.01f && toggleAnimProgress < 0.99f) {
+                int glowA = (int)(25 * Math.sin(toggleAnimProgress * Math.PI));
+                int glowCol = (glowA << 24) | (trackR << 16) | (trackG << 8) | trackB;
+                for (int g = 0; g < 2; g++) {
+                    graphics.fill(swX - g, swY - g, swX + swW + g, swY + swH + g, glowCol);
+                }
+            }
 
         } else if (parameter instanceof ModeParameter mp) {
-            // Draw Parameter Label on the left
-            graphics.drawString(font, mp.getName(), x + 6, y + 2, 0xFF9E9EB0, false);
+            FontRenderUtility.drawString(graphics, mp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
 
-            // Draw '< Mode >' selection on the right
-            String modeVal = "< " + mp.getValue() + " >";
-            int mw = font.width(modeVal);
-            graphics.drawString(font, modeVal, x + width - mw - 6, y + 2, activeColor, false);
+            if (mp.isExpanded()) {
+                int modeY = y + 22;
+                for (String m : mp.getModes()) {
+                    boolean isCurrent = m.equals(mp.getValue());
+                    boolean mHovered = mouseX >= x && mouseX <= x + width && mouseY >= modeY && mouseY <= modeY + 18;
+
+                    int mBg = mHovered ? 0x22FFFFFF : 0;
+                    if (mBg != 0) {
+                        graphics.fill(x + 2, modeY, x + width - 2, modeY + 18, mBg);
+                    }
+                    if (isCurrent) {
+                        graphics.fill(x + 2, modeY, x + 4, modeY + 18, activeColor);
+                        graphics.fill(x + 2, modeY + 17, x + width - 2, modeY + 18, ColorUtility.withAlpha(activeColor, 50));
+                    }
+
+                    int mCol = isCurrent ? activeColor : 0xFF808090;
+                    if (mHovered) mCol = 0xFFFFFFFF;
+
+                    FontRenderUtility.drawString(graphics, m, x + 14, modeY + 5, mCol, true);
+                    modeY += 18;
+                }
+            } else {
+                String modeVal = mp.getValue();
+                int mw = FontRenderUtility.getStringWidth(modeVal);
+                int valX = x + width - mw - 8;
+                FontRenderUtility.drawString(graphics, modeVal, valX, y + 7, activeColor, true);
+
+                FontRenderUtility.drawString(graphics, "<", valX - FontRenderUtility.getStringWidth("<") - 3, y + 7, ColorUtility.withAlpha(activeColor, 120), true);
+                FontRenderUtility.drawString(graphics, ">", x + width - 8, y + 7, ColorUtility.withAlpha(activeColor, 120), true);
+            }
 
         } else if (parameter instanceof NumberParameter np) {
-            // Slider toolbar layout
             double min = np.getMin();
             double max = np.getMax();
             double val = np.getValue();
             double progress = (val - min) / (max - min);
 
-            // Slider Label & current value
-            String label = String.format("%s: %.1f", np.getName(), val);
-            graphics.drawString(font, label, x + 6, y + 1, 0xFF9E9EB0, false);
+            FontRenderUtility.drawString(graphics, np.getName(), x + 8, y + 5, 0xFFC0C0D0, true);
 
-            // Slider Track bounds
-            int slX = x + 6;
-            int slY = y + 10;
-            int slW = width - 12;
-            int slH = 2;
+            String valStr = String.format("%.1f", val);
+            int valW = FontRenderUtility.getStringWidth(valStr);
+            FontRenderUtility.drawString(graphics, valStr, x + width - valW - 8, y + 5, activeColor, true);
 
-            // Handle active dragging inside rendering loop (real-time responsiveness)
+            int slX = x + 8;
+            int slY = y + 18;
+            int slW = width - 16;
+            int slH = 3;
+
             if (isDragging) {
                 if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(net.minecraft.client.Minecraft.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
                     isDragging = false;
@@ -88,55 +176,103 @@ public class ParameterElement {
                     double relative = (double) (mouseX - slX) / slW;
                     relative = Math.max(0.0, Math.min(1.0, relative));
                     double newValue = min + relative * (max - min);
-                    // Snap to step value
                     double step = np.getStep();
                     newValue = Math.round(newValue / step) * step;
                     np.setValue(newValue);
                 }
             }
 
-            // Draw background track line
-            graphics.fill(slX, slY, slX + slW, slY + slH, 0xFF2A2A35);
+            boolean slHovered = mouseX >= slX && mouseX <= slX + slW && mouseY >= slY - 3 && mouseY <= slY + slH + 3;
 
-            // Draw active progress line
+            for (int i = 0; i < slH; i++) {
+                float gap = Math.abs(i - slH/2f) / (slH/2f);
+                int inset = (int)(slH/2 * gap * gap);
+                graphics.fill(slX + inset, slY + i, slX + slW - inset, slY + i + 1, 0xFF2A2A38);
+            }
+
             int fillW = (int) (slW * progress);
-            graphics.fill(slX, slY, slX + fillW, slY + slH, activeColor);
+            if (fillW > 0) {
+                for (int i = 0; i < slH; i++) {
+                    float gap = Math.abs(i - slH/2f) / (slH/2f);
+                    int inset = (int)(slH/2 * gap * gap);
+                    graphics.fill(slX + inset, slY + i, slX + fillW - inset, slY + i + 1, activeColor);
+                }
+            }
 
-            // Draw sliding knob handle
-            int knobX = slX + fillW - 2;
-            graphics.fill(knobX, slY - 2, knobX + 4, slY + slH + 2, 0xFFFFFFFF);
+            int knobX = slX + fillW;
+            int knobY2 = slY + slH / 2;
+            int knobR = 4;
+            int knobColor = slHovered || isDragging ? 0xFFFFFFFF : 0xFFC8C8D0;
+
+            for (int dy = -knobR; dy <= knobR; dy++) {
+                float gap = Math.abs(dy) / (float)knobR;
+                int dx = (int) Math.sqrt(knobR * knobR - dy * dy);
+                int innerInset = (int)(knobR/2 * gap * gap * 0.5f);
+                graphics.fill(knobX - dx + innerInset, knobY2 + dy, knobX + dx - innerInset + 1, knobY2 + dy + 1, knobColor);
+            }
         } else if (parameter instanceof ColorParameter cp) {
-            // Label
-            graphics.drawString(font, cp.getName(), x + 6, y + 2, 0xFF9E9EB0, false);
-            // Colour chip on the right
-            int chipX = x + width - 18;
-            int chipY = y + 2;
-            int argb  = cp.getValue();
-            // Checkerboard behind chip (shows alpha)
-            graphics.fill(chipX,     chipY,     chipX + 8,  chipY + 8,  0xFF888888);
-            graphics.fill(chipX + 4, chipY,     chipX + 8,  chipY + 4,  0xFF444444);
-            graphics.fill(chipX,     chipY + 4, chipX + 4,  chipY + 8,  0xFF444444);
-            graphics.fill(chipX, chipY, chipX + 8, chipY + 8, argb);
-            // Border
-            int border = 0xFF606060;
-            graphics.fill(chipX - 1, chipY - 1, chipX + 9, chipY,     border);
-            graphics.fill(chipX - 1, chipY + 8, chipX + 9, chipY + 9, border);
-            graphics.fill(chipX - 1, chipY - 1, chipX,     chipY + 9, border);
-            graphics.fill(chipX + 8, chipY - 1, chipX + 9, chipY + 9, border);
+            FontRenderUtility.drawString(graphics, cp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+
+            int chipX = x + width - 24;
+            int chipY = y + 6;
+            int chipSize = 10;
+            int argb = cp.getValue();
+
+            for (int s = 1; s >= 0; s--) {
+                graphics.fill(chipX - s, chipY - s, chipX + chipSize + s, chipY + chipSize + s, ColorUtility.withAlpha(activeColor, 40));
+            }
+
+            graphics.fill(chipX, chipY, chipX + chipSize, chipY + chipSize, 0xFF888888);
+            graphics.fill(chipX + chipSize / 2, chipY, chipX + chipSize, chipY + chipSize / 2, 0xFF444444);
+            graphics.fill(chipX, chipY + chipSize / 2, chipX + chipSize / 2, chipY + chipSize, 0xFF444444);
+            graphics.fill(chipX, chipY, chipX + chipSize, chipY + chipSize, argb);
+        } else if (parameter instanceof ravex.parameter.StringParameter sp) {
+            FontRenderUtility.drawString(graphics, sp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+            boolean isFocused = ClickGUI.activeStringParameterElement != null && ClickGUI.activeStringParameterElement.getParameter() == sp;
+            String text = sp.getValue();
+            if (isFocused && (System.currentTimeMillis() / 500) % 2 == 0) {
+                text += "_";
+            }
+            int tw = FontRenderUtility.getStringWidth(text);
+            FontRenderUtility.drawString(graphics, text, x + width - tw - 8, y + 7, activeColor, true);
         } else {
-            // Fallback for general parameters
             String text = parameter.getName() + ": " + parameter.getValue();
             if (text.length() > 18) {
                 text = text.substring(0, 16) + "..";
             }
-            graphics.drawString(font, text, x + 6, y + 2, 0xFF9E9EB0, false);
+            FontRenderUtility.drawString(graphics, text, x + 8, y + 7, 0xFFC0C0D0, true);
         }
+    }
+
+    private static int lerpColor(int from, int to, float t) {
+        int a = (int)(((from >> 24) & 0xFF) * (1 - t) + ((to >> 24) & 0xFF) * t);
+        int r = (int)(((from >> 16) & 0xFF) * (1 - t) + ((to >> 16) & 0xFF) * t);
+        int g = (int)(((from >> 8) & 0xFF) * (1 - t) + ((to >> 8) & 0xFF) * t);
+        int b = (int)((from & 0xFF) * (1 - t) + (to & 0xFF) * t);
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int y, int width, int height) {
         if (!parameter.isVisible()) return false;
         
         if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
+            if (parameter instanceof ModeParameter mp && mp.isExpanded()) {
+                int modeY = y + 22;
+                for (String m : mp.getModes()) {
+                    if (mouseX >= x && mouseX <= x + width && mouseY >= modeY && mouseY <= modeY + 18) {
+                        mp.setValue(m);
+                        playSound();
+                        return true;
+                    }
+                    modeY += 18;
+                }
+            }
+
+            if (button == 1) {
+                parameter.setExpanded(!parameter.isExpanded());
+                playSound();
+                return true;
+            }
             if (parameter instanceof BooleanParameter bp) {
                 bp.setValue(!bp.getValue());
                 playSound();
@@ -156,9 +292,22 @@ public class ParameterElement {
                 ClickGUI.activeColorPalette = new ColorPaletteModal(cp);
                 playSound();
                 return true;
+            } else if (parameter instanceof ravex.parameter.StringParameter sp) {
+                if (ClickGUI.activeStringParameterElement != null && ClickGUI.activeStringParameterElement.getParameter() == sp) {
+                    ClickGUI.activeStringParameterElement = null;
+                } else {
+                    ClickGUI.activeStringParameterElement = this;
+                }
+                playSound();
+                return true;
             }
         }
         return false;
+    }
+
+    public void resetToggleAnim() {
+        toggleAnimProgress = 0f;
+        toggleLastUpdate = 0;
     }
 
     private void playSound() {

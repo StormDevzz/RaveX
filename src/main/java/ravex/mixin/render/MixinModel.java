@@ -25,22 +25,13 @@ public class MixinModel {
             return consumer;
         }
 
-        boolean renderingHand = Shaders.RENDERING_HAND.get();
-        if (renderingHand && Shaders.INSTANCE.hands.getValue()) {
-            return new NativeAnimateVertexConsumer(consumer, Shaders.INSTANCE.fillColor.getValue(), true);
-        }
-
         Model self = (Model)(Object)this;
         String className = self.getClass().getSimpleName().toLowerCase();
 
         boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
-        boolean isHandModel = className.contains("arm") || className.contains("hand") || className.contains("skin");
 
         if (isPlayerModel && Shaders.INSTANCE.players.getValue()) {
             return new NativeAnimateVertexConsumer(consumer, Shaders.INSTANCE.fillColor.getValue(), false);
-        }
-        if (isHandModel && Shaders.INSTANCE.hands.getValue()) {
-            return new NativeAnimateVertexConsumer(consumer, Shaders.INSTANCE.fillColor.getValue(), true);
         }
 
         return consumer;
@@ -52,16 +43,12 @@ public class MixinModel {
     )
     private void onRenderHead(PoseStack poseStack, VertexConsumer consumer, int light, int overlay, int tint, CallbackInfo ci) {
         if (Shaders.INSTANCE.getEnabled() && Shaders.INSTANCE.throughWalls.getValue()) {
-            boolean renderingHand = Shaders.RENDERING_HAND.get();
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();
 
             boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
-            boolean isHandModel = className.contains("arm") || className.contains("hand") || className.contains("skin");
 
-            if ((renderingHand && Shaders.INSTANCE.hands.getValue()) ||
-                (isPlayerModel && Shaders.INSTANCE.players.getValue()) ||
-                (isHandModel && Shaders.INSTANCE.hands.getValue())) {
+            if (isPlayerModel && Shaders.INSTANCE.players.getValue()) {
                 GlStateManager._disableDepthTest();
             }
         }
@@ -73,16 +60,12 @@ public class MixinModel {
     )
     private void onRenderReturn(PoseStack poseStack, VertexConsumer consumer, int light, int overlay, int tint, CallbackInfo ci) {
         if (Shaders.INSTANCE.getEnabled() && Shaders.INSTANCE.throughWalls.getValue()) {
-            boolean renderingHand = Shaders.RENDERING_HAND.get();
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();
 
             boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
-            boolean isHandModel = className.contains("arm") || className.contains("hand") || className.contains("skin");
 
-            if ((renderingHand && Shaders.INSTANCE.hands.getValue()) ||
-                (isPlayerModel && Shaders.INSTANCE.players.getValue()) ||
-                (isHandModel && Shaders.INSTANCE.hands.getValue())) {
+            if (isPlayerModel && Shaders.INSTANCE.players.getValue()) {
                 GlStateManager._enableDepthTest();
             }
         }
