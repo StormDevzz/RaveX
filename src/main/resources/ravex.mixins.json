@@ -38,6 +38,7 @@
         "render.MixinWorldBorderRenderer",
         "render.MixinLivingEntity",
         "render.MixinMultiPlayerGameMode",
+        "render.MixinLightTexture",
         "entity.MixinEntity",
         "entity.MixinNoWeb",
         "menu.MixinTitleScreen",

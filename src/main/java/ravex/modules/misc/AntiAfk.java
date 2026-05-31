@@ -85,5 +85,4 @@ public class AntiAfk extends Module {
     private native void    nativeStop();
     private native boolean nativeIsRunning();
     private native boolean nativePerformAction();
-    private native boolean nativeHasXTest();
 }

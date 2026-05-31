@@ -4,6 +4,7 @@ add_library(ravex_jni SHARED
 
 target_link_libraries(ravex_jni PRIVATE
     ravex_common
+    ravex_optimizer
     ravex_antiafk
     ravex_shaders
     ${JNI_LIBRARIES}

@@ -4,7 +4,11 @@
 #include <chrono>
 #include <vector>
 #include <cstring>
+#ifndef _WIN32
 #include <unistd.h>
+#include <malloc.h>
+#include <sched.h>
+#endif
 
 namespace ravex {
 
@@ -32,13 +36,16 @@ OptResult Optimizer::run(const std::string& mode) {
 }
 
 void Optimizer::vacuumGlibc() {
+#ifndef _WIN32
     for (int i = 0; i < 5; i++) {
         malloc_trim(0);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
+#endif
 }
 
 bool Optimizer::hintHeapPages() {
+#ifndef _WIN32
     extern char __heap_start, __heap_end;
     void* heap_end = sbrk(0);
     if (heap_end == (void*)-1) return false;
@@ -47,6 +54,9 @@ bool Optimizer::hintHeapPages() {
         madvise(heap_end, 4096, MADV_COLD);
     }
     return true;
+#else
+    return false;
+#endif
 }
 
 uint64_t Optimizer::measureFreeDelta(uint64_t before) {
@@ -70,7 +80,13 @@ OptResult Optimizer::aggressive() {
     Memory::setThreadAffinity(0);
     actions++;
 
-    Memory::setCPUSchedPolicy(SCHED_FIFO, 50);
+    Memory::setCPUSchedPolicy(
+#ifdef _WIN32
+        0
+#else
+        SCHED_FIFO
+#endif
+    , 50);
     actions++;
 
     vacuumGlibc();
@@ -112,7 +128,9 @@ OptResult Optimizer::normal() {
     actions++;
 
     for (int i = 0; i < 3; i++) {
+#ifndef _WIN32
         malloc_trim(0);
+#endif
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     actions++;
@@ -131,7 +149,9 @@ OptResult Optimizer::soft() {
     double usedPct = 100.0 * (1.0 - (double)before.free_kb / (double)before.total_kb);
 
     if (usedPct > 65.0) {
+#ifndef _WIN32
         malloc_trim(0);
+#endif
         Memory::setOOMScoreAdj(-200);
     }
 

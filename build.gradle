@@ -62,6 +62,7 @@ loom {
                 "-XX:CompressedClassSpaceSize=128M",
                 "-XX:MaxDirectMemorySize=512M"
             )
+
         }
     }
 }

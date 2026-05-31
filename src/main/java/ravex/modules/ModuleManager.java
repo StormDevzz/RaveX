@@ -23,6 +23,7 @@ import ravex.modules.player.RichPresence;
 import ravex.modules.player.NoInteract;
 import ravex.modules.player.SourceFiller;
 import ravex.modules.player.AirPlace;
+import ravex.modules.player.AutoArmor;
 import ravex.modules.movement.GuiWalk;
 import ravex.modules.movement.NoSlowDown;
 import ravex.modules.movement.Velocity;
@@ -66,6 +67,7 @@ public class ModuleManager {
         clickGuiModules.add(Glint.INSTANCE);
         clickGuiModules.add(Sounds.INSTANCE);
         clickGuiModules.add(ravex.modules.render.ItemPhysics.INSTANCE);
+        clickGuiModules.add(ravex.modules.render.Fullbright.INSTANCE);
 
         // ── Player ──────────────────────────────────────────────────────────────
         clickGuiModules.add(AutoTool.INSTANCE);
@@ -73,6 +75,7 @@ public class ModuleManager {
         clickGuiModules.add(NoInteract.INSTANCE);
         clickGuiModules.add(SourceFiller.INSTANCE);
         clickGuiModules.add(AirPlace.INSTANCE);
+        clickGuiModules.add(AutoArmor.INSTANCE);
 
         // ── Movement ────────────────────────────────────────────────────────────
         clickGuiModules.add(GuiWalk.INSTANCE);
@@ -81,6 +84,8 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.movement.Step.INSTANCE);
         clickGuiModules.add(ravex.modules.movement.ReverseStep.INSTANCE);
         clickGuiModules.add(ravex.modules.movement.NoWeb.INSTANCE);
+        clickGuiModules.add(ravex.modules.movement.AutoWalk.INSTANCE);
+        clickGuiModules.add(ravex.modules.movement.AutoSprint.INSTANCE);
 
         // ── Misc ─────────────────────────────────────────────────────────────────
         clickGuiModules.add(AntiAfk.INSTANCE);

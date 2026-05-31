@@ -82,11 +82,6 @@ Java_ravex_modules_misc_AntiAfk_nativePerformAction(JNIEnv*, jclass) {
     return ravex::AntiAfk::performRandomAction() ? JNI_TRUE : JNI_FALSE;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_ravex_modules_misc_AntiAfk_nativeHasXTest(JNIEnv*, jclass) {
-    return ravex::AntiAfk::hasXTest() ? JNI_TRUE : JNI_FALSE;
-}
-
 // ═════════════════════════════════════════════════════════════════════════════
 //  SHADERS JNI BINDINGS
 // ═════════════════════════════════════════════════════════════════════════════

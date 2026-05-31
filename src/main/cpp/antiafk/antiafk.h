@@ -3,6 +3,8 @@
 #include "antiafk_common.h"
 #include "antiafk_input.h"
 #include <memory>
+#include <thread>
+#include <atomic>
 
 namespace ravex {
 
