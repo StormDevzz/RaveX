@@ -4,6 +4,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
+import ravex.utility.render.animate.FadeAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -24,7 +25,16 @@ public class Scaffold extends Module {
     public final BooleanParameter tower = new BooleanParameter("Tower", true);
     public final BooleanParameter silentRot = new BooleanParameter("Silent Rot", true);
     public final BooleanParameter keepY = new BooleanParameter("Keep Y", false);
+    public final BooleanParameter render = new BooleanParameter("Render", true);
 
+    public static Vec3 highlightPos = null;
+    public static float renderAlpha = 0.0f;
+    public static float renderR = 1.0f;
+    public static float renderG = 0.2f;
+    public static float renderB = 0.8f;
+
+    private final FadeAnimation fadeAnim = new FadeAnimation();
+    private BlockPos currentTarget = null;
     private int lastSlot = -1;
     private double targetY = -1;
 
@@ -34,6 +44,7 @@ public class Scaffold extends Module {
         addParameter(tower);
         addParameter(silentRot);
         addParameter(keepY);
+        addParameter(render);
     }
 
     @Override
@@ -44,6 +55,17 @@ public class Scaffold extends Module {
         } else {
             targetY = -1;
         }
+        highlightPos = null;
+        renderAlpha = 0.0f;
+        currentTarget = null;
+        fadeAnim.reset();
+    }
+
+    @Override
+    protected void onDisable() {
+        highlightPos = null;
+        renderAlpha = 0.0f;
+        currentTarget = null;
     }
 
     @Override
@@ -52,31 +74,31 @@ public class Scaffold extends Module {
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
 
-        // Reset or adjust Keep Y level when player is on ground or jumps higher
         if (p.onGround()) {
             targetY = Math.floor(p.getY());
         }
 
-        // 1. Jump/Tower Helper
         if (tower.getValue() && mc.options.keyJump.isDown()) {
             p.setDeltaMovement(p.getDeltaMovement().x, 0.42, p.getDeltaMovement().z);
             targetY = Math.floor(p.getY());
         }
 
-        // 2. Select block slot from hotbar
         int slot = findBlockSlot(p);
-        if (slot == -1) return;
+        if (slot == -1) {
+            currentTarget = null;
+            renderAlpha = fadeAnim.update(false, 0.25f);
+            if (renderAlpha <= 0.01f) {
+                highlightPos = null;
+            }
+            return;
+        }
 
-        // 3. Find placement target block below player
         BlockPos below = BlockPos.containing(
             p.getX(), 
             (keepY.getValue() && targetY != -1) ? (targetY - 1) : (p.getY() - 1), 
             p.getZ()
         );
 
-        if (!isAir(below)) return; // Already placed
-
-        // Try expanding scaffold slightly if moving in Expand mode
         BlockPos targetPos = below;
         if ("Expand".equals(mode.getValue())) {
             double dx = p.getDeltaMovement().x;
@@ -91,7 +113,25 @@ public class Scaffold extends Module {
             }
         }
 
-        // 4. Find valid adjacent block face to interact with
+        if (!isAir(targetPos)) {
+            currentTarget = null;
+            renderAlpha = fadeAnim.update(false, 0.25f);
+            if (renderAlpha <= 0.01f) {
+                highlightPos = null;
+            }
+            return;
+        }
+
+        currentTarget = targetPos;
+
+        if (render.getValue()) {
+            renderAlpha = fadeAnim.update(true, 0.25f);
+            highlightPos = Vec3.atLowerCornerOf(targetPos);
+        } else {
+            highlightPos = null;
+            renderAlpha = 0.0f;
+        }
+
         BlockPos neighbor = null;
         Direction placeFace = null;
         for (Direction face : Direction.values()) {
@@ -103,20 +143,17 @@ public class Scaffold extends Module {
             }
         }
 
-        // If no neighbor exists, try looking down/below the neighbor block structure
         if (neighbor == null) {
             neighbor = targetPos.below();
             placeFace = Direction.UP;
         }
 
-        // 5. Silent Rotations
         if (silentRot.getValue()) {
             float[] rots = rotationsTo(neighbor);
             p.setYRot(rots[0]);
             p.setXRot(rots[1]);
         }
 
-        // 6. Vanilla-Like Silent Hand Swap & Interaction
         int prevSlot = p.getInventory().getSelectedSlot();
         p.getInventory().setSelectedSlot(slot);
 
@@ -125,11 +162,9 @@ public class Scaffold extends Module {
         );
 
         BlockHitResult blockHit = new BlockHitResult(hitVec, placeFace, neighbor, false);
-
         mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
         p.swing(InteractionHand.MAIN_HAND);
 
-        // Silent swap back
         if (slot != prevSlot) {
             p.getInventory().setSelectedSlot(prevSlot);
         }
