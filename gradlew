@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# RaveX — Volthack :3
 #
 # Copyright © 2015-2021 the original authors.
 #
