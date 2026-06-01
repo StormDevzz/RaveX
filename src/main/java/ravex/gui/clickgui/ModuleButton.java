@@ -2,9 +2,13 @@ package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.modules.Module;
+import ravex.modules.render.ClickGui;
 import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.Render2DEngine;
 import ravex.parameter.Parameter;
 import ravex.utility.sound.SoundUtility;
+
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +18,8 @@ public class ModuleButton {
     private boolean expanded = false;
 
     private float expansionProgress = 0.0f;
+    private float hoverProgress = 0.0f;
+    private float enabledAnim = 0.0f;
     private long lastUpdateTime = System.currentTimeMillis();
 
     public ModuleButton(Module module) {
@@ -35,33 +41,105 @@ public class ModuleButton {
             ClickGUI.hoveredDescription = module.getDescription();
         }
 
-        int bg = ColorUtility.getModuleColor(module.getEnabled(), hovered);
-        int textColor = ColorUtility.getTextColor(module.getEnabled(), hovered);
+        long now = System.currentTimeMillis();
+        long delta = now - lastUpdateTime;
+        lastUpdateTime = now;
+        if (delta > 100) delta = 16;
+
+        float expSpeed = 0.012f;
+        if (expanded) {
+            expansionProgress = Math.min(1.0f, expansionProgress + delta * expSpeed);
+        } else {
+            expansionProgress = Math.max(0.0f, expansionProgress - delta * expSpeed);
+        }
+
+        float hoverSpeed = 0.02f;
+        if (hovered) {
+            hoverProgress = Math.min(1.0f, hoverProgress + delta * hoverSpeed);
+        } else {
+            hoverProgress = Math.max(0.0f, hoverProgress - delta * hoverSpeed);
+        }
+
+        if (module.getEnabled()) {
+            enabledAnim = Math.min(1.0f, enabledAnim + delta * 0.018f);
+        } else {
+            enabledAnim = Math.max(0.0f, enabledAnim - delta * 0.018f);
+        }
+
+        int activeColor = ColorUtility.getActiveColor();
+
+        Color c270 = ColorUtility.getColor(270);
+        Color c0 = ColorUtility.getColor(0);
+        Color c180 = ColorUtility.getColor(180);
+        Color c90 = ColorUtility.getColor(90);
+
+        if (enabledAnim > 0.01f) {
+            float anim = enabledAnim;
+            String gradMode = ClickGui.INSTANCE.gradientMode.getValue();
+            switch (gradMode) {
+                case "LeftToRight" -> {
+                    Render2DEngine.drawRect(graphics, x, currentY, width, 18,
+                        Render2DEngine.injectAlpha(c270, (int)(anim * 255)).getRGB());
+                }
+                case "UpsideDown" -> {
+                    graphics.fillGradient(x, currentY, x + width, currentY + 18,
+                        Render2DEngine.injectAlpha(c270, (int)(anim * 255)).getRGB(),
+                        Render2DEngine.injectAlpha(c0, (int)(anim * 255)).getRGB());
+                }
+                case "Both" -> {
+                    graphics.fillGradient(x, currentY, x + width, currentY + 18,
+                        Render2DEngine.injectAlpha(c270, (int)(anim * 255)).getRGB(),
+                        Render2DEngine.injectAlpha(c180, (int)(anim * 255)).getRGB());
+                }
+            }
+        } else {
+            int normalBg = ColorUtility.getModuleColor(false, false);
+            int hoverBg = ColorUtility.getModuleColor(false, true);
+            int bg = lerpColor(normalBg, hoverBg, hoverProgress);
+            graphics.fill(x, currentY, x + width, currentY + 18, bg);
+        }
+
+        int textColor;
+        if (module.getEnabled()) {
+            textColor = 0xFFE0E0F0;
+        } else {
+            int normalText = 0xFF8F8FA0;
+            int hoverText = 0xFFD0D0E0;
+            textColor = lerpColor(normalText, hoverText, hoverProgress);
+        }
 
         if (searchQuery != null && !searchQuery.isEmpty()
             && module.getName().toLowerCase().contains(searchQuery.toLowerCase())) {
-            bg = blendColors(bg, ColorUtility.getActiveColor(), 0.15f);
+            graphics.fill(x, currentY, x + width, currentY + 18,
+                ColorUtility.withAlpha(activeColor, 30));
         }
 
-        graphics.fill(x, currentY, x + width, currentY + 18, bg);
+        int accentWidth = (int)(3 + hoverProgress * 3);
+        int animatedAccent = ColorUtility.withAlpha(activeColor,
+            module.getEnabled() ? 255 : (int)(0x3A + hoverProgress * (0x60 - 0x3A)));
+        graphics.fill(x, currentY, x + accentWidth, currentY + 18, animatedAccent);
 
-        int activeColor = ColorUtility.getActiveColor();
-        int accentColor = module.getEnabled() ? activeColor : 0xFF3A3A45;
-        graphics.fill(x, currentY, x + 3, currentY + 18, accentColor);
-        if (module.getEnabled()) {
-            graphics.fill(x + 3, currentY, x + width, currentY + 1, ColorUtility.withAlpha(activeColor, 25));
+        if (module.getEnabled() && hoverProgress > 0.01f) {
+            graphics.fill(x + accentWidth, currentY, x + width, currentY + 1,
+                ColorUtility.withAlpha(activeColor, (int)(25 * (1 + hoverProgress))));
+        } else if (module.getEnabled()) {
+            graphics.fill(x + 3, currentY, x + width, currentY + 1,
+                ColorUtility.withAlpha(activeColor, 25));
         }
 
-        if (ravex.modules.render.ClickGui.INSTANCE.moduleOutlines.getValue()) {
-            int borderCol = ravex.modules.render.ClickGui.INSTANCE.moduleOutlineColor.getValue();
+        if (ClickGui.INSTANCE.moduleOutlines.getValue()) {
+            int borderCol = ClickGui.INSTANCE.moduleOutlineColor.getValue();
             graphics.fill(x, currentY, x + width, currentY + 1, borderCol);
             graphics.fill(x, currentY + 17, x + width, currentY + 18, borderCol);
             graphics.fill(x, currentY, x + 1, currentY + 18, borderCol);
             graphics.fill(x + width - 1, currentY, x + width, currentY + 18, borderCol);
         } else {
-            graphics.fill(x + 3, currentY + 17, x + width, currentY + 18, ColorUtility.withAlpha(accentColor, 40));
+            graphics.fill(x + accentWidth, currentY + 17, x + width, currentY + 18,
+                ColorUtility.withAlpha(module.getEnabled() ? activeColor : 0xFF3A3A45,
+                    (int)(40 + hoverProgress * 30)));
             if (module.getEnabled()) {
-                graphics.fill(x + 3, currentY + 1, x + width, currentY + 2, ColorUtility.withAlpha(activeColor, 10));
+                graphics.fill(x + 3, currentY + 1, x + width, currentY + 2,
+                    ColorUtility.withAlpha(activeColor, 10));
             }
         }
 
@@ -84,7 +162,7 @@ public class ModuleButton {
         if (searchQuery != null && !searchQuery.isEmpty() && !module.getName().isEmpty()) {
             renderHighlightedName(graphics, displayName, x + 9, currentY + 5, textColor, searchQuery);
         } else {
-            FontRenderUtility.drawString(graphics, displayName, x + 9, currentY + 5, textColor, true);
+            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.SF_BOLD, displayName, x + 9, currentY + 5, textColor, true);
         }
 
         int visibleCount = 0;
@@ -97,34 +175,22 @@ public class ModuleButton {
         }
 
         if (visibleCount > 0) {
-            FontRenderUtility.drawString(graphics, expanded ? "−" : "+", x + width - 12, currentY + 5, 0xFF606080, true);
+            FontRenderUtility.drawString(graphics, expanded ? "\u2212" : "+", x + width - 12, currentY + 5, 0xFF606080, true);
         }
 
         currentY += 18;
-
-        long now = System.currentTimeMillis();
-        long delta = now - lastUpdateTime;
-        lastUpdateTime = now;
-        if (delta > 100) delta = 16;
-
-        float animSpeed = 0.008f;
-        if (expanded) {
-            expansionProgress = Math.min(1.0f, expansionProgress + delta * animSpeed);
-        } else {
-            expansionProgress = Math.max(0.0f, expansionProgress - delta * animSpeed);
-        }
 
         if (expansionProgress > 0.001f && visibleCount > 0) {
             int animatedHeight = (int) (expandedHeight * expansionProgress);
             int totalDrawHeight = animatedHeight + 4;
 
             int boxBg = 0xFF14141E;
-            int boxBorder = ColorUtility.getActiveColor();
             graphics.fill(x + 4, currentY, x + width - 4, currentY + totalDrawHeight, boxBg);
-            graphics.fill(x + 4, currentY, x + 6, currentY + totalDrawHeight, boxBorder);
-            graphics.fill(x + 4, currentY + totalDrawHeight - 1, x + width - 4, currentY + totalDrawHeight, ColorUtility.withAlpha(boxBorder, 40));
 
-            graphics.enableScissor(x + 4, currentY, x + width - 4, currentY + totalDrawHeight);
+            int boxBorder = ColorUtility.withAlpha(activeColor, 60);
+            graphics.fill(x + 4, currentY, x + 6, currentY + totalDrawHeight, boxBorder);
+            graphics.fill(x + 4, currentY + totalDrawHeight - 1, x + width - 4, currentY + totalDrawHeight,
+                ColorUtility.withAlpha(activeColor, 25));
 
             int py = currentY + 2;
             for (ParameterElement pe : parameterElements) {
@@ -135,7 +201,6 @@ public class ModuleButton {
                 }
             }
 
-            graphics.disableScissor();
             currentY += totalDrawHeight;
         }
 
@@ -163,16 +228,15 @@ public class ModuleButton {
             }
 
             String matched = text.substring(matchIdx, Math.min(matchIdx + queryLen, text.length()));
-            int highlightColor = 0xFFFFFF80;
             graphics.fill(currentX - 1, y - 1, currentX + FontRenderUtility.getStringWidth(matched) + 1, y + 10, 0x44FFAA00);
-            FontRenderUtility.drawString(graphics, matched, currentX, y, highlightColor, true);
+            FontRenderUtility.drawString(graphics, matched, currentX, y, 0xFFFFFF80, true);
             currentX += FontRenderUtility.getStringWidth(matched);
 
             i = matchIdx + queryLen;
         }
     }
 
-    private static int blendColors(int bg, int fg, float alpha) {
+    private static int lerpColor(int bg, int fg, float alpha) {
         int aBg = (bg >> 24) & 0xFF;
         int rBg = (bg >> 16) & 0xFF;
         int gBg = (bg >> 8) & 0xFF;
@@ -250,5 +314,17 @@ public class ModuleButton {
 
     public Module getModule() {
         return module;
+    }
+
+    public boolean isExpanded() {
+        return expanded;
+    }
+
+    public float getExpansionProgress() {
+        return expansionProgress;
+    }
+
+    public List<ParameterElement> getParameterElements() {
+        return parameterElements;
     }
 }

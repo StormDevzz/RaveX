@@ -1,0 +1,249 @@
+#!/bin/bash
+# Gentoo dual-boot installer — рядом с CachyOS (btrfs + systemd-boot)
+set -euo pipefail
+
+# ======================== НАСТРОЙКИ ========================
+BTRFS_PART="/dev/nvme0n1p2"
+BOOT_PART="/dev/nvme0n1p1"
+BOOT_UUID="41CE-25C5"
+BTRFS_UUID="fcdabe12-e094-42e9-9e8e-960d47e0e4a6"
+
+TIMEZONE="Europe/Warsaw"
+HOSTNAME="rave-gentoo"
+USERNAME="rave"
+
+# USE-флаги
+USE_FLAGS="-kde -gnome -systemd -wayland X elogind dbus pipewire udev pam"
+
+GENTOO_MIRROR="https://distfiles.gentoo.org"
+
+BASE_PACKAGES=(
+    sys-kernel/installkernel-gentoo
+    sys-kernel/gentoo-kernel-bin
+    net-misc/dhcpcd
+    app-admin/sudo
+    sys-process/cronie
+    app-admin/logrotate
+    net-wireless/iwd
+)
+# ===========================================================
+
+die() { echo "[!] $*" >&2; exit 1; }
+info() { echo "[*] $*"; }
+
+confirm() {
+    echo ""
+    echo "========== Gentoo dual-boot installer =========="
+    echo "  Disk:   $(lsblk -ndo SIZE "$BTRFS_PART" 2>/dev/null || echo '?') free on NVMe"
+    echo "  Subvol: @gentoo (новый)                     "
+    echo "  /boot:  $BOOT_PART (общий с CachyOS)        "
+    echo "  Boot:   systemd-boot (твой текущий)         "
+    echo "  Kernel: gentoo-kernel-bin (dist-kernel)     "
+    echo "  Grub:   НЕ ставится — загрузка через sdboot"
+    echo "  CachyOS: НЕТРОНУТ                           "
+    echo "==============================================="
+    echo ""
+    read -rp "Всё верно? (yes/no): " ans
+    [[ "$ans" == "yes" ]] || die "Отменено"
+}
+
+prepare_subvol() {
+    info "Монтирую btrfs..."
+    mount "$BTRFS_PART" /mnt
+
+    info "Создаю подтом @gentoo..."
+    btrfs subvolume create /mnt/@gentoo
+
+    info "Монтирую @gentoo..."
+    mkdir -p /mnt/gentoo
+    mount -o subvol=/@gentoo "$BTRFS_PART" /mnt/gentoo
+
+    info "Монтирую /boot..."
+    mkdir -p /mnt/gentoo/boot
+    mount "$BOOT_PART" /mnt/gentoo/boot
+
+    # На случай если непустой /mnt/gentoo от предыдущей попытки
+    rm -rf /mnt/gentoo/boot/*
+}
+
+download_stage3() {
+    info "Определяю последний stage3..."
+    local latest_url="${GENTOO_MIRROR}/releases/amd64/autobuilds/latest-stage3-amd64-openrc.txt"
+    local stage3_file
+    stage3_file=$(wget -q -O- "$latest_url" | awk '/^[0-9]/ {print $1; exit}')
+    [[ -z "$stage3_file" ]] && die "Не удалось определить последний stage3"
+
+    local url="${GENTOO_MIRROR}/releases/amd64/autobuilds/current-stage3-amd64-openrc/${stage3_file}"
+
+    info "Качаю: $stage3_file"
+    cd /mnt/gentoo
+
+    if [[ -f "$stage3_file" ]]; then
+        info "Уже скачано"
+    else
+        wget -q --show-progress "$url"
+    fi
+
+    info "Распаковываю..."
+    tar xpf "$stage3_file" --xattrs-include='*.*' --numeric-owner
+    rm -f "$stage3_file"
+}
+
+configure_make_conf() {
+    info "make.conf..."
+    cat > /mnt/gentoo/etc/portage/make.conf <<EOF
+COMMON_FLAGS="-march=native -O2 -pipe"
+CFLAGS="\${COMMON_FLAGS}"
+CXXFLAGS="\${COMMON_FLAGS}"
+FCFLAGS="\${COMMON_FLAGS}"
+FFLAGS="\${COMMON_FLAGS}"
+
+MAKEOPTS="-j$(nproc)"
+EMERGE_DEFAULT_OPTS="--jobs=$(nproc) --load-average=$(nproc) --keep-going=y --with-bdeps=y"
+
+USE="${USE_FLAGS}"
+
+ACCEPT_LICENSE="*"
+ACCEPT_KEYWORDS="amd64"
+
+GENTOO_MIRRORS="${GENTOO_MIRROR}"
+
+VIDEO_CARDS="intel"
+L10N="en ru"
+LINGUAS="en ru"
+EOF
+
+    mkdir -p /mnt/gentoo/etc/portage/package.use
+    mkdir -p /mnt/gentoo/etc/portage/package.accept_keywords
+}
+
+configure_repos() {
+    info "repos.conf..."
+    mkdir -p /mnt/gentoo/etc/portage/repos.conf
+    cp /mnt/gentoo/usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
+    sed -i "s|sync-uri =.*|sync-uri = ${GENTOO_MIRROR}/repos/gentoo|" \
+        /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
+}
+
+prepare_chroot() {
+    info "Chroot..."
+    cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
+
+    mount --types proc /proc /mnt/gentoo/proc
+    mount --rbind /sys /mnt/gentoo/sys
+    mount --make-rslave /mnt/gentoo/sys
+    mount --rbind /dev /mnt/gentoo/dev
+    mount --make-rslave /mnt/gentoo/dev
+    mount --bind /run /mnt/gentoo/run
+    mount --make-slave /mnt/gentoo/run
+}
+
+install_base() {
+    chroot /mnt/gentoo /bin/bash <<'CHROOT'
+set -euo pipefail
+source /etc/profile
+
+echo "[*] Синхронизирую репозиторий..."
+emerge-webrsync 2>/dev/null || emerge --sync --quiet
+
+echo "[*] Выбираю профиль..."
+eselect profile set --force default/linux/amd64/23.0
+
+echo "[*] Ставлю базовые пакеты (dist-kernel, без grub)..."
+emerge -v sys-kernel/gentoo-kernel-bin net-misc/dhcpcd \
+       app-admin/sudo sys-process/cronie app-admin/logrotate \
+       net-wireless/iwd
+
+echo "[*] fstab..."
+cat > /etc/fstab <<'FSTAB'
+# /etc/fstab
+UUID=fcdabe12-e094-42e9-9e8e-960d47e0e4a6  /     btrfs  subvol=/@gentoo,defaults,noatime,compress=zstd:1  0 0
+UUID=41CE-25C5                               /boot vfat   defaults,umask=0077                          0 2
+FSTAB
+CHROOT
+}
+
+configure_system() {
+    chroot /mnt/gentoo /bin/bash <<CHROOT
+set -euo pipefail
+source /etc/profile
+
+echo "${HOSTNAME}" > /etc/hostname
+
+cat > /etc/hosts <<HOSTS
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   ${HOSTNAME}.localdomain ${HOSTNAME}
+HOSTS
+
+echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+echo "ru_RU.UTF-8 UTF-8" >> /etc/locale.gen
+locale-gen
+eselect locale set en_US.UTF-8
+
+ln -sf "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime
+
+cat > /etc/vconsole.conf <<'VCONF'
+KEYMAP=us
+FONT=ter-132n
+VCONF
+
+rc-update add dhcpcd default
+rc-update add iwd default
+rc-update add cronie default
+
+useradd -m -G wheel,audio,video,cdrom,usb,portage "${USERNAME}"
+echo "${USERNAME} ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-${USERNAME}
+
+echo "root:gentoo" | chpasswd
+echo "${USERNAME}:gentoo" | chpasswd
+CHROOT
+}
+
+install_sdboot_entry() {
+    info "Создаю запись systemd-boot для Gentoo..."
+
+    # Определяем установленное ядро
+    local kernel_file initrd_file
+    kernel_file=$(ls /mnt/gentoo/boot/vmlinuz-* 2>/dev/null | head -1) || die "Ядро не найдено в /mnt/gentoo/boot/!"
+    local kver
+    kver=$(basename "$kernel_file" | sed 's/vmlinuz-//')
+
+    info "Найдено ядро: $kver"
+
+    cat > /mnt/gentoo/boot/loader/entries/gentoo.conf <<'ENTRY'
+title   Gentoo Linux
+linux   /vmlinuz-KVER
+initrd  /initramfs-KVER.img
+options root=UUID=BTRFS_UUID rootflags=subvol=/@gentoo rw
+ENTRY
+
+    sed -i "s/KVER/$kver/g" /mnt/gentoo/boot/loader/entries/gentoo.conf
+    sed -i "s/BTRFS_UUID/$BTRFS_UUID/g" /mnt/gentoo/boot/loader/entries/gentoo.conf
+
+    info "Запись создана: /boot/loader/entries/gentoo.conf"
+    cat /mnt/gentoo/boot/loader/entries/gentoo.conf
+}
+
+cleanup() {
+    info "Чистка..."
+    umount -l /mnt/gentoo/dev{/shm,/pts,} 2>/dev/null || true
+    umount -R /mnt/gentoo 2>/dev/null || true
+    umount /mnt 2>/dev/null || true
+    info "Готово! Перезагрузиcь и выбери Gentoo в systemd-boot."
+}
+
+# ======================== ЗАПУСК ========================
+[[ $EUID -eq 0 ]] || die "Запусти под root"
+trap cleanup EXIT
+
+confirm
+prepare_subvol
+download_stage3
+configure_make_conf
+configure_repos
+prepare_chroot
+install_base
+configure_system
+install_sdboot_entry
+cleanup

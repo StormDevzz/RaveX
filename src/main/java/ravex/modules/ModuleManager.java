@@ -53,6 +53,11 @@ import ravex.modules.render.Shaders;
 import ravex.modules.render.Glint;
 import ravex.modules.render.Sounds;
 import ravex.modules.render.ViewClip;
+import ravex.modules.render.BlockOutline;
+import ravex.modules.movement.Speed;
+import ravex.modules.exploit.Timer;
+import ravex.modules.player.Xray;
+import ravex.modules.combat.Surround;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +81,7 @@ public class ModuleManager {
         clickGuiModules.add(Offhand.INSTANCE);
         clickGuiModules.add(MainHand.INSTANCE);
         clickGuiModules.add(Reach.INSTANCE);
+        clickGuiModules.add(Surround.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ESP.INSTANCE);
@@ -94,10 +100,11 @@ public class ModuleManager {
         clickGuiModules.add(Sounds.INSTANCE);
         clickGuiModules.add(ravex.modules.render.ItemPhysics.INSTANCE);
         clickGuiModules.add(ravex.modules.render.Fullbright.INSTANCE);
+        clickGuiModules.add(BlockOutline.INSTANCE);
+        clickGuiModules.add(Xray.INSTANCE);
 
         // ── Player ──────────────────────────────────────────────────────────────
         clickGuiModules.add(AutoTool.INSTANCE);
-        clickGuiModules.add(RichPresence.INSTANCE);
         clickGuiModules.add(NoInteract.INSTANCE);
         clickGuiModules.add(SourceFiller.INSTANCE);
         clickGuiModules.add(AirPlace.INSTANCE);
@@ -122,6 +129,7 @@ public class ModuleManager {
         clickGuiModules.add(NoPush.INSTANCE);
         clickGuiModules.add(AutoSprint.INSTANCE);
         clickGuiModules.add(Spider.INSTANCE);
+        clickGuiModules.add(Speed.INSTANCE);
 
         // ── Misc ─────────────────────────────────────────────────────────────────
         clickGuiModules.add(AntiAfk.INSTANCE);
@@ -148,6 +156,10 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.exploit.PacketCanceller.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.HandshakeSpoof.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.GhostHand.INSTANCE);
+        clickGuiModules.add(Timer.INSTANCE);
+
+        // ── Client ────────────────────────────────────────────────────────────────
+        clickGuiModules.add(RichPresence.INSTANCE);
 
         // ── HUD modules ──────────────────────────────────────────────────────────
         hudModules.add(new HudModule("Watermark", 10, 10, 80, 14) {

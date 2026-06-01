@@ -101,10 +101,7 @@ public abstract class MixinEntity {
         if (ravex.modules.movement.NoPush.INSTANCE.getEnabled()) {
             Entity self = (Entity)(Object)this;
             if (self instanceof net.minecraft.client.player.LocalPlayer) {
-                String m = ravex.modules.movement.NoPush.INSTANCE.mode.getValue();
-                if ("All".equals(m)) {
-                    ci.cancel();
-                } else if ("Water".equals(m) && ravex.modules.movement.NoPush.INSTANCE.water.getValue()) {
+                if (ravex.modules.movement.NoPush.INSTANCE.water.getValue()) {
                     ci.cancel();
                 }
             }

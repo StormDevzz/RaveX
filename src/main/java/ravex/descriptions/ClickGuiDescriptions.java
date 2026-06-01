@@ -76,6 +76,11 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("GhostHand",     "Interacts with containers through walls.");
         DESCRIPTIONS.put("AutoSprint",    "Automatically sprints when moving forward.");
         DESCRIPTIONS.put("Spider",        "Climbs up walls like a spider while holding jump.");
+        DESCRIPTIONS.put("Timer",         "Accelerates game tick rate for faster movement.");
+        DESCRIPTIONS.put("Speed",         "Increases movement speed with various bypass modes.");
+        DESCRIPTIONS.put("Xray",          "Makes blocks transparent and outlines chosen blocks.");
+        DESCRIPTIONS.put("Surround",      "Places blocks around your feet for protection.");
+        DESCRIPTIONS.put("BlockOutline",  "Customizable highlight on the targeted block.");
     }
 
     public static String getDescription(String moduleName) {

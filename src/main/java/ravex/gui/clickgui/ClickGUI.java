@@ -23,6 +23,7 @@ public class ClickGUI extends Screen {
 
     private final List<CategoryPanel> panels = new ArrayList<>();
     private final long initTime;
+    private double smoothedMaxH = 200.0;
 
     private boolean closing = false;
     private long closingStartTime = 0;
@@ -37,6 +38,7 @@ public class ClickGUI extends Screen {
 
     private boolean macrosHovered;
     private boolean profilesHovered;
+    private boolean configsHovered;
 
     public ClickGUI() {
         super(Component.literal("RaveX ClickGUI"));
@@ -58,7 +60,9 @@ public class ClickGUI extends Screen {
         int numPanels = panels.size();
         float totalW = numPanels * panelW + (numPanels - 1) * spacing;
         float startX = (this.width - totalW) / 2;
-        float startY = (this.height - 200) / 2;
+        int maxH = getMaxPanelHeight();
+        float startY = (this.height - maxH) / 2;
+        if (startY < 30) startY = 30;
 
         for (int i = 0; i < numPanels; i++) {
             CategoryPanel panel = panels.get(i);
@@ -72,6 +76,15 @@ public class ClickGUI extends Screen {
         return false;
     }
 
+    private int getMaxPanelHeight() {
+        int maxH = 150;
+        for (CategoryPanel panel : panels) {
+            int h = panel.getCurrentHeight(searchQuery);
+            if (h > maxH) maxH = h;
+        }
+        return maxH;
+    }
+
     private float getResponsiveScale() {
         int numPanels = panels.size();
         if (numPanels == 0) return 1.0f;
@@ -79,10 +92,10 @@ public class ClickGUI extends Screen {
         float panelW = 120f;
         float spacing = 2f;
         float totalW = numPanels * panelW + (numPanels - 1) * spacing;
-        float totalH = 16f + 18f * 18 + 60f; // header + modules + padding
+        float totalH = (float) smoothedMaxH + 40f;
 
-        float marginX = 30f;
-        float marginY = 50f;
+        float marginX = 20f;
+        float marginY = 30f;
         float availW = this.width - marginX * 2;
         float availH = this.height - marginY * 2;
 
@@ -114,6 +127,10 @@ public class ClickGUI extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        FontRenderUtility.setCustomEnabled(false);
+        int targetMaxH = getMaxPanelHeight();
+        smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.15;
+
         if (ravex.modules.render.ClickGui.INSTANCE.drawBackground.getValue()) {
             graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.BACKGROUND_START, ColorUtility.BACKGROUND_END);
         }
@@ -129,34 +146,43 @@ public class ClickGUI extends Screen {
         FontRenderUtility.drawString(graphics, tips, tipsX, tipsY - 1, 0xFF858599, true);
 
         float btnScale = Math.max(0.7f, getResponsiveScale());
-        int mgW = (int)(60 * btnScale);
+        int mgW = (int)(52 * btnScale);
         int mgH = (int)(16 * btnScale);
         int mgX = Math.max(4, (int)(10 * btnScale));
         int mgY = this.height - (int)(40 * btnScale);
         macrosHovered = mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
-        profilesHovered = mouseX >= mgX + mgW + 6 && mouseX <= mgX + mgW * 2 + 6 && mouseY >= mgY && mouseY <= mgY + mgH;
+        profilesHovered = mouseX >= mgX + mgW + 4 && mouseX <= mgX + mgW * 2 + 4 && mouseY >= mgY && mouseY <= mgY + mgH;
+        configsHovered = mouseX >= mgX + mgW * 2 + 8 && mouseX <= mgX + mgW * 3 + 8 && mouseY >= mgY && mouseY <= mgY + mgH;
         int activeColor = ColorUtility.getActiveColor();
         int macroBg = macrosHovered ? activeColor : 0xAA0E0E1C;
         int profileBg = profilesHovered ? activeColor : 0xAA0E0E1C;
+        int configsBg = configsHovered ? activeColor : 0xAA0E0E1C;
 
         for (int s = 2; s > 0; s--) {
             int sa = (int)(15 * (1f - s/2f));
             graphics.fill(mgX + s, mgY + s, mgX + mgW - s, mgY + mgH + s, (sa << 24));
-            graphics.fill(mgX + mgW + 6 + s, mgY + s, mgX + mgW * 2 + 6 - s, mgY + mgH + s, (sa << 24));
+            graphics.fill(mgX + mgW + 4 + s, mgY + s, mgX + mgW * 2 + 4 - s, mgY + mgH + s, (sa << 24));
+            graphics.fill(mgX + mgW * 2 + 8 + s, mgY + s, mgX + mgW * 3 + 8 - s, mgY + mgH + s, (sa << 24));
         }
         graphics.fillGradient(mgX, mgY, mgX + mgW, mgY + mgH, macroBg, ColorUtility.darker(macroBg, 0.7f));
-        graphics.fillGradient(mgX + mgW + 6, mgY, mgX + mgW * 2 + 6, mgY + mgH, profileBg, ColorUtility.darker(profileBg, 0.7f));
-        graphics.fill(mgX + mgW + 6, mgY + 1, mgX + mgW + 7, mgY + mgH - 1, ColorUtility.withAlpha(activeColor, 80));
+        graphics.fillGradient(mgX + mgW + 4, mgY, mgX + mgW * 2 + 4, mgY + mgH, profileBg, ColorUtility.darker(profileBg, 0.7f));
+        graphics.fillGradient(mgX + mgW * 2 + 8, mgY, mgX + mgW * 3 + 8, mgY + mgH, configsBg, ColorUtility.darker(configsBg, 0.7f));
+        graphics.fill(mgX + mgW + 4, mgY + 1, mgX + mgW + 5, mgY + mgH - 1, ColorUtility.withAlpha(activeColor, 80));
+        graphics.fill(mgX + mgW * 2 + 8, mgY + 1, mgX + mgW * 2 + 9, mgY + mgH - 1, ColorUtility.withAlpha(activeColor, 80));
         if (macrosHovered) {
             graphics.fill(mgX, mgY + mgH - 1, mgX + mgW, mgY + mgH, activeColor);
         }
         if (profilesHovered) {
-            graphics.fill(mgX + mgW + 6, mgY + mgH - 1, mgX + mgW * 2 + 6, mgY + mgH, activeColor);
+            graphics.fill(mgX + mgW + 4, mgY + mgH - 1, mgX + mgW * 2 + 4, mgY + mgH, activeColor);
+        }
+        if (configsHovered) {
+            graphics.fill(mgX + mgW * 2 + 8, mgY + mgH - 1, mgX + mgW * 3 + 8, mgY + mgH, activeColor);
         }
 
         int textY = mgY + (mgH - 8) / 2;
         FontRenderUtility.drawString(graphics, "Macros", mgX + 8, textY, 0xFFD0D0E0, true);
-        FontRenderUtility.drawString(graphics, "Profiles", mgX + mgW + 14, textY, 0xFFD0D0E0, true);
+        FontRenderUtility.drawString(graphics, "Profiles", mgX + mgW + 12, textY, 0xFFD0D0E0, true);
+        FontRenderUtility.drawString(graphics, "Configs", mgX + mgW * 2 + 14, textY, 0xFFD0D0E0, true);
 
         hoveredDescription = null;
 
@@ -218,6 +244,8 @@ public class ClickGUI extends Screen {
         }
 
         super.render(graphics, mouseX, mouseY, partialTicks);
+
+        FontRenderUtility.setCustomEnabled(false);
     }
 
     private void renderSearchBar(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -317,10 +345,10 @@ public class ClickGUI extends Screen {
         }
 
         float btnScale = Math.max(0.7f, getResponsiveScale());
-        int mgW = (int)(56 * btnScale);
-        int mgH = (int)(14 * btnScale);
+        int mgW = (int)(52 * btnScale);
+        int mgH = (int)(16 * btnScale);
         int mgX = Math.max(4, (int)(10 * btnScale));
-        int mgY = this.height - (int)(38 * btnScale);
+        int mgY = this.height - (int)(40 * btnScale);
 
         if (event.x() >= mgX && event.x() <= mgX + mgW && event.y() >= mgY && event.y() <= mgY + mgH) {
             this.minecraft.setScreen(new MacroScreen(this));
@@ -328,6 +356,10 @@ public class ClickGUI extends Screen {
         }
         if (event.x() >= mgX + mgW + 4 && event.x() <= mgX + mgW * 2 + 4 && event.y() >= mgY && event.y() <= mgY + mgH) {
             this.minecraft.setScreen(new ProfilesScreen(this));
+            return true;
+        }
+        if (event.x() >= mgX + mgW * 2 + 8 && event.x() <= mgX + mgW * 3 + 8 && event.y() >= mgY && event.y() <= mgY + mgH) {
+            this.minecraft.setScreen(new ConfigsScreen(this));
             return true;
         }
 
@@ -435,5 +467,6 @@ public class ClickGUI extends Screen {
             ravex.utility.sound.SoundUtility.playGuiClose();
             ravex.manager.ConfigManager.INSTANCE.save("default");
         }
+        FontRenderUtility.setCustomEnabled(false);
     }
 }

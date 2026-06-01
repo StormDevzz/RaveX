@@ -42,7 +42,7 @@ public class Scaffold extends Module {
     private final FadeAnimation fadeAnim = new FadeAnimation();
     private final SizeAnimation sizeAnim = new SizeAnimation();
     private final SlideAnimation slideAnim = new SlideAnimation();
-    private BlockPos currentTarget = null;
+    public BlockPos currentTarget = null;
     private int lastSlot = -1;
     private double targetY = -1;
 
@@ -100,9 +100,6 @@ public class Scaffold extends Module {
         int slot = findBlockSlot(p);
         if (slot == -1) {
             currentTarget = null;
-            renderAlpha = fadeAnim.update(false, 0.25f);
-            renderSize = sizeAnim.update(false, 0.15);
-            if (renderAlpha <= 0.01f) highlightPos = null;
             return;
         }
 
@@ -126,9 +123,6 @@ public class Scaffold extends Module {
 
         if (!isAir(targetPos)) {
             currentTarget = null;
-            renderAlpha = fadeAnim.update(false, 0.25f);
-            renderSize = sizeAnim.update(false, 0.15);
-            if (renderAlpha <= 0.01f) highlightPos = null;
             return;
         }
 
@@ -139,20 +133,6 @@ public class Scaffold extends Module {
             renderR = ((hc >> 16) & 0xFF) / 255.0f;
             renderG = ((hc >> 8) & 0xFF) / 255.0f;
             renderB = (hc & 0xFF) / 255.0f;
-
-            if (animate.getValue()) {
-                renderAlpha = fadeAnim.update(true, 0.25f);
-                renderSize = sizeAnim.update(true, 0.15);
-                highlightPos = slideAnim.update(targetPos.getX(), targetPos.getY(), targetPos.getZ(), 0.25);
-            } else {
-                renderAlpha = 1.0f;
-                renderSize = 1.0;
-                highlightPos = Vec3.atLowerCornerOf(targetPos);
-            }
-        } else {
-            highlightPos = null;
-            renderAlpha = 0.0f;
-            renderSize = 0.0;
         }
 
         BlockPos neighbor = null;

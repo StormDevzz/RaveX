@@ -17,7 +17,7 @@ public class RichPresence extends Module {
     public final BooleanParameter showCoords = new BooleanParameter("Show Coords", false);
 
     private RichPresence() {
-        super("RichPresence", Category.PLAYER);
+        super("RichPresence", Category.CLIENT);
         addParameter(showHP);
         addParameter(showCoords);
     }

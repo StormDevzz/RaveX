@@ -8,7 +8,6 @@ import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 
-
 public class ParameterElement {
     private final Parameter<?> parameter;
     private boolean isDragging = false;
@@ -64,9 +63,9 @@ public class ParameterElement {
             int swY = y + (height - swH) / 2;
 
             if (bp.getValue()) {
-                toggleAnimProgress = Math.min(1.0f, toggleAnimProgress + delta * 0.012f);
+                toggleAnimProgress = Math.min(1.0f, toggleAnimProgress + delta * 0.015f);
             } else {
-                toggleAnimProgress = Math.max(0.0f, toggleAnimProgress - delta * 0.012f);
+                toggleAnimProgress = Math.max(0.0f, toggleAnimProgress - delta * 0.015f);
             }
 
             int knobSize = 10;
@@ -80,12 +79,6 @@ public class ParameterElement {
             int trackOn = (0xCC << 24) | (trackR << 16) | (trackG << 8) | trackB;
             int trackOff = 0xFF2A2A38;
             int trackColor = lerpColor(trackOff, trackOn, toggleAnimProgress);
-
-            int sh = 2;
-            for (int s = sh; s > 0; s--) {
-                int sa = (int)(12 * (1f - s/(float)sh));
-                graphics.fill(swX + s, swY + s + 1, swX + swW - s, swY + swH + s, (sa << 24));
-            }
 
             for (int i = 0; i < swH; i++) {
                 float t = (i + 0.5f) / swH;
@@ -107,14 +100,6 @@ public class ParameterElement {
                     graphics.fill(knobX + borderInset, knobY2 + i, knobX + knobSize - borderInset, knobY2 + i + 1, 0xFFE0E0E0);
                 } else {
                     graphics.fill(knobX + inset, knobY2 + i, knobX + knobSize - inset, knobY2 + i + 1, knobCol);
-                }
-            }
-
-            if (toggleAnimProgress > 0.01f && toggleAnimProgress < 0.99f) {
-                int glowA = (int)(25 * Math.sin(toggleAnimProgress * Math.PI));
-                int glowCol = (glowA << 24) | (trackR << 16) | (trackG << 8) | trackB;
-                for (int g = 0; g < 2; g++) {
-                    graphics.fill(swX - g, swY - g, swX + swW + g, swY + swH + g, glowCol);
                 }
             }
 
@@ -210,6 +195,7 @@ public class ParameterElement {
                 int innerInset = (int)(knobR/2 * gap * gap * 0.5f);
                 graphics.fill(knobX - dx + innerInset, knobY2 + dy, knobX + dx - innerInset + 1, knobY2 + dy + 1, knobColor);
             }
+
         } else if (parameter instanceof ColorParameter cp) {
             FontRenderUtility.drawString(graphics, cp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
 
@@ -218,14 +204,22 @@ public class ParameterElement {
             int chipSize = 10;
             int argb = cp.getValue();
 
-            for (int s = 1; s >= 0; s--) {
-                graphics.fill(chipX - s, chipY - s, chipX + chipSize + s, chipY + chipSize + s, ColorUtility.withAlpha(activeColor, 40));
-            }
+            graphics.fill(chipX - 1, chipY - 1, chipX + chipSize + 1, chipY, ColorUtility.withAlpha(activeColor, 40));
+            graphics.fill(chipX - 1, chipY + chipSize, chipX + chipSize + 1, chipY + chipSize + 1, ColorUtility.withAlpha(activeColor, 40));
+            graphics.fill(chipX - 1, chipY - 1, chipX, chipY + chipSize + 1, ColorUtility.withAlpha(activeColor, 40));
+            graphics.fill(chipX + chipSize, chipY - 1, chipX + chipSize + 1, chipY + chipSize + 1, ColorUtility.withAlpha(activeColor, 40));
 
             graphics.fill(chipX, chipY, chipX + chipSize, chipY + chipSize, 0xFF888888);
             graphics.fill(chipX + chipSize / 2, chipY, chipX + chipSize, chipY + chipSize / 2, 0xFF444444);
             graphics.fill(chipX, chipY + chipSize / 2, chipX + chipSize / 2, chipY + chipSize, 0xFF444444);
             graphics.fill(chipX, chipY, chipX + chipSize, chipY + chipSize, argb);
+
+        } else if (parameter instanceof ravex.parameter.ActionParameter ap) {
+            FontRenderUtility.drawString(graphics, ap.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+            String text = "Configure >";
+            int tw = FontRenderUtility.getStringWidth(text);
+            FontRenderUtility.drawString(graphics, text, x + width - tw - 8, y + 7, activeColor, true);
+
         } else if (parameter instanceof ravex.parameter.StringParameter sp) {
             FontRenderUtility.drawString(graphics, sp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
             boolean isFocused = ClickGUI.activeStringParameterElement != null && ClickGUI.activeStringParameterElement.getParameter() == sp;
@@ -235,6 +229,7 @@ public class ParameterElement {
             }
             int tw = FontRenderUtility.getStringWidth(text);
             FontRenderUtility.drawString(graphics, text, x + width - tw - 8, y + 7, activeColor, true);
+
         } else {
             String text = parameter.getName() + ": " + parameter.getValue();
             if (text.length() > 18) {
@@ -290,6 +285,10 @@ public class ParameterElement {
             } else if (parameter instanceof ColorParameter cp) {
                 ClickGUI.activeColorParameter = cp;
                 ClickGUI.activeColorPalette = new ColorPaletteModal(cp);
+                playSound();
+                return true;
+            } else if (parameter instanceof ravex.parameter.ActionParameter ap) {
+                ap.getValue().run();
                 playSound();
                 return true;
             } else if (parameter instanceof ravex.parameter.StringParameter sp) {

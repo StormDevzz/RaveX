@@ -23,6 +23,11 @@ public class MixinFogRenderer {
     private void onComputeFogColor(Camera camera, float partialTick, ClientLevel level,
                                    int renderDistance, float bossColorModifier,
                                    CallbackInfoReturnable<Vector4f> cir) {
+        if (ravex.modules.player.Xray.INSTANCE.getEnabled()) {
+            cir.setReturnValue(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
+            return;
+        }
+
         if (!CustomFog.INSTANCE.getEnabled()) return;
 
         int argb = CustomFog.INSTANCE.color.getValue();

@@ -1,10 +1,14 @@
 package ravex.gui.clickgui;
 
 import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.Render2DEngine;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.modules.ModuleManager;
+import ravex.modules.render.ClickGui;
+
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +28,7 @@ public class CategoryPanel {
 
     private final int width = 120;
     private final List<ModuleButton> allButtons = new ArrayList<>();
+    private float headerAnim = 0f;
 
     public CategoryPanel(Category category, int x, int y) {
         this.category = category;
@@ -88,35 +93,47 @@ public class CategoryPanel {
         }
         int currentY = currentYOut[0];
 
+        int activeColor = ColorUtility.getActiveColor();
+        Color ac1 = ColorUtility.getColor(270);
+        Color ac2 = ColorUtility.getColor(0);
+        Color ac3 = ColorUtility.getColor(180);
+        Color ac4 = ColorUtility.getColor(90);
+
+        boolean hovered = Render2DEngine.isHovered(mouseX, mouseY, ix, iy - 2, width, currentY - iy + 2);
+        headerAnim = Render2DEngine.fastAnimation(headerAnim, hovered ? 1f : 0f, 8f);
+
         int shadowSize = 5;
         for (int s = shadowSize; s > 0; s--) {
-            int alpha = 20 - s * 3;
+            int alpha = (int)(12 * (1f - s / (float)shadowSize));
             if (alpha > 0) {
                 graphics.fill(ix + s, iy - 2 + s, ix + width - s, currentY + s, (alpha << 24));
             }
         }
 
-        graphics.fillGradient(ix, iy - 2, ix + width, iy + 16, ColorUtility.HEADER_COLOR, ColorUtility.HEADER_GRADIENT_END);
+        int panelTop = 0xCC0B0B18;
+        int panelBot = 0xE00E0E22;
+        Render2DEngine.drawRect(graphics, ix, iy + 16, width, currentY - iy - 16, panelTop);
+        if (ClickGui.INSTANCE.gradientMode.getValue().equals("Both")) {
+            int headerAccent = Render2DEngine.interpolateColorC(ac1, ac3, 0.5f).getRGB();
+            graphics.fill(ix, iy + 16, ix + width, iy + 17, ColorUtility.withAlpha(headerAccent, 25));
+        }
 
-        int activeColor = ColorUtility.getActiveColor();
+        int headerStart = 0xFF12122A;
+        int headerEnd = 0xFF181838;
+        graphics.fill(ix, iy - 2, ix + width, iy + 16, headerStart);
+
+        int animAccent = Render2DEngine.interpolateColorC(
+            ac1, Render2DEngine.injectAlpha(ac1, 80), headerAnim * 0.5f
+        ).getRGB();
         graphics.fill(ix, iy + 14, ix + width, iy + 16, activeColor);
         graphics.fill(ix, iy + 13, ix + 3, iy + 14, ColorUtility.darker(activeColor, 0.5f));
 
         String header = category.getDisplayName();
-        FontRenderUtility.drawString(graphics, header, ix + 8, iy + 4, 0xFFE0E0F0, true);
-        graphics.fill(ix + 8, iy + 13, ix + 8 + FontRenderUtility.getStringWidth(header) + 4, iy + 14, ColorUtility.withAlpha(activeColor, 30));
+        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.COMFORTAA, header, ix + 8, iy + 4, 0xFFE0E0F0, true);
+        graphics.fill(ix + 8, iy + 13, ix + 8 + FontRenderUtility.getStringWidth(FontRenderUtility.FontType.COMFORTAA, header) + 4, iy + 14, ColorUtility.withAlpha(activeColor, 30));
 
-        graphics.fillGradient(ix, iy + 16, ix + width, currentY, ColorUtility.PANEL_BODY_START, ColorUtility.PANEL_BODY_END);
-        graphics.fill(ix, iy + 16, ix + width, iy + 17, ColorUtility.withAlpha(activeColor, 15));
-
-        currentYOut[0] = iy + 16;
-        for (ModuleButton btn : visible) {
-            btn.render(graphics, ix, iy, width, mouseX, mouseY, currentYOut, searchQuery);
-        }
-        currentY = currentYOut[0];
-
-        if (ravex.modules.render.ClickGui.INSTANCE.outlines.getValue()) {
-            int borderColor = ravex.modules.render.ClickGui.INSTANCE.outlineColor.getValue();
+        if (ClickGui.INSTANCE.outlines.getValue()) {
+            int borderColor = ClickGui.INSTANCE.outlineColor.getValue();
             graphics.fill(ix - 1, iy - 2, ix, currentY + 1, borderColor);
             graphics.fill(ix + width, iy - 2, ix + width + 1, currentY + 1, borderColor);
             graphics.fill(ix - 1, iy - 2, ix + width + 1, iy - 1, borderColor);
@@ -125,6 +142,11 @@ public class CategoryPanel {
             graphics.fill(ix - 1, iy - 2, ix, currentY, ColorUtility.PANEL_BORDER_COLOR);
             graphics.fill(ix + width, iy - 2, ix + width + 1, currentY, ColorUtility.PANEL_BORDER_COLOR);
             graphics.fill(ix, currentY, ix + width, currentY + 1, ColorUtility.PANEL_BORDER_COLOR);
+        }
+
+        currentYOut[0] = iy + 16;
+        for (ModuleButton btn : visible) {
+            btn.render(graphics, ix, iy, width, mouseX, mouseY, currentYOut, searchQuery);
         }
     }
 
@@ -164,5 +186,28 @@ public class CategoryPanel {
             }
         }
         return false;
+    }
+
+    public int getCurrentHeight(String searchQuery) {
+        List<ModuleButton> visible = filterButtons(searchQuery);
+        if (visible.isEmpty() && !searchQuery.isEmpty()) return 0;
+        if (visible.isEmpty() && allButtons.isEmpty()) return 0;
+
+        int h = 16;
+        for (ModuleButton btn : visible) {
+            h += 18;
+            int visibleCount = 0;
+            int expandedHeight = 0;
+            for (ParameterElement pe : btn.getParameterElements()) {
+                if (pe.getParameter().isVisible()) {
+                    visibleCount++;
+                    expandedHeight += pe.getHeight();
+                }
+            }
+            if (btn.isExpanded() && visibleCount > 0) {
+                h += (int) ((expandedHeight + 4) * btn.getExpansionProgress());
+            }
+        }
+        return h;
     }
 }

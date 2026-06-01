@@ -1,6 +1,9 @@
 package ravex.gui.clickgui;
 
 import ravex.modules.render.ClickGui;
+import ravex.utility.render.Render2DEngine;
+
+import java.awt.*;
 
 public class ColorUtility {
     public static final int HEADER_COLOR = 0xFF12122A;
@@ -10,28 +13,28 @@ public class ColorUtility {
     public static final int BACKGROUND_END = 0xDD0A0A1E;
     public static final int PANEL_BODY_START = 0xCC0B0B18;
     public static final int PANEL_BODY_END = 0xE00E0E22;
-
     public static final int SHADOW_COLOR = 0x60000000;
 
     public static int getActiveColor() {
-        String palette = ClickGui.INSTANCE.colorPalette.getValue();
-        switch (palette) {
-            case "Blue":
-                return 0xFF1E88E5;
-            case "Green":
-                return 0xFF43A047;
-            case "Gold":
-                return 0xFFFFB300;
-            case "Purple":
-                return 0xFF8E24AA;
-            case "Rainbow":
-                return getRainbowColor(0, 4000);
-            case "Custom":
-                return ClickGui.INSTANCE.accentColor.getValue();
-            case "Red":
-            default:
-                return 0xFFE63946;
-        }
+        return getColor(0).getRGB();
+    }
+
+    public static Color getColor(int index) {
+        ClickGui cfg = ClickGui.INSTANCE;
+        String mode = cfg.colorMode.getValue();
+        int speed = cfg.colorSpeed.getValue().intValue();
+        Color c1 = new Color(cfg.color1.getValue());
+        Color c2 = new Color(cfg.color2.getValue());
+
+        return switch (mode) {
+            case "Sky" -> Render2DEngine.skyRainbow(speed, index);
+            case "LightRainbow" -> Render2DEngine.rainbow(speed, index, 0.6f, 1f, 1f);
+            case "Rainbow" -> Render2DEngine.rainbow(speed, index, 1f, 1f, 1f);
+            case "Fade" -> Render2DEngine.fade(speed, index, c1, 1f);
+            case "DoubleColor" -> Render2DEngine.twoColorEffect(c1, c2, speed, index);
+            case "Analogous" -> Render2DEngine.interpolateColorsBackAndForth(speed, index, c1, Render2DEngine.getAnalogousColor(c2), true);
+            default -> c1;
+        };
     }
 
     public static int getRainbowColor(int index, int speed) {
@@ -48,44 +51,14 @@ public class ColorUtility {
 
     public static int getModuleColor(boolean enabled, boolean hovered) {
         if (enabled) {
-            String palette = ClickGui.INSTANCE.colorPalette.getValue();
-            switch (palette) {
-                case "Blue":
-                    return 0xFF0D47A1;
-                case "Green":
-                    return 0xFF1B5E20;
-                case "Gold":
-                    return 0xFFE65100;
-                case "Purple":
-                    return 0xFF4A148C;
-                case "Rainbow":
-                    return getRainbowColor(indexForButton(), 6000);
-                case "Red":
-                default:
-                    return 0xFF8B0000;
-            }
+            return getColor(0).getRGB();
         }
         return hovered ? 0xFF202035 : 0xFF0D0D14;
     }
 
     public static int getTextColor(boolean enabled, boolean hovered) {
         if (enabled) {
-            String palette = ClickGui.INSTANCE.colorPalette.getValue();
-            switch (palette) {
-                case "Blue":
-                    return 0xFF90CAF9;
-                case "Green":
-                    return 0xFFA5D6A7;
-                case "Gold":
-                    return 0xFFFFE082;
-                case "Purple":
-                    return 0xFFE1BEE7;
-                case "Rainbow":
-                    return 0xFFFFFFFF;
-                case "Red":
-                default:
-                    return 0xFFFF6B6B;
-            }
+            return 0xFFD0D0E0;
         }
         return hovered ? 0xFFD0D0E0 : 0xFF8F8FA0;
     }
@@ -100,9 +73,5 @@ public class ColorUtility {
 
     public static int withAlpha(int color, int alpha) {
         return (alpha << 24) | (color & 0xFFFFFF);
-    }
-
-    private static int indexForButton() {
-        return 1;
     }
 }

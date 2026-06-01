@@ -53,10 +53,13 @@
         "movement.MixinNoSlowDown",
         "movement.MixinVelocity",
         "movement.MixinSpider",
+        "movement.MixinSpeed",
+        "movement.MixinTimer",
         "player.MixinNoInteract",
         "player.MixinFastBreak",
         "player.MixinGhostHand",
         "world.MixinBlock",
+        "render.MixinBlockXRay",
         "entity.MixinMob"
     ],
     "client": [],
