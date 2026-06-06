@@ -9,6 +9,7 @@ import net.minecraft.client.input.CharacterEvent;
 import org.lwjgl.glfw.GLFW;
 import ravex.modules.Category;
 import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.Render2DEngine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -177,7 +178,6 @@ public class ClickGUI extends Screen {
 
         int activeColor = ColorUtility.getActiveColor();
 
-        // Draw three buttons
         int[] bxArr   = { mgX, mgX + mgW + mgGap, mgX + 2 * (mgW + mgGap) };
         boolean[] hovArr = { macrosHovered, profilesHovered, configsHovered };
         String[] labArr  = { "Macros", "Profiles", "Configs" };
@@ -185,27 +185,9 @@ public class ClickGUI extends Screen {
         for (int i = 0; i < 3; i++) {
             int bx  = bxArr[i];
             boolean h = hovArr[i];
-            int bg  = h ? activeColor : 0xBB0B0B1C;
+            int bg  = h ? activeColor : 0xFF202020;
 
-            // Glow behind hovered button
-            if (h) {
-                for (int s = 1; s <= 4; s++) {
-                    ravex.utility.render.Render2DEngine.drawRound(graphics,
-                        bx - s, mgY - s, mgW + s * 2, mgH + s * 2, mgRadius + s,
-                        ColorUtility.withAlpha(activeColor, 20 / s));
-                }
-            }
-
-            ravex.utility.render.Render2DEngine.drawRound(graphics, bx, mgY, mgW, mgH, mgRadius, bg);
-
-            // Subtle top-highlight on all buttons
-            graphics.fill(bx + mgRadius, mgY, bx + mgW - mgRadius, mgY + 1,
-                    ColorUtility.withAlpha(0xFFFFFF, h ? 40 : 15));
-
-            // Active underline when hovered
-            if (h) {
-                graphics.fill(bx + mgRadius, mgY + mgH - 1, bx + mgW - mgRadius, mgY + mgH, activeColor);
-            }
+            graphics.fill(bx, mgY, bx + mgW, mgY + mgH, bg);
 
             int textW = FontRenderUtility.getStringWidth(labArr[i]);
             int textY = mgY + (mgH - FontRenderUtility.getFontHeight()) / 2;
@@ -250,22 +232,17 @@ public class ClickGUI extends Screen {
         }
 
         if (tooltipAlpha > 0.02f && !activeTooltipText.isEmpty()) {
-            int tx = mouseX + 12;
-            int ty = mouseY + 12;
-            int tw = FontRenderUtility.getStringWidth(activeTooltipText) + 8;
-            int th = 16;
+            int tx = mouseX + 8;
+            int ty = mouseY + 8;
+            int tw = FontRenderUtility.getStringWidth(activeTooltipText) + 6;
+            int th = 13;
 
             if (tx + tw > this.width) tx = mouseX - tw - 4;
             if (ty + th > this.height) ty = mouseY - th - 4;
 
-            int alphaInt = Math.round(tooltipAlpha * 230);
-            int bg = (alphaInt << 24) | 0x07070B;
-            int border = (Math.round(tooltipAlpha * 255) << 24) | (ColorUtility.getActiveColor() & 0xFFFFFF);
-            int textCol = (Math.round(tooltipAlpha * 255) << 24) | 0xE0E0E0;
-
-            graphics.fill(tx, ty, tx + tw, ty + th, bg);
-            graphics.fill(tx, ty, tx + tw, ty + 1, border);
-            FontRenderUtility.drawString(graphics, activeTooltipText, tx + 4, ty + 4, textCol, true);
+            graphics.fill(tx, ty, tx + tw, ty + th, 0xEE141414);
+            Render2DEngine.drawBorder(graphics, tx, ty, tw, th, 1, 0xFF2C2C2C);
+            FontRenderUtility.drawString(graphics, activeTooltipText, tx + 3, ty + 2, 0xFFE0E0E0, true);
         }
 
         if (activeColorPalette != null) {
@@ -276,10 +253,10 @@ public class ClickGUI extends Screen {
     }
 
     private void renderSearchBar(GuiGraphics graphics, int mouseX, int mouseY) {
-        int barW = Math.min(280, this.width - 60);
+        int barW = Math.min(200, this.width - 60);
         int barX = (this.width - barW) / 2;
         int barY = 14;
-        int barH = 26;
+        int barH = 20;
 
         long now = System.currentTimeMillis();
         long delta = now - searchLastUpdate;
@@ -295,40 +272,33 @@ public class ClickGUI extends Screen {
 
         int glowColor = ColorUtility.getActiveColor();
         float eased = searchAnimProgress * searchAnimProgress * (3f - 2f * searchAnimProgress);
-        int expandedW = barW + (int)(60 * eased);
+        int expandedW = barW + (int)(40 * eased);
         int actualX = barX - (expandedW - barW) / 2;
 
-        for (int s = 3; s > 0; s--) {
-            int sa = (int)(15 * (1f - s/3f));
-            graphics.fill(actualX + s, barY + s, actualX + expandedW - s, barY + barH + s, (sa << 24));
-        }
-        graphics.fillGradient(actualX, barY, actualX + expandedW, barY + barH, 0xFF0B0B1A, 0xFF14142E);
-        graphics.fill(actualX, barY + barH - 2, actualX + expandedW, barY + barH - 1, ColorUtility.withAlpha(glowColor, 40 + (int)(60 * eased)));
-        graphics.fill(actualX, barY + barH - 1, actualX + expandedW, barY + barH, glowColor);
+        graphics.fill(actualX, barY, actualX + expandedW, barY + barH, 0xEE141414);
+        Render2DEngine.drawBorder(graphics, actualX, barY, expandedW, barH, 1, 0xFF2C2C2C);
+        graphics.fill(actualX, barY + barH - 2, actualX + expandedW, barY + barH, glowColor);
 
-        int searchIconSize = 10;
-        int iconX = actualX + 10;
-        int iconY = barY + (barH - searchIconSize) / 2 + 1;
-        for (int dy = 0; dy < searchIconSize; dy++) {
-            float dist = Math.abs(dy - searchIconSize / 2f) / (searchIconSize / 2f);
-            int dx = (int)(4 * dist);
-            graphics.fill(iconX + dx, iconY + dy, iconX + searchIconSize - dx, iconY + dy + 1, ColorUtility.withAlpha(glowColor, 80 + (int)(40 * eased)));
-        }
+        int iconX = actualX + 8;
+        int iconY = barY + (barH - 8) / 2;
+        graphics.fill(iconX, iconY, iconX + 6, iconY + 1, glowColor);
+        graphics.fill(iconX, iconY, iconX + 1, iconY + 6, glowColor);
+        graphics.fill(iconX + 5, iconY, iconX + 6, iconY + 6, glowColor);
+        graphics.fill(iconX, iconY + 5, iconX + 6, iconY + 6, glowColor);
+        graphics.fill(iconX + 5, iconY + 5, iconX + 8, iconY + 8, glowColor);
 
         String searchText = searchQuery;
         if (searchText.isEmpty() && !searchFocused) {
-            FontRenderUtility.drawString(graphics, "Search modules\u2026", actualX + 24, barY + 9, 0xFF505068, true);
+            FontRenderUtility.drawString(graphics, "Search...", actualX + 20, barY + 6, 0xFF505068, true);
         } else {
-            FontRenderUtility.drawString(graphics, searchText, actualX + 24, barY + 9, 0xFFC0C0D0, true);
+            FontRenderUtility.drawString(graphics, searchText, actualX + 20, barY + 6, 0xFFC0C0D0, true);
             if (searchFocused) {
                 int textW = FontRenderUtility.getStringWidth(searchText);
                 float cursorBlink = (float)Math.sin(searchCursorCounter * 0.1f);
                 int cursorAlpha = (int)(150 + 105 * cursorBlink * cursorBlink * cursorBlink);
-                graphics.fill(actualX + 24 + textW, barY + 8, actualX + 26 + textW, barY + 19, (cursorAlpha << 24) | (glowColor & 0xFFFFFF));
+                graphics.fill(actualX + 20 + textW, barY + 5, actualX + 22 + textW, barY + 15, (cursorAlpha << 24) | (glowColor & 0xFFFFFF));
             }
         }
-
-        graphics.fill(actualX + 22, barY + 7, actualX + 24, barY + 19, ColorUtility.withAlpha(glowColor, 80));
 
         int resultCount = 0;
         if (!searchQuery.isEmpty()) {
@@ -336,10 +306,9 @@ public class ClickGUI extends Screen {
                 resultCount += panel.getMatchCount(searchQuery);
             }
             if (resultCount > 0) {
-                String countText = resultCount + (resultCount == 1 ? " result" : " results");
+                String countText = String.valueOf(resultCount);
                 int cw = FontRenderUtility.getStringWidth(countText);
-                FontRenderUtility.drawString(graphics, countText, actualX + expandedW - cw - 10, barY + 9, 0xFF606080, true);
-                graphics.fill(actualX + expandedW - cw - 14, barY + 8, actualX + expandedW - cw - 12, barY + 19, ColorUtility.withAlpha(glowColor, 60));
+                FontRenderUtility.drawString(graphics, countText, actualX + expandedW - cw - 8, barY + 6, 0xFF606080, true);
             }
         }
     }
@@ -357,10 +326,10 @@ public class ClickGUI extends Screen {
         double mx = (event.x() - cx) / finalScale + cx;
         double my = (event.y() - cy) / finalScale + cy;
 
-        int barW = Math.min(240, this.width - 60);
+        int barW = Math.min(200, this.width - 60);
         int barX = (this.width - barW) / 2;
-        int barY = 12;
-        int barH = 22;
+        int barY = 14;
+        int barH = 20;
 
         if (event.x() >= barX && event.x() <= barX + barW && event.y() >= barY && event.y() <= barY + barH) {
             searchFocused = true;
@@ -407,6 +376,15 @@ public class ClickGUI extends Screen {
         }
 
         int key = event.key();
+
+        boolean ctrlPressed = (GLFW.glfwGetKey(this.minecraft.getWindow().handle(), GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS) ||
+                             (GLFW.glfwGetKey(this.minecraft.getWindow().handle(), GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS);
+
+        if (ctrlPressed && key == GLFW.GLFW_KEY_F) {
+            searchFocused = true;
+            searchQuery = "";
+            return true;
+        }
 
         if (bindingModuleButton != null) {
             if (key == GLFW.GLFW_KEY_ESCAPE) {

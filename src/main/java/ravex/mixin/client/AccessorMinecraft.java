@@ -11,4 +11,7 @@ public interface AccessorMinecraft {
 
     @Accessor("rightClickDelay")
     void setRightClickDelay(int delay);
+
+    @org.spongepowered.asm.mixin.gen.Invoker("startUseItem")
+    void invokeStartUseItem();
 }

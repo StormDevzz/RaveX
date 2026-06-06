@@ -66,6 +66,10 @@ public class CommandProcessor {
             case "coords":
                 handleCoords();
                 break;
+            case "friend":
+            case "f":
+                handleFriendCommand(args);
+                break;
             default:
                 printMessage("§c[RaveX] Unknown command. Type §e" + pref + "help §cfor a list of commands.");
         }
@@ -346,6 +350,44 @@ public class CommandProcessor {
             } else if (mc.level.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
                 printMessage(String.format("§7→ Nether: §e%.1f §7/ §7- §7/ §e%.1f", p.getX() / 8, p.getZ() / 8));
             }
+        }
+    }
+
+    private void handleFriendCommand(String[] args) {
+        String pref = Commands.INSTANCE.prefix.getValue();
+        if (args.length < 2) {
+            printMessage("§c[RaveX] Usage: " + pref + "friend <add/remove/list> [name]");
+            return;
+        }
+        String sub = args[1].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "add":
+                if (args.length < 3) {
+                    printMessage("§c[RaveX] Usage: " + pref + "friend add <name>");
+                    return;
+                }
+                ravex.manager.FriendManager.INSTANCE.addFriend(args[2]);
+                printMessage("§a[RaveX] Added friend: §e" + args[2]);
+                break;
+            case "remove":
+            case "del":
+                if (args.length < 3) {
+                    printMessage("§c[RaveX] Usage: " + pref + "friend remove <name>");
+                    return;
+                }
+                ravex.manager.FriendManager.INSTANCE.removeFriend(args[2]);
+                printMessage("§a[RaveX] Removed friend: §e" + args[2]);
+                break;
+            case "list":
+                java.util.Set<String> friends = ravex.manager.FriendManager.INSTANCE.getFriends();
+                if (friends.isEmpty()) {
+                    printMessage("§e[RaveX] Your friend list is empty.");
+                } else {
+                    printMessage("§5[RaveX] Friends: §e" + String.join("§r, §e", friends));
+                }
+                break;
+            default:
+                printMessage("§c[RaveX] Unknown subcommand. Use add, remove, or list.");
         }
     }
 

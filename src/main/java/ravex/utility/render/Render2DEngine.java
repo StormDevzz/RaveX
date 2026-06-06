@@ -22,80 +22,15 @@ public class Render2DEngine {
     }
 
     public static void drawRound(GuiGraphics graphics, int x, int y, int width, int height, int radius, int color) {
-        int a = (color >> 24) & 0xFF;
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-        drawRound(graphics, x, y, width, height, radius, r, g, b, a);
+        graphics.fill(x, y, x + width, y + height, color);
     }
 
     public static void drawRound(GuiGraphics graphics, int x, int y, int width, int height, int radius, int r, int g, int b, int a) {
-        if (radius < 1) {
-            graphics.fill(x, y, x + width, y + height, (a << 24) | (r << 16) | (g << 8) | b);
-            return;
-        }
-        int rs = Math.min(radius, Math.min(width, height) / 2);
-        graphics.fill(x + rs, y, x + width - rs, y + height, (a << 24) | (r << 16) | (g << 8) | b);
-        graphics.fill(x, y + rs, x + rs, y + height - rs, (a << 24) | (r << 16) | (g << 8) | b);
-        graphics.fill(x + width - rs, y + rs, x + width, y + height - rs, (a << 24) | (r << 16) | (g << 8) | b);
-        int aa = Math.max(1, a / 3);
-        int ab = (a << 24) | (r << 16) | (g << 8) | b;
-        int aab = (aa << 24) | (r << 16) | (g << 8) | b;
-        int aab2 = (Math.min(255, aa * 2) << 24) | (r << 16) | (g << 8) | b;
-        drawCorner(graphics, x + rs, y + rs, false, false, rs, ab);
-        drawCorner(graphics, x + width - rs, y + rs, true, false, rs, ab);
-        drawCorner(graphics, x + rs, y + height - rs, false, true, rs, ab);
-        drawCorner(graphics, x + width - rs, y + height - rs, true, true, rs, ab);
-    }
-
-    private static void drawCorner(GuiGraphics graphics, int cx, int cy, boolean right, boolean bottom, int radius, int color) {
-        int a = (color >> 24) & 0xFF;
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-        for (int dy = 0; dy < radius; dy++) {
-            int yPos = bottom ? cy + dy : cy - dy - 1;
-            int xOff = (int) Math.sqrt(radius * radius - (radius - dy) * (radius - dy));
-            int x1 = right ? cx + radius - xOff : cx - radius + xOff;
-            int x2 = right ? cx + radius : cx - radius + xOff + 1;
-            if (x2 > x1) {
-                int alpha = (int) (a * Math.max(0, Math.min(1, (radius - dy) / (float) radius)));
-                int col = (Math.min(255, alpha) << 24) | (r << 16) | (g << 8) | b;
-                graphics.fill(x1, yPos, x2, yPos + 1, col);
-            }
-        }
+        graphics.fill(x, y, x + width, y + height, (a << 24) | (r << 16) | (g << 8) | b);
     }
 
     public static void drawRoundGradient(GuiGraphics graphics, int x, int y, int width, int height, int radius, Color c1, Color c2, Color c3, Color c4) {
-        if (width < 1 || height < 1) return;
-        int rs = Math.min(radius, Math.min(width, height) / 2);
-        int cx = x + width / 2;
-        int cy = y + height / 2;
-
-        for (int py = y; py < y + height; py++) {
-            float tY = (py - y) / (float) height;
-            Color leftColor = interpolateColorC(c1, c3, tY);
-            Color rightColor = interpolateColorC(c2, c4, tY);
-            for (int px = x; px < x + width; px++) {
-                float tX = (px - x) / (float) width;
-                Color col = interpolateColorC(leftColor, rightColor, tX);
-
-                int dx = Math.min(px - x, x + width - 1 - px);
-                int dy = Math.min(py - y, y + height - 1 - py);
-                int distToEdge = Math.min(dx, dy);
-                if (distToEdge < rs) {
-                    float cornerProgress = 1f - (distToEdge / (float) rs);
-                    float alphaMul = 1f - cornerProgress * cornerProgress;
-                    int finalA = Math.max(0, Math.min(255, (int) (col.getAlpha() * alphaMul)));
-                    if (finalA > 0) {
-                        int argb = (finalA << 24) | (col.getRed() << 16) | (col.getGreen() << 8) | col.getBlue();
-                        graphics.fill(px, py, px + 1, py + 1, argb);
-                    }
-                } else {
-                    graphics.fill(px, py, px + 1, py + 1, col.getRGB());
-                }
-            }
-        }
+        graphics.fillGradient(x, y, x + width, y + height, c1.getRGB(), c3.getRGB());
     }
 
     public static boolean isHovered(double mouseX, double mouseY, double x, double y, double width, double height) {

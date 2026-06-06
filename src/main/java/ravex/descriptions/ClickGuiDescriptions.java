@@ -12,7 +12,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("AutoTool",      "Swaps to the most efficient tool automatically.");
         DESCRIPTIONS.put("AntiAfk",       "Prevents AFK timeout kicks by moving.");
         DESCRIPTIONS.put("BoneMeal",      "Automatically fertilizes crops with bonemeal.");
-        DESCRIPTIONS.put("ClickGui",      "Opens the cheat configuration interface.");
+        DESCRIPTIONS.put("ClickGui",      "GUI can be opened from any screen (menu, server list, in-game).");
         DESCRIPTIONS.put("Notifications", "Displays screen alerts for toggled modules.");
         DESCRIPTIONS.put("VisualRange",   "Alerts you when players enter render range.");
         DESCRIPTIONS.put("NoBob",         "Disables hand and camera bobbing physics.");
@@ -89,6 +89,19 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("SelfTrap",      "Automatically places blocks around yourself.");
         DESCRIPTIONS.put("WaxAura",       "Automatically waxes nearby copper blocks.");
         DESCRIPTIONS.put("ChestAura",      "Automatically places chests around the player or entities.");
+        DESCRIPTIONS.put("PortalGui",      "Use inventory and chat inside portals.");
+        DESCRIPTIONS.put("Avoid",          "Avoids damaging blocks like cacti and berries.");
+        DESCRIPTIONS.put("ItemScroller",   "Ctrl+Shift+Throw to mass-drop matching items. RShift+Scroll/LMB to transfer.");
+        DESCRIPTIONS.put("ExtraTab",       "Bigger tab list with ping and colored names.");
+        DESCRIPTIONS.put("ExtraChat",      "ZoV (з→Z, в→V) and MoreChatHistory options.");
+        DESCRIPTIONS.put("ExtraChest",     "Steal/Dump/Fill/Drop All buttons for chests.");
+        DESCRIPTIONS.put("AutoReconnect",  "Adds Reconnect button to Game Menu & Disconnect screen.");
+        DESCRIPTIONS.put("FastLatency",    "Measures ping more frequently for accurate RTT.");
+        DESCRIPTIONS.put("MultiTask",      "Allows attacking & mining while eating/using items.");
+        DESCRIPTIONS.put("BlockSelector",  "Selects a random block from the hotbar after placing one.");
+        DESCRIPTIONS.put("AutoSoup",       "Auto-drinks healing potions when health is low.");
+        DESCRIPTIONS.put("NameProtect",    "Hides player name in nametags and chat (→RaveX).");
+        DESCRIPTIONS.put("StashFinder",    "Detects & highlights stashes with valuable items.");
     }
 
     public static String getDescription(String moduleName) {

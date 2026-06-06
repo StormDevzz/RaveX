@@ -26,6 +26,10 @@ public class ModuleSettingsScreen extends Screen {
     private final List<ParameterElement> paramElements = new ArrayList<>();
     private float scrollOffset = 0;
 
+    private long openTime = -1;
+    private boolean closing = false;
+    private long closingStartTime = -1;
+
     public ModuleSettingsScreen(Screen parent, Module module) {
         super(Component.literal(module.getName() + " Settings"));
         this.parent = parent;
@@ -40,12 +44,29 @@ public class ModuleSettingsScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        long now = System.currentTimeMillis();
+        if (openTime == -1) openTime = now;
+
+        float progress = 1.0f;
+        if (closing) {
+            long elapsed = now - closingStartTime;
+            progress = Math.max(0.0f, 1.0f - (elapsed / 130.0f));
+            if (progress <= 0.001f) {
+                Minecraft.getInstance().setScreen(parent);
+                return;
+            }
+        } else {
+            long elapsed = now - openTime;
+            progress = Math.min(1.0f, elapsed / 150.0f);
+        }
+
+        float scale = progress * (2.0f - progress);
         int activeColor = ColorUtility.getActiveColor();
         int w = this.width;
         int h = this.height;
 
-        // Draw translucent dark background so the world is visible
-        graphics.fill(0, 0, w, h, 0x7705050E);
+        int bgAlpha = (int)(progress * 0x77);
+        graphics.fill(0, 0, w, h, (bgAlpha << 24) | 0x05050E);
 
         int panelW = Math.min(280, w - 40);
         int panelX = (w - panelW) / 2;
@@ -59,13 +80,22 @@ public class ModuleSettingsScreen extends Screen {
         int panelH = Math.min(totalContentH + headerH + 8, maxPanelH);
         int panelY = (h - panelH) / 2;
 
-        Render2DEngine.drawRound(graphics, panelX, panelY, panelW, panelH, 6, 0xCC0B0B18);
-        Render2DEngine.drawRound(graphics, panelX, panelY, panelW, panelH, 6, ColorUtility.withAlpha(activeColor, 40));
+        var pose = graphics.pose();
+        pose.pushMatrix();
+        pose.translate(w / 2.0f, h / 2.0f);
+        pose.scale(scale, scale);
+        pose.translate(-w / 2.0f, -h / 2.0f);
 
+        float cx = w / 2.0f;
+        float cy = h / 2.0f;
+        int mx = scale > 0.01f ? (int) ((mouseX - cx) / scale + cx) : mouseX;
+        int my = scale > 0.01f ? (int) ((mouseY - cy) / scale + cy) : mouseY;
 
+        graphics.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xEE141414);
+        Render2DEngine.drawBorder(graphics, panelX, panelY, panelW, panelH, 1, 0xFF2C2C2C);
 
-        graphics.fillGradient(panelX, panelY, panelX + panelW, panelY + headerH, 0xFF151530, 0xFF0E0E22);
-        graphics.fill(panelX, panelY + headerH - 1, panelX + panelW, panelY + headerH, activeColor);
+        graphics.fill(panelX, panelY, panelX + panelW, panelY + headerH, 0xFF1C1C1C);
+        graphics.fill(panelX, panelY + headerH - 2, panelX + panelW, panelY + headerH, activeColor);
 
         FontRenderUtility.drawString(graphics, module.getName() + " Settings", panelX + 10, panelY + 8, 0xFFFFFFFF, true);
         FontRenderUtility.drawString(graphics, "ESC to close", panelX + panelW - 80, panelY + 10, 0xFF606080, false);
@@ -83,7 +113,7 @@ public class ModuleSettingsScreen extends Screen {
             if (!pe.getParameter().isVisible()) continue;
             int pHeight = pe.getHeight();
             if (py + pHeight >= contentY - 20 && py <= contentY + contentH + 20) {
-                pe.render(graphics, panelX + 10, py, panelW - 20, pHeight, mouseX, mouseY);
+                pe.render(graphics, panelX + 10, py, panelW - 20, pHeight, mx, my);
             }
             py += pHeight;
         }
@@ -101,6 +131,8 @@ public class ModuleSettingsScreen extends Screen {
             graphics.fill(sbX, thumbY, sbX + 2, thumbY + thumbH, ColorUtility.withAlpha(activeColor, 80));
         }
 
+        pose.popMatrix();
+
         if (ClickGUI.activeColorPalette != null) {
             ClickGUI.activeColorPalette.render(graphics, mouseX, mouseY, w, h);
         }
@@ -108,11 +140,29 @@ public class ModuleSettingsScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partialTicks);
     }
 
+    private void closeScreen() {
+        if (!closing) {
+            closing = true;
+            closingStartTime = System.currentTimeMillis();
+        }
+    }
+
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         if (ClickGUI.activeColorPalette != null) {
             return true;
         }
+        if (closing) return true;
+        long now = System.currentTimeMillis();
+        float progress = Math.min(1.0f, (now - openTime) / 150.0f);
+        float scale = progress * (2.0f - progress);
+        if (scale <= 0.05f) return true;
+
+        float cx = width / 2.0f;
+        float cy = height / 2.0f;
+        double mx = (mouseX - cx) / scale + cx;
+        double my = (mouseY - cy) / scale + cy;
+
         int panelW = Math.min(280, width - 40);
         int panelX = (width - panelW) / 2;
         
@@ -127,7 +177,7 @@ public class ModuleSettingsScreen extends Screen {
         int contentH = panelH - headerH - 8;
 
         float maxScroll = Math.max(0, totalContentH - contentH);
-        if (mouseX >= panelX && mouseX <= panelX + panelW && mouseY >= panelY && mouseY <= panelY + panelH) {
+        if (mx >= panelX && mx <= panelX + panelW && my >= panelY && my <= panelY + panelH) {
             scrollOffset = (float) Math.max(0, Math.min(maxScroll, scrollOffset - verticalAmount * 12));
             return true;
         }
@@ -139,6 +189,16 @@ public class ModuleSettingsScreen extends Screen {
         if (ClickGUI.activeColorPalette != null) {
             return ClickGUI.activeColorPalette.mouseClicked(event.x(), event.y(), event.button());
         }
+        if (closing) return true;
+        long now = System.currentTimeMillis();
+        float progress = Math.min(1.0f, (now - openTime) / 150.0f);
+        float scale = progress * (2.0f - progress);
+        if (scale <= 0.05f) return true;
+
+        float cx = width / 2.0f;
+        float cy = height / 2.0f;
+        double mx = (event.x() - cx) / scale + cx;
+        double my = (event.y() - cy) / scale + cy;
 
         int panelW = Math.min(280, width - 40);
         int panelX = (width - panelW) / 2;
@@ -157,7 +217,7 @@ public class ModuleSettingsScreen extends Screen {
         for (ParameterElement pe : paramElements) {
             if (!pe.getParameter().isVisible()) continue;
             int pHeight = pe.getHeight();
-            if (pe.mouseClicked(event.x(), event.y(), event.button(), panelX + 10, py, panelW - 20, pHeight)) {
+            if (pe.mouseClicked(mx, my, event.button(), panelX + 10, py, panelW - 20, pHeight)) {
                 return true;
             }
             py += pHeight;
@@ -191,7 +251,7 @@ public class ModuleSettingsScreen extends Screen {
         }
 
         if (key == GLFW.GLFW_KEY_ESCAPE) {
-            Minecraft.getInstance().setScreen(parent);
+            closeScreen();
             return true;
         }
         return super.keyPressed(event);

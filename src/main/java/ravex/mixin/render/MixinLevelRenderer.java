@@ -237,6 +237,31 @@ public class MixinLevelRenderer {
                 }
             }
         }
+
+        // --- StashFinder overlay ---
+        if (ravex.modules.misc.StashFinder.INSTANCE.getEnabled()) {
+            double maxDist = ravex.modules.misc.StashFinder.INSTANCE.range.getValue();
+            for (ravex.modules.misc.StashFinder.StashEntry stash : ravex.modules.misc.StashFinder.INSTANCE.getStashes()) {
+                Vec3 stashPos = Vec3.atBottomCenterOf(stash.pos);
+                double dist = stashPos.distanceTo(camPos);
+                if (dist > maxDist) continue;
+
+                try {
+                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                        .translate(
+                            (float)(stashPos.x - camPos.x),
+                            (float)(stashPos.y - camPos.y + 0.5),
+                            (float)(stashPos.z - camPos.z)
+                        );
+
+                    float scale = (float)Math.max(0.5, Math.min(3.0, 64.0 / dist));
+                    matrix.scale(scale, scale, scale);
+
+                    Render3DUtils.renderFilledBox(matrix, 1.0, 1.0f, 0.5f, 0.0f, 0.3f);
+                    Render3DUtils.renderWireframe(matrix, 1.0, 1.0f, 0.5f, 0.0f, 0.8f);
+                } catch (Exception ignored) {}
+            }
+        }
     }
 
     private void renderBlockHighlight(Vec3 highlightPos, float alpha, double size, float r, float g, float b, Vec3 camPos, Matrix4f modelViewMatrix) {

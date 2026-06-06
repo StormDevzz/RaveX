@@ -25,6 +25,10 @@ public class ClickGui extends Module {
     public final BooleanParameter moduleOutlines = new BooleanParameter("Button Outlines", true);
     public final ravex.parameter.ColorParameter moduleOutlineColor = new ravex.parameter.ColorParameter("Button Border", 0xFF2A2A35);
 
+    // Live-adjustable layout
+    public final NumberParameter buttonHeight = new NumberParameter("Button Height", 15, 12, 24, 1);
+    public final NumberParameter panelWidth   = new NumberParameter("Panel Width",  120, 80, 200, 5);
+
     private ClickGui() {
         super("ClickGui", Category.CLIENT);
         addParameter(drawBackground);
@@ -39,8 +43,11 @@ public class ClickGui extends Module {
         addParameter(outlineColor);
         addParameter(moduleOutlines);
         addParameter(moduleOutlineColor);
+        addParameter(buttonHeight);
+        addParameter(panelWidth);
         color1.setVisible(() -> "Static".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue()) || "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         setEnabled(true);
     }
 }
+

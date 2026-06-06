@@ -72,13 +72,9 @@ public class CategoryPanel {
                 targetY = mouseY - dragOffsetY;
             }
         }
-
-        double spring = 0.25;
-        double damping = 0.75;
-        vx = (targetX - x) * spring + vx * damping;
-        vy = (targetY - y) * spring + vy * damping;
-        x += vx;
-        y += vy;
+        // Snap immediately to target position (no spring animations)
+        x = targetX;
+        y = targetY;
 
         int ix = (int) x;
         int iy = (int) y;
@@ -88,60 +84,27 @@ public class CategoryPanel {
         if (visible.isEmpty() && allButtons.isEmpty()) return;
 
         int currentY = getCurrentHeight(searchQuery) + iy;
-
         int activeColor = ColorUtility.getActiveColor();
-        Color ac1 = ColorUtility.getColor(270);
-        Color ac2 = ColorUtility.getColor(0);
-        Color ac3 = ColorUtility.getColor(180);
-        Color ac4 = ColorUtility.getColor(90);
 
-        boolean hovered = Render2DEngine.isHovered(mouseX, mouseY, ix, iy - 2, width, currentY - iy + 2);
-        headerAnim = Render2DEngine.fastAnimation(headerAnim, hovered ? 1f : 0f, 8f);
+        // 1. Draw flat Category Panel Body
+        graphics.fill(ix, iy + 16, ix + width, currentY, 0xEE141414);
 
-        int radius = 4;
-        int shadowSize = 4;
-        for (int s = shadowSize; s > 0; s--) {
-            int alpha = (int)(10 * (1f - s / (float)shadowSize));
-            if (alpha > 0) {
-                Render2DEngine.drawRound(graphics, ix + s, iy - 2 + s, width, currentY - iy + 4 - s * 2, radius,
-                    (alpha << 24));
-            }
-        }
+        // 2. Draw flat Category Panel Header
+        graphics.fill(ix, iy - 2, ix + width, iy + 16, 0xFF1C1C1C);
 
-        int panelTop = 0xCC0B0B18;
-        Render2DEngine.drawRound(graphics, ix, iy + 16, width, Math.max(0, currentY - iy - 16), radius, panelTop);
+        // 3. Draw Accent Line (2px active color at the bottom of header)
+        graphics.fill(ix, iy + 14, ix + width, iy + 16, activeColor);
 
-        // Header: deep navy gradient with a fine top highlight
-        graphics.fillGradient(ix, iy - 2, ix + width, iy + 16, 0xFF151530, 0xFF0E0E22);
-        // Sheen on top edge
-        graphics.fill(ix + radius, iy - 2, ix + width - radius, iy - 1, 0x22FFFFFF);
-        // Rounded corners on header
-        Render2DEngine.drawRound(graphics, ix, iy - 2, width, 18, radius, 0x00000000); // clears corners via overdraw is not ideal; draw header fill + corners
-
-        // Accent divider (full width, bottom of header)
-        int activeColorDarker = ColorUtility.darker(activeColor, 0.7f);
-        // Gradient glow just above the line
-        graphics.fillGradient(ix, iy + 10, ix + width, iy + 15,
-            0x00000000, ColorUtility.withAlpha(activeColor, 45));
-        graphics.fill(ix, iy + 15, ix + width, iy + 16, activeColor);
-        // Soft bloom below the accent line
-        graphics.fillGradient(ix, iy + 16, ix + width, iy + 20,
-            ColorUtility.withAlpha(activeColor, 30), 0x00000000);
-
+        // 4. Draw Header Title Text
         String header = category.getDisplayName();
-        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header, ix + 8, iy + 3, 0xFFEEEEFF, true);
-        int headerW = FontRenderUtility.getStringWidth(FontRenderUtility.FontType.VANILLA, header);
-        graphics.fill(ix + 8, iy + 13, ix + 8 + headerW + 4, iy + 14, ColorUtility.withAlpha(activeColor, 25));
+        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header, ix + 6, iy + 2, 0xFFFFFFFF, true);
 
-        if (ClickGui.INSTANCE.outlines.getValue()) {
-            int borderColor = ClickGui.INSTANCE.outlineColor.getValue();
-            Render2DEngine.drawRound(graphics, ix - 1, iy - 2, width + 2, currentY - iy + 4, radius + 1, borderColor);
-        } else {
-            int borderCol = ColorUtility.PANEL_BORDER_COLOR;
-            graphics.fill(ix - 1, iy - 2, ix, currentY, borderCol);
-            graphics.fill(ix + width, iy - 2, ix + width + 1, currentY, borderCol);
-            graphics.fill(ix, currentY, ix + width, currentY + 1, borderCol);
-        }
+        // 5. Draw Border Outline
+        int borderColor = ClickGui.INSTANCE.outlines.getValue() ? ClickGui.INSTANCE.outlineColor.getValue() : 0xFF2C2C2C;
+        graphics.fill(ix - 1, iy - 3, ix + width + 1, iy - 2, borderColor); // Top
+        graphics.fill(ix - 1, iy - 2, ix, currentY, borderColor); // Left
+        graphics.fill(ix + width, iy - 2, ix + width + 1, currentY, borderColor); // Right
+        graphics.fill(ix - 1, currentY, ix + width + 1, currentY + 1, borderColor); // Bottom
 
         int[] renderYOut = { iy + 16 };
         for (ModuleButton btn : visible) {
@@ -171,7 +134,7 @@ public class CategoryPanel {
         int ix = (int) x;
         int iy = (int) y;
 
-        if (button == 0 && mouseX >= ix && mouseX <= ix + width && mouseY >= iy && mouseY <= iy + 16) {
+        if (button == 0 && mouseX >= ix && mouseX <= ix + width && mouseY >= iy - 2 && mouseY <= iy + 16) {
             dragging = true;
             dragOffsetX = mouseX - x;
             dragOffsetY = mouseY - y;
@@ -195,7 +158,7 @@ public class CategoryPanel {
 
         int h = 16;
         for (ModuleButton ignored : visible) {
-            h += 18;
+            h += 15;
         }
         return h;
     }

@@ -13,6 +13,44 @@ import ravex.modules.render.ESP;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity {
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void onTick(CallbackInfo ci) {
+        Entity self = (Entity)(Object)this;
+        if (!(self instanceof net.minecraft.client.player.LocalPlayer player)) return;
+
+        // PortalGui: null out portal process to keep GUI accessible
+        if (ravex.modules.exploit.PortalGui.INSTANCE.getEnabled()) {
+            self.portalProcess = null;
+        }
+
+        // Avoid: check surrounding blocks and push player away from hazardous ones
+        if (ravex.modules.movement.Avoid.INSTANCE.getEnabled()) {
+            net.minecraft.world.level.Level level = player.level();
+            net.minecraft.world.phys.AABB box = player.getBoundingBox().inflate(0.15);
+            net.minecraft.core.BlockPos.betweenClosedStream(
+                    (int) Math.floor(box.minX), (int) Math.floor(box.minY), (int) Math.floor(box.minZ),
+                    (int) Math.floor(box.maxX), (int) Math.floor(box.maxY), (int) Math.floor(box.maxZ)
+            ).forEach(blockPos -> {
+                net.minecraft.world.level.block.state.BlockState state = level.getBlockState(blockPos);
+                if (ravex.modules.movement.Avoid.INSTANCE.shouldAvoid(state.getBlock())) {
+                    // Push the player away from the center of the hazardous block
+                    double bx = blockPos.getX() + 0.5;
+                    double bz = blockPos.getZ() + 0.5;
+                    double px = player.getX();
+                    double pz = player.getZ();
+                    double dx = px - bx;
+                    double dz = pz - bz;
+                    double len = Math.sqrt(dx * dx + dz * dz);
+                    if (len < 0.01) { dx = 1; dz = 0; len = 1; }
+                    double pushX = (dx / len) * 0.25;
+                    double pushZ = (dz / len) * 0.25;
+                    player.setPos(player.getX() + pushX, player.getY(), player.getZ() + pushZ);
+                }
+            });
+        }
+    }
+
+
     @Inject(method = "getBlockSpeedFactor", at = @At("RETURN"), cancellable = true)
     private void onGetBlockSpeedFactor(CallbackInfoReturnable<Float> cir) {
         Entity self = (Entity)(Object)this;

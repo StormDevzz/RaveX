@@ -152,34 +152,33 @@ public class RaveX implements ClientModInitializer {
         ravex.macro.MacroManager.INSTANCE.onTick();
         ravex.utility.lua.LuaManager.INSTANCE.onTick(); // fire Lua timers (e.g. RichPresence)
 
-        // Direct, bulletproof GLFW right shift key press checking!
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null && mc.getWindow() != null) {
-            com.mojang.blaze3d.platform.Window window = mc.getWindow();
-            boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
-            
-            if (isDown && !rightShiftWasDown) {
-                // Key pressed event!
-                if (mc.screen == null) {
-                    mc.setScreen(new ravex.gui.clickgui.ClickGUI());
-                } else if (mc.screen instanceof ravex.gui.clickgui.ClickGUI) {
-                    mc.setScreen(null);
-                }
-            }
-            rightShiftWasDown = isDown;
+        if (mc.getWindow() == null) return;
 
-            // Robust and highly reliable client keybinds processing!
-            for (ravex.modules.Module m : ModuleManager.INSTANCE.getModules()) {
-                int bind = m.getKeyBind();
-                if (bind > 0 && bind < keysState.length) {
-                    boolean isKeyBindDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, bind);
-                    if (isKeyBindDown && !keysState[bind]) {
-                        if (mc.screen == null) {
-                            m.toggle();
-                        }
+        com.mojang.blaze3d.platform.Window window = mc.getWindow();
+
+        // Right Shift — open/close GUI from ANY screen (TitleScreen, server list, in-game)
+        boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
+        if (isDown && !rightShiftWasDown) {
+            if (mc.screen instanceof ravex.gui.clickgui.ClickGUI) {
+                mc.setScreen(null);
+            } else {
+                mc.setScreen(new ravex.gui.clickgui.ClickGUI());
+            }
+        }
+        rightShiftWasDown = isDown;
+
+        // Keybinds — only process when player is present (in-game or in ClickGUI)
+        for (ravex.modules.Module m : ModuleManager.INSTANCE.getModules()) {
+            int bind = m.getKeyBind();
+            if (bind > 0 && bind < keysState.length) {
+                boolean isKeyBindDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, bind);
+                if (isKeyBindDown && !keysState[bind]) {
+                    if (mc.screen == null || mc.screen instanceof ravex.gui.clickgui.ClickGUI) {
+                        m.toggle();
                     }
-                    keysState[bind] = isKeyBindDown;
                 }
+                keysState[bind] = isKeyBindDown;
             }
         }
     }

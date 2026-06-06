@@ -120,6 +120,9 @@ public class ModuleManager {
         clickGuiModules.add(AutoRespawn.INSTANCE);
         clickGuiModules.add(FastBreak.INSTANCE);
         clickGuiModules.add(InstaBreak.INSTANCE);
+        clickGuiModules.add(ravex.modules.player.ExtraTab.INSTANCE);
+        clickGuiModules.add(ravex.modules.player.ExtraChest.INSTANCE);
+        clickGuiModules.add(ravex.modules.player.ExtraChat.INSTANCE);
 
         // ── Movement ────────────────────────────────────────────────────────────
         clickGuiModules.add(GuiWalk.INSTANCE);
@@ -137,6 +140,7 @@ public class ModuleManager {
         clickGuiModules.add(Spider.INSTANCE);
         clickGuiModules.add(Speed.INSTANCE);
         clickGuiModules.add(NoRotate.INSTANCE);
+        clickGuiModules.add(ravex.modules.movement.Avoid.INSTANCE);
 
         // ── Misc ─────────────────────────────────────────────────────────────────
         clickGuiModules.add(AntiAfk.INSTANCE);
@@ -148,6 +152,12 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.misc.Spammer.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Commands.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.WaxAura.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.AutoReconnect.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.ItemScroller.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.BlockSelector.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.AutoSoup.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.NameProtect.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.StashFinder.INSTANCE);
 
         // ── World ────────────────────────────────────────────────────────────────
         clickGuiModules.add(BoneMeal.INSTANCE);
@@ -166,10 +176,14 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.exploit.HandshakeSpoof.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.GhostHand.INSTANCE);
         clickGuiModules.add(Timer.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.PortalGui.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.MultiTask.INSTANCE);
+
 
         // ── Client ────────────────────────────────────────────────────────────────
         clickGuiModules.add(RichPresence.INSTANCE);
         clickGuiModules.add(ravex.modules.client.GuiParticles.INSTANCE);
+        clickGuiModules.add(ravex.modules.client.FastLatency.INSTANCE);
 
         // ── HUD modules ──────────────────────────────────────────────────────────
         hudModules.add(new HudModule("Watermark", 10, 10, 80, 14) {
