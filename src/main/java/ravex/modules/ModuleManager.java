@@ -91,7 +91,6 @@ public class ModuleManager {
         clickGuiModules.add(ESP.INSTANCE);
         clickGuiModules.add(MobOwner.INSTANCE);
         clickGuiModules.add(NameTags.INSTANCE);
-        clickGuiModules.add(NameTags.INSTANCE);
         clickGuiModules.add(ClickGui.INSTANCE);
         clickGuiModules.add(Notifications.INSTANCE);
         clickGuiModules.add(NoBob.INSTANCE);

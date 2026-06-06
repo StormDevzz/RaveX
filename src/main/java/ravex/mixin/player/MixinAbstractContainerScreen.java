@@ -62,13 +62,6 @@ public abstract class MixinAbstractContainerScreen {
                     Slot slot = invokeGetHoveredSlot(mouseX, mouseY);
                     if (slot == null) slot = this.hoveredSlot;
 
-                    System.out.println("[ItemScroller] TAIL shift=" + shift + " lmb=" + lmb
-                        + " slot=" + (slot != null ? slot.index : -1)
-                        + " hasItem=" + (slot != null && slot.hasItem())
-                        + " screen=" + this.getClass().getSimpleName()
-                        + " mouse=(" + mouseX + "," + mouseY + ")"
-                        + " wasHolding=" + scrollerWasHolding);
-
                     if (shift && lmb && slot != null && slot.hasItem()) {
                         long now = System.currentTimeMillis();
                         long delayMs = ItemScroller.INSTANCE.delay.getValue().longValue();
