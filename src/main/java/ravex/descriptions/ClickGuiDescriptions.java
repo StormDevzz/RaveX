@@ -81,6 +81,14 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Xray",          "Makes blocks transparent and outlines chosen blocks.");
         DESCRIPTIONS.put("Surround",      "Places blocks around your feet for protection.");
         DESCRIPTIONS.put("BlockOutline",  "Customizable highlight on the targeted block.");
+        DESCRIPTIONS.put("Fullbright",    "Makes everything fully bright.");
+        DESCRIPTIONS.put("GuiParticles",  "Renders animated particles in ClickGUI.");
+        DESCRIPTIONS.put("NoRotate",      "Prevents the server from rotating your head.");
+        DESCRIPTIONS.put("AutoWalk",      "Automatically walks forward.");
+        DESCRIPTIONS.put("MobOwner",      "Displays the owner of tamed mobs.");
+        DESCRIPTIONS.put("SelfTrap",      "Automatically places blocks around yourself.");
+        DESCRIPTIONS.put("WaxAura",       "Automatically waxes nearby copper blocks.");
+        DESCRIPTIONS.put("ChestAura",      "Automatically places chests around the player or entities.");
     }
 
     public static String getDescription(String moduleName) {

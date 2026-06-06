@@ -174,6 +174,40 @@ public class MixinLevelRenderer {
             renderBlockOutline(camPos, modelViewMatrix);
         }
 
+        // --- ChestAura highlights ---
+        if (ravex.modules.world.ChestAura.INSTANCE.getEnabled() && ravex.modules.world.ChestAura.INSTANCE.render.getValue() && !ravex.modules.world.ChestAura.placedChests.isEmpty()) {
+            long chestNow = System.currentTimeMillis();
+            double durationMs = ravex.modules.world.ChestAura.INSTANCE.fadeSpeed.getValue() * 1000.0;
+            int color = ravex.modules.world.ChestAura.INSTANCE.highlightColor.getValue();
+            float r = ((color >> 16) & 0xFF) / 255.0f;
+            float g = ((color >> 8) & 0xFF) / 255.0f;
+            float b = (color & 0xFF) / 255.0f;
+            boolean filled = ravex.modules.world.ChestAura.INSTANCE.filled.getValue();
+
+            for (ravex.modules.world.ChestAura.PlacedChest chest : ravex.modules.world.ChestAura.placedChests) {
+                long elapsed = chestNow - chest.placeTime;
+                if (elapsed > durationMs) continue;
+
+                float progress = (float)(elapsed / durationMs);
+                float alpha = 1.0f - progress;
+
+                try {
+                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                        .translate(
+                            (float)(chest.pos.getX() - camPos.x),
+                            (float)(chest.pos.getY() - camPos.y),
+                            (float)(chest.pos.getZ() - camPos.z)
+                        );
+
+                    double size = 1.002;
+                    if (filled) {
+                        Render3DUtils.renderFilledBox(matrix, size, r, g, b, alpha * 0.25f);
+                    }
+                    Render3DUtils.renderWireframe(matrix, size, r, g, b, alpha * 0.95f);
+                    Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, alpha * 0.3f);
+                } catch (Exception ignored) {}
+            }
+        }
 
         // --- Surround ---
         if (Surround.INSTANCE.getEnabled()) {
@@ -232,28 +266,28 @@ public class MixinLevelRenderer {
 
         BlockHitResult blockHit = (BlockHitResult) hit;
         BlockPos pos = blockHit.getBlockPos();
-        Vec3 blockPos = Vec3.atBottomCenterOf(pos);
 
         int color = BlockOutline.INSTANCE.color.getValue();
         float r = ((color >> 16) & 0xFF) / 255.0f;
         float g = ((color >> 8) & 0xFF) / 255.0f;
         float b = (color & 0xFF) / 255.0f;
-        double width = BlockOutline.INSTANCE.width.getValue();
         boolean filled = BlockOutline.INSTANCE.filled.getValue();
 
         try {
             Matrix4f matrix = new Matrix4f(modelViewMatrix)
                 .translate(
-                    (float)(blockPos.x - camPos.x),
-                    (float)(blockPos.y - camPos.y),
-                    (float)(blockPos.z - camPos.z)
+                    (float)(pos.getX() - camPos.x),
+                    (float)(pos.getY() - camPos.y),
+                    (float)(pos.getZ() - camPos.z)
                 );
 
+            double outlineSize = 1.002;
+            float lineWidth = BlockOutline.INSTANCE.width.getValue().floatValue();
             if (filled) {
-                Render3DUtils.renderFilledBox(matrix, width * 0.5, r, g, b, 0.2f);
+                Render3DUtils.renderFilledBox(matrix, outlineSize, r, g, b, 0.2f);
             }
-            Render3DUtils.renderWireframe(matrix, width * 0.5, r, g, b, 0.95f);
-            Render3DUtils.renderWireframe(matrix, width * 0.5 * 1.05, r, g, b, 0.3f);
+            Render3DUtils.renderWireframe(matrix, outlineSize, r, g, b, 0.95f, lineWidth);
+            Render3DUtils.renderWireframe(matrix, outlineSize * 1.03, r, g, b, 0.3f, lineWidth);
         } catch (Exception ignored) {}
     }
 }

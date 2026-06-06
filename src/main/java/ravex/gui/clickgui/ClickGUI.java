@@ -40,6 +40,18 @@ public class ClickGUI extends Screen {
     private boolean profilesHovered;
     private boolean configsHovered;
 
+    // ── Star particles ───────────────────────────────────────────────────────────
+    private static final int STAR_COUNT = 55;
+    private final float[] starX   = new float[STAR_COUNT];
+    private final float[] starY   = new float[STAR_COUNT];
+    private final float[] starVx  = new float[STAR_COUNT];
+    private final float[] starVy  = new float[STAR_COUNT];
+    private final float[] starAlpha = new float[STAR_COUNT];
+    private final float[] starSize  = new float[STAR_COUNT];
+    private boolean starsInit = false;
+
+    private long lastStarTick = 0;
+
     public ClickGUI() {
         super(Component.literal("RaveX ClickGUI"));
         this.initTime = System.currentTimeMillis();
@@ -127,15 +139,18 @@ public class ClickGUI extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        FontRenderUtility.setCustomEnabled(false);
         int targetMaxH = getMaxPanelHeight();
         smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.15;
 
-        if (ravex.modules.render.ClickGui.INSTANCE.drawBackground.getValue()) {
+        boolean drawBg = ravex.modules.render.ClickGui.INSTANCE.drawBackground.getValue();
+        if (drawBg) {
             graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.BACKGROUND_START, ColorUtility.BACKGROUND_END);
         }
+        if (ravex.modules.client.GuiParticles.INSTANCE.getEnabled()) {
+            renderStars(graphics);
+        }
 
-        String tips = "Esc/Shift — close  •  MMB — bind  •  RMB — settings";
+        String tips = "Esc/Shift — close  •  LMB — toggle  •  RMB — settings  •  MMB — bind";
         int tipsW = FontRenderUtility.getStringWidth(tips);
         int tipsX = (this.width - tipsW) / 2;
         int tipsY = this.height - 18;
@@ -145,44 +160,58 @@ public class ClickGUI extends Screen {
         graphics.fill(tipsX - 14, tipsY + 7, tipsX + tipsW + 14, tipsY + 8, ColorUtility.withAlpha(ColorUtility.getActiveColor(), 40));
         FontRenderUtility.drawString(graphics, tips, tipsX, tipsY - 1, 0xFF858599, true);
 
-        float btnScale = Math.max(0.7f, getResponsiveScale());
-        int mgW = (int)(52 * btnScale);
-        int mgH = (int)(16 * btnScale);
-        int mgX = Math.max(4, (int)(10 * btnScale));
-        int mgY = this.height - (int)(40 * btnScale);
-        macrosHovered = mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
-        profilesHovered = mouseX >= mgX + mgW + 4 && mouseX <= mgX + mgW * 2 + 4 && mouseY >= mgY && mouseY <= mgY + mgH;
-        configsHovered = mouseX >= mgX + mgW * 2 + 8 && mouseX <= mgX + mgW * 3 + 8 && mouseY >= mgY && mouseY <= mgY + mgH;
+        // ── Bottom nav buttons ───────────────────────────────────────────────────
+        //    Macros  |  Profiles  |  Configs   — centered pill buttons
+        float btnScale = Math.max(0.65f, getResponsiveScale());
+        int mgW = (int)(60 * btnScale);
+        int mgH = (int)(20 * btnScale);
+        int mgGap = (int)(6 * btnScale);
+        int totalBtnW = 3 * mgW + 2 * mgGap;
+        int mgX = (this.width - totalBtnW) / 2;
+        int mgY = this.height - (int)(38 * btnScale);
+        int mgRadius = Math.max(3, (int)(5 * btnScale));
+
+        macrosHovered   = mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
+        profilesHovered = mouseX >= mgX + mgW + mgGap && mouseX <= mgX + 2 * mgW + mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+        configsHovered  = mouseX >= mgX + 2 * (mgW + mgGap) && mouseX <= mgX + 3 * mgW + 2 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+
         int activeColor = ColorUtility.getActiveColor();
-        int macroBg = macrosHovered ? activeColor : 0xAA0E0E1C;
-        int profileBg = profilesHovered ? activeColor : 0xAA0E0E1C;
-        int configsBg = configsHovered ? activeColor : 0xAA0E0E1C;
 
-        for (int s = 2; s > 0; s--) {
-            int sa = (int)(15 * (1f - s/2f));
-            graphics.fill(mgX + s, mgY + s, mgX + mgW - s, mgY + mgH + s, (sa << 24));
-            graphics.fill(mgX + mgW + 4 + s, mgY + s, mgX + mgW * 2 + 4 - s, mgY + mgH + s, (sa << 24));
-            graphics.fill(mgX + mgW * 2 + 8 + s, mgY + s, mgX + mgW * 3 + 8 - s, mgY + mgH + s, (sa << 24));
-        }
-        graphics.fillGradient(mgX, mgY, mgX + mgW, mgY + mgH, macroBg, ColorUtility.darker(macroBg, 0.7f));
-        graphics.fillGradient(mgX + mgW + 4, mgY, mgX + mgW * 2 + 4, mgY + mgH, profileBg, ColorUtility.darker(profileBg, 0.7f));
-        graphics.fillGradient(mgX + mgW * 2 + 8, mgY, mgX + mgW * 3 + 8, mgY + mgH, configsBg, ColorUtility.darker(configsBg, 0.7f));
-        graphics.fill(mgX + mgW + 4, mgY + 1, mgX + mgW + 5, mgY + mgH - 1, ColorUtility.withAlpha(activeColor, 80));
-        graphics.fill(mgX + mgW * 2 + 8, mgY + 1, mgX + mgW * 2 + 9, mgY + mgH - 1, ColorUtility.withAlpha(activeColor, 80));
-        if (macrosHovered) {
-            graphics.fill(mgX, mgY + mgH - 1, mgX + mgW, mgY + mgH, activeColor);
-        }
-        if (profilesHovered) {
-            graphics.fill(mgX + mgW + 4, mgY + mgH - 1, mgX + mgW * 2 + 4, mgY + mgH, activeColor);
-        }
-        if (configsHovered) {
-            graphics.fill(mgX + mgW * 2 + 8, mgY + mgH - 1, mgX + mgW * 3 + 8, mgY + mgH, activeColor);
-        }
+        // Draw three buttons
+        int[] bxArr   = { mgX, mgX + mgW + mgGap, mgX + 2 * (mgW + mgGap) };
+        boolean[] hovArr = { macrosHovered, profilesHovered, configsHovered };
+        String[] labArr  = { "Macros", "Profiles", "Configs" };
 
-        int textY = mgY + (mgH - 8) / 2;
-        FontRenderUtility.drawString(graphics, "Macros", mgX + 8, textY, 0xFFD0D0E0, true);
-        FontRenderUtility.drawString(graphics, "Profiles", mgX + mgW + 12, textY, 0xFFD0D0E0, true);
-        FontRenderUtility.drawString(graphics, "Configs", mgX + mgW * 2 + 14, textY, 0xFFD0D0E0, true);
+        for (int i = 0; i < 3; i++) {
+            int bx  = bxArr[i];
+            boolean h = hovArr[i];
+            int bg  = h ? activeColor : 0xBB0B0B1C;
+
+            // Glow behind hovered button
+            if (h) {
+                for (int s = 1; s <= 4; s++) {
+                    ravex.utility.render.Render2DEngine.drawRound(graphics,
+                        bx - s, mgY - s, mgW + s * 2, mgH + s * 2, mgRadius + s,
+                        ColorUtility.withAlpha(activeColor, 20 / s));
+                }
+            }
+
+            ravex.utility.render.Render2DEngine.drawRound(graphics, bx, mgY, mgW, mgH, mgRadius, bg);
+
+            // Subtle top-highlight on all buttons
+            graphics.fill(bx + mgRadius, mgY, bx + mgW - mgRadius, mgY + 1,
+                    ColorUtility.withAlpha(0xFFFFFF, h ? 40 : 15));
+
+            // Active underline when hovered
+            if (h) {
+                graphics.fill(bx + mgRadius, mgY + mgH - 1, bx + mgW - mgRadius, mgY + mgH, activeColor);
+            }
+
+            int textW = FontRenderUtility.getStringWidth(labArr[i]);
+            int textY = mgY + (mgH - FontRenderUtility.getFontHeight()) / 2;
+            FontRenderUtility.drawString(graphics, labArr[i], bx + (mgW - textW) / 2, textY,
+                    h ? 0xFFFFFFFF : 0xFFB0B0CC, false);
+        }
 
         hoveredDescription = null;
 
@@ -244,8 +273,6 @@ public class ClickGUI extends Screen {
         }
 
         super.render(graphics, mouseX, mouseY, partialTicks);
-
-        FontRenderUtility.setCustomEnabled(false);
     }
 
     private void renderSearchBar(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -344,21 +371,23 @@ public class ClickGUI extends Screen {
             return super.mouseClicked(event, handled);
         }
 
-        float btnScale = Math.max(0.7f, getResponsiveScale());
-        int mgW = (int)(52 * btnScale);
-        int mgH = (int)(16 * btnScale);
-        int mgX = Math.max(4, (int)(10 * btnScale));
-        int mgY = this.height - (int)(40 * btnScale);
+        // Match layout computed in render()
+        float btnScale = Math.max(0.65f, getResponsiveScale());
+        int mgW   = (int)(60 * btnScale);
+        int mgH   = (int)(20 * btnScale);
+        int mgGap = (int)(6 * btnScale);
+        int mgX   = (this.width - (3 * mgW + 2 * mgGap)) / 2;
+        int mgY   = this.height - (int)(38 * btnScale);
 
         if (event.x() >= mgX && event.x() <= mgX + mgW && event.y() >= mgY && event.y() <= mgY + mgH) {
             this.minecraft.setScreen(new MacroScreen(this));
             return true;
         }
-        if (event.x() >= mgX + mgW + 4 && event.x() <= mgX + mgW * 2 + 4 && event.y() >= mgY && event.y() <= mgY + mgH) {
+        if (event.x() >= mgX + mgW + mgGap && event.x() <= mgX + 2 * mgW + mgGap && event.y() >= mgY && event.y() <= mgY + mgH) {
             this.minecraft.setScreen(new ProfilesScreen(this));
             return true;
         }
-        if (event.x() >= mgX + mgW * 2 + 8 && event.x() <= mgX + mgW * 3 + 8 && event.y() >= mgY && event.y() <= mgY + mgH) {
+        if (event.x() >= mgX + 2 * (mgW + mgGap) && event.x() <= mgX + 3 * mgW + 2 * mgGap && event.y() >= mgY && event.y() <= mgY + mgH) {
             this.minecraft.setScreen(new ConfigsScreen(this));
             return true;
         }
@@ -467,6 +496,69 @@ public class ClickGUI extends Screen {
             ravex.utility.sound.SoundUtility.playGuiClose();
             ravex.manager.ConfigManager.INSTANCE.save("default");
         }
-        FontRenderUtility.setCustomEnabled(false);
+    }
+
+    // ─── Star particle system ────────────────────────────────────────────────────
+
+    private static final float STAR_PULSE = 0.0008f;
+    private static final float STAR_ALPHA_MIN = 0.15f;
+    private static final float STAR_ALPHA_RANGE = 0.30f;
+
+    private void renderStars(GuiGraphics graphics) {
+        if (this.width <= 0 || this.height <= 0) return;
+
+        if (!starsInit) {
+            java.util.Random rng = new java.util.Random(0xDEADBEEFL);
+            for (int i = 0; i < STAR_COUNT; i++) {
+                starX[i]     = rng.nextFloat() * this.width;
+                starY[i]     = rng.nextFloat() * this.height;
+                float speedMultiplier = 0.5f + rng.nextFloat() * 1.5f;
+                starVx[i]    = (rng.nextFloat() - 0.5f) * 0.15f * speedMultiplier;
+                starVy[i]    = (rng.nextFloat() - 0.5f) * 0.15f * speedMultiplier;
+                starAlpha[i] = STAR_ALPHA_MIN + rng.nextFloat() * STAR_ALPHA_RANGE;
+                starSize[i]  = 1f + rng.nextFloat() * 4f;
+            }
+            starsInit = true;
+        }
+
+        long now   = System.currentTimeMillis();
+        float dt   = Math.min(32f, now - lastStarTick);
+        if (lastStarTick == 0) dt = 16f;
+        lastStarTick = now;
+
+        int accentColor = ColorUtility.getActiveColor();
+
+        for (int i = 0; i < STAR_COUNT; i++) {
+            starX[i] += starVx[i] * dt;
+            starY[i] += starVy[i] * dt;
+
+            if (starX[i] < 0)            starX[i] += this.width;
+            if (starX[i] > this.width)   starX[i] -= this.width;
+            if (starY[i] < 0)            starY[i] += this.height;
+            if (starY[i] > this.height)  starY[i] -= this.height;
+
+            float pulse = (float)(Math.sin(now * 0.0015 + i * 1.7) * 0.5 + 0.5);
+            float currentAlpha = STAR_ALPHA_MIN + pulse * STAR_ALPHA_RANGE;
+
+            int alpha = (int)(currentAlpha * 255);
+            int col   = ColorUtility.withAlpha(accentColor, alpha);
+
+            int sx = (int) starX[i];
+            int sy = (int) starY[i];
+            int sz = Math.max(1, (int) starSize[i]);
+
+            if (sz <= 2) {
+                graphics.fill(sx, sy, sx + sz, sy + sz, col);
+            } else {
+                graphics.fill(sx, sy, sx + sz, sy + sz, col);
+                int glowAlpha1 = Math.max(0, alpha / 3);
+                int glowCol1 = ColorUtility.withAlpha(accentColor, glowAlpha1);
+                graphics.fill(sx - 1, sy - 1, sx + sz + 1, sy + sz + 1, glowCol1);
+
+                int glowAlpha2 = Math.max(0, alpha / 7);
+                int glowCol2 = ColorUtility.withAlpha(accentColor, glowAlpha2);
+                graphics.fill(sx - 2, sy - 2, sx + sz + 2, sy + sz + 2, glowCol2);
+            }
+        }
     }
 }

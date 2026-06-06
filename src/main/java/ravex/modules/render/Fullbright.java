@@ -6,32 +6,24 @@ import net.minecraft.client.Minecraft;
 
 public class Fullbright extends Module {
     public static final Fullbright INSTANCE = new Fullbright();
-    private double oldGamma = 1.0;
-    private boolean gammaSaved = false;
 
     private Fullbright() {
         super("Fullbright", Category.RENDER);
     }
 
     @Override
-    public void onTick() {
+    protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.options == null) return;
-
-        if (!gammaSaved) {
-            oldGamma = mc.options.gamma().get();
-            gammaSaved = true;
+        if (mc.levelRenderer != null) {
+            mc.levelRenderer.allChanged();
         }
-
-        mc.options.gamma().set(1.0);
     }
 
     @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.options != null) {
-            mc.options.gamma().set(oldGamma);
+        if (mc.levelRenderer != null) {
+            mc.levelRenderer.allChanged();
         }
-        gammaSaved = false;
     }
 }

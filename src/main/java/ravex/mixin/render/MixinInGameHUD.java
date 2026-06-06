@@ -20,6 +20,7 @@ import ravex.modules.HudModule;
 import ravex.modules.render.Ambient;
 import ravex.modules.render.ESP;
 import ravex.modules.render.NameTags;
+import ravex.modules.render.MobOwner;
 
 @Mixin(Gui.class)
 public abstract class MixinInGameHUD {
@@ -27,7 +28,6 @@ public abstract class MixinInGameHUD {
     private void onRender(GuiGraphics context, DeltaTracker tickCounter, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
 
-        // 1. Draw Ambient full screen color tint overlay if enabled
         if (Ambient.INSTANCE.getEnabled()) {
             int rVal = Ambient.INSTANCE.r.getValue().intValue();
             int gVal = Ambient.INSTANCE.g.getValue().intValue();
@@ -37,161 +37,219 @@ public abstract class MixinInGameHUD {
             context.fill(0, 0, context.guiWidth(), context.guiHeight(), color);
         }
 
-        // 2. Render custom 2D Box ESP & Holographic NameTags
-        if (mc.level != null && mc.player != null) {
-            float pt = tickCounter.getGameTimeDeltaTicks();
-            Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
+        if (mc.level == null || mc.player == null) {
+            renderHud(context, tickCounter);
+            return;
+        }
 
-            for (Entity entity : mc.level.entitiesForRendering()) {
-                if (!(entity instanceof LivingEntity target)) continue;
-                if (target == mc.player || !target.isAlive()) continue;
+        float pt = tickCounter.getGameTimeDeltaTicks();
+        Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
+        boolean espEnabled = ESP.INSTANCE.getEnabled();
+        boolean nameTagsEnabled = NameTags.INSTANCE.getEnabled();
+        boolean mobOwnerEnabled = MobOwner.INSTANCE.getEnabled() && MobOwner.INSTANCE.animals.getValue();
 
-                // ESP Filters
-                boolean isPlayer = target instanceof Player;
-                boolean isMonster = target instanceof Monster;
-                if (isPlayer && !ESP.INSTANCE.players.getValue()) continue;
-                if (isMonster && !ESP.INSTANCE.monsters.getValue()) continue;
+        for (Entity target : mc.level.entitiesForRendering()) {
+            if (target == mc.player) continue;
+            if (target instanceof LivingEntity living && !living.isAlive()) continue;
 
-                // Project entity's foot/head positions into screen space
-                Vec3 basePos = target.getPosition(pt);
-                Vec3 headPos = basePos.add(0, target.getBbHeight(), 0);
-                // Also project a side point to get accurate pixel width from entity bounding box
-                Vec3 sidePos = basePos.add(target.getBbWidth() / 2.0, target.getBbHeight() / 2.0, 0);
+            // Distance limit check
+            double dist = mc.player.distanceTo(target);
+            if (dist > ESP.INSTANCE.maxDistance.getValue()) continue;
 
-                Vec3 baseProj = mc.gameRenderer.projectPointToScreen(basePos);
-                Vec3 headProj = mc.gameRenderer.projectPointToScreen(headPos);
-                Vec3 sideProj = mc.gameRenderer.projectPointToScreen(sidePos);
+            // Prevent first person overlap when entity is extremely close
+            if (mc.options.getCameraType().isFirstPerson() && dist < 1.2) continue;
 
-                if (baseProj != null && headProj != null && sideProj != null) {
-                    // Check if entity is in front of the camera using dot product
-                    Vec3 dir = target.getPosition(pt).subtract(cameraPos).normalize();
-                    Vec3 look = mc.player.getViewVector(pt);
-                    double dot = dir.dot(look);
+            boolean isPlayer = target instanceof Player;
+            boolean isMonster = target instanceof Monster;
+            boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
+                               target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
+            boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
+            boolean isFrame = target instanceof net.minecraft.world.entity.decoration.ItemFrame;
 
-                    if (dot > 0.0) {
-                        // Project NDC [-1, 1] coordinates into actual scaled screen pixels
-                        double sx_base = (baseProj.x + 1.0) / 2.0 * context.guiWidth();
-                        double sy_base = (1.0 - baseProj.y) / 2.0 * context.guiHeight();
-                        double sx_head = (headProj.x + 1.0) / 2.0 * context.guiWidth();
-                        double sy_head = (1.0 - headProj.y) / 2.0 * context.guiHeight();
-                        double sx_side = (sideProj.x + 1.0) / 2.0 * context.guiWidth();
-                        double sy_side = (1.0 - sideProj.y) / 2.0 * context.guiHeight();
+            if (isPlayer && !ESP.INSTANCE.players.getValue()) continue;
+            if (isMonster && !ESP.INSTANCE.monsters.getValue()) continue;
+            if (isAnimal && !ESP.INSTANCE.animals.getValue()) continue;
+            if (isItem && !ESP.INSTANCE.items.getValue()) continue;
+            if (isFrame && !ESP.INSTANCE.frames.getValue()) continue;
 
-                        int bx = (int) sx_base;
-                        int by = (int) sy_base;
-                        int hy = (int) sy_head;
-                        int sx = (int) sx_side;
+            if (!isPlayer && !isMonster && !isAnimal && !isItem && !isFrame) continue;
 
-                        // Box dimensions: height from foot to head, width from entity hitbox side projection
-                        int boxH = Math.abs(by - hy);
-                        // Width = 2 * half-width derived from side projection vs center
-                        int halfBoxW = Math.max(2, Math.abs(sx - bx));
-                        int boxW = halfBoxW * 2;
-                        int x = bx - halfBoxW;
-                        int y = Math.min(by, hy); // top of box is head
+            Vec3 basePos = target.getPosition(pt);
+            Vec3 headPos = basePos.add(0, target.getBbHeight(), 0);
+            Vec3 sidePos = basePos.add(target.getBbWidth() / 2.0, target.getBbHeight() / 2.0, 0);
 
-                        // Draw 2D Box ESP if enabled
-                        if (ESP.INSTANCE.getEnabled() && ESP.INSTANCE.mode.getValue().equals("Box2D")) {
-                            int espColor = isPlayer ? ESP.INSTANCE.playerColor.getValue() : ESP.INSTANCE.mobColor.getValue();
-                            // 4 border lines
-                            context.fill(x,          y,          x + boxW, y + 1,      espColor); // top
-                            context.fill(x,          y + boxH,   x + boxW, y + boxH + 1, espColor); // bottom
-                            context.fill(x,          y,          x + 1,    y + boxH,   espColor); // left
-                            context.fill(x + boxW-1, y,          x + boxW, y + boxH,   espColor); // right
-                            // Corner accents (2px)
-                            int ca = 4;
-                            context.fill(x, y, x + ca, y + 1, espColor);
-                            context.fill(x + boxW - ca, y, x + boxW, y + 1, espColor);
-                            context.fill(x, y + boxH, x + ca, y + boxH + 1, espColor);
-                            context.fill(x + boxW - ca, y + boxH, x + boxW, y + boxH + 1, espColor);
-                        }
+            Vec3 baseProj = mc.gameRenderer.projectPointToScreen(basePos);
+            Vec3 headProj = mc.gameRenderer.projectPointToScreen(headPos);
+            Vec3 sideProj = mc.gameRenderer.projectPointToScreen(sidePos);
 
-                        // Draw Custom NameTags above entity head
-                        if (NameTags.INSTANCE.getEnabled()) {
-                            String displayName = target.getDisplayName().getString();
-                            int health = (int) Math.ceil(target.getHealth());
-                            int maxHealth = (int) Math.ceil(target.getMaxHealth());
-                            String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-                            int tw = mc.font.width(tagText);
-                            int textY = y - 13; // 13px above the top of the box
+            if (baseProj == null || headProj == null || sideProj == null) continue;
 
-                            boolean showArmor = NameTags.INSTANCE.armor.getValue();
-                            boolean showHands = NameTags.INSTANCE.handItems.getValue();
+            Vec3 dir = target.getPosition(pt).subtract(cameraPos).normalize();
+            Vec3 look = mc.player.getViewVector(pt);
+            double dot = dir.dot(look);
+            if (dot <= 0.0) continue;
 
-                            if (!showArmor && !showHands) {
-                                int tx = bx - (tw / 2);
-                                context.fill(tx - 3, textY - 1, tx + tw + 3, textY + 9, 0xBB000000);
-                                context.fill(tx - 3, textY - 1, tx + tw + 3, textY, isPlayer ? 0xFFFF5555 : 0xFF55FF55);
-                                context.drawString(mc.font, tagText, tx, textY, 0xFFFFFFFF, false);
-                            } else {
-                                ItemStack mainHand = target.getMainHandItem();
-                                ItemStack offHand = target.getOffhandItem();
-                                ItemStack boots = target.getItemBySlot(EquipmentSlot.FEET);
-                                ItemStack leggings = target.getItemBySlot(EquipmentSlot.LEGS);
-                                ItemStack chestplate = target.getItemBySlot(EquipmentSlot.CHEST);
-                                ItemStack helmet = target.getItemBySlot(EquipmentSlot.HEAD);
+            double sx_base = (baseProj.x + 1.0) / 2.0 * context.guiWidth();
+            double sy_base = (1.0 - baseProj.y) / 2.0 * context.guiHeight();
+            double sx_head = (headProj.x + 1.0) / 2.0 * context.guiWidth();
+            double sy_head = (1.0 - headProj.y) / 2.0 * context.guiHeight();
+            double sx_side = (sideProj.x + 1.0) / 2.0 * context.guiWidth();
 
-                                int is = 16;
-                                int gap = 2;
+            // Offscreen check: if all projected points are off-screen, skip rendering
+            if ((sx_base < 0 || sx_base > context.guiWidth() || sy_base < 0 || sy_base > context.guiHeight()) &&
+                (sx_head < 0 || sx_head > context.guiWidth() || sy_head < 0 || sy_head > context.guiHeight())) {
+                continue;
+            }
 
-                                // Main row width
-                                int mainRowW = tw;
-                                if (showHands && !mainHand.isEmpty()) mainRowW += is + gap;
-                                if (showHands && !offHand.isEmpty()) mainRowW += gap + is;
+            int bx = (int) sx_base;
+            int by = (int) sy_base;
+            int hy = (int) sy_head;
+            int sx = (int) sx_side;
 
-                                // Armor row width
-                                int armorW = 0;
-                                if (showArmor) {
-                                    if (!boots.isEmpty()) armorW += is + gap;
-                                    if (!leggings.isEmpty()) armorW += is + gap;
-                                    if (!chestplate.isEmpty()) armorW += is + gap;
-                                    if (!helmet.isEmpty()) armorW += is + gap;
-                                    if (armorW > 0) armorW -= gap;
-                                }
+            int boxH = Math.abs(by - hy);
+            int halfBoxW = Math.max(2, Math.abs(sx - bx));
+            int boxW = halfBoxW * 2;
+            int boxX = bx - halfBoxW;
+            int y = Math.min(by, hy);
 
-                                int totalW = Math.max(mainRowW, armorW);
-                                int armorRowY = textY - is - gap;
+            String ownerName = (mobOwnerEnabled && target instanceof LivingEntity living) ? MobOwner.getOwnerName(living) : null;
+            boolean hasOwner = ownerName != null;
 
-                                // Background
-                                int bgLeft = bx - totalW / 2 - 3;
-                                int bgTop = showArmor && armorW > 0 ? armorRowY - 1 : textY - 1;
-                                int bgRight = bx + totalW / 2 + 3;
-                                int bgBottom = textY + 9;
+            if (espEnabled) {
+                String mode = ESP.INSTANCE.mode.getValue();
+                int espColor = isPlayer ? ESP.INSTANCE.playerColor.getValue() :
+                               (isMonster ? ESP.INSTANCE.mobColor.getValue() :
+                               (isAnimal ? ESP.INSTANCE.animalColor.getValue() :
+                               (isItem ? ESP.INSTANCE.itemColor.getValue() :
+                               ESP.INSTANCE.frameColor.getValue())));
 
-                                context.fill(bgLeft, bgTop, bgRight, bgBottom, 0xBB000000);
-                                context.fill(bgLeft, bgTop, bgRight, bgTop + 1, isPlayer ? 0xFFFF5555 : 0xFF55FF55);
+                if ("Box2D".equals(mode)) {
+                    context.fill(boxX, y, boxX + boxW, y + 1, espColor);
+                    context.fill(boxX, y + boxH, boxX + boxW, y + boxH + 1, espColor);
+                    context.fill(boxX, y, boxX + 1, y + boxH, espColor);
+                    context.fill(boxX + boxW - 1, y, boxX + boxW, y + boxH, espColor);
+                    int ca = 4;
+                    context.fill(boxX, y, boxX + ca, y + 1, espColor);
+                    context.fill(boxX + boxW - ca, y, boxX + boxW, y + 1, espColor);
+                    context.fill(boxX, y + boxH, boxX + ca, y + boxH + 1, espColor);
+                    context.fill(boxX + boxW - ca, y + boxH, boxX + boxW, y + boxH + 1, espColor);
+                }
+            }
 
-                                // Armor items
-                                if (showArmor && armorW > 0) {
-                                    int ax = bx - armorW / 2;
-                                    for (ItemStack stack : new ItemStack[]{boots, leggings, chestplate, helmet}) {
-                                        if (!stack.isEmpty()) {
-                                            context.renderItem(stack, ax, armorRowY);
-                                            ax += is + gap;
-                                        }
-                                    }
-                                }
+            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity);
+            if (drawNametags || hasOwner) {
+                LivingEntity livingTarget = (LivingEntity) target;
+                String displayName = livingTarget.getDisplayName().getString();
+                int health = (int) Math.ceil(livingTarget.getHealth());
+                int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
+                String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
+                int tw = mc.font.width(tagText);
+                int textY = y - 13;
 
-                                // Main hand + text + offhand
-                                int rx = bx - mainRowW / 2;
-                                if (showHands && !mainHand.isEmpty()) {
-                                    context.renderItem(mainHand, rx, textY);
-                                    rx += is + gap;
-                                }
-                                context.drawString(mc.font, tagText, rx, textY, 0xFFFFFFFF, false);
-                                rx += tw;
-                                if (showHands && !offHand.isEmpty()) {
-                                    rx += gap;
-                                    context.renderItem(offHand, rx, textY);
-                                }
+                boolean showArmor = drawNametags && NameTags.INSTANCE.armor.getValue();
+                boolean showHands = drawNametags && NameTags.INSTANCE.handItems.getValue();
+
+                if (!showArmor && !showHands) {
+                    int tx = bx - (tw / 2);
+                    boolean drawMobOwnerBg = hasOwner && MobOwner.INSTANCE.background.getValue();
+                    int tagHeight = (drawNametags && drawMobOwnerBg) ? 19 : (drawNametags ? 9 : (drawMobOwnerBg ? 19 : 0));
+                    int tagColor = hasOwner ? 0x44FFAA00 : (isPlayer ? 0xFFFF5555 : 0xFF55FF55);
+                    
+                    if (drawNametags || drawMobOwnerBg) {
+                        context.fill(tx - 3, textY - 1, tx + tw + 3, textY + tagHeight, 0xBB000000);
+                        context.fill(tx - 3, textY - 1, tx + tw + 3, textY, tagColor);
+                    }
+                    if (drawNametags) {
+                        context.drawString(mc.font, tagText, tx, textY, 0xFFFFFFFF, false);
+                    }
+                    if (hasOwner) {
+                        String ownerText = "Owner: " + ownerName;
+                        int txOwner = drawNametags ? tx : bx - (mc.font.width(ownerText) / 2);
+                        int tyOwner = drawNametags ? textY + 10 : textY + 3;
+                        context.drawString(mc.font, ownerText, txOwner, tyOwner, MobOwner.INSTANCE.textColor.getValue(), false);
+                    }
+                } else {
+                    ItemStack mainHand = livingTarget.getMainHandItem();
+                    ItemStack offHand = livingTarget.getOffhandItem();
+                    ItemStack boots = livingTarget.getItemBySlot(EquipmentSlot.FEET);
+                    ItemStack leggings = livingTarget.getItemBySlot(EquipmentSlot.LEGS);
+                    ItemStack chestplate = livingTarget.getItemBySlot(EquipmentSlot.CHEST);
+                    ItemStack helmet = livingTarget.getItemBySlot(EquipmentSlot.HEAD);
+
+                    int is = 16;
+                    int gap = 2;
+
+                    int mainRowW = drawNametags ? tw : 0;
+                    if (drawNametags && showHands && !mainHand.isEmpty()) mainRowW += is + gap;
+                    if (drawNametags && showHands && !offHand.isEmpty()) mainRowW += gap + is;
+
+                    int ownerAddW = hasOwner ? mc.font.width("Owner: " + ownerName) : 0;
+                    int armorW = 0;
+                    if (drawNametags && showArmor) {
+                        if (!boots.isEmpty()) armorW += is + gap;
+                        if (!leggings.isEmpty()) armorW += is + gap;
+                        if (!chestplate.isEmpty()) armorW += is + gap;
+                        if (!helmet.isEmpty()) armorW += is + gap;
+                        if (armorW > 0) armorW -= gap;
+                    }
+
+                    int totalW = Math.max(mainRowW, armorW);
+                    totalW = Math.max(totalW, ownerAddW);
+                    int armorRowY = textY - is - gap;
+                    
+                    boolean drawMobOwnerBg = hasOwner && MobOwner.INSTANCE.background.getValue();
+                    int extraRows = drawMobOwnerBg ? 10 : 0;
+                    boolean drawBg = drawNametags || drawMobOwnerBg;
+
+                    int bgLeft = bx - totalW / 2 - 3;
+                    int bgTop = drawNametags && showArmor && armorW > 0 ? armorRowY - 1 : textY - 1;
+                    int bgRight = bx + totalW / 2 + 3;
+                    int bgBottom = textY + (drawNametags ? 9 : 0) + extraRows;
+
+                    int tagColor = hasOwner ? 0x44FFAA00 : (isPlayer ? 0xFFFF5555 : 0xFF55FF55);
+                    if (drawBg) {
+                        context.fill(bgLeft, bgTop, bgRight, bgBottom, 0xBB000000);
+                        context.fill(bgLeft, bgTop, bgRight, bgTop + 1, tagColor);
+                    }
+
+                    if (drawNametags && showArmor && armorW > 0) {
+                        int ax = bx - armorW / 2;
+                        for (ItemStack stack : new ItemStack[]{boots, leggings, chestplate, helmet}) {
+                            if (!stack.isEmpty()) {
+                                context.renderItem(stack, ax, armorRowY);
+                                ax += is + gap;
                             }
                         }
                     }
+
+                    if (drawNametags) {
+                        int rx = bx - mainRowW / 2;
+                        if (showHands && !mainHand.isEmpty()) {
+                            context.renderItem(mainHand, rx, textY);
+                            rx += is + gap;
+                        }
+                        context.drawString(mc.font, tagText, rx, textY, 0xFFFFFFFF, false);
+                        rx += tw;
+                        if (showHands && !offHand.isEmpty()) {
+                            rx += gap;
+                            context.renderItem(offHand, rx, textY);
+                        }
+                    }
+
+                    if (hasOwner) {
+                        String ownerText = "Owner: " + ownerName;
+                        int otx = bx - ownerAddW / 2;
+                        int oty = drawNametags ? textY + 10 : textY + 3;
+                        context.drawString(mc.font, ownerText, otx, oty, MobOwner.INSTANCE.textColor.getValue(), false);
+                    }
+                }
             }
         }
-        }
 
-        // 3. Render each enabled HUD element
+        renderHud(context, tickCounter);
+    }
+
+    private void renderHud(GuiGraphics context, DeltaTracker tickCounter) {
         for (HudModule hud : ModuleManager.INSTANCE.getHudModules()) {
             if (hud.getEnabled()) {
                 hud.render(context, tickCounter.getGameTimeDeltaTicks());

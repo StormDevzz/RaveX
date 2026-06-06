@@ -87,11 +87,7 @@ public class CategoryPanel {
         if (visible.isEmpty() && !searchQuery.isEmpty()) return;
         if (visible.isEmpty() && allButtons.isEmpty()) return;
 
-        int[] currentYOut = { iy + 16 };
-        for (ModuleButton btn : visible) {
-            btn.render(graphics, ix, iy, width, mouseX, mouseY, currentYOut, searchQuery);
-        }
-        int currentY = currentYOut[0];
+        int currentY = getCurrentHeight(searchQuery) + iy;
 
         int activeColor = ColorUtility.getActiveColor();
         Color ac1 = ColorUtility.getColor(270);
@@ -102,51 +98,54 @@ public class CategoryPanel {
         boolean hovered = Render2DEngine.isHovered(mouseX, mouseY, ix, iy - 2, width, currentY - iy + 2);
         headerAnim = Render2DEngine.fastAnimation(headerAnim, hovered ? 1f : 0f, 8f);
 
-        int shadowSize = 5;
+        int radius = 4;
+        int shadowSize = 4;
         for (int s = shadowSize; s > 0; s--) {
-            int alpha = (int)(12 * (1f - s / (float)shadowSize));
+            int alpha = (int)(10 * (1f - s / (float)shadowSize));
             if (alpha > 0) {
-                graphics.fill(ix + s, iy - 2 + s, ix + width - s, currentY + s, (alpha << 24));
+                Render2DEngine.drawRound(graphics, ix + s, iy - 2 + s, width, currentY - iy + 4 - s * 2, radius,
+                    (alpha << 24));
             }
         }
 
         int panelTop = 0xCC0B0B18;
-        int panelBot = 0xE00E0E22;
-        Render2DEngine.drawRect(graphics, ix, iy + 16, width, currentY - iy - 16, panelTop);
-        if (ClickGui.INSTANCE.gradientMode.getValue().equals("Both")) {
-            int headerAccent = Render2DEngine.interpolateColorC(ac1, ac3, 0.5f).getRGB();
-            graphics.fill(ix, iy + 16, ix + width, iy + 17, ColorUtility.withAlpha(headerAccent, 25));
-        }
+        Render2DEngine.drawRound(graphics, ix, iy + 16, width, Math.max(0, currentY - iy - 16), radius, panelTop);
 
-        int headerStart = 0xFF12122A;
-        int headerEnd = 0xFF181838;
-        graphics.fill(ix, iy - 2, ix + width, iy + 16, headerStart);
+        // Header: deep navy gradient with a fine top highlight
+        graphics.fillGradient(ix, iy - 2, ix + width, iy + 16, 0xFF151530, 0xFF0E0E22);
+        // Sheen on top edge
+        graphics.fill(ix + radius, iy - 2, ix + width - radius, iy - 1, 0x22FFFFFF);
+        // Rounded corners on header
+        Render2DEngine.drawRound(graphics, ix, iy - 2, width, 18, radius, 0x00000000); // clears corners via overdraw is not ideal; draw header fill + corners
 
-        int animAccent = Render2DEngine.interpolateColorC(
-            ac1, Render2DEngine.injectAlpha(ac1, 80), headerAnim * 0.5f
-        ).getRGB();
-        graphics.fill(ix, iy + 14, ix + width, iy + 16, activeColor);
-        graphics.fill(ix, iy + 13, ix + 3, iy + 14, ColorUtility.darker(activeColor, 0.5f));
+        // Accent divider (full width, bottom of header)
+        int activeColorDarker = ColorUtility.darker(activeColor, 0.7f);
+        // Gradient glow just above the line
+        graphics.fillGradient(ix, iy + 10, ix + width, iy + 15,
+            0x00000000, ColorUtility.withAlpha(activeColor, 45));
+        graphics.fill(ix, iy + 15, ix + width, iy + 16, activeColor);
+        // Soft bloom below the accent line
+        graphics.fillGradient(ix, iy + 16, ix + width, iy + 20,
+            ColorUtility.withAlpha(activeColor, 30), 0x00000000);
 
         String header = category.getDisplayName();
-        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.COMFORTAA, header, ix + 8, iy + 4, 0xFFE0E0F0, true);
-        graphics.fill(ix + 8, iy + 13, ix + 8 + FontRenderUtility.getStringWidth(FontRenderUtility.FontType.COMFORTAA, header) + 4, iy + 14, ColorUtility.withAlpha(activeColor, 30));
+        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header, ix + 8, iy + 3, 0xFFEEEEFF, true);
+        int headerW = FontRenderUtility.getStringWidth(FontRenderUtility.FontType.VANILLA, header);
+        graphics.fill(ix + 8, iy + 13, ix + 8 + headerW + 4, iy + 14, ColorUtility.withAlpha(activeColor, 25));
 
         if (ClickGui.INSTANCE.outlines.getValue()) {
             int borderColor = ClickGui.INSTANCE.outlineColor.getValue();
-            graphics.fill(ix - 1, iy - 2, ix, currentY + 1, borderColor);
-            graphics.fill(ix + width, iy - 2, ix + width + 1, currentY + 1, borderColor);
-            graphics.fill(ix - 1, iy - 2, ix + width + 1, iy - 1, borderColor);
-            graphics.fill(ix - 1, currentY, ix + width + 1, currentY + 1, borderColor);
+            Render2DEngine.drawRound(graphics, ix - 1, iy - 2, width + 2, currentY - iy + 4, radius + 1, borderColor);
         } else {
-            graphics.fill(ix - 1, iy - 2, ix, currentY, ColorUtility.PANEL_BORDER_COLOR);
-            graphics.fill(ix + width, iy - 2, ix + width + 1, currentY, ColorUtility.PANEL_BORDER_COLOR);
-            graphics.fill(ix, currentY, ix + width, currentY + 1, ColorUtility.PANEL_BORDER_COLOR);
+            int borderCol = ColorUtility.PANEL_BORDER_COLOR;
+            graphics.fill(ix - 1, iy - 2, ix, currentY, borderCol);
+            graphics.fill(ix + width, iy - 2, ix + width + 1, currentY, borderCol);
+            graphics.fill(ix, currentY, ix + width, currentY + 1, borderCol);
         }
 
-        currentYOut[0] = iy + 16;
+        int[] renderYOut = { iy + 16 };
         for (ModuleButton btn : visible) {
-            btn.render(graphics, ix, iy, width, mouseX, mouseY, currentYOut, searchQuery);
+            btn.render(graphics, ix, iy, width, mouseX, mouseY, renderYOut, searchQuery);
         }
     }
 
@@ -179,9 +178,10 @@ public class CategoryPanel {
             return true;
         }
 
+        List<ModuleButton> visible = filterButtons(ClickGUI.searchQuery);
         int[] currentYOut = { iy + 16 };
-        for (ModuleButton btn : allButtons) {
-            if (btn.mouseClicked(mouseX, mouseY, button, ix, currentYOut, mc)) {
+        for (ModuleButton btn : visible) {
+            if (btn.mouseClicked(mouseX, mouseY, button, ix, width, currentYOut, mc)) {
                 return true;
             }
         }
@@ -194,19 +194,8 @@ public class CategoryPanel {
         if (visible.isEmpty() && allButtons.isEmpty()) return 0;
 
         int h = 16;
-        for (ModuleButton btn : visible) {
+        for (ModuleButton ignored : visible) {
             h += 18;
-            int visibleCount = 0;
-            int expandedHeight = 0;
-            for (ParameterElement pe : btn.getParameterElements()) {
-                if (pe.getParameter().isVisible()) {
-                    visibleCount++;
-                    expandedHeight += pe.getHeight();
-                }
-            }
-            if (btn.isExpanded() && visibleCount > 0) {
-                h += (int) ((expandedHeight + 4) * btn.getExpansionProgress());
-            }
         }
         return h;
     }

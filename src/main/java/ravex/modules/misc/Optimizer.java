@@ -39,19 +39,6 @@ public class Optimizer extends Module {
         Minecraft mc = Minecraft.getInstance();
         String mode = gcMode.getValue();
 
-        if (useNative.getValue()) {
-            try {
-                String result = nativeOptimize(mode);
-                if (result != null && notify.getValue() && mc.player != null) {
-                    mc.player.displayClientMessage(
-                        Component.literal("§7[§cRaveX§7] §a" + result), false);
-                }
-                return;
-            } catch (UnsatisfiedLinkError e) {
-                nativeAvailable = false;
-            }
-        }
-
         switch (mode) {
             case "Aggressive" -> {
                 System.gc(); System.gc(); System.gc();

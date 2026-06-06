@@ -21,9 +21,20 @@ public class Render3DUtils {
     }
 
     public static void renderWireframe(Matrix4f matrix, double size, float r, float g, float b, float a) {
-        BufferBuilder builder = new BufferBuilder(ALLOCATOR, LINE_TYPE.mode(), LINE_TYPE.format());
-        BlockRenderer.renderWireframe(builder, matrix, size, r, g, b, a);
-        MeshData mesh = builder.buildOrThrow();
-        LINE_TYPE.draw(mesh);
+        renderWireframe(matrix, size, r, g, b, a, 1.0f);
+    }
+
+    public static void renderWireframe(Matrix4f matrix, double size, float r, float g, float b, float a, float lineWidth) {
+        if (lineWidth > 1.0f) {
+            BufferBuilder builder = new BufferBuilder(ALLOCATOR, FILL_TYPE.mode(), FILL_TYPE.format());
+            BlockRenderer.renderThickWireframe(builder, matrix, size, r, g, b, a, lineWidth);
+            MeshData mesh = builder.buildOrThrow();
+            FILL_TYPE.draw(mesh);
+        } else {
+            BufferBuilder builder = new BufferBuilder(ALLOCATOR, LINE_TYPE.mode(), LINE_TYPE.format());
+            BlockRenderer.renderWireframe(builder, matrix, size, r, g, b, a, lineWidth);
+            MeshData mesh = builder.buildOrThrow();
+            LINE_TYPE.draw(mesh);
+        }
     }
 }

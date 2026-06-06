@@ -51,11 +51,32 @@ public abstract class MixinEntity {
     private void onGetTeamColor(CallbackInfoReturnable<Integer> cir) {
         if (ESP.INSTANCE.getEnabled() && ESP.INSTANCE.mode.getValue().equals("Outline")) {
             Entity self = (Entity) (Object) this;
-            if (self instanceof LivingEntity) {
-                if (self instanceof Player) {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            if (self == mc.player) return;
+
+            if (mc.player != null && mc.player.distanceTo(self) > ESP.INSTANCE.maxDistance.getValue()) {
+                return;
+            }
+
+            if (self instanceof Player) {
+                if (ESP.INSTANCE.players.getValue()) {
                     cir.setReturnValue(ESP.INSTANCE.playerColor.getValue());
-                } else if (self instanceof Monster) {
+                }
+            } else if (self instanceof Monster) {
+                if (ESP.INSTANCE.monsters.getValue()) {
                     cir.setReturnValue(ESP.INSTANCE.mobColor.getValue());
+                }
+            } else if (self instanceof net.minecraft.world.entity.animal.Animal || self instanceof net.minecraft.world.entity.ambient.AmbientCreature) {
+                if (ESP.INSTANCE.animals.getValue()) {
+                    cir.setReturnValue(ESP.INSTANCE.animalColor.getValue());
+                }
+            } else if (self instanceof net.minecraft.world.entity.item.ItemEntity) {
+                if (ESP.INSTANCE.items.getValue()) {
+                    cir.setReturnValue(ESP.INSTANCE.itemColor.getValue());
+                }
+            } else if (self instanceof net.minecraft.world.entity.decoration.ItemFrame) {
+                if (ESP.INSTANCE.frames.getValue()) {
+                    cir.setReturnValue(ESP.INSTANCE.frameColor.getValue());
                 }
             }
         }

@@ -17,12 +17,31 @@ public abstract class MixinMinecraftClient {
     @Inject(method = "shouldEntityAppearGlowing", at = @At("HEAD"), cancellable = true)
     private void onShouldEntityAppearGlowing(net.minecraft.world.entity.Entity entity, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
         if (ravex.modules.render.ESP.INSTANCE.getEnabled() && ravex.modules.render.ESP.INSTANCE.mode.getValue().equals("Outline")) {
-            if (entity instanceof net.minecraft.world.entity.LivingEntity) {
-                boolean isPlayer = entity instanceof net.minecraft.world.entity.player.Player;
-                boolean isMonster = entity instanceof net.minecraft.world.entity.monster.Monster;
-                if (isPlayer && ravex.modules.render.ESP.INSTANCE.players.getValue()) {
+            var mc = Minecraft.getInstance();
+            if (entity == mc.player) return;
+
+            if (mc.player != null && mc.player.distanceTo(entity) > ravex.modules.render.ESP.INSTANCE.maxDistance.getValue()) {
+                return;
+            }
+
+            if (entity instanceof net.minecraft.world.entity.player.Player) {
+                if (ravex.modules.render.ESP.INSTANCE.players.getValue()) {
                     cir.setReturnValue(true);
-                } else if (isMonster && ravex.modules.render.ESP.INSTANCE.monsters.getValue()) {
+                }
+            } else if (entity instanceof net.minecraft.world.entity.monster.Monster) {
+                if (ravex.modules.render.ESP.INSTANCE.monsters.getValue()) {
+                    cir.setReturnValue(true);
+                }
+            } else if (entity instanceof net.minecraft.world.entity.animal.Animal || entity instanceof net.minecraft.world.entity.ambient.AmbientCreature) {
+                if (ravex.modules.render.ESP.INSTANCE.animals.getValue()) {
+                    cir.setReturnValue(true);
+                }
+            } else if (entity instanceof net.minecraft.world.entity.item.ItemEntity) {
+                if (ravex.modules.render.ESP.INSTANCE.items.getValue()) {
+                    cir.setReturnValue(true);
+                }
+            } else if (entity instanceof net.minecraft.world.entity.decoration.ItemFrame) {
+                if (ravex.modules.render.ESP.INSTANCE.frames.getValue()) {
                     cir.setReturnValue(true);
                 }
             }

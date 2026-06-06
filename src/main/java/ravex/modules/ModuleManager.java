@@ -54,7 +54,10 @@ import ravex.modules.render.Glint;
 import ravex.modules.render.Sounds;
 import ravex.modules.render.ViewClip;
 import ravex.modules.render.BlockOutline;
+import ravex.modules.render.MobOwner;
 import ravex.modules.movement.Speed;
+import ravex.modules.movement.NoRotate;
+import ravex.modules.combat.SelfTrap;
 import ravex.modules.exploit.Timer;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
@@ -82,9 +85,12 @@ public class ModuleManager {
         clickGuiModules.add(MainHand.INSTANCE);
         clickGuiModules.add(Reach.INSTANCE);
         clickGuiModules.add(Surround.INSTANCE);
+        clickGuiModules.add(SelfTrap.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ESP.INSTANCE);
+        clickGuiModules.add(MobOwner.INSTANCE);
+        clickGuiModules.add(NameTags.INSTANCE);
         clickGuiModules.add(NameTags.INSTANCE);
         clickGuiModules.add(ClickGui.INSTANCE);
         clickGuiModules.add(Notifications.INSTANCE);
@@ -130,6 +136,7 @@ public class ModuleManager {
         clickGuiModules.add(AutoSprint.INSTANCE);
         clickGuiModules.add(Spider.INSTANCE);
         clickGuiModules.add(Speed.INSTANCE);
+        clickGuiModules.add(NoRotate.INSTANCE);
 
         // ── Misc ─────────────────────────────────────────────────────────────────
         clickGuiModules.add(AntiAfk.INSTANCE);
@@ -140,6 +147,7 @@ public class ModuleManager {
         clickGuiModules.add(AutoLog.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Spammer.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Commands.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.WaxAura.INSTANCE);
 
         // ── World ────────────────────────────────────────────────────────────────
         clickGuiModules.add(BoneMeal.INSTANCE);
@@ -150,6 +158,7 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.world.AutoNameTag.INSTANCE);
         clickGuiModules.add(ravex.modules.world.AutoMount.INSTANCE);
         clickGuiModules.add(ravex.modules.world.FakePlayer.INSTANCE);
+        clickGuiModules.add(ravex.modules.world.ChestAura.INSTANCE);
 
         // ── Exploit ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ravex.modules.exploit.RideExploit.INSTANCE);
@@ -160,6 +169,7 @@ public class ModuleManager {
 
         // ── Client ────────────────────────────────────────────────────────────────
         clickGuiModules.add(RichPresence.INSTANCE);
+        clickGuiModules.add(ravex.modules.client.GuiParticles.INSTANCE);
 
         // ── HUD modules ──────────────────────────────────────────────────────────
         hudModules.add(new HudModule("Watermark", 10, 10, 80, 14) {
