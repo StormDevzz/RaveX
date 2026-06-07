@@ -61,6 +61,9 @@ import ravex.modules.combat.SelfTrap;
 import ravex.modules.exploit.Timer;
 import ravex.modules.exploit.ClickTP;
 import ravex.modules.exploit.ClickFly;
+import ravex.modules.exploit.ChorusExploit;
+import ravex.modules.exploit.TickShift;
+import ravex.modules.exploit.TridentBoost;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
 
@@ -181,6 +184,9 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.exploit.MultiTask.INSTANCE);
         clickGuiModules.add(ClickTP.INSTANCE);
         clickGuiModules.add(ClickFly.INSTANCE);
+        clickGuiModules.add(ChorusExploit.INSTANCE);
+        clickGuiModules.add(TickShift.INSTANCE);
+        clickGuiModules.add(TridentBoost.INSTANCE);
 
 
         // ── Client ────────────────────────────────────────────────────────────────

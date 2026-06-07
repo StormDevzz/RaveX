@@ -5,6 +5,7 @@ import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
+import ravex.parameter.KeybindParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 
@@ -230,6 +231,14 @@ public class ParameterElement {
             int tw = FontRenderUtility.getStringWidth(text);
             FontRenderUtility.drawString(graphics, text, x + width - tw - 8, y + 7, activeColor, true);
 
+        } else if (parameter instanceof KeybindParameter kp) {
+            FontRenderUtility.drawString(graphics, kp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+            boolean isListening = ClickGUI.activeKeybindElement != null && ClickGUI.activeKeybindElement.getParameter() == kp;
+            String keyText = isListening ? "..." : KeybindParameter.getKeyName(kp.getValue());
+            int tw = FontRenderUtility.getStringWidth(keyText);
+            int keyCol = isListening ? 0xFF00FF00 : activeColor;
+            FontRenderUtility.drawString(graphics, keyText, x + width - tw - 8, y + 7, keyCol, true);
+
         } else {
             String text = parameter.getName() + ": " + parameter.getValue();
             if (text.length() > 18) {
@@ -296,6 +305,14 @@ public class ParameterElement {
                     ClickGUI.activeStringParameterElement = null;
                 } else {
                     ClickGUI.activeStringParameterElement = this;
+                }
+                playSound();
+                return true;
+            } else if (parameter instanceof KeybindParameter kp) {
+                if (ClickGUI.activeKeybindElement != null && ClickGUI.activeKeybindElement.getParameter() == kp) {
+                    ClickGUI.activeKeybindElement = null;
+                } else {
+                    ClickGUI.activeKeybindElement = this;
                 }
                 playSound();
                 return true;

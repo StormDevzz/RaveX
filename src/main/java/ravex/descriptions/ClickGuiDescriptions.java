@@ -104,6 +104,9 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("StashFinder",    "Detects & highlights stashes with valuable items.");
         DESCRIPTIONS.put("ClickTP",        "Right-click anywhere to instantly teleport there.");
         DESCRIPTIONS.put("ClickFly",       "Right-click a destination and fly toward it automatically.");
+        DESCRIPTIONS.put("ChorusExploit",  "Eat chorus fruit to store teleport, press module keybind to trigger.");
+        DESCRIPTIONS.put("TickShift",      "Store idle ticks and release them as speed bursts.");
+        DESCRIPTIONS.put("TridentBoost",   "Boost your velocity when using a Riptide trident.");
     }
 
     public static String getDescription(String moduleName) {

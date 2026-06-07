@@ -234,6 +234,24 @@ public class ModuleSettingsScreen extends Screen {
 
         int key = event.key();
 
+        if (ClickGUI.activeKeybindElement != null) {
+            ravex.parameter.KeybindParameter kp = (ravex.parameter.KeybindParameter) ClickGUI.activeKeybindElement.getParameter();
+            if (key == GLFW.GLFW_KEY_ESCAPE) {
+                kp.setValue(org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN);
+                ClickGUI.activeKeybindElement = null;
+            } else {
+                kp.setValue(key);
+                ClickGUI.activeKeybindElement = null;
+            }
+            if (this.minecraft.player != null) {
+                this.minecraft.player.playSound(
+                    net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(),
+                    0.5f, 1.5f
+                );
+            }
+            return true;
+        }
+
         if (ClickGUI.activeStringParameterElement != null) {
             ravex.parameter.StringParameter sp = (ravex.parameter.StringParameter) ClickGUI.activeStringParameterElement.getParameter();
             if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER) {
@@ -260,6 +278,9 @@ public class ModuleSettingsScreen extends Screen {
     @Override
     public boolean charTyped(CharacterEvent event) {
         if (ClickGUI.activeColorPalette != null) {
+            return true;
+        }
+        if (ClickGUI.activeKeybindElement != null) {
             return true;
         }
         if (ClickGUI.activeStringParameterElement != null) {

@@ -71,7 +71,7 @@
         "player.MixinClientPacketListener",
         "render.MixinNameProtect"
     ],
-    "client": [],
+    "client": ["player.MixinChorusExploit", "player.MixinChorusPositionHandler", "player.MixinTridentBoost"],
     "server": [],
     "injectors": {
         "defaultRequire": 1

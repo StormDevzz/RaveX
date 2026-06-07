@@ -21,6 +21,7 @@ public class ClickGUI extends Screen {
     public static ravex.parameter.ColorParameter activeColorParameter = null;
     public static ColorPaletteModal activeColorPalette = null;
     public static ParameterElement activeStringParameterElement = null;
+    public static ParameterElement activeKeybindElement = null;
 
     private final List<CategoryPanel> panels = new ArrayList<>();
     private final long initTime;
@@ -402,6 +403,24 @@ public class ClickGUI extends Screen {
             return true;
         }
 
+        if (activeKeybindElement != null) {
+            ravex.parameter.KeybindParameter kp = (ravex.parameter.KeybindParameter) activeKeybindElement.getParameter();
+            if (key == GLFW.GLFW_KEY_ESCAPE) {
+                kp.setValue(org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN);
+                activeKeybindElement = null;
+            } else {
+                kp.setValue(key);
+                activeKeybindElement = null;
+            }
+            if (this.minecraft.player != null) {
+                this.minecraft.player.playSound(
+                    net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(),
+                    0.5f, 1.5f
+                );
+            }
+            return true;
+        }
+
         if (activeStringParameterElement != null) {
             ravex.parameter.StringParameter sp = (ravex.parameter.StringParameter) activeStringParameterElement.getParameter();
             if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER) {
@@ -447,6 +466,9 @@ public class ClickGUI extends Screen {
         if (activeColorPalette != null) {
             return true;
         }
+        if (activeKeybindElement != null) {
+            return true;
+        }
         if (activeStringParameterElement != null) {
             ravex.parameter.StringParameter sp = (ravex.parameter.StringParameter) activeStringParameterElement.getParameter();
             String text = event.codepointAsString();
@@ -468,6 +490,7 @@ public class ClickGUI extends Screen {
     @Override
     public void onClose() {
         activeStringParameterElement = null;
+        activeKeybindElement = null;
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
