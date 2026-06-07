@@ -37,4 +37,23 @@ public class Render3DUtils {
             LINE_TYPE.draw(mesh);
         }
     }
+
+    public static void renderLineStrip(Matrix4f matrix, java.util.List<org.joml.Vector3f> points, float r, float g, float b, float a, float lineWidth) {
+        if (points.size() < 2) return;
+        BufferBuilder builder = new BufferBuilder(ALLOCATOR, LINE_TYPE.mode(), LINE_TYPE.format());
+        int ir = (int)(r * 255);
+        int ig = (int)(g * 255);
+        int ib = (int)(b * 255);
+        int ia = (int)(a * 255);
+        for (int i = 1; i < points.size(); i++) {
+            org.joml.Vector3f p1 = points.get(i - 1);
+            org.joml.Vector3f p2 = points.get(i);
+            BlockRenderer.renderLine3D(builder, matrix,
+                p1.x, p1.y, p1.z,
+                p2.x, p2.y, p2.z,
+                ir, ig, ib, ia, lineWidth);
+        }
+        MeshData mesh = builder.buildOrThrow();
+        LINE_TYPE.draw(mesh);
+    }
 }

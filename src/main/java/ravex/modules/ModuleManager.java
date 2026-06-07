@@ -66,6 +66,8 @@ import ravex.modules.exploit.TickShift;
 import ravex.modules.exploit.TridentBoost;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
+import ravex.modules.combat.WindAura;
+import ravex.modules.render.BreadCrumbs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +93,7 @@ public class ModuleManager {
         clickGuiModules.add(Reach.INSTANCE);
         clickGuiModules.add(Surround.INSTANCE);
         clickGuiModules.add(SelfTrap.INSTANCE);
+        clickGuiModules.add(WindAura.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ESP.INSTANCE);
@@ -112,6 +115,7 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.render.Fullbright.INSTANCE);
         clickGuiModules.add(BlockOutline.INSTANCE);
         clickGuiModules.add(Xray.INSTANCE);
+        clickGuiModules.add(BreadCrumbs.INSTANCE);
 
         // ── Player ──────────────────────────────────────────────────────────────
         clickGuiModules.add(AutoTool.INSTANCE);

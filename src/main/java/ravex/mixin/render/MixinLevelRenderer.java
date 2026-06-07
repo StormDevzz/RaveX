@@ -262,6 +262,11 @@ public class MixinLevelRenderer {
                 } catch (Exception ignored) {}
             }
         }
+
+        // --- BreadCrumbs ---
+        if (ravex.modules.render.BreadCrumbs.INSTANCE.getEnabled()) {
+            ravex.modules.render.BreadCrumbs.renderTrails(modelViewMatrix, camPos);
+        }
     }
 
     private void renderBlockHighlight(Vec3 highlightPos, float alpha, double size, float r, float g, float b, Vec3 camPos, Matrix4f modelViewMatrix) {

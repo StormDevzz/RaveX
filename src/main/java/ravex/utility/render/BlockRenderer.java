@@ -156,6 +156,15 @@ public class BlockRenderer {
         renderSolidBox(consumer, matrix, min - t, min - t, min, min + t, min + t, max, ir, ig, ib, ia);
         renderSolidBox(consumer, matrix, max - t, min - t, min, max + t, min + t, max, ir, ig, ib, ia);
         renderSolidBox(consumer, matrix, min - t, max - t, min, min + t, max + t, max, ir, ig, ib, ia);
-        renderSolidBox(consumer, matrix, max - t, max - t, min, max + t, max + t, max, ir, ig, ib, ia);
+    }
+
+    public static void renderLine3D(com.mojang.blaze3d.vertex.VertexConsumer consumer, Matrix4f matrix,
+                                     float x1, float y1, float z1, float x2, float y2, float z2,
+                                     int r, int g, int b, int a, float lineWidth) {
+        float nx = x2 - x1;
+        float ny = y2 - y1;
+        float nz = z2 - z1;
+        consumer.addVertex(matrix, x1, y1, z1).setColor(r, g, b, a).setNormal(nx, ny, nz).setLineWidth(lineWidth);
+        consumer.addVertex(matrix, x2, y2, z2).setColor(r, g, b, a).setNormal(nx, ny, nz).setLineWidth(lineWidth);
     }
 }

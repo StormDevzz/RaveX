@@ -92,9 +92,9 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("PortalGui",      "Use inventory and chat inside portals.");
         DESCRIPTIONS.put("Avoid",          "Avoids damaging blocks like cacti and berries.");
         DESCRIPTIONS.put("ItemScroller",   "Ctrl+Shift+Throw to mass-drop matching items. RShift+Scroll/LMB to transfer.");
-        DESCRIPTIONS.put("ExtraTab",       "Bigger tab list with ping and colored names.");
-        DESCRIPTIONS.put("ExtraChat",      "ZoV (з→Z, в→V) and MoreChatHistory options.");
-        DESCRIPTIONS.put("ExtraChest",     "Steal/Dump/Fill/Drop All buttons for chests.");
+        DESCRIPTIONS.put("ExtraTab",       "Some chest utility.");
+        DESCRIPTIONS.put("ExtraChat",      "Some chat utility.");
+        DESCRIPTIONS.put("ExtraChest",     "Some chest utility.");
         DESCRIPTIONS.put("AutoReconnect",  "Adds Reconnect button to Game Menu & Disconnect screen.");
         DESCRIPTIONS.put("FastLatency",    "Measures ping more frequently for accurate RTT.");
         DESCRIPTIONS.put("MultiTask",      "Allows attacking & mining while eating/using items.");
@@ -107,6 +107,8 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("ChorusExploit",  "Eat chorus fruit to store teleport, press module keybind to trigger.");
         DESCRIPTIONS.put("TickShift",      "Store idle ticks and release them as speed bursts.");
         DESCRIPTIONS.put("TridentBoost",   "Boost your velocity when using a Riptide trident.");
+        DESCRIPTIONS.put("WindAura",       "Auto-throws wind charges at nearby entities.");
+        DESCRIPTIONS.put("BreadCrumbs",    "Draws trail lines behind you and other entities.");
     }
 
     public static String getDescription(String moduleName) {
