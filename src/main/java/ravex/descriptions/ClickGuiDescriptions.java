@@ -109,6 +109,10 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("TridentBoost",   "Boost your velocity when using a Riptide trident.");
         DESCRIPTIONS.put("WindAura",       "Auto-throws wind charges at nearby entities.");
         DESCRIPTIONS.put("BreadCrumbs",    "Draws trail lines behind you and other entities.");
+        DESCRIPTIONS.put("ExtraRocket",    "Multiplies elytra velocity when using firework rockets.");
+        DESCRIPTIONS.put("ExtraRiding",    "Increases the speed of rideable entities.");
+        DESCRIPTIONS.put("Blink",          "Cancels movement packets on enable, sends them on disable.");
+        DESCRIPTIONS.put("PacketFly",      "Manipulates packets to fly through the air.");
     }
 
     public static String getDescription(String moduleName) {

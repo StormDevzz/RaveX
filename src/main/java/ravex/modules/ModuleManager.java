@@ -149,6 +149,8 @@ public class ModuleManager {
         clickGuiModules.add(Speed.INSTANCE);
         clickGuiModules.add(NoRotate.INSTANCE);
         clickGuiModules.add(ravex.modules.movement.Avoid.INSTANCE);
+        clickGuiModules.add(ravex.modules.movement.ExtraRocket.INSTANCE);
+        clickGuiModules.add(ravex.modules.movement.ExtraRiding.INSTANCE);
 
         // ── Misc ─────────────────────────────────────────────────────────────────
         clickGuiModules.add(AntiAfk.INSTANCE);
@@ -191,6 +193,8 @@ public class ModuleManager {
         clickGuiModules.add(ChorusExploit.INSTANCE);
         clickGuiModules.add(TickShift.INSTANCE);
         clickGuiModules.add(TridentBoost.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.Blink.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.PacketFly.INSTANCE);
 
 
         // ── Client ────────────────────────────────────────────────────────────────

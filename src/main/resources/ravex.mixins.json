@@ -50,6 +50,7 @@
         "network.AccessorServerboundInteractPacket",
         "network.AccessorClientIntentionPacket",
         "network.MixinConnection",
+        "network.MixinBlink",
         "movement.MixinGuiWalk",
         "movement.MixinNoSlowDown",
         "movement.MixinVelocity",
