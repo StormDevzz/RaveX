@@ -12,16 +12,6 @@ public class Github {
             .connectTimeout(Duration.ofSeconds(5))
             .build();
 
-    /**
-     * Asynchronously fetches the raw text content of a file from a GitHub repository.
-     * Can be used to load dynamic features like splash texts, configurations, or update checks.
-     *
-     * @param repoOwner Owner/organization of the repository
-     * @param repoName  Name of the repository
-     * @param branch    Branch to fetch from (e.g., "main" or "master")
-     * @param filePath  Relative path to the file in the repository
-     * @return CompletableFuture containing the raw text content of the file
-     */
     public static CompletableFuture<String> fetchRawContent(String repoOwner, String repoName, String branch, String filePath) {
         String url = String.format("https://raw.githubusercontent.com/%s/%s/%s/%s", repoOwner, repoName, branch, filePath);
         HttpRequest request = HttpRequest.newBuilder()
@@ -40,13 +30,6 @@ public class Github {
                 });
     }
 
-    /**
-     * Asynchronously checks if a GitHub repository is reachable (returns HTTP 200).
-     *
-     * @param repoOwner Owner of the repository
-     * @param repoName  Name of the repository
-     * @return CompletableFuture containing true if reachable, false otherwise
-     */
     public static CompletableFuture<Boolean> isReachable(String repoOwner, String repoName) {
         String url = String.format("https://api.github.com/repos/%s/%s", repoOwner, repoName);
         HttpRequest request = HttpRequest.newBuilder()

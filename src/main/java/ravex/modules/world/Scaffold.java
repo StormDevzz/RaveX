@@ -5,8 +5,7 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
-import ravex.utility.render.animate.FadeAnimation;
-import ravex.utility.render.animate.SizeAnimation;
+import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -39,8 +38,8 @@ public class Scaffold extends Module {
     public static float renderG = 0.2f;
     public static float renderB = 0.8f;
 
-    private final FadeAnimation fadeAnim = new FadeAnimation();
-    private final SizeAnimation sizeAnim = new SizeAnimation();
+    private final EasingAnimation fadeAnim = new EasingAnimation();
+    private final EasingAnimation sizeAnim = new EasingAnimation();
     private final SlideAnimation slideAnim = new SlideAnimation();
     public BlockPos currentTarget = null;
     private int lastSlot = -1;

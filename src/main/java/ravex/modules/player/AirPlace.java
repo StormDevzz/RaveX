@@ -4,8 +4,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
-import ravex.utility.render.animate.FadeAnimation;
-import ravex.utility.render.animate.SizeAnimation;
+import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -28,8 +27,8 @@ public class AirPlace extends Module {
     public final BooleanParameter animate = new BooleanParameter("Animate", true);
     public final ColorParameter highlightColor = new ColorParameter("Highlight Color", 0xFF55AAFF);
 
-    private final FadeAnimation fadeAnim = new FadeAnimation();
-    private final SizeAnimation sizeAnim = new SizeAnimation();
+    private final EasingAnimation fadeAnim = new EasingAnimation();
+    private final EasingAnimation sizeAnim = new EasingAnimation();
     private final SlideAnimation slideAnim = new SlideAnimation();
     public BlockPos currentTarget = null;
     private long lastPlaceTime = 0;
@@ -76,7 +75,7 @@ public class AirPlace extends Module {
 
         if (hand == null) {
             currentTarget = null;
-            renderAlpha = fadeAnim.update(false, 0.25f);
+            renderAlpha = fadeAnim.updateFloat(false, 0.25f);
             renderSize = sizeAnim.update(false, 0.15);
             if (renderAlpha <= 0.01f) {
                 highlightPos = null;

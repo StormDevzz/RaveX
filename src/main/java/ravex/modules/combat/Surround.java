@@ -13,9 +13,8 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
-import ravex.utility.render.animate.FadeAnimation;
+import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
-import ravex.utility.render.animate.SizeAnimation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +37,8 @@ public class Surround extends Module {
     public final BooleanParameter animate = new BooleanParameter("Animate", true);
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
 
-    private final FadeAnimation fadeAnim = new FadeAnimation();
-    private final SizeAnimation sizeAnim = new SizeAnimation();
+    private final EasingAnimation fadeAnim = new EasingAnimation();
+    private final EasingAnimation sizeAnim = new EasingAnimation();
     private final SlideAnimation slideAnim = new SlideAnimation();
     private int placeTimer = 0;
     private boolean placed = false;
@@ -79,7 +78,7 @@ public class Surround extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
             surroundBlocks.clear();
-            renderAlpha = fadeAnim.update(false, 0.2f);
+            renderAlpha = fadeAnim.updateFloat(false, 0.2f);
             renderSize = sizeAnim.update(false, 0.15);
             return;
         }
@@ -89,7 +88,7 @@ public class Surround extends Module {
         int blockSlot = findBlockSlot(mc.player);
         if (blockSlot == -1) {
             surroundBlocks.clear();
-            renderAlpha = fadeAnim.update(false, 0.2f);
+            renderAlpha = fadeAnim.updateFloat(false, 0.2f);
             return;
         }
 
@@ -144,7 +143,7 @@ public class Surround extends Module {
             renderG = ((c >> 8) & 0xFF) / 255.0f;
             renderB = (c & 0xFF) / 255.0f;
 
-            renderAlpha = fadeAnim.update(!toPlace.isEmpty(), 0.2f);
+            renderAlpha = fadeAnim.updateFloat(!toPlace.isEmpty(), 0.2f);
             renderSize = sizeAnim.update(!toPlace.isEmpty(), 0.15);
 
             if (animate.getValue() && !toPlace.isEmpty()) {
