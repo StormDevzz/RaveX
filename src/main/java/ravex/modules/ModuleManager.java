@@ -59,6 +59,8 @@ import ravex.modules.movement.Speed;
 import ravex.modules.movement.NoRotate;
 import ravex.modules.combat.SelfTrap;
 import ravex.modules.exploit.Timer;
+import ravex.modules.exploit.ClickTP;
+import ravex.modules.exploit.ClickFly;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
 
@@ -177,6 +179,8 @@ public class ModuleManager {
         clickGuiModules.add(Timer.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.PortalGui.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.MultiTask.INSTANCE);
+        clickGuiModules.add(ClickTP.INSTANCE);
+        clickGuiModules.add(ClickFly.INSTANCE);
 
 
         // ── Client ────────────────────────────────────────────────────────────────

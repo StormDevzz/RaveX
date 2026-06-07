@@ -102,6 +102,8 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("AutoSoup",       "Auto-drinks healing potions when health is low.");
         DESCRIPTIONS.put("NameProtect",    "Hides player name in nametags and chat (→RaveX).");
         DESCRIPTIONS.put("StashFinder",    "Detects & highlights stashes with valuable items.");
+        DESCRIPTIONS.put("ClickTP",        "Right-click anywhere to instantly teleport there.");
+        DESCRIPTIONS.put("ClickFly",       "Right-click a destination and fly toward it automatically.");
     }
 
     public static String getDescription(String moduleName) {
