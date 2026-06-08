@@ -109,6 +109,8 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("TridentBoost",   "Boost your velocity when using a Riptide trident.");
         DESCRIPTIONS.put("WindAura",       "Auto-throws wind charges at nearby entities.");
         DESCRIPTIONS.put("BreadCrumbs",    "Draws trail lines behind you and other entities.");
+        DESCRIPTIONS.put("ViewModel",      "Customize hand position, rotation and scale.");
+        DESCRIPTIONS.put("AutoCrystal",    "Automatically places and breaks End Crystals for damage.");
         DESCRIPTIONS.put("ExtraRocket",    "Multiplies elytra velocity when using firework rockets.");
         DESCRIPTIONS.put("ExtraRiding",    "Increases the speed of rideable entities.");
         DESCRIPTIONS.put("Blink",          "Cancels movement packets on enable, sends them on disable.");

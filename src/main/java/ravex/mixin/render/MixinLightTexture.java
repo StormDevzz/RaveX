@@ -16,9 +16,8 @@ public class MixinLightTexture {
 
     @ModifyArg(
         method = "updateLightTexture",
-        at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/buffers/Std140Builder;putFloat(F)Lcom/mojang/blaze3d/buffers/Std140Builder;", ordinal = 0),
-        index = 0,
-        remap = false
+        at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/buffers/Std140Builder;putFloat(F)Lcom/mojang/blaze3d/buffers/Std140Builder;", ordinal = 0, remap = false),
+        index = 0
     )
     private float modifyAmbientLight(float value) {
         return isFullbright() ? 1.0f : value;
@@ -26,9 +25,8 @@ public class MixinLightTexture {
 
     @ModifyArg(
         method = "updateLightTexture",
-        at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/buffers/Std140Builder;putFloat(F)Lcom/mojang/blaze3d/buffers/Std140Builder;", ordinal = 3),
-        index = 0,
-        remap = false
+        at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/buffers/Std140Builder;putFloat(F)Lcom/mojang/blaze3d/buffers/Std140Builder;", ordinal = 3, remap = false),
+        index = 0
     )
     private float modifyNightVision(float value) {
         return isFullbright() ? 1.0f : value;
@@ -36,9 +34,8 @@ public class MixinLightTexture {
 
     @ModifyArg(
         method = "updateLightTexture",
-        at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/buffers/Std140Builder;putFloat(F)Lcom/mojang/blaze3d/buffers/Std140Builder;", ordinal = 4),
-        index = 0,
-        remap = false
+        at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/buffers/Std140Builder;putFloat(F)Lcom/mojang/blaze3d/buffers/Std140Builder;", ordinal = 4, remap = false),
+        index = 0
     )
     private float modifyDarkness(float value) {
         return isFullbright() ? 0.0f : value;

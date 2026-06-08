@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <sched.h>
+#include <sys/mman.h>
 #endif
 
 namespace ravex {

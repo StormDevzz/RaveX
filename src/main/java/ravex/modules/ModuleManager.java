@@ -1,6 +1,7 @@
 package ravex.modules;
 
 import ravex.modules.combat.KillAura;
+import ravex.modules.combat.AutoCrystal;
 import ravex.modules.render.ESP;
 import ravex.modules.player.AutoTool;
 import ravex.modules.misc.AntiAfk;
@@ -81,6 +82,7 @@ public class ModuleManager {
     private ModuleManager() {
         // ── Combat ──────────────────────────────────────────────────────────────
         clickGuiModules.add(KillAura.INSTANCE);
+        clickGuiModules.add(AutoCrystal.INSTANCE);
         clickGuiModules.add(AimAssist.INSTANCE);
         clickGuiModules.add(Trigger.INSTANCE);
         clickGuiModules.add(MaceSwap.INSTANCE);
@@ -116,6 +118,7 @@ public class ModuleManager {
         clickGuiModules.add(BlockOutline.INSTANCE);
         clickGuiModules.add(Xray.INSTANCE);
         clickGuiModules.add(BreadCrumbs.INSTANCE);
+        clickGuiModules.add(ravex.modules.render.ViewModel.INSTANCE);
 
         // ── Player ──────────────────────────────────────────────────────────────
         clickGuiModules.add(AutoTool.INSTANCE);

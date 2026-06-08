@@ -238,6 +238,25 @@ public class MixinLevelRenderer {
             }
         }
 
+        // --- AutoCrystal highlight ---
+        ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
+        if (ac.getEnabled() && ac.renderPlacement.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
+            BlockPos p = ravex.modules.combat.AutoCrystal.currentPlacementBlock;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate(
+                        (float)(p.getX() - camPos.x),
+                        (float)(p.getY() - camPos.y),
+                        (float)(p.getZ() - camPos.z)
+                    );
+
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, 0.2f, 0.8f, 1.0f, 0.22f);
+                Render3DUtils.renderWireframe(matrix, size, 0.2f, 0.8f, 1.0f, 0.85f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, 0.2f, 0.8f, 1.0f, 0.2f);
+            } catch (Exception ignored) {}
+        }
+
         // --- StashFinder overlay ---
         if (ravex.modules.misc.StashFinder.INSTANCE.getEnabled()) {
             double maxDist = ravex.modules.misc.StashFinder.INSTANCE.range.getValue();

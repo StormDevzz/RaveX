@@ -21,6 +21,7 @@ import ravex.modules.render.Ambient;
 import ravex.modules.render.ESP;
 import ravex.modules.render.NameTags;
 import ravex.modules.render.MobOwner;
+import net.minecraft.core.BlockPos;
 
 @Mixin(Gui.class)
 public abstract class MixinInGameHUD {
@@ -242,6 +243,46 @@ public abstract class MixinInGameHUD {
                         int oty = drawNametags ? textY + 10 : textY + 3;
                         context.drawString(mc.font, ownerText, otx, oty, MobOwner.INSTANCE.textColor.getValue(), false);
                     }
+                }
+            }
+        }
+
+        // --- AutoCrystal 2D Overlay ---
+        ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
+        if (ac.getEnabled() && ac.renderDamage.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
+            BlockPos p = ravex.modules.combat.AutoCrystal.currentPlacementBlock;
+            Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
+            Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+            if (proj != null) {
+                Vec3 dir = pos3d.subtract(cameraPos).normalize();
+                Vec3 look = mc.player.getViewVector(pt);
+                double dot = dir.dot(look);
+                if (dot > 0.0) {
+                    double sx = (proj.x + 1.0) / 2.0 * context.guiWidth();
+                    double sy = (1.0 - proj.y) / 2.0 * context.guiHeight();
+
+                    int x = (int) sx;
+                    int y = (int) sy;
+
+                    String dmgText = String.format("Target: %.1f | Self: %.1f", 
+                            ravex.modules.combat.AutoCrystal.currentTargetDamage,
+                            ravex.modules.combat.AutoCrystal.currentSelfDamage);
+                    String totemsText = String.format("Totems: %d", ravex.modules.combat.AutoCrystal.currentTargetTotems);
+
+                    int w1 = mc.font.width(dmgText);
+                    int w2 = mc.font.width(totemsText);
+                    int w = Math.max(w1, w2);
+
+                    int left = x - w / 2 - 4;
+                    int top = y - 10;
+                    int right = x + w / 2 + 4;
+                    int bottom = y + 10;
+
+                    context.fill(left, top, right, bottom, 0xAA000000);
+                    context.fill(left, top, right, top + 1, 0xFF00DDFF);
+
+                    context.drawString(mc.font, dmgText, x - w1 / 2, y - 8, 0xFFFFFFFF, false);
+                    context.drawString(mc.font, totemsText, x - w2 / 2, y + 1, 0xFFFFCC00, false);
                 }
             }
         }
