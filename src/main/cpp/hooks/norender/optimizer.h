@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include "../common/memory.h"
+#include "../../common/memory.h"
 
 namespace ravex {
 

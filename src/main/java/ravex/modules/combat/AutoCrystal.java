@@ -46,17 +46,52 @@ public class AutoCrystal extends Module {
     public final NumberParameter  minDamage      = new NumberParameter("Min Damage",     4.0, 1.0, 20.0, 0.5);
     public final NumberParameter  maxSelfDmg     = new NumberParameter("Max Self Dmg",   8.0, 1.0, 20.0, 0.5);
     public final BooleanParameter antiSuicide    = new BooleanParameter("Anti Suicide",  true);
-    public final BooleanParameter rotate         = new BooleanParameter("Rotate",        true);
-    public final BooleanParameter placeSwitch    = new BooleanParameter("Place Switch",  true);
+    public final NumberParameter  antiSuicideMinHp = new NumberParameter("Anti Suicide Min HP", 6.0, 1.0, 20.0, 0.5);
+    public final ModeParameter    rotate         = new ModeParameter("Rotate Mode", "Silent",
+            java.util.List.of("Silent", "Normal", "Packet", "None"));
+    public final ModeParameter    swapMode       = new ModeParameter("Swap Mode", "Silent",
+            java.util.List.of("Silent", "Normal", "None"));
+    public final NumberParameter  swapDelay      = new NumberParameter("Swap Delay", 0.0, 0.0, 500.0, 10.0);
     public final BooleanParameter onlyInRender   = new BooleanParameter("Only Render",   false);
     public final ModeParameter    targetMode     = new ModeParameter("Target", "Closest",
             java.util.List.of("Closest", "Lowest HP", "Highest Damage"));
+    public final ModeParameter    targetType     = new ModeParameter("Target Type", "Players",
+            java.util.List.of("Players", "Monsters", "Passives", "All"));
     public final BooleanParameter renderPlacement = new BooleanParameter("Render Placement", true);
     public final BooleanParameter renderDamage    = new BooleanParameter("Render Damage", true);
     public final BooleanParameter armorBreaker    = new BooleanParameter("Armor Breaker", true);
     public final NumberParameter  armorPercent    = new NumberParameter("Armor Percent", 15.0, 1.0, 50.0, 1.0);
     public final NumberParameter  predictTicks    = new NumberParameter("Predict Ticks", 1.0, 0.0, 4.0, 0.1);
     public final BooleanParameter totemDetection  = new BooleanParameter("Totem Detection", true);
+    public final NumberParameter  totemMinDamage  = new NumberParameter("Totem Min Damage", 1.5, 0.5, 10.0, 0.5);
+    public final NumberParameter  totemSelfMinHp  = new NumberParameter("Totem Self Min HP", 8.0, 2.0, 20.0, 0.5);
+    public final ModeParameter    placeMode      = new ModeParameter("Place Mode", "Normal",
+            java.util.List.of("Normal", "Aggressive", "Smart"));
+
+    // Rotate sub-settings
+    public final NumberParameter  rotateSpeed     = new NumberParameter("Rotate Speed", 180.0, 10.0, 180.0, 5.0);
+    public final NumberParameter  rotateRandomize = new NumberParameter("Rotate Randomize", 0.0, 0.0, 3.0, 0.1);
+
+    // Anti Suicide sub-settings
+    public final BooleanParameter antiSuicideCheckBreaking = new BooleanParameter("AntiSuicide Break", true);
+    public final BooleanParameter antiSuicideIgnoreWithTotem = new BooleanParameter("AntiSuicide Ignore Totem", false);
+
+    // Totem Detection sub-settings
+    public final BooleanParameter totemCheckTarget = new BooleanParameter("Totem Check Target", true);
+    public final BooleanParameter totemPopSwap     = new BooleanParameter("Totem Pop Swap", false);
+    public final NumberParameter  totemPopHp       = new NumberParameter("Totem Pop HP", 6.0, 1.0, 20.0, 0.5);
+
+    // Place sub-settings
+    public final NumberParameter  placeWallRange  = new NumberParameter("Place Wall Range", 3.5, 1.0, 6.0, 0.1);
+    public final NumberParameter  breakWallRange  = new NumberParameter("Break Wall Range", 3.5, 1.0, 6.0, 0.1);
+    public final BooleanParameter placeAirPlace   = new BooleanParameter("Air Place", false);
+    public final NumberParameter  placeUnderHp     = new NumberParameter("Place Under HP", 10.0, 0.0, 36.0, 0.5);
+    public final BooleanParameter placeMultiPlace  = new BooleanParameter("Multi Place", false);
+
+    // Swaps sub-settings
+    public final BooleanParameter swapSwitchBack   = new BooleanParameter("Swap Switch Back", true);
+    public final BooleanParameter swapNoGap        = new BooleanParameter("Swap No Gap", true);
+    public final BooleanParameter swapInventory   = new BooleanParameter("Swap Inventory", false);
 
     // ── Состояние ─────────────────────────────────────────────────────────────
     public static BlockPos currentPlacementBlock = null;
@@ -97,7 +132,7 @@ public class AutoCrystal extends Module {
 
     // ── JNI методы ────────────────────────────────────────────────────────────
     /**
-     * Главный расчёт — возвращает double[12] с результатами.
+     * Главный расчёт — возвращает double[16] с результатами.
      * Описание полей см. в autocrystal_jni.h
      */
     private static native double[] nativeTick(
@@ -109,11 +144,15 @@ public class AutoCrystal extends Module {
             double[] tStats,
             double[] blockData,
             double[] crystalData,
-            double placeRange, double breakRange,
+            double placeRange, double placeWallRange,
+            double breakRange, double breakWallRange,
             double minTargetDmg, double maxSelfDmg,
             double selfDmgWeight, boolean antiSuicide,
+            boolean antiSuicideCheckBreaking, boolean antiSuicideIgnoreWithTotem,
             boolean armorBreaker, double armorPercent,
-            double predictTicks, boolean totemDetection
+            double predictTicks, boolean totemDetection,
+            boolean totemCheckTarget, boolean placeAirPlace,
+            boolean placeMultiPlace
     );
 
     /** Расчёт урона одного кристалла (для preview/debug) */
@@ -134,16 +173,70 @@ public class AutoCrystal extends Module {
         addParameter(minDamage);
         addParameter(maxSelfDmg);
         addParameter(antiSuicide);
+        addParameter(antiSuicideMinHp);
         addParameter(rotate);
-        addParameter(placeSwitch);
+        addParameter(swapMode);
+        addParameter(swapDelay);
         addParameter(onlyInRender);
         addParameter(targetMode);
+        addParameter(targetType);
         addParameter(renderPlacement);
         addParameter(renderDamage);
         addParameter(armorBreaker);
         addParameter(armorPercent);
         addParameter(predictTicks);
         addParameter(totemDetection);
+        addParameter(totemMinDamage);
+        addParameter(totemSelfMinHp);
+        addParameter(placeMode);
+
+        addParameter(rotateSpeed);
+        addParameter(rotateRandomize);
+        addParameter(antiSuicideCheckBreaking);
+        addParameter(antiSuicideIgnoreWithTotem);
+        addParameter(totemCheckTarget);
+        addParameter(totemPopSwap);
+        addParameter(totemPopHp);
+        addParameter(placeWallRange);
+        addParameter(breakWallRange);
+        addParameter(placeAirPlace);
+        addParameter(placeUnderHp);
+        addParameter(placeMultiPlace);
+        addParameter(swapSwitchBack);
+        addParameter(swapNoGap);
+        addParameter(swapInventory);
+
+        // Conditional visibility configuration
+        armorPercent.setVisible(() -> armorBreaker.getValue());
+        renderDamage.setVisible(() -> renderPlacement.getValue());
+        antiSuicideMinHp.setVisible(() -> antiSuicide.getValue());
+        totemMinDamage.setVisible(() -> totemDetection.getValue());
+        totemSelfMinHp.setVisible(() -> totemDetection.getValue());
+        swapDelay.setVisible(() -> !swapMode.getValue().equals("None"));
+
+        rotateSpeed.setVisible(() -> !rotate.getValue().equals("None"));
+        rotateRandomize.setVisible(() -> !rotate.getValue().equals("None"));
+        antiSuicideCheckBreaking.setVisible(() -> antiSuicide.getValue());
+        antiSuicideIgnoreWithTotem.setVisible(() -> antiSuicide.getValue());
+        totemCheckTarget.setVisible(() -> totemDetection.getValue());
+        totemPopHp.setVisible(() -> totemPopSwap.getValue());
+        placeUnderHp.setVisible(() -> !placeMode.getValue().equals("Smart"));
+        swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
+        swapNoGap.setVisible(() -> !swapMode.getValue().equals("None"));
+        swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
+    }
+
+    public static float silentYaw = 0;
+    public static float silentPitch = 0;
+    private static boolean hasSilentRotations = false;
+    private int originalSlot = -1;
+
+    private float lastSilentYaw = 0f;
+    private float lastSilentPitch = 0f;
+    private boolean lastSilentInit = false;
+
+    public static boolean hasSilentRotations() {
+        return hasSilentRotations;
     }
 
     @Override
@@ -151,8 +244,54 @@ public class AutoCrystal extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
 
+        hasSilentRotations = false;
+
+        // Auto-Totem offhand swap
+        if (totemPopSwap.getValue()) {
+            double selfHp = mc.player.getHealth() + mc.player.getAbsorptionAmount();
+            if (selfHp <= totemPopHp.getValue()) {
+                ItemStack offhandItem = mc.player.getOffhandItem();
+                if (offhandItem.getItem() != Items.TOTEM_OF_UNDYING) {
+                    int totemSlot = -1;
+                    for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
+                        if (mc.player.getInventory().getItem(i).getItem() == Items.TOTEM_OF_UNDYING) {
+                            totemSlot = i;
+                            break;
+                        }
+                    }
+                    if (totemSlot != -1) {
+                        int containerSlot = totemSlot;
+                        if (totemSlot < 9) {
+                            containerSlot = 36 + totemSlot;
+                        }
+                        mc.gameMode.handleInventoryMouseClick(
+                            mc.player.inventoryMenu.containerId,
+                            containerSlot,
+                            0,
+                            net.minecraft.world.inventory.ClickType.PICKUP,
+                            mc.player
+                        );
+                        mc.gameMode.handleInventoryMouseClick(
+                            mc.player.inventoryMenu.containerId,
+                            45,
+                            0,
+                            net.minecraft.world.inventory.ClickType.PICKUP,
+                            mc.player
+                        );
+                        mc.gameMode.handleInventoryMouseClick(
+                            mc.player.inventoryMenu.containerId,
+                            containerSlot,
+                            0,
+                            net.minecraft.world.inventory.ClickType.PICKUP,
+                            mc.player
+                        );
+                    }
+                }
+            }
+        }
+
         // ── Выбор цели ────────────────────────────────────────────────────────
-        Player target = findTarget(mc);
+        LivingEntity target = findTarget(mc);
         if (target == null) {
             currentPlacementBlock = null;
             return;
@@ -183,11 +322,15 @@ public class AutoCrystal extends Module {
                     targetPos.x, targetPos.y, targetPos.z,
                     tHp, tAbs, tStats,
                     blockData, crystalData,
-                    placeRange.getValue(), breakRange.getValue(),
+                    placeRange.getValue(), placeWallRange.getValue(),
+                    breakRange.getValue(), breakWallRange.getValue(),
                     minDamage.getValue(), maxSelfDmg.getValue(),
                     1.2, antiSuicide.getValue(),
+                    antiSuicideCheckBreaking.getValue(), antiSuicideIgnoreWithTotem.getValue(),
                     armorBreaker.getValue(), armorPercent.getValue(),
-                    predictTicks.getValue(), totemDetection.getValue()
+                    predictTicks.getValue(), totemDetection.getValue(),
+                    totemCheckTarget.getValue(), placeAirPlace.getValue(),
+                    placeMultiPlace.getValue()
             );
         } else {
             result = javaFallbackTick(
@@ -204,6 +347,17 @@ public class AutoCrystal extends Module {
 
         boolean shouldPlace = result[0] > 0.5;
         boolean shouldBreak = result[6] > 0.5;
+
+        // Anti-Suicide HP Check (Ignore if totem is held/present and antiSuicideIgnoreWithTotem is enabled)
+        if (shouldPlace && antiSuicide.getValue()) {
+            boolean ignoreSuicide = antiSuicideIgnoreWithTotem.getValue() && pStats[14] > 0.0;
+            if (!ignoreSuicide) {
+                double selfDmg = result[5];
+                if (pHp + pAbs - selfDmg < antiSuicideMinHp.getValue()) {
+                    shouldPlace = false;
+                }
+            }
+        }
 
         if (shouldPlace) {
             currentPlacementBlock = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
@@ -222,7 +376,7 @@ public class AutoCrystal extends Module {
             if (entityId != lastBreakId) { // не подрываем один и тот же кристалл дважды подряд
                 Entity crystal = mc.level.getEntity(entityId);
                 if (crystal instanceof EndCrystal) {
-                    if (rotate.getValue()) lookAt(mc, crystal.position());
+                    rotateTo(mc, crystal.position());
                     mc.gameMode.attack(mc.player, crystal);
                     mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
                     lastBreakTime = now;
@@ -232,57 +386,135 @@ public class AutoCrystal extends Module {
         }
 
         // ── Размещение ────────────────────────────────────────────────────────
-        if (shouldPlace && now - lastPlaceTime >= placeDelay.getValue()) {
+        boolean checkPlaceDelay = true;
+        if (placeMode.getValue().equals("Aggressive")) {
+            if (target != null && !target.onGround()) {
+                checkPlaceDelay = false;
+            }
+        } else if (placeMode.getValue().equals("Smart")) {
+            if (currentTargetDamage < minDamage.getValue() && currentTargetDamage < target.getHealth() + target.getAbsorptionAmount()) {
+                shouldPlace = false;
+            }
+        }
+
+        if (target != null) {
+            double targetEffHp = target.getHealth() + target.getAbsorptionAmount();
+            if (targetEffHp <= placeUnderHp.getValue()) {
+                checkPlaceDelay = false;
+            }
+        }
+
+        if (shouldPlace && (now - lastPlaceTime >= placeDelay.getValue() || !checkPlaceDelay)) {
             BlockPos placePos = new BlockPos(
                     (int) result[1], (int) result[2], (int) result[3]);
 
             // Убеждаемся, что в руке End Crystal
             boolean hasItem = switchToCrystal(mc);
-            if (!hasItem) return;
+            if (hasItem) {
+                // Направление взгляда на блок
+                rotateTo(mc, new Vec3(result[1] + 0.5, result[2] + 1.0, result[3] + 0.5));
 
-            // Направление взгляда на блок
-            if (rotate.getValue()) {
-                lookAt(mc, new Vec3(result[1] + 0.5, result[2] + 1.0, result[3] + 0.5));
+                // Отправляем пакет размещения
+                net.minecraft.world.phys.Vec3 hitVec = new net.minecraft.world.phys.Vec3(
+                        result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
+                net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
+                BlockHitResult hitResult = new BlockHitResult(hitVec, face, placePos, false);
+
+                mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+                mc.player.swing(mc.player.getUsedItemHand());
+
+                // If silent swap was performed, restore the original slot!
+                if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+                    if (mc.player.connection != null) {
+                        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
+                    }
+                    originalSlot = -1;
+                }
+
+                lastPlaceTime = now;
             }
+        }
 
-            // Отправляем пакет размещения
-            net.minecraft.world.phys.Vec3 hitVec = new net.minecraft.world.phys.Vec3(
-                    result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
-            net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
-            BlockHitResult hitResult = new BlockHitResult(hitVec, face, placePos, false);
+        // Multi-placement support (place second crystal if returned by JNI)
+        boolean shouldPlace2 = placeMultiPlace.getValue() && result.length >= 16 && result[12] > 0.5;
+        if (shouldPlace2 && antiSuicide.getValue()) {
+            boolean ignoreSuicide2 = antiSuicideIgnoreWithTotem.getValue() && pStats[14] > 0.0;
+            if (!ignoreSuicide2) {
+                double selfDmg2 = result[17];
+                if (pHp + pAbs - selfDmg2 < antiSuicideMinHp.getValue()) {
+                    shouldPlace2 = false;
+                }
+            }
+        }
 
-            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-            lastPlaceTime = now;
+        if (shouldPlace2 && (now - lastPlaceTime >= placeDelay.getValue() || !checkPlaceDelay)) {
+            BlockPos placePos2 = new BlockPos((int) result[13], (int) result[14], (int) result[15]);
+
+            boolean hasItem = switchToCrystal(mc);
+            if (hasItem) {
+                rotateTo(mc, new Vec3(result[13] + 0.5, result[14] + 1.0, result[15] + 0.5));
+
+                net.minecraft.world.phys.Vec3 hitVec2 = new net.minecraft.world.phys.Vec3(
+                        result[13] + 0.5, result[14] + 1.0, result[15] + 0.5);
+                net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
+                BlockHitResult hitResult2 = new BlockHitResult(hitVec2, face, placePos2, false);
+
+                mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult2);
+                mc.player.swing(mc.player.getUsedItemHand());
+
+                if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+                    if (mc.player.connection != null) {
+                        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
+                    }
+                    originalSlot = -1;
+                }
+
+                lastPlaceTime = now;
+            }
+        }
+
+        // Update silent rotation init flag if no rotations were done
+        if (!hasSilentRotations) {
+            lastSilentInit = false;
         }
     }
 
     // ── Выбор цели ────────────────────────────────────────────────────────────
-    private Player findTarget(Minecraft mc) {
-        Player closest = null;
+    private LivingEntity findTarget(Minecraft mc) {
+        LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
 
         double maxDist = Math.max(placeRange.getValue(), breakRange.getValue()) + 2.0;
         String mode = targetMode.getValue();
+        String typeFilter = targetType.getValue();
 
         for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof Player p)) continue;
-            if (p == mc.player) continue;
-            if (p.isDeadOrDying()) continue;
+            if (!(e instanceof LivingEntity le)) continue;
+            if (le == mc.player) continue;
+            if (le.isDeadOrDying()) continue;
 
-            double dist = mc.player.distanceTo(p);
+            // Apply type filtering
+            if (typeFilter.equals("Players")) {
+                if (!(le instanceof Player)) continue;
+            } else if (typeFilter.equals("Monsters")) {
+                if (!(le instanceof net.minecraft.world.entity.monster.Monster || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss)) continue;
+            } else if (typeFilter.equals("Passives")) {
+                if (le instanceof Player || le instanceof net.minecraft.world.entity.monster.Monster || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss) continue;
+            }
+
+            double dist = mc.player.distanceTo(le);
             if (dist > maxDist) continue;
 
             double metric = switch (mode) {
                 case "Closest"        -> dist;
-                case "Lowest HP"      -> p.getHealth();
-                case "Highest Damage" -> -calcQuickDamage(mc, p);
+                case "Lowest HP"      -> le.getHealth();
+                case "Highest Damage" -> -calcQuickDamage(mc, le);
                 default               -> dist;
             };
 
             if (metric < bestMetric) {
                 bestMetric = metric;
-                closest = p;
+                closest = le;
             }
         }
         return closest;
@@ -339,33 +571,126 @@ public class AutoCrystal extends Module {
         ItemStack mainHand = mc.player.getMainHandItem();
         if (mainHand.getItem() == Items.END_CRYSTAL) return true;
 
-        if (!placeSwitch.getValue()) return false;
+        String mode = swapMode.getValue();
+        if (mode.equals("None")) return false;
+
+        // swapNoGap check
+        if (swapNoGap.getValue() && mc.player.isUsingItem()) {
+            ItemStack usingItem = mc.player.getUseItem();
+            if (usingItem.getItem() == Items.GOLDEN_APPLE || usingItem.getItem() == Items.ENCHANTED_GOLDEN_APPLE) {
+                return false;
+            }
+        }
 
         // Ищем в хотбаре
         for (int slot = 0; slot < 9; slot++) {
             if (mc.player.getInventory().getItem(slot).getItem() == Items.END_CRYSTAL) {
-                mc.player.getInventory().setSelectedSlot(slot);
+                if (mode.equals("Normal")) {
+                    mc.player.getInventory().setSelectedSlot(slot);
+                } else if (mode.equals("Silent")) {
+                    originalSlot = mc.player.getInventory().getSelectedSlot();
+                    if (mc.player.connection != null) {
+                        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
+                    }
+                }
                 return true;
             }
         }
+
+        // Ищем во всем инвентаре, если включено swapInventory
+        if (swapInventory.getValue()) {
+            for (int slot = 9; slot < 36; slot++) {
+                if (mc.player.getInventory().getItem(slot).getItem() == Items.END_CRYSTAL) {
+                    // Свапаем с 0-м слотом хотбара (InventoryMenu slot index = 36)
+                    int targetHotbarSlot = 0;
+                    mc.gameMode.handleInventoryMouseClick(
+                        mc.player.containerMenu.containerId,
+                        slot,
+                        targetHotbarSlot,
+                        net.minecraft.world.inventory.ClickType.SWAP,
+                        mc.player
+                    );
+
+                    if (mode.equals("Normal")) {
+                        mc.player.getInventory().setSelectedSlot(targetHotbarSlot);
+                    } else if (mode.equals("Silent")) {
+                        originalSlot = mc.player.getInventory().getSelectedSlot();
+                        if (mc.player.connection != null) {
+                            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(targetHotbarSlot));
+                        }
+                    }
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
     // ── Поворот к цели ────────────────────────────────────────────────────────
-    private void lookAt(Minecraft mc, Vec3 target) {
+    private void rotateTo(Minecraft mc, Vec3 target) {
+        String mode = rotate.getValue();
+        if (mode.equals("None")) return;
+
         Vec3 eyes = mc.player.getEyePosition();
         double dx = target.x - eyes.x;
         double dy = target.y - eyes.y;
         double dz = target.z - eyes.z;
         double dist = Math.sqrt(dx*dx + dz*dz);
-        float yaw   = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90f;
-        float pitch = (float) -Math.toDegrees(Math.atan2(dy, dist));
-        mc.player.setYRot(yaw);
-        mc.player.setXRot(pitch);
+        float targetYaw   = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90f;
+        float targetPitch = (float) -Math.toDegrees(Math.atan2(dy, dist));
+
+        float currentYaw = mc.player.getYRot();
+        float currentPitch = mc.player.getXRot();
+
+        if (mode.equals("Silent")) {
+            if (!lastSilentInit) {
+                lastSilentYaw = currentYaw;
+                lastSilentPitch = currentPitch;
+                lastSilentInit = true;
+            }
+            currentYaw = lastSilentYaw;
+            currentPitch = lastSilentPitch;
+        }
+
+        float maxSpeed = rotateSpeed.getValue().floatValue();
+        float diffYaw = net.minecraft.util.Mth.wrapDegrees(targetYaw - currentYaw);
+        float diffPitch = targetPitch - currentPitch;
+
+        if (Math.abs(diffYaw) > maxSpeed) {
+            diffYaw = Math.signum(diffYaw) * maxSpeed;
+        }
+        if (Math.abs(diffPitch) > maxSpeed) {
+            diffPitch = Math.signum(diffPitch) * maxSpeed;
+        }
+
+        float finalYaw = currentYaw + diffYaw;
+        float finalPitch = currentPitch + diffPitch;
+
+        if (rotateRandomize.getValue() > 0.0) {
+            float rand = rotateRandomize.getValue().floatValue();
+            finalYaw += (float) ((Math.random() - 0.5) * rand);
+            finalPitch += (float) ((Math.random() - 0.5) * rand);
+        }
+
+        if (mode.equals("Normal")) {
+            mc.player.setYRot(finalYaw);
+            mc.player.setXRot(finalPitch);
+        } else if (mode.equals("Silent")) {
+            silentYaw = finalYaw;
+            silentPitch = finalPitch;
+            hasSilentRotations = true;
+            lastSilentYaw = finalYaw;
+            lastSilentPitch = finalPitch;
+        } else if (mode.equals("Packet")) {
+            if (mc.player.connection != null) {
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(finalYaw, finalPitch, mc.player.onGround(), mc.player.horizontalCollision));
+            }
+        }
     }
 
     // ── Быстрая оценка урона (для выбора цели) ────────────────────────────────
-    private double calcQuickDamage(Minecraft mc, Player target) {
+    private double calcQuickDamage(Minecraft mc, LivingEntity target) {
         Vec3 playerPos = mc.player.position();
         Vec3 targetPos = target.position();
         // Оцениваем позицию прямо над ногами цели
@@ -435,7 +760,7 @@ public class AutoCrystal extends Module {
         return nativeAvailable;
     }
 
-    private double[] getEntityStats(Player player) {
+    private double[] getEntityStats(LivingEntity player) {
         int protectionEpf = 0;
         int blastProtectionEpf = 0;
         net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
@@ -465,9 +790,11 @@ public class AutoCrystal extends Module {
         int totems = 0;
         if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;
         if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;
-        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-            if (player.getInventory().getItem(i).getItem() == Items.TOTEM_OF_UNDYING) {
-                totems++;
+        if (player instanceof Player p) {
+            for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
+                if (p.getInventory().getItem(i).getItem() == Items.TOTEM_OF_UNDYING) {
+                    totems++;
+                }
             }
         }
         

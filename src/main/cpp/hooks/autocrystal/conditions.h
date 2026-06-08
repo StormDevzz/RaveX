@@ -20,7 +20,8 @@ public:
         double selfDamage,
         const EntityStats& playerStats,
         const AutoCrystalConfig& config,
-        bool playerInHole
+        bool playerInHole,
+        bool isBreakPhase
     );
 
     // Стоит ли снизить требования к минимальному урону, чтобы сломать броню цели

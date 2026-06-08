@@ -91,11 +91,15 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     jdoubleArray tStats,
     jdoubleArray blockData,
     jdoubleArray crystalData,
-    jdouble placeRange, jdouble breakRange,
+    jdouble placeRange, jdouble placeWallRange,
+    jdouble breakRange, jdouble breakWallRange,
     jdouble minTargetDmg, jdouble maxSelfDmg,
     jdouble selfDmgWeight, jboolean antiSuicide,
+    jboolean antiSuicideCheckBreaking, jboolean antiSuicideIgnoreWithTotem,
     jboolean armorBreaker, jdouble armorPercent,
-    jdouble predictTicks, jboolean totemDetection)
+    jdouble predictTicks, jboolean totemDetection,
+    jboolean totemCheckTarget, jboolean placeAirPlace,
+    jboolean placeMultiPlace)
 {
     Vec3 playerPos = {pX, pY, pZ};
     Vec3 targetPos = {tX, tY, tZ};
@@ -108,17 +112,24 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
 
     AutoCrystalConfig config;
     config.placeRange       = placeRange;
+    config.placeWallRange   = placeWallRange;
     config.breakRange       = breakRange;
+    config.breakWallRange   = breakWallRange;
     config.minTargetDamage  = minTargetDmg;
     config.maxSelfDamage    = maxSelfDmg;
     config.selfDamageWeight = selfDmgWeight;
     config.antiSuicide      = (antiSuicide == JNI_TRUE);
+    config.antiSuicideCheckBreaking = (antiSuicideCheckBreaking == JNI_TRUE);
+    config.antiSuicideIgnoreWithTotem = (antiSuicideIgnoreWithTotem == JNI_TRUE);
     
     // Новые настройки обхода и логики
     config.armorBreaker     = (armorBreaker == JNI_TRUE);
     config.armorPercent     = armorPercent;
     config.predictTicks     = predictTicks;
     config.totemDetection   = (totemDetection == JNI_TRUE);
+    config.totemCheckTarget = (totemCheckTarget == JNI_TRUE);
+    config.placeAirPlace    = (placeAirPlace == JNI_TRUE);
+    config.placeMultiPlace  = (placeMultiPlace == JNI_TRUE);
 
     AutoCrystalResult result = AutoCrystalMath::tick(
         playerPos, pHp, pAbs, pStatsStruct,
@@ -126,10 +137,10 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
         blocks, crystals, config
     );
 
-    jdoubleArray out = env->NewDoubleArray(12);
+    jdoubleArray out = env->NewDoubleArray(18);
     if (!out) return nullptr;
 
-    jdouble buf[12] = {
+    jdouble buf[18] = {
         result.shouldPlace ? 1.0 : 0.0,
         result.bestPlacement.blockPos.x,
         result.bestPlacement.blockPos.y,
@@ -141,10 +152,16 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
         result.breakPos.x,
         result.breakPos.y,
         result.breakPos.z,
-        result.breakDamage
+        result.breakDamage,
+        result.shouldPlace2 ? 1.0 : 0.0,
+        result.secondPlacement.blockPos.x,
+        result.secondPlacement.blockPos.y,
+        result.secondPlacement.blockPos.z,
+        result.secondPlacement.targetDamage,
+        result.secondPlacement.selfDamage
     };
 
-    env->SetDoubleArrayRegion(out, 0, 12, buf);
+    env->SetDoubleArrayRegion(out, 0, 18, buf);
     return out;
 }
 

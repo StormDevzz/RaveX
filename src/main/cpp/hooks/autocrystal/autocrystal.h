@@ -58,13 +58,17 @@ struct CrystalPlacement {
 // ── Параметры расчётов ───────────────────────────────────────────────────────
 struct AutoCrystalConfig {
     double placeRange       = 4.5;
+    double placeWallRange   = 3.5;
     double breakRange       = 4.5;
+    double breakWallRange   = 3.5;
     double minTargetDamage  = 4.0;
     double maxSelfDamage    = 8.0;
     double selfDamageWeight = 1.2;
     double placeDelay       = 100.0;
     double breakDelay       = 50.0;
     bool   antiSuicide      = true;
+    bool   antiSuicideCheckBreaking = true;
+    bool   antiSuicideIgnoreWithTotem = false;
     bool   requireExposed   = false;
     double targetHealthBonus= 2.0;
     
@@ -73,6 +77,9 @@ struct AutoCrystalConfig {
     double armorPercent     = 15.0;
     double predictTicks     = 1.0;
     bool   totemDetection   = true;
+    bool   totemCheckTarget = true;
+    bool   placeAirPlace    = false;
+    bool   placeMultiPlace  = false;
 };
 
 // ── Состояние кристалла на поле ──────────────────────────────────────────────
@@ -86,6 +93,8 @@ struct CrystalEntity {
 struct AutoCrystalResult {
     bool             shouldPlace;    // Нужно ли ставить кристалл
     CrystalPlacement bestPlacement;  // Лучшая позиция для установки
+    bool             shouldPlace2;   // Нужно ли ставить второй кристалл
+    CrystalPlacement secondPlacement;// Вторая лучшая позиция
     bool             shouldBreak;    // Нужно ли подрывать кристалл
     int              breakEntityId;  // ID кристалла для подрыва
     Vec3             breakPos;       // Позиция кристалла для подрыва
@@ -129,7 +138,9 @@ public:
         double                    targetAbsorption,
         const EntityStats&        targetStats,
         const std::vector<Vec3>&  blocks,
-        const AutoCrystalConfig&  config
+        const AutoCrystalConfig&  config,
+        bool                      excludePos = false,
+        const Vec3&               posToExclude = {}
     );
 
     static bool findBestBreak(

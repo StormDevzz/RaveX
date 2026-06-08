@@ -8,4 +8,16 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface AccessorServerboundMovePlayerPacket {
     @Accessor("onGround")
     void setOnGround(boolean onGround);
+
+    @Accessor("xRot")
+    float getxRot();
+
+    @Accessor("xRot")
+    void setxRot(float xRot);
+
+    @Accessor("yRot")
+    float getyRot();
+
+    @Accessor("yRot")
+    void setyRot(float yRot);
 }

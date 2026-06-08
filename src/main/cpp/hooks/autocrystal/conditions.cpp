@@ -39,11 +39,22 @@ bool ConditionValidator::isPlacementSafe(
     double selfDamage,
     const EntityStats& playerStats,
     const AutoCrystalConfig& config,
-    bool playerInHole)
+    bool playerInHole,
+    bool isBreakPhase)
 {
     if (config.antiSuicide) {
-        double netHealth = playerHealth + playerAbsorption - selfDamage;
-        if (netHealth <= 0.5) return false;
+        bool checkSuicide = true;
+        if (isBreakPhase && !config.antiSuicideCheckBreaking) {
+            checkSuicide = false;
+        }
+        if (playerStats.totemCount > 0.0 && config.antiSuicideIgnoreWithTotem) {
+            checkSuicide = false;
+        }
+
+        if (checkSuicide) {
+            double netHealth = playerHealth + playerAbsorption - selfDamage;
+            if (netHealth <= 0.5) return false;
+        }
     }
 
     double allowedSelfDmg = playerInHole ? (config.maxSelfDamage * 1.5) : config.maxSelfDamage;

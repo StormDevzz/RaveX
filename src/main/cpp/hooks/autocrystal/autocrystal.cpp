@@ -13,6 +13,34 @@
 
 namespace ravex {
 
+static bool isPosVisible(const Vec3& eyePos, const Vec3& targetPos, const std::vector<Vec3>& blocks, bool ignoreTargetBlock = false, const Vec3& targetBlock = {}) {
+    Vec3 dir = targetPos - eyePos;
+    double len = dir.length();
+    if (len < 0.001) return true;
+
+    Vec3 normDir = dir * (1.0 / len);
+    const int STEPS = 10;
+    for (int step = 1; step < STEPS; step++) {
+        double t = (double)step / STEPS * len;
+        Vec3 p = eyePos + normDir * t;
+
+        int bx = (int)std::floor(p.x);
+        int by = (int)std::floor(p.y);
+        int bz = (int)std::floor(p.z);
+
+        if (ignoreTargetBlock && bx == (int)targetBlock.x && by == (int)targetBlock.y && bz == (int)targetBlock.z) {
+            continue;
+        }
+
+        for (const Vec3& block : blocks) {
+            if ((int)block.x == bx && (int)block.y == by && (int)block.z == bz) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 double AutoCrystalMath::calcExplosionDamage(
     const Vec3& explosionPos,
     const Vec3& entityPos,
@@ -63,7 +91,9 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
     double                    targetAbsorption,
     const EntityStats&        targetStats,
     const std::vector<Vec3>&  blocks,
-    const AutoCrystalConfig&  config)
+    const AutoCrystalConfig&  config,
+    bool                      excludePos,
+    const Vec3&               posToExclude)
 {
     CrystalPlacement best;
     best.valid = false;
@@ -85,10 +115,19 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
     double targetEffHp = EntityTracker::getEffectiveHealth(targetHealth, targetAbsorption);
 
     for (const Vec3& block : blocks) {
+        if (excludePos && (int)block.x == (int)posToExclude.x && (int)block.y == (int)posToExclude.y && (int)block.z == (int)posToExclude.z) {
+            continue;
+        }
+
         Vec3 crystalPos = {block.x + 0.5, block.y + 1.0, block.z + 0.5};
 
+        Vec3 blockCenter = {block.x + 0.5, block.y + 0.5, block.z + 0.5};
+        Vec3 eyePos = {playerPos.x, playerPos.y + 1.62, playerPos.z};
+        bool visible = isPosVisible(eyePos, blockCenter, blocks, true, block);
+        double maxRange = visible ? config.placeRange : config.placeWallRange;
+
         double dist = distanceToCenter(playerPos, block);
-        if (dist > config.placeRange) continue;
+        if (dist > maxRange) continue;
 
         // Проверяем свободное пространство над обсидианом/бедроком
         bool spaceBlocked = false;
@@ -98,8 +137,10 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
             if ((int)b.x == (int)above1.x && (int)b.y == (int)above1.y && (int)b.z == (int)above1.z) {
                 spaceBlocked = true; break;
             }
-            if ((int)b.x == (int)above2.x && (int)b.y == (int)above2.y && (int)b.z == (int)above2.z) {
-                spaceBlocked = true; break;
+            if (!config.placeAirPlace) {
+                if ((int)b.x == (int)above2.x && (int)b.y == (int)above2.y && (int)b.z == (int)above2.z) {
+                    spaceBlocked = true; break;
+                }
             }
         }
         if (spaceBlocked) continue;
@@ -109,7 +150,7 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
         double selfDmg   = calcExplosionDamage(crystalPos, playerPos, playerHealth, playerAbsorption, playerStats, blocks);
 
         // Строгая проверка безопасности для игрока
-        if (!ConditionValidator::isPlacementSafe(playerHealth, playerAbsorption, selfDmg, playerStats, config, playerInHole)) {
+        if (!ConditionValidator::isPlacementSafe(playerHealth, playerAbsorption, selfDmg, playerStats, config, playerInHole, false)) {
             continue;
         }
 
@@ -188,14 +229,17 @@ bool AutoCrystalMath::findBestBreak(
     double targetEffHp = EntityTracker::getEffectiveHealth(targetHealth, targetAbsorption);
 
     for (const CrystalEntity& crystal : crystals) {
+        bool visible = isPosVisible(eyePos, crystal.pos, blocks);
+        double maxRange = visible ? config.breakRange : config.breakWallRange;
+
         double dist = eyePos.distanceTo(crystal.pos);
-        if (dist > config.breakRange) continue;
+        if (dist > maxRange) continue;
 
         double targetDmg = calcExplosionDamage(crystal.pos, predictedTargetPos, targetHealth, targetAbsorption, targetStats, blocks);
         double selfDmg   = calcExplosionDamage(crystal.pos, playerPos, playerHealth, playerAbsorption, playerStats, blocks);
 
-        // Строгая проверка безопасности для игрока
-        if (!ConditionValidator::isPlacementSafe(playerHealth, playerAbsorption, selfDmg, playerStats, config, playerInHole)) {
+        // Строгая проверка безопасности для игрока (isBreakPhase = true)
+        if (!ConditionValidator::isPlacementSafe(playerHealth, playerAbsorption, selfDmg, playerStats, config, playerInHole, true)) {
             continue;
         }
 
@@ -242,6 +286,7 @@ AutoCrystalResult AutoCrystalMath::tick(
 {
     AutoCrystalResult result;
     result.shouldPlace = false;
+    result.shouldPlace2 = false;
     result.shouldBreak = false;
     result.breakEntityId = -1;
     result.breakDamage = 0.0;
@@ -252,7 +297,8 @@ AutoCrystalResult AutoCrystalMath::tick(
     CrystalPlacement placement = findBestPlacement(
         playerPos, playerHealth, playerAbsorption, playerStats,
         targetPos, targetHealth, targetAbsorption, targetStats,
-        blocks, config
+        blocks, config,
+        false, {}
     );
 
     if (placement.valid) {
@@ -264,6 +310,25 @@ AutoCrystalResult AutoCrystalMath::tick(
                 << "tDmg=" << placement.targetDamage
                 << " sDmg=" << placement.selfDamage
                 << " score=" << placement.score << "; ";
+
+            // Multi-place
+            if (config.placeMultiPlace) {
+                CrystalPlacement placement2 = findBestPlacement(
+                    playerPos, playerHealth, playerAbsorption, playerStats,
+                    targetPos, targetHealth, targetAbsorption, targetStats,
+                    blocks, config,
+                    true, placement.blockPos
+                );
+                if (placement2.valid && !isOccupied(placement2.crystalPos, activeCrystals)) {
+                    result.shouldPlace2 = true;
+                    result.secondPlacement = placement2;
+                    dbg << "PLACE2 at (" << placement2.blockPos.x << "," << placement2.blockPos.y
+                        << "," << placement2.blockPos.z << ") "
+                        << "tDmg=" << placement2.targetDamage
+                        << " sDmg=" << placement2.selfDamage
+                        << " score=" << placement2.score << "; ";
+                }
+            }
         } else {
             dbg << "PLACE occupied; ";
         }

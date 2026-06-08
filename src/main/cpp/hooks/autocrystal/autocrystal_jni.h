@@ -23,11 +23,15 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     jdoubleArray blockData,
     jdoubleArray crystalData,
     // Конфигурация
-    jdouble placeRange, jdouble breakRange,
+    jdouble placeRange, jdouble placeWallRange,
+    jdouble breakRange, jdouble breakWallRange,
     jdouble minTargetDmg, jdouble maxSelfDmg,
     jdouble selfDmgWeight, jboolean antiSuicide,
+    jboolean antiSuicideCheckBreaking, jboolean antiSuicideIgnoreWithTotem,
     jboolean armorBreaker, jdouble armorPercent,
-    jdouble predictTicks, jboolean totemDetection
+    jdouble predictTicks, jboolean totemDetection,
+    jboolean totemCheckTarget, jboolean placeAirPlace,
+    jboolean placeMultiPlace
 );
 
 /*

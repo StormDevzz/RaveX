@@ -297,4 +297,11 @@ public abstract class MixinInGameHUD {
             }
         }
     }
+
+    @Inject(method = "renderPortalOverlay", at = @At("HEAD"), cancellable = true)
+    private void onRenderPortalOverlay(GuiGraphics guiGraphics, float f, CallbackInfo ci) {
+        if (ravex.modules.render.NoRender.INSTANCE.getEnabled() && ravex.modules.render.NoRender.INSTANCE.portal.getValue()) {
+            ci.cancel();
+        }
+    }
 }

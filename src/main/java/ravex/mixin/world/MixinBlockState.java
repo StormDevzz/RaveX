@@ -21,4 +21,14 @@ public class MixinBlockState {
             }
         }
     }
+
+    @Inject(method = "getRenderShape", at = @At("HEAD"), cancellable = true)
+    private void onGetRenderShape(CallbackInfoReturnable<net.minecraft.world.level.block.RenderShape> cir) {
+        if (ravex.modules.render.NoRender.INSTANCE.getEnabled() && ravex.modules.render.NoRender.INSTANCE.tripwire.getValue()) {
+            BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
+            if (self.getBlock() instanceof net.minecraft.world.level.block.TripWireBlock) {
+                cir.setReturnValue(net.minecraft.world.level.block.RenderShape.INVISIBLE);
+            }
+        }
+    }
 }

@@ -119,6 +119,7 @@ public class ModuleManager {
         clickGuiModules.add(Xray.INSTANCE);
         clickGuiModules.add(BreadCrumbs.INSTANCE);
         clickGuiModules.add(ravex.modules.render.ViewModel.INSTANCE);
+        clickGuiModules.add(ravex.modules.render.NoRender.INSTANCE);
 
         // ── Player ──────────────────────────────────────────────────────────────
         clickGuiModules.add(AutoTool.INSTANCE);

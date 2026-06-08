@@ -1,5 +1,6 @@
 #include "jni_bridge.h"
-#include "../optimizer/optimizer.h"
+#include "../hooks/norender/optimizer.h"
+#include "../hooks/norender/norender.h"
 #include "../antiafk/antiafk.h"
 #include "../common/memory.h"
 #include "../hooks/shaders/color_shader.h"
@@ -96,6 +97,24 @@ Java_ravex_modules_render_Shaders_nativeCalculateWave(JNIEnv*, jclass, jfloat ti
 JNIEXPORT jint JNICALL
 Java_ravex_modules_render_Shaders_nativeBlendColors(JNIEnv*, jclass, jint color1, jint color2, jfloat ratio) {
     return ravex::shaders::blendColors(color1, color2, ratio);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_ravex_modules_render_NoRender_nativeShouldCull(JNIEnv*, jclass, jdouble x, jdouble y, jdouble z, jdouble camX, jdouble camY, jdouble camZ, jdouble maxDist) {
+    return ravex::norender::shouldCull(x, y, z, camX, camY, camZ, maxDist) ? JNI_TRUE : JNI_FALSE;
+}
+
+JNIEXPORT jint JNICALL
+Java_ravex_modules_render_NoRender_nativeOptimizeBudget(JNIEnv*, jclass, jint activeCount, jint currentFps, jint minFps) {
+    return ravex::norender::optimizeBudget(activeCount, currentFps, minFps);
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_ravex_modules_render_NoRender_nativeOptimizeFog(JNIEnv* env, jclass, jfloat envStart, jfloat envEnd, jfloat rdStart, jfloat rdEnd, jfloat skyEnd, jfloat cloudEnd) {
+    auto res = ravex::norender::optimizeFog(envStart, envEnd, rdStart, rdEnd, skyEnd, cloudEnd);
+    jfloatArray arr = env->NewFloatArray(static_cast<jsize>(res.size()));
+    env->SetFloatArrayRegion(arr, 0, static_cast<jsize>(res.size()), res.data());
+    return arr;
 }
 
 }
