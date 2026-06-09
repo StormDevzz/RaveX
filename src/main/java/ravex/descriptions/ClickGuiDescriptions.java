@@ -20,6 +20,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("CustomFog",     "Modifies ambient fog density and color.");
         DESCRIPTIONS.put("AimAssist",     "Smoothly guides your crosshair toward targets.");
         DESCRIPTIONS.put("NameTags",      "Displays high-fidelity HUD info above entities.");
+        DESCRIPTIONS.put("Tracers",       "Draws lines from the crosshair to entities.");
         DESCRIPTIONS.put("Trigger",       "Attacks targets automatically when hovered.");
         DESCRIPTIONS.put("MaceSwap",      "Swaps to Mace automatically during falls.");
         DESCRIPTIONS.put("Hud",           "Configures screen overlays and HUD positions.");
@@ -111,10 +112,14 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("BreadCrumbs",    "Draws trail lines behind you and other entities.");
         DESCRIPTIONS.put("ViewModel",      "Customize hand position, rotation and scale.");
         DESCRIPTIONS.put("AutoCrystal",    "Automatically places and breaks End Crystals for damage.");
+        DESCRIPTIONS.put("Trap",           "Automatically boxes target players or entities using solid blocks.");
+        DESCRIPTIONS.put("Igniter",        "Automatically ignites nearby TNT blocks.");
         DESCRIPTIONS.put("ExtraRocket",    "Multiplies elytra velocity when using firework rockets.");
         DESCRIPTIONS.put("ExtraRiding",    "Increases the speed of rideable entities.");
         DESCRIPTIONS.put("Blink",          "Cancels movement packets on enable, sends them on disable.");
         DESCRIPTIONS.put("PacketFly",      "Manipulates packets to fly through the air.");
+        DESCRIPTIONS.put("AutoApple",      "Automatically eats golden apples under dangerous circumstances.");
+        DESCRIPTIONS.put("TreeCutter",     "Automatically breaks nearby tree logs and renders 3D block highlights.");
     }
 
     public static String getDescription(String moduleName) {

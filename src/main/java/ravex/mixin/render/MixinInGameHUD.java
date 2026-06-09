@@ -55,7 +55,11 @@ public abstract class MixinInGameHUD {
 
             // Distance limit check
             double dist = mc.player.distanceTo(target);
-            if (dist > ESP.INSTANCE.maxDistance.getValue()) continue;
+            double maxDist = ESP.INSTANCE.maxDistance.getValue();
+            if (ravex.modules.render.Tracers.INSTANCE.getEnabled()) {
+                maxDist = Math.max(maxDist, ravex.modules.render.Tracers.INSTANCE.maxDistance.getValue());
+            }
+            if (dist > maxDist) continue;
 
             // Prevent first person overlap when entity is extremely close
             if (mc.options.getCameraType().isFirstPerson() && dist < 1.2) continue;
@@ -79,6 +83,80 @@ public abstract class MixinInGameHUD {
             Vec3 headPos = basePos.add(0, target.getBbHeight(), 0);
             Vec3 sidePos = basePos.add(target.getBbWidth() / 2.0, target.getBbHeight() / 2.0, 0);
 
+            // 1. Render Tracers first without dot/projection/off-screen checks of ESP/Nametags
+            boolean tracersEnabled = ravex.modules.render.Tracers.INSTANCE.getEnabled();
+            if (tracersEnabled) {
+                ravex.modules.render.Tracers tracers = ravex.modules.render.Tracers.INSTANCE;
+                if (dist <= tracers.maxDistance.getValue()) {
+                    boolean show = false;
+                    int color = 0;
+                    if (isPlayer && tracers.players.getValue()) {
+                        show = true;
+                        color = tracers.playerColor.getValue();
+                    } else if (isMonster && tracers.monsters.getValue()) {
+                        show = true;
+                        color = tracers.mobColor.getValue();
+                    } else if (isAnimal && tracers.animals.getValue()) {
+                        show = true;
+                        color = tracers.animalColor.getValue();
+                    } else if (isItem && tracers.items.getValue()) {
+                        show = true;
+                        color = tracers.itemColor.getValue();
+                    }
+                    if (show) {
+                        Vec3 baseProjUnbobbed = projectPointToScreenUnbobbed(basePos);
+                        Vec3 headProjUnbobbed = projectPointToScreenUnbobbed(headPos);
+                        if (baseProjUnbobbed != null && headProjUnbobbed != null) {
+                            double cx = context.guiWidth() / 2.0;
+                            double cy = context.guiHeight() / 2.0;
+                            double ex = (baseProjUnbobbed.x + 1.0) / 2.0 * context.guiWidth();
+                            double ey_base = (1.0 - baseProjUnbobbed.y) / 2.0 * context.guiHeight();
+                            double ey_head = (1.0 - headProjUnbobbed.y) / 2.0 * context.guiHeight();
+                            double ey = (ey_base + ey_head) / 2.0;
+
+                            // Check if the target point is behind the camera or offscreen
+                            boolean isBehind = baseProjUnbobbed.z < 0;
+                            boolean isOffscreen = isBehind || ex < 0 || ex > context.guiWidth() || ey < 0 || ey > context.guiHeight();
+
+                            if (isOffscreen) {
+                                double dx = ex - cx;
+                                double dy = ey - cy;
+                                double tX = Double.MAX_VALUE;
+                                double tY = Double.MAX_VALUE;
+                                double borderPadding = 2.0;
+
+                                if (dx > 0) {
+                                    tX = (context.guiWidth() - borderPadding - cx) / dx;
+                                } else if (dx < 0) {
+                                    tX = (borderPadding - cx) / dx;
+                                }
+
+                                if (dy > 0) {
+                                    tY = (context.guiHeight() - borderPadding - cy) / dy;
+                                } else if (dy < 0) {
+                                    tY = (borderPadding - cy) / dy;
+                                }
+
+                                double t = Math.min(tX, tY);
+                                if (t > 0 && t < 1.0) {
+                                    ex = cx + t * dx;
+                                    ey = cy + t * dy;
+                                } else {
+                                    double len = Math.sqrt(dx * dx + dy * dy);
+                                    if (len > 0) {
+                                        ex = cx + (dx / len) * (cx - borderPadding);
+                                        ey = cy + (dy / len) * (cy - borderPadding);
+                                    }
+                                }
+                            }
+                            float width = tracers.lineWidth.getValue().floatValue();
+                            drawTracerLine2D(context, (float) cx, (float) cy, (float) ex, (float) ey, color, width);
+                        }
+                    }
+                }
+            }
+
+            // 2. Perform projections and culling checks specifically for ESP / NameTags
             Vec3 baseProj = mc.gameRenderer.projectPointToScreen(basePos);
             Vec3 headProj = mc.gameRenderer.projectPointToScreen(headPos);
             Vec3 sideProj = mc.gameRenderer.projectPointToScreen(sidePos);
@@ -144,106 +222,132 @@ public abstract class MixinInGameHUD {
                 int health = (int) Math.ceil(livingTarget.getHealth());
                 int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
                 String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-                int tw = mc.font.width(tagText);
-                int textY = y - 13;
+                double tw = drawNametags ? mc.font.width(tagText) : 0.0;
+                double ow = hasOwner ? mc.font.width("Owner: " + ownerName) : 0.0;
 
                 boolean showArmor = drawNametags && NameTags.INSTANCE.armor.getValue();
                 boolean showHands = drawNametags && NameTags.INSTANCE.handItems.getValue();
 
-                if (!showArmor && !showHands) {
-                    int tx = bx - (tw / 2);
-                    boolean drawMobOwnerBg = hasOwner && MobOwner.INSTANCE.background.getValue();
-                    int tagHeight = (drawNametags && drawMobOwnerBg) ? 19 : (drawNametags ? 9 : (drawMobOwnerBg ? 19 : 0));
-                    int tagColor = hasOwner ? 0x44FFAA00 : (isPlayer ? 0xFFFF5555 : 0xFF55FF55);
-                    
-                    if (drawNametags || drawMobOwnerBg) {
-                        context.fill(tx - 3, textY - 1, tx + tw + 3, textY + tagHeight, 0xBB000000);
-                        context.fill(tx - 3, textY - 1, tx + tw + 3, textY, tagColor);
-                    }
-                    if (drawNametags) {
-                        context.drawString(mc.font, tagText, tx, textY, 0xFFFFFFFF, false);
-                    }
-                    if (hasOwner) {
-                        String ownerText = "Owner: " + ownerName;
-                        int txOwner = drawNametags ? tx : bx - (mc.font.width(ownerText) / 2);
-                        int tyOwner = drawNametags ? textY + 10 : textY + 3;
-                        context.drawString(mc.font, ownerText, txOwner, tyOwner, MobOwner.INSTANCE.textColor.getValue(), false);
-                    }
+                boolean hasMainHand = drawNametags && !livingTarget.getMainHandItem().isEmpty();
+                boolean hasOffHand = drawNametags && !livingTarget.getOffhandItem().isEmpty();
+
+                int armorCount = 0;
+                if (showArmor) {
+                    if (!livingTarget.getItemBySlot(EquipmentSlot.FEET).isEmpty()) armorCount++;
+                    if (!livingTarget.getItemBySlot(EquipmentSlot.LEGS).isEmpty()) armorCount++;
+                    if (!livingTarget.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) armorCount++;
+                    if (!livingTarget.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) armorCount++;
+                }
+
+                double[] layout;
+                if (NameTags.isNativeAvailable()) {
+                    layout = NameTags.nativeCalculateLayout(
+                        dist,
+                        NameTags.INSTANCE.scale.getValue(),
+                        NameTags.INSTANCE.distanceScaling.getValue(),
+                        showArmor,
+                        showHands,
+                        hasOwner,
+                        tw,
+                        ow,
+                        hasMainHand,
+                        hasOffHand,
+                        armorCount
+                    );
                 } else {
-                    ItemStack mainHand = livingTarget.getMainHandItem();
-                    ItemStack offHand = livingTarget.getOffhandItem();
-                    ItemStack boots = livingTarget.getItemBySlot(EquipmentSlot.FEET);
-                    ItemStack leggings = livingTarget.getItemBySlot(EquipmentSlot.LEGS);
-                    ItemStack chestplate = livingTarget.getItemBySlot(EquipmentSlot.CHEST);
-                    ItemStack helmet = livingTarget.getItemBySlot(EquipmentSlot.HEAD);
+                    layout = NameTags.javaFallbackCalculate(
+                        dist,
+                        NameTags.INSTANCE.scale.getValue(),
+                        NameTags.INSTANCE.distanceScaling.getValue(),
+                        showArmor,
+                        showHands,
+                        hasOwner,
+                        tw,
+                        ow,
+                        hasMainHand,
+                        hasOffHand,
+                        armorCount
+                    );
+                }
 
-                    int is = 16;
-                    int gap = 2;
+                double scale = layout[0];
+                double totalW = layout[1];
+                double totalH = layout[2];
+                double armorRowY = layout[3];
+                double mainRowY = layout[4];
+                double ownerRowY = layout[5];
+                double textYOff = layout[6];
+                double mainRowW = layout[7];
+                double armorRowW = layout[8];
 
-                    int mainRowW = drawNametags ? tw : 0;
-                    if (drawNametags && showHands && !mainHand.isEmpty()) mainRowW += is + gap;
-                    if (drawNametags && showHands && !offHand.isEmpty()) mainRowW += gap + is;
+                 context.pose().pushMatrix();
+                 context.pose().translate((float) bx, (float) y);
+                 context.pose().scale((float) scale, (float) scale);
 
-                    int ownerAddW = hasOwner ? mc.font.width("Owner: " + ownerName) : 0;
-                    int armorW = 0;
-                    if (drawNametags && showArmor) {
-                        if (!boots.isEmpty()) armorW += is + gap;
-                        if (!leggings.isEmpty()) armorW += is + gap;
-                        if (!chestplate.isEmpty()) armorW += is + gap;
-                        if (!helmet.isEmpty()) armorW += is + gap;
-                        if (armorW > 0) armorW -= gap;
-                    }
+                boolean bgEnabled = drawNametags ? NameTags.INSTANCE.background.getValue() : (hasOwner && MobOwner.INSTANCE.background.getValue());
+                if (bgEnabled) {
+                    int bgColor = drawNametags ? NameTags.INSTANCE.backgroundColor.getValue() : 0xBB000000;
+                    int bgLeft = (int)(-totalW / 2.0 - 3.0);
+                    int bgRight = (int)(totalW / 2.0 + 3.0);
+                    int bgBottom = -2;
+                    int bgTop = (int)(-2.0 - totalH);
 
-                    int totalW = Math.max(mainRowW, armorW);
-                    totalW = Math.max(totalW, ownerAddW);
-                    int armorRowY = textY - is - gap;
-                    
-                    boolean drawMobOwnerBg = hasOwner && MobOwner.INSTANCE.background.getValue();
-                    int extraRows = drawMobOwnerBg ? 10 : 0;
-                    boolean drawBg = drawNametags || drawMobOwnerBg;
+                    context.fill(bgLeft, bgTop, bgRight, bgBottom, bgColor);
 
-                    int bgLeft = bx - totalW / 2 - 3;
-                    int bgTop = drawNametags && showArmor && armorW > 0 ? armorRowY - 1 : textY - 1;
-                    int bgRight = bx + totalW / 2 + 3;
-                    int bgBottom = textY + (drawNametags ? 9 : 0) + extraRows;
-
-                    int tagColor = hasOwner ? 0x44FFAA00 : (isPlayer ? 0xFFFF5555 : 0xFF55FF55);
-                    if (drawBg) {
-                        context.fill(bgLeft, bgTop, bgRight, bgBottom, 0xBB000000);
-                        context.fill(bgLeft, bgTop, bgRight, bgTop + 1, tagColor);
-                    }
-
-                    if (drawNametags && showArmor && armorW > 0) {
-                        int ax = bx - armorW / 2;
-                        for (ItemStack stack : new ItemStack[]{boots, leggings, chestplate, helmet}) {
-                            if (!stack.isEmpty()) {
-                                context.renderItem(stack, ax, armorRowY);
-                                ax += is + gap;
-                            }
-                        }
-                    }
-
+                    boolean drawTopLine = false;
+                    int lineCol = 0;
                     if (drawNametags) {
-                        int rx = bx - mainRowW / 2;
-                        if (showHands && !mainHand.isEmpty()) {
-                            context.renderItem(mainHand, rx, textY);
-                            rx += is + gap;
-                        }
-                        context.drawString(mc.font, tagText, rx, textY, 0xFFFFFFFF, false);
-                        rx += tw;
-                        if (showHands && !offHand.isEmpty()) {
-                            rx += gap;
-                            context.renderItem(offHand, rx, textY);
-                        }
+                        drawTopLine = NameTags.INSTANCE.topLine.getValue();
+                        lineCol = NameTags.INSTANCE.topLineColor.getValue();
+                    } else if (hasOwner) {
+                        drawTopLine = MobOwner.INSTANCE.background.getValue();
+                        lineCol = 0x44FFAA00;
                     }
-
-                    if (hasOwner) {
-                        String ownerText = "Owner: " + ownerName;
-                        int otx = bx - ownerAddW / 2;
-                        int oty = drawNametags ? textY + 10 : textY + 3;
-                        context.drawString(mc.font, ownerText, otx, oty, MobOwner.INSTANCE.textColor.getValue(), false);
+                    if (drawTopLine) {
+                        context.fill(bgLeft, bgTop, bgRight, bgTop + 1, lineCol);
                     }
                 }
+
+                if (showArmor && armorCount > 0) {
+                    int ax = (int)(-armorRowW / 2.0);
+                    int ay = (int) armorRowY;
+                    ItemStack[] armorItems = new ItemStack[]{
+                        livingTarget.getItemBySlot(EquipmentSlot.FEET),
+                        livingTarget.getItemBySlot(EquipmentSlot.LEGS),
+                        livingTarget.getItemBySlot(EquipmentSlot.CHEST),
+                        livingTarget.getItemBySlot(EquipmentSlot.HEAD)
+                    };
+                    for (ItemStack stack : armorItems) {
+                        if (!stack.isEmpty()) {
+                            context.renderItem(stack, ax, ay);
+                            ax += 16 + 2;
+                        }
+                    }
+                }
+
+                if (drawNametags) {
+                    int rx = (int)(-mainRowW / 2.0);
+                    int mY = (int) mainRowY;
+                    if (showHands && !livingTarget.getMainHandItem().isEmpty()) {
+                        context.renderItem(livingTarget.getMainHandItem(), rx, mY);
+                        rx += 16 + 2;
+                    }
+                    context.drawString(mc.font, tagText, rx, (int)(mY + textYOff), 0xFFFFFFFF, false);
+                    rx += (int) tw;
+                    if (showHands && !livingTarget.getOffhandItem().isEmpty()) {
+                        rx += 2;
+                        context.renderItem(livingTarget.getOffhandItem(), rx, mY);
+                    }
+                }
+
+                if (hasOwner) {
+                    String ownerText = "Owner: " + ownerName;
+                    int otx = (int)(-ow / 2.0);
+                    int oty = (int) ownerRowY;
+                    context.drawString(mc.font, ownerText, otx, oty, MobOwner.INSTANCE.textColor.getValue(), false);
+                }
+
+                context.pose().popMatrix();
             }
         }
 
@@ -302,6 +406,51 @@ public abstract class MixinInGameHUD {
     private void onRenderPortalOverlay(GuiGraphics guiGraphics, float f, CallbackInfo ci) {
         if (ravex.modules.render.NoRender.INSTANCE.getEnabled() && ravex.modules.render.NoRender.INSTANCE.portal.getValue()) {
             ci.cancel();
+        }
+    }
+
+    private void drawTracerLine2D(GuiGraphics context, float x1, float y1, float x2, float y2, int color, float width) {
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float len = (float) Math.sqrt(dx * dx + dy * dy);
+        float angle = (float) Math.atan2(dy, dx);
+
+        context.pose().pushMatrix();
+        context.pose().translate(x1, y1);
+        context.pose().rotate(angle);
+        context.pose().scale(1.0f, width);
+        context.pose().translate(0.0f, -0.5f);
+
+        context.fill(0, 0, (int) len, 1, color);
+
+        context.pose().popMatrix();
+    }
+
+    private Vec3 projectPointToScreenUnbobbed(Vec3 pos) {
+        Minecraft mc = Minecraft.getInstance();
+        net.minecraft.client.Camera camera = mc.gameRenderer.getMainCamera();
+        org.joml.Matrix4f projectionMatrix = ravex.manager.ShaderManager.INSTANCE.getProjectionMatrix();
+        if (projectionMatrix == null) return null;
+
+        org.joml.Quaternionf cameraRotation = new org.joml.Quaternionf(camera.rotation());
+        org.joml.Matrix4f modelViewMatrix = new org.joml.Matrix4f().rotation(cameraRotation.conjugate());
+
+        Vec3 camPos = camera.position();
+        org.joml.Vector4f vector4f = new org.joml.Vector4f(
+            (float) (pos.x - camPos.x),
+            (float) (pos.y - camPos.y),
+            (float) (pos.z - camPos.z),
+            1.0F
+        );
+
+        vector4f.mul(modelViewMatrix);
+        vector4f.mul(projectionMatrix);
+
+        if (vector4f.w == 0.0F) {
+            return null;
+        } else {
+            vector4f.div(vector4f.w);
+            return new Vec3(vector4f.x, vector4f.y, vector4f.z);
         }
     }
 }

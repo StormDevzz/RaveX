@@ -93,6 +93,13 @@ public class AutoCrystal extends Module {
     public final BooleanParameter swapNoGap        = new BooleanParameter("Swap No Gap", true);
     public final BooleanParameter swapInventory   = new BooleanParameter("Swap Inventory", false);
 
+    // Speed & Timings settings
+    public final ModeParameter    speedMode      = new ModeParameter("Speed Mode", "Normal",
+            java.util.List.of("Legit", "Normal", "Aggressive"));
+    public final NumberParameter  jitterDelay    = new NumberParameter("Jitter Delay", 0.0, 0.0, 100.0, 5.0);
+    public final BooleanParameter strictRotation = new BooleanParameter("Strict Rotation", false);
+    public final NumberParameter  maxRate        = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
+
     // ── Состояние ─────────────────────────────────────────────────────────────
     public static BlockPos currentPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
@@ -205,6 +212,10 @@ public class AutoCrystal extends Module {
         addParameter(swapSwitchBack);
         addParameter(swapNoGap);
         addParameter(swapInventory);
+        addParameter(speedMode);
+        addParameter(jitterDelay);
+        addParameter(strictRotation);
+        addParameter(maxRate);
 
         // Conditional visibility configuration
         armorPercent.setVisible(() -> armorBreaker.getValue());
@@ -224,6 +235,10 @@ public class AutoCrystal extends Module {
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapNoGap.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
+
+        jitterDelay.setVisible(() -> !speedMode.getValue().equals("Aggressive"));
+        strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
+        maxRate.setVisible(() -> !speedMode.getValue().equals("Legit"));
     }
 
     public static float silentYaw = 0;
@@ -370,27 +385,68 @@ public class AutoCrystal extends Module {
 
         long now = System.currentTimeMillis();
 
-        // ── Подрыв ────────────────────────────────────────────────────────────
-        if (shouldBreak && now - lastBreakTime >= breakDelay.getValue()) {
+        // ── Расчёт цели вращения ──────────────────────────────────────────────
+        Vec3 rotationTarget = null;
+        if (shouldBreak) {
             int entityId = (int) result[7];
-            if (entityId != lastBreakId) { // не подрываем один и тот же кристалл дважды подряд
-                Entity crystal = mc.level.getEntity(entityId);
-                if (crystal instanceof EndCrystal) {
-                    rotateTo(mc, crystal.position());
-                    mc.gameMode.attack(mc.player, crystal);
-                    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-                    lastBreakTime = now;
-                    lastBreakId   = entityId;
+            Entity crystal = mc.level.getEntity(entityId);
+            if (crystal instanceof EndCrystal) {
+                rotationTarget = crystal.position();
+            }
+        }
+        if (rotationTarget == null && shouldPlace) {
+            rotationTarget = new Vec3(result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
+        }
+
+        if (rotationTarget != null) {
+            rotateTo(mc, rotationTarget);
+        }
+
+        // ── Проверка выравнивания ротации (Strict Rotation) ───────────────────
+        boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
+        boolean aligned = true;
+        if (isStrict && rotationTarget != null) {
+            aligned = isRotationAligned(mc, rotationTarget);
+        }
+
+        // ── Ограничение скорости (Max Rate) ──────────────────────────────────
+        int limit = maxRate.getValue().intValue();
+        if (speedMode.getValue().equals("Legit")) {
+            limit = 1;
+        }
+        int actionsThisTick = 0;
+
+        // ── Подрыв ────────────────────────────────────────────────────────────
+        boolean checkBreakDelay = true;
+        if (speedMode.getValue().equals("Aggressive")) {
+            checkBreakDelay = false;
+        }
+
+        if (shouldBreak && aligned && actionsThisTick < limit) {
+            if (!checkBreakDelay || now - lastBreakTime >= currentBreakDelay) {
+                int entityId = (int) result[7];
+                if (entityId != lastBreakId) { // не подрываем один и тот же кристалл дважды подряд
+                    Entity crystal = mc.level.getEntity(entityId);
+                    if (crystal instanceof EndCrystal) {
+                        mc.gameMode.attack(mc.player, crystal);
+                        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                        lastBreakTime = now;
+                        lastBreakId   = entityId;
+                        actionsThisTick++;
+
+                        // Рассчитываем следующую задержку подрыва с учётом джиттера
+                        double base = breakDelay.getValue();
+                        double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
+                        currentBreakDelay = Math.max(0, (long)(base + jitter));
+                    }
                 }
             }
         }
 
         // ── Размещение ────────────────────────────────────────────────────────
         boolean checkPlaceDelay = true;
-        if (placeMode.getValue().equals("Aggressive")) {
-            if (target != null && !target.onGround()) {
-                checkPlaceDelay = false;
-            }
+        if (speedMode.getValue().equals("Aggressive")) {
+            checkPlaceDelay = false;
         } else if (placeMode.getValue().equals("Smart")) {
             if (currentTargetDamage < minDamage.getValue() && currentTargetDamage < target.getHealth() + target.getAbsorptionAmount()) {
                 shouldPlace = false;
@@ -404,34 +460,39 @@ public class AutoCrystal extends Module {
             }
         }
 
-        if (shouldPlace && (now - lastPlaceTime >= placeDelay.getValue() || !checkPlaceDelay)) {
-            BlockPos placePos = new BlockPos(
-                    (int) result[1], (int) result[2], (int) result[3]);
+        if (shouldPlace && aligned && actionsThisTick < limit) {
+            if (!checkPlaceDelay || now - lastPlaceTime >= currentPlaceDelay) {
+                BlockPos placePos = new BlockPos(
+                        (int) result[1], (int) result[2], (int) result[3]);
 
-            // Убеждаемся, что в руке End Crystal
-            boolean hasItem = switchToCrystal(mc);
-            if (hasItem) {
-                // Направление взгляда на блок
-                rotateTo(mc, new Vec3(result[1] + 0.5, result[2] + 1.0, result[3] + 0.5));
+                // Убеждаемся, что в руке End Crystal
+                boolean hasItem = switchToCrystal(mc);
+                if (hasItem) {
+                    // Отправляем пакет размещения
+                    net.minecraft.world.phys.Vec3 hitVec = new net.minecraft.world.phys.Vec3(
+                            result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
+                    net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
+                    BlockHitResult hitResult = new BlockHitResult(hitVec, face, placePos, false);
 
-                // Отправляем пакет размещения
-                net.minecraft.world.phys.Vec3 hitVec = new net.minecraft.world.phys.Vec3(
-                        result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
-                net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
-                BlockHitResult hitResult = new BlockHitResult(hitVec, face, placePos, false);
+                    mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+                    mc.player.swing(mc.player.getUsedItemHand());
 
-                mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-                mc.player.swing(mc.player.getUsedItemHand());
-
-                // If silent swap was performed, restore the original slot!
-                if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
-                    if (mc.player.connection != null) {
-                        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
+                    // If silent swap was performed, restore the original slot!
+                    if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+                        if (mc.player.connection != null) {
+                            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
+                        }
+                        originalSlot = -1;
                     }
-                    originalSlot = -1;
-                }
 
-                lastPlaceTime = now;
+                    lastPlaceTime = now;
+                    actionsThisTick++;
+
+                    // Рассчитываем следующую задержку установки с учётом джиттера
+                    double base = placeDelay.getValue();
+                    double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
+                    currentPlaceDelay = Math.max(0, (long)(base + jitter));
+                }
             }
         }
 
@@ -447,29 +508,34 @@ public class AutoCrystal extends Module {
             }
         }
 
-        if (shouldPlace2 && (now - lastPlaceTime >= placeDelay.getValue() || !checkPlaceDelay)) {
-            BlockPos placePos2 = new BlockPos((int) result[13], (int) result[14], (int) result[15]);
+        if (shouldPlace2 && aligned && actionsThisTick < limit) {
+            if (!checkPlaceDelay || now - lastPlaceTime >= currentPlaceDelay) {
+                BlockPos placePos2 = new BlockPos((int) result[13], (int) result[14], (int) result[15]);
 
-            boolean hasItem = switchToCrystal(mc);
-            if (hasItem) {
-                rotateTo(mc, new Vec3(result[13] + 0.5, result[14] + 1.0, result[15] + 0.5));
+                boolean hasItem = switchToCrystal(mc);
+                if (hasItem) {
+                    net.minecraft.world.phys.Vec3 hitVec2 = new net.minecraft.world.phys.Vec3(
+                            result[13] + 0.5, result[14] + 1.0, result[15] + 0.5);
+                    net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
+                    BlockHitResult hitResult2 = new BlockHitResult(hitVec2, face, placePos2, false);
 
-                net.minecraft.world.phys.Vec3 hitVec2 = new net.minecraft.world.phys.Vec3(
-                        result[13] + 0.5, result[14] + 1.0, result[15] + 0.5);
-                net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
-                BlockHitResult hitResult2 = new BlockHitResult(hitVec2, face, placePos2, false);
+                    mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult2);
+                    mc.player.swing(mc.player.getUsedItemHand());
 
-                mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult2);
-                mc.player.swing(mc.player.getUsedItemHand());
-
-                if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
-                    if (mc.player.connection != null) {
-                        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
+                    if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+                        if (mc.player.connection != null) {
+                            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
+                        }
+                        originalSlot = -1;
                     }
-                    originalSlot = -1;
-                }
 
-                lastPlaceTime = now;
+                    lastPlaceTime = now;
+                    actionsThisTick++;
+
+                    double base = placeDelay.getValue();
+                    double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
+                    currentPlaceDelay = Math.max(0, (long)(base + jitter));
+                }
             }
         }
 
@@ -687,6 +753,36 @@ public class AutoCrystal extends Module {
                 mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(finalYaw, finalPitch, mc.player.onGround(), mc.player.horizontalCollision));
             }
         }
+    }
+
+    private long currentPlaceDelay = 0;
+    private long currentBreakDelay = 0;
+
+    private boolean isRotationAligned(Minecraft mc, Vec3 target) {
+        if (rotate.getValue().equals("None")) return true;
+
+        Vec3 eyes = mc.player.getEyePosition();
+        double dx = target.x - eyes.x;
+        double dy = target.y - eyes.y;
+        double dz = target.z - eyes.z;
+        double dist = Math.sqrt(dx*dx + dz*dz);
+        float targetYaw   = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90f;
+        float targetPitch = (float) -Math.toDegrees(Math.atan2(dy, dist));
+
+        float currentYaw = mc.player.getYRot();
+        float currentPitch = mc.player.getXRot();
+
+        if (rotate.getValue().equals("Silent")) {
+            if (lastSilentInit) {
+                currentYaw = lastSilentYaw;
+                currentPitch = lastSilentPitch;
+            }
+        }
+
+        float diffYaw = Math.abs(net.minecraft.util.Mth.wrapDegrees(targetYaw - currentYaw));
+        float diffPitch = Math.abs(targetPitch - currentPitch);
+
+        return diffYaw <= 10.0f && diffPitch <= 10.0f;
     }
 
     // ── Быстрая оценка урона (для выбора цели) ────────────────────────────────

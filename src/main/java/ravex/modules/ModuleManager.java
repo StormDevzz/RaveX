@@ -15,6 +15,7 @@ import ravex.modules.render.Ambient;
 import ravex.modules.combat.AimAssist;
 import ravex.modules.render.CustomFog;
 import ravex.modules.render.NameTags;
+import ravex.modules.render.Tracers;
 import ravex.modules.combat.Trigger;
 import ravex.modules.combat.MaceSwap;
 import ravex.modules.render.Hud;
@@ -68,6 +69,9 @@ import ravex.modules.exploit.TridentBoost;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
 import ravex.modules.combat.WindAura;
+import ravex.modules.combat.Trap;
+import ravex.modules.combat.AutoApple;
+import ravex.modules.world.TreeCutter;
 import ravex.modules.render.BreadCrumbs;
 
 import java.util.ArrayList;
@@ -96,11 +100,14 @@ public class ModuleManager {
         clickGuiModules.add(Surround.INSTANCE);
         clickGuiModules.add(SelfTrap.INSTANCE);
         clickGuiModules.add(WindAura.INSTANCE);
+        clickGuiModules.add(Trap.INSTANCE);
+        clickGuiModules.add(AutoApple.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ESP.INSTANCE);
         clickGuiModules.add(MobOwner.INSTANCE);
         clickGuiModules.add(NameTags.INSTANCE);
+        clickGuiModules.add(Tracers.INSTANCE);
         clickGuiModules.add(ClickGui.INSTANCE);
         clickGuiModules.add(Notifications.INSTANCE);
         clickGuiModules.add(NoBob.INSTANCE);
@@ -183,6 +190,8 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.world.AutoMount.INSTANCE);
         clickGuiModules.add(ravex.modules.world.FakePlayer.INSTANCE);
         clickGuiModules.add(ravex.modules.world.ChestAura.INSTANCE);
+        clickGuiModules.add(ravex.modules.world.Igniter.INSTANCE);
+        clickGuiModules.add(TreeCutter.INSTANCE);
 
         // ── Exploit ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ravex.modules.exploit.RideExploit.INSTANCE);

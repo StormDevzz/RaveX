@@ -238,6 +238,37 @@ public class MixinLevelRenderer {
             }
         }
 
+        // --- Trap highlight ---
+        ravex.modules.combat.Trap trap = ravex.modules.combat.Trap.INSTANCE;
+        if (trap.getEnabled() && trap.render.getValue()) {
+            synchronized (ravex.modules.combat.Trap.trapBlocks) {
+                for (BlockPos pos : ravex.modules.combat.Trap.trapBlocks) {
+                    if (pos == null) continue;
+                    Vec3 blockPos = Vec3.atBottomCenterOf(pos);
+
+                    try {
+                        Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                            .translate(
+                                (float)(blockPos.x - camPos.x),
+                                (float)(blockPos.y - camPos.y),
+                                (float)(blockPos.z - camPos.z)
+                            );
+
+                        int c = trap.color.getValue();
+                        float r = ((c >> 16) & 0xFF) / 255.0f;
+                        float g = ((c >> 8) & 0xFF) / 255.0f;
+                        float b = (c & 0xFF) / 255.0f;
+                        float a = 0.35f;
+
+                        double size = 1.002;
+                        Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                        Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                        Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
         // --- AutoCrystal highlight ---
         ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
         if (ac.getEnabled() && ac.renderPlacement.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
@@ -286,6 +317,32 @@ public class MixinLevelRenderer {
         if (ravex.modules.render.BreadCrumbs.INSTANCE.getEnabled()) {
             ravex.modules.render.BreadCrumbs.renderTrails(modelViewMatrix, camPos);
         }
+
+        // --- TreeCutter highlight ---
+        ravex.modules.world.TreeCutter tc = ravex.modules.world.TreeCutter.INSTANCE;
+        if (tc.getEnabled() && tc.render.getValue() && ravex.modules.world.TreeCutter.currentMiningBlock != null) {
+            BlockPos p = ravex.modules.world.TreeCutter.currentMiningBlock;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate(
+                        (float)(p.getX() - camPos.x),
+                        (float)(p.getY() - camPos.y),
+                        (float)(p.getZ() - camPos.z)
+                    );
+
+                int c = tc.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = 0.35f;
+
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
     }
 
     private void renderBlockHighlight(Vec3 highlightPos, float alpha, double size, float r, float g, float b, Vec3 camPos, Matrix4f modelViewMatrix) {
