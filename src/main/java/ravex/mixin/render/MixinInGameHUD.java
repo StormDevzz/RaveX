@@ -351,9 +351,80 @@ public abstract class MixinInGameHUD {
             }
         }
 
+        // --- BasePlace 2D Overlay ---
+        ravex.modules.combat.BasePlace bp = ravex.modules.combat.BasePlace.INSTANCE;
+        if (bp.getEnabled() && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
+            BlockPos p = ravex.modules.combat.BasePlace.getSimulatedPlacementBlock();
+            Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
+            Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+            if (proj != null) {
+                Vec3 dir = pos3d.subtract(cameraPos).normalize();
+                Vec3 look = mc.player.getViewVector(pt);
+                double dot = dir.dot(look);
+                if (dot > 0.0) {
+                    double sx = (proj.x + 1.0) / 2.0 * context.guiWidth();
+                    double sy = (1.0 - proj.y) / 2.0 * context.guiHeight();
+
+                    int x = (int) sx;
+                    int y = (int) sy;
+
+                    String dmgText = String.format("Dmg: %.1f | Self: %.1f", 
+                            ravex.modules.combat.BasePlace.currentTargetDamage,
+                            ravex.modules.combat.BasePlace.currentSelfDamage);
+
+                    int w = mc.font.width(dmgText);
+                    int left = x - w / 2 - 4;
+                    int top = y - 5;
+                    int right = x + w / 2 + 4;
+                    int bottom = y + 5;
+
+                    context.fill(left, top, right, bottom, 0xAA000000);
+                    context.fill(left, top, right, top + 1, 0xFF00FF00); // Green color line for BasePlace
+
+                    context.drawString(mc.font, dmgText, x - w / 2, y - 4, 0xFFFFFFFF, false);
+                }
+            }
+        }
+
+        // --- AnchorAura 2D Overlay ---
+        ravex.modules.combat.AnchorAura aa = ravex.modules.combat.AnchorAura.INSTANCE;
+        if (aa.getEnabled() && ravex.modules.combat.AnchorAura.simulatedPlacementBlock != null) {
+            BlockPos p = ravex.modules.combat.AnchorAura.simulatedPlacementBlock;
+            Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
+            Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+            if (proj != null) {
+                Vec3 dir = pos3d.subtract(cameraPos).normalize();
+                Vec3 look = mc.player.getViewVector(pt);
+                double dot = dir.dot(look);
+                if (dot > 0.0) {
+                    double sx = (proj.x + 1.0) / 2.0 * context.guiWidth();
+                    double sy = (1.0 - proj.y) / 2.0 * context.guiHeight();
+
+                    int x = (int) sx;
+                    int y = (int) sy;
+
+                    String dmgText = String.format("Dmg: %.1f | Self: %.1f", 
+                            ravex.modules.combat.AnchorAura.currentTargetDamage,
+                            ravex.modules.combat.AnchorAura.currentSelfDamage);
+
+                    int w = mc.font.width(dmgText);
+                    int left = x - w / 2 - 4;
+                    int top = y - 5;
+                    int right = x + w / 2 + 4;
+                    int bottom = y + 5;
+
+                    context.fill(left, top, right, bottom, 0xAA000000);
+                    context.fill(left, top, right, top + 1, 0xFF00FFFF); // Cyan color line for AnchorAura
+
+                    context.drawString(mc.font, dmgText, x - w / 2, y - 4, 0xFFFFFFFF, false);
+                }
+            }
+        }
+
         // --- AutoCrystal 2D Overlay ---
         ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
         if (ac.getEnabled() && ac.renderDamage.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
+
             BlockPos p = ravex.modules.combat.AutoCrystal.currentPlacementBlock;
             Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
             Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);

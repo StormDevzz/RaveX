@@ -269,7 +269,87 @@ public class MixinLevelRenderer {
             }
         }
 
+        // --- SelfTrap highlight ---
+        ravex.modules.combat.SelfTrap selfTrap = ravex.modules.combat.SelfTrap.INSTANCE;
+        if (selfTrap.getEnabled() && selfTrap.render.getValue()) {
+            for (BlockPos pos : ravex.modules.combat.SelfTrap.getSelfTrapBlocks()) {
+                if (pos == null) continue;
+                Vec3 blockPos = Vec3.atBottomCenterOf(pos);
+
+                try {
+                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                        .translate(
+                            (float)(blockPos.x - camPos.x),
+                            (float)(blockPos.y - camPos.y),
+                            (float)(blockPos.z - camPos.z)
+                        );
+
+                    int c = selfTrap.color.getValue();
+                    float r = ((c >> 16) & 0xFF) / 255.0f;
+                    float g = ((c >> 8) & 0xFF) / 255.0f;
+                    float b = (c & 0xFF) / 255.0f;
+                    float a = ((c >> 24) & 0xFF) / 255.0f;
+
+                    double size = 1.002;
+                    Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                    Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // --- BasePlace highlight ---
+        ravex.modules.combat.BasePlace basePlace = ravex.modules.combat.BasePlace.INSTANCE;
+        if (basePlace.getEnabled() && basePlace.render.getValue() && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
+            BlockPos pos = ravex.modules.combat.BasePlace.getSimulatedPlacementBlock();
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate(
+                        (float)(pos.getX() - camPos.x),
+                        (float)(pos.getY() - camPos.y),
+                        (float)(pos.getZ() - camPos.z)
+                    );
+
+                int c = basePlace.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = ((c >> 24) & 0xFF) / 255.0f;
+
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
+        // --- AnchorAura highlight ---
+        ravex.modules.combat.AnchorAura anchorAura = ravex.modules.combat.AnchorAura.INSTANCE;
+        if (anchorAura.getEnabled() && anchorAura.render.getValue() && ravex.modules.combat.AnchorAura.simulatedPlacementBlock != null) {
+            BlockPos pos = ravex.modules.combat.AnchorAura.simulatedPlacementBlock;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate(
+                        (float)(pos.getX() - camPos.x),
+                        (float)(pos.getY() - camPos.y),
+                        (float)(pos.getZ() - camPos.z)
+                    );
+
+                int c = anchorAura.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = ((c >> 24) & 0xFF) / 255.0f;
+
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
         // --- AutoCrystal highlight ---
+
+
         ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
         if (ac.getEnabled() && ac.renderPlacement.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
             BlockPos p = ravex.modules.combat.AutoCrystal.currentPlacementBlock;
@@ -340,6 +420,30 @@ public class MixinLevelRenderer {
                 Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
                 Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
                 Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
+        // --- Breaker highlight ---
+        ravex.modules.combat.Breaker br = ravex.modules.combat.Breaker.INSTANCE;
+        if (br.getEnabled() && br.render.getValue() && ravex.modules.combat.Breaker.currentMiningBlock != null) {
+            BlockPos p = ravex.modules.combat.Breaker.currentMiningBlock;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate(
+                        (float)(p.getX() - camPos.x),
+                        (float)(p.getY() - camPos.y),
+                        (float)(p.getZ() - camPos.z)
+                    );
+
+                int c = br.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = 0.35f;
+
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
             } catch (Exception ignored) {}
         }
 

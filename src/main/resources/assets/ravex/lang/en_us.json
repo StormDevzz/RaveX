@@ -85,5 +85,34 @@
     "module.AutoNameTag": "Applies name tags",
     "module.AutoNameTag.description": "Applies name tags automatically.",
     "module.AutoShearer": "Shears nearby sheep",
-    "module.AutoShearer.description": "Shears nearby sheep automatically."
+    "module.AutoShearer.description": "Shears nearby sheep automatically.",
+    "module.NoRender": "Disables visual elements",
+    "module.NoRender.description": "Disables rendering of specific client-side visuals like particles and fog.",
+    "module.FakePearl": "Throws visual fake pearls",
+    "module.FakePearl.description": "Visually throws a client-side Ender Pearl without actual teleportation.",
+    "module.BasePlace": "Places crystal bases",
+    "module.BasePlace.description": "Automatically places obsidian to optimize AutoCrystal damage to targets.",
+    "module.AnchorAura": "Respawn Anchor Aura",
+    "module.AnchorAura.description": "Intelligently places, charges, and explodes Respawn Anchors to damage targets.",
+    "module.ElytraSwap": "Elytra Swap",
+    "module.ElytraSwap.description": "Swaps equipped chestplate and elytra with customizable legitimacy modes.",
+    "module.ElytraReplace": "Elytra Replace",
+    "module.ElytraReplace.description": "Replaces worn elytra with a fresh one from inventory at low durability.",
+    "module.ViewLock": "View Lock",
+    "module.ViewLock.description": "Prevents player rotations entirely, customizable with Lua script callbacks.",
+    "module.ToolSaver": "Tool Saver",
+    "module.ToolSaver.description": "Prevents tools from breaking by swapping hotbar slots and canceling usages.",
+    "module.AntiAim": "Anti Aim",
+    "module.AntiAim.description": "Jitters or spins player head rotations silently or client-side.",
+    "module.DesktopGui": "Desktop GUI",
+    "module.DesktopGui.description": "Opens an external native C++ desktop GUI window to manage client modules.",
+    "module.Breaker": "Breaker",
+    "module.Breaker.description": "Automatically mines protective blocks around targets to expose them to AutoCrystal explosions.",
+    "module.BowAim": "BowAim",
+    "module.BowAim.description": "Automatically aims bows at target players or entities, predicting target movement and arrow trajectory.",
+    "module.Quiver": "Quiver",
+    "module.Quiver.description": "Automatically shoots beneficial tipped arrows at the player to apply positive potion buffs."
 }
+
+
+

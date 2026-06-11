@@ -85,5 +85,34 @@
     "module.AutoNameTag": "Авто-бирки на мобов",
     "module.AutoNameTag.description": "Использует именные бирки на мобов.",
     "module.AutoShearer": "Авто-стрижка овец",
-    "module.AutoShearer.description": "Стрижет овец поблизости без спама пакетов."
+    "module.AutoShearer.description": "Стрижет овец поблизости без спама пакетов.",
+    "module.NoRender": "Отключение отрисовки элементов",
+    "module.NoRender.description": "Отключает рендеринг различных визуальных эффектов, частиц и тумана.",
+    "module.FakePearl": "Фейковый эндер-пёрл",
+    "module.FakePearl.description": "Визуально бросает эндер-пёрл на клиенте без реальной телепортации.",
+    "module.BasePlace": "Установка баз",
+    "module.BasePlace.description": "Автоматически ставит обсидиан для нанесения максимального урона AutoCrystal.",
+    "module.AnchorAura": "Аура якорей",
+    "module.AnchorAura.description": "Автоматически ставит, заряжает и взрывает якоря возрождения для нанесения максимального урона целям.",
+    "module.ElytraSwap": "Смена элитры",
+    "module.ElytraSwap.description": "Быстро меняет нагрудник на элитру и обратно с настраиваемыми режимами легитности.",
+    "module.ElytraReplace": "Замена элитры",
+    "module.ElytraReplace.description": "Автоматически заменяет почти сломанную элитру в нагруднике на новую из инвентаря.",
+    "module.ViewLock": "Блокировка взгляда",
+    "module.ViewLock.description": "Полностью блокирует повороты камеры, поддерживает гибкую настройку через Lua скрипты.",
+    "module.ToolSaver": "Сохранение вещей",
+    "module.ToolSaver.description": "Предотвращает поломку инструментов, автоматически переключая слот хотбара и блокируя их использование.",
+    "module.AntiAim": "Анти Аим",
+    "module.AntiAim.description": "Быстро и хаотично вращает камеру игрока для сервера (silent) или на клиенте.",
+    "module.DesktopGui": "Внешнее Меню",
+    "module.DesktopGui.description": "Открывает настоящее внешнее C++ окно на рабочем столе для управления модулями.",
+    "module.Breaker": "Breaker",
+    "module.Breaker.description": "Автоматически ломает защитные блоки вокруг целей, чтобы автокристалл мог наносить максимальный урон.",
+    "module.BowAim": "BowAim",
+    "module.BowAim.description": "Автоматически прицеливается из лука в игроков или сущностей, рассчитывая траекторию и движение цели.",
+    "module.Quiver": "Quiver",
+    "module.Quiver.description": "Автоматически стреляет в себя стрелами с положительными эффектами."
 }
+
+
+

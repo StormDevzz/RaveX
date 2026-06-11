@@ -1,4 +1,4 @@
-package ravex.modules.render;
+package ravex.modules.client;
 
 import ravex.modules.Category;
 import ravex.modules.Module;
@@ -9,7 +9,7 @@ public class Notifications extends Module {
     public static final Notifications INSTANCE = new Notifications();
 
     private Notifications() {
-        super("Notifications", Category.RENDER);
+        super("Notifications", Category.CLIENT);
         setEnabled(true); // Enabled by default
     }
 

@@ -8,7 +8,8 @@ import ravex.modules.misc.AntiAfk;
 import ravex.modules.world.BoneMeal;
 import ravex.modules.world.Scaffold;
 import ravex.modules.render.ClickGui;
-import ravex.modules.render.Notifications;
+import ravex.modules.client.Notifications;
+import ravex.modules.client.DesktopGui;
 import ravex.modules.misc.VisualRange;
 import ravex.modules.render.NoBob;
 import ravex.modules.render.Ambient;
@@ -29,6 +30,11 @@ import ravex.modules.player.AutoArmor;
 import ravex.modules.player.AutoMend;
 import ravex.modules.player.FastUse;
 import ravex.modules.player.AutoRespawn;
+import ravex.modules.player.ElytraSwap;
+import ravex.modules.player.ElytraReplace;
+import ravex.modules.player.ViewLock;
+import ravex.modules.player.ToolSaver;
+import ravex.modules.player.AntiAim;
 import ravex.modules.movement.GuiWalk;
 import ravex.modules.movement.NoSlowDown;
 import ravex.modules.movement.Velocity;
@@ -60,12 +66,20 @@ import ravex.modules.render.MobOwner;
 import ravex.modules.movement.Speed;
 import ravex.modules.movement.NoRotate;
 import ravex.modules.combat.SelfTrap;
+import ravex.modules.combat.BasePlace;
+import ravex.modules.combat.AnchorAura;
+import ravex.modules.combat.BowAim;
+import ravex.modules.combat.Breaker;
+import ravex.modules.combat.Quiver;
+
+
 import ravex.modules.exploit.Timer;
 import ravex.modules.exploit.ClickTP;
 import ravex.modules.exploit.ClickFly;
 import ravex.modules.exploit.ChorusExploit;
 import ravex.modules.exploit.TickShift;
 import ravex.modules.exploit.TridentBoost;
+import ravex.modules.exploit.FakePearl;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
 import ravex.modules.combat.WindAura;
@@ -99,6 +113,12 @@ public class ModuleManager {
         clickGuiModules.add(Reach.INSTANCE);
         clickGuiModules.add(Surround.INSTANCE);
         clickGuiModules.add(SelfTrap.INSTANCE);
+        clickGuiModules.add(BasePlace.INSTANCE);
+        clickGuiModules.add(AnchorAura.INSTANCE);
+        clickGuiModules.add(BowAim.INSTANCE);
+        clickGuiModules.add(Breaker.INSTANCE);
+        clickGuiModules.add(Quiver.INSTANCE);
+
         clickGuiModules.add(WindAura.INSTANCE);
         clickGuiModules.add(Trap.INSTANCE);
         clickGuiModules.add(AutoApple.INSTANCE);
@@ -109,7 +129,6 @@ public class ModuleManager {
         clickGuiModules.add(NameTags.INSTANCE);
         clickGuiModules.add(Tracers.INSTANCE);
         clickGuiModules.add(ClickGui.INSTANCE);
-        clickGuiModules.add(Notifications.INSTANCE);
         clickGuiModules.add(NoBob.INSTANCE);
         clickGuiModules.add(Ambient.INSTANCE);
         clickGuiModules.add(CustomFog.INSTANCE);
@@ -142,6 +161,11 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.player.ExtraTab.INSTANCE);
         clickGuiModules.add(ravex.modules.player.ExtraChest.INSTANCE);
         clickGuiModules.add(ravex.modules.player.ExtraChat.INSTANCE);
+        clickGuiModules.add(ElytraSwap.INSTANCE);
+        clickGuiModules.add(ElytraReplace.INSTANCE);
+        clickGuiModules.add(ViewLock.INSTANCE);
+        clickGuiModules.add(ToolSaver.INSTANCE);
+        clickGuiModules.add(AntiAim.INSTANCE);
 
         // ── Movement ────────────────────────────────────────────────────────────
         clickGuiModules.add(GuiWalk.INSTANCE);
@@ -208,12 +232,15 @@ public class ModuleManager {
         clickGuiModules.add(TridentBoost.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.Blink.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.PacketFly.INSTANCE);
+        clickGuiModules.add(FakePearl.INSTANCE);
 
 
         // ── Client ────────────────────────────────────────────────────────────────
         clickGuiModules.add(RichPresence.INSTANCE);
         clickGuiModules.add(ravex.modules.client.GuiParticles.INSTANCE);
         clickGuiModules.add(ravex.modules.client.FastLatency.INSTANCE);
+        clickGuiModules.add(Notifications.INSTANCE);
+        clickGuiModules.add(DesktopGui.INSTANCE);
 
         // ── HUD modules ──────────────────────────────────────────────────────────
         hudModules.add(new HudModule("Watermark", 10, 10, 80, 14) {

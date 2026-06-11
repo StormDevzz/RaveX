@@ -611,9 +611,36 @@ public class AutoCrystal extends Module {
             }
         }
 
+        // AutoCrystalSync prediction integration
+        if (BasePlace.INSTANCE.getEnabled() && BasePlace.INSTANCE.autoCrystalSync.getValue() && BasePlace.lastPlacedBase != null) {
+            long msLimit = (long) (BasePlace.INSTANCE.syncPredictTicks.getValue() * 50);
+            if (System.currentTimeMillis() - BasePlace.lastPlacedTime <= msLimit) {
+                BlockPos predictedPos = BasePlace.lastPlacedBase;
+                double dist = Math.sqrt(predictedPos.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
+                if (dist <= placeRange.getValue()) {
+                    boolean alreadyAdded = false;
+                    for (int i = 0; i < data.size(); i += 3) {
+                        if (data.get(i) == predictedPos.getX() &&
+                            data.get(i+1) == predictedPos.getY() &&
+                            data.get(i+2) == predictedPos.getZ()) {
+                            alreadyAdded = true;
+                            break;
+                        }
+                    }
+                    if (!alreadyAdded) {
+                        data.add((double) predictedPos.getX());
+                        data.add((double) predictedPos.getY());
+                        data.add((double) predictedPos.getZ());
+                    }
+                }
+            }
+        }
+
+
         double[] arr = new double[data.size()];
         for (int i = 0; i < arr.length; i++) arr[i] = data.get(i);
         return arr;
+
     }
 
     // ── Сбор активных кристаллов ─────────────────────────────────────────────

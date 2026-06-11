@@ -21,3 +21,16 @@ add_subdirectory(hooks/trap)
 add_subdirectory(hooks/nametags)
 add_subdirectory(hooks/autoapple)
 add_subdirectory(hooks/treecutter)
+add_subdirectory(hooks/fakepearl)
+add_subdirectory(hooks/selftrap)
+add_subdirectory(hooks/baseplace)
+add_subdirectory(hooks/anchoraura)
+add_subdirectory(hooks/desktopgui)
+add_subdirectory(hooks/breaker)
+add_subdirectory(hooks/bowaim)
+add_subdirectory(hooks/quiver)
+
+
+
+
+

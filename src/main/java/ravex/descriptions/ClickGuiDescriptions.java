@@ -85,6 +85,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Fullbright",    "Makes everything fully bright.");
         DESCRIPTIONS.put("GuiParticles",  "Renders animated particles in ClickGUI.");
         DESCRIPTIONS.put("NoRotate",      "Prevents the server from rotating your head.");
+        DESCRIPTIONS.put("NoRender",      "Disables rendering of specific client-side visuals like particles and fog.");
         DESCRIPTIONS.put("AutoWalk",      "Automatically walks forward.");
         DESCRIPTIONS.put("MobOwner",      "Displays the owner of tamed mobs.");
         DESCRIPTIONS.put("SelfTrap",      "Automatically places blocks around yourself.");
@@ -120,7 +121,22 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("PacketFly",      "Manipulates packets to fly through the air.");
         DESCRIPTIONS.put("AutoApple",      "Automatically eats golden apples under dangerous circumstances.");
         DESCRIPTIONS.put("TreeCutter",     "Automatically breaks nearby tree logs and renders 3D block highlights.");
+        DESCRIPTIONS.put("FakePearl",     "Visually throws a client-side Ender Pearl without actual teleportation.");
+        DESCRIPTIONS.put("BasePlace",     "Automatically places obsidian to optimize AutoCrystal damage to targets.");
+        DESCRIPTIONS.put("AnchorAura",    "Intelligently places, charges, and explodes Respawn Anchors to damage targets.");
+        DESCRIPTIONS.put("ElytraSwap",     "Swaps chestplate and elytra with customizable legitimacy modes.");
+        DESCRIPTIONS.put("ElytraReplace",  "Replaces worn elytra with a fresh one from inventory at low durability.");
+        DESCRIPTIONS.put("ViewLock",       "Prevents player client-side rotations entirely with Lua scripting support.");
+        DESCRIPTIONS.put("ToolSaver",      "Prevents tools from breaking by swapping hotbar slots and canceling usages.");
+        DESCRIPTIONS.put("AntiAim",        "Jitters or spins player head rotations silently or client-side.");
+        DESCRIPTIONS.put("DesktopGui",     "Opens an external native C++ desktop GUI window to manage client modules.");
+        DESCRIPTIONS.put("Breaker",        "Automatically mines protective blocks around targets to expose them to AutoCrystal explosions.");
+        DESCRIPTIONS.put("BowAim",         "Automatically aims bows at target players or entities, predicting target movement and arrow trajectory.");
+        DESCRIPTIONS.put("Quiver",         "Automatically shoots beneficial tipped arrows at the player to apply positive potion buffs.");
     }
+
+
+
 
     public static String getDescription(String moduleName) {
         return DESCRIPTIONS.getOrDefault(moduleName, "No description.");

@@ -13,6 +13,31 @@ import ravex.modules.render.ESP;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity {
+    @Inject(method = "turn(DD)V", at = @At("HEAD"), cancellable = true)
+    private void onTurn(double yRot, double xRot, CallbackInfo ci) {
+        Entity self = (Entity)(Object)this;
+        if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
+
+        if (ravex.modules.player.ViewLock.INSTANCE.getEnabled()) {
+            boolean lockYaw = ravex.modules.player.ViewLock.INSTANCE.shouldLockYaw(yRot, xRot);
+            boolean lockPitch = ravex.modules.player.ViewLock.INSTANCE.shouldLockPitch(yRot, xRot);
+            if (lockYaw && lockPitch) {
+                ci.cancel();
+            } else {
+                float currentPitch = self.getXRot();
+                float currentYaw = self.getYRot();
+                if (!lockYaw) {
+                    self.setYRot(currentYaw + (float)yRot * 0.15F);
+                }
+                if (!lockPitch) {
+                    float newPitch = currentPitch + (float)xRot * 0.15F;
+                    self.setXRot(Math.max(-90.0F, Math.min(90.0F, newPitch)));
+                }
+                ci.cancel();
+            }
+        }
+    }
+
     @Inject(method = "tick", at = @At("TAIL"))
     private void onTick(CallbackInfo ci) {
         Entity self = (Entity)(Object)this;

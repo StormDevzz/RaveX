@@ -56,4 +56,44 @@ public class MixinMultiPlayerGameMode {
          && cir.getReturnValue() != InteractionResult.SUCCESS) return;
         BlockSelector.INSTANCE.selectRandomBlock();
     }
+
+    // =========================================================================
+    // ToolSaver — cancel client interactions if tool is low durability
+    // =========================================================================
+    @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
+    private void onAttack(Player player, net.minecraft.world.entity.Entity target, CallbackInfo ci) {
+        if (ravex.modules.player.ToolSaver.INSTANCE.shouldSave(player.getMainHandItem())) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
+    private void onStartDestroyBlock(net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face, CallbackInfoReturnable<Boolean> cir) {
+        var mc = Minecraft.getInstance();
+        if (mc.player != null && ravex.modules.player.ToolSaver.INSTANCE.shouldSave(mc.player.getMainHandItem())) {
+            cir.setReturnValue(false);
+        }
+    }
+
+    @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
+    private void onContinueDestroyBlock(net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face, CallbackInfoReturnable<Boolean> cir) {
+        var mc = Minecraft.getInstance();
+        if (mc.player != null && ravex.modules.player.ToolSaver.INSTANCE.shouldSave(mc.player.getMainHandItem())) {
+            cir.setReturnValue(false);
+        }
+    }
+
+    @Inject(method = "useItem", at = @At("HEAD"), cancellable = true)
+    private void onUseItem(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+        if (ravex.modules.player.ToolSaver.INSTANCE.shouldSave(player.getItemInHand(hand))) {
+            cir.setReturnValue(InteractionResult.PASS);
+        }
+    }
+
+    @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
+    private void onUseItemOnHead(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir) {
+        if (ravex.modules.player.ToolSaver.INSTANCE.shouldSave(player.getItemInHand(hand))) {
+            cir.setReturnValue(InteractionResult.PASS);
+        }
+    }
 }

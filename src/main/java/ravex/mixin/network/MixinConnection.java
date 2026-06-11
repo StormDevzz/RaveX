@@ -47,6 +47,22 @@ public class MixinConnection {
             PacketLogger.INSTANCE.logPacket("C2S ->", packet);
         }
 
+        // FakePearl right click interception
+        if (packet instanceof ServerboundUseItemPacket usePacket) {
+            if (ravex.modules.exploit.FakePearl.INSTANCE.getEnabled()) {
+                String trg = ravex.modules.exploit.FakePearl.INSTANCE.trigger.getValue();
+                if ("Right Click".equals(trg) || "Both".equals(trg)) {
+                    net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                    if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(net.minecraft.world.item.Items.ENDER_PEARL)) {
+                        ci.cancel();
+                        ravex.modules.exploit.FakePearl.INSTANCE.throwFakePearl();
+                        mc.player.swing(usePacket.getHand());
+                        return;
+                    }
+                }
+            }
+        }
+
         // Packet Canceller
         if (PacketCanceller.INSTANCE.getEnabled()) {
             boolean cancel = false;

@@ -50,16 +50,17 @@ public abstract class Module {
             if (enabled) {
                 onEnable();
                 SoundUtility.playEnable();
-                if (ravex.modules.render.Notifications.INSTANCE != null) {
-                    ravex.modules.render.Notifications.notifyToggle(this, true);
+                if (ravex.modules.client.Notifications.INSTANCE != null) {
+                    ravex.modules.client.Notifications.notifyToggle(this, true);
                 }
             } else {
                 onDisable();
                 SoundUtility.playDisable();
-                if (ravex.modules.render.Notifications.INSTANCE != null) {
-                    ravex.modules.render.Notifications.notifyToggle(this, false);
+                if (ravex.modules.client.Notifications.INSTANCE != null) {
+                    ravex.modules.client.Notifications.notifyToggle(this, false);
                 }
             }
+            ravex.modules.client.DesktopGui.onModuleToggle(this.getName(), enabled);
         }
     }
 

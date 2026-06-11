@@ -52,6 +52,38 @@ public class NativeLoader {
         }
     }
 
+    public static synchronized boolean loadLibrary(String name) {
+        try {
+            System.loadLibrary(name);
+            return true;
+        } catch (UnsatisfiedLinkError e) {
+            String os = System.getProperty("os.name").toLowerCase();
+            boolean isWin = os.contains("win");
+            String libName = isWin ? name + ".dll" : "lib" + name + ".so";
+            String tempPrefix = isWin ? name : "lib" + name;
+            String tempSuffix = isWin ? ".dll" : ".so";
+            try {
+                java.io.InputStream in = NativeLoader.class.getResourceAsStream("/assets/ravex/natives/" + libName);
+                if (in != null) {
+                    java.io.File tempFile = java.io.File.createTempFile(tempPrefix, tempSuffix);
+                    tempFile.deleteOnExit();
+                    try (java.io.FileOutputStream out = new java.io.FileOutputStream(tempFile)) {
+                        byte[] buffer = new byte[8192];
+                        int bytesRead;
+                        while ((bytesRead = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, bytesRead);
+                        }
+                    }
+                    System.load(tempFile.getAbsolutePath());
+                    return true;
+                }
+            } catch (Throwable ex) {
+                System.err.println("[RaveX] Failed to extract and load native library " + name + ": " + ex.getMessage());
+            }
+        }
+        return false;
+    }
+
     public static boolean isNativeAvailable() {
         return nativeAvailable;
     }
