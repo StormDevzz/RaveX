@@ -42,6 +42,31 @@ public class MixinModel {
         at = @At("HEAD")
     )
     private void onRenderHead(PoseStack poseStack, VertexConsumer consumer, int light, int overlay, int tint, CallbackInfo ci) {
+        if (ravex.modules.render.Skeleton.INSTANCE.getEnabled()) {
+            Model self = (Model)(Object)this;
+            if (self instanceof net.minecraft.client.model.HumanoidModel) {
+                net.minecraft.world.entity.LivingEntity entity = ravex.modules.render.Skeleton.getEntityBeingRendered(poseStack);
+                if (entity != null) {
+                    boolean isPlayer = entity instanceof net.minecraft.world.entity.player.Player;
+                    boolean shouldRender = false;
+                    if (isPlayer && ravex.modules.render.Skeleton.INSTANCE.players.getValue()) {
+                        shouldRender = true;
+                    } else if (!isPlayer && ravex.modules.render.Skeleton.INSTANCE.mobs.getValue()) {
+                        shouldRender = true;
+                    }
+                    if (shouldRender) {
+                        try {
+                            net.minecraft.client.model.HumanoidModel<?> humanoidModel = (net.minecraft.client.model.HumanoidModel<?>) self;
+                            int colorVal = ravex.modules.render.Skeleton.INSTANCE.color.getValue();
+                            float lineWidth = ravex.modules.render.Skeleton.INSTANCE.lineWidth.getValue().floatValue();
+                            boolean throughWalls = ravex.modules.render.Skeleton.INSTANCE.throughWalls.getValue();
+                            ravex.modules.render.Skeleton.renderSkeleton(poseStack, humanoidModel, colorVal, lineWidth, throughWalls);
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        }
+
         if (Shaders.INSTANCE.getEnabled() && Shaders.INSTANCE.throughWalls.getValue()) {
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();

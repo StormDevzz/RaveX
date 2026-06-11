@@ -3,6 +3,7 @@ package ravex.modules;
 import ravex.modules.combat.KillAura;
 import ravex.modules.combat.AutoCrystal;
 import ravex.modules.render.ESP;
+import ravex.modules.render.Skeleton;
 import ravex.modules.player.AutoTool;
 import ravex.modules.misc.AntiAfk;
 import ravex.modules.world.BoneMeal;
@@ -125,6 +126,7 @@ public class ModuleManager {
 
         // ── Render ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ESP.INSTANCE);
+        clickGuiModules.add(Skeleton.INSTANCE);
         clickGuiModules.add(MobOwner.INSTANCE);
         clickGuiModules.add(NameTags.INSTANCE);
         clickGuiModules.add(Tracers.INSTANCE);
