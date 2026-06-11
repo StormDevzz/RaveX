@@ -50,7 +50,7 @@ public class RaveXLoader {
 
         if (java.awt.GraphicsEnvironment.isHeadless()) {
             System.out.println("[RaveX-Loader] Headless environment detected. Skipping GUI, running optimizations only.");
-            nativeAvailable = NativeBridge.isLoaded();
+            nativeAvailable = NativeBridge.load();
             if (nativeAvailable) {
                 try {
                     NativeBridge.trimMemory();
@@ -97,7 +97,6 @@ public class RaveXLoader {
         }
 
         String version = readVersion("gradle.properties");
-        nativeAvailable = NativeBridge.isLoaded();
 
         window = new LoaderWindow();
         window.setVersion(version);
@@ -107,6 +106,9 @@ public class RaveXLoader {
 
         new Thread(() -> {
             try {
+                window.updateStatus("Loading components...", 2);
+                nativeAvailable = NativeBridge.load();
+                downloadRequiredAssets();
                 runChecksPhase();
                 runOptimizePhase();
                 runLaunchPhase(command, extraArgs);
@@ -138,7 +140,7 @@ public class RaveXLoader {
             System.out.println("[RaveX-Loader] Integrated Mode: Headless override failed or environment is non-graphical. Running background optimization only.");
             new Thread(() -> {
                 try {
-                    nativeAvailable = NativeBridge.isLoaded();
+                    nativeAvailable = NativeBridge.load();
                     if (nativeAvailable) {
                         NativeBridge.trimMemory();
                         NativeBridge.setHighPriority();
@@ -151,8 +153,6 @@ public class RaveXLoader {
             return;
         }
 
-        nativeAvailable = NativeBridge.isLoaded();
-
         window = new LoaderWindow();
         window.setVersion(version);
         window.setVisible(true);
@@ -161,6 +161,9 @@ public class RaveXLoader {
 
         new Thread(() -> {
             try {
+                window.updateStatus("Loading components...", 2);
+                nativeAvailable = NativeBridge.load();
+                downloadRequiredAssets();
                 runChecksPhase();
                 runOptimizePhase();
                 window.updateStatus("Optimizing game environment...", 70);
@@ -380,6 +383,77 @@ public class RaveXLoader {
             sleep(1500); // Shorter safe sleep fallback
         } else {
             sleep(1000);
+        }
+    }
+
+    static void updateWindowStatus(String status, int progress) {
+        if (window != null) {
+            try {
+                window.updateStatus(status, progress);
+            } catch (Throwable ignored) {}
+        }
+    }
+
+    private static void downloadRequiredAssets() {
+        String os = System.getProperty("os.name").toLowerCase();
+        boolean isWin = os.contains("win");
+
+        List<String> assetList = new ArrayList<>(Arrays.asList(
+            "font/sf_medium.ttf",
+            "font/sf_bold.ttf",
+            "font/comfortaa.ttf",
+            "companion/textures/kotost.png",
+            "companion/textures/ninja.png",
+            "companion/textures/vanya.png"
+        ));
+
+        if (isWin) {
+            assetList.add("natives/ravex_jni.dll");
+        } else {
+            assetList.add("natives/libravex_jni.so");
+        }
+
+        java.io.File cacheDir = new java.io.File(System.getProperty("user.home"), ".ravex");
+
+        for (int i = 0; i < assetList.size(); i++) {
+            String assetPath = assetList.get(i);
+            java.io.File cachedFile = new java.io.File(cacheDir, assetPath);
+            if (cachedFile.exists() && cachedFile.length() > 0) {
+                continue;
+            }
+
+            java.io.File parent = cachedFile.getParentFile();
+            if (!parent.exists()) {
+                parent.mkdirs();
+            }
+
+            String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/" + assetPath;
+            System.out.println("[RaveX-Loader] Pre-downloading asset: " + assetPath);
+            updateWindowStatus("Downloading asset " + (i + 1) + "/" + assetList.size() + "...", 5 + (i * 2));
+
+            try {
+                java.net.URL url = new java.net.URL(remoteUrl);
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(8000);
+                if (conn.getResponseCode() == 200) {
+                    java.io.File tempDownload = new java.io.File(parent, cachedFile.getName() + ".tmp");
+                    try (java.io.InputStream in = conn.getInputStream();
+                         java.io.FileOutputStream out = new java.io.FileOutputStream(tempDownload)) {
+                        byte[] buffer = new byte[8192];
+                        int bytesRead;
+                        while ((bytesRead = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, bytesRead);
+                        }
+                    }
+                    if (!tempDownload.renameTo(cachedFile)) {
+                        java.nio.file.Files.copy(tempDownload.toPath(), cachedFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        tempDownload.delete();
+                    }
+                }
+            } catch (Throwable t) {
+                System.err.println("[RaveX-Loader] Failed to pre-download " + assetPath + ": " + t.getMessage());
+            }
         }
     }
 }

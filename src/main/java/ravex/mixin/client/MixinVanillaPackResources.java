@@ -30,17 +30,53 @@ public class MixinVanillaPackResources {
         }
     }
 
+    private static InputStream getResourceStream(String path, String idPath) throws java.io.IOException {
+        InputStream is = MixinVanillaPackResources.class.getResourceAsStream(path);
+        if (is != null) {
+            return is;
+        }
+
+        java.io.File cacheFile = new java.io.File(System.getProperty("user.home"), ".ravex/" + idPath);
+        if (cacheFile.exists() && cacheFile.length() > 0) {
+            return new java.io.FileInputStream(cacheFile);
+        }
+
+        java.io.File parent = cacheFile.getParentFile();
+        if (!parent.exists()) {
+            parent.mkdirs();
+        }
+        String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/" + idPath;
+        try {
+            java.net.URL url = new java.net.URL(remoteUrl);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
+            if (conn.getResponseCode() == 200) {
+                java.io.File tempDownload = new java.io.File(parent, cacheFile.getName() + ".tmp");
+                try (InputStream inStream = conn.getInputStream();
+                     java.io.FileOutputStream outStream = new java.io.FileOutputStream(tempDownload)) {
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = inStream.read(buffer)) != -1) {
+                        outStream.write(buffer, 0, bytesRead);
+                    }
+                }
+                if (!tempDownload.renameTo(cacheFile)) {
+                    java.nio.file.Files.copy(tempDownload.toPath(), cacheFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    tempDownload.delete();
+                }
+                return new java.io.FileInputStream(cacheFile);
+            }
+        } catch (Throwable ignored) {}
+
+        throw new java.io.FileNotFoundException("Resource not found: " + path);
+    }
+
     @Inject(method = "getResource", at = @At("HEAD"), cancellable = true)
     private void onGetResource(PackType type, Identifier id, CallbackInfoReturnable<IoSupplier<InputStream>> cir) {
         if (type == PackType.CLIENT_RESOURCES && "ravex".equals(id.getNamespace())) {
             String path = "/assets/ravex/" + id.getPath();
-            IoSupplier<InputStream> supplier = () -> {
-                InputStream is = MixinVanillaPackResources.class.getResourceAsStream(path);
-                if (is == null) {
-                    throw new java.io.FileNotFoundException("Resource not found: " + path);
-                }
-                return is;
-            };
+            IoSupplier<InputStream> supplier = () -> getResourceStream(path, id.getPath());
             cir.setReturnValue(supplier);
         }
     }
@@ -72,13 +108,7 @@ public class MixinVanillaPackResources {
                 if (asset.startsWith(path)) {
                     Identifier id = Identifier.fromNamespaceAndPath(namespace, asset);
                     String resourcePath = "/assets/ravex/" + asset;
-                    IoSupplier<InputStream> supplier = () -> {
-                        InputStream is = MixinVanillaPackResources.class.getResourceAsStream(resourcePath);
-                        if (is == null) {
-                            throw new java.io.FileNotFoundException("Resource not found: " + resourcePath);
-                        }
-                        return is;
-                    };
+                    IoSupplier<InputStream> supplier = () -> getResourceStream(resourcePath, asset);
                     output.accept(id, supplier);
                 }
             }
