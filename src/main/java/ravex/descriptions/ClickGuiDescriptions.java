@@ -129,7 +129,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("ViewLock",       "Prevents player client-side rotations entirely with Lua scripting support.");
         DESCRIPTIONS.put("ToolSaver",      "Prevents tools from breaking by swapping hotbar slots and canceling usages.");
         DESCRIPTIONS.put("AntiAim",        "Jitters or spins player head rotations silently or client-side.");
-        DESCRIPTIONS.put("DesktopGui",     "Opens an external native C++ desktop GUI window to manage client modules.");
+        DESCRIPTIONS.put("DesktopGui",     "Native desktop control.");
         DESCRIPTIONS.put("Breaker",        "Automatically mines protective blocks around targets to expose them to AutoCrystal explosions.");
         DESCRIPTIONS.put("BowAim",         "Automatically aims bows at target players or entities, predicting target movement and arrow trajectory.");
         DESCRIPTIONS.put("Quiver",         "Automatically shoots beneficial tipped arrows at the player to apply positive potion buffs.");
