@@ -192,6 +192,37 @@ public class ClickGUI extends Screen {
             renderStars(graphics);
         }
 
+        if (ravex.modules.render.ClickGui.INSTANCE.companionImage.getValue()) {
+            String type = ravex.modules.render.ClickGui.INSTANCE.companionType.getValue();
+            Identifier imgId = null;
+            if ("Femboy".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.FEMBOY;
+            } else if ("Wypher1".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.WYPHER1;
+            } else if ("Boykgun".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.BOYKGUN;
+            } else if ("Cutie".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.CUTIE;
+            } else if ("Kiss".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.KISS;
+            } else if ("Laying".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.LAYING;
+            } else if ("Licking".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.LICKING;
+            } else if ("Pillow".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.PILLOW;
+            }
+
+            if (imgId != null) {
+                int imgW = 120;
+                int imgH = 120;
+                int imgX = this.width - imgW - 10;
+                int imgY = this.height - imgH - 45;
+
+                graphics.blit(imgId, imgX, imgY, imgX + imgW, imgY + imgH, 0.0f, 1.0f, 0.0f, 1.0f);
+            }
+        }
+
         String tips = "Esc/Shift — close  •  LMB — toggle  •  RMB — settings  •  MMB — bind";
         int tipsW = FontRenderUtility.getStringWidth(tips);
         int tipsX = (this.width - tipsW) / 2;

@@ -76,7 +76,6 @@ task runLoader(type: JavaExec) {
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude("assets/ravex/natives/**")
-    exclude("assets/ravex/font/*.ttf")
     exclude("assets/ravex/companion/textures/**")
     manifest {
         attributes(
@@ -105,3 +104,4 @@ processResources {
 
 }
 //Xiaomi 10SPro 
+

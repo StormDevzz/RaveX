@@ -30,6 +30,16 @@ public class MixinVanillaPackResources {
         }
     }
 
+    private static boolean isValidTTF(java.io.File file) {
+        if (file == null || !file.exists() || file.length() < 12) return false;
+        try (java.io.DataInputStream dis = new java.io.DataInputStream(new java.io.FileInputStream(file))) {
+            int magic = dis.readInt();
+            return magic == 0x00010000 || magic == 0x74727565;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private static InputStream getResourceStream(String path, String idPath) throws java.io.IOException {
         InputStream is = MixinVanillaPackResources.class.getResourceAsStream(path);
         if (is != null) {
@@ -38,7 +48,11 @@ public class MixinVanillaPackResources {
 
         java.io.File cacheFile = new java.io.File(System.getProperty("user.home"), ".ravex/" + idPath);
         if (cacheFile.exists() && cacheFile.length() > 0) {
-            return new java.io.FileInputStream(cacheFile);
+            if (idPath.endsWith(".ttf") && !isValidTTF(cacheFile)) {
+                cacheFile.delete();
+            } else {
+                return new java.io.FileInputStream(cacheFile);
+            }
         }
 
         java.io.File parent = cacheFile.getParentFile();
@@ -85,9 +99,6 @@ public class MixinVanillaPackResources {
     private void onListResources(PackType type, String namespace, String path, PackResources.ResourceOutput output, CallbackInfo ci) {
         if (type == PackType.CLIENT_RESOURCES && "ravex".equals(namespace)) {
             String[] assets = {
-                "companion/textures/kotost.png",
-                "companion/textures/ninja.png",
-                "companion/textures/vanya.png",
                 "font/comfortaa.json",
                 "font/comfortaa.ttf",
                 "font/sf_bold.json",

@@ -27,6 +27,15 @@ public class TextureLoader {
     private static final Identifier FALLBACK = id("misc");
     private static final Map<Category, Identifier> CAT_IDS = new HashMap<>();
 
+    public static final Identifier FEMBOY = Identifier.fromNamespaceAndPath(NS, "img/femboy");
+    public static final Identifier WYPHER1 = Identifier.fromNamespaceAndPath(NS, "img/wypher1");
+    public static final Identifier BOYKGUN = Identifier.fromNamespaceAndPath(NS, "img/boykgun");
+    public static final Identifier CUTIE = Identifier.fromNamespaceAndPath(NS, "img/cutie");
+    public static final Identifier KISS = Identifier.fromNamespaceAndPath(NS, "img/kiss");
+    public static final Identifier LAYING = Identifier.fromNamespaceAndPath(NS, "img/laying");
+    public static final Identifier LICKING = Identifier.fromNamespaceAndPath(NS, "img/licking");
+    public static final Identifier PILLOW = Identifier.fromNamespaceAndPath(NS, "img/pillow");
+
     static {
         for (Category cat : Category.values()) {
             CAT_IDS.put(cat, id(cat.name().toLowerCase()));
@@ -53,18 +62,37 @@ public class TextureLoader {
         for (Map.Entry<Category, Identifier> e : CAT_IDS.entrySet()) {
             ensureLoaded(e.getValue(), e.getKey().name().toLowerCase());
         }
+        ensureLoaded(FEMBOY, "femboy");
+        ensureLoaded(WYPHER1, "wypher1");
+        ensureLoaded(BOYKGUN, "boykgun");
+        ensureLoaded(CUTIE, "cutie");
+        ensureLoaded(KISS, "kiss");
+        ensureLoaded(LAYING, "laying");
+        ensureLoaded(LICKING, "licking");
+        ensureLoaded(PILLOW, "pillow");
     }
 
     private static boolean ensureLoaded(Identifier guiId, String name) {
         if (loaded.containsKey(guiId)) return true;
 
-        String resourcePath = CLASSPATH_PREFIX + name + ".png";
+        String resourcePath;
+        if (guiId.getPath().startsWith("companion/")) {
+            resourcePath = "/assets/ravex/" + guiId.getPath() + ".png";
+        } else if (guiId.getPath().startsWith("img/")) {
+            resourcePath = "/assets/ravex/" + guiId.getPath() + ".png";
+        } else {
+            resourcePath = CLASSPATH_PREFIX + name + ".png";
+        }
+
         try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
             if (stream == null) {
                 RaveX.LOGGER.warn("[TextureLoader] Resource not found on classpath: {}", resourcePath);
                 return false;
             }
             NativeImage image = NativeImage.read(stream);
+
+
+
             AbstractTexture tex = createLinearTexture(image);
             image.close();
             Minecraft.getInstance().getTextureManager().register(guiId, tex);

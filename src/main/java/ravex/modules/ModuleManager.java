@@ -27,6 +27,7 @@ import ravex.modules.player.InventoryCleaner;
 import ravex.modules.misc.VisualRange;
 import ravex.modules.render.NoBob;
 import ravex.modules.render.Ambient;
+import ravex.modules.render.Weather;
 import ravex.modules.combat.AimAssist;
 import ravex.modules.render.CustomFog;
 import ravex.modules.render.NameTags;
@@ -198,6 +199,7 @@ public class ModuleManager {
         clickGuiModules.add(ClickGui.INSTANCE);
         clickGuiModules.add(NoBob.INSTANCE);
         clickGuiModules.add(Ambient.INSTANCE);
+        clickGuiModules.add(Weather.INSTANCE);
         clickGuiModules.add(CustomFog.INSTANCE);
         clickGuiModules.add(Hud.INSTANCE);
         clickGuiModules.add(Shaders.INSTANCE);
