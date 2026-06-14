@@ -11,23 +11,7 @@ public class RaveXLoader {
     private static boolean nativeAvailable = false;
 
     public static void main(String[] args) {
-        try {
-            Class<?> fontDescClass = Class.forName("net.minecraft.network.chat.FontDescription");
-            System.out.println("=== FONT DESCRIPTION CLASSES ===");
-            System.out.println("CLASS: " + fontDescClass.getName());
-            for (Class<?> c : fontDescClass.getDeclaredClasses()) {
-                System.out.println("  INNER CLASS: " + c.getName());
-                for (java.lang.reflect.Constructor<?> con : c.getDeclaredConstructors()) {
-                    System.out.println("    CONSTRUCTOR: " + con.toString());
-                }
-                for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
-                    System.out.println("    METHOD: " + m.toString());
-                }
-            }
-            System.out.println("===========================");
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
+
         // Prevent Java AWT from erasing/clearing background to eliminate all flickering on Linux
         System.setProperty("sun.awt.noerasebackground", "true");
 
@@ -418,10 +402,7 @@ public class RaveXLoader {
         List<String> assetList = new ArrayList<>(Arrays.asList(
             "font/sf_medium.ttf",
             "font/sf_bold.ttf",
-            "font/comfortaa.ttf",
-            "companion/textures/kotost.png",
-            "companion/textures/ninja.png",
-            "companion/textures/vanya.png"
+            "font/comfortaa.ttf"
         ));
 
         if (isWin) {

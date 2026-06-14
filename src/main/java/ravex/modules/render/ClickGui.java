@@ -32,6 +32,9 @@ public class ClickGui extends Module {
     // Module counter badge in category header
     public final BooleanParameter moduleCounter = new BooleanParameter("Module Counter", true);
 
+    public final BooleanParameter companionImage = new BooleanParameter("Show Image", false);
+    public final ModeParameter companionType = new ModeParameter("Image Type", "Femboy", List.of("Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow"));
+
     private ClickGui() {
         super("ClickGui", Category.CLIENT);
         addParameter(drawBackground);
@@ -49,6 +52,8 @@ public class ClickGui extends Module {
         addParameter(buttonHeight);
         addParameter(panelWidth);
         addParameter(moduleCounter);
+        addParameter(companionImage);
+        addParameter(companionType);
         color1.setVisible(() -> "Static".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue()) || "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         setEnabled(true);

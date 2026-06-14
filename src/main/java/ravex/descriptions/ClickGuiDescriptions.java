@@ -17,6 +17,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("VisualRange",   "Alerts you when players enter render range.");
         DESCRIPTIONS.put("NoBob",         "Disables hand and camera bobbing physics.");
         DESCRIPTIONS.put("Ambient",       "Changes world sky light and time tint color.");
+        DESCRIPTIONS.put("Weather",       "Visually changes world weather.");
         DESCRIPTIONS.put("CustomFog",     "Modifies ambient fog density and color.");
         DESCRIPTIONS.put("AimAssist",     "Smoothly guides your crosshair toward targets.");
         DESCRIPTIONS.put("NameTags",      "Displays high-fidelity HUD info above entities.");
