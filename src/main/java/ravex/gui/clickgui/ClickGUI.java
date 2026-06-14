@@ -6,13 +6,18 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
+import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Category;
+import ravex.utility.render.BlurUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClickGUI extends Screen {
     public static ModuleButton bindingModuleButton = null;
@@ -23,6 +28,15 @@ public class ClickGUI extends Screen {
     public static ParameterElement activeStringParameterElement = null;
     public static ParameterElement activeKeybindElement = null;
 
+    public static Identifier getCategoryTexture(Category cat) {
+        return ravex.utility.render.TextureLoader.getCategoryTexture(cat);
+    }
+
+    public static Identifier getSearchTexture() {
+        return ravex.utility.render.TextureLoader.getSearchTexture();
+    }
+
+    private final Map<Category, CategoryPanel> panelMap = new HashMap<>();
     private final List<CategoryPanel> panels = new ArrayList<>();
     private final long initTime;
     private double smoothedMaxH = 200.0;
@@ -57,31 +71,53 @@ public class ClickGUI extends Screen {
     public ClickGUI() {
         super(Component.literal("RaveX ClickGUI"));
         this.initTime = System.currentTimeMillis();
-        int startX = 20;
-        int startY = 55;
+
+        if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {
+            BlurUtility.enable();
+        }
+
+        ravex.utility.render.TextureLoader.preloadAll();
+
         int spacing = 15;
+        int panelW = 120;
+        Map<Category, int[]> saved = ravex.manager.LayoutManager.INSTANCE.load();
         Category[] categories = Category.values();
-        for (int i = 0; i < categories.length; i++) {
-            panels.add(new CategoryPanel(categories[i], startX + i * (120 + spacing), startY));
+        for (Category cat : categories) {
+            int[] pos = saved.get(cat);
+            int px, py;
+            if (pos != null) {
+                px = pos[0];
+                py = pos[1];
+            } else {
+                int i = cat.ordinal();
+                px = 20 + i * (panelW + spacing);
+                py = 55;
+            }
+            CategoryPanel p = new CategoryPanel(cat, px, py);
+            panels.add(p);
+            panelMap.put(cat, p);
         }
         ravex.utility.sound.SoundUtility.playGuiOpen();
     }
 
     @Override
     protected void init() {
-        float spacing = 2;
-        float panelW = 120;
-        int numPanels = panels.size();
-        float totalW = numPanels * panelW + (numPanels - 1) * spacing;
-        float startX = (this.width - totalW) / 2;
-        int maxH = getMaxPanelHeight();
-        float startY = (this.height - maxH) / 2;
-        if (startY < 30) startY = 30;
-
-        for (int i = 0; i < numPanels; i++) {
-            CategoryPanel panel = panels.get(i);
-            panel.setX((int)(startX + i * (panelW + spacing)));
-            panel.setY((int)startY);
+        Map<Category, int[]> saved = ravex.manager.LayoutManager.INSTANCE.load();
+        for (CategoryPanel panel : panels) {
+            int[] pos = saved.get(panel.getCategory());
+            if (pos == null) {
+                int spacing = 2;
+                int panelW = 120;
+                int numPanels = panels.size();
+                float totalW = numPanels * panelW + (numPanels - 1) * spacing;
+                float startX = (this.width - totalW) / 2;
+                int maxH = getMaxPanelHeight();
+                float startY = (this.height - maxH) / 2;
+                if (startY < 30) startY = 30;
+                int i = panel.getCategory().ordinal();
+                panel.setX((int)(startX + i * (panelW + spacing)));
+                panel.setY((int)startY);
+            }
         }
     }
 
@@ -144,9 +180,13 @@ public class ClickGUI extends Screen {
         int targetMaxH = getMaxPanelHeight();
         smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.15;
 
+        // ── Background ──────────────────────────────────────────────────────────────
         boolean drawBg = ravex.modules.render.ClickGui.INSTANCE.drawBackground.getValue();
         if (drawBg) {
             graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.BACKGROUND_START, ColorUtility.BACKGROUND_END);
+            // Vignette effect
+            int edgeColor = ColorUtility.withAlpha(ColorUtility.getActiveColor(), 6);
+            graphics.fillGradient(0, 0, this.width, 1, edgeColor, 0x00000000);
         }
         if (ravex.modules.client.GuiParticles.INSTANCE.getEnabled()) {
             renderStars(graphics);
@@ -157,9 +197,10 @@ public class ClickGUI extends Screen {
         int tipsX = (this.width - tipsW) / 2;
         int tipsY = this.height - 18;
 
-        int tipBg = ColorUtility.withAlpha(ColorUtility.getActiveColor(), 15);
-        graphics.fillGradient(tipsX - 14, tipsY - 5, tipsX + tipsW + 14, tipsY + 12, tipBg, 0x22050508);
-        graphics.fill(tipsX - 14, tipsY + 7, tipsX + tipsW + 14, tipsY + 8, ColorUtility.withAlpha(ColorUtility.getActiveColor(), 40));
+        int ac = ColorUtility.getActiveColor();
+        int tipBg = ColorUtility.withAlpha(ac, 18);
+        graphics.fillGradient(tipsX - 14, tipsY - 5, tipsX + tipsW + 14, tipsY + 12, tipBg, ColorUtility.withAlpha(ac, 4));
+        graphics.fill(tipsX - 14, tipsY + 7, tipsX + tipsW + 14, tipsY + 8, ColorUtility.withAlpha(ac, 50));
         FontRenderUtility.drawString(graphics, tips, tipsX, tipsY - 1, 0xFF858599, true);
 
         // ── Bottom nav buttons ───────────────────────────────────────────────────
@@ -186,9 +227,9 @@ public class ClickGUI extends Screen {
         for (int i = 0; i < 3; i++) {
             int bx  = bxArr[i];
             boolean h = hovArr[i];
-            int bg  = h ? activeColor : 0xFF202020;
+            int bg  = h ? activeColor : 0xFF1C1C2C;
 
-            graphics.fill(bx, mgY, bx + mgW, mgY + mgH, bg);
+            graphics.fillGradient(bx, mgY, bx + mgW, mgY + mgH, h ? activeColor : 0xFF202038, h ? activeColor : 0xFF161624);
 
             int textW = FontRenderUtility.getStringWidth(labArr[i]);
             int textY = mgY + (mgH - FontRenderUtility.getFontHeight()) / 2;
@@ -227,23 +268,26 @@ public class ClickGUI extends Screen {
 
         if (hoveredDescription != null) {
             activeTooltipText = hoveredDescription;
-            tooltipAlpha = Math.min(1.0f, tooltipAlpha + partialTicks * 0.15f);
+            tooltipAlpha = Math.min(1.0f, tooltipAlpha + 0.10f);
         } else {
-            tooltipAlpha = Math.max(0.0f, tooltipAlpha - partialTicks * 0.25f);
+            tooltipAlpha = Math.max(0.0f, tooltipAlpha - 0.15f);
         }
 
         if (tooltipAlpha > 0.02f && !activeTooltipText.isEmpty()) {
             int tx = mouseX + 8;
             int ty = mouseY + 8;
             int tw = FontRenderUtility.getStringWidth(activeTooltipText) + 6;
-            int th = 13;
+            int th = 14;
 
             if (tx + tw > this.width) tx = mouseX - tw - 4;
             if (ty + th > this.height) ty = mouseY - th - 4;
 
-            graphics.fill(tx, ty, tx + tw, ty + th, 0xEE141414);
-            Render2DEngine.drawBorder(graphics, tx, ty, tw, th, 1, 0xFF2C2C2C);
-            FontRenderUtility.drawString(graphics, activeTooltipText, tx + 3, ty + 2, 0xFFE0E0E0, true);
+            int ba = (int)(tooltipAlpha * 238);
+            int ta = (int)(tooltipAlpha * 255);
+            int bga = Math.min(255, (int)(tooltipAlpha * 100));
+            graphics.fill(tx, ty, tx + tw, ty + th, (ba << 24) | 0x141414);
+            Render2DEngine.drawBorder(graphics, tx, ty, tw, th, 1, (ta << 24) | 0x2C2C2C);
+            FontRenderUtility.drawString(graphics, activeTooltipText, tx + 3, ty + 3, (ta << 24) | 0xE0E0E0, true);
         }
 
         if (activeColorPalette != null) {
@@ -276,28 +320,30 @@ public class ClickGUI extends Screen {
         int expandedW = barW + (int)(40 * eased);
         int actualX = barX - (expandedW - barW) / 2;
 
-        graphics.fill(actualX, barY, actualX + expandedW, barY + barH, 0xEE141414);
-        Render2DEngine.drawBorder(graphics, actualX, barY, expandedW, barH, 1, 0xFF2C2C2C);
-        graphics.fill(actualX, barY + barH - 2, actualX + expandedW, barY + barH, glowColor);
+        graphics.fillGradient(actualX, barY, actualX + expandedW, barY + barH, 0xF0121228, 0xF00E0E1A);
+        Render2DEngine.drawBorder(graphics, actualX, barY, expandedW, barH, 1, ColorUtility.withAlpha(glowColor, 60));
+        graphics.fill(actualX, barY + barH - 1, actualX + expandedW, barY + barH, glowColor);
 
-        int iconX = actualX + 8;
-        int iconY = barY + (barH - 8) / 2;
-        graphics.fill(iconX, iconY, iconX + 6, iconY + 1, glowColor);
-        graphics.fill(iconX, iconY, iconX + 1, iconY + 6, glowColor);
-        graphics.fill(iconX + 5, iconY, iconX + 6, iconY + 6, glowColor);
-        graphics.fill(iconX, iconY + 5, iconX + 6, iconY + 6, glowColor);
-        graphics.fill(iconX + 5, iconY + 5, iconX + 8, iconY + 8, glowColor);
+        int iconSize = 14;
+        Identifier searchTex = getSearchTexture();
+        if (searchTex != null) {
+            int iconX = actualX + 8;
+            int iconY = barY + (barH - iconSize) / 2;
+            graphics.blit(searchTex, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
+        }
 
+        int textOffset = 8 + iconSize + 4;
         String searchText = searchQuery;
+        int textY = barY + (barH - FontRenderUtility.getFontHeight()) / 2 + 1;
         if (searchText.isEmpty() && !searchFocused) {
-            FontRenderUtility.drawString(graphics, "Search...", actualX + 20, barY + 6, 0xFF505068, true);
+            FontRenderUtility.drawString(graphics, "Search...", actualX + textOffset, textY, 0xFF505068, true);
         } else {
-            FontRenderUtility.drawString(graphics, searchText, actualX + 20, barY + 6, 0xFFC0C0D0, true);
+            FontRenderUtility.drawString(graphics, searchText, actualX + textOffset, textY, 0xFFC0C0D0, true);
             if (searchFocused) {
                 int textW = FontRenderUtility.getStringWidth(searchText);
                 float cursorBlink = (float)Math.sin(searchCursorCounter * 0.1f);
                 int cursorAlpha = (int)(150 + 105 * cursorBlink * cursorBlink * cursorBlink);
-                graphics.fill(actualX + 20 + textW, barY + 5, actualX + 22 + textW, barY + 15, (cursorAlpha << 24) | (glowColor & 0xFFFFFF));
+                graphics.fill(actualX + textOffset + textW, textY - 1, actualX + textOffset + 2 + textW, textY + FontRenderUtility.getFontHeight() + 1, (cursorAlpha << 24) | (glowColor & 0xFFFFFF));
             }
         }
 
@@ -309,7 +355,7 @@ public class ClickGUI extends Screen {
             if (resultCount > 0) {
                 String countText = String.valueOf(resultCount);
                 int cw = FontRenderUtility.getStringWidth(countText);
-                FontRenderUtility.drawString(graphics, countText, actualX + expandedW - cw - 8, barY + 6, 0xFF606080, true);
+                FontRenderUtility.drawString(graphics, countText, actualX + expandedW - cw - 8, textY, 0xFF606080, true);
             }
         }
     }
@@ -488,14 +534,39 @@ public class ClickGUI extends Screen {
     }
 
     @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (activeColorPalette != null) {
+            return false;
+        }
+
+        float finalScale = getAdaptiveScale();
+        float cx = this.width / 2.0f;
+        float cy = this.height / 2.0f;
+
+        double mx = (mouseX - cx) / finalScale + cx;
+        double my = (mouseY - cy) / finalScale + cy;
+
+        for (CategoryPanel panel : panels) {
+            if (panel.mouseScrolled(mx, my, horizontalAmount, verticalAmount, searchQuery)) {
+                return true;
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+    }
+
+    @Override
     public void onClose() {
         activeStringParameterElement = null;
         activeKeybindElement = null;
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
+            ravex.manager.LayoutManager.INSTANCE.save(panelMap);
             ravex.utility.sound.SoundUtility.playGuiClose();
             ravex.manager.ConfigManager.INSTANCE.save("default");
+            if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {
+                BlurUtility.disable();
+            }
         }
     }
 

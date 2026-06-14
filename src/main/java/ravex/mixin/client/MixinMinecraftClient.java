@@ -1,6 +1,10 @@
 package ravex.mixin.client;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.BookEditScreen;
+import net.minecraft.client.gui.screens.inventory.BookViewScreen;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -12,6 +16,28 @@ public abstract class MixinMinecraftClient {
     @Inject(method = "tick", at = @At("TAIL"))
     private void onTick(CallbackInfo ci) {
         RaveX.onClientTick();
+    }
+
+    @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
+    private void onSetScreen(Screen screen, CallbackInfo ci) {
+        if (screen instanceof BookViewScreen || screen instanceof BookEditScreen) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                ItemStack main = mc.player.getMainHandItem();
+                ItemStack off = mc.player.getOffhandItem();
+                if (ravex.modules.misc.AntiBookBan.INSTANCE.shouldBlock(main)
+                        || ravex.modules.misc.AntiBookBan.INSTANCE.shouldBlock(off)) {
+                    ci.cancel();
+                }
+            }
+        }
+    }
+
+    @Inject(method = "disconnectFromWorld", at = @At("HEAD"), cancellable = true)
+    private void onDisconnectFromWorld(net.minecraft.network.chat.Component component, CallbackInfo ci) {
+        if (ravex.modules.misc.AntiQuit.INSTANCE.shouldBlockDisconnect()) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "shouldEntityAppearGlowing", at = @At("HEAD"), cancellable = true)

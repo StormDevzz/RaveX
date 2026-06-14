@@ -2,26 +2,26 @@ package ravex.modules.render;
 
 import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 
-/**
- * FreeCam Module
- * Spectator-mode camera flying with JNI-accelerated C++ physics and controls.
- */
 public class FreeCam extends Module {
     public static final FreeCam INSTANCE = new FreeCam();
 
-    // Public fields read by MixinCamera.java for frame-rate independent rendering
     public double x, y, z;
     public float yaw, pitch;
     public double prevX, prevY, prevZ;
     public float prevYaw, prevPitch;
 
     private double targetX, targetY, targetZ;
+    private double frozenX, frozenY, frozenZ;
+    private float frozenYaw, frozenPitch;
 
     public final NumberParameter speed = new NumberParameter("Speed", 0.5, 0.1, 2.0, 0.1);
     public final NumberParameter smoothness = new NumberParameter("Smoothness", 0.2, 0.0, 0.9, 0.05);
+    public final BooleanParameter freeze = new BooleanParameter("Freeze", false);
+    public final BooleanParameter placeTrace = new BooleanParameter("Place Trace", true);
 
     private static boolean nativeAvailable = false;
 
@@ -38,6 +38,8 @@ public class FreeCam extends Module {
         super("FreeCam", Category.RENDER);
         addParameter(speed);
         addParameter(smoothness);
+        addParameter(freeze);
+        addParameter(placeTrace);
     }
 
     @Override
@@ -50,6 +52,12 @@ public class FreeCam extends Module {
             float startYaw = mc.player.getYRot();
             float startPitch = mc.player.getXRot();
 
+            frozenX = startX;
+            frozenY = mc.player.getY();
+            frozenZ = startZ;
+            frozenYaw = startYaw;
+            frozenPitch = startPitch;
+
             if (nativeAvailable) {
                 try {
                     nativeReset(startX, startY, startZ, startYaw, startPitch);
@@ -60,7 +68,6 @@ public class FreeCam extends Module {
                 }
             }
 
-            // Java Fallback
             this.prevX = this.x = startX;
             this.prevY = this.y = startY;
             this.prevZ = this.z = startZ;
@@ -73,18 +80,20 @@ public class FreeCam extends Module {
         }
     }
 
-    public void turn(double yRot, double xRot) {
-        if (nativeAvailable) {
-            try {
-                nativeTurn(yRot, xRot);
-                syncFromNative();
-                return;
-            } catch (UnsatisfiedLinkError e) {
-                nativeAvailable = false;
+    @Override
+    protected void onDisable() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            mc.player.setDeltaMovement(0, 0, 0);
+            if (freeze.getValue()) {
+                mc.player.setPos(frozenX, frozenY, frozenZ);
+                mc.player.setYRot(frozenYaw);
+                mc.player.setXRot(frozenPitch);
             }
         }
+    }
 
-        // Java Fallback (vanilla sensitivity behavior)
+    public void turnMixin(double yRot, double xRot) {
         this.yaw += (float) yRot;
         this.pitch += (float) xRot;
         this.pitch = Math.max(-90.0f, Math.min(90.0f, this.pitch));
@@ -94,6 +103,12 @@ public class FreeCam extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
+
+        if (freeze.getValue()) {
+            mc.player.setYRot(frozenYaw);
+            mc.player.setXRot(frozenPitch);
+            mc.player.setPos(frozenX, frozenY, frozenZ);
+        }
 
         double moveSpeed = speed.getValue();
         double smoothVal = smoothness.getValue();
@@ -116,7 +131,6 @@ public class FreeCam extends Module {
             }
         }
 
-        // Java Fallback Tick Behavior
         this.prevX = this.x;
         this.prevY = this.y;
         this.prevZ = this.z;
@@ -177,7 +191,6 @@ public class FreeCam extends Module {
             }
         }
 
-        // Java Fallback: buttery smooth positioning and angle-wrap check
         double renderX = this.prevX + (this.x - this.prevX) * partialTicks;
         double renderY = this.prevY + (this.y - this.prevY) * partialTicks;
         double renderZ = this.prevZ + (this.z - this.prevZ) * partialTicks;
@@ -196,6 +209,16 @@ public class FreeCam extends Module {
         output[4] = renderPitch;
         return output;
     }
+
+    public Vec3 getEyePosition(float tickDelta) {
+        return new Vec3(
+            this.prevX + (this.x - this.prevX) * tickDelta,
+            this.prevY + (this.y - this.prevY) * tickDelta,
+            this.prevZ + (this.z - this.prevZ) * tickDelta
+        );
+    }
+
+    public record Vec3(double x, double y, double z) {}
 
     private void syncFromNative() {
         if (nativeAvailable) {
@@ -216,18 +239,17 @@ public class FreeCam extends Module {
         }
     }
 
-    // ── Native Bindings ──────────────────────────────────────────────────────
     private static native void nativeReset(double x, double y, double z, float yaw, float pitch);
     private static native void nativeTurn(double yRot, double xRot);
     private static native void nativeUpdatePosition(boolean keyUp, boolean keyDown, boolean keyLeft, boolean keyRight, boolean keyJump, boolean keyShift, double speed, double smoothness);
     private static native void nativeGetCorrected(double partialTicks, double[] output);
-    
+
     private static native double nativeGetX();
     private static native double nativeGetY();
     private static native double nativeGetZ();
     private static native float nativeGetYaw();
     private static native float nativeGetPitch();
-    
+
     private static native double nativeGetPrevX();
     private static native double nativeGetPrevY();
     private static native double nativeGetPrevZ();

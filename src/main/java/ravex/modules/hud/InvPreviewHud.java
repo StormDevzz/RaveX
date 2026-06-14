@@ -6,22 +6,34 @@ import net.minecraft.world.item.ItemStack;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.HudModule;
 import ravex.modules.render.Hud;
+import ravex.parameter.BooleanParameter;
+import ravex.parameter.ColorParameter;
 
-/**
- * InvPreviewHud – shows the player's inventory as a compact icon grid.
- * Hotbar (9 items) on the bottom row, inventory above.
- */
 public class InvPreviewHud extends HudModule {
     public static final InvPreviewHud INSTANCE = new InvPreviewHud();
 
-    // Cell size + padding
     private static final int CELL = 16;
     private static final int PAD  = 2;
     private static final int COLS = 9;
 
     private InvPreviewHud() {
-        // 9 cols × (CELL+PAD) wide, 4 rows tall (+header 10px)
         super("InvPreview", 10, 280, COLS * (CELL + PAD) + PAD, 4 * (CELL + PAD) + PAD + 12);
+        addParameter(new ColorParameter("AccentColor", 0xFF1E88E5));
+        addParameter(new BooleanParameter("ShowLabel", true));
+    }
+
+    private int getAccent() {
+        for (var p : getParameters()) {
+            if (p instanceof ColorParameter cp) return cp.getValue();
+        }
+        return ColorUtility.getActiveColor();
+    }
+
+    private boolean showLabel() {
+        for (var p : getParameters()) {
+            if (p instanceof BooleanParameter bp && p.getName().equals("ShowLabel")) return bp.getValue();
+        }
+        return true;
     }
 
     @Override
@@ -30,51 +42,44 @@ public class InvPreviewHud extends HudModule {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        int activeColor = ColorUtility.getActiveColor();
+        int accent = getAccent();
         int bx = getX();
         int by = getY();
         int w  = getWidth();
         int h  = getHeight();
 
-        // Background
-        graphics.fill(bx, by, bx + w, by + h, 0xBB060610);
-        graphics.fill(bx, by, bx + w, by + 1, ColorUtility.withAlpha(activeColor, 120));
+        ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, w, h, accent);
+        if (showLabel()) {
+            ravex.utility.render.HudRenderer.drawLabel(graphics, "Inventory", bx, by, accent);
+        }
 
-        // Label
-        ravex.utility.render.FontRenderUtility.drawString(graphics, "Inventory", bx + 3, by + 3, ColorUtility.withAlpha(activeColor, 200), false);
+        int startY = by + (showLabel() ? 12 : 3);
 
-        int startY = by + 12;
-
-        // Rows 0-2: main inventory (items 9-35)
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < COLS; col++) {
                 int slot = 9 + row * COLS + col;
-                renderSlot(graphics, mc, slot, bx + PAD + col * (CELL + PAD), startY + PAD + row * (CELL + PAD), false, activeColor);
+                renderSlot(graphics, mc, slot, bx + PAD + col * (CELL + PAD), startY + PAD + row * (CELL + PAD), false, accent);
             }
         }
 
-        // Row 3: hotbar (items 0-8), highlighted
         int hotbarY = startY + PAD + 3 * (CELL + PAD);
-        // Hotbar background strip
         graphics.fill(bx + 1, hotbarY - 1, bx + w - 1, hotbarY + CELL + PAD + 1, 0x22FFFFFF);
         for (int col = 0; col < COLS; col++) {
             boolean isSelected = mc.player.getInventory().getSelectedSlot() == col;
-            renderSlot(graphics, mc, col, bx + PAD + col * (CELL + PAD), hotbarY, isSelected, activeColor);
+            renderSlot(graphics, mc, col, bx + PAD + col * (CELL + PAD), hotbarY, isSelected, accent);
         }
     }
 
-    private void renderSlot(GuiGraphics graphics, Minecraft mc, int inventorySlot, int x, int y, boolean highlight, int activeColor) {
-        // Slot background
-        int bg = highlight ? ColorUtility.withAlpha(activeColor, 40) : 0x22FFFFFF;
+    private void renderSlot(GuiGraphics graphics, Minecraft mc, int inventorySlot, int x, int y, boolean highlight, int accent) {
+        int bg = highlight ? ColorUtility.withAlpha(accent, 40) : 0x22FFFFFF;
         graphics.fill(x, y, x + CELL, y + CELL, bg);
         if (highlight) {
-            graphics.fill(x, y, x + CELL, y + 1, activeColor);
+            graphics.fill(x, y, x + CELL, y + 1, accent);
         }
 
         ItemStack stack = mc.player.getInventory().getItem(inventorySlot);
         if (!stack.isEmpty()) {
             graphics.renderItem(stack, x, y);
-            // Count
             if (stack.getCount() > 1) {
                 String countStr = stack.getCount() >= 64 ? "64" : String.valueOf(stack.getCount());
                 graphics.renderItemDecorations(mc.font, stack, x, y, countStr);

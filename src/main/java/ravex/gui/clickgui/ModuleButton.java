@@ -16,6 +16,7 @@ public class ModuleButton {
     private final Module module;
     private final List<ParameterElement> parameterElements = new ArrayList<>();
     private float hoverProgress = 0.0f;
+    private float enableAnim = 0.0f;
 
     public ModuleButton(Module module) {
         this.module = module;
@@ -35,32 +36,36 @@ public class ModuleButton {
 
         if (hovered) {
             ClickGUI.hoveredDescription = module.getDescription();
-            hoverProgress = Math.min(1.0f, hoverProgress + 0.15f);
+            hoverProgress = Math.min(1.0f, hoverProgress + 0.07f);
         } else {
-            hoverProgress = Math.max(0.0f, hoverProgress - 0.15f);
+            hoverProgress = Math.max(0.0f, hoverProgress - 0.07f);
+        }
+
+        float targetAnim = module.getEnabled() ? 1.0f : 0.0f;
+        if (enableAnim < targetAnim) {
+            enableAnim = Math.min(targetAnim, enableAnim + 0.06f);
+        } else if (enableAnim > targetAnim) {
+            enableAnim = Math.max(targetAnim, enableAnim - 0.10f);
         }
 
         int activeColor = ColorUtility.getActiveColor();
+        int disabledBg = 0xFF0D0D14;
 
-        if (module.getEnabled()) {
-            graphics.fill(x, currentY, x + width, currentY + btnH, activeColor);
+        if (enableAnim > 0.001f) {
+            int bg = lerpColor(disabledBg, activeColor, enableAnim);
+            graphics.fill(x, currentY, x + width, currentY + btnH, bg);
             if (hoverProgress > 0.01f) {
                 int alpha = (int)(hoverProgress * 0x15);
                 graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, alpha));
             }
-        } else {
-            if (hoverProgress > 0.01f) {
-                int alpha = (int)(hoverProgress * 0x22);
-                graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, alpha));
-            }
+        } else if (hoverProgress > 0.01f) {
+            int alpha = (int)(hoverProgress * 0x22);
+            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, alpha));
         }
 
-        int textColor;
-        if (module.getEnabled()) {
-            textColor = 0xFFFFFFFF;
-        } else {
-            textColor = hovered ? 0xFFE0E0E0 : 0xFF8F8FA0;
-        }
+        float textLerp = enableAnim;
+        if (textLerp < 0.001f) textLerp = hovered ? 0.5f : 0.0f;
+        int textColor = lerpColor(0xFF8F8FA0, 0xFFFFFFFF, textLerp);
 
         if (searchQuery != null && !searchQuery.isEmpty()
             && module.getName().toLowerCase().contains(searchQuery.toLowerCase())) {
@@ -91,14 +96,16 @@ public class ModuleButton {
             displayName += " [" + keyName + "]";
         }
 
+        int textY = currentY + (btnH - FontRenderUtility.getFontHeight()) / 2 + 1;
+
         if (searchQuery != null && !searchQuery.isEmpty() && !module.getName().isEmpty()) {
-            renderHighlightedName(graphics, displayName, x + 9, currentY + (btnH - 7) / 2, textColor, searchQuery);
+            renderHighlightedName(graphics, displayName, x + 9, textY, textColor, searchQuery);
         } else {
-            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, displayName, x + 9, currentY + (btnH - 7) / 2, textColor, true);
+            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, displayName, x + 9, textY, textColor, true);
         }
 
         if (!module.getParameters().isEmpty()) {
-            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, "+", x + width - 12, currentY + (btnH - 7) / 2, 0xFF7A7A8A, true);
+            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, "+", x + width - 12, textY, 0xFF7A7A8A, true);
         }
 
         currentY += btnH;
@@ -109,6 +116,7 @@ public class ModuleButton {
         String lower = text.toLowerCase();
         String qLower = query.toLowerCase();
         int queryLen = qLower.length();
+        int fontH = FontRenderUtility.getFontHeight();
 
         int currentX = x;
         int i = 0;
@@ -126,7 +134,7 @@ public class ModuleButton {
             }
 
             String matched = text.substring(matchIdx, Math.min(matchIdx + queryLen, text.length()));
-            graphics.fill(currentX - 1, y - 1, currentX + FontRenderUtility.getStringWidth(matched) + 1, y + 10, 0x44FFAA00);
+            graphics.fill(currentX - 1, y - 1, currentX + FontRenderUtility.getStringWidth(matched) + 1, y + fontH + 1, 0x44FFAA00);
             FontRenderUtility.drawString(graphics, matched, currentX, y, 0xFFFFFF80, true);
             currentX += FontRenderUtility.getStringWidth(matched);
 

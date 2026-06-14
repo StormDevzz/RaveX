@@ -4,7 +4,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.ModeParameter;
-import ravex.utility.player.PlayerUtility;
+import ravex.utility.misc.NativeLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -24,6 +24,10 @@ public class AntiVoid extends Module {
         addParameter(mode);
     }
 
+    static {
+        NativeLoader.load();
+    }
+
     @Override
     protected void onEnable() {
         lastOnGroundPos = null;
@@ -37,8 +41,16 @@ public class AntiVoid extends Module {
 
         if (p.onGround()) {
             lastOnGroundPos = p.position();
-        } else if (lastOnGroundPos != null && PlayerUtility.isOverVoid()) {
-            if (lastOnGroundPos.y - p.getY() > fallDistance.getValue()) {
+        } else if (lastOnGroundPos != null && lastOnGroundPos.y - p.getY() > fallDistance.getValue()) {
+            boolean isVoid = false;
+            try {
+                isVoid = nativeIsVoidFall(p.getY(), p.getDeltaMovement().y,
+                    mc.level.getMinY(), fallDistance.getValue());
+            } catch (UnsatisfiedLinkError e) {
+                isVoid = p.getY() < mc.level.getMinY() && p.getDeltaMovement().y < 0;
+            }
+
+            if (isVoid) {
                 if (mode.getValue().equals("Teleport")) {
                     p.setDeltaMovement(0, 0, 0);
                     p.teleportTo(lastOnGroundPos.x, lastOnGroundPos.y, lastOnGroundPos.z);
@@ -48,4 +60,6 @@ public class AntiVoid extends Module {
             }
         }
     }
+
+    private native boolean nativeIsVoidFall(double y, double motionY, int worldMinY, double fallDist);
 }

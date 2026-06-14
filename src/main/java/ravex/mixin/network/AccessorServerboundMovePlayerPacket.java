@@ -24,4 +24,26 @@ public interface AccessorServerboundMovePlayerPacket {
     @Mutable
     @Accessor("yRot")
     void setyRot(float yRot);
+
+    @Accessor("x")
+    double getX();
+
+    @Mutable
+    @Accessor("x")
+    void setX(double x);
+
+    @Accessor("y")
+    double getY();
+
+    @Mutable
+    @Accessor("y")
+    void setY(double y);
+
+    @Accessor("z")
+    double getZ();
+
+    @Mutable
+    @Accessor("z")
+    void setZ(double z);
 }
+

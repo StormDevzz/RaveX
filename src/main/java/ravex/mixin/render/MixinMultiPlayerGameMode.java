@@ -65,6 +65,10 @@ public class MixinMultiPlayerGameMode {
         if (ravex.modules.player.ToolSaver.INSTANCE.shouldSave(player.getMainHandItem())) {
             ci.cancel();
         }
+        if (ravex.modules.misc.AntiAttack.INSTANCE.shouldCancel(target)) {
+            ci.cancel();
+        }
+        ravex.modules.misc.Announcer.INSTANCE.onHit();
     }
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)

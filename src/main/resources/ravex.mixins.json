@@ -20,6 +20,7 @@
         "render.MixinItemRenderer",
         "render.MixinChat",
         "render.MixinChatComponent",
+        "render.MixinChatHud",
         "render.MixinEntityRenderer",
         "render.MixinDeltaTrackerTimer",
         "render.MixinLivingEntityRenderer",
@@ -75,9 +76,17 @@
         "player.AccessorContainerScreen",
         "player.MixinCommandHistory",
         "player.MixinClientPacketListener",
-        "render.MixinNameProtect"
+        "render.MixinNameProtect",
+        "client.MixinSoundEngine",
+        "client.MixinLocalPlayerDeath",
+        "misc.MixinDeathScreen",
+        "render.MixinGameRendererFreeCam",
+        "combat.MixinPlayerNoHitDelay",
+        "render.MixinItemStack",
+        "render.MixinClientTooltipComponent",
+        "render.AccessorRenderType"
     ],
-    "client": ["player.MixinChorusExploit", "player.MixinChorusPositionHandler", "player.MixinTridentBoost"],
+    "client": [        "player.MixinChorusExploit", "player.MixinChorusPositionHandler", "player.MixinTridentBoost", "player.MixinLivingEntityTracker"],
     "server": [],
     "injectors": {
         "defaultRequire": 1
