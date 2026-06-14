@@ -7,19 +7,37 @@ import java.util.List;
 public abstract class HudModule {
     private final String name;
     private boolean enabled;
-    private int x;
-    private int y;
+    private int targetX;
+    private int targetY;
     private int width;
     private int height;
     private final List<Parameter<?>> parameters = new ArrayList<>();
 
+    // Smooth animation state
+    private float displayX;
+    private float displayY;
+    private boolean animInitialized = false;
+
     public HudModule(String name, int defaultX, int defaultY, int width, int height) {
         this.name = name;
-        this.x = defaultX;
-        this.y = defaultY;
+        this.targetX = defaultX;
+        this.targetY = defaultY;
         this.width = width;
         this.height = height;
-        this.enabled = true; // Enabled by default
+        this.enabled = false;
+    }
+
+    public void updateAnimation() {
+        if (!animInitialized) {
+            displayX = targetX;
+            displayY = targetY;
+            animInitialized = true;
+        }
+        float speed = 0.25f;
+        displayX += (targetX - displayX) * speed;
+        displayY += (targetY - displayY) * speed;
+        if (Math.abs(targetX - displayX) < 0.3f) displayX = targetX;
+        if (Math.abs(targetY - displayY) < 0.3f) displayY = targetY;
     }
 
     public String getName() {
@@ -48,19 +66,35 @@ public abstract class HudModule {
     }
 
     public int getX() {
-        return x;
-    }
-
-    public void setX(int x) {
-        this.x = x;
+        return Math.round(displayX);
     }
 
     public int getY() {
-        return y;
+        return Math.round(displayY);
+    }
+
+    public int getTargetX() {
+        return targetX;
+    }
+
+    public int getTargetY() {
+        return targetY;
+    }
+
+    public void setX(int x) {
+        this.targetX = x;
+        if (!animInitialized) {
+            displayX = x;
+            animInitialized = true;
+        }
     }
 
     public void setY(int y) {
-        this.y = y;
+        this.targetY = y;
+        if (!animInitialized) {
+            displayY = y;
+            animInitialized = true;
+        }
     }
 
     public int getWidth() {

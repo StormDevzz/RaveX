@@ -1,12 +1,14 @@
 package ravex.gui.clickgui;
 
-import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.Render2DEngine;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
+import ravex.gui.clickgui.ClickGUI;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.modules.ModuleManager;
 import ravex.modules.render.ClickGui;
+import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.Render2DEngine;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ public class CategoryPanel {
     private final int width = 120;
     private final List<ModuleButton> allButtons = new ArrayList<>();
     private float headerAnim = 0f;
+    private int scrollIndex = 0;
 
     public CategoryPanel(Category category, int x, int y) {
         this.category = category;
@@ -43,6 +46,7 @@ public class CategoryPanel {
         }
     }
 
+    public Category getCategory() { return category; }
     public int getX() { return (int) x; }
     public int getY() { return (int) y; }
 
@@ -72,7 +76,6 @@ public class CategoryPanel {
                 targetY = mouseY - dragOffsetY;
             }
         }
-        // Snap immediately to target position (no spring animations)
         x = targetX;
         y = targetY;
 
@@ -83,32 +86,96 @@ public class CategoryPanel {
         if (visible.isEmpty() && !searchQuery.isEmpty()) return;
         if (visible.isEmpty() && allButtons.isEmpty()) return;
 
+        // Reset/clamp scroll index if list is smaller
+        if (visible.size() <= 20) {
+            scrollIndex = 0;
+        } else {
+            scrollIndex = Math.max(0, Math.min(scrollIndex, visible.size() - 20));
+        }
+
         int currentY = getCurrentHeight(searchQuery) + iy;
         int activeColor = ColorUtility.getActiveColor();
+        int r = 3;
 
-        // 1. Draw flat Category Panel Body
-        graphics.fill(ix, iy + 16, ix + width, currentY, 0xEE141414);
+        // ── Shadow ───────────────────────────────────────────────────────────────
+        graphics.fill(ix + 2, iy + 2, ix + width + 2, currentY + 2, 0x40000000);
 
-        // 2. Draw flat Category Panel Header
-        graphics.fill(ix, iy - 2, ix + width, iy + 16, 0xFF1C1C1C);
+        // ── Body (gradient) ──────────────────────────────────────────────────────
+        graphics.fillGradient(ix, iy + 16, ix + width, currentY, 0xE60E0E22, 0xE60A0A16);
 
-        // 3. Draw Accent Line (2px active color at the bottom of header)
-        graphics.fill(ix, iy + 14, ix + width, iy + 16, activeColor);
+        // ── Header (gradient with accent) ────────────────────────────────────────
+        graphics.fillGradient(ix, iy - 2, ix + width, iy + 16, ColorUtility.withAlpha(activeColor, 8), 0xFF18182E);
 
-        // 4. Draw Header Title Text
+        // ── Accent line at header bottom ─────────────────────────────────────────
+        graphics.fill(ix, iy + 14, ix + width, iy + 15, ColorUtility.withAlpha(activeColor, 90));
+        graphics.fill(ix, iy + 15, ix + width, iy + 16, activeColor);
+
+        // ── Category Icon ────────────────────────────────────────────────────────
+        Identifier catTex = ClickGUI.getCategoryTexture(category);
+        if (catTex != null) {
+            int iconSize = 14;
+            int iconX = ix + 4;
+            int iconY = iy + (16 - iconSize) / 2;
+            graphics.blit(catTex, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
+        }
+
+        // ── Header Title ─────────────────────────────────────────────────────────
         String header = category.getDisplayName();
-        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header, ix + 6, iy + 2, 0xFFFFFFFF, true);
+        int headerY = iy - 2 + (18 - FontRenderUtility.getFontHeight()) / 2 + 1;
+        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header, ix + 24, headerY, 0xFFFFFFFF, true);
 
-        // 5. Draw Border Outline
-        int borderColor = ClickGui.INSTANCE.outlines.getValue() ? ClickGui.INSTANCE.outlineColor.getValue() : 0xFF2C2C2C;
-        graphics.fill(ix - 1, iy - 3, ix + width + 1, iy - 2, borderColor); // Top
-        graphics.fill(ix - 1, iy - 2, ix, currentY, borderColor); // Left
-        graphics.fill(ix + width, iy - 2, ix + width + 1, currentY, borderColor); // Right
-        graphics.fill(ix - 1, currentY, ix + width + 1, currentY + 1, borderColor); // Bottom
+        // ── Module Counter Badge ────────────────────────────────────────────────
+        if (ClickGui.INSTANCE.moduleCounter.getValue()) {
+            int enabled = (int) allButtons.stream().filter(b -> b.getModule().getEnabled()).count();
+            int total = allButtons.size();
+            String countText = enabled + "/" + total;
+            int cw = FontRenderUtility.getStringWidth(countText);
+            int pad = 4;
+            int badgeX = ix + width - cw - pad - 4;
+            int badgeY = iy + 1;
+            int badgeH = 12;
+            graphics.fill(badgeX, badgeY, badgeX + cw + pad * 2, badgeY + badgeH, 0x30000000);
+            graphics.fill(badgeX, badgeY, badgeX + cw + pad * 2, badgeY + badgeH, ColorUtility.withAlpha(activeColor, 20));
+            graphics.fill(badgeX, badgeY + badgeH - 1, badgeX + cw + pad * 2, badgeY + badgeH, ColorUtility.withAlpha(activeColor, 60));
+            int badgeTextY = badgeY + (badgeH - FontRenderUtility.getFontHeight()) / 2 + 1;
+            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, countText, badgeX + pad, badgeTextY,
+                enabled == total ? 0xFFA0E0A0 : 0xFFE0E0E0, true);
+        }
+
+        // ── Border Outline ───────────────────────────────────────────────────────
+        int borderColor = ClickGui.INSTANCE.outlines.getValue() ? ClickGui.INSTANCE.outlineColor.getValue() : 0xFF1C1C2C;
+        graphics.fill(ix - 1, iy - 3, ix + width + 1, iy - 2, borderColor);
+        graphics.fill(ix - 1, iy - 2, ix, currentY, borderColor);
+        graphics.fill(ix + width, iy - 2, ix + width + 1, currentY, borderColor);
+        graphics.fill(ix - 1, currentY, ix + width + 1, currentY + 1, borderColor);
+
+        // ── Module Buttons ───────────────────────────────────────────────────────
+        List<ModuleButton> rendered = visible;
+        int btnWidth = width;
+        if (visible.size() > 20) {
+            rendered = visible.subList(scrollIndex, scrollIndex + 20);
+            btnWidth = width - 4; // leave 4px space for scrollbar on the right
+        }
 
         int[] renderYOut = { iy + 16 };
-        for (ModuleButton btn : visible) {
-            btn.render(graphics, ix, iy, width, mouseX, mouseY, renderYOut, searchQuery);
+        for (ModuleButton btn : rendered) {
+            btn.render(graphics, ix, iy, btnWidth, mouseX, mouseY, renderYOut, searchQuery);
+        }
+
+        // ── Scrollbar ────────────────────────────────────────────────────────────
+        if (visible.size() > 20) {
+            int trackX = ix + width - 4;
+            int trackY = iy + 16;
+            int trackW = 2;
+            int trackH = currentY - trackY - 2;
+
+            // Track background
+            graphics.fill(trackX, trackY, trackX + trackW, trackY + trackH, 0x1A000000);
+
+            // Thumb
+            int thumbH = Math.max(8, trackH * 20 / visible.size());
+            int thumbY = trackY + (trackH - thumbH) * scrollIndex / (visible.size() - 20);
+            graphics.fill(trackX, thumbY, trackX + trackW, thumbY + thumbH, ColorUtility.withAlpha(activeColor, 180));
         }
     }
 
@@ -142,9 +209,36 @@ public class CategoryPanel {
         }
 
         List<ModuleButton> visible = filterButtons(ClickGUI.searchQuery);
+        List<ModuleButton> rendered = visible;
+        int btnWidth = width;
+        if (visible.size() > 20) {
+            scrollIndex = Math.max(0, Math.min(scrollIndex, visible.size() - 20));
+            rendered = visible.subList(scrollIndex, scrollIndex + 20);
+            btnWidth = width - 4;
+        }
+
         int[] currentYOut = { iy + 16 };
-        for (ModuleButton btn : visible) {
-            if (btn.mouseClicked(mouseX, mouseY, button, ix, width, currentYOut, mc)) {
+        for (ModuleButton btn : rendered) {
+            if (btn.mouseClicked(mouseX, mouseY, button, ix, btnWidth, currentYOut, mc)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, String searchQuery) {
+        int ix = (int) x;
+        int iy = (int) y;
+        int currentY = getCurrentHeight(searchQuery) + iy;
+
+        if (mouseX >= ix && mouseX <= ix + width && mouseY >= iy + 16 && mouseY <= currentY) {
+            List<ModuleButton> visible = filterButtons(searchQuery);
+            if (visible.size() > 20) {
+                if (verticalAmount > 0) {
+                    scrollIndex = Math.max(0, scrollIndex - 1);
+                } else if (verticalAmount < 0) {
+                    scrollIndex = Math.min(visible.size() - 20, scrollIndex + 1);
+                }
                 return true;
             }
         }
@@ -157,9 +251,9 @@ public class CategoryPanel {
         if (visible.isEmpty() && allButtons.isEmpty()) return 0;
 
         int h = 16;
-        for (ModuleButton ignored : visible) {
-            h += 15;
-        }
+        int btnH = ravex.modules.render.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
+        int count = Math.min(visible.size(), 20);
+        h += count * btnH;
         return h;
     }
 }

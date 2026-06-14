@@ -12,7 +12,7 @@ public class Commands extends Module {
     public final BooleanParameter showFeedback = new BooleanParameter("Feedback", true);
 
     private Commands() {
-        super("Commands", Category.MISC);
+        super("Commands", Category.CLIENT);
         addParameter(prefix);
         addParameter(showFeedback);
         setEnabled(true); // Commands are enabled by default!

@@ -15,6 +15,10 @@ import ravex.utility.render.Render3DUtils;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
 import ravex.modules.render.BlockOutline;
+import ravex.modules.esp.Borders;
+import ravex.modules.esp.Tunnels;
+import ravex.modules.esp.HoleESP;
+import ravex.modules.esp.VoidESP;
 
 @Mixin(LevelRenderer.class)
 public class MixinLevelRenderer {
@@ -423,6 +427,27 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
+        // --- WebSelf highlight ---
+        ravex.modules.combat.WebSelf ws = ravex.modules.combat.WebSelf.INSTANCE;
+        if (ws.getEnabled() && ws.render.getValue() && ravex.modules.combat.WebSelf.targetPos != null) {
+            BlockPos p = ravex.modules.combat.WebSelf.targetPos;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate(
+                        (float)(p.getX() - camPos.x),
+                        (float)(p.getY() - camPos.y),
+                        (float)(p.getZ() - camPos.z)
+                    );
+                float r = ravex.modules.combat.WebSelf.renderR;
+                float g = ravex.modules.combat.WebSelf.renderG;
+                float b = ravex.modules.combat.WebSelf.renderB;
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, 0.20f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, 0.85f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, 0.25f);
+            } catch (Exception ignored) {}
+        }
+
         // --- Breaker highlight ---
         ravex.modules.combat.Breaker br = ravex.modules.combat.Breaker.INSTANCE;
         if (br.getEnabled() && br.render.getValue() && ravex.modules.combat.Breaker.currentMiningBlock != null) {
@@ -445,6 +470,304 @@ public class MixinLevelRenderer {
                 Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
                 Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
             } catch (Exception ignored) {}
+        }
+
+        // --- AutoTunnel highlight ---
+        ravex.modules.world.AutoTunnel at = ravex.modules.world.AutoTunnel.INSTANCE;
+        if (at.getEnabled() && at.render.getValue() && ravex.modules.world.AutoTunnel.currentTarget != null) {
+            BlockPos p = ravex.modules.world.AutoTunnel.currentTarget;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate(
+                        (float)(p.getX() - camPos.x),
+                        (float)(p.getY() - camPos.y),
+                        (float)(p.getZ() - camPos.z)
+                    );
+
+                int c = at.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = ((c >> 24) & 0xFF) / 255.0f;
+
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
+        // --- Nuker highlight ---
+        ravex.modules.world.Nuker nk = ravex.modules.world.Nuker.INSTANCE;
+        if (nk.getEnabled() && nk.render.getValue() && ravex.modules.world.Nuker.currentTarget != null) {
+            BlockPos p = ravex.modules.world.Nuker.currentTarget;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate(
+                        (float)(p.getX() - camPos.x),
+                        (float)(p.getY() - camPos.y),
+                        (float)(p.getZ() - camPos.z)
+                    );
+
+                int c = nk.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = ((c >> 24) & 0xFF) / 255.0f;
+
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
+        // --- AutoSmelt highlight ---
+        ravex.modules.world.AutoSmelt sm = ravex.modules.world.AutoSmelt.INSTANCE;
+        if (sm.getEnabled() && sm.render.getValue() && ravex.modules.world.AutoSmelt.currentTarget != null) {
+            BlockPos p = ravex.modules.world.AutoSmelt.currentTarget;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z));
+                int c = sm.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = ((c >> 24) & 0xFF) / 255.0f;
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
+        // --- AutoBrew highlight ---
+        ravex.modules.world.AutoBrew bw = ravex.modules.world.AutoBrew.INSTANCE;
+        if (bw.getEnabled() && bw.render.getValue() && ravex.modules.world.AutoBrew.currentTarget != null) {
+            BlockPos p = ravex.modules.world.AutoBrew.currentTarget;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z));
+                int c = bw.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = ((c >> 24) & 0xFF) / 255.0f;
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
+        // --- ECFarmer highlight ---
+        ravex.modules.world.ECFarmer ec = ravex.modules.world.ECFarmer.INSTANCE;
+        if (ec.getEnabled() && ec.render.getValue() && ravex.modules.world.ECFarmer.currentTarget != null) {
+            BlockPos p = ravex.modules.world.ECFarmer.currentTarget;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z));
+                int c = ec.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = ((c >> 24) & 0xFF) / 255.0f;
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
+        // --- PortalBuild highlight ---
+        ravex.modules.misc.PortalBuild pb = ravex.modules.misc.PortalBuild.INSTANCE;
+        if (pb.getEnabled() && pb.render.getValue() && ravex.modules.misc.PortalBuild.currentTarget != null) {
+            BlockPos p = ravex.modules.misc.PortalBuild.currentTarget;
+            try {
+                Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                    .translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z));
+                int c = pb.color.getValue();
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                float a = ((c >> 24) & 0xFF) / 255.0f;
+                double size = 1.002;
+                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
+                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+            } catch (Exception ignored) {}
+        }
+
+        // --- HoleFill highlight ---
+        ravex.modules.combat.HoleFill hf = ravex.modules.combat.HoleFill.INSTANCE;
+        if (hf.getEnabled() && hf.render.getValue()) {
+            for (var hole : ravex.modules.combat.HoleFill.holePositions) {
+                if (hole == null) continue;
+                try {
+                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                        .translate((float)(hole.getX() - camPos.x), (float)(hole.getY() - camPos.y), (float)(hole.getZ() - camPos.z));
+                    int c = hf.color.getValue();
+                    float r = ((c >> 16) & 0xFF) / 255.0f;
+                    float g = ((c >> 8) & 0xFF) / 255.0f;
+                    float b = (c & 0xFF) / 255.0f;
+                    float a = ((c >> 24) & 0xFF) / 255.0f;
+                    double size = 1.002;
+                    Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.15f);
+                    Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.85f);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // --- Borders ---
+        if (Borders.INSTANCE.getEnabled()) {
+            int rd = Borders.INSTANCE.renderDistance.getValue().intValue();
+            boolean showCurrent = Borders.INSTANCE.showCurrentChunk.getValue();
+            boolean showAll = Borders.INSTANCE.showChunkBorders.getValue();
+            int lc = Borders.INSTANCE.chunkColor.getValue();
+            float lr = ((lc >> 16) & 0xFF) / 255.0f;
+            float lg = ((lc >> 8) & 0xFF) / 255.0f;
+            float lb = (lc & 0xFF) / 255.0f;
+            float lw = Borders.INSTANCE.lineWidth.getValue().floatValue();
+
+            if (showAll && mc.player != null) {
+                int cx = mc.player.chunkPosition().x;
+                int cz = mc.player.chunkPosition().z;
+                for (int dx = -rd / 16; dx <= rd / 16; dx++) {
+                    for (int dz = -rd / 16; dz <= rd / 16; dz++) {
+                        if (showCurrent && dx == 0 && dz == 0) continue;
+                        int bx = (cx + dx) << 4;
+                        int bz = (cz + dz) << 4;
+                        try {
+                            Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                                .translate(bx - (float)camPos.x, 0, bz - (float)camPos.z);
+                            renderChunkBorderThroughWalls(matrix, bx, bz, lr, lg, lb, lw);
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+
+            if (showCurrent) {
+                int cc = Borders.INSTANCE.currentColor.getValue();
+                float cr = ((cc >> 16) & 0xFF) / 255.0f;
+                float cg = ((cc >> 8) & 0xFF) / 255.0f;
+                float cb = (cc & 0xFF) / 255.0f;
+                if (mc.player != null) {
+                    int cx = mc.player.chunkPosition().x;
+                    int cz = mc.player.chunkPosition().z;
+                    int bx = cx << 4;
+                    int bz = cz << 4;
+                    try {
+                        Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                            .translate(bx - (float)camPos.x, 0, bz - (float)camPos.z);
+                        renderChunkBorderThroughWalls(matrix, bx, bz, cr, cg, cb, lw + 1.0f);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        // --- Tunnels ---
+        if (Tunnels.INSTANCE.getEnabled()) {
+            int tunnelColorVal = Tunnels.INSTANCE.tunnelColor.getValue();
+            float tr = ((tunnelColorVal >> 16) & 0xFF) / 255.0f;
+            float tg = ((tunnelColorVal >> 8) & 0xFF) / 255.0f;
+            float tb = (tunnelColorVal & 0xFF) / 255.0f;
+            float ta = ((tunnelColorVal >> 24) & 0xFF) / 255.0f;
+            boolean filled = Tunnels.INSTANCE.filled.getValue();
+            boolean wire = Tunnels.INSTANCE.wireframe.getValue();
+            for (BlockPos pos : Tunnels.INSTANCE.getTunnelBlocks()) {
+                try {
+                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                        .translate((float)(pos.getX() - camPos.x), (float)(pos.getY() - camPos.y), (float)(pos.getZ() - camPos.z));
+                    if (filled) Render3DUtils.renderFilledBox(matrix, 1.002, tr, tg, tb, ta * 0.3f);
+                    if (wire) Render3DUtils.renderWireframe(matrix, 1.002, tr, tg, tb, ta * 0.85f);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // --- HoleESP ---
+        if (HoleESP.INSTANCE.getEnabled()) {
+            int c = HoleESP.INSTANCE.safeColor.getValue();
+            float hr = ((c >> 16) & 0xFF) / 255.0f;
+            float hg = ((c >> 8) & 0xFF) / 255.0f;
+            float hb = (c & 0xFF) / 255.0f;
+            float ha = ((c >> 24) & 0xFF) / 255.0f;
+            for (var pos : HoleESP.INSTANCE.getHoles()) {
+                try {
+                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                        .translate((float)(pos.getX() - camPos.x), (float)(pos.getY() - camPos.y), (float)(pos.getZ() - camPos.z));
+                    if (HoleESP.INSTANCE.filled.getValue()) Render3DUtils.renderFilledBox(matrix, 1.002, hr, hg, hb, ha * 0.25f, true);
+                    if (HoleESP.INSTANCE.wireframe.getValue()) Render3DUtils.renderWireframe(matrix, 1.002, hr, hg, hb, ha * 0.85f, 1.0f, true);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // --- VoidESP ---
+        if (VoidESP.INSTANCE.getEnabled()) {
+            int vc = VoidESP.INSTANCE.voidColor.getValue();
+            float vr = ((vc >> 16) & 0xFF) / 255.0f;
+            float vg = ((vc >> 8) & 0xFF) / 255.0f;
+            float vb = (vc & 0xFF) / 255.0f;
+            float va = ((vc >> 24) & 0xFF) / 255.0f;
+            boolean vf = VoidESP.INSTANCE.filled.getValue();
+            boolean vw = VoidESP.INSTANCE.wireframe.getValue();
+            for (BlockPos pos : VoidESP.INSTANCE.getVoidBlocks()) {
+                try {
+                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                        .translate((float)(pos.getX() - camPos.x), 0, (float)(pos.getZ() - camPos.z));
+                    if (vf) Render3DUtils.renderFilledBox(matrix, 16.0, vr, vg, vb, va * 0.15f);
+                    if (vw) Render3DUtils.renderWireframe(matrix, 16.0, vr, vg, vb, va * 0.4f);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // --- PacketMine animated highlight ---
+        ravex.modules.exploit.PacketMine pm = ravex.modules.exploit.PacketMine.INSTANCE;
+        if (pm.getEnabled() && pm.render.getValue()) {
+            long globalTime = System.currentTimeMillis();
+            for (var mb : ravex.modules.exploit.PacketMine.miningBlocks) {
+                if (mb == null || mb.pos == null) continue;
+                try {
+                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
+                        .translate((float)(mb.pos.getX() - camPos.x), (float)(mb.pos.getY() - camPos.y), (float)(mb.pos.getZ() - camPos.z));
+
+                    int c = pm.color.getValue();
+                    float r = ((c >> 16) & 0xFF) / 255.0f;
+                    float g = ((c >> 8) & 0xFF) / 255.0f;
+                    float b = (c & 0xFF) / 255.0f;
+
+                    long blockTime = globalTime - mb.startTime;
+                    float progress = Math.min(1.0f, (float)blockTime / (float)Math.max(1, mb.breakAt));
+                    float fadeOut = mb.done ? Math.max(0, 1.0f - (globalTime - mb.visibleUntil + 2500) / 2500.0f) : 1.0f;
+                    if (fadeOut <= 0.01f) continue;
+
+                    float pulse = 0.5f + 0.5f * (float)Math.sin(blockTime * 0.006 + progress * 3.14f);
+
+                    float flashR = r + (1.0f - r) * progress * 0.8f;
+                    float flashG = g + (1.0f - g) * progress * 0.8f;
+                    float flashB = b + (1.0f - b) * progress * 0.8f;
+                    double size = 1.002;
+                    float fillAlpha = (0.3f - 0.2f * progress) * pulse * fadeOut;
+                    Render3DUtils.renderFilledBox(matrix, size, flashR * pulse, flashG * pulse, flashB * pulse, fillAlpha);
+
+                    float wireAlpha = (0.3f + 0.5f * (1.0f - progress)) * fadeOut;
+                    Render3DUtils.renderWireframe(matrix, size * 1.005, r, g, b, wireAlpha);
+                    Render3DUtils.renderWireframe(matrix, size * 1.015, r, g, b, wireAlpha * 0.5f);
+                    Render3DUtils.renderWireframe(matrix, size * 1.025, r, g, b, wireAlpha * 0.2f);
+
+                    for (int i = 0; i < 3; i++) {
+                        float phase = (float)(blockTime * 0.003 + i * 2.09);
+                        float beamX = (float)Math.cos(phase) * 0.15f + 0.5f;
+                        float beamZ = (float)Math.sin(phase) * 0.15f + 0.5f;
+                        float beamY = (float)((phase % 6.28) / 6.28) * 1.2f - 0.1f;
+                        if (beamY < 0) beamY += 1.2f;
+                        Matrix4f beamMat = new Matrix4f(modelViewMatrix)
+                            .translate((float)(mb.pos.getX() + beamX - camPos.x),
+                                       (float)(mb.pos.getY() + beamY - camPos.y),
+                                       (float)(mb.pos.getZ() + beamZ - camPos.z));
+                        Render3DUtils.renderFilledBox(beamMat, 0.04, flashR, flashG, flashB, 0.6f * (1.0f - progress) * fadeOut);
+                    }
+                } catch (Exception ignored) {}
+            }
         }
 
     }
@@ -499,5 +822,14 @@ public class MixinLevelRenderer {
             Render3DUtils.renderWireframe(matrix, outlineSize, r, g, b, 0.95f, lineWidth);
             Render3DUtils.renderWireframe(matrix, outlineSize * 1.03, r, g, b, 0.3f, lineWidth);
         } catch (Exception ignored) {}
+    }
+
+    private void renderChunkBorderThroughWalls(Matrix4f matrix, int bx, int bz, float r, float g, float b, float lw) {
+        double size = 16.0;
+        Render3DUtils.renderWireframe(matrix, size, r, g, b, 0.6f, lw, true);
+        Matrix4f floorMat = new Matrix4f(matrix).translate(0, -64, 0);
+        Render3DUtils.renderWireframe(floorMat, size, r, g, b, 0.15f, lw * 0.5f, true);
+        Matrix4f ceilMat = new Matrix4f(matrix).translate(0, 320, 0);
+        Render3DUtils.renderWireframe(ceilMat, size, r, g, b, 0.15f, lw * 0.5f, true);
     }
 }

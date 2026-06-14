@@ -77,6 +77,11 @@ public class MixinLocalPlayer {
             ravexSavedPitch = player.getXRot();
             player.setYRot(ravex.modules.combat.Breaker.silentYaw);
             player.setXRot(ravex.modules.combat.Breaker.silentPitch);
+        } else if (ravex.modules.exploit.PacketMine.INSTANCE.getEnabled() && ravex.modules.exploit.PacketMine.INSTANCE.rotate.getValue().equals("Silent") && ravex.modules.exploit.PacketMine.hasSilentRotations) {
+            ravexSavedYaw = player.getYRot();
+            ravexSavedPitch = player.getXRot();
+            player.setYRot(ravex.modules.exploit.PacketMine.silentYaw);
+            player.setXRot(ravex.modules.exploit.PacketMine.silentPitch);
         }
     }
 
@@ -92,7 +97,8 @@ public class MixinLocalPlayer {
         boolean bowAimActive = ravex.modules.combat.BowAim.INSTANCE.getEnabled() && ravex.modules.combat.BowAim.INSTANCE.rotate.getValue().equals("Silent") && ravex.modules.combat.BowAim.hasSilentRotations();
         boolean quiverActive = ravex.modules.combat.Quiver.INSTANCE.getEnabled() && ravex.modules.combat.Quiver.hasSilentRotations();
         boolean breakerActive = ravex.modules.combat.Breaker.INSTANCE.getEnabled() && ravex.modules.combat.Breaker.INSTANCE.rotate.getValue().equals("Silent") && ravex.modules.combat.Breaker.hasSilentRotations;
-        if (acActive || trapActive || selfTrapActive || basePlaceActive || anchorAuraActive || antiAimActive || bowAimActive || quiverActive || breakerActive) {
+        boolean pmActive = ravex.modules.exploit.PacketMine.INSTANCE.getEnabled() && ravex.modules.exploit.PacketMine.INSTANCE.rotate.getValue().equals("Silent") && ravex.modules.exploit.PacketMine.hasSilentRotations;
+        if (acActive || trapActive || selfTrapActive || basePlaceActive || anchorAuraActive || antiAimActive || bowAimActive || quiverActive || breakerActive || pmActive) {
             player.setYRot(ravexSavedYaw);
             player.setXRot(ravexSavedPitch);
         }

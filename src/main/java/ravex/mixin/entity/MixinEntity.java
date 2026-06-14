@@ -10,6 +10,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.ESP;
+import ravex.modules.render.FreeCam;
+import ravex.modules.render.FreeLook;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity {
@@ -35,6 +37,18 @@ public abstract class MixinEntity {
                 }
                 ci.cancel();
             }
+            return;
+        }
+
+        if (FreeCam.INSTANCE.getEnabled()) {
+            FreeCam.INSTANCE.turnMixin(yRot * 0.15, xRot * 0.15);
+            ci.cancel();
+            return;
+        }
+
+        if (FreeLook.INSTANCE.getEnabled() && "Camera".equals(FreeLook.INSTANCE.mode.getValue())) {
+            FreeLook.INSTANCE.turn(yRot * 0.15, xRot * 0.15);
+            ci.cancel();
         }
     }
 

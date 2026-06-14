@@ -46,9 +46,17 @@ public class ConfigManager {
 
                 JsonObject paramsObj = new JsonObject();
                 for (Parameter<?> p : m.getParameters()) {
+                    if (p instanceof ravex.parameter.ActionParameter) continue;
                     paramsObj.addProperty(p.getName(), String.valueOf(p.getValue()));
                 }
                 modObj.add("parameters", paramsObj);
+
+                JsonObject extraObj = new JsonObject();
+                m.saveExtra(extraObj);
+                if (extraObj.size() > 0) {
+                    modObj.add("extra", extraObj);
+                }
+
                 root.add(m.getName(), modObj);
             }
 
@@ -90,6 +98,10 @@ public class ConfigManager {
                                 setParameterValueRaw(p, valStr);
                             }
                         }
+                    }
+
+                    if (modObj.has("extra")) {
+                        m.loadExtra(modObj.getAsJsonObject("extra"));
                     }
                 }
             }

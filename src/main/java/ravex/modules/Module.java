@@ -1,5 +1,6 @@
 package ravex.modules;
 
+import com.google.gson.JsonObject;
 import ravex.parameter.Parameter;
 import ravex.utility.sound.SoundUtility;
 import java.util.ArrayList;
@@ -87,4 +88,7 @@ public abstract class Module {
     protected void onEnable() {}
     protected void onDisable() {}
     public void onTick() {}
+
+    public void saveExtra(JsonObject obj) {}
+    public void loadExtra(JsonObject obj) {}
 }

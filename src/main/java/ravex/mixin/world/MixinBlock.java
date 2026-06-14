@@ -13,15 +13,25 @@ public class MixinBlock {
     @Inject(method = "getFriction", at = @At("RETURN"), cancellable = true)
     private void onGetFriction(CallbackInfoReturnable<Float> cir) {
         if (ravex.modules.movement.Sleepy.INSTANCE.getEnabled()) {
-            cir.setReturnValue(0.98F);
-            return;
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+                if (!ravex.modules.movement.Sleepy.INSTANCE.onlyOnGround.getValue() || mc.player.onGround()) {
+                    cir.setReturnValue(ravex.modules.movement.Sleepy.INSTANCE.friction.getValue().floatValue());
+                    return;
+                }
+            }
         }
 
         if (NoSlowDown.INSTANCE.getEnabled() && NoSlowDown.INSTANCE.blocks.getValue()) {
             Block self = (Block) (Object) this;
             if (self == Blocks.ICE || self == Blocks.PACKED_ICE || self == Blocks.BLUE_ICE || self == Blocks.FROSTED_ICE) {
                 cir.setReturnValue(0.6F); // Default block friction
+            } else {
+                String blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(self).toString();
+                float customFriction = NoSlowDown.getBlockFriction(blockId, cir.getReturnValue());
+                cir.setReturnValue(customFriction);
             }
         }
     }
 }
+

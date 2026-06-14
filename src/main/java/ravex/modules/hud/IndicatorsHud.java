@@ -6,30 +6,47 @@ import net.minecraft.world.entity.player.Player;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.HudModule;
 import ravex.modules.render.Hud;
+import ravex.parameter.BooleanParameter;
+import ravex.parameter.ColorParameter;
 
-/**
- * IndicatorsHud – five circular progress gauges:
- * Health · Armor · TPS · Speed · Knockback
- */
 public class IndicatorsHud extends HudModule {
     public static final IndicatorsHud INSTANCE = new IndicatorsHud();
 
-    private static final int RADIUS     = 18;   // circle radius in pixels
-    private static final int THICKNESS  = 3;    // arc thickness
-    private static final int SPACING    = 50;   // center-to-center spacing
+    private static final int RADIUS     = 16;
+    private static final int THICKNESS  = 4;
+    private static final int SPACING    = 48;
     private static final int COLS       = 5;
 
-    // Server TPS tracking
     private long lastRealTime  = 0;
     private long lastGameTick  = -1;
     private float smoothedTPS  = 20.0f;
-
-    // Knockback smoothing
     private float prevVelX = 0, prevVelZ = 0;
     private float smoothKB = 0;
 
     private IndicatorsHud() {
-        super("Indicators", 10, 340, COLS * SPACING + 10, RADIUS * 2 + 30);
+        super("Indicators", 10, 340, 10, 10);
+        addParameter(new ColorParameter("HealthColor", 0xFFFF4455));
+        addParameter(new ColorParameter("ArmorColor", 0xFF44AAFF));
+        addParameter(new ColorParameter("TPSColor", 0xFF44FF88));
+        addParameter(new ColorParameter("SpeedColor", 0xFFFFCC33));
+        addParameter(new ColorParameter("KBColor", 0xFFCC44FF));
+        addParameter(new BooleanParameter("Shadow", true));
+    }
+
+    private int getGaugeColor(int index) {
+        String[] names = {"HealthColor", "ArmorColor", "TPSColor", "SpeedColor", "KBColor"};
+        for (var p : getParameters()) {
+            if (p instanceof ColorParameter cp && cp.getName().equals(names[index])) return cp.getValue();
+        }
+        int[] def = {0xFFFF4455, 0xFF44AAFF, 0xFF44FF88, 0xFFFFCC33, 0xFFCC44FF};
+        return def[index];
+    }
+
+    private boolean getShadow() {
+        for (var p : getParameters()) {
+            if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) return bp.getValue();
+        }
+        return true;
     }
 
     @Override
@@ -46,90 +63,74 @@ public class IndicatorsHud extends HudModule {
         float armor   = Math.max(0, Math.min(1, player.getArmorValue() / 20.0f));
         float tps     = Math.max(0, Math.min(1, smoothedTPS / 20.0f));
         float speed   = (float) Math.min(1, Math.sqrt(player.getDeltaMovement().x * player.getDeltaMovement().x +
-                                                       player.getDeltaMovement().z * player.getDeltaMovement().z) / 0.3);
+                                                        player.getDeltaMovement().z * player.getDeltaMovement().z) / 0.3);
         float kb      = Math.max(0, Math.min(1, smoothKB / 0.4f));
+
+        boolean shadow = getShadow();
+
+        int pw = COLS * SPACING + 5;
+        int ph = RADIUS * 2 + 28;
+        setWidth(pw);
+        setHeight(ph);
 
         int bx = getX();
         int by = getY();
-        int w  = getWidth();
-        int h  = getHeight();
 
-        // Background
-        graphics.fill(bx, by, bx + w, by + h, 0xBB060610);
-        graphics.fill(bx, by, bx + w, by + 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), 80));
+        ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, pw, ph, ColorUtility.getActiveColor());
 
-        // Draw 5 gauges
         String[] labels = { "Health", "Armor", "TPS", "Speed", "Knockback" };
         float[] values  = { health,   armor,   tps,   speed,   kb };
-        int[]   colors  = {
-            0xFFFF4455,  // Health: red
-            0xFF44AAFF,  // Armor: blue
-            0xFF44FF88,  // TPS: green
-            0xFFFFCC33,  // Speed: gold
-            0xFFCC44FF   // Knockback: purple
-        };
-
-        // Text values to show
         String[] valueTexts = {
-            (int)(player.getHealth()) + "§7/" + (int)(player.getMaxHealth()),
+            (int)(player.getHealth()) + "\u00A77/" + (int)(player.getMaxHealth()),
             String.valueOf(player.getArmorValue()),
             String.format("%.1f", smoothedTPS),
-            String.format("%.1f", speed * 0.3 * 20 /* bps */),
+            String.format("%.0f", speed * 0.3 * 20),
             player.hurtTime > 0 ? String.format("%.2f", smoothKB) : "0.00"
         };
 
         for (int i = 0; i < COLS; i++) {
-            int cx = bx + 5 + RADIUS + i * SPACING;
+            int cx = bx + 3 + RADIUS + i * SPACING;
             int cy = by + RADIUS + 8;
-            drawGauge(graphics, cx, cy, RADIUS, THICKNESS, values[i], colors[i]);
+            int col = getGaugeColor(i);
+            drawGauge(graphics, cx, cy, RADIUS, THICKNESS, values[i], col);
 
-            // Center text
             String valStr = valueTexts[i];
             int tw = ravex.utility.render.FontRenderUtility.getStringWidth(valStr);
-            ravex.utility.render.FontRenderUtility.drawString(graphics, valStr, cx - tw / 2, cy - 4, colors[i], false);
+            ravex.utility.render.FontRenderUtility.drawString(graphics, valStr, cx - tw / 2, cy - 5, col, shadow);
 
-            // Label below
             int lw = ravex.utility.render.FontRenderUtility.getStringWidth(labels[i]);
-            ravex.utility.render.FontRenderUtility.drawString(graphics, labels[i], cx - lw / 2, by + h - 10, 0xFF8080A0, false);
+            ravex.utility.render.FontRenderUtility.drawString(graphics, labels[i], cx - lw / 2, by + ph - 11, 0xFF8080A0, false);
         }
     }
 
-    /**
-     * Draws a circular progress arc with a dark background ring.
-     * Starts at 12 o'clock (top), goes clockwise.
-     */
     private void drawGauge(GuiGraphics g, int cx, int cy, int r, int thick, float progress, int color) {
-        double step = 0.06; // radians per segment — smaller = smoother
-
-        // Background ring (full circle, dark)
-        for (double a = 0; a < Math.PI * 2; a += step) {
-            fillArcSegment(g, cx, cy, r, thick, a, 0x33FFFFFF);
-        }
-
-        // Progress arc (clockwise from top)
+        int bg = 0x22FFFFFF;
+        double step = Math.PI / 48;
         double total = progress * Math.PI * 2;
-        for (double a = -Math.PI / 2; a < -Math.PI / 2 + total; a += step) {
-            fillArcSegment(g, cx, cy, r, thick, a, color);
+
+        for (double a = 0; a < Math.PI * 2; a += step) {
+            boolean filled = a >= -Math.PI / 2 && a < -Math.PI / 2 + total;
+            int c = filled ? color : bg;
+            for (int t = 0; t < thick; t++) {
+                int rr = r - thick / 2 + t;
+                int px = (int)(cx + rr * Math.cos(a));
+                int py = (int)(cy + rr * Math.sin(a));
+                g.fill(px, py, px + 1, py + 1, c);
+            }
         }
 
-        // Endpoint dot (bright cap)
         if (progress > 0.01f) {
             double endA = -Math.PI / 2 + total;
-            int ex = (int)(cx + r * Math.cos(endA));
-            int ey = (int)(cy + r * Math.sin(endA));
-            g.fill(ex - 1, ey - 1, ex + 2, ey + 2, color | 0xFF000000);
-        }
-    }
-
-    private void fillArcSegment(GuiGraphics g, int cx, int cy, int r, int thick, double angle, int color) {
-        // Fill from r-thick+1 to r+1 pixels
-        for (int dr = 0; dr <= thick; dr++) {
-            int rr = r - thick / 2 + dr;
-            int px = (int)(cx + rr * Math.cos(angle));
-            int py = (int)(cy + rr * Math.sin(angle));
-            // Single pixel fill, slightly bigger for outer radius
-            int size = dr == thick / 2 ? 2 : 1;
-            g.fill(px, py, px + size, py + size, color);
+            int dotR = 2;
+            for (int dy = -dotR; dy <= dotR; dy++) {
+                for (int dx = -dotR; dx <= dotR; dx++) {
+                    if (dx * dx + dy * dy <= dotR * dotR) {
+                        int px = (int)(cx + (r - thick / 2.0 + 0.5) * Math.cos(endA)) + dx;
+                        int py = (int)(cy + (r - thick / 2.0 + 0.5) * Math.sin(endA)) + dy;
+                        g.fill(px, py, px + 1, py + 1, color);
+                    }
+                }
+            }
         }
     }
 
@@ -158,7 +159,7 @@ public class IndicatorsHud extends HudModule {
         if (player.hurtTime > 0 && deltaV > 0.05f) {
             smoothKB = smoothKB * 0.4f + deltaV * 0.6f;
         } else {
-            smoothKB = smoothKB * 0.85f; // decay
+            smoothKB = smoothKB * 0.85f;
         }
         prevVelX = vx;
         prevVelZ = vz;

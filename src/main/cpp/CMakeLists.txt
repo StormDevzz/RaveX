@@ -29,6 +29,38 @@ add_subdirectory(hooks/desktopgui)
 add_subdirectory(hooks/breaker)
 add_subdirectory(hooks/bowaim)
 add_subdirectory(hooks/quiver)
+add_subdirectory(hooks/mediaquery)
+add_subdirectory(hooks/safewalk)
+add_subdirectory(hooks/antivoid)
+add_subdirectory(hooks/antiquit)
+add_subdirectory(hooks/nonarrator)
+add_subdirectory(hooks/nopacktkick)
+add_subdirectory(hooks/coordlogger)
+add_subdirectory(hooks/phase)
+add_subdirectory(hooks/rocketextender)
+add_subdirectory(hooks/raytracebypass)
+add_subdirectory(hooks/noslow)
+add_subdirectory(hooks/faststairs)
+add_subdirectory(hooks/nofall)
+add_subdirectory(hooks/replenish)
+add_subdirectory(hooks/nuker)
+add_subdirectory(hooks/holefill)
+add_subdirectory(hooks/packetmine)
+add_subdirectory(hooks/autoclicker)
+add_subdirectory(hooks/antibot)
+add_subdirectory(hooks/autodrop)
+add_subdirectory(hooks/selffill)
+add_subdirectory(hooks/burrow)
+add_subdirectory(hooks/animations)
+add_subdirectory(hooks/tunnels)
+add_subdirectory(hooks/holeesp)
+add_subdirectory(hooks/voidesp)
+add_subdirectory(hooks/autoregear)
+add_subdirectory(hooks/antiregear)
+
+
+
+
 
 
 

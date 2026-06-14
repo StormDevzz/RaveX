@@ -462,12 +462,120 @@ public abstract class MixinInGameHUD {
             }
         }
 
+        // --- AutoSmelt 2D Overlay ---
+        ravex.modules.world.AutoSmelt asm = ravex.modules.world.AutoSmelt.INSTANCE;
+        if (asm.getEnabled() && asm.render.getValue() && ravex.modules.world.AutoSmelt.currentTarget != null) {
+            BlockPos p = ravex.modules.world.AutoSmelt.currentTarget;
+            Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
+            Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+            if (proj != null) {
+                Vec3 dir = pos3d.subtract(cameraPos).normalize();
+                Vec3 look = mc.player.getViewVector(pt);
+                if (dir.dot(look) > 0.0) {
+                    double sx = (proj.x + 1.0) / 2.0 * context.guiWidth();
+                    double sy = (1.0 - proj.y) / 2.0 * context.guiHeight();
+                    int x = (int) sx;
+                    int y = (int) sy;
+
+                    String statusText = "";
+                    if (mc.player.containerMenu instanceof net.minecraft.world.inventory.AbstractFurnaceMenu furnace) {
+                        var resultStack = furnace.getSlot(2).getItem();
+                        var inputStack = furnace.getSlot(0).getItem();
+                        if (!resultStack.isEmpty()) {
+                            statusText = "§fResult: §e" + resultStack.getHoverName().getString() + " §7x" + resultStack.getCount();
+                        } else if (!inputStack.isEmpty()) {
+                            float progress = furnace.getBurnProgress();
+                            statusText = "§7Smelting: §f" + inputStack.getHoverName().getString() + " §7(" + (int)(progress * 100) + "%)";
+                        } else {
+                            statusText = "§7Idle";
+                        }
+                    } else {
+                        statusText = "§7Furnace";
+                    }
+
+                    int w = mc.font.width(statusText);
+                    context.drawString(mc.font, statusText, x - w / 2, y - 4, 0xFFFFFFFF, true);
+                }
+            }
+        }
+
+        // --- AutoBrew 2D Overlay ---
+        ravex.modules.world.AutoBrew ab = ravex.modules.world.AutoBrew.INSTANCE;
+        if (ab.getEnabled() && ab.render.getValue() && ravex.modules.world.AutoBrew.currentTarget != null) {
+            BlockPos p = ravex.modules.world.AutoBrew.currentTarget;
+            Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
+            Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+            if (proj != null) {
+                Vec3 dir = pos3d.subtract(cameraPos).normalize();
+                Vec3 look = mc.player.getViewVector(pt);
+                if (dir.dot(look) > 0.0) {
+                    double sx = (proj.x + 1.0) / 2.0 * context.guiWidth();
+                    double sy = (1.0 - proj.y) / 2.0 * context.guiHeight();
+                    int x = (int) sx;
+                    int y = (int) sy;
+
+                    String statusText = "";
+                    if (mc.player.containerMenu instanceof net.minecraft.world.inventory.BrewingStandMenu brew) {
+                        int ticks = brew.getBrewingTicks();
+                        int fuel = brew.getFuel();
+                        var ingr = brew.getSlot(3).getItem();
+
+                        if (ticks > 0) {
+                            statusText = "§dBrewing... §7(" + (400 - ticks) / 20 + "s)";
+                        } else if (!ingr.isEmpty()) {
+                            statusText = "§dReady: §f" + ingr.getHoverName().getString();
+                        } else {
+                            statusText = "§7Idle";
+                        }
+
+                        String fuelText = "§7Fuel: " + fuel;
+
+                        String totalText = statusText + " | " + fuelText;
+                        int w = mc.font.width(totalText);
+                        context.drawString(mc.font, totalText, x - w / 2, y - 4, 0xFFFFFFFF, true);
+                    }
+                }
+            }
+        }
+
+        // --- PacketMine 2D overlay (unbobbed) ---
+        ravex.modules.exploit.PacketMine pm = ravex.modules.exploit.PacketMine.INSTANCE;
+        if (pm.getEnabled() && pm.render.getValue()) {
+            for (var mb : ravex.modules.exploit.PacketMine.miningBlocks) {
+                if (mb == null || mb.pos == null) continue;
+                long now = System.currentTimeMillis();
+                boolean expired = mb.done && now > mb.visibleUntil;
+                if (expired) continue;
+                Vec3 pos3d = new Vec3(mb.pos.getX() + 0.5, mb.pos.getY() + 1.4, mb.pos.getZ() + 0.5);
+                Vec3 proj = projectPointToScreenUnbobbed(pos3d);
+                if (proj != null) {
+                    double sx = (proj.x + 1.0) / 2.0 * context.guiWidth();
+                    double sy = (1.0 - proj.y) / 2.0 * context.guiHeight();
+                    int x = (int) sx;
+                    int y = (int) sy;
+
+                    long elapsed = now - mb.startTime;
+                    int pct = mb.done ? 100 : (int)((float)elapsed / Math.max(1, mb.breakAt) * 100);
+                    pct = Math.min(100, pct);
+
+                    if (mb.done) {
+                        context.drawString(mc.font, "Done", x - mc.font.width("Done") / 2, y - 4, 0xFFFFFFFF, true);
+                    } else {
+                        context.drawString(mc.font, pct + "%", x - mc.font.width(pct + "%") / 2, y - 4, 0xFFFFFFFF, true);
+                    }
+                }
+            }
+        }
+
+        ravex.utility.notification.NotificationManager.render(context);
+
         renderHud(context, tickCounter);
     }
 
     private void renderHud(GuiGraphics context, DeltaTracker tickCounter) {
         for (HudModule hud : ModuleManager.INSTANCE.getHudModules()) {
             if (hud.getEnabled()) {
+                hud.updateAnimation();
                 hud.render(context, tickCounter.getGameTimeDeltaTicks());
             }
         }
