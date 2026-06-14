@@ -2,6 +2,7 @@ package ravex.gui.clickgui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
 import ravex.modules.Module;
 import ravex.modules.render.ClickGui;
 import ravex.utility.render.FontRenderUtility;
@@ -10,19 +11,66 @@ import ravex.parameter.Parameter;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ModuleButton {
+    public static final Set<Module> expandedModules = new HashSet<>();
+    private static long lastGearTick = System.currentTimeMillis();
+    private static final int MAX_INLINE_HEIGHT = 220;
+
+    private int inlineScrollTarget = 0;
+    private float inlineScrollAnim = 0f;
+
+    public static void tickAllGears() {
+        float speed = ClickGui.INSTANCE.gearRotationSpeed.getValue().floatValue();
+        if (speed <= 0 || expandedModules.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        float dt = Math.min(100f, now - lastGearTick) / 1000f;
+        lastGearTick = now;
+        for (Module m : expandedModules) {
+            float cur = m.getGearAngle();
+            m.setGearAngle(cur + speed * dt, now);
+        }
+    }
+
     private final Module module;
     private final List<ParameterElement> parameterElements = new ArrayList<>();
     private float hoverProgress = 0.0f;
     private float enableAnim = 0.0f;
+    private boolean expanded = false;
+    private float expandAnim = 0.0f;
 
     public ModuleButton(Module module) {
         this.module = module;
         for (Parameter<?> p : module.getParameters()) {
             parameterElements.add(new ParameterElement(p));
         }
+    }
+
+    public boolean isExpanded() { return expanded; }
+
+    public int getExpandedHeight(int panelWidth) {
+        if (!expanded) return 0;
+        int h = 0;
+        for (ParameterElement pe : parameterElements) {
+            if (pe.getParameter().isVisible()) {
+                h += pe.getHeight();
+            }
+        }
+        return Math.min(h, MAX_INLINE_HEIGHT) + 4;
+    }
+
+    public void onInlineScroll(double amount) {
+        int fullH = 0;
+        for (ParameterElement pe : parameterElements) {
+            if (pe.getParameter().isVisible()) {
+                fullH += pe.getHeight();
+            }
+        }
+        int maxScroll = Math.max(0, fullH - MAX_INLINE_HEIGHT);
+        inlineScrollTarget = Math.max(0, Math.min(maxScroll, inlineScrollTarget - (int)amount * 20));
     }
 
     public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut) {
@@ -99,16 +147,100 @@ public class ModuleButton {
         int textY = currentY + (btnH - FontRenderUtility.getFontHeight()) / 2 + 1;
 
         if (searchQuery != null && !searchQuery.isEmpty() && !module.getName().isEmpty()) {
-            renderHighlightedName(graphics, displayName, x + 9, textY, textColor, searchQuery);
+            renderHighlightedName(graphics, displayName, x + ravex.modules.client.Settings.INSTANCE.moduleTextX.getValue().intValue(), textY, textColor, searchQuery);
         } else {
-            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, displayName, x + 9, textY, textColor, true);
+            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, displayName, x + ravex.modules.client.Settings.INSTANCE.moduleTextX.getValue().intValue(), textY, textColor, true);
         }
 
-        if (!module.getParameters().isEmpty()) {
-            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, "+", x + width - 12, textY, 0xFF7A7A8A, true);
+        boolean hasParams = !module.getParameters().isEmpty();
+        if (hasParams) {
+            Identifier settingsTex = ravex.utility.render.TextureLoader.getSettingsWhiteTexture();
+            if (settingsTex == null) settingsTex = ravex.utility.render.TextureLoader.getSettingsTexture();
+            if (settingsTex != null) {
+                int iconSize = 10;
+                int iconX = x + width - iconSize - 6;
+                int iconY = currentY + (btnH - iconSize) / 2;
+                boolean rotating = !ClickGui.INSTANCE.separateSettings.getValue() && expanded;
+                float angle = module.getGearAngle();
+                var pose = graphics.pose();
+                pose.pushMatrix();
+                pose.translate(iconX + iconSize / 2f, iconY + iconSize / 2f);
+                if (rotating) {
+                    pose.rotate(angle * (float)Math.PI / 180f);
+                }
+                pose.translate(-(iconX + iconSize / 2f), -(iconY + iconSize / 2f));
+                graphics.blit(settingsTex, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
+                pose.popMatrix();
+            } else {
+                boolean sepSettings = ClickGui.INSTANCE.separateSettings.getValue();
+                String indicator = sepSettings ? "+" : (expanded ? "-" : "+");
+                FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, indicator, x + width - 12, textY, 0xFF7A7A8A, true);
+            }
         }
 
         currentY += btnH;
+
+        // Render inline expanded parameters
+        if (hasParams) {
+            float targetExpand = expanded ? 1.0f : 0.0f;
+            if (expandAnim < targetExpand) {
+                expandAnim = Math.min(targetExpand, expandAnim + 0.08f);
+            } else if (expandAnim > targetExpand) {
+                expandAnim = Math.max(targetExpand, expandAnim - 0.08f);
+            }
+
+            if (expandAnim > 0.01f) {
+                int paramAreaH = 0;
+                int paramW = width - 6;
+                for (ParameterElement pe : parameterElements) {
+                    if (pe.getParameter().isVisible()) {
+                        paramAreaH += pe.getHeight();
+                    }
+                }
+                int cappedH = Math.min(paramAreaH, MAX_INLINE_HEIGHT);
+                int displayH = (int)(cappedH * expandAnim);
+                int bgCol = 0xFF0A0A14;
+                graphics.fill(x + 1, currentY, x + width - 1, currentY + displayH + 4, bgCol);
+
+                if (ClickGui.INSTANCE.smoothScroll.getValue()) {
+                    float lerp = ClickGui.INSTANCE.scrollSmoothness.getValue().floatValue() / 100f;
+                    inlineScrollAnim += (inlineScrollTarget - inlineScrollAnim) * lerp;
+                } else {
+                    inlineScrollAnim = inlineScrollTarget;
+                }
+                int scrollOffset = Math.round(inlineScrollAnim);
+                int pY = currentY + 2 - scrollOffset;
+                int visTop = currentY + 2;
+                int visBot = currentY + 2 + displayH;
+                graphics.enableScissor(x + 1, currentY, x + width - 1, currentY + displayH + 4);
+                for (ParameterElement pe : parameterElements) {
+                    if (!pe.getParameter().isVisible()) continue;
+                    int pHeight = pe.getHeight();
+                    int pBot = pY + pHeight;
+                    if (pBot > visTop && pY < visBot) {
+                        float oldExpand = expandAnim;
+                        expandAnim = 1.0f;
+                        pe.render(graphics, x + 4, pY, paramW, pHeight, mouseX, mouseY);
+                        expandAnim = oldExpand;
+                    }
+                    pY += pHeight;
+                }
+
+                int maxScroll = Math.max(0, paramAreaH - MAX_INLINE_HEIGHT);
+                if (inlineScrollTarget > 0) {
+                    graphics.fillGradient(x + 1, currentY, x + width - 1, currentY + 12, bgCol, 0x000A0A14);
+                }
+                if (inlineScrollTarget < maxScroll) {
+                    graphics.fillGradient(x + 1, currentY + displayH + 4 - 12, x + width - 1, currentY + displayH + 4, 0x000A0A14, bgCol);
+                }
+
+                graphics.disableScissor();
+                currentY += displayH + 4;
+            }
+        } else {
+            expandAnim = Math.max(0.0f, expandAnim - 0.10f);
+        }
+
         currentYOut[0] = currentY;
     }
 
@@ -164,22 +296,52 @@ public class ModuleButton {
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int width, int[] currentYOut, net.minecraft.client.Minecraft mc) {
         int currentY = currentYOut[0];
         int btnH = ravex.modules.render.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
-        currentYOut[0] = currentY + btnH;
+        int totalH = btnH + (expanded && !ClickGui.INSTANCE.separateSettings.getValue() ? getExpandedHeight(width) : 0);
+        boolean sepMode = ClickGui.INSTANCE.separateSettings.getValue();
 
-        if (mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + btnH) {
-            if (button == 0) {
-                module.toggle();
-            } else if (button == 1 && !module.getParameters().isEmpty()) {
-                Minecraft.getInstance().setScreen(new ModuleSettingsScreen(Minecraft.getInstance().screen, module));
-            } else if (button == 2) {
-                ClickGUI.bindingModuleButton = this;
-                if (mc.player != null) {
-                    mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 1.5f);
+        if (mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + totalH) {
+            if (mouseY <= currentY + btnH) {
+                if (button == 0) {
+                    module.toggle();
+                } else if (button == 1 && !module.getParameters().isEmpty()) {
+                    if (sepMode) {
+                        Minecraft.getInstance().setScreen(new ModuleSettingsScreen(Minecraft.getInstance().screen, module));
+                    } else {
+                        expanded = !expanded;
+                        if (expanded) {
+                            expandedModules.add(module);
+                            inlineScrollTarget = 0;
+                        } else {
+                            expandedModules.remove(module);
+                        }
+                    }
+                } else if (button == 2) {
+                    ClickGUI.bindingModuleButton = this;
+                    if (mc.player != null) {
+                        mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 1.5f);
+                    }
+                }
+            } else if (!sepMode && expanded) {
+                int scrollOffset = Math.round(inlineScrollAnim);
+                int pY = currentY + btnH + 2 - scrollOffset;
+                int paramW = width - 6;
+                for (ParameterElement pe : parameterElements) {
+                    if (!pe.getParameter().isVisible()) continue;
+                    int pH = pe.getHeight();
+                    if (mouseX >= x + 4 && mouseX <= x + 4 + paramW && mouseY >= pY && mouseY <= pY + pH) {
+                        if (pe.mouseClicked(mouseX, mouseY, button, x + 4, pY, paramW, pH)) {
+                            currentYOut[0] = currentY + totalH;
+                            return true;
+                        }
+                    }
+                    pY += pH;
                 }
             }
+            currentYOut[0] = currentY + totalH;
             return true;
         }
 
+        currentYOut[0] = currentY + totalH;
         return false;
     }
 

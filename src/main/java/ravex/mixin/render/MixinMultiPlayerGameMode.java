@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.misc.BlockSelector;
 import ravex.modules.misc.ItemScroller;
+import ravex.modules.exploit.PacketPlace;
 
 @Mixin(MultiPlayerGameMode.class)
 public class MixinMultiPlayerGameMode {
@@ -98,6 +99,9 @@ public class MixinMultiPlayerGameMode {
     private void onUseItemOnHead(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir) {
         if (ravex.modules.player.ToolSaver.INSTANCE.shouldSave(player.getItemInHand(hand))) {
             cir.setReturnValue(InteractionResult.PASS);
+        }
+        if (PacketPlace.INSTANCE.shouldIntercept()) {
+            cir.setReturnValue(InteractionResult.SUCCESS);
         }
     }
 }

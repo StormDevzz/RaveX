@@ -35,6 +35,20 @@ public class ClickGui extends Module {
     public final BooleanParameter companionImage = new BooleanParameter("Show Image", false);
     public final ModeParameter companionType = new ModeParameter("Image Type", "Femboy", List.of("Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow"));
 
+    // Inline vs separate window for module settings
+    public final BooleanParameter separateSettings = new BooleanParameter("Separate Settings", true);
+
+    // Gear icon rotation speed (degrees per second)
+    public final NumberParameter gearRotationSpeed = new NumberParameter("Gear Speed", 30, 0, 180, 5);
+
+    // Smooth scrolling
+    public final BooleanParameter smoothScroll = new BooleanParameter("Smooth Scroll", true);
+    public final NumberParameter scrollSmoothness = new NumberParameter("Scroll Smoothness", 12, 1, 40, 1);
+
+    // Category header glow
+    public final BooleanParameter headerGlow = new BooleanParameter("Header Glow", true);
+    public final NumberParameter headerGlowIntensity = new NumberParameter("Glow Intensity", 20, 5, 60, 5);
+
     private ClickGui() {
         super("ClickGui", Category.CLIENT);
         addParameter(drawBackground);
@@ -54,6 +68,12 @@ public class ClickGui extends Module {
         addParameter(moduleCounter);
         addParameter(companionImage);
         addParameter(companionType);
+        addParameter(separateSettings);
+        addParameter(gearRotationSpeed);
+        addParameter(smoothScroll);
+        addParameter(scrollSmoothness);
+        addParameter(headerGlow);
+        addParameter(headerGlowIntensity);
         color1.setVisible(() -> "Static".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue()) || "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         setEnabled(true);

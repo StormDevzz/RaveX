@@ -22,6 +22,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.core.component.DataComponents;
 
+import ravex.RaveX;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -75,7 +76,7 @@ public class AnchorAura extends Module {
             System.loadLibrary("ravex_anchoraura");
             nativeAvailable = true;
         } catch (UnsatisfiedLinkError e) {
-            System.err.println("[AnchorAura JNI] Failed to load native library: " + e.getMessage());
+            RaveX.LOGGER.warn("[AnchorAura JNI] Failed to load native library: {}", e.getMessage());
         }
     }
 

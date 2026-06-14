@@ -162,6 +162,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("HighJump",        "Jump extremely high.");
         DESCRIPTIONS.put("FastStairs",      "Speeds up stairs climbing using C++ JNI.");
         DESCRIPTIONS.put("NoFall",          "Prevents fall damage using NCP/Grim bypass JNI.");
+        DESCRIPTIONS.put("Flight",          "Creative flight with various bypass modes.");
         DESCRIPTIONS.put("InventoryCleaner","Select and auto-drop unwanted items from inventory.");
         DESCRIPTIONS.put("Replenish",       "Auto-refills hotbar items from inventory when below threshold.");
         DESCRIPTIONS.put("AutoLight",       "Automatically places torches in dark areas.");
@@ -199,6 +200,20 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("VoidESP",         "Highlights void areas below.");
         DESCRIPTIONS.put("AutoReGear",      "Automatically refills items from containers.");
         DESCRIPTIONS.put("AntiReGear",      "Automatically breaks nearby enemy containers.");
+        DESCRIPTIONS.put("Skeleton",        "Renders player skeleton models.");
+        DESCRIPTIONS.put("ExtraBook",       "Extra book editing utilities.");
+        DESCRIPTIONS.put("BookFill",        "Automatically fills writable books.");
+        DESCRIPTIONS.put("ChatHud",         "Custom chat overlay and filtering.");
+        DESCRIPTIONS.put("CooldownsHud",    "Displays item cooldowns on the HUD.");
+        DESCRIPTIONS.put("IndicatorsHud",   "Shows target info indicators on screen.");
+        DESCRIPTIONS.put("InvPreviewHud",   "Preview inventories on hover.");
+        DESCRIPTIONS.put("NowPlayingHud",   "Displays now playing track info.");
+        DESCRIPTIONS.put("Settings",        "Client settings and configuration.");
+        DESCRIPTIONS.put("TpsHud",          "Visualizes server TPS on the HUD.");
+        DESCRIPTIONS.put("Calculator",      "In-game calculator utility.");
+        DESCRIPTIONS.put("Fonts",           "Customize fonts, size and text appearance.");
+        DESCRIPTIONS.put("PacketPlace",     "Packet block placement.");
+        DESCRIPTIONS.put("PingSpoof",       "Spoof ping latency.");
     }
 
     public static String getDescription(String moduleName) {

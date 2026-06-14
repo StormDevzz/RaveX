@@ -25,10 +25,20 @@ public class ModuleSettingsScreen extends Screen {
     private final Module module;
     private final List<ParameterElement> paramElements = new ArrayList<>();
     private float scrollOffset = 0;
+    private float targetScrollOffset = 0;
 
     private long openTime = -1;
     private boolean closing = false;
     private long closingStartTime = -1;
+
+    private int lastPanelW = 360;
+    private int lastPanelX = 0;
+    private int lastPanelY = 0;
+    private int lastPanelH = 0;
+    private int lastHeaderH = 32;
+    private int lastContentH = 0;
+    private int lastTotalContentH = 0;
+    private float lastScale = 1.0f;
 
     public ModuleSettingsScreen(Screen parent, Module module) {
         super(Component.literal(module.getName() + " Settings"));
@@ -42,6 +52,19 @@ public class ModuleSettingsScreen extends Screen {
     @Override
     public boolean isPauseScreen() { return false; }
 
+    private void updatePanelLayout() {
+        lastPanelW = Math.min(360, width - 40);
+        lastPanelX = (width - lastPanelW) / 2;
+        lastTotalContentH = 0;
+        for (ParameterElement pe : paramElements) {
+            if (pe.getParameter().isVisible()) lastTotalContentH += pe.getHeight();
+        }
+        int maxPanelH = height - 80;
+        lastPanelH = Math.min(lastTotalContentH + lastHeaderH + 8, maxPanelH);
+        lastPanelY = (height - lastPanelH) / 2;
+        lastContentH = lastPanelH - lastHeaderH - 8;
+    }
+
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         long now = System.currentTimeMillis();
@@ -50,35 +73,26 @@ public class ModuleSettingsScreen extends Screen {
         float progress = 1.0f;
         if (closing) {
             long elapsed = now - closingStartTime;
-            progress = Math.max(0.0f, 1.0f - (elapsed / 130.0f));
+            progress = Math.max(0.0f, 1.0f - (elapsed / 300.0f));
             if (progress <= 0.001f) {
                 Minecraft.getInstance().setScreen(parent);
                 return;
             }
         } else {
             long elapsed = now - openTime;
-            progress = Math.min(1.0f, elapsed / 150.0f);
+            progress = Math.min(1.0f, elapsed / 250.0f);
         }
 
-        float scale = progress * (2.0f - progress);
+        float ease = progress * progress * (3.0f - 2.0f * progress);
+        float scale = closing ? ease * 0.9f + 0.1f : 0.7f + 0.3f * ease;
+        lastScale = scale;
         int activeColor = ColorUtility.getActiveColor();
         int w = this.width;
         int h = this.height;
 
-        int bgAlpha = (int)(progress * 0x77);
-        graphics.fill(0, 0, w, h, (bgAlpha << 24) | 0x05050E);
+        updatePanelLayout();
 
-        int panelW = Math.min(280, w - 40);
-        int panelX = (w - panelW) / 2;
-        int maxPanelH = h - 80;
-        int headerH = 32;
-
-        int totalContentH = 0;
-        for (ParameterElement pe : paramElements) {
-            if (pe.getParameter().isVisible()) totalContentH += pe.getHeight();
-        }
-        int panelH = Math.min(totalContentH + headerH + 8, maxPanelH);
-        int panelY = (h - panelH) / 2;
+        graphics.fill(0, 0, w, h, 0xFF05050E);
 
         var pose = graphics.pose();
         pose.pushMatrix();
@@ -91,40 +105,52 @@ public class ModuleSettingsScreen extends Screen {
         int mx = scale > 0.01f ? (int) ((mouseX - cx) / scale + cx) : mouseX;
         int my = scale > 0.01f ? (int) ((mouseY - cy) / scale + cy) : mouseY;
 
-        graphics.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xEE141414);
-        Render2DEngine.drawBorder(graphics, panelX, panelY, panelW, panelH, 1, 0xFF2C2C2C);
+        int px = lastPanelX;
+        int py = lastPanelY;
+        int pw = lastPanelW;
+        int ph = lastPanelH;
+        int hh = lastHeaderH;
 
-        graphics.fill(panelX, panelY, panelX + panelW, panelY + headerH, 0xFF1C1C1C);
-        graphics.fill(panelX, panelY + headerH - 2, panelX + panelW, panelY + headerH, activeColor);
+        graphics.fill(px, py, px + pw, py + ph, 0xEE141414);
+        Render2DEngine.drawBorder(graphics, px, py, pw, ph, 1, 0xFF2C2C2C);
 
-        FontRenderUtility.drawString(graphics, module.getName() + " Settings", panelX + 10, panelY + 8, 0xFFFFFFFF, true);
-        FontRenderUtility.drawString(graphics, "ESC to close", panelX + panelW - 80, panelY + 10, 0xFF606080, false);
+        graphics.fill(px, py, px + pw, py + hh, 0xFF1C1C1C);
+        graphics.fill(px, py + hh - 2, px + pw, py + hh, activeColor);
 
-        int contentY = panelY + headerH + 4;
-        int contentH = panelH - headerH - 8;
+        FontRenderUtility.drawString(graphics, module.getName() + " Settings", px + 10, py + 8, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, "ESC to close", px + pw - 80, py + 10, 0xFF606080, false);
 
-        float maxScroll = Math.max(0, totalContentH - contentH);
+        int contentY = py + hh + 4;
+        int contentH = lastContentH;
+
+        float maxScroll = Math.max(0, lastTotalContentH - contentH);
+        if (targetScrollOffset < scrollOffset) {
+            scrollOffset = Math.max(targetScrollOffset, scrollOffset - 8.0f);
+        } else if (targetScrollOffset > scrollOffset) {
+            scrollOffset = Math.min(targetScrollOffset, scrollOffset + 8.0f);
+        }
         scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset));
+        targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset));
 
-        graphics.enableScissor(panelX + 4, contentY, panelX + panelW - 4, contentY + contentH);
+        graphics.enableScissor(px + 4, contentY, px + pw - 4, contentY + contentH);
 
-        int py = contentY - (int) scrollOffset;
+        int paramY = contentY - (int) scrollOffset;
         for (ParameterElement pe : paramElements) {
             if (!pe.getParameter().isVisible()) continue;
             int pHeight = pe.getHeight();
-            if (py + pHeight >= contentY - 20 && py <= contentY + contentH + 20) {
-                pe.render(graphics, panelX + 10, py, panelW - 20, pHeight, mx, my);
+            if (paramY + pHeight >= contentY - 20 && paramY <= contentY + contentH + 20) {
+                pe.render(graphics, px + 10, paramY, pw - 20, pHeight, mx, my);
             }
-            py += pHeight;
+            paramY += pHeight;
         }
 
         graphics.disableScissor();
 
         if (maxScroll > 0) {
-            int sbX = panelX + panelW - 6;
+            int sbX = px + pw - 6;
             int sbY = contentY;
             int sbH = contentH;
-            float ratio = sbH / (float) totalContentH;
+            float ratio = sbH / (float) lastTotalContentH;
             int thumbH = Math.max(12, (int) (sbH * ratio));
             int thumbY = sbY + (int) ((sbH - thumbH) * (scrollOffset / maxScroll));
             graphics.fill(sbX, sbY, sbX + 2, sbY + sbH, 0x2215152A);
@@ -149,36 +175,20 @@ public class ModuleSettingsScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (ClickGUI.activeColorPalette != null) {
-            return true;
-        }
+        if (ClickGUI.activeColorPalette != null) return true;
         if (closing) return true;
-        long now = System.currentTimeMillis();
-        float progress = Math.min(1.0f, (now - openTime) / 150.0f);
-        float scale = progress * (2.0f - progress);
-        if (scale <= 0.05f) return true;
 
-        float cx = width / 2.0f;
-        float cy = height / 2.0f;
-        double mx = (mouseX - cx) / scale + cx;
-        double my = (mouseY - cy) / scale + cy;
+        float s = lastScale;
+        if (s <= 0.05f) return true;
 
-        int panelW = Math.min(280, width - 40);
-        int panelX = (width - panelW) / 2;
-        
-        int totalContentH = 0;
-        for (ParameterElement pe : paramElements) {
-            if (pe.getParameter().isVisible()) totalContentH += pe.getHeight();
-        }
-        int maxPanelH = height - 80;
-        int headerH = 32;
-        int panelH = Math.min(totalContentH + headerH + 8, maxPanelH);
-        int panelY = (height - panelH) / 2;
-        int contentH = panelH - headerH - 8;
+        float cxx = width / 2.0f;
+        float cyy = height / 2.0f;
+        double mx = (mouseX - cxx) / s + cxx;
+        double my = (mouseY - cyy) / s + cyy;
 
-        float maxScroll = Math.max(0, totalContentH - contentH);
-        if (mx >= panelX && mx <= panelX + panelW && my >= panelY && my <= panelY + panelH) {
-            scrollOffset = (float) Math.max(0, Math.min(maxScroll, scrollOffset - verticalAmount * 12));
+        if (mx >= lastPanelX && mx <= lastPanelX + lastPanelW && my >= lastPanelY && my <= lastPanelY + lastPanelH) {
+            float maxScroll = Math.max(0, lastTotalContentH - lastContentH);
+            targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset - (float)verticalAmount * 18));
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
@@ -190,34 +200,21 @@ public class ModuleSettingsScreen extends Screen {
             return ClickGUI.activeColorPalette.mouseClicked(event.x(), event.y(), event.button());
         }
         if (closing) return true;
-        long now = System.currentTimeMillis();
-        float progress = Math.min(1.0f, (now - openTime) / 150.0f);
-        float scale = progress * (2.0f - progress);
-        if (scale <= 0.05f) return true;
 
-        float cx = width / 2.0f;
-        float cy = height / 2.0f;
-        double mx = (event.x() - cx) / scale + cx;
-        double my = (event.y() - cy) / scale + cy;
+        float s = lastScale;
+        if (s <= 0.05f) return true;
 
-        int panelW = Math.min(280, width - 40);
-        int panelX = (width - panelW) / 2;
-        
-        int totalContentH = 0;
-        for (ParameterElement pe : paramElements) {
-            if (pe.getParameter().isVisible()) totalContentH += pe.getHeight();
-        }
-        int maxPanelH = height - 80;
-        int headerH = 32;
-        int panelH = Math.min(totalContentH + headerH + 8, maxPanelH);
-        int panelY = (height - panelH) / 2;
+        float cxx = width / 2.0f;
+        float cyy = height / 2.0f;
+        double mx = (event.x() - cxx) / s + cxx;
+        double my = (event.y() - cyy) / s + cyy;
 
-        int contentY = panelY + headerH + 4;
+        int contentY = lastPanelY + lastHeaderH + 4;
         int py = contentY - (int) scrollOffset;
         for (ParameterElement pe : paramElements) {
             if (!pe.getParameter().isVisible()) continue;
             int pHeight = pe.getHeight();
-            if (pe.mouseClicked(mx, my, event.button(), panelX + 10, py, panelW - 20, pHeight)) {
+            if (pe.mouseClicked(mx, my, event.button(), lastPanelX + 10, py, lastPanelW - 20, pHeight)) {
                 return true;
             }
             py += pHeight;

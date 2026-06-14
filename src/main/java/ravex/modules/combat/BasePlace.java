@@ -21,6 +21,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.core.component.DataComponents;
 
+import ravex.RaveX;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -81,7 +82,7 @@ public class BasePlace extends Module {
             System.loadLibrary("ravex_baseplace");
             nativeAvailable = true;
         } catch (UnsatisfiedLinkError e) {
-            System.err.println("[BasePlace JNI] Failed to load native library: " + e.getMessage());
+            RaveX.LOGGER.warn("[BasePlace JNI] Failed to load native library: {}", e.getMessage());
         }
     }
 

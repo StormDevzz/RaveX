@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.lang.Math.*;
+
 public class CategoryPanel {
     private final Category category;
     private double x;
@@ -32,6 +34,7 @@ public class CategoryPanel {
     private final List<ModuleButton> allButtons = new ArrayList<>();
     private float headerAnim = 0f;
     private int scrollIndex = 0;
+    private float scrollSmooth = 0f;
 
     public CategoryPanel(Category category, int x, int y) {
         this.category = category;
@@ -86,11 +89,19 @@ public class CategoryPanel {
         if (visible.isEmpty() && !searchQuery.isEmpty()) return;
         if (visible.isEmpty() && allButtons.isEmpty()) return;
 
-        // Reset/clamp scroll index if list is smaller
+        // Clamp scroll and animate
+        int btnH = ClickGui.INSTANCE.buttonHeight.getValue().intValue();
         if (visible.size() <= 20) {
             scrollIndex = 0;
+            scrollSmooth = 0;
         } else {
-            scrollIndex = Math.max(0, Math.min(scrollIndex, visible.size() - 20));
+            scrollIndex = clamp(scrollIndex, 0, visible.size() - 20);
+            if (ClickGui.INSTANCE.smoothScroll.getValue()) {
+                float lerp = ClickGui.INSTANCE.scrollSmoothness.getValue().floatValue() / 100f;
+                scrollSmooth += (scrollIndex - scrollSmooth) * lerp;
+            } else {
+                scrollSmooth = scrollIndex;
+            }
         }
 
         int currentY = getCurrentHeight(searchQuery) + iy;
@@ -110,8 +121,21 @@ public class CategoryPanel {
         graphics.fill(ix, iy + 14, ix + width, iy + 15, ColorUtility.withAlpha(activeColor, 90));
         graphics.fill(ix, iy + 15, ix + width, iy + 16, activeColor);
 
-        // ── Category Icon ────────────────────────────────────────────────────────
-        Identifier catTex = ClickGUI.getCategoryTexture(category);
+        // ── Header Glow ──────────────────────────────────────────────────────────
+        if (ClickGui.INSTANCE.headerGlow.getValue()) {
+            int glowIntensity = ClickGui.INSTANCE.headerGlowIntensity.getValue().intValue();
+            int glowCol = ColorUtility.withAlpha(activeColor, glowIntensity);
+            int textGlowW = FontRenderUtility.getStringWidth(category.getDisplayName()) + 20;
+            graphics.fill(ix + 20, iy, ix + 20 + textGlowW, iy + 16, glowCol);
+
+            Identifier catTexGlow = ClickGUI.getCategoryTexture(category);
+            if (catTexGlow != null) {
+                graphics.fill(ix + 3, iy + 1, ix + 19, iy + 15, glowCol);
+            }
+        }
+
+        // ── Category Icon (white) ────────────────────────────────────────────────
+        Identifier catTex = ravex.utility.render.TextureLoader.getCategoryTextureWhite(category);
         if (catTex != null) {
             int iconSize = 14;
             int iconX = ix + 4;
@@ -122,7 +146,7 @@ public class CategoryPanel {
         // ── Header Title ─────────────────────────────────────────────────────────
         String header = category.getDisplayName();
         int headerY = iy - 2 + (18 - FontRenderUtility.getFontHeight()) / 2 + 1;
-        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header, ix + 24, headerY, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header, ix + ravex.modules.client.Settings.INSTANCE.headerTextX.getValue().intValue(), headerY, 0xFFFFFFFF, true);
 
         // ── Module Counter Badge ────────────────────────────────────────────────
         if (ClickGui.INSTANCE.moduleCounter.getValue()) {
@@ -150,32 +174,46 @@ public class CategoryPanel {
         graphics.fill(ix - 1, currentY, ix + width + 1, currentY + 1, borderColor);
 
         // ── Module Buttons ───────────────────────────────────────────────────────
-        List<ModuleButton> rendered = visible;
-        int btnWidth = width;
-        if (visible.size() > 20) {
-            rendered = visible.subList(scrollIndex, scrollIndex + 20);
-            btnWidth = width - 4; // leave 4px space for scrollbar on the right
-        }
+        int listTop = iy + 16;
+        int listBot = listTop + 20 * btnH;
 
-        int[] renderYOut = { iy + 16 };
-        for (ModuleButton btn : rendered) {
-            btn.render(graphics, ix, iy, btnWidth, mouseX, mouseY, renderYOut, searchQuery);
-        }
-
-        // ── Scrollbar ────────────────────────────────────────────────────────────
         if (visible.size() > 20) {
+            int btnWidth = width - 4;
+            float pos = (float)scrollSmooth;
+            int firstIdx = max(0, (int)floor(pos));
+            int lastIdx = min(visible.size(), firstIdx + 21);
+            List<ModuleButton> sub = visible.subList(firstIdx, lastIdx);
+
+            int scissorBot = max(listBot, currentY);
+            graphics.enableScissor(ix, listTop, ix + btnWidth, scissorBot);
+            int[] renderYOut = { Math.round(listTop + firstIdx * btnH - pos * btnH) };
+            for (ModuleButton btn : sub) {
+                btn.render(graphics, ix, iy, btnWidth, mouseX, mouseY, renderYOut, searchQuery);
+            }
+            graphics.disableScissor();
+
+            // ── Scrollbar ────────────────────────────────────────────────────
             int trackX = ix + width - 4;
-            int trackY = iy + 16;
-            int trackW = 2;
-            int trackH = currentY - trackY - 2;
+            int trackH = 20 * btnH - 2;
+            graphics.fill(trackX, listTop, trackX + 2, listTop + trackH, 0x1A000000);
+            int thumbH = max(8, trackH * 20 / visible.size());
+            int thumbY = listTop + (int)((trackH - thumbH) * pos / (visible.size() - 20));
+            graphics.fill(trackX, thumbY, trackX + 2, thumbY + thumbH, ColorUtility.withAlpha(activeColor, 180));
 
-            // Track background
-            graphics.fill(trackX, trackY, trackX + trackW, trackY + trackH, 0x1A000000);
-
-            // Thumb
-            int thumbH = Math.max(8, trackH * 20 / visible.size());
-            int thumbY = trackY + (trackH - thumbH) * scrollIndex / (visible.size() - 20);
-            graphics.fill(trackX, thumbY, trackX + trackW, thumbY + thumbH, ColorUtility.withAlpha(activeColor, 180));
+            // ── Scroll gradient indicators ───────────────────────────────────
+            int gradH = 14;
+            int contentBot = max(listBot, currentY);
+            if (pos > 0.5f) {
+                graphics.fillGradient(ix, listTop, ix + btnWidth, listTop + gradH, 0xE60E0E22, 0x000A0A16);
+            }
+            if (pos < visible.size() - 20 - 0.5f) {
+                graphics.fillGradient(ix, contentBot - gradH, ix + btnWidth, contentBot, 0x000A0A16, 0xE60E0E22);
+            }
+        } else {
+            int[] renderYOut = { listTop };
+            for (ModuleButton btn : visible) {
+                btn.render(graphics, ix, iy, width, mouseX, mouseY, renderYOut, searchQuery);
+            }
         }
     }
 
@@ -209,18 +247,28 @@ public class CategoryPanel {
         }
 
         List<ModuleButton> visible = filterButtons(ClickGUI.searchQuery);
-        List<ModuleButton> rendered = visible;
-        int btnWidth = width;
-        if (visible.size() > 20) {
-            scrollIndex = Math.max(0, Math.min(scrollIndex, visible.size() - 20));
-            rendered = visible.subList(scrollIndex, scrollIndex + 20);
-            btnWidth = width - 4;
-        }
+        int listTop = iy + 16;
+        int btnH = ClickGui.INSTANCE.buttonHeight.getValue().intValue();
 
-        int[] currentYOut = { iy + 16 };
-        for (ModuleButton btn : rendered) {
-            if (btn.mouseClicked(mouseX, mouseY, button, ix, btnWidth, currentYOut, mc)) {
-                return true;
+        if (visible.size() > 20) {
+            int btnWidth = width - 4;
+            float pos = (float)scrollSmooth;
+            int firstIdx = max(0, (int)floor(pos));
+            int lastIdx = min(visible.size(), firstIdx + 21);
+            List<ModuleButton> sub = visible.subList(firstIdx, lastIdx);
+
+            int[] currentYOut = { Math.round(listTop + firstIdx * btnH - pos * btnH) };
+            for (ModuleButton btn : sub) {
+                if (btn.mouseClicked(mouseX, mouseY, button, ix, btnWidth, currentYOut, mc)) {
+                    return true;
+                }
+            }
+        } else {
+            int[] currentYOut = { listTop };
+            for (ModuleButton btn : visible) {
+                if (btn.mouseClicked(mouseX, mouseY, button, ix, width, currentYOut, mc)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -233,11 +281,32 @@ public class CategoryPanel {
 
         if (mouseX >= ix && mouseX <= ix + width && mouseY >= iy + 16 && mouseY <= currentY) {
             List<ModuleButton> visible = filterButtons(searchQuery);
+
+            // Inline scroll for expanded modules
+            if (!ClickGui.INSTANCE.separateSettings.getValue()) {
+                int btnH = ClickGui.INSTANCE.buttonHeight.getValue().intValue();
+                int count = Math.min(visible.size(), 20);
+                int yPos = iy + 16;
+                for (int i = 0; i < count; i++) {
+                    ModuleButton btn = visible.get(i);
+                    yPos += btnH;
+                    if (btn.isExpanded()) {
+                        int expH = btn.getExpandedHeight(width);
+                        if (mouseY >= yPos && mouseY < yPos + expH) {
+                            btn.onInlineScroll(verticalAmount);
+                            return true;
+                        }
+                        yPos += expH;
+                    }
+                }
+            }
+
+            // Module list scroll
             if (visible.size() > 20) {
                 if (verticalAmount > 0) {
-                    scrollIndex = Math.max(0, scrollIndex - 1);
+                    scrollIndex = max(0, scrollIndex - 1);
                 } else if (verticalAmount < 0) {
-                    scrollIndex = Math.min(visible.size() - 20, scrollIndex + 1);
+                    scrollIndex = min(visible.size() - 20, scrollIndex + 1);
                 }
                 return true;
             }
@@ -250,10 +319,29 @@ public class CategoryPanel {
         if (visible.isEmpty() && !searchQuery.isEmpty()) return 0;
         if (visible.isEmpty() && allButtons.isEmpty()) return 0;
 
-        int h = 16;
         int btnH = ravex.modules.render.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
         int count = Math.min(visible.size(), 20);
-        h += count * btnH;
+        int startIdx = visible.size() > 20 ? clamp(scrollIndex, 0, visible.size() - 20) : 0;
+        int h = 16 + count * btnH;
+
+        boolean sepMode = ravex.modules.render.ClickGui.INSTANCE.separateSettings.getValue();
+        if (!sepMode) {
+            int panelW = this.width;
+            for (int i = 0; i < count; i++) {
+                ModuleButton btn = visible.get(startIdx + i);
+                if (btn.isExpanded()) {
+                    h += btn.getExpandedHeight(panelW);
+                }
+            }
+        }
         return h;
+    }
+
+    public int getBaseHeight(String searchQuery) {
+        List<ModuleButton> visible = filterButtons(searchQuery);
+        if (visible.isEmpty() && !searchQuery.isEmpty()) return 0;
+        if (visible.isEmpty() && allButtons.isEmpty()) return 0;
+        int btnH = ravex.modules.render.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
+        return 16 + Math.min(visible.size(), 20) * btnH;
     }
 }

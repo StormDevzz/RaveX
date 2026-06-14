@@ -17,6 +17,7 @@ import ravex.modules.misc.AntiAfk;
 import ravex.modules.world.BoneMeal;
 import ravex.modules.world.Scaffold;
 import ravex.modules.render.ClickGui;
+import ravex.modules.client.Fonts;
 import ravex.modules.client.Notifications;
 import ravex.modules.client.DesktopGui;
 import ravex.modules.client.Settings;
@@ -50,6 +51,7 @@ import ravex.modules.player.ElytraReplace;
 import ravex.modules.player.ViewLock;
 import ravex.modules.player.ToolSaver;
 import ravex.modules.player.AntiAim;
+import ravex.modules.movement.Flight;
 import ravex.modules.movement.GuiWalk;
 import ravex.modules.movement.NoSlowDown;
 import ravex.modules.movement.Velocity;
@@ -126,6 +128,8 @@ import ravex.modules.combat.Criticals;
 import ravex.modules.combat.AutoBow;
 import ravex.modules.combat.HoleFill;
 import ravex.modules.exploit.PacketMine;
+import ravex.modules.exploit.PacketPlace;
+import ravex.modules.exploit.PingSpoof;
 import ravex.modules.world.TreeCutter;
 import ravex.modules.world.WitherBuild;
 import ravex.modules.world.AutoLight;
@@ -272,6 +276,7 @@ public class ModuleManager {
         clickGuiModules.add(HighJump.INSTANCE);
         clickGuiModules.add(FastStairs.INSTANCE);
         clickGuiModules.add(NoFall.INSTANCE);
+        clickGuiModules.add(Flight.INSTANCE);
 
 
         // ── Misc ─────────────────────────────────────────────────────────────────
@@ -354,12 +359,15 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.exploit.RaytraceBypass.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.NoMineAnimation.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.PacketEat.INSTANCE);
+        clickGuiModules.add(PacketPlace.INSTANCE);
+        clickGuiModules.add(PingSpoof.INSTANCE);
 
 
         // ── Client ────────────────────────────────────────────────────────────────
         clickGuiModules.add(RichPresence.INSTANCE);
         clickGuiModules.add(ravex.modules.client.GuiParticles.INSTANCE);
         clickGuiModules.add(ravex.modules.client.FastLatency.INSTANCE);
+        clickGuiModules.add(Fonts.INSTANCE);
         clickGuiModules.add(Notifications.INSTANCE);
         clickGuiModules.add(DesktopGui.INSTANCE);
         clickGuiModules.add(Settings.INSTANCE);

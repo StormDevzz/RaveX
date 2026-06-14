@@ -12,11 +12,21 @@ public abstract class Module {
     private boolean enabled;
     private int keyBind = org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN;
     private final List<Parameter<?>> parameters = new ArrayList<>();
+    private float gearAngle = 0f;
+    private long gearLastTick = 0L;
+
+    public float getGearAngle() { return gearAngle; }
+    public long getGearLastTick() { return gearLastTick; }
+    public void setGearAngle(float angle, long tickTime) {
+        this.gearAngle = angle % 360f;
+        this.gearLastTick = tickTime;
+    }
 
     public Module(String name, Category category) {
         this.name = name;
         this.category = category;
         this.enabled = false;
+        this.gearLastTick = System.currentTimeMillis();
     }
 
     public String getName() {
@@ -42,6 +52,7 @@ public abstract class Module {
     }
 
     public void setEnabled(boolean enabled) {
+        if (isToggleLocked()) return;
         if (enabled && !enableCondition.canEnable()) {
             SoundUtility.playFailure();
             return;
@@ -65,7 +76,17 @@ public abstract class Module {
         }
     }
 
+    public boolean isToggleLocked() {
+        for (Parameter<?> p : parameters) {
+            if (p instanceof ravex.parameter.ToggleLockParameter tlp && tlp.getValue()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void toggle() {
+        if (isToggleLocked()) return;
         setEnabled(!enabled);
     }
 

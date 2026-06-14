@@ -1,6 +1,7 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
 import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;
 import ravex.parameter.BooleanParameter;
@@ -58,8 +59,8 @@ public class ParameterElement {
             int textCol = bp.getValue() ? 0xFFD0D0E0 : 0xFF9090A0;
             FontRenderUtility.drawString(graphics, bp.getName(), x + 8, y + 7, textCol, true);
 
-            int swW = 30;
-            int swH = 14;
+            int swW = 28;
+            int swH = 12;
             int swX = x + width - swW - 7;
             int swY = y + (height - swH) / 2;
 
@@ -72,35 +73,61 @@ public class ParameterElement {
             int knobSize = 10;
             int knobRange = swW - knobSize - 3;
             int knobX = swX + 2 + (int)(toggleAnimProgress * knobRange);
-            int knobY2 = swY + 2;
+            int knobY2 = swY + 1;
 
-            int trackR = ((activeColor >> 16) & 0xFF);
-            int trackG = ((activeColor >> 8) & 0xFF);
-            int trackB = (activeColor & 0xFF);
-            int trackOn = (0xCC << 24) | (trackR << 16) | (trackG << 8) | trackB;
-            int trackOff = 0xFF2A2A38;
-            int trackColor = lerpColor(trackOff, trackOn, toggleAnimProgress);
+            Identifier switcherTex = ravex.utility.render.TextureLoader.getSwitcherTexture();
+            if (switcherTex != null) {
+                graphics.blit(switcherTex, swX, swY, swX + swW, swY + swH, 0.0f, 1.0f, 0.0f, 1.0f);
+            } else {
+                int trackR = ((activeColor >> 16) & 0xFF);
+                int trackG = ((activeColor >> 8) & 0xFF);
+                int trackB = (activeColor & 0xFF);
+                int trackOn = (0xCC << 24) | (trackR << 16) | (trackG << 8) | trackB;
+                int trackOff = 0xFF2A2A38;
+                int trackColor = lerpColor(trackOff, trackOn, toggleAnimProgress);
+                int trackA = (trackColor >> 24) & 0xFF;
 
-            for (int i = 0; i < swH; i++) {
-                float t = (i + 0.5f) / swH;
-                float edge = Math.min(t, 1f - t) * 2f;
-                int inset = (int)(swH/2 * (1f - edge * edge));
-                if (inset < 0) inset = 0;
-                graphics.fill(swX + inset, swY + i, swX + swW - inset, swY + i + 1, trackColor);
+                float halfH = swH / 2f;
+                for (int i = 0; i < swH; i++) {
+                    float t = (i + 0.5f) / swH;
+                    float edge = Math.min(t, 1f - t) * 2f;
+                    float insetF = halfH * (1f - edge * edge);
+                    int inset = (int) insetF;
+                    float frac = insetF - inset;
+
+                    int lx = swX + inset;
+                    int rx = swX + swW - inset;
+                    graphics.fill(lx + 1, swY + i, rx - 1, swY + i + 1, trackColor);
+
+                    int a = Math.round(frac * trackA);
+                    if (a > 0) {
+                        int edgeCol = (a << 24) | (trackColor & 0x00FFFFFF);
+                        graphics.fill(lx, swY + i, lx + 1, swY + i + 1, edgeCol);
+                        graphics.fill(rx - 1, swY + i, rx, swY + i + 1, edgeCol);
+                    }
+                }
             }
 
-            for (int i = 0; i < knobSize; i++) {
-                float t = (i + 0.5f) / knobSize;
-                float edge = Math.min(t, 1f - t) * 2f;
-                int inset = (int)(knobSize/2 * (1f - edge * edge));
-                if (inset < 0) inset = 0;
-                int kcol = (int)(0xFF * (0.85f + 0.15f * toggleAnimProgress));
-                int knobCol = (0xFF << 24) | (kcol << 16) | (kcol << 8) | kcol;
-                if (i == 0 || i == knobSize - 1) {
-                    int borderInset = knobSize/2 - 1;
-                    graphics.fill(knobX + borderInset, knobY2 + i, knobX + knobSize - borderInset, knobY2 + i + 1, 0xFFE0E0E0);
-                } else {
-                    graphics.fill(knobX + inset, knobY2 + i, knobX + knobSize - inset, knobY2 + i + 1, knobCol);
+            Identifier circleTex = ravex.utility.render.TextureLoader.getCircleWhiteTexture();
+            if (circleTex != null) {
+                int cSize = knobSize + 2;
+                int cx = knobX - 1;
+                int cy = knobY2 - 1;
+                graphics.blit(circleTex, cx, cy, cx + cSize, cy + cSize, 0.0f, 1.0f, 0.0f, 1.0f);
+            } else {
+                for (int i = 0; i < knobSize; i++) {
+                    float t = (i + 0.5f) / knobSize;
+                    float edge = Math.min(t, 1f - t) * 2f;
+                    int inset = (int)(knobSize/2 * (1f - edge * edge));
+                    if (inset < 0) inset = 0;
+                    int kcol = (int)(0xFF * (0.85f + 0.15f * toggleAnimProgress));
+                    int knobCol = (0xFF << 24) | (kcol << 16) | (kcol << 8) | kcol;
+                    if (i == 0 || i == knobSize - 1) {
+                        int borderInset = knobSize/2 - 1;
+                        graphics.fill(knobX + borderInset, knobY2 + i, knobX + knobSize - borderInset, knobY2 + i + 1, 0xFFE0E0E0);
+                    } else {
+                        graphics.fill(knobX + inset, knobY2 + i, knobX + knobSize - inset, knobY2 + i + 1, knobCol);
+                    }
                 }
             }
 
@@ -151,9 +178,9 @@ public class ParameterElement {
             FontRenderUtility.drawString(graphics, valStr, x + width - valW - 8, y + 5, activeColor, true);
 
             int slX = x + 8;
-            int slY = y + 18;
+            int slY = y + 16;
             int slW = width - 16;
-            int slH = 3;
+            int slH = 12;
 
             if (isDragging) {
                 if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(net.minecraft.client.Minecraft.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
@@ -168,33 +195,35 @@ public class ParameterElement {
                 }
             }
 
-            boolean slHovered = mouseX >= slX && mouseX <= slX + slW && mouseY >= slY - 3 && mouseY <= slY + slH + 3;
+            boolean slHovered = mouseX >= slX && mouseX <= slX + slW && mouseY >= slY - 2 && mouseY <= slY + slH + 2;
 
-            for (int i = 0; i < slH; i++) {
-                float gap = Math.abs(i - slH/2f) / (slH/2f);
-                int inset = (int)(slH/2 * gap * gap);
-                graphics.fill(slX + inset, slY + i, slX + slW - inset, slY + i + 1, 0xFF2A2A38);
-            }
-
-            int fillW = (int) (slW * progress);
-            if (fillW > 0) {
+            Identifier switcherTex = ravex.utility.render.TextureLoader.getSwitcherTexture();
+            if (switcherTex != null) {
+                graphics.blit(switcherTex, slX, slY, slX + slW, slY + slH, 0.0f, 1.0f, 0.0f, 1.0f);
+            } else {
                 for (int i = 0; i < slH; i++) {
                     float gap = Math.abs(i - slH/2f) / (slH/2f);
                     int inset = (int)(slH/2 * gap * gap);
-                    graphics.fill(slX + inset, slY + i, slX + fillW - inset, slY + i + 1, activeColor);
+                    graphics.fill(slX + inset, slY + i, slX + slW - inset, slY + i + 1, 0xFF2A2A38);
                 }
             }
 
-            int knobX = slX + fillW;
+            int fillW = slW - 12;
+            int knobX = slX + 6 + (int)(fillW * progress);
             int knobY2 = slY + slH / 2;
-            int knobR = 4;
-            int knobColor = slHovered || isDragging ? 0xFFFFFFFF : 0xFFC8C8D0;
-
-            for (int dy = -knobR; dy <= knobR; dy++) {
-                float gap = Math.abs(dy) / (float)knobR;
-                int dx = (int) Math.sqrt(knobR * knobR - dy * dy);
-                int innerInset = (int)(knobR/2 * gap * gap * 0.5f);
-                graphics.fill(knobX - dx + innerInset, knobY2 + dy, knobX + dx - innerInset + 1, knobY2 + dy + 1, knobColor);
+            Identifier circleTex = ravex.utility.render.TextureLoader.getCircleWhiteTexture();
+            if (circleTex != null) {
+                int cSize = 12;
+                graphics.blit(circleTex, knobX - cSize / 2, knobY2 - cSize / 2, knobX + cSize / 2 + 1, knobY2 + cSize / 2 + 1, 0.0f, 1.0f, 0.0f, 1.0f);
+            } else {
+                int knobR = 4;
+                int knobColor = slHovered || isDragging ? 0xFFFFFFFF : 0xFFC8C8D0;
+                for (int dy = -knobR; dy <= knobR; dy++) {
+                    float gap = Math.abs(dy) / (float)knobR;
+                    int dx = (int) Math.sqrt(knobR * knobR - dy * dy);
+                    int innerInset = (int)(knobR/2 * gap * gap * 0.5f);
+                    graphics.fill(knobX - dx + innerInset, knobY2 + dy, knobX + dx - innerInset + 1, knobY2 + dy + 1, knobColor);
+                }
             }
 
         } else if (parameter instanceof ColorParameter cp) {
