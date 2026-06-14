@@ -1,0 +1,16 @@
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "ravex:inter.ttf",
+      "shift": [-0.5, -0.5],
+      "size": 13.0,
+      "oversample": 2.0,
+      "skip": []
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:default"
+    }
+  ]
+}
