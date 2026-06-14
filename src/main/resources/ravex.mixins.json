@@ -73,6 +73,7 @@
         "world.MixinBlockState",
         "player.MixinAbstractContainerScreen",
         "player.MixinPlayerTabOverlay",
+        "player.MixinPlayerInfo",
         "player.AccessorContainerScreen",
         "player.MixinCommandHistory",
         "player.MixinClientPacketListener",
@@ -84,7 +85,8 @@
         "combat.MixinPlayerNoHitDelay",
         "render.MixinItemStack",
         "render.MixinClientTooltipComponent",
-        "render.AccessorRenderType"
+        "render.AccessorRenderType",
+        "font.MixinTrueTypeGlyphProviderDefinition"
     ],
     "client": [        "player.MixinChorusExploit", "player.MixinChorusPositionHandler", "player.MixinTridentBoost", "player.MixinLivingEntityTracker"],
     "server": [],

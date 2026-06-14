@@ -8,7 +8,7 @@ import ravex.RaveX;
 import java.lang.reflect.Method;
 
 public class BlurUtility {
-    private static final Identifier BLUR_ID = Identifier.fromNamespaceAndPath("minecraft", "post_effect/blur");
+    private static final Identifier BLUR_ID = Identifier.withDefaultNamespace("blur");
     private static boolean active = false;
     private static Method setPostEffect;
     private static Method clearPostEffect;

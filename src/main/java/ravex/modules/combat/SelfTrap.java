@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import ravex.RaveX;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.ActionParameter;
@@ -65,7 +66,7 @@ public class SelfTrap extends Module {
             nativeAvailable = true;
         } catch (UnsatisfiedLinkError e) {
             // Fallback to Java implementation
-            System.err.println("[SelfTrap JNI] Failed to load native library: " + e.getMessage());
+            RaveX.LOGGER.warn("[SelfTrap JNI] Failed to load native library: {}", e.getMessage());
         }
     }
 

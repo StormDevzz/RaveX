@@ -55,16 +55,19 @@ public class ClickGUI extends Screen {
     private boolean macrosHovered;
     private boolean profilesHovered;
     private boolean configsHovered;
+    private boolean guiSettingsHovered;
 
     // ── Star particles ───────────────────────────────────────────────────────────
-    private static final int STAR_COUNT = 55;
-    private final float[] starX   = new float[STAR_COUNT];
-    private final float[] starY   = new float[STAR_COUNT];
-    private final float[] starVx  = new float[STAR_COUNT];
-    private final float[] starVy  = new float[STAR_COUNT];
-    private final float[] starAlpha = new float[STAR_COUNT];
-    private final float[] starSize  = new float[STAR_COUNT];
+    private final float[] starX   = new float[150];
+    private final float[] starY   = new float[150];
+    private final float[] starVx  = new float[150];
+    private final float[] starVy  = new float[150];
+    private final float[] starAlpha = new float[150];
+    private final float[] starSize  = new float[150];
     private boolean starsInit = false;
+    private String lastParticleType = "";
+    private float lastParticleSpeed = 0;
+    private float lastParticleSize = 0;
 
     private long lastStarTick = 0;
 
@@ -129,7 +132,7 @@ public class ClickGUI extends Screen {
     private int getMaxPanelHeight() {
         int maxH = 150;
         for (CategoryPanel panel : panels) {
-            int h = panel.getCurrentHeight(searchQuery);
+            int h = panel.getBaseHeight(searchQuery);
             if (h > maxH) maxH = h;
         }
         return maxH;
@@ -177,6 +180,7 @@ public class ClickGUI extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        ModuleButton.tickAllGears();
         int targetMaxH = getMaxPanelHeight();
         smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.15;
 
@@ -235,27 +239,27 @@ public class ClickGUI extends Screen {
         FontRenderUtility.drawString(graphics, tips, tipsX, tipsY - 1, 0xFF858599, true);
 
         // ── Bottom nav buttons ───────────────────────────────────────────────────
-        //    Macros  |  Profiles  |  Configs   — centered pill buttons
+        //    Macros  |  Profiles  |  Configs  |  GUI   — centered pill buttons
         float btnScale = Math.max(0.65f, getResponsiveScale());
-        int mgW = (int)(60 * btnScale);
+        int mgW = (int)(50 * btnScale);
         int mgH = (int)(20 * btnScale);
         int mgGap = (int)(6 * btnScale);
-        int totalBtnW = 3 * mgW + 2 * mgGap;
+        int totalBtnW = 4 * mgW + 3 * mgGap;
         int mgX = (this.width - totalBtnW) / 2;
         int mgY = this.height - (int)(38 * btnScale);
-        int mgRadius = Math.max(3, (int)(5 * btnScale));
 
-        macrosHovered   = mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
-        profilesHovered = mouseX >= mgX + mgW + mgGap && mouseX <= mgX + 2 * mgW + mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
-        configsHovered  = mouseX >= mgX + 2 * (mgW + mgGap) && mouseX <= mgX + 3 * mgW + 2 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+        macrosHovered      = mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
+        profilesHovered    = mouseX >= mgX + mgW + mgGap && mouseX <= mgX + 2 * mgW + mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+        configsHovered     = mouseX >= mgX + 2 * (mgW + mgGap) && mouseX <= mgX + 3 * mgW + 2 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+        guiSettingsHovered = mouseX >= mgX + 3 * (mgW + mgGap) && mouseX <= mgX + 4 * mgW + 3 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
 
         int activeColor = ColorUtility.getActiveColor();
 
-        int[] bxArr   = { mgX, mgX + mgW + mgGap, mgX + 2 * (mgW + mgGap) };
-        boolean[] hovArr = { macrosHovered, profilesHovered, configsHovered };
-        String[] labArr  = { "Macros", "Profiles", "Configs" };
+        int[] bxArr   = { mgX, mgX + mgW + mgGap, mgX + 2 * (mgW + mgGap), mgX + 3 * (mgW + mgGap) };
+        boolean[] hovArr = { macrosHovered, profilesHovered, configsHovered, guiSettingsHovered };
+        String[] labArr  = { "Macros", "Profiles", "Configs", "GUI" };
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 4; i++) {
             int bx  = bxArr[i];
             boolean h = hovArr[i];
             int bg  = h ? activeColor : 0xFF1C1C2C;
@@ -356,7 +360,7 @@ public class ClickGUI extends Screen {
         graphics.fill(actualX, barY + barH - 1, actualX + expandedW, barY + barH, glowColor);
 
         int iconSize = 14;
-        Identifier searchTex = getSearchTexture();
+        Identifier searchTex = ravex.utility.render.TextureLoader.getSearchWhiteTexture();
         if (searchTex != null) {
             int iconX = actualX + 8;
             int iconY = barY + (barH - iconSize) / 2;
@@ -420,10 +424,10 @@ public class ClickGUI extends Screen {
 
         // Match layout computed in render()
         float btnScale = Math.max(0.65f, getResponsiveScale());
-        int mgW   = (int)(60 * btnScale);
+        int mgW   = (int)(50 * btnScale);
         int mgH   = (int)(20 * btnScale);
         int mgGap = (int)(6 * btnScale);
-        int mgX   = (this.width - (3 * mgW + 2 * mgGap)) / 2;
+        int mgX   = (this.width - (4 * mgW + 3 * mgGap)) / 2;
         int mgY   = this.height - (int)(38 * btnScale);
 
         if (event.x() >= mgX && event.x() <= mgX + mgW && event.y() >= mgY && event.y() <= mgY + mgH) {
@@ -436,6 +440,10 @@ public class ClickGUI extends Screen {
         }
         if (event.x() >= mgX + 2 * (mgW + mgGap) && event.x() <= mgX + 3 * mgW + 2 * mgGap && event.y() >= mgY && event.y() <= mgY + mgH) {
             this.minecraft.setScreen(new ConfigsScreen(this));
+            return true;
+        }
+        if (event.x() >= mgX + 3 * (mgW + mgGap) && event.x() <= mgX + 4 * mgW + 3 * mgGap && event.y() >= mgY && event.y() <= mgY + mgH) {
+            this.minecraft.setScreen(new ModuleSettingsScreen(this, ravex.modules.render.ClickGui.INSTANCE));
             return true;
         }
 
@@ -587,6 +595,7 @@ public class ClickGUI extends Screen {
 
     @Override
     public void onClose() {
+        ModuleButton.expandedModules.clear();
         activeStringParameterElement = null;
         activeKeybindElement = null;
         if (!closing) {
@@ -603,25 +612,37 @@ public class ClickGUI extends Screen {
 
     // ─── Star particle system ────────────────────────────────────────────────────
 
-    private static final float STAR_PULSE = 0.0008f;
-    private static final float STAR_ALPHA_MIN = 0.15f;
-    private static final float STAR_ALPHA_RANGE = 0.30f;
-
     private void renderStars(GuiGraphics graphics) {
         if (this.width <= 0 || this.height <= 0) return;
 
-        if (!starsInit) {
+        var gp = ravex.modules.client.GuiParticles.INSTANCE;
+        int count = gp.amount.getValue().intValue();
+        count = Math.min(count, 150);
+        String pType = gp.type.getValue();
+        int pColor = gp.color.getValue();
+        float pSize = gp.size.getValue().floatValue();
+        float pSpeed = gp.speed.getValue().floatValue();
+
+        boolean reinit = !starsInit
+            || !pType.equals(lastParticleType)
+            || Math.abs(pSpeed - lastParticleSpeed) > 0.01f
+            || Math.abs(pSize - lastParticleSize) > 0.01f;
+
+        if (reinit) {
+            starsInit = true;
+            lastParticleType = pType;
+            lastParticleSpeed = pSpeed;
+            lastParticleSize = pSize;
             java.util.Random rng = new java.util.Random(0xDEADBEEFL);
-            for (int i = 0; i < STAR_COUNT; i++) {
+            for (int i = 0; i < 150; i++) {
                 starX[i]     = rng.nextFloat() * this.width;
                 starY[i]     = rng.nextFloat() * this.height;
-                float speedMultiplier = 0.5f + rng.nextFloat() * 1.5f;
-                starVx[i]    = (rng.nextFloat() - 0.5f) * 0.15f * speedMultiplier;
-                starVy[i]    = (rng.nextFloat() - 0.5f) * 0.15f * speedMultiplier;
-                starAlpha[i] = STAR_ALPHA_MIN + rng.nextFloat() * STAR_ALPHA_RANGE;
-                starSize[i]  = 1f + rng.nextFloat() * 4f;
+                float s = 0.5f + rng.nextFloat() * 1.5f;
+                starVx[i]    = (rng.nextFloat() - 0.5f) * 0.15f * s * pSpeed;
+                starVy[i]    = (rng.nextFloat() - 0.5f) * 0.15f * s * pSpeed;
+                starAlpha[i] = 0.15f + rng.nextFloat() * 0.30f;
+                starSize[i]  = Math.max(0.5f, 1f + rng.nextFloat() * 4f + (pSize - 3f));
             }
-            starsInit = true;
         }
 
         long now   = System.currentTimeMillis();
@@ -629,9 +650,9 @@ public class ClickGUI extends Screen {
         if (lastStarTick == 0) dt = 16f;
         lastStarTick = now;
 
-        int accentColor = ColorUtility.getActiveColor();
+        Identifier particleTex = ravex.utility.render.TextureLoader.getParticleTexture(pType, pColor);
 
-        for (int i = 0; i < STAR_COUNT; i++) {
+        for (int i = 0; i < count; i++) {
             starX[i] += starVx[i] * dt;
             starY[i] += starVy[i] * dt;
 
@@ -641,26 +662,26 @@ public class ClickGUI extends Screen {
             if (starY[i] > this.height)  starY[i] -= this.height;
 
             float pulse = (float)(Math.sin(now * 0.0015 + i * 1.7) * 0.5 + 0.5);
-            float currentAlpha = STAR_ALPHA_MIN + pulse * STAR_ALPHA_RANGE;
+            float currentAlpha = 0.15f + pulse * 0.30f;
 
             int alpha = (int)(currentAlpha * 255);
-            int col   = ColorUtility.withAlpha(accentColor, alpha);
-
             int sx = (int) starX[i];
             int sy = (int) starY[i];
-            int sz = Math.max(1, (int) starSize[i]);
+            int sz = Math.max(4, (int)(starSize[i] * 2));
 
-            if (sz <= 2) {
-                graphics.fill(sx, sy, sx + sz, sy + sz, col);
+            if (particleTex != null) {
+                graphics.blit(particleTex, sx, sy, sx + sz, sy + sz, 0.0f, 1.0f, 0.0f, 1.0f);
             } else {
+                int col = (alpha << 24) | (pColor & 0x00FFFFFF);
                 graphics.fill(sx, sy, sx + sz, sy + sz, col);
-                int glowAlpha1 = Math.max(0, alpha / 3);
-                int glowCol1 = ColorUtility.withAlpha(accentColor, glowAlpha1);
-                graphics.fill(sx - 1, sy - 1, sx + sz + 1, sy + sz + 1, glowCol1);
-
-                int glowAlpha2 = Math.max(0, alpha / 7);
-                int glowCol2 = ColorUtility.withAlpha(accentColor, glowAlpha2);
-                graphics.fill(sx - 2, sy - 2, sx + sz + 2, sy + sz + 2, glowCol2);
+                if (sz > 4) {
+                    int g1 = Math.max(0, alpha / 3);
+                    int gc1 = (g1 << 24) | (pColor & 0x00FFFFFF);
+                    graphics.fill(sx - 1, sy - 1, sx + sz + 1, sy + sz + 1, gc1);
+                    int g2 = Math.max(0, alpha / 7);
+                    int gc2 = (g2 << 24) | (pColor & 0x00FFFFFF);
+                    graphics.fill(sx - 2, sy - 2, sx + sz + 2, sy + sz + 2, gc2);
+                }
             }
         }
     }
