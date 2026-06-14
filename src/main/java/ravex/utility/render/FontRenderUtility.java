@@ -18,8 +18,26 @@ public class FontRenderUtility {
     private static final Identifier SF_BOLD_FONT = Identifier.fromNamespaceAndPath("ravex", "sf_bold");
     private static final FontDescription SF_BOLD_DESC = new FontDescription.Resource(SF_BOLD_FONT);
 
+    private static final Identifier ROBOTO_FONT = Identifier.fromNamespaceAndPath("ravex", "roboto");
+    private static final FontDescription ROBOTO_DESC = new FontDescription.Resource(ROBOTO_FONT);
+
+    private static final Identifier INTER_FONT = Identifier.fromNamespaceAndPath("ravex", "inter");
+    private static final FontDescription INTER_DESC = new FontDescription.Resource(INTER_FONT);
+
+    private static final Identifier JETBRAINS_MONO_FONT = Identifier.fromNamespaceAndPath("ravex", "jetbrains_mono");
+    private static final FontDescription JETBRAINS_MONO_DESC = new FontDescription.Resource(JETBRAINS_MONO_FONT);
+
+    private static final Identifier NOTO_MONO_FONT = Identifier.fromNamespaceAndPath("ravex", "noto_mono");
+    private static final FontDescription NOTO_MONO_DESC = new FontDescription.Resource(NOTO_MONO_FONT);
+
+    private static final Identifier FIRA_CODE_FONT = Identifier.fromNamespaceAndPath("ravex", "fira_code");
+    private static final FontDescription FIRA_CODE_DESC = new FontDescription.Resource(FIRA_CODE_FONT);
+
+    private static final Identifier OPEN_DYSLEXIC_FONT = Identifier.fromNamespaceAndPath("ravex", "open_dyslexic");
+    private static final FontDescription OPEN_DYSLEXIC_DESC = new FontDescription.Resource(OPEN_DYSLEXIC_FONT);
+
     public enum FontType {
-        SF_MEDIUM, SF_BOLD, COMFORTAA, VANILLA
+        SF_MEDIUM, SF_BOLD, COMFORTAA, ROBOTO, INTER, JETBRAINS_MONO, NOTO_MONO, FIRA_CODE, OPEN_DYSLEXIC, VANILLA
     }
 
     public static FontType getCurrentFontType() {
@@ -28,10 +46,16 @@ public class FontRenderUtility {
         }
         String font = ravex.modules.client.Fonts.INSTANCE.fontType.getValue();
         switch (font) {
-            case "Comfortaa": return FontType.COMFORTAA;
-            case "SF Medium": return FontType.SF_MEDIUM;
-            case "SF Bold":   return FontType.SF_BOLD;
-            default:          return FontType.VANILLA;
+            case "Comfortaa":     return FontType.COMFORTAA;
+            case "SF Medium":     return FontType.SF_MEDIUM;
+            case "SF Bold":       return FontType.SF_BOLD;
+            case "Roboto":        return FontType.ROBOTO;
+            case "Inter":         return FontType.INTER;
+            case "JetBrainsMono": return FontType.JETBRAINS_MONO;
+            case "NotoMono":      return FontType.NOTO_MONO;
+            case "FiraCode":      return FontType.FIRA_CODE;
+            case "OpenDyslexic":  return FontType.OPEN_DYSLEXIC;
+            default:              return FontType.VANILLA;
         }
     }
 
@@ -54,17 +78,16 @@ public class FontRenderUtility {
 
         FontDescription desc;
         switch (actualType) {
-            case COMFORTAA:
-                desc = COMFORTAA_DESC;
-                break;
-            case SF_MEDIUM:
-                desc = SF_MEDIUM_DESC;
-                break;
-            case SF_BOLD:
-                desc = SF_BOLD_DESC;
-                break;
-            default:
-                return Component.literal(text);
+            case COMFORTAA:     desc = COMFORTAA_DESC; break;
+            case SF_MEDIUM:     desc = SF_MEDIUM_DESC; break;
+            case SF_BOLD:       desc = SF_BOLD_DESC; break;
+            case ROBOTO:        desc = ROBOTO_DESC; break;
+            case INTER:         desc = INTER_DESC; break;
+            case JETBRAINS_MONO: desc = JETBRAINS_MONO_DESC; break;
+            case NOTO_MONO:     desc = NOTO_MONO_DESC; break;
+            case FIRA_CODE:     desc = FIRA_CODE_DESC; break;
+            case OPEN_DYSLEXIC: desc = OPEN_DYSLEXIC_DESC; break;
+            default:            return Component.literal(text);
         }
         return Component.literal(text).withStyle(Style.EMPTY.withFont(desc));
     }
