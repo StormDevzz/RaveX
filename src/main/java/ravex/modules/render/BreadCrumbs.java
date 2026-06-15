@@ -86,7 +86,7 @@ public class BreadCrumbs extends Module {
                     (float)(p.z - camPos.z)
                 ));
             }
-            Render3DUtils.renderLineStrip(modelViewMatrix, points, cr, cg, cb, 0.8f, lineWidth);
+            Render3DUtils.batchLineStrip(modelViewMatrix, points, cr, cg, cb, 0.8f, lineWidth);
         }
     }
 

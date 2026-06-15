@@ -49,6 +49,12 @@ public abstract class MixinInGameHUD {
         boolean nameTagsEnabled = NameTags.INSTANCE.getEnabled();
         boolean mobOwnerEnabled = MobOwner.INSTANCE.getEnabled() && MobOwner.INSTANCE.animals.getValue();
 
+        int guiWidth = context.guiWidth();
+        int guiHeight = context.guiHeight();
+        boolean firstPerson = mc.options.getCameraType().isFirstPerson();
+        Vec3 playerViewVec = mc.player != null ? mc.player.getViewVector(pt) : null;
+        boolean tracersEnabled = ravex.modules.render.Tracers.INSTANCE.getEnabled();
+
         for (Entity target : mc.level.entitiesForRendering()) {
             if (target == mc.player) continue;
             if (target instanceof LivingEntity living && !living.isAlive()) continue;
@@ -56,13 +62,13 @@ public abstract class MixinInGameHUD {
             // Distance limit check
             double dist = mc.player.distanceTo(target);
             double maxDist = ESP.INSTANCE.maxDistance.getValue();
-            if (ravex.modules.render.Tracers.INSTANCE.getEnabled()) {
+            if (tracersEnabled) {
                 maxDist = Math.max(maxDist, ravex.modules.render.Tracers.INSTANCE.maxDistance.getValue());
             }
             if (dist > maxDist) continue;
 
             // Prevent first person overlap when entity is extremely close
-            if (mc.options.getCameraType().isFirstPerson() && dist < 1.2) continue;
+            if (firstPerson && dist < 1.2) continue;
 
             boolean isPlayer = target instanceof Player;
             boolean isMonster = target instanceof Monster;
@@ -80,14 +86,15 @@ public abstract class MixinInGameHUD {
             if (!isPlayer && !isMonster && !isAnimal && !isItem && !isFrame) continue;
 
             Vec3 basePos = target.getPosition(pt);
-            Vec3 headPos = basePos.add(0, target.getBbHeight(), 0);
-            Vec3 sidePos = basePos.add(target.getBbWidth() / 2.0, target.getBbHeight() / 2.0, 0);
+            float bbHeight = target.getBbHeight();
+            float bbWidth = target.getBbWidth();
+            Vec3 headPos = basePos.add(0, bbHeight, 0);
+            Vec3 sidePos = basePos.add(bbWidth / 2.0f, bbHeight / 2.0f, 0);
+            double basePosX = basePos.x, basePosY = basePos.y, basePosZ = basePos.z;
 
-            // 1. Render Tracers first without dot/projection/off-screen checks of ESP/Nametags
-            boolean tracersEnabled = ravex.modules.render.Tracers.INSTANCE.getEnabled();
+            // 1. Render Tracers first without dot/projection/off-screen checks
             if (tracersEnabled) {
                 ravex.modules.render.Tracers tracers = ravex.modules.render.Tracers.INSTANCE;
-                if (dist <= tracers.maxDistance.getValue()) {
                     boolean show = false;
                     int color = 0;
                     if (isPlayer && tracers.players.getValue()) {
@@ -107,16 +114,16 @@ public abstract class MixinInGameHUD {
                         Vec3 baseProjUnbobbed = projectPointToScreenUnbobbed(basePos);
                         Vec3 headProjUnbobbed = projectPointToScreenUnbobbed(headPos);
                         if (baseProjUnbobbed != null && headProjUnbobbed != null) {
-                            double cx = context.guiWidth() / 2.0;
-                            double cy = context.guiHeight() / 2.0;
-                            double ex = (baseProjUnbobbed.x + 1.0) / 2.0 * context.guiWidth();
-                            double ey_base = (1.0 - baseProjUnbobbed.y) / 2.0 * context.guiHeight();
-                            double ey_head = (1.0 - headProjUnbobbed.y) / 2.0 * context.guiHeight();
+                            double cx = guiWidth / 2.0;
+                            double cy = guiHeight / 2.0;
+                            double ex = (baseProjUnbobbed.x + 1.0) / 2.0 * guiWidth;
+                            double ey_base = (1.0 - baseProjUnbobbed.y) / 2.0 * guiHeight;
+                            double ey_head = (1.0 - headProjUnbobbed.y) / 2.0 * guiHeight;
                             double ey = (ey_base + ey_head) / 2.0;
 
                             // Check if the target point is behind the camera or offscreen
                             boolean isBehind = baseProjUnbobbed.z < 0;
-                            boolean isOffscreen = isBehind || ex < 0 || ex > context.guiWidth() || ey < 0 || ey > context.guiHeight();
+                            boolean isOffscreen = isBehind || ex < 0 || ex > guiWidth || ey < 0 || ey > guiHeight;
 
                             if (isOffscreen) {
                                 double dx = ex - cx;
@@ -126,13 +133,13 @@ public abstract class MixinInGameHUD {
                                 double borderPadding = 2.0;
 
                                 if (dx > 0) {
-                                    tX = (context.guiWidth() - borderPadding - cx) / dx;
+                                    tX = (guiWidth - borderPadding - cx) / dx;
                                 } else if (dx < 0) {
                                     tX = (borderPadding - cx) / dx;
                                 }
 
                                 if (dy > 0) {
-                                    tY = (context.guiHeight() - borderPadding - cy) / dy;
+                                    tY = (guiHeight - borderPadding - cy) / dy;
                                 } else if (dy < 0) {
                                     tY = (borderPadding - cy) / dy;
                                 }
@@ -153,7 +160,6 @@ public abstract class MixinInGameHUD {
                             drawTracerLine2D(context, (float) cx, (float) cy, (float) ex, (float) ey, color, width);
                         }
                     }
-                }
             }
 
             // 2. Perform projections and culling checks specifically for ESP / NameTags
@@ -163,20 +169,19 @@ public abstract class MixinInGameHUD {
 
             if (baseProj == null || headProj == null || sideProj == null) continue;
 
-            Vec3 dir = target.getPosition(pt).subtract(cameraPos).normalize();
-            Vec3 look = mc.player.getViewVector(pt);
-            double dot = dir.dot(look);
+            Vec3 dir = (new Vec3(basePosX - cameraPos.x, basePosY - cameraPos.y, basePosZ - cameraPos.z)).normalize();
+            double dot = dir.dot(playerViewVec);
             if (dot <= 0.0) continue;
 
-            double sx_base = (baseProj.x + 1.0) / 2.0 * context.guiWidth();
-            double sy_base = (1.0 - baseProj.y) / 2.0 * context.guiHeight();
-            double sx_head = (headProj.x + 1.0) / 2.0 * context.guiWidth();
-            double sy_head = (1.0 - headProj.y) / 2.0 * context.guiHeight();
-            double sx_side = (sideProj.x + 1.0) / 2.0 * context.guiWidth();
+            double sx_base = (baseProj.x + 1.0) / 2.0 * guiWidth;
+            double sy_base = (1.0 - baseProj.y) / 2.0 * guiHeight;
+            double sx_head = (headProj.x + 1.0) / 2.0 * guiWidth;
+            double sy_head = (1.0 - headProj.y) / 2.0 * guiHeight;
+            double sx_side = (sideProj.x + 1.0) / 2.0 * guiWidth;
 
             // Offscreen check: if all projected points are off-screen, skip rendering
-            if ((sx_base < 0 || sx_base > context.guiWidth() || sy_base < 0 || sy_base > context.guiHeight()) &&
-                (sx_head < 0 || sx_head > context.guiWidth() || sy_head < 0 || sy_head > context.guiHeight())) {
+            if ((sx_base < 0 || sx_base > guiWidth || sy_base < 0 || sy_base > guiHeight) &&
+                (sx_head < 0 || sx_head > guiWidth || sy_head < 0 || sy_head > guiHeight)) {
                 continue;
             }
 

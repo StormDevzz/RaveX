@@ -18,7 +18,7 @@ import ravex.mixin.render.AccessorRenderType;
 import java.util.List;
 
 public class Render3DUtils {
-    private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
+    private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(512 * 1024);
 
     private static final RenderType FILL_TYPE = RenderTypes.debugFilledBox();
     private static final RenderType LINE_TYPE = RenderTypes.lines();
@@ -74,6 +74,164 @@ public class Render3DUtils {
         return AccessorRenderType.invokeCreate(name, setup);
     }
 
+    // -------------------------------------------------------------------------
+    // Per-frame batcher — accumulates all draws into 4 shared BufferBuilders,
+    // then flushes at endFrame() with just 4 type.draw() calls.
+    // -------------------------------------------------------------------------
+    private static BufferBuilder fillBuilder;
+    private static BufferBuilder fillNoDepthBuilder;
+    private static BufferBuilder lineBuilder;
+    private static BufferBuilder lineNoDepthBuilder;
+
+    private static boolean fillUsed = false;
+    private static boolean fillNoDepthUsed = false;
+    private static boolean lineUsed = false;
+    private static boolean lineNoDepthUsed = false;
+
+    public static void beginFrame() {
+        ALLOCATOR.clear();
+        fillBuilder = new BufferBuilder(ALLOCATOR, FILL_TYPE.mode(), FILL_TYPE.format());
+        if (FILL_NO_DEPTH != null)
+            fillNoDepthBuilder = new BufferBuilder(ALLOCATOR, FILL_NO_DEPTH.mode(), FILL_NO_DEPTH.format());
+        lineBuilder = new BufferBuilder(ALLOCATOR, LINE_TYPE.mode(), LINE_TYPE.format());
+        if (LINE_NO_DEPTH != null)
+            lineNoDepthBuilder = new BufferBuilder(ALLOCATOR, LINE_NO_DEPTH.mode(), LINE_NO_DEPTH.format());
+        fillUsed = fillNoDepthUsed = lineUsed = lineNoDepthUsed = false;
+    }
+
+    public static void endFrame() {
+        if (fillBuilder != null && fillUsed) {
+            MeshData mesh = fillBuilder.buildOrThrow();
+            FILL_TYPE.draw(mesh);
+        }
+        fillBuilder = null;
+        if (fillNoDepthBuilder != null && fillNoDepthUsed) {
+            MeshData mesh = fillNoDepthBuilder.buildOrThrow();
+            FILL_NO_DEPTH.draw(mesh);
+        }
+        fillNoDepthBuilder = null;
+        if (lineBuilder != null && lineUsed) {
+            MeshData mesh = lineBuilder.buildOrThrow();
+            LINE_TYPE.draw(mesh);
+        }
+        lineBuilder = null;
+        if (lineNoDepthBuilder != null && lineNoDepthUsed) {
+            MeshData mesh = lineNoDepthBuilder.buildOrThrow();
+            LINE_NO_DEPTH.draw(mesh);
+        }
+        lineNoDepthBuilder = null;
+    }
+
+    // -------------------------------------------------------------------------
+    // Batch render methods (used inside beginFrame() / endFrame())
+    // -------------------------------------------------------------------------
+    public static void batchFilledBox(Matrix4f matrix, double size, float r, float g, float b, float a) {
+        batchFilledBox(matrix, size, r, g, b, a, false);
+    }
+
+    public static void batchFilledBox(Matrix4f matrix, double size, float r, float g, float b, float a, boolean throughWalls) {
+        BufferBuilder buf;
+        if (throughWalls && fillNoDepthBuilder != null) {
+            buf = fillNoDepthBuilder;
+            fillNoDepthUsed = true;
+        } else {
+            buf = fillBuilder;
+            fillUsed = true;
+        }
+        BlockRenderer.renderFilledBoxQuads(buf, matrix, size, r, g, b, a);
+    }
+
+    public static void batchWireframe(Matrix4f matrix, double size, float r, float g, float b, float a) {
+        batchWireframe(matrix, size, r, g, b, a, 1.0f, false);
+    }
+
+    public static void batchWireframe(Matrix4f matrix, double size, float r, float g, float b, float a, float lineWidth) {
+        batchWireframe(matrix, size, r, g, b, a, lineWidth, false);
+    }
+
+    public static void batchWireframe(Matrix4f matrix, double size, float r, float g, float b, float a, float lineWidth, boolean throughWalls) {
+        if (lineWidth > 1.0f) {
+            BufferBuilder buf;
+            if (throughWalls && fillNoDepthBuilder != null) {
+                buf = fillNoDepthBuilder;
+                fillNoDepthUsed = true;
+            } else {
+                buf = fillBuilder;
+                fillUsed = true;
+            }
+            BlockRenderer.renderThickWireframe(buf, matrix, size, r, g, b, a, lineWidth);
+        } else {
+            BufferBuilder buf;
+            if (throughWalls && lineNoDepthBuilder != null) {
+                buf = lineNoDepthBuilder;
+                lineNoDepthUsed = true;
+            } else {
+                buf = lineBuilder;
+                lineUsed = true;
+            }
+            BlockRenderer.renderWireframe(buf, matrix, size, r, g, b, a, lineWidth);
+        }
+    }
+
+    public static void batchAxisLine(Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2, float thickness, float r, float g, float b, float a) {
+        batchAxisLine(matrix, x1, y1, z1, x2, y2, z2, thickness, r, g, b, a, false);
+    }
+
+    public static void batchAxisLine(Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2, float thickness, float r, float g, float b, float a, boolean throughWalls) {
+        float h = thickness * 0.5f;
+        float minX, maxX, minY, maxY, minZ, maxZ;
+        float dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1), dz = Math.abs(z2 - z1);
+        if (dx >= dy && dx >= dz) {
+            minX = Math.min(x1, x2);
+            maxX = Math.max(x1, x2);
+            minY = Math.min(y1, y2) - h;  maxY = Math.max(y1, y2) + h;
+            minZ = Math.min(z1, z2) - h;  maxZ = Math.max(z1, z2) + h;
+        } else if (dy >= dz) {
+            minX = Math.min(x1, x2) - h;  maxX = Math.max(x1, x2) + h;
+            minY = Math.min(y1, y2);
+            maxY = Math.max(y1, y2);
+            minZ = Math.min(z1, z2) - h;  maxZ = Math.max(z1, z2) + h;
+        } else {
+            minX = Math.min(x1, x2) - h;  maxX = Math.max(x1, x2) + h;
+            minY = Math.min(y1, y2) - h;  maxY = Math.max(y1, y2) + h;
+            minZ = Math.min(z1, z2);
+            maxZ = Math.max(z1, z2);
+        }
+        int ir = (int)(r * 255);
+        int ig = (int)(g * 255);
+        int ib = (int)(b * 255);
+        int ia = (int)(a * 255);
+        BufferBuilder buf;
+        if (throughWalls && fillNoDepthBuilder != null) {
+            buf = fillNoDepthBuilder;
+            fillNoDepthUsed = true;
+        } else {
+            buf = fillBuilder;
+            fillUsed = true;
+        }
+        BlockRenderer.renderSolidBox(buf, matrix, minX, minY, minZ, maxX, maxY, maxZ, ir, ig, ib, ia);
+    }
+
+    public static void batchLineStrip(Matrix4f matrix, List<org.joml.Vector3f> points, float r, float g, float b, float a, float lineWidth) {
+        if (points.size() < 2) return;
+        lineUsed = true;
+        int ir = (int)(r * 255);
+        int ig = (int)(g * 255);
+        int ib = (int)(b * 255);
+        int ia = (int)(a * 255);
+        for (int i = 1; i < points.size(); i++) {
+            org.joml.Vector3f p1 = points.get(i - 1);
+            org.joml.Vector3f p2 = points.get(i);
+            BlockRenderer.renderLine3D(lineBuilder, matrix,
+                p1.x, p1.y, p1.z,
+                p2.x, p2.y, p2.z,
+                ir, ig, ib, ia, lineWidth);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Legacy immediate-mode API (one draw call per invocation)
+    // -------------------------------------------------------------------------
     public static void renderFilledBox(Matrix4f matrix, double size, float r, float g, float b, float a) {
         renderFilledBox(matrix, size, r, g, b, a, false);
     }
