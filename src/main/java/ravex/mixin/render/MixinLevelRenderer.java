@@ -11,12 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.LevelRenderState;
-import ravex.utility.render.BlockRenderer;
+
 import ravex.utility.render.Render3DUtils;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
@@ -28,6 +23,7 @@ import ravex.modules.esp.VoidESP;
 
 @Mixin(LevelRenderer.class)
 public class MixinLevelRenderer {
+    private static final Matrix4f REUSABLE_MATRIX = new Matrix4f();
     private static long lastAnimTime = 0;
 
     // Smooth state variables for AirPlace
@@ -41,26 +37,6 @@ public class MixinLevelRenderer {
     private static float scAlpha = 0.0f;
     private static double scSize = 0.0;
     private static boolean scInitialized = false;
-    @Inject(
-        method = "renderBlockOutline(Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/PoseStack;ZLnet/minecraft/client/renderer/state/LevelRenderState;)V",
-        at = @At("HEAD"),
-        cancellable = true
-    )
-    private void onVanillaRenderBlockOutline(
-        MultiBufferSource.BufferSource bufferSource,
-        PoseStack poseStack,
-        boolean isTranslucent,
-        LevelRenderState levelRenderState,
-        CallbackInfo ci
-    ) {
-        if (BlockOutline.INSTANCE.getEnabled()) {
-            ci.cancel();
-            if (!isTranslucent) {
-                renderCustomBlockOutline(bufferSource, poseStack);
-            }
-        }
-    }
-
     @Inject(
         method = "renderLevel",
         at = @At("TAIL")
@@ -86,6 +62,7 @@ public class MixinLevelRenderer {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
 
+        Render3DUtils.beginFrame();
         long now = System.currentTimeMillis();
         if (lastAnimTime == 0) lastAnimTime = now;
         long deltaMs = now - lastAnimTime;
@@ -94,6 +71,39 @@ public class MixinLevelRenderer {
 
         float factor = Math.min(1.0f, (deltaMs / 50.0f) * 0.25f);
         double slideFactor = Math.min(1.0, (deltaMs / 50.0) * 0.35);
+
+        // --- BlockOutline highlight ---
+        if (BlockOutline.INSTANCE.getEnabled()) {
+            HitResult hit = mc.hitResult;
+            if (hit != null && hit.getType() == HitResult.Type.BLOCK) {
+                BlockHitResult blockHit = (BlockHitResult) hit;
+                BlockPos pos = blockHit.getBlockPos();
+
+                int color = BlockOutline.INSTANCE.color.getValue();
+                float r = ((color >> 16) & 0xFF) / 255.0f;
+                float g = ((color >> 8) & 0xFF) / 255.0f;
+                float b = (color & 0xFF) / 255.0f;
+                float a = ((color >> 24) & 0xFF) / 255.0f;
+                boolean filled = BlockOutline.INSTANCE.filled.getValue();
+                float lineWidth = BlockOutline.INSTANCE.width.getValue().floatValue();
+
+                try {
+                    modelViewMatrix.translate(
+                        (float)(pos.getX() + 0.5 - camPos.x),
+                        (float)(pos.getY() - camPos.y),
+                        (float)(pos.getZ() + 0.5 - camPos.z),
+                        REUSABLE_MATRIX
+                    );
+
+                    double size = 1.002;
+                    if (filled) {
+                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f, true);
+                    }
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a, lineWidth, true);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.035, r, g, b, a * 0.35f, lineWidth * 0.6f, true);
+                } catch (Exception ignored) {}
+            }
+        }
 
         // --- AirPlace highlight ---
         ravex.modules.player.AirPlace ap = ravex.modules.player.AirPlace.INSTANCE;
@@ -209,6 +219,7 @@ public class MixinLevelRenderer {
             float b = (color & 0xFF) / 255.0f;
             boolean filled = ravex.modules.world.ChestAura.INSTANCE.filled.getValue();
 
+            Matrix4f mat = new Matrix4f();
             for (ravex.modules.world.ChestAura.PlacedChest chest : ravex.modules.world.ChestAura.placedChests) {
                 long elapsed = chestNow - chest.placeTime;
                 if (elapsed > durationMs) continue;
@@ -217,19 +228,19 @@ public class MixinLevelRenderer {
                 float alpha = 1.0f - progress;
 
                 try {
-                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                        .translate(
-                            (float)(chest.pos.getX() - camPos.x),
-                            (float)(chest.pos.getY() - camPos.y),
-                            (float)(chest.pos.getZ() - camPos.z)
-                        );
+                    modelViewMatrix.translate(
+                        (float)(chest.pos.getX() - camPos.x),
+                        (float)(chest.pos.getY() - camPos.y),
+                        (float)(chest.pos.getZ() - camPos.z),
+                        mat
+                    );
 
                     double size = 1.002;
                     if (filled) {
-                        Render3DUtils.renderFilledBox(matrix, size, r, g, b, alpha * 0.25f);
+                        Render3DUtils.batchFilledBox(mat, size, r, g, b, alpha * 0.25f);
                     }
-                    Render3DUtils.renderWireframe(matrix, size, r, g, b, alpha * 0.95f);
-                    Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, alpha * 0.3f);
+                    Render3DUtils.batchWireframe(mat, size, r, g, b, alpha * 0.95f);
+                    Render3DUtils.batchWireframe(mat, size * 1.03, r, g, b, alpha * 0.3f);
                 } catch (Exception ignored) {}
             }
         }
@@ -241,22 +252,20 @@ public class MixinLevelRenderer {
                     if (pos == null) continue;
                     Vec3 blockPos = Vec3.atBottomCenterOf(pos);
 
+                    float dx = (float)(pos.getX() + 0.5 - camPos.x);
+                    float dy = (float)(pos.getY() - camPos.y);
+                    float dz = (float)(pos.getZ() + 0.5 - camPos.z);
                     try {
-                        Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                            .translate(
-                                (float)(blockPos.x - camPos.x),
-                                (float)(blockPos.y - camPos.y),
-                                (float)(blockPos.z - camPos.z)
-                            );
+                        modelViewMatrix.translate(dx, dy, dz, REUSABLE_MATRIX);
 
                         float a = Surround.renderAlpha * 0.85f;
                         float s = (float)Surround.renderSize;
 
-                        Render3DUtils.renderFilledBox(matrix, s,
+                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, s,
                             Surround.renderR, Surround.renderG, Surround.renderB, a * 0.25f);
-                        Render3DUtils.renderWireframe(matrix, s,
+                        Render3DUtils.batchWireframe(REUSABLE_MATRIX, s,
                             Surround.renderR, Surround.renderG, Surround.renderB, a * 0.95f);
-                        Render3DUtils.renderWireframe(matrix, s * 1.03,
+                        Render3DUtils.batchWireframe(REUSABLE_MATRIX, s * 1.03,
                             Surround.renderR, Surround.renderG, Surround.renderB, a * 0.3f);
                     } catch (Exception ignored) {}
                 }
@@ -269,15 +278,12 @@ public class MixinLevelRenderer {
             synchronized (ravex.modules.combat.Trap.trapBlocks) {
                 for (BlockPos pos : ravex.modules.combat.Trap.trapBlocks) {
                     if (pos == null) continue;
-                    Vec3 blockPos = Vec3.atBottomCenterOf(pos);
+                    float tx = (float)(pos.getX() + 0.5 - camPos.x);
+                    float ty = (float)(pos.getY() - camPos.y);
+                    float tz = (float)(pos.getZ() + 0.5 - camPos.z);
 
                     try {
-                        Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                            .translate(
-                                (float)(blockPos.x - camPos.x),
-                                (float)(blockPos.y - camPos.y),
-                                (float)(blockPos.z - camPos.z)
-                            );
+                        modelViewMatrix.translate(tx, ty, tz, REUSABLE_MATRIX);
 
                         int c = trap.color.getValue();
                         float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -286,9 +292,9 @@ public class MixinLevelRenderer {
                         float a = 0.35f;
 
                         double size = 1.002;
-                        Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                        Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                        Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                        Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                        Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
                     } catch (Exception ignored) {}
                 }
             }
@@ -299,15 +305,12 @@ public class MixinLevelRenderer {
         if (selfTrap.getEnabled() && selfTrap.render.getValue()) {
             for (BlockPos pos : ravex.modules.combat.SelfTrap.getSelfTrapBlocks()) {
                 if (pos == null) continue;
-                Vec3 blockPos = Vec3.atBottomCenterOf(pos);
+                float sx = (float)(pos.getX() + 0.5 - camPos.x);
+                float sy = (float)(pos.getY() - camPos.y);
+                float sz = (float)(pos.getZ() + 0.5 - camPos.z);
 
                 try {
-                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                        .translate(
-                            (float)(blockPos.x - camPos.x),
-                            (float)(blockPos.y - camPos.y),
-                            (float)(blockPos.z - camPos.z)
-                        );
+                    modelViewMatrix.translate(sx, sy, sz, REUSABLE_MATRIX);
 
                     int c = selfTrap.color.getValue();
                     float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -316,8 +319,8 @@ public class MixinLevelRenderer {
                     float a = ((c >> 24) & 0xFF) / 255.0f;
 
                     double size = 1.002;
-                    Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                    Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                    Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
                 } catch (Exception ignored) {}
             }
         }
@@ -327,12 +330,12 @@ public class MixinLevelRenderer {
         if (basePlace.getEnabled() && basePlace.render.getValue() && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
             BlockPos pos = ravex.modules.combat.BasePlace.getSimulatedPlacementBlock();
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate(
-                        (float)(pos.getX() - camPos.x),
-                        (float)(pos.getY() - camPos.y),
-                        (float)(pos.getZ() - camPos.z)
-                    );
+                modelViewMatrix.translate(
+                    (float)(pos.getX() - camPos.x),
+                    (float)(pos.getY() - camPos.y),
+                    (float)(pos.getZ() - camPos.z),
+                    REUSABLE_MATRIX
+                );
 
                 int c = basePlace.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -341,9 +344,9 @@ public class MixinLevelRenderer {
                 float a = ((c >> 24) & 0xFF) / 255.0f;
 
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -352,12 +355,12 @@ public class MixinLevelRenderer {
         if (anchorAura.getEnabled() && anchorAura.render.getValue() && ravex.modules.combat.AnchorAura.simulatedPlacementBlock != null) {
             BlockPos pos = ravex.modules.combat.AnchorAura.simulatedPlacementBlock;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate(
-                        (float)(pos.getX() - camPos.x),
-                        (float)(pos.getY() - camPos.y),
-                        (float)(pos.getZ() - camPos.z)
-                    );
+                modelViewMatrix.translate(
+                    (float)(pos.getX() - camPos.x),
+                    (float)(pos.getY() - camPos.y),
+                    (float)(pos.getZ() - camPos.z),
+                    REUSABLE_MATRIX
+                );
 
                 int c = anchorAura.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -366,9 +369,9 @@ public class MixinLevelRenderer {
                 float a = ((c >> 24) & 0xFF) / 255.0f;
 
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -379,17 +382,17 @@ public class MixinLevelRenderer {
         if (ac.getEnabled() && ac.renderPlacement.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
             BlockPos p = ravex.modules.combat.AutoCrystal.currentPlacementBlock;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate(
-                        (float)(p.getX() - camPos.x),
-                        (float)(p.getY() - camPos.y),
-                        (float)(p.getZ() - camPos.z)
-                    );
+                modelViewMatrix.translate(
+                    (float)(p.getX() - camPos.x),
+                    (float)(p.getY() - camPos.y),
+                    (float)(p.getZ() - camPos.z),
+                    REUSABLE_MATRIX
+                );
 
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, 0.2f, 0.8f, 1.0f, 0.22f);
-                Render3DUtils.renderWireframe(matrix, size, 0.2f, 0.8f, 1.0f, 0.85f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, 0.2f, 0.8f, 1.0f, 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, 0.2f, 0.8f, 1.0f, 0.22f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, 0.2f, 0.8f, 1.0f, 0.85f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, 0.2f, 0.8f, 1.0f, 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -402,18 +405,18 @@ public class MixinLevelRenderer {
                 if (dist > maxDist) continue;
 
                 try {
-                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                        .translate(
-                            (float)(stashPos.x - camPos.x),
-                            (float)(stashPos.y - camPos.y + 0.5),
-                            (float)(stashPos.z - camPos.z)
-                        );
+                    modelViewMatrix.translate(
+                        (float)(stashPos.x - camPos.x),
+                        (float)(stashPos.y - camPos.y + 0.5),
+                        (float)(stashPos.z - camPos.z),
+                        REUSABLE_MATRIX
+                    );
 
-                    float scale = (float)Math.max(0.5, Math.min(3.0, 64.0 / dist));
-                    matrix.scale(scale, scale, scale);
+                    float s = (float)Math.max(0.5, Math.min(3.0, 64.0 / dist));
+                    REUSABLE_MATRIX.scale(s, s, s);
 
-                    Render3DUtils.renderFilledBox(matrix, 1.0, 1.0f, 0.5f, 0.0f, 0.3f);
-                    Render3DUtils.renderWireframe(matrix, 1.0, 1.0f, 0.5f, 0.0f, 0.8f);
+                    Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.0, 1.0f, 0.5f, 0.0f, 0.3f);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, 1.0, 1.0f, 0.5f, 0.0f, 0.8f);
                 } catch (Exception ignored) {}
             }
         }
@@ -428,11 +431,11 @@ public class MixinLevelRenderer {
         if (tc.getEnabled() && tc.render.getValue() && ravex.modules.world.TreeCutter.currentMiningBlock != null) {
             BlockPos p = ravex.modules.world.TreeCutter.currentMiningBlock;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate(
+                modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
                         (float)(p.getY() - camPos.y),
-                        (float)(p.getZ() - camPos.z)
+                        (float)(p.getZ() - camPos.z),
+                        REUSABLE_MATRIX
                     );
 
                 int c = tc.color.getValue();
@@ -442,9 +445,9 @@ public class MixinLevelRenderer {
                 float a = 0.35f;
 
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -453,19 +456,19 @@ public class MixinLevelRenderer {
         if (ws.getEnabled() && ws.render.getValue() && ravex.modules.combat.WebSelf.targetPos != null) {
             BlockPos p = ravex.modules.combat.WebSelf.targetPos;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate(
+                modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
                         (float)(p.getY() - camPos.y),
-                        (float)(p.getZ() - camPos.z)
+                        (float)(p.getZ() - camPos.z),
+                        REUSABLE_MATRIX
                     );
                 float r = ravex.modules.combat.WebSelf.renderR;
                 float g = ravex.modules.combat.WebSelf.renderG;
                 float b = ravex.modules.combat.WebSelf.renderB;
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, 0.20f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, 0.85f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, 0.25f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, 0.20f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, 0.85f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, 0.25f);
             } catch (Exception ignored) {}
         }
 
@@ -474,11 +477,11 @@ public class MixinLevelRenderer {
         if (br.getEnabled() && br.render.getValue() && ravex.modules.combat.Breaker.currentMiningBlock != null) {
             BlockPos p = ravex.modules.combat.Breaker.currentMiningBlock;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate(
+                modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
                         (float)(p.getY() - camPos.y),
-                        (float)(p.getZ() - camPos.z)
+                        (float)(p.getZ() - camPos.z),
+                        REUSABLE_MATRIX
                     );
 
                 int c = br.color.getValue();
@@ -488,8 +491,8 @@ public class MixinLevelRenderer {
                 float a = 0.35f;
 
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
             } catch (Exception ignored) {}
         }
 
@@ -498,11 +501,11 @@ public class MixinLevelRenderer {
         if (at.getEnabled() && at.render.getValue() && ravex.modules.world.AutoTunnel.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoTunnel.currentTarget;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate(
+                modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
                         (float)(p.getY() - camPos.y),
-                        (float)(p.getZ() - camPos.z)
+                        (float)(p.getZ() - camPos.z),
+                        REUSABLE_MATRIX
                     );
 
                 int c = at.color.getValue();
@@ -512,9 +515,9 @@ public class MixinLevelRenderer {
                 float a = ((c >> 24) & 0xFF) / 255.0f;
 
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -523,11 +526,11 @@ public class MixinLevelRenderer {
         if (nk.getEnabled() && nk.render.getValue() && ravex.modules.world.Nuker.currentTarget != null) {
             BlockPos p = ravex.modules.world.Nuker.currentTarget;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate(
+                modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
                         (float)(p.getY() - camPos.y),
-                        (float)(p.getZ() - camPos.z)
+                        (float)(p.getZ() - camPos.z),
+                        REUSABLE_MATRIX
                     );
 
                 int c = nk.color.getValue();
@@ -537,9 +540,9 @@ public class MixinLevelRenderer {
                 float a = ((c >> 24) & 0xFF) / 255.0f;
 
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -548,17 +551,16 @@ public class MixinLevelRenderer {
         if (sm.getEnabled() && sm.render.getValue() && ravex.modules.world.AutoSmelt.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoSmelt.currentTarget;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z));
+                modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = sm.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
                 float g = ((c >> 8) & 0xFF) / 255.0f;
                 float b = (c & 0xFF) / 255.0f;
                 float a = ((c >> 24) & 0xFF) / 255.0f;
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -567,17 +569,16 @@ public class MixinLevelRenderer {
         if (bw.getEnabled() && bw.render.getValue() && ravex.modules.world.AutoBrew.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoBrew.currentTarget;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z));
+                modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = bw.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
                 float g = ((c >> 8) & 0xFF) / 255.0f;
                 float b = (c & 0xFF) / 255.0f;
                 float a = ((c >> 24) & 0xFF) / 255.0f;
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -586,17 +587,16 @@ public class MixinLevelRenderer {
         if (ec.getEnabled() && ec.render.getValue() && ravex.modules.world.ECFarmer.currentTarget != null) {
             BlockPos p = ravex.modules.world.ECFarmer.currentTarget;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z));
+                modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = ec.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
                 float g = ((c >> 8) & 0xFF) / 255.0f;
                 float b = (c & 0xFF) / 255.0f;
                 float a = ((c >> 24) & 0xFF) / 255.0f;
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -605,17 +605,16 @@ public class MixinLevelRenderer {
         if (pb.getEnabled() && pb.render.getValue() && ravex.modules.misc.PortalBuild.currentTarget != null) {
             BlockPos p = ravex.modules.misc.PortalBuild.currentTarget;
             try {
-                Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                    .translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z));
+                modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = pb.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
                 float g = ((c >> 8) & 0xFF) / 255.0f;
                 float b = (c & 0xFF) / 255.0f;
                 float a = ((c >> 24) & 0xFF) / 255.0f;
                 double size = 1.002;
-                Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.25f);
-                Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.95f);
-                Render3DUtils.renderWireframe(matrix, size * 1.03, r, g, b, a * 0.2f);
+                Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
             } catch (Exception ignored) {}
         }
 
@@ -625,16 +624,15 @@ public class MixinLevelRenderer {
             for (var hole : ravex.modules.combat.HoleFill.holePositions) {
                 if (hole == null) continue;
                 try {
-                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                        .translate((float)(hole.getX() - camPos.x), (float)(hole.getY() - camPos.y), (float)(hole.getZ() - camPos.z));
+                    modelViewMatrix.translate((float)(hole.getX() - camPos.x), (float)(hole.getY() - camPos.y), (float)(hole.getZ() - camPos.z), REUSABLE_MATRIX);
                     int c = hf.color.getValue();
                     float r = ((c >> 16) & 0xFF) / 255.0f;
                     float g = ((c >> 8) & 0xFF) / 255.0f;
                     float b = (c & 0xFF) / 255.0f;
                     float a = ((c >> 24) & 0xFF) / 255.0f;
                     double size = 1.002;
-                    Render3DUtils.renderFilledBox(matrix, size, r, g, b, a * 0.15f);
-                    Render3DUtils.renderWireframe(matrix, size, r, g, b, a * 0.85f);
+                    Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.15f);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.85f);
                 } catch (Exception ignored) {}
             }
         }
@@ -695,10 +693,9 @@ public class MixinLevelRenderer {
             boolean wire = Tunnels.INSTANCE.wireframe.getValue();
             for (BlockPos pos : Tunnels.INSTANCE.getTunnelBlocks()) {
                 try {
-                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                        .translate((float)(pos.getX() - camPos.x), (float)(pos.getY() - camPos.y), (float)(pos.getZ() - camPos.z));
-                    if (filled) Render3DUtils.renderFilledBox(matrix, 1.002, tr, tg, tb, ta * 0.3f);
-                    if (wire) Render3DUtils.renderWireframe(matrix, 1.002, tr, tg, tb, ta * 0.85f);
+                    modelViewMatrix.translate((float)(pos.getX() - camPos.x), (float)(pos.getY() - camPos.y), (float)(pos.getZ() - camPos.z), REUSABLE_MATRIX);
+                    if (filled) Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, tr, tg, tb, ta * 0.3f);
+                    if (wire) Render3DUtils.batchWireframe(REUSABLE_MATRIX, 1.002, tr, tg, tb, ta * 0.85f);
                 } catch (Exception ignored) {}
             }
         }
@@ -717,25 +714,25 @@ public class MixinLevelRenderer {
                     float py = (float)(pos.getY() - camPos.y);
                     float pz = (float)(pos.getZ() - camPos.z);
                     if (HoleESP.INSTANCE.filled.getValue()) {
-                        Matrix4f mat = new Matrix4f(modelViewMatrix).translate(px, py, pz);
-                        Render3DUtils.renderFilledBox(mat, 1.002, hr, hg, hb, ha * 0.3f, true);
+                        modelViewMatrix.translate(px, py, pz, REUSABLE_MATRIX);
+                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, hr, hg, hb, ha * 0.3f, true);
                     }
                     if (HoleESP.INSTANCE.wireframe.getValue()) {
                         // 12 edges as thin axis-aligned boxes through the fixed fillNoDepth
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py, pz, px + 1, py, pz, hw, hr, hg, hb, ha, true);
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py, pz + 1, hw, hr, hg, hb, ha, true);
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py, pz + 1, px, py, pz + 1, hw, hr, hg, hb, ha, true);
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py, pz + 1, px, py, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px, py, pz, px + 1, py, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz + 1, px, py, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px, py, pz + 1, px, py, pz, hw, hr, hg, hb, ha, true);
 
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py + 1, pz, px + 1, py + 1, pz, hw, hr, hg, hb, ha, true);
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py + 1, pz, px + 1, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py + 1, pz + 1, px, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py + 1, pz + 1, px, py + 1, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px, py + 1, pz, px + 1, py + 1, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py + 1, pz, px + 1, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py + 1, pz + 1, px, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px, py + 1, pz + 1, px, py + 1, pz, hw, hr, hg, hb, ha, true);
 
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py, pz, px, py + 1, pz, hw, hr, hg, hb, ha, true);
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py + 1, pz, hw, hr, hg, hb, ha, true);
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py, pz + 1, px + 1, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
-                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py, pz + 1, px, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px, py, pz, px, py + 1, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py + 1, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz + 1, px + 1, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, px, py, pz + 1, px, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
                     }
                 } catch (Exception ignored) {}
             }
@@ -752,10 +749,9 @@ public class MixinLevelRenderer {
             boolean vw = VoidESP.INSTANCE.wireframe.getValue();
             for (BlockPos pos : VoidESP.INSTANCE.getVoidBlocks()) {
                 try {
-                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                        .translate((float)(pos.getX() - camPos.x), 0, (float)(pos.getZ() - camPos.z));
-                    if (vf) Render3DUtils.renderFilledBox(matrix, 16.0, vr, vg, vb, va * 0.15f);
-                    if (vw) Render3DUtils.renderWireframe(matrix, 16.0, vr, vg, vb, va * 0.4f);
+                    modelViewMatrix.translate((float)(pos.getX() - camPos.x), 0, (float)(pos.getZ() - camPos.z), REUSABLE_MATRIX);
+                    if (vf) Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 16.0, vr, vg, vb, va * 0.15f);
+                    if (vw) Render3DUtils.batchWireframe(REUSABLE_MATRIX, 16.0, vr, vg, vb, va * 0.4f);
                 } catch (Exception ignored) {}
             }
         }
@@ -767,8 +763,7 @@ public class MixinLevelRenderer {
             for (var mb : ravex.modules.exploit.PacketMine.miningBlocks) {
                 if (mb == null || mb.pos == null) continue;
                 try {
-                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                        .translate((float)(mb.pos.getX() - camPos.x), (float)(mb.pos.getY() - camPos.y), (float)(mb.pos.getZ() - camPos.z));
+                    modelViewMatrix.translate((float)(mb.pos.getX() - camPos.x), (float)(mb.pos.getY() - camPos.y), (float)(mb.pos.getZ() - camPos.z), REUSABLE_MATRIX);
 
                     int c = pm.color.getValue();
                     float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -787,12 +782,12 @@ public class MixinLevelRenderer {
                     float flashB = b + (1.0f - b) * progress * 0.8f;
                     double size = 1.002;
                     float fillAlpha = (0.3f - 0.2f * progress) * pulse * fadeOut;
-                    Render3DUtils.renderFilledBox(matrix, size, flashR * pulse, flashG * pulse, flashB * pulse, fillAlpha);
+                    Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, flashR * pulse, flashG * pulse, flashB * pulse, fillAlpha);
 
                     float wireAlpha = (0.3f + 0.5f * (1.0f - progress)) * fadeOut;
-                    Render3DUtils.renderWireframe(matrix, size * 1.005, r, g, b, wireAlpha);
-                    Render3DUtils.renderWireframe(matrix, size * 1.015, r, g, b, wireAlpha * 0.5f);
-                    Render3DUtils.renderWireframe(matrix, size * 1.025, r, g, b, wireAlpha * 0.2f);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.005, r, g, b, wireAlpha);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.015, r, g, b, wireAlpha * 0.5f);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.025, r, g, b, wireAlpha * 0.2f);
 
                     for (int i = 0; i < 3; i++) {
                         float phase = (float)(blockTime * 0.003 + i * 2.09);
@@ -800,74 +795,37 @@ public class MixinLevelRenderer {
                         float beamZ = (float)Math.sin(phase) * 0.15f + 0.5f;
                         float beamY = (float)((phase % 6.28) / 6.28) * 1.2f - 0.1f;
                         if (beamY < 0) beamY += 1.2f;
-                        Matrix4f beamMat = new Matrix4f(modelViewMatrix)
-                            .translate((float)(mb.pos.getX() + beamX - camPos.x),
+                        modelViewMatrix.translate(
+                                       (float)(mb.pos.getX() + beamX - camPos.x),
                                        (float)(mb.pos.getY() + beamY - camPos.y),
-                                       (float)(mb.pos.getZ() + beamZ - camPos.z));
-                        Render3DUtils.renderFilledBox(beamMat, 0.04, flashR, flashG, flashB, 0.6f * (1.0f - progress) * fadeOut);
+                                       (float)(mb.pos.getZ() + beamZ - camPos.z),
+                                       REUSABLE_MATRIX);
+                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 0.04, flashR, flashG, flashB, 0.6f * (1.0f - progress) * fadeOut);
                     }
                 } catch (Exception ignored) {}
             }
         }
 
+        Render3DUtils.endFrame();
     }
 
     private void renderBlockHighlight(Vec3 highlightPos, float alpha, double size, float r, float g, float b, Vec3 camPos, Matrix4f modelViewMatrix) {
         if (highlightPos == null || alpha <= 0.01f) return;
 
         try {
-            Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                .translate(
+            modelViewMatrix.translate(
                     (float)(highlightPos.x - camPos.x),
                     (float)(highlightPos.y - camPos.y),
-                    (float)(highlightPos.z - camPos.z)
+                    (float)(highlightPos.z - camPos.z),
+                    REUSABLE_MATRIX
                 );
 
             float filledAlpha = alpha * 0.3f;
             float lineAlpha = alpha * 0.95f;
 
-            Render3DUtils.renderFilledBox(matrix, size, r, g, b, filledAlpha);
-            Render3DUtils.renderWireframe(matrix, size, r, g, b, lineAlpha);
-            Render3DUtils.renderWireframe(matrix, size * 1.02, r, g, b, lineAlpha * 0.4f);
-        } catch (Exception ignored) {}
-    }
-
-    private void renderCustomBlockOutline(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack) {
-        Minecraft mc = Minecraft.getInstance();
-        HitResult hit = mc.hitResult;
-        if (hit == null || hit.getType() != HitResult.Type.BLOCK) return;
-
-        BlockHitResult blockHit = (BlockHitResult) hit;
-        BlockPos pos = blockHit.getBlockPos();
-
-        int color = BlockOutline.INSTANCE.color.getValue();
-        float r = ((color >> 16) & 0xFF) / 255.0f;
-        float g = ((color >> 8) & 0xFF) / 255.0f;
-        float b = (color & 0xFF) / 255.0f;
-        float a = ((color >> 24) & 0xFF) / 255.0f;
-        boolean filled = BlockOutline.INSTANCE.filled.getValue();
-        float lineWidth = BlockOutline.INSTANCE.width.getValue().floatValue();
-        double outlineSize = 1.002;
-
-        try {
-            poseStack.pushPose();
-            poseStack.translate((float)pos.getX(), (float)pos.getY(), (float)pos.getZ());
-
-            Matrix4f matrix = new Matrix4f(poseStack.last().pose());
-
-            if (filled) {
-                VertexConsumer fillConsumer = bufferSource.getBuffer(RenderTypes.debugFilledBox());
-                BlockRenderer.renderFilledBoxQuads(fillConsumer, matrix, outlineSize, r, g, b, a * 0.25f);
-            }
-
-            VertexConsumer lineConsumer = bufferSource.getBuffer(RenderTypes.lines());
-            BlockRenderer.renderWireframe(lineConsumer, matrix, outlineSize, r, g, b, a, lineWidth);
-
-            // glow
-            VertexConsumer glowConsumer = bufferSource.getBuffer(RenderTypes.lines());
-            BlockRenderer.renderWireframe(glowConsumer, matrix, outlineSize * 1.035, r, g, b, a * 0.35f, lineWidth * 0.6f);
-
-            poseStack.popPose();
+            Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, filledAlpha);
+            Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, lineAlpha);
+            Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.02, r, g, b, lineAlpha * 0.4f);
         } catch (Exception ignored) {}
     }
 
@@ -879,10 +837,10 @@ public class MixinLevelRenderer {
 
         // 4 vertical corner pillars (full world height)
         // Through-walls для видимости сквозь стены
-        Render3DUtils.renderAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz - cz, bx - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
-        Render3DUtils.renderAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz - cz, bx + 16 - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
-        Render3DUtils.renderAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz + 16 - cz, bx - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
-        Render3DUtils.renderAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz + 16 - cz, bx + 16 - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
+        Render3DUtils.batchAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz - cz, bx - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
+        Render3DUtils.batchAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz - cz, bx + 16 - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
+        Render3DUtils.batchAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz + 16 - cz, bx - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
+        Render3DUtils.batchAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz + 16 - cz, bx + 16 - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
 
         // 4 horizontal edges at the nearest Y levels around the player (every 32 blocks)
         int baseY = Math.round(cy / 32.0f) * 32;
@@ -891,10 +849,10 @@ public class MixinLevelRenderer {
             if (y < -64 || y > 320) continue;
             float yOff = y - cy;
             float ha = a * (1.0f - Math.abs(dy) / 64.0f) * 0.5f;
-            Render3DUtils.renderAxisLine(modelViewMatrix, bx - cx, yOff, bz - cz, bx + 16 - cx, yOff, bz - cz, th, r, g, b, ha, true);
-            Render3DUtils.renderAxisLine(modelViewMatrix, bx + 16 - cx, yOff, bz - cz, bx + 16 - cx, yOff, bz + 16 - cz, th, r, g, b, ha, true);
-            Render3DUtils.renderAxisLine(modelViewMatrix, bx + 16 - cx, yOff, bz + 16 - cz, bx - cx, yOff, bz + 16 - cz, th, r, g, b, ha, true);
-            Render3DUtils.renderAxisLine(modelViewMatrix, bx - cx, yOff, bz + 16 - cz, bx - cx, yOff, bz - cz, th, r, g, b, ha, true);
+            Render3DUtils.batchAxisLine(modelViewMatrix, bx - cx, yOff, bz - cz, bx + 16 - cx, yOff, bz - cz, th, r, g, b, ha, true);
+            Render3DUtils.batchAxisLine(modelViewMatrix, bx + 16 - cx, yOff, bz - cz, bx + 16 - cx, yOff, bz + 16 - cz, th, r, g, b, ha, true);
+            Render3DUtils.batchAxisLine(modelViewMatrix, bx + 16 - cx, yOff, bz + 16 - cz, bx - cx, yOff, bz + 16 - cz, th, r, g, b, ha, true);
+            Render3DUtils.batchAxisLine(modelViewMatrix, bx - cx, yOff, bz + 16 - cz, bx - cx, yOff, bz - cz, th, r, g, b, ha, true);
         }
     }
 }
