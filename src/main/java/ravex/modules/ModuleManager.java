@@ -4,7 +4,7 @@ import ravex.modules.combat.KillAura;
 import ravex.modules.combat.AutoCrystal;
 import ravex.modules.render.ESP;
 import ravex.modules.render.Skeleton;
-import ravex.modules.esp.Animations;
+
 import ravex.modules.esp.Borders;
 import ravex.modules.esp.Tunnels;
 import ravex.modules.esp.Zoom;
@@ -219,7 +219,7 @@ public class ModuleManager {
         clickGuiModules.add(BreadCrumbs.INSTANCE);
         clickGuiModules.add(ravex.modules.render.ViewModel.INSTANCE);
         clickGuiModules.add(ravex.modules.render.NoRender.INSTANCE);
-        clickGuiModules.add(Animations.INSTANCE);
+
         clickGuiModules.add(Borders.INSTANCE);
         clickGuiModules.add(Tunnels.INSTANCE);
         clickGuiModules.add(Zoom.INSTANCE);

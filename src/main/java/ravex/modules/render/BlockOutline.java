@@ -14,6 +14,9 @@ public class BlockOutline extends Module {
     public final BooleanParameter throughWalls = new BooleanParameter("Through Walls", true);
     public final BooleanParameter filled = new BooleanParameter("Filled", false);
 
+    /** True when the game says a block outline should be shown (looking at a block, GUI closed, etc.) */
+    public static boolean vanillaOutlineEnabled = true;
+
     private BlockOutline() {
         super("BlockOutline", Category.RENDER);
         addParameter(color);

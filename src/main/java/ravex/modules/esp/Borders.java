@@ -18,8 +18,6 @@ public class Borders extends Module {
     public final ColorParameter currentColor = new ColorParameter("CurrentColor", 0x55FF5500);
     public final NumberParameter lineWidth = new NumberParameter("LineWidth", 1.5, 0.5, 5.0, 0.5);
     public final NumberParameter renderDistance = new NumberParameter("RenderDist", 64, 16, 128, 16);
-    public final BooleanParameter showCoords = new BooleanParameter("ShowCoords", true);
-
     private ChunkPos lastChunk;
 
     private Borders() {
@@ -30,7 +28,6 @@ public class Borders extends Module {
         addParameter(currentColor);
         addParameter(lineWidth);
         addParameter(renderDistance);
-        addParameter(showCoords);
     }
 
     @Override
@@ -44,8 +41,4 @@ public class Borders extends Module {
         return lastChunk;
     }
 
-    public String getChunkInfo() {
-        if (lastChunk == null) return "?";
-        return lastChunk.x + ", " + lastChunk.z;
-    }
 }

@@ -3,6 +3,7 @@ package ravex.modules.esp;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -19,10 +20,9 @@ public class HoleESP extends Module {
     public final ColorParameter safeColor = new ColorParameter("SafeColor", 0xAA00FF00);
     public final BooleanParameter filled = new BooleanParameter("Filled", true);
     public final BooleanParameter wireframe = new BooleanParameter("Wireframe", true);
-    public final NumberParameter updateInterval = new NumberParameter("UpdateInterval", 10, 2, 40, 2);
 
     private final List<BlockPos> holes = new ArrayList<>();
-    private long lastScan = 0;
+    private int tickCounter = 0;
 
     private HoleESP() {
         super("HoleESP", Category.RENDER);
@@ -30,7 +30,6 @@ public class HoleESP extends Module {
         addParameter(safeColor);
         addParameter(filled);
         addParameter(wireframe);
-        addParameter(updateInterval);
     }
 
     @Override
@@ -38,9 +37,8 @@ public class HoleESP extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        long now = System.currentTimeMillis();
-        if (now - lastScan < updateInterval.getValue().intValue() * 50) return;
-        lastScan = now;
+        if (++tickCounter % 5 != 0) return;
+        tickCounter = 0;
 
         holes.clear();
         BlockPos center = mc.player.blockPosition();
@@ -60,14 +58,14 @@ public class HoleESP extends Module {
     }
 
     private boolean isSafeHole(Minecraft mc, BlockPos pos) {
-        if (mc.level.getBlockState(pos.below()).isAir()) return false;
+        if (!mc.level.getBlockState(pos.below()).isSolid()) return false;
         BlockPos[] sides = {
             pos.offset(1, 0, 0), pos.offset(-1, 0, 0),
             pos.offset(0, 0, 1), pos.offset(0, 0, -1)
         };
         for (BlockPos side : sides) {
             BlockState state = mc.level.getBlockState(side);
-            if (state.isAir()) return false;
+            if (state.isAir() || !state.isSolid()) return false;
         }
         return true;
     }

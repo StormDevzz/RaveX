@@ -11,6 +11,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.LevelRenderState;
+import ravex.utility.render.BlockRenderer;
 import ravex.utility.render.Render3DUtils;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
@@ -35,6 +41,26 @@ public class MixinLevelRenderer {
     private static float scAlpha = 0.0f;
     private static double scSize = 0.0;
     private static boolean scInitialized = false;
+    @Inject(
+        method = "renderBlockOutline(Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/PoseStack;ZLnet/minecraft/client/renderer/state/LevelRenderState;)V",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void onVanillaRenderBlockOutline(
+        MultiBufferSource.BufferSource bufferSource,
+        PoseStack poseStack,
+        boolean isTranslucent,
+        LevelRenderState levelRenderState,
+        CallbackInfo ci
+    ) {
+        if (BlockOutline.INSTANCE.getEnabled()) {
+            ci.cancel();
+            if (!isTranslucent) {
+                renderCustomBlockOutline(bufferSource, poseStack);
+            }
+        }
+    }
+
     @Inject(
         method = "renderLevel",
         at = @At("TAIL")
@@ -171,11 +197,6 @@ public class MixinLevelRenderer {
                 ravex.modules.world.Scaffold.renderB,
                 camPos, modelViewMatrix
             );
-        }
-
-        // --- BlockOutline ---
-        if (BlockOutline.INSTANCE.getEnabled()) {
-            renderBlockOutline(camPos, modelViewMatrix);
         }
 
         // --- ChestAura highlights ---
@@ -627,6 +648,7 @@ public class MixinLevelRenderer {
             float lr = ((lc >> 16) & 0xFF) / 255.0f;
             float lg = ((lc >> 8) & 0xFF) / 255.0f;
             float lb = (lc & 0xFF) / 255.0f;
+            float la = ((lc >> 24) & 0xFF) / 255.0f;
             float lw = Borders.INSTANCE.lineWidth.getValue().floatValue();
 
             if (showAll && mc.player != null) {
@@ -638,9 +660,7 @@ public class MixinLevelRenderer {
                         int bx = (cx + dx) << 4;
                         int bz = (cz + dz) << 4;
                         try {
-                            Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                                .translate(bx - (float)camPos.x, 0, bz - (float)camPos.z);
-                            renderChunkBorderThroughWalls(matrix, bx, bz, lr, lg, lb, lw);
+                            renderChunkBorderLines(modelViewMatrix, bx, bz, lr, lg, lb, la, camPos);
                         } catch (Exception ignored) {}
                     }
                 }
@@ -651,15 +671,14 @@ public class MixinLevelRenderer {
                 float cr = ((cc >> 16) & 0xFF) / 255.0f;
                 float cg = ((cc >> 8) & 0xFF) / 255.0f;
                 float cb = (cc & 0xFF) / 255.0f;
+                float ca = ((cc >> 24) & 0xFF) / 255.0f;
                 if (mc.player != null) {
                     int cx = mc.player.chunkPosition().x;
                     int cz = mc.player.chunkPosition().z;
                     int bx = cx << 4;
                     int bz = cz << 4;
                     try {
-                        Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                            .translate(bx - (float)camPos.x, 0, bz - (float)camPos.z);
-                        renderChunkBorderThroughWalls(matrix, bx, bz, cr, cg, cb, lw + 1.0f);
+                        renderChunkBorderLines(modelViewMatrix, bx, bz, cr, cg, cb, ca, camPos);
                     } catch (Exception ignored) {}
                 }
             }
@@ -691,12 +710,33 @@ public class MixinLevelRenderer {
             float hg = ((c >> 8) & 0xFF) / 255.0f;
             float hb = (c & 0xFF) / 255.0f;
             float ha = ((c >> 24) & 0xFF) / 255.0f;
+            float hw = 0.04f;
             for (var pos : HoleESP.INSTANCE.getHoles()) {
                 try {
-                    Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                        .translate((float)(pos.getX() - camPos.x), (float)(pos.getY() - camPos.y), (float)(pos.getZ() - camPos.z));
-                    if (HoleESP.INSTANCE.filled.getValue()) Render3DUtils.renderFilledBox(matrix, 1.002, hr, hg, hb, ha * 0.25f, true);
-                    if (HoleESP.INSTANCE.wireframe.getValue()) Render3DUtils.renderWireframe(matrix, 1.002, hr, hg, hb, ha * 0.85f, 1.0f, true);
+                    float px = (float)(pos.getX() - camPos.x);
+                    float py = (float)(pos.getY() - camPos.y);
+                    float pz = (float)(pos.getZ() - camPos.z);
+                    if (HoleESP.INSTANCE.filled.getValue()) {
+                        Matrix4f mat = new Matrix4f(modelViewMatrix).translate(px, py, pz);
+                        Render3DUtils.renderFilledBox(mat, 1.002, hr, hg, hb, ha * 0.3f, true);
+                    }
+                    if (HoleESP.INSTANCE.wireframe.getValue()) {
+                        // 12 edges as thin axis-aligned boxes through the fixed fillNoDepth
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py, pz, px + 1, py, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py, pz + 1, px, py, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py, pz + 1, px, py, pz, hw, hr, hg, hb, ha, true);
+
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py + 1, pz, px + 1, py + 1, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py + 1, pz, px + 1, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py + 1, pz + 1, px, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py + 1, pz + 1, px, py + 1, pz, hw, hr, hg, hb, ha, true);
+
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py, pz, px, py + 1, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py + 1, pz, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px + 1, py, pz + 1, px + 1, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
+                        Render3DUtils.renderAxisLine(modelViewMatrix, px, py, pz + 1, px, py + 1, pz + 1, hw, hr, hg, hb, ha, true);
+                    }
                 } catch (Exception ignored) {}
             }
         }
@@ -792,7 +832,7 @@ public class MixinLevelRenderer {
         } catch (Exception ignored) {}
     }
 
-    private void renderBlockOutline(Vec3 camPos, Matrix4f modelViewMatrix) {
+    private void renderCustomBlockOutline(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack) {
         Minecraft mc = Minecraft.getInstance();
         HitResult hit = mc.hitResult;
         if (hit == null || hit.getType() != HitResult.Type.BLOCK) return;
@@ -804,32 +844,57 @@ public class MixinLevelRenderer {
         float r = ((color >> 16) & 0xFF) / 255.0f;
         float g = ((color >> 8) & 0xFF) / 255.0f;
         float b = (color & 0xFF) / 255.0f;
+        float a = ((color >> 24) & 0xFF) / 255.0f;
         boolean filled = BlockOutline.INSTANCE.filled.getValue();
+        float lineWidth = BlockOutline.INSTANCE.width.getValue().floatValue();
+        double outlineSize = 1.002;
 
         try {
-            Matrix4f matrix = new Matrix4f(modelViewMatrix)
-                .translate(
-                    (float)(pos.getX() - camPos.x),
-                    (float)(pos.getY() - camPos.y),
-                    (float)(pos.getZ() - camPos.z)
-                );
+            poseStack.pushPose();
+            poseStack.translate((float)pos.getX(), (float)pos.getY(), (float)pos.getZ());
 
-            double outlineSize = 1.002;
-            float lineWidth = BlockOutline.INSTANCE.width.getValue().floatValue();
+            Matrix4f matrix = new Matrix4f(poseStack.last().pose());
+
             if (filled) {
-                Render3DUtils.renderFilledBox(matrix, outlineSize, r, g, b, 0.2f);
+                VertexConsumer fillConsumer = bufferSource.getBuffer(RenderTypes.debugFilledBox());
+                BlockRenderer.renderFilledBoxQuads(fillConsumer, matrix, outlineSize, r, g, b, a * 0.25f);
             }
-            Render3DUtils.renderWireframe(matrix, outlineSize, r, g, b, 0.95f, lineWidth);
-            Render3DUtils.renderWireframe(matrix, outlineSize * 1.03, r, g, b, 0.3f, lineWidth);
+
+            VertexConsumer lineConsumer = bufferSource.getBuffer(RenderTypes.lines());
+            BlockRenderer.renderWireframe(lineConsumer, matrix, outlineSize, r, g, b, a, lineWidth);
+
+            // glow
+            VertexConsumer glowConsumer = bufferSource.getBuffer(RenderTypes.lines());
+            BlockRenderer.renderWireframe(glowConsumer, matrix, outlineSize * 1.035, r, g, b, a * 0.35f, lineWidth * 0.6f);
+
+            poseStack.popPose();
         } catch (Exception ignored) {}
     }
 
-    private void renderChunkBorderThroughWalls(Matrix4f matrix, int bx, int bz, float r, float g, float b, float lw) {
-        double size = 16.0;
-        Render3DUtils.renderWireframe(matrix, size, r, g, b, 0.6f, lw, true);
-        Matrix4f floorMat = new Matrix4f(matrix).translate(0, -64, 0);
-        Render3DUtils.renderWireframe(floorMat, size, r, g, b, 0.15f, lw * 0.5f, true);
-        Matrix4f ceilMat = new Matrix4f(matrix).translate(0, 320, 0);
-        Render3DUtils.renderWireframe(ceilMat, size, r, g, b, 0.15f, lw * 0.5f, true);
+    private void renderChunkBorderLines(Matrix4f modelViewMatrix, int bx, int bz, float r, float g, float b, float a, Vec3 camPos) {
+        float cx = (float)camPos.x;
+        float cy = (float)camPos.y;
+        float cz = (float)camPos.z;
+        float th = 0.06f;
+
+        // 4 vertical corner pillars (full world height)
+        // Through-walls для видимости сквозь стены
+        Render3DUtils.renderAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz - cz, bx - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
+        Render3DUtils.renderAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz - cz, bx + 16 - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
+        Render3DUtils.renderAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz + 16 - cz, bx - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
+        Render3DUtils.renderAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz + 16 - cz, bx + 16 - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
+
+        // 4 horizontal edges at the nearest Y levels around the player (every 32 blocks)
+        int baseY = Math.round(cy / 32.0f) * 32;
+        for (int dy = -32; dy <= 32; dy += 32) {
+            int y = baseY + dy;
+            if (y < -64 || y > 320) continue;
+            float yOff = y - cy;
+            float ha = a * (1.0f - Math.abs(dy) / 64.0f) * 0.5f;
+            Render3DUtils.renderAxisLine(modelViewMatrix, bx - cx, yOff, bz - cz, bx + 16 - cx, yOff, bz - cz, th, r, g, b, ha, true);
+            Render3DUtils.renderAxisLine(modelViewMatrix, bx + 16 - cx, yOff, bz - cz, bx + 16 - cx, yOff, bz + 16 - cz, th, r, g, b, ha, true);
+            Render3DUtils.renderAxisLine(modelViewMatrix, bx + 16 - cx, yOff, bz + 16 - cz, bx - cx, yOff, bz + 16 - cz, th, r, g, b, ha, true);
+            Render3DUtils.renderAxisLine(modelViewMatrix, bx - cx, yOff, bz + 16 - cz, bx - cx, yOff, bz - cz, th, r, g, b, ha, true);
+        }
     }
 }

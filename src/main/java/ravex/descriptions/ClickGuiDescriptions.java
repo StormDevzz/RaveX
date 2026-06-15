@@ -190,7 +190,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("PacketMine",      "Click to auto-mine blocks with progress.");
         DESCRIPTIONS.put("PacketEat",       "Packet-based instant eating with Auto/Manual modes.");
         DESCRIPTIONS.put("WitherBuild",     "Builds wither structures.");
-        DESCRIPTIONS.put("Animations",      "Custom walk animation styles.");
+
         DESCRIPTIONS.put("Borders",         "Shows chunk borders and current chunk.");
         DESCRIPTIONS.put("Tunnels",         "Highlights tunnel entrances nearby.");
         DESCRIPTIONS.put("Zoom",            "Smooth camera zoom in and out.");

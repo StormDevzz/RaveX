@@ -5,6 +5,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -23,6 +24,7 @@ public abstract class MixinCamera {
     @Shadow protected abstract float getMaxZoom(float startingDistance);
     @Shadow protected abstract void setRotation(float yRot, float xRot);
     @Shadow protected abstract void setPosition(net.minecraft.world.phys.Vec3 pos);
+
 
     @Inject(method = "setup", at = @At("RETURN"))
     private void onSetup(Level area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
@@ -62,6 +64,7 @@ public abstract class MixinCamera {
             this.setPosition(targetPos);
             this.setRotation(yaw, pitch);
         }
+
     }
 
     @Inject(method = "isDetached", at = @At("HEAD"), cancellable = true)

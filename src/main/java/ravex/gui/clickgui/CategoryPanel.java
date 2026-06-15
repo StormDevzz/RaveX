@@ -192,6 +192,11 @@ public class CategoryPanel {
             }
             graphics.disableScissor();
 
+            // ── Fix: не показывать тултип для кнопок вне видимой области ─────
+            if (ClickGUI.hoveredDescription != null && (mouseY < listTop || mouseY >= listTop + 20 * btnH)) {
+                ClickGUI.hoveredDescription = null;
+            }
+
             // ── Scrollbar ────────────────────────────────────────────────────
             int trackX = ix + width - 4;
             int trackH = 20 * btnH - 2;

@@ -49,6 +49,11 @@ public class ClickGui extends Module {
     public final BooleanParameter headerGlow = new BooleanParameter("Header Glow", true);
     public final NumberParameter headerGlowIntensity = new NumberParameter("Glow Intensity", 20, 5, 60, 5);
 
+    // Tooltip settings
+    public final NumberParameter tooltipSpeed = new NumberParameter("Tooltip Speed", 10, 1, 30, 1);
+    public final NumberParameter tooltipOffsetX = new NumberParameter("Tooltip Offset X", 8, 0, 30, 1);
+    public final NumberParameter tooltipOffsetY = new NumberParameter("Tooltip Offset Y", 8, 0, 30, 1);
+
     private ClickGui() {
         super("ClickGui", Category.CLIENT);
         addParameter(drawBackground);
@@ -74,6 +79,9 @@ public class ClickGui extends Module {
         addParameter(scrollSmoothness);
         addParameter(headerGlow);
         addParameter(headerGlowIntensity);
+        addParameter(tooltipSpeed);
+        addParameter(tooltipOffsetX);
+        addParameter(tooltipOffsetY);
         color1.setVisible(() -> "Static".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue()) || "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         setEnabled(true);
