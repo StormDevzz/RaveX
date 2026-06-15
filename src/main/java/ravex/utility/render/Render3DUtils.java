@@ -23,17 +23,23 @@ public class Render3DUtils {
     private static final RenderType FILL_TYPE = RenderTypes.debugFilledBox();
     private static final RenderType LINE_TYPE = RenderTypes.lines();
 
-    private static RenderType fillNoDepth;
-    private static RenderType lineNoDepth;
+    private static final RenderType FILL_NO_DEPTH;
+    private static final RenderType LINE_NO_DEPTH;
 
-    private static void ensureNoDepthTypes() {
-        if (fillNoDepth != null) return;
+    static {
+        RenderType f = null, l = null;
+        try {
+            f = buildNoDepthType(RenderPipelines.DEBUG_FILLED_BOX, "ravex_fill_nodepth");
+            l = buildNoDepthType(RenderPipelines.LINES, "ravex_line_nodepth");
+        } catch (Exception e) {
+            // through-walls unavailable
+        }
+        FILL_NO_DEPTH = f;
+        LINE_NO_DEPTH = l;
+    }
 
-        RenderPipeline linesPipe = RenderPipelines.LINES;
-        RenderPipeline fillPipe = RenderPipelines.DEBUG_FILLED_BOX;
-
-        fillNoDepth = buildNoDepthType(fillPipe, "ravex_fill_nodepth");
-        lineNoDepth = buildNoDepthType(linesPipe, "ravex_line_nodepth");
+    private static boolean hasNoDepth() {
+        return FILL_NO_DEPTH != null && LINE_NO_DEPTH != null;
     }
 
     private static RenderType buildNoDepthType(RenderPipeline source, String name) {
@@ -44,18 +50,26 @@ public class Render3DUtils {
             .withFragmentShader(source.getFragmentShader())
             .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
             .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+            .withDepthWrite(false)
             .withCull(source.isCull())
-            .withDepthBias(source.getDepthBiasScaleFactor(), source.getDepthBiasConstant());
+            .withDepthBias(source.getDepthBiasScaleFactor(), source.getDepthBiasConstant())
+            .withPolygonMode(source.getPolygonMode())
+            .withColorLogic(source.getColorLogic())
+            .withColorWrite(source.isWriteColor(), source.isWriteAlpha());
 
-        Optional<com.mojang.blaze3d.pipeline.BlendFunction> blend = source.getBlendFunction();
-        if (blend.isPresent()) {
-            builder = builder.withBlend(blend.get());
-        } else {
-            builder = builder.withoutBlend();
+        source.getBlendFunction().ifPresentOrElse(
+            b -> builder.withBlend(b),
+            () -> builder.withoutBlend()
+        );
+
+        for (String s : source.getSamplers()) {
+            builder.withSampler(s);
+        }
+        for (RenderPipeline.UniformDescription u : source.getUniforms()) {
+            builder.withUniform(u.name(), u.type());
         }
 
         RenderPipeline newPipe = builder.build();
-
         RenderSetup setup = RenderSetup.builder(newPipe).createRenderSetup();
         return AccessorRenderType.invokeCreate(name, setup);
     }
@@ -65,8 +79,7 @@ public class Render3DUtils {
     }
 
     public static void renderFilledBox(Matrix4f matrix, double size, float r, float g, float b, float a, boolean throughWalls) {
-        ensureNoDepthTypes();
-        RenderType type = throughWalls ? fillNoDepth : FILL_TYPE;
+        RenderType type = (throughWalls && hasNoDepth()) ? FILL_NO_DEPTH : FILL_TYPE;
         BufferBuilder builder = new BufferBuilder(ALLOCATOR, type.mode(), type.format());
         BlockRenderer.renderFilledBoxQuads(builder, matrix, size, r, g, b, a);
         MeshData mesh = builder.buildOrThrow();
@@ -82,8 +95,7 @@ public class Render3DUtils {
     }
 
     public static void renderWireframe(Matrix4f matrix, double size, float r, float g, float b, float a, float lineWidth, boolean throughWalls) {
-        ensureNoDepthTypes();
-        RenderType type = throughWalls ? lineNoDepth : LINE_TYPE;
+        RenderType type = (throughWalls && hasNoDepth()) ? LINE_NO_DEPTH : LINE_TYPE;
         if (lineWidth > 1.0f) {
             BufferBuilder builder = new BufferBuilder(ALLOCATOR, type.mode(), type.format());
             BlockRenderer.renderThickWireframe(builder, matrix, size, r, g, b, a, lineWidth);
@@ -95,6 +107,41 @@ public class Render3DUtils {
             MeshData mesh = builder.buildOrThrow();
             type.draw(mesh);
         }
+    }
+
+    public static void renderAxisLine(Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2, float thickness, float r, float g, float b, float a) {
+        renderAxisLine(matrix, x1, y1, z1, x2, y2, z2, thickness, r, g, b, a, false);
+    }
+
+    public static void renderAxisLine(Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2, float thickness, float r, float g, float b, float a, boolean throughWalls) {
+        float h = thickness * 0.5f;
+        float minX, maxX, minY, maxY, minZ, maxZ;
+        float dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1), dz = Math.abs(z2 - z1);
+        if (dx >= dy && dx >= dz) {
+            minX = Math.min(x1, x2);
+            maxX = Math.max(x1, x2);
+            minY = Math.min(y1, y2) - h;  maxY = Math.max(y1, y2) + h;
+            minZ = Math.min(z1, z2) - h;  maxZ = Math.max(z1, z2) + h;
+        } else if (dy >= dz) {
+            minX = Math.min(x1, x2) - h;  maxX = Math.max(x1, x2) + h;
+            minY = Math.min(y1, y2);
+            maxY = Math.max(y1, y2);
+            minZ = Math.min(z1, z2) - h;  maxZ = Math.max(z1, z2) + h;
+        } else {
+            minX = Math.min(x1, x2) - h;  maxX = Math.max(x1, x2) + h;
+            minY = Math.min(y1, y2) - h;  maxY = Math.max(y1, y2) + h;
+            minZ = Math.min(z1, z2);
+            maxZ = Math.max(z1, z2);
+        }
+        int ir = (int)(r * 255);
+        int ig = (int)(g * 255);
+        int ib = (int)(b * 255);
+        int ia = (int)(a * 255);
+        RenderType type = (throughWalls && hasNoDepth()) ? FILL_NO_DEPTH : FILL_TYPE;
+        BufferBuilder builder = new BufferBuilder(ALLOCATOR, type.mode(), type.format());
+        BlockRenderer.renderSolidBox(builder, matrix, minX, minY, minZ, maxX, maxY, maxZ, ir, ig, ib, ia);
+        MeshData mesh = builder.buildOrThrow();
+        type.draw(mesh);
     }
 
     public static void renderLineStrip(Matrix4f matrix, List<org.joml.Vector3f> points, float r, float g, float b, float a, float lineWidth) {

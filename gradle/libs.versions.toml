@@ -1,6 +1,6 @@
 [versions]
 minecraft = "1.21.11"
-loader = "0.16.10"
+loader = "0.19.3"
 loom = "1.10.5"
 discord-ipc = "0.10.2"
 

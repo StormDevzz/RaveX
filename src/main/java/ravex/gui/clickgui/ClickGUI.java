@@ -303,14 +303,18 @@ public class ClickGUI extends Screen {
 
         if (hoveredDescription != null) {
             activeTooltipText = hoveredDescription;
-            tooltipAlpha = Math.min(1.0f, tooltipAlpha + 0.10f);
+            float speed = ravex.modules.render.ClickGui.INSTANCE.tooltipSpeed.getValue().floatValue() / 10f;
+            tooltipAlpha = Math.min(1.0f, tooltipAlpha + 0.10f * speed);
         } else {
-            tooltipAlpha = Math.max(0.0f, tooltipAlpha - 0.15f);
+            float speed = ravex.modules.render.ClickGui.INSTANCE.tooltipSpeed.getValue().floatValue() / 10f;
+            tooltipAlpha = Math.max(0.0f, tooltipAlpha - 0.15f * speed);
         }
 
         if (tooltipAlpha > 0.02f && !activeTooltipText.isEmpty()) {
-            int tx = mouseX + 8;
-            int ty = mouseY + 8;
+            int ox = ravex.modules.render.ClickGui.INSTANCE.tooltipOffsetX.getValue().intValue();
+            int oy = ravex.modules.render.ClickGui.INSTANCE.tooltipOffsetY.getValue().intValue();
+            int tx = mouseX + ox;
+            int ty = mouseY + oy;
             int tw = FontRenderUtility.getStringWidth(activeTooltipText) + 6;
             int th = 14;
 

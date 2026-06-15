@@ -22,17 +22,7 @@ public class MixinFogRenderer {
                                    CallbackInfoReturnable<Vector4f> cir) {
         if (ravex.modules.player.Xray.INSTANCE.getEnabled()) {
             cir.setReturnValue(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
-            return;
         }
-
-        if (!CustomFog.INSTANCE.getEnabled()) return;
-
-        int argb = CustomFog.INSTANCE.color.getValue();
-        float r = ((argb >> 16) & 0xFF) / 255.0f;
-        float g = ((argb >>  8) & 0xFF) / 255.0f;
-        float b = ( argb        & 0xFF) / 255.0f;
-
-        cir.setReturnValue(new Vector4f(r, g, b, 1.0f));
     }
 
     @ModifyArgs(
@@ -40,6 +30,13 @@ public class MixinFogRenderer {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V")
     )
     private void onUpdateBufferArgs(Args args) {
+        if (CustomFog.INSTANCE.getEnabled()) {
+            int argb = CustomFog.INSTANCE.color.getValue();
+            float r = ((argb >> 16) & 0xFF) / 255.0f;
+            float g = ((argb >>  8) & 0xFF) / 255.0f;
+            float b = ( argb        & 0xFF) / 255.0f;
+            args.set(2, new Vector4f(r, g, b, 1.0f));
+        }
         if (NoRender.INSTANCE.getEnabled() && NoRender.INSTANCE.fog.getValue()) {
             float envStart = args.get(3);
             float envEnd = args.get(4);

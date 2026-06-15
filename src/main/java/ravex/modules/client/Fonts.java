@@ -14,8 +14,7 @@ public class Fonts extends Module {
 
     public final BooleanParameter enabled = new BooleanParameter("Enabled", true);
     public final ModeParameter fontType = new ModeParameter("Font", "Comfortaa",
-        List.of("Comfortaa", "SF Medium", "SF Bold", "Roboto", "Inter",
-                "JetBrainsMono", "NotoMono", "FiraCode", "OpenDyslexic", "Vanilla"));
+        List.of("Comfortaa", "SF Medium", "SF Bold", "Vanilla"));
     public final NumberParameter fontSize = new NumberParameter("Font Size", 1.0, 0.5, 3.0, 0.1);
     public final BooleanParameter textShadow = new BooleanParameter("Text Shadow", true);
     public final ModeParameter textCase = new ModeParameter("Text Case", "Normal",
