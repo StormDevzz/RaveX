@@ -250,7 +250,7 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.player.AutoEZ.INSTANCE);
         clickGuiModules.add(InventoryCleaner.INSTANCE);
         clickGuiModules.add(Replenish.INSTANCE);
-        clickGuiModules.add(ravex.modules.player.AutoReGear.INSTANCE);
+        clickGuiModules.add(ravex.modules.player.AutoReGear.AutoReGear.INSTANCE);
 
         // ── Movement ────────────────────────────────────────────────────────────
         clickGuiModules.add(GuiWalk.INSTANCE);
@@ -386,7 +386,7 @@ public class ModuleManager {
                 int ac = getParamColor("Color");
                 boolean shadow = getParamBool("Shadow");
                 int bx = getX(), by = getY();
-                String text = "RaveX v1.2 NextGen";
+                String text = "RaveX v" + ravex.RaveX.version + " NextGen";
                 int tw = ravex.utility.render.HudRenderer.textWidth(text);
                 int pw = tw + 12;
                 int ph = 14;

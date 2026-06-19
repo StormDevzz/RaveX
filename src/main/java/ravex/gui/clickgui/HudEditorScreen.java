@@ -11,6 +11,7 @@ import ravex.modules.HudModule;
 import ravex.parameter.*;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.BlurUtility;
 
 import java.util.List;
 
@@ -517,5 +518,12 @@ public class HudEditorScreen extends Screen {
         savedFlashMs = System.currentTimeMillis();
         ravex.manager.ConfigManager.INSTANCE.save("default");
         this.minecraft.setScreen(null);
+    }
+
+    @Override
+    public void removed() {
+        // clean up screen blur post-effect on exit, keep it fresh!
+        BlurUtility.disable();
+        super.removed();
     }
 }

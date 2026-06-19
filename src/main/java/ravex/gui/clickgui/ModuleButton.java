@@ -55,7 +55,7 @@ public class ModuleButton {
         if (!expanded) return 0;
         int h = 0;
         for (ParameterElement pe : parameterElements) {
-            if (pe.getParameter().isVisible()) {
+            if (pe.getParameter().isVisible() || pe.getExpandAnimProgress() > 0.001f) {
                 h += pe.getHeight();
             }
         }
@@ -65,7 +65,7 @@ public class ModuleButton {
     public void onInlineScroll(double amount) {
         int fullH = 0;
         for (ParameterElement pe : parameterElements) {
-            if (pe.getParameter().isVisible()) {
+            if (pe.getParameter().isVisible() || pe.getExpandAnimProgress() > 0.001f) {
                 fullH += pe.getHeight();
             }
         }
@@ -193,7 +193,7 @@ public class ModuleButton {
                 int paramAreaH = 0;
                 int paramW = width - 6;
                 for (ParameterElement pe : parameterElements) {
-                    if (pe.getParameter().isVisible()) {
+                    if (pe.getParameter().isVisible() || pe.getExpandAnimProgress() > 0.001f) {
                         paramAreaH += pe.getHeight();
                     }
                 }
@@ -214,7 +214,7 @@ public class ModuleButton {
                 int visBot = currentY + 2 + displayH;
                 graphics.enableScissor(x + 1, currentY, x + width - 1, currentY + displayH + 4);
                 for (ParameterElement pe : parameterElements) {
-                    if (!pe.getParameter().isVisible()) continue;
+                    if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
                     int pHeight = pe.getHeight();
                     int pBot = pY + pHeight;
                     if (pBot > visTop && pY < visBot) {
@@ -326,7 +326,7 @@ public class ModuleButton {
                 int pY = currentY + btnH + 2 - scrollOffset;
                 int paramW = width - 6;
                 for (ParameterElement pe : parameterElements) {
-                    if (!pe.getParameter().isVisible()) continue;
+                    if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
                     int pH = pe.getHeight();
                     if (mouseX >= x + 4 && mouseX <= x + 4 + paramW && mouseY >= pY && mouseY <= pY + pH) {
                         if (pe.mouseClicked(mouseX, mouseY, button, x + 4, pY, paramW, pH)) {

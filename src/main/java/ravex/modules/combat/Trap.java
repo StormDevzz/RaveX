@@ -71,22 +71,9 @@ public class Trap extends Module {
 
     static {
         try {
-            System.loadLibrary("ravex_trap");
-            nativeAvailable = true;
+            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_trap");
         } catch (UnsatisfiedLinkError e) {
-            try {
-                String libName = System.getProperty("os.name").toLowerCase().contains("win")
-                        ? "ravex_trap.dll" : "libravex_trap.so";
-                java.io.InputStream is = Trap.class.getResourceAsStream(
-                        "/assets/ravex/natives/" + libName);
-                if (is != null) {
-                    java.nio.file.Path tmp = java.nio.file.Files.createTempFile("ravex_tp", "");
-                    java.nio.file.Files.copy(is, tmp, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    System.load(tmp.toAbsolutePath().toString());
-                    tmp.toFile().deleteOnExit();
-                    nativeAvailable = true;
-                }
-            } catch (Throwable ignored) {}
+            // Fallback handled
         }
     }
 

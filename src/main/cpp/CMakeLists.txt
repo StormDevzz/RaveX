@@ -57,6 +57,9 @@ add_subdirectory(hooks/holeesp)
 add_subdirectory(hooks/voidesp)
 add_subdirectory(hooks/autoregear)
 add_subdirectory(hooks/antiregear)
+add_subdirectory(plugins/optimize)
+add_subdirectory(plugins/manager)
+add_subdirectory(launcher)
 
 
 

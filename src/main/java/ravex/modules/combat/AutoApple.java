@@ -33,22 +33,9 @@ public class AutoApple extends Module {
 
     static {
         try {
-            System.loadLibrary("ravex_autoapple");
-            nativeAvailable = true;
+            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_autoapple");
         } catch (UnsatisfiedLinkError e) {
-            try {
-                String libName = System.getProperty("os.name").toLowerCase().contains("win")
-                        ? "ravex_autoapple.dll" : "libravex_autoapple.so";
-                java.io.InputStream is = AutoApple.class.getResourceAsStream(
-                        "/assets/ravex/natives/" + libName);
-                if (is != null) {
-                    java.nio.file.Path tmp = java.nio.file.Files.createTempFile("ravex_aa", "");
-                    java.nio.file.Files.copy(is, tmp, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    System.load(tmp.toAbsolutePath().toString());
-                    tmp.toFile().deleteOnExit();
-                    nativeAvailable = true;
-                }
-            } catch (Throwable ignored) {}
+            // Fallback handled
         }
     }
 

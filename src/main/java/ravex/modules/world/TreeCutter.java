@@ -31,22 +31,9 @@ public class TreeCutter extends Module {
 
     static {
         try {
-            System.loadLibrary("ravex_treecutter");
-            nativeAvailable = true;
+            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_treecutter");
         } catch (UnsatisfiedLinkError e) {
-            try {
-                String libName = System.getProperty("os.name").toLowerCase().contains("win")
-                        ? "ravex_treecutter.dll" : "libravex_treecutter.so";
-                java.io.InputStream is = TreeCutter.class.getResourceAsStream(
-                        "/assets/ravex/natives/" + libName);
-                if (is != null) {
-                    java.nio.file.Path tmp = java.nio.file.Files.createTempFile("ravex_tc", "");
-                    java.nio.file.Files.copy(is, tmp, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    System.load(tmp.toAbsolutePath().toString());
-                    tmp.toFile().deleteOnExit();
-                    nativeAvailable = true;
-                }
-            } catch (Throwable ignored) {}
+            // Fallback handled
         }
     }
 

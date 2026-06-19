@@ -16,30 +16,87 @@ public class ParameterElement {
     private float toggleAnimProgress = 0f;
     private long toggleLastUpdate = 0;
     private long modeExpandedAt = 0;
+    
+    private float expandAnimProgress = 0f;
+    private float dropdownAnimProgress = 0f;
+    private long lastAnimTime = 0;
 
     public ParameterElement(Parameter<?> parameter) {
         this.parameter = parameter;
+        this.expandAnimProgress = parameter.isVisible() ? 1.0f : 0.0f;
+        this.dropdownAnimProgress = parameter.isExpanded() ? 1.0f : 0.0f;
+    }
+
+    public float getExpandAnimProgress() {
+        return expandAnimProgress;
     }
 
     public Parameter<?> getParameter() {
         return parameter;
     }
 
+    public void updateAnimations() {
+        long now = System.currentTimeMillis();
+        if (now == lastAnimTime) return;
+        long delta = now - lastAnimTime;
+        if (lastAnimTime == 0) {
+            lastAnimTime = now;
+            return;
+        }
+        lastAnimTime = now;
+        if (delta > 100) delta = 16;
+
+        boolean smoothOption = ravex.modules.render.ClickGui.INSTANCE.smoothOption.getValue();
+        float optionSmoothness = ravex.modules.render.ClickGui.INSTANCE.optionSmoothness.getValue().floatValue();
+
+        // 1. Parameter visibility animation (for child options)
+        float targetExpand = parameter.isVisible() ? 1.0f : 0.0f;
+        if (smoothOption) {
+            float speed = (optionSmoothness / 100f) * (delta / 16f);
+            if (expandAnimProgress < targetExpand) {
+                expandAnimProgress = Math.min(targetExpand, expandAnimProgress + speed);
+            } else if (expandAnimProgress > targetExpand) {
+                expandAnimProgress = Math.max(targetExpand, expandAnimProgress - speed);
+            }
+        } else {
+            expandAnimProgress = targetExpand;
+        }
+
+        // 2. Dropdown expansion animation (for ModeParameter)
+        float targetDropdown = parameter.isExpanded() ? 1.0f : 0.0f;
+        if (smoothOption) {
+            float speed = (optionSmoothness / 100f) * (delta / 16f);
+            if (dropdownAnimProgress < targetDropdown) {
+                dropdownAnimProgress = Math.min(targetDropdown, dropdownAnimProgress + speed);
+            } else if (dropdownAnimProgress > targetDropdown) {
+                dropdownAnimProgress = Math.max(targetDropdown, dropdownAnimProgress - speed);
+            }
+        } else {
+            dropdownAnimProgress = targetDropdown;
+        }
+    }
+
     public int getHeight() {
-        if (!parameter.isVisible()) return 0;
+        updateAnimations();
+        if (!parameter.isVisible() && expandAnimProgress < 0.001f) return 0;
+        int baseH = 22;
         if (parameter instanceof NumberParameter) {
-            return 28;
+            baseH = 28;
         }
-        if (parameter instanceof ColorParameter) {
-            return 22;
+        int extraH = 0;
+        if (parameter instanceof ModeParameter mp) {
+            extraH = 18 * mp.getModes().size();
         }
-        if (parameter instanceof ModeParameter mp && mp.isExpanded()) {
-            return 22 + 18 * mp.getModes().size();
-        }
-        return 22;
+        int totalH = baseH + (int) (extraH * dropdownAnimProgress);
+        return (int) (totalH * expandAnimProgress);
     }
 
     public void render(GuiGraphics graphics, int x, int y, int width, int height, int mouseX, int mouseY) {
+        updateAnimations();
+        if (height <= 0) return;
+
+        graphics.enableScissor(x, y, x + width, y + height);
+
         long now = System.currentTimeMillis();
         if (toggleLastUpdate == 0) toggleLastUpdate = now;
         long delta = now - toggleLastUpdate;
@@ -134,7 +191,7 @@ public class ParameterElement {
         } else if (parameter instanceof ModeParameter mp) {
             FontRenderUtility.drawString(graphics, mp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
 
-            if (mp.isExpanded()) {
+            if (dropdownAnimProgress > 0.01f) {
                 int modeY = y + 22;
                 for (String m : mp.getModes()) {
                     boolean isCurrent = m.equals(mp.getValue());
@@ -275,6 +332,7 @@ public class ParameterElement {
             }
             FontRenderUtility.drawString(graphics, text, x + 8, y + 7, 0xFFC0C0D0, true);
         }
+        graphics.disableScissor();
     }
 
     private static int lerpColor(int from, int to, float t) {

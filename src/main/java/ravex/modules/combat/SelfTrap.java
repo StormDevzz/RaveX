@@ -62,8 +62,7 @@ public class SelfTrap extends Module {
     private static boolean nativeAvailable = false;
     static {
         try {
-            System.loadLibrary("ravex_selftrap");
-            nativeAvailable = true;
+            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_selftrap");
         } catch (UnsatisfiedLinkError e) {
             // Fallback to Java implementation
             RaveX.LOGGER.warn("[SelfTrap JNI] Failed to load native library: {}", e.getMessage());

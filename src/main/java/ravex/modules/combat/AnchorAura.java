@@ -73,8 +73,7 @@ public class AnchorAura extends Module {
     private static boolean nativeAvailable = false;
     static {
         try {
-            System.loadLibrary("ravex_anchoraura");
-            nativeAvailable = true;
+            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_anchoraura");
         } catch (UnsatisfiedLinkError e) {
             RaveX.LOGGER.warn("[AnchorAura JNI] Failed to load native library: {}", e.getMessage());
         }

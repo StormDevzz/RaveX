@@ -116,24 +116,9 @@ public class AutoCrystal extends Module {
 
     static {
         try {
-            // Пытаемся загрузить нативную библиотеку
-            System.loadLibrary("ravex_autocrystal");
-            nativeAvailable = true;
+            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_autocrystal");
         } catch (UnsatisfiedLinkError e) {
-            // Попытка загрузить из ресурсов JAR
-            try {
-                String libName = System.getProperty("os.name").toLowerCase().contains("win")
-                        ? "ravex_autocrystal.dll" : "libravex_autocrystal.so";
-                java.io.InputStream is = AutoCrystal.class.getResourceAsStream(
-                        "/assets/ravex/natives/" + libName);
-                if (is != null) {
-                    java.nio.file.Path tmp = java.nio.file.Files.createTempFile("ravex_ac", "");
-                    java.nio.file.Files.copy(is, tmp, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    System.load(tmp.toAbsolutePath().toString());
-                    tmp.toFile().deleteOnExit();
-                    nativeAvailable = true;
-                }
-            } catch (Throwable ignored) {}
+            // Fallback handled
         }
     }
 

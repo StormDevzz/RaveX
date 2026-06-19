@@ -45,6 +45,10 @@ public class ClickGui extends Module {
     public final BooleanParameter smoothScroll = new BooleanParameter("Smooth Scroll", true);
     public final NumberParameter scrollSmoothness = new NumberParameter("Scroll Smoothness", 12, 1, 40, 1);
 
+    // Option settings open/close animation
+    public final BooleanParameter smoothOption = new BooleanParameter("Option Animation", true);
+    public final NumberParameter optionSmoothness = new NumberParameter("Option Smoothness", 12, 1, 40, 1);
+
     // Category header glow
     public final BooleanParameter headerGlow = new BooleanParameter("Header Glow", true);
     public final NumberParameter headerGlowIntensity = new NumberParameter("Glow Intensity", 20, 5, 60, 5);
@@ -77,11 +81,14 @@ public class ClickGui extends Module {
         addParameter(gearRotationSpeed);
         addParameter(smoothScroll);
         addParameter(scrollSmoothness);
+        addParameter(smoothOption);
+        addParameter(optionSmoothness);
         addParameter(headerGlow);
         addParameter(headerGlowIntensity);
         addParameter(tooltipSpeed);
         addParameter(tooltipOffsetX);
         addParameter(tooltipOffsetY);
+        optionSmoothness.setVisible(() -> smoothOption.getValue());
         color1.setVisible(() -> "Static".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue()) || "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
         setEnabled(true);

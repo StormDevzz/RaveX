@@ -75,6 +75,9 @@ public class ClickGUI extends Screen {
         super(Component.literal("RaveX ClickGUI"));
         this.initTime = System.currentTimeMillis();
 
+        // Optimize scheduler, CPU affinity, priorities and memory on ClickGUI open
+        ravex.utility.misc.GuiOptimizer.optimize();
+
         if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {
             BlurUtility.enable();
         }
@@ -83,19 +86,11 @@ public class ClickGUI extends Screen {
 
         int spacing = 15;
         int panelW = 120;
-        Map<Category, int[]> saved = ravex.manager.LayoutManager.INSTANCE.load();
         Category[] categories = Category.values();
         for (Category cat : categories) {
-            int[] pos = saved.get(cat);
-            int px, py;
-            if (pos != null) {
-                px = pos[0];
-                py = pos[1];
-            } else {
-                int i = cat.ordinal();
-                px = 20 + i * (panelW + spacing);
-                py = 55;
-            }
+            int i = cat.ordinal();
+            int px = 20 + i * (panelW + spacing);
+            int py = 55;
             CategoryPanel p = new CategoryPanel(cat, px, py);
             panels.add(p);
             panelMap.put(cat, p);
@@ -105,21 +100,47 @@ public class ClickGUI extends Screen {
 
     @Override
     protected void init() {
-        Map<Category, int[]> saved = ravex.manager.LayoutManager.INSTANCE.load();
+        Map<Category, double[]> saved = ravex.manager.LayoutManager.INSTANCE.load();
+        float scale = getResponsiveScale();
+        double cx = this.width / 2.0;
+        double cy = this.height / 2.0;
+
+        int spacing = 2;
+        int panelW = 120;
+        int numPanels = panels.size();
+        float totalW = numPanels * panelW + (numPanels - 1) * spacing;
+        float defaultStartX = (this.width - totalW) / 2;
+        int maxH = getMaxPanelHeight();
+        float defaultStartY = (this.height - maxH) / 2;
+        if (defaultStartY < 30) defaultStartY = 30;
+
         for (CategoryPanel panel : panels) {
-            int[] pos = saved.get(panel.getCategory());
-            if (pos == null) {
-                int spacing = 2;
-                int panelW = 120;
-                int numPanels = panels.size();
-                float totalW = numPanels * panelW + (numPanels - 1) * spacing;
-                float startX = (this.width - totalW) / 2;
-                int maxH = getMaxPanelHeight();
-                float startY = (this.height - maxH) / 2;
-                if (startY < 30) startY = 30;
+            double[] pos = saved.get(panel.getCategory());
+            if (pos != null) {
+                double rx = pos[0];
+                double ry = pos[1];
+                if (rx <= 1.0 && ry <= 1.0) {
+                    int px = (int) (cx + (rx - 0.5) * this.width / scale);
+                    int py = (int) (cy + (ry - 0.5) * this.height / scale);
+                    panel.setX(px);
+                    panel.setY(py);
+                } else {
+                    // Compatibility with old absolute layouts
+                    int px = (int) rx;
+                    int py = (int) ry;
+                    if (px < 0 || px > this.width || py < 0 || py > this.height) {
+                        int i = panel.getCategory().ordinal();
+                        panel.setX((int) (defaultStartX + i * (panelW + spacing)));
+                        panel.setY((int) defaultStartY);
+                    } else {
+                        panel.setX(px);
+                        panel.setY(py);
+                    }
+                }
+            } else {
                 int i = panel.getCategory().ordinal();
-                panel.setX((int)(startX + i * (panelW + spacing)));
-                panel.setY((int)startY);
+                panel.setX((int) (defaultStartX + i * (panelW + spacing)));
+                panel.setY((int) defaultStartY);
             }
         }
     }
@@ -605,7 +626,7 @@ public class ClickGUI extends Screen {
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
-            ravex.manager.LayoutManager.INSTANCE.save(panelMap);
+            ravex.manager.LayoutManager.INSTANCE.save(panelMap, this.width, this.height, getResponsiveScale());
             ravex.utility.sound.SoundUtility.playGuiClose();
             ravex.manager.ConfigManager.INSTANCE.save("default");
             if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {

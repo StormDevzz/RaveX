@@ -1,0 +1,19 @@
+#include "include/compat_check.h"
+
+namespace ravex {
+namespace launcher {
+namespace simple {
+namespace ver {
+
+compat_check_result compat_check_execute(const std::string& input) {
+    compat_check_result r;
+    r.success = true;
+    r.message = "compat_check: check ok";
+    r.data = input;
+    return r;
+}
+
+} // namespace ver
+} // namespace simple
+} // namespace launcher
+} // namespace ravex

@@ -6,7 +6,7 @@
 extern "C" {
 
 JNIEXPORT jint JNICALL
-Java_ravex_modules_player_AutoReGear_nativeCalculateRegear(
+Java_ravex_modules_player_AutoReGear_AutoReGear_nativeCalculateRegear(
     JNIEnv* env, jclass cls,
     jobjectArray containerItemIds,
     jintArray containerCounts,

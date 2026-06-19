@@ -77,7 +77,7 @@ public class SoundUtility {
                 frozenField.setAccessible(true);
                 if ((boolean) frozenField.get(registry)) {
                     frozenField.set(registry, false);
-                    ravex.RaveX.LOGGER.warn("[RaveX] SoundUtility: Unfroze SOUND_EVENT registry for registration.");
+                    ravex.RaveX.LOGGER.info("[RaveX] SoundUtility: Unfroze SOUND_EVENT registry for registration.");
                     return true;
                 }
             }

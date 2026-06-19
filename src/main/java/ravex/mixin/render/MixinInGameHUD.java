@@ -55,13 +55,25 @@ public abstract class MixinInGameHUD {
         Vec3 playerViewVec = mc.player != null ? mc.player.getViewVector(pt) : null;
         boolean tracersEnabled = ravex.modules.render.Tracers.INSTANCE.getEnabled();
 
+        java.util.List<Entity> candidates = new java.util.ArrayList<>();
         for (Entity target : mc.level.entitiesForRendering()) {
             if (target == mc.player) continue;
             if (target instanceof LivingEntity living && !living.isAlive()) continue;
 
-            // Distance limit check
-            double dist = mc.player.distanceTo(target);
+            // Distance limit check using C++ JNI call if available
+            double dist;
+            if (NameTags.isNativeAvailable()) {
+                Vec3 pPos = mc.player.position();
+                Vec3 tPos = target.position();
+                dist = NameTags.nativeGetDistance(pPos.x, pPos.y, pPos.z, tPos.x, tPos.y, tPos.z);
+            } else {
+                dist = mc.player.distanceTo(target);
+            }
+
             double maxDist = ESP.INSTANCE.maxDistance.getValue();
+            if (nameTagsEnabled) {
+                maxDist = Math.max(maxDist, NameTags.INSTANCE.range.getValue());
+            }
             if (tracersEnabled) {
                 maxDist = Math.max(maxDist, ravex.modules.render.Tracers.INSTANCE.maxDistance.getValue());
             }
@@ -85,274 +97,667 @@ public abstract class MixinInGameHUD {
 
             if (!isPlayer && !isMonster && !isAnimal && !isItem && !isFrame) continue;
 
-            Vec3 basePos = target.getPosition(pt);
-            float bbHeight = target.getBbHeight();
-            float bbWidth = target.getBbWidth();
-            Vec3 headPos = basePos.add(0, bbHeight, 0);
-            Vec3 sidePos = basePos.add(bbWidth / 2.0f, bbHeight / 2.0f, 0);
-            double basePosX = basePos.x, basePosY = basePos.y, basePosZ = basePos.z;
+            candidates.add(target);
+        }
 
-            // 1. Render Tracers first without dot/projection/off-screen checks
-            if (tracersEnabled) {
-                ravex.modules.render.Tracers tracers = ravex.modules.render.Tracers.INSTANCE;
-                    boolean show = false;
-                    int color = 0;
-                    if (isPlayer && tracers.players.getValue()) {
-                        show = true;
-                        color = tracers.playerColor.getValue();
-                    } else if (isMonster && tracers.monsters.getValue()) {
-                        show = true;
-                        color = tracers.mobColor.getValue();
-                    } else if (isAnimal && tracers.animals.getValue()) {
-                        show = true;
-                        color = tracers.animalColor.getValue();
-                    } else if (isItem && tracers.items.getValue()) {
-                        show = true;
-                        color = tracers.itemColor.getValue();
+        // 1. Render Tracers first without dot/projection/off-screen checks
+        if (tracersEnabled) {
+            ravex.modules.render.Tracers tracers = ravex.modules.render.Tracers.INSTANCE;
+            float width = tracers.lineWidth.getValue().floatValue();
+
+            // filter targets that should actually be shown and get their colors
+            java.util.List<Entity> tracerEntities = new java.util.ArrayList<>();
+            java.util.List<Integer> tracerColors = new java.util.ArrayList<>();
+
+            for (Entity target : candidates) {
+                boolean isPlayer = target instanceof Player;
+                boolean isMonster = target instanceof Monster;
+                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
+                                   target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
+                boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
+
+                boolean show = false;
+                int color = 0;
+                if (isPlayer && tracers.players.getValue()) {
+                    show = true;
+                    color = tracers.playerColor.getValue();
+                } else if (isMonster && tracers.monsters.getValue()) {
+                    show = true;
+                    color = tracers.mobColor.getValue();
+                } else if (isAnimal && tracers.animals.getValue()) {
+                    show = true;
+                    color = tracers.animalColor.getValue();
+                } else if (isItem && tracers.items.getValue()) {
+                    show = true;
+                    color = tracers.itemColor.getValue();
+                }
+
+                if (show) {
+                    tracerEntities.add(target);
+                    tracerColors.add(color);
+                }
+            }
+
+            int tracerCount = tracerEntities.size();
+            boolean tracersNativeDone = false;
+
+            if (tracerCount > 0 && ravex.utility.misc.NativeLoader.isNativeAvailable()) {
+                try {
+                    double[] cameraPosArr = new double[] { cameraPos.x, cameraPos.y, cameraPos.z };
+                    org.joml.Matrix4f projMatrix = ravex.manager.ShaderManager.INSTANCE.getProjectionMatrix();
+                    org.joml.Quaternionf cameraRotation = new org.joml.Quaternionf(mc.gameRenderer.getMainCamera().rotation());
+                    org.joml.Matrix4f mvMatrix = new org.joml.Matrix4f().rotation(cameraRotation.conjugate());
+
+                    float[] projectionArr = new float[16];
+                    float[] modelViewArr = new float[16];
+                    projMatrix.get(projectionArr);
+                    mvMatrix.get(modelViewArr);
+
+                    double[] positions = new double[tracerCount * 6];
+                    for (int i = 0; i < tracerCount; i++) {
+                        Entity target = tracerEntities.get(i);
+                        Vec3 basePos = target.getPosition(pt);
+                        float bbHeight = target.getBbHeight();
+                        Vec3 headPos = basePos.add(0, bbHeight, 0);
+
+                        positions[i * 6 + 0] = basePos.x;
+                        positions[i * 6 + 1] = basePos.y;
+                        positions[i * 6 + 2] = basePos.z;
+                        positions[i * 6 + 3] = headPos.x;
+                        positions[i * 6 + 4] = headPos.y;
+                        positions[i * 6 + 5] = headPos.z;
                     }
-                    if (show) {
-                        Vec3 baseProjUnbobbed = projectPointToScreenUnbobbed(basePos);
-                        Vec3 headProjUnbobbed = projectPointToScreenUnbobbed(headPos);
-                        if (baseProjUnbobbed != null && headProjUnbobbed != null) {
-                            double cx = guiWidth / 2.0;
-                            double cy = guiHeight / 2.0;
-                            double ex = (baseProjUnbobbed.x + 1.0) / 2.0 * guiWidth;
-                            double ey_base = (1.0 - baseProjUnbobbed.y) / 2.0 * guiHeight;
-                            double ey_head = (1.0 - headProjUnbobbed.y) / 2.0 * guiHeight;
-                            double ey = (ey_base + ey_head) / 2.0;
 
-                            // Check if the target point is behind the camera or offscreen
-                            boolean isBehind = baseProjUnbobbed.z < 0;
-                            boolean isOffscreen = isBehind || ex < 0 || ex > guiWidth || ey < 0 || ey > guiHeight;
+                    double[] outPoints = new double[tracerCount * 3];
+                    ravex.utility.misc.GuiOptimizer.nativeOptimizeTracers(
+                        cameraPosArr, modelViewArr, projectionArr, positions, tracerCount, guiWidth, guiHeight, outPoints
+                    );
 
-                            if (isOffscreen) {
-                                double dx = ex - cx;
-                                double dy = ey - cy;
-                                double tX = Double.MAX_VALUE;
-                                double tY = Double.MAX_VALUE;
-                                double borderPadding = 2.0;
+                    double cx = guiWidth / 2.0;
+                    double cy = guiHeight / 2.0;
 
-                                if (dx > 0) {
-                                    tX = (guiWidth - borderPadding - cx) / dx;
-                                } else if (dx < 0) {
-                                    tX = (borderPadding - cx) / dx;
-                                }
+                    for (int i = 0; i < tracerCount; i++) {
+                        if (outPoints[i * 3 + 2] > 0.5) { // draw flag, let's roll!
+                            double ex = outPoints[i * 3 + 0];
+                            double ey = outPoints[i * 3 + 1];
+                            drawTracerLine2D(context, (float) cx, (float) cy, (float) ex, (float) ey, tracerColors.get(i), width);
+                        }
+                    }
+                    tracersNativeDone = true;
+                } catch (Throwable t) {
+                    // Fallback to Java if anything goes wrong, stay safe!
+                }
+            }
 
-                                if (dy > 0) {
-                                    tY = (guiHeight - borderPadding - cy) / dy;
-                                } else if (dy < 0) {
-                                    tY = (borderPadding - cy) / dy;
-                                }
+            if (!tracersNativeDone) {
+                // Java fallback path, keep it functional!
+                for (int i = 0; i < tracerCount; i++) {
+                    Entity target = tracerEntities.get(i);
+                    int color = tracerColors.get(i);
+                    Vec3 basePos = target.getPosition(pt);
+                    float bbHeight = target.getBbHeight();
+                    Vec3 headPos = basePos.add(0, bbHeight, 0);
+                    Vec3 baseProjUnbobbed = projectPointToScreenUnbobbed(basePos);
+                    Vec3 headProjUnbobbed = projectPointToScreenUnbobbed(headPos);
+                    if (baseProjUnbobbed != null && headProjUnbobbed != null) {
+                        double cx = guiWidth / 2.0;
+                        double cy = guiHeight / 2.0;
+                        double ex = (baseProjUnbobbed.x + 1.0) / 2.0 * guiWidth;
+                        double ey_base = (1.0 - baseProjUnbobbed.y) / 2.0 * guiHeight;
+                        double ey_head = (1.0 - headProjUnbobbed.y) / 2.0 * guiHeight;
+                        double ey = (ey_base + ey_head) / 2.0;
 
-                                double t = Math.min(tX, tY);
-                                if (t > 0 && t < 1.0) {
-                                    ex = cx + t * dx;
-                                    ey = cy + t * dy;
-                                } else {
-                                    double len = Math.sqrt(dx * dx + dy * dy);
-                                    if (len > 0) {
-                                        ex = cx + (dx / len) * (cx - borderPadding);
-                                        ey = cy + (dy / len) * (cy - borderPadding);
-                                    }
+                        boolean isBehind = baseProjUnbobbed.z < 0;
+                        boolean isOffscreen = isBehind || ex < 0 || ex > guiWidth || ey < 0 || ey > guiHeight;
+
+                        if (isOffscreen) {
+                            double dx = ex - cx;
+                            double dy = ey - cy;
+                            double tX = Double.MAX_VALUE;
+                            double tY = Double.MAX_VALUE;
+                            double borderPadding = 2.0;
+
+                            if (dx > 0) {
+                                tX = (guiWidth - borderPadding - cx) / dx;
+                            } else if (dx < 0) {
+                                tX = (borderPadding - cx) / dx;
+                            }
+
+                            if (dy > 0) {
+                                tY = (guiHeight - borderPadding - cy) / dy;
+                            } else if (dy < 0) {
+                                tY = (borderPadding - cy) / dy;
+                            }
+
+                            double t = Math.min(tX, tY);
+                            if (t > 0 && t < 1.0) {
+                                ex = cx + t * dx;
+                                ey = cy + t * dy;
+                            } else {
+                                double len = Math.sqrt(dx * dx + dy * dy);
+                                if (len > 0) {
+                                    ex = cx + (dx / len) * (cx - borderPadding);
+                                    ey = cy + (dy / len) * (cy - borderPadding);
                                 }
                             }
-                            float width = tracers.lineWidth.getValue().floatValue();
-                            drawTracerLine2D(context, (float) cx, (float) cy, (float) ex, (float) ey, color, width);
+                        }
+                        drawTracerLine2D(context, (float) cx, (float) cy, (float) ex, (float) ey, color, width);
+                    }
+                }
+            }
+        }
+
+        // 2. Perform projections and culling checks specifically for ESP / NameTags
+        int count = candidates.size();
+        boolean nativeSuccess = false;
+        int renderedCount = 0;
+        double[] outLayouts = null;
+        int[] outIndices = null;
+
+        if (count > 0 && ravex.utility.misc.NativeLoader.isNativeAvailable()) {
+            try {
+                double[] cameraPosArr = new double[] { cameraPos.x, cameraPos.y, cameraPos.z };
+                org.joml.Matrix4f projMatrix = ravex.manager.ShaderManager.INSTANCE.getProjectionMatrix();
+                org.joml.Quaternionf cameraRotation = new org.joml.Quaternionf(mc.gameRenderer.getMainCamera().rotation());
+                org.joml.Matrix4f mvMatrix = new org.joml.Matrix4f().rotation(cameraRotation.conjugate());
+
+                float[] projectionArr = new float[16];
+                float[] modelViewArr = new float[16];
+                projMatrix.get(projectionArr);
+                mvMatrix.get(modelViewArr);
+
+                double[] playerViewVecArr = new double[] {
+                    playerViewVec != null ? playerViewVec.x : 0.0,
+                    playerViewVec != null ? playerViewVec.y : 0.0,
+                    playerViewVec != null ? playerViewVec.z : 0.0
+                };
+
+                double[] positions = new double[count * 9];
+                double[] textWidths = new double[count * 2];
+                int[] booleans = new int[count * 5];
+                int[] armorCounts = new int[count];
+
+                for (int i = 0; i < count; i++) {
+                    Entity target = candidates.get(i);
+                    Vec3 basePos = target.getPosition(pt);
+                    float bbHeight = target.getBbHeight();
+                    float bbWidth = target.getBbWidth();
+                    Vec3 headPos = basePos.add(0, bbHeight, 0);
+                    Vec3 sidePos = basePos.add(bbWidth / 2.0f, bbHeight / 2.0f, 0);
+
+                    positions[i * 9 + 0] = basePos.x;
+                    positions[i * 9 + 1] = basePos.y;
+                    positions[i * 9 + 2] = basePos.z;
+                    positions[i * 9 + 3] = headPos.x;
+                    positions[i * 9 + 4] = headPos.y;
+                    positions[i * 9 + 5] = headPos.z;
+                    positions[i * 9 + 6] = sidePos.x;
+                    positions[i * 9 + 7] = sidePos.y;
+                    positions[i * 9 + 8] = sidePos.z;
+
+                    boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity);
+                    String ownerName = (mobOwnerEnabled && target instanceof LivingEntity living) ? MobOwner.getOwnerName(living) : null;
+                    boolean hasOwner = ownerName != null;
+
+                    double tw = 0.0;
+                    double ow = 0.0;
+                    boolean showArmor = false;
+                    boolean showHands = false;
+                    boolean hasMainHand = false;
+                    boolean hasOffHand = false;
+                    int armorCnt = 0;
+
+                    if (drawNametags || hasOwner) {
+                        LivingEntity livingTarget = (LivingEntity) target;
+                        if (drawNametags) {
+                            String displayName = livingTarget.getDisplayName().getString();
+                            int health = (int) Math.ceil(livingTarget.getHealth());
+                            int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
+                            String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
+                            tw = NameTags.INSTANCE.customFont.getValue() ? 
+                                 ravex.utility.render.FontRenderUtility.getStringWidth(tagText) : 
+                                 mc.font.width(tagText);
+                            showArmor = NameTags.INSTANCE.armor.getValue();
+                            showHands = NameTags.INSTANCE.handItems.getValue();
+                            hasMainHand = !livingTarget.getMainHandItem().isEmpty();
+                            hasOffHand = !livingTarget.getOffhandItem().isEmpty();
+
+                            if (showArmor) {
+                                if (!livingTarget.getItemBySlot(EquipmentSlot.FEET).isEmpty()) armorCnt++;
+                                if (!livingTarget.getItemBySlot(EquipmentSlot.LEGS).isEmpty()) armorCnt++;
+                                if (!livingTarget.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) armorCnt++;
+                                if (!livingTarget.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) armorCnt++;
+                            }
+                        }
+                        if (hasOwner) {
+                            String ownerText = "Owner: " + ownerName;
+                            ow = NameTags.INSTANCE.customFont.getValue() ? 
+                                 ravex.utility.render.FontRenderUtility.getStringWidth(ownerText) : 
+                                 mc.font.width(ownerText);
                         }
                     }
-            }
 
-            // 2. Perform projections and culling checks specifically for ESP / NameTags
-            Vec3 baseProj = mc.gameRenderer.projectPointToScreen(basePos);
-            Vec3 headProj = mc.gameRenderer.projectPointToScreen(headPos);
-            Vec3 sideProj = mc.gameRenderer.projectPointToScreen(sidePos);
+                    textWidths[i * 2 + 0] = tw;
+                    textWidths[i * 2 + 1] = ow;
 
-            if (baseProj == null || headProj == null || sideProj == null) continue;
+                    booleans[i * 5 + 0] = showArmor ? 1 : 0;
+                    booleans[i * 5 + 1] = showHands ? 1 : 0;
+                    booleans[i * 5 + 2] = hasOwner ? 1 : 0;
+                    booleans[i * 5 + 3] = hasMainHand ? 1 : 0;
+                    booleans[i * 5 + 4] = hasOffHand ? 1 : 0;
 
-            Vec3 dir = (new Vec3(basePosX - cameraPos.x, basePosY - cameraPos.y, basePosZ - cameraPos.z)).normalize();
-            double dot = dir.dot(playerViewVec);
-            if (dot <= 0.0) continue;
-
-            double sx_base = (baseProj.x + 1.0) / 2.0 * guiWidth;
-            double sy_base = (1.0 - baseProj.y) / 2.0 * guiHeight;
-            double sx_head = (headProj.x + 1.0) / 2.0 * guiWidth;
-            double sy_head = (1.0 - headProj.y) / 2.0 * guiHeight;
-            double sx_side = (sideProj.x + 1.0) / 2.0 * guiWidth;
-
-            // Offscreen check: if all projected points are off-screen, skip rendering
-            if ((sx_base < 0 || sx_base > guiWidth || sy_base < 0 || sy_base > guiHeight) &&
-                (sx_head < 0 || sx_head > guiWidth || sy_head < 0 || sy_head > guiHeight)) {
-                continue;
-            }
-
-            int bx = (int) sx_base;
-            int by = (int) sy_base;
-            int hy = (int) sy_head;
-            int sx = (int) sx_side;
-
-            int boxH = Math.abs(by - hy);
-            int halfBoxW = Math.max(2, Math.abs(sx - bx));
-            int boxW = halfBoxW * 2;
-            int boxX = bx - halfBoxW;
-            int y = Math.min(by, hy);
-
-            String ownerName = (mobOwnerEnabled && target instanceof LivingEntity living) ? MobOwner.getOwnerName(living) : null;
-            boolean hasOwner = ownerName != null;
-
-            if (espEnabled) {
-                String mode = ESP.INSTANCE.mode.getValue();
-                int espColor = isPlayer ? ESP.INSTANCE.playerColor.getValue() :
-                               (isMonster ? ESP.INSTANCE.mobColor.getValue() :
-                               (isAnimal ? ESP.INSTANCE.animalColor.getValue() :
-                               (isItem ? ESP.INSTANCE.itemColor.getValue() :
-                               ESP.INSTANCE.frameColor.getValue())));
-
-                if ("Box2D".equals(mode)) {
-                    context.fill(boxX, y, boxX + boxW, y + 1, espColor);
-                    context.fill(boxX, y + boxH, boxX + boxW, y + boxH + 1, espColor);
-                    context.fill(boxX, y, boxX + 1, y + boxH, espColor);
-                    context.fill(boxX + boxW - 1, y, boxX + boxW, y + boxH, espColor);
-                    int ca = 4;
-                    context.fill(boxX, y, boxX + ca, y + 1, espColor);
-                    context.fill(boxX + boxW - ca, y, boxX + boxW, y + 1, espColor);
-                    context.fill(boxX, y + boxH, boxX + ca, y + boxH + 1, espColor);
-                    context.fill(boxX + boxW - ca, y + boxH, boxX + boxW, y + boxH + 1, espColor);
-                }
-            }
-
-            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity);
-            if (drawNametags || hasOwner) {
-                LivingEntity livingTarget = (LivingEntity) target;
-                String displayName = livingTarget.getDisplayName().getString();
-                int health = (int) Math.ceil(livingTarget.getHealth());
-                int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
-                String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-                double tw = drawNametags ? mc.font.width(tagText) : 0.0;
-                double ow = hasOwner ? mc.font.width("Owner: " + ownerName) : 0.0;
-
-                boolean showArmor = drawNametags && NameTags.INSTANCE.armor.getValue();
-                boolean showHands = drawNametags && NameTags.INSTANCE.handItems.getValue();
-
-                boolean hasMainHand = drawNametags && !livingTarget.getMainHandItem().isEmpty();
-                boolean hasOffHand = drawNametags && !livingTarget.getOffhandItem().isEmpty();
-
-                int armorCount = 0;
-                if (showArmor) {
-                    if (!livingTarget.getItemBySlot(EquipmentSlot.FEET).isEmpty()) armorCount++;
-                    if (!livingTarget.getItemBySlot(EquipmentSlot.LEGS).isEmpty()) armorCount++;
-                    if (!livingTarget.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) armorCount++;
-                    if (!livingTarget.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) armorCount++;
+                    armorCounts[i] = armorCnt;
                 }
 
-                double[] layout;
-                if (NameTags.isNativeAvailable()) {
-                    layout = NameTags.nativeCalculateLayout(
-                        dist,
-                        NameTags.INSTANCE.scale.getValue(),
-                        NameTags.INSTANCE.distanceScaling.getValue(),
-                        showArmor,
-                        showHands,
-                        hasOwner,
-                        tw,
-                        ow,
-                        hasMainHand,
-                        hasOffHand,
-                        armorCount
-                    );
-                } else {
-                    layout = NameTags.javaFallbackCalculate(
-                        dist,
-                        NameTags.INSTANCE.scale.getValue(),
-                        NameTags.INSTANCE.distanceScaling.getValue(),
-                        showArmor,
-                        showHands,
-                        hasOwner,
-                        tw,
-                        ow,
-                        hasMainHand,
-                        hasOffHand,
-                        armorCount
-                    );
+                outLayouts = new double[count * 16];
+                outIndices = new int[count];
+
+                renderedCount = ravex.utility.misc.GuiOptimizer.nativeOptimizeNameTags(
+                    cameraPosArr,
+                    modelViewArr,
+                    projectionArr,
+                    playerViewVecArr,
+                    positions,
+                    textWidths,
+                    booleans,
+                    armorCounts,
+                    count,
+                    NameTags.INSTANCE.scale.getValue(),
+                    NameTags.INSTANCE.distanceScaling.getValue(),
+                    Math.max(ESP.INSTANCE.maxDistance.getValue(), nameTagsEnabled ? NameTags.INSTANCE.range.getValue() : 0.0),
+                    guiWidth,
+                    guiHeight,
+                    outLayouts,
+                    outIndices
+                );
+                nativeSuccess = true;
+            } catch (Throwable t) {
+                nativeSuccess = false;
+            }
+        }
+
+        if (nativeSuccess) {
+            for (int k = 0; k < renderedCount; k++) {
+                int idx = outIndices[k];
+                Entity target = candidates.get(idx);
+
+                double scale = outLayouts[k * 16 + 0];
+                double totalW = outLayouts[k * 16 + 1];
+                double totalH = outLayouts[k * 16 + 2];
+                double armorRowY = outLayouts[k * 16 + 3];
+                double mainRowY = outLayouts[k * 16 + 4];
+                double ownerRowY = outLayouts[k * 16 + 5];
+                double textYOff = outLayouts[k * 16 + 6];
+                double mainRowW = outLayouts[k * 16 + 7];
+                double armorRowW = outLayouts[k * 16 + 8];
+
+                double sx_base = outLayouts[k * 16 + 9];
+                double sy_base = outLayouts[k * 16 + 10];
+                double sy_head = outLayouts[k * 16 + 11];
+                double sx_side = outLayouts[k * 16 + 12];
+                double dist = outLayouts[k * 16 + 13];
+
+                int bx = (int) sx_base;
+                int by = (int) sy_base;
+                int hy = (int) sy_head;
+                int sx = (int) sx_side;
+
+                int boxH = Math.abs(by - hy);
+                int halfBoxW = Math.max(2, Math.abs(sx - bx));
+                int boxW = halfBoxW * 2;
+                int boxX = bx - halfBoxW;
+                int y = Math.min(by, hy);
+
+                boolean isPlayer = target instanceof Player;
+                boolean isMonster = target instanceof Monster;
+                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
+                                   target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
+                boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
+
+                String ownerName = (mobOwnerEnabled && target instanceof LivingEntity living) ? MobOwner.getOwnerName(living) : null;
+                boolean hasOwner = ownerName != null;
+
+                if (espEnabled) {
+                    String mode = ESP.INSTANCE.mode.getValue();
+                    int espColor = isPlayer ? ESP.INSTANCE.playerColor.getValue() :
+                                   (isMonster ? ESP.INSTANCE.mobColor.getValue() :
+                                   (isAnimal ? ESP.INSTANCE.animalColor.getValue() :
+                                   (isItem ? ESP.INSTANCE.itemColor.getValue() :
+                                   ESP.INSTANCE.frameColor.getValue())));
+
+                    if ("Box2D".equals(mode)) {
+                        context.fill(boxX, y, boxX + boxW, y + 1, espColor);
+                        context.fill(boxX, y + boxH, boxX + boxW, y + boxH + 1, espColor);
+                        context.fill(boxX, y, boxX + 1, y + boxH, espColor);
+                        context.fill(boxX + boxW - 1, y, boxX + boxW, y + boxH, espColor);
+                        int ca = 4;
+                        context.fill(boxX, y, boxX + ca, y + 1, espColor);
+                        context.fill(boxX + boxW - ca, y, boxX + boxW, y + 1, espColor);
+                        context.fill(boxX, y + boxH, boxX + ca, y + boxH + 1, espColor);
+                        context.fill(boxX + boxW - ca, y + boxH, boxX + boxW, y + boxH + 1, espColor);
+                    }
                 }
 
-                double scale = layout[0];
-                double totalW = layout[1];
-                double totalH = layout[2];
-                double armorRowY = layout[3];
-                double mainRowY = layout[4];
-                double ownerRowY = layout[5];
-                double textYOff = layout[6];
-                double mainRowW = layout[7];
-                double armorRowW = layout[8];
+                boolean withinRange = NameTags.isNativeAvailable() ? 
+                    NameTags.nativeIsWithinRange(dist, NameTags.INSTANCE.range.getValue()) : 
+                    (dist <= NameTags.INSTANCE.range.getValue());
+                boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange;
+                if (drawNametags || hasOwner) {
+                    LivingEntity livingTarget = (LivingEntity) target;
+                    String displayName = livingTarget.getDisplayName().getString();
+                    int health = (int) Math.ceil(livingTarget.getHealth());
+                    int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
+                    String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
+                    double tw = drawNametags ? (NameTags.INSTANCE.customFont.getValue() ? ravex.utility.render.FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText)) : 0.0;
+                    double ow = hasOwner ? (NameTags.INSTANCE.customFont.getValue() ? ravex.utility.render.FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName)) : 0.0;
 
-                 context.pose().pushMatrix();
-                 context.pose().translate((float) bx, (float) y);
-                 context.pose().scale((float) scale, (float) scale);
+                    boolean showArmor = drawNametags && NameTags.INSTANCE.armor.getValue();
+                    boolean showHands = drawNametags && NameTags.INSTANCE.handItems.getValue();
 
-                boolean bgEnabled = drawNametags ? NameTags.INSTANCE.background.getValue() : (hasOwner && MobOwner.INSTANCE.background.getValue());
-                if (bgEnabled) {
-                    int bgColor = drawNametags ? NameTags.INSTANCE.backgroundColor.getValue() : 0xBB000000;
-                    int bgLeft = (int)(-totalW / 2.0 - 3.0);
-                    int bgRight = (int)(totalW / 2.0 + 3.0);
-                    int bgBottom = -2;
-                    int bgTop = (int)(-2.0 - totalH);
+                    context.pose().pushMatrix();
+                    context.pose().translate((float) bx, (float) y);
+                    context.pose().scale((float) scale, (float) scale);
 
-                    context.fill(bgLeft, bgTop, bgRight, bgBottom, bgColor);
+                    boolean bgEnabled = drawNametags ? NameTags.INSTANCE.background.getValue() : (hasOwner && MobOwner.INSTANCE.background.getValue());
+                    if (bgEnabled) {
+                        int bgColor = drawNametags ? NameTags.INSTANCE.backgroundColor.getValue() : 0xBB000000;
+                        int bgLeft = (int)(-totalW / 2.0 - 3.0);
+                        int bgRight = (int)(totalW / 2.0 + 3.0);
+                        int bgBottom = -2;
+                        int bgTop = (int)(-2.0 - totalH);
 
-                    boolean drawTopLine = false;
-                    int lineCol = 0;
+                        context.fill(bgLeft, bgTop, bgRight, bgBottom, bgColor);
+
+                        boolean drawTopLine = false;
+                        int lineCol = 0;
+                        if (drawNametags) {
+                            drawTopLine = NameTags.INSTANCE.topLine.getValue();
+                            lineCol = NameTags.INSTANCE.topLineColor.getValue();
+                        } else if (hasOwner) {
+                            drawTopLine = MobOwner.INSTANCE.background.getValue();
+                            lineCol = 0x44FFAA00;
+                        }
+                        if (drawTopLine) {
+                            context.fill(bgLeft, bgTop, bgRight, bgTop + 1, lineCol);
+                        }
+                    }
+
+                    int armorCount = 0;
+                    if (showArmor) {
+                        if (!livingTarget.getItemBySlot(EquipmentSlot.FEET).isEmpty()) armorCount++;
+                        if (!livingTarget.getItemBySlot(EquipmentSlot.LEGS).isEmpty()) armorCount++;
+                        if (!livingTarget.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) armorCount++;
+                        if (!livingTarget.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) armorCount++;
+                    }
+
+                    if (showArmor && armorCount > 0) {
+                        int ax = (int)(-armorRowW / 2.0);
+                        int ay = (int) armorRowY;
+                        ItemStack[] armorItems = new ItemStack[]{
+                            livingTarget.getItemBySlot(EquipmentSlot.FEET),
+                            livingTarget.getItemBySlot(EquipmentSlot.LEGS),
+                            livingTarget.getItemBySlot(EquipmentSlot.CHEST),
+                            livingTarget.getItemBySlot(EquipmentSlot.HEAD)
+                        };
+                        for (ItemStack stack : armorItems) {
+                            if (!stack.isEmpty()) {
+                                context.renderItem(stack, ax, ay);
+                                ax += 16 + 2;
+                            }
+                        }
+                    }
+
                     if (drawNametags) {
-                        drawTopLine = NameTags.INSTANCE.topLine.getValue();
-                        lineCol = NameTags.INSTANCE.topLineColor.getValue();
-                    } else if (hasOwner) {
-                        drawTopLine = MobOwner.INSTANCE.background.getValue();
-                        lineCol = 0x44FFAA00;
-                    }
-                    if (drawTopLine) {
-                        context.fill(bgLeft, bgTop, bgRight, bgTop + 1, lineCol);
-                    }
-                }
-
-                if (showArmor && armorCount > 0) {
-                    int ax = (int)(-armorRowW / 2.0);
-                    int ay = (int) armorRowY;
-                    ItemStack[] armorItems = new ItemStack[]{
-                        livingTarget.getItemBySlot(EquipmentSlot.FEET),
-                        livingTarget.getItemBySlot(EquipmentSlot.LEGS),
-                        livingTarget.getItemBySlot(EquipmentSlot.CHEST),
-                        livingTarget.getItemBySlot(EquipmentSlot.HEAD)
-                    };
-                    for (ItemStack stack : armorItems) {
-                        if (!stack.isEmpty()) {
-                            context.renderItem(stack, ax, ay);
-                            ax += 16 + 2;
+                        int rx = (int)(-mainRowW / 2.0);
+                        int mY = (int) mainRowY;
+                        if (showHands && !livingTarget.getMainHandItem().isEmpty()) {
+                            context.renderItem(livingTarget.getMainHandItem(), rx, mY);
+                            rx += 16 + 2;
+                        }
+                        if (NameTags.INSTANCE.customFont.getValue()) {
+                            ravex.utility.render.FontRenderUtility.drawString(context, tagText, rx, (int)(mY + textYOff), 0xFFFFFFFF, false);
+                        } else {
+                            context.drawString(mc.font, tagText, rx, (int)(mY + textYOff), 0xFFFFFFFF, false);
+                        }
+                        rx += (int) tw;
+                        if (showHands && !livingTarget.getOffhandItem().isEmpty()) {
+                            rx += 2;
+                            context.renderItem(livingTarget.getOffhandItem(), rx, mY);
                         }
                     }
-                }
 
-                if (drawNametags) {
-                    int rx = (int)(-mainRowW / 2.0);
-                    int mY = (int) mainRowY;
-                    if (showHands && !livingTarget.getMainHandItem().isEmpty()) {
-                        context.renderItem(livingTarget.getMainHandItem(), rx, mY);
-                        rx += 16 + 2;
+                    if (hasOwner) {
+                        String ownerText = "Owner: " + ownerName;
+                        int otx = (int)(-ow / 2.0);
+                        int oty = (int) ownerRowY;
+                        if (NameTags.INSTANCE.customFont.getValue()) {
+                            ravex.utility.render.FontRenderUtility.drawString(context, ownerText, otx, oty, MobOwner.INSTANCE.textColor.getValue(), false);
+                        } else {
+                            context.drawString(mc.font, ownerText, otx, oty, MobOwner.INSTANCE.textColor.getValue(), false);
+                        }
                     }
-                    context.drawString(mc.font, tagText, rx, (int)(mY + textYOff), 0xFFFFFFFF, false);
-                    rx += (int) tw;
-                    if (showHands && !livingTarget.getOffhandItem().isEmpty()) {
-                        rx += 2;
-                        context.renderItem(livingTarget.getOffhandItem(), rx, mY);
+
+                    context.pose().popMatrix();
+                }
+            }
+        } else {
+            // Fallback loop if native code failed or is unavailable
+            for (Entity target : candidates) {
+                boolean isPlayer = target instanceof Player;
+                boolean isMonster = target instanceof Monster;
+                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
+                                   target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
+                boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
+
+                Vec3 basePos = target.getPosition(pt);
+                double dist = mc.player.distanceTo(target);
+                float bbHeight = target.getBbHeight();
+                float bbWidth = target.getBbWidth();
+                Vec3 headPos = basePos.add(0, bbHeight, 0);
+                Vec3 sidePos = basePos.add(bbWidth / 2.0f, bbHeight / 2.0f, 0);
+                double basePosX = basePos.x, basePosY = basePos.y, basePosZ = basePos.z;
+
+                Vec3 baseProj = mc.gameRenderer.projectPointToScreen(basePos);
+                Vec3 headProj = mc.gameRenderer.projectPointToScreen(headPos);
+                Vec3 sideProj = mc.gameRenderer.projectPointToScreen(sidePos);
+
+                if (baseProj == null || headProj == null || sideProj == null) continue;
+
+                Vec3 dir = (new Vec3(basePosX - cameraPos.x, basePosY - cameraPos.y, basePosZ - cameraPos.z)).normalize();
+                double dot = dir.dot(playerViewVec);
+                if (dot <= 0.0) continue;
+
+                double sx_base = (baseProj.x + 1.0) / 2.0 * guiWidth;
+                double sy_base = (1.0 - baseProj.y) / 2.0 * guiHeight;
+                double sx_head = (headProj.x + 1.0) / 2.0 * guiWidth;
+                double sy_head = (1.0 - headProj.y) / 2.0 * guiHeight;
+                double sx_side = (sideProj.x + 1.0) / 2.0 * guiWidth;
+
+                if ((sx_base < 0 || sx_base > guiWidth || sy_base < 0 || sy_base > guiHeight) &&
+                    (sx_head < 0 || sx_head > guiWidth || sy_head < 0 || sy_head > guiHeight)) {
+                    continue;
+                }
+
+                int bx = (int) sx_base;
+                int by = (int) sy_base;
+                int hy = (int) sy_head;
+                int sx = (int) sx_side;
+
+                int boxH = Math.abs(by - hy);
+                int halfBoxW = Math.max(2, Math.abs(sx - bx));
+                int boxW = halfBoxW * 2;
+                int boxX = bx - halfBoxW;
+                int y = Math.min(by, hy);
+
+                String ownerName = (mobOwnerEnabled && target instanceof LivingEntity living) ? MobOwner.getOwnerName(living) : null;
+                boolean hasOwner = ownerName != null;
+
+                if (espEnabled) {
+                    String mode = ESP.INSTANCE.mode.getValue();
+                    int espColor = isPlayer ? ESP.INSTANCE.playerColor.getValue() :
+                                   (isMonster ? ESP.INSTANCE.mobColor.getValue() :
+                                   (isAnimal ? ESP.INSTANCE.animalColor.getValue() :
+                                   (isItem ? ESP.INSTANCE.itemColor.getValue() :
+                                   ESP.INSTANCE.frameColor.getValue())));
+
+                    if ("Box2D".equals(mode)) {
+                        context.fill(boxX, y, boxX + boxW, y + 1, espColor);
+                        context.fill(boxX, y + boxH, boxX + boxW, y + boxH + 1, espColor);
+                        context.fill(boxX, y, boxX + 1, y + boxH, espColor);
+                        context.fill(boxX + boxW - 1, y, boxX + boxW, y + boxH, espColor);
+                        int ca = 4;
+                        context.fill(boxX, y, boxX + ca, y + 1, espColor);
+                        context.fill(boxX + boxW - ca, y, boxX + boxW, y + 1, espColor);
+                        context.fill(boxX, y + boxH, boxX + ca, y + boxH + 1, espColor);
+                        context.fill(boxX + boxW - ca, y + boxH, boxX + boxW, y + boxH + 1, espColor);
                     }
                 }
 
-                if (hasOwner) {
-                    String ownerText = "Owner: " + ownerName;
-                    int otx = (int)(-ow / 2.0);
-                    int oty = (int) ownerRowY;
-                    context.drawString(mc.font, ownerText, otx, oty, MobOwner.INSTANCE.textColor.getValue(), false);
-                }
+                boolean withinRange = NameTags.isNativeAvailable() ? 
+                    NameTags.nativeIsWithinRange(dist, NameTags.INSTANCE.range.getValue()) : 
+                    (dist <= NameTags.INSTANCE.range.getValue());
+                boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange;
+                if (drawNametags || hasOwner) {
+                    LivingEntity livingTarget = (LivingEntity) target;
+                    String displayName = livingTarget.getDisplayName().getString();
+                    int health = (int) Math.ceil(livingTarget.getHealth());
+                    int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
+                    String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
+                    double tw = drawNametags ? (NameTags.INSTANCE.customFont.getValue() ? ravex.utility.render.FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText)) : 0.0;
+                    double ow = hasOwner ? (NameTags.INSTANCE.customFont.getValue() ? ravex.utility.render.FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName)) : 0.0;
 
-                context.pose().popMatrix();
+                    boolean showArmor = drawNametags && NameTags.INSTANCE.armor.getValue();
+                    boolean showHands = drawNametags && NameTags.INSTANCE.handItems.getValue();
+
+                    boolean hasMainHand = drawNametags && !livingTarget.getMainHandItem().isEmpty();
+                    boolean hasOffHand = drawNametags && !livingTarget.getOffhandItem().isEmpty();
+
+                    int armorCount = 0;
+                    if (showArmor) {
+                        if (!livingTarget.getItemBySlot(EquipmentSlot.FEET).isEmpty()) armorCount++;
+                        if (!livingTarget.getItemBySlot(EquipmentSlot.LEGS).isEmpty()) armorCount++;
+                        if (!livingTarget.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) armorCount++;
+                        if (!livingTarget.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) armorCount++;
+                    }
+
+                    double[] layout;
+                    if (NameTags.isNativeAvailable()) {
+                        layout = NameTags.nativeCalculateLayout(
+                            dist,
+                            NameTags.INSTANCE.scale.getValue(),
+                            NameTags.INSTANCE.distanceScaling.getValue(),
+                            showArmor,
+                            showHands,
+                            hasOwner,
+                            tw,
+                            ow,
+                            hasMainHand,
+                            hasOffHand,
+                            armorCount
+                        );
+                    } else {
+                        layout = NameTags.javaFallbackCalculate(
+                            dist,
+                            NameTags.INSTANCE.scale.getValue(),
+                            NameTags.INSTANCE.distanceScaling.getValue(),
+                            showArmor,
+                            showHands,
+                            hasOwner,
+                            tw,
+                            ow,
+                            hasMainHand,
+                            hasOffHand,
+                            armorCount
+                        );
+                    }
+
+                    double scale = layout[0];
+                    double totalW = layout[1];
+                    double totalH = layout[2];
+                    double armorRowY = layout[3];
+                    double mainRowY = layout[4];
+                    double ownerRowY = layout[5];
+                    double textYOff = layout[6];
+                    double mainRowW = layout[7];
+                    double armorRowW = layout[8];
+
+                    context.pose().pushMatrix();
+                    context.pose().translate((float) bx, (float) y);
+                    context.pose().scale((float) scale, (float) scale);
+
+                    boolean bgEnabled = drawNametags ? NameTags.INSTANCE.background.getValue() : (hasOwner && MobOwner.INSTANCE.background.getValue());
+                    if (bgEnabled) {
+                        int bgColor = drawNametags ? NameTags.INSTANCE.backgroundColor.getValue() : 0xBB000000;
+                        int bgLeft = (int)(-totalW / 2.0 - 3.0);
+                        int bgRight = (int)(totalW / 2.0 + 3.0);
+                        int bgBottom = -2;
+                        int bgTop = (int)(-2.0 - totalH);
+
+                        context.fill(bgLeft, bgTop, bgRight, bgBottom, bgColor);
+
+                        boolean drawTopLine = false;
+                        int lineCol = 0;
+                        if (drawNametags) {
+                            drawTopLine = NameTags.INSTANCE.topLine.getValue();
+                            lineCol = NameTags.INSTANCE.topLineColor.getValue();
+                        } else if (hasOwner) {
+                            drawTopLine = MobOwner.INSTANCE.background.getValue();
+                            lineCol = 0x44FFAA00;
+                        }
+                        if (drawTopLine) {
+                            context.fill(bgLeft, bgTop, bgRight, bgTop + 1, lineCol);
+                        }
+                    }
+
+                    if (showArmor && armorCount > 0) {
+                        int ax = (int)(-armorRowW / 2.0);
+                        int ay = (int) armorRowY;
+                        ItemStack[] armorItems = new ItemStack[]{
+                            livingTarget.getItemBySlot(EquipmentSlot.FEET),
+                            livingTarget.getItemBySlot(EquipmentSlot.LEGS),
+                            livingTarget.getItemBySlot(EquipmentSlot.CHEST),
+                            livingTarget.getItemBySlot(EquipmentSlot.HEAD)
+                        };
+                        for (ItemStack stack : armorItems) {
+                            if (!stack.isEmpty()) {
+                                context.renderItem(stack, ax, ay);
+                                ax += 16 + 2;
+                            }
+                        }
+                    }
+
+                    if (drawNametags) {
+                        int rx = (int)(-mainRowW / 2.0);
+                        int mY = (int) mainRowY;
+                        if (showHands && !livingTarget.getMainHandItem().isEmpty()) {
+                            context.renderItem(livingTarget.getMainHandItem(), rx, mY);
+                            rx += 16 + 2;
+                        }
+                        if (NameTags.INSTANCE.customFont.getValue()) {
+                            ravex.utility.render.FontRenderUtility.drawString(context, tagText, rx, (int)(mY + textYOff), 0xFFFFFFFF, false);
+                        } else {
+                            context.drawString(mc.font, tagText, rx, (int)(mY + textYOff), 0xFFFFFFFF, false);
+                        }
+                        rx += (int) tw;
+                        if (showHands && !livingTarget.getOffhandItem().isEmpty()) {
+                            rx += 2;
+                            context.renderItem(livingTarget.getOffhandItem(), rx, mY);
+                        }
+                    }
+
+                    if (hasOwner) {
+                        String ownerText = "Owner: " + ownerName;
+                        int otx = (int)(-ow / 2.0);
+                        int oty = (int) ownerRowY;
+                        if (NameTags.INSTANCE.customFont.getValue()) {
+                            ravex.utility.render.FontRenderUtility.drawString(context, ownerText, otx, oty, MobOwner.INSTANCE.textColor.getValue(), false);
+                        } else {
+                            context.drawString(mc.font, ownerText, otx, oty, MobOwner.INSTANCE.textColor.getValue(), false);
+                        }
+                    }
+
+                    context.pose().popMatrix();
+                }
             }
         }
 
@@ -578,11 +983,20 @@ public abstract class MixinInGameHUD {
     }
 
     private void renderHud(GuiGraphics context, DeltaTracker tickCounter) {
+        java.util.List<HudModule> enabledModules = new java.util.ArrayList<>();
         for (HudModule hud : ModuleManager.INSTANCE.getHudModules()) {
             if (hud.getEnabled()) {
-                hud.updateAnimation();
-                hud.render(context, tickCounter.getGameTimeDeltaTicks());
+                enabledModules.add(hud);
             }
+        }
+
+        // batch update animation states via C++, keep it blazing fast!
+        ravex.utility.misc.GuiOptimizer.optimizeHudAnimations(enabledModules);
+
+        for (HudModule hud : enabledModules) {
+            try {
+                hud.render(context, tickCounter.getGameTimeDeltaTicks());
+            } catch (Throwable ignored) {}
         }
     }
 

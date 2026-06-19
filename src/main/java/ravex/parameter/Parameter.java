@@ -36,9 +36,16 @@ public abstract class Parameter<T> {
         return this;
     }
 
+    private Parameter<?> parent = null;
+
     public Parameter<T> visibleIfExpanded(Parameter<?> parent) {
+        this.parent = parent;
         this.visibility = () -> parent.isExpanded();
         return this;
+    }
+
+    public Parameter<?> getParent() {
+        return parent;
     }
 
     public boolean isVisible() {

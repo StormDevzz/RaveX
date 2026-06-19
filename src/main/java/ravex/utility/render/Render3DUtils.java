@@ -19,6 +19,10 @@ import java.util.List;
 
 public class Render3DUtils {
     private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(512 * 1024);
+    private static final ByteBufferBuilder FILL_ALLOCATOR = new ByteBufferBuilder(256 * 1024);
+    private static final ByteBufferBuilder FILL_NODEPTH_ALLOCATOR = new ByteBufferBuilder(256 * 1024);
+    private static final ByteBufferBuilder LINE_ALLOCATOR = new ByteBufferBuilder(256 * 1024);
+    private static final ByteBufferBuilder LINE_NODEPTH_ALLOCATOR = new ByteBufferBuilder(256 * 1024);
 
     private static final RenderType FILL_TYPE = RenderTypes.debugFilledBox();
     private static final RenderType LINE_TYPE = RenderTypes.lines();
@@ -89,13 +93,18 @@ public class Render3DUtils {
     private static boolean lineNoDepthUsed = false;
 
     public static void beginFrame() {
-        ALLOCATOR.clear();
-        fillBuilder = new BufferBuilder(ALLOCATOR, FILL_TYPE.mode(), FILL_TYPE.format());
-        if (FILL_NO_DEPTH != null)
-            fillNoDepthBuilder = new BufferBuilder(ALLOCATOR, FILL_NO_DEPTH.mode(), FILL_NO_DEPTH.format());
-        lineBuilder = new BufferBuilder(ALLOCATOR, LINE_TYPE.mode(), LINE_TYPE.format());
-        if (LINE_NO_DEPTH != null)
-            lineNoDepthBuilder = new BufferBuilder(ALLOCATOR, LINE_NO_DEPTH.mode(), LINE_NO_DEPTH.format());
+        FILL_ALLOCATOR.clear();
+        fillBuilder = new BufferBuilder(FILL_ALLOCATOR, FILL_TYPE.mode(), FILL_TYPE.format());
+        if (FILL_NO_DEPTH != null) {
+            FILL_NODEPTH_ALLOCATOR.clear();
+            fillNoDepthBuilder = new BufferBuilder(FILL_NODEPTH_ALLOCATOR, FILL_NO_DEPTH.mode(), FILL_NO_DEPTH.format());
+        }
+        LINE_ALLOCATOR.clear();
+        lineBuilder = new BufferBuilder(LINE_ALLOCATOR, LINE_TYPE.mode(), LINE_TYPE.format());
+        if (LINE_NO_DEPTH != null) {
+            LINE_NODEPTH_ALLOCATOR.clear();
+            lineNoDepthBuilder = new BufferBuilder(LINE_NODEPTH_ALLOCATOR, LINE_NO_DEPTH.mode(), LINE_NO_DEPTH.format());
+        }
         fillUsed = fillNoDepthUsed = lineUsed = lineNoDepthUsed = false;
     }
 

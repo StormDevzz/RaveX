@@ -185,18 +185,52 @@ public class RaveXLoader {
         }).start();
     }
 
+    public static String getDetailedOSName() {
+        String osName = System.getProperty("os.name");
+        String osVersion = System.getProperty("os.version");
+        
+        if (osName.toLowerCase().contains("linux")) {
+            java.io.File osRelease = new java.io.File("/etc/os-release");
+            if (osRelease.exists()) {
+                try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(osRelease))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        if (line.startsWith("PRETTY_NAME=")) {
+                            String pretty = line.substring("PRETTY_NAME=".length());
+                            if (pretty.startsWith("\"") && pretty.endsWith("\"")) {
+                                pretty = pretty.substring(1, pretty.length() - 1);
+                            }
+                            return pretty + " (Kernel " + osVersion + ")";
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+            return "Linux (Kernel " + osVersion + ")";
+        }
+        
+        return osName + " (Kernel " + osVersion + ")";
+    }
+
     private static void runChecksPhase() {
         window.updateStatus("Checking system...", 5);
+        String osDetails = getDetailedOSName();
 
         if (nativeAvailable) {
             try {
-                String info = NativeBridge.getSystemInfo();
-                window.setSystemInfo(info);
-
                 String json = NativeBridge.runChecks();
                 int score = NativeBridge.getScore();
                 window.setSystemScore(score);
                 window.setExtraInfo("Score: " + score + "/100");
+                
+                Runtime rt = Runtime.getRuntime();
+                long maxMem = rt.maxMemory() / (1024 * 1024);
+                long totalMem = rt.totalMemory() / (1024 * 1024);
+                long freeMem = rt.freeMemory() / (1024 * 1024);
+                long usedMem = totalMem - freeMem;
+                
+                String info = osDetails + " | Heap: " + usedMem + "/" + maxMem + " MB";
+                window.setSystemInfo(info);
+                
                 window.updateStatus("System checked: " + score + "/100", 20);
                 sleep(400);
             } catch (Exception e) {
@@ -216,9 +250,8 @@ public class RaveXLoader {
         long totalMem = rt.totalMemory() / (1024 * 1024);
         long freeMem = rt.freeMemory() / (1024 * 1024);
         long usedMem = totalMem - freeMem;
-        int cores = rt.availableProcessors();
 
-        String info = cores + " cores | Heap: " + usedMem + "/" + maxMem + " MB";
+        String info = getDetailedOSName() + " | Heap: " + usedMem + "/" + maxMem + " MB";
         window.setSystemInfo(info);
 
         int score = 100;
