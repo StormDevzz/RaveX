@@ -269,8 +269,9 @@ void on_launch_clicked(GtkWidget *widget, gpointer user_data) {
         }
 
         if (version.empty()) {
-            std::string localVer = get_local_version_internal(state->ravex_dir);
-            version = "1.21.1";
+            std::cerr << "[RaveX] WARNING: MC_VERSION not found in release body, defaulting to 1.21.11" << std::endl;
+            std::cerr << "[RaveX] Add MC_VERSION=1.21.11 to GitHub release body to set this automatically" << std::endl;
+            version = "1.21.11";
         }
 
         bool mojang_ok = network::download_minecraft_version(state, version);

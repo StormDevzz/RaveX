@@ -40,17 +40,21 @@ ReleaseInfo GithubUtility::getLatestRelease() {
 
     {
         std::string body = extractJsonValue(json, "body");
-        size_t pos = 0;
-        while (true) {
-            pos = body.find("MC_VERSION=", pos);
-            if (pos == std::string::npos) break;
-            size_t start = pos + 11;
-            if (start >= body.size()) break;
-            size_t end = body.find_first_of("\n\r ", start);
-            if (end == std::string::npos) end = body.size();
-            info.minecraftVersion = body.substr(start, end - start);
-            break;
+        // 1) Try MC_VERSION=X.Y.Z in body (preferred)
+        {
+            size_t pos = 0;
+            while (true) {
+                pos = body.find("MC_VERSION=", pos);
+                if (pos == std::string::npos) break;
+                size_t start = pos + 11;
+                if (start >= body.size()) break;
+                size_t end = body.find_first_of("\n\r ", start);
+                if (end == std::string::npos) end = body.size();
+                info.minecraftVersion = body.substr(start, end - start);
+                break;
+            }
         }
+
     }
 
     size_t assets_pos = json.find("\"assets\":");
