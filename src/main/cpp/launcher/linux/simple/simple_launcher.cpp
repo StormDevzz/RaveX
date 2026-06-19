@@ -19,10 +19,12 @@ void SimpleLauncher::run(const std::string& modsDir, const std::string& ravexDir
     file::ensure_directory(kickxDir + "/versions");
     file::ensure_directory(kickxDir + "/libraries");
     file::ensure_directory(kickxDir + "/assets");
-    file::ensure_directory(kickxDir + "/instances/default");
+    std::string instDir = kickxDir + "/instances/default";
+    file::ensure_directory(instDir);
+    file::ensure_directory(instDir + "/mods");
 
     LauncherState *state = new LauncherState();
-    state->mods_dir = modsDir;
+    state->mods_dir = instDir + "/mods";
     state->ravex_dir = ravexDir;
     state->kickx_dir = kickxDir;
 

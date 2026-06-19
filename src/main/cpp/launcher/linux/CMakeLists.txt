@@ -32,6 +32,8 @@ add_executable(kickx_launcher
     simple/instances/main/window_layout.cpp
     simple/instances/main/window_signals.cpp
     simple/instances/main/window_init.cpp
+    simple/instances/manager/instance_manager.cpp
+    simple/instances/editor/instance_editor.cpp
     simple/instances/console/console_window.cpp
     simple/window/background/custom/ui_styles.cpp
     simple/window/background/custom/bg_loader.cpp
@@ -118,6 +120,8 @@ target_include_directories(kickx_launcher PRIVATE
     simple/file/include
     simple/instances/main/include
     simple/instances/console/include
+    simple/instances/manager/include
+    simple/instances/editor/include
     simple/network/include
     simple/state/include
     simple/event/include
