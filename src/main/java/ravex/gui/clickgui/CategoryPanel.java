@@ -79,11 +79,24 @@ public class CategoryPanel {
                 targetY = mouseY - dragOffsetY;
             }
         }
-        x = targetX;
-        y = targetY;
+        double dragLerp = ClickGui.INSTANCE.smoothScroll.getValue() 
+            ? (ClickGui.INSTANCE.scrollSmoothness.getValue().doubleValue() / 100.0) 
+            : 1.0;
+        
+        if (Math.abs(targetX - x) > 0.05) {
+            x += (targetX - x) * dragLerp;
+        } else {
+            x = targetX;
+        }
+        
+        if (Math.abs(targetY - y) > 0.05) {
+            y += (targetY - y) * dragLerp;
+        } else {
+            y = targetY;
+        }
 
-        int ix = (int) x;
-        int iy = (int) y;
+        int ix = (int) Math.round(x);
+        int iy = (int) Math.round(y);
 
         List<ModuleButton> visible = filterButtons(searchQuery);
         if (visible.isEmpty() && !searchQuery.isEmpty()) return;

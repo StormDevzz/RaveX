@@ -13,31 +13,20 @@ public class NameTags extends Module {
     public final BooleanParameter handItems = new BooleanParameter("Hand Items", true);
     public final BooleanParameter distanceScaling = new BooleanParameter("Distance Scaling", true);
     public final NumberParameter scale = new NumberParameter("ScaleMultiplier", 1.0, 0.5, 3.0, 0.1);
+    public final NumberParameter range = new NumberParameter("Range", 64.0, 5.0, 256.0, 1.0);
     public final BooleanParameter background = new BooleanParameter("Background", true);
     public final ColorParameter backgroundColor = new ColorParameter("Background Color", 0xBB000000);
     public final BooleanParameter topLine = new BooleanParameter("Top Line", false);
     public final ColorParameter topLineColor = new ColorParameter("Top Line Color", 0xFFFF5555);
+    public final BooleanParameter customFont = new BooleanParameter("Custom Font", false);
 
     private static boolean nativeAvailable = false;
 
     static {
         try {
-            System.loadLibrary("ravex_nametags");
-            nativeAvailable = true;
+            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_nametags");
         } catch (UnsatisfiedLinkError e) {
-            try {
-                String libName = System.getProperty("os.name").toLowerCase().contains("win")
-                        ? "ravex_nametags.dll" : "libravex_nametags.so";
-                java.io.InputStream is = NameTags.class.getResourceAsStream(
-                        "/assets/ravex/natives/" + libName);
-                if (is != null) {
-                    java.nio.file.Path tmp = java.nio.file.Files.createTempFile("ravex_nt", "");
-                    java.nio.file.Files.copy(is, tmp, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    System.load(tmp.toAbsolutePath().toString());
-                    tmp.toFile().deleteOnExit();
-                    nativeAvailable = true;
-                }
-            } catch (Throwable ignored) {}
+            // Fallback handled
         }
     }
 
@@ -47,10 +36,12 @@ public class NameTags extends Module {
         addParameter(handItems);
         addParameter(distanceScaling);
         addParameter(scale);
+        addParameter(range);
         addParameter(background);
         addParameter(backgroundColor);
         addParameter(topLine);
         addParameter(topLineColor);
+        addParameter(customFont);
 
         // Visibility triggers
         backgroundColor.setVisible(background::getValue);
@@ -61,6 +52,10 @@ public class NameTags extends Module {
     public static boolean isNativeAvailable() {
         return nativeAvailable;
     }
+
+    public static native double nativeGetDistance(double x1, double y1, double z1, double x2, double y2, double z2);
+    public static native boolean nativeIsWithinRange(double distance, double range);
+    public static native double nativeCalculateScale(double distance, double scaleParam, boolean distanceScaling);
 
     public static native double[] nativeCalculateLayout(
         double distance,
@@ -90,11 +85,16 @@ public class NameTags extends Module {
         boolean hasOffHand,
         int armorCount
     ) {
-        double currentScale = scaleParam;
-        if (distanceScaling) {
-            currentScale = scaleParam * (distance * 0.15);
-            if (currentScale < 0.5) currentScale = 0.5;
-            if (currentScale > 3.0) currentScale = 3.0;
+        double currentScale;
+        if (isNativeAvailable()) {
+            currentScale = nativeCalculateScale(distance, scaleParam, distanceScaling);
+        } else {
+            currentScale = scaleParam;
+            if (distanceScaling) {
+                currentScale = scaleParam * (distance * 0.15);
+                if (currentScale < 0.5) currentScale = 0.5;
+                if (currentScale > 3.0) currentScale = 3.0;
+            }
         }
 
         double is = 16.0;

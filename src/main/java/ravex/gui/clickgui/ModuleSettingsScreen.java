@@ -57,7 +57,7 @@ public class ModuleSettingsScreen extends Screen {
         lastPanelX = (width - lastPanelW) / 2;
         lastTotalContentH = 0;
         for (ParameterElement pe : paramElements) {
-            if (pe.getParameter().isVisible()) lastTotalContentH += pe.getHeight();
+            if (pe.getParameter().isVisible() || pe.getExpandAnimProgress() > 0.001f) lastTotalContentH += pe.getHeight();
         }
         int maxPanelH = height - 80;
         lastPanelH = Math.min(lastTotalContentH + lastHeaderH + 8, maxPanelH);
@@ -136,7 +136,7 @@ public class ModuleSettingsScreen extends Screen {
 
         int paramY = contentY - (int) scrollOffset;
         for (ParameterElement pe : paramElements) {
-            if (!pe.getParameter().isVisible()) continue;
+            if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
             int pHeight = pe.getHeight();
             if (paramY + pHeight >= contentY - 20 && paramY <= contentY + contentH + 20) {
                 pe.render(graphics, px + 10, paramY, pw - 20, pHeight, mx, my);
@@ -212,7 +212,7 @@ public class ModuleSettingsScreen extends Screen {
         int contentY = lastPanelY + lastHeaderH + 4;
         int py = contentY - (int) scrollOffset;
         for (ParameterElement pe : paramElements) {
-            if (!pe.getParameter().isVisible()) continue;
+            if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
             int pHeight = pe.getHeight();
             if (pe.mouseClicked(mx, my, event.button(), lastPanelX + 10, py, lastPanelW - 20, pHeight)) {
                 return true;

@@ -78,39 +78,7 @@ public class FontRenderUtility {
 
         if (!renderOnce) {
             renderOnce = true;
-            Style componentStyle = component.getStyle();
-            FontDescription fd = componentStyle.getFont();
-            LOGGER.warn("===== FONT DEBUG =====");
-            LOGGER.warn("fontType={}, text='{}'", fontType, text);
-            LOGGER.warn("Style.getFont class={}", fd != null ? fd.getClass().getName() : "null");
-            LOGGER.warn("Style.getFont={}", fd);
-            if (fd instanceof FontDescription.Resource res) {
-                LOGGER.warn("Resource id={}", res.id());
-            }
-            // Try reflection to check FontManager internals
-            try {
-                Object mc = Minecraft.getInstance();
-                java.lang.reflect.Field fmField = mc.getClass().getDeclaredField("fontManager");
-                fmField.setAccessible(true);
-                Object fontManager = fmField.get(mc);
-                java.lang.reflect.Field fsField = fontManager.getClass().getDeclaredField("fontSets");
-                fsField.setAccessible(true);
-                Object fontSets = fsField.get(fontManager);
-                LOGGER.warn("FontManager fontSets class={}", fontSets.getClass().getName());
-                if (fontSets instanceof java.util.Map map) {
-                    LOGGER.warn("FontManager fontSets keys={}", map.keySet().stream().filter(k -> k.toString().startsWith("ravex:") || k.toString().contains("default")).toList());
-                    Identifier ourId = Identifier.fromNamespaceAndPath("ravex", "sf_bold");
-                    LOGGER.warn("Has ravex:sf_bold? {}", map.containsKey(ourId));
-                }
-            } catch (Exception e) {
-                LOGGER.warn("FontManager reflection failed: {}", e.toString());
-            }
-            // Try uniform font
-            Component uniComponent = Component.literal("Test-" + text).withStyle(Style.EMPTY.withFont(new FontDescription.Resource(Identifier.fromNamespaceAndPath("minecraft", "uniform"))));
-            LOGGER.warn("Uniform component style.getFont={}", uniComponent.getStyle().getFont());
-            // Test that withFont returns a new Style correctly
-            Style testStyle = Style.EMPTY.withFont(new FontDescription.Resource(Identifier.fromNamespaceAndPath("ravex", "comfortaa")));
-            LOGGER.warn("testStyle.getFont={}", testStyle.getFont());
+            LOGGER.info("[RaveX/font] Custom fonts successfully initialized!");
         }
 
         if (Math.abs(scale - 1.0) < 0.01) {

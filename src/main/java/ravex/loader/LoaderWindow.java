@@ -8,7 +8,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.*;
 
 public class LoaderWindow extends JFrame {
-    private static final Color BG_DARK = new Color(0x09, 0x06, 0x11);
+    private static final Color BG_DARK = Color.BLACK;
     private static final Color BG_LIGHT = new Color(0x1a, 0x0f, 0x30);
     private static final Color ACCENT_PINK = new Color(0xff, 0x2a, 0x85);
     private static final Color ACCENT_PURPLE = new Color(0x9d, 0x4e, 0xdd);
@@ -27,6 +27,7 @@ public class LoaderWindow extends JFrame {
     private String extraInfo = "";
     
     private float pulseAngle = 0f;
+    private float waveTime = 0f;
     private Timer animTimer;
 
     public LoaderWindow() {
@@ -84,6 +85,8 @@ public class LoaderWindow extends JFrame {
                 pulseAngle = 0f;
             }
 
+            waveTime += 0.03f;
+
             repaint();
         });
         animTimer.start();
@@ -135,25 +138,14 @@ public class LoaderWindow extends JFrame {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        // 1. Beautiful Space/Radial Background
-        RadialGradientPaint bgGrad = new RadialGradientPaint(
-            new Point2D.Float(cx, h / 2f), w * 0.8f,
-            new float[]{0f, 0.7f, 1f},
-            new Color[]{BG_LIGHT, BG_DARK, new Color(4, 2, 8)}
-        );
-        g.setPaint(bgGrad);
+        // 1. Slightly dark base background
+        g.setColor(new Color(0x03, 0x02, 0x05));
         g.fillRect(0, 0, w, h);
 
-        // 2. Cyber Grid/Decorative Lines
-        g.setColor(new Color(0x3f, 0x2d, 0x6e, 25));
-        g.setStroke(new BasicStroke(1f));
-        int gridSpacing = 20;
-        for (int x = 0; x < w; x += gridSpacing) {
-            g.drawLine(x, 0, x, h);
-        }
-        for (int y = 0; y < h; y += gridSpacing) {
-            g.drawLine(0, y, w, y);
-        }
+        // Draw animated blue waves
+        drawWave(g, w, h, 0.005, 16, waveTime * 0.5f, 0.0f, new Color(0x0a, 0x1f, 0x4d, 90), new Color(0x04, 0x06, 0x0c, 180));
+        drawWave(g, w, h, 0.008, 10, waveTime * 0.8f, 2.0f, new Color(0x10, 0x2a, 0x6b, 70), new Color(0x02, 0x04, 0x08, 140));
+        drawWave(g, w, h, 0.012, 6, waveTime * 1.2f, 4.0f, new Color(0x00, 0x77, 0xb6, 50), new Color(0x00, 0x00, 0x00, 0));
 
         // Pulse intensity calculated from sin wave
         float pulse = (float) (Math.sin(pulseAngle) + 1f) / 2f; // [0, 1]
@@ -304,5 +296,27 @@ public class LoaderWindow extends JFrame {
 
         // Sync toolkit to avoid any Linux AWT lagging or desync
         Toolkit.getDefaultToolkit().sync();
+    }
+
+    private void drawWave(Graphics2D g, int w, int h, double frequency, double amplitude, float time, float phaseOffset, Color colorStart, Color colorEnd) {
+        java.awt.geom.Path2D.Double path = new java.awt.geom.Path2D.Double();
+        path.moveTo(0, h);
+        
+        double waveMidY = h * 0.65;
+        
+        for (int x = 0; x <= w; x += 2) {
+            double angle = x * frequency + time + phaseOffset;
+            double y = waveMidY + Math.sin(angle) * amplitude + Math.cos(angle * 0.5) * (amplitude * 0.4);
+            path.lineTo(x, y);
+        }
+        path.lineTo(w, h);
+        path.closePath();
+        
+        GradientPaint grad = new GradientPaint(
+            0, (float)(waveMidY - amplitude * 2), colorStart,
+            0, h, colorEnd
+        );
+        g.setPaint(grad);
+        g.fill(path);
     }
 }

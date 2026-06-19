@@ -1,4 +1,4 @@
-package ravex.modules.player;
+package ravex.modules.player.AutoReGear;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

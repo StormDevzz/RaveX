@@ -79,8 +79,7 @@ public class BasePlace extends Module {
     private static boolean nativeAvailable = false;
     static {
         try {
-            System.loadLibrary("ravex_baseplace");
-            nativeAvailable = true;
+            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_baseplace");
         } catch (UnsatisfiedLinkError e) {
             RaveX.LOGGER.warn("[BasePlace JNI] Failed to load native library: {}", e.getMessage());
         }

@@ -23,38 +23,13 @@ public class Flight extends Module {
     public final BooleanParameter damageBoost = new BooleanParameter("Damage Boost", false);
     public final NumberParameter damageMultiplier = new NumberParameter("Damage Multiplier", 1.5, 1.0, 5.0, 0.1);
 
-    private static boolean nativeAvailable = false;
-    static {
-        try {
-            System.loadLibrary("ravex_flight");
-            nativeAvailable = true;
-        } catch (UnsatisfiedLinkError e) {
-            RaveX.LOGGER.warn("[Flight JNI] Failed to load native library: {}", e.getMessage());
-        }
-    }
-
-    private static native double[] nativeCalculateVelocity(String mode, double hSpeed, double vSpeed, double glide, double yaw, double pitch, boolean jump, boolean sneak);
-    private static native double nativeHandleAirFriction(String mode, double currentSpeed, double acceleration, double friction);
+    private static final boolean nativeAvailable = false;
 
     public static double[] calculateVelocity(String mode, double hSpeed, double vSpeed, double glide, double yaw, double pitch, boolean jump, boolean sneak) {
-        if (nativeAvailable) {
-            try {
-                return nativeCalculateVelocity(mode, hSpeed, vSpeed, glide, yaw, pitch, jump, sneak);
-            } catch (Exception e) {
-                RaveX.LOGGER.warn("[Flight] Native velocity calc failed, using fallback: {}", e.getMessage());
-            }
-        }
         return javaCalculateVelocity(mode, hSpeed, vSpeed, glide, yaw, pitch, jump, sneak);
     }
 
     public static double handleAirFriction(String mode, double currentSpeed, double acceleration, double friction) {
-        if (nativeAvailable) {
-            try {
-                return nativeHandleAirFriction(mode, currentSpeed, acceleration, friction);
-            } catch (Exception e) {
-                RaveX.LOGGER.warn("[Flight] Native friction calc failed, using fallback: {}", e.getMessage());
-            }
-        }
         return javaHandleAirFriction(mode, currentSpeed, acceleration, friction);
     }
 

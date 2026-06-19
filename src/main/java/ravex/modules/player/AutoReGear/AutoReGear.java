@@ -1,4 +1,4 @@
-package ravex.modules.player;
+package ravex.modules.player.AutoReGear;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

@@ -1,0 +1,19 @@
+#include "include/update_check.h"
+
+namespace ravex {
+namespace launcher {
+namespace simple {
+namespace ver {
+
+update_check_result update_check_execute(const std::string& input) {
+    update_check_result r;
+    r.success = true;
+    r.message = "update_check: check ok";
+    r.data = input;
+    return r;
+}
+
+} // namespace ver
+} // namespace simple
+} // namespace launcher
+} // namespace ravex

@@ -40,6 +40,14 @@ public abstract class HudModule {
         if (Math.abs(targetY - displayY) < 0.3f) displayY = targetY;
     }
 
+    // native bindings helpers, keep them rollin'
+    public float getDisplayX() { return displayX; }
+    public void setDisplayX(float displayX) { this.displayX = displayX; }
+    public float getDisplayY() { return displayY; }
+    public void setDisplayY(float displayY) { this.displayY = displayY; }
+    public boolean isAnimInitialized() { return animInitialized; }
+    public void setAnimInitialized(boolean animInitialized) { this.animInitialized = animInitialized; }
+
     public String getName() {
         return name;
     }

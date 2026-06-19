@@ -104,6 +104,21 @@ public class RaveX implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LOGGER.info("===== Initializing RaveX client v" + version + " =====");
+        
+        // Print OS in a highly visible colored box in the terminal
+        String osName = ravex.loader.RaveXLoader.getDetailedOSName();
+        System.out.println("\u001B[35m┌────────────────────────────────────────────────────────┐\u001B[0m");
+        System.out.println("\u001B[35m│\u001B[36m   RaveX Client loaded on Operating System:              \u001B[35m│\u001B[0m");
+        System.out.printf("\u001B[35m│\u001B[32m   %-53s\u001B[35m│\u001B[0m\n", osName);
+        System.out.println("\u001B[35m└────────────────────────────────────────────────────────┘\u001B[0m");
+
+        LOGGER.info("[RaveX] Operating System: " + osName);
+
+        // Run JNI and native module checks
+        ravex.manager.NativeManager.INSTANCE.check();
+
+        // Run C++ optimization for game priority & scheduling
+        ravex.utility.misc.GuiOptimizer.optimize();
 
         // 1. Initialize ModuleManager
         LOGGER.info("Initializing ModuleManager...");
