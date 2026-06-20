@@ -48,7 +48,7 @@ public class LuaManager {
     private OutputStream  discordOut     = null;
     private long discordNonce = 1;
 
-    private static final String DISCORD_CLIENT_ID = "1508940193388957846";
+    private static final String DISCORD_CLIENT_ID = "1517835260799484034";
 
     private LuaManager() {
         initEngine();
@@ -390,21 +390,22 @@ public class LuaManager {
 
     public boolean discordConnect() {
         for (int i = 0; i <= 9; i++) {
-            String path = getIpcPath(i);
-            try {
-                var addr = UnixDomainSocketAddress.of(path);
-                discordChannel = SocketChannel.open(java.net.StandardProtocolFamily.UNIX);
-                discordChannel.connect(addr);
-                discordOut = java.nio.channels.Channels.newOutputStream(discordChannel);
+            for (String path : getIpcPaths(i)) {
+                try {
+                    var addr = UnixDomainSocketAddress.of(path);
+                    discordChannel = SocketChannel.open(java.net.StandardProtocolFamily.UNIX);
+                    discordChannel.connect(addr);
+                    discordOut = java.nio.channels.Channels.newOutputStream(discordChannel);
 
-                String hs = "{\"v\":1,\"client_id\":\"" + DISCORD_CLIENT_ID + "\"}";
-                sendDiscordFrame(0, hs);
-                java.nio.channels.Channels.newInputStream(discordChannel).readNBytes(64);
+                    String hs = "{\"v\":1,\"client_id\":\"" + DISCORD_CLIENT_ID + "\"}";
+                    sendDiscordFrame(0, hs);
+                    java.nio.channels.Channels.newInputStream(discordChannel).readNBytes(64);
 
-                ravex.RaveX.LOGGER.info("[RichPresence] Discord IPC connected via " + path);
-                return true;
-            } catch (Exception e) {
-                discordDisconnect();
+                    ravex.RaveX.LOGGER.info("[RichPresence] Discord IPC connected via " + path);
+                    return true;
+                } catch (Exception e) {
+                    discordDisconnect();
+                }
             }
         }
         ravex.RaveX.LOGGER.warn("[RichPresence] Could not connect to Discord IPC.");
@@ -470,13 +471,24 @@ public class LuaManager {
         discordOut.flush();
     }
 
-    private static String getIpcPath(int i) {
-        String[] envVars = { "XDG_RUNTIME_DIR", "TMPDIR", "TMP", "TEMP" };
+    private static List<String> getIpcPaths(int i) {
+        List<String> paths = new ArrayList<>();
+        String xdg = System.getenv("XDG_RUNTIME_DIR");
+        if (xdg != null && !xdg.isEmpty()) {
+            paths.add(xdg + "/discord-ipc-" + i);
+            paths.add(xdg + "/app/com.discordapp.Discord/discord-ipc-" + i);
+            paths.add(xdg + "/.flatpak/com.discordapp.Discord/xdg-run/discord-ipc-" + i);
+            paths.add(xdg + "/snap.discord/discord-ipc-" + i);
+        }
+        String[] envVars = { "TMPDIR", "TMP", "TEMP" };
         for (String v : envVars) {
             String dir = System.getenv(v);
-            if (dir != null && !dir.isEmpty()) return dir + "/discord-ipc-" + i;
+            if (dir != null && !dir.isEmpty()) {
+                paths.add(dir + "/discord-ipc-" + i);
+            }
         }
-        return "/tmp/discord-ipc-" + i;
+        paths.add("/tmp/discord-ipc-" + i);
+        return paths;
     }
 
     private static String escJson(String s) {

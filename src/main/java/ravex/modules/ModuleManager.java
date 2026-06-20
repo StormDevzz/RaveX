@@ -2,6 +2,7 @@ package ravex.modules;
 
 import ravex.modules.combat.KillAura;
 import ravex.modules.combat.AutoCrystal;
+import ravex.modules.combat.TntAura;
 import ravex.modules.render.ESP;
 import ravex.modules.render.Skeleton;
 
@@ -51,6 +52,7 @@ import ravex.modules.player.ElytraReplace;
 import ravex.modules.player.ViewLock;
 import ravex.modules.player.ToolSaver;
 import ravex.modules.player.AntiAim;
+import ravex.modules.movement.ElytraFly;
 import ravex.modules.movement.Flight;
 import ravex.modules.movement.GuiWalk;
 import ravex.modules.movement.NoSlowDown;
@@ -58,7 +60,7 @@ import ravex.modules.movement.Velocity;
 import ravex.modules.misc.PacketLogger;
 import ravex.modules.movement.LongJump;
 import ravex.modules.misc.AutoLog;
-import ravex.modules.misc.KillEffects;
+import ravex.modules.render.KillEffects;
 import ravex.modules.misc.AntiQuit;
 import ravex.modules.misc.CustomDeathText;
 import ravex.modules.misc.NoNarrator;
@@ -68,6 +70,7 @@ import ravex.modules.misc.Announcer;
 import ravex.modules.misc.Welcomer;
 import ravex.modules.misc.CoordLogger;
 import ravex.modules.combat.WebAura;
+import ravex.modules.combat.WitherRoseAura;
 import ravex.modules.combat.AutoWeapon;
 import ravex.modules.combat.MaceAura;
 import ravex.modules.player.Offhand;
@@ -90,9 +93,17 @@ import ravex.modules.render.Glint;
 import ravex.modules.render.Sounds;
 import ravex.modules.render.ViewClip;
 import ravex.modules.render.BlockOutline;
-import ravex.modules.render.MobOwner;
+import ravex.modules.player.MobOwner;
+import ravex.modules.render.ShiftInterp;
+import ravex.modules.render.BabyDude;
+import ravex.modules.render.SkyColor;
+import ravex.modules.render.CloudColor;
+import ravex.modules.render.Trails;
+import ravex.modules.render.Waypoint;
+import ravex.modules.render.AspectRatio;
 import ravex.modules.movement.Speed;
 import ravex.modules.movement.NoRotate;
+import ravex.modules.movement.LiquidCollision;
 import ravex.modules.movement.HighJump;
 import ravex.modules.movement.FastStairs;
 import ravex.modules.movement.NoFall;
@@ -118,6 +129,8 @@ import ravex.modules.exploit.TridentBoost;
 import ravex.modules.exploit.FakePearl;
 import ravex.modules.player.Xray;
 import ravex.modules.player.Replenish;
+import ravex.modules.player.NoSwing;
+import ravex.modules.player.Swing;
 import ravex.modules.combat.Surround;
 import ravex.modules.combat.WindAura;
 import ravex.modules.combat.Trap;
@@ -193,11 +206,12 @@ public class ModuleManager {
         clickGuiModules.add(Burrow.INSTANCE);
         clickGuiModules.add(PacketMine.INSTANCE);
         clickGuiModules.add(ravex.modules.combat.AntiReGear.INSTANCE);
+        clickGuiModules.add(TntAura.INSTANCE);
+        clickGuiModules.add(WitherRoseAura.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ESP.INSTANCE);
         clickGuiModules.add(Skeleton.INSTANCE);
-        clickGuiModules.add(MobOwner.INSTANCE);
         clickGuiModules.add(NameTags.INSTANCE);
         clickGuiModules.add(Tracers.INSTANCE);
         clickGuiModules.add(ClickGui.INSTANCE);
@@ -219,6 +233,14 @@ public class ModuleManager {
         clickGuiModules.add(BreadCrumbs.INSTANCE);
         clickGuiModules.add(ravex.modules.render.ViewModel.INSTANCE);
         clickGuiModules.add(ravex.modules.render.NoRender.INSTANCE);
+        clickGuiModules.add(ShiftInterp.INSTANCE);
+        clickGuiModules.add(BabyDude.INSTANCE);
+        clickGuiModules.add(SkyColor.INSTANCE);
+        clickGuiModules.add(CloudColor.INSTANCE);
+        clickGuiModules.add(Trails.INSTANCE);
+        clickGuiModules.add(Waypoint.INSTANCE);
+        clickGuiModules.add(KillEffects.INSTANCE);
+        clickGuiModules.add(AspectRatio.INSTANCE);
 
         clickGuiModules.add(Borders.INSTANCE);
         clickGuiModules.add(Tunnels.INSTANCE);
@@ -250,6 +272,9 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.player.AutoEZ.INSTANCE);
         clickGuiModules.add(InventoryCleaner.INSTANCE);
         clickGuiModules.add(Replenish.INSTANCE);
+        clickGuiModules.add(MobOwner.INSTANCE);
+        clickGuiModules.add(NoSwing.INSTANCE);
+        clickGuiModules.add(Swing.INSTANCE);
         clickGuiModules.add(ravex.modules.player.AutoReGear.AutoReGear.INSTANCE);
 
         // ── Movement ────────────────────────────────────────────────────────────
@@ -276,7 +301,9 @@ public class ModuleManager {
         clickGuiModules.add(HighJump.INSTANCE);
         clickGuiModules.add(FastStairs.INSTANCE);
         clickGuiModules.add(NoFall.INSTANCE);
+        clickGuiModules.add(ElytraFly.INSTANCE);
         clickGuiModules.add(Flight.INSTANCE);
+        clickGuiModules.add(LiquidCollision.INSTANCE);
 
 
         // ── Misc ─────────────────────────────────────────────────────────────────
@@ -300,7 +327,6 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.misc.NameProtect.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.StashFinder.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.AutoAuth.INSTANCE);
-        clickGuiModules.add(KillEffects.INSTANCE);
         clickGuiModules.add(AntiQuit.INSTANCE);
         clickGuiModules.add(CustomDeathText.INSTANCE);
         clickGuiModules.add(NoNarrator.INSTANCE);
@@ -411,14 +437,15 @@ public class ModuleManager {
 
         hudModules.add(new HudModule("ActiveModules", 10, 40, 90, 100) {
             {
-                addParameter(new ravex.parameter.ColorParameter("Color", 0xFF8F8FA0));
                 addParameter(new ravex.parameter.BooleanParameter("Shadow", true));
+                addParameter(new ravex.parameter.ModeParameter("Highlight", "Active Color",
+                    java.util.List.of("Active Color", "Rainbow", "Gradient")));
             }
             @Override
             public void render(net.minecraft.client.gui.GuiGraphics graphics, float partialTicks) {
                 if (!Hud.INSTANCE.getEnabled()) return;
-                int ac = getParamColor("Color");
                 boolean shadow = getParamBool("Shadow");
+                String highlightMode = getParamMode("Highlight");
                 java.util.List<String> names = new java.util.ArrayList<>();
                 for (Module m : clickGuiModules) {
                     if (m.getEnabled()) names.add(m.getName());
@@ -428,23 +455,33 @@ public class ModuleManager {
                 int lh = 10;
                 int pw = 10;
                 for (String n : names) {
-                    int nw = ravex.utility.render.HudRenderer.textWidth(n) + 8;
+                    int nw = ravex.utility.render.HudRenderer.textWidth(n) + 2;
                     if (nw > pw) pw = nw;
                 }
-                int ph = names.size() * lh + 6;
-                ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, pw, ph, ac);
-                int cy = by + 4;
+                int cy = by;
+                int idx = 0;
+                int activeColor = ravex.gui.clickgui.ColorUtility.getActiveColor();
                 for (String n : names) {
-                    ravex.utility.render.HudRenderer.drawText(graphics, n, bx + 5, cy, ac, shadow);
+                    int color;
+                    switch (highlightMode) {
+                        case "Rainbow":
+                            color = ravex.gui.clickgui.ColorUtility.getRainbowColor(idx, 4000);
+                            break;
+                        case "Gradient":
+                            color = ravex.gui.clickgui.ColorUtility.getColor(idx).getRGB();
+                            break;
+                        default: // "Active Color"
+                            // Dim alternating modules for readability
+                            color = (idx % 2 == 0) ? activeColor
+                                : ravex.gui.clickgui.ColorUtility.darker(activeColor, 0.6f);
+                            break;
+                    }
+                    ravex.utility.render.HudRenderer.drawText(graphics, n, bx, cy, color, shadow);
                     cy += lh;
+                    idx++;
                 }
-            }
-
-            private int getParamColor(String name) {
-                for (var p : getParameters()) {
-                    if (p.getName().equals(name) && p instanceof ravex.parameter.ColorParameter cp) return cp.getValue();
-                }
-                return ravex.gui.clickgui.ColorUtility.getActiveColor();
+                setWidth(pw);
+                setHeight(names.size() * lh);
             }
 
             private boolean getParamBool(String name) {
@@ -452,6 +489,13 @@ public class ModuleManager {
                     if (p.getName().equals(name) && p instanceof ravex.parameter.BooleanParameter bp) return bp.getValue();
                 }
                 return true;
+            }
+
+            private String getParamMode(String name) {
+                for (var p : getParameters()) {
+                    if (p.getName().equals(name) && p instanceof ravex.parameter.ModeParameter mp) return mp.getValue();
+                }
+                return "Active Color";
             }
         });
 

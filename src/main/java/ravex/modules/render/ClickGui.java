@@ -14,13 +14,13 @@ public class ClickGui extends Module {
     public final BooleanParameter drawBackground = new BooleanParameter("Background", true);
     public final ModeParameter colorMode = new ModeParameter("Color Mode", "Static", List.of("Static", "Sky", "LightRainbow", "Rainbow", "Fade", "DoubleColor", "Analogous"));
     public final NumberParameter colorSpeed = new NumberParameter("Speed", 18, 2, 54, 1);
-    public final ravex.parameter.ColorParameter color1 = new ravex.parameter.ColorParameter("Color 1", 0xFF1E88E5);
+    public final ravex.parameter.ColorParameter color1 = new ravex.parameter.ColorParameter("Color 1", 0xFF40A9F8);
     public final ravex.parameter.ColorParameter color2 = new ravex.parameter.ColorParameter("Color 2", 0xFFE63946);
     public final ModeParameter gradientMode = new ModeParameter("Gradient", "LeftToRight", List.of("LeftToRight", "UpsideDown", "Both"));
     public final BooleanParameter blur = new BooleanParameter("Blur", false);
     public final BooleanParameter customFont = new BooleanParameter("Custom Font", true);
 
-    public final BooleanParameter outlines = new BooleanParameter("Outlines", true);
+    public final BooleanParameter outlines = new BooleanParameter("Outlines", false);
     public final ravex.parameter.ColorParameter outlineColor = new ravex.parameter.ColorParameter("Outline Color", 0x44FFFFFF);
     public final BooleanParameter moduleOutlines = new BooleanParameter("Button Outlines", true);
     public final ravex.parameter.ColorParameter moduleOutlineColor = new ravex.parameter.ColorParameter("Button Border", 0xFF2A2A35);
@@ -36,7 +36,10 @@ public class ClickGui extends Module {
     public final ModeParameter companionType = new ModeParameter("Image Type", "Femboy", List.of("Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow"));
 
     // Inline vs separate window for module settings
-    public final BooleanParameter separateSettings = new BooleanParameter("Separate Settings", true);
+    public final BooleanParameter separateSettings = new BooleanParameter("Separate Settings", false);
+
+    // Gui Scale
+    public final NumberParameter guiScale = new NumberParameter("Gui Scale", 0.85, 0.5, 1.0, 0.05);
 
     // Gear icon rotation speed (degrees per second)
     public final NumberParameter gearRotationSpeed = new NumberParameter("Gear Speed", 30, 0, 180, 5);
@@ -78,6 +81,7 @@ public class ClickGui extends Module {
         addParameter(companionImage);
         addParameter(companionType);
         addParameter(separateSettings);
+        addParameter(guiScale);
         addParameter(gearRotationSpeed);
         addParameter(smoothScroll);
         addParameter(scrollSmoothness);

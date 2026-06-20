@@ -125,6 +125,19 @@ public class RaveX implements ClientModInitializer {
         ModuleManager.INSTANCE.init();
         LOGGER.info("Successfully registered " + ModuleManager.INSTANCE.getModules().size() + " modules!");
 
+        // Load Addons (Java & Native)
+        try {
+            ravex.utility.misc.NativeLoader.loadLibrary("ravex_addon");
+        } catch (UnsatisfiedLinkError e) {
+            LOGGER.error("[Addon System] Native library ravex_addon load failed", e);
+        }
+        try {
+            LOGGER.info("Initializing AddonManager...");
+            ravex.addon.AddonManager.INSTANCE.init();
+        } catch (Exception e) {
+            LOGGER.error("[Addon System] Failed to initialize AddonManager", e);
+        }
+
         // 2. Load macros
         LOGGER.info("Loading macros...");
         ravex.macro.MacroManager.INSTANCE.load();
@@ -146,6 +159,9 @@ public class RaveX implements ClientModInitializer {
         // 5. Register a JVM shutdown hook to automatically save settings on game exit
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("[RaveX] Game shutting down! Automatically saving default configuration...");
+            try {
+                ravex.addon.AddonManager.INSTANCE.shutdown();
+            } catch (Throwable ignored) {}
             ravex.manager.ConfigManager.INSTANCE.save("default");
         }));
 

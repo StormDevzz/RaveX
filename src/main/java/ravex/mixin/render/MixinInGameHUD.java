@@ -20,7 +20,7 @@ import ravex.modules.HudModule;
 import ravex.modules.render.Ambient;
 import ravex.modules.render.ESP;
 import ravex.modules.render.NameTags;
-import ravex.modules.render.MobOwner;
+import ravex.modules.player.MobOwner;
 import net.minecraft.core.BlockPos;
 
 @Mixin(Gui.class)
@@ -973,6 +973,54 @@ public abstract class MixinInGameHUD {
                     } else {
                         context.drawString(mc.font, pct + "%", x - mc.font.width(pct + "%") / 2, y - 4, 0xFFFFFFFF, true);
                     }
+                }
+            }
+        }
+
+        // --- Waypoint overlay ---
+        if (ravex.modules.render.Waypoint.INSTANCE.getEnabled()) {
+            int wpColor = ravex.modules.render.Waypoint.INSTANCE.color.getValue();
+            String currentDim = mc.level != null ? mc.level.dimension().identifier().toString() : null;
+            boolean showDist = ravex.modules.render.Waypoint.INSTANCE.showDistance.getValue();
+            boolean showNm = ravex.modules.render.Waypoint.INSTANCE.showName.getValue();
+            for (var wp : ravex.modules.render.Waypoint.getWaypoints()) {
+                if (currentDim != null && !wp.dimension().equals(currentDim)) continue;
+
+                Vec3 pos3d = new Vec3(wp.x() + 0.5, wp.y() + 1.5, wp.z() + 0.5);
+                Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+                if (proj != null && proj.z > 0.0) {
+                    double sx = (proj.x + 1.0) / 2.0 * context.guiWidth();
+                    double sy = (1.0 - proj.y) / 2.0 * context.guiHeight();
+                    int ix = (int) sx;
+                    int iy = (int) sy;
+
+                    double dist = mc.player.distanceToSqr(wp.x(), wp.y(), wp.z());
+                    dist = Math.sqrt(dist);
+
+                    String text = "";
+                    if (showNm) text = wp.name();
+                    if (showDist) {
+                        if (!text.isEmpty()) text += " ";
+                        text += "§7" + (int)dist + "m";
+                    }
+                    if (text.isEmpty()) text = wp.name();
+
+                    int tw = mc.font.width(text);
+                    int th = mc.font.lineHeight;
+                    int pad = 3;
+
+                    context.pose().pushMatrix();
+                    context.pose().translate(ix, iy);
+
+                    int bgLeft = -tw / 2 - pad;
+                    int bgRight = tw / 2 + pad;
+                    int bgTop = -th / 2 - pad;
+                    int bgBottom = th / 2 + pad;
+
+                    context.fill(bgLeft, bgTop, bgRight, bgBottom, 0xAA000000);
+                    context.drawString(mc.font, text, -tw / 2, -th / 2, wpColor, false);
+
+                    context.pose().popMatrix();
                 }
             }
         }

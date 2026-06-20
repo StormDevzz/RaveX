@@ -32,6 +32,12 @@ RaveX — клиентский мод для Minecraft от организаци
 2. Поместите JAR в папку `mods`
 3. Запустите игру
 
+### Аддоны
+
+Вы можете создавать собственные Java и C++ дополнения для RaveX. Подробные руководства по созданию, сборке и установке аддонов доступны в соответствующих папках шаблонов:
+* [Руководство по Java-аддонам](templates/java/README_RU.md) (English version: [Java Addons Guide](templates/java/README.md))
+* [Руководство по C++ нативным аддонам](templates/cpp/README_RU.md) (English version: [C++ Addons Guide](templates/cpp/README.md))
+
 ### Лицензия
 
 GNU General Public License v3.0 — см. файл LICENSE.

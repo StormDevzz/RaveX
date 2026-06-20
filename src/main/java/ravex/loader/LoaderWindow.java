@@ -5,16 +5,12 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.geom.*;
 
 public class LoaderWindow extends JFrame {
-    private static final Color BG_DARK = Color.BLACK;
-    private static final Color BG_LIGHT = new Color(0x1a, 0x0f, 0x30);
-    private static final Color ACCENT_PINK = new Color(0xff, 0x2a, 0x85);
-    private static final Color ACCENT_PURPLE = new Color(0x9d, 0x4e, 0xdd);
-    private static final Color ACCENT_BLUE = new Color(0x00, 0xb4, 0xd8);
-    private static final Color TEXT_COLOR = new Color(0xf8, 0xf9, 0xfa);
-    private static final Color TEXT_MUTED = new Color(0x9a, 0x8c, 0xb9);
+    private static final Color BG_DARK = new Color(0x11, 0x11, 0x15);
+    private static final Color ACCENT_BLUE = new Color(0x40, 0xA9, 0xF8);
+    private static final Color TEXT_COLOR = new Color(0xe2, 0xe2, 0xe8);
+    private static final Color TEXT_MUTED = new Color(0x65, 0x65, 0x75);
 
     private String version = "1.2 NextGen";
     private String status = "Initializing...";
@@ -25,19 +21,29 @@ public class LoaderWindow extends JFrame {
     private int systemScore = -1;
     private String systemInfo = "";
     private String extraInfo = "";
-    
-    private float pulseAngle = 0f;
-    private float waveTime = 0f;
+
     private Timer animTimer;
+    private boolean closeHovered = false;
+    private Image logoImage = null;
 
     public LoaderWindow() {
-        setTitle("RaveX NextGen Loader");
+        setTitle("RaveX Loader");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(540, 290);
+        setSize(480, 180);
         setResizable(false);
         setLocationRelativeTo(null);
         setUndecorated(true);
         setBackground(BG_DARK);
+
+        try {
+            java.io.InputStream is = LoaderWindow.class.getResourceAsStream("/assets/ravex/textures/ravexclean.png");
+            if (is != null) {
+                logoImage = javax.imageio.ImageIO.read(is);
+                setIconImage(logoImage);
+            }
+        } catch (Exception e) {
+            // Ignore icon load failures
+        }
 
         JPanel panel = new JPanel() {
             @Override
@@ -49,12 +55,15 @@ public class LoaderWindow extends JFrame {
         panel.setBackground(BG_DARK);
         panel.setDoubleBuffered(true);
 
-        // Make window draggable
         final Point[] dragStart = new Point[1];
         panel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                dragStart[0] = e.getPoint();
+                if (e.getX() >= getWidth() - 28 && e.getY() <= 28) {
+                    System.exit(0);
+                } else {
+                    dragStart[0] = e.getPoint();
+                }
             }
         });
         panel.addMouseMotionListener(new MouseMotionAdapter() {
@@ -65,28 +74,31 @@ public class LoaderWindow extends JFrame {
                     setLocation(curr.x - dragStart[0].x, curr.y - dragStart[0].y);
                 }
             }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                boolean hovered = (e.getX() >= getWidth() - 28 && e.getY() <= 28);
+                if (hovered != closeHovered) {
+                    closeHovered = hovered;
+                    repaint();
+                }
+                if (hovered) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                } else {
+                    setCursor(Cursor.getDefaultCursor());
+                }
+            }
         });
 
         setContentPane(panel);
 
-        // Animation loop running at 60 FPS
-        animTimer = new Timer(16, e -> {
-            // Smooth progress bar interpolation
+        animTimer = new Timer(10, e -> {
             float diff = percent - animatedPercent;
-            if (Math.abs(diff) > 0.05f) {
-                animatedPercent += diff * 0.08f;
+            if (Math.abs(diff) > 0.01f) {
+                animatedPercent += diff * 0.04f;
             } else {
                 animatedPercent = percent;
             }
-
-            // Pulse animation for neon glows
-            pulseAngle += 0.05f;
-            if (pulseAngle > Math.PI * 2) {
-                pulseAngle = 0f;
-            }
-
-            waveTime += 0.03f;
-
             repaint();
         });
         animTimer.start();
@@ -133,190 +145,88 @@ public class LoaderWindow extends JFrame {
     }
 
     private void drawFrame(Graphics2D g) {
-        int w = getWidth(), h = getHeight(), cx = w / 2;
+        int w = getWidth(), h = getHeight();
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
-        // 1. Slightly dark base background
-        g.setColor(new Color(0x03, 0x02, 0x05));
+        // 1. Solid background
+        g.setColor(BG_DARK);
         g.fillRect(0, 0, w, h);
 
-        // Draw animated blue waves
-        drawWave(g, w, h, 0.005, 16, waveTime * 0.5f, 0.0f, new Color(0x0a, 0x1f, 0x4d, 90), new Color(0x04, 0x06, 0x0c, 180));
-        drawWave(g, w, h, 0.008, 10, waveTime * 0.8f, 2.0f, new Color(0x10, 0x2a, 0x6b, 70), new Color(0x02, 0x04, 0x08, 140));
-        drawWave(g, w, h, 0.012, 6, waveTime * 1.2f, 4.0f, new Color(0x00, 0x77, 0xb6, 50), new Color(0x00, 0x00, 0x00, 0));
+        // 2. 1px flat border
+        g.setColor(ACCENT_BLUE);
+        g.setStroke(new BasicStroke(1.0f));
+        g.drawRect(0, 0, w - 1, h - 1);
 
-        // Pulse intensity calculated from sin wave
-        float pulse = (float) (Math.sin(pulseAngle) + 1f) / 2f; // [0, 1]
-        int glowAlpha = 50 + (int)(pulse * 60); // [50, 110]
-
-        // 3. Gorgeous Neon Border
-        GradientPaint borderGrad = new GradientPaint(
-            0, 0, ACCENT_PINK,
-            w, h, ACCENT_PURPLE
-        );
-        g.setPaint(borderGrad);
-        g.setStroke(new BasicStroke(1.5f));
-        g.drawRect(1, 1, w - 2, h - 2);
-
-        // Outer Glow for border
-        g.setColor(new Color(ACCENT_PURPLE.getRed(), ACCENT_PURPLE.getGreen(), ACCENT_PURPLE.getBlue(), glowAlpha / 3));
-        g.setStroke(new BasicStroke(4f));
-        g.drawRect(2, 2, w - 4, h - 4);
-
-        // 4. Logo / Client Title
-        g.setFont(new Font("SansSerif", Font.BOLD, 32));
-        String title = "RaveX";
-        int tw = g.getFontMetrics().stringWidth(title);
-        
-        // Glowing drop shadow for title
-        g.setColor(new Color(ACCENT_PINK.getRed(), ACCENT_PINK.getGreen(), ACCENT_PINK.getBlue(), glowAlpha));
-        g.drawString(title, cx - tw / 2 - 1, 65 + 1);
-        g.drawString(title, cx - tw / 2 + 1, 65 - 1);
-
-        GradientPaint titleGrad = new GradientPaint(
-            cx - tw / 2f, 0, ACCENT_PINK,
-            cx + tw / 2f, 0, ACCENT_BLUE
-        );
-        g.setPaint(titleGrad);
-        g.drawString(title, cx - tw / 2, 65);
-
-        // Version Badge
-        g.setFont(new Font("SansSerif", Font.BOLD, 10));
-        String badge = version.toUpperCase();
-        int bw = g.getFontMetrics().stringWidth(badge);
-        int bx = cx + tw / 2 + 10;
-        int by = 44;
-        
-        // Draw badge background
-        g.setColor(new Color(0xff, 0x2a, 0x85, 30));
-        g.fillRoundRect(bx - 6, by - 12, bw + 12, 18, 6, 6);
-        g.setColor(ACCENT_PINK);
-        g.setStroke(new BasicStroke(1f));
-        g.drawRoundRect(bx - 6, by - 12, bw + 12, 18, 6, 6);
-        g.drawString(badge, bx, by);
-
-        // 5. Status text
-        g.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        g.setColor(TEXT_COLOR);
-        int sw = g.getFontMetrics().stringWidth(status);
-        g.drawString(status, cx - sw / 2, 115);
-
-        // Extra info
-        if (extraInfo != null && !extraInfo.isEmpty()) {
-            g.setFont(new Font("SansSerif", Font.PLAIN, 10));
-            g.setColor(TEXT_MUTED);
-            int ew = g.getFontMetrics().stringWidth(extraInfo);
-            g.drawString(extraInfo, cx - ew / 2, 132);
-        }
-
-        // 6. Smooth Progress Bar
-        int barX = cx - 180, barY = 150, barW = 360, barH = 8;
-        
-        // Track
-        g.setColor(new Color(0x13, 0x0a, 0x22));
-        g.fillRoundRect(barX, barY, barW, barH, 8, 8);
-        g.setColor(new Color(0x3a, 0x22, 0x5c, 100));
-        g.setStroke(new BasicStroke(1f));
-        g.drawRoundRect(barX, barY, barW, barH, 8, 8);
-
-        // Fill
-        if (animatedPercent > 0.1f) {
-            int fillW = (int) (barW * animatedPercent / 100f);
-            
-            // Draw glow under progress fill
-            g.setColor(new Color(ACCENT_PINK.getRed(), ACCENT_PINK.getGreen(), ACCENT_PINK.getBlue(), glowAlpha));
-            g.setStroke(new BasicStroke(4f));
-            g.drawRoundRect(barX, barY, fillW, barH, 8, 8);
-
-            GradientPaint barGrad = new GradientPaint(
-                barX, barY, ACCENT_PINK,
-                barX + barW, barY, ACCENT_BLUE
-            );
-            g.setPaint(barGrad);
-            g.fillRoundRect(barX, barY, fillW, barH, 8, 8);
-        }
-
-        // 7. Percentage label
-        g.setFont(new Font("SansSerif", Font.BOLD, 12));
-        g.setColor(TEXT_COLOR);
-        String pctStr = Math.round(animatedPercent) + "%";
-        int pw = g.getFontMetrics().stringWidth(pctStr);
-        g.drawString(pctStr, cx - pw / 2, barY + barH + 20);
-
-        // 8. System score rating badge (glowing circle / panel)
-        if (systemScore >= 0) {
-            int badgeW = 100, badgeH = 26;
-            int rx = cx - badgeW / 2;
-            int ry = h - 75;
-
-            // Select color based on rating
-            Color scoreColor = ACCENT_BLUE;
-            if (systemScore >= 80) scoreColor = new Color(0x00, 0xe6, 0x76); // Lime Green
-            else if (systemScore >= 50) scoreColor = new Color(0xff, 0xd6, 0x00); // Yellow
-            else scoreColor = new Color(0xff, 0x17, 0x44); // Red
-
-            // Box
-            g.setColor(new Color(scoreColor.getRed(), scoreColor.getGreen(), scoreColor.getBlue(), 15));
-            g.fillRoundRect(rx, ry, badgeW, badgeH, 6, 6);
-            g.setColor(new Color(scoreColor.getRed(), scoreColor.getGreen(), scoreColor.getBlue(), 80));
-            g.setStroke(new BasicStroke(1f));
-            g.drawRoundRect(rx, ry, badgeW, badgeH, 6, 6);
-
-            g.setFont(new Font("SansSerif", Font.BOLD, 10));
-            g.setColor(TEXT_COLOR);
-            String scoreText = "RATING: " + systemScore + "/100";
-            int sctw = g.getFontMetrics().stringWidth(scoreText);
-            g.drawString(scoreText, cx - sctw / 2, ry + 16);
-        }
-
-        // 9. System Info Footer
-        if (systemInfo != null && !systemInfo.isEmpty()) {
-            g.setFont(new Font("SansSerif", Font.PLAIN, 10));
-            g.setColor(TEXT_MUTED);
-            int siw = g.getFontMetrics().stringWidth(systemInfo);
-            g.drawString(systemInfo, cx - siw / 2, h - 38);
-        }
-
-        // 10. Footer / Error
-        if (error) {
-            g.setFont(new Font("SansSerif", Font.BOLD, 11));
-            g.setColor(new Color(0xff, 0x33, 0x33));
-            String err = "FATAL: " + (errorMsg != null ? errorMsg : "Unknown Exception");
-            int erw = g.getFontMetrics().stringWidth(err);
-            g.drawString(err, cx - erw / 2, h - 18);
+        // 3. Logo Image
+        if (logoImage != null) {
+            g.drawImage(logoImage, 25, 25, 100, 100, null);
         } else {
-            g.setFont(new Font("SansSerif", Font.BOLD, 9));
+            // Fallback text logo if resource is missing
+            g.setFont(new Font("SansSerif", Font.BOLD, 26));
+            g.setColor(Color.WHITE);
+            g.drawString("Rave", 25, 75);
+            g.setColor(ACCENT_BLUE);
+            g.drawString("X", 25 + g.getFontMetrics().stringWidth("Rave"), 75);
+        }
+
+        // 4. Logo Text (RaveX) beside the icon
+        g.setFont(new Font("SansSerif", Font.BOLD, 30));
+        int w1 = g.getFontMetrics().stringWidth("Rave");
+        g.setColor(Color.WHITE);
+        g.drawString("Rave", 150, 58);
+        g.setColor(ACCENT_BLUE);
+        g.drawString("X", 150 + w1, 58);
+
+        // 5. Subtitle
+        g.setFont(new Font("SansSerif", Font.BOLD, 10));
+        String sub = "LOADER v" + version.toUpperCase();
+        g.setColor(TEXT_MUTED);
+        g.drawString(sub, 150, 78);
+
+        // 6. Status
+        g.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        if (error) {
+            g.setColor(new Color(0xff, 0x4f, 0x4f));
+            String displayStatus = "FATAL: " + (errorMsg != null ? errorMsg : "Unknown Exception");
+            g.drawString(displayStatus, 150, 115);
+        } else {
+            g.setColor(TEXT_COLOR);
+            g.drawString(status, 150, 115);
+        }
+
+        // 7. Extra Info / Hardware details
+        if (!error && extraInfo != null && !extraInfo.isEmpty()) {
+            g.setFont(new Font("SansSerif", Font.PLAIN, 10));
             g.setColor(TEXT_MUTED);
-            String footer = "STORMDEVZZ  •  GITHUB.COM/STORMDEVZZ/RAVEX";
-            int fw = g.getFontMetrics().stringWidth(footer);
-            g.drawString(footer, cx - fw / 2, h - 18);
+            g.drawString(extraInfo, 150, 135);
         }
 
-        // Sync toolkit to avoid any Linux AWT lagging or desync
+        // 8. Thin progress bar at the very bottom
+        int barH = 4;
+        g.setColor(new Color(0x1F, 0x1F, 0x24));
+        g.fillRect(0, h - barH, w, barH);
+        
+        if (animatedPercent > 0.1f) {
+            int fillW = (int) (w * animatedPercent / 100f);
+            g.setColor(ACCENT_BLUE);
+            g.fillRect(0, h - barH, fillW, barH);
+        }
+
+        // 9. Close button
+        if (closeHovered) {
+            g.setColor(new Color(0xff, 0x4f, 0x4f));
+        } else {
+            g.setColor(TEXT_MUTED);
+        }
+        g.setFont(new Font("SansSerif", Font.BOLD, 12));
+        g.drawString("✕", w - 18, 18);
+
         Toolkit.getDefaultToolkit().sync();
-    }
-
-    private void drawWave(Graphics2D g, int w, int h, double frequency, double amplitude, float time, float phaseOffset, Color colorStart, Color colorEnd) {
-        java.awt.geom.Path2D.Double path = new java.awt.geom.Path2D.Double();
-        path.moveTo(0, h);
-        
-        double waveMidY = h * 0.65;
-        
-        for (int x = 0; x <= w; x += 2) {
-            double angle = x * frequency + time + phaseOffset;
-            double y = waveMidY + Math.sin(angle) * amplitude + Math.cos(angle * 0.5) * (amplitude * 0.4);
-            path.lineTo(x, y);
-        }
-        path.lineTo(w, h);
-        path.closePath();
-        
-        GradientPaint grad = new GradientPaint(
-            0, (float)(waveMidY - amplitude * 2), colorStart,
-            0, h, colorEnd
-        );
-        g.setPaint(grad);
-        g.fill(path);
     }
 }

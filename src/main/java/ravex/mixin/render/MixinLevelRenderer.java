@@ -475,6 +475,11 @@ public class MixinLevelRenderer {
             ravex.modules.render.BreadCrumbs.renderTrails(modelViewMatrix, camPos);
         }
 
+        // --- Trails ---
+        if (ravex.modules.render.Trails.INSTANCE.getEnabled()) {
+            ravex.modules.render.Trails.renderTrails(modelViewMatrix, camPos);
+        }
+
         // --- TreeCutter highlight ---
         ravex.modules.world.TreeCutter tc = ravex.modules.world.TreeCutter.INSTANCE;
         if (tc.getEnabled() && tc.render.getValue() && ravex.modules.world.TreeCutter.currentMiningBlock != null) {
@@ -851,6 +856,53 @@ public class MixinLevelRenderer {
                                        REUSABLE_MATRIX);
                         Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 0.04, flashR, flashG, flashB, 0.6f * (1.0f - progress) * fadeOut);
                     }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // --- Waypoints ---
+        if (ravex.modules.render.Waypoint.INSTANCE.getEnabled()) {
+            int wpColor = ravex.modules.render.Waypoint.getColor();
+            float wr = ((wpColor >> 16) & 0xFF) / 255.0f;
+            float wg = ((wpColor >> 8) & 0xFF) / 255.0f;
+            float wb = (wpColor & 0xFF) / 255.0f;
+            double wpSize = ravex.modules.render.Waypoint.getMarkerSize();
+            double maxDist = ravex.modules.render.Waypoint.getRange();
+            boolean showBeam = ravex.modules.render.Waypoint.isShowBeam();
+            String currentDim = mc.level != null ? mc.level.dimension().identifier().toString() : null;
+
+            for (var wp : ravex.modules.render.Waypoint.getWaypoints()) {
+                if (currentDim != null && !wp.dimension().equals(currentDim)) continue;
+
+                double dx = wp.x() + 0.5 - camPos.x;
+                double dy = wp.y() + 0.5 - camPos.y;
+                double dz = wp.z() + 0.5 - camPos.z;
+                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                if (dist > maxDist) continue;
+
+                try {
+                    if (showBeam) {
+                        Render3DUtils.batchAxisLine(modelViewMatrix,
+                            (float)(wp.x() + 0.5 - camPos.x),
+                            (float)(wp.y() - camPos.y),
+                            (float)(wp.z() + 0.5 - camPos.z),
+                            (float)(wp.x() + 0.5 - camPos.x),
+                            (float)(wp.y() + 0.5 - camPos.y),
+                            (float)(wp.z() + 0.5 - camPos.z),
+                            0.06f, wr, wg, wb, 0.4f, true);
+                    }
+
+                    modelViewMatrix.translate(
+                        (float)(wp.x() + 0.5 - camPos.x),
+                        (float)(wp.y() + 0.5 - camPos.y),
+                        (float)(wp.z() + 0.5 - camPos.z),
+                        REUSABLE_MATRIX
+                    );
+
+                    double size = 0.15 * (wpSize / 2.0);
+                    Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, wr, wg, wb, 0.6f, true);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.5, wr, wg, wb, 0.9f, 2.0f, true);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 2.0, wr, wg, wb, 0.3f, 2.0f, true);
                 } catch (Exception ignored) {}
             }
         }

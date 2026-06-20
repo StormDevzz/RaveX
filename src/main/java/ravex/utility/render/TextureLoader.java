@@ -18,6 +18,7 @@ import java.util.Map;
 
 public class TextureLoader {
     private static final Map<Identifier, AbstractTexture> loaded = new HashMap<>();
+    private static boolean markerLoaded = false;
 
     private static final String NS = "ravex";
     private static final String GUI_PREFIX = "gui/";
@@ -43,6 +44,7 @@ public class TextureLoader {
     public static final Identifier LAYING = Identifier.fromNamespaceAndPath(NS, "img/laying");
     public static final Identifier LICKING = Identifier.fromNamespaceAndPath(NS, "img/licking");
     public static final Identifier PILLOW = Identifier.fromNamespaceAndPath(NS, "img/pillow");
+    public static final Identifier MARKER = Identifier.fromNamespaceAndPath(NS, "wp_marker");
 
     static {
         for (Category cat : Category.values()) {
@@ -57,6 +59,7 @@ public class TextureLoader {
     }
 
     public static Identifier getCategoryTexture(Category cat) {
+        if (cat == Category.CUSTOM) cat = Category.MISC;
         Identifier id = CAT_IDS.get(cat);
         if (ensureLoaded(id, cat.name().toLowerCase())) return id;
         if (ensureLoaded(FALLBACK, "misc")) return FALLBACK;
@@ -100,12 +103,13 @@ public class TextureLoader {
     }
 
     public static Identifier getCategoryTextureWhite(Category cat) {
+        if (cat == Category.CUSTOM) cat = Category.MISC;
         Identifier whiteId = CAT_WHITE_IDS.get(cat);
         if (whiteId == null) return getCategoryTexture(cat);
         if (loaded.containsKey(whiteId)) return whiteId;
         Identifier originalId = CAT_IDS.get(cat);
         if (!ensureLoaded(originalId, cat.name().toLowerCase())) return null;
-        Identifier result = makeWhiteCopy(originalId, whiteId, cat.name().toLowerCase());
+        Identifier result = makeWhiteCopyNearest(originalId, whiteId, cat.name().toLowerCase());
         return result != null ? result : originalId;
     }
 
@@ -151,7 +155,7 @@ public class TextureLoader {
                         int rgba = image.getPixel(x, y);
                         int a = (rgba >> 24) & 0xFF;
                         if (a > 0) {
-                            image.setPixel(x, y, (a << 24) | 0xA0A0A0);
+                            image.setPixel(x, y, (a << 24) | 0xFFFFFF);
                         }
                     }
                 }
@@ -298,6 +302,60 @@ public class TextureLoader {
         ensureLoaded(LAYING, "laying");
         ensureLoaded(LICKING, "licking");
         ensureLoaded(PILLOW, "pillow");
+        try (InputStream stream = TextureLoader.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
+            if (stream != null) {
+                NativeImage image = NativeImage.read(stream);
+                AbstractTexture tex = createLinearTexture(image);
+                Minecraft.getInstance().getTextureManager().register(MARKER, tex);
+                loaded.put(MARKER, tex);
+            }
+        } catch (Exception e) {
+            RaveX.LOGGER.warn("[TextureLoader] Failed to load marker: {}", e.getMessage());
+        }
+    }
+
+    public static Identifier getMarkerTexture(int color) {
+        Identifier tintedId = Identifier.fromNamespaceAndPath(NS, "wp_marker_tinted");
+        if (loaded.containsKey(tintedId) && lastTintedColor.getOrDefault(tintedId, -1) == color) {
+            return tintedId;
+        }
+
+        if (!loaded.containsKey(MARKER)) {
+            try (InputStream stream = TextureLoader.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
+                if (stream != null) {
+                    NativeImage image = NativeImage.read(stream);
+                    AbstractTexture tex = createLinearTexture(image);
+                    Minecraft.getInstance().getTextureManager().register(MARKER, tex);
+                    loaded.put(MARKER, tex);
+                }
+            } catch (Exception e) {
+                RaveX.LOGGER.warn("[TextureLoader] Failed to load marker base: {}", e.getMessage());
+            }
+        }
+
+        try (InputStream stream = TextureLoader.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
+            if (stream == null) return MARKER;
+            NativeImage image = NativeImage.read(stream);
+            int cR = (color >> 16) & 0xFF;
+            int cG = (color >> 8) & 0xFF;
+            int cB = color & 0xFF;
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    int rgba = image.getPixel(x, y);
+                    int a = (rgba >> 24) & 0xFF;
+                    image.setPixel(x, y, (a << 24) | (cR << 16) | (cG << 8) | cB);
+                }
+            }
+            AbstractTexture tex = createLinearTexture(image);
+            image.close();
+            Minecraft.getInstance().getTextureManager().register(tintedId, tex);
+            loaded.put(tintedId, tex);
+            lastTintedColor.put(tintedId, color);
+            return tintedId;
+        } catch (Exception e) {
+            RaveX.LOGGER.warn("[TextureLoader] Failed to tint marker: {}", e.getMessage());
+            return MARKER;
+        }
     }
 
     private static boolean ensureLoaded(Identifier guiId, String name) {
@@ -333,6 +391,43 @@ public class TextureLoader {
             RaveX.LOGGER.warn("[TextureLoader] Failed to load {}: {}", guiId, e.getMessage());
             return false;
         }
+    }
+
+    private static Identifier makeWhiteCopyNearest(Identifier sourceId, Identifier targetId, String name) {
+        try (InputStream stream = TextureLoader.class.getResourceAsStream(CLASSPATH_PREFIX + name + ".png")) {
+            if (stream == null) return null;
+            NativeImage image = NativeImage.read(stream);
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    int rgba = image.getPixel(x, y);
+                    int a = (rgba >> 24) & 0xFF;
+                    if (a > 0) {
+                        image.setPixel(x, y, (a << 24) | 0xFFFFFF);
+                    }
+                }
+            }
+            AbstractTexture tex = createNearestTexture(image);
+            image.close();
+            Minecraft.getInstance().getTextureManager().register(targetId, tex);
+            loaded.put(targetId, tex);
+            return targetId;
+        } catch (Exception e) {
+            RaveX.LOGGER.warn("[TextureLoader] Failed to load white {}: {}", name, e.getMessage());
+            return null;
+        }
+    }
+
+    private static AbstractTexture createNearestTexture(NativeImage image) {
+        DynamicTexture tex = new DynamicTexture(() -> "nearest_icon", image);
+        try {
+            GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
+            Field f = AbstractTexture.class.getDeclaredField("sampler");
+            f.setAccessible(true);
+            f.set(tex, sampler);
+        } catch (Exception e) {
+            RaveX.LOGGER.warn("[TextureLoader] Failed to set nearest sampler: {}", e.getMessage());
+        }
+        return tex;
     }
 
     private static AbstractTexture createLinearTexture(NativeImage image) {

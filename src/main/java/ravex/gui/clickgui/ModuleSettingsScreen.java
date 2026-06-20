@@ -47,6 +47,7 @@ public class ModuleSettingsScreen extends Screen {
         for (Parameter<?> p : module.getParameters()) {
             paramElements.add(new ParameterElement(p));
         }
+        ravex.utility.sound.SoundUtility.playSettingsOpen();
     }
 
     @Override
@@ -170,6 +171,7 @@ public class ModuleSettingsScreen extends Screen {
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
+            ravex.utility.sound.SoundUtility.playSettingsClose();
         }
     }
 

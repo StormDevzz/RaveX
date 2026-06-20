@@ -6,13 +6,13 @@ import ravex.utility.render.Render2DEngine;
 import java.awt.*;
 
 public class ColorUtility {
-    public static final int HEADER_COLOR = 0xFF12122A;
-    public static final int HEADER_GRADIENT_END = 0xFF181838;
-    public static final int PANEL_BORDER_COLOR = 0x33FFFFFF;
-    public static final int BACKGROUND_START = 0x99070712;
-    public static final int BACKGROUND_END = 0xDD0A0A1E;
-    public static final int PANEL_BODY_START = 0xCC0B0B18;
-    public static final int PANEL_BODY_END = 0xE00E0E22;
+    public static final int HEADER_COLOR = 0xFF151915;
+    public static final int HEADER_GRADIENT_END = 0xFF151915;
+    public static final int PANEL_BORDER_COLOR = 0xCC8A8A8A;
+    public static final int BACKGROUND_START = 0x990A0A10;
+    public static final int BACKGROUND_END = 0xDD0E0E18;
+    public static final int PANEL_BODY_START = 0xCC232522;
+    public static final int PANEL_BODY_END = 0xE6232522;
     public static final int SHADOW_COLOR = 0x60000000;
 
     public static int getActiveColor() {

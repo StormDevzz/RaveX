@@ -30,6 +30,12 @@ Pre-built JARs are also available in the Releases section.
 2. Place the JAR in your `mods` folder
 3. Launch the game
 
+### Addons
+
+You can create your own Java and C++ addons for RaveX. Detailed compilation, creation, and installation guides are available inside the template directories:
+* [Java Addons Guide](templates/java/README.md) (Russian version: [Руководство по Java-аддонам](templates/java/README_RU.md))
+* [C++ Addons Guide](templates/cpp/README.md) (Russian version: [Руководство по C++ нативным аддонам](templates/cpp/README_RU.md))
+
 ### License
 
 GNU General Public License v3.0 — see LICENSE file.

@@ -1,4 +1,4 @@
-package ravex.modules.render;
+package ravex.modules.player;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
@@ -16,7 +16,7 @@ public class MobOwner extends Module {
     public final ColorParameter textColor = new ColorParameter("Text Color", 0xFFFFAA00);
 
     private MobOwner() {
-        super("MobOwner", Category.RENDER);
+        super("MobOwner", Category.PLAYER);
         addParameter(textColor);
     }
 
@@ -45,7 +45,6 @@ public class MobOwner extends Module {
         if (!(entity instanceof OwnableEntity owned)) return null;
         
         java.util.UUID uuid = null;
-        // Use runtime reflection to find the UUID getter (compile-safe under all environments)
         try {
             for (java.lang.reflect.Method m : owned.getClass().getMethods()) {
                 if (m.getParameterCount() == 0 && m.getReturnType() == java.util.UUID.class) {
@@ -55,7 +54,6 @@ public class MobOwner extends Module {
             }
         } catch (Exception ignored) {}
 
-        // Fallback using getOwner() Entity reference
         if (uuid == null) {
             try {
                 net.minecraft.world.entity.Entity owner = owned.getOwner();
@@ -69,7 +67,6 @@ public class MobOwner extends Module {
             return uuid.toString();
         }
 
-        // Try getting owner entity's nickname if loaded
         try {
             net.minecraft.world.entity.Entity owner = owned.getOwner();
             if (owner != null) {
@@ -77,7 +74,6 @@ public class MobOwner extends Module {
             }
         } catch (Exception ignored) {}
 
-        // Try getting name from connection player info cache
         String resolved = resolveName(uuid);
         if (resolved != null) {
             return resolved;

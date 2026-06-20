@@ -14,6 +14,33 @@ public class MixinBlockState {
 
     @Inject(method = "getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;", at = @At("HEAD"), cancellable = true)
     private void onGetCollisionShape(net.minecraft.world.level.BlockGetter world, net.minecraft.core.BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
+        if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled()) {
+            if (context instanceof net.minecraft.world.phys.shapes.EntityCollisionContext ecc) {
+                if (ecc.getEntity() != null && ecc.getEntity() == net.minecraft.client.Minecraft.getInstance().player) {
+                    BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
+                    boolean bypassWater = ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue();
+                    boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
+                    boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
+                    
+                    net.minecraft.world.level.material.FluidState fluid = self.getFluidState();
+                    if (!fluid.isEmpty()) {
+                        if (fluid.is(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
+                            cir.setReturnValue(Shapes.empty());
+                            return;
+                        }
+                        if (fluid.is(net.minecraft.tags.FluidTags.LAVA) && bypassLava) {
+                            cir.setReturnValue(Shapes.empty());
+                            return;
+                        }
+                        if (bypassOthers) {
+                            cir.setReturnValue(Shapes.empty());
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         if (ravex.modules.exploit.Phase.INSTANCE.getEnabled()) {
             if (context instanceof net.minecraft.world.phys.shapes.EntityCollisionContext ecc) {
                 if (ecc.getEntity() != null && ecc.getEntity() instanceof net.minecraft.client.player.LocalPlayer) {

@@ -41,7 +41,7 @@ public class RichPresence extends Module {
             if (mc.player != null) {
                 mc.player.displayClientMessage(
                     net.minecraft.network.chat.Component.literal(
-                        "§7[§cRaveX§7] §eRichPresence: скопируй rich_presence.lua в ravex/scripts/"), false);
+                        "§7[§cRaveX§7] §eRichPresence: Copy rich_presence.lua to ravex/scripts/"), false);
             }
         }
     }
@@ -55,7 +55,22 @@ public class RichPresence extends Module {
         File scriptsDir = new File(mc.gameDirectory, "ravex/scripts");
         scriptsDir.mkdirs();
         File target = new File(scriptsDir, "rich_presence.lua");
-        if (target.exists()) return target;
+        
+        if (target.exists()) {
+            try {
+                String content = java.nio.file.Files.readString(target.toPath());
+                if (!content.contains("Connected to Discord")) {
+                    try (InputStream in = RichPresence.class.getResourceAsStream("/lua/rich_presence.lua")) {
+                        if (in != null) {
+                            try (OutputStream out = new FileOutputStream(target)) {
+                                in.transferTo(out);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+            return target;
+        }
 
         try (InputStream in = RichPresence.class.getResourceAsStream("/lua/rich_presence.lua")) {
             if (in != null) {
