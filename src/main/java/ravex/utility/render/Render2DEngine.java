@@ -22,11 +22,117 @@ public class Render2DEngine {
     }
 
     public static void drawRound(GuiGraphics graphics, int x, int y, int width, int height, int radius, int color) {
-        graphics.fill(x, y, x + width, y + height, color);
+        if (radius <= 0) {
+            graphics.fill(x, y, x + width, y + height, color);
+            return;
+        }
+        graphics.fill(x + radius, y, x + width - radius, y + height, color);
+        graphics.fill(x, y + radius, x + radius, y + height - radius, color);
+        graphics.fill(x + width - radius, y + radius, x + width, y + height - radius, color);
+
+        if (radius == 3) {
+            // Top-left corner
+            graphics.fill(x + 2, y, x + 3, y + 1, color);
+            graphics.fill(x + 1, y + 1, x + 3, y + 2, color);
+            graphics.fill(x, y + 2, x + 3, y + 3, color);
+            // Top-right corner
+            graphics.fill(x + width - 3, y, x + width - 2, y + 1, color);
+            graphics.fill(x + width - 3, y + 1, x + width - 1, y + 2, color);
+            graphics.fill(x + width - 3, y + 2, x + width, y + 3, color);
+            // Bottom-left corner
+            graphics.fill(x, y + height - 3, x + 3, y + height - 2, color);
+            graphics.fill(x + 1, y + height - 2, x + 3, y + height - 1, color);
+            graphics.fill(x + 2, y + height - 1, x + 3, y + height, color);
+            // Bottom-right corner
+            graphics.fill(x + width - 3, y + height - 3, x + width, y + height - 2, color);
+            graphics.fill(x + width - 3, y + height - 2, x + width - 1, y + height - 1, color);
+            graphics.fill(x + width - 2, y + height - 1, x + width - 1, y + height, color);
+        } else if (radius == 2) {
+            // Top-left corner
+            graphics.fill(x + 1, y, x + 2, y + 1, color);
+            graphics.fill(x, y + 1, x + 2, y + 2, color);
+            // Top-right corner
+            graphics.fill(x + width - 2, y, x + width - 1, y + 1, color);
+            graphics.fill(x + width - 2, y + 1, x + width, y + 2, color);
+            // Bottom-left corner
+            graphics.fill(x, y + height - 2, x + 2, y + height - 1, color);
+            graphics.fill(x + 1, y + height - 1, x + 2, y + height, color);
+            // Bottom-right corner
+            graphics.fill(x + width - 2, y + height - 2, x + width, y + height - 1, color);
+            graphics.fill(x + width - 2, y + height - 1, x + width - 1, y + height, color);
+        } else {
+            graphics.fill(x, y, x + width, y + height, color);
+        }
     }
 
     public static void drawRound(GuiGraphics graphics, int x, int y, int width, int height, int radius, int r, int g, int b, int a) {
-        graphics.fill(x, y, x + width, y + height, (a << 24) | (r << 16) | (g << 8) | b);
+        int color = (a << 24) | (r << 16) | (g << 8) | b;
+        drawRound(graphics, x, y, width, height, radius, color);
+    }
+
+    public static void drawSmoothRound(GuiGraphics graphics, float x, float y, float w, float h, float r, int color) {
+        if (w <= 0f || h <= 0f) return;
+        r = Math.max(0f, Math.min(r, Math.min(w, h) / 2.0f));
+        if (r <= 0f) {
+            graphics.fill((int)x, (int)y, (int)(x + w), (int)(y + h), color);
+            return;
+        }
+
+        int aBase = (color >> 24) & 0xFF;
+        int rCol = (color >> 16) & 0xFF;
+        int gCol = (color >> 8) & 0xFF;
+        int bCol = color & 0xFF;
+
+        float cx = x + w / 2.0f;
+        float cy = y + h / 2.0f;
+        float innerHalfW = w / 2.0f - r;
+        float innerHalfH = h / 2.0f - r;
+
+        int minX = (int) Math.floor(x);
+        int maxX = (int) Math.ceil(x + w);
+        int minY = (int) Math.floor(y);
+        int maxY = (int) Math.ceil(y + h);
+
+        for (int py = minY; py < maxY; py++) {
+            float pCenterY = py + 0.5f;
+            float dy = Math.abs(pCenterY - cy) - innerHalfH;
+
+            int startX = -1;
+            for (int px = minX; px < maxX; px++) {
+                float pCenterX = px + 0.5f;
+                float dx = Math.abs(pCenterX - cx) - innerHalfW;
+
+                float dist;
+                if (dx > 0 && dy > 0) {
+                    dist = (float) Math.sqrt(dx * dx + dy * dy) - r;
+                } else {
+                    dist = Math.max(dx, dy) - r;
+                }
+
+                if (dist <= -0.5f) {
+                    if (startX == -1) {
+                        startX = px;
+                    }
+                } else {
+                    if (startX != -1) {
+                        graphics.fill(startX, py, px, py + 1, color);
+                        startX = -1;
+                    }
+
+                    if (dist < 0.5f) {
+                        float alphaFactor = 0.5f - dist;
+                        int alpha = Math.round(aBase * alphaFactor);
+                        if (alpha > 0) {
+                            int edgeColor = (alpha << 24) | (rCol << 16) | (gCol << 8) | bCol;
+                            graphics.fill(px, py, px + 1, py + 1, edgeColor);
+                        }
+                    }
+                }
+            }
+            if (startX != -1) {
+                graphics.fill(startX, py, maxX, py + 1, color);
+            }
+        }
     }
 
     public static void drawRoundGradient(GuiGraphics graphics, int x, int y, int width, int height, int radius, Color c1, Color c2, Color c3, Color c4) {

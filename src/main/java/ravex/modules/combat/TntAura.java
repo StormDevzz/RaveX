@@ -1,0 +1,596 @@
+package ravex.modules.combat;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import ravex.modules.Category;
+import ravex.modules.Module;
+import ravex.parameter.BooleanParameter;
+import ravex.parameter.ColorParameter;
+import ravex.parameter.ModeParameter;
+import ravex.parameter.NumberParameter;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * TntAura — traps a target with obsidian while leaving a strategic gap
+ * to place and ignite TNT through the wall.
+ *
+ * States: TRAPPING → PLACING_TNT → IGNITING → WAITING → (repeat or disable)
+ */
+public class TntAura extends Module {
+    public static final TntAura INSTANCE = new TntAura();
+
+    // ── Parameters ───────────────────────────────────────────────────────────
+    public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
+    public final NumberParameter  placeDelay   = new NumberParameter("Place Delay", 50.0, 0.0, 500.0, 10.0);
+    public final NumberParameter  tntDelay     = new NumberParameter("TNT Delay", 200.0, 0.0, 1000.0, 10.0);
+    public final NumberParameter  igniteDelay  = new NumberParameter("Ignite Delay", 100.0, 0.0, 500.0, 10.0);
+    public final ModeParameter    swapMode     = new ModeParameter("Swap Mode", "Silent",
+            java.util.List.of("Silent", "Normal", "None"));
+    public final ModeParameter    rotateMode   = new ModeParameter("Rotate Mode", "Silent",
+            java.util.List.of("Silent", "Normal", "Packet", "None"));
+    public final BooleanParameter roof         = new BooleanParameter("Roof", true);
+    public final BooleanParameter autoDisable  = new BooleanParameter("Auto Disable", true);
+    public final ModeParameter    targetMode   = new ModeParameter("Target", "Closest",
+            java.util.List.of("Closest", "Lowest HP"));
+    public final ModeParameter    targetType   = new ModeParameter("Target Type", "Players",
+            java.util.List.of("Players", "Monsters", "All"));
+    public final NumberParameter  maxRate      = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
+    public final BooleanParameter render       = new BooleanParameter("Render", true);
+    public final ColorParameter   color        = new ColorParameter("Color", 0xFFFF4400);
+
+    // ── State machine ────────────────────────────────────────────────────────
+    private enum State { TRAPPING, PLACING_TNT, IGNITING, WAITING }
+    private State currentState = State.TRAPPING;
+
+    private long lastActionTime = 0;
+    private int[] gapPos = null;      // [x, y, z] of the gap in the cage
+    private net.minecraft.world.entity.LivingEntity currentTarget = null;
+    private int failedTntPlacements = 0;
+
+    public static final List<BlockPos> renderBlocks = new ArrayList<>();
+
+    // ── Silent rotation state ────────────────────────────────────────────────
+    public static float silentYaw = 0;
+    public static float silentPitch = 0;
+    private static boolean hasSilentRotations = false;
+
+    // ── Native library ───────────────────────────────────────────────────────
+    private static boolean nativeAvailable = false;
+
+    static {
+        try {
+            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_tntaura");
+        } catch (UnsatisfiedLinkError e) {
+            // Fallback to Java
+        }
+    }
+
+    // ── JNI methods ──────────────────────────────────────────────────────────
+    private static native double[] nativeCalculateCage(
+        double playerX, double playerY, double playerZ,
+        double targetX, double targetY, double targetZ,
+        double[] solidBlockData,
+        double range, boolean roof,
+        int gapDirection, double[] gapPosData
+    );
+
+    private static native double[] nativeCalculateTntSlot(
+        double playerX, double playerY, double playerZ,
+        double gapX, double gapY, double gapZ,
+        double[] solidBlockData, double range
+    );
+
+    private static native double[] nativeEstimateDamage(
+        double tntX, double tntY, double tntZ,
+        double targetX, double targetY, double targetZ,
+        double targetHealth,
+        int armorPoints, int armorToughness,
+        int blastProtLevel,
+        boolean hasResistance, int resistanceAmplifier
+    );
+
+    public static boolean hasSilentRotations() { return hasSilentRotations; }
+
+    private TntAura() {
+        super("TntAura", Category.COMBAT);
+        addParameter(range);
+        addParameter(placeDelay);
+        addParameter(tntDelay);
+        addParameter(igniteDelay);
+        addParameter(swapMode);
+        addParameter(rotateMode);
+        addParameter(roof);
+        addParameter(autoDisable);
+        addParameter(targetMode);
+        addParameter(targetType);
+        addParameter(maxRate);
+        addParameter(render);
+        addParameter(color);
+    }
+
+    @Override
+    protected void onEnable() {
+        currentState = State.TRAPPING;
+        lastActionTime = 0;
+        gapPos = null;
+        currentTarget = null;
+        failedTntPlacements = 0;
+        synchronized (renderBlocks) { renderBlocks.clear(); }
+    }
+
+    @Override
+    protected void onDisable() {
+        hasSilentRotations = false;
+        currentTarget = null;
+        gapPos = null;
+        failedTntPlacements = 0;
+        synchronized (renderBlocks) { renderBlocks.clear(); }
+    }
+
+    @Override
+    public void onTick() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+
+        hasSilentRotations = false;
+
+        // Find target
+        net.minecraft.world.entity.LivingEntity target = findTarget(mc);
+        if (target == null) {
+            if (autoDisable.getValue()) setEnabled(false);
+            return;
+        }
+
+        // If target changed, reset state
+        if (currentTarget != target) {
+            currentTarget = target;
+            currentState = State.TRAPPING;
+            gapPos = null;
+        }
+
+        long now = System.currentTimeMillis();
+
+        switch (currentState) {
+            case TRAPPING:
+                tickTrapping(mc, target, now);
+                break;
+            case PLACING_TNT:
+                tickPlacingTnt(mc, target, now);
+                break;
+            case IGNITING:
+                tickIgniting(mc, target, now);
+                break;
+            case WAITING:
+                tickWaiting(mc, now);
+                break;
+        }
+    }
+
+    // ─── TRAPPING state ──────────────────────────────────────────────────────
+    private void tickTrapping(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
+        if (now - lastActionTime < placeDelay.getValue()) return;
+
+        double[] solidData = collectSolidBlocks(mc);
+        double[] gapData = gapPos != null ? new double[]{gapPos[0], gapPos[1], gapPos[2]} : null;
+
+        double[] result = null;
+        double placeRange = range.getValue() + 1.5;
+        if (nativeAvailable) {
+            result = nativeCalculateCage(
+                mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                target.getX(), target.getY(), target.getZ(),
+                solidData, placeRange, roof.getValue(),
+                0, gapData
+            );
+        } else {
+            result = javaFallbackCage(mc, target, solidData);
+        }
+
+        if (result == null || result[0] < 0.5) {
+            // Cage complete or nothing to place — transition to TNT
+            currentState = State.PLACING_TNT;
+            lastActionTime = now;
+            return;
+        }
+
+        // Extract gap position from first call (11 elements)
+        if (gapPos == null && result.length >= 11) {
+            gapPos = new int[]{(int) result[8], (int) result[9], (int) result[10]};
+        }
+
+        // Place obsidian
+        int blockSlot = findObsidianSlot(mc);
+        if (blockSlot == -1) return;
+
+        BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
+        Direction face = Direction.values()[(int) result[4]];
+        BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
+
+        Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(
+            new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+
+        rotateTo(mc, hitVec);
+        swapTo(mc, blockSlot);
+
+        BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
+        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
+        mc.player.swing(InteractionHand.MAIN_HAND);
+
+        restoreSlot(mc, blockSlot);
+
+        synchronized (renderBlocks) { renderBlocks.add(targetBlock); }
+        lastActionTime = now;
+    }
+
+    // ─── PLACING_TNT state ───────────────────────────────────────────────────
+    private void tickPlacingTnt(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
+        if (now - lastActionTime < tntDelay.getValue()) return;
+
+        if (gapPos == null) {
+            BlockPos feet = target.blockPosition();
+            double dx = mc.player.getX() - (feet.getX() + 0.5);
+            double dz = mc.player.getZ() - (feet.getZ() + 0.5);
+            int headY = feet.getY() + 1;
+            if (Math.abs(dx) >= Math.abs(dz)) {
+                gapPos = dx > 0 ? new int[]{feet.getX() + 1, headY, feet.getZ()}
+                                : new int[]{feet.getX() - 1, headY, feet.getZ()};
+            } else {
+                gapPos = dz > 0 ? new int[]{feet.getX(), headY, feet.getZ() + 1}
+                                : new int[]{feet.getX(), headY, feet.getZ() - 1};
+            }
+        }
+
+        int tntSlot = findTntSlot(mc);
+        if (tntSlot == -1) {
+            if (autoDisable.getValue()) setEnabled(false);
+            return;
+        }
+
+        double[] solidData = collectSolidBlocks(mc);
+        double[] result = null;
+
+        // Use slightly larger range for TNT placement since gap is at head level
+        double placeRange = range.getValue() + 1.5;
+
+        if (nativeAvailable) {
+            result = nativeCalculateTntSlot(
+                mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                gapPos[0], gapPos[1], gapPos[2],
+                solidData, placeRange
+            );
+        } else {
+            result = javaFallbackTntPlacement(mc);
+        }
+
+        if (result == null || result[0] < 0.5) {
+            failedTntPlacements++;
+            // Retry a few times before giving up
+            if (failedTntPlacements >= 5) {
+                if (autoDisable.getValue()) {
+                    setEnabled(false);
+                } else {
+                    currentState = State.TRAPPING;
+                    gapPos = null;
+                    failedTntPlacements = 0;
+                }
+            }
+            return;
+        }
+
+        failedTntPlacements = 0;
+
+        BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
+        Direction face = Direction.values()[(int) result[4]];
+
+        Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(
+            new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+
+        rotateTo(mc, hitVec);
+        swapTo(mc, tntSlot);
+
+        BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
+        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
+        mc.player.swing(InteractionHand.MAIN_HAND);
+
+        restoreSlot(mc, tntSlot);
+
+        currentState = State.IGNITING;
+        lastActionTime = now;
+    }
+
+    // ─── IGNITING state ──────────────────────────────────────────────────────
+    private void tickIgniting(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
+        if (now - lastActionTime < igniteDelay.getValue()) return;
+
+        int flintSlot = findFlintAndSteelSlot(mc);
+        if (flintSlot == -1) {
+            if (autoDisable.getValue()) setEnabled(false);
+            return;
+        }
+
+        // Ignite the TNT at the gap position
+        BlockPos tntPos = new BlockPos(gapPos[0], gapPos[1], gapPos[2]);
+        Vec3 hitVec = Vec3.atCenterOf(tntPos);
+
+        rotateTo(mc, hitVec);
+        swapTo(mc, flintSlot);
+
+        // Use item on the TNT block to ignite it
+        BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, tntPos, false);
+        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
+        mc.player.swing(InteractionHand.MAIN_HAND);
+
+        restoreSlot(mc, flintSlot);
+
+        currentState = State.WAITING;
+        lastActionTime = now;
+    }
+
+    // ─── WAITING state ───────────────────────────────────────────────────────
+    private void tickWaiting(Minecraft mc, long now) {
+        // Wait for explosion (TNT fuse ~80 ticks = 4 seconds)
+        if (now - lastActionTime > 5000) {
+            if (autoDisable.getValue()) {
+                setEnabled(false);
+            } else {
+                // Reset for another cycle
+                currentState = State.TRAPPING;
+                gapPos = null;
+                synchronized (renderBlocks) { renderBlocks.clear(); }
+            }
+        }
+    }
+
+    // ─── Target finding ──────────────────────────────────────────────────────
+    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+        net.minecraft.world.entity.LivingEntity closest = null;
+        double bestMetric = Double.MAX_VALUE;
+        double maxDist = range.getValue() + 2.0;
+
+        String mode = targetMode.getValue();
+        String typeFilter = targetType.getValue();
+
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
+            if (le == mc.player) continue;
+            if (le.isDeadOrDying()) continue;
+
+            if (typeFilter.equals("Players") && !(le instanceof Player)) continue;
+            if (typeFilter.equals("Monsters") && !(le instanceof net.minecraft.world.entity.monster.Monster)) continue;
+
+            double dist = mc.player.distanceTo(le);
+            if (dist > maxDist) continue;
+
+            double metric = mode.equals("Lowest HP") ? le.getHealth() : dist;
+            if (metric < bestMetric) {
+                bestMetric = metric;
+                closest = le;
+            }
+        }
+        return closest;
+    }
+
+    // ─── Slot finders ────────────────────────────────────────────────────────
+    private int findObsidianSlot(Minecraft mc) {
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getItem(i);
+            if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
+                if (bi.getBlock() == Blocks.OBSIDIAN) return i;
+            }
+        }
+        // Fallback: any full-block
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getItem(i);
+            if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
+                if (bi.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, BlockPos.ZERO)) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private int findTntSlot(Minecraft mc) {
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getItem(i);
+            if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
+                if (bi.getBlock() == Blocks.TNT) return i;
+            }
+        }
+        return -1;
+    }
+
+    private int findFlintAndSteelSlot(Minecraft mc) {
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getItem(i);
+            if (!stack.isEmpty() && stack.is(Items.FLINT_AND_STEEL)) return i;
+        }
+        return -1;
+    }
+
+    // ─── Solid block collection ──────────────────────────────────────────────
+    private double[] collectSolidBlocks(Minecraft mc) {
+        List<Double> data = new ArrayList<>();
+        double r = range.getValue() + 3.0;
+        BlockPos playerPos = mc.player.blockPosition();
+        int rx = (int) Math.ceil(r);
+        int ry = 3;
+        int rz = (int) Math.ceil(r);
+
+        for (int dx = -rx; dx <= rx; dx++) {
+            for (int dy = -ry; dy <= ry; dy++) {
+                for (int dz = -rz; dz <= rz; dz++) {
+                    BlockPos pos = playerPos.offset(dx, dy, dz);
+                    if (mc.level.isLoaded(pos)) {
+                        BlockState state = mc.level.getBlockState(pos);
+                        if (!state.isAir() && !state.liquid()) {
+                            data.add((double) pos.getX());
+                            data.add((double) pos.getY());
+                            data.add((double) pos.getZ());
+                        }
+                    }
+                }
+            }
+        }
+
+        double[] arr = new double[data.size()];
+        for (int i = 0; i < arr.length; i++) arr[i] = data.get(i);
+        return arr;
+    }
+
+    // ─── Rotation ────────────────────────────────────────────────────────────
+    private void rotateTo(Minecraft mc, Vec3 target) {
+        String mode = rotateMode.getValue();
+        if (mode.equals("None")) return;
+
+        Vec3 eyes = mc.player.getEyePosition();
+        double dx = target.x - eyes.x;
+        double dy = target.y - eyes.y;
+        double dz = target.z - eyes.z;
+        double dist = Math.sqrt(dx * dx + dz * dz);
+        float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90f;
+        float pitch = (float) -Math.toDegrees(Math.atan2(dy, dist));
+
+        if (mode.equals("Normal")) {
+            mc.player.setYRot(yaw);
+            mc.player.setXRot(pitch);
+        } else if (mode.equals("Silent")) {
+            silentYaw = yaw;
+            silentPitch = pitch;
+            hasSilentRotations = true;
+        } else if (mode.equals("Packet")) {
+            if (mc.player.connection != null) {
+                mc.player.connection.send(
+                    new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(
+                        yaw, pitch, mc.player.onGround(), mc.player.horizontalCollision));
+            }
+        }
+    }
+
+    // ─── Swap helpers ────────────────────────────────────────────────────────
+    private int savedSlot = -1;
+
+    private void swapTo(Minecraft mc, int slot) {
+        String swap = swapMode.getValue();
+        savedSlot = mc.player.getInventory().getSelectedSlot();
+        if (swap.equals("Normal")) {
+            mc.player.getInventory().setSelectedSlot(slot);
+        } else if (swap.equals("Silent")) {
+            if (mc.player.connection != null) {
+                mc.player.connection.send(
+                    new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
+            }
+        }
+    }
+
+    private void restoreSlot(Minecraft mc, int slot) {
+        if (swapMode.getValue().equals("Silent") && savedSlot != -1) {
+            if (mc.player.connection != null) {
+                mc.player.connection.send(
+                    new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(savedSlot));
+            }
+        }
+    }
+
+    // ─── Java fallbacks (when native lib not loaded) ─────────────────────────
+    private double[] javaFallbackCage(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidData) {
+        BlockPos feet = target.blockPosition();
+
+        // Determine gap (closest side at head level)
+        double dx = mc.player.getX() - (feet.getX() + 0.5);
+        double dz = mc.player.getZ() - (feet.getZ() + 0.5);
+        int headY = feet.getY() + 1;
+        BlockPos gapBlock;
+        if (Math.abs(dx) >= Math.abs(dz)) {
+            gapBlock = dx > 0 ? new BlockPos(feet.getX() + 1, headY, feet.getZ())
+                              : new BlockPos(feet.getX() - 1, headY, feet.getZ());
+        } else {
+            gapBlock = dz > 0 ? new BlockPos(feet.getX(), headY, feet.getZ() + 1)
+                              : new BlockPos(feet.getX(), headY, feet.getZ() - 1);
+        }
+
+        if (gapPos == null) {
+            gapPos = new int[]{gapBlock.getX(), gapBlock.getY(), gapBlock.getZ()};
+        }
+
+        // Build candidate list
+        List<BlockPos> candidates = new ArrayList<>();
+        // Feet level
+        candidates.add(feet.north()); candidates.add(feet.south());
+        candidates.add(feet.east());  candidates.add(feet.west());
+        // Head level (skip gap)
+        BlockPos[] headSides = {feet.above().north(), feet.above().south(),
+                                feet.above().east(), feet.above().west()};
+        for (BlockPos h : headSides) {
+            if (!h.equals(gapBlock)) candidates.add(h);
+        }
+        if (roof.getValue()) candidates.add(feet.above(2));
+
+        Set<BlockPos> solids = new HashSet<>();
+        for (int i = 0; i + 2 < solidData.length; i += 3) {
+            solids.add(new BlockPos((int) solidData[i], (int) solidData[i + 1], (int) solidData[i + 2]));
+        }
+
+        Vec3 eyePos = mc.player.getEyePosition();
+        double r = range.getValue();
+
+        for (BlockPos cand : candidates) {
+            if (solids.contains(cand)) continue;
+            if (eyePos.distanceToSqr(Vec3.atCenterOf(cand)) > r * r) continue;
+
+            for (Direction d : Direction.values()) {
+                BlockPos side = cand.relative(d);
+                if (solids.contains(side)) {
+                    return new double[]{
+                        1.0,
+                        side.getX(), side.getY(), side.getZ(),
+                        d.getOpposite().ordinal(),
+                        cand.getX(), cand.getY(), cand.getZ(),
+                        gapBlock.getX(), gapBlock.getY(), gapBlock.getZ()
+                    };
+                }
+            }
+        }
+
+        return new double[]{0.0};
+    }
+
+    private double[] javaFallbackTntPlacement(Minecraft mc) {
+        if (gapPos == null) return new double[]{0.0};
+
+        BlockPos gap = new BlockPos(gapPos[0], gapPos[1], gapPos[2]);
+        Vec3 eyePos = mc.player.getEyePosition();
+        double r = range.getValue();
+        if (eyePos.distanceToSqr(Vec3.atCenterOf(gap)) > r * r) return new double[]{0.0};
+
+        for (Direction d : Direction.values()) {
+            BlockPos side = gap.relative(d);
+            BlockState state = mc.level.getBlockState(side);
+            if (!state.isAir() && !state.liquid()) {
+                return new double[]{
+                    1.0,
+                    side.getX(), side.getY(), side.getZ(),
+                    d.getOpposite().ordinal(),
+                    gap.getX(), gap.getY(), gap.getZ(),
+                };
+            }
+        }
+
+        return new double[]{0.0};
+    }
+}

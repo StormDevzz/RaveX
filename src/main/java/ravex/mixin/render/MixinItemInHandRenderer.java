@@ -1,6 +1,7 @@
 package ravex.mixin.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -9,11 +10,12 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import ravex.modules.player.NoSwing;
+import ravex.modules.player.Swing;
 import ravex.modules.render.Shaders;
 import ravex.modules.render.ViewModel;
 
@@ -39,8 +41,6 @@ public abstract class MixinItemInHandRenderer {
     }
 
     // ── ViewModel: applyItemArmTransform ─────────────────────────────────────
-    // This method sets up the base PoseStack transform for the arm/item at rest.
-    // We inject at TAIL to apply our extra translation+rotation+scale on top.
 
     @Inject(
         method = "applyItemArmTransform(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/entity/HumanoidArm;F)V",
@@ -52,8 +52,6 @@ public abstract class MixinItemInHandRenderer {
 
         boolean isRight = arm == HumanoidArm.RIGHT;
 
-        // Determine if right arm = main hand (default for right-handed player)
-        // We apply per-hand transforms
         float tx, ty, tz, rx, ry, rz, scale;
 
         if (isRight) {
@@ -74,19 +72,16 @@ public abstract class MixinItemInHandRenderer {
             scale = vm.offScale.getValue().floatValue();
         }
 
-        // Apply translation
         poseStack.translate(tx, ty, tz);
 
-        // Apply rotations (in degrees)
         if (rx != 0f) poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(rx));
         if (ry != 0f) poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(ry));
         if (rz != 0f) poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(rz));
 
-        // Apply scale
         if (scale != 1f) poseStack.scale(scale, scale, scale);
     }
 
-    // ── ViewModel: renderArmWithItem — Hide hand / swing speed ───────────────
+    // ── ViewModel: renderArmWithItem — Hide hand ─────────────────────────────
 
     @Inject(
         method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
@@ -110,5 +105,75 @@ public abstract class MixinItemInHandRenderer {
             ci.cancel();
             return;
         }
+    }
+
+    // ── NoSwing & Swing Custom overrides ───────────────────────────────────
+
+    private static AbstractClientPlayer capturedPlayer;
+
+    @Inject(
+        method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
+        at = @At("HEAD")
+    )
+    private void capturePlayer(AbstractClientPlayer player, float partialTick, float pitch,
+                                InteractionHand hand, float swingProgress, ItemStack stack,
+                                float equipProgress, PoseStack poseStack,
+                                SubmitNodeCollector collector, int light, CallbackInfo ci) {
+        capturedPlayer = player;
+    }
+
+    @ModifyVariable(
+        method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
+        at = @At("HEAD"),
+        ordinal = 2,
+        argsOnly = true
+    )
+    private float modifySwingProgress(float swingProgress) {
+        if (capturedPlayer == null) return swingProgress;
+
+        boolean isSelf = Minecraft.getInstance().player == capturedPlayer;
+
+        if (NoSwing.INSTANCE.getEnabled()) {
+            if (NoSwing.INSTANCE.self.getValue() && isSelf) return 1.0f;
+            if (NoSwing.INSTANCE.others.getValue() && !isSelf) return 1.0f;
+        }
+
+        if (Swing.INSTANCE.getEnabled() && "Custom".equals(Swing.INSTANCE.mode.getValue())) {
+            float p = swingProgress;
+            String path = Swing.INSTANCE.swingPath.getValue();
+            if ("Smooth".equals(path)) {
+                float t = 1 - p;
+                t = t * t * (3 - 2 * t);
+                p = 1 - t;
+            } else if ("Bounce".equals(path)) {
+                float t = 1 - p;
+                t = t * t * (3 - 2 * t) + 0.08f * (float) Math.sin(t * Math.PI * 4);
+                t = Math.max(0, Math.min(1, t));
+                p = 1 - t;
+            } else if ("Reverse".equals(path)) {
+                p = 1 - p;
+            }
+            p = (float) Math.pow(p, Swing.INSTANCE.swingCurve.getValue().floatValue());
+            p = Math.min(p, Swing.INSTANCE.progressCap.getValue().floatValue());
+            p = Math.max(p, Swing.INSTANCE.progressFloor.getValue().floatValue());
+            return p;
+        }
+
+        return swingProgress;
+    }
+
+    @ModifyVariable(
+        method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
+        at = @At("HEAD"),
+        ordinal = 3,
+        argsOnly = true
+    )
+    private float modifyEquipProgress(float equipProgress) {
+        if (Swing.INSTANCE.getEnabled()
+            && ("1.8".equals(Swing.INSTANCE.mode.getValue())
+                || ("Custom".equals(Swing.INSTANCE.mode.getValue()) && Swing.INSTANCE.noEquip.getValue()))) {
+            return 0.0f;
+        }
+        return equipProgress;
     }
 }

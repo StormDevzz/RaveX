@@ -1,30 +1,30 @@
 --[[
   rich_presence.lua — RaveX Discord Rich Presence
   ===================================================
-  Оптимизированная версия: кеширование, минимальная нагрузка на тик
+  Optimized version: caching, minimal tick overhead
 ]]
 
--- ── Настройки ────────────────────────────────────────────────────────────────
+-- ── Settings ─────────────────────────────────────────────────────────────────
 local UPDATE_INTERVAL_MS = 10000
 
--- ── Состояние ────────────────────────────────────────────────────────────────
+-- ── State ────────────────────────────────────────────────────────────────────
 local startTime = client.getTime()
 local connected = false
 
--- ── Подключение к Discord ────────────────────────────────────────────────────
+-- ── Connecting to Discord ─────────────────────────────────────────────────────
 local function connect()
     if discord.isConnected() then return true end
     local ok = discord.connect()
     if ok then
-        client.print("§a[RichPresence] Подключено к Discord!")
+        client.print("§a[RichPresence] Connected to Discord!")
     end
     connected = ok
     return ok
 end
 
--- ── Формирование строки состояния ────────────────────────────────────────────
+-- ── Building State String ─────────────────────────────────────────────────────
 local function buildState()
-    if not player.isInGame() then return "В главном меню" end
+    if not player.isInGame() then return "In main menu" end
 
     local hp = math.floor(player.getHealth())
     local maxHp = math.floor(player.getMaxHealth())
@@ -40,13 +40,13 @@ local function buildState()
     return "❤ " .. hp .. "/" .. maxHp .. " | " .. enabledCount .. " modules"
 end
 
--- ── Формирование details строки ───────────────────────────────────────────────
+-- ── Building Details String ───────────────────────────────────────────────────
 local function buildDetails()
-    if not player.isInGame() then return "Меню" end
+    if not player.isInGame() then return "Menu" end
     return "RaveX — " .. player.getName()
 end
 
--- ── Обновление presence ───────────────────────────────────────────────────────
+-- ── Updating Presence ─────────────────────────────────────────────────────────
 local function updatePresence()
     if not discord.isConnected() then
         if not connect() then return end
@@ -58,11 +58,11 @@ local function updatePresence()
     end
 end
 
--- ── Запуск ────────────────────────────────────────────────────────────────────
+-- ── Startup ───────────────────────────────────────────────────────────────────
 connect()
 
 if connected then
     updatePresence()
     timer.setInterval("rich_presence", UPDATE_INTERVAL_MS, updatePresence)
-    client.print("§a[RichPresence] Загружен (интервал: " .. (UPDATE_INTERVAL_MS / 1000) .. "c)")
+    client.print("§a[RichPresence] Loaded (interval: " .. (UPDATE_INTERVAL_MS / 1000) .. "s)")
 end

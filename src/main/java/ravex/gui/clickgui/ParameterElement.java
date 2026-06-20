@@ -4,6 +4,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.Render2DEngine;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.KeybindParameter;
@@ -127,65 +128,26 @@ public class ParameterElement {
                 toggleAnimProgress = Math.max(0.0f, toggleAnimProgress - delta * 0.015f);
             }
 
-            int knobSize = 10;
-            int knobRange = swW - knobSize - 3;
-            int knobX = swX + 2 + (int)(toggleAnimProgress * knobRange);
-            int knobY2 = swY + 1;
-
-            Identifier switcherTex = ravex.utility.render.TextureLoader.getSwitcherTexture();
-            if (switcherTex != null) {
-                graphics.blit(switcherTex, swX, swY, swX + swW, swY + swH, 0.0f, 1.0f, 0.0f, 1.0f);
+            // Track background color interpolated between off state and active state
+            int trackColor = lerpColor(0xFF2A2A38, activeColor, toggleAnimProgress);
+            Identifier trackTex = ravex.utility.render.TextureLoader.getTrackWhiteTexture();
+            if (trackTex != null) {
+                drawTintedTexture(graphics, trackTex, swX, swY, swW, swH, trackColor);
             } else {
-                int trackR = ((activeColor >> 16) & 0xFF);
-                int trackG = ((activeColor >> 8) & 0xFF);
-                int trackB = (activeColor & 0xFF);
-                int trackOn = (0xCC << 24) | (trackR << 16) | (trackG << 8) | trackB;
-                int trackOff = 0xFF2A2A38;
-                int trackColor = lerpColor(trackOff, trackOn, toggleAnimProgress);
-                int trackA = (trackColor >> 24) & 0xFF;
-
-                float halfH = swH / 2f;
-                for (int i = 0; i < swH; i++) {
-                    float t = (i + 0.5f) / swH;
-                    float edge = Math.min(t, 1f - t) * 2f;
-                    float insetF = halfH * (1f - edge * edge);
-                    int inset = (int) insetF;
-                    float frac = insetF - inset;
-
-                    int lx = swX + inset;
-                    int rx = swX + swW - inset;
-                    graphics.fill(lx + 1, swY + i, rx - 1, swY + i + 1, trackColor);
-
-                    int a = Math.round(frac * trackA);
-                    if (a > 0) {
-                        int edgeCol = (a << 24) | (trackColor & 0x00FFFFFF);
-                        graphics.fill(lx, swY + i, lx + 1, swY + i + 1, edgeCol);
-                        graphics.fill(rx - 1, swY + i, rx, swY + i + 1, edgeCol);
-                    }
-                }
+                Render2DEngine.drawSmoothRound(graphics, swX, swY, swW, swH, 6.0f, trackColor);
             }
 
+            // Center knob with 2px margin inside track, sliding dynamically
+            int knobSize = 8;
+            int knobRange = swW - knobSize - 4;
+            int knobX = swX + 2 + (int)(toggleAnimProgress * knobRange);
+            int knobY = swY + 2;
+            int knobColor = lerpColor(0xFFB0B0C0, 0xFFFFFFFF, toggleAnimProgress);
             Identifier circleTex = ravex.utility.render.TextureLoader.getCircleWhiteTexture();
             if (circleTex != null) {
-                int cSize = knobSize + 2;
-                int cx = knobX - 1;
-                int cy = knobY2 - 1;
-                graphics.blit(circleTex, cx, cy, cx + cSize, cy + cSize, 0.0f, 1.0f, 0.0f, 1.0f);
+                drawTintedTexture(graphics, circleTex, knobX, knobY, knobSize, knobSize, knobColor);
             } else {
-                for (int i = 0; i < knobSize; i++) {
-                    float t = (i + 0.5f) / knobSize;
-                    float edge = Math.min(t, 1f - t) * 2f;
-                    int inset = (int)(knobSize/2 * (1f - edge * edge));
-                    if (inset < 0) inset = 0;
-                    int kcol = (int)(0xFF * (0.85f + 0.15f * toggleAnimProgress));
-                    int knobCol = (0xFF << 24) | (kcol << 16) | (kcol << 8) | kcol;
-                    if (i == 0 || i == knobSize - 1) {
-                        int borderInset = knobSize/2 - 1;
-                        graphics.fill(knobX + borderInset, knobY2 + i, knobX + knobSize - borderInset, knobY2 + i + 1, 0xFFE0E0E0);
-                    } else {
-                        graphics.fill(knobX + inset, knobY2 + i, knobX + knobSize - inset, knobY2 + i + 1, knobCol);
-                    }
-                }
+                Render2DEngine.drawSmoothRound(graphics, knobX, knobY, knobSize, knobSize, knobSize / 2.0f, knobColor);
             }
 
         } else if (parameter instanceof ModeParameter mp) {
@@ -237,11 +199,14 @@ public class ParameterElement {
             int slX = x + 8;
             int slY = y + 16;
             int slW = width - 16;
-            int slH = 12;
+            int slH = 4;
 
             if (isDragging) {
                 if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(net.minecraft.client.Minecraft.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
                     isDragging = false;
+                    if (np.getName().equalsIgnoreCase("Gui Scale")) {
+                        ClickGUI.isDraggingSlider = false;
+                    }
                 } else {
                     double relative = (double) (mouseX - slX) / slW;
                     relative = Math.max(0.0, Math.min(1.0, relative));
@@ -252,35 +217,42 @@ public class ParameterElement {
                 }
             }
 
-            boolean slHovered = mouseX >= slX && mouseX <= slX + slW && mouseY >= slY - 2 && mouseY <= slY + slH + 2;
+            boolean slHovered = mouseX >= slX && mouseX <= slX + slW && mouseY >= slY - 4 && mouseY <= slY + slH + 4;
 
-            Identifier switcherTex = ravex.utility.render.TextureLoader.getSwitcherTexture();
-            if (switcherTex != null) {
-                graphics.blit(switcherTex, slX, slY, slX + slW, slY + slH, 0.0f, 1.0f, 0.0f, 1.0f);
+            int baseKnobSize = 10;
+            int knobRange = slW - baseKnobSize;
+            int knobX = slX + baseKnobSize / 2 + (int)(knobRange * progress);
+
+            boolean active = slHovered || isDragging;
+            int drawKnobSize = active ? 10 : 8;
+            int knobColor = active ? 0xFFFFFFFF : 0xFFC8C8D0;
+
+            float knobDrawX = knobX - drawKnobSize / 2.0f;
+            float knobDrawY = (slY + slH / 2.0f) - drawKnobSize / 2.0f;
+
+            // Render slider background track (dark grey)
+            Identifier trackTex = ravex.utility.render.TextureLoader.getTrackWhiteTexture();
+            if (trackTex != null) {
+                drawTintedTexture(graphics, trackTex, slX, slY, slW, slH, 0xFF2A2A38);
             } else {
-                for (int i = 0; i < slH; i++) {
-                    float gap = Math.abs(i - slH/2f) / (slH/2f);
-                    int inset = (int)(slH/2 * gap * gap);
-                    graphics.fill(slX + inset, slY + i, slX + slW - inset, slY + i + 1, 0xFF2A2A38);
+                Render2DEngine.drawSmoothRound(graphics, slX, slY, slW, slH, slH / 2.0f, 0xFF2A2A38);
+            }
+
+            // Render active/filled slider track (sky blue or client color)
+            if (knobX > slX) {
+                if (trackTex != null) {
+                    drawTintedTexture(graphics, trackTex, slX, slY, knobX - slX, slH, activeColor);
+                } else {
+                    Render2DEngine.drawSmoothRound(graphics, slX, slY, (float)(knobX - slX), slH, slH / 2.0f, activeColor);
                 }
             }
 
-            int fillW = slW - 12;
-            int knobX = slX + 6 + (int)(fillW * progress);
-            int knobY2 = slY + slH / 2;
+            // Render knob circle
             Identifier circleTex = ravex.utility.render.TextureLoader.getCircleWhiteTexture();
             if (circleTex != null) {
-                int cSize = 12;
-                graphics.blit(circleTex, knobX - cSize / 2, knobY2 - cSize / 2, knobX + cSize / 2 + 1, knobY2 + cSize / 2 + 1, 0.0f, 1.0f, 0.0f, 1.0f);
+                drawTintedTexture(graphics, circleTex, (int)knobDrawX, (int)knobDrawY, drawKnobSize, drawKnobSize, knobColor);
             } else {
-                int knobR = 4;
-                int knobColor = slHovered || isDragging ? 0xFFFFFFFF : 0xFFC8C8D0;
-                for (int dy = -knobR; dy <= knobR; dy++) {
-                    float gap = Math.abs(dy) / (float)knobR;
-                    int dx = (int) Math.sqrt(knobR * knobR - dy * dy);
-                    int innerInset = (int)(knobR/2 * gap * gap * 0.5f);
-                    graphics.fill(knobX - dx + innerInset, knobY2 + dy, knobX + dx - innerInset + 1, knobY2 + dy + 1, knobColor);
-                }
+                Render2DEngine.drawSmoothRound(graphics, knobDrawX, knobDrawY, drawKnobSize, drawKnobSize, drawKnobSize / 2.0f, knobColor);
             }
 
         } else if (parameter instanceof ColorParameter cp) {
@@ -377,6 +349,9 @@ public class ParameterElement {
                 return true;
             } else if (parameter instanceof NumberParameter np) {
                 isDragging = true;
+                if (np.getName().equalsIgnoreCase("Gui Scale")) {
+                    ClickGUI.isDraggingSlider = true;
+                }
                 return true;
             } else if (parameter instanceof ColorParameter cp) {
                 ClickGUI.activeColorParameter = cp;
@@ -418,5 +393,9 @@ public class ParameterElement {
         if (mc.player != null) {
             mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.25f, 1.4f);
         }
+    }
+
+    private void drawTintedTexture(GuiGraphics graphics, Identifier texture, int x, int y, int width, int height, int color) {
+        graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, texture, x, y, 0.0f, 0.0f, width, height, width, height, color);
     }
 }

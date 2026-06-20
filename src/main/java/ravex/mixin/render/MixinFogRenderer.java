@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import ravex.modules.render.NoRender;
 import ravex.modules.render.CustomFog;
+import ravex.modules.render.SkyColor;
 
 @Mixin(FogRenderer.class)
 public class MixinFogRenderer {
@@ -22,6 +23,12 @@ public class MixinFogRenderer {
                                    CallbackInfoReturnable<Vector4f> cir) {
         if (ravex.modules.player.Xray.INSTANCE.getEnabled()) {
             cir.setReturnValue(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
+        } else if (SkyColor.INSTANCE.getEnabled()) {
+            int col = SkyColor.INSTANCE.skyColor.getValue();
+            float r = ((col >> 16) & 0xFF) / 255.0f;
+            float g = ((col >> 8) & 0xFF) / 255.0f;
+            float b = (col & 0xFF) / 255.0f;
+            cir.setReturnValue(new Vector4f(r, g, b, 1.0f));
         }
     }
 

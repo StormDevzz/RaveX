@@ -60,6 +60,10 @@ public class LayoutManager {
         save(panels, sw, sh, 1.0f);
     }
 
+    public void reset() {
+        if (layoutFile.exists()) layoutFile.delete();
+    }
+
     public Map<Category, double[]> load() {
         Map<Category, double[]> result = new HashMap<>();
         if (!layoutFile.exists()) return result;

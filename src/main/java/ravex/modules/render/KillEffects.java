@@ -1,4 +1,4 @@
-package ravex.modules.misc;
+package ravex.modules.render;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -32,7 +32,7 @@ public class KillEffects extends Module {
     private final Set<Entity> processed = new HashSet<>();
 
     private KillEffects() {
-        super("KillEffects", Category.MISC);
+        super("KillEffects", Category.RENDER);
         addParameter(effect);
         addParameter(players);
         addParameter(monsters);

@@ -27,6 +27,7 @@ public class ClickGUI extends Screen {
     public static ColorPaletteModal activeColorPalette = null;
     public static ParameterElement activeStringParameterElement = null;
     public static ParameterElement activeKeybindElement = null;
+    public static boolean isDraggingSlider = false;
 
     public static Identifier getCategoryTexture(Category cat) {
         return ravex.utility.render.TextureLoader.getCategoryTexture(cat);
@@ -40,6 +41,7 @@ public class ClickGUI extends Screen {
     private final List<CategoryPanel> panels = new ArrayList<>();
     private final long initTime;
     private double smoothedMaxH = 200.0;
+    private float currentScale = -1;
 
     private boolean closing = false;
     private long closingStartTime = 0;
@@ -56,6 +58,7 @@ public class ClickGUI extends Screen {
     private boolean profilesHovered;
     private boolean configsHovered;
     private boolean guiSettingsHovered;
+    private boolean resetLayoutHovered;
 
     // ── Star particles ───────────────────────────────────────────────────────────
     private final float[] starX   = new float[150];
@@ -84,13 +87,13 @@ public class ClickGUI extends Screen {
 
         ravex.utility.render.TextureLoader.preloadAll();
 
-        int spacing = 15;
+        int spacing = 10;
         int panelW = 120;
         Category[] categories = Category.values();
         for (Category cat : categories) {
             int i = cat.ordinal();
             int px = 20 + i * (panelW + spacing);
-            int py = 55;
+            int py = 65;
             CategoryPanel p = new CategoryPanel(cat, px, py);
             panels.add(p);
             panelMap.put(cat, p);
@@ -101,47 +104,40 @@ public class ClickGUI extends Screen {
     @Override
     protected void init() {
         Map<Category, double[]> saved = ravex.manager.LayoutManager.INSTANCE.load();
-        float scale = getResponsiveScale();
-        double cx = this.width / 2.0;
-        double cy = this.height / 2.0;
 
-        int spacing = 2;
+        int spacing = 10;
         int panelW = 120;
         int numPanels = panels.size();
         float totalW = numPanels * panelW + (numPanels - 1) * spacing;
         float defaultStartX = (this.width - totalW) / 2;
-        int maxH = getMaxPanelHeight();
-        float defaultStartY = (this.height - maxH) / 2;
-        if (defaultStartY < 30) defaultStartY = 30;
+        float defaultStartY = 65;
 
         for (CategoryPanel panel : panels) {
+            int i = panel.getCategory().ordinal();
+            int px = (int) (defaultStartX + i * (panelW + spacing));
+            int py = (int) defaultStartY;
+
             double[] pos = saved.get(panel.getCategory());
             if (pos != null) {
                 double rx = pos[0];
                 double ry = pos[1];
                 if (rx <= 1.0 && ry <= 1.0) {
-                    int px = (int) (cx + (rx - 0.5) * this.width / scale);
-                    int py = (int) (cy + (ry - 0.5) * this.height / scale);
-                    panel.setX(px);
-                    panel.setY(py);
+                    px = (int) (this.width / 2.0 + (rx - 0.5) * this.width);
+                    py = (int) (this.height / 2.0 + (ry - 0.5) * this.height);
                 } else {
-                    // Compatibility with old absolute layouts
-                    int px = (int) rx;
-                    int py = (int) ry;
-                    if (px < 0 || px > this.width || py < 0 || py > this.height) {
-                        int i = panel.getCategory().ordinal();
-                        panel.setX((int) (defaultStartX + i * (panelW + spacing)));
-                        panel.setY((int) defaultStartY);
-                    } else {
-                        panel.setX(px);
-                        panel.setY(py);
-                    }
+                    px = (int) rx;
+                    py = (int) ry;
                 }
-            } else {
-                int i = panel.getCategory().ordinal();
-                panel.setX((int) (defaultStartX + i * (panelW + spacing)));
-                panel.setY((int) defaultStartY);
+                if (py > this.height - 200) {
+                    py = (int) defaultStartY;
+                }
             }
+            if (py < 30) py = 30;
+            px = Math.max(10, Math.min(this.width - panelW - 10, px));
+            py = Math.max(30, Math.min(this.height - 50, py));
+
+            panel.setX(px);
+            panel.setY(py);
         }
     }
 
@@ -160,26 +156,20 @@ public class ClickGUI extends Screen {
     }
 
     private float getResponsiveScale() {
-        int numPanels = panels.size();
-        if (numPanels == 0) return 1.0f;
-
-        float panelW = 120f;
-        float spacing = 2f;
-        float totalW = numPanels * panelW + (numPanels - 1) * spacing;
-        float totalH = (float) smoothedMaxH + 40f;
-
-        float marginX = 20f;
-        float marginY = 30f;
-        float availW = this.width - marginX * 2;
-        float availH = this.height - marginY * 2;
-
-        if (availW <= 0 || availH <= 0) return 0.5f;
-
-        float scaleW = availW / totalW;
-        float scaleH = availH / totalH;
-        float scale = Math.min(scaleW, scaleH);
-
-        return Math.max(0.4f, Math.min(1.0f, scale));
+        float target = ravex.modules.render.ClickGui.INSTANCE.guiScale.getValue().floatValue();
+        if (currentScale < 0) {
+            currentScale = target;
+        }
+        if (isDraggingSlider) {
+            // Freeze scale during dragging to prevent feedback loops and flickering
+        } else {
+            // Smoothly transition to the target scale when not dragging
+            currentScale += (target - currentScale) * 0.15f;
+            if (Math.abs(currentScale - target) < 0.001f) {
+                currentScale = target;
+            }
+        }
+        return currentScale;
     }
 
     private float getAdaptiveScale() {
@@ -203,7 +193,7 @@ public class ClickGUI extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         ModuleButton.tickAllGears();
         int targetMaxH = getMaxPanelHeight();
-        smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.15;
+        smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.35;
 
         // ── Background ──────────────────────────────────────────────────────────────
         boolean drawBg = ravex.modules.render.ClickGui.INSTANCE.drawBackground.getValue();
@@ -260,12 +250,12 @@ public class ClickGUI extends Screen {
         FontRenderUtility.drawString(graphics, tips, tipsX, tipsY - 1, 0xFF858599, true);
 
         // ── Bottom nav buttons ───────────────────────────────────────────────────
-        //    Macros  |  Profiles  |  Configs  |  GUI   — centered pill buttons
+        //    Macros  |  Profiles  |  Configs  |  GUI  |  Reset
         float btnScale = Math.max(0.65f, getResponsiveScale());
-        int mgW = (int)(50 * btnScale);
+        int mgW = (int)(44 * btnScale);
         int mgH = (int)(20 * btnScale);
-        int mgGap = (int)(6 * btnScale);
-        int totalBtnW = 4 * mgW + 3 * mgGap;
+        int mgGap = (int)(5 * btnScale);
+        int totalBtnW = 5 * mgW + 4 * mgGap;
         int mgX = (this.width - totalBtnW) / 2;
         int mgY = this.height - (int)(38 * btnScale);
 
@@ -273,14 +263,15 @@ public class ClickGUI extends Screen {
         profilesHovered    = mouseX >= mgX + mgW + mgGap && mouseX <= mgX + 2 * mgW + mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
         configsHovered     = mouseX >= mgX + 2 * (mgW + mgGap) && mouseX <= mgX + 3 * mgW + 2 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
         guiSettingsHovered = mouseX >= mgX + 3 * (mgW + mgGap) && mouseX <= mgX + 4 * mgW + 3 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+        resetLayoutHovered = mouseX >= mgX + 4 * (mgW + mgGap) && mouseX <= mgX + 5 * mgW + 4 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
 
         int activeColor = ColorUtility.getActiveColor();
 
-        int[] bxArr   = { mgX, mgX + mgW + mgGap, mgX + 2 * (mgW + mgGap), mgX + 3 * (mgW + mgGap) };
-        boolean[] hovArr = { macrosHovered, profilesHovered, configsHovered, guiSettingsHovered };
-        String[] labArr  = { "Macros", "Profiles", "Configs", "GUI" };
+        int[] bxArr   = { mgX, mgX + mgW + mgGap, mgX + 2 * (mgW + mgGap), mgX + 3 * (mgW + mgGap), mgX + 4 * (mgW + mgGap) };
+        boolean[] hovArr = { macrosHovered, profilesHovered, configsHovered, guiSettingsHovered, resetLayoutHovered };
+        String[] labArr  = { "Macros", "Profiles", "Configs", "GUI", "Reset" };
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             int bx  = bxArr[i];
             boolean h = hovArr[i];
             int bg  = h ? activeColor : 0xFF1C1C2C;
@@ -449,10 +440,10 @@ public class ClickGUI extends Screen {
 
         // Match layout computed in render()
         float btnScale = Math.max(0.65f, getResponsiveScale());
-        int mgW   = (int)(50 * btnScale);
+        int mgW   = (int)(44 * btnScale);
         int mgH   = (int)(20 * btnScale);
-        int mgGap = (int)(6 * btnScale);
-        int mgX   = (this.width - (4 * mgW + 3 * mgGap)) / 2;
+        int mgGap = (int)(5 * btnScale);
+        int mgX   = (this.width - (5 * mgW + 4 * mgGap)) / 2;
         int mgY   = this.height - (int)(38 * btnScale);
 
         if (event.x() >= mgX && event.x() <= mgX + mgW && event.y() >= mgY && event.y() <= mgY + mgH) {
@@ -469,6 +460,14 @@ public class ClickGUI extends Screen {
         }
         if (event.x() >= mgX + 3 * (mgW + mgGap) && event.x() <= mgX + 4 * mgW + 3 * mgGap && event.y() >= mgY && event.y() <= mgY + mgH) {
             this.minecraft.setScreen(new ModuleSettingsScreen(this, ravex.modules.render.ClickGui.INSTANCE));
+            return true;
+        }
+        if (event.x() >= mgX + 4 * (mgW + mgGap) && event.x() <= mgX + 5 * mgW + 4 * mgGap && event.y() >= mgY && event.y() <= mgY + mgH) {
+            // Reset layout positions
+            ravex.manager.LayoutManager.INSTANCE.reset();
+            // Reload positions
+            init();
+            ravex.utility.sound.SoundUtility.playGuiOpen();
             return true;
         }
 
@@ -620,19 +619,33 @@ public class ClickGUI extends Screen {
 
     @Override
     public void onClose() {
+        isDraggingSlider = false;
         ModuleButton.expandedModules.clear();
+        for (ravex.modules.Module m : ravex.modules.ModuleManager.INSTANCE.getModules()) {
+            m.setGearAngle(0f, System.currentTimeMillis());
+        }
         activeStringParameterElement = null;
         activeKeybindElement = null;
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
-            ravex.manager.LayoutManager.INSTANCE.save(panelMap, this.width, this.height, getResponsiveScale());
+            // Save with fixed scale 1.0 to avoid drift from animated smoothMaxH
+            ravex.manager.LayoutManager.INSTANCE.save(panelMap, this.width, this.height, 1.0f);
             ravex.utility.sound.SoundUtility.playGuiClose();
             ravex.manager.ConfigManager.INSTANCE.save("default");
             if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {
                 BlurUtility.disable();
             }
         }
+    }
+
+    @Override
+    public void removed() {
+        isDraggingSlider = false;
+        for (ravex.modules.Module m : ravex.modules.ModuleManager.INSTANCE.getModules()) {
+            m.setGearAngle(0f, System.currentTimeMillis());
+        }
+        super.removed();
     }
 
     // ─── Star particle system ────────────────────────────────────────────────────

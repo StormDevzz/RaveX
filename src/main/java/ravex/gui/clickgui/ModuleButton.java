@@ -18,7 +18,7 @@ import java.util.Set;
 public class ModuleButton {
     public static final Set<Module> expandedModules = new HashSet<>();
     private static long lastGearTick = System.currentTimeMillis();
-    private static final int MAX_INLINE_HEIGHT = 220;
+    private static final int MAX_INLINE_HEIGHT = 500;
 
     private int inlineScrollTarget = 0;
     private float inlineScrollAnim = 0f;
@@ -49,20 +49,19 @@ public class ModuleButton {
         }
     }
 
-    public boolean isExpanded() { return expanded; }
+    public boolean isExpanded() { return expanded || expandAnim > 0.001f; }
 
     public int getExpandedHeight(int panelWidth) {
-        if (!expanded) return 0;
         int h = 0;
         for (ParameterElement pe : parameterElements) {
             if (pe.getParameter().isVisible() || pe.getExpandAnimProgress() > 0.001f) {
                 h += pe.getHeight();
             }
         }
-        return Math.min(h, MAX_INLINE_HEIGHT) + 4;
+        return (int) ((Math.min(h, MAX_INLINE_HEIGHT) + 4) * expandAnim);
     }
 
-    public void onInlineScroll(double amount) {
+    public boolean onInlineScroll(double amount) {
         int fullH = 0;
         for (ParameterElement pe : parameterElements) {
             if (pe.getParameter().isVisible() || pe.getExpandAnimProgress() > 0.001f) {
@@ -70,7 +69,11 @@ public class ModuleButton {
             }
         }
         int maxScroll = Math.max(0, fullH - MAX_INLINE_HEIGHT);
-        inlineScrollTarget = Math.max(0, Math.min(maxScroll, inlineScrollTarget - (int)amount * 20));
+        if (maxScroll <= 0) return false;
+
+        int prevTarget = inlineScrollTarget;
+        inlineScrollTarget = Math.max(0, Math.min(maxScroll, inlineScrollTarget - (int)amount * 12));
+        return inlineScrollTarget != prevTarget;
     }
 
     public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut) {
@@ -91,23 +94,28 @@ public class ModuleButton {
 
         float targetAnim = module.getEnabled() ? 1.0f : 0.0f;
         if (enableAnim < targetAnim) {
-            enableAnim = Math.min(targetAnim, enableAnim + 0.06f);
+            enableAnim = Math.min(targetAnim, enableAnim + 0.30f);
         } else if (enableAnim > targetAnim) {
-            enableAnim = Math.max(targetAnim, enableAnim - 0.10f);
+            enableAnim = Math.max(targetAnim, enableAnim - 0.35f);
         }
 
         int activeColor = ColorUtility.getActiveColor();
         int disabledBg = 0xFF0D0D14;
 
+        // Draw base inactive background
+        graphics.fill(x, currentY, x + width, currentY + btnH, disabledBg);
+
+        // Slide fill animation from left to right
         if (enableAnim > 0.001f) {
-            int bg = lerpColor(disabledBg, activeColor, enableAnim);
-            graphics.fill(x, currentY, x + width, currentY + btnH, bg);
-            if (hoverProgress > 0.01f) {
-                int alpha = (int)(hoverProgress * 0x15);
-                graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, alpha));
+            int fillW = (int) (width * enableAnim);
+            if (fillW > 0) {
+                graphics.fill(x, currentY, x + fillW, currentY + btnH, activeColor);
             }
-        } else if (hoverProgress > 0.01f) {
-            int alpha = (int)(hoverProgress * 0x22);
+        }
+
+        // Hover highlight overlay
+        if (hoverProgress > 0.01f) {
+            int alpha = (int) (hoverProgress * 0x1A);
             graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, alpha));
         }
 
@@ -197,10 +205,9 @@ public class ModuleButton {
                         paramAreaH += pe.getHeight();
                     }
                 }
-                int cappedH = Math.min(paramAreaH, MAX_INLINE_HEIGHT);
-                int displayH = (int)(cappedH * expandAnim);
+                int actualH = getExpandedHeight(width);
                 int bgCol = 0xFF0A0A14;
-                graphics.fill(x + 1, currentY, x + width - 1, currentY + displayH + 4, bgCol);
+                graphics.fill(x + 1, currentY, x + width - 1, currentY + actualH, bgCol);
 
                 if (ClickGui.INSTANCE.smoothScroll.getValue()) {
                     float lerp = ClickGui.INSTANCE.scrollSmoothness.getValue().floatValue() / 100f;
@@ -211,8 +218,8 @@ public class ModuleButton {
                 int scrollOffset = Math.round(inlineScrollAnim);
                 int pY = currentY + 2 - scrollOffset;
                 int visTop = currentY + 2;
-                int visBot = currentY + 2 + displayH;
-                graphics.enableScissor(x + 1, currentY, x + width - 1, currentY + displayH + 4);
+                int visBot = currentY + actualH - 2;
+                graphics.enableScissor(x + 1, currentY, x + width - 1, currentY + actualH);
                 for (ParameterElement pe : parameterElements) {
                     if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
                     int pHeight = pe.getHeight();
@@ -227,15 +234,27 @@ public class ModuleButton {
                 }
 
                 int maxScroll = Math.max(0, paramAreaH - MAX_INLINE_HEIGHT);
-                if (inlineScrollTarget > 0) {
+                // Draw gradient indicators
+                if (inlineScrollAnim > 0.5f) {
                     graphics.fillGradient(x + 1, currentY, x + width - 1, currentY + 12, bgCol, 0x000A0A14);
                 }
-                if (inlineScrollTarget < maxScroll) {
-                    graphics.fillGradient(x + 1, currentY + displayH + 4 - 12, x + width - 1, currentY + displayH + 4, 0x000A0A14, bgCol);
+                if (inlineScrollAnim < maxScroll - 0.5f) {
+                    graphics.fillGradient(x + 1, currentY + actualH - 12, x + width - 1, currentY + actualH, 0x000A0A14, bgCol);
+                }
+                // Draw scrollbar
+                if (maxScroll > 0) {
+                    int sbX = x + width - 4;
+                    int sbY = currentY + 2;
+                    int sbH = actualH - 4;
+                    float ratio = sbH / (float) paramAreaH;
+                    int thumbH = Math.max(8, (int) (sbH * ratio));
+                    int thumbY = sbY + (int) ((sbH - thumbH) * (inlineScrollAnim / maxScroll));
+                    graphics.fill(sbX, sbY, sbX + 2, sbY + sbH, 0x1515152A);
+                    graphics.fill(sbX, thumbY, sbX + 2, thumbY + thumbH, ColorUtility.withAlpha(0xFFFFFFFF, 60));
                 }
 
                 graphics.disableScissor();
-                currentY += displayH + 4;
+                currentY += actualH;
             }
         } else {
             expandAnim = Math.max(0.0f, expandAnim - 0.10f);
@@ -311,8 +330,11 @@ public class ModuleButton {
                         if (expanded) {
                             expandedModules.add(module);
                             inlineScrollTarget = 0;
+                            ravex.utility.sound.SoundUtility.playSettingsOpen();
                         } else {
                             expandedModules.remove(module);
+                            module.setGearAngle(0f, System.currentTimeMillis());
+                            ravex.utility.sound.SoundUtility.playSettingsClose();
                         }
                     }
                 } else if (button == 2) {

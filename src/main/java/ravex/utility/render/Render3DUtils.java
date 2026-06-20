@@ -1,6 +1,7 @@
 package ravex.utility.render;
 
 import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
@@ -23,23 +24,27 @@ public class Render3DUtils {
     private static final ByteBufferBuilder FILL_NODEPTH_ALLOCATOR = new ByteBufferBuilder(256 * 1024);
     private static final ByteBufferBuilder LINE_ALLOCATOR = new ByteBufferBuilder(256 * 1024);
     private static final ByteBufferBuilder LINE_NODEPTH_ALLOCATOR = new ByteBufferBuilder(256 * 1024);
+    private static final ByteBufferBuilder LINE_ADDITIVE_ALLOCATOR = new ByteBufferBuilder(512 * 1024);
 
     private static final RenderType FILL_TYPE = RenderTypes.debugFilledBox();
     private static final RenderType LINE_TYPE = RenderTypes.lines();
 
     private static final RenderType FILL_NO_DEPTH;
     private static final RenderType LINE_NO_DEPTH;
+    private static final RenderType LINE_ADDITIVE;
 
     static {
-        RenderType f = null, l = null;
+        RenderType f = null, l = null, la = null;
         try {
             f = buildNoDepthType(RenderPipelines.DEBUG_FILLED_BOX, "ravex_fill_nodepth");
             l = buildNoDepthType(RenderPipelines.LINES, "ravex_line_nodepth");
+            la = buildAdditiveType(RenderPipelines.LINES, "ravex_line_additive");
         } catch (Exception e) {
-            // through-walls unavailable
+            // through-walls/additive unavailable
         }
         FILL_NO_DEPTH = f;
         LINE_NO_DEPTH = l;
+        LINE_ADDITIVE = la;
     }
 
     private static boolean hasNoDepth() {
@@ -47,14 +52,25 @@ public class Render3DUtils {
     }
 
     private static RenderType buildNoDepthType(RenderPipeline source, String name) {
+        return cloneWithOverride(source, name,
+            b -> b.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false));
+    }
+
+    private static RenderType buildAdditiveType(RenderPipeline source, String name) {
+        return cloneWithOverride(source, name,
+            b -> b.withBlend(BlendFunction.ADDITIVE));
+    }
+
+    private static RenderType cloneWithOverride(RenderPipeline source, String name,
+                                                  java.util.function.Consumer<RenderPipeline.Builder> overrider) {
         Identifier id = Identifier.withDefaultNamespace(name);
         RenderPipeline.Builder builder = RenderPipeline.builder()
             .withLocation(id)
             .withVertexShader(source.getVertexShader())
             .withFragmentShader(source.getFragmentShader())
             .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
-            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-            .withDepthWrite(false)
+            .withDepthTestFunction(source.getDepthTestFunction())
+            .withDepthWrite(source.isWriteDepth())
             .withCull(source.isCull())
             .withDepthBias(source.getDepthBiasScaleFactor(), source.getDepthBiasConstant())
             .withPolygonMode(source.getPolygonMode())
@@ -73,6 +89,8 @@ public class Render3DUtils {
             builder.withUniform(u.name(), u.type());
         }
 
+        overrider.accept(builder);
+
         RenderPipeline newPipe = builder.build();
         RenderSetup setup = RenderSetup.builder(newPipe).createRenderSetup();
         return AccessorRenderType.invokeCreate(name, setup);
@@ -86,11 +104,13 @@ public class Render3DUtils {
     private static BufferBuilder fillNoDepthBuilder;
     private static BufferBuilder lineBuilder;
     private static BufferBuilder lineNoDepthBuilder;
+    private static BufferBuilder lineAdditiveBuilder;
 
     private static boolean fillUsed = false;
     private static boolean fillNoDepthUsed = false;
     private static boolean lineUsed = false;
     private static boolean lineNoDepthUsed = false;
+    private static boolean lineAdditiveUsed = false;
 
     public static void beginFrame() {
         FILL_ALLOCATOR.clear();
@@ -105,7 +125,11 @@ public class Render3DUtils {
             LINE_NODEPTH_ALLOCATOR.clear();
             lineNoDepthBuilder = new BufferBuilder(LINE_NODEPTH_ALLOCATOR, LINE_NO_DEPTH.mode(), LINE_NO_DEPTH.format());
         }
-        fillUsed = fillNoDepthUsed = lineUsed = lineNoDepthUsed = false;
+        if (LINE_ADDITIVE != null) {
+            LINE_ADDITIVE_ALLOCATOR.clear();
+            lineAdditiveBuilder = new BufferBuilder(LINE_ADDITIVE_ALLOCATOR, LINE_ADDITIVE.mode(), LINE_ADDITIVE.format());
+        }
+        fillUsed = fillNoDepthUsed = lineUsed = lineNoDepthUsed = lineAdditiveUsed = false;
     }
 
     public static void endFrame() {
@@ -129,6 +153,11 @@ public class Render3DUtils {
             LINE_NO_DEPTH.draw(mesh);
         }
         lineNoDepthBuilder = null;
+        if (lineAdditiveBuilder != null && lineAdditiveUsed) {
+            MeshData mesh = lineAdditiveBuilder.buildOrThrow();
+            LINE_ADDITIVE.draw(mesh);
+        }
+        lineAdditiveBuilder = null;
     }
 
     // -------------------------------------------------------------------------
@@ -232,6 +261,23 @@ public class Render3DUtils {
             org.joml.Vector3f p1 = points.get(i - 1);
             org.joml.Vector3f p2 = points.get(i);
             BlockRenderer.renderLine3D(lineBuilder, matrix,
+                p1.x, p1.y, p1.z,
+                p2.x, p2.y, p2.z,
+                ir, ig, ib, ia, lineWidth);
+        }
+    }
+
+    public static void batchLineAdditive(Matrix4f matrix, List<org.joml.Vector3f> points, float r, float g, float b, float a, float lineWidth) {
+        if (points.size() < 2 || lineAdditiveBuilder == null) return;
+        lineAdditiveUsed = true;
+        int ir = (int)(r * 255);
+        int ig = (int)(g * 255);
+        int ib = (int)(b * 255);
+        int ia = (int)(a * 255);
+        for (int i = 1; i < points.size(); i++) {
+            org.joml.Vector3f p1 = points.get(i - 1);
+            org.joml.Vector3f p2 = points.get(i);
+            BlockRenderer.renderLine3D(lineAdditiveBuilder, matrix,
                 p1.x, p1.y, p1.z,
                 p2.x, p2.y, p2.z,
                 ir, ig, ib, ia, lineWidth);

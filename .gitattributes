@@ -5,4 +5,5 @@ gradlew linguist-language=Shell
 gradlew.bat linguist-language=Batchfile
 *.bat linguist-language=Batchfile
 *.gradle linguist-language=Groovy
+*.h linguist-language=C++
 build-native/ linguist-vendored

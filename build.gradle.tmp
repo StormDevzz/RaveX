@@ -1,0 +1,109 @@
+plugins {
+    alias(libs.plugins.fabric.loom)
+}
+
+base {
+    archivesName = property("archives_name")
+}
+
+def getGitHash = { ->
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+            standardOutput = stdout
+        }
+        return stdout.toString().trim()
+    } catch (Exception e) {
+        return "dev"
+    }
+}
+
+version = property("mod_version")
+group = property("maven_group")
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft(libs.minecraft)
+    mappings(loom.officialMojangMappings())
+    modImplementation(libs.fabric.loader)
+
+    implementation(libs.discord.ipc)
+    include(libs.discord.ipc)
+    implementation("org.luaj:luaj-jse:3.0.1")
+    include("org.luaj:luaj-jse:3.0.1")
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/ravex.accesswidener")
+
+    mixin {
+        defaultRefmapName = "ravex.refmap.json"
+    }
+
+    runs {
+        client {
+            client()
+            configName = "Client"
+            ideConfigGenerated(true)
+            vmArgs(
+                "-Xmx512M",
+                "-Xms512M",
+                "-XX:+UseG1GC",
+                "-XX:MaxGCPauseMillis=20",
+                "-XX:InitiatingHeapOccupancyPercent=45",
+                "-XX:G1ReservePercent=15",
+                "-XX:ReservedCodeCacheSize=256M",
+                "-XX:MaxMetaspaceSize=256M",
+                "-XX:CICompilerCount=2",
+                "-XX:CompressedClassSpaceSize=128M",
+                "-XX:MaxDirectMemorySize=512M"
+            )
+
+        }
+    }
+}
+
+task runLoader(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'ravex.loader.RaveXLoader'
+    workingDir = rootProject.projectDir
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude("assets/ravex/natives/**")
+    exclude("assets/ravex/companion/textures/**")
+    manifest {
+        attributes(
+            'Main-Class': 'ravex.loader.RaveXLoader'
+        )
+    }
+}
+def mcVersion = property("minecraft_version")
+def loaderVersion = property("loader_version")
+
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    inputs.properties([
+        "version"          : version,
+        "minecraft_version": mcVersion,
+        "loader_version"   : loaderVersion
+    ])
+
+    filesMatching("fabric.mod.json") {
+        expand([
+            "version"          : version,
+            "minecraft_version": mcVersion,
+            "loader_version"   : loaderVersion
+        ])
+    }
+
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+}
