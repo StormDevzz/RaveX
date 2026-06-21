@@ -227,6 +227,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("LiquidCollision", "Bypass fucking liquids.");
         DESCRIPTIONS.put("TntAura", "Bombs fucking targets.");
         DESCRIPTIONS.put("WitherRoseAura", "Places roses.");
+        DESCRIPTIONS.put("GridBuilder", "Builds 5x5 grid patterns on right-click.");
     }
 
     public static String getDescription(String moduleName) {
