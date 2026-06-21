@@ -1,17 +1,26 @@
 package ravex.modules.combat;
 
-import ravex.modules.Category;
-import ravex.modules.Module;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
+import ravex.modules.Category;
+import ravex.modules.Module;
+import ravex.parameter.BooleanParameter;
+import ravex.parameter.ModeParameter;
+import java.util.List;
 
 public class AutoWeapon extends Module {
     public static final AutoWeapon INSTANCE = new AutoWeapon();
 
+    public final ModeParameter swapMode = new ModeParameter("Swap Mode", "Normal",
+            List.of("Normal", "Silent", "None"));
+    public final BooleanParameter swordsOnly = new BooleanParameter("Swords Only", false);
+
     private AutoWeapon() {
         super("AutoWeapon", Category.COMBAT);
+        addParameter(swapMode);
+        addParameter(swordsOnly);
     }
 
     @Override
@@ -19,7 +28,8 @@ public class AutoWeapon extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        // Если зажата кнопка атаки и мы смотрим на живую сущность
+        if (swapMode.getValue().equals("None")) return;
+
         if (mc.options.keyAttack.isDown() && mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof LivingEntity target) {
             if (!target.isAlive() || target == mc.player) return;
 
@@ -28,6 +38,7 @@ public class AutoWeapon extends Module {
 
             for (int i = 0; i < 9; i++) {
                 ItemStack stack = mc.player.getInventory().getItem(i);
+                if (swordsOnly.getValue() && !isSword(stack.getItem())) continue;
                 double dmg = getWeaponDamage(stack);
                 if (dmg > bestDmg) {
                     bestDmg = dmg;
@@ -36,9 +47,22 @@ public class AutoWeapon extends Module {
             }
 
             if (bestSlot != -1 && bestSlot != mc.player.getInventory().getSelectedSlot() && bestDmg > 1.0) {
-                mc.player.getInventory().setSelectedSlot(bestSlot);
+                if (swapMode.getValue().equals("Silent")) {
+                    mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(bestSlot));
+                } else {
+                    mc.player.getInventory().setSelectedSlot(bestSlot);
+                }
             }
         }
+    }
+
+    private boolean isSword(net.minecraft.world.item.Item item) {
+        return item == net.minecraft.world.item.Items.WOODEN_SWORD ||
+               item == net.minecraft.world.item.Items.STONE_SWORD ||
+               item == net.minecraft.world.item.Items.IRON_SWORD ||
+               item == net.minecraft.world.item.Items.GOLDEN_SWORD ||
+               item == net.minecraft.world.item.Items.DIAMOND_SWORD ||
+               item == net.minecraft.world.item.Items.NETHERITE_SWORD;
     }
 
     private double getWeaponDamage(ItemStack stack) {
