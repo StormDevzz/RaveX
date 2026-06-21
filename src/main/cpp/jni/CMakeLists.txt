@@ -10,9 +10,12 @@ target_link_libraries(ravex_jni PRIVATE
     ravex_optimize
     ravex_manager
     ravex_github_tools
-    ravex_lua
     ${JNI_LIBRARIES}
 )
+
+if(TARGET ravex_lua)
+    target_link_libraries(ravex_jni PRIVATE ravex_lua)
+endif()
 
 target_include_directories(ravex_jni PRIVATE
     ${JNI_INCLUDE_DIRS}

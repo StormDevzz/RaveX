@@ -188,10 +188,20 @@ jobs:
             "Compare: $COMPARE_URL" \
             "Logs: https://github.com/$REPO/actions/runs/$RUN_ID")
 
-          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+          echo "Sending payload to Telegram..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${CHAT_ID}" \
             --data-urlencode "text=${TEXT}" \
-            -d "disable_web_page_preview=true" > /dev/null
+            -d "disable_web_page_preview=true")
+          HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\r' | tail -n 1 | cut -d':' -f2)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "Telegram API Response Body:"
+          echo "$BODY"
+          echo "HTTP Status Code: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "Error: Telegram API rejected the request with status code $HTTP_STATUS"
+            exit 1
+          fi
 
       # Step 7: Send Git push notification + Compilation + Release results to Discord (ALWAYS RUNS ON PUSH)
       - name: Send Push & CI/CD Notification to Discord
@@ -382,10 +392,20 @@ jobs:
             "Title: $ISSUE_TITLE" \
             "$ISSUE_URL")
 
-          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+          echo "Sending payload to Telegram..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${CHAT_ID}" \
             --data-urlencode "text=${TEXT}" \
-            -d "disable_web_page_preview=true" > /dev/null
+            -d "disable_web_page_preview=true")
+          HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\r' | tail -n 1 | cut -d':' -f2)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "Telegram API Response Body:"
+          echo "$BODY"
+          echo "HTTP Status Code: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "Error: Telegram API rejected the request with status code $HTTP_STATUS"
+            exit 1
+          fi
 
       - name: Send Issue Discord Embed
         env:
