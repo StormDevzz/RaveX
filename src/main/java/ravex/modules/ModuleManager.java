@@ -131,6 +131,7 @@ import ravex.modules.player.Xray;
 import ravex.modules.player.Replenish;
 import ravex.modules.player.NoSwing;
 import ravex.modules.player.Swing;
+import ravex.modules.player.GridBuilder;
 import ravex.modules.combat.Surround;
 import ravex.modules.combat.WindAura;
 import ravex.modules.combat.Trap;
@@ -276,6 +277,7 @@ public class ModuleManager {
         clickGuiModules.add(NoSwing.INSTANCE);
         clickGuiModules.add(Swing.INSTANCE);
         clickGuiModules.add(ravex.modules.player.AutoReGear.AutoReGear.INSTANCE);
+        clickGuiModules.add(GridBuilder.INSTANCE);
 
         // ── Movement ────────────────────────────────────────────────────────────
         clickGuiModules.add(GuiWalk.INSTANCE);
