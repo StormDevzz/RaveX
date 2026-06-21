@@ -12,6 +12,7 @@ endif()
 
 set_target_properties(ravex_optimize PROPERTIES
     OUTPUT_NAME "ravex_optimize"
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 
 if(WIN32)

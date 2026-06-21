@@ -6,6 +6,7 @@ target_include_directories(ravex_manager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 set_target_properties(ravex_manager PROPERTIES
     OUTPUT_NAME "ravex_manager"
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 
 if(WIN32)
