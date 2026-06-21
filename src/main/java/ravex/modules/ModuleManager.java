@@ -81,7 +81,8 @@ import ravex.modules.combat.Reach;
 import ravex.modules.movement.NoPush;
 import ravex.modules.movement.AutoSprint;
 import ravex.modules.movement.Spider;
-import ravex.modules.movement.KeepSprint;
+import ravex.modules.combat.KeepSprint;
+import ravex.modules.combat.ShieldFucker;
 import ravex.modules.movement.SafeWalk;
 import ravex.modules.player.FastBreak;
 import ravex.modules.player.InstaBreak;
@@ -208,6 +209,8 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.combat.AntiReGear.INSTANCE);
         clickGuiModules.add(TntAura.INSTANCE);
         clickGuiModules.add(WitherRoseAura.INSTANCE);
+        clickGuiModules.add(KeepSprint.INSTANCE);
+        clickGuiModules.add(ShieldFucker.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ESP.INSTANCE);
@@ -296,7 +299,6 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.movement.Avoid.INSTANCE);
         clickGuiModules.add(ravex.modules.movement.ExtraRocket.INSTANCE);
         clickGuiModules.add(ravex.modules.movement.ExtraRiding.INSTANCE);
-        clickGuiModules.add(KeepSprint.INSTANCE);
         clickGuiModules.add(SafeWalk.INSTANCE);
         clickGuiModules.add(HighJump.INSTANCE);
         clickGuiModules.add(FastStairs.INSTANCE);

@@ -153,6 +153,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("AutoAuth", "Auto /register and /login.");
         DESCRIPTIONS.put("SafeWalk", "Prevents falling off edges.");
         DESCRIPTIONS.put("AutoTame", "Auto tame wolves, cats, llamas.");
+        DESCRIPTIONS.put("ShieldFucker", "Fucks shielded opponents.");
         DESCRIPTIONS.put("KillEffects", "Visual effects on entity death.");
         DESCRIPTIONS.put("AntiQuit", "Blocks game or server exit.");
         DESCRIPTIONS.put("CustomDeathText", "Custom death message.");
