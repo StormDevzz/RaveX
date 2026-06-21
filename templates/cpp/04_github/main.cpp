@@ -118,13 +118,13 @@ void exampleReleaseChecker() {
 
     checker.setLogCallback(onLog);
 
-    // RU: Проверяем обновления относительно текущей версии "1.4.1".
+    // RU: Проверяем обновления относительно текущей версии "1.4.2".
     //     info содержит результат: есть ли обновление, какая версия,
     //     какие ассеты доступны.
-    // EN: Check for updates relative to current version "1.4.1".
+    // EN: Check for updates relative to current version "1.4.2".
     //     info contains the result: whether an update is available,
     //     what version, what assets are available.
-    auto info = checker.checkForUpdates("1.4.1");
+    auto info = checker.checkForUpdates("1.4.2");
 
     if (info.error) {
         std::cerr << "  Error: " << info.errorMessage << std::endl;
@@ -188,7 +188,7 @@ void exampleReleaseManager() {
     ravex::github::GithubConfig cfg;
     cfg.owner          = "StormDevzz";
     cfg.repo           = "RaveX";
-    cfg.currentVersion = "1.4.1";
+    cfg.currentVersion = "1.4.2";
     cfg.channel        = ravex::github::ReleaseChannel::Stable;
     cfg.verifyChecksums = true;
 

@@ -15,6 +15,10 @@
 #include <AddonConfig.h>
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
+#ifdef __linux__
+#include <dirent.h>
+#endif
 #include <fstream>
 #include <sstream>
 #include <system_error>
