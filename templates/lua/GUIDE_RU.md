@@ -95,7 +95,7 @@ function getName()
 end
 
 function getVersion()
-    return "1.4.1"
+    return "1.4.2"
 end
 
 function onLoad(ctx)
@@ -111,7 +111,7 @@ end
 
 1. RaveX загружает `main.lua` из `addons/lua/MyFirstAddon/`
 2. Вызывает `getName()` → "MyFirstAddon"
-3. Вызывает `getVersion()` → "1.4.1"
+3. Вызывает `getVersion()` → "1.4.2"
 4. Вызывает `onLoad(ctx)` → логирует "Привет из Lua!"
 5. Аддон запущен
 
@@ -130,7 +130,7 @@ end
 local enabled = configGet("enabled", "false")
 
 -- Записать значение
-configSet("last_loaded", "MyAddon v1.4.1")
+configSet("last_loaded", "MyAddon v1.4.2")
 ```
 
 Значения конфига сохраняются между сессиями игры.

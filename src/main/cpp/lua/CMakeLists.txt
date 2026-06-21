@@ -65,7 +65,7 @@ set_target_properties(ravex_lua PROPERTIES
     CXX_STANDARD_REQUIRED ON
     POSITION_INDEPENDENT_CODE ON
     OUTPUT_NAME "ravex_lua"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 
 if(WIN32)

@@ -637,9 +637,9 @@ public class MixinLevelRenderer {
         }
 
         // --- ECFarmer highlight ---
-        ravex.modules.world.ECFarmer ec = ravex.modules.world.ECFarmer.INSTANCE;
-        if (ec.getEnabled() && ec.render.getValue() && ravex.modules.world.ECFarmer.currentTarget != null) {
-            BlockPos p = ravex.modules.world.ECFarmer.currentTarget;
+        ravex.modules.player.ECFarmer ec = ravex.modules.player.ECFarmer.INSTANCE;
+        if (ec.getEnabled() && ec.render.getValue() && ravex.modules.player.ECFarmer.currentTarget != null) {
+            BlockPos p = ravex.modules.player.ECFarmer.currentTarget;
             try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = ec.color.getValue();
