@@ -99,7 +99,7 @@ int LuaContext::lua_getPlatform(lua_State* L) {
 }
 
 int LuaContext::lua_getApiVersion(lua_State* L) {
-    lua_pushstring(L, "1.4.1");
+    lua_pushstring(L, "1.4.2");
     return 1;
 }
 

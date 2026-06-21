@@ -28,7 +28,7 @@ function getName()
 end
 
 function getVersion()
-    return "1.4.1"
+    return "1.4.2"
 end
 
 function getAuthor()
@@ -53,7 +53,7 @@ function onLoad(ctx)
 
     -- RU: Записываем в конфиг (сохраняется автоматически).
     -- EN: Write to config (saved automatically).
-    configSet("last_loaded", "FeatureLuaAddon v1.4.1")
+    configSet("last_loaded", "FeatureLuaAddon v1.4.2")
 
     -- RU: Регистрируем модуль, который появится в GUI.
     -- EN: Register a module that will appear in the GUI.

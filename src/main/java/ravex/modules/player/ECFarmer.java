@@ -1,4 +1,4 @@
-package ravex.modules.world;
+package ravex.modules.player;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -50,7 +50,7 @@ public class ECFarmer extends Module {
     }
 
     private ECFarmer() {
-        super("ECFarmer", Category.WORLD);
+        super("ECFarmer", Category.PLAYER);
         addParameter(range);
         addParameter(swapMode);
         addParameter(render);
