@@ -7,6 +7,7 @@ add_library(ravex_ecfarmer SHARED
     ecfarmer_place.cpp
     ecfarmer_scan.cpp
     ecfarmer_rotation.cpp
+    ecfarmer_util.cpp
 )
 
 find_package(JNI REQUIRED)
