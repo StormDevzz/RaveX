@@ -1,17 +1,24 @@
 cmake_minimum_required(VERSION 3.16)
-project(ravex-native VERSION 1.0.0 LANGUAGES CXX)
+project(ravex-native VERSION 1.4.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(WIN32)
-    add_link_options(-static -static-libgcc -static-libstdc++)
+    if(MSVC)
+        # MSVC: статическая линковка CRT
+        add_link_options(/MT)
+    else()
+        # MinGW/GCC: статическая линковка
+        add_link_options(-static -static-libgcc -static-libstdc++)
+    endif()
 endif()
 
 find_package(JNI REQUIRED)
 
 add_subdirectory(common)
+add_subdirectory(lua)
 add_subdirectory(antiafk)
 add_subdirectory(hooks/shaders)
 add_subdirectory(hooks/norender)
@@ -25,7 +32,6 @@ add_subdirectory(hooks/fakepearl)
 add_subdirectory(hooks/selftrap)
 add_subdirectory(hooks/baseplace)
 add_subdirectory(hooks/anchoraura)
-add_subdirectory(hooks/desktopgui)
 add_subdirectory(hooks/breaker)
 add_subdirectory(hooks/bowaim)
 add_subdirectory(hooks/quiver)
@@ -60,16 +66,17 @@ add_subdirectory(hooks/antiregear)
 add_subdirectory(hooks/tntaura)
 add_subdirectory(hooks/witherroseaura)
 add_subdirectory(hooks/elytraplusplus)
+add_subdirectory(hooks/desktopgui)
+add_subdirectory(hooks/calculator)
+add_subdirectory(hooks/antipearl)
+add_subdirectory(hooks/bedbomb)
+add_subdirectory(hooks/ecfarmer)
+add_subdirectory(hooks/noghostblocks)
+add_subdirectory(hooks/portalbuild)
 add_subdirectory(addon)
+add_subdirectory(loader)
 add_subdirectory(plugins/optimize)
 add_subdirectory(plugins/manager)
+add_subdirectory(plugins/github)
+add_subdirectory(plugins/render)
 add_subdirectory(launcher)
-
-
-
-
-
-
-
-
-

@@ -14,7 +14,7 @@ RaveX — клиентский мод для Minecraft от организаци
 |---|---|
 | **Java** | Основная логика мода — ClickGUI, модули, миксины, рендеринг |
 | **C++** | Нативный код для производительных операций: оптимизатор, анти-AFK, хуки шейдеров, JNI-мост |
-| **Lua** | Скриптинг — rich presence, взаимодействие с Discord, кастомные модули |
+| **Lua** | Скриптинг — rich presence, взаимодействие с Discord, кастомные модули и Lua-аддоны |
 | **Makefile** | Генерируется CMake для сборки C++ компонентов (native-библиотеки) |
 
 ### Сборка
@@ -28,15 +28,16 @@ RaveX — клиентский мод для Minecraft от организаци
 
 ### Установка
 
-1. Установите Fabric Loader
-2. Поместите JAR в папку `mods`
-3. Запустите игру
+1. Установи Fabric Loader
+2. Помести JAR в папку `mods`
+3. Запусти игру
 
 ### Аддоны
 
-Вы можете создавать собственные Java и C++ дополнения для RaveX. Подробные руководства по созданию, сборке и установке аддонов доступны в соответствующих папках шаблонов:
-* [Руководство по Java-аддонам](templates/java/README_RU.md) (English version: [Java Addons Guide](templates/java/README.md))
-* [Руководство по C++ нативным аддонам](templates/cpp/README_RU.md) (English version: [C++ Addons Guide](templates/cpp/README.md))
+Ты можешь создавать собственные Java, C++ и Lua дополнения для RaveX. Подробные руководства по созданию, сборке и установке аддонов доступны в соответствующих папках шаблонов:
+* [Руководство по Java-аддонам](templates/java/GUIDE_RU.md) (English version: [Java Addons Guide](templates/java/GUIDE.md))
+* [Руководство по C++ нативным аддонам](templates/cpp/GUIDE_RU.md) (English version: [C++ Addons Guide](templates/cpp/GUIDE.md))
+* [Руководство по Lua-аддонам](templates/lua/GUIDE_RU.md) (English version: [Lua Addons Guide](templates/lua/GUIDE.md))
 
 ### Лицензия
 

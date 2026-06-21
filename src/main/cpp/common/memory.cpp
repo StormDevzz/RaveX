@@ -10,8 +10,10 @@
 #include <cerrno>
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
+#pragma comment(lib, "psapi.lib")
 #else
 #include <unistd.h>
 #include <sys/resource.h>

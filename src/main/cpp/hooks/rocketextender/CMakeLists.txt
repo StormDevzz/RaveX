@@ -24,14 +24,23 @@ set_property(TARGET ravex_rocketextender PROPERTY CXX_STANDARD 23)
 set_property(TARGET ravex_rocketextender PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(ravex_rocketextender PRIVATE -O3 -march=native -ffast-math)
+    if(MSVC)
+        target_compile_options(ravex_rocketextender PRIVATE /O2 /fp:fast)
+    else()
+        target_compile_options(ravex_rocketextender PRIVATE -O3 -march=native -ffast-math)
+    endif()
 endif()
 
 set_target_properties(ravex_rocketextender PROPERTIES
     OUTPUT_NAME "ravex_rocketextender"
-    PREFIX "lib"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
 )
+
+if(WIN32)
+    set_target_properties(ravex_rocketextender PROPERTIES PREFIX "")
+else()
+    set_target_properties(ravex_rocketextender PROPERTIES PREFIX "lib")
+endif()
 
 if(WIN32)
     set_target_properties(ravex_rocketextender PROPERTIES SUFFIX ".dll")

@@ -9,6 +9,9 @@
 #include <malloc.h>
 #include <sched.h>
 #include <sys/mman.h>
+#else
+#include <windows.h>
+#include <malloc.h>
 #endif
 
 namespace ravex {
@@ -37,7 +40,13 @@ OptResult Optimizer::run(const std::string& mode) {
 }
 
 void Optimizer::vacuumGlibc() {
-#ifndef _WIN32
+#ifdef _WIN32
+    for (int i = 0; i < 5; i++) {
+        _heapmin();
+        SetProcessWorkingSetSize(GetCurrentProcess(), (SIZE_T)-1, (SIZE_T)-1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+#else
     for (int i = 0; i < 5; i++) {
         malloc_trim(0);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -129,7 +138,9 @@ OptResult Optimizer::normal() {
     actions++;
 
     for (int i = 0; i < 3; i++) {
-#ifndef _WIN32
+#ifdef _WIN32
+        _heapmin();
+#else
         malloc_trim(0);
 #endif
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -150,7 +161,9 @@ OptResult Optimizer::soft() {
     double usedPct = 100.0 * (1.0 - (double)before.free_kb / (double)before.total_kb);
 
     if (usedPct > 65.0) {
-#ifndef _WIN32
+#ifdef _WIN32
+        _heapmin();
+#else
         malloc_trim(0);
 #endif
         Memory::setOOMScoreAdj(-200);

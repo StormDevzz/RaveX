@@ -1,50 +1,55 @@
-# RaveX C++ Native Addon Build & Installation Guide
+# RaveX C++ Native Addon Templates
 
-This directory contains a template C++ native addon for RaveX, showing how to register modules and use client APIs from C++.
+Cross-platform native addon templates for RaveX (Windows + Linux).
 
-Addons are designed to work **only in conjunction with RaveX**. Without the RaveX client installed, they will not function.
+## Quick Start
 
----
+```bash
+cd scripts
+./build.sh               # Linux: build default example (02_features)
+./build.sh --install      # Linux: build + install to .minecraft/
+```
 
-## 📂 Installation Directory
+```cmd
+cd scripts
+build.bat                 % Windows: build 02_features
+build.bat --install       % Windows: build + install
+```
 
-The compiled shared library (`.so` on Linux, `.dll` on Windows) must be placed in the `ravex/addons/native/` folder inside your Minecraft instance (profile) directory.
+## Examples
 
-| Launcher / OS | Addons Folder Path |
-| :--- | :--- |
-| **Standard Launcher** | `<Minecraft-game-directory>/ravex/addons/native/` |
-| **Prism Launcher (Flatpak on Linux)** | `~/.var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances/<Instance_Name>/minecraft/ravex/addons/native/` |
+| # | Directory | What it teaches |
+|---|-----------|-----------------|
+| 01 | [01_minimal/](01_minimal/) | Minimal addon: onLoad/onUnload, createAddon/destroyAddon |
+| 02 | [02_features/](02_features/) | Full addon: config, events, threads, platform API, JNI bridge |
+| 03 | [03_overlay/](03_overlay/) | Overlay window: Win32 layered window (GDI) + X11 override-redirect |
+| 04 | [04_github/](04_github/) | GitHub auto-update: ReleaseChecker, ReleaseManager, HTTP client |
 
----
+## Documentation
 
-## 🛠️ Build Instructions
+- [GUIDE.md](GUIDE.md) — Full step-by-step tutorial (English, ~300 lines)
+- [GUIDE_RU.md](GUIDE_RU.md) — Полное пошаговое руководство (русский)
 
-### Requirements
-* A C++ compiler supporting C++17/20 (GCC, Clang, or MSVC).
-* CMake version 3.10 or higher installed.
+## Structure
 
-### Build Steps
+```
+templates/cpp/
+├── 01_minimal/          Self-contained minimal addon
+├── 02_features/         Self-contained full addon + JniBridge + platform.hpp
+├── 03_overlay/          Self-contained Win32/X11 overlay
+├── 04_github/           Self-contained GitHub updater
+├── scripts/
+│   ├── build.bat        Build any example by name
+│   └── build.sh         Build any example by name
+├── GUIDE.md             English tutorial
+├── GUIDE_RU.md          Russian tutorial
+└── README.md            This file
+```
 
-1. **Create a build directory and navigate to it**:
-   ```bash
-   mkdir -p build
-   cd build
-   ```
+Each example is a **standalone CMake project** — build it independently:
 
-2. **Generate the build files using CMake**:
-   ```bash
-   cmake ..
-   ```
-
-3. **Compile the library** (using the Release configuration for optimization):
-   ```bash
-   cmake --build . --config Release
-   ```
-   Upon successful compilation, the built library will be generated inside the `build/` directory:
-   * `AnotherAddon.so` — on Linux.
-   * `AnotherAddon.dll` — on Windows.
-
-4. **Copy the library** into the `ravex/addons/native/` folder of your Minecraft instance.
-
-> [!TIP]
-> All build and copy steps are fully automated in the [build.sh](file:///home/nprevenant/RaveX/templates/cpp/build.sh) script. You can run it locally to build the native library.
+```bash
+cd 01_minimal && mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build .
+```

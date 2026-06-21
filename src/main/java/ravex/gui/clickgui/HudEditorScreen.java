@@ -410,8 +410,8 @@ public class HudEditorScreen extends Screen {
                 } else if (rel == 1 && hasParams) {
                     settingsModule = ctxModule;
                 } else if ((rel == 1 && !hasParams) || (rel == 2 && hasParams)) {
-                    ctxModule.setX(10);
-                    ctxModule.setY(10);
+                    ctxModule.setX(Math.max(10, this.width / 50));
+                    ctxModule.setY(Math.max(10, this.height / 50));
                 } else if ((rel == 2 && !hasParams) || (rel == 3 && hasParams)) {
                     ctxModule.setWidth(80);
                     ctxModule.setHeight(14);

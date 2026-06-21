@@ -37,8 +37,8 @@ public class LayoutManager {
             JsonObject root = new JsonObject();
             for (Map.Entry<Category, CategoryPanel> e : panels.entrySet()) {
                 JsonObject pos = new JsonObject();
-                double rx = (e.getValue().getX() - cx) * scale / width + 0.5;
-                double ry = (e.getValue().getY() - cy) * scale / height + 0.5;
+                double rx = (e.getValue().getX() - cx) / width + 0.5;
+                double ry = (e.getValue().getY() - cy) / height + 0.5;
                 pos.addProperty("rx", rx);
                 pos.addProperty("ry", ry);
                 root.add(e.getKey().name(), pos);

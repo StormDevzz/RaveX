@@ -15,9 +15,11 @@ import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ClickGUI extends Screen {
     public static ModuleButton bindingModuleButton = null;
@@ -105,19 +107,19 @@ public class ClickGUI extends Screen {
     protected void init() {
         Map<Category, double[]> saved = ravex.manager.LayoutManager.INSTANCE.load();
 
-        int spacing = 10;
         int panelW = 120;
-        int numPanels = panels.size();
-        float totalW = numPanels * panelW + (numPanels - 1) * spacing;
-        float defaultStartX = (this.width - totalW) / 2;
-        float defaultStartY = 65;
+        int spacing = 10;
+        int num = panels.size();
 
-        for (CategoryPanel panel : panels) {
-            int i = panel.getCategory().ordinal();
-            int px = (int) (defaultStartX + i * (panelW + spacing));
-            int py = (int) defaultStartY;
+        float totalW = num * panelW + (num - 1) * spacing;
+        float startX = Math.max(10, (this.width - totalW) / 2f);
+        float startY = Math.max(30, this.height * 0.04f);
 
-            double[] pos = saved.get(panel.getCategory());
+        for (int i = 0; i < num; i++) {
+            int px = (int) (startX + i * (panelW + spacing));
+            int py = (int) startY;
+
+            double[] pos = saved.get(panels.get(i).getCategory());
             if (pos != null) {
                 double rx = pos[0];
                 double ry = pos[1];
@@ -128,16 +130,14 @@ public class ClickGUI extends Screen {
                     px = (int) rx;
                     py = (int) ry;
                 }
-                if (py > this.height - 200) {
-                    py = (int) defaultStartY;
-                }
+                if (py > this.height - 200)
+                    py = (int) startY;
             }
-            if (py < 30) py = 30;
-            px = Math.max(10, Math.min(this.width - panelW - 10, px));
-            py = Math.max(30, Math.min(this.height - 50, py));
+            px = Math.max(10, px);
+            py = Math.max(30, py);
 
-            panel.setX(px);
-            panel.setY(py);
+            panels.get(i).setX(px);
+            panels.get(i).setY(py);
         }
     }
 

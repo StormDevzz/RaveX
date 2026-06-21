@@ -9,6 +9,8 @@ target_link_libraries(ravex_jni PRIVATE
     ravex_norender
     ravex_optimize
     ravex_manager
+    ravex_github_tools
+    ravex_lua
     ${JNI_LIBRARIES}
 )
 
@@ -20,11 +22,15 @@ target_include_directories(ravex_jni PRIVATE
     ${CMAKE_SOURCE_DIR}/hooks/norender
     ${CMAKE_SOURCE_DIR}/plugins/optimize
     ${CMAKE_SOURCE_DIR}/plugins/manager
+    ${CMAKE_SOURCE_DIR}/plugins/github/include
 )
 
 if(WIN32)
-    target_link_libraries(ravex_jni PRIVATE winmm)
-elseif(UNIX AND NOT APPLE)
+    target_link_libraries(ravex_jni PRIVATE winmm ravex_optimize_windows)
+    target_include_directories(ravex_jni PRIVATE ${CMAKE_SOURCE_DIR}/plugins/optimize/windows)
+endif()
+
+if(NOT WIN32)
     find_package(X11 REQUIRED)
     if(X11_FOUND)
         target_include_directories(ravex_jni PRIVATE ${X11_INCLUDE_DIR})
@@ -32,9 +38,19 @@ elseif(UNIX AND NOT APPLE)
     endif()
 endif()
 
-# Output naming convention and destination
 set_target_properties(ravex_jni PROPERTIES
     OUTPUT_NAME "ravex_jni"
-    PREFIX "lib"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
 )
+
+if(WIN32)
+    set_target_properties(ravex_jni PROPERTIES PREFIX "")
+else()
+    set_target_properties(ravex_jni PROPERTIES PREFIX "lib")
+endif()
+
+if(WIN32)
+    set_target_properties(ravex_jni PROPERTIES SUFFIX ".dll")
+elseif(UNIX AND NOT APPLE)
+    set_target_properties(ravex_jni PROPERTIES SUFFIX ".so")
+endif()

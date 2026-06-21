@@ -19,7 +19,10 @@ import java.io.*;
 import java.net.UnixDomainSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.Channel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +47,7 @@ public class LuaManager {
         } catch (Throwable ignored) {}
     }
 
-    private SocketChannel discordChannel = null;
+    private Channel discordChannel = null;
     private OutputStream  discordOut     = null;
     private long discordNonce = 1;
 
@@ -392,14 +395,20 @@ public class LuaManager {
         for (int i = 0; i <= 9; i++) {
             for (String path : getIpcPaths(i)) {
                 try {
-                    var addr = UnixDomainSocketAddress.of(path);
-                    discordChannel = SocketChannel.open(java.net.StandardProtocolFamily.UNIX);
-                    discordChannel.connect(addr);
-                    discordOut = java.nio.channels.Channels.newOutputStream(discordChannel);
+                    if (isWindows()) {
+                        java.io.RandomAccessFile pipe = new java.io.RandomAccessFile(path, "rw");
+                        discordChannel = pipe.getChannel();
+                        discordOut = java.nio.channels.Channels.newOutputStream((WritableByteChannel)discordChannel);
+                    } else {
+                        var addr = UnixDomainSocketAddress.of(path);
+                        discordChannel = SocketChannel.open(java.net.StandardProtocolFamily.UNIX);
+                        ((SocketChannel)discordChannel).connect(addr);
+                        discordOut = java.nio.channels.Channels.newOutputStream((WritableByteChannel)discordChannel);
+                    }
 
                     String hs = "{\"v\":1,\"client_id\":\"" + DISCORD_CLIENT_ID + "\"}";
                     sendDiscordFrame(0, hs);
-                    java.nio.channels.Channels.newInputStream(discordChannel).readNBytes(64);
+                    java.nio.channels.Channels.newInputStream((ReadableByteChannel)discordChannel).readNBytes(64);
 
                     ravex.RaveX.LOGGER.info("[RichPresence] Discord IPC connected via " + path);
                     return true;
@@ -471,23 +480,31 @@ public class LuaManager {
         discordOut.flush();
     }
 
+    private static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().contains("win");
+    }
+
     private static List<String> getIpcPaths(int i) {
         List<String> paths = new ArrayList<>();
-        String xdg = System.getenv("XDG_RUNTIME_DIR");
-        if (xdg != null && !xdg.isEmpty()) {
-            paths.add(xdg + "/discord-ipc-" + i);
-            paths.add(xdg + "/app/com.discordapp.Discord/discord-ipc-" + i);
-            paths.add(xdg + "/.flatpak/com.discordapp.Discord/xdg-run/discord-ipc-" + i);
-            paths.add(xdg + "/snap.discord/discord-ipc-" + i);
-        }
-        String[] envVars = { "TMPDIR", "TMP", "TEMP" };
-        for (String v : envVars) {
-            String dir = System.getenv(v);
-            if (dir != null && !dir.isEmpty()) {
-                paths.add(dir + "/discord-ipc-" + i);
+        if (isWindows()) {
+            paths.add("\\\\.\\pipe\\discord-ipc-" + i);
+        } else {
+            String xdg = System.getenv("XDG_RUNTIME_DIR");
+            if (xdg != null && !xdg.isEmpty()) {
+                paths.add(xdg + "/discord-ipc-" + i);
+                paths.add(xdg + "/app/com.discordapp.Discord/discord-ipc-" + i);
+                paths.add(xdg + "/.flatpak/com.discordapp.Discord/xdg-run/discord-ipc-" + i);
+                paths.add(xdg + "/snap.discord/discord-ipc-" + i);
             }
+            String[] envVars = { "TMPDIR", "TMP", "TEMP" };
+            for (String v : envVars) {
+                String dir = System.getenv(v);
+                if (dir != null && !dir.isEmpty()) {
+                    paths.add(dir + "/discord-ipc-" + i);
+                }
+            }
+            paths.add("/tmp/discord-ipc-" + i);
         }
-        paths.add("/tmp/discord-ipc-" + i);
         return paths;
     }
 

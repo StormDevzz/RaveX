@@ -44,6 +44,17 @@ public class NativeBridge {
         if (loaded) return true;
         try {
             String libName = getLibName();
+
+            // 1. Try local project src directory (development mode)
+            java.io.File localDev = new java.io.File("src/main/resources/assets/ravex/natives/" + libName);
+            if (localDev.exists() && localDev.length() > 0) {
+                System.load(localDev.getAbsolutePath());
+                loaded = true;
+                loadError = null;
+                return true;
+            }
+
+            // 2. Try user cache directory
             java.io.File cacheDir = new java.io.File(System.getProperty("user.home"), ".ravex/natives");
             if (!cacheDir.exists()) {
                 cacheDir.mkdirs();
@@ -52,6 +63,21 @@ public class NativeBridge {
             boolean exists = cachedFile.exists() && cachedFile.length() > 0;
 
             if (!exists) {
+                // 3. Try the build output directory
+                java.io.File buildNative = new java.io.File("build/native/loader/" + libName);
+                if (!buildNative.exists()) {
+                    buildNative = new java.io.File("build/native/launcher/windows/" + libName);
+                }
+                if (buildNative.exists() && buildNative.length() > 0) {
+                    try {
+                        java.nio.file.Files.copy(buildNative.toPath(), cachedFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        exists = true;
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            if (!exists) {
+                // 4. Download from remote
                 String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/natives/" + libName;
                 System.out.println("[RaveX-Loader] Downloading " + libName + " from " + remoteUrl);
                 RaveXLoader.updateWindowStatus("Downloading " + libName + "...", 10);
