@@ -18,6 +18,7 @@ endif()
 
 set_target_properties(ravex_github_tools PROPERTIES
     OUTPUT_NAME "ravex_github_tools"
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 
 if(WIN32)
