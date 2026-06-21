@@ -18,6 +18,7 @@ class ReleaseChecker {
 public:
     ReleaseChecker(const std::string& owner, const std::string& repo,
                    const std::string& token = "");
+    ~ReleaseChecker();
 
     // Check if a newer version is available
     UpdateInfo checkForUpdates(const std::string& currentVersion,

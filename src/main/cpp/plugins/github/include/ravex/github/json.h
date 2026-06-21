@@ -30,6 +30,7 @@ public:
     JsonValue(int64_t n) : m_type(Number), m_num(static_cast<double>(n)) {}
     JsonValue(const char* s) : m_type(String), m_str(s), m_num(0) {}
     JsonValue(const std::string& s) : m_type(String), m_str(s), m_num(0) {}
+    JsonValue(JsonObject obj) : m_type(Object), m_obj(std::move(obj)), m_num(0) {}
 
     Type type() const { return m_type; }
     bool isNull()   const { return m_type == Null; }
