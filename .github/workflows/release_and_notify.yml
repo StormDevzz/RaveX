@@ -147,7 +147,7 @@ jobs:
         if: always()
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
           BRANCH: ${{ github.ref_name }}
           PUSHER: ${{ github.actor }}
           REPO: ${{ github.repository }}
@@ -159,8 +159,8 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          if [ -z "$TG_TOKEN" ] || [ -z "$CHAT_ID" ]; then
-            echo "TG_TOKEN or CHAT_ID secret not set. Skipping Telegram notification."
+          if [ -z "$TG_TOKEN" ] || [ -z "$CHANNEL_ID" ]; then
+            echo "TG_TOKEN or CHANNEL_ID secret not set. Skipping Telegram notification."
             exit 0
           fi
 
@@ -190,7 +190,7 @@ jobs:
 
           echo "Sending payload to Telegram..."
           RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${CHAT_ID}" \
+            --data-urlencode "chat_id=${CHANNEL_ID}" \
             --data-urlencode "text=${TEXT}" \
             -d "disable_web_page_preview=true")
           HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\r' | tail -n 1 | cut -d':' -f2)
@@ -372,15 +372,15 @@ jobs:
       - name: Send Issue to Telegram
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_URL: ${{ github.event.issue.html_url }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_ACTION: ${{ github.event.action }}
           ISSUE_CREATOR: ${{ github.event.issue.user.login }}
         run: |
-          if [ -z "$TG_TOKEN" ] || [ -z "$CHAT_ID" ]; then
-            echo "TG_TOKEN or CHAT_ID secret not set. Skipping Telegram notification."
+          if [ -z "$TG_TOKEN" ] || [ -z "$CHANNEL_ID" ]; then
+            echo "TG_TOKEN or CHANNEL_ID secret not set. Skipping Telegram notification."
             exit 0
           fi
 
@@ -394,7 +394,7 @@ jobs:
 
           echo "Sending payload to Telegram..."
           RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${CHAT_ID}" \
+            --data-urlencode "chat_id=${CHANNEL_ID}" \
             --data-urlencode "text=${TEXT}" \
             -d "disable_web_page_preview=true")
           HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\r' | tail -n 1 | cut -d':' -f2)
