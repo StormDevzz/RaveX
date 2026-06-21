@@ -179,7 +179,7 @@ jobs:
             RELEASE_LINE="Release: RaveX $RELEASE_VERSION ($RELEASE_TAG)"
           fi
 
-          TEXT=$(printf '%s\n%s\n%s\n%s\n%s\n%s\n%s' \
+          TEXT=$(printf '%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s' \
             "[$REPO] Push to $BRANCH" \
             "Author: $PUSHER" \
             "Message: $COMMIT_MSG" \
@@ -386,7 +386,7 @@ jobs:
 
           REPO="${{ github.repository }}"
 
-          TEXT=$(printf '%s\n%s\n%s\n%s' \
+          TEXT=$(printf '%s\n%s\n\n%s\n\n%s' \
             "[$REPO] Issue #$ISSUE_NUMBER ($ISSUE_ACTION)" \
             "Author: $ISSUE_CREATOR" \
             "Title: $ISSUE_TITLE" \
