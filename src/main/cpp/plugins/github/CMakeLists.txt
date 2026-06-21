@@ -19,7 +19,6 @@ endif()
 set_target_properties(ravex_github_tools PROPERTIES
     OUTPUT_NAME "ravex_github_tools"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
 )
 
 if(WIN32)
