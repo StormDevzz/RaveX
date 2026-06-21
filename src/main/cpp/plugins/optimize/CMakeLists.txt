@@ -7,6 +7,7 @@ target_include_directories(ravex_optimize PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WIN32)
     add_subdirectory(windows)
     target_include_directories(ravex_optimize PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/windows)
+    target_link_libraries(ravex_optimize PRIVATE ravex_optimize_windows)
 endif()
 
 set_target_properties(ravex_optimize PROPERTIES
