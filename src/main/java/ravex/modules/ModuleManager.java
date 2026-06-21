@@ -153,7 +153,7 @@ import ravex.modules.world.AutoFish;
 import ravex.modules.world.AutoTunnel;
 import ravex.modules.world.AutoSmelt;
 import ravex.modules.world.AutoBrew;
-import ravex.modules.world.ECFarmer;
+import ravex.modules.player.ECFarmer;
 import ravex.modules.world.NoGhostBlocks;
 import ravex.modules.render.BreadCrumbs;
 

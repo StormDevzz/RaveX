@@ -2,15 +2,27 @@ cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_ecfarmer SHARED
     ecfarmer.cpp
+    ecfarmer_jni.cpp
+    ecfarmer_break.cpp
+    ecfarmer_place.cpp
+    ecfarmer_scan.cpp
+    ecfarmer_rotation.cpp
 )
 
 find_package(JNI REQUIRED)
+if(JNI_FOUND)
+    target_include_directories(ravex_ecfarmer PRIVATE ${JNI_INCLUDE_DIRS})
+    target_link_libraries(ravex_ecfarmer PRIVATE ${JNI_LIBRARIES})
+else()
+    message(FATAL_ERROR "JNI not found — cannot build ravex_ecfarmer")
+endif()
+
 target_include_directories(ravex_ecfarmer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${JNI_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/common
 )
 
-target_link_libraries(ravex_ecfarmer PRIVATE ${JNI_LIBRARIES})
+target_link_libraries(ravex_ecfarmer PRIVATE ravex_common)
 
 set_property(TARGET ravex_ecfarmer PROPERTY CXX_STANDARD 23)
 set_property(TARGET ravex_ecfarmer PROPERTY CXX_STANDARD_REQUIRED ON)

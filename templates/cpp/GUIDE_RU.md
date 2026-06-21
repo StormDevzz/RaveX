@@ -119,7 +119,7 @@ public:
 
     void onUnload() override { /* cleanup */ }
     std::string getName()    const override { return "MinimalAddon"; }
-    std::string getVersion() const override { return "1.4.1"; }
+    std::string getVersion() const override { return "1.4.2"; }
 };
 
 }}}
@@ -161,7 +161,7 @@ extern "C" {
 
 ```cmake
 cmake_minimum_required(VERSION 3.16)
-project(FeatureAddon VERSION 1.4.1 LANGUAGES CXX)
+project(FeatureAddon VERSION 1.4.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -365,7 +365,7 @@ void overlayLoop() {
 ```cpp
 ravex::github::ReleaseChecker checker("StormDevzz", "RaveX");
 
-auto info = checker.checkForUpdates("1.4.1");
+auto info = checker.checkForUpdates("1.4.2");
 // info.available → true/false
 // info.remoteVersion → "1.5.1"
 // info.matchingAssets → список файлов под твою платформу
@@ -377,7 +377,7 @@ auto info = checker.checkForUpdates("1.4.1");
 ravex::github::GithubConfig cfg;
 cfg.owner = "StormDevzz";
 cfg.repo  = "RaveX";
-cfg.currentVersion = "1.4.1";
+cfg.currentVersion = "1.4.2";
 
 ravex::github::ReleaseManager manager(cfg);
 
