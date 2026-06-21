@@ -141,7 +141,60 @@ jobs:
             exit 1
           fi
 
-      # Step 6: Send Git push notification + Compilation + Release results to Discord (ALWAYS RUNS ON PUSH)
+      # Step 6: Send Git push notification + Compilation + Release results to Telegram (ALWAYS RUNS ON PUSH)
+      - name: Send Push & CI/CD Notification to Telegram
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          PUSHER: ${{ github.actor }}
+          REPO: ${{ github.repository }}
+          COMPARE_URL: ${{ github.event.compare }}
+          HEAD_COMMIT_MSG: ${{ github.event.head_commit.message }}
+          BUILD_STATUS: ${{ steps.compile.outputs.build_status }}
+          BUILD_DURATION: ${{ steps.compile.outputs.build_duration }}
+          RELEASE_VERSION: ${{ steps.release.outputs.release_version }}
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          if [ -z "$TG_TOKEN" ] || [ -z "$CHAT_ID" ]; then
+            echo "TG_TOKEN or CHAT_ID secret not set. Skipping Telegram notification."
+            exit 0
+          fi
+
+          COMMIT_MSG=$(echo "$HEAD_COMMIT_MSG" | head -n 1)
+          if [ -z "$COMPARE_URL" ] || [ "$COMPARE_URL" = "null" ]; then
+            COMPARE_URL="https://github.com/$REPO"
+          fi
+
+          STATUS_ICON="✅"
+          STATUS_TEXT="Success"
+          if [ "$BUILD_STATUS" != "success" ]; then
+            STATUS_ICON="❌"
+            STATUS_TEXT="Failed"
+          fi
+
+          RELEASE_LINE=""
+          if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "null" ]; then
+            RELEASE_LINE="📦 Release: RaveX $RELEASE_VERSION ($RELEASE_TAG)"
+          fi
+
+          TEXT="$STATUS_ICON <b>[$REPO] Push to $BRANCH</b>
+        👤 $PUSHER
+        📝 $COMMIT_MSG
+        🔗 <a href=\"$COMPARE_URL\">Compare changes</a>
+        🛠 Build: $STATUS_TEXT (${BUILD_DURATION}s)
+        $RELEASE_LINE
+        📋 <a href=\"https://github.com/$REPO/actions/runs/$RUN_ID\">Workflow run</a>"
+
+          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d "chat_id=${CHAT_ID}" \
+            -d "text=${TEXT}" \
+            -d "parse_mode=HTML" \
+            -d "disable_web_page_preview=true" > /dev/null
+
+      # Step 7: Send Git push notification + Compilation + Release results to Discord (ALWAYS RUNS ON PUSH)
       - name: Send Push & CI/CD Notification to Discord
         if: always()
         env:
@@ -307,6 +360,42 @@ jobs:
     if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     steps:
+      - name: Send Issue to Telegram
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_ACTION: ${{ github.event.action }}
+          ISSUE_CREATOR: ${{ github.event.issue.user.login }}
+        run: |
+          if [ -z "$TG_TOKEN" ] || [ -z "$CHAT_ID" ]; then
+            echo "TG_TOKEN or CHAT_ID secret not set. Skipping Telegram notification."
+            exit 0
+          fi
+
+          REPO="${{ github.repository }}"
+
+          case "$ISSUE_ACTION" in
+            opened)   ICON="🆕" ;;
+            closed)   ICON="✅" ;;
+            reopened) ICON="🔄" ;;
+            edited)   ICON="✏️" ;;
+            *)        ICON="📌" ;;
+          esac
+
+          TEXT="$ICON <b>[$REPO] Issue #$ISSUE_NUMBER $ISSUE_ACTION</b>
+        👤 $ISSUE_CREATOR
+        📝 $ISSUE_TITLE
+        🔗 <a href=\"$ISSUE_URL\">View issue</a>"
+
+          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d "chat_id=${CHAT_ID}" \
+            -d "text=${TEXT}" \
+            -d "parse_mode=HTML" \
+            -d "disable_web_page_preview=true" > /dev/null
+
       - name: Send Issue Discord Embed
         env:
           WEBHOOK_URL: ${{ secrets.GIT_ISSUES }}
