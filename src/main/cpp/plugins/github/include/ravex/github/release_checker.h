@@ -19,8 +19,8 @@ public:
     ReleaseChecker(const std::string& owner, const std::string& repo,
                    const std::string& token = "");
     ~ReleaseChecker();
-    ReleaseChecker(ReleaseChecker&&) noexcept = default;
-    ReleaseChecker& operator=(ReleaseChecker&&) noexcept = default;
+    ReleaseChecker(ReleaseChecker&&) noexcept;
+    ReleaseChecker& operator=(ReleaseChecker&&) noexcept;
 
     // Check if a newer version is available
     UpdateInfo checkForUpdates(const std::string& currentVersion,

@@ -122,6 +122,8 @@ ReleaseChecker::ReleaseChecker(const std::string& owner, const std::string& repo
     : m_impl(std::make_unique<ReleaseCheckerImpl>(owner, repo, token)) {}
 
 ReleaseChecker::~ReleaseChecker() = default;
+ReleaseChecker::ReleaseChecker(ReleaseChecker&&) noexcept = default;
+ReleaseChecker& ReleaseChecker::operator=(ReleaseChecker&&) noexcept = default;
 
 UpdateInfo ReleaseChecker::checkForUpdates(const std::string& currentVersion,
                                             ReleaseChannel channel) {
