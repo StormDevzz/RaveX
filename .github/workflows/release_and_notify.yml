@@ -8,10 +8,15 @@ on:
 jobs:
   build-windows:
     if: github.event_name == 'push'
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Setup MSVC (x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -24,16 +29,12 @@ jobs:
 
       - name: Build C++ Natives (CMake + MSVC)
         run: |
-          $CMAKE_GENERATOR = "Visual Studio 17 2022"
-          $ARCH = "-A x64"
-          New-Item -ItemType Directory -Force -Path build\native
-          cd build\native
-          cmake ..\..\src\main\cpp -G "$CMAKE_GENERATOR" $ARCH -DCMAKE_BUILD_TYPE=Release
-          cmake --build . --config Release --parallel
-          if (-not (Test-Path "Release")) { New-Item -ItemType Directory -Path "Release" }
-          Get-ChildItem -Recurse -Filter "*.dll" | Copy-Item -Destination "Release" -Force
-          Copy-Item "Release\*.dll" "..\..\src\main\resources\assets\ravex\natives\" -Force
-          cd ..\..
+          cmake -S src\main\cpp -B build\native -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+          cmake --build build\native --config Release --parallel
+          if (-not (Test-Path "build\native\Release")) { New-Item -ItemType Directory -Path "build\native\Release" }
+          Get-ChildItem -Recurse -Filter "*.dll" | Copy-Item -Destination "build\native\Release" -Force
+          Remove-Item "src\main\resources\assets\ravex\natives\*" -Force -ErrorAction SilentlyContinue
+          Copy-Item "build\native\Release\*.dll" "src\main\resources\assets\ravex\natives\" -Force
 
       - name: Build Java Mod
         run: ./gradlew.bat build
