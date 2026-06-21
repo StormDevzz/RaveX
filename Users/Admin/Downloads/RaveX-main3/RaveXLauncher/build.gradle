@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'ravex.launcher'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+application {
+    mainClass = 'ravex.launcher.RaveXLauncher'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // No external dependencies needed - using only standard Java libraries
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'ravex.launcher.RaveXLauncher'
+        )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+task buildWindows(type: Copy) {
+    dependsOn jar
+    from jar.archiveFile
+    into "$buildDir/windows"
+    rename { 'RaveXLauncher.jar' }
+}
+
+task buildLinux(type: Copy) {
+    dependsOn jar
+    from jar.archiveFile
+    into "$buildDir/linux"
+    rename { 'RaveXLauncher.jar' }
+}
