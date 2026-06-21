@@ -6,6 +6,38 @@ on:
     types: [opened, closed, reopened, edited]
 
 jobs:
+  build-windows:
+    if: github.event_name == 'push'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build C++ Natives (CMake + MSVC)
+        run: |
+          $CMAKE_GENERATOR = "Visual Studio 17 2022"
+          $ARCH = "-A x64"
+          New-Item -ItemType Directory -Force -Path build\native
+          cd build\native
+          cmake ..\..\src\main\cpp -G "$CMAKE_GENERATOR" $ARCH -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --config Release --parallel
+          if (-not (Test-Path "Release")) { New-Item -ItemType Directory -Path "Release" }
+          Get-ChildItem -Recurse -Filter "*.dll" | Copy-Item -Destination "Release" -Force
+          Copy-Item "Release\*.dll" "..\..\src\main\resources\assets\ravex\natives\" -Force
+          cd ..\..
+
+      - name: Build Java Mod
+        run: ./gradlew.bat build
+
   build-and-release:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest

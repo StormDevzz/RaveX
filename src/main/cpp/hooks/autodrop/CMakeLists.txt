@@ -12,9 +12,18 @@ target_include_directories(ravex_autodrop PRIVATE
 
 target_link_libraries(ravex_autodrop PRIVATE
     ${JNI_LIBRARIES}
-    pthread
 )
+
+if(NOT WIN32)
+    target_link_libraries(ravex_autodrop PRIVATE pthread)
+endif()
 
 set_target_properties(ravex_autodrop PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
 )
+
+if(WIN32)
+    set_target_properties(ravex_autodrop PROPERTIES PREFIX "")
+else()
+    set_target_properties(ravex_autodrop PROPERTIES PREFIX "lib")
+endif()

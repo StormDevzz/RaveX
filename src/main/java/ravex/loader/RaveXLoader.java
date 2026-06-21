@@ -88,12 +88,13 @@ public class RaveXLoader {
 
         String command;
         String[] extraArgs;
+        boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
 
         if (args.length > 0) {
             command = args[0];
             extraArgs = Arrays.copyOfRange(args, 1, args.length);
         } else {
-            command = "./gradlew";
+            command = isWindows ? "gradlew.bat" : "./gradlew";
             extraArgs = new String[]{"runClient"};
         }
 
@@ -188,7 +189,11 @@ public class RaveXLoader {
     public static String getDetailedOSName() {
         String osName = System.getProperty("os.name");
         String osVersion = System.getProperty("os.version");
-        
+
+        if (osName.toLowerCase().contains("win")) {
+            return osName + " " + osVersion;
+        }
+
         if (osName.toLowerCase().contains("linux")) {
             java.io.File osRelease = new java.io.File("/etc/os-release");
             if (osRelease.exists()) {
@@ -207,8 +212,8 @@ public class RaveXLoader {
             }
             return "Linux (Kernel " + osVersion + ")";
         }
-        
-        return osName + " (Kernel " + osVersion + ")";
+
+        return osName + " (" + osVersion + ")";
     }
 
     private static void runChecksPhase() {
@@ -413,11 +418,7 @@ public class RaveXLoader {
             }
         }
 
-        if (!found) {
-            sleep(1500); // Shorter safe sleep fallback
-        } else {
-            sleep(1000);
-        }
+        sleep(found ? 1000 : 1500);
     }
 
     static void updateWindowStatus(String status, int progress) {
@@ -438,19 +439,44 @@ public class RaveXLoader {
             "font/comfortaa.ttf"
         ));
 
-        if (isWin) {
-            assetList.add("natives/ravex_jni.dll");
-        } else {
-            assetList.add("natives/libravex_jni.so");
-        }
+        String loaderLib = isWin ? "ravex_loader.dll" : "libravex_loader.so";
+        String jniLib = isWin ? "ravex_jni.dll" : "libravex_jni.so";
+
+        assetList.add("natives/" + loaderLib);
+        assetList.add("natives/" + jniLib);
+
+        // Local source/build directories (dev mode)
+        java.io.File localSrc = new java.io.File("src/main/resources/assets/ravex");
+        java.io.File buildNative = new java.io.File("build/native");
 
         java.io.File cacheDir = new java.io.File(System.getProperty("user.home"), ".ravex");
 
         for (int i = 0; i < assetList.size(); i++) {
             String assetPath = assetList.get(i);
             java.io.File cachedFile = new java.io.File(cacheDir, assetPath);
+
             if (cachedFile.exists() && cachedFile.length() > 0) {
                 continue;
+            }
+
+            // Try to copy from local src directory first
+            java.io.File localFile = new java.io.File(localSrc, assetPath);
+            if (!localFile.exists() || localFile.length() == 0) {
+                // Try build output directory
+                localFile = new java.io.File(buildNative, assetPath.replace("natives/", ""));
+                if (!localFile.exists() || localFile.length() == 0) {
+                    localFile = null;
+                }
+            }
+
+            if (localFile != null && localFile.exists() && localFile.length() > 0) {
+                java.io.File parent = cachedFile.getParentFile();
+                if (!parent.exists()) parent.mkdirs();
+                try {
+                    java.nio.file.Files.copy(localFile.toPath(), cachedFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    System.out.println("[RaveX-Loader] Cached local asset: " + assetPath);
+                    continue;
+                } catch (Exception ignored) {}
             }
 
             java.io.File parent = cachedFile.getParentFile();

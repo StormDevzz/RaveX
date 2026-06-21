@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <cstring>
 
+static std::atomic<bool> g_quitBlocked{false};
+
 #ifdef _WIN32
 #include <windows.h>
 static BOOL WINAPI consoleHandler(DWORD dwCtrlType) {
@@ -22,8 +24,6 @@ static BOOL WINAPI consoleHandler(DWORD dwCtrlType) {
 #include <unistd.h>
 #include <sys/wait.h>
 #endif
-
-static std::atomic<bool> g_quitBlocked{false};
 
 #ifdef _WIN32
 static bool g_handlerInstalled = false;

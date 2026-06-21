@@ -4,15 +4,37 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <tlhelp32.h>
+#include <psapi.h>
+#pragma comment(lib, "psapi.lib")
+#else
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
 #include <sys/utsname.h>
 #include <thread>
+#endif
 
 namespace ravex {
 namespace loader {
+
+#ifdef _WIN32
+typedef struct _RTL_OSVERSIONINFOW {
+    ULONG dwOSVersionInfoSize;
+    ULONG dwMajorVersion;
+    ULONG dwMinorVersion;
+    ULONG dwBuildNumber;
+    ULONG dwPlatformId;
+    WCHAR szCSDVersion[128];
+} RTL_OSVERSIONINFOW, *PRTL_OSVERSIONINFOW;
+
+typedef LONG (WINAPI *RtlGetVersionFn)(PRTL_OSVERSIONINFOW);
+#endif
 
 SystemReport SystemChecks::runAll() {
     SystemReport r;
@@ -31,6 +53,78 @@ SystemReport SystemChecks::runAll() {
     r.loadAvg1m = 0;
     r.score = 0;
 
+#ifdef _WIN32
+    {
+        HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
+        if (hNtdll) {
+            RtlGetVersionFn rtl = (RtlGetVersionFn)GetProcAddress(hNtdll, "RtlGetVersion");
+            if (rtl) {
+                RTL_OSVERSIONINFOW osv;
+                ZeroMemory(&osv, sizeof(osv));
+                osv.dwOSVersionInfoSize = sizeof(osv);
+                if (rtl(&osv) == 0) {
+                    r.osName = "Windows";
+                    r.osVersion = std::to_string(osv.dwMajorVersion) + "." +
+                                  std::to_string(osv.dwMinorVersion) + " (Build " +
+                                  std::to_string(osv.dwBuildNumber) + ")";
+                }
+            }
+        }
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
+        r.cpuCores = si.dwNumberOfProcessors;
+        switch (si.wProcessorArchitecture) {
+            case PROCESSOR_ARCHITECTURE_AMD64: r.osArch = "x86_64"; break;
+            case PROCESSOR_ARCHITECTURE_INTEL: r.osArch = "x86"; break;
+            case PROCESSOR_ARCHITECTURE_ARM64: r.osArch = "ARM64"; break;
+            case PROCESSOR_ARCHITECTURE_ARM: r.osArch = "ARM"; break;
+            default: r.osArch = "Unknown"; break;
+        }
+    }
+
+    r.cpuGovernor = readCPUGovernor();
+    r.cpuTemp = readCPUTemp();
+
+    {
+        MEMORYSTATUSEX mem;
+        mem.dwLength = sizeof(mem);
+        if (GlobalMemoryStatusEx(&mem)) {
+            r.totalRamKB = mem.ullTotalPhys / 1024;
+            r.freeRamKB = mem.ullAvailPhys / 1024;
+            r.availRamKB = mem.ullAvailPhys / 1024;
+            if (mem.ullTotalPhys > 0) {
+                r.swapTotalKB = (mem.ullTotalPageFile - mem.ullTotalPhys) / 1024;
+                r.swapFreeKB = (mem.ullAvailPageFile - mem.ullAvailPhys) / 1024;
+            }
+        }
+    }
+
+    {
+        ULARGE_INTEGER freeAvail, total, totalFree;
+        if (GetDiskFreeSpaceExA(".", &freeAvail, &total, &totalFree)) {
+            r.diskTotalKB = total.QuadPart / 1024;
+            r.diskFreeKB = freeAvail.QuadPart / 1024;
+        }
+    }
+
+    {
+        FILETIME idle, kernel, user;
+        GetSystemTimes(&idle, &kernel, &user);
+        Sleep(200);
+        FILETIME idle2, kernel2, user2;
+        GetSystemTimes(&idle2, &kernel2, &user2);
+        ULARGE_INTEGER i1, k1, u1, i2, k2, u2;
+        memcpy(&i1, &idle, sizeof(i1));
+        memcpy(&k1, &kernel, sizeof(k1));
+        memcpy(&u1, &user, sizeof(u1));
+        memcpy(&i2, &idle2, sizeof(i2));
+        memcpy(&k2, &kernel2, sizeof(k2));
+        memcpy(&u2, &user2, sizeof(u2));
+        double total = (double)((k2.QuadPart - k1.QuadPart) + (u2.QuadPart - u1.QuadPart));
+        double idleDiff = (double)(i2.QuadPart - i1.QuadPart);
+        if (total > 0) r.cpuLoad = (total - idleDiff) / total;
+    }
+#else
     struct utsname uts;
     if (uname(&uts) == 0) {
         r.osName = uts.sysname;
@@ -61,7 +155,6 @@ SystemReport SystemChecks::runAll() {
         r.diskFreeKB = (uint64_t)vfs.f_bfree * vfs.f_frsize / 1024;
     }
 
-    // CPU load (simple delta)
     {
         std::ifstream stat("/proc/stat");
         std::string line;
@@ -79,6 +172,7 @@ SystemReport SystemChecks::runAll() {
             }
         }
     }
+#endif
 
     r.selfRSSKB = readSelfRSS();
     r.processCount = countProcesses();
@@ -89,6 +183,7 @@ SystemReport SystemChecks::runAll() {
 
 void SystemChecks::readProcMemInfo(uint64_t& total, uint64_t& free, uint64_t& avail,
                                     uint64_t& swapTotal, uint64_t& swapFree) {
+#ifndef _WIN32
     std::ifstream f("/proc/meminfo");
     if (!f.is_open()) return;
     std::string line;
@@ -99,33 +194,78 @@ void SystemChecks::readProcMemInfo(uint64_t& total, uint64_t& free, uint64_t& av
         else if (line.find("SwapTotal:") == 0) sscanf(line.c_str(), "SwapTotal: %lu kB", &swapTotal);
         else if (line.find("SwapFree:") == 0) sscanf(line.c_str(), "SwapFree: %lu kB", &swapFree);
     }
+#else
+    (void)total;
+    (void)free;
+    (void)avail;
+    (void)swapTotal;
+    (void)swapFree;
+#endif
 }
 
 double SystemChecks::readCPUTemp() {
+#ifndef _WIN32
     std::ifstream f("/sys/class/thermal/thermal_zone0/temp");
     if (!f.is_open()) return -1;
     int millideg;
     f >> millideg;
     return millideg / 1000.0;
+#else
+    return -1;
+#endif
 }
 
 std::string SystemChecks::readCPUGovernor() {
+#ifndef _WIN32
     std::ifstream f("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
     if (!f.is_open()) return "unknown";
     std::string gov;
     f >> gov;
     return gov;
+#else
+    return "unknown";
+#endif
 }
 
 double SystemChecks::readLoadAvg() {
+#ifndef _WIN32
     std::ifstream f("/proc/loadavg");
     if (!f.is_open()) return 0;
     double l1, l5, l15;
     f >> l1 >> l5 >> l15;
     return l1;
+#else
+    return 0.0;
+#endif
 }
 
 void SystemChecks::readTopProcesses(std::vector<ProcessInfo>& out) {
+#ifdef _WIN32
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) return;
+    PROCESSENTRY32W pe;
+    pe.dwSize = sizeof(pe);
+    if (Process32FirstW(snap, &pe)) {
+        do {
+            HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pe.th32ProcessID);
+            if (hProc) {
+                PROCESS_MEMORY_COUNTERS pmc;
+                if (GetProcessMemoryInfo(hProc, &pmc, sizeof(pmc))) {
+                    ProcessInfo pi;
+                    pi.pid = pe.th32ProcessID;
+                    char name[256];
+                    WideCharToMultiByte(CP_UTF8, 0, pe.szExeFile, -1, name, sizeof(name), nullptr, nullptr);
+                    pi.name = name;
+                    pi.memMB = pmc.WorkingSetSize / (1024.0 * 1024.0);
+                    pi.cpuPct = 0;
+                    out.push_back(pi);
+                }
+                CloseHandle(hProc);
+            }
+        } while (Process32NextW(snap, &pe));
+    }
+    CloseHandle(snap);
+#else
     DIR* dir = opendir("/proc");
     if (!dir) return;
 
@@ -170,6 +310,7 @@ void SystemChecks::readTopProcesses(std::vector<ProcessInfo>& out) {
         }
     }
     closedir(dir);
+#endif
 
     std::sort(out.begin(), out.end(), [](const ProcessInfo& a, const ProcessInfo& b) {
         return a.memMB > b.memMB;
@@ -178,6 +319,18 @@ void SystemChecks::readTopProcesses(std::vector<ProcessInfo>& out) {
 }
 
 int SystemChecks::countProcesses() {
+#ifdef _WIN32
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) return 0;
+    int count = 0;
+    PROCESSENTRY32W pe;
+    pe.dwSize = sizeof(pe);
+    if (Process32FirstW(snap, &pe)) {
+        do { count++; } while (Process32NextW(snap, &pe));
+    }
+    CloseHandle(snap);
+    return count;
+#else
     DIR* dir = opendir("/proc");
     if (!dir) return 0;
     int count = 0;
@@ -192,15 +345,25 @@ int SystemChecks::countProcesses() {
     }
     closedir(dir);
     return count;
+#endif
 }
 
 uint64_t SystemChecks::readSelfRSS() {
+#ifdef _WIN32
+    HANDLE hProc = GetCurrentProcess();
+    PROCESS_MEMORY_COUNTERS pmc;
+    if (GetProcessMemoryInfo(hProc, &pmc, sizeof(pmc))) {
+        return pmc.WorkingSetSize / 1024;
+    }
+    return 0;
+#else
     std::ifstream f("/proc/self/statm");
     if (!f.is_open()) return 0;
     uint64_t rssPages = 0;
     f >> rssPages;
     f >> rssPages;
     return rssPages * sysconf(_SC_PAGESIZE) / 1024;
+#endif
 }
 
 void SystemChecks::calcScore(SystemReport& r) {

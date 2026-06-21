@@ -5,6 +5,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.nio.file.*;
+import java.util.List;
 
 public class LoaderWindow extends JFrame {
     private static final Color BG_DARK = new Color(0x11, 0x11, 0x15);
@@ -12,7 +14,8 @@ public class LoaderWindow extends JFrame {
     private static final Color TEXT_COLOR = new Color(0xe2, 0xe2, 0xe8);
     private static final Color TEXT_MUTED = new Color(0x65, 0x65, 0x75);
 
-    private String version = "1.2 NextGen";
+    private String version = "1.4.1";
+    private final String osName = detectOS();
     private String status = "Initializing...";
     private int percent = 0;
     private float animatedPercent = 0f;
@@ -25,6 +28,64 @@ public class LoaderWindow extends JFrame {
     private Timer animTimer;
     private boolean closeHovered = false;
     private Image logoImage = null;
+
+    private static String detectOS() {
+        String os = System.getProperty("os.name", "Unknown").toLowerCase();
+        if (os.contains("win")) {
+            return detectWindows();
+        }
+        if (os.contains("linux")) {
+            try {
+                Path osRelease = Paths.get("/etc/os-release");
+                if (Files.exists(osRelease)) {
+                    List<String> lines = Files.readAllLines(osRelease);
+                    for (String line : lines) {
+                        if (line.startsWith("PRETTY_NAME=")) {
+                            String val = line.substring(12);
+                            if (val.startsWith("\"") && val.endsWith("\""))
+                                val = val.substring(1, val.length() - 1);
+                            return val;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+            return "Linux";
+        }
+        if (os.contains("mac")) return "macOS";
+        if (os.contains("freebsd")) return "FreeBSD";
+        return System.getProperty("os.name", "Unknown");
+    }
+
+    private static String detectWindows() {
+        if (System.getProperty("os.name").contains("11"))
+            return "Windows 11";
+        try {
+            String[] parts = System.getProperty("os.version", "0").split("\\.");
+            int build = Integer.parseInt(parts[parts.length - 1]);
+            if (build >= 22000) return "Windows 11";
+        } catch (Exception ignored) {}
+        try {
+            Process p = Runtime.getRuntime().exec(
+                "reg query \"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\" /v CurrentBuild"
+            );
+            java.io.BufferedReader br = new java.io.BufferedReader(
+                new java.io.InputStreamReader(p.getInputStream(), "CP866")
+            );
+            String line;
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                if (line.endsWith("CurrentBuild") || line.matches("\\d+")) {
+                    String[] tokens = line.split("\\s+");
+                    String buildStr = tokens[tokens.length - 1].trim();
+                    int build = Integer.parseInt(buildStr);
+                    if (build >= 22000) return "Windows 11";
+                    break;
+                }
+            }
+            br.close();
+        } catch (Exception ignored) {}
+        return System.getProperty("os.name", "Windows");
+    }
 
     public LoaderWindow() {
         setTitle("RaveX Loader");
@@ -183,9 +244,9 @@ public class LoaderWindow extends JFrame {
         g.setColor(ACCENT_BLUE);
         g.drawString("X", 150 + w1, 58);
 
-        // 5. Subtitle
+        // 5. Subtitle with version and OS
         g.setFont(new Font("SansSerif", Font.BOLD, 10));
-        String sub = "LOADER v" + version.toUpperCase();
+        String sub = "LOADER v" + version.toUpperCase() + "  \u2022  " + osName;
         g.setColor(TEXT_MUTED);
         g.drawString(sub, 150, 78);
 

@@ -12,9 +12,18 @@ target_include_directories(ravex_animations PRIVATE
 
 target_link_libraries(ravex_animations PRIVATE
     ${JNI_LIBRARIES}
-    pthread
 )
+
+if(NOT WIN32)
+    target_link_libraries(ravex_animations PRIVATE pthread)
+endif()
 
 set_target_properties(ravex_animations PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
 )
+
+if(WIN32)
+    set_target_properties(ravex_animations PROPERTIES PREFIX "")
+else()
+    set_target_properties(ravex_animations PROPERTIES PREFIX "lib")
+endif()

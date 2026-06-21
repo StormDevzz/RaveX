@@ -29,14 +29,23 @@ set_property(TARGET ravex_breaker PROPERTY CXX_STANDARD 17)
 set_property(TARGET ravex_breaker PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(ravex_breaker PRIVATE -O3 -march=native -ffast-math)
+    if(MSVC)
+        target_compile_options(ravex_breaker PRIVATE /O2 /fp:fast)
+    else()
+        target_compile_options(ravex_breaker PRIVATE -O3 -march=native -ffast-math)
+    endif()
 endif()
 
 set_target_properties(ravex_breaker PROPERTIES
     OUTPUT_NAME "ravex_breaker"
-    PREFIX "lib"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
 )
+
+if(WIN32)
+    set_target_properties(ravex_breaker PROPERTIES PREFIX "")
+else()
+    set_target_properties(ravex_breaker PROPERTIES PREFIX "lib")
+endif()
 
 if(WIN32)
     set_target_properties(ravex_breaker PROPERTIES SUFFIX ".dll")

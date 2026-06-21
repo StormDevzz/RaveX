@@ -6,9 +6,7 @@
 #include <algorithm>
 
 #ifdef _WIN32
-#include <windows.h>
-#include <psapi.h>
-#include <timeapi.h>
+#include "optimize_windows.h"
 #else
 #include <unistd.h>
 #include <sys/resource.h>
@@ -24,55 +22,9 @@ namespace optimize {
 
 void GuiOptimizer::optimizeGuiAndGame() {
 #ifdef _WIN32
-    // 1. pump game process priority to high class
-    SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
-
-    // 2. boost current rendering thread priority
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
-
-    // 3. kill Windows 11 Power Throttling for stable FPS
-    // Windows might throttle CPU for Java threads when opening GUI
-    typedef struct _PROCESS_POWER_THROTTLING_STATE {
-        ULONG Version;
-        ULONG ControlMask;
-        ULONG StateMask;
-    } PROCESS_POWER_THROTTLING_STATE, *PPROCESS_POWER_THROTTLING_STATE;
-
-    PROCESS_POWER_THROTTLING_STATE PowerThrottling;
-    RtlZeroMemory(&PowerThrottling, sizeof(PowerThrottling));
-    PowerThrottling.Version = 1; // PROCESS_POWER_THROTTLING_CURRENT_VERSION
-    PowerThrottling.ControlMask = 1; // PROCESS_POWER_THROTTLING_EXECUTION_SPEED
-    PowerThrottling.StateMask = 0;   // disabling throttling (set to 0)
-
-    // call dynamically via GetProcAddress to stay compatible with old Windows SDKs
-    typedef BOOL(WINAPI* SetProcessInformationFn)(HANDLE, int, LPVOID, DWORD);
-    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
-    if (hKernel32) {
-        SetProcessInformationFn pSetProcessInformation = 
-            (SetProcessInformationFn)GetProcAddress(hKernel32, "SetProcessInformation");
-        if (pSetProcessInformation) {
-            // ProcessPowerThrottling has value 4 in PROCESS_INFORMATION_CLASS
-            pSetProcessInformation(GetCurrentProcess(), 4, &PowerThrottling, sizeof(PowerThrottling));
-        }
-    }
-
-    // 4. lock Windows scheduler to 1ms resolution
-    timeBeginPeriod(1);
-
-    // 5. bind affinity mask to P-cores only (bypass E-cores on Intel 12th/13th/14th Gen)
-    SYSTEM_INFO sysInfo;
-    GetSystemInfo(&sysInfo);
-    DWORD_PTR mask = 0;
-    // P-cores usually come first. If we have many cores, bind to first 8 or 12.
-    int limit = (sysInfo.dwNumberOfProcessors > 16) ? 12 : (sysInfo.dwNumberOfProcessors > 8 ? 8 : sysInfo.dwNumberOfProcessors);
-    for (int i = 0; i < limit; i++) {
-        mask |= (1ULL << i);
-    }
-    SetThreadAffinityMask(GetCurrentThread(), mask);
-
-    // 6. flush working set
-    EmptyWorkingSet(GetCurrentProcess());
-
+    StartupBoost::boostAll();
+    MemoryBoost::optimizeAll();
+    SystemConfig::checkAll();
 #else
     // Linux
     // 1. raise process priority using nice
