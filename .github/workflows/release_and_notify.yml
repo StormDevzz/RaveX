@@ -31,10 +31,6 @@ jobs:
         run: |
           cmake -S src\main\cpp -B build\native -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
           cmake --build build\native --config Release --parallel
-          if (-not (Test-Path "build\native\Release")) { New-Item -ItemType Directory -Path "build\native\Release" }
-          Get-ChildItem -Recurse -Filter "*.dll" | Copy-Item -Destination "build\native\Release" -Force
-          Remove-Item "src\main\resources\assets\ravex\natives\*" -Force -ErrorAction SilentlyContinue
-          Copy-Item "build\native\Release\*.dll" "src\main\resources\assets\ravex\natives\" -Force
 
       - name: Build Java Mod
         run: ./gradlew.bat build
