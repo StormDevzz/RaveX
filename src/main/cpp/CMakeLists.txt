@@ -7,11 +7,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(WIN32)
     if(MSVC)
-        # MSVC: статическая линковка CRT
-        add_link_options(/MT)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        add_compile_definitions(_USE_MATH_DEFINES NOMINMAX)
     else()
-        # MinGW/GCC: статическая линковка
         add_link_options(-static -static-libgcc -static-libstdc++)
+        add_compile_definitions(_USE_MATH_DEFINES)
     endif()
 endif()
 
