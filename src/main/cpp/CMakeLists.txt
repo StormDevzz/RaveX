@@ -18,7 +18,7 @@ endif()
 find_package(JNI REQUIRED)
 
 add_subdirectory(common)
-add_subdirectory(lua)
+# add_subdirectory(lua)  # disabled: needs LuaScript.h which is missing
 add_subdirectory(antiafk)
 add_subdirectory(hooks/shaders)
 add_subdirectory(hooks/norender)

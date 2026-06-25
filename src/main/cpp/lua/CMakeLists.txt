@@ -49,7 +49,7 @@ target_include_directories(ravex_lua PUBLIC
 )
 
 target_include_directories(ravex_lua PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/main/cpp/addon/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../addon/include
 )
 
 target_link_libraries(ravex_lua PUBLIC
