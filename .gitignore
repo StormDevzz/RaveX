@@ -12,4 +12,6 @@ out/
 .DS_Store
 Thumbs.db
 *.log
+*.log.gz
+RaveX-main/
 src/main/native/encoded.h
