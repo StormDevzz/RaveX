@@ -46,3 +46,4 @@ GNU General Public License v3.0 — см. файл LICENSE.
 ---
 
 [English version →](README_EN.md)
+
