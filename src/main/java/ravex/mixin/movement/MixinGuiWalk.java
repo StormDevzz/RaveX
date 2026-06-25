@@ -3,6 +3,7 @@ package ravex.mixin.movement;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,6 +19,7 @@ public abstract class MixinGuiWalk {
 
         Minecraft mc = (Minecraft)(Object)this;
         if (mc.screen == null || mc.player == null || mc.getWindow() == null) return;
+        if (mc.screen instanceof ChatScreen) return;
 
         forceBinding(mc, mc.options.keyUp);
         forceBinding(mc, mc.options.keyDown);
