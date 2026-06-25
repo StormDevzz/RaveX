@@ -18,7 +18,6 @@ public class NoRender extends Module {
     public final BooleanParameter tripwire = new BooleanParameter("Tripwire", true);
     public final BooleanParameter signs = new BooleanParameter("Signs", true);
     public final BooleanParameter fog = new BooleanParameter("Fog", true);
-    public final BooleanParameter fire = new BooleanParameter("Fire", true);
 
     private static boolean nativeAvailable = false;
 
@@ -41,7 +40,6 @@ public class NoRender extends Module {
         addParameter(tripwire);
         addParameter(signs);
         addParameter(fog);
-        addParameter(fire);
     }
 
     // ── JNI methods ────────────────────────────────────────────────────────────
