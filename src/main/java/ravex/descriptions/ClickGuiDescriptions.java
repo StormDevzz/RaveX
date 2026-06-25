@@ -227,7 +227,6 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("LiquidCollision", "Bypass fucking liquids.");
         DESCRIPTIONS.put("TntAura", "Bombs fucking targets.");
         DESCRIPTIONS.put("WitherRoseAura", "Places roses.");
-        DESCRIPTIONS.put("MiddleClick", "Context-aware middle click actions.");
     }
 
     public static String getDescription(String moduleName) {

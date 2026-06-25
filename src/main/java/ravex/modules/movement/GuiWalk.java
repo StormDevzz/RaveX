@@ -7,7 +7,7 @@ import ravex.parameter.BooleanParameter;
 public class GuiWalk extends Module {
     public static final GuiWalk INSTANCE = new GuiWalk();
 
-    public final BooleanParameter sneak = new BooleanParameter("Sneak", false);
+    public final BooleanParameter sneak = new BooleanParameter("Sneak", true);
 
     private GuiWalk() {
         super("GuiWalk", Category.MOVEMENT);

@@ -37,9 +37,6 @@ public class Scaffold extends Module {
     public static float renderR = 1.0f;
     public static float renderG = 0.2f;
     public static float renderB = 0.8f;
-    public static float silentYaw = 0.0f;
-    public static float silentPitch = 0.0f;
-    public static boolean hasSilentRotation = false;
 
     private final EasingAnimation fadeAnim = new EasingAnimation();
     private final EasingAnimation sizeAnim = new EasingAnimation();
@@ -155,11 +152,8 @@ public class Scaffold extends Module {
 
         if (silentRot.getValue()) {
             float[] rots = rotationsTo(neighbor);
-            silentYaw = rots[0];
-            silentPitch = rots[1];
-            hasSilentRotation = true;
-        } else {
-            hasSilentRotation = false;
+            p.setYRot(rots[0]);
+            p.setXRot(rots[1]);
         }
 
         int prevSlot = p.getInventory().getSelectedSlot();

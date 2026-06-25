@@ -1055,8 +1055,6 @@ public abstract class MixinInGameHUD {
         }
     }
 
-
-
     private void drawTracerLine2D(GuiGraphics context, float x1, float y1, float x2, float y2, int color, float width) {
         float dx = x2 - x1;
         float dy = y2 - y1;

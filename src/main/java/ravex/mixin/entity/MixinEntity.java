@@ -118,6 +118,10 @@ public abstract class MixinEntity {
         if (ravex.modules.movement.NoWeb.INSTANCE.getEnabled()) {
             return;
         }
+
+        if (ravex.modules.movement.NoSlowDown.INSTANCE.getEnabled() && ravex.modules.movement.NoSlowDown.INSTANCE.cobwebs.getValue()) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "getTeamColor", at = @At("HEAD"), cancellable = true)
@@ -208,12 +212,6 @@ public abstract class MixinEntity {
             Entity self = (Entity)(Object)this;
             if (self instanceof net.minecraft.client.player.LocalPlayer) {
                 if (ravex.modules.movement.NoPush.INSTANCE.shouldCancelPush(self, other)) {
-                    ci.cancel();
-                    return;
-                }
-            }
-            if (other instanceof net.minecraft.client.player.LocalPlayer) {
-                if (ravex.modules.movement.NoPush.INSTANCE.shouldCancelPush(other, self)) {
                     ci.cancel();
                 }
             }
