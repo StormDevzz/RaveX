@@ -4,6 +4,7 @@ add_library(ravex_ecfarmer SHARED
     ecfarmer.cpp
     ecfarmer_jni.cpp
     ecfarmer_break.cpp
+    ecfarmer_util.cpp
     ecfarmer_place.cpp
     ecfarmer_scan.cpp
     ecfarmer_rotation.cpp
