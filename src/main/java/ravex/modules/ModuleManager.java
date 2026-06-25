@@ -138,6 +138,7 @@ import ravex.modules.combat.Trap;
 import ravex.modules.combat.AutoApple;
 import ravex.modules.combat.WebSelf;
 import ravex.modules.combat.KeyPearl;
+import ravex.modules.combat.PearlTarget;
 import ravex.modules.combat.Criticals;
 import ravex.modules.combat.AutoBow;
 import ravex.modules.combat.HoleFill;
@@ -157,6 +158,7 @@ import ravex.modules.world.AutoBrew;
 import ravex.modules.player.ECFarmer;
 import ravex.modules.world.NoGhostBlocks;
 import ravex.modules.render.BreadCrumbs;
+import ravex.modules.render.Crosshair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -194,6 +196,7 @@ public class ModuleManager {
         clickGuiModules.add(AutoApple.INSTANCE);
         clickGuiModules.add(WebSelf.INSTANCE);
         clickGuiModules.add(KeyPearl.INSTANCE);
+        clickGuiModules.add(PearlTarget.INSTANCE);
         clickGuiModules.add(ravex.modules.combat.NoHitDelay.INSTANCE);
         clickGuiModules.add(ravex.modules.combat.AntiPearl.INSTANCE);
         clickGuiModules.add(ravex.modules.combat.BedBomb.INSTANCE);
@@ -211,6 +214,7 @@ public class ModuleManager {
         clickGuiModules.add(WitherRoseAura.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
+        clickGuiModules.add(Crosshair.INSTANCE);
         clickGuiModules.add(ESP.INSTANCE);
         clickGuiModules.add(Skeleton.INSTANCE);
         clickGuiModules.add(NameTags.INSTANCE);

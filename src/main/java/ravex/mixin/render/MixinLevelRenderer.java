@@ -131,19 +131,29 @@ public class MixinLevelRenderer {
                 float lineWidth = BlockOutline.INSTANCE.width.getValue().floatValue();
 
                 try {
-                    modelViewMatrix.translate(
-                        (float)(boX - camPos.x),
-                        (float)(boY - camPos.y),
-                        (float)(boZ - camPos.z),
-                        REUSABLE_MATRIX
-                    );
-
-                    double size = 1.002;
+                    float bx = (float)(boX - camPos.x);
+                    float by = (float)(boY - camPos.y);
+                    float bz = (float)(boZ - camPos.z);
+                    float sx = bx + 1.0f;
+                    float sy = by + 1.0f;
+                    float sz = bz + 1.0f;
+                    float edgeWidth = lineWidth * 0.02f;
                     if (filled) {
-                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f, true);
+                        modelViewMatrix.translate(bx, by, bz, REUSABLE_MATRIX);
+                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, r, g, b, a * 0.25f, true);
                     }
-                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a, lineWidth, true);
-                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 1.035, r, g, b, a * 0.35f, lineWidth * 0.6f, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, bz, sx, by, bz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, bz, sx, by, sz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, sz, bx, by, sz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, sz, bx, by, bz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, sy, bz, sx, sy, bz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, sy, bz, sx, sy, sz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, sy, sz, bx, sy, sz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, sy, sz, bx, sy, bz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, bz, bx, sy, bz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, bz, sx, sy, bz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, sz, sx, sy, sz, edgeWidth, r, g, b, a, true);
+                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, sz, bx, sy, sz, edgeWidth, r, g, b, a, true);
                 } catch (Exception ignored) {}
             }
         } else {
@@ -905,6 +915,13 @@ public class MixinLevelRenderer {
                     Render3DUtils.batchWireframe(REUSABLE_MATRIX, size * 2.0, wr, wg, wb, 0.3f, 2.0f, true);
                 } catch (Exception ignored) {}
             }
+        }
+
+        // --- PearlTarget ---
+        if (ravex.modules.combat.PearlTarget.INSTANCE.getEnabled()) {
+            try {
+                ravex.modules.combat.PearlTarget.INSTANCE.render(modelViewMatrix, camera);
+            } catch (Exception ignored) {}
         }
 
         Render3DUtils.endFrame();

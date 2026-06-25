@@ -94,6 +94,7 @@
         "render.MixinGameRendererFreeCam",
         "combat.MixinPlayerNoHitDelay",
         "render.MixinItemStack",
+        "render.MixinCrosshair",
         "render.MixinClientTooltipComponent",
         "render.AccessorRenderType",
         "font.MixinTrueTypeGlyphProviderDefinition"
