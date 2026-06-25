@@ -210,7 +210,7 @@ public class MainAddon implements Addon {
         return new AddonInfo(
             "MainAddon",
             isWindows() ? "Windows Edition" : "Linux Edition",
-            "1.4.2",
+            "1.4.3",
             "RaveX Team",
             "ravex.addon.template.MainAddon"
         );

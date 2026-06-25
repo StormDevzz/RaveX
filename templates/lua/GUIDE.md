@@ -95,7 +95,7 @@ function getName()
 end
 
 function getVersion()
-    return "1.4.2"
+    return "1.4.3"
 end
 
 function onLoad(ctx)
@@ -111,7 +111,7 @@ end
 
 1. RaveX loads `main.lua` from `addons/lua/MyFirstAddon/`
 2. Calls `getName()` → "MyFirstAddon"
-3. Calls `getVersion()` → "1.4.2"
+3. Calls `getVersion()` → "1.4.3"
 4. Calls `onLoad(ctx)` → logs "Hello from Lua!"
 5. Addon is now running
 
@@ -130,7 +130,7 @@ Demonstrates config, modules, events, ticks, and platform branching.
 local enabled = configGet("enabled", "false")
 
 -- Write a value
-configSet("last_loaded", "MyAddon v1.4.2")
+configSet("last_loaded", "MyAddon v1.4.3")
 ```
 
 Config values persist between game sessions.
