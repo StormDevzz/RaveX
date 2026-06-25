@@ -70,6 +70,7 @@ public class MixinMultiPlayerGameMode {
             ci.cancel();
         }
         ravex.modules.misc.Announcer.INSTANCE.onHit();
+        ravex.modules.render.Crosshair.INSTANCE.onHit();
     }
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
