@@ -14,6 +14,7 @@ import ravex.modules.esp.Blur;
 import ravex.modules.esp.ToolTips;
 import ravex.modules.esp.VoidESP;
 import ravex.modules.player.AutoTool;
+import ravex.modules.player.MiddleClick;
 import ravex.modules.misc.AntiAfk;
 import ravex.modules.world.BoneMeal;
 import ravex.modules.world.Scaffold;
@@ -264,6 +265,7 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.player.ExtraTab.INSTANCE);
         clickGuiModules.add(ravex.modules.player.ExtraChest.INSTANCE);
         clickGuiModules.add(ravex.modules.player.ExtraChat.INSTANCE);
+        clickGuiModules.add(MiddleClick.INSTANCE);
         clickGuiModules.add(ElytraSwap.INSTANCE);
         clickGuiModules.add(ElytraReplace.INSTANCE);
         clickGuiModules.add(ViewLock.INSTANCE);

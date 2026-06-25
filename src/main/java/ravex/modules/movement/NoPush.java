@@ -1,5 +1,6 @@
 package ravex.modules.movement;
 
+import net.minecraft.world.entity.player.Player;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -23,7 +24,7 @@ public class NoPush extends Module {
     public boolean shouldCancelPush(net.minecraft.world.entity.Entity self, net.minecraft.world.entity.Entity other) {
         if (!getEnabled()) return false;
 
-        boolean otherPlayer = other instanceof net.minecraft.client.player.LocalPlayer;
+        boolean otherPlayer = other instanceof Player;
         boolean otherMob = other instanceof net.minecraft.world.entity.monster.Monster;
         boolean otherItem = other instanceof net.minecraft.world.entity.item.ItemEntity;
 
