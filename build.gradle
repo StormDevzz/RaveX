@@ -103,4 +103,18 @@ processResources {
         ])
     }
 }
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    // Фиксируем версию Java, под которую пишется софт (например, 21)
+    it.options.release.set(21) 
+    
+    // Если вы используете превью-фичи (те самые unnamed classes), раскомментируйте строку ниже:
+    // it.options.compilerArgs.add("--enable-preview")
+}
+
+java {
+    // Указываем Gradle использовать Java 21 для сборки
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
 
