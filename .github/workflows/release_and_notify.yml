@@ -9,7 +9,7 @@ jobs:
   build-windows:
     if: github.event_name == 'push'
     runs-on: windows-2022
-        steps:
+    steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
