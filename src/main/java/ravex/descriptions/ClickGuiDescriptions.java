@@ -230,6 +230,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Crosshair", "Custom crosshair with dynamic spread.");
         DESCRIPTIONS.put("PearlTarget", "Instantly detects enemy pearls and pursues the thrower with full force.");
         DESCRIPTIONS.put("MiddleClick", "Context-aware middle click actions.");
+        DESCRIPTIONS.put("Telemetry", "Sends anonymous usage data to improve RaveX.");
     }
 
     public static String getDescription(String moduleName) {

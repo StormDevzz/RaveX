@@ -24,6 +24,7 @@ import ravex.modules.client.Notifications;
 import ravex.modules.client.DesktopGui;
 import ravex.modules.client.Settings;
 import ravex.modules.client.Calculator;
+import ravex.modules.client.Telemetry;
 
 import ravex.modules.player.InventoryCleaner;
 
@@ -408,6 +409,7 @@ public class ModuleManager {
         clickGuiModules.add(DesktopGui.INSTANCE);
         clickGuiModules.add(Settings.INSTANCE);
         clickGuiModules.add(Calculator.INSTANCE);
+        clickGuiModules.add(Telemetry.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Commands.INSTANCE);
 
         // ── HUD modules ──────────────────────────────────────────────────────────

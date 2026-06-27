@@ -13,6 +13,7 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
+import ravex.parameter.NumberParameter;
 import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
 
@@ -32,24 +33,40 @@ public class Surround extends Module {
 
     public final ModeParameter mode = new ModeParameter("Mode", "Full",
         java.util.List.of("Full", "AntiFace", "Extra"));
+    public final BooleanParameter autoCenter = new BooleanParameter("Auto Center", true);
     public final BooleanParameter autoDisable = new BooleanParameter("Auto Disable", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter animate = new BooleanParameter("Animate", true);
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
+    public final NumberParameter delay = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
+
+    private static boolean nativeAvailable = false;
+    static {
+        try {
+            ravex.utility.misc.NativeLoader.load();
+            nativeAvailable = ravex.utility.misc.NativeLoader.isNativeAvailable();
+        } catch (Throwable t) {
+            nativeAvailable = false;
+        }
+    }
+
+    private static native double[] nativeGetCenter(double px, double py, double pz, boolean autoCenter);
 
     private final EasingAnimation fadeAnim = new EasingAnimation();
     private final EasingAnimation sizeAnim = new EasingAnimation();
     private final SlideAnimation slideAnim = new SlideAnimation();
-    private int placeTimer = 0;
+    private long lastPlaceTime = 0;
     private boolean placed = false;
 
     private Surround() {
         super("Surround", Category.COMBAT);
         addParameter(mode);
+        addParameter(autoCenter);
         addParameter(autoDisable);
         addParameter(render);
         addParameter(animate);
         addParameter(color);
+        addParameter(delay);
     }
 
     @Override
@@ -59,7 +76,7 @@ public class Surround extends Module {
         renderSize = 0.0;
         animatedCenter = null;
         placed = false;
-        placeTimer = 0;
+        lastPlaceTime = 0;
         fadeAnim.reset();
         sizeAnim.reset();
         slideAnim.reset();
@@ -81,6 +98,40 @@ public class Surround extends Module {
             renderAlpha = fadeAnim.updateFloat(false, 0.2f);
             renderSize = sizeAnim.update(false, 0.15);
             return;
+        }
+
+        // AutoDisable check on jump or in mid-air
+        if (autoDisable.getValue() && (!mc.player.onGround() || mc.options.keyJump.isDown())) {
+            setEnabled(false);
+            return;
+        }
+
+        // AutoCenter centering player
+        if (autoCenter.getValue()) {
+            double[] center;
+            if (nativeAvailable) {
+                try {
+                    center = nativeGetCenter(mc.player.getX(), mc.player.getY(), mc.player.getZ(), true);
+                } catch (Throwable t) {
+                    center = new double[]{
+                        Math.floor(mc.player.getX()) + 0.5,
+                        mc.player.getY(),
+                        Math.floor(mc.player.getZ()) + 0.5
+                    };
+                }
+            } else {
+                center = new double[]{
+                    Math.floor(mc.player.getX()) + 0.5,
+                    mc.player.getY(),
+                    Math.floor(mc.player.getZ()) + 0.5
+                };
+            }
+            mc.player.setPos(center[0], center[1], center[2]);
+            if (mc.player.connection != null) {
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
+                    center[0], center[1], center[2], mc.player.onGround(), false
+                ));
+            }
         }
 
         BlockPos playerPos = mc.player.blockPosition();
@@ -128,8 +179,23 @@ public class Surround extends Module {
 
         List<BlockPos> toPlace = new ArrayList<>();
         for (BlockPos target : targets) {
-            if (mc.level.getBlockState(target).isAir()) {
-                toPlace.add(target);
+            if (isReplaceable(target)) {
+                // If there's an End Crystal blocking the target block, attack it
+                if (handleBlockingEntities(target)) {
+                    continue;
+                }
+
+                // Check if we need a support block underneath
+                if (findNeighbor(target) == null) {
+                    BlockPos below = target.below();
+                    if (isReplaceable(below) && !toPlace.contains(below)) {
+                        toPlace.add(below);
+                    }
+                }
+
+                if (!toPlace.contains(target)) {
+                    toPlace.add(target);
+                }
             }
         }
 
@@ -168,9 +234,10 @@ public class Surround extends Module {
             return;
         }
 
-        placeTimer++;
-        if (placeTimer < 2) return;
-        placeTimer = 0;
+        long now = System.currentTimeMillis();
+        long msDelay = delay.getValue().longValue();
+        if (now - lastPlaceTime < msDelay) return;
+        lastPlaceTime = now;
 
         int prevSlot = mc.player.getInventory().getSelectedSlot();
         mc.player.getInventory().setSelectedSlot(blockSlot);
@@ -202,13 +269,41 @@ public class Surround extends Module {
         }
     }
 
+    private boolean isReplaceable(BlockPos pos) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return false;
+        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+        return state.isAir() || state.canBeReplaced();
+    }
+
+    private boolean handleBlockingEntities(BlockPos pos) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) return false;
+        net.minecraft.world.phys.AABB aabb = new net.minecraft.world.phys.AABB(pos);
+        List<net.minecraft.world.entity.Entity> entities = mc.level.getEntitiesOfClass(
+            net.minecraft.world.entity.Entity.class,
+            aabb,
+            entity -> entity instanceof net.minecraft.world.entity.boss.enderdragon.EndCrystal
+        );
+        if (!entities.isEmpty()) {
+            for (net.minecraft.world.entity.Entity crystal : entities) {
+                if (mc.gameMode != null) {
+                    mc.gameMode.attack(mc.player, crystal);
+                    mc.player.swing(InteractionHand.MAIN_HAND);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     private BlockPos findNeighbor(BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return null;
 
         for (Direction face : Direction.values()) {
             BlockPos side = pos.relative(face);
-            if (!mc.level.getBlockState(side).isAir()) {
+            if (!isReplaceable(side)) {
                 return side;
             }
         }

@@ -292,5 +292,17 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeTracers(
     if (pOutPoints) env->ReleaseDoubleArrayElements(outPoints, pOutPoints, 0);
 }
 
+JNIEXPORT jdoubleArray JNICALL
+Java_ravex_modules_combat_Surround_nativeGetCenter(JNIEnv* env, jclass, jdouble px, jdouble py, jdouble pz, jboolean autoCenter) {
+    jdoubleArray arr = env->NewDoubleArray(3);
+    if (!arr) return nullptr;
+    double cx = autoCenter ? std::floor(px) + 0.5 : px;
+    double cy = py;
+    double cz = autoCenter ? std::floor(pz) + 0.5 : pz;
+    jdouble buf[] = {cx, cy, cz};
+    env->SetDoubleArrayRegion(arr, 0, 3, buf);
+    return arr;
+}
+
 }
 
