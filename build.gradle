@@ -50,6 +50,7 @@ loom {
             configName = "Client"
             ideConfigGenerated(true)
             vmArgs(
+                "-Dcom.mojang.text2speech.Narrator=false",
                 "-Xmx1280M",
                 "-Xms512M",
                 "-XX:+UseG1GC",
@@ -62,7 +63,6 @@ loom {
                 "-XX:CompressedClassSpaceSize=128M",
                 "-XX:MaxDirectMemorySize=512M"
             )
-
         }
     }
 }
@@ -83,6 +83,7 @@ jar {
         )
     }
 }
+
 def mcVersion = property("minecraft_version")
 def loaderVersion = property("loader_version")
 
@@ -101,7 +102,5 @@ processResources {
             "loader_version"   : loaderVersion
         ])
     }
-
 }
-//Xiaomi 10SPro 
 
