@@ -113,8 +113,13 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 java {
-    // Указываем Gradle использовать Java 21 для сборки
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    // Включаем автодетект и автоскачивание Java 21 у всех разработчиков и на GitHub
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
 }
 
