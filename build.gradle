@@ -103,17 +103,7 @@ processResources {
         ])
     }
 }
-tasks.withType(JavaCompile).configureEach {
-    it.options.encoding = "UTF-8"
-    // Фиксируем версию Java, под которую пишется софт (например, 21)
-    it.options.release.set(21) 
-    
-    // Если вы используете превью-фичи (те самые unnamed classes), раскомментируйте строку ниже:
-    // it.options.compilerArgs.add("--enable-preview")
-}
-
 java {
-    // Включаем автодетект и автоскачивание Java 21 у всех разработчиков и на GitHub
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
@@ -121,5 +111,6 @@ java {
 
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
+    it.options.release.set(21)
 }
 
