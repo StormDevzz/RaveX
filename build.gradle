@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.fabric.loom)
+    id 'fabric-loom' version '1.10.5'
 }
 
 base {
@@ -103,14 +103,12 @@ processResources {
         ])
     }
 }
+
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
-    it.options.release.set(21)
 }
-
