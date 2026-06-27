@@ -53,9 +53,27 @@ public class NameTags extends Module {
         return nativeAvailable;
     }
 
-    public static native double nativeGetDistance(double x1, double y1, double z1, double x2, double y2, double z2);
-    public static native boolean nativeIsWithinRange(double distance, double range);
-    public static native double nativeCalculateScale(double distance, double scaleParam, boolean distanceScaling);
+        public static double nativeGetDistance(double x1, double y1, double z1, double x2, double y2, double z2) {
+        double dX = x1 - x2;
+        double dY = y1 - y2;
+        double dZ = z1 - z2;
+        return Math.sqrt(dX * dX + dY * dY + dZ * dZ);
+    }
+
+    public static boolean nativeIsWithinRange(double distance, double range) {
+        return distance <= range;
+    }
+
+    public static double nativeCalculateScale(double distance, double scaleParam, boolean distanceScaling) {
+        if (!distanceScaling) {
+            return scaleParam;
+        }
+        // Стандартная логика масштабирования неймтегов от дистанции:
+        // чем дальше игрок, тем крупнее (или стабильнее) размер текста, чтобы его можно было прочесть
+        double scale = distance * (scaleParam / 10.0);
+        return Math.max(scale, scaleParam); 
+    }
+
 
     public static native double[] nativeCalculateLayout(
         double distance,
