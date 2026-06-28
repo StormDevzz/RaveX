@@ -1,5 +1,13 @@
 package ravex.utility.misc;
 
+import java.io.*;
+import java.net.URL;
+import java.net.HttpURLConnection;
+import java.nio.file.Files;
+import java.util.Enumeration;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
 public class NativeLoader {
     private static boolean loaded = false;
     private static boolean nativeAvailable = false;
@@ -21,12 +29,48 @@ public class NativeLoader {
         return isWindows() ? ".dll" : ".so";
     }
 
-    private static java.io.File getOrDownloadLibrary(String libName, String tempPrefix, String tempSuffix) {
-        java.io.File cacheDir = new java.io.File(System.getProperty("user.home"), ".ravex/natives");
-        if (!cacheDir.exists()) {
-            cacheDir.mkdirs();
-        }
-        java.io.File cachedFile = new java.io.File(cacheDir, libName);
+    private static File getCacheDir() {
+        return new File(System.getProperty("user.home"), ".ravex/natives");
+    }
+
+    private static void extractAllFromJar(File dir) {
+        String prefix = "assets/ravex/natives/";
+        String suffix = isWindows() ? ".dll" : ".so";
+        try {
+            java.net.URL jarUrl = NativeLoader.class.getProtectionDomain().getCodeSource().getLocation();
+            if (jarUrl == null) return;
+            String jarPath = jarUrl.getPath();
+            if (jarPath == null || !jarPath.endsWith(".jar")) return;
+            try (java.util.jar.JarFile jar = new java.util.jar.JarFile(new File(jarPath))) {
+                java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
+                while (entries.hasMoreElements()) {
+                    java.util.jar.JarEntry entry = entries.nextElement();
+                    String name = entry.getName();
+                    if (name.startsWith(prefix) && name.endsWith(suffix) && !entry.isDirectory()) {
+                        String fileName = name.substring(prefix.length());
+                        File outFile = new File(dir, fileName);
+                        if (outFile.exists() && outFile.length() == entry.getSize()) continue;
+                        try (InputStream in = jar.getInputStream(entry);
+                             FileOutputStream out = new FileOutputStream(outFile)) {
+                            byte[] buf = new byte[8192];
+                            int read;
+                            while ((read = in.read(buf)) != -1) out.write(buf, 0, read);
+                        }
+                        outFile.setExecutable(true);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private static File getOrDownloadLibrary(String libName, String tempPrefix, String tempSuffix) {
+        File cacheDir = getCacheDir();
+        if (!cacheDir.exists()) cacheDir.mkdirs();
+
+        // First try to extract all from JAR to cache dir
+        extractAllFromJar(cacheDir);
+
+        File cachedFile = new File(cacheDir, libName);
         if (cachedFile.exists() && cachedFile.length() > 0) {
             return cachedFile;
         }
@@ -34,17 +78,17 @@ public class NativeLoader {
         String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/natives/" + libName;
         System.out.println("[RaveX] Downloading remote native: " + libName + " from " + remoteUrl);
         try {
-            java.net.URL url = new java.net.URL(remoteUrl);
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            URL url = new URL(remoteUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(10000);
             conn.setRequestMethod("GET");
 
             int responseCode = conn.getResponseCode();
             if (responseCode == 200) {
-                java.io.File tempDownload = new java.io.File(cacheDir, libName + ".tmp");
-                try (java.io.InputStream in = conn.getInputStream();
-                     java.io.FileOutputStream out = new java.io.FileOutputStream(tempDownload)) {
+                File tempDownload = new File(cacheDir, libName + ".tmp");
+                try (InputStream in = conn.getInputStream();
+                     FileOutputStream out = new FileOutputStream(tempDownload)) {
                     byte[] buffer = new byte[8192];
                     int bytesRead;
                     while ((bytesRead = in.read(buffer)) != -1) {
@@ -54,7 +98,7 @@ public class NativeLoader {
                 if (tempDownload.renameTo(cachedFile)) {
                     return cachedFile;
                 } else {
-                    java.nio.file.Files.copy(tempDownload.toPath(), cachedFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(tempDownload.toPath(), cachedFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                     tempDownload.delete();
                     return cachedFile;
                 }
@@ -65,18 +109,16 @@ public class NativeLoader {
             System.err.println("[RaveX] Error downloading native " + libName + ": " + t.getMessage());
         }
 
-        // Direct download to temp file fallback
         try {
-            String remoteUrlFallback = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/natives/" + libName;
-            java.net.URL url = new java.net.URL(remoteUrlFallback);
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            URL url = new URL(remoteUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(10000);
             if (conn.getResponseCode() == 200) {
-                java.io.File tempFile = java.io.File.createTempFile(tempPrefix, tempSuffix);
+                File tempFile = File.createTempFile(tempPrefix, tempSuffix);
                 tempFile.deleteOnExit();
-                try (java.io.InputStream in = conn.getInputStream();
-                     java.io.FileOutputStream out = new java.io.FileOutputStream(tempFile)) {
+                try (InputStream in = conn.getInputStream();
+                     FileOutputStream out = new FileOutputStream(tempFile)) {
                     byte[] buffer = new byte[8192];
                     int bytesRead;
                     while ((bytesRead = in.read(buffer)) != -1) {
@@ -92,6 +134,19 @@ public class NativeLoader {
         return null;
     }
 
+    private static void loadDependencies(File dir) {
+        // Load dependencies of libravex_jni.so first so the linker can find them
+        String[] deps = {"libravex_optimize.so", "libravex_manager.so", "libravex_github_tools.so"};
+        for (String dep : deps) {
+            File f = new File(dir, dep);
+            if (f.exists()) {
+                try {
+                    System.load(f.getAbsolutePath());
+                } catch (Throwable ignored) {}
+            }
+        }
+    }
+
     public static synchronized void load() {
         if (loaded) return;
         loaded = true;
@@ -101,11 +156,23 @@ public class NativeLoader {
         } catch (UnsatisfiedLinkError e) {
             String libName = getLibName();
             try {
-                java.io.InputStream in = NativeLoader.class.getResourceAsStream("/assets/ravex/natives/" + libName);
+                File cacheDir = getCacheDir();
+                if (!cacheDir.exists()) cacheDir.mkdirs();
+                extractAllFromJar(cacheDir);
+
+                File cached = new File(cacheDir, libName);
+                if (cached.exists() && cached.length() > 0) {
+                    loadDependencies(cacheDir);
+                    System.load(cached.getAbsolutePath());
+                    nativeAvailable = true;
+                    return;
+                }
+
+                InputStream in = NativeLoader.class.getResourceAsStream("/assets/ravex/natives/" + libName);
                 if (in != null) {
-                    java.io.File tempFile = java.io.File.createTempFile(getTempPrefix(), getTempSuffix());
+                    File tempFile = File.createTempFile(getTempPrefix(), getTempSuffix());
                     tempFile.deleteOnExit();
-                    try (java.io.FileOutputStream out = new java.io.FileOutputStream(tempFile)) {
+                    try (FileOutputStream out = new FileOutputStream(tempFile)) {
                         byte[] buffer = new byte[8192];
                         int bytesRead;
                         while ((bytesRead = in.read(buffer)) != -1) {
@@ -115,8 +182,9 @@ public class NativeLoader {
                     System.load(tempFile.getAbsolutePath());
                     nativeAvailable = true;
                 } else {
-                    java.io.File file = getOrDownloadLibrary(libName, getTempPrefix(), getTempSuffix());
+                    File file = getOrDownloadLibrary(libName, getTempPrefix(), getTempSuffix());
                     if (file != null) {
+                        loadDependencies(file.getParentFile());
                         System.load(file.getAbsolutePath());
                         nativeAvailable = true;
                     } else {
@@ -140,11 +208,21 @@ public class NativeLoader {
             String tempPrefix = isWin ? name : "lib" + name;
             String tempSuffix = isWin ? ".dll" : ".so";
             try {
-                java.io.InputStream in = NativeLoader.class.getResourceAsStream("/assets/ravex/natives/" + libName);
+                File cacheDir = getCacheDir();
+                if (!cacheDir.exists()) cacheDir.mkdirs();
+                extractAllFromJar(cacheDir);
+
+                File cached = new File(cacheDir, libName);
+                if (cached.exists() && cached.length() > 0) {
+                    System.load(cached.getAbsolutePath());
+                    return true;
+                }
+
+                InputStream in = NativeLoader.class.getResourceAsStream("/assets/ravex/natives/" + libName);
                 if (in != null) {
-                    java.io.File tempFile = java.io.File.createTempFile(tempPrefix, tempSuffix);
+                    File tempFile = File.createTempFile(tempPrefix, tempSuffix);
                     tempFile.deleteOnExit();
-                    try (java.io.FileOutputStream out = new java.io.FileOutputStream(tempFile)) {
+                    try (FileOutputStream out = new FileOutputStream(tempFile)) {
                         byte[] buffer = new byte[8192];
                         int bytesRead;
                         while ((bytesRead = in.read(buffer)) != -1) {
@@ -154,7 +232,7 @@ public class NativeLoader {
                     System.load(tempFile.getAbsolutePath());
                     return true;
                 } else {
-                    java.io.File file = getOrDownloadLibrary(libName, tempPrefix, tempSuffix);
+                    File file = getOrDownloadLibrary(libName, tempPrefix, tempSuffix);
                     if (file != null) {
                         System.load(file.getAbsolutePath());
                         return true;

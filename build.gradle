@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.fabric.loom)
+    id 'fabric-loom' version '1.10.5'
 }
 
 base {
@@ -51,6 +51,7 @@ loom {
             configName = "Client"
             ideConfigGenerated(true)
             vmArgs(
+                "-Dcom.mojang.text2speech.Narrator=false",
                 "-Xmx1280M",
                 "-Xms512M",
                 "-XX:+UseG1GC",
@@ -63,7 +64,6 @@ loom {
                 "-XX:CompressedClassSpaceSize=128M",
                 "-XX:MaxDirectMemorySize=512M"
             )
-
         }
     }
 }
@@ -84,6 +84,7 @@ jar {
         )
     }
 }
+
 def mcVersion = property("minecraft_version")
 def loaderVersion = property("loader_version")
 
@@ -102,7 +103,15 @@ processResources {
             "loader_version"   : loaderVersion
         ])
     }
-
 }
-//Xiaomi 10SPro 
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    it.options.release.set(21)
+}

@@ -14,6 +14,7 @@ import ravex.modules.esp.Blur;
 import ravex.modules.esp.ToolTips;
 import ravex.modules.esp.VoidESP;
 import ravex.modules.player.AutoTool;
+import ravex.modules.player.MiddleClick;
 import ravex.modules.misc.AntiAfk;
 import ravex.modules.world.BoneMeal;
 import ravex.modules.world.Scaffold;
@@ -23,6 +24,7 @@ import ravex.modules.client.Notifications;
 import ravex.modules.client.DesktopGui;
 import ravex.modules.client.Settings;
 import ravex.modules.client.Calculator;
+
 
 import ravex.modules.player.InventoryCleaner;
 
@@ -34,6 +36,7 @@ import ravex.modules.combat.AimAssist;
 import ravex.modules.render.CustomFog;
 import ravex.modules.render.NameTags;
 import ravex.modules.render.Tracers;
+import ravex.modules.render.Particles;
 import ravex.modules.combat.Trigger;
 import ravex.modules.combat.MaceSwap;
 import ravex.modules.render.Hud;
@@ -61,6 +64,7 @@ import ravex.modules.misc.PacketLogger;
 import ravex.modules.movement.LongJump;
 import ravex.modules.misc.AutoLog;
 import ravex.modules.render.KillEffects;
+import ravex.modules.misc.NewChunkDetector;
 import ravex.modules.misc.AntiQuit;
 import ravex.modules.misc.CustomDeathText;
 import ravex.modules.misc.NoNarrator;
@@ -128,6 +132,7 @@ import ravex.modules.exploit.ClickFly;
 import ravex.modules.exploit.ChorusExploit;
 import ravex.modules.exploit.TickShift;
 import ravex.modules.exploit.TridentBoost;
+import ravex.modules.exploit.GrimInstantMine;
 import ravex.modules.exploit.FakePearl;
 import ravex.modules.player.Xray;
 import ravex.modules.player.Replenish;
@@ -140,6 +145,7 @@ import ravex.modules.combat.Trap;
 import ravex.modules.combat.AutoApple;
 import ravex.modules.combat.WebSelf;
 import ravex.modules.combat.KeyPearl;
+import ravex.modules.combat.PearlTarget;
 import ravex.modules.combat.Criticals;
 import ravex.modules.combat.AutoBow;
 import ravex.modules.combat.HoleFill;
@@ -159,6 +165,7 @@ import ravex.modules.world.AutoBrew;
 import ravex.modules.player.ECFarmer;
 import ravex.modules.world.NoGhostBlocks;
 import ravex.modules.render.BreadCrumbs;
+import ravex.modules.render.Crosshair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -196,6 +203,7 @@ public class ModuleManager {
         clickGuiModules.add(AutoApple.INSTANCE);
         clickGuiModules.add(WebSelf.INSTANCE);
         clickGuiModules.add(KeyPearl.INSTANCE);
+        clickGuiModules.add(PearlTarget.INSTANCE);
         clickGuiModules.add(ravex.modules.combat.NoHitDelay.INSTANCE);
         clickGuiModules.add(ravex.modules.combat.AntiPearl.INSTANCE);
         clickGuiModules.add(ravex.modules.combat.BedBomb.INSTANCE);
@@ -216,6 +224,7 @@ public class ModuleManager {
         clickGuiModules.add(AutoCart.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
+        clickGuiModules.add(Crosshair.INSTANCE);
         clickGuiModules.add(ESP.INSTANCE);
         clickGuiModules.add(Skeleton.INSTANCE);
         clickGuiModules.add(NameTags.INSTANCE);
@@ -247,6 +256,7 @@ public class ModuleManager {
         clickGuiModules.add(Trails.INSTANCE);
         clickGuiModules.add(Waypoint.INSTANCE);
         clickGuiModules.add(KillEffects.INSTANCE);
+        clickGuiModules.add(Particles.INSTANCE);
         clickGuiModules.add(AspectRatio.INSTANCE);
 
         clickGuiModules.add(Borders.INSTANCE);
@@ -271,6 +281,7 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.player.ExtraTab.INSTANCE);
         clickGuiModules.add(ravex.modules.player.ExtraChest.INSTANCE);
         clickGuiModules.add(ravex.modules.player.ExtraChat.INSTANCE);
+        clickGuiModules.add(MiddleClick.INSTANCE);
         clickGuiModules.add(ElytraSwap.INSTANCE);
         clickGuiModules.add(ElytraReplace.INSTANCE);
         clickGuiModules.add(ViewLock.INSTANCE);
@@ -319,6 +330,7 @@ public class ModuleManager {
         clickGuiModules.add(Optimizer.INSTANCE);
         clickGuiModules.add(AutoEat.INSTANCE);
         clickGuiModules.add(PacketLogger.INSTANCE);
+        clickGuiModules.add(NewChunkDetector.INSTANCE);
         clickGuiModules.add(AutoLog.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Spammer.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.DurabAlert.INSTANCE);
@@ -378,8 +390,10 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.exploit.GhostHand.INSTANCE);
         clickGuiModules.add(Timer.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.PortalGui.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.PortalGodMode.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.MultiTask.INSTANCE);
         clickGuiModules.add(ClickTP.INSTANCE);
+        clickGuiModules.add(GrimInstantMine.INSTANCE);
         clickGuiModules.add(ClickFly.INSTANCE);
         clickGuiModules.add(ChorusExploit.INSTANCE);
         clickGuiModules.add(TickShift.INSTANCE);
@@ -558,6 +572,8 @@ public class ModuleManager {
         hudModules.add(ravex.modules.hud.CooldownsHud.INSTANCE);
         hudModules.add(ravex.modules.hud.InvPreviewHud.INSTANCE);
         hudModules.add(ravex.modules.hud.IndicatorsHud.INSTANCE);
+        hudModules.add(ravex.modules.hud.CurrencyHud.INSTANCE);
+        hudModules.add(ravex.modules.hud.ServerBrandHud.INSTANCE);
         hudModules.add(new HudModule("Fps", 10, 220, 60, 14) {
             {
                 addParameter(new ravex.parameter.ColorParameter("HighColor", 0xFF44FF88));

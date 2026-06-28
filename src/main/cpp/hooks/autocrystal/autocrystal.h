@@ -80,6 +80,7 @@ struct AutoCrystalConfig {
     bool   totemCheckTarget = true;
     bool   placeAirPlace    = false;
     bool   placeMultiPlace  = false;
+    bool   suicide          = false;
 };
 
 // ── Состояние кристалла на поле ──────────────────────────────────────────────

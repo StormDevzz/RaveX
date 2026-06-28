@@ -49,6 +49,8 @@ public class HudEditorScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        ravex.utility.misc.GuiOptimizer.optimizeHudAnimations(ModuleManager.INSTANCE.getHudModules());
+
         if (settingsModule != null) {
             renderSettingsPopup(graphics, mouseX, mouseY);
             super.render(graphics, mouseX, mouseY, partialTicks);

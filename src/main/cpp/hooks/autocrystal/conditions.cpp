@@ -42,6 +42,10 @@ bool ConditionValidator::isPlacementSafe(
     bool playerInHole,
     bool isBreakPhase)
 {
+    if (config.suicide) {
+        return true;
+    }
+
     if (config.antiSuicide) {
         bool checkSuicide = true;
         if (isBreakPhase && !config.antiSuicideCheckBreaking) {

@@ -105,7 +105,7 @@ public class MainAddon implements Addon {
     @Override
     public AddonInfo getAddonInfo() {
         return new AddonInfo("MainAddon", "Description",
-            "1.4.2", "Author", "ravex.addon.template.MainAddon");
+            "1.4.3", "Author", "ravex.addon.template.MainAddon");
     }
 }
 ```

@@ -283,7 +283,7 @@ public:
     }
 
     std::string getName()    const override { return "FeatureAddon"; }
-    std::string getVersion() const override { return "1.4.2"; }
+    std::string getVersion() const override { return "1.4.3"; }
 };
 
 } // namespace my_addon

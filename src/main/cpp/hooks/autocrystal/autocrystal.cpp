@@ -181,6 +181,9 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
         }
 
         double score = targetDmg - selfDmg * config.selfDamageWeight + deathBonus + totemPopBonus + healthBonus;
+        if (config.suicide) {
+            score = selfDmg * 100.0 + targetDmg;
+        }
 
         if (score > best.score) {
             best.score        = score;
@@ -258,6 +261,9 @@ bool AutoCrystalMath::findBestBreak(
         }
 
         double score = targetDmg - selfDmg * config.selfDamageWeight + deathBonus + totemPopBonus;
+        if (config.suicide) {
+            score = selfDmg * 100.0 + targetDmg;
+        }
 
         if (score > bestScore) {
             bestScore    = score;

@@ -85,7 +85,7 @@ public:
     //     Используется системой авто-обновления для сравнения версий.
     // EN: Returns the addon version in semver format (major.minor.patch).
     //     Used by the auto-update system for version comparison.
-    std::string getVersion() const override { return "1.4.2"; }
+    std::string getVersion() const override { return "1.4.3"; }
 };
 
 } // namespace minimal_addon

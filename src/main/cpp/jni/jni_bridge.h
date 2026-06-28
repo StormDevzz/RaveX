@@ -93,6 +93,10 @@ Java_ravex_modules_misc_AntiAfk_nativeIsRunning(JNIEnv* env, jclass clazz);
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_misc_AntiAfk_nativePerformAction(JNIEnv* env, jclass clazz);
 
+// ── Surround ──────────────────────────────────────────────────────────────
+JNIEXPORT jdoubleArray JNICALL
+Java_ravex_modules_combat_Surround_nativeGetCenter(JNIEnv* env, jclass clazz, jdouble px, jdouble py, jdouble pz, jboolean autoCenter);
+
 #ifdef __cplusplus
 }
 #endif

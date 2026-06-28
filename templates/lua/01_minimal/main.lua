@@ -29,7 +29,7 @@ end
 -- RU: Возвращает версию в формате major.minor.patch (semver).
 -- EN: Returns version in major.minor.patch format (semver).
 function getVersion()
-    return "1.4.2"
+    return "1.4.3"
 end
 
 -- RU: Опционально: автор аддона.

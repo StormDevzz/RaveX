@@ -35,6 +35,26 @@ public class Breaker extends Module {
     public final BooleanParameter antiSuicide = new BooleanParameter("Anti Suicide", true);
     public final NumberParameter antiSuicideMinHp = new NumberParameter("Anti Suicide Min HP", 6.0, 1.0, 20.0, 0.5);
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
+    public final BooleanParameter syncPacketMine = new BooleanParameter("Sync PacketMine", false) {
+        @Override
+        public void setValue(Boolean val) {
+            if (val) {
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                boolean packetMineEnabled = ravex.modules.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();
+                if (!packetMineEnabled) {
+                    if (mc.player != null) {
+                        mc.player.displayClientMessage(
+                            net.minecraft.network.chat.Component.literal("§7[§cBreaker§7] §cPlease enable PacketMine module first!"),
+                            false
+                        );
+                    }
+                    super.setValue(false);
+                    return;
+                }
+            }
+            super.setValue(val);
+        }
+    };
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00FFFF);
 
@@ -59,6 +79,7 @@ public class Breaker extends Module {
         addParameter(antiSuicide);
         addParameter(antiSuicideMinHp);
         addParameter(rotate);
+        addParameter(syncPacketMine);
         addParameter(render);
         addParameter(color);
     }
@@ -66,7 +87,7 @@ public class Breaker extends Module {
     @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
-        if (currentMiningBlock != null && mc.gameMode != null) {
+        if (currentMiningBlock != null && mc.gameMode != null && !syncPacketMine.getValue()) {
             mc.gameMode.stopDestroyBlock();
         }
         currentMiningBlock = null;
@@ -84,12 +105,25 @@ public class Breaker extends Module {
 
         hasSilentRotations = false;
 
+        if (syncPacketMine.getValue()) {
+            boolean packetMineEnabled = ravex.modules.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();
+            if (!packetMineEnabled) {
+                syncPacketMine.setValue(false);
+                mc.player.displayClientMessage(
+                    net.minecraft.network.chat.Component.literal("§7[§cBreaker§7] §cPacketMine was disabled, Sync PacketMine turned off!"),
+                    false
+                );
+            }
+        }
+
         if (!nativeAvailable) return;
 
         Player target = findTarget(mc);
         if (target == null) {
             if (currentMiningBlock != null) {
-                mc.gameMode.stopDestroyBlock();
+                if (!syncPacketMine.getValue()) {
+                    mc.gameMode.stopDestroyBlock();
+                }
                 currentMiningBlock = null;
             }
             return;
@@ -97,70 +131,137 @@ public class Breaker extends Module {
 
         List<BlockPos> solid = collectSolidBlocks(mc, target);
         List<BlockPos> candidates = new ArrayList<>();
+        BlockPos tPos = target.blockPosition();
+        int tx = tPos.getX();
+        int ty = tPos.getY();
+        int tz = tPos.getZ();
+
         for (BlockPos pos : solid) {
             BlockState state = mc.level.getBlockState(pos);
             if (state.getDestroySpeed(mc.level, pos) > 0.0f) {
-                candidates.add(pos);
+                int px = pos.getX();
+                int py = pos.getY();
+                int pz = pos.getZ();
+
+                boolean isTargetCover = false;
+
+                // Support block below feet
+                if (px == tx && py == ty - 1 && pz == tz) {
+                    isTargetCover = true;
+                }
+                // Feet/Legs level surround
+                else if (py == ty) {
+                    int dx = Math.abs(px - tx);
+                    int dz = Math.abs(pz - tz);
+                    if (dx <= 1 && dz <= 1 && (dx + dz > 0)) {
+                        isTargetCover = true;
+                    }
+                }
+                // Head/Body level surround
+                else if (py == ty + 1) {
+                    int dx = Math.abs(px - tx);
+                    int dz = Math.abs(pz - tz);
+                    if (dx <= 1 && dz <= 1 && (dx + dz > 0)) {
+                        isTargetCover = true;
+                    }
+                }
+                // Top block / Trap / Ceiling
+                else if (px == tx && py == ty + 2 && pz == tz) {
+                    isTargetCover = true;
+                }
+
+                if (isTargetCover) {
+                    candidates.add(pos);
+                }
             }
         }
 
         if (candidates.isEmpty()) {
             if (currentMiningBlock != null) {
-                mc.gameMode.stopDestroyBlock();
+                if (!syncPacketMine.getValue()) {
+                    mc.gameMode.stopDestroyBlock();
+                }
                 currentMiningBlock = null;
             }
             return;
         }
 
-        double[] solidData = flatten(solid);
-        double[] candData = flatten(candidates);
-
-        double[] result = nativeCalculateBreaker(
-            mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-            mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
-            target.getX(), target.getY(), target.getZ(),
-            target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
-            solidData,
-            candData,
-            range.getValue(),
-            crystalRange.getValue(),
-            minDamage.getValue(),
-            maxSelfDmg.getValue(),
-            selfDamageWeight.getValue(),
-            antiSuicide.getValue(),
-            antiSuicideMinHp.getValue()
-        );
-
-        if (result == null || result[0] < 0.5) {
-            if (currentMiningBlock != null) {
-                mc.gameMode.stopDestroyBlock();
-                currentMiningBlock = null;
+        BlockPos targetPos = null;
+        if (currentMiningBlock != null) {
+            double dist = Vec3.atCenterOf(currentMiningBlock).distanceTo(mc.player.getEyePosition());
+            if (dist <= range.getValue() && candidates.contains(currentMiningBlock)) {
+                targetPos = currentMiningBlock;
             }
-            return;
         }
 
-        BlockPos targetPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
+        if (targetPos == null) {
+            double[] solidData = flatten(solid);
+            double[] candData = flatten(candidates);
 
-        String rotMode = rotate.getValue();
-        if (rotMode.equals("Normal")) {
-            rotateTo(mc, Vec3.atCenterOf(targetPos));
-        } else if (rotMode.equals("Silent")) {
-            silentYaw = calculateYaw(mc, Vec3.atCenterOf(targetPos));
-            silentPitch = calculatePitch(mc, Vec3.atCenterOf(targetPos));
-            hasSilentRotations = true;
+            double[] result = nativeCalculateBreaker(
+                mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
+                target.getX(), target.getY(), target.getZ(),
+                target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
+                solidData,
+                candData,
+                range.getValue(),
+                crystalRange.getValue(),
+                minDamage.getValue(),
+                maxSelfDmg.getValue(),
+                selfDamageWeight.getValue(),
+                antiSuicide.getValue(),
+                antiSuicideMinHp.getValue()
+            );
+
+            if (result == null || result[0] < 0.5) {
+                if (currentMiningBlock != null) {
+                    if (!syncPacketMine.getValue()) {
+                        mc.gameMode.stopDestroyBlock();
+                    }
+                    currentMiningBlock = null;
+                }
+                return;
+            }
+
+            targetPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
         }
 
-        if (currentMiningBlock == null || !currentMiningBlock.equals(targetPos)) {
-            if (currentMiningBlock != null) {
-                mc.gameMode.stopDestroyBlock();
+        if (!syncPacketMine.getValue()) {
+            String rotMode = rotate.getValue();
+            if (rotMode.equals("Normal")) {
+                rotateTo(mc, Vec3.atCenterOf(targetPos));
+            } else if (rotMode.equals("Silent")) {
+                silentYaw = calculateYaw(mc, Vec3.atCenterOf(targetPos));
+                silentPitch = calculatePitch(mc, Vec3.atCenterOf(targetPos));
+                hasSilentRotations = true;
+            }
+        }
+
+        if (syncPacketMine.getValue()) {
+            if (!ravex.modules.exploit.PacketMine.INSTANCE.isTargetBlock(targetPos)) {
+                // Focus only on the target block
+                ravex.modules.exploit.PacketMine.miningBlocks.removeIf(m -> !m.done);
+                
+                String name = mc.level.getBlockState(targetPos).getBlock().getName().getString();
+                long breakMs = ravex.modules.exploit.PacketMine.INSTANCE.calcBreakTime(mc, targetPos);
+                ravex.modules.exploit.PacketMine.miningBlocks.add(
+                    new ravex.modules.exploit.PacketMine.MiningBlock(targetPos, breakMs, name)
+                );
             }
             currentMiningBlock = targetPos;
-            mc.gameMode.startDestroyBlock(targetPos, Direction.UP);
         } else {
-            mc.gameMode.continueDestroyBlock(targetPos, Direction.UP);
+            if (currentMiningBlock == null || !currentMiningBlock.equals(targetPos)) {
+                if (currentMiningBlock != null) {
+                    mc.gameMode.stopDestroyBlock();
+                }
+                currentMiningBlock = targetPos;
+                mc.gameMode.startDestroyBlock(targetPos, Direction.UP);
+            } else {
+                mc.gameMode.continueDestroyBlock(targetPos, Direction.UP);
+            }
+            mc.player.swing(InteractionHand.MAIN_HAND);
         }
-
-        mc.player.swing(InteractionHand.MAIN_HAND);
     }
 
     private Player findTarget(Minecraft mc) {
