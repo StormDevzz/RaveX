@@ -99,6 +99,7 @@
         "combat.MixinPlayerNoHitDelay",
         "render.MixinItemStack",
         "render.MixinCrosshair",
+        "render.MixinPlayerModel",
         "render.MixinClientTooltipComponent",
         "render.AccessorRenderType",
         "font.MixinTrueTypeGlyphProviderDefinition"

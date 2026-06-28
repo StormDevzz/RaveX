@@ -14,11 +14,7 @@ public class LoaderWindow extends JFrame {
     private static final Color TEXT_COLOR = new Color(0xe2, 0xe2, 0xe8);
     private static final Color TEXT_MUTED = new Color(0x65, 0x65, 0x75);
 
-<<<<<<< HEAD
-    private String version = "1.4.3";
-=======
     private String version = "1.4.5";
->>>>>>> d5789b70550118b35e864d8afa6cd32033b90fc8
     private final String osName = detectOS();
     private String status = "Initializing...";
     private int percent = 0;
