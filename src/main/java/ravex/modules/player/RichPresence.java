@@ -3,83 +3,132 @@ package ravex.modules.player;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
 import ravex.utility.lua.LuaManager;
 import net.minecraft.client.Minecraft;
-
-import java.io.*;
-import java.util.List;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.multiplayer.ServerData;
 
 public class RichPresence extends Module {
     public static final RichPresence INSTANCE = new RichPresence();
 
     public final BooleanParameter showHP     = new BooleanParameter("Show HP",     true);
     public final BooleanParameter showCoords = new BooleanParameter("Show Coords", false);
+    public final BooleanParameter showIP     = new BooleanParameter("Show IP",     true);
+    public final BooleanParameter showPing   = new BooleanParameter("Show Ping",   true);
+    public final BooleanParameter showButton = new BooleanParameter("Show Button", true);
+    public final BooleanParameter showOS     = new BooleanParameter("Show OS",     true);
+
+    private Thread updateThread;
+    private volatile boolean running = false;
 
     private RichPresence() {
         super("RichPresence", Category.CLIENT);
         addParameter(showHP);
         addParameter(showCoords);
+        addParameter(showIP);
+        addParameter(showPing);
+        addParameter(showButton);
+        addParameter(showOS);
     }
 
     @Override
     protected void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
-        File scriptFile = ensureScriptFile(mc);
-
-        if (scriptFile != null && scriptFile.exists()) {
+        running = true;
+        updateThread = new Thread(() -> {
             try {
-                LuaManager.INSTANCE.getGlobals().loadfile(scriptFile.getAbsolutePath()).call();
-            } catch (Exception e) {
-                if (mc.player != null) {
-                    mc.player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal(
-                            "§7[§cRaveX§7] §cRichPresence Lua error: " + e.getMessage()), false);
-                }
+                LuaManager.INSTANCE.discordConnect();
+            } catch (Throwable t) {
+                System.err.println("[RichPresence] discordConnect failed: " + t.getMessage());
+                running = false;
+                return;
             }
-        } else {
-            if (mc.player != null) {
-                mc.player.displayClientMessage(
-                    net.minecraft.network.chat.Component.literal(
-                        "§7[§cRaveX§7] §eRichPresence: Copy rich_presence.lua to ravex/scripts/"), false);
+
+            long startTime = System.currentTimeMillis();
+
+            while (running) {
+                try {
+                    updatePresence(startTime);
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    break;
+                } catch (Throwable ignored) {}
             }
-        }
+
+            try {
+                LuaManager.INSTANCE.discordClearActivity();
+                LuaManager.INSTANCE.discordDisconnect();
+            } catch (Throwable ignored) {}
+        }, "RaveX-RichPresence");
+        updateThread.setDaemon(true);
+        updateThread.start();
     }
 
     @Override
     protected void onDisable() {
-        LuaManager.INSTANCE.onDisableRichPresence();
+        running = false;
+        if (updateThread != null) {
+            updateThread.interrupt();
+            updateThread = null;
+        }
+        try {
+            LuaManager.INSTANCE.discordClearActivity();
+            LuaManager.INSTANCE.discordDisconnect();
+        } catch (Throwable ignored) {}
     }
 
-    private static File ensureScriptFile(Minecraft mc) {
-        File scriptsDir = new File(mc.gameDirectory, "ravex/scripts");
-        scriptsDir.mkdirs();
-        File target = new File(scriptsDir, "rich_presence.lua");
-        
-        if (target.exists()) {
-            try {
-                String content = java.nio.file.Files.readString(target.toPath());
-                if (!content.contains("Connected to Discord")) {
-                    try (InputStream in = RichPresence.class.getResourceAsStream("/lua/rich_presence.lua")) {
-                        if (in != null) {
-                            try (OutputStream out = new FileOutputStream(target)) {
-                                in.transferTo(out);
-                            }
-                        }
+    private void updatePresence(long startTime) {
+        Minecraft mc = Minecraft.getInstance();
+        String details;
+        String state;
+
+        if (mc.player == null || mc.level == null) {
+            details = "Menu";
+            state = "In main menu";
+        } else {
+            details = "RaveX — " + mc.player.getGameProfile().name();
+
+            StringBuilder stateBuilder = new StringBuilder();
+            if (showHP.getValue()) {
+                int hp = (int) Math.ceil(mc.player.getHealth());
+                int maxHp = (int) Math.ceil(mc.player.getMaxHealth());
+                stateBuilder.append("HP ").append(hp).append("/").append(maxHp);
+            }
+            if (showIP.getValue()) {
+                if (stateBuilder.length() > 0) stateBuilder.append(" | ");
+                ServerData server = mc.getCurrentServer();
+                if (server != null) {
+                    stateBuilder.append(server.ip);
+                }
+            }
+            if (showPing.getValue()) {
+                if (stateBuilder.length() > 0) stateBuilder.append(" | ");
+                if (mc.getConnection() != null) {
+                    PlayerInfo info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
+                    if (info != null) {
+                        stateBuilder.append(info.getLatency()).append("ms");
                     }
                 }
-            } catch (Exception ignored) {}
-            return target;
+            }
+            if (showCoords.getValue()) {
+                if (stateBuilder.length() > 0) stateBuilder.append(" | ");
+                stateBuilder.append(String.format("XYZ: %.0f, %.0f, %.0f", mc.player.getX(), mc.player.getY(), mc.player.getZ()));
+            } else {
+                int enabledCount = 0;
+                for (var m : ravex.modules.ModuleManager.INSTANCE.getModules()) {
+                    if (m.getEnabled()) {
+                        enabledCount++;
+                    }
+                }
+                if (stateBuilder.length() > 0) stateBuilder.append(" | ");
+                stateBuilder.append(enabledCount).append(" modules");
+            }
+            state = stateBuilder.toString();
         }
 
-        try (InputStream in = RichPresence.class.getResourceAsStream("/lua/rich_presence.lua")) {
-            if (in != null) {
-                try (OutputStream out = new FileOutputStream(target)) {
-                    in.transferTo(out);
-                }
-                return target;
-            }
-        } catch (Exception ignored) {}
-        return target.exists() ? target : null;
+        try {
+            LuaManager.INSTANCE.discordSetActivity(details, state, startTime, showOS.getValue(), showButton.getValue());
+        } catch (Throwable t) {
+            System.err.println("[RichPresence] discordSetActivity failed: " + t.getMessage());
+        }
     }
 }
