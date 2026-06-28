@@ -81,6 +81,7 @@ import ravex.modules.combat.Reach;
 import ravex.modules.movement.NoPush;
 import ravex.modules.movement.AutoSprint;
 import ravex.modules.movement.Spider;
+import ravex.modules.combat.AutoCart;
 import ravex.modules.combat.KeepSprint;
 import ravex.modules.combat.ShieldFucker;
 import ravex.modules.movement.SafeWalk;
@@ -212,6 +213,7 @@ public class ModuleManager {
         clickGuiModules.add(WitherRoseAura.INSTANCE);
         clickGuiModules.add(KeepSprint.INSTANCE);
         clickGuiModules.add(ShieldFucker.INSTANCE);
+        clickGuiModules.add(AutoCart.INSTANCE);
 
         // ── Render ──────────────────────────────────────────────────────────────
         clickGuiModules.add(ESP.INSTANCE);
@@ -236,6 +238,7 @@ public class ModuleManager {
         clickGuiModules.add(Xray.INSTANCE);
         clickGuiModules.add(BreadCrumbs.INSTANCE);
         clickGuiModules.add(ravex.modules.render.ViewModel.INSTANCE);
+        clickGuiModules.add(ravex.modules.render.Animation.INSTANCE);
         clickGuiModules.add(ravex.modules.render.NoRender.INSTANCE);
         clickGuiModules.add(ShiftInterp.INSTANCE);
         clickGuiModules.add(BabyDude.INSTANCE);
