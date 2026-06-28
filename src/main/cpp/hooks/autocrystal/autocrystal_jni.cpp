@@ -99,7 +99,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     jboolean armorBreaker, jdouble armorPercent,
     jdouble predictTicks, jboolean totemDetection,
     jboolean totemCheckTarget, jboolean placeAirPlace,
-    jboolean placeMultiPlace)
+    jboolean placeMultiPlace, jboolean suicide)
 {
     Vec3 playerPos = {pX, pY, pZ};
     Vec3 targetPos = {tX, tY, tZ};
@@ -130,6 +130,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     config.totemCheckTarget = (totemCheckTarget == JNI_TRUE);
     config.placeAirPlace    = (placeAirPlace == JNI_TRUE);
     config.placeMultiPlace  = (placeMultiPlace == JNI_TRUE);
+    config.suicide          = (suicide == JNI_TRUE);
 
     AutoCrystalResult result = AutoCrystalMath::tick(
         playerPos, pHp, pAbs, pStatsStruct,

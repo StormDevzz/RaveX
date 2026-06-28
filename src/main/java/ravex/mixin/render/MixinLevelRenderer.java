@@ -490,6 +490,11 @@ public class MixinLevelRenderer {
             ravex.modules.render.Trails.renderTrails(modelViewMatrix, camPos);
         }
 
+        // --- Particles ---
+        if (ravex.modules.render.Particles.INSTANCE.getEnabled()) {
+            ravex.modules.render.Particles.renderParticles(modelViewMatrix, camPos);
+        }
+
         // --- TreeCutter highlight ---
         ravex.modules.world.TreeCutter tc = ravex.modules.world.TreeCutter.INSTANCE;
         if (tc.getEnabled() && tc.render.getValue() && ravex.modules.world.TreeCutter.currentMiningBlock != null) {

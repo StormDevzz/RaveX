@@ -6,6 +6,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.phys.BlockHitResult;
 import org.lwjgl.glfw.GLFW;
@@ -71,6 +72,8 @@ public class MixinMultiPlayerGameMode {
         }
         ravex.modules.misc.Announcer.INSTANCE.onHit();
         ravex.modules.render.Crosshair.INSTANCE.onHit();
+        ravex.modules.render.Particles.attackedThisTick = true;
+        ravex.modules.render.Particles.lastAttackPos = target.position();
     }
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
@@ -79,6 +82,8 @@ public class MixinMultiPlayerGameMode {
         if (mc.player != null && ravex.modules.player.ToolSaver.INSTANCE.shouldSave(mc.player.getMainHandItem())) {
             cir.setReturnValue(false);
         }
+        ravex.modules.render.Particles.minedThisTick = true;
+        ravex.modules.render.Particles.lastMinePos = net.minecraft.world.phys.Vec3.atCenterOf(pos);
     }
 
     @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)

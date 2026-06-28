@@ -61,44 +61,8 @@ public class GuiOptimizer {
 
     public static void optimizeHudAnimations(java.util.List<ravex.modules.HudModule> modules) {
         if (modules == null || modules.isEmpty()) return;
-
-        if (!NativeLoader.isNativeAvailable()) {
-            for (var m : modules) {
-                m.updateAnimation();
-            }
-            return;
-        }
-
-        int count = modules.size();
-        float[] displayXs = new float[count];
-        float[] displayYs = new float[count];
-        int[] targetXs = new int[count];
-        int[] targetYs = new int[count];
-        boolean[] animInitializeds = new boolean[count];
-
-        for (int i = 0; i < count; i++) {
-            var m = modules.get(i);
-            displayXs[i] = m.getDisplayX();
-            displayYs[i] = m.getDisplayY();
-            targetXs[i] = m.getTargetX();
-            targetYs[i] = m.getTargetY();
-            animInitializeds[i] = m.isAnimInitialized();
-        }
-
-        try {
-            nativeUpdateHudAnimations(displayXs, displayYs, targetXs, targetYs, animInitializeds, count, 0.25f);
-
-            for (int i = 0; i < count; i++) {
-                var m = modules.get(i);
-                m.setDisplayX(displayXs[i]);
-                m.setDisplayY(displayYs[i]);
-                m.setAnimInitialized(animInitializeds[i]);
-            }
-        } catch (Throwable t) {
-            // fallback if anything goes sideways, let's play it safe!
-            for (var m : modules) {
-                m.updateAnimation();
-            }
+        for (var m : modules) {
+            m.updateAnimation();
         }
     }
 }

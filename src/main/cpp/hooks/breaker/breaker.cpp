@@ -44,6 +44,31 @@ BreakResult findBestBreakBlock(
         if (placement.valid) {
             double score = placement.targetDamage - placement.selfDamage * selfDamageWeight;
             
+            // Priority boost for surround or support blocks covering target legs/feet
+            int cx = (int)std::floor(cand.x);
+            int cy = (int)std::floor(cand.y);
+            int cz = (int)std::floor(cand.z);
+            int tx = (int)std::floor(targetPos.x);
+            int ty = (int)std::floor(targetPos.y);
+            int tz = (int)std::floor(targetPos.z);
+            
+            bool isSurroundOrSupport = false;
+            if (cx == tx && cy == ty - 1 && cz == tz) {
+                isSurroundOrSupport = true;
+            } else if (cy == ty || cy == ty + 1) {
+                int dx = std::abs(cx - tx);
+                int dz = std::abs(cz - tz);
+                if (dx <= 1 && dz <= 1 && (dx + dz > 0)) {
+                    isSurroundOrSupport = true;
+                }
+            } else if (cx == tx && cy == ty + 2 && cz == tz) {
+                isSurroundOrSupport = true;
+            }
+            
+            if (isSurroundOrSupport) {
+                score += 50.0;
+            }
+            
             if (antiSuicide) {
                 if (playerHp + playerAbs - placement.selfDamage < antiSuicideMinHp) continue;
             }

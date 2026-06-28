@@ -12,13 +12,14 @@ public class NoRender extends Module {
     public final BooleanParameter explosions = new BooleanParameter("Explosions", true);
     public final BooleanParameter weather = new BooleanParameter("Weather", true);
     public final BooleanParameter portal = new BooleanParameter("Portal", true);
-    public final BooleanParameter sprint = new BooleanParameter("Sprint", true);
-    public final BooleanParameter armor = new BooleanParameter("Armor", true);
-    public final BooleanParameter items = new BooleanParameter("Items", true);
-    public final BooleanParameter tripwire = new BooleanParameter("Tripwire", true);
-    public final BooleanParameter signs = new BooleanParameter("Signs", true);
+    public final BooleanParameter sprint = new BooleanParameter("Sprint", false);
+    public final BooleanParameter armor = new BooleanParameter("Armor", false);
+    public final BooleanParameter items = new BooleanParameter("Items", false);
+    public final BooleanParameter tripwire = new BooleanParameter("Tripwire", false);
+    public final BooleanParameter signs = new BooleanParameter("Signs", false);
     public final BooleanParameter fog = new BooleanParameter("Fog", true);
     public final BooleanParameter fire = new BooleanParameter("Fire", true);
+    public final BooleanParameter inventoryBackground = new BooleanParameter("Inventory Background", false);
 
     private static boolean nativeAvailable = false;
 
@@ -42,6 +43,7 @@ public class NoRender extends Module {
         addParameter(signs);
         addParameter(fog);
         addParameter(fire);
+        addParameter(inventoryBackground);
     }
 
     // ── JNI methods ────────────────────────────────────────────────────────────

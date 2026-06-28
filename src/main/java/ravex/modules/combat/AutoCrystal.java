@@ -99,6 +99,7 @@ public class AutoCrystal extends Module {
     public final NumberParameter  jitterDelay    = new NumberParameter("Jitter Delay", 0.0, 0.0, 100.0, 5.0);
     public final BooleanParameter strictRotation = new BooleanParameter("Strict Rotation", false);
     public final NumberParameter  maxRate        = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
+    public final BooleanParameter suicide        = new BooleanParameter("Suicide", false);
 
     // ── Состояние ─────────────────────────────────────────────────────────────
     public static BlockPos currentPlacementBlock = null;
@@ -144,7 +145,7 @@ public class AutoCrystal extends Module {
             boolean armorBreaker, double armorPercent,
             double predictTicks, boolean totemDetection,
             boolean totemCheckTarget, boolean placeAirPlace,
-            boolean placeMultiPlace
+            boolean placeMultiPlace, boolean suicide
     );
 
     /** Расчёт урона одного кристалла (для preview/debug) */
@@ -201,6 +202,7 @@ public class AutoCrystal extends Module {
         addParameter(jitterDelay);
         addParameter(strictRotation);
         addParameter(maxRate);
+        addParameter(suicide);
 
         // Conditional visibility configuration
         armorPercent.setVisible(() -> armorBreaker.getValue());
@@ -330,7 +332,7 @@ public class AutoCrystal extends Module {
                     armorBreaker.getValue(), armorPercent.getValue(),
                     predictTicks.getValue(), totemDetection.getValue(),
                     totemCheckTarget.getValue(), placeAirPlace.getValue(),
-                    placeMultiPlace.getValue()
+                    placeMultiPlace.getValue(), suicide.getValue()
             );
         } else {
             result = javaFallbackTick(
@@ -842,11 +844,14 @@ public class AutoCrystal extends Module {
             double sDmg = (sImpact * sImpact + sImpact) / 2.0 * 84.0 + 1.0;
 
             if (tDmg < minDamage.getValue()) continue;
-            if (sDmg > maxSelfDmg.getValue()) continue;
-            if (antiSuicide.getValue() && pHp + pAbs - sDmg <= 0) continue;
+            if (!suicide.getValue()) {
+                if (sDmg > maxSelfDmg.getValue()) continue;
+                if (antiSuicide.getValue() && pHp + pAbs - sDmg <= 0) continue;
+            }
 
-            if (tDmg > bestBreakDmg) {
-                bestBreakDmg = tDmg;
+            double score = suicide.getValue() ? (sDmg * 100.0 + tDmg) : tDmg;
+            if (score > bestBreakDmg) {
+                bestBreakDmg = score;
                 bestId = e.getId();
                 bestPos = e.position();
             }

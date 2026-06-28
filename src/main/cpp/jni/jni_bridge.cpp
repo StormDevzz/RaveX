@@ -6,6 +6,7 @@
 #include "../hooks/shaders/color_shader.h"
 #include "../plugins/optimize/optimize.h"
 #include "../plugins/manager/manager.h"
+#include "brand.h"
 
 #include <cstring>
 #include <vector>
@@ -302,6 +303,15 @@ Java_ravex_modules_combat_Surround_nativeGetCenter(JNIEnv* env, jclass, jdouble 
     jdouble buf[] = {cx, cy, cz};
     env->SetDoubleArrayRegion(arr, 0, 3, buf);
     return arr;
+}
+
+JNIEXPORT jstring JNICALL
+Java_ravex_modules_hud_ServerBrandHud_nativeFormatBrand(JNIEnv* env, jclass, jstring rawBrand) {
+    if (!rawBrand) return env->NewStringUTF("Unknown");
+    const char* cBrand = env->GetStringUTFChars(rawBrand, nullptr);
+    std::string formatted = ravex::plugins::brand::BrandFormatter::formatBrand(cBrand);
+    env->ReleaseStringUTFChars(rawBrand, cBrand);
+    return env->NewStringUTF(formatted.c_str());
 }
 
 }

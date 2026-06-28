@@ -36,6 +36,7 @@ import ravex.modules.combat.AimAssist;
 import ravex.modules.render.CustomFog;
 import ravex.modules.render.NameTags;
 import ravex.modules.render.Tracers;
+import ravex.modules.render.Particles;
 import ravex.modules.combat.Trigger;
 import ravex.modules.combat.MaceSwap;
 import ravex.modules.render.Hud;
@@ -248,6 +249,7 @@ public class ModuleManager {
         clickGuiModules.add(Trails.INSTANCE);
         clickGuiModules.add(Waypoint.INSTANCE);
         clickGuiModules.add(KillEffects.INSTANCE);
+        clickGuiModules.add(Particles.INSTANCE);
         clickGuiModules.add(AspectRatio.INSTANCE);
 
         clickGuiModules.add(Borders.INSTANCE);
@@ -381,6 +383,7 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.exploit.GhostHand.INSTANCE);
         clickGuiModules.add(Timer.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.PortalGui.INSTANCE);
+        clickGuiModules.add(ravex.modules.exploit.PortalGodMode.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.MultiTask.INSTANCE);
         clickGuiModules.add(ClickTP.INSTANCE);
         clickGuiModules.add(GrimInstantMine.INSTANCE);
@@ -562,6 +565,8 @@ public class ModuleManager {
         hudModules.add(ravex.modules.hud.CooldownsHud.INSTANCE);
         hudModules.add(ravex.modules.hud.InvPreviewHud.INSTANCE);
         hudModules.add(ravex.modules.hud.IndicatorsHud.INSTANCE);
+        hudModules.add(ravex.modules.hud.CurrencyHud.INSTANCE);
+        hudModules.add(ravex.modules.hud.ServerBrandHud.INSTANCE);
         hudModules.add(new HudModule("Fps", 10, 220, 60, 14) {
             {
                 addParameter(new ravex.parameter.ColorParameter("HighColor", 0xFF44FF88));
