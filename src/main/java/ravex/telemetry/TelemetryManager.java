@@ -36,6 +36,7 @@ public class TelemetryManager {
                 .map(c -> c.getMetadata().getVersion().getFriendlyString())
                 .orElse("unknown");
         data.addProperty("mc_version", mcVersion);
+        data.addProperty("mods_count", net.fabricmc.loader.api.FabricLoader.getInstance().getAllMods().size());
 
         String body = data.toString();
         HttpRequest request = HttpRequest.newBuilder()
