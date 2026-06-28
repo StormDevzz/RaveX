@@ -30,6 +30,7 @@ public class Animation extends Module {
     private static final String CPA_PROJECT = "EhthJpjM";
     private static final String CLOTH_CONFIG_PROJECT = "9s6osm5g";
     private static final String PAL_PROJECT = "ha1mEyJS";
+    private static final String FABRIC_API_PROJECT = "P7dR8mSH";
     private static final String API_BASE = "https://api.modrinth.com/v2/project/%s/version";
 
     private static final String CPA_MAIN = "com.github.razorplay01.cpa.ModTemplate";
@@ -131,6 +132,7 @@ public class Animation extends Module {
                 downloadMod(client, modsDir, CPA_PROJECT, "cpa");
                 downloadMod(client, modsDir, CLOTH_CONFIG_PROJECT, "cloth-config");
                 downloadMod(client, modsDir, PAL_PROJECT, "PlayerAnimationLib");
+                downloadMod(client, modsDir, FABRIC_API_PROJECT, "fabric-api");
                 RaveX.LOGGER.info("[Animation] Downloads complete. Restart the game to load CPA.");
             } catch (Exception e) {
                 RaveX.LOGGER.warn("[Animation] Download error: {}", e.toString());
