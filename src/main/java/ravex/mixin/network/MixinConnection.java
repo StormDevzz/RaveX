@@ -19,7 +19,6 @@ import io.netty.channel.ChannelHandlerContext;
 public class MixinConnection {
     @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void onSendPacket(Packet<?> packet, CallbackInfo ci) {
-        // Attack/Interact shield for FakePlayer to prevent server-side kicks/desyncs
         if (packet instanceof ServerboundInteractPacket interactPacket) {
             int entityId = ((AccessorServerboundInteractPacket) interactPacket).getEntityId();
             if (entityId == -9999) {
@@ -28,7 +27,6 @@ public class MixinConnection {
             }
         }
 
-        // HandshakeSpoof injection
         if (packet instanceof ClientIntentionPacket handshakePacket) {
             if (HandshakeSpoof.INSTANCE.getEnabled()) {
                 AccessorClientIntentionPacket accessor = (AccessorClientIntentionPacket) (Object) handshakePacket;
@@ -43,18 +41,15 @@ public class MixinConnection {
             }
         }
 
-        // NoPacketKick rate limiter
         if (NoPacketKick.INSTANCE.getEnabled() && !NoPacketKick.INSTANCE.shouldAllow(packet)) {
             ci.cancel();
             return;
         }
 
-        // Packet Logger (Outgoing)
         if (PacketLogger.INSTANCE.getEnabled() && PacketLogger.INSTANCE.outgoing.getValue()) {
             PacketLogger.INSTANCE.logPacket("C2S ->", packet);
         }
 
-        // FakePearl right click interception
         if (packet instanceof ServerboundUseItemPacket usePacket) {
             if (ravex.modules.exploit.FakePearl.INSTANCE.getEnabled()) {
                 String trg = ravex.modules.exploit.FakePearl.INSTANCE.trigger.getValue();
@@ -70,7 +65,6 @@ public class MixinConnection {
             }
         }
 
-        // Phase Ender Pearl clipping trigger
         if (packet instanceof ServerboundUseItemPacket usePacket) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(net.minecraft.world.item.Items.ENDER_PEARL)) {
@@ -80,7 +74,6 @@ public class MixinConnection {
             }
         }
 
-        // NoMineAnimation hand swing suppression
         if (packet instanceof ServerboundSwingPacket) {
             if (ravex.modules.exploit.NoMineAnimation.INSTANCE.getEnabled() && ravex.modules.exploit.NoMineAnimation.INSTANCE.hideSwing.getValue()) {
                 net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
@@ -91,7 +84,6 @@ public class MixinConnection {
             }
         }
 
-        // RaytraceBypass packet rotations spoofing
         if (ravex.modules.exploit.RaytraceBypass.INSTANCE.getEnabled()) {
             net.minecraft.core.BlockPos pos = null;
             if (packet instanceof ServerboundPlayerActionPacket actionPacket && actionPacket.getAction() == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK) {
@@ -114,7 +106,13 @@ public class MixinConnection {
             }
         }
 
-        // Packet Canceller
+        if (ravex.modules.exploit.PortalGodMode.INSTANCE.getEnabled()) {
+            if (packet instanceof ServerboundAcceptTeleportationPacket) {
+                ci.cancel();
+                return;
+            }
+        }
+
         if (PacketCanceller.INSTANCE.getEnabled()) {
             boolean cancel = false;
             if (packet instanceof ServerboundMovePlayerPacket && PacketCanceller.INSTANCE.move.getValue()) cancel = true;
@@ -130,7 +128,6 @@ public class MixinConnection {
             }
         }
 
-        // NoFall
         if (ravex.modules.movement.NoFall.INSTANCE.getEnabled() && packet instanceof ServerboundMovePlayerPacket movePacket) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null) {
@@ -153,17 +150,14 @@ public class MixinConnection {
         }
 
         if (AntiHunger.INSTANCE.getEnabled()) {
-
             String currentMode = AntiHunger.INSTANCE.mode.getValue();
             
-            // Handle movement packages (setting ground to false)
             if (packet instanceof ServerboundMovePlayerPacket) {
                 if ("Full".equals(currentMode) || "OnGround".equals(currentMode)) {
                     ((AccessorServerboundMovePlayerPacket) packet).setOnGround(false);
                 }
             }
             
-            // Handle player commands (cancelling sprint states to avoid server-side sprint exhaustion ticks)
             if (packet instanceof ServerboundPlayerCommandPacket commandPacket) {
                 var action = commandPacket.getAction();
                 if (action == ServerboundPlayerCommandPacket.Action.START_SPRINTING || 
@@ -178,12 +172,12 @@ public class MixinConnection {
 
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"))
     private void onChannelRead(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
-        // Packet Logger (Incoming)
+        ravex.modules.misc.NewChunkDetector.INSTANCE.onPacketReceive(packet);
+
         if (PacketLogger.INSTANCE.getEnabled() && PacketLogger.INSTANCE.incoming.getValue()) {
             PacketLogger.INSTANCE.logPacket("S2C <-", packet);
         }
 
-        // NoGhostBlocks: track server block updates
         if (ravex.modules.world.NoGhostBlocks.INSTANCE.getEnabled()) {
             if (packet instanceof ClientboundBlockUpdatePacket blockUpdate) {
                 net.minecraft.core.BlockPos pos = blockUpdate.getPos();

@@ -21,4 +21,12 @@ public class MixinGameRenderer {
         float original = (float) window.getWidth() / (float) window.getHeight();
         return AspectRatio.INSTANCE.getAspectRatio(original);
     }
+
+    @org.spongepowered.asm.mixin.injection.Inject(
+        method = "getProjectionMatrix(F)Lorg/joml/Matrix4f;",
+        at = @At("RETURN")
+    )
+    private void onGetProjectionMatrix(float fov, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<org.joml.Matrix4f> cir) {
+        ravex.manager.ShaderManager.INSTANCE.setProjectionMatrix(cir.getReturnValue());
+    }
 }

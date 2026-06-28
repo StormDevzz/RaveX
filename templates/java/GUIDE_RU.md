@@ -107,7 +107,7 @@ public class MainAddon implements Addon {
         return new AddonInfo(
             "MainAddon",        // Имя
             "Description",      // Описание
-            "1.4.2",           // Версия
+            "1.4.3",           // Версия
             "Author",          // Автор
             "ravex.addon.template.MainAddon"  // Главный класс
         );

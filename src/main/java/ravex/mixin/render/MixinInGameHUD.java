@@ -53,6 +53,9 @@ public abstract class MixinInGameHUD {
         int guiHeight = context.guiHeight();
         boolean firstPerson = mc.options.getCameraType().isFirstPerson();
         Vec3 playerViewVec = mc.player != null ? mc.player.getViewVector(pt) : null;
+        org.joml.Quaternionf cRotation = mc.gameRenderer.getMainCamera().rotation();
+        org.joml.Vector3f lookVec = new org.joml.Vector3f(0.0F, 0.0F, -1.0F).rotate(cRotation);
+        Vec3 cameraLook = new Vec3(lookVec.x(), lookVec.y(), lookVec.z());
         boolean tracersEnabled = ravex.modules.render.Tracers.INSTANCE.getEnabled();
 
         java.util.List<Entity> candidates = new java.util.ArrayList<>();
@@ -80,7 +83,7 @@ public abstract class MixinInGameHUD {
             if (dist > maxDist) continue;
 
             // Prevent first person overlap when entity is extremely close
-            if (firstPerson && dist < 1.2) continue;
+            if (firstPerson && dist < 1.2 && !nameTagsEnabled) continue;
 
             boolean isPlayer = target instanceof Player;
             boolean isMonster = target instanceof Monster;
@@ -141,54 +144,6 @@ public abstract class MixinInGameHUD {
             int tracerCount = tracerEntities.size();
             boolean tracersNativeDone = false;
 
-            if (tracerCount > 0 && ravex.utility.misc.NativeLoader.isNativeAvailable()) {
-                try {
-                    double[] cameraPosArr = new double[] { cameraPos.x, cameraPos.y, cameraPos.z };
-                    org.joml.Matrix4f projMatrix = ravex.manager.ShaderManager.INSTANCE.getProjectionMatrix();
-                    org.joml.Quaternionf cameraRotation = new org.joml.Quaternionf(mc.gameRenderer.getMainCamera().rotation());
-                    org.joml.Matrix4f mvMatrix = new org.joml.Matrix4f().rotation(cameraRotation.conjugate());
-
-                    float[] projectionArr = new float[16];
-                    float[] modelViewArr = new float[16];
-                    projMatrix.get(projectionArr);
-                    mvMatrix.get(modelViewArr);
-
-                    double[] positions = new double[tracerCount * 6];
-                    for (int i = 0; i < tracerCount; i++) {
-                        Entity target = tracerEntities.get(i);
-                        Vec3 basePos = target.getPosition(pt);
-                        float bbHeight = target.getBbHeight();
-                        Vec3 headPos = basePos.add(0, bbHeight, 0);
-
-                        positions[i * 6 + 0] = basePos.x;
-                        positions[i * 6 + 1] = basePos.y;
-                        positions[i * 6 + 2] = basePos.z;
-                        positions[i * 6 + 3] = headPos.x;
-                        positions[i * 6 + 4] = headPos.y;
-                        positions[i * 6 + 5] = headPos.z;
-                    }
-
-                    double[] outPoints = new double[tracerCount * 3];
-                    ravex.utility.misc.GuiOptimizer.nativeOptimizeTracers(
-                        cameraPosArr, modelViewArr, projectionArr, positions, tracerCount, guiWidth, guiHeight, outPoints
-                    );
-
-                    double cx = guiWidth / 2.0;
-                    double cy = guiHeight / 2.0;
-
-                    for (int i = 0; i < tracerCount; i++) {
-                        if (outPoints[i * 3 + 2] > 0.5) { // draw flag, let's roll!
-                            double ex = outPoints[i * 3 + 0];
-                            double ey = outPoints[i * 3 + 1];
-                            drawTracerLine2D(context, (float) cx, (float) cy, (float) ex, (float) ey, tracerColors.get(i), width);
-                        }
-                    }
-                    tracersNativeDone = true;
-                } catch (Throwable t) {
-                    // Fallback to Java if anything goes wrong, stay safe!
-                }
-            }
-
             if (!tracersNativeDone) {
                 // Java fallback path, keep it functional!
                 for (int i = 0; i < tracerCount; i++) {
@@ -202,12 +157,18 @@ public abstract class MixinInGameHUD {
                     if (baseProjUnbobbed != null && headProjUnbobbed != null) {
                         double cx = guiWidth / 2.0;
                         double cy = guiHeight / 2.0;
+                        Vec3 toEntity = basePos.subtract(cameraPos);
+                        boolean isBehind = cameraLook.dot(toEntity) < 0;
+
                         double ex = (baseProjUnbobbed.x + 1.0) / 2.0 * guiWidth;
                         double ey_base = (1.0 - baseProjUnbobbed.y) / 2.0 * guiHeight;
                         double ey_head = (1.0 - headProjUnbobbed.y) / 2.0 * guiHeight;
                         double ey = (ey_base + ey_head) / 2.0;
 
-                        boolean isBehind = baseProjUnbobbed.z < 0;
+                        if (isBehind) {
+                            ex = guiWidth - ex;
+                            ey = guiHeight - ey;
+                        }
                         boolean isOffscreen = isBehind || ex < 0 || ex > guiWidth || ey < 0 || ey > guiHeight;
 
                         if (isOffscreen) {
@@ -254,7 +215,7 @@ public abstract class MixinInGameHUD {
         double[] outLayouts = null;
         int[] outIndices = null;
 
-        if (count > 0 && ravex.utility.misc.NativeLoader.isNativeAvailable()) {
+        if (false && count > 0 && ravex.utility.misc.NativeLoader.isNativeAvailable()) {
             try {
                 double[] cameraPosArr = new double[] { cameraPos.x, cameraPos.y, cameraPos.z };
                 org.joml.Matrix4f projMatrix = ravex.manager.ShaderManager.INSTANCE.getProjectionMatrix();
@@ -564,7 +525,7 @@ public abstract class MixinInGameHUD {
                 if (baseProj == null || headProj == null || sideProj == null) continue;
 
                 Vec3 dir = (new Vec3(basePosX - cameraPos.x, basePosY - cameraPos.y, basePosZ - cameraPos.z)).normalize();
-                double dot = dir.dot(playerViewVec);
+                double dot = dir.dot(cameraLook);
                 if (dot <= 0.0) continue;
 
                 double sx_base = (baseProj.x + 1.0) / 2.0 * guiWidth;
@@ -1027,6 +988,12 @@ public abstract class MixinInGameHUD {
 
         ravex.utility.notification.NotificationManager.render(context);
 
+        if (ravex.modules.render.Crosshair.INSTANCE.getEnabled()) {
+            try {
+                ravex.modules.render.Crosshair.INSTANCE.render(context);
+            } catch (Throwable ignored) {}
+        }
+
         renderHud(context, tickCounter);
     }
 
@@ -1054,6 +1021,8 @@ public abstract class MixinInGameHUD {
             ci.cancel();
         }
     }
+
+
 
     private void drawTracerLine2D(GuiGraphics context, float x1, float y1, float x2, float y2, int color, float width) {
         float dx = x2 - x1;
@@ -1089,10 +1058,10 @@ public abstract class MixinInGameHUD {
             1.0F
         );
 
-        vector4f.mul(modelViewMatrix);
-        vector4f.mul(projectionMatrix);
+        modelViewMatrix.transform(vector4f);
+        projectionMatrix.transform(vector4f);
 
-        if (vector4f.w == 0.0F) {
+        if (vector4f.w <= 0.0F) {
             return null;
         } else {
             vector4f.div(vector4f.w);

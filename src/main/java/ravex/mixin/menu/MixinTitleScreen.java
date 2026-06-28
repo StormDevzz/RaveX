@@ -2,7 +2,9 @@ package ravex.mixin.menu;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.SplashRenderer;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,23 +12,24 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import ravex.gui.proxy.ProxyConfigScreen;
 
 import java.util.Random;
 
 @Mixin(TitleScreen.class)
-public class MixinTitleScreen {
+public abstract class MixinTitleScreen extends Screen {
 
     @Shadow
     private SplashRenderer splash;
 
     private String ravexSplashText = "RaveX on top!";
 
+    protected MixinTitleScreen(Component title) {
+        super(title);
+    }
+
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        // =========================================================================
-        // RaveX Custom Splashes Pool
-        // Add or modify any text strings below! One will be chosen randomly on load.
-        // =========================================================================
         String[] ravexSplashes = {
                 "Малая Токмачка бухает",
                 "Зелебобашаламетбимба",
@@ -55,7 +58,6 @@ public class MixinTitleScreen {
                 "CelkaPasta"
         };
 
-        // Immediately choose a local fallback splash
         try {
             Random random = new Random();
             ravexSplashText = ravexSplashes[random.nextInt(ravexSplashes.length)];
@@ -63,7 +65,6 @@ public class MixinTitleScreen {
             ravexSplashText = "RaveX Client!";
         }
 
-        // Try to fetch online splashes
         ravex.utility.network.Github.fetchRawContent("StormDevzz", "RaveX", "main", "splashes.txt")
                 .thenAccept(content -> {
                     if (content != null && !content.isBlank()) {
@@ -80,8 +81,12 @@ public class MixinTitleScreen {
                 })
                 .exceptionally(ex -> null);
 
-        // Hide vanilla splash
         this.splash = null;
+
+        this.addRenderableWidget(Button.builder(
+            Component.literal("Proxy Config"),
+            btn -> Minecraft.getInstance().setScreen(new ProxyConfigScreen((TitleScreen)(Object)this))
+        ).bounds(this.width / 2 + 104, this.height / 4 + 72, 100, 20).build());
     }
 
     @Inject(method = "render", at = @At("TAIL"))

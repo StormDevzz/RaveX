@@ -1,0 +1,22 @@
+#pragma once
+
+#include "../../include/packet_types.h"
+#include "../../include/stats.h"
+
+namespace packet {
+namespace analyze {
+
+struct AnalysisResult {
+    int64_t totalPackets = 0;
+    int64_t totalBytes = 0;
+    double avgSize = 0;
+    int64_t uniquePacketTypes = 0;
+    std::array<int64_t, 256> typeDistribution = {};
+};
+
+AnalysisResult analyzePackets(const std::vector<Packet>& packets);
+AnalysisResult analyzeStats(const stats::SnifferStats& stats);
+void printAnalysis(const AnalysisResult& result);
+
+} // namespace analyze
+} // namespace packet

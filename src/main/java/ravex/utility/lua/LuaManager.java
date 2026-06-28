@@ -422,21 +422,38 @@ public class LuaManager {
     }
 
     public boolean discordSetActivity(String details, String state, long startMs) {
+        return discordSetActivity(details, state, startMs, false, false);
+    }
+
+    public boolean discordSetActivity(String details, String state, long startMs, boolean showOS, boolean showButton) {
         if (discordChannel == null || !discordChannel.isOpen()) return false;
         try {
             String nonce = String.valueOf(discordNonce++);
             String startBlock = (startMs > 0)
                 ? ",\"timestamps\":{\"start\":" + (startMs / 1000L) + "}"
                 : "";
+
+            String effectiveState = state;
+            if (showOS && !state.isEmpty()) {
+                String os = System.getProperty("os.name") + " (kernel " + System.getProperty("os.version") + ")";
+                effectiveState = state + "\nOS: " + os;
+            }
+
+            String buttonsBlock = "";
+            if (showButton) {
+                buttonsBlock = ",\"buttons\":[{\"label\":\"Download RaveX\",\"url\":\"https://github.com/StormDevzz/RaveX/releases\"}]";
+            }
+
             String payload = "{"
                 + "\"cmd\":\"SET_ACTIVITY\","
                 + "\"args\":{"
                 + "\"pid\":" + ProcessHandle.current().pid() + ","
                 + "\"activity\":{"
                 + "\"details\":\"" + escJson(details) + "\","
-                + "\"state\":\"" + escJson(state) + "\""
+                + "\"state\":\"" + escJson(effectiveState) + "\""
                 + startBlock
                 + ",\"assets\":{\"large_image\":\"icon\",\"large_text\":\"RaveX\"}"
+                + buttonsBlock
                 + "}},"
                 + "\"nonce\":\"" + nonce + "\"}";
             sendDiscordFrame(1, payload);

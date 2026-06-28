@@ -229,7 +229,16 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("LiquidCollision", "Bypass fucking liquids.");
         DESCRIPTIONS.put("TntAura", "Bombs fucking targets.");
         DESCRIPTIONS.put("WitherRoseAura", "Places roses.");
+<<<<<<< HEAD
         DESCRIPTIONS.put("GridBuilder", "Builds 5x5 grid patterns on right-click.");
+=======
+        DESCRIPTIONS.put("Particles", "3D particle effects");
+        DESCRIPTIONS.put("Crosshair", "Custom crosshair with dynamic spread.");
+        DESCRIPTIONS.put("PearlTarget", "Instantly detects enemy pearls and pursues the thrower with full force.");
+        DESCRIPTIONS.put("MiddleClick", "Context-aware middle click actions.");
+        DESCRIPTIONS.put("Telemetry", "Sends anonymous usage data to improve RaveX.");
+        DESCRIPTIONS.put("PortalGodMode", "Makes you invulnerable inside portals by cancelling teleport confirm packets.");
+>>>>>>> d5789b70550118b35e864d8afa6cd32033b90fc8
     }
 
     public static String getDescription(String moduleName) {
