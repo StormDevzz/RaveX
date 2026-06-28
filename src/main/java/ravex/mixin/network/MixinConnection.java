@@ -106,6 +106,13 @@ public class MixinConnection {
             }
         }
 
+        if (ravex.modules.exploit.PortalGodMode.INSTANCE.getEnabled()) {
+            if (packet instanceof ServerboundAcceptTeleportationPacket) {
+                ci.cancel();
+                return;
+            }
+        }
+
         if (PacketCanceller.INSTANCE.getEnabled()) {
             boolean cancel = false;
             if (packet instanceof ServerboundMovePlayerPacket && PacketCanceller.INSTANCE.move.getValue()) cancel = true;

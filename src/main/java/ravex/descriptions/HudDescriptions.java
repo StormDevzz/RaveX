@@ -17,6 +17,8 @@ public class HudDescriptions {
         DESCRIPTIONS.put("Chat", "Repositions and scales the in-game chat box.");
         DESCRIPTIONS.put("TPS", "Current server tick rate (TPS) monitor.");
         DESCRIPTIONS.put("Cooldowns", "Displays item cooldowns (Ender Pearl, Chorus, etc.) with remaining percentage.");
+        DESCRIPTIONS.put("Currency", "Renders custom live/simulated currency exchange rates for CIS & NATO countries + BTC.");
+        DESCRIPTIONS.put("ServerBrand", "Displays the server implementation brand using C++ JNI formatting.");
     }
 
     public static String getDescription(String moduleName) {

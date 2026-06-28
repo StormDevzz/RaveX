@@ -10,6 +10,7 @@ target_link_libraries(ravex_jni PRIVATE
     ravex_optimize
     ravex_manager
     ravex_github_tools
+    ravex_brand
     ${JNI_LIBRARIES}
 )
 
@@ -26,6 +27,7 @@ target_include_directories(ravex_jni PRIVATE
     ${CMAKE_SOURCE_DIR}/plugins/optimize
     ${CMAKE_SOURCE_DIR}/plugins/manager
     ${CMAKE_SOURCE_DIR}/plugins/github/include
+    ${CMAKE_SOURCE_DIR}/plugins/brand/include
 )
 
 if(WIN32)

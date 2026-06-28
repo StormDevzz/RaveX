@@ -56,9 +56,25 @@ public class ConfigManager {
                 if (extraObj.size() > 0) {
                     modObj.add("extra", extraObj);
                 }
-
                 root.add(m.getName(), modObj);
             }
+
+            JsonObject hudRoot = new JsonObject();
+            for (ravex.modules.HudModule hm : ModuleManager.INSTANCE.getHudModules()) {
+                JsonObject hudObj = new JsonObject();
+                hudObj.addProperty("enabled", hm.getEnabled());
+                hudObj.addProperty("x", hm.getTargetX());
+                hudObj.addProperty("y", hm.getTargetY());
+
+                JsonObject paramsObj = new JsonObject();
+                for (Parameter<?> p : hm.getParameters()) {
+                    if (p instanceof ravex.parameter.ActionParameter) continue;
+                    paramsObj.addProperty(p.getName(), String.valueOf(p.getValue()));
+                }
+                hudObj.add("parameters", paramsObj);
+                hudRoot.add(hm.getName(), hudObj);
+            }
+            root.add("hud_modules", hudRoot);
 
             try (FileWriter writer = new FileWriter(file)) {
                 gson.toJson(root, writer);
@@ -102,6 +118,34 @@ public class ConfigManager {
 
                     if (modObj.has("extra")) {
                         m.loadExtra(modObj.getAsJsonObject("extra"));
+                    }
+                }
+            }
+
+            if (root.has("hud_modules")) {
+                JsonObject hudRoot = root.getAsJsonObject("hud_modules");
+                for (ravex.modules.HudModule hm : ModuleManager.INSTANCE.getHudModules()) {
+                    if (hudRoot.has(hm.getName())) {
+                        JsonObject hudObj = hudRoot.getAsJsonObject(hm.getName());
+                        if (hudObj.has("enabled")) {
+                            hm.setEnabled(hudObj.get("enabled").getAsBoolean());
+                        }
+                        if (hudObj.has("x")) {
+                            hm.setX(hudObj.get("x").getAsInt());
+                        }
+                        if (hudObj.has("y")) {
+                            hm.setY(hudObj.get("y").getAsInt());
+                        }
+
+                        if (hudObj.has("parameters")) {
+                            JsonObject paramsObj = hudObj.getAsJsonObject("parameters");
+                            for (Parameter<?> p : hm.getParameters()) {
+                                if (paramsObj.has(p.getName())) {
+                                    String valStr = paramsObj.get(p.getName()).getAsString();
+                                    setParameterValueRaw(p, valStr);
+                                }
+                            }
+                        }
                     }
                 }
             }

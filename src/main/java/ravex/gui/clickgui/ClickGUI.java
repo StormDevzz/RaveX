@@ -238,23 +238,14 @@ public class ClickGUI extends Screen {
             }
         }
 
-        String tips = "Esc/Shift — close  •  LMB — toggle  •  RMB — settings  •  MMB — bind";
-        int tipsW = FontRenderUtility.getStringWidth(tips);
-        int tipsX = (this.width - tipsW) / 2;
-        int tipsY = this.height - 18;
-
-        int ac = ColorUtility.getActiveColor();
-        int tipBg = ColorUtility.withAlpha(ac, 18);
-        graphics.fillGradient(tipsX - 14, tipsY - 5, tipsX + tipsW + 14, tipsY + 12, tipBg, ColorUtility.withAlpha(ac, 4));
-        graphics.fill(tipsX - 14, tipsY + 7, tipsX + tipsW + 14, tipsY + 8, ColorUtility.withAlpha(ac, 50));
-        FontRenderUtility.drawString(graphics, tips, tipsX, tipsY - 1, 0xFF858599, true);
+        String tips = "";
 
         // ── Bottom nav buttons ───────────────────────────────────────────────────
         //    Macros  |  Profiles  |  Configs  |  GUI  |  Reset
         float btnScale = Math.max(0.65f, getResponsiveScale());
         int mgW = (int)(44 * btnScale);
         int mgH = (int)(20 * btnScale);
-        int mgGap = (int)(5 * btnScale);
+        int mgGap = (int)(40 * btnScale);
         int totalBtnW = 5 * mgW + 4 * mgGap;
         int mgX = (this.width - totalBtnW) / 2;
         int mgY = this.height - (int)(38 * btnScale);
@@ -442,7 +433,7 @@ public class ClickGUI extends Screen {
         float btnScale = Math.max(0.65f, getResponsiveScale());
         int mgW   = (int)(44 * btnScale);
         int mgH   = (int)(20 * btnScale);
-        int mgGap = (int)(5 * btnScale);
+        int mgGap = (int)(40 * btnScale);
         int mgX   = (this.width - (5 * mgW + 4 * mgGap)) / 2;
         int mgY   = this.height - (int)(38 * btnScale);
 

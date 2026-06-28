@@ -53,6 +53,9 @@ public abstract class MixinInGameHUD {
         int guiHeight = context.guiHeight();
         boolean firstPerson = mc.options.getCameraType().isFirstPerson();
         Vec3 playerViewVec = mc.player != null ? mc.player.getViewVector(pt) : null;
+        org.joml.Quaternionf cRotation = mc.gameRenderer.getMainCamera().rotation();
+        org.joml.Vector3f lookVec = new org.joml.Vector3f(0.0F, 0.0F, -1.0F).rotate(cRotation);
+        Vec3 cameraLook = new Vec3(lookVec.x(), lookVec.y(), lookVec.z());
         boolean tracersEnabled = ravex.modules.render.Tracers.INSTANCE.getEnabled();
 
         java.util.List<Entity> candidates = new java.util.ArrayList<>();
@@ -80,7 +83,7 @@ public abstract class MixinInGameHUD {
             if (dist > maxDist) continue;
 
             // Prevent first person overlap when entity is extremely close
-            if (firstPerson && dist < 1.2) continue;
+            if (firstPerson && dist < 1.2 && !nameTagsEnabled) continue;
 
             boolean isPlayer = target instanceof Player;
             boolean isMonster = target instanceof Monster;
@@ -155,7 +158,7 @@ public abstract class MixinInGameHUD {
                         double cx = guiWidth / 2.0;
                         double cy = guiHeight / 2.0;
                         Vec3 toEntity = basePos.subtract(cameraPos);
-                        boolean isBehind = playerViewVec != null && playerViewVec.dot(toEntity) < 0;
+                        boolean isBehind = cameraLook.dot(toEntity) < 0;
 
                         double ex = (baseProjUnbobbed.x + 1.0) / 2.0 * guiWidth;
                         double ey_base = (1.0 - baseProjUnbobbed.y) / 2.0 * guiHeight;
@@ -212,7 +215,7 @@ public abstract class MixinInGameHUD {
         double[] outLayouts = null;
         int[] outIndices = null;
 
-        if (count > 0 && ravex.utility.misc.NativeLoader.isNativeAvailable()) {
+        if (false && count > 0 && ravex.utility.misc.NativeLoader.isNativeAvailable()) {
             try {
                 double[] cameraPosArr = new double[] { cameraPos.x, cameraPos.y, cameraPos.z };
                 org.joml.Matrix4f projMatrix = ravex.manager.ShaderManager.INSTANCE.getProjectionMatrix();
@@ -522,7 +525,7 @@ public abstract class MixinInGameHUD {
                 if (baseProj == null || headProj == null || sideProj == null) continue;
 
                 Vec3 dir = (new Vec3(basePosX - cameraPos.x, basePosY - cameraPos.y, basePosZ - cameraPos.z)).normalize();
-                double dot = dir.dot(playerViewVec);
+                double dot = dir.dot(cameraLook);
                 if (dot <= 0.0) continue;
 
                 double sx_base = (baseProj.x + 1.0) / 2.0 * guiWidth;
@@ -1055,10 +1058,10 @@ public abstract class MixinInGameHUD {
             1.0F
         );
 
-        vector4f.mul(modelViewMatrix);
-        vector4f.mul(projectionMatrix);
+        modelViewMatrix.transform(vector4f);
+        projectionMatrix.transform(vector4f);
 
-        if (vector4f.w == 0.0F) {
+        if (vector4f.w <= 0.0F) {
             return null;
         } else {
             vector4f.div(vector4f.w);
