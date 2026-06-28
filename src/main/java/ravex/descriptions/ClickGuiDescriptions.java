@@ -136,6 +136,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("ToolSaver", "Prevents tools from breaking.");
         DESCRIPTIONS.put("AntiAim", "Jitters or spins head rotation.");
         DESCRIPTIONS.put("NoSwing", "Prevent hand swing animation.");
+        DESCRIPTIONS.put("Animation", "Downloads and applies the Detailed Animations resource pack.");
         DESCRIPTIONS.put("Swing", "Change swing animation style.");
         DESCRIPTIONS.put("DesktopGui", "Native desktop control.");
         DESCRIPTIONS.put("Breaker", "Mines blocks around targets automatically.");
