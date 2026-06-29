@@ -40,10 +40,10 @@ int selectBestArrow(
 
         if (!match) continue;
 
-        // Base score is category score + amplifier weight
+        
         double score = typeScore + arrow.amplifier * 10.0;
 
-        // Reduce priority if we already have the active effect with equal/higher amplifier
+        
         for (const auto& eff : activeEffects) {
             bool effMatch = (eff.id == eName) || 
                           (eff.id.find(eName) != std::string::npos) || 
@@ -62,4 +62,4 @@ int selectBestArrow(
     return bestIndex;
 }
 
-} // namespace ravex
+} 

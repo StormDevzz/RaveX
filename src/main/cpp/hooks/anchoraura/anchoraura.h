@@ -6,9 +6,9 @@ namespace ravex {
 
 struct AnchorAuraResult {
     bool   valid;
-    Vec3   blockPos;       // Where to place or target the Respawn Anchor
-    Vec3   neighborPos;    // Adjacent block to place against
-    int    face;           // clicked block face ordinal
+    Vec3   blockPos;       
+    Vec3   neighborPos;    
+    int    face;           
     double score;
     double targetDamage;
     double selfDamage;
@@ -39,4 +39,4 @@ public:
     );
 };
 
-} // namespace ravex
+} 

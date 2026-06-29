@@ -1,17 +1,13 @@
---[[
-  rich_presence.lua — RaveX Discord Rich Presence
-  ===================================================
-  Optimized version: caching, minimal tick overhead
-]]
 
--- ── Settings ─────────────────────────────────────────────────────────────────
+
+
 local UPDATE_INTERVAL_MS = 10000
 
--- ── State ────────────────────────────────────────────────────────────────────
+
 local startTime = client.getTime()
 local connected = false
 
--- ── Connecting to Discord ─────────────────────────────────────────────────────
+
 local function connect()
     if discord.isConnected() then return true end
     local ok = discord.connect()
@@ -22,7 +18,7 @@ local function connect()
     return ok
 end
 
--- ── Building State String ─────────────────────────────────────────────────────
+
 local function buildState()
     if not player.isInGame() then return "In main menu" end
 
@@ -40,13 +36,13 @@ local function buildState()
     return "❤ " .. hp .. "/" .. maxHp .. " | " .. enabledCount .. " modules"
 end
 
--- ── Building Details String ───────────────────────────────────────────────────
+
 local function buildDetails()
     if not player.isInGame() then return "Menu" end
     return "RaveX — " .. player.getName()
 end
 
--- ── Updating Presence ─────────────────────────────────────────────────────────
+
 local function updatePresence()
     if not discord.isConnected() then
         if not connect() then return end
@@ -58,7 +54,7 @@ local function updatePresence()
     end
 end
 
--- ── Startup ───────────────────────────────────────────────────────────────────
+
 connect()
 
 if connected then

@@ -12,12 +12,12 @@ public class RaveXLoader {
 
     public static void main(String[] args) {
 
-        // Prevent Java AWT from erasing/clearing background to eliminate all flickering on Linux
+        
         System.setProperty("sun.awt.noerasebackground", "true");
 
         if (args.length > 0 && args[0].equals("--integrated-gui")) {
             System.setProperty("java.awt.headless", "false");
-            nativeAvailable = false; // Force native-free checks for GUI to ensure 100% startup stability
+            nativeAvailable = false; 
             
             window = new LoaderWindow();
             window.setVersion("1.0");
@@ -33,14 +33,14 @@ public class RaveXLoader {
                     window.updateStatus("Optimization completed! Starting game...", 95);
                     window.setSystemScore(100);
                     
-                    // Keep loader open indefinitely until killed by the main game process
+                    
                     while (true) {
                         sleep(1000);
                     }
                 } catch (Exception ignored) {}
             }).start();
 
-            // 30-second safety-net thread in case the main game crashes on startup
+            
             new Thread(() -> {
                 sleep(30000);
                 closeLoader();
@@ -65,7 +65,7 @@ public class RaveXLoader {
         boolean isGradleDev = new java.io.File("gradlew").exists() || new java.io.File("gradlew.bat").exists();
         
         if (!isGradleDev) {
-            // Standalone Optimization Mode (running outside development environment)
+            
             window = new LoaderWindow();
             window.setVersion("1.0");
             window.setVisible(true);
@@ -135,7 +135,7 @@ public class RaveXLoader {
 
     public static void startIntegrated(String version) {
         System.setProperty("sun.awt.noerasebackground", "true");
-        // Dynamic headless mode override for Minecraft Launchers
+        
         System.setProperty("java.awt.headless", "false");
 
         if (java.awt.GraphicsEnvironment.isHeadless()) {
@@ -179,7 +179,7 @@ public class RaveXLoader {
             }
         }).start();
 
-        // 20-second safety-net thread to prevent loader getting stuck on screen if game crashes during start
+        
         new Thread(() -> {
             sleep(20000);
             closeLoader();
@@ -288,7 +288,7 @@ public class RaveXLoader {
                 window.updateStatus("Optimization skipped", 40);
             }
         } else {
-            // Java-level GC
+            
             System.gc();
             window.updateStatus("GC completed", 35);
             sleep(200);
@@ -299,7 +299,7 @@ public class RaveXLoader {
     private static void runLaunchPhase(String command, String[] extraArgs) {
         window.updateStatus("Launching client...", 50);
 
-        // Delete any stale signal file in system temp directory
+        
         java.io.File signalFile = new java.io.File(System.getProperty("java.io.tmpdir"), ".ravex_ready");
         if (signalFile.exists()) {
             signalFile.delete();
@@ -313,7 +313,7 @@ public class RaveXLoader {
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectErrorStream(true);
             
-            // Set environment flag to inform the child game process that an active loader is already running
+            
             pb.environment().put("RAVEX_LOADER_ACTIVE", "true");
             
             Process process = pb.start();
@@ -321,7 +321,7 @@ public class RaveXLoader {
 
             window.updateStatus("Client starting...", 55);
 
-            // Parallel thread to print game logs to terminal
+            
             new Thread(() -> {
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(process.getInputStream()))) {
@@ -332,14 +332,14 @@ public class RaveXLoader {
                 } catch (IOException ignored) {}
             }).start();
 
-            // Wait for the ready signal file to be created by the game in system temp directory
+            
             boolean detected = false;
-            for (int i = 0; i < 300; i++) { // Wait up to 60 seconds (300 * 200ms)
+            for (int i = 0; i < 300; i++) { 
                 if (signalFile.exists()) {
                     detected = true;
                     break;
                 }
-                // Also check if process died unexpectedly
+                
                 if (!process.isAlive()) {
                     break;
                 }
@@ -350,14 +350,14 @@ public class RaveXLoader {
                 window.updateStatus("Client ready!", 100);
                 window.setSystemScore(100);
                 sleep(800);
-                signalFile.delete(); // clean up the signal file
+                signalFile.delete(); 
             } else {
                 int exitCode = process.isAlive() ? 0 : process.exitValue();
                 if (!process.isAlive() && exitCode != 0) {
                     window.setError("Client crashed during startup (code " + exitCode + ")");
                     sleep(3000);
                 } else {
-                    // Safe fallback if ready signal was somehow missed or timed out
+                    
                     window.updateStatus("Client ready!", 100);
                     sleep(800);
                 }
@@ -393,7 +393,7 @@ public class RaveXLoader {
         boolean found = false;
 
         if (os.contains("linux")) {
-            // Robustly check if xdotool is actually installed first to prevent 10-second lag loops
+            
             boolean xdotoolExists = false;
             try {
                 Process p = new ProcessBuilder("which", "xdotool").start();
@@ -445,7 +445,7 @@ public class RaveXLoader {
         assetList.add("natives/" + loaderLib);
         assetList.add("natives/" + jniLib);
 
-        // Local source/build directories (dev mode)
+        
         java.io.File localSrc = new java.io.File("src/main/resources/assets/ravex");
         java.io.File buildNative = new java.io.File("build/native");
 
@@ -459,10 +459,10 @@ public class RaveXLoader {
                 continue;
             }
 
-            // Try to copy from local src directory first
+            
             java.io.File localFile = new java.io.File(localSrc, assetPath);
             if (!localFile.exists() || localFile.length() == 0) {
-                // Try build output directory
+                
                 localFile = new java.io.File(buildNative, assetPath.replace("natives/", ""));
                 if (!localFile.exists() || localFile.length() == 0) {
                     localFile = null;

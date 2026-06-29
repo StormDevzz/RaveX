@@ -15,7 +15,7 @@ std::string parse_json_value(const std::string& json, const std::string& key) {
     return json.substr(startQuote + 1, endQuote - startQuote - 1);
 }
 
-} // namespace network
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

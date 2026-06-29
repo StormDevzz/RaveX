@@ -5,10 +5,7 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 
-/**
- * ViewClip Module
- * Allows third-person camera and FreeLook to clip through walls, and configures custom camera zoom/distance.
- */
+
 public class ViewClip extends Module {
     public static final ViewClip INSTANCE = new ViewClip();
 

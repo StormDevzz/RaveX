@@ -13,7 +13,7 @@ std::string mavenGroupToPath(const std::string& group) {
 }
 
 std::string mavenToPath(const std::string& mavenCoord) {
-    // group:artifact:version[@classifier]
+    
     size_t c1 = mavenCoord.find(':');
     if (c1 == std::string::npos) return "";
 
@@ -46,7 +46,7 @@ std::string mavenToUrl(const std::string& mavenCoord, const std::string& repoBas
     return repoBase + path;
 }
 
-} // namespace integr
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

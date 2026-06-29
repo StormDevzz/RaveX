@@ -16,7 +16,7 @@ void save_instance(const std::string& kickxDir, const InstanceInfo& inst);
 void delete_instance(const std::string& kickxDir, const std::string& name);
 InstanceInfo create_default_instance(const std::string& kickxDir);
 
-} // namespace instance
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

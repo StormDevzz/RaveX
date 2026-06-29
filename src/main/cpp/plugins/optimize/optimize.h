@@ -11,7 +11,7 @@ public:
 
 class NameTagsOptimizer {
 public:
-    // optimize NameTags layout calculations
+    
     static int optimizeNameTags(
         const double* cameraPos,
         const float* modelView,
@@ -34,7 +34,7 @@ public:
 
 class HudOptimizer {
 public:
-    // optimize Hud module lerp animations in batch
+    
     static void updateAnimations(
         float* displayXs,
         float* displayYs,
@@ -48,7 +48,7 @@ public:
 
 class TracersOptimizer {
 public:
-    // optimize Tracer projection and offscreen clamping calculations
+    
     static void optimizeTracers(
         const double* cameraPos,
         const float* modelView,
@@ -61,6 +61,6 @@ public:
     );
 };
 
-} // namespace optimize
-} // namespace plugins
-} // namespace ravex
+} 
+} 
+} 

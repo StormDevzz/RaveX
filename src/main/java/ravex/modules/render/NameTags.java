@@ -26,7 +26,7 @@ public class NameTags extends Module {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_nametags");
         } catch (UnsatisfiedLinkError e) {
-            // Fallback handled
+            
         }
     }
 
@@ -43,7 +43,7 @@ public class NameTags extends Module {
         addParameter(topLineColor);
         addParameter(customFont);
 
-        // Visibility triggers
+        
         backgroundColor.setVisible(background::getValue);
         topLine.setVisible(background::getValue);
         topLineColor.setVisible(() -> background.getValue() && topLine.getValue());
@@ -68,8 +68,8 @@ public class NameTags extends Module {
         if (!distanceScaling) {
             return scaleParam;
         }
-        // Стандартная логика масштабирования неймтегов от дистанции:
-        // чем дальше игрок, тем крупнее (или стабильнее) размер текста, чтобы его можно было прочесть
+        
+        
         double scale = distance * (scaleParam / 10.0);
         return Math.max(scale, scaleParam); 
     }
@@ -89,7 +89,7 @@ public class NameTags extends Module {
         int armorCount
     );
 
-    // Java fallback method if native isn't available
+    
     public static double[] javaFallbackCalculate(
         double distance,
         double scaleParam,

@@ -4,10 +4,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 
-/**
- * ItemPhysics Module
- * Adds beautiful, high-performance ground-laying physics and spinning animations to dropped item entities.
- */
+
 public class ItemPhysics extends Module {
     public static final ItemPhysics INSTANCE = new ItemPhysics();
 

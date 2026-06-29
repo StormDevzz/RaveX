@@ -13,7 +13,7 @@ dep_resolve_result dep_resolve_execute(const std::string& input) {
     return r;
 }
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

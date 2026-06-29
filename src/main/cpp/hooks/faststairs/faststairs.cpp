@@ -5,6 +5,6 @@ double calculateClimbSpeed(const std::string& mode, double currentY, double spee
     if (mode == "Boost") {
         return baseSpeed * speedFactor * 1.35;
     }
-    // Default or Simple mode
+    
     return baseSpeed * speedFactor;
 }

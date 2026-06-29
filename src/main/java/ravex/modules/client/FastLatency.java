@@ -7,10 +7,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 
-/**
- * FastLatency - sends ping packets more frequently to get accurate real-time latency.
- * Uses ClientboundPingPacket/ServerboundPongPacket (common protocol) which is available in-game.
- */
+
 public class FastLatency extends Module {
     public static final FastLatency INSTANCE = new FastLatency();
 
@@ -37,17 +34,14 @@ public class FastLatency extends Module {
         if (now - lastPingTime >= intervalMs) {
             lastPingTime = now;
             lastPingSentAt = now;
-            // Send common ping packet — works in-game (server responds with Pong)
+            
             try {
                 mc.getConnection().send(new net.minecraft.network.protocol.common.ServerboundPongPacket((int)(lastPingSentAt & 0x7FFFFFFF)));
             } catch (Exception ignored) {}
         }
     }
 
-    /**
-     * Called by network mixin when we receive a ClientboundPingPacket or Pong response.
-     * We measure RTT using our own timestamp.
-     */
+    
     public void handlePong(int id) {
         int sentId = (int)(lastPingSentAt & 0x7FFFFFFF);
         if (id == sentId) {
@@ -59,9 +53,7 @@ public class FastLatency extends Module {
         return measuredPing;
     }
 
-    /**
-     * Returns the best available ping value (our measured, or fallback to vanilla).
-     */
+    
     public static int getDisplayPing() {
         Minecraft mc = Minecraft.getInstance();
         if (INSTANCE.getEnabled() && INSTANCE.measuredPing >= 0) {

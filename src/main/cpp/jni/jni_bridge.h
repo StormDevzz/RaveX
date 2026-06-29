@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-// ── Optimizer ────────────────────────────────────────────────────────────
+
 JNIEXPORT jstring JNICALL
 Java_ravex_modules_misc_Optimizer_nativeOptimize(JNIEnv* env, jclass clazz, jstring mode);
 
@@ -77,7 +77,7 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeTracers(
     jdoubleArray outPoints
 );
 
-// ── AntiAFK ──────────────────────────────────────────────────────────────
+
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_misc_AntiAfk_nativeStart(JNIEnv* env, jclass clazz,
     jint intervalMs, jint maxJitterMs,
@@ -93,7 +93,7 @@ Java_ravex_modules_misc_AntiAfk_nativeIsRunning(JNIEnv* env, jclass clazz);
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_misc_AntiAfk_nativePerformAction(JNIEnv* env, jclass clazz);
 
-// ── Surround ──────────────────────────────────────────────────────────────
+
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_Surround_nativeGetCenter(JNIEnv* env, jclass clazz, jdouble px, jdouble py, jdouble pz, jboolean autoCenter);
 

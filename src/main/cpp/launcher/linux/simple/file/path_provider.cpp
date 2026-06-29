@@ -18,7 +18,7 @@ std::string get_mods_dir() {
     return home + "/.minecraft/mods";
 }
 
-} // namespace file
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

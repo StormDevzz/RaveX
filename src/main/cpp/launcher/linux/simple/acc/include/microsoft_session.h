@@ -12,7 +12,7 @@ struct MicrosoftSession {
     long long expires_in = 0;
 };
 
-} // namespace acc
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

@@ -65,7 +65,7 @@ public class AutoSmelt extends Module {
         int playerInvStart = 3;
         int hotbarStart = playerInvStart + 27;
 
-        // Take result (slot 2)
+        
         if (furnace.getSlot(2).hasItem()) {
             mc.gameMode.handleInventoryMouseClick(
                 containerId, 2, 0, ClickType.QUICK_MOVE, mc.player
@@ -73,10 +73,10 @@ public class AutoSmelt extends Module {
             return;
         }
 
-        // Check if smelting is in progress - if so, wait
+        
         if (furnace.getBurnProgress() > 0.01f) return;
 
-        // Refill input (slot 0)
+        
         if (!furnace.getSlot(0).hasItem()) {
             for (int i = playerInvStart; i < furnace.slots.size(); i++) {
                 ItemStack stack = furnace.slots.get(i).getItem();
@@ -100,7 +100,7 @@ public class AutoSmelt extends Module {
             }
         }
 
-        // Refill fuel (slot 1)
+        
         if (autoFuel.getValue() && !furnace.getSlot(1).hasItem()) {
             for (int i = playerInvStart; i < furnace.slots.size(); i++) {
                 ItemStack stack = furnace.slots.get(i).getItem();

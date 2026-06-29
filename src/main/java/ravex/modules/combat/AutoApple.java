@@ -35,7 +35,7 @@ public class AutoApple extends Module {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_autoapple");
         } catch (UnsatisfiedLinkError e) {
-            // Fallback handled
+            
         }
     }
 
@@ -59,7 +59,7 @@ public class AutoApple extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
 
-        // If currently eating, update/handle progress
+        
         if (isEating) {
             eatTicks++;
             ItemStack currentStack = mc.player.getInventory().getItem(eatingSlot);
@@ -68,15 +68,15 @@ public class AutoApple extends Module {
                 return;
             }
 
-            // In normal swap mode, we can monitor mc.player.isUsing().
-            // In silent swap mode, we count ticks or look for stack decrease.
+            
+            
             boolean finished = false;
             if (swapMode.getValue().equals("Normal")) {
                 if (!mc.player.isUsingItem() && eatTicks > 5) {
                     finished = true;
                 }
             } else {
-                // Silent swap: usually takes 32 ticks. Let's add buffer.
+                
                 if (eatTicks >= 33) {
                     finished = true;
                 }
@@ -87,7 +87,7 @@ public class AutoApple extends Module {
                 return;
             }
 
-            // Keep eating
+            
             if (swapMode.getValue().equals("Normal")) {
                 mc.options.keyUse.setDown(true);
             } else {
@@ -98,7 +98,7 @@ public class AutoApple extends Module {
             return;
         }
 
-        // Check dangerous circumstances
+        
         boolean shouldEat = false;
         if (nativeAvailable) {
             shouldEat = nativeShouldEat(
@@ -133,7 +133,7 @@ public class AutoApple extends Module {
             mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
             mc.options.keyUse.setDown(true);
         } else {
-            // Silent swap: send slot and start using packet
+            
             if (mc.player.connection != null) {
                 mc.player.connection.send(new ServerboundSetCarriedItemPacket(slot));
                 mc.player.connection.send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 0, mc.player.getYRot(), mc.player.getXRot()));
@@ -150,7 +150,7 @@ public class AutoApple extends Module {
                 mc.player.getInventory().setSelectedSlot(originalSlot);
             }
         } else {
-            // Silent swap restore
+            
             if (mc.player.connection != null && originalSlot != -1 && originalSlot >= 0 && originalSlot < 9) {
                 mc.player.connection.send(new ServerboundSetCarriedItemPacket(originalSlot));
             }
@@ -175,7 +175,7 @@ public class AutoApple extends Module {
     }
 
     private int findAppleSlot(Minecraft mc) {
-        // High danger: prioritize enchanted gold apple if health is below 6.0
+        
         boolean highDanger = (mc.player.getHealth() + mc.player.getAbsorptionAmount()) <= 6.0;
         
         if (highDanger && (appleType.getValue().equals("Both") || appleType.getValue().equals("Enchanted"))) {

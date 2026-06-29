@@ -13,7 +13,7 @@ compat_check_result compat_check_execute(const std::string& input) {
     return r;
 }
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

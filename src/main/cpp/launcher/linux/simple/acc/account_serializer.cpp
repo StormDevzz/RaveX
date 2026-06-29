@@ -98,7 +98,7 @@ void serialize_accounts(LauncherState *state) {
     file.close();
 }
 
-} // namespace acc
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

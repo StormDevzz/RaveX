@@ -13,7 +13,7 @@ ver_parser_result ver_parser_execute(const std::string& input) {
     return r;
 }
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

@@ -4,13 +4,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 
-/**
- * NoInteract — prevents the player from accidentally opening containers
- * (chests, barrels, droppers, etc.) and other block interactions.
- *
- * The mixin MixinNoInteract hooks into Minecraft.gameMode.useItemOn()
- * and cancels the right-click packet when the targeted block is a container.
- */
+
 public class NoInteract extends Module {
     public static final NoInteract INSTANCE = new NoInteract();
 

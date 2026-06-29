@@ -31,33 +31,33 @@ public class Render2DEngine {
         graphics.fill(x + width - radius, y + radius, x + width, y + height - radius, color);
 
         if (radius == 3) {
-            // Top-left corner
+            
             graphics.fill(x + 2, y, x + 3, y + 1, color);
             graphics.fill(x + 1, y + 1, x + 3, y + 2, color);
             graphics.fill(x, y + 2, x + 3, y + 3, color);
-            // Top-right corner
+            
             graphics.fill(x + width - 3, y, x + width - 2, y + 1, color);
             graphics.fill(x + width - 3, y + 1, x + width - 1, y + 2, color);
             graphics.fill(x + width - 3, y + 2, x + width, y + 3, color);
-            // Bottom-left corner
+            
             graphics.fill(x, y + height - 3, x + 3, y + height - 2, color);
             graphics.fill(x + 1, y + height - 2, x + 3, y + height - 1, color);
             graphics.fill(x + 2, y + height - 1, x + 3, y + height, color);
-            // Bottom-right corner
+            
             graphics.fill(x + width - 3, y + height - 3, x + width, y + height - 2, color);
             graphics.fill(x + width - 3, y + height - 2, x + width - 1, y + height - 1, color);
             graphics.fill(x + width - 2, y + height - 1, x + width - 1, y + height, color);
         } else if (radius == 2) {
-            // Top-left corner
+            
             graphics.fill(x + 1, y, x + 2, y + 1, color);
             graphics.fill(x, y + 1, x + 2, y + 2, color);
-            // Top-right corner
+            
             graphics.fill(x + width - 2, y, x + width - 1, y + 1, color);
             graphics.fill(x + width - 2, y + 1, x + width, y + 2, color);
-            // Bottom-left corner
+            
             graphics.fill(x, y + height - 2, x + 2, y + height - 1, color);
             graphics.fill(x + 1, y + height - 1, x + 2, y + height, color);
-            // Bottom-right corner
+            
             graphics.fill(x + width - 2, y + height - 2, x + width, y + height - 1, color);
             graphics.fill(x + width - 2, y + height - 1, x + width - 1, y + height, color);
         } else {

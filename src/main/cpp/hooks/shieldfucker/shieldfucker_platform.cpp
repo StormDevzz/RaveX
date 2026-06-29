@@ -38,4 +38,4 @@ uint64_t currentTimeMs() {
 #endif
 }
 
-} // namespace shieldfucker
+} 

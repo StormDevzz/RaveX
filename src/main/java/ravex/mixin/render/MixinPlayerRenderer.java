@@ -17,14 +17,14 @@ public class MixinPlayerRenderer {
     )
     private void onExtractPlayerRenderState(net.minecraft.world.entity.Avatar entity, AvatarRenderState state, float partialTicks, CallbackInfo ci) {
         if (entity instanceof net.minecraft.world.entity.player.Player player) {
-            // ShiftInterp logic: force crouching state
+            
             if (ravex.modules.render.ShiftInterp.INSTANCE.getEnabled()) {
                 if (ravex.modules.render.ShiftInterp.INSTANCE.shouldCrouch(player)) {
                     state.isCrouching = true;
                 }
             }
 
-            // BabyDude logic: set baby render proportions and register scale factor
+            
             if (ravex.modules.render.BabyDude.INSTANCE.getEnabled()) {
                 if (ravex.modules.render.BabyDude.INSTANCE.shouldScale(player)) {
                     state.isBaby = true;

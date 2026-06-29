@@ -40,7 +40,7 @@ ReleaseInfo GithubUtility::getLatestRelease() {
 
     {
         std::string body = extractJsonValue(json, "body");
-        // 1) Try MC_VERSION=X.Y.Z in body (preferred)
+        
         {
             size_t pos = 0;
             while (true) {
@@ -82,6 +82,6 @@ bool GithubUtility::downloadFile(const std::string& url, const std::string& dest
     return (code == 0);
 }
 
-} // namespace plugins
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 

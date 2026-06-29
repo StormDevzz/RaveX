@@ -252,4 +252,4 @@ bool Memory::compactMemory() {
 #endif
 }
 
-} // namespace ravex
+} 

@@ -22,9 +22,9 @@ import ravex.modules.exploit.PacketPlace;
 @Mixin(MultiPlayerGameMode.class)
 public class MixinMultiPlayerGameMode {
 
-    // =========================================================================
-    // ItemScroller — Ctrl+Shift+Throw mass-drop like ThunderHack
-    // =========================================================================
+    
+    
+    
     @Inject(method = "handleInventoryMouseClick",
             at = @At("HEAD"), cancellable = true)
     private void onHandleInventoryMouseClick(int syncId, int slotId, int button, ClickType type,
@@ -44,9 +44,9 @@ public class MixinMultiPlayerGameMode {
         ItemScroller.INSTANCE.handleClick(slotId);
     }
 
-    // =========================================================================
-    // BlockSelector — after placing a block, switch to a random block in hotbar
-    // =========================================================================
+    
+    
+    
     @Inject(method = "useItemOn",
             at = @At("RETURN"))
     private void onUseItemOn(LocalPlayer player,
@@ -59,9 +59,9 @@ public class MixinMultiPlayerGameMode {
         BlockSelector.INSTANCE.selectRandomBlock();
     }
 
-    // =========================================================================
-    // ToolSaver — cancel client interactions if tool is low durability
-    // =========================================================================
+    
+    
+    
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void onAttack(Player player, net.minecraft.world.entity.Entity target, CallbackInfo ci) {
         if (ravex.modules.player.ToolSaver.INSTANCE.shouldSave(player.getMainHandItem())) {

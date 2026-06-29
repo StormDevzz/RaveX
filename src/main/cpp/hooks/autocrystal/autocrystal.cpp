@@ -99,15 +99,15 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
     best.valid = false;
     best.score = -std::numeric_limits<double>::infinity();
 
-    // Экстраполируем будущую позицию цели на основе настраиваемого predictTicks
+    
     Vec3 predictedTargetPos = EntityTracker::predictPosition(
         targetPos, targetStats.motionX, targetStats.motionY, targetStats.motionZ, config.predictTicks
     );
 
-    // Проверяем, находится ли игрок в безопасной яме (Hole)
+    
     bool playerInHole = ConditionValidator::isInHole(playerPos, blocks);
 
-    // Цель неуязвима под эффектом Resistance V
+    
     if (ConditionValidator::isTargetInvulnerable(targetStats)) {
         return best;
     }
@@ -129,7 +129,7 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
         double dist = distanceToCenter(playerPos, block);
         if (dist > maxRange) continue;
 
-        // Проверяем свободное пространство над обсидианом/бедроком
+        
         bool spaceBlocked = false;
         Vec3 above1 = {block.x, block.y + 1.0, block.z};
         Vec3 above2 = {block.x, block.y + 2.0, block.z};
@@ -145,16 +145,16 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
         }
         if (spaceBlocked) continue;
 
-        // Рассчитываем урон по цели (по предсказанным координатам) и себе
+        
         double targetDmg = calcExplosionDamage(crystalPos, predictedTargetPos, targetHealth, targetAbsorption, targetStats, blocks);
         double selfDmg   = calcExplosionDamage(crystalPos, playerPos, playerHealth, playerAbsorption, playerStats, blocks);
 
-        // Строгая проверка безопасности для игрока
+        
         if (!ConditionValidator::isPlacementSafe(playerHealth, playerAbsorption, selfDmg, playerStats, config, playerInHole, false)) {
             continue;
         }
 
-        // Если у цели критическое состояние брони, опускаем требования к минимальному урону до 1.0 урона
+        
         double requiredMinDmg = config.minTargetDamage;
         if (ConditionValidator::shouldForceArmorBreak(targetStats, targetEffHp, config.armorBreaker, config.armorPercent)) {
             requiredMinDmg = std::min(1.0, config.minTargetDamage);
@@ -162,19 +162,19 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
 
         if (targetDmg < requiredMinDmg) continue;
 
-        // Бонус за убийство цели
+        
         double deathBonus = 0.0;
         if (targetEffHp - targetDmg <= 0.0) {
             deathBonus = 20.0;
         }
 
-        // Бонус за снятие (поп) тотема цели (+30 очков для приоритета)
+        
         double totemPopBonus = 0.0;
         if (ConditionValidator::shouldForcePopTotem(targetEffHp, targetDmg, targetStats.totemCount, config.totemDetection)) {
             totemPopBonus = 30.0;
         }
 
-        // Бонус за малое здоровье цели
+        
         double healthBonus = 0.0;
         if (targetHealth < 8.0) {
             healthBonus = config.targetHealthBonus * (8.0 - targetHealth);
@@ -241,7 +241,7 @@ bool AutoCrystalMath::findBestBreak(
         double targetDmg = calcExplosionDamage(crystal.pos, predictedTargetPos, targetHealth, targetAbsorption, targetStats, blocks);
         double selfDmg   = calcExplosionDamage(crystal.pos, playerPos, playerHealth, playerAbsorption, playerStats, blocks);
 
-        // Строгая проверка безопасности для игрока (isBreakPhase = true)
+        
         if (!ConditionValidator::isPlacementSafe(playerHealth, playerAbsorption, selfDmg, playerStats, config, playerInHole, true)) {
             continue;
         }
@@ -299,7 +299,7 @@ AutoCrystalResult AutoCrystalMath::tick(
 
     std::ostringstream dbg;
 
-    // Фаза 1: Размещение
+    
     CrystalPlacement placement = findBestPlacement(
         playerPos, playerHealth, playerAbsorption, playerStats,
         targetPos, targetHealth, targetAbsorption, targetStats,
@@ -317,7 +317,7 @@ AutoCrystalResult AutoCrystalMath::tick(
                 << " sDmg=" << placement.selfDamage
                 << " score=" << placement.score << "; ";
 
-            // Multi-place
+            
             if (config.placeMultiPlace) {
                 CrystalPlacement placement2 = findBestPlacement(
                     playerPos, playerHealth, playerAbsorption, playerStats,
@@ -342,7 +342,7 @@ AutoCrystalResult AutoCrystalMath::tick(
         dbg << "NO placement; ";
     }
 
-    // Фаза 2: Подрыв
+    
     int    breakId  = -1;
     Vec3   breakPos;
     double breakDmg = 0.0;
@@ -369,4 +369,4 @@ AutoCrystalResult AutoCrystalMath::tick(
     return result;
 }
 
-} // namespace ravex
+} 

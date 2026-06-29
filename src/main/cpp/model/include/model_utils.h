@@ -78,5 +78,5 @@ inline Mesh mergeMeshes(const std::vector<Mesh>& meshes) {
     return out;
 }
 
-} // namespace utils
-} // namespace model
+} 
+} 

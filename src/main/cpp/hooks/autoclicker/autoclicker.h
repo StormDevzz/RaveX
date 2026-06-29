@@ -29,6 +29,6 @@ inline int64_t calculateClickDelay(double minCps, double maxCps, bool randomize)
     return delay;
 }
 
-} // namespace ravex
+} 
 
 #endif

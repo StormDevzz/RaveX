@@ -11,7 +11,7 @@ void on_window_resize(GtkWidget *widget, GtkAllocation *allocation, gpointer dat
     (void)data;
 }
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

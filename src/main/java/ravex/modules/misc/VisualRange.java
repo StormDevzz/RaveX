@@ -34,14 +34,14 @@ public class VisualRange extends Module {
             currentPlayers.add(name);
 
             if (!knownPlayers.contains(name)) {
-                // Player entered render distance!
+                
                 mc.player.displayClientMessage(Component.literal("§7[§cRaveX§7] §f" + name + " §7entered visual range!"), false);
             }
         }
 
         for (String name : knownPlayers) {
             if (!currentPlayers.contains(name)) {
-                // Player left render distance!
+                
                 mc.player.displayClientMessage(Component.literal("§7[§cRaveX§7] §f" + name + " §7left visual range!"), false);
             }
         }

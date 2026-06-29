@@ -106,7 +106,7 @@ ModelData convert(const ModelData& input, const ConvertOptions& opts) {
     }
 
     if (opts.deduplicateVerts) {
-        // simple dedup
+        
     }
 
     return out;
@@ -140,4 +140,4 @@ ModelFormat detectFormat(const uint8_t* data, size_t size) {
     return utils::detectFormat(data, size);
 }
 
-} // namespace model
+} 

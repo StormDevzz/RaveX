@@ -54,7 +54,7 @@ bool is_log_enabled() {
     return logging_enabled;
 }
 
-} // namespace analyze
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

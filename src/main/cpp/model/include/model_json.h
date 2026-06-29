@@ -48,5 +48,5 @@ namespace detail {
     std::string parseString(const char*& p);
 }
 
-} // namespace json
-} // namespace model
+} 
+} 

@@ -53,14 +53,12 @@ public class InventoryCleaner extends Module {
         cleanInventory(mc);
     }
 
-    /**
-     * Удаляет все предметы из инвентаря, которые есть в selectedItems.
-     */
+    
     public static void cleanInventory(Minecraft mc) {
         if (mc.player == null || mc.getConnection() == null) return;
 
         Inventory inv = mc.player.getInventory();
-        // Проверяем слоты 0-35 (основной инвентарь + хотбар)
+        
         for (int i = 0; i < 36; i++) {
             ItemStack stack = inv.getItem(i);
             if (stack.isEmpty()) continue;
@@ -70,15 +68,15 @@ public class InventoryCleaner extends Module {
 
             String itemId = rl.toString();
             if (InventoryCleanerData.INSTANCE.isSelected(itemId)) {
-                // Выбрасываем предмет: отправляем DROP_ALL_ITEMS через action packet
-                // Для hotbar slots (0-8): устанавливаем слот и нажимаем Q
-                // Для основного инвентаря: используем ServerboundPlayerActionPacket
+                
+                
+                
                 int slot = i;
                 final int finalI = i;
                 mc.execute(() -> {
                     ItemStack s = mc.player.getInventory().getItem(finalI);
                     if (!s.isEmpty()) {
-                        // Использовать серверный метод сброса: PacketUtil
+                        
                         mc.player.drop(true);
                         if (finalI < 9) {
                             int prevSelected = ravex.manager.HotbarManager.INSTANCE.getSelectedSlot();

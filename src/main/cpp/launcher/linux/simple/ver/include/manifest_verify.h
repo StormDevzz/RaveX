@@ -15,7 +15,7 @@ struct manifest_verify_result {
 manifest_verify_result manifest_verify_execute(const std::string& input);
 double manifest_verify_calculate(const std::string& input);
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

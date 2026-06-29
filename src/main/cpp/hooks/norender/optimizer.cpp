@@ -178,4 +178,4 @@ OptResult Optimizer::soft() {
     return {true, msg, after.free_kb, freed, usedPct > 65.0 ? 1 : 0};
 }
 
-} // namespace ravex
+} 

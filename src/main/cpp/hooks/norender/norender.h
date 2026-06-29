@@ -9,4 +9,4 @@ namespace ravex::norender {
     std::vector<float> optimizeFog(float envStart, float envEnd, float rdStart, float rdEnd, float skyEnd, float cloudEnd);
 }
 
-#endif // RAVEX_NORENDER_H
+#endif 

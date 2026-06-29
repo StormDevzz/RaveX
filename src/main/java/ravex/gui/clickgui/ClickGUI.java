@@ -62,7 +62,7 @@ public class ClickGUI extends Screen {
     private boolean guiSettingsHovered;
     private boolean resetLayoutHovered;
 
-    // ── Star particles ───────────────────────────────────────────────────────────
+    
     private final float[] starX   = new float[150];
     private final float[] starY   = new float[150];
     private final float[] starVx  = new float[150];
@@ -80,7 +80,7 @@ public class ClickGUI extends Screen {
         super(Component.literal("RaveX ClickGUI"));
         this.initTime = System.currentTimeMillis();
 
-        // Optimize scheduler, CPU affinity, priorities and memory on ClickGUI open
+        
         ravex.utility.misc.GuiOptimizer.optimize();
 
         if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {
@@ -161,9 +161,9 @@ public class ClickGUI extends Screen {
             currentScale = target;
         }
         if (isDraggingSlider) {
-            // Freeze scale during dragging to prevent feedback loops and flickering
+            
         } else {
-            // Smoothly transition to the target scale when not dragging
+            
             currentScale += (target - currentScale) * 0.15f;
             if (Math.abs(currentScale - target) < 0.001f) {
                 currentScale = target;
@@ -195,11 +195,11 @@ public class ClickGUI extends Screen {
         int targetMaxH = getMaxPanelHeight();
         smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.35;
 
-        // ── Background ──────────────────────────────────────────────────────────────
+        
         boolean drawBg = ravex.modules.render.ClickGui.INSTANCE.drawBackground.getValue();
         if (drawBg) {
             graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.BACKGROUND_START, ColorUtility.BACKGROUND_END);
-            // Vignette effect
+            
             int edgeColor = ColorUtility.withAlpha(ColorUtility.getActiveColor(), 6);
             graphics.fillGradient(0, 0, this.width, 1, edgeColor, 0x00000000);
         }
@@ -240,8 +240,8 @@ public class ClickGUI extends Screen {
 
         String tips = "";
 
-        // ── Bottom nav buttons ───────────────────────────────────────────────────
-        //    Macros  |  Profiles  |  Configs  |  GUI  |  Reset
+        
+        
         float btnScale = Math.max(0.65f, getResponsiveScale());
         int mgW = (int)(44 * btnScale);
         int mgH = (int)(20 * btnScale);
@@ -289,7 +289,7 @@ public class ClickGUI extends Screen {
         int mx = (int) ((mouseX - cx) / finalScale + cx);
         int my = (int) ((mouseY - cy) / finalScale + cy);
 
-        // Render search bar in unscaled space so it's always accessible
+        
         renderSearchBar(graphics, mouseX, mouseY);
 
         var pose = graphics.pose();
@@ -429,7 +429,7 @@ public class ClickGUI extends Screen {
             return super.mouseClicked(event, handled);
         }
 
-        // Match layout computed in render()
+        
         float btnScale = Math.max(0.65f, getResponsiveScale());
         int mgW   = (int)(44 * btnScale);
         int mgH   = (int)(20 * btnScale);
@@ -454,9 +454,9 @@ public class ClickGUI extends Screen {
             return true;
         }
         if (event.x() >= mgX + 4 * (mgW + mgGap) && event.x() <= mgX + 5 * mgW + 4 * mgGap && event.y() >= mgY && event.y() <= mgY + mgH) {
-            // Reset layout positions
+            
             ravex.manager.LayoutManager.INSTANCE.reset();
-            // Reload positions
+            
             init();
             ravex.utility.sound.SoundUtility.playGuiOpen();
             return true;
@@ -620,7 +620,7 @@ public class ClickGUI extends Screen {
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
-            // Save with fixed scale 1.0 to avoid drift from animated smoothMaxH
+            
             ravex.manager.LayoutManager.INSTANCE.save(panelMap, this.width, this.height, 1.0f);
             ravex.utility.sound.SoundUtility.playGuiClose();
             ravex.manager.ConfigManager.INSTANCE.save("default");
@@ -639,7 +639,7 @@ public class ClickGUI extends Screen {
         super.removed();
     }
 
-    // ─── Star particle system ────────────────────────────────────────────────────
+    
 
     private void renderStars(GuiGraphics graphics) {
         if (this.width <= 0 || this.height <= 0) return;

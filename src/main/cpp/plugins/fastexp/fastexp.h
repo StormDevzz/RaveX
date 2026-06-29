@@ -26,6 +26,6 @@ private:
     jmethodID mid;
 };
 
-} // namespace ravex
+} 
 
 #endif

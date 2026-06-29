@@ -36,7 +36,7 @@ public class AutoShear extends Module {
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
 
-        // 1. Scan for a sheep that can be sheared
+        
         Sheep target = null;
         double closestDist = range.getValue();
         for (var entity : mc.level.entitiesForRendering()) {
@@ -53,7 +53,7 @@ public class AutoShear extends Module {
 
         if (target == null) return;
 
-        // 2. Find shears in hotbar
+        
         int shearSlot = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = p.getInventory().getItem(i);
@@ -63,19 +63,19 @@ public class AutoShear extends Module {
             }
         }
 
-        if (shearSlot == -1) return; // No shears in hotbar
+        if (shearSlot == -1) return; 
 
         int prevSlot = p.getInventory().getSelectedSlot();
 
         if ("Packet".equals(exploitType.getValue())) {
-            // Packet-level silent swap:
-            // Send set carried item packet, send interact packet, swing arm packet, and restore carried item packet.
-            // This leaves the client-side selected slot completely unchanged!
+            
+            
+            
             if (shearSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(shearSlot));
             }
 
-            // Send standard interaction packets
+            
             p.connection.send(ServerboundInteractPacket.createInteractionPacket(target, p.isShiftKeyDown(), InteractionHand.MAIN_HAND));
             p.connection.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
 
@@ -83,8 +83,8 @@ public class AutoShear extends Module {
                 p.connection.send(new ServerboundSetCarriedItemPacket(prevSlot));
             }
         } else {
-            // Client-level swap:
-            // Visually change the client's held item, interact via gameMode, swing, and optionally swap back.
+            
+            
             p.getInventory().setSelectedSlot(shearSlot);
 
             mc.gameMode.interact(p, target, InteractionHand.MAIN_HAND);

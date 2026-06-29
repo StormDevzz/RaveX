@@ -7,7 +7,7 @@ double ArmorCalc::applyArmorMitigation(double rawDamage, double armorValue, doub
     double defensePoints = armorValue;
     double armorToughness = toughness;
     
-    // Ванильная формула брони Minecraft (1.9+)
+    
     double denominator = 2.0 + armorToughness / 4.0;
     double term1 = defensePoints / 5.0;
     double term2 = defensePoints - rawDamage / denominator;
@@ -20,7 +20,7 @@ double ArmorCalc::applyArmorMitigation(double rawDamage, double armorValue, doub
 }
 
 bool ArmorCalc::hasCriticalArmorDurability(const EntityStats& stats, double minThresholdPercent) {
-    // Проверяем каждую часть брони, если она одета (прочность > 0.0)
+    
     if (stats.helmetDurability > 0.0 && stats.helmetDurability <= minThresholdPercent) return true;
     if (stats.chestplateDurability > 0.0 && stats.chestplateDurability <= minThresholdPercent) return true;
     if (stats.leggingsDurability > 0.0 && stats.leggingsDurability <= minThresholdPercent) return true;
@@ -52,4 +52,4 @@ double ArmorCalc::getMinArmorDurability(const EntityStats& stats) {
     return hasArmor ? minDur : 0.0;
 }
 
-} // namespace ravex
+} 

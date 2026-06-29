@@ -26,8 +26,8 @@ BowAimResult solveBowAim(
     double best_pitch = 0;
     int best_ticks = 0;
 
-    double d = 0.99; // drag
-    double g = 0.05; // gravity
+    double d = 0.99; 
+    double g = 0.05; 
 
     double targetCenterY = targetY + targetHeight * 0.5;
 
@@ -91,4 +91,4 @@ BowAimResult solveBowAim(
     return result;
 }
 
-} // namespace ravex
+} 

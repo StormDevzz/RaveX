@@ -50,21 +50,21 @@ public class AutoBow extends Module {
             if (bowSlot == -1) return;
         }
 
-        // Check if using bow (charging)
+        
         if (!mc.player.isUsingItem()) return;
         if (!mc.player.getUsedItemHand().equals(InteractionHand.MAIN_HAND)) return;
 
-        // Check if target required but not present
+        
         if (onlyWhenTarget.getValue() && !(mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult)) return;
 
-        // Check bow charge
+        
         float chargeProgress = mc.player.getTicksUsingItem() / 20.0f;
         chargeProgress = Math.min(chargeProgress, 1.0f);
         float requiredCharge = charge.getValue().floatValue() / 100.0f;
 
         if (chargeProgress < requiredCharge) return;
 
-        // Release bow via packet
+        
         if (bowSlot != -1 && silent.getValue()) {
             mc.player.connection.send(new ServerboundSetCarriedItemPacket(bowSlot));
         } else if (bowSlot != -1) {

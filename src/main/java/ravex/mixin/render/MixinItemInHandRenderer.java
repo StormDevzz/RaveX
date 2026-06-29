@@ -22,7 +22,7 @@ import ravex.modules.render.ViewModel;
 @Mixin(ItemInHandRenderer.class)
 public abstract class MixinItemInHandRenderer {
 
-    // ── Existing Shaders hooks ───────────────────────────────────────────────
+    
 
     @Inject(
         method = "renderHandsWithItems(FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/player/LocalPlayer;I)V",
@@ -40,7 +40,7 @@ public abstract class MixinItemInHandRenderer {
         Shaders.RENDERING_HAND.set(false);
     }
 
-    // ── ViewModel: applyItemArmTransform ─────────────────────────────────────
+    
 
     @Inject(
         method = "applyItemArmTransform(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/entity/HumanoidArm;F)V",
@@ -81,7 +81,7 @@ public abstract class MixinItemInHandRenderer {
         if (scale != 1f) poseStack.scale(scale, scale, scale);
     }
 
-    // ── ViewModel: renderArmWithItem — Hide hand ─────────────────────────────
+    
 
     @Inject(
         method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
@@ -107,7 +107,7 @@ public abstract class MixinItemInHandRenderer {
         }
     }
 
-    // ── NoSwing & Swing Custom overrides ───────────────────────────────────
+    
 
     private static AbstractClientPlayer capturedPlayer;
 

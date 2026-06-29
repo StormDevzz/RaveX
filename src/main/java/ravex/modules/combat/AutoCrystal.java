@@ -26,19 +26,11 @@ import net.minecraft.core.component.DataComponents;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * AutoCrystal — автоматически ставит и подрывает End Crystals.
- *
- * Архитектура:
- *  - Java сторона: сбор данных из мира, вызов native JNI математики, отправка пакетов.
- *  - C++ сторона: точные математические расчёты урона взрыва (см. hooks/autocrystal/).
- *
- * Когда native библиотека не загружена — используется Java fallback.
- */
+
 public class AutoCrystal extends Module {
     public static final AutoCrystal INSTANCE = new AutoCrystal();
 
-    // ── Параметры ─────────────────────────────────────────────────────────────
+    
     public final NumberParameter  placeRange     = new NumberParameter("Place Range",    4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  breakRange     = new NumberParameter("Break Range",    4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay     = new NumberParameter("Place Delay",   100, 0, 500, 10);
@@ -68,32 +60,32 @@ public class AutoCrystal extends Module {
     public final ModeParameter    placeMode      = new ModeParameter("Place Mode", "Normal",
             java.util.List.of("Normal", "Aggressive", "Smart"));
 
-    // Rotate sub-settings
+    
     public final NumberParameter  rotateSpeed     = new NumberParameter("Rotate Speed", 180.0, 10.0, 180.0, 5.0);
     public final NumberParameter  rotateRandomize = new NumberParameter("Rotate Randomize", 0.0, 0.0, 3.0, 0.1);
 
-    // Anti Suicide sub-settings
+    
     public final BooleanParameter antiSuicideCheckBreaking = new BooleanParameter("AntiSuicide Break", true);
     public final BooleanParameter antiSuicideIgnoreWithTotem = new BooleanParameter("AntiSuicide Ignore Totem", false);
 
-    // Totem Detection sub-settings
+    
     public final BooleanParameter totemCheckTarget = new BooleanParameter("Totem Check Target", true);
     public final BooleanParameter totemPopSwap     = new BooleanParameter("Totem Pop Swap", false);
     public final NumberParameter  totemPopHp       = new NumberParameter("Totem Pop HP", 6.0, 1.0, 20.0, 0.5);
 
-    // Place sub-settings
+    
     public final NumberParameter  placeWallRange  = new NumberParameter("Place Wall Range", 3.5, 1.0, 6.0, 0.1);
     public final NumberParameter  breakWallRange  = new NumberParameter("Break Wall Range", 3.5, 1.0, 6.0, 0.1);
     public final BooleanParameter placeAirPlace   = new BooleanParameter("Air Place", false);
     public final NumberParameter  placeUnderHp     = new NumberParameter("Place Under HP", 10.0, 0.0, 36.0, 0.5);
     public final BooleanParameter placeMultiPlace  = new BooleanParameter("Multi Place", false);
 
-    // Swaps sub-settings
+    
     public final BooleanParameter swapSwitchBack   = new BooleanParameter("Swap Switch Back", true);
     public final BooleanParameter swapNoGap        = new BooleanParameter("Swap No Gap", true);
     public final BooleanParameter swapInventory   = new BooleanParameter("Swap Inventory", false);
 
-    // Speed & Timings settings
+    
     public final ModeParameter    speedMode      = new ModeParameter("Speed Mode", "Normal",
             java.util.List.of("Legit", "Normal", "Aggressive"));
     public final NumberParameter  jitterDelay    = new NumberParameter("Jitter Delay", 0.0, 0.0, 100.0, 5.0);
@@ -101,33 +93,30 @@ public class AutoCrystal extends Module {
     public final NumberParameter  maxRate        = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
     public final BooleanParameter suicide        = new BooleanParameter("Suicide", false);
 
-    // ── Состояние ─────────────────────────────────────────────────────────────
+    
     public static BlockPos currentPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
     public static int currentTargetTotems = 0;
 
-    // ── Состояние ─────────────────────────────────────────────────────────────
+    
     private long lastPlaceTime = 0;
     private long lastBreakTime = 0;
     private int  lastBreakId   = -1;
 
-    // Native JNI
+    
     private static boolean nativeAvailable = false;
 
     static {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_autocrystal");
         } catch (UnsatisfiedLinkError e) {
-            // Fallback handled
+            
         }
     }
 
-    // ── JNI методы ────────────────────────────────────────────────────────────
-    /**
-     * Главный расчёт — возвращает double[16] с результатами.
-     * Описание полей см. в autocrystal_jni.h
-     */
+    
+    
     private static native double[] nativeTick(
             double pX, double pY, double pZ,
             double pHp, double pAbs,
@@ -148,7 +137,7 @@ public class AutoCrystal extends Module {
             boolean placeMultiPlace, boolean suicide
     );
 
-    /** Расчёт урона одного кристалла (для preview/debug) */
+    
     public static native double[] nativeCalcDamage(
             double expX, double expY, double expZ,
             double entityX, double entityY, double entityZ,
@@ -204,7 +193,7 @@ public class AutoCrystal extends Module {
         addParameter(maxRate);
         addParameter(suicide);
 
-        // Conditional visibility configuration
+        
         armorPercent.setVisible(() -> armorBreaker.getValue());
         renderDamage.setVisible(() -> renderPlacement.getValue());
         antiSuicideMinHp.setVisible(() -> antiSuicide.getValue());
@@ -248,7 +237,7 @@ public class AutoCrystal extends Module {
 
         hasSilentRotations = false;
 
-        // Auto-Totem offhand swap
+        
         if (totemPopSwap.getValue()) {
             double selfHp = mc.player.getHealth() + mc.player.getAbsorptionAmount();
             if (selfHp <= totemPopHp.getValue()) {
@@ -292,14 +281,14 @@ public class AutoCrystal extends Module {
             }
         }
 
-        // ── Выбор цели ────────────────────────────────────────────────────────
+        
         LivingEntity target = findTarget(mc);
         if (target == null) {
             currentPlacementBlock = null;
             return;
         }
 
-        // ── Сбор данных ───────────────────────────────────────────────────────
+        
         Vec3 playerPos = mc.player.position();
         double pHp  = mc.player.getHealth();
         double pAbs = mc.player.getAbsorptionAmount();
@@ -307,15 +296,15 @@ public class AutoCrystal extends Module {
         double tHp  = target.getHealth();
         double tAbs = target.getAbsorptionAmount();
 
-        // Блоки в радиусе действия (обсидиан + бедрок)
+        
         double[] blockData  = collectValidBlocks(mc, playerPos);
-        // Активные кристаллы
+        
         double[] crystalData = collectCrystals(mc, playerPos);
 
         double[] pStats = getEntityStats(mc.player);
         double[] tStats = getEntityStats(target);
 
-        // ── Расчёт ────────────────────────────────────────────────────────────
+        
         double[] result;
         if (nativeAvailable) {
             result = nativeTick(
@@ -350,7 +339,7 @@ public class AutoCrystal extends Module {
         boolean shouldPlace = result[0] > 0.5;
         boolean shouldBreak = result[6] > 0.5;
 
-        // Anti-Suicide HP Check (Ignore if totem is held/present and antiSuicideIgnoreWithTotem is enabled)
+        
         if (shouldPlace && antiSuicide.getValue()) {
             boolean ignoreSuicide = antiSuicideIgnoreWithTotem.getValue() && pStats[14] > 0.0;
             if (!ignoreSuicide) {
@@ -372,7 +361,7 @@ public class AutoCrystal extends Module {
 
         long now = System.currentTimeMillis();
 
-        // ── Расчёт цели вращения ──────────────────────────────────────────────
+        
         Vec3 rotationTarget = null;
         if (shouldBreak) {
             int entityId = (int) result[7];
@@ -389,21 +378,21 @@ public class AutoCrystal extends Module {
             rotateTo(mc, rotationTarget);
         }
 
-        // ── Проверка выравнивания ротации (Strict Rotation) ───────────────────
+        
         boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
         boolean aligned = true;
         if (isStrict && rotationTarget != null) {
             aligned = isRotationAligned(mc, rotationTarget);
         }
 
-        // ── Ограничение скорости (Max Rate) ──────────────────────────────────
+        
         int limit = maxRate.getValue().intValue();
         if (speedMode.getValue().equals("Legit")) {
             limit = 1;
         }
         int actionsThisTick = 0;
 
-        // ── Подрыв ────────────────────────────────────────────────────────────
+        
         boolean checkBreakDelay = true;
         if (speedMode.getValue().equals("Aggressive")) {
             checkBreakDelay = false;
@@ -412,7 +401,7 @@ public class AutoCrystal extends Module {
         if (shouldBreak && aligned && actionsThisTick < limit) {
             if (!checkBreakDelay || now - lastBreakTime >= currentBreakDelay) {
                 int entityId = (int) result[7];
-                if (entityId != lastBreakId) { // не подрываем один и тот же кристалл дважды подряд
+                if (entityId != lastBreakId) { 
                     Entity crystal = mc.level.getEntity(entityId);
                     if (crystal instanceof EndCrystal) {
                         mc.gameMode.attack(mc.player, crystal);
@@ -421,7 +410,7 @@ public class AutoCrystal extends Module {
                         lastBreakId   = entityId;
                         actionsThisTick++;
 
-                        // Рассчитываем следующую задержку подрыва с учётом джиттера
+                        
                         double base = breakDelay.getValue();
                         double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
                         currentBreakDelay = Math.max(0, (long)(base + jitter));
@@ -430,7 +419,7 @@ public class AutoCrystal extends Module {
             }
         }
 
-        // ── Размещение ────────────────────────────────────────────────────────
+        
         boolean checkPlaceDelay = true;
         if (speedMode.getValue().equals("Aggressive")) {
             checkPlaceDelay = false;
@@ -452,10 +441,10 @@ public class AutoCrystal extends Module {
                 BlockPos placePos = new BlockPos(
                         (int) result[1], (int) result[2], (int) result[3]);
 
-                // Убеждаемся, что в руке End Crystal
+                
                 boolean hasItem = switchToCrystal(mc);
                 if (hasItem) {
-                    // Отправляем пакет размещения
+                    
                     net.minecraft.world.phys.Vec3 hitVec = new net.minecraft.world.phys.Vec3(
                             result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
@@ -464,7 +453,7 @@ public class AutoCrystal extends Module {
                     mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
                     mc.player.swing(mc.player.getUsedItemHand());
 
-                    // If silent swap was performed, restore the original slot!
+                    
                     if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
                         if (mc.player.connection != null) {
                             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
@@ -475,7 +464,7 @@ public class AutoCrystal extends Module {
                     lastPlaceTime = now;
                     actionsThisTick++;
 
-                    // Рассчитываем следующую задержку установки с учётом джиттера
+                    
                     double base = placeDelay.getValue();
                     double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
                     currentPlaceDelay = Math.max(0, (long)(base + jitter));
@@ -483,7 +472,7 @@ public class AutoCrystal extends Module {
             }
         }
 
-        // Multi-placement support (place second crystal if returned by JNI)
+        
         boolean shouldPlace2 = placeMultiPlace.getValue() && result.length >= 16 && result[12] > 0.5;
         if (shouldPlace2 && antiSuicide.getValue()) {
             boolean ignoreSuicide2 = antiSuicideIgnoreWithTotem.getValue() && pStats[14] > 0.0;
@@ -526,13 +515,13 @@ public class AutoCrystal extends Module {
             }
         }
 
-        // Update silent rotation init flag if no rotations were done
+        
         if (!hasSilentRotations) {
             lastSilentInit = false;
         }
     }
 
-    // ── Выбор цели ────────────────────────────────────────────────────────────
+    
     private LivingEntity findTarget(Minecraft mc) {
         LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
@@ -546,7 +535,7 @@ public class AutoCrystal extends Module {
             if (le == mc.player) continue;
             if (le.isDeadOrDying()) continue;
 
-            // Apply type filtering
+            
             if (typeFilter.equals("Players")) {
                 if (!(le instanceof Player)) continue;
             } else if (typeFilter.equals("Monsters")) {
@@ -573,7 +562,7 @@ public class AutoCrystal extends Module {
         return closest;
     }
 
-    // ── Сбор валидных блоков (обсидиан + бедрок) ──────────────────────────────
+    
     private double[] collectValidBlocks(Minecraft mc, Vec3 playerPos) {
         List<Double> data = new ArrayList<>();
         int r = (int) Math.ceil(placeRange.getValue()) + 1;
@@ -585,7 +574,7 @@ public class AutoCrystal extends Module {
                     BlockPos pos = origin.offset(dx, dy, dz);
                     BlockState state = mc.level.getBlockState(pos);
                     if (state.is(Blocks.OBSIDIAN) || state.is(Blocks.BEDROCK)) {
-                        // Блок над должен быть пустым
+                        
                         BlockState above = mc.level.getBlockState(pos.above());
                         BlockState above2 = mc.level.getBlockState(pos.above(2));
                         if (above.isAir() && above2.isAir()) {
@@ -598,7 +587,7 @@ public class AutoCrystal extends Module {
             }
         }
 
-        // AutoCrystalSync prediction integration
+        
         if (BasePlace.INSTANCE.getEnabled() && BasePlace.INSTANCE.autoCrystalSync.getValue() && BasePlace.lastPlacedBase != null) {
             long msLimit = (long) (BasePlace.INSTANCE.syncPredictTicks.getValue() * 50);
             if (System.currentTimeMillis() - BasePlace.lastPlacedTime <= msLimit) {
@@ -630,7 +619,7 @@ public class AutoCrystal extends Module {
 
     }
 
-    // ── Сбор активных кристаллов ─────────────────────────────────────────────
+    
     private double[] collectCrystals(Minecraft mc, Vec3 playerPos) {
         List<Double> data = new ArrayList<>();
         for (Entity e : mc.level.entitiesForRendering()) {
@@ -646,7 +635,7 @@ public class AutoCrystal extends Module {
         return arr;
     }
 
-    // ── Переключение на End Crystal в руке ───────────────────────────────────
+    
     private boolean switchToCrystal(Minecraft mc) {
         ItemStack mainHand = mc.player.getMainHandItem();
         if (mainHand.getItem() == Items.END_CRYSTAL) return true;
@@ -654,7 +643,7 @@ public class AutoCrystal extends Module {
         String mode = swapMode.getValue();
         if (mode.equals("None")) return false;
 
-        // swapNoGap check
+        
         if (swapNoGap.getValue() && mc.player.isUsingItem()) {
             ItemStack usingItem = mc.player.getUseItem();
             if (usingItem.getItem() == Items.GOLDEN_APPLE || usingItem.getItem() == Items.ENCHANTED_GOLDEN_APPLE) {
@@ -662,7 +651,7 @@ public class AutoCrystal extends Module {
             }
         }
 
-        // Ищем в хотбаре
+        
         for (int slot = 0; slot < 9; slot++) {
             if (mc.player.getInventory().getItem(slot).getItem() == Items.END_CRYSTAL) {
                 if (mode.equals("Normal")) {
@@ -677,11 +666,11 @@ public class AutoCrystal extends Module {
             }
         }
 
-        // Ищем во всем инвентаре, если включено swapInventory
+        
         if (swapInventory.getValue()) {
             for (int slot = 9; slot < 36; slot++) {
                 if (mc.player.getInventory().getItem(slot).getItem() == Items.END_CRYSTAL) {
-                    // Свапаем с 0-м слотом хотбара (InventoryMenu slot index = 36)
+                    
                     int targetHotbarSlot = 0;
                     mc.gameMode.handleInventoryMouseClick(
                         mc.player.containerMenu.containerId,
@@ -707,7 +696,7 @@ public class AutoCrystal extends Module {
         return false;
     }
 
-    // ── Поворот к цели ────────────────────────────────────────────────────────
+    
     private void rotateTo(Minecraft mc, Vec3 target) {
         String mode = rotate.getValue();
         if (mode.equals("None")) return;
@@ -799,27 +788,27 @@ public class AutoCrystal extends Module {
         return diffYaw <= 10.0f && diffPitch <= 10.0f;
     }
 
-    // ── Быстрая оценка урона (для выбора цели) ────────────────────────────────
+    
     private double calcQuickDamage(Minecraft mc, LivingEntity target) {
         Vec3 playerPos = mc.player.position();
         Vec3 targetPos = target.position();
-        // Оцениваем позицию прямо над ногами цели
+        
         Vec3 crystalPos = targetPos.add(0, 1, 0);
         double dist = playerPos.distanceTo(crystalPos);
         if (dist > 12.0) return 0;
-        // Упрощённая оценка без блоков
+        
         double impact = Math.max(0, (1.0 - dist / 12.0));
         return (impact * impact + impact) / 2.0 * 84.0 + 1.0;
     }
 
-    // ── Java Fallback (когда native не загружен) ──────────────────────────────
+    
     private double[] javaFallbackTick(
             Vec3 playerPos, double pHp, double pAbs,
             Vec3 targetPos, double tHp, double tAbs,
             double[] blockData, double[] crystalData) {
         double[] result = new double[12];
 
-        // Простейшая реализация — ищем ближайший кристалл для подрыва
+        
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return result;
 
@@ -832,7 +821,7 @@ public class AutoCrystal extends Module {
             double dist = mc.player.distanceTo(e);
             if (dist > breakRange.getValue()) continue;
 
-            // Упрощённый расчёт урона
+            
             Vec3 cp = e.position();
             double tdist = cp.distanceTo(targetPos);
             double sdist = cp.distanceTo(playerPos);
@@ -899,7 +888,7 @@ public class AutoCrystal extends Module {
             }
         }
 
-        // Позиция 14: количество тотемов
+        
         int totems = 0;
         if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;
         if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;

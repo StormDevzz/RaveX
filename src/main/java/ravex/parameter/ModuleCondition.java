@@ -19,7 +19,7 @@ public interface ModuleCondition {
         return () -> !this.canEnable();
     }
 
-    // Static helper conditions to easily construct custom constraints!
+    
     static ModuleCondition requireModule(String moduleName) {
         return () -> {
             Module m = ModuleManager.INSTANCE.getByName(moduleName);

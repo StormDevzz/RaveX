@@ -21,7 +21,7 @@
 namespace ravex {
 namespace github {
 
-// ─── File helpers ─────────────────────────────────────────────────────────────
+
 
 static std::string readFile(const std::string& path) {
     std::ifstream ifs(path, std::ios::binary | std::ios::ate);
@@ -165,7 +165,7 @@ static std::string computeSha256(const std::string& data) {
     return std::string(hex, 64);
 }
 
-// ─── ReleaseManagerImpl ──────────────────────────────────────────────────────
+
 
 class ReleaseManagerImpl {
 public:
@@ -182,7 +182,7 @@ public:
     ReleaseManagerImpl(const GithubConfig& cfg)
         : config(cfg), checker(cfg.owner, cfg.repo, cfg.token) {}
 
-    // ─── check ─────────────────────────────────────────────────────────────
+    
     UpdateInfo check() {
         UpdateInfo info;
         downloading = false;
@@ -214,7 +214,7 @@ public:
         return info;
     }
 
-    // ─── download ──────────────────────────────────────────────────────────
+    
     DownloadResult download(const UpdateInfo& update) {
         DownloadResult result;
         downloading = true;
@@ -228,7 +228,7 @@ public:
             return result;
         }
 
-        // Pick the first matching asset
+        
         const GithubAsset& asset = update.matchingAssets[0];
 
         std::string dlDir = config.downloadDir;
@@ -260,7 +260,7 @@ public:
         result.success = true;
         result.bytesDownloaded = result.totalBytes;
 
-        // Checksum verification
+        
         if (config.verifyChecksums) {
             std::string fileData = readFile(result.filePath);
             result.checksumSha256 = computeSha256(fileData);
@@ -271,7 +271,7 @@ public:
         return result;
     }
 
-    // ─── install ───────────────────────────────────────────────────────────
+    
     bool install(const DownloadResult& dl) {
         installing = true;
         if (!dl.success) {
@@ -283,7 +283,7 @@ public:
 
         std::string appDir = config.installDir.empty() ? getExecutableDir() : config.installDir;
 
-        // Create backup
+        
         std::string fileName = dl.filePath.substr(dl.filePath.find_last_of("/\\") + 1);
         std::string targetFile = appDir + "/" + fileName;
         std::string backupFile = appDir + "/" + fileName + ".bak";
@@ -296,7 +296,7 @@ public:
         }
 
         if (!renameFile(dl.filePath, targetFile)) {
-            // Try copy instead (cross-drive)
+            
             std::string data = readFile(dl.filePath);
             if (data.empty() || !writeFile(targetFile, data)) {
                 errMsg = "Install failed: could not copy file to " + targetFile;
@@ -312,7 +312,7 @@ public:
         return true;
     }
 
-    // ─── checkAndUpdate ────────────────────────────────────────────────────
+    
     UpdateInfo checkAndUpdate() {
         UpdateInfo info = check();
         if (info.available && !info.error) {
@@ -330,7 +330,7 @@ public:
         return info;
     }
 
-    // ─── rollback ──────────────────────────────────────────────────────────
+    
     bool rollback() {
         std::string appDir = config.installDir.empty() ? getExecutableDir() : config.installDir;
 #ifdef _WIN32
@@ -390,7 +390,7 @@ public:
 
     void setConfig(const GithubConfig& cfg) {
         config = cfg;
-        // Re-init checker with new creds
+        
         checker = ReleaseChecker(cfg.owner, cfg.repo, cfg.token);
     }
 
@@ -399,7 +399,7 @@ public:
     std::string lastError() const { return errMsg; }
 };
 
-// ─── ReleaseManager public API ───────────────────────────────────────────────
+
 
 ReleaseManager::ReleaseManager(const GithubConfig& config)
     : m_impl(std::make_unique<ReleaseManagerImpl>(config)) {}
@@ -424,5 +424,5 @@ void ReleaseManager::setConfig(const GithubConfig& cfg)       { m_impl->setConfi
 const GithubConfig& ReleaseManager::config() const            { return m_impl->getConfig(); }
 std::string ReleaseManager::lastError() const                 { return m_impl->lastError(); }
 
-} // namespace github
-} // namespace ravex
+} 
+} 

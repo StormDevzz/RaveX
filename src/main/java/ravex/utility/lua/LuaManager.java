@@ -36,7 +36,7 @@ public class LuaManager {
     private final Map<String, LuaTimer> luaTimers = new ConcurrentHashMap<>();
     private final AtomicInteger tickCounter = new AtomicInteger(0);
 
-    // Ключ для XOR расшифровки скриптов — тот же, что используется при сборке
+    
     private static final String SCRIPT_KEY = "RaveX_ScriptKey_2025";
     private static boolean nativeAvailable = false;
 
@@ -551,11 +551,7 @@ public class LuaManager {
         }
     }
 
-    /**
-     * Загружает зашифрованные скрипты из ресурсов JAR (ravex/scripts/*.dat).
-     * Расшифровка происходит через C++ JNI — исключительно в оперативной памяти.
-     * На диск расшифрованный код НИКОГДА не записывается.
-     */
+    
     public void loadEncryptedScripts() {
         String[] scriptNames = {
             "init",
@@ -621,7 +617,7 @@ public class LuaManager {
         }
     }
 
-    // ── Native JNI binding ────────────────────────────────────────────────────
+    
     private static native String nativeDecryptScript(byte[] encryptedData, String key);
 
     private static class LuaTimer {

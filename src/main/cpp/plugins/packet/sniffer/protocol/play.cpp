@@ -27,5 +27,5 @@ void parsePlayPacket(const Packet& raw) {
     log::debug("play packet 0x" + std::to_string(raw.id) + " " + name);
 }
 
-} // namespace proto
-} // namespace packet
+} 
+} 

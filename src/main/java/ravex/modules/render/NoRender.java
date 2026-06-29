@@ -46,7 +46,7 @@ public class NoRender extends Module {
         addParameter(inventoryBackground);
     }
 
-    // ── JNI methods ────────────────────────────────────────────────────────────
+    
     public static native boolean nativeShouldCull(double x, double y, double z, double camX, double camY, double camZ, double maxDist);
     public static native int nativeOptimizeBudget(int activeCount, int currentFps, int minFps);
     public static native float[] nativeOptimizeFog(float envStart, float envEnd, float rdStart, float rdEnd, float skyEnd, float cloudEnd);
@@ -59,7 +59,7 @@ public class NoRender extends Module {
                 nativeAvailable = false;
             }
         }
-        // Java fallback culling
+        
         double dx = x - camX;
         double dy = y - camY;
         double dz = z - camZ;
@@ -74,7 +74,7 @@ public class NoRender extends Module {
                 nativeAvailable = false;
             }
         }
-        // Java fallback optimization
+        
         if (minFps <= 0) return activeCount;
         if (currentFps < minFps) {
             double ratio = (double) currentFps / (double) minFps;
@@ -92,7 +92,7 @@ public class NoRender extends Module {
                 nativeAvailable = false;
             }
         }
-        // Java fallback: remove fog by setting distances to massive values
+        
         return new float[] { 999999.0f, 999999.0f, 999999.0f, 999999.0f, 999999.0f, 999999.0f };
     }
 }

@@ -64,7 +64,7 @@ public class NewChunkDetector extends Module {
             if (isNewChunk) {
                 newChunks.add(pos);
                 if (notify.getValue()) {
-                    // Перенаправляем отправку сообщения в главный поток игры, чтобы не было краша
+                    
                     mc.execute(() -> {
                         if (mc.player != null) {
                             mc.player.displayClientMessage(

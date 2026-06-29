@@ -137,7 +137,7 @@ public class PortalBuild extends Module {
             }
         }
 
-        // find ground: scan from py+3 down to py-10
+        
         int startY = (int)Math.round(py) + 3;
         BlockPos ground = null;
         for (int y = startY; y >= startY - 16; y--) {

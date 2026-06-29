@@ -8,11 +8,7 @@ import org.joml.Matrix3x2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-/**
- * NativeAnimateVertexConsumer
- * Intercepts vertex output streams for players to apply JNI custom pulsing color gradients and silhouette glowing.
- * Wave displacement is strictly forced to 0.0f to stabilize player rendering and prevent dimensional warping or shaking.
- */
+
 public class NativeAnimateVertexConsumer implements VertexConsumer {
     private final VertexConsumer delegate;
     private final int fillColor;
@@ -29,7 +25,7 @@ public class NativeAnimateVertexConsumer implements VertexConsumer {
 
     @Override
     public VertexConsumer addVertex(float x, float y, float z) {
-        // Force wave displacement to 0.0f to keep high-fidelity silhouette rendering perfectly stable
+        
         delegate.addVertex(x, y, z);
         return this;
     }

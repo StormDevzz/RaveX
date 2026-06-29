@@ -9,10 +9,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 
-/**
- * AutoReconnect - adds Reconnect button to disconnect screen.
- * Automatically reconnects when kicked if enabled.
- */
+
 public class AutoReconnect extends Module {
     public static final AutoReconnect INSTANCE = new AutoReconnect();
 
@@ -27,7 +24,7 @@ public class AutoReconnect extends Module {
         addParameter(delay);
     }
 
-    /** Called when connecting to a server - save the server info */
+    
     public static void recordServer(ServerData server) {
         if (server != null) lastServer = server;
     }
@@ -40,7 +37,7 @@ public class AutoReconnect extends Module {
         return lastServer != null;
     }
 
-    /** Trigger auto-reconnect with configured delay */
+    
     public void scheduleAutoReconnect() {
         if (!getEnabled() || !hasLastServer()) return;
         pendingAutoReconnect = true;
@@ -54,12 +51,12 @@ public class AutoReconnect extends Module {
         pendingAutoReconnect = false;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null) return; // Already in-game
+        if (mc.level != null) return; 
 
         reconnect(mc);
     }
 
-    /** Reconnect to the last server immediately */
+    
     public static void reconnect(Minecraft mc) {
         if (!hasLastServer()) return;
         ServerAddress addr = ServerAddress.parseString(lastServer.ip);

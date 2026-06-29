@@ -124,4 +124,4 @@ bool isFormatSupported(ImageFormat fmt) {
     return findHandler(fmt) != nullptr;
 }
 
-} // namespace txtr
+} 

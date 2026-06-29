@@ -24,7 +24,7 @@ enum class EventKind {
 
 ProgressMsg *alloc_progress_msg(LauncherState *state, const char *text, double fraction);
 
-} // namespace event
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

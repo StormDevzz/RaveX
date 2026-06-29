@@ -14,7 +14,7 @@ struct env_info_t {
 
 env_info_t get_env_info();
 
-} // namespace sys
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

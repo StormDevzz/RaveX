@@ -49,12 +49,12 @@ bool Proxy::acceptClient() {
     if (clientFd_ < 0) return false;
     log::info("proxy: client connected");
 
-    // connect to target
+    
     struct sockaddr_in target;
     std::memset(&target, 0, sizeof(target));
     target.sin_family = AF_INET;
     target.sin_port = htons(target_.port);
-    target.sin_addr.s_addr = htonl(0x7F000001); // localhost stub
+    target.sin_addr.s_addr = htonl(0x7F000001); 
 
     int remoteFd = socket(AF_INET, SOCK_STREAM, 0);
     if (remoteFd < 0 || connect(remoteFd, (struct sockaddr*)&target, sizeof(target)) < 0) {
@@ -91,4 +91,4 @@ bool Proxy::relayPacket(int from, int to, bool outgoing) {
     return true;
 }
 
-} // namespace packet
+} 

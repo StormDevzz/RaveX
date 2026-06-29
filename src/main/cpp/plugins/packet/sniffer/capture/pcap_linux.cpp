@@ -46,7 +46,7 @@ private:
     pcap_t* handle_ = nullptr;
 };
 
-} // namespace packet
+} 
 #else
 namespace packet {
 class PcapBackend : public CaptureBackend {
@@ -56,5 +56,5 @@ public:
     void shutdown() override {}
     const char* name() const override { return "pcap (unavailable)"; }
 };
-} // namespace packet
+} 
 #endif

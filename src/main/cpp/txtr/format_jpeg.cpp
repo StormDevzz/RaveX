@@ -150,4 +150,4 @@ ErrorCode saveJpeg(const TextureData&, std::vector<uint8_t>&, int) {
 }
 #endif
 
-} // namespace txtr
+} 

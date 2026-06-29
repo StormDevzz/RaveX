@@ -14,7 +14,7 @@ namespace launcher {
 namespace simple {
 namespace window {
 
-// ── helpers ─────────────────────────────────────────────────
+
 static std::string get_local_version(const std::string& ravexDir) {
     std::string path = ravexDir + "/version.txt";
     std::ifstream file(path);
@@ -32,13 +32,13 @@ static void on_console_clicked(GtkWidget*, gpointer data) {
     open_console(s);
 }
 
-// ── instance card DnD target ────────────────────────────────
+
 static const char* INSTANCE_TARGET = "ravex-instance-idx";
 
-// ── rebuild the flowbox after any change ─────────────────────
+
 static void rebuild_instances(LauncherState* state);
 
-// ── card creation ────────────────────────────────────────────
+
 static GtkWidget* create_instance_card(LauncherState* state, int idx) {
     auto& inst = state->instances[idx];
 
@@ -50,7 +50,7 @@ static GtkWidget* create_instance_card(LauncherState* state, int idx) {
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 8);
     gtk_container_add(GTK_CONTAINER(card), vbox);
 
-    // icon
+    
     GtkWidget* icon_img = nullptr;
     if (!inst.icon_path.empty()) {
         icon_img = gtk_image_new_from_file(inst.icon_path.c_str());
@@ -61,25 +61,25 @@ static GtkWidget* create_instance_card(LauncherState* state, int idx) {
     gtk_widget_set_size_request(icon_img, 48, 48);
     gtk_box_pack_start(GTK_BOX(vbox), icon_img, FALSE, FALSE, 0);
 
-    // name
+    
     GtkWidget* lbl_name = gtk_label_new(inst.name.c_str());
     gtk_label_set_ellipsize(GTK_LABEL(lbl_name), PANGO_ELLIPSIZE_END);
     gtk_box_pack_start(GTK_BOX(vbox), lbl_name, FALSE, FALSE, 0);
 
-    // version
+    
     std::string ver_text = "MC " + inst.mc_version;
     GtkWidget* lbl_ver = gtk_label_new(ver_text.c_str());
     gtk_style_context_add_class(gtk_widget_get_style_context(lbl_ver), "inst-version");
     gtk_box_pack_start(GTK_BOX(vbox), lbl_ver, FALSE, FALSE, 0);
 
-    // buttons row
+    
     GtkWidget* hbox_btns = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     gtk_box_set_homogeneous(GTK_BOX(hbox_btns), TRUE);
 
-    // store idx in card data
+    
     g_object_set_data(G_OBJECT(card), "inst-idx", GINT_TO_POINTER(idx));
 
-    // DnD source
+    
     gtk_drag_source_set(card, GDK_BUTTON1_MASK, nullptr, 0, GDK_ACTION_MOVE);
     gtk_drag_source_add_text_targets(card);
     g_signal_connect(card, "drag-data-get", G_CALLBACK(+[](GtkWidget* w, GdkDragContext*, GtkSelectionData* sel, guint, guint, gpointer) {
@@ -94,7 +94,7 @@ static GtkWidget* create_instance_card(LauncherState* state, int idx) {
         gtk_widget_set_opacity(w, 1.0);
     }), nullptr);
 
-    // Edit
+    
     GtkWidget* btn_edit = gtk_button_new_with_label("Edit");
     gtk_widget_set_name(btn_edit, "btn-card-edit");
     g_object_set_data(G_OBJECT(btn_edit), "inst-idx", GINT_TO_POINTER(idx));
@@ -120,7 +120,7 @@ static GtkWidget* create_instance_card(LauncherState* state, int idx) {
     }), state);
     gtk_box_pack_start(GTK_BOX(hbox_btns), btn_edit, TRUE, TRUE, 0);
 
-    // Delete
+    
     GtkWidget* btn_del = gtk_button_new_with_label("X");
     gtk_widget_set_name(btn_del, "btn-card-del");
     g_object_set_data(G_OBJECT(btn_del), "inst-idx", GINT_TO_POINTER(idx));
@@ -143,10 +143,10 @@ static GtkWidget* create_instance_card(LauncherState* state, int idx) {
     return card;
 }
 
-// ── rebuild instance list ────────────────────────────────────
+
 static void rebuild_instances(LauncherState* state) {
     if (!state->instance_list) return;
-    // remove all children
+    
     GList* children = gtk_container_get_children(GTK_CONTAINER(state->instance_list));
     for (GList* iter = children; iter != nullptr; iter = iter->next) {
         gtk_container_remove(GTK_CONTAINER(state->instance_list), GTK_WIDGET(iter->data));
@@ -159,12 +159,12 @@ static void rebuild_instances(LauncherState* state) {
     gtk_widget_show_all(state->instance_list);
 }
 
-// ── build_instance_page: the "Инстанции" tab ─────────────────
+
 static GtkWidget* build_instance_page(LauncherState* state) {
     GtkWidget* vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 12);
 
-    // scrolled flowbox
+    
     GtkWidget* scroll = gtk_scrolled_window_new(nullptr, nullptr);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
         GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -181,7 +181,7 @@ static GtkWidget* build_instance_page(LauncherState* state) {
 
     state->instance_list = flow;
 
-    // DnD drop target on flowbox
+    
     gtk_drag_dest_set(flow, GTK_DEST_DEFAULT_ALL, nullptr, 0, GDK_ACTION_MOVE);
     gtk_drag_dest_add_text_targets(flow);
 
@@ -193,7 +193,7 @@ static GtkWidget* build_instance_page(LauncherState* state) {
         int srcIdx = std::atoi(text);
         if (srcIdx < 0 || srcIdx >= (int)st->instances.size()) return;
 
-        // Find target index from drop position (GTK3 compat)
+        
         int dstIdx = -1;
         GList* flowChildren = gtk_container_get_children(GTK_CONTAINER(flowbox));
         for (GList* iter = flowChildren; iter != nullptr; iter = iter->next) {
@@ -210,7 +210,7 @@ static GtkWidget* build_instance_page(LauncherState* state) {
         g_list_free(flowChildren);
 
         if (dstIdx < 0) {
-            // drop at end
+            
             dstIdx = (int)st->instances.size() - 1;
         }
 
@@ -231,13 +231,13 @@ static GtkWidget* build_instance_page(LauncherState* state) {
         }
     }), state);
 
-    // populate cards
+    
     for (size_t i = 0; i < state->instances.size(); i++) {
         GtkWidget* card = create_instance_card(state, i);
         gtk_container_add(GTK_CONTAINER(flow), card);
     }
 
-    // bottom buttons
+    
     GtkWidget* hbox_bottom = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     gtk_widget_set_halign(hbox_bottom, GTK_ALIGN_CENTER);
 
@@ -264,12 +264,12 @@ static GtkWidget* build_instance_page(LauncherState* state) {
     return vbox;
 }
 
-// ── build_launcher_page: the "Лаунчер" tab ──────────────────
+
 static GtkWidget* build_launcher_page(LauncherState* state) {
     GtkWidget* vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 16);
 
-    // header
+    
     GtkWidget* lbl_header = gtk_label_new("KickX Launcher");
     gtk_style_context_add_class(gtk_widget_get_style_context(lbl_header), "header-label");
     gtk_box_pack_start(GTK_BOX(vbox), lbl_header, FALSE, FALSE, 0);
@@ -280,19 +280,19 @@ static GtkWidget* build_launcher_page(LauncherState* state) {
 
     gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 5);
 
-    // system info
+    
     std::string kernel = checks::getKernelVersion();
     GtkWidget* lbl_system = gtk_label_new(("system: linux " + kernel).c_str());
     gtk_widget_set_halign(lbl_system, GTK_ALIGN_START);
     gtk_box_pack_start(GTK_BOX(vbox), lbl_system, FALSE, FALSE, 2);
 
-    // version
+    
     std::string ver_text = "version: " + get_local_version(state->ravex_dir);
     state->version_label = gtk_label_new(ver_text.c_str());
     gtk_widget_set_halign(state->version_label, GTK_ALIGN_START);
     gtk_box_pack_start(GTK_BOX(vbox), state->version_label, FALSE, FALSE, 2);
 
-    // ---- instance selector ----
+    
     GtkWidget* hbox_inst = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     gtk_box_pack_start(GTK_BOX(vbox), hbox_inst, FALSE, FALSE, 5);
 
@@ -313,7 +313,7 @@ static GtkWidget* build_launcher_page(LauncherState* state) {
         }
     }), state);
 
-    // ---- accounts ----
+    
     GtkWidget* hbox_acc = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     gtk_box_pack_start(GTK_BOX(vbox), hbox_acc, FALSE, FALSE, 5);
 
@@ -335,7 +335,7 @@ static GtkWidget* build_launcher_page(LauncherState* state) {
     GtkWidget* btn_add_ms = create_styled_button("+ Microsoft");
     gtk_box_pack_start(GTK_BOX(hbox_acc), btn_add_ms, FALSE, FALSE, 0);
 
-    // instance info frame
+    
     {
         GtkWidget* frame = gtk_frame_new("instance");
         gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 5);
@@ -353,7 +353,7 @@ static GtkWidget* build_launcher_page(LauncherState* state) {
         gtk_box_pack_end(GTK_BOX(hbox), btn_console, FALSE, FALSE, 0);
         g_signal_connect(btn_console, "clicked", G_CALLBACK(on_console_clicked), state);
 
-        // update label when instance changes
+        
         g_signal_connect(state->combo_instances, "changed", G_CALLBACK(+[](GtkComboBox* box, gpointer user_data) {
             LauncherState* st = static_cast<LauncherState*>(user_data);
             GtkWidget* container = static_cast<GtkWidget*>(g_object_get_data(G_OBJECT(box), "frame-container"));
@@ -371,19 +371,19 @@ static GtkWidget* build_launcher_page(LauncherState* state) {
         g_object_set_data(G_OBJECT(state->combo_instances), "frame-container", hbox);
     }
 
-    // status
+    
     state->status_label = gtk_label_new("status: ready");
     gtk_widget_set_halign(state->status_label, GTK_ALIGN_START);
     gtk_box_pack_start(GTK_BOX(vbox), state->status_label, FALSE, FALSE, 2);
 
-    // progress
+    
     state->progress_bar = gtk_progress_bar_new();
     gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progress_bar), FALSE);
     gtk_box_pack_start(GTK_BOX(vbox), state->progress_bar, FALSE, FALSE, 8);
 
     gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 5);
 
-    // buttons
+    
     GtkWidget* hbox_btns = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
     gtk_widget_set_halign(hbox_btns, GTK_ALIGN_CENTER);
     gtk_box_pack_start(GTK_BOX(vbox), hbox_btns, FALSE, FALSE, 8);
@@ -403,22 +403,22 @@ static GtkWidget* build_launcher_page(LauncherState* state) {
     return vbox;
 }
 
-// ── build_layout: entry point ────────────────────────────────
+
 void build_layout(LauncherState* state) {
-    // notebook with two tabs
+    
     state->notebook = gtk_notebook_new();
     gtk_container_add(GTK_CONTAINER(state->window), state->notebook);
 
-    // Tab 1: Launcher
+    
     GtkWidget* page1 = build_launcher_page(state);
     gtk_notebook_append_page(GTK_NOTEBOOK(state->notebook), page1, gtk_label_new("Launcher"));
 
-    // Tab 2: Instances
+    
     GtkWidget* page2 = build_instance_page(state);
     gtk_notebook_append_page(GTK_NOTEBOOK(state->notebook), page2, gtk_label_new("Instances"));
 }
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

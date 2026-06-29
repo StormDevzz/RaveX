@@ -37,7 +37,7 @@ public class AimAssist extends Module {
             return;
         }
 
-        // Search for nearest target within FOV
+        
         LivingEntity target = null;
         double bestDist = Double.MAX_VALUE;
 
@@ -45,7 +45,7 @@ public class AimAssist extends Module {
             if (!(entity instanceof LivingEntity p)) continue;
             if (p == mc.player || !p.isAlive()) continue;
 
-            // Target filtering
+            
             String mode = targetMode.getValue();
             if (mode.equals("Players") && !(p instanceof Player)) continue;
             if (mode.equals("Monsters") && !(p instanceof Monster)) continue;
@@ -58,7 +58,7 @@ public class AimAssist extends Module {
         }
 
         if (target != null) {
-            // Smoothly assist crosshair targeting
+            
             double dx = target.getX() - mc.player.getX();
             double dy = (target.getY() + target.getEyeHeight(target.getPose())) - (mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()));
             double dz = target.getZ() - mc.player.getZ();

@@ -56,7 +56,7 @@ public class ViewLock extends Module {
                 }
             }
 
-            // Execute the script specifically to load the callback function
+            
             try {
                 org.luaj.vm2.LuaValue chunk = ravex.utility.lua.LuaManager.INSTANCE.getGlobals().loadfile(scriptFile.getAbsolutePath());
                 chunk.call();

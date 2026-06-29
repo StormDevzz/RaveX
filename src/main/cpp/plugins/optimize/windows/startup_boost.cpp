@@ -179,6 +179,6 @@ void StartupBoost::restoreAll() {
     std::cout << "[RaveX/Boost] Startup optimizations restored" << std::endl;
 }
 
-} // namespace optimize
-} // namespace plugins
-} // namespace ravex
+} 
+} 
+} 

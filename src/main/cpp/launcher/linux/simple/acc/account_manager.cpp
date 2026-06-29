@@ -26,7 +26,7 @@ void save_accounts(LauncherState *state) {
 void add_offline_account(LauncherState *state, const std::string& username) {
     if (username.empty()) return;
     
-    // проверяем наличие аккаунта
+    
     for (size_t i = 0; i < state->accounts.size(); ++i) {
         if (state->accounts[i].username == username) {
             state->active_account_index = i;
@@ -58,7 +58,7 @@ void remove_account(LauncherState *state, int index) {
     save_accounts(state);
 }
 
-} // namespace acc
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

@@ -1,12 +1,12 @@
-// ══════════════════════════════════════════════════════════════════════════════
-//  lua/main/LuaBridge.cpp
-//
-//  RU: Реализация LuaBridge — безопасной обёртки над Lua C API.
-//      Все методы проверяют типы перед конвертацией.
-//
-//  EN: LuaBridge implementation — safe wrapper over Lua C API.
-//      All methods check types before conversion.
-// ══════════════════════════════════════════════════════════════════════════════
+
+
+
+
+
+
+
+
+
 
 #include "LuaBridge.h"
 #include <cstdio>
@@ -52,10 +52,10 @@ bool LuaBridge::popBoolean(lua_State* L, int index) {
 
 bool LuaBridge::getTableField(lua_State* L, int tableIndex,
                                const std::string& key) {
-    // RU: Если индекс отрицательный, корректируем его (lua_getfield
-    //     работает с абсолютными индексами для таблиц).
-    // EN: If index is negative, adjust it (lua_getfield works with
-    //     absolute indices for tables).
+    
+    
+    
+    
     if (tableIndex < 0) {
         tableIndex = lua_gettop(L) + tableIndex + 1;
     }
@@ -94,8 +94,8 @@ bool LuaBridge::callFunction(lua_State* L, const std::string& name,
         lua_pop(L, args + 1);
         return false;
     }
-    // RU: Перемещаем функцию под аргументы (аргументы уже на стеке).
-    // EN: Move the function below the arguments (arguments are already on stack).
+    
+    
     if (args > 0) {
         lua_insert(L, -args - 1);
     }
@@ -135,5 +135,5 @@ std::string LuaBridge::checkError(lua_State* L, int result) {
     return {};
 }
 
-} // namespace lua
-} // namespace ravex
+} 
+} 

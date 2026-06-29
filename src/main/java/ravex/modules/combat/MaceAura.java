@@ -28,7 +28,7 @@ public class MaceAura extends Module {
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
 
-        // Trigger only when holding a Mace and pressing attack button
+        
         if (p.getMainHandItem().is(Items.MACE) && mc.options.keyAttack.isDown()) {
             if (mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof LivingEntity target) {
                 if (!target.isAlive() || target == p) return;
@@ -38,28 +38,28 @@ public class MaceAura extends Module {
                 double y = p.getY();
                 double z = p.getZ();
 
-                // Genuine server-side fall distance spoofing using loops of micro-movements.
-                // This builds up massive fallDistance on the server without triggering anti-cheat speed/flight limits.
+                
+                
                 double step = 0.25;
                 int loops = (int) Math.ceil(h / step);
 
                 for (int i = 0; i < loops; i++) {
-                    // 1. Send micro-packet upwards
+                    
                     p.connection.send(new ServerboundMovePlayerPacket.Pos(x, y + 0.001, z, false, p.horizontalCollision));
-                    // 2. Send micro-packet downwards to accumulate fallDistance
+                    
                     p.connection.send(new ServerboundMovePlayerPacket.Pos(x, y - step, z, false, p.horizontalCollision));
-                    // 3. Return cleanly to the original coordinate
+                    
                     p.connection.send(new ServerboundMovePlayerPacket.Pos(x, y, z, false, p.horizontalCollision));
                 }
 
-                // Deliver critical attack packet at peak accumulated spoofed fallDistance
+                
                 p.connection.send(ServerboundInteractPacket.createAttackPacket(target, p.isShiftKeyDown()));
                 p.swing(InteractionHand.MAIN_HAND);
 
-                // Finalize on-ground packet to cleanly resolve state and apply critical smash damage
+                
                 p.connection.send(new ServerboundMovePlayerPacket.Pos(x, y, z, true, p.horizontalCollision));
 
-                // Visual smash client effect
+                
                 p.fallDistance = (float) h;
             }
         }

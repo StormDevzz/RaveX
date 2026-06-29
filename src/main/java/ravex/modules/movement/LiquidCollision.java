@@ -4,9 +4,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 
-/**
- * LiquidCollision - allows bypassing fluid/liquid physics and collisions.
- */
+
 public class LiquidCollision extends Module {
     public static final LiquidCollision INSTANCE = new LiquidCollision();
 

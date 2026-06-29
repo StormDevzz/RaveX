@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <unordered_set>
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 
 struct TntBlockPosHash {
     size_t operator()(const TntBlockPos& p) const {
@@ -22,12 +22,12 @@ static int getFace(const TntBlockPos& from, const TntBlockPos& to) {
     int dx = to.x - from.x;
     int dy = to.y - from.y;
     int dz = to.z - from.z;
-    if (dy ==  1) return 1; // UP
-    if (dy == -1) return 0; // DOWN
-    if (dz == -1) return 2; // NORTH
-    if (dz ==  1) return 3; // SOUTH
-    if (dx == -1) return 4; // WEST
-    if (dx ==  1) return 5; // EAST
+    if (dy ==  1) return 1; 
+    if (dy == -1) return 0; 
+    if (dz == -1) return 2; 
+    if (dz ==  1) return 3; 
+    if (dx == -1) return 4; 
+    if (dx ==  1) return 5; 
     return 1;
 }
 
@@ -58,7 +58,7 @@ static TntPlacement findPlacementFor(
         }
     }
 
-    // Try support block below
+    
     TntBlockPos below = {target.x, target.y - 1, target.z};
     if (!solids.count(below) && distSqr(px, py, pz, below) <= rSqr) {
         for (const auto& off : OFFSETS) {
@@ -72,24 +72,24 @@ static TntPlacement findPlacementFor(
     return {false, {0,0,0}, 0, {0,0,0}};
 }
 
-// Try to place a chain: support block first, then the actual target
+
 static TntPlacement findPlacementChain(
     const TntBlockPos& target,
     double px, double py, double pz,
     BlockSet& extendedSolids,
     double range
 ) {
-    // Direct placement attempt
+    
     TntPlacement direct = findPlacementFor(target, px, py, pz, extendedSolids, range);
     if (direct.valid) return direct;
 
-    // Try placing a support block below target first, then retry target
+    
     TntBlockPos below = {target.x, target.y - 1, target.z};
     if (!extendedSolids.count(below) && distSqr(px, py, pz, below) <= range * range) {
         TntPlacement support = findPlacementFor(below, px, py, pz, extendedSolids, range);
         if (support.valid) {
             extendedSolids.insert(below);
-            // now retry original target
+            
             TntPlacement retry = findPlacementFor(target, px, py, pz, extendedSolids, range);
             if (retry.valid) return retry;
         }
@@ -98,20 +98,20 @@ static TntPlacement findPlacementChain(
     return {false, {0,0,0}, 0, {0,0,0}};
 }
 
-// ─── Gap direction selection ─────────────────────────────────────────────────
+
 static TntBlockPos selectGap(
     const TntBlockPos& feet,
     double playerX, double playerZ,
     int gapDir
 ) {
-    // Gap is at head level (feet.y + 1) on the side closest to the player
+    
     int headY = feet.y + 1;
-    if (gapDir == 1) return {feet.x, headY, feet.z - 1}; // north
-    if (gapDir == 2) return {feet.x, headY, feet.z + 1}; // south
-    if (gapDir == 3) return {feet.x + 1, headY, feet.z}; // east
-    if (gapDir == 4) return {feet.x - 1, headY, feet.z}; // west
+    if (gapDir == 1) return {feet.x, headY, feet.z - 1}; 
+    if (gapDir == 2) return {feet.x, headY, feet.z + 1}; 
+    if (gapDir == 3) return {feet.x + 1, headY, feet.z}; 
+    if (gapDir == 4) return {feet.x - 1, headY, feet.z}; 
 
-    // Auto: pick the side closest to player
+    
     double dx = playerX - (feet.x + 0.5);
     double dz = playerZ - (feet.z + 0.5);
 
@@ -124,12 +124,12 @@ static TntBlockPos selectGap(
     }
 }
 
-// ─── Build cage candidate list ───────────────────────────────────────────────
+
 static std::vector<TntBlockPos> buildCageCandidates(
     const TntBlockPos& feet, bool roof, bool bottom, const TntBlockPos& gap
 ) {
     std::vector<TntBlockPos> cands;
-    // Feet level (4 sides)
+    
     TntBlockPos feetSides[4] = {
         {feet.x, feet.y, feet.z - 1},
         {feet.x, feet.y, feet.z + 1},
@@ -138,7 +138,7 @@ static std::vector<TntBlockPos> buildCageCandidates(
     };
     for (auto& c : feetSides) cands.push_back(c);
 
-    // Head level (4 sides, skip gap)
+    
     TntBlockPos headSides[4] = {
         {feet.x, feet.y + 1, feet.z - 1},
         {feet.x, feet.y + 1, feet.z + 1},
@@ -149,12 +149,12 @@ static std::vector<TntBlockPos> buildCageCandidates(
         if (c != gap) cands.push_back(c);
     }
 
-    // Roof
+    
     if (roof) {
         cands.push_back({feet.x, feet.y + 2, feet.z});
     }
 
-    // Bottom
+    
     if (bottom) {
         cands.push_back({feet.x, feet.y - 1, feet.z});
     }
@@ -162,7 +162,7 @@ static std::vector<TntBlockPos> buildCageCandidates(
     return cands;
 }
 
-// ─── Public API ──────────────────────────────────────────────────────────────
+
 
 TntAuraResult calculateTntAuraCage(
     double playerX, double playerY, double playerZ,
@@ -187,7 +187,7 @@ TntAuraResult calculateTntAuraCage(
     result.filledCageSlots = 0;
     result.cageComplete = false;
 
-    // Build ordered placement list using chain placement
+    
     BlockSet extendedSolids = solids;
     for (const auto& c : candidates) {
         if (solids.count(c)) {
@@ -203,7 +203,7 @@ TntAuraResult calculateTntAuraCage(
 
     result.cageComplete = (result.filledCageSlots + (int)result.cagePlacements.size() == result.totalCageSlots);
 
-    // TNT placement: place TNT at the gap position (through the wall)
+    
     TntBlockPos tntTarget = gap;
     result.tntPos = tntTarget;
     result.tntPlacement = findPlacementChain(tntTarget, playerX, playerY, playerZ, extendedSolids, config.range);

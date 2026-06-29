@@ -177,7 +177,7 @@ public class ModuleManager {
     private final List<HudModule> hudModules = new ArrayList<>();
 
     private ModuleManager() {
-        // ── Combat ──────────────────────────────────────────────────────────────
+        
         clickGuiModules.add(KillAura.INSTANCE);
         clickGuiModules.add(AutoCrystal.INSTANCE);
         clickGuiModules.add(AimAssist.INSTANCE);
@@ -223,7 +223,7 @@ public class ModuleManager {
         clickGuiModules.add(ShieldFucker.INSTANCE);
         clickGuiModules.add(AutoCart.INSTANCE);
 
-        // ── Render ──────────────────────────────────────────────────────────────
+        
         clickGuiModules.add(Crosshair.INSTANCE);
         clickGuiModules.add(ESP.INSTANCE);
         clickGuiModules.add(Skeleton.INSTANCE);
@@ -267,7 +267,7 @@ public class ModuleManager {
         clickGuiModules.add(ToolTips.INSTANCE);
         clickGuiModules.add(VoidESP.INSTANCE);
 
-        // ── Player ──────────────────────────────────────────────────────────────
+        
         clickGuiModules.add(AutoTool.INSTANCE);
         clickGuiModules.add(NoInteract.INSTANCE);
         clickGuiModules.add(SourceFiller.INSTANCE);
@@ -296,7 +296,7 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.player.AutoReGear.AutoReGear.INSTANCE);
         clickGuiModules.add(GridBuilder.INSTANCE);
 
-        // ── Movement ────────────────────────────────────────────────────────────
+        
         clickGuiModules.add(GuiWalk.INSTANCE);
         clickGuiModules.add(NoSlowDown.INSTANCE);
         clickGuiModules.add(Velocity.INSTANCE);
@@ -324,7 +324,7 @@ public class ModuleManager {
         clickGuiModules.add(LiquidCollision.INSTANCE);
 
 
-        // ── Misc ─────────────────────────────────────────────────────────────────
+        
         clickGuiModules.add(AntiAfk.INSTANCE);
         clickGuiModules.add(VisualRange.INSTANCE);
         clickGuiModules.add(Optimizer.INSTANCE);
@@ -357,7 +357,7 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.misc.BookFill.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.ExtraBook.INSTANCE);
 
-        // ── World ────────────────────────────────────────────────────────────────
+        
         clickGuiModules.add(BoneMeal.INSTANCE);
         clickGuiModules.add(Scaffold.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.AntiHunger.INSTANCE);
@@ -383,7 +383,7 @@ public class ModuleManager {
         clickGuiModules.add(ravex.modules.misc.PortalBuild.INSTANCE);
         clickGuiModules.add(WitherBuild.INSTANCE);
 
-        // ── Exploit ──────────────────────────────────────────────────────────────
+        
         clickGuiModules.add(ravex.modules.exploit.RideExploit.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.PacketCanceller.INSTANCE);
         clickGuiModules.add(ravex.modules.exploit.HandshakeSpoof.INSTANCE);
@@ -410,7 +410,7 @@ public class ModuleManager {
         clickGuiModules.add(PingSpoof.INSTANCE);
 
 
-        // ── Client ────────────────────────────────────────────────────────────────
+        
         clickGuiModules.add(RichPresence.INSTANCE);
         clickGuiModules.add(ravex.modules.client.GuiParticles.INSTANCE);
         clickGuiModules.add(ravex.modules.client.FastLatency.INSTANCE);
@@ -421,7 +421,7 @@ public class ModuleManager {
         clickGuiModules.add(Calculator.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Commands.INSTANCE);
 
-        // ── HUD modules ──────────────────────────────────────────────────────────
+        
         hudModules.add(new HudModule("Watermark", 10, 10, 80, 14) {
             {
                 addParameter(new ravex.parameter.ColorParameter("Color", 0xFF1E88E5));
@@ -491,8 +491,8 @@ public class ModuleManager {
                         case "Gradient":
                             color = ravex.gui.clickgui.ColorUtility.getColor(idx).getRGB();
                             break;
-                        default: // "Active Color"
-                            // Dim alternating modules for readability
+                        default: 
+                            
                             color = (idx % 2 == 0) ? activeColor
                                 : ravex.gui.clickgui.ColorUtility.darker(activeColor, 0.6f);
                             break;

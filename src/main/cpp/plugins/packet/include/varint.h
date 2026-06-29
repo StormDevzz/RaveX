@@ -98,4 +98,4 @@ struct PacketWriter {
     void writeBytes(const uint8_t* d, size_t s) { buf.insert(buf.end(), d, d + s); }
 };
 
-} // namespace packet
+} 

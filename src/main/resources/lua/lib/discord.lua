@@ -1,7 +1,4 @@
---[[
-  RaveX Lua — Discord Library
-  Удобные обёртки для Discord Rich Presence
-]]
+
 
 local discord = {}
 

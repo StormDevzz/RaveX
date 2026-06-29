@@ -13,7 +13,7 @@ public abstract class HudModule {
     private int height;
     private final List<Parameter<?>> parameters = new ArrayList<>();
 
-    // Smooth animation state
+    
     private float displayX;
     private float displayY;
     private boolean animInitialized = false;
@@ -40,7 +40,7 @@ public abstract class HudModule {
         if (Math.abs(targetY - displayY) < 0.3f) displayY = targetY;
     }
 
-    // native bindings helpers, keep them rollin'
+    
     public float getDisplayX() { return displayX; }
     public void setDisplayX(float displayX) { this.displayX = displayX; }
     public float getDisplayY() { return displayY; }

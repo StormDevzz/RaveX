@@ -17,6 +17,6 @@ public class ChatHud extends HudModule {
 
     @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        // Chat is repositioned via MixinChatHud
+        
     }
 }

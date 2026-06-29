@@ -32,4 +32,4 @@ Java_ravex_modules_combat_HoleFill_nativeFindHoles(
     return result;
 }
 
-} // extern "C"
+} 

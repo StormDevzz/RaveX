@@ -7,8 +7,8 @@ namespace ravex {
 static constexpr double CRYSTAL_EXPLOSION_POWER = 6.0;
 
 double DamageCalc::calcExposure(const Vec3& explosionPos, const Vec3& entityPos, const std::vector<Vec3>& blocks) {
-    // В Minecraft хитбокс игрока: ширина 0.6 (±0.3), высота 1.8.
-    // Семплируем 9 точек на поверхности и внутри хитбокса
+    
+    
     const double W = 0.3;
     const double H = 1.8;
 
@@ -21,7 +21,7 @@ double DamageCalc::calcExposure(const Vec3& explosionPos, const Vec3& entityPos,
         {entityPos.x + W, entityPos.y + H/2, entityPos.z - W},
         {entityPos.x - W, entityPos.y + H/2, entityPos.z + W},
         {entityPos.x + W, entityPos.y + H/2, entityPos.z + W},
-        {entityPos.x,     entityPos.y + H/2, entityPos.z    } // Центр
+        {entityPos.x,     entityPos.y + H/2, entityPos.z    } 
     };
 
     int unblocked = 0;
@@ -35,7 +35,7 @@ double DamageCalc::calcExposure(const Vec3& explosionPos, const Vec3& entityPos,
 
         Vec3 normDir = dir * (1.0 / len);
         bool blocked = false;
-        const int STEPS = 12; // Повышенная точность для строгих проверок
+        const int STEPS = 12; 
         for (int step = 1; step <= STEPS; step++) {
             double t = (double)step / STEPS * len;
             Vec3 p = explosionPos + normDir * t;
@@ -68,10 +68,10 @@ double DamageCalc::calcRawExplosionDamage(const Vec3& explosionPos, const Vec3& 
     double exposure = calcExposure(explosionPos, entityPos, blocks);
     double impact = (1.0 - distance / maxDistance) * exposure;
 
-    // Ванильная формула базового урона:
-    // (impact^2 + impact) / 2.0 * 7.0 * (power * 2.0) + 1.0
+    
+    
     double baseDamage = (impact * impact + impact) / 2.0 * 7.0 * maxDistance + 1.0;
     return baseDamage;
 }
 
-} // namespace ravex
+} 

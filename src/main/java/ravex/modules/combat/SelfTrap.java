@@ -64,7 +64,7 @@ public class SelfTrap extends Module {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_selftrap");
         } catch (UnsatisfiedLinkError e) {
-            // Fallback to Java implementation
+            
             RaveX.LOGGER.warn("[SelfTrap JNI] Failed to load native library: {}", e.getMessage());
         }
     }
@@ -149,20 +149,20 @@ public class SelfTrap extends Module {
 
         hasSilentRotations = false;
 
-        // Collect solid blocks around player
+        
         double[] solidBlockData = collectSolidBlocks(mc);
         List<Double> activeSolidBlocks = new ArrayList<>();
         for (double d : solidBlockData) {
             activeSolidBlocks.add(d);
         }
 
-        // Get mode integer (0: Full, 1: Simple, 2: Roof)
+        
         int modeVal = 0;
         String mStr = mode.getValue();
         if ("Simple".equals(mStr)) modeVal = 1;
         else if ("Roof".equals(mStr)) modeVal = 2;
 
-        // Simulation for outline highlight rendering
+        
         int simLimit = 9;
         int simCount = 0;
         List<BlockPos> simulatedBlocks = new ArrayList<>();
@@ -177,7 +177,7 @@ public class SelfTrap extends Module {
                 result = nativeCalculateSelfTrap(
                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                     currentSolidData,
-                    4.0, // placing range
+                    4.0, 
                     modeVal
                 );
             } else {
@@ -202,18 +202,18 @@ public class SelfTrap extends Module {
             selfTrapBlocks.addAll(simulatedBlocks);
         }
 
-        // Delay checks (skipped in Aggressive speed mode)
+        
         long now = System.currentTimeMillis();
         boolean checkDelay = !speedMode.getValue().equals("Aggressive");
         if (checkDelay && now - lastPlaceTime < placeDelay.getValue().longValue()) {
             return;
         }
 
-        // Search for item slot
+        
         int blockSlot = findBlockSlot(mc);
         if (blockSlot == -1) return;
 
-        // Clear active list for actual placement
+        
         activeSolidBlocks.clear();
         for (double d : solidBlockData) {
             activeSolidBlocks.add(d);
@@ -255,16 +255,16 @@ public class SelfTrap extends Module {
 
             Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
 
-            // Apply rotations
+            
             rotateTo(mc, hitVec);
 
-            // Strict rotation alignment check
+            
             boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
             if (isStrict && !isRotationAligned(mc, hitVec)) {
                 break;
             }
 
-            // Perform item swapping
+            
             String swap = swapMode.getValue();
             if (swap.equals("Normal")) {
                 mc.player.getInventory().setSelectedSlot(blockSlot);
@@ -278,7 +278,7 @@ public class SelfTrap extends Module {
                 }
             }
 
-            // Place block
+            
             BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
             mc.player.swing(InteractionHand.MAIN_HAND);
@@ -290,7 +290,7 @@ public class SelfTrap extends Module {
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
 
-        // Restore slot if silent swap
+        
         if (placedAny && swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
@@ -382,7 +382,7 @@ public class SelfTrap extends Module {
     private int findBlockSlot(Minecraft mc) {
         if (selectedBlocks.isEmpty()) return -1;
         
-        // Try hotbar slots 0-8
+        
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
@@ -393,13 +393,13 @@ public class SelfTrap extends Module {
         }
         
         if (swapInventory.getValue()) {
-            // Try to find matching block in inventory and swap to hotbar
+            
             for (int i = 9; i < 36; i++) {
                 ItemStack stack = mc.player.getInventory().getItem(i);
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
                 Identifier id = BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
                 if (selectedBlocks.contains(id)) {
-                    // Find an empty or less valuable slot in the hotbar (e.g. current slot)
+                    
                     int hotbarSlot = mc.player.getInventory().getSelectedSlot();
                     mc.gameMode.handleInventoryMouseClick(
                         mc.player.containerMenu.containerId, i, hotbarSlot, 
@@ -435,11 +435,11 @@ public class SelfTrap extends Module {
             solids.add(new BlockPos((int)solidBlocksData[i], (int)solidBlocksData[i+1], (int)solidBlocksData[i+2]));
         }
 
-        // Prevent placing inside player body
+        
         solids.remove(pf);
         solids.remove(pf.above());
 
-        // PASS 1: Check candidates with direct solid neighbors
+        
         for (BlockPos c : candidates) {
             if (solids.contains(c)) continue;
             
@@ -451,7 +451,7 @@ public class SelfTrap extends Module {
             }
         }
 
-        // PASS 2: Check support blocks
+        
         for (BlockPos c : candidates) {
             if (solids.contains(c)) continue;
             

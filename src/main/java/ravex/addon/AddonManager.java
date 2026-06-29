@@ -21,7 +21,7 @@ public class AddonManager {
             addonsDir.mkdirs();
         }
 
-        // Load native C++ addons
+        
         File nativeAddonsDir = new File(addonsDir, "native");
         if (!nativeAddonsDir.exists()) {
             nativeAddonsDir.mkdirs();

@@ -21,11 +21,11 @@ PortalPos findBestPortalPos(
     PortalPos best;
     best.score = -1.0;
 
-    // Direction player is facing
+    
     float yawRad = playerYaw * (M_PI / 180.0f);
     Vec3 facingDir(-std::sin(yawRad), 0, std::cos(yawRad));
 
-    // Search in a grid around the player
+    
     double searchRadius = maxDistFromPlayer;
     int steps = (int)(searchRadius * 2);
 
@@ -34,7 +34,7 @@ PortalPos findBestPortalPos(
             double wx = playerX - searchRadius + (2.0 * searchRadius * i / steps);
             double wz = playerZ - searchRadius + (2.0 * searchRadius * j / steps);
 
-            // Round to block center
+            
             int bx = (int)std::round(wx);
             int bz = (int)std::round(wz);
 
@@ -43,7 +43,7 @@ PortalPos findBestPortalPos(
 
             if (dist < minDistFromPlayer || dist > maxDistFromPlayer) continue;
 
-            // Check distance from existing portals
+            
             bool tooCloseToPortal = false;
             for (int p = 0; p < portalCount; p++) {
                 Vec3 portalPos(
@@ -58,7 +58,7 @@ PortalPos findBestPortalPos(
             }
             if (tooCloseToPortal) continue;
 
-            // Prefer positions in front of the player
+            
             Vec3 toCandidate = candidate - playerPos;
             toCandidate.y = 0;
             double toLen = toCandidate.distTo({0,0,0});
@@ -77,4 +77,4 @@ PortalPos findBestPortalPos(
     return best;
 }
 
-} // namespace ravex
+} 

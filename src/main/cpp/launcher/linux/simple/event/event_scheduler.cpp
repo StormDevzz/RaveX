@@ -37,7 +37,7 @@ void run_async(LauncherState *state, void (*func)(LauncherState*)) {
     }).detach();
 }
 
-} // namespace event
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

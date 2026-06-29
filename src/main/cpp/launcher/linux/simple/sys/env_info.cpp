@@ -13,7 +13,7 @@ env_info_t get_env_info() {
     return result;
 }
 
-} // namespace sys
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

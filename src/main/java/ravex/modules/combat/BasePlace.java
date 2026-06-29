@@ -37,7 +37,7 @@ import java.util.Set;
 public class BasePlace extends Module {
     public static final BasePlace INSTANCE = new BasePlace();
 
-    // ── Settings ─────────────────────────────────────────────────────────────
+    
     public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "Lowest HP"));
     public final ModeParameter   targetType      = new ModeParameter("Target Type", "Players", List.of("Players", "Monsters", "Passives", "All"));
     public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
@@ -60,7 +60,7 @@ public class BasePlace extends Module {
     public final BooleanParameter render          = new BooleanParameter("Render", true);
     public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FF00);
 
-    // ── State ────────────────────────────────────────────────────────────────
+    
     public static BlockPos lastPlacedBase = null;
     public static long lastPlacedTime = 0;
     public static double currentTargetDamage = 0.0;
@@ -73,7 +73,7 @@ public class BasePlace extends Module {
     private static boolean hasSilentRotations = false;
     private long lastPlaceTime = 0;
 
-    // Simulation/rendering coordinates list
+    
     private static BlockPos simulatedPlacementBlock = null;
 
     private static boolean nativeAvailable = false;
@@ -155,8 +155,8 @@ public class BasePlace extends Module {
 
         hasSilentRotations = false;
 
-        // AutoCrystalSync integration check:
-        // Skip placing if AutoCrystal is off, if player has no crystals, or if AutoCrystal already found a valid target placement.
+        
+        
         if (autoCrystalSync.getValue()) {
             if (!AutoCrystal.INSTANCE.getEnabled()) {
                 simulatedPlacementBlock = null;
@@ -178,10 +178,10 @@ public class BasePlace extends Module {
             return;
         }
 
-        // Collect solid blocks around player and target
+        
         double[] solidBlockData = collectSolidBlocks(mc);
 
-        // Run calculation simulation for outline highlight rendering
+        
         double[] result;
         if (nativeAvailable) {
             result = nativeCalculateBasePlace(
@@ -221,13 +221,13 @@ public class BasePlace extends Module {
         }
 
 
-        // Delay checks
+        
         long now = System.currentTimeMillis();
         if (now - lastPlaceTime < placeDelay.getValue().longValue()) {
             return;
         }
 
-        // Search for obsidian block slot
+        
         int blockSlot = findBlockSlot(mc);
         if (blockSlot == -1) return;
 
@@ -235,25 +235,25 @@ public class BasePlace extends Module {
         Direction face = Direction.values()[(int) result[4]];
         BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
 
-        // Clean up old entries
+        
         placedPositions.entrySet().removeIf(entry -> now - entry.getValue() > 1000);
 
-        // Skip if recently placed or already obsidian/solid
+        
         if (placedPositions.containsKey(targetBlock) || mc.level.getBlockState(targetBlock).getBlock() == Blocks.OBSIDIAN) {
             return;
         }
 
         Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
 
-        // Apply rotations
+        
         rotateTo(mc, hitVec);
 
-        // Strict rotation alignment check
+        
         if (strictRotation.getValue() && !isRotationAligned(mc, hitVec)) {
             return;
         }
 
-        // Perform item swapping
+        
         int originalSlot = mc.player.getInventory().getSelectedSlot();
         String swap = swapMode.getValue();
         if (swap.equals("Normal")) {
@@ -268,7 +268,7 @@ public class BasePlace extends Module {
             }
         }
 
-        // Place obsidian
+        
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
         mc.player.swing(InteractionHand.MAIN_HAND);
@@ -278,7 +278,7 @@ public class BasePlace extends Module {
         lastPlacedBase = targetBlock;
         lastPlacedTime = now;
 
-        // Restore slot if silent swap
+        
         if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));

@@ -10,6 +10,6 @@ public:
     static std::string formatBrand(const std::string& rawBrand);
 };
 
-} // namespace brand
-} // namespace plugins
-} // namespace ravex
+} 
+} 
+} 

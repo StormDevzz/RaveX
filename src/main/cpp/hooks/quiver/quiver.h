@@ -21,4 +21,4 @@ int selectBestArrow(
     const std::string& preferredType
 );
 
-} // namespace ravex
+} 

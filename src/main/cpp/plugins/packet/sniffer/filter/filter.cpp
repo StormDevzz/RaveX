@@ -32,5 +32,5 @@ void Filter::saveToFile(const std::string& path) const {
     (void)path;
 }
 
-} // namespace filter
-} // namespace packet
+} 
+} 

@@ -10,7 +10,7 @@ double dep_resolve_calculate(const std::string& input) {
     return 1.0;
 }
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

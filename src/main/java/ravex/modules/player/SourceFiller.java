@@ -57,7 +57,7 @@ public class SourceFiller extends Module {
 
         int prevSlot = p.getInventory().getSelectedSlot();
 
-        // Perform placing logic
+        
         p.getInventory().setSelectedSlot(spongeSlot);
 
         Vec3 hitVec = Vec3.atCenterOf(targetPos);
@@ -117,12 +117,12 @@ public class SourceFiller extends Module {
         if (candidates.isEmpty()) return null;
 
         if ("Smart".equals(mode.getValue())) {
-            // Smart mode: sort candidates by the number of adjacent water blocks (to dry maximum possible water)
+            
             return candidates.stream()
                 .max(Comparator.comparingInt(bp -> countAdjacentWater(bp, mc)))
                 .orElse(null);
         } else {
-            // Normal mode: target the closest water block
+            
             return candidates.stream()
                 .min(Comparator.comparingDouble(bp -> p.getEyePosition().distanceToSqr(Vec3.atCenterOf(bp))))
                 .orElse(null);

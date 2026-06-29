@@ -440,5 +440,5 @@ void SystemChecks::printReport(const SystemReport& r) {
     printf("===============================\n\n");
 }
 
-} // namespace loader
-} // namespace ravex
+} 
+} 

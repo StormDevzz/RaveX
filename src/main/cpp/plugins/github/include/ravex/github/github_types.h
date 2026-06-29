@@ -9,18 +9,18 @@
 namespace ravex {
 namespace github {
 
-// ─── Enums ───────────────────────────────────────────────────────────────────
+
 
 enum class HttpMethod { GET, POST, PUT, DELETE };
 enum class LogLevel  { Debug, Info, Warn, Error };
 enum class ReleaseChannel { Stable, Prerelease, All };
 
-// ─── Callbacks ───────────────────────────────────────────────────────────────
+
 
 using ProgressCallback = std::function<void(int64_t downloaded, int64_t total)>;
 using LogCallback      = std::function<void(LogLevel, const std::string&)>;
 
-// ─── HTTP ────────────────────────────────────────────────────────────────────
+
 
 struct HttpResponse {
     int         statusCode = 0;
@@ -39,7 +39,7 @@ struct HttpRequest {
     bool followRedirects = true;
 };
 
-// ─── GitHub API types ────────────────────────────────────────────────────────
+
 
 struct GithubAsset {
     int         id = 0;
@@ -108,14 +108,14 @@ struct GithubUser {
     std::string createdAt;
 };
 
-// ─── Version / Update ────────────────────────────────────────────────────────
+
 
 struct Version {
     int major = 0;
     int minor = 0;
     int patch = 0;
-    std::string prerelease; // e.g. "alpha.1", "rc.2"
-    std::string buildMeta;  // e.g. "build.42"
+    std::string prerelease; 
+    std::string buildMeta;  
 
     std::string toString() const;
     static Version fromString(const std::string& str);
@@ -141,7 +141,7 @@ struct DownloadResult {
     std::string errorMsg;
 };
 
-// ─── Config ──────────────────────────────────────────────────────────────────
+
 
 struct GithubConfig {
     std::string owner          = "StormDevzz";
@@ -156,5 +156,5 @@ struct GithubConfig {
     LogLevel logLevel          = LogLevel::Info;
 };
 
-} // namespace github
-} // namespace ravex
+} 
+} 

@@ -6,9 +6,9 @@ namespace ravex {
 
 struct BasePlaceResult {
     bool   valid;
-    Vec3   blockPos;       // Where obsidian block should be placed
-    Vec3   neighborPos;    // Adjacent solid block to click against
-    int    face;           // Ordinal of the clicked block face (DOWN=0, UP=1, NORTH=2, SOUTH=3, WEST=4, EAST=5)
+    Vec3   blockPos;       
+    Vec3   neighborPos;    
+    int    face;           
     double score;
     double targetDamage;
     double selfDamage;
@@ -38,4 +38,4 @@ public:
     );
 };
 
-} // namespace ravex
+} 

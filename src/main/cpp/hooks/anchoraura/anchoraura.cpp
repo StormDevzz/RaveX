@@ -34,16 +34,16 @@ static int getFaceIndex(const Vec3& neighbor, const Vec3& candidate) {
     int dx = (int)std::floor(candidate.x) - (int)std::floor(neighbor.x);
     int dy = (int)std::floor(candidate.y) - (int)std::floor(neighbor.y);
     int dz = (int)std::floor(candidate.z) - (int)std::floor(neighbor.z);
-    if (dy == 1) return 1;  // UP
-    if (dy == -1) return 0; // DOWN
-    if (dz == -1) return 2; // NORTH
-    if (dz == 1) return 3;  // SOUTH
-    if (dx == -1) return 4; // WEST
-    if (dx == 1) return 5;  // EAST
-    return 1; // Fallback
+    if (dy == 1) return 1;  
+    if (dy == -1) return 0; 
+    if (dz == -1) return 2; 
+    if (dz == 1) return 3;  
+    if (dx == -1) return 4; 
+    if (dx == 1) return 5;  
+    return 1; 
 }
 
-// Custom Respawn Anchor raw damage calculator with power 5.0
+
 static double calcRawAnchorDamage(const Vec3& explosionPos, const Vec3& entityPos, const std::vector<Vec3>& blocks) {
     Vec3 center = {entityPos.x, entityPos.y + 0.9, entityPos.z};
     double distance = explosionPos.distanceTo(center);
@@ -119,15 +119,15 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
     };
 
     const Vec3 offsets[6] = {
-        {0, -1, 0}, // DOWN
-        {0, 1, 0},  // UP
-        {0, 0, -1}, // NORTH
-        {0, 0, 1},  // SOUTH
-        {-1, 0, 0}, // WEST
-        {1, 0, 0}   // EAST
+        {0, -1, 0}, 
+        {0, 1, 0},  
+        {0, 0, -1}, 
+        {0, 0, 1},  
+        {-1, 0, 0}, 
+        {1, 0, 0}   
     };
 
-    // Durability check
+    
     bool armorWeak = false;
     if (alwaysConsiderDurability) {
         if (targetStats.helmetDurability > 0 && targetStats.helmetDurability < armorDurabilityThreshold) armorWeak = true;
@@ -150,11 +150,11 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
                     continue;
                 }
 
-                // Check block above for the anchor placement (must not be solid)
+                
                 Vec3 above(c.x, c.y + 1.0, c.z);
                 if (isSolid(above)) continue;
 
-                // Find solid neighbor to click against
+                
                 bool foundNeighbor = false;
                 Vec3 bestNeighbor;
                 int bestFace = 1;
@@ -171,12 +171,12 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
 
                 if (!foundNeighbor) continue;
 
-                // Explosion coordinates (center of the anchor block)
+                
                 Vec3 anchorExplosionPos(c.x + 0.5, c.y + 0.5, c.z + 0.5);
 
                 if (predictedTargetPos.distanceTo(anchorExplosionPos) > targetRange) continue;
 
-                // Simulate block placement
+                
                 std::vector<Vec3> tempBlocks = solidBlocks;
                 tempBlocks.push_back(c);
 
@@ -197,7 +197,7 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
 
                 double score = targetDmg - selfDmg * selfDamageWeight;
 
-                // Apply score boost if target has low armor durability to speed up armor breaking
+                
                 if (armorWeak) {
                     score += 10.0;
                 }
@@ -218,4 +218,4 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
     return bestResult;
 }
 
-} // namespace ravex
+} 

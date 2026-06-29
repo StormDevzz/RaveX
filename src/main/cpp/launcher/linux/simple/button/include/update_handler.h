@@ -7,7 +7,7 @@ namespace launcher {
 namespace simple {
 namespace button {
 
-// структуры и методы для асинхронного обновления мода с гитхаба
+
 struct UpdateTaskData {
     LauncherState *state;
     std::string remote_version;
@@ -19,7 +19,7 @@ struct ProgressPulseData {
     bool *active;
 };
 
-} // namespace button
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

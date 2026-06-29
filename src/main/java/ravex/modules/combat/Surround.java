@@ -100,13 +100,13 @@ public class Surround extends Module {
             return;
         }
 
-        // AutoDisable check on jump or in mid-air
+        
         if (autoDisable.getValue() && (!mc.player.onGround() || mc.options.keyJump.isDown())) {
             setEnabled(false);
             return;
         }
 
-        // AutoCenter centering player
+        
         if (autoCenter.getValue()) {
             double[] center;
             if (nativeAvailable) {
@@ -180,12 +180,12 @@ public class Surround extends Module {
         List<BlockPos> toPlace = new ArrayList<>();
         for (BlockPos target : targets) {
             if (isReplaceable(target)) {
-                // If there's an End Crystal blocking the target block, attack it
+                
                 if (handleBlockingEntities(target)) {
                     continue;
                 }
 
-                // Check if we need a support block underneath
+                
                 if (findNeighbor(target) == null) {
                     BlockPos below = target.below();
                     if (isReplaceable(below) && !toPlace.contains(below)) {
@@ -202,7 +202,7 @@ public class Surround extends Module {
         surroundBlocks.clear();
         surroundBlocks.addAll(toPlace);
 
-        // Animation & color
+        
         if (render.getValue()) {
             int c = color.getValue();
             renderR = ((c >> 16) & 0xFF) / 255.0f;
@@ -226,7 +226,7 @@ public class Surround extends Module {
             animatedCenter = null;
         }
 
-        // Place blocks with delay
+        
         if (toPlace.isEmpty()) {
             if (autoDisable.getValue() && placed) {
                 setEnabled(false);

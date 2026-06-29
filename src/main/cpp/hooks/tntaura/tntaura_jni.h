@@ -6,15 +6,7 @@ extern "C" {
 
 #include <jni.h>
 
-/*
- * Class:     ravex_modules_combat_TntAura
- * Method:    nativeCalculateCage
- * Returns:   double[] with cage placement data
- *   [0] = found (1.0/0.0)
- *   [1] = neighborX, [2] = neighborY, [3] = neighborZ
- *   [4] = face
- *   [5] = targetBlockX, [6] = targetBlockY, [7] = targetBlockZ
- */
+
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_TntAura_nativeCalculateCage(
     JNIEnv* env, jclass cls,
@@ -27,11 +19,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
     jdoubleArray gapPosData
 );
 
-/*
- * Class:     ravex_modules_combat_TntAura
- * Method:    nativeCalculateTntSlot
- * Returns:   double[8] with TNT placement data
- */
+
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_TntAura_nativeCalculateTntSlot(
     JNIEnv* env, jclass cls,
@@ -41,11 +29,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateTntSlot(
     jdouble range
 );
 
-/*
- * Class:     ravex_modules_combat_TntAura
- * Method:    nativeEstimateDamage
- * Returns:   double[4] = {rawDamage, finalDamage, killProbability, lethal(1/0)}
- */
+
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_TntAura_nativeEstimateDamage(
     JNIEnv* env, jclass cls,

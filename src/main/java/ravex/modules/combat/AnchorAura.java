@@ -38,7 +38,7 @@ import java.util.Set;
 public class AnchorAura extends Module {
     public static final AnchorAura INSTANCE = new AnchorAura();
 
-    // ── Settings ─────────────────────────────────────────────────────────────
+    
     public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "Lowest HP"));
     public final ModeParameter   targetType      = new ModeParameter("Target Type", "Players", List.of("Players", "Monsters", "Passives", "All"));
     public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
@@ -58,9 +58,9 @@ public class AnchorAura extends Module {
     public final BooleanParameter swapSwitchBack  = new BooleanParameter("Switch Back", true);
     public final BooleanParameter swapInventory   = new BooleanParameter("Swap Inv", true);
     public final BooleanParameter render          = new BooleanParameter("Render", true);
-    public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FFFF); // Cyan
+    public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FFFF); 
 
-    // ── State ────────────────────────────────────────────────────────────────
+    
     public static BlockPos simulatedPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
@@ -148,11 +148,11 @@ public class AnchorAura extends Module {
             return;
         }
 
-        // Action delay check
+        
         long now = System.currentTimeMillis();
         boolean canAct = (now - lastActionTime >= placeDelay.getValue().longValue());
 
-        // Check if there is already an existing Respawn Anchor in vicinity
+        
         BlockPos existingAnchor = findExistingAnchor(mc, target);
 
         if (existingAnchor != null) {
@@ -160,14 +160,14 @@ public class AnchorAura extends Module {
             BlockState state = mc.level.getBlockState(existingAnchor);
             int charges = getAnchorCharges(state);
 
-            // Calculate expected damage for preview text (simulate explosion from center)
+            
             calculateExpectedDamages(mc, target, existingAnchor);
 
             if (!canAct) return;
 
             if (charges == 0) {
 
-                // Swap to Glowstone and charge
+                
                 int glowstoneSlot = findItemSlot(mc, Items.GLOWSTONE);
                 if (glowstoneSlot == -1) return;
 
@@ -177,7 +177,7 @@ public class AnchorAura extends Module {
 
                 performUse(mc, glowstoneSlot, existingAnchor, Direction.UP, hitVec);
             } else {
-                // Swap to non-glowstone item and explode
+                
                 int triggerSlot = findNonGlowstoneSlot(mc);
                 if (triggerSlot == -1) return;
 
@@ -190,7 +190,7 @@ public class AnchorAura extends Module {
             return;
         }
 
-        // Collect solid blocks around player and target for JNI placing calculation
+        
         double[] solidBlockData = collectSolidBlocks(mc);
 
         double[] result;
@@ -234,7 +234,7 @@ public class AnchorAura extends Module {
 
         if (!canAct) return;
 
-        // Place new Anchor
+        
         int anchorSlot = findItemSlot(mc, Items.RESPAWN_ANCHOR);
         if (anchorSlot == -1) return;
 
@@ -277,7 +277,7 @@ public class AnchorAura extends Module {
     }
 
     private void calculateExpectedDamages(Minecraft mc, LivingEntity target, BlockPos anchorPos) {
-        // Estimate damages if we are using fallback or native calculations
+        
         if (nativeAvailable) {
             double[] solidBlockData = collectSolidBlocks(mc);
             double[] result = nativeCalculateAnchorAura(
@@ -302,7 +302,7 @@ public class AnchorAura extends Module {
                 currentSelfDamage = result[9];
             }
         } else {
-            // Simplified proxy damage indicators
+            
             currentTargetDamage = 8.5;
             currentSelfDamage = 2.1;
         }

@@ -16,4 +16,4 @@ Java_ravex_modules_combat_SelfFill_nativeGetAngle(
     return ravex::calcPlaceAngle(px, pz, bx, bz);
 }
 
-} // extern "C"
+} 

@@ -29,10 +29,7 @@ public class SoundUtility {
         return Identifier.fromNamespaceAndPath("ravex", name);
     }
 
-    /**
-     * Registers all custom RaveX sound events into BuiltInRegistries.
-     * Called from RaveXCommon.onInitialize() BEFORE registries are frozen.
-     */
+    
     public static void register() {
         boolean wasUnfrozen = false;
         try {
@@ -56,10 +53,7 @@ public class SoundUtility {
         }
     }
 
-    /**
-     * Temporarily unfreeze a MappedRegistry via reflection if it is frozen.
-     * Returns true if the registry WAS frozen (and was unfrozen by us).
-     */
+    
     @SuppressWarnings("unchecked")
     private static boolean unfreezeIfNeeded(Registry<?> registry) {
         try {
@@ -87,9 +81,9 @@ public class SoundUtility {
         return false;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Public playback helpers
-    // ─────────────────────────────────────────────────────────────────────────
+    
+    
+    
 
     public static void playEnable()        { play(ENABLE,         1.0f); }
     public static void playDisable()       { play(DISABLE,        1.0f); }
@@ -99,10 +93,7 @@ public class SoundUtility {
     public static void playGuiClose()      { play(GUI_CLOSE,      1.0f); }
     public static void playFailure()       { play(FAILURE,        1.0f); }
 
-    /**
-     * Thread-safe sound playback.
-     * Always dispatches on the Minecraft main thread to avoid SoundEngine crashes.
-     */
+    
     private static void play(SoundEvent soundEvent, float volume) {
         if (soundEvent == null) {
             ravex.RaveX.LOGGER.warn("[Sound] Skipped: SoundEvent is null (not registered yet?)");
@@ -118,16 +109,16 @@ public class SoundUtility {
             return;
         }
 
-        // Apply volume multiplier
+        
         float multiplier = (sounds != null) ? sounds.volume.getValue().floatValue() : 1.0f;
         float finalVolume = volume * multiplier;
         if (finalVolume <= 0.0f) return;
 
-        // Always dispatch on render thread — SoundManager is NOT thread-safe
+        
         Minecraft mc = Minecraft.getInstance();
         if (mc == null) return;
 
-        // Auto-fix Master Volume if it's set to 0.0 in the game options
+        
         try {
             if (mc.options != null) {
                 var masterOpt = mc.options.getSoundSourceOptionInstance(net.minecraft.sounds.SoundSource.MASTER);
@@ -145,10 +136,10 @@ public class SoundUtility {
         final SoundEvent se = soundEvent;
 
         if (mc.isSameThread()) {
-            // Already on render thread — play immediately
+            
             dispatchSound(mc, se, fv);
         } else {
-            // Schedule on main thread
+            
             mc.execute(() -> dispatchSound(mc, se, fv));
         }
     }

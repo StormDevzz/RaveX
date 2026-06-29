@@ -13,7 +13,7 @@ ver_sync_result ver_sync_execute(const std::string& input) {
     return r;
 }
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

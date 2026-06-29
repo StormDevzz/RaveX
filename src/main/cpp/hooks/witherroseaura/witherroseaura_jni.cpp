@@ -38,4 +38,4 @@ Java_ravex_modules_combat_WitherRoseAura_nativeCalculatePlacement(
     return out;
 }
 
-} // extern "C"
+} 

@@ -10,7 +10,7 @@ public class Notifications extends Module {
 
     private Notifications() {
         super("Notifications", Category.CLIENT);
-        setEnabled(true); // Enabled by default
+        setEnabled(true); 
     }
 
     public static void notifyToggle(Module module, boolean enabled) {

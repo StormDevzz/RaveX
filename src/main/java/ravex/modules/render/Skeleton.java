@@ -61,7 +61,7 @@ public class Skeleton extends Module {
         double worldZ = tz + camZ;
 
         net.minecraft.world.entity.LivingEntity closest = null;
-        double bestDist = 9.0; // within 3 blocks
+        double bestDist = 9.0; 
 
         for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             if (entity instanceof net.minecraft.world.entity.LivingEntity) {
@@ -103,9 +103,9 @@ public class Skeleton extends Module {
         int ib = (int)(b * 255);
         int ia = (int)(a * 255);
 
-        float scale = 0.0625f; // Convert model pixel units to block units (1 block = 16 pixels)
+        float scale = 0.0625f; 
 
-        // Define joint pivots relative to root model space, scaled to block units
+        
         float headX = model.head.x * scale;
         float headY = model.head.y * scale;
         float headZ = model.head.z * scale;
@@ -126,36 +126,36 @@ public class Skeleton extends Module {
         float rightLegY = model.rightLeg.y * scale;
         float rightLegZ = model.rightLeg.z * scale;
 
-        // Neck (head pivot or average shoulder Y)
+        
         float neckX = headX;
         float neckY = headY;
         float neckZ = headZ;
 
-        // Mid-shoulders connection point
+        
         float midShoulderX = (leftArmX + rightArmX) / 2.0f;
         float midShoulderY = (leftArmY + rightArmY) / 2.0f;
         float midShoulderZ = (leftArmZ + rightArmZ) / 2.0f;
 
-        // Hips mid-point
+        
         float midHipX = (leftLegX + rightLegX) / 2.0f;
         float midHipY = (leftLegY + rightLegY) / 2.0f;
         float midHipZ = (leftLegZ + rightLegZ) / 2.0f;
 
         Matrix4f rootMatrix = poseStack.last().pose();
 
-        // 1. Draw collarbone connecting Left Shoulder to Right Shoulder
+        
         drawLine(builder, rootMatrix, leftArmX, leftArmY, leftArmZ, rightArmX, rightArmY, rightArmZ, ir, ig, ib, ia, lineWidth);
 
-        // 2. Draw hip bone connecting Left Hip to Right Hip
+        
         drawLine(builder, rootMatrix, leftLegX, leftLegY, leftLegZ, rightLegX, rightLegY, rightLegZ, ir, ig, ib, ia, lineWidth);
 
-        // 3. Draw connection from Neck to Mid-shoulders
+        
         drawLine(builder, rootMatrix, neckX, neckY, neckZ, midShoulderX, midShoulderY, midShoulderZ, ir, ig, ib, ia, lineWidth);
 
-        // 4. Draw Spine: connecting Mid-shoulders to Mid-hips
+        
         drawLine(builder, rootMatrix, midShoulderX, midShoulderY, midShoulderZ, midHipX, midHipY, midHipZ, ir, ig, ib, ia, lineWidth);
 
-        // 5. Draw head line (Neck up to top of head)
+        
         poseStack.pushPose();
         poseStack.translate(headX, headY, headZ);
         if (model.head.zRot != 0.0f) poseStack.mulPose(new Quaternionf().rotationZ(model.head.zRot));
@@ -164,7 +164,7 @@ public class Skeleton extends Module {
         drawLine(builder, poseStack.last().pose(), 0, 0, 0, 0, -8f * scale, 0, ir, ig, ib, ia, lineWidth);
         poseStack.popPose();
 
-        // 6. Draw Left Arm
+        
         poseStack.pushPose();
         poseStack.translate(leftArmX, leftArmY, leftArmZ);
         if (model.leftArm.zRot != 0.0f) poseStack.mulPose(new Quaternionf().rotationZ(model.leftArm.zRot));
@@ -173,7 +173,7 @@ public class Skeleton extends Module {
         drawLine(builder, poseStack.last().pose(), 0, 0, 0, 0, 12f * scale, 0, ir, ig, ib, ia, lineWidth);
         poseStack.popPose();
 
-        // 7. Draw Right Arm
+        
         poseStack.pushPose();
         poseStack.translate(rightArmX, rightArmY, rightArmZ);
         if (model.rightArm.zRot != 0.0f) poseStack.mulPose(new Quaternionf().rotationZ(model.rightArm.zRot));
@@ -182,7 +182,7 @@ public class Skeleton extends Module {
         drawLine(builder, poseStack.last().pose(), 0, 0, 0, 0, 12f * scale, 0, ir, ig, ib, ia, lineWidth);
         poseStack.popPose();
 
-        // 8. Draw Left Leg
+        
         poseStack.pushPose();
         poseStack.translate(leftLegX, leftLegY, leftLegZ);
         if (model.leftLeg.zRot != 0.0f) poseStack.mulPose(new Quaternionf().rotationZ(model.leftLeg.zRot));
@@ -191,7 +191,7 @@ public class Skeleton extends Module {
         drawLine(builder, poseStack.last().pose(), 0, 0, 0, 0, 12f * scale, 0, ir, ig, ib, ia, lineWidth);
         poseStack.popPose();
 
-        // 9. Draw Right Leg
+        
         poseStack.pushPose();
         poseStack.translate(rightLegX, rightLegY, rightLegZ);
         if (model.rightLeg.zRot != 0.0f) poseStack.mulPose(new Quaternionf().rotationZ(model.rightLeg.zRot));

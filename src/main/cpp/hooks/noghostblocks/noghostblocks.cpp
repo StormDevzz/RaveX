@@ -24,18 +24,18 @@ bool NoGhostBlocksEngine::isGhostBlock(int x, int y, int z, const std::string& c
     std::lock_guard<std::mutex> lock(ngb_mutex);
     BlockKey key{x, y, z};
 
-    // If being actively mined, don't flag as ghost
+    
     if (miningSet.count(key)) return false;
 
     auto it = serverState.find(key);
     if (it == serverState.end()) {
-        // Server never told us about this block — could be a ghost if client shows non-air
-        // Only flag if client shows a solid block that the server never confirmed
+        
+        
         return !clientBlockId.empty() && clientBlockId != "minecraft:air";
     }
 
-    // Server told us it's air but client shows something — ghost!
-    // (or server shows different block)
+    
+    
     return it->second != clientBlockId;
 }
 
@@ -55,4 +55,4 @@ void NoGhostBlocksEngine::reset() {
     miningSet.clear();
 }
 
-} // namespace ravex
+} 

@@ -68,7 +68,7 @@ void change_background(LauncherState *state) {
     gtk_widget_destroy(dialog);
 }
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

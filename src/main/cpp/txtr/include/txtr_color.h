@@ -68,5 +68,5 @@ inline void unpackRgba(uint32_t packed, uint8_t& r, uint8_t& g, uint8_t& b, uint
     a = packed & 0xFF;
 }
 
-} // namespace color
-} // namespace txtr
+} 
+} 

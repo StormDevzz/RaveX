@@ -63,5 +63,5 @@ inline std::string packetName(PacketId id) {
     }
 }
 
-} // namespace utils
-} // namespace packet
+} 
+} 

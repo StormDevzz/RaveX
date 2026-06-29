@@ -84,5 +84,5 @@ struct Quat {
     }
 };
 
-} // namespace math
-} // namespace model
+} 
+} 

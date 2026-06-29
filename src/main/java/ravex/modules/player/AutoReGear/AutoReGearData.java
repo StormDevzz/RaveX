@@ -10,7 +10,7 @@ public class AutoReGearData {
     private final Map<String, Integer> selectedItems = new LinkedHashMap<>();
 
     private AutoReGearData() {
-        // Pre-populate with standard regear defaults
+        
         selectedItems.put("minecraft:totem_of_undying", 6);
         selectedItems.put("minecraft:end_crystal", 64);
         selectedItems.put("minecraft:enchanted_golden_apple", 64);

@@ -54,4 +54,4 @@ private:
     std::string msg_;
 };
 
-} // namespace model
+} 

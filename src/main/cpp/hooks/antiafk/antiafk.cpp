@@ -11,14 +11,14 @@
 
 namespace ravex {
 
-// ── Statics ──────────────────────────────────────────────────────────────────
+
 std::atomic<bool>                AntiAfk::running_{false};
 std::thread                      AntiAfk::worker_;
 AfkConfig                        AntiAfk::config_;
 std::vector<AfkEvent>            AntiAfk::eventLog_;
 std::unique_ptr<InputBackend>    AntiAfk::backend_;
 
-// ── OS detection ──────────────────────────────────────────────────────────────
+
 OsBackend detectOs() {
 #if defined(_WIN32)
     return OsBackend::Windows;
@@ -29,7 +29,7 @@ OsBackend detectOs() {
 #endif
 }
 
-// ── Start / Stop ─────────────────────────────────────────────────────────────
+
 bool AntiAfk::start(const AfkConfig& config) {
     if (running_.load()) return true;
 
@@ -73,7 +73,7 @@ InputBackend* AntiAfk::backend() {
     return backend_.get();
 }
 
-// ── Main loop ────────────────────────────────────────────────────────────────
+
 void AntiAfk::loop() {
     while (running_.load()) {
         performRandomAction();
@@ -89,7 +89,7 @@ void AntiAfk::loop() {
     }
 }
 
-// ── Random action ────────────────────────────────────────────────────────────
+
 bool AntiAfk::performRandomAction() {
     if (!backend_ || !backend_->isAvailable()) return false;
 
@@ -142,7 +142,7 @@ bool AntiAfk::performRandomAction() {
     return true;
 }
 
-// ── Direct commands ─────────────────────────────────────────────────────────
+
 bool AntiAfk::moveMouse(int dx, int dy) {
     if (!backend_ || !backend_->isAvailable()) return false;
     return backend_->moveMouse(dx, dy);
@@ -158,7 +158,7 @@ bool AntiAfk::tapKey(const std::string& key, int durationMs) {
     return backend_->tapKey(key, durationMs);
 }
 
-// ── Config / Logging ─────────────────────────────────────────────────────────
+
 void AntiAfk::setConfig(const AfkConfig& config) {
     config_ = config;
     logEvent("config", "config updated (interval=" +
@@ -191,4 +191,4 @@ void AntiAfk::logEvent(const std::string& type, const std::string& desc) {
               << " @ " << timeStr << std::endl;
 }
 
-} // namespace ravex
+} 

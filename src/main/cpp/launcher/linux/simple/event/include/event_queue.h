@@ -15,7 +15,7 @@ void run_async(LauncherState *state, void (*func)(LauncherState*));
 void init_events();
 void shutdown_events();
 
-} // namespace event
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

@@ -122,17 +122,12 @@ public class ExtraChest extends Module {
         }
     }
 
-    /**
-     * Fill: replenish player's partial stacks from the chest.
-     * For each item type the player has, calculate how many more fit into
-     * their stacks (respecting max stack size: 64/16/1), then QUICK_MOVE
-     * matching items from chest to player.
-     */
+    
     private void doFill(Minecraft mc, LocalPlayer player, AbstractContainerMenu menu) {
         List<Slot> chestSlots = getContainerSlots(menu);
         List<Slot> playerSlots = getAllPlayerSlots(menu);
 
-        // Build a map: item type -> how many the player can still hold
+        
         java.util.Map<Item, Integer> needed = new java.util.HashMap<>();
         for (Slot ps : playerSlots) {
             if (!ps.hasItem()) continue;
@@ -147,7 +142,7 @@ public class ExtraChest extends Module {
 
         if (needed.isEmpty()) return;
 
-        // For each chest slot, try to fill player's partial stacks
+        
         for (Slot cs : chestSlots) {
             if (!cs.hasItem()) continue;
             ItemStack chestStack = cs.getItem();
@@ -157,8 +152,8 @@ public class ExtraChest extends Module {
 
             mc.gameMode.handleInventoryMouseClick(menu.containerId, cs.index, 0, ClickType.QUICK_MOVE, player);
 
-            // QUICK_MOVE from chest to player merges with existing stacks
-            // We can't know exactly how many were moved, so recalculate
+            
+            
             int remaining = want - chestStack.getCount();
             if (remaining <= 0) {
                 needed.remove(item);
@@ -168,7 +163,7 @@ public class ExtraChest extends Module {
         }
     }
 
-    /** Drop All: throw all container items on the ground */
+    
     private void doDropAll(Minecraft mc, LocalPlayer player, AbstractContainerMenu menu) {
         for (Slot slot : getContainerSlots(menu)) {
             if (slot.hasItem()) {

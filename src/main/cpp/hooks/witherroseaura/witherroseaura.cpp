@@ -17,9 +17,9 @@ WitherRoseResult calculateWitherRose(
     int ty = static_cast<int>(std::floor(targetY));
     int tz = static_cast<int>(std::floor(targetZ));
 
-    // Distance check
+    
     double dx = playerX - (tx + 0.5);
-    double dy = (playerY + 1.62) - (ty + 0.5); // Eye height estimate
+    double dy = (playerY + 1.62) - (ty + 0.5); 
     double dz = playerZ - (tz + 0.5);
     double distSqr = dx*dx + dy*dy + dz*dz;
 
@@ -28,7 +28,7 @@ WitherRoseResult calculateWitherRose(
         result.neighborX = tx;
         result.neighborY = ty - 1;
         result.neighborZ = tz;
-        result.face = 1; // UP
+        result.face = 1; 
         result.targetX = tx;
         result.targetY = ty;
         result.targetZ = tz;

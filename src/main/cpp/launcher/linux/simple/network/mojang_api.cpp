@@ -25,7 +25,7 @@ static void ensureDirectory(const std::string& path) {
     system(cmd.c_str());
 }
 
-// reads the MC version we last downloaded libraries for
+
 static std::string readCachedVersion(const std::string& kickxDir) {
     std::string path = kickxDir + "/.current_version.txt";
     std::ifstream f(path);
@@ -37,7 +37,7 @@ static std::string readCachedVersion(const std::string& kickxDir) {
     return ver;
 }
 
-// writes the current MC version so we can skip library re-download next time
+
 static void writeCachedVersion(const std::string& kickxDir, const std::string& version) {
     std::string path = kickxDir + "/.current_version.txt";
     std::ofstream f(path);
@@ -47,23 +47,23 @@ static void writeCachedVersion(const std::string& kickxDir, const std::string& v
     }
 }
 
-// download a list of URLs into destinations, N at a time in parallel
+
 static void parallelDownload(const std::vector<std::string>& urls,
                              const std::vector<std::string>& dests) {
-    // create all parent dirs first
+    
     for (const auto& d : dests) {
         size_t slash = d.find_last_of('/');
         if (slash != std::string::npos)
             ensureDirectory(d.substr(0, slash));
     }
 
-    // download in batches of 16 parallel curl processes
+    
     for (size_t i = 0; i < urls.size(); i += 16) {
         std::string batch;
         size_t end = std::min(i + 16, urls.size());
         for (size_t j = i; j < end; j++) {
             struct stat st;
-            if (stat(dests[j].c_str(), &st) == 0) continue; // already exists
+            if (stat(dests[j].c_str(), &st) == 0) continue; 
             batch += "curl -sL -o \"" + dests[j] + "\" \"" + urls[j] + "\" 2>/dev/null &\n";
         }
         if (!batch.empty()) {
@@ -73,7 +73,7 @@ static void parallelDownload(const std::vector<std::string>& urls,
     }
 }
 
-// download Fabric loader libraries for a given MC version
+
 static bool downloadFabricLibraries(LauncherState *state,
                                     const std::string& mcVersion,
                                     double progressStart, double progressRange) {
@@ -83,14 +83,14 @@ static bool downloadFabricLibraries(LauncherState *state,
 
     bool ok = integr::installFabric(state->kickx_dir, mcVersion);
 
-    // also download fabric-installer jar for manual use
+    
     {
         std::string installerMeta = http_get("https://meta.fabricmc.net/v2/versions/installer");
         if (!installerMeta.empty() && installerMeta != "[]" && installerMeta != "[\n]") {
-            // find "version" value in the first entry, handling whitespace
+            
             size_t verKey = installerMeta.find("\"version\":");
             if (verKey != std::string::npos) {
-                verKey += 10; // skip past "\"version\":"
+                verKey += 10; 
                 while (verKey < installerMeta.length() &&
                        (installerMeta[verKey] == ' ' || installerMeta[verKey] == '\t' ||
                         installerMeta[verKey] == '\n' || installerMeta[verKey] == '\r'))
@@ -157,7 +157,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
         out_json.close();
     }
 
-    // only clean libraries when the MC version changes
+    
     std::string cached_ver = readCachedVersion(state->kickx_dir);
     if (cached_ver != version) {
         queue_progress(state, "Version changed — cleaning old libraries...", 0.07);
@@ -189,11 +189,11 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
         return false;
     }
 
-    // collect library URLs from version JSON
+    
     size_t offset = 0;
     std::vector<std::string> lib_urls, lib_dests;
     while (true) {
-        size_t pos = version_json.find("https://libraries.minecraft.net/", offset);
+        size_t pos = version_json.find("https://libraries.minecraft.net/");
         if (pos == std::string::npos) break;
         size_t url_end = version_json.find("\"", pos);
         if (url_end == std::string::npos) break;
@@ -206,13 +206,13 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
         lib_dests.push_back(lib_dest);
     }
 
-    // download libraries in parallel
+    
     int total_libs = (int)lib_urls.size();
     queue_progress(state, ("Libraries [0/" + std::to_string(total_libs) + "]").c_str(), 0.12);
     parallelDownload(lib_urls, lib_dests);
     queue_progress(state, ("Libraries [" + std::to_string(total_libs) + "/" + std::to_string(total_libs) + "]").c_str(), 0.5);
 
-    // download asset index
+    
     queue_progress(state, "Downloading asset index...", 0.52);
 
     size_t asset_index_pos = version_json.find("\"assetIndex\":");
@@ -231,7 +231,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
             std::string asset_index_path = state->kickx_dir + "/assets/indexes/" + asset_id + ".json";
             http_download(asset_url, asset_index_path);
 
-            // download individual asset objects
+            
             queue_progress(state, "Scanning assets...", 0.55);
 
             std::ifstream in_asset_index(asset_index_path);
@@ -240,7 +240,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
                                                   std::istreambuf_iterator<char>());
                 in_asset_index.close();
 
-                // collect missing asset URLs + destinations
+                
                 std::vector<std::string> asset_urls, asset_dests;
                 size_t search_offset = 0;
                 while (true) {
@@ -256,7 +256,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
                     std::string obj_path = state->kickx_dir + "/assets/objects/" + prefix + "/" + hash;
                     struct stat st;
                     if (stat(obj_path.c_str(), &st) != 0) {
-                        std::string url = "https://resources.download.minecraft.net/" + prefix + "/" + hash;
+                        std::string url = "https://resources.download.minecraft.net/";
                         asset_urls.push_back(url);
                         asset_dests.push_back(obj_path);
                     }
@@ -264,7 +264,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
 
                 size_t missing = asset_urls.size();
                 if (missing > 0) {
-                    // write download list: url dest per line
+                    
                     std::string list_path = state->kickx_dir + "/.asset_list.txt";
                     {
                         std::ofstream list_out(list_path);
@@ -273,82 +273,8 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
                         }
                     }
 
-                    // run xargs with 32 parallel curl processes
-                    // xargs -n 2 passes url as $1, dest as $2 to sh -c
+                    
+                    
                     std::string cmd =
                         "xargs -P 32 -n 2 sh -c '"
-                        "mkdir -p \"${2%/*}\" 2>/dev/null; "
-                        "curl -sL -o \"$2\" \"$1\" 2>/dev/null"
-                        "' _ < \"" + list_path + "\"";
-                    system(cmd.c_str());
-
-                    size_t done = 0;
-                    for (const auto& d : asset_dests) {
-                        struct stat st;
-                        if (stat(d.c_str(), &st) == 0) done++;
-                    }
-
-                    char buf[256];
-                    snprintf(buf, sizeof(buf), "Assets [%zu/%zu]: all done", done, missing);
-                    queue_progress(state, buf, 0.55 + 0.15 * (double)done / missing);
-
-                    unlink(list_path.c_str());
-                }
-            }
-        }
-    }
-
-    // download Fabric loader libraries
-    queue_progress(state, "Setting up Fabric...", 0.72);
-    downloadFabricLibraries(state, version, 0.72, 0.26);
-
-    queue_progress(state, "Done!", 1.0);
-    g_usleep(300000);
-    queue_hide(state);
-
-    return true;
-}
-
-std::string detect_java_path() {
-    const char* java_home = getenv("JAVA_HOME");
-    if (java_home) {
-        std::string path = std::string(java_home) + "/bin/java";
-        struct stat buf;
-        if (stat(path.c_str(), &buf) == 0) return path;
-    }
-
-    const char* candidates[] = {
-        "/usr/lib/jvm/java-21-openjdk-amd64/bin/java",
-        "/usr/lib/jvm/java-17-openjdk-amd64/bin/java",
-        "/usr/lib/jvm/java-11-openjdk-amd64/bin/java",
-        "/usr/lib/jvm/java-8-openjdk-amd64/bin/java",
-        "/usr/lib/jvm/default-java/bin/java",
-        "/usr/bin/java",
-    };
-    for (const char* path : candidates) {
-        struct stat buf;
-        if (stat(path, &buf) == 0) return path;
-    }
-
-    std::string which = "which java 2>/dev/null";
-    FILE* pipe = popen(which.c_str(), "r");
-    if (pipe) {
-        char buf[512];
-        if (fgets(buf, sizeof(buf), pipe)) {
-            std::string result(buf);
-            if (!result.empty()) {
-                result.erase(result.find_last_not_of("\n") + 1);
-                pclose(pipe);
-                return result;
-            }
-        }
-        pclose(pipe);
-    }
-
-    return "/usr/bin/java";
-}
-
-} // namespace network
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+                        "mkdir -p \"${2%

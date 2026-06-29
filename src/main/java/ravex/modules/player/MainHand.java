@@ -36,7 +36,7 @@ public class MainHand extends Module {
         } else {
             String choice = item.getValue();
             if (choice.equals("Sword")) {
-                // Ищем лучший меч в хотбаре
+                
                 int swordSlot = findSwordSlot();
                 if (swordSlot != -1) {
                     p.getInventory().setSelectedSlot(swordSlot);
@@ -50,12 +50,12 @@ public class MainHand extends Module {
 
         if (targetItem == Items.AIR) return;
 
-        // Если уже держим нужный предмет, выходим
+        
         if (p.getMainHandItem().is(targetItem) || (targetItem == Items.GOLDEN_APPLE && p.getMainHandItem().is(Items.ENCHANTED_GOLDEN_APPLE))) {
             return;
         }
 
-        // Ищем в хотбаре
+        
         int slot = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = p.getInventory().getItem(i);

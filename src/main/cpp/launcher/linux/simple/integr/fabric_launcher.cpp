@@ -7,7 +7,7 @@ namespace simple {
 namespace integr {
 
 bool prepareFabricLaunch(const std::string& kickxDir, const std::string& mcVersion, std::string& mainClass) {
-    // check if fabric-loader is installed
+    
     std::string loaderDir = kickxDir + "/libraries/net/fabricmc/fabric-loader";
     struct stat st;
     if (stat(loaderDir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
@@ -25,7 +25,7 @@ std::string getFabricMainClass() {
     return "net.fabricmc.loader.impl.launch.knot.KnotClient";
 }
 
-} // namespace integr
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

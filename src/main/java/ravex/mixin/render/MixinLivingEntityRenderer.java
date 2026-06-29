@@ -18,7 +18,7 @@ public class MixinLivingEntityRenderer {
 
     @Inject(method = "shouldShowName", at = @At("HEAD"), cancellable = true)
     private void onShouldShowName(net.minecraft.world.entity.LivingEntity entity, double distance, CallbackInfoReturnable<Boolean> cir) {
-        // mute vanilla nametags when our nametags are active
+        
         if (NameTags.INSTANCE.getEnabled()) {
             cir.setReturnValue(false);
         }

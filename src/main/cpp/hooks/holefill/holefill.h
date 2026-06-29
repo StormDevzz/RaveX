@@ -27,22 +27,13 @@ struct HoleCandidate {
     double distToPlayer;
 };
 
-/**
- * Scans for holes in the block grid around the player.
- * A "hole" is an air pocket at the player's feet level that is:
- *   - Air at (x, y, z)
- *   - Solid block below (floor)
- *   - Air above (open top)
- *   - 3+ solid horizontal neighbors (or 2+ if fillAll)
- *
- * Uses scan-line ray casting for efficient grid traversal.
- */
+
 std::vector<HoleCandidate> findHoles(
     double px, double py, double pz,
     double range,
     int maxResults
 );
 
-} // namespace ravex
+} 
 
 #endif

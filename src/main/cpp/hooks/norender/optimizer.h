@@ -29,4 +29,4 @@ private:
     static uint64_t measureFreeDelta(uint64_t before);
 };
 
-} // namespace ravex
+} 

@@ -38,7 +38,7 @@ void log_perf(const std::string &section, const std::string &detail, long ms) {
     write_log("PERF", section + "/" + detail + ": " + std::to_string(ms) + " ms");
 }
 
-} // namespace analyze
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

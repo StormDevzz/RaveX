@@ -77,8 +77,8 @@ bool ConditionValidator::isPlacementSafe(
 bool ConditionValidator::shouldForceArmorBreak(const EntityStats& targetStats, double targetEffectiveHp, bool armorBreaker, double armorPercent) {
     if (!armorBreaker) return false;
     
-    // Если у цели прочность любой части брони падает ниже установленного процента (например, 15%),
-    // и здоровье цели в пределах досягаемости (<= 28 HP), мы заставляем ломать броню
+    
+    
     double minDur = ArmorCalc::getMinArmorDurability(targetStats);
     if (minDur > 0.0 && minDur <= armorPercent && targetEffectiveHp <= 28.0) {
         return true;
@@ -89,12 +89,12 @@ bool ConditionValidator::shouldForceArmorBreak(const EntityStats& targetStats, d
 bool ConditionValidator::shouldForcePopTotem(double targetEffectiveHp, double targetDmg, double targetTotems, bool totemDetection) {
     if (!totemDetection) return false;
     
-    // Если у цели есть тотемы, и наносимый урон превышает оставшееся эффективное здоровье цели,
-    // это гарантированно снимет/попнет тотем. В этом случае мы даем огромный приоритет!
+    
+    
     if (targetTotems > 0.0 && targetDmg >= targetEffectiveHp) {
         return true;
     }
     return false;
 }
 
-} // namespace ravex
+} 

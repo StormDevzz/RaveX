@@ -11,7 +11,7 @@ enum class AccountType {
     MICROSOFT
 };
 
-} // namespace acc
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

@@ -3,10 +3,7 @@ package ravex.modules.player;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * Singleton хранилище выбранных для удаления предметов InventoryCleaner.
- * ID предметов хранятся в формате "minecraft:dirt", "minecraft:stone" и т.д.
- */
+
 public class InventoryCleanerData {
     public static final InventoryCleanerData INSTANCE = new InventoryCleanerData();
 
