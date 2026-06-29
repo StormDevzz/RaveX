@@ -18,7 +18,7 @@ void shutdown_analyze() {
     log_system_state("shutdown");
 }
 
-} // namespace analyze
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

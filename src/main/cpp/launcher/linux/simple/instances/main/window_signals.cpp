@@ -78,7 +78,7 @@ void bind_signals(LauncherState *state, GtkWidget *btn_offline, GtkWidget *btn_m
     g_signal_connect(state->btn_launch, "clicked", G_CALLBACK(button::on_launch_clicked), state);
 }
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

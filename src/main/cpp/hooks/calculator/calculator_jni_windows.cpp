@@ -14,7 +14,7 @@
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "user32.lib")
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+
 
 static const COLORREF CLR_BG       = RGB(0x0e,0x0a,0x1a);
 static const COLORREF CLR_DISPLAY  = RGB(0xee,0xee,0xee);
@@ -46,7 +46,7 @@ static const int FN_COLS = 5;
 static const int FN_ROWS = 2;
 static const int FN_BTN_H = 28;
 
-// ─── Global state ────────────────────────────────────────────────────────────
+
 
 static JavaVM*   g_jvm       = nullptr;
 static jclass    g_calc_class = nullptr;
@@ -66,7 +66,7 @@ static HWND g_hDisplay = nullptr;
 static HWND g_hResult  = nullptr;
 static HWND g_hHistory = nullptr;
 
-// ─── UTF-8 / UTF-16 ─────────────────────────────────────────────────────────
+
 
 static std::wstring to_wide(const std::string& s) {
     if (s.empty()) return L"";
@@ -84,7 +84,7 @@ static std::string to_utf8(const std::wstring& w) {
     return s;
 }
 
-// ─── JNI helpers ─────────────────────────────────────────────────────────────
+
 
 static JNIEnv* get_env() {
     JNIEnv* env = nullptr;
@@ -101,7 +101,7 @@ static void notify_java_close() {
     if (m) env->CallStaticVoidMethod(g_calc_class, m);
 }
 
-// ─── Calculator logic ────────────────────────────────────────────────────────
+
 
 static void update_display() {
     if (g_hDisplay)
@@ -162,14 +162,14 @@ static void handle_calc(wchar_t ch) {
     }
 }
 
-// ─── Button action map ───────────────────────────────────────────────────────
+
 
 static std::string btn_action(HWND hBtn) {
     wchar_t buf[64] = {0};
     GetWindowTextW(hBtn, buf, 64);
-    // Map display text to action string
+    
     std::wstring w(buf);
-    if (w == L"\u00b1")    return "\xc2\xb1";     // ±
+    if (w == L"\u00b1")    return "\xc2\xb1";     
     if (w == L"\u2190" || w == L"\u232b") return "BS";
     if (w == L"\u00d7")    return "*";
     if (w == L"\u00f7")    return "/";
@@ -178,7 +178,7 @@ static std::string btn_action(HWND hBtn) {
     return to_utf8(w);
 }
 
-// ─── Button creation ─────────────────────────────────────────────────────────
+
 
 static int g_btn_id = 100;
 
@@ -188,25 +188,25 @@ static void add_btn(HWND parent, const wchar_t* text, int x, int y, int w, int h
         x, y, w, h, parent, (HMENU)(INT_PTR)(g_btn_id++), g_hinst, nullptr);
 }
 
-// ─── Window procedure ────────────────────────────────────────────────────────
+
 
 static LRESULT CALLBACK CalcWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_CREATE: {
         int y = 8;
-        // Title
+        
         CreateWindowExW(0, L"STATIC", L"\u26a1 RaveX Calculator",
             WS_CHILD | WS_VISIBLE | SS_LEFT, 10, y, 300, 22,
             hWnd, nullptr, g_hinst, nullptr);
         y += 28;
 
-        // Display
+        
         g_hDisplay = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"",
             WS_CHILD | WS_VISIBLE | ES_READONLY | ES_RIGHT | ES_AUTOHSCROLL,
             8, y, WIN_CX - 16, 28, hWnd, nullptr, g_hinst, nullptr);
         y += 34;
 
-        // Result preview
+        
         g_hResult = CreateWindowExW(0, L"STATIC", L"",
             WS_CHILD | WS_VISIBLE | SS_RIGHT,
             8, y, WIN_CX - 16, 18, hWnd, nullptr, g_hinst, nullptr);
@@ -214,7 +214,7 @@ static LRESULT CALLBACK CalcWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
         y += 4;
 
-        // Function buttons: 2 rows x 5 cols
+        
         const wchar_t* fns[FN_ROWS][FN_COLS] = {
             {L"sin(", L"cos(", L"tan(", L"sqrt(", L"log("},
             {L"asin(",L"acos(",L"atan(",L"^",     L"fact("}
@@ -227,53 +227,53 @@ static LRESULT CALLBACK CalcWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
         y += FN_ROWS * (FN_BTN_H + BTN_GAP) + 4;
 
-        // Numpad grid: 4 cols, 6 rows
+        
         int grid_w = 4 * BTN_W + 3 * BTN_GAP;
         int gx = (WIN_CX - grid_w) / 2;
 
-        // Row 0: C  ±  %  ←
+        
         add_btn(hWnd, L"C",     gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"\u00b1", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"%",     gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"\u2190", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        // Row 1: 7  8  9  /
+        
         add_btn(hWnd, L"7", gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"8", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"9", gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"/", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        // Row 2: 4  5  6  *
+        
         add_btn(hWnd, L"4", gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"5", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"6", gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"*", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        // Row 3: 1  2  3  -
+        
         add_btn(hWnd, L"1", gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"2", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"3", gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"-", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        // Row 4: 0  .  (  +
+        
         add_btn(hWnd, L"0", gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L".", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"(", gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"+", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        // Row 5: )  pi  =  (spacer for =)
+        
         add_btn(hWnd, L")",      gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"\u03c0", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"=",      gx + (BTN_W+BTN_GAP)*2, y, BTN_W * 2 + BTN_GAP, BTN_H);
-        // = spans 2 columns for larger hit area
+        
         y += BTN_H + BTN_GAP + 4;
 
-        // History
+        
         CreateWindowExW(0, L"STATIC", L"History",
             WS_CHILD | WS_VISIBLE | SS_LEFT, 10, y, 100, 16,
             hWnd, nullptr, g_hinst, nullptr);
@@ -284,7 +284,7 @@ static LRESULT CALLBACK CalcWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
             8, y, WIN_CX - 16, WIN_CY - y - 8,
             hWnd, nullptr, g_hinst, nullptr);
 
-        // Apply fonts
+        
         if (g_hDisplay && g_disp_font) SendMessageW(g_hDisplay, WM_SETFONT, (WPARAM)g_disp_font, TRUE);
         if (g_hResult  && g_res_font)  SendMessageW(g_hResult,  WM_SETFONT, (WPARAM)g_res_font,  TRUE);
         if (g_hHistory && g_fn_font)   SendMessageW(g_hHistory, WM_SETFONT, (WPARAM)g_fn_font,   TRUE);
@@ -443,7 +443,7 @@ static LRESULT CALLBACK CalcWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
     return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-// ─── Window thread ───────────────────────────────────────────────────────────
+
 
 static void calc_thread() {
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
@@ -502,7 +502,7 @@ static void calc_thread() {
     CoUninitialize();
 }
 
-// ─── JNI exports ─────────────────────────────────────────────────────────────
+
 
 extern "C" {
 

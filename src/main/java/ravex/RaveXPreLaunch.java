@@ -13,7 +13,7 @@ public class RaveXPreLaunch implements PreLaunchEntrypoint {
     public void onPreLaunch() {
         LOGGER.info("[RaveX-PreLaunch] Early startup detected! Initializing loader process...");
 
-        // Clean up any stale ready signal in system temp directory
+        
         try {
             java.io.File signal = new java.io.File(System.getProperty("java.io.tmpdir"), ".ravex_ready");
             if (signal.exists()) {
@@ -21,7 +21,7 @@ public class RaveXPreLaunch implements PreLaunchEntrypoint {
             }
         } catch (Exception ignored) {}
 
-        // Spawn standalone loader GUI process ONLY if we weren't launched by an active launcher loader!
+        
         if (!"true".equals(System.getenv("RAVEX_LOADER_ACTIVE"))) {
             try {
                 String jarPath = RaveX.getModJarPath();
@@ -29,7 +29,7 @@ public class RaveXPreLaunch implements PreLaunchEntrypoint {
                     String javaExe = System.getProperty("java.home") + "/bin/java";
                     java.io.File exeFile = new java.io.File(javaExe);
                     if (!exeFile.exists()) {
-                        javaExe = "java"; // Fallback to global java path
+                        javaExe = "java"; 
                     }
                     
                     List<String> cmd = new ArrayList<>();
@@ -46,7 +46,7 @@ public class RaveXPreLaunch implements PreLaunchEntrypoint {
                     Process p = pb.start();
                     RaveX.setLoaderProcess(p);
                     
-                    // Read loader process output and print directly to Minecraft logs for real-time diagnostics
+                    
                     new Thread(() -> {
                         try (java.io.BufferedReader r = new java.io.BufferedReader(
                                 new java.io.InputStreamReader(p.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {

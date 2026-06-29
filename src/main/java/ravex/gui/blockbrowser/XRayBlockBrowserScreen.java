@@ -30,7 +30,7 @@ public class XRayBlockBrowserScreen extends Screen {
     private static final int HEADER_HEIGHT = 48;
     private static final int BOTTOM_BAR_HEIGHT = 30;
 
-    // Cache entry to avoid costly allocations and translations on the fly
+    
     private static class BlockCacheEntry {
         final Block block;
         final Identifier identifier;
@@ -105,32 +105,32 @@ public class XRayBlockBrowserScreen extends Screen {
 
         int activeColor = ColorUtility.getActiveColor();
 
-        // Title and count info - changed to "Block Selector"
+        
         FontRenderUtility.drawString(graphics, "Block Selector", 16, 8, activeColor, true);
         long selectedCount = allBlocksCache.stream().filter(entry -> Xray.INSTANCE.isBlockSelected(entry.identifier)).count();
         FontRenderUtility.drawString(graphics,
             selectedCount + " / " + allBlocksCache.size() + " blocks active",
             16, 22, 0xFF858599, true);
 
-        // Render Search Box
+        
         int barW = Math.min(240, this.width - 290);
         int barX = this.width - barW - 16;
         searchBar.render(graphics, mouseX, mouseY, barX, 8, barW, 24);
 
-        // Render Tabs
+        
         int tabX = 16;
         int tabY = HEADER_HEIGHT - 6;
         tabAll.render(graphics, mouseX, mouseY, tabX, tabY, currentTab == Tab.ALL, activeColor);
         tabSelected.render(graphics, mouseX, mouseY, tabX + 86, tabY, currentTab == Tab.SELECTED, activeColor);
         tabHidden.render(graphics, mouseX, mouseY, tabX + 172, tabY, currentTab == Tab.HIDDEN, activeColor);
 
-        // Grid parameters
+        
         int gridX = 20;
         int gridY = HEADER_HEIGHT + 18;
         int gridWidth = columns * (ITEM_SIZE + GRID_PADDING);
         int gridHeight = rows * (ITEM_SIZE + GRID_PADDING);
 
-        // Grid backing
+        
         graphics.fill(gridX - 4, gridY - 4, gridX + gridWidth + 4, gridY + gridHeight + 4, 0xAA0A0A1A);
         graphics.fill(gridX - 4, gridY - 4, gridX + gridWidth + 4, gridY - 3, ColorUtility.withAlpha(activeColor, 35));
         graphics.fill(gridX - 4, gridY + gridHeight + 3, gridX + gridWidth + 4, gridY + gridHeight + 4, ColorUtility.withAlpha(activeColor, 35));
@@ -140,7 +140,7 @@ public class XRayBlockBrowserScreen extends Screen {
         int totalRows = (int)Math.ceil((double)filteredBlocksCache.size() / columns);
         int maxScroll = Math.max(0, totalRows - rows);
 
-        // Smooth scroll
+        
         targetScrollAnim = scrollOffset;
         float scrollDiff = targetScrollAnim - scrollAnimProgress;
         if (Math.abs(scrollDiff) > 0.01f) {
@@ -168,11 +168,11 @@ public class XRayBlockBrowserScreen extends Screen {
 
                 boolean selected = Xray.INSTANCE.isBlockSelected(entry.identifier);
 
-                // Slot background
+                
                 int slotBg = hovered ? ColorUtility.withAlpha(activeColor, 40) : (selected ? 0x2244FF44 : 0x2215152A);
                 graphics.fill(slotX, slotY, slotX + ITEM_SIZE, slotY + ITEM_SIZE, slotBg);
 
-                // Slot border outline
+                
                 int borderCol = selected ? 0x8844FF44 : 0x22858599;
                 if (hovered) borderCol = activeColor;
 
@@ -185,7 +185,7 @@ public class XRayBlockBrowserScreen extends Screen {
                     hoveredItem = entry.stack;
                 }
 
-                // Render block icon directly from pre-cached ItemStack (highly optimized)
+                
                 int iconX = slotX + (ITEM_SIZE - 16) / 2;
                 int iconY = slotY + (ITEM_SIZE - 16) / 2;
                 graphics.renderItem(entry.stack, iconX, iconY);
@@ -194,7 +194,7 @@ public class XRayBlockBrowserScreen extends Screen {
 
         graphics.disableScissor();
 
-        // Scrollbar
+        
         if (maxScroll > 0) {
             int scrollbarX = gridX + gridWidth + 8;
             int barY = gridY;
@@ -210,7 +210,7 @@ public class XRayBlockBrowserScreen extends Screen {
             graphics.fill(scrollbarX, thumbY, scrollbarX + 4, thumbY + thumbHeight, ColorUtility.withAlpha(activeColor, 80));
         }
 
-        // Back button
+        
         int btnW = 60;
         int btnH = 16;
         int btnX = 16;
@@ -226,7 +226,7 @@ public class XRayBlockBrowserScreen extends Screen {
         }
         FontRenderUtility.drawString(graphics, "Back", btnX + btnW/2 - 12, btnY + 4, 0xFFD0D0E0, true);
 
-        // Tooltip
+        
         if (!hoveredItem.isEmpty()) {
             renderTooltip(graphics, hoveredItem, mouseX, mouseY);
         }
@@ -271,12 +271,12 @@ public class XRayBlockBrowserScreen extends Screen {
         int barW = Math.min(240, this.width - 290);
         int barX = this.width - barW - 16;
 
-        // Search bar click
+        
         if (searchBar.mouseClicked(event.x(), event.y(), barX, 8, barW, 24)) {
             return true;
         }
 
-        // Back button click
+        
         int btnW = 60;
         int btnH = 16;
         int btnX = 16;
@@ -286,7 +286,7 @@ public class XRayBlockBrowserScreen extends Screen {
             return true;
         }
 
-        // Tabs click
+        
         int tabX = 16;
         int tabY = HEADER_HEIGHT - 6;
         if (tabAll.mouseClicked(event.x(), event.y(), tabX, tabY)) {
@@ -308,7 +308,7 @@ public class XRayBlockBrowserScreen extends Screen {
             return true;
         }
 
-        // Block slot click
+        
         int col = (int)(event.x() - gridX) / (ITEM_SIZE + GRID_PADDING);
         int row = ((int)event.y() - gridY) / (ITEM_SIZE + GRID_PADDING) + (int)scrollAnimProgress;
         if (col >= 0 && col < columns && row >= 0) {

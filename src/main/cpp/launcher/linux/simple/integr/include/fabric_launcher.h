@@ -10,7 +10,7 @@ bool prepareFabricLaunch(const std::string& kickxDir, const std::string& mcVersi
 bool detectFabricInClasspath(const std::string& classpath);
 std::string getFabricMainClass();
 
-} // namespace integr
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

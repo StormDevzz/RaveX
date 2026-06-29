@@ -38,6 +38,6 @@ std::string BrandFormatter::formatBrand(const std::string& rawBrand) {
     return "\u00A77" + brand;
 }
 
-} // namespace brand
-} // namespace plugins
-} // namespace ravex
+} 
+} 
+} 

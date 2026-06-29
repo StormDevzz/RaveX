@@ -23,13 +23,13 @@ void printSysInfo() {
 }
 
 void optimizeProcess() {
-    // 1. Elevate thread scheduling priority to high/realtime if possible
+    
     struct sched_param param;
-    param.sched_priority = 0; // standard priority
+    param.sched_priority = 0; 
     sched_setscheduler(0, SCHED_OTHER, &param);
-    setpriority(PRIO_PROCESS, 0, -10); // nice -10 (high priority)
+    setpriority(PRIO_PROCESS, 0, -10); 
 
-    // 2. Perform native memory trim to release unused pages to OS
+    
     malloc_trim(0);
 
     std::cout << "{\"status\":\"optimized\",\"native_memory_trimmed\":true,\"process_priority\":-10}" << std::endl;

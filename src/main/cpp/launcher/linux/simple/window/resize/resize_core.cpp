@@ -16,7 +16,7 @@ void constrain_window_size(GtkWidget *window, int w, int h) {
     (void)h;
 }
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

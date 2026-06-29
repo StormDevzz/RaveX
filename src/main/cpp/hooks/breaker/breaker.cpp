@@ -27,14 +27,14 @@ BreakResult findBestBreakBlock(
     for (const auto& cand : candidates) {
         if (AutoCrystalMath::distanceToCenter(playerPos, cand) > breakRange) continue;
 
-        // Build temporary solid blocks list excluding the candidate
+        
         std::vector<Vec3> tempBlocks;
         for (const auto& sb : solidBlocks) {
             if ((int)sb.x == (int)cand.x && (int)sb.y == (int)cand.y && (int)sb.z == (int)cand.z) continue;
             tempBlocks.push_back(sb);
         }
 
-        // Call findBestPlacement in the simulated world
+        
         CrystalPlacement placement = AutoCrystalMath::findBestPlacement(
             playerPos, playerHp, playerAbs, playerStats,
             targetPos, targetHp, targetAbs, targetStats,
@@ -44,7 +44,7 @@ BreakResult findBestBreakBlock(
         if (placement.valid) {
             double score = placement.targetDamage - placement.selfDamage * selfDamageWeight;
             
-            // Priority boost for surround or support blocks covering target legs/feet
+            
             int cx = (int)std::floor(cand.x);
             int cy = (int)std::floor(cand.y);
             int cz = (int)std::floor(cand.z);
@@ -88,4 +88,4 @@ BreakResult findBestBreakBlock(
     return best;
 }
 
-} // namespace ravex
+} 

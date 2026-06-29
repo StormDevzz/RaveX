@@ -24,7 +24,7 @@ public class AutoNameTag extends Module {
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
 
-        // 1. Find NameTag in hotbar
+        
         int tagSlot = -1;
         ItemStack tagStack = null;
         for (int i = 0; i < 9; i++) {
@@ -36,16 +36,16 @@ public class AutoNameTag extends Module {
             }
         }
 
-        if (tagSlot == -1 || tagStack == null) return; // No custom-named NameTag in hotbar
+        if (tagSlot == -1 || tagStack == null) return; 
         String tagName = tagStack.getHoverName().getString();
 
-        // 2. Scan for a valid target living entity
+        
         LivingEntity target = null;
         double closestDist = 4.5;
         for (var entity : mc.level.entitiesForRendering()) {
             if (entity instanceof LivingEntity living && !(entity instanceof Player) && !(entity instanceof ArmorStand)) {
                 if (living.isAlive()) {
-                    // Check if already renamed to this custom name to avoid wasting tags
+                    
                     if (living.getCustomName() != null && tagName.equals(living.getCustomName().getString())) {
                         continue;
                     }
@@ -60,7 +60,7 @@ public class AutoNameTag extends Module {
 
         if (target == null) return;
 
-        // 3. Silent swap to NameTag, interact, swing, and swap back!
+        
         int prevSlot = p.getInventory().getSelectedSlot();
         p.getInventory().setSelectedSlot(tagSlot);
 

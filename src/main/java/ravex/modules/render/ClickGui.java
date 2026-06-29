@@ -25,38 +25,38 @@ public class ClickGui extends Module {
     public final BooleanParameter moduleOutlines = new BooleanParameter("Button Outlines", true);
     public final ravex.parameter.ColorParameter moduleOutlineColor = new ravex.parameter.ColorParameter("Button Border", 0xFF2A2A35);
 
-    // Live-adjustable layout
+    
     public final NumberParameter buttonHeight = new NumberParameter("Button Height", 15, 12, 24, 1);
     public final NumberParameter panelWidth   = new NumberParameter("Panel Width",  120, 80, 200, 5);
 
-    // Module counter badge in category header
+    
     public final BooleanParameter moduleCounter = new BooleanParameter("Module Counter", true);
 
     public final BooleanParameter companionImage = new BooleanParameter("Show Image", false);
     public final ModeParameter companionType = new ModeParameter("Image Type", "Femboy", List.of("Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow"));
 
-    // Inline vs separate window for module settings
+    
     public final BooleanParameter separateSettings = new BooleanParameter("Separate Settings", false);
 
-    // Gui Scale
+    
     public final NumberParameter guiScale = new NumberParameter("Gui Scale", 0.85, 0.5, 1.0, 0.05);
 
-    // Gear icon rotation speed (degrees per second)
+    
     public final NumberParameter gearRotationSpeed = new NumberParameter("Gear Speed", 30, 0, 180, 5);
 
-    // Smooth scrolling
+    
     public final BooleanParameter smoothScroll = new BooleanParameter("Smooth Scroll", true);
     public final NumberParameter scrollSmoothness = new NumberParameter("Scroll Smoothness", 12, 1, 40, 1);
 
-    // Option settings open/close animation
+    
     public final BooleanParameter smoothOption = new BooleanParameter("Option Animation", true);
     public final NumberParameter optionSmoothness = new NumberParameter("Option Smoothness", 12, 1, 40, 1);
 
-    // Category header glow
+    
     public final BooleanParameter headerGlow = new BooleanParameter("Header Glow", true);
     public final NumberParameter headerGlowIntensity = new NumberParameter("Glow Intensity", 20, 5, 60, 5);
 
-    // Tooltip settings
+    
     public final NumberParameter tooltipSpeed = new NumberParameter("Tooltip Speed", 10, 1, 30, 1);
     public final NumberParameter tooltipOffsetX = new NumberParameter("Tooltip Offset X", 8, 0, 30, 1);
     public final NumberParameter tooltipOffsetY = new NumberParameter("Tooltip Offset Y", 8, 0, 30, 1);

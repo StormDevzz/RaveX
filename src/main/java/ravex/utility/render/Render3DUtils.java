@@ -43,7 +43,7 @@ public class Render3DUtils {
             la = buildAdditiveType(RenderPipelines.LINES, "ravex_line_additive");
             lan = buildAdditiveNoDepthType(RenderPipelines.LINES, "ravex_line_additive_nodepth");
         } catch (Exception e) {
-            // through-walls/additive unavailable
+            
         }
         FILL_NO_DEPTH = f;
         LINE_NO_DEPTH = l;
@@ -107,10 +107,10 @@ public class Render3DUtils {
         return AccessorRenderType.invokeCreate(name, setup);
     }
 
-    // -------------------------------------------------------------------------
-    // Per-frame batcher — accumulates all draws into 4 shared BufferBuilders,
-    // then flushes at endFrame() with just 4 type.draw() calls.
-    // -------------------------------------------------------------------------
+    
+    
+    
+    
     private static BufferBuilder fillBuilder;
     private static BufferBuilder fillNoDepthBuilder;
     private static BufferBuilder lineBuilder;
@@ -182,9 +182,9 @@ public class Render3DUtils {
         lineAdditiveNoDepthBuilder = null;
     }
 
-    // -------------------------------------------------------------------------
-    // Batch render methods (used inside beginFrame() / endFrame())
-    // -------------------------------------------------------------------------
+    
+    
+    
     public static void batchFilledBox(Matrix4f matrix, double size, float r, float g, float b, float a) {
         batchFilledBox(matrix, size, r, g, b, a, false);
     }
@@ -330,9 +330,9 @@ public class Render3DUtils {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Legacy immediate-mode API (one draw call per invocation)
-    // -------------------------------------------------------------------------
+    
+    
+    
     public static void renderFilledBox(Matrix4f matrix, double size, float r, float g, float b, float a) {
         renderFilledBox(matrix, size, r, g, b, a, false);
     }

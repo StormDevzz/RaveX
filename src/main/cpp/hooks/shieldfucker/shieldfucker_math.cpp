@@ -45,4 +45,4 @@ float clampPitch(float pitch) {
     return pitch;
 }
 
-} // namespace shieldfucker
+} 

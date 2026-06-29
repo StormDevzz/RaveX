@@ -20,5 +20,5 @@ AuthResult offlineAuth(const std::string& username);
 bool verifySession(const std::string& serverId, const std::string& sharedSecret,
                    const std::string& publicKey);
 
-} // namespace auth
-} // namespace packet
+} 
+} 

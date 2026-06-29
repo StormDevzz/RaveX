@@ -10,7 +10,7 @@ ModelData convert(const ModelData& input, const ConvertOptions& opts) {
     if (opts.flattenHierarchy) {
         for (auto& mesh : out.meshes) {
             for (auto& v : mesh.vertices) {
-                v.pos.x += 0; // placeholder
+                v.pos.x += 0; 
             }
         }
         out.bones.clear();
@@ -25,4 +25,4 @@ ModelData convert(const ModelData& input, const ConvertOptions& opts) {
     return out;
 }
 
-} // namespace model
+} 

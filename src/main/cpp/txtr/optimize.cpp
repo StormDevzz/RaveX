@@ -114,4 +114,4 @@ TextureData optimize(const TextureData& input, const OptimizeOptions& opts) {
     return result;
 }
 
-} // namespace txtr
+} 

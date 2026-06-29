@@ -14,7 +14,7 @@ void calculatePhaseOffset(
     double yawRad = yaw * (M_PI / 180.0);
     double pitchRad = pitch * (M_PI / 180.0);
 
-    // Calculate movement vector
+    
     outOffset[0] = -std::sin(yawRad) * std::cos(pitchRad) * distance;
     outOffset[1] = -std::sin(pitchRad) * distance;
     outOffset[2] = std::cos(yawRad) * std::cos(pitchRad) * distance;

@@ -33,4 +33,4 @@ TextureData convert(const TextureData& input, const ConvertOptions& opts) {
     return result;
 }
 
-} // namespace txtr
+} 

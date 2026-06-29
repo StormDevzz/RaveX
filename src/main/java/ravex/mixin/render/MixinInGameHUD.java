@@ -63,7 +63,7 @@ public abstract class MixinInGameHUD {
             if (target == mc.player) continue;
             if (target instanceof LivingEntity living && !living.isAlive()) continue;
 
-            // Distance limit check using C++ JNI call if available
+            
             double dist;
             if (NameTags.isNativeAvailable()) {
                 Vec3 pPos = mc.player.position();
@@ -82,7 +82,7 @@ public abstract class MixinInGameHUD {
             }
             if (dist > maxDist) continue;
 
-            // Prevent first person overlap when entity is extremely close
+            
             if (firstPerson && dist < 1.2 && !nameTagsEnabled) continue;
 
             boolean isPlayer = target instanceof Player;
@@ -103,12 +103,12 @@ public abstract class MixinInGameHUD {
             candidates.add(target);
         }
 
-        // 1. Render Tracers first without dot/projection/off-screen checks
+        
         if (tracersEnabled) {
             ravex.modules.render.Tracers tracers = ravex.modules.render.Tracers.INSTANCE;
             float width = tracers.lineWidth.getValue().floatValue();
 
-            // filter targets that should actually be shown and get their colors
+            
             java.util.List<Entity> tracerEntities = new java.util.ArrayList<>();
             java.util.List<Integer> tracerColors = new java.util.ArrayList<>();
 
@@ -145,7 +145,7 @@ public abstract class MixinInGameHUD {
             boolean tracersNativeDone = false;
 
             if (!tracersNativeDone) {
-                // Java fallback path, keep it functional!
+                
                 for (int i = 0; i < tracerCount; i++) {
                     Entity target = tracerEntities.get(i);
                     int color = tracerColors.get(i);
@@ -208,7 +208,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        // 2. Perform projections and culling checks specifically for ESP / NameTags
+        
         int count = candidates.size();
         boolean nativeSuccess = false;
         int renderedCount = 0;
@@ -502,7 +502,7 @@ public abstract class MixinInGameHUD {
                 }
             }
         } else {
-            // Fallback loop if native code failed or is unavailable
+            
             for (Entity target : candidates) {
                 boolean isPlayer = target instanceof Player;
                 boolean isMonster = target instanceof Monster;
@@ -722,7 +722,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        // --- BasePlace 2D Overlay ---
+        
         ravex.modules.combat.BasePlace bp = ravex.modules.combat.BasePlace.INSTANCE;
         if (bp.getEnabled() && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
             BlockPos p = ravex.modules.combat.BasePlace.getSimulatedPlacementBlock();
@@ -750,14 +750,14 @@ public abstract class MixinInGameHUD {
                     int bottom = y + 5;
 
                     context.fill(left, top, right, bottom, 0xAA000000);
-                    context.fill(left, top, right, top + 1, 0xFF00FF00); // Green color line for BasePlace
+                    context.fill(left, top, right, top + 1, 0xFF00FF00); 
 
                     context.drawString(mc.font, dmgText, x - w / 2, y - 4, 0xFFFFFFFF, false);
                 }
             }
         }
 
-        // --- AnchorAura 2D Overlay ---
+        
         ravex.modules.combat.AnchorAura aa = ravex.modules.combat.AnchorAura.INSTANCE;
         if (aa.getEnabled() && ravex.modules.combat.AnchorAura.simulatedPlacementBlock != null) {
             BlockPos p = ravex.modules.combat.AnchorAura.simulatedPlacementBlock;
@@ -785,14 +785,14 @@ public abstract class MixinInGameHUD {
                     int bottom = y + 5;
 
                     context.fill(left, top, right, bottom, 0xAA000000);
-                    context.fill(left, top, right, top + 1, 0xFF00FFFF); // Cyan color line for AnchorAura
+                    context.fill(left, top, right, top + 1, 0xFF00FFFF); 
 
                     context.drawString(mc.font, dmgText, x - w / 2, y - 4, 0xFFFFFFFF, false);
                 }
             }
         }
 
-        // --- AutoCrystal 2D Overlay ---
+        
         ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
         if (ac.getEnabled() && ac.renderDamage.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
 
@@ -833,7 +833,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        // --- AutoSmelt 2D Overlay ---
+        
         ravex.modules.world.AutoSmelt asm = ravex.modules.world.AutoSmelt.INSTANCE;
         if (asm.getEnabled() && asm.render.getValue() && ravex.modules.world.AutoSmelt.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoSmelt.currentTarget;
@@ -870,7 +870,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        // --- AutoBrew 2D Overlay ---
+        
         ravex.modules.world.AutoBrew ab = ravex.modules.world.AutoBrew.INSTANCE;
         if (ab.getEnabled() && ab.render.getValue() && ravex.modules.world.AutoBrew.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoBrew.currentTarget;
@@ -909,7 +909,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        // --- PacketMine 2D overlay (unbobbed) ---
+        
         ravex.modules.exploit.PacketMine pm = ravex.modules.exploit.PacketMine.INSTANCE;
         if (pm.getEnabled() && pm.render.getValue()) {
             for (var mb : ravex.modules.exploit.PacketMine.miningBlocks) {
@@ -938,7 +938,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        // --- Waypoint overlay ---
+        
         if (ravex.modules.render.Waypoint.INSTANCE.getEnabled()) {
             int wpColor = ravex.modules.render.Waypoint.INSTANCE.color.getValue();
             String currentDim = mc.level != null ? mc.level.dimension().identifier().toString() : null;
@@ -1005,7 +1005,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        // batch update animation states via C++, keep it blazing fast!
+        
         ravex.utility.misc.GuiOptimizer.optimizeHudAnimations(enabledModules);
 
         for (HudModule hud : enabledModules) {

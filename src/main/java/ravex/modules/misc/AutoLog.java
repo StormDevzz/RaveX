@@ -30,13 +30,13 @@ public class AutoLog extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        // 1. Проверка низкого здоровья
+        
         if (onLowHealth.getValue() && mc.player.getHealth() <= healthLimit.getValue()) {
             disconnect("Low Health Triggered (" + mc.player.getHealth() + " HP)");
             return;
         }
 
-        // 2. Проверка игроков рядом
+        
         for (Player other : mc.level.players()) {
             if (other == mc.player) continue;
 
@@ -47,11 +47,11 @@ public class AutoLog extends Module {
                 return;
             }
 
-            // 3. Проверка админов рядом (игроки в креативе/наблюдателе или с особыми префиксами в табе)
+            
             if (onAdminNearby.getValue()) {
                 boolean isAdmin = other.isCreative() || other.isSpectator();
                 if (!isAdmin) {
-                    // Также проверяем список стаффа по префиксам или нику
+                    
                     String name = other.getGameProfile().name().toLowerCase();
                     if (name.contains("admin") || name.contains("mod") || name.contains("helper") || name.contains("owner")) {
                         isAdmin = true;

@@ -6,10 +6,10 @@ namespace launcher {
 namespace simple {
 namespace window {
 
-// создание графического интерфейса
+
 void create_window(LauncherState *state);
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

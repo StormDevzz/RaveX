@@ -53,5 +53,5 @@ private:
     void calcScore(SystemReport& r);
 };
 
-} // namespace loader
-} // namespace ravex
+} 
+} 

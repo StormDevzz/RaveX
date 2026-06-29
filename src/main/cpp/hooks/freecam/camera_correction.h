@@ -11,12 +11,9 @@ namespace ravex::hooks::freecam {
         float renderPitch = 0.0f;
     };
 
-    /**
-     * Computes the corrected, smoothly-interpolated camera coordinates based on partial ticks
-     * to eliminate jitter, bypass rendering clipping, and ensure stable rendering.
-     */
+    
     CameraCoordinates getCorrectedCoordinates(double partialTicks);
 
-} // namespace ravex::hooks::freecam
+} 
 
-#endif // RAVEX_CAMERA_CORRECTION_H
+#endif 

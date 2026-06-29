@@ -31,4 +31,4 @@ Java_ravex_modules_player_MiddleClick_nativeStopFastXp(
     fastXp.stop(env);
 }
 
-} // extern "C"
+} 

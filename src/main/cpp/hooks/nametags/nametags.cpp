@@ -14,7 +14,7 @@ NameTagsLayout calculateNameTagsLayout(
     bool hasOffHand,
     int armorCount
 ) {
-    // 1. Calculate Scale
+    
     double scale = scaleParam;
     if (distanceScaling) {
         scale = scaleParam * (distance * 0.15);
@@ -22,12 +22,12 @@ NameTagsLayout calculateNameTagsLayout(
         if (scale > 3.0) scale = 3.0;
     }
 
-    // 2. Constants
+    
     const double is = 16.0;
     const double gap = 2.0;
     const double padding = 3.0;
 
-    // 3. Row Widths
+    
     double armorRowWidth = 0.0;
     bool hasArmorRow = showArmor && (armorCount > 0);
     if (hasArmorRow) {
@@ -48,21 +48,21 @@ NameTagsLayout calculateNameTagsLayout(
 
     double totalWidth = std::max(mainRowWidth, std::max(armorRowWidth, ownerRowWidth));
 
-    // 4. Row Heights
+    
     double mainRowHeight = 9.0;
     double textYOffset = 0.0;
     if (hasMainHandItem || hasOffHandItem) {
         mainRowHeight = is;
-        textYOffset = (is - 9.0) / 2.0; // Center text vertically
+        textYOffset = (is - 9.0) / 2.0; 
     }
 
-    // 5. Total Height Calculation
+    
     double totalHeight = 0.0;
     if (hasArmorRow) {
         totalHeight += is + gap;
     }
-    // Main row (always present for NameTags display, unless only showing owner for some reason)
-    // Let's assume main row is present if tw > 0
+    
+    
     bool hasMainRow = (tw > 0);
     if (hasMainRow) {
         totalHeight += mainRowHeight;
@@ -76,7 +76,7 @@ NameTagsLayout calculateNameTagsLayout(
     }
     totalHeight += 2 * padding;
 
-    // 6. Y offsets relative to projected head coordinate (where Y = 0 is the head)
+    
     double bgBottom = -2.0;
     double bgTop = bgBottom - totalHeight;
     double contentTop = bgTop + padding;

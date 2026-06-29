@@ -40,7 +40,7 @@ void queue_idle(GSourceFunc func, gpointer data) {
     g_idle_add(func, data);
 }
 
-} // namespace event
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

@@ -7,13 +7,13 @@ static int getFaceIndex(const BlockPos& neighbor, const BlockPos& candidate) {
     int dx = candidate.x - neighbor.x;
     int dy = candidate.y - neighbor.y;
     int dz = candidate.z - neighbor.z;
-    if (dy == 1) return 1;  // UP
-    if (dy == -1) return 0; // DOWN
-    if (dz == -1) return 2; // NORTH
-    if (dz == 1) return 3;  // SOUTH
-    if (dx == -1) return 4; // WEST
-    if (dx == 1) return 5;  // EAST
-    return 1; // Fallback
+    if (dy == 1) return 1;  
+    if (dy == -1) return 0; 
+    if (dz == -1) return 2; 
+    if (dz == 1) return 3;  
+    if (dx == -1) return 4; 
+    if (dx == 1) return 5;  
+    return 1; 
 }
 
 static double distSqr(double px, double py, double pz, const BlockPos& pos) {
@@ -21,7 +21,7 @@ static double distSqr(double px, double py, double pz, const BlockPos& pos) {
     double cy = pos.y + 0.5;
     double cz = pos.z + 0.5;
     double dx = px - cx;
-    double dy = (py + 1.62) - cy; // Eye height estimate
+    double dy = (py + 1.62) - cy; 
     double dz = pz - cz;
     return dx*dx + dy*dy + dz*dz;
 }
@@ -36,27 +36,27 @@ SelfTrapResult calculateSelfTrap(
 
     std::vector<BlockPos> candidates;
     
-    // Mode 0: Full (Sides + Roof), Mode 1: Simple (Sides only), Mode 2: Roof only
+    
     if (mode == 0 || mode == 1) {
-        // Feet level sides
-        candidates.push_back({ pf.x,     pf.y,     pf.z - 1 }); // North
-        candidates.push_back({ pf.x,     pf.y,     pf.z + 1 }); // South
-        candidates.push_back({ pf.x + 1, pf.y,     pf.z });     // East
-        candidates.push_back({ pf.x - 1, pf.y,     pf.z });     // West
         
-        // Head level sides
-        candidates.push_back({ pf.x,     pf.y + 1, pf.z - 1 }); // North Head
-        candidates.push_back({ pf.x,     pf.y + 1, pf.z + 1 }); // South Head
-        candidates.push_back({ pf.x + 1, pf.y + 1, pf.z });     // East Head
-        candidates.push_back({ pf.x - 1, pf.y + 1, pf.z });     // West Head
+        candidates.push_back({ pf.x,     pf.y,     pf.z - 1 }); 
+        candidates.push_back({ pf.x,     pf.y,     pf.z + 1 }); 
+        candidates.push_back({ pf.x + 1, pf.y,     pf.z });     
+        candidates.push_back({ pf.x - 1, pf.y,     pf.z });     
+        
+        
+        candidates.push_back({ pf.x,     pf.y + 1, pf.z - 1 }); 
+        candidates.push_back({ pf.x,     pf.y + 1, pf.z + 1 }); 
+        candidates.push_back({ pf.x + 1, pf.y + 1, pf.z });     
+        candidates.push_back({ pf.x - 1, pf.y + 1, pf.z });     
     }
 
     if (mode == 0 || mode == 2) {
-        candidates.push_back({ pf.x, pf.y + 2, pf.z }); // Roof
+        candidates.push_back({ pf.x, pf.y + 2, pf.z }); 
     }
 
     auto isSolid = [&](const BlockPos& pos) -> bool {
-        // Player body collision prevention: player stands at pf and pf+1
+        
         if (pos.x == pf.x && pos.z == pf.z && (pos.y == pf.y || pos.y == pf.y + 1)) {
             return false;
         }
@@ -67,17 +67,17 @@ SelfTrapResult calculateSelfTrap(
     };
 
     const BlockPos offsets[6] = {
-        {0, -1, 0}, // DOWN
-        {0, 1, 0},  // UP
-        {0, 0, -1}, // NORTH
-        {0, 0, 1},  // SOUTH
-        {-1, 0, 0}, // WEST
-        {1, 0, 0}   // EAST
+        {0, -1, 0}, 
+        {0, 1, 0},  
+        {0, 0, -1}, 
+        {0, 0, 1},  
+        {-1, 0, 0}, 
+        {1, 0, 0}   
     };
 
     double rSqr = range * range;
 
-    // First pass: find placements with direct solid neighbors
+    
     for (const auto& c : candidates) {
         if (isSolid(c)) continue;
 
@@ -91,7 +91,7 @@ SelfTrapResult calculateSelfTrap(
         }
     }
 
-    // Second pass: support block check
+    
     for (const auto& c : candidates) {
         if (isSolid(c)) continue;
 

@@ -18,5 +18,5 @@ AnalysisResult analyzePackets(const std::vector<Packet>& packets);
 AnalysisResult analyzeStats(const stats::SnifferStats& stats);
 void printAnalysis(const AnalysisResult& result);
 
-} // namespace analyze
-} // namespace packet
+} 
+} 

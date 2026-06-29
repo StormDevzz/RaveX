@@ -42,5 +42,5 @@ PortalPos findBestPortalPos(
     int groundCount
 );
 
-} // namespace ravex
+} 
 #endif

@@ -8,7 +8,7 @@
 namespace ravex {
 namespace github {
 
-// ─── Version helpers ─────────────────────────────────────────────────────────
+
 
 std::string Version::toString() const {
     std::string s = std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
@@ -20,24 +20,24 @@ std::string Version::toString() const {
 Version Version::fromString(const std::string& str) {
     Version v;
     std::string s = str;
-    // Strip leading 'v' or 'V'
+    
     if (!s.empty() && (s[0] == 'v' || s[0] == 'V')) s = s.substr(1);
 
-    // Split build metadata
+    
     size_t plus = s.find('+');
     if (plus != std::string::npos) {
         v.buildMeta = s.substr(plus + 1);
         s = s.substr(0, plus);
     }
 
-    // Split prerelease
+    
     size_t dash = s.find('-');
     if (dash != std::string::npos) {
         v.prerelease = s.substr(dash + 1);
         s = s.substr(0, dash);
     }
 
-    // Parse major.minor.patch
+    
     std::istringstream ss(s);
     std::string part;
     int idx = 0;
@@ -58,7 +58,7 @@ int Version::compare(const Version& a, const Version& b) {
     if (a.minor != b.minor) return a.minor < b.minor ? -1 : 1;
     if (a.patch != b.patch) return a.patch < b.patch ? -1 : 1;
 
-    // Prerelease: no prerelease > has prerelease
+    
     if (a.prerelease.empty() && !b.prerelease.empty()) return 1;
     if (!a.prerelease.empty() && b.prerelease.empty()) return -1;
     if (a.prerelease != b.prerelease) return a.prerelease < b.prerelease ? -1 : 1;
@@ -66,7 +66,7 @@ int Version::compare(const Version& a, const Version& b) {
     return 0;
 }
 
-// ─── ReleaseCheckerImpl ──────────────────────────────────────────────────────
+
 
 class ReleaseCheckerImpl {
 public:
@@ -94,7 +94,7 @@ public:
         rel.tarballUrl = j["tarball_url"].asString();
         rel.zipballUrl = j["zipball_url"].asString();
 
-        // Parse assets
+        
         if (j.has("assets") && j["assets"].isArray()) {
             for (const auto& a : j["assets"].asArray()) {
                 GithubAsset asset;
@@ -115,7 +115,7 @@ public:
     }
 };
 
-// ─── ReleaseChecker public API ───────────────────────────────────────────────
+
 
 ReleaseChecker::ReleaseChecker(const std::string& owner, const std::string& repo,
                                 const std::string& token)
@@ -129,7 +129,7 @@ UpdateInfo ReleaseChecker::checkForUpdates(const std::string& currentVersion,
                                             ReleaseChannel channel) {
     UpdateInfo info;
 
-    // Get latest release
+    
     GithubRelease latest = getLatestRelease();
     if (latest.tagName.empty()) {
         info.error = true;
@@ -141,9 +141,9 @@ UpdateInfo ReleaseChecker::checkForUpdates(const std::string& currentVersion,
     info.remoteVersion = Version::fromString(latest.tagName);
     info.release = latest;
 
-    // Filter by channel
+    
     if (channel == ReleaseChannel::Stable && latest.prerelease) {
-        // Latest is prerelease, try to find the latest stable
+        
         auto allReleases = listReleases(20, ReleaseChannel::All);
         for (const auto& rel : allReleases) {
             if (!rel.prerelease && !rel.draft) {
@@ -157,7 +157,7 @@ UpdateInfo ReleaseChecker::checkForUpdates(const std::string& currentVersion,
     int cmp = Version::compare(info.remoteVersion, info.localVersion);
     info.available = (cmp > 0);
 
-    // Filter assets by platform
+    
     std::string platformSuffix;
 #ifdef _WIN32
     platformSuffix = "win";
@@ -251,5 +251,5 @@ HttpClient& ReleaseChecker::http() const { return m_impl->http; }
 std::string ReleaseChecker::lastError() const { return ""; }
 bool ReleaseChecker::hasError() const { return false; }
 
-} // namespace github
-} // namespace ravex
+} 
+} 

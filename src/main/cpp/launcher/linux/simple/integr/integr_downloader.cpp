@@ -9,7 +9,7 @@ namespace launcher {
 namespace simple {
 namespace integr {
 
-// parallel download helper — downloads a list of urls to destinations, N at a time
+
 static void parallelDownloadLibs(const std::vector<std::string>& urls,
                                   const std::vector<std::string>& dests) {
     for (size_t i = 0; i < urls.size(); i += 16) {
@@ -31,7 +31,7 @@ static void parallelDownloadLibs(const std::vector<std::string>& urls,
     }
 }
 
-} // namespace integr
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

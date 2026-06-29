@@ -32,7 +32,7 @@ public abstract class MixinAbstractSignEditScreen {
                     l1, l2, l3, l4
                 ));
                 
-                // Close the screen immediately
+                
                 mc.execute(() -> mc.setScreen(null));
             }
         }

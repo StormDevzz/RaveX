@@ -1,16 +1,16 @@
-// ══════════════════════════════════════════════════════════════════════════════
-//  lua/main/LuaContext.cpp
-//
-//  RU: Регистрирует RaveX API-функции в Lua-состоянии.
-//      Каждая статическая функция — это C-функция, вызываемая из Lua.
-//      Они получают LuaContext через upvalue и делегируют вызовы
-//      AddonContext и AddonConfig.
-//
-//  EN: Registers RaveX API functions in the Lua state.
-//      Each static function is a C function callable from Lua.
-//      They get LuaContext via upvalue and delegate calls
-//      to AddonContext and AddonConfig.
-// ══════════════════════════════════════════════════════════════════════════════
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #include "LuaContext.h"
 #include "LuaBridge.h"
@@ -22,10 +22,10 @@
 namespace ravex {
 namespace lua {
 
-// RU: Извлекает указатель на LuaContext из upvalue (регистрируется
-//     вместе с C-функцией).
-// EN: Gets the LuaContext pointer from upvalue (registered together
-//     with the C function).
+
+
+
+
 static LuaContext* getCtxFromState(lua_State* L) {
     lua_getglobal(L, "__ravex_lua_ctx");
     if (lua_islightuserdata(L, -1)) {
@@ -37,10 +37,10 @@ static LuaContext* getCtxFromState(lua_State* L) {
     return nullptr;
 }
 
-// RU: Вызывается из Lua: logInfo("message")
-//     Принимает один строковый аргумент.
-// EN: Called from Lua: logInfo("message")
-//     Takes one string argument.
+
+
+
+
 int LuaContext::lua_logInfo(lua_State* L) {
     auto* self = getCtxFromState(L);
     if (!self || !self->m_ctx) return 0;
@@ -107,13 +107,13 @@ void LuaContext::registerInState(lua_State* L) {
     if (!L || m_registered) return;
     m_L = L;
 
-    // RU: Сохраняем указатель на this как lightuserdata.
-    // EN: Save pointer to this as lightuserdata.
+    
+    
     lua_pushlightuserdata(L, this);
     lua_setglobal(L, "__ravex_lua_ctx");
 
-    // RU: Регистрируем глобальные функции.
-    // EN: Register global functions.
+    
+    
     LuaBridge::registerFunction(L, "logInfo",      lua_logInfo);
     LuaBridge::registerFunction(L, "logWarn",      lua_logWarn);
     LuaBridge::registerFunction(L, "logError",     lua_logError);
@@ -129,8 +129,8 @@ void LuaContext::registerInState(lua_State* L) {
 void LuaContext::unregisterFromState(lua_State* L) {
     if (!L || !m_registered) return;
 
-    // RU: Удаляем зарегистрированные глобальные функции.
-    // EN: Remove registered global functions.
+    
+    
     static const char* funcs[] = {
         "logInfo", "logWarn", "logError",
         "configGet", "configSet",
@@ -146,5 +146,5 @@ void LuaContext::unregisterFromState(lua_State* L) {
     m_L = nullptr;
 }
 
-} // namespace lua
-} // namespace ravex
+} 
+} 

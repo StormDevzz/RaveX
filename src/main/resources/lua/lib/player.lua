@@ -1,7 +1,4 @@
---[[
-  RaveX Lua — Player Library
-  Расширенные функции для работы с игроком
-]]
+
 
 local player = {}
 

@@ -9,18 +9,18 @@ import org.lwjgl.glfw.GLFW;
 public class ColorPaletteModal {
     private final ColorParameter parameter;
     
-    // Core coordinates
+    
     private float hue = 0.0f;
     private float saturation = 1.0f;
     private float value = 1.0f;
     private float alpha = 1.0f;
     
-    // Dragging state
+    
     private boolean draggingSV = false;
     private boolean draggingHue = false;
     private boolean draggingAlpha = false;
 
-    // Dimensions
+    
     private final int modalWidth = 200;
     private final int modalHeight = 245;
     
@@ -49,7 +49,7 @@ public class ColorPaletteModal {
         return a | rgb;
     }
 
-    // High performance inline HSB to RGB converter to avoid heavy library allocations
+    
     private static int hsbToRgb(float hue, float saturation, float brightness) {
         int r = 0, g = 0, b = 0;
         if (saturation == 0) {
@@ -97,21 +97,21 @@ public class ColorPaletteModal {
     }
 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, int screenWidth, int screenHeight) {
-        // Modal coordinates (centered)
+        
         int mx = (screenWidth - modalWidth) / 2;
         int my = (screenHeight - modalHeight) / 2;
 
-        // Dark frosted-glass overlay across the whole screen
+        
         graphics.fill(0, 0, screenWidth, screenHeight, 0xAA07070B);
 
-        // Update drag inputs if left mouse button is pressed
+        
         long win = Minecraft.getInstance().getWindow().handle();
         boolean lmb = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
         if (!lmb) {
             draggingSV = draggingHue = draggingAlpha = false;
         }
 
-        // SV Dragging
+        
         int svX = mx + 15;
         int svY = my + 35;
         if (draggingSV) {
@@ -122,7 +122,7 @@ public class ColorPaletteModal {
             parameter.setValue(getArgb());
         }
 
-        // Hue Dragging
+        
         int hueX = mx + 15;
         int hueY = my + 165;
         int hueW = svSize;
@@ -132,7 +132,7 @@ public class ColorPaletteModal {
             parameter.setValue(getArgb());
         }
 
-        // Alpha Dragging
+        
         int alphaX = mx + 15;
         int alphaY = my + 183;
         int alphaW = svSize;
@@ -142,29 +142,29 @@ public class ColorPaletteModal {
             parameter.setValue(getArgb());
         }
 
-        // Modal background (frost dark slate)
+        
         graphics.fill(mx, my, mx + modalWidth, my + modalHeight, 0xF50D0D14);
         
-        // Inner elegant border
+        
         graphics.fill(mx + 1, my + 1, mx + modalWidth - 1, my + 2, 0xFF1C1C2A);
         graphics.fill(mx + 1, my + modalHeight - 2, mx + modalWidth - 1, my + modalHeight - 1, 0xFF1C1C2A);
         graphics.fill(mx + 1, my + 1, mx + 2, my + modalHeight - 1, 0xFF1C1C2A);
         graphics.fill(mx + modalWidth - 2, my + 1, mx + modalWidth - 1, my + modalHeight - 1, 0xFF1C1C2A);
 
-        // Active color glowing outer neon border (1px offset)
+        
         int activeColor = getArgb() | 0xFF000000;
         graphics.fill(mx - 1, my - 1, mx + modalWidth + 1, my, activeColor);
         graphics.fill(mx - 1, my + modalHeight, mx + modalWidth + 1, my + modalHeight + 1, activeColor);
         graphics.fill(mx - 1, my - 1, mx, my + modalHeight + 1, activeColor);
         graphics.fill(mx + modalWidth, my - 1, mx + modalWidth + 1, my + modalHeight + 1, activeColor);
 
-        // Header Title
+        
         FontRenderUtility.drawString(graphics, parameter.getName() + " Palette", mx + 12, my + 10, 0xFFE5E5F0, false);
         
-        // Horizontal divider line
+        
         graphics.fill(mx + 10, my + 23, mx + modalWidth - 10, my + 24, 0xFF252535);
 
-        // SV Gradient Box rendered with step = 4 for maximum rendering smoothness and 75%+ FPS savings
+        
         int step = 4;
         for (int py = 0; py < svSize; py += step) {
             float v = 1.0f - py / (float) svSize;
@@ -175,46 +175,46 @@ public class ColorPaletteModal {
             }
         }
         
-        // Border around SV gradient box
+        
         graphics.fill(svX - 1, svY - 1, svX + svSize + 1, svY, 0xFF353545);
         graphics.fill(svX - 1, svY + svSize, svX + svSize + 1, svY + svSize + 1, 0xFF353545);
         graphics.fill(svX - 1, svY - 1, svX, svY + svSize + 1, 0xFF353545);
         graphics.fill(svX + svSize, svY - 1, svX + svSize + 1, svY + svSize + 1, 0xFF353545);
 
-        // Draw modern Circular Ring SV Cursor
+        
         int curX = svX + (int)(saturation * svSize);
         int curY = svY + (int)((1.0f - value) * svSize);
-        // Outer dark circle outline
+        
         graphics.fill(curX - 4, curY - 4, curX + 5, curY - 3, 0xFF000000);
         graphics.fill(curX - 4, curY + 4, curX + 5, curY + 5, 0xFF000000);
         graphics.fill(curX - 4, curY - 3, curX - 3, curY + 4, 0xFF000000);
         graphics.fill(curX + 4, curY - 3, curX + 5, curY + 4, 0xFF000000);
-        // Inner white circle outline
+        
         graphics.fill(curX - 3, curY - 3, curX + 4, curY - 2, 0xFFFFFFFF);
         graphics.fill(curX - 3, curY + 3, curX + 4, curY + 4, 0xFFFFFFFF);
         graphics.fill(curX - 3, curY - 2, curX - 2, curY + 3, 0xFFFFFFFF);
         graphics.fill(curX + 3, curY - 2, curX + 4, curY + 3, 0xFFFFFFFF);
 
-        // Hue Slider (step = 4 for ultra-smooth rendering performance)
+        
         for (int px = 0; px < hueW; px += step) {
             float h = px / (float) hueW;
             int hColor = hsbToRgb(h, 1.0f, 1.0f);
             graphics.fill(hueX + px, hueY, hueX + px + step, hueY + sliderHeight, hColor);
         }
         
-        // Hue slider border
+        
         graphics.fill(hueX - 1, hueY - 1, hueX + hueW + 1, hueY, 0xFF353545);
         graphics.fill(hueX - 1, hueY + sliderHeight, hueX + hueW + 1, hueY + sliderHeight + 1, 0xFF353545);
         graphics.fill(hueX - 1, hueY - 1, hueX, hueY + sliderHeight + 1, 0xFF353545);
         graphics.fill(hueX + hueW, hueY - 1, hueX + hueW + 1, hueY + sliderHeight + 1, 0xFF353545);
 
-        // Hue Knob
+        
         int hkX = hueX + (int)(hue * hueW);
         graphics.fill(hkX - 1, hueY - 2, hkX + 2, hueY + sliderHeight + 2, 0xFFFFFFFF);
         graphics.fill(hkX - 2, hueY - 2, hkX - 1, hueY + sliderHeight + 2, 0xFF000000);
         graphics.fill(hkX + 2, hueY - 2, hkX + 3, hueY + sliderHeight + 2, 0xFF000000);
 
-        // Alpha Slider Checkerboard background
+        
         int checkSize = 4;
         for (int px = 0; px < alphaW; px += checkSize) {
             for (int py = 0; py < sliderHeight; py += checkSize) {
@@ -226,30 +226,30 @@ public class ColorPaletteModal {
             }
         }
         
-        // Alpha Gradient overlay
+        
         int currentRgb = hsbToRgb(hue, saturation, value) & 0x00FFFFFF;
         graphics.fillGradient(alphaX, alphaY, alphaX + alphaW, alphaY + sliderHeight,
                                currentRgb, (0xFF << 24) | currentRgb);
                                
-        // Alpha slider border
+        
         graphics.fill(alphaX - 1, alphaY - 1, alphaX + alphaW + 1, alphaY, 0xFF353545);
         graphics.fill(alphaX - 1, alphaY + sliderHeight, alphaX + alphaW + 1, alphaY + sliderHeight + 1, 0xFF353545);
         graphics.fill(alphaX - 1, alphaY - 1, alphaX, alphaY + sliderHeight + 1, 0xFF353545);
         graphics.fill(alphaX + alphaW, alphaY - 1, alphaX + alphaW + 1, alphaY + sliderHeight + 1, 0xFF353545);
 
-        // Alpha Knob
+        
         int akX = alphaX + (int)(alpha * alphaW);
         graphics.fill(akX - 1, alphaY - 2, akX + 2, alphaY + sliderHeight + 2, 0xFFFFFFFF);
         graphics.fill(akX - 2, alphaY - 2, akX - 1, alphaY + sliderHeight + 2, 0xFF000000);
         graphics.fill(akX + 2, alphaY - 2, akX + 3, alphaY + sliderHeight + 2, 0xFF000000);
 
-        // Right side - Color Previews & Swatches
+        
         int previewX = mx + 145;
         int previewY = my + 35;
         int previewW = 40;
         int previewH = 40;
 
-        // Big checkerboard preview
+        
         for (int px = 0; px < previewW; px += 8) {
             for (int py = 0; py < previewH; py += 8) {
                 boolean light = ((px / 8 + py / 8) % 2 == 0);
@@ -258,33 +258,33 @@ public class ColorPaletteModal {
             }
         }
         
-        // Actual Color Overlay
+        
         graphics.fill(previewX, previewY, previewX + previewW, previewY + previewH, getArgb());
         
-        // Preview border (modern dark border)
+        
         graphics.fill(previewX - 1, previewY - 1, previewX + previewW + 1, previewY, 0xFF4A4A5A);
         graphics.fill(previewX - 1, previewY + previewH, previewX + previewW + 1, previewY + previewH + 1, 0xFF4A4A5A);
         graphics.fill(previewX - 1, previewY - 1, previewX, previewY + previewH + 1, 0xFF4A4A5A);
         graphics.fill(previewX + previewW, previewY - 1, previewX + previewW + 1, previewY + previewH + 1, 0xFF4A4A5A);
 
-        // Hex Code text label
+        
         String hex = String.format("#%08X", getArgb());
         int hw = FontRenderUtility.getStringWidth(hex);
         FontRenderUtility.drawString(graphics, hex, previewX + (previewW - hw) / 2, previewY + previewH + 6, 0xFFAAAAAA, false);
 
-        // Curated Presets
+        
         int presetY = my + 203;
         FontRenderUtility.drawString(graphics, "Presets", mx + 15, presetY - 10, 0xFF75758A, false);
         
         int[] presets = {
-            0xFFFFFFFF, // White
-            0xFFFF5555, // Light Red
-            0xFF55FF55, // Light Green
-            0xFF5555FF, // Light Blue
-            0xFFFFAA00, // Gold / Orange
-            0xFFFFFF55, // Yellow
-            0xFF55FFFF, // Aqua
-            0xFFFF55FF  // Pink
+            0xFFFFFFFF, 
+            0xFFFF5555, 
+            0xFF55FF55, 
+            0xFF5555FF, 
+            0xFFFFAA00, 
+            0xFFFFFF55, 
+            0xFF55FFFF, 
+            0xFFFF55FF  
         };
         
         for (int i = 0; i < presets.length; i++) {
@@ -293,7 +293,7 @@ public class ColorPaletteModal {
             
             graphics.fill(px, presetY, px + 16, presetY + 16, presets[i]);
             
-            // Draw border (lights up white on hover!)
+            
             int borderColor = hovered ? 0xFFFFFFFF : 0xFF2A2A3A;
             graphics.fill(px - 1, presetY - 1, px + 17, presetY, borderColor);
             graphics.fill(px - 1, presetY + 16, px + 17, presetY + 17, borderColor);
@@ -301,14 +301,14 @@ public class ColorPaletteModal {
             graphics.fill(px + 16, presetY - 1, px + 17, presetY + 17, borderColor);
         }
 
-        // Apply Button
+        
         int btnW = 50;
         int btnH = 14;
         int btnX = mx + modalWidth - btnW - 15;
         int btnY = my + modalHeight - btnH - 10;
         boolean btnHovered = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
         
-        // Dynamic active-colored button highlights when hovered!
+        
         int btnBg = btnHovered ? ((activeColor & 0x00FFFFFF) | 0x66000000) : 0xFF14141E;
         int btnBorder = btnHovered ? activeColor : 0xFF3E3E4E;
         
@@ -326,13 +326,13 @@ public class ColorPaletteModal {
         int mx = (int) mouseX;
         int my = (int) mouseY;
 
-        // Centered coordinates
+        
         int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
         int mxLeft = (screenWidth - modalWidth) / 2;
         int myTop = (screenHeight - modalHeight) / 2;
 
-        // If clicked outside the modal bounds, close it
+        
         if (mx < mxLeft || mx > mxLeft + modalWidth || my < myTop || my > myTop + modalHeight) {
             ClickGUI.activeColorParameter = null;
             ClickGUI.activeColorPalette = null;
@@ -340,7 +340,7 @@ public class ColorPaletteModal {
             return true;
         }
 
-        // SV Square click
+        
         int svX = mxLeft + 15;
         int svY = myTop + 35;
         if (mx >= svX && mx < svX + svSize && my >= svY && my < svY + svSize) {
@@ -351,7 +351,7 @@ public class ColorPaletteModal {
             return true;
         }
 
-        // Hue Slider click
+        
         int hueX = mxLeft + 15;
         int hueY = myTop + 165;
         if (mx >= hueX && mx < hueX + svSize && my >= hueY && my < hueY + sliderHeight) {
@@ -361,7 +361,7 @@ public class ColorPaletteModal {
             return true;
         }
 
-        // Alpha Slider click
+        
         int alphaX = mxLeft + 15;
         int alphaY = myTop + 183;
         if (mx >= alphaX && mx < alphaX + svSize && my >= alphaY && my < alphaY + sliderHeight) {
@@ -371,7 +371,7 @@ public class ColorPaletteModal {
             return true;
         }
 
-        // Preset clicks
+        
         int presetY = myTop + 203;
         int[] presets = {
             0xFFFFFFFF, 0xFFFF5555, 0xFF55FF55, 0xFF5555FF,
@@ -387,7 +387,7 @@ public class ColorPaletteModal {
             }
         }
 
-        // Apply Button click
+        
         int btnW = 50;
         int btnH = 14;
         int btnX = mxLeft + modalWidth - btnW - 15;
@@ -399,7 +399,7 @@ public class ColorPaletteModal {
             return true;
         }
 
-        return true; // Consume all clicks inside modal
+        return true; 
     }
 
     public boolean keyPressed(int key) {
@@ -409,7 +409,7 @@ public class ColorPaletteModal {
             playClickSound();
             return true;
         }
-        return true; // Block keyboard typing when modal is open
+        return true; 
     }
 
     private void playClickSound() {

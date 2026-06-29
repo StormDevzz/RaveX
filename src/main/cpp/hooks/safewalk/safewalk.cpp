@@ -16,7 +16,7 @@ bool isNearEdge(double playerX, double playerY, double playerZ,
     int by = (int)std::floor(playerY);
     int bz = (int)std::floor(playerZ);
 
-    // Check the 4 blocks at the player's feet level
+    
     struct Check {
         int x, z;
     } checks[4] = {
@@ -25,16 +25,16 @@ bool isNearEdge(double playerX, double playerY, double playerZ,
     };
 
     for (auto& c : checks) {
-        // If this block is solid (the player is standing on something solid),
-        // check if the block below it is air
+        
+        
         if (isSolid(c.x, by, c.z, solidBlocks, count)) {
             if (!isSolid(c.x, by - 1, c.z, solidBlocks, count)) {
-                return true; // edge detected
+                return true; 
             }
         }
     }
 
-    // Also check diagonal blocks
+    
     struct Diag {
         int x, z;
     } diags[4] = {

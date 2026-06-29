@@ -50,8 +50,8 @@ public class ToolTips extends Module {
             count++;
         }
 
-        // We do not add the text representation when showShulker is enabled,
-        // because the visual grid tooltip handles rendering the contents much better.
+        
+        
 
         if (showFood.getValue()) {
             FoodProperties food = stack.get(DataComponents.FOOD);

@@ -108,4 +108,4 @@ ErrorCode saveBmp(const TextureData& tex, std::vector<uint8_t>& out, int) {
     return ErrorCode::Success;
 }
 
-} // namespace txtr
+} 

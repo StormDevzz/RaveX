@@ -58,7 +58,7 @@ public class Criticals extends Module {
         }
 
         if (seq == Sequence.LANDING) {
-            // Now attack the target
+            
             if (autoAttack.getValue() && mc.hitResult instanceof EntityHitResult ehr) {
                 Entity target = ehr.getEntity();
                 if (target instanceof LivingEntity lt && lt.isAlive() && target != mc.player

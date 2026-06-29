@@ -23,7 +23,7 @@ std::string generate_offline_uuid(const std::string& username) {
     return ss.str();
 }
 
-} // namespace acc
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

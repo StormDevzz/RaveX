@@ -28,7 +28,7 @@ public class Quiver extends Module {
     public static float silentPitch = 0;
     public static boolean hasSilentRotations = false;
 
-    private int state = 0; // 0 = idle, 1 = swapping/drawing, 2 = cooldown
+    private int state = 0; 
     private int ticksHolding = 0;
     private int cooldownTicks = 0;
     private int arrowInvSlot = -1;
@@ -89,7 +89,7 @@ public class Quiver extends Module {
         }
 
         if (state == 1) {
-            // Keep looking straight up
+            
             if (rotate.getValue().equals("Normal")) {
                 mc.player.setXRot(-90.0f);
             } else {
@@ -102,17 +102,17 @@ public class Quiver extends Module {
 
             ticksHolding++;
             if (ticksHolding >= chargeDuration.getValue().intValue()) {
-                // Release use key
+                
                 mc.options.keyUse.setDown(false);
 
-                // Shoot the arrow
+                
                 mc.player.releaseUsingItem();
                 mc.gameMode.releaseUsingItem(mc.player);
 
-                // Restore previous state
+                
                 restoreOffhandAndBow(mc);
 
-                // Enter cooldown (20 ticks / 1 second)
+                
                 state = 2;
                 cooldownTicks = 20;
                 hasSilentRotations = false;
@@ -120,7 +120,7 @@ public class Quiver extends Module {
             return;
         }
 
-        // State 0: Idle, look for a useful arrow to shoot
+        
         int bowSlot = findBowSlot(mc);
         if (bowSlot == -1) {
             mc.player.displayClientMessage(
@@ -143,19 +143,19 @@ public class Quiver extends Module {
 
         arrowInvSlot = bestArrowIndex;
 
-        // Start shooting process
+        
         previousSelectedSlot = mc.player.getInventory().getSelectedSlot();
         if (autoSwapBow.getValue() && previousSelectedSlot != bowSlot) {
             mc.player.getInventory().setSelectedSlot(bowSlot);
         }
 
-        // Swap target arrow to offhand
+        
         int containerSlot = arrowInvSlot < 9 ? arrowInvSlot + 36 : arrowInvSlot;
         mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
         mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, 45, 0, ClickType.PICKUP, mc.player);
         mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
 
-        // Aim up
+        
         savedClientYaw = mc.player.getYRot();
         savedClientPitch = mc.player.getXRot();
 
@@ -167,7 +167,7 @@ public class Quiver extends Module {
             hasSilentRotations = true;
         }
 
-        // Draw bow
+        
         mc.options.keyUse.setDown(true);
         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
 
@@ -178,7 +178,7 @@ public class Quiver extends Module {
     private void restoreOffhandAndBow(Minecraft mc) {
         if (arrowInvSlot != -1) {
             int containerSlot = arrowInvSlot < 9 ? arrowInvSlot + 36 : arrowInvSlot;
-            // Swap back
+            
             mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
             mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, 45, 0, ClickType.PICKUP, mc.player);
             mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
@@ -188,7 +188,7 @@ public class Quiver extends Module {
             mc.player.getInventory().setSelectedSlot(previousSelectedSlot);
             previousSelectedSlot = -1;
         }
-        // Restore client rotations if Normal
+        
         if (rotate.getValue().equals("Normal") && mc.player != null) {
             mc.player.setYRot(savedClientYaw);
             mc.player.setXRot(savedClientPitch);

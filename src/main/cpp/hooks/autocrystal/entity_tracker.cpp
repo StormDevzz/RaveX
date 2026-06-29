@@ -4,9 +4,9 @@
 namespace ravex {
 
 Vec3 EntityTracker::predictPosition(const Vec3& currentPos, double motionX, double motionY, double motionZ, double ticksAhead) {
-    // В Minecraft движение игрока в воздухе или по земле имеет инерцию/трение.
-    // Средний коэффициент трения/сопротивления воздуха составляет 0.91 для LivingEntity,
-    // а гравитационное ускорение — 0.08 блока за тик.
+    
+    
+    
     double friction = 0.91;
     double gravity = 0.08;
     
@@ -29,7 +29,7 @@ Vec3 EntityTracker::predictPosition(const Vec3& currentPos, double motionX, doub
         vz *= friction;
     }
     
-    // Экстраполяция остаточной дробной части тика
+    
     double frac = ticksAhead - fullTicks;
     if (frac > 0.0) {
         predX += vx * frac;
@@ -44,4 +44,4 @@ double EntityTracker::getEffectiveHealth(double health, double absorption) {
     return health + absorption;
 }
 
-} // namespace ravex
+} 

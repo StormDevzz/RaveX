@@ -23,7 +23,7 @@ public class GlintVertexConsumer implements VertexConsumer {
         int tg = (color >> 8) & 0xFF;
         int tb = color & 0xFF;
         int ta = (color >> 24) & 0xFF;
-        if (ta == 0) ta = a; // use original alpha if alpha is 0
+        if (ta == 0) ta = a; 
         delegate.setColor(tr, tg, tb, ta);
         return this;
     }

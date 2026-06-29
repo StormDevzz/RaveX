@@ -21,6 +21,6 @@ inline BurrowResult calculateBurrow(double px, double py, double pz, double heig
     return r;
 }
 
-} // namespace ravex
+} 
 
 #endif

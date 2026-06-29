@@ -44,14 +44,14 @@ public class WebAura extends Module {
             return;
         }
 
-        // 1. Determine scan range based on mode
+        
         double range = 4.5;
         String m = mode.getValue();
         if (m.equals("Custom")) {
             range = customRange.getValue();
         }
 
-        // 2. Scan for closest player target
+        
         Player target = null;
         double closest = range;
         for (Player player : mc.level.players()) {
@@ -59,7 +59,7 @@ public class WebAura extends Module {
 
             double dist = p.distanceTo(player);
             if (dist < closest) {
-                // If Positive mode, target must be moving on ground
+                
                 if (m.equals("Positive")) {
                     boolean isMoving = player.getDeltaMovement().horizontalDistanceSqr() > 0.002;
                     if (!player.onGround() || !isMoving) {
@@ -73,7 +73,7 @@ public class WebAura extends Module {
 
         if (target == null) return;
 
-        // 3. Find cobweb in hotbar
+        
         int webSlot = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = p.getInventory().getItem(i);
@@ -85,12 +85,12 @@ public class WebAura extends Module {
 
         if (webSlot == -1) return;
 
-        // 4. Place web under target
+        
         BlockPos targetPos = BlockPos.containing(target.getX(), target.getY(), target.getZ());
         if (mc.level.getBlockState(targetPos).isAir()) {
             int prevSlot = p.getInventory().getSelectedSlot();
 
-            // Silent packet swap
+            
             if (webSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(webSlot));
             }
@@ -102,7 +102,7 @@ public class WebAura extends Module {
                 false
             );
 
-            // Use item on the position
+            
             p.connection.send(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, hit, 0));
             p.connection.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
 
@@ -110,7 +110,7 @@ public class WebAura extends Module {
                 p.connection.send(new ServerboundSetCarriedItemPacket(prevSlot));
             }
 
-            delay = 4; // cooldown
+            delay = 4; 
         }
     }
 }

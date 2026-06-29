@@ -17,5 +17,5 @@ struct Vec3 {
 Vec3 predictPearlLanding(Vec3 pos, Vec3 vel);
 bool willHitPlayer(Vec3 landing, Vec3 playerPos, double hitRadius);
 
-} // namespace ravex
+} 
 #endif

@@ -30,10 +30,7 @@ public class StashFinder extends Module {
         addParameter(logToChat);
     }
 
-    /**
-     * Called from MixinAbstractContainerScreen when a container is opened.
-     * Detects stashes by checking if chest contents are valuable.
-     */
+    
     public void onContainerOpened(BlockPos pos, List<ItemStack> contents) {
         if (!getEnabled()) return;
         if (stashes.stream().anyMatch(s -> s.pos.equals(pos))) return;
@@ -46,7 +43,7 @@ public class StashFinder extends Module {
             if (isValuable(stack)) valuableCount++;
         }
 
-        if (totalItems < 9) return; // at least 9 slots filled
+        if (totalItems < 9) return; 
 
         StashEntry entry = new StashEntry(pos, totalItems, valuableCount, System.currentTimeMillis());
         stashes.add(entry);
@@ -73,14 +70,14 @@ public class StashFinder extends Module {
 
     private boolean isValuable(ItemStack stack) {
         String name = stack.getItem().getName(stack.getItem().getDefaultInstance()).getString().toLowerCase();
-        // Valuable items check
+        
         if (name.contains("diamond") || name.contains("emerald") || name.contains("gold")
             || name.contains("iron") || name.contains("netherite") || name.contains("enchanted")
             || name.contains("beacon") || name.contains("elytra") || name.contains("shulker")
             || name.contains("totem") || name.contains("god apple") || name.contains("notch apple")
             || name.contains("trident") || name.contains("spawner")) return true;
 
-        // Check for high-value enchantments (data components API)
+        
         var enchantments = stack.get(net.minecraft.core.component.DataComponents.ENCHANTMENTS);
         if (enchantments != null && !enchantments.isEmpty()) return true;
 

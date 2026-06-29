@@ -12,9 +12,9 @@
 
 namespace ravex {
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tokenizer
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 enum class TokType { NUMBER, OP, FUNC, LPAREN, RPAREN, COMMA };
 
@@ -30,19 +30,19 @@ static bool isLetter(char c) { return std::isalpha((unsigned char)c) || c == '_'
 static std::vector<Token> tokenize(const std::string& expr) {
     std::vector<Token> tokens;
     size_t i = 0;
-    bool lastWasNum = false; // for unary minus detection
+    bool lastWasNum = false; 
 
     while (i < expr.size()) {
         char c = expr[i];
 
-        // whitespace
+        
         if (std::isspace((unsigned char)c)) { i++; continue; }
 
-        // number
+        
         if (std::isdigit((unsigned char)c) || c == '.') {
             size_t start = i;
             while (i < expr.size() && (std::isdigit((unsigned char)expr[i]) || expr[i] == '.')) i++;
-            // scientific notation
+            
             if (i < expr.size() && (expr[i] == 'e' || expr[i] == 'E')) {
                 i++;
                 if (i < expr.size() && (expr[i] == '+' || expr[i] == '-')) i++;
@@ -53,15 +53,15 @@ static std::vector<Token> tokenize(const std::string& expr) {
             tokens.push_back(t); lastWasNum = true; continue;
         }
 
-        // identifier (function or constant)
+        
         if (isLetter(c)) {
             size_t start = i;
             while (i < expr.size() && (isLetter(expr[i]) || std::isdigit((unsigned char)expr[i]))) i++;
             std::string word = expr.substr(start, i - start);
-            // lowercase
+            
             std::transform(word.begin(), word.end(), word.begin(), ::tolower);
 
-            // constants
+            
             double constVal = 0; bool isConst = false;
             if (word == "pi")  { constVal = M_PI; isConst = true; }
             else if (word == "e")   { constVal = M_E;  isConst = true; }
@@ -79,7 +79,7 @@ static std::vector<Token> tokenize(const std::string& expr) {
             continue;
         }
 
-        // parentheses
+        
         if (c == '(') {
             Token t; t.type = TokType::LPAREN;
             tokens.push_back(t); i++; lastWasNum = false; continue;
@@ -93,34 +93,34 @@ static std::vector<Token> tokenize(const std::string& expr) {
             tokens.push_back(t); i++; lastWasNum = false; continue;
         }
 
-        // operators
+        
         if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '^') {
             Token t; t.type = TokType::OP;
-            // Unary minus: previous token was not a number/rparen, or this is start
+            
             if (c == '-' && !lastWasNum) {
-                t.op = 'u'; // unary minus
+                t.op = 'u'; 
             } else {
                 t.op = c;
             }
             tokens.push_back(t); i++; lastWasNum = false; continue;
         }
 
-        // unknown character — skip
+        
         i++;
     }
     return tokens;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shunting-yard
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 static int precedence(char op) {
     switch (op) {
         case '+': case '-': return 1;
         case '*': case '/': case '%': return 2;
         case '^': return 3;
-        case 'u': return 4; // unary minus (highest)
+        case 'u': return 4; 
         default: return 0;
     }
 }
@@ -246,7 +246,7 @@ static double shuntingYard(const std::vector<Token>& tokens) {
             case TokType::RPAREN:
                 while (!opStack.empty() && opStack.top().type != TokType::LPAREN) popOp();
                 if (opStack.empty()) throw std::runtime_error("Mismatched parentheses");
-                opStack.pop(); // pop LPAREN
+                opStack.pop(); 
                 if (!opStack.empty() && opStack.top().type == TokType::FUNC) popOp();
                 break;
         }
@@ -262,9 +262,9 @@ static double shuntingYard(const std::vector<Token>& tokens) {
     return output.top();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Public API
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 std::string MathParser::evaluate(const std::string& expr) {
     if (expr.empty()) return "";
@@ -273,7 +273,7 @@ std::string MathParser::evaluate(const std::string& expr) {
         if (tokens.empty()) return "0";
         double result = shuntingYard(tokens);
 
-        // Format result: if it's a whole number, show without decimal
+        
         if (std::isinf(result)) return result > 0 ? "∞" : "-∞";
         if (std::isnan(result)) return "NaN";
 
@@ -282,7 +282,7 @@ std::string MathParser::evaluate(const std::string& expr) {
             oss << std::fixed << std::setprecision(0) << result;
         } else {
             oss << std::setprecision(12) << result;
-            // Remove trailing zeros
+            
             std::string s = oss.str();
             if (s.find('.') != std::string::npos) {
                 size_t last = s.find_last_not_of('0');
@@ -297,4 +297,4 @@ std::string MathParser::evaluate(const std::string& expr) {
     }
 }
 
-} // namespace ravex
+} 

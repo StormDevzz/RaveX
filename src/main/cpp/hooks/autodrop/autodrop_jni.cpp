@@ -30,4 +30,4 @@ Java_ravex_modules_combat_AutoDrop_nativeFindTargets(
     return result;
 }
 
-} // extern "C"
+} 

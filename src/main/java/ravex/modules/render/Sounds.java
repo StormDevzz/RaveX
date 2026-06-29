@@ -12,6 +12,6 @@ public class Sounds extends Module {
     private Sounds() {
         super("Sounds", Category.CLIENT);
         addParameter(volume);
-        setEnabled(true); // Enabled by default so sounds are active right away!
+        setEnabled(true); 
     }
 }

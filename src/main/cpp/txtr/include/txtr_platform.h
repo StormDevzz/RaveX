@@ -63,5 +63,5 @@ inline std::string getExtension(const std::string& path) {
     return ext;
 }
 
-} // namespace platform
-} // namespace txtr
+} 
+} 

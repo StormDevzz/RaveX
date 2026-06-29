@@ -159,4 +159,4 @@ Java_ravex_loader_NativeBridge_getScore(JNIEnv*, jclass) {
     }
 }
 
-} // extern "C"
+} 

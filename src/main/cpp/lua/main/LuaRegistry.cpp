@@ -1,12 +1,12 @@
-// ══════════════════════════════════════════════════════════════════════════════
-//  lua/main/LuaRegistry.cpp
-//
-//  RU: Реестр Lua-аддонов (синглтон). Хранит все загруженные аддоны
-//      и управляет их жизненным циклом.
-//
-//  EN: Lua addon registry (singleton). Stores all loaded addons
-//      and manages their lifecycle.
-// ══════════════════════════════════════════════════════════════════════════════
+
+
+
+
+
+
+
+
+
 
 #include "LuaRegistry.h"
 #include <algorithm>
@@ -24,8 +24,8 @@ void LuaRegistry::registerAddon(LuaAddon* addon) {
     if (!addon) return;
     const std::string& name = addon->getMeta().name;
 
-    // RU: Если аддон с таким именем уже есть — перезаписываем.
-    // EN: If an addon with this name already exists — overwrite.
+    
+    
     auto it = m_addonMap.find(name);
     if (it != m_addonMap.end()) {
         it->second = addon;
@@ -40,8 +40,8 @@ void LuaRegistry::unregisterAddon(const std::string& name) {
     auto it = m_addonMap.find(name);
     if (it == m_addonMap.end()) return;
 
-    // RU: Удаляем из списка.
-    // EN: Remove from list.
+    
+    
     auto vecIt = std::find(m_addonList.begin(), m_addonList.end(), it->second);
     if (vecIt != m_addonList.end()) {
         m_addonList.erase(vecIt);
@@ -83,5 +83,5 @@ void LuaRegistry::eventAll(const std::string& eventName) {
     }
 }
 
-} // namespace lua
-} // namespace ravex
+} 
+} 

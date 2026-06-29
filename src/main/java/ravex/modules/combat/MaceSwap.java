@@ -9,14 +9,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
-/**
- * MaceSwap — swaps to Mace automatically for smash attacks.
- *
- * Modes:
- *   Basic  — swap whenever falling (y velocity < threshold)
- *   Smart  — swap only when falling fast enough to actually deal bonus damage
- *             AND the crosshair is targeting an entity (accurate smash).
- */
+
 public class MaceSwap extends Module {
     public static final MaceSwap INSTANCE = new MaceSwap();
 
@@ -24,7 +17,7 @@ public class MaceSwap extends Module {
             List.of("Basic", "Smart"));
     public final NumberParameter fallSpeed = new NumberParameter("Fall Speed", 0.5, 0.1, 3.0, 0.05);
 
-    /** Slot the player had BEFORE mace swap (restored after landing). */
+    
     private int previousSlot = -1;
 
     private MaceSwap() {
@@ -42,17 +35,17 @@ public class MaceSwap extends Module {
         boolean falling = velY < -fallSpeed.getValue() && !mc.player.onGround();
 
         if ("Smart".equals(mode.getValue())) {
-            // Smart: only swap when actually targeting an entity
+            
             boolean targetingEntity = mc.crosshairPickEntity != null;
             if (falling && targetingEntity) {
                 swapToMace(mc);
             } else if (!falling && previousSlot != -1 && mc.player.onGround()) {
-                // Restore slot after landing
+                
                 mc.player.getInventory().setSelectedSlot(previousSlot);
                 previousSlot = -1;
             }
         } else {
-            // Basic: swap whenever falling fast enough
+            
             if (falling) {
                 swapToMace(mc);
             } else if (!falling && previousSlot != -1 && mc.player.onGround()) {

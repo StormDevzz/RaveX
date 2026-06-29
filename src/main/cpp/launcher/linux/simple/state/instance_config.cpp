@@ -30,7 +30,7 @@ void save_instance_config(const std::string& path, const InstanceConfig& config)
     file.close();
 }
 
-} // namespace state
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

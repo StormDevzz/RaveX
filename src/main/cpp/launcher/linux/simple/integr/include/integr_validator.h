@@ -9,7 +9,7 @@ namespace integr {
 bool validateIntegration(const std::string& kickxDir);
 bool checkLoaderJar(const std::string& path);
 
-} // namespace integr
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

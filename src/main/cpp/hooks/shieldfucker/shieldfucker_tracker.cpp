@@ -46,4 +46,4 @@ int trackerGetBreakCount() {
     return state.breakCount;
 }
 
-} // namespace shieldfucker
+} 

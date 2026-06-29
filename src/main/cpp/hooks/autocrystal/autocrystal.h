@@ -8,7 +8,7 @@
 
 namespace ravex {
 
-// ── Вектор 3D ────────────────────────────────────────────────────────────────
+
 struct Vec3 {
     double x, y, z;
 
@@ -26,7 +26,7 @@ struct Vec3 {
     double distanceToSq(const Vec3& o) const { return (*this - o).lengthSq(); }
 };
 
-// ── Характеристики сущности (эффекты, броня, прочность, движение и тотемы) ───
+
 struct EntityStats {
     double armorValue;
     double toughness;
@@ -42,20 +42,20 @@ struct EntityStats {
     double motionX;
     double motionY;
     double motionZ;
-    double totemCount; // Добавлено: количество тотемов у сущности
+    double totemCount; 
 };
 
-// ── Описание позиции для установки кристалла ─────────────────────────────────
+
 struct CrystalPlacement {
-    Vec3    blockPos;       // Позиция блока куда ставим кристалл
-    Vec3    crystalPos;     // Итоговая позиция кристалла
-    double  targetDamage;   // Урон цели
-    double  selfDamage;     // Урон себе
-    double  score;          // Итоговая оценка
-    bool    valid;          // Прошла ли позиция все проверки
+    Vec3    blockPos;       
+    Vec3    crystalPos;     
+    double  targetDamage;   
+    double  selfDamage;     
+    double  score;          
+    bool    valid;          
 };
 
-// ── Параметры расчётов ───────────────────────────────────────────────────────
+
 struct AutoCrystalConfig {
     double placeRange       = 4.5;
     double placeWallRange   = 3.5;
@@ -72,7 +72,7 @@ struct AutoCrystalConfig {
     bool   requireExposed   = false;
     double targetHealthBonus= 2.0;
     
-    // Новые настраиваемые параметры
+    
     bool   armorBreaker     = true;
     double armorPercent     = 15.0;
     double predictTicks     = 1.0;
@@ -83,27 +83,27 @@ struct AutoCrystalConfig {
     bool   suicide          = false;
 };
 
-// ── Состояние кристалла на поле ──────────────────────────────────────────────
+
 struct CrystalEntity {
     int    entityId;
     Vec3   pos;
     bool   shouldBreak;
 };
 
-// ── Результат AutoCrystal-тика ────────────────────────────────────────────────
+
 struct AutoCrystalResult {
-    bool             shouldPlace;    // Нужно ли ставить кристалл
-    CrystalPlacement bestPlacement;  // Лучшая позиция для установки
-    bool             shouldPlace2;   // Нужно ли ставить второй кристалл
-    CrystalPlacement secondPlacement;// Вторая лучшая позиция
-    bool             shouldBreak;    // Нужно ли подрывать кристалл
-    int              breakEntityId;  // ID кристалла для подрыва
-    Vec3             breakPos;       // Позиция кристалла для подрыва
-    double           breakDamage;    // Ожидаемый урон от подрыва
-    std::string      debugInfo;      // Отладочная информация
+    bool             shouldPlace;    
+    CrystalPlacement bestPlacement;  
+    bool             shouldPlace2;   
+    CrystalPlacement secondPlacement;
+    bool             shouldBreak;    
+    int              breakEntityId;  
+    Vec3             breakPos;       
+    double           breakDamage;    
+    std::string      debugInfo;      
 };
 
-// ── Основной класс расчётов ───────────────────────────────────────────────────
+
 class AutoCrystalMath {
 public:
     static AutoCrystalResult tick(
@@ -166,4 +166,4 @@ public:
     static double distanceToCenter(const Vec3& playerPos, const Vec3& blockPos);
 };
 
-} // namespace ravex
+} 

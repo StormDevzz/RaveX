@@ -3,7 +3,7 @@
 #include "damage_calc.h"
 #include <vector>
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 
 static std::vector<TntBlockPos> parseBlockData(JNIEnv* env, jdoubleArray arr) {
     std::vector<TntBlockPos> result;
@@ -26,7 +26,7 @@ static std::vector<TntBlockPos> parseBlockData(JNIEnv* env, jdoubleArray arr) {
     return result;
 }
 
-// ─── nativeCalculateCage ─────────────────────────────────────────────────────
+
 
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_TntAura_nativeCalculateCage(
@@ -41,7 +41,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
 ) {
     auto solidBlocks = parseBlockData(env, solidBlockData);
 
-    // Parse gap position if provided
+    
     TntBlockPos gapPos = {0, 0, 0};
     bool hasGap = false;
     if (gapPosData) {
@@ -80,7 +80,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
         } else {
             placement = {false, {0,0,0}, 0, {0,0,0}};
         }
-        // Also encode gap position in extra slots
+        
         jdoubleArray out = env->NewDoubleArray(11);
         if (!out) return nullptr;
         jdouble buf[11] = {
@@ -106,7 +106,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
     return out;
 }
 
-// ─── nativeCalculateTntSlot ──────────────────────────────────────────────────
+
 
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_TntAura_nativeCalculateTntSlot(
@@ -136,7 +136,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateTntSlot(
     return out;
 }
 
-// ─── nativeEstimateDamage ────────────────────────────────────────────────────
+
 
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_TntAura_nativeEstimateDamage(

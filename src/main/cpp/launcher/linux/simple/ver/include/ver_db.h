@@ -15,7 +15,7 @@ struct ver_db_result {
 ver_db_result ver_db_execute(const std::string& input);
 double ver_db_calculate(const std::string& input);
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

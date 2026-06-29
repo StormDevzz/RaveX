@@ -5,10 +5,7 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 
-/**
- * Shaders Module
- * Renders players and items with JNI-optimized volumetric waves and custom pulsing color gradients.
- */
+
 public class Shaders extends Module {
     public static final Shaders INSTANCE = new Shaders();
 
@@ -17,7 +14,7 @@ public class Shaders extends Module {
 
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter throughWalls = new BooleanParameter("Through Walls", false);
-    public final ColorParameter fillColor = new ColorParameter("Color", 0x77FF00A4); // default cool translucent violet/magenta
+    public final ColorParameter fillColor = new ColorParameter("Color", 0x77FF00A4); 
 
     private static boolean nativeAvailable;
 

@@ -7,14 +7,7 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 
-/**
- * Velocity — modifies knockback received by the player.
- *
- * Modes:
- *   Cancel — zero out all horizontal knockback (and optionally vertical).
- *   Matrix — reduce knockback with slight randomization (bypass Matrix AC).
- *   NCP    — reduce horizontal, keep vertical (bypass NoCheatPlus).
- */
+
 public class Velocity extends Module {
     public static final Velocity INSTANCE = new Velocity();
 
@@ -30,7 +23,7 @@ public class Velocity extends Module {
         addParameter(horizontal);
         addParameter(vertical);
         addParameter(explosion);
-        // Horizontal/vertical sliders only relevant in NCP/Matrix modes
+        
         horizontal.setVisible(() -> !mode.getValue().equals("Cancel"));
         vertical.setVisible(() -> !mode.getValue().equals("Cancel"));
     }

@@ -11,7 +11,7 @@ public class NativeManager {
     public static native void nativeCheckNatives();
 
     private NativeManager() {
-        // constructor
+        
     }
 
     public synchronized void check() {
@@ -21,12 +21,12 @@ public class NativeManager {
         System.out.println("[RaveX] [NativeManager] firing up native checks, let's roll!");
 
         try {
-            // loading the main JNI lib
+            
             NativeLoader.load();
             if (NativeLoader.isNativeAvailable()) {
                 System.out.println("[RaveX] [NativeManager] main ravex_jni library loaded successfully, let's go!");
                 
-                // invoking C++ manager checks
+                
                 nativeCheckNatives();
                 
                 nativeAvailable = true;

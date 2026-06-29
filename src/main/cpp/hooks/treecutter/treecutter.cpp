@@ -15,7 +15,7 @@ TreeCutterResult findBestLog(
     LogPos bestLog = { 0.0, 0.0, 0.0 };
 
     for (const auto& c : candidates) {
-        // We calculate distance from the center of the block
+        
         double dx = (c.x + 0.5) - playerX;
         double dy = (c.y + 0.5) - playerY;
         double dz = (c.z + 0.5) - playerZ;

@@ -12,7 +12,7 @@ void animate_resize(GtkWidget *window, int target_w, int target_h, int duration_
     (void)duration_ms;
 }
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

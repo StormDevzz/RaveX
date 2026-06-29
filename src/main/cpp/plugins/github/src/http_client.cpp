@@ -25,7 +25,7 @@
 namespace ravex {
 namespace github {
 
-// ─── Internal helpers ────────────────────────────────────────────────────────
+
 
 static std::string urlEncode(const std::string& s) {
     std::ostringstream oss;
@@ -41,7 +41,7 @@ static std::string urlEncode(const std::string& s) {
 
 static void parseUrl(const std::string& url, std::string& host, std::string& path,
                      int& port, bool& isHttps) {
-    isHttps = url.compare(0, 8, "https://") == 0;
+    isHttps = url.compare(0, 8, "https://");
     size_t start = isHttps ? 8 : 7;
     size_t slash = url.find('/', start);
     std::string hostPart = (slash != std::string::npos) ? url.substr(start, slash - start) : url.substr(start);
@@ -57,7 +57,7 @@ static void parseUrl(const std::string& url, std::string& host, std::string& pat
     }
 }
 
-// ─── Platform-specific implementation ────────────────────────────────────────
+
 
 struct HttpClient::Impl {
     std::string token;
@@ -86,7 +86,7 @@ struct HttpClient::Impl {
 #endif
     }
 
-    // ─── Windows: WinHTTP ───────────────────────────────────────────────
+    
 #ifdef _WIN32
     HttpResponse execWinHttp(const HttpRequest& req) {
         HttpResponse resp;
@@ -109,13 +109,13 @@ struct HttpClient::Impl {
             https ? WINHTTP_FLAG_SECURE : 0);
         if (!hRequest) { resp.error = true; resp.errorMsg = "WinHttpOpenRequest failed"; WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession); return resp; }
 
-        // Timeout
+        
         int timeout = req.timeoutSec * 1000;
         WinHttpSetOption(hRequest, WINHTTP_OPTION_CONNECT_TIMEOUT, &timeout, sizeof(timeout));
         WinHttpSetOption(hRequest, WINHTTP_OPTION_SEND_TIMEOUT, &timeout, sizeof(timeout));
         WinHttpSetOption(hRequest, WINHTTP_OPTION_RECEIVE_TIMEOUT, &timeout, sizeof(timeout));
 
-        // Headers
+        
         std::string headers;
         for (auto& [k, v] : req.headers) headers += k + ": " + v + "\r\n";
         if (!token.empty()) headers += "Authorization: Bearer " + token + "\r\n";
@@ -140,13 +140,13 @@ struct HttpClient::Impl {
             return resp;
         }
 
-        // Status code
+        
         DWORD status = 0, statusSize = sizeof(status);
         WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
                             nullptr, &status, &statusSize, nullptr);
         resp.statusCode = status;
 
-        // Body
+        
         DWORD bytesAvail = 0;
         while (WinHttpQueryDataAvailable(hRequest, &bytesAvail) && bytesAvail > 0) {
             std::vector<char> buf(bytesAvail);
@@ -164,7 +164,7 @@ struct HttpClient::Impl {
 
     bool downloadWinHttp(const std::string& url, const std::string& outputPath,
                          ProgressCallback progress) {
-        // Similar to execWinHttp but writes to file with progress
+        
         std::string host, path; int port; bool https;
         parseUrl(url, host, path, port, https);
 
@@ -208,7 +208,7 @@ struct HttpClient::Impl {
             if (WinHttpReadData(hRequest, buf.data(), bytesAvail, &bytesRead)) {
                 ofs.write(buf.data(), bytesRead);
                 total += bytesRead;
-                if (progress) progress(total, 0); // total unknown with chunked
+                if (progress) progress(total, 0); 
             }
         }
 
@@ -219,7 +219,7 @@ struct HttpClient::Impl {
         return true;
     }
 
-    // ─── Linux: POSIX sockets + OpenSSL ─────────────────────────────────
+    
 #else
     static int sockConnect(const std::string& host, int port, int timeoutSec) {
         struct hostent* he = gethostbyname(host.c_str());
@@ -233,7 +233,7 @@ struct HttpClient::Impl {
         addr.sin_port = htons(port);
         memcpy(&addr.sin_addr, he->h_addr_list[0], he->h_length);
 
-        // Non-blocking connect with timeout
+        
         fcntl(fd, F_SETFL, O_NONBLOCK);
         int res = connect(fd, (struct sockaddr*)&addr, sizeof(addr));
         if (res < 0 && errno != EINPROGRESS) { close(fd); return -1; }
@@ -265,7 +265,7 @@ struct HttpClient::Impl {
         std::string result;
         char buf[65536];
         fd_set fdSet;
-        struct timeval tv = { 5, 0 }; // 5s timeout per read
+        struct timeval tv = { 5, 0 }; 
         while (true) {
             FD_ZERO(&fdSet);
             FD_SET(fd, &fdSet);
@@ -306,7 +306,7 @@ struct HttpClient::Impl {
             }
         }
 
-        // Build HTTP request
+        
         std::ostringstream reqStream;
         static const char* methodStrs[] = { "GET", "POST", "PUT", "DELETE" };
         reqStream << methodStrs[(int)req.method] << " " << path << " HTTP/1.1\r\n";
@@ -344,7 +344,7 @@ struct HttpClient::Impl {
         if (ssl) { SSL_free(ssl); SSL_CTX_free(sslCtx); }
         close(fd);
 
-        // Parse response
+        
         size_t headerEnd = rawResp.find("\r\n\r\n");
         if (headerEnd == std::string::npos) {
             resp.error = true; resp.errorMsg = "malformed response";
@@ -354,14 +354,14 @@ struct HttpClient::Impl {
         std::string headerSection = rawResp.substr(0, headerEnd);
         std::string bodySection = rawResp.substr(headerEnd + 4);
 
-        // Status line: "HTTP/1.1 200 OK"
+        
         size_t sp1 = headerSection.find(' ');
         size_t sp2 = sp1 != std::string::npos ? headerSection.find(' ', sp1 + 1) : std::string::npos;
         if (sp2 != std::string::npos) {
             resp.statusCode = std::stoi(headerSection.substr(sp1 + 1, sp2 - sp1 - 1));
         }
 
-        // Headers
+        
         std::istringstream hdrStream(headerSection.substr(headerSection.find('\n') + 1));
         std::string line;
         while (std::getline(hdrStream, line)) {
@@ -375,7 +375,7 @@ struct HttpClient::Impl {
             }
         }
 
-        // Handle chunked transfer encoding
+        
         auto it = resp.headers.find("Transfer-Encoding");
         if (it != resp.headers.end() && it->second == "chunked") {
             std::string unchunked;
@@ -383,14 +383,14 @@ struct HttpClient::Impl {
             std::string chunkLine;
             while (std::getline(chunkStream, chunkLine)) {
                 if (chunkLine.empty() || chunkLine == "\r") continue;
-                // Remove \r
+                
                 if (!chunkLine.empty() && chunkLine.back() == '\r') chunkLine.pop_back();
                 unsigned long chunkSize = strtoul(chunkLine.c_str(), nullptr, 16);
                 if (chunkSize == 0) break;
                 std::vector<char> chunkData(chunkSize);
                 chunkStream.read(chunkData.data(), chunkSize);
                 unchunked.append(chunkData.data(), chunkSize);
-                // Skip trailing \r\n
+                
                 if (chunkStream.peek() == '\r') chunkStream.get();
                 if (chunkStream.peek() == '\n') chunkStream.get();
             }
@@ -415,7 +415,7 @@ struct HttpClient::Impl {
 #endif
 };
 
-// ─── HttpClient public API ───────────────────────────────────────────────────
+
 
 HttpClient::HttpClient() : m_impl(std::make_unique<Impl>()) {}
 HttpClient::~HttpClient() = default;
@@ -454,5 +454,5 @@ bool HttpClient::download(const std::string& url, const std::string& outputPath,
     return m_impl->downloadFile(url, outputPath, std::move(progress));
 }
 
-} // namespace github
-} // namespace ravex
+} 
+} 

@@ -117,6 +117,6 @@ bool MemoryBoost::optimizeAll() {
     return ok;
 }
 
-} // namespace optimize
-} // namespace plugins
-} // namespace ravex
+} 
+} 
+} 

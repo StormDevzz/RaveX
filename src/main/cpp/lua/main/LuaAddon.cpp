@@ -1,14 +1,14 @@
-// ══════════════════════════════════════════════════════════════════════════════
-//  lua/main/LuaAddon.cpp
-//
-//  RU: Реализация LuaAddon — обёртки Lua-скрипта в интерфейс аддона.
-//      Управляет жизненным циклом: создание lua_State, загрузка
-//      скрипта, вызов onLoad/onUnload/onTick/onEvent.
-//
-//  EN: LuaAddon implementation — wraps a Lua script into the addon interface.
-//      Manages the lifecycle: creating lua_State, loading the script,
-//      calling onLoad/onUnload/onTick/onEvent.
-// ══════════════════════════════════════════════════════════════════════════════
+
+
+
+
+
+
+
+
+
+
+
 
 #include "LuaAddon.h"
 #include "LuaBridge.h"
@@ -18,8 +18,8 @@
 #include <cstdio>
 #include <fstream>
 
-// RU: Функции из LuaScript.cpp, общие между translation units.
-// EN: Functions from LuaScript.cpp shared between translation units.
+
+
 namespace ravex { namespace lua {
     lua_State* createLuaState();
     void closeLuaState(lua_State* L);
@@ -42,8 +42,8 @@ LuaLoadResult LuaAddon::loadFromFile(const std::string& filePath,
     LuaLoadResult result;
     result.filePath = filePath;
 
-    // RU: Проверяем существование файла.
-    // EN: Check if file exists.
+    
+    
     std::ifstream testFile(filePath);
     if (!testFile) {
         result.errorMsg = "File not found: " + filePath;
@@ -51,26 +51,26 @@ LuaLoadResult LuaAddon::loadFromFile(const std::string& filePath,
     }
     testFile.close();
 
-    // RU: Создаём lua_State.
-    // EN: Create lua_State.
+    
+    
     m_L = createLuaState();
     if (!m_L) {
         result.errorMsg = "Failed to create Lua state";
         return result;
     }
 
-    // RU: Настраиваем sandbox.
-    // EN: Set up sandbox.
+    
+    
     setupSandbox(m_L, true);
 
-    // RU: Регистрируем RaveX API в Lua.
-    // EN: Register RaveX API in Lua.
+    
+    
     m_luaCtx.setContext(ctx);
     m_luaCtx.setConfig(cfg);
     m_luaCtx.registerInState(m_L);
 
-    // RU: Загружаем и выполняем скрипт.
-    // EN: Load and execute the script.
+    
+    
     std::string loadError;
     if (!loadLuaFile(m_L, filePath, loadError)) {
         result.errorMsg = "Failed to load script: " + loadError;
@@ -80,15 +80,15 @@ LuaLoadResult LuaAddon::loadFromFile(const std::string& filePath,
         return result;
     }
 
-    // RU: Читаем мета-информацию из скрипта.
-    // EN: Read meta information from the script.
+    
+    
     m_meta.name        = readGlobalString("getName", "UnnamedLuaAddon");
     m_meta.version     = readGlobalString("getVersion", "0.0.0");
     m_meta.author      = readGlobalString("getAuthor", "Unknown");
     m_meta.description = readGlobalString("getDescription", "");
 
-    // RU: Проверяем, есть ли опциональные функции.
-    // EN: Check for optional functions.
+    
+    
     m_hasTick  = hasLuaFunction(m_L, "onTick");
     m_hasEvent = hasLuaFunction(m_L, "onEvent");
 
@@ -153,8 +153,8 @@ std::string LuaAddon::readGlobalString(const std::string& name,
     if (!m_L) return defaultValue;
     lua_getglobal(m_L, name.c_str());
     if (lua_isfunction(m_L, -1)) {
-        // RU: Если это функция — вызываем и получаем результат.
-        // EN: If it's a function — call it and get the result.
+        
+        
         if (lua_pcall(m_L, 0, 1, 0) == LUA_OK) {
             std::string val = LuaBridge::popString(m_L, -1);
             lua_pop(m_L, 1);
@@ -172,5 +172,5 @@ bool LuaAddon::hasGlobalFunction(const std::string& name) {
     return hasLuaFunction(m_L, name);
 }
 
-} // namespace lua
-} // namespace ravex
+} 
+} 

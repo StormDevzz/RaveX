@@ -15,7 +15,7 @@ struct ver_sync_result {
 ver_sync_result ver_sync_execute(const std::string& input);
 double ver_sync_calculate(const std::string& input);
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

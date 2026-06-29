@@ -6,10 +6,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.utility.misc.NativeLoader;
 
-/**
- * Calculator — открывает GTK3 desktop-калькулятор с полным парсером математических выражений.
- * Поддерживает: +, -, *, /, %, ^, sin, cos, tan, sqrt, log, pi, e, и многое другое.
- */
+
 public class Calculator extends Module {
     public static final Calculator INSTANCE = new Calculator();
 
@@ -53,7 +50,7 @@ public class Calculator extends Module {
         });
     }
 
-    // ── Native declarations ───────────────────────────────────────────────────
+    
     private static native void openCalculator();
     private static native void closeCalculator();
     public static native String nativeEvaluate(String expr);

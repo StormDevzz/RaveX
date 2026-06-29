@@ -1,11 +1,6 @@
---[[
-  ┌──────────────────────────────────────────────────────────────┐
-  │  RaveX Lua Scripting API — init.lua                          │
-  │  Загружается автоматически при старте LuaManager             │
-  └──────────────────────────────────────────────────────────────┘
-]]
 
--- ── Базовая библиотека ───────────────────────────────────────────
+
+
 
 _G.ravex = _G.ravex or {}
 local ravex = _G.ravex
@@ -30,7 +25,7 @@ function ravex.error(msg)
     client.print("§c[✗]§7 " .. tostring(msg))
 end
 
--- ── Утилиты ───────────────────────────────────────────────────────
+
 
 function ravex.tableToString(tbl, indent)
     indent = indent or 0
@@ -58,7 +53,7 @@ function ravex.clamp(val, min, max)
     return math.max(min, math.min(max, val))
 end
 
--- ── Timer helpers ────────────────────────────────────────────────
+
 
 function ravex.every(intervalMs, fn)
     local id = "ravex_timer_" .. tostring(math.random(100000, 999999))
@@ -70,7 +65,7 @@ function ravex.cancel(id)
     timer.clearInterval(id)
 end
 
--- ── Module helpers ───────────────────────────────────────────────
+
 
 function ravex.getEnabledModules()
     local list = modules.list()
@@ -94,7 +89,7 @@ function ravex.getEnabledCount()
     return count
 end
 
--- ── Export ───────────────────────────────────────────────────────
+
 
 ravex.version = "1.0"
 ravex.NAME = "RaveX"

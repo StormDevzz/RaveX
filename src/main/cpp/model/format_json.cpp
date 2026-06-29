@@ -109,8 +109,8 @@ Value parseValue(const char*& p) {
     return v;
 }
 
-} // namespace detail
-} // namespace json
+} 
+} 
 
 ModelData loadJson(const uint8_t* data, size_t size) {
     std::string input(reinterpret_cast<const char*>(data), size);
@@ -190,4 +190,4 @@ ExportResult saveJson(const ModelData& m, const ExportSettings&) {
     return r;
 }
 
-} // namespace model
+} 

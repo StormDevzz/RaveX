@@ -74,7 +74,7 @@ static bool ensureDir(const std::string& path) {
     return mkdir(path.c_str(), 0755) == 0;
 }
 
-// --- interactive ----------------------------------------------------------
+
 
 static void interactive() {
     std::cout << "\ntxtr - Texture Tool v1.0  (type 'help' for commands)\n\n";
@@ -213,7 +213,7 @@ static void interactive() {
     std::cout << "bye\n";
 }
 
-// --- command-line ----------------------------------------------------------
+
 
 static void printUsage(const char* prog) {
     std::cerr << "txtr - Texture Tool v1.0\n"

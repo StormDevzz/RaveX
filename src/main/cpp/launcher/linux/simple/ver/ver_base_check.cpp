@@ -13,7 +13,7 @@ ver_base_result ver_base_execute(const std::string& input) {
     return r;
 }
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

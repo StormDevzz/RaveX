@@ -148,6 +148,6 @@ bool SystemConfig::checkAll() {
     return true;
 }
 
-} // namespace optimize
-} // namespace plugins
-} // namespace ravex
+} 
+} 
+} 

@@ -6,10 +6,10 @@ namespace launcher {
 namespace simple {
 namespace window {
 
-// верстка и размещение виджетов в окне
+
 void build_layout(LauncherState *state);
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

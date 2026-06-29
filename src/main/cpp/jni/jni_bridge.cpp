@@ -12,9 +12,9 @@
 #include <vector>
 #include <cmath>
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  OPTIMIZER
-// ═════════════════════════════════════════════════════════════════════════════
+
+
+
 
 JNIEXPORT jstring JNICALL
 Java_ravex_modules_misc_Optimizer_nativeOptimize(JNIEnv* env, jclass, jstring mode) {
@@ -49,9 +49,9 @@ Java_ravex_modules_misc_Optimizer_nativeListTechniques(JNIEnv* env, jclass) {
     return arr;
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  ANTI-AFK
-// ═════════════════════════════════════════════════════════════════════════════
+
+
+
 
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_misc_AntiAfk_nativeStart(JNIEnv* env, jclass,
@@ -87,9 +87,9 @@ Java_ravex_modules_misc_AntiAfk_nativePerformAction(JNIEnv*, jclass) {
     return ravex::AntiAfk::performRandomAction() ? JNI_TRUE : JNI_FALSE;
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  SHADERS JNI BINDINGS
-// ═════════════════════════════════════════════════════════════════════════════
+
+
+
 
 extern "C" {
 
@@ -146,7 +146,7 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
     jdoubleArray outLayouts,
     jintArray outIndices
 ) {
-    // grab pointers to array elements
+    
     jdouble* pCameraPos = env->GetDoubleArrayElements(cameraPos, nullptr);
     jfloat* pModelView = env->GetFloatArrayElements(modelView, nullptr);
     jfloat* pProjection = env->GetFloatArrayElements(projection, nullptr);
@@ -162,7 +162,7 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
     if (pCameraPos && pModelView && pProjection && pPlayerViewVec && pPositions &&
         pTextWidths && pBooleans && pArmorCounts && pOutLayouts && pOutIndices) {
         
-        // invoke optimize method
+        
         result = ravex::plugins::optimize::NameTagsOptimizer::optimizeNameTags(
             pCameraPos,
             pModelView,
@@ -183,7 +183,7 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
         );
     }
 
-    // free arrays without writing back
+    
     if (pCameraPos) env->ReleaseDoubleArrayElements(cameraPos, pCameraPos, JNI_ABORT);
     if (pModelView) env->ReleaseFloatArrayElements(modelView, pModelView, JNI_ABORT);
     if (pProjection) env->ReleaseFloatArrayElements(projection, pProjection, JNI_ABORT);
@@ -193,7 +193,7 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
     if (pBooleans) env->ReleaseIntArrayElements(booleans, pBooleans, JNI_ABORT);
     if (pArmorCounts) env->ReleaseIntArrayElements(armorCounts, pArmorCounts, JNI_ABORT);
     
-    // save changes to output arrays
+    
     if (pOutLayouts) env->ReleaseDoubleArrayElements(outLayouts, pOutLayouts, 0);
     if (pOutIndices) env->ReleaseIntArrayElements(outIndices, pOutIndices, 0);
 
@@ -207,7 +207,7 @@ Java_ravex_manager_NativeManager_nativeCheckNatives(JNIEnv*, jclass) {
 
 JNIEXPORT jdouble JNICALL
 Java_ravex_modules_render_NameTags_nativeGetDistance(JNIEnv*, jclass, jdouble x1, jdouble y1, jdouble z1, jdouble x2, jdouble y2, jdouble z2) {
-    // compute simple euclidean distance on the fly
+    
     double dx = x1 - x2;
     double dy = y1 - y2;
     double dz = z1 - z2;
@@ -216,13 +216,13 @@ Java_ravex_modules_render_NameTags_nativeGetDistance(JNIEnv*, jclass, jdouble x1
 
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_render_NameTags_nativeIsWithinRange(JNIEnv*, jclass, jdouble distance, jdouble range) {
-    // check if we are closer than the configured range limit
+    
     return distance <= range ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT jdouble JNICALL
 Java_ravex_modules_render_NameTags_nativeCalculateScale(JNIEnv*, jclass, jdouble distance, jdouble scaleParam, jboolean distanceScaling) {
-    // scale layout dynamically depending on target distance
+    
     double scale = scaleParam;
     if (distanceScaling == JNI_TRUE) {
         scale = scaleParam * (distance * 0.15);

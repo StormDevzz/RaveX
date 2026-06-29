@@ -11,7 +11,7 @@
 static txtr::TextureData currentTex;
 static std::string currentPath;
 
-// widgets
+
 static GtkWidget *infoLabel, *statusLabel, *formatCombo, *qualitySpin;
 static GtkWidget *batchDirEntry, *batchFmtCombo, *batchRecurseCheck;
 
@@ -35,7 +35,7 @@ static txtr::ImageFormat strToFmt(const char* s) {
     return txtr::ImageFormat::PNG;
 }
 
-// --- open ----------------------------------------------------------------
+
 
 static void onOpen(GtkButton*, GtkWindow* parent) {
     GtkWidget* dialog = gtk_file_chooser_dialog_new("Open Image",
@@ -70,7 +70,7 @@ static void onOpen(GtkButton*, GtkWindow* parent) {
     gtk_widget_destroy(dialog);
 }
 
-// --- convert single -------------------------------------------------------
+
 
 static void onConvert(GtkButton*, GtkWindow* parent) {
     if (!currentTex.valid()) {
@@ -119,7 +119,7 @@ static void onConvert(GtkButton*, GtkWindow* parent) {
     gtk_widget_destroy(dialog);
 }
 
-// --- batch -----------------------------------------------------------------
+
 
 static void onBatch(GtkButton*, GtkWindow*) {
     const char* dir = gtk_entry_get_text(GTK_ENTRY(batchDirEntry));
@@ -190,7 +190,7 @@ static void onBatch(GtkButton*, GtkWindow*) {
     gtk_label_set_text(GTK_LABEL(statusLabel), buf);
 }
 
-// --- batch dir browser -----------------------------------------------------
+
 
 static void onBatchBrowse(GtkButton*, GtkWindow* parent) {
     GtkWidget* dialog = gtk_file_chooser_dialog_new("Select Directory",
@@ -206,7 +206,7 @@ static void onBatchBrowse(GtkButton*, GtkWindow* parent) {
     gtk_widget_destroy(dialog);
 }
 
-// --- about -----------------------------------------------------------------
+
 
 static void onAbout(GtkWidget*, GtkWindow* parent) {
     GtkWidget* dlg = gtk_about_dialog_new();
@@ -218,7 +218,7 @@ static void onAbout(GtkWidget*, GtkWindow* parent) {
     gtk_widget_destroy(dlg);
 }
 
-// --- main ------------------------------------------------------------------
+
 
 int main(int argc, char** argv) {
     gtk_init(&argc, &argv);
@@ -230,7 +230,7 @@ int main(int argc, char** argv) {
 
     auto* nb = gtk_notebook_new();
 
-    // === TAB 1: Single ===
+    
     auto* tab1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_set_border_width(GTK_CONTAINER(tab1), 12);
 
@@ -273,7 +273,7 @@ int main(int argc, char** argv) {
 
     gtk_notebook_append_page(GTK_NOTEBOOK(nb), tab1, gtk_label_new("Single"));
 
-    // === TAB 2: Batch ===
+    
     auto* tab2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_set_border_width(GTK_CONTAINER(tab2), 12);
 

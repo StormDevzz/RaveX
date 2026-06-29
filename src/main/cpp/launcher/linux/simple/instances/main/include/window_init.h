@@ -8,7 +8,7 @@ namespace window {
 
 void init_and_run(LauncherState* state);
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

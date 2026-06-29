@@ -20,7 +20,7 @@ import java.util.List;
 public class KillAura extends Module {
     public static final KillAura INSTANCE = new KillAura();
 
-    // --- Parameters ---
+    
     public final NumberParameter range = new NumberParameter("Range", 4.2, 3.0, 6.0, 0.1);
     public final NumberParameter cooldownThreshold = new NumberParameter("Cooldown", 0.9, 0.0, 1.0, 0.05);
     public final NumberParameter switchDelay = new NumberParameter("Switch Delay", 100, 0, 1000, 10);
@@ -41,7 +41,7 @@ public class KillAura extends Module {
     public final ModeParameter swingMode = new ModeParameter("Swing", "Client",
             List.of("Client", "Server", "Off"));
 
-    // --- Silent rotation state ---
+    
     public static float silentYaw = 0;
     public static float silentPitch = 0;
     private static boolean hasSilentRotations = false;

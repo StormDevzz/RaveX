@@ -11,7 +11,7 @@ void close_console(LauncherState *state);
 void append_console_log(LauncherState *state, const char *text);
 bool is_console_open(LauncherState *state);
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

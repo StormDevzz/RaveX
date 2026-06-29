@@ -26,11 +26,11 @@ void GuiOptimizer::optimizeGuiAndGame() {
     MemoryBoost::optimizeAll();
     SystemConfig::checkAll();
 #else
-    // Linux
-    // 1. raise process priority using nice
+    
+    
     setpriority(PRIO_PROCESS, 0, -20);
 
-    // 2. boost current rendering thread priority
+    
     pthread_t thread = pthread_self();
     int policy;
     struct sched_param param;
@@ -39,7 +39,7 @@ void GuiOptimizer::optimizeGuiAndGame() {
         pthread_setschedparam(thread, SCHED_RR, &param);
     }
 
-    // 3. thread affinity: lock to the first P-cores
+    
     long numCPU = sysconf(_SC_NPROCESSORS_ONLN);
     if (numCPU > 0) {
         cpu_set_t cpuset;
@@ -51,12 +51,12 @@ void GuiOptimizer::optimizeGuiAndGame() {
         pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
     }
 
-    // 4. trim native heap memory
+    
     malloc_trim(0);
 #endif
 }
 
-// matrix multiplication: C = A * B (column-major style)
+
 static void multiplyMatrices(const float* A, const float* B, float* C) {
     for (int col = 0; col < 4; ++col) {
         for (int row = 0; row < 4; ++row) {
@@ -69,7 +69,7 @@ static void multiplyMatrices(const float* A, const float* B, float* C) {
     }
 }
 
-// project point to screen coordinates
+
 static bool projectPoint(const float* Combined, double dx, double dy, double dz, double& outX, double& outY, double& outZ) {
     float x = static_cast<float>(dx);
     float y = static_cast<float>(dy);
@@ -106,7 +106,7 @@ int NameTagsOptimizer::optimizeNameTags(
     double* outLayouts,
     int* outIndices
 ) {
-    // compute combined projection and modelview matrix
+    
     float Combined[16];
     multiplyMatrices(projection, modelView, Combined);
 
@@ -121,7 +121,7 @@ int NameTagsOptimizer::optimizeNameTags(
     double lookZ = playerViewVec[2];
 
     for (int i = 0; i < count; ++i) {
-        // grab position of three key points: base, head, side
+        
         double bx_w = positions[i * 9 + 0];
         double by_w = positions[i * 9 + 1];
         double bz_w = positions[i * 9 + 2];
@@ -134,19 +134,19 @@ int NameTagsOptimizer::optimizeNameTags(
         double sy_w = positions[i * 9 + 7];
         double sz_w = positions[i * 9 + 8];
 
-        // check distance vector difference
+        
         double dx = bx_w - camX;
         double dy = by_w - camY;
         double dz = bz_w - camZ;
         double distSq = dx * dx + dy * dy + dz * dz;
 
-        // fast distance check
+        
         double distance = std::sqrt(distSq);
         if (distance > maxDistance) {
             continue;
         }
 
-        // check dot product of camera view vector
+        
         if (distance > 0.0) {
             double ndx = dx / distance;
             double ndy = dy / distance;
@@ -157,7 +157,7 @@ int NameTagsOptimizer::optimizeNameTags(
             }
         }
 
-        // project all 3 points to screen space
+        
         double projBaseX, projBaseY, projBaseZ;
         double projHeadX, projHeadY, projHeadZ;
         double projSideX, projSideY, projSideZ;
@@ -168,20 +168,20 @@ int NameTagsOptimizer::optimizeNameTags(
             continue;
         }
 
-        // transform to screen coordinates (GUI space)
+        
         double sx_base = (projBaseX + 1.0) / 2.0 * guiWidth;
         double sy_base = (1.0 - projBaseY) / 2.0 * guiHeight;
         double sx_head = (projHeadX + 1.0) / 2.0 * guiWidth;
         double sy_head = (1.0 - projHeadY) / 2.0 * guiHeight;
         double sx_side = (projSideX + 1.0) / 2.0 * guiWidth;
 
-        // verify if the entity is offscreen
+        
         if ((sx_base < 0 || sx_base > guiWidth || sy_base < 0 || sy_base > guiHeight) &&
             (sx_head < 0 || sx_head > guiWidth || sy_head < 0 || sy_head > guiHeight)) {
             continue;
         }
 
-        // read entity properties
+        
         double tw = textWidths[i * 2 + 0];
         double ow = textWidths[i * 2 + 1];
 
@@ -193,7 +193,7 @@ int NameTagsOptimizer::optimizeNameTags(
 
         int armorCount = armorCounts[i];
 
-        // 1. calculate scaling factor
+        
         double scale = scaleParam;
         if (distanceScaling) {
             scale = scaleParam * (distance * 0.15);
@@ -201,12 +201,12 @@ int NameTagsOptimizer::optimizeNameTags(
             if (scale > 3.0) scale = 3.0;
         }
 
-        // 2. layout constants
+        
         const double is = 16.0;
         const double gap = 2.0;
         const double padding = 3.0;
 
-        // 3. calculate row widths
+        
         double armorRowWidth = 0.0;
         bool hasArmorRow = showArmor && (armorCount > 0);
         if (hasArmorRow) {
@@ -224,7 +224,7 @@ int NameTagsOptimizer::optimizeNameTags(
         double ownerRowWidth = hasOwner ? ow : 0.0;
         double totalWidth = std::max(mainRowWidth, std::max(armorRowWidth, ownerRowWidth));
 
-        // 4. calculate row heights
+        
         double mainRowHeight = 9.0;
         double textYOffset = 0.0;
         if ((showHands && hasMainHand) || (showHands && hasOffHand)) {
@@ -232,7 +232,7 @@ int NameTagsOptimizer::optimizeNameTags(
             textYOffset = (is - 9.0) / 2.0;
         }
 
-        // 5. calculate total height
+        
         double totalHeight = 0.0;
         if (hasArmorRow) {
             totalHeight += is + gap;
@@ -250,7 +250,7 @@ int NameTagsOptimizer::optimizeNameTags(
         }
         totalHeight += 2 * padding;
 
-        // 6. calculate Y offsets
+        
         double bgBottom = -2.0;
         double bgTop = bgBottom - totalHeight;
         double contentTop = bgTop + padding;
@@ -276,7 +276,7 @@ int NameTagsOptimizer::optimizeNameTags(
             }
         }
 
-        // write layout results back to outLayouts
+        
         int idx = renderedCount * 16;
         outLayouts[idx + 0] = scale;
         outLayouts[idx + 1] = totalWidth;
@@ -292,10 +292,10 @@ int NameTagsOptimizer::optimizeNameTags(
         outLayouts[idx + 11] = sy_head;
         outLayouts[idx + 12] = sx_side;
         outLayouts[idx + 13] = distance;
-        outLayouts[idx + 14] = 0.0; // reserve
-        outLayouts[idx + 15] = 0.0; // reserve
+        outLayouts[idx + 14] = 0.0; 
+        outLayouts[idx + 15] = 0.0; 
 
-        // store entity indices mapping
+        
         outIndices[renderedCount] = i;
 
         renderedCount++;
@@ -317,7 +317,7 @@ void HudOptimizer::updateAnimations(
         if (!animInitializeds[i]) {
             displayXs[i] = static_cast<float>(targetXs[i]);
             displayYs[i] = static_cast<float>(targetYs[i]);
-            animInitializeds[i] = 1; // true, initialized!
+            animInitializeds[i] = 1; 
         }
         displayXs[i] += (targetXs[i] - displayXs[i]) * speed;
         displayYs[i] += (targetYs[i] - displayYs[i]) * speed;
@@ -372,7 +372,7 @@ void TracersOptimizer::optimizeTracers(
 
         if (!projectPoint(Combined, dx_b, dy_b, dz_b, projBaseX, projBaseY, projBaseZ) ||
             !projectPoint(Combined, dx_h, dy_h, dz_h, projHeadX, projHeadY, projHeadZ)) {
-            outPoints[i * 3 + 2] = 0.0; // flag: let's not paint this tracer, skip!
+            outPoints[i * 3 + 2] = 0.0; 
             continue;
         }
 
@@ -418,10 +418,10 @@ void TracersOptimizer::optimizeTracers(
 
         outPoints[i * 3 + 0] = ex;
         outPoints[i * 3 + 1] = ey;
-        outPoints[i * 3 + 2] = 1.0; // flag: draw this tracer, let's roll!
+        outPoints[i * 3 + 2] = 1.0; 
     }
 }
 
-} // namespace optimize
-} // namespace plugins
-} // namespace ravex
+} 
+} 
+} 

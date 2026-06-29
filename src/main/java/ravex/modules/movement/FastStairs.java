@@ -30,10 +30,10 @@ public class FastStairs extends Module {
             try {
                 return nativeCalculateClimbSpeed(mode, currentY, speedFactor);
             } catch (UnsatisfiedLinkError | Exception e) {
-                // Fallback
+                
             }
         }
-        // Fallback Java logic
+        
         double baseSpeed = (currentY > 0.0) ? currentY : 0.15;
         if ("Boost".equals(mode)) {
             return baseSpeed * speedFactor * 1.35;

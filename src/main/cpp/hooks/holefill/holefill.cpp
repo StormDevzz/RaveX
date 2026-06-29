@@ -18,10 +18,7 @@ struct BlockInfo {
     bool solid;
 };
 
-/**
- * Grid scan for holes using breadth-first expansion from player center.
- * Scans in concentric rings for efficient near-to-far hole discovery.
- */
+
 std::vector<HoleCandidate> findHoles(
     double px, double py, double pz,
     double range,
@@ -33,11 +30,11 @@ std::vector<HoleCandidate> findHoles(
     int px_i = static_cast<int>(std::round(px));
     int pz_i = static_cast<int>(std::round(pz));
 
-    // The Y level to check for holes: at player feet
+    
     int feetY = static_cast<int>(std::floor(py));
     int range_i = static_cast<int>(std::ceil(range));
 
-    // Candidate cache for uniqueness checking
+    
     auto isDuplicate = [&](int x, int y, int z) -> bool {
         for (const auto& h : results) {
             if (h.x == x && h.y == y && h.z == z) return true;
@@ -45,21 +42,21 @@ std::vector<HoleCandidate> findHoles(
         return false;
     };
 
-    // Scan in concentric rings (BFS from center)
+    
     for (int ring = 0; ring <= range_i; ring++) {
         int ringStart = (ring == 0) ? 0 : ring;
 
-        // Top and bottom rows of the ring
+        
         for (int dx = -ringStart; dx <= ringStart; dx++) {
             for (int dz = -ringStart; dz <= ringStart; dz++) {
-                // Only include blocks on the ring boundary for ring > 0
+                
                 if (ring > 0 && std::abs(dx) < ring && std::abs(dz) < ring) continue;
 
-                // Skip out-of-range
+                
                 double dist = std::sqrt(double(dx*dx + dz*dz));
                 if (dist > range) continue;
 
-                // Check at feet Y level, and also 1 below and 1 above
+                
                 for (int dy = -1; dy <= 1; dy++) {
                     int x = px_i + dx;
                     int y = feetY + dy;
@@ -67,7 +64,7 @@ std::vector<HoleCandidate> findHoles(
 
                     if (isDuplicate(x, y, z)) continue;
 
-                    // Calculate distance to player in 3D
+                    
                     double d3 = std::sqrt(
                         (x - px) * (x - px) +
                         (y - py) * (y - py) +
@@ -75,13 +72,13 @@ std::vector<HoleCandidate> findHoles(
                     );
                     if (d3 > range) continue;
 
-                    // We need the Java side to verify block states,
-                    // so just return the candidate positions
+                    
+                    
                     HoleCandidate cand;
                     cand.x = x;
                     cand.y = y;
                     cand.z = z;
-                    cand.solidSides = 0; // filled by Java
+                    cand.solidSides = 0; 
                     cand.distToPlayer = d3;
                     results.push_back(cand);
 
@@ -94,7 +91,7 @@ std::vector<HoleCandidate> findHoles(
     }
 
 done:
-    // Sort by distance to player (closest first)
+    
     std::sort(results.begin(), results.end(),
         [](const HoleCandidate& a, const HoleCandidate& b) {
             return a.distToPlayer < b.distToPlayer;
@@ -103,4 +100,4 @@ done:
     return results;
 }
 
-} // namespace ravex
+} 

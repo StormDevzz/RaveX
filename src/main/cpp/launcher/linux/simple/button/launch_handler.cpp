@@ -16,7 +16,7 @@ namespace launcher {
 namespace simple {
 namespace button {
 
-// сборка classpath из библиотек и оригинального jar
+
 static std::string read_asset_index_id(const std::string& kickx_dir, const std::string& version) {
     std::string path = kickx_dir + "/versions/" + version + "/" + version + ".json";
     std::ifstream file(path);
@@ -155,7 +155,7 @@ void monitor_game_process(LauncherState *state, pid_t pid) {
     }, state);
 }
 
-} // namespace button
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

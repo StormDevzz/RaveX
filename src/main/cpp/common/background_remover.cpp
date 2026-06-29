@@ -31,7 +31,7 @@ void removeBackground(
             r = (pixel >> 16) & 0xFF;
         }
 
-        // Euclidean distance in RGB color space
+        
         double dist = std::sqrt(
             (r - keyRed) * (r - keyRed) +
             (g - keyGreen) * (g - keyGreen) +
@@ -39,11 +39,11 @@ void removeBackground(
         );
 
         if (dist <= threshold) {
-            // Set alpha to 0 (fully transparent)
+            
             pixels[i] = pixel & 0x00FFFFFF;
         }
     }
 }
 
-} // namespace utility
-} // namespace ravex
+} 
+} 

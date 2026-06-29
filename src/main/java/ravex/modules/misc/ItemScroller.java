@@ -22,10 +22,7 @@ public class ItemScroller extends Module {
         addParameter(delay);
     }
 
-    /**
-     * Called from MixinMultiPlayerGameMode when a THROW click happens
-     * while Ctrl+Shift are held. Drops all items of the same type.
-     */
+    
     public boolean isPauseListening() {
         return pauseListening;
     }

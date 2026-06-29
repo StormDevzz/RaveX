@@ -54,7 +54,7 @@ public class AutoReGearScreen extends Screen {
             count = Math.max(1, Math.min(256, count));
             AutoReGearData.INSTANCE.setTargetCount(editingItemId, count);
         } catch (NumberFormatException e) {
-            // fallback
+            
         }
         editingItemId = null;
     }
@@ -144,7 +144,7 @@ public class AutoReGearScreen extends Screen {
         int contentY = panelY + headerH + 6;
         int contentH = panelH - headerH - 50;
 
-        // LEFT: NonSelected grid
+        
         g.fill(leftX, contentY, leftX + leftW, contentY + contentH, 0xFF0C0920);
         Render2DEngine.drawBorder(g, leftX, contentY, leftW, contentH, 1, 0xFF281844);
 
@@ -201,7 +201,7 @@ public class AutoReGearScreen extends Screen {
 
         g.disableScissor();
 
-        // Pagination
+        
         int pageY = gridY + gridH + 2;
         int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
         String pageStr = "Page " + (currentPage + 1) + " / " + (maxPage + 1);
@@ -218,7 +218,7 @@ public class AutoReGearScreen extends Screen {
         g.fill(leftX + leftW - 26, pageY, leftX + leftW - 4, pageY + 12, nextHovered ? 0xFF2A2050 : 0xFF180E38);
         FontRenderUtility.drawString(g, "▶", leftX + leftW - 22, pageY + 1, currentPage < maxPage ? 0xFFCCCCCC : 0xFF444466, false);
 
-        // RIGHT: Selected items list with target count configuration
+        
         g.fill(rightX, contentY, rightX + rightW, contentY + contentH, 0xFF0C0920);
         Render2DEngine.drawBorder(g, rightX, contentY, rightW, contentH, 1, 0xFF281844);
 
@@ -263,7 +263,7 @@ public class AutoReGearScreen extends Screen {
             g.renderItem(stack, rightX + 4, sy);
             FontRenderUtility.drawString(g, new ItemStack(item).getHoverName().getString(), rightX + 22, sy + 3, 0xFFDDDDDD, false);
 
-            // Target amount representation (e.g. x64) or editing field
+            
             if (itemId.equals(editingItemId)) {
                 String amountStr = editingText + (System.currentTimeMillis() % 1000 < 500 ? "|" : "");
                 int amW = FontRenderUtility.getStringWidth(amountStr);
@@ -276,7 +276,7 @@ public class AutoReGearScreen extends Screen {
                 FontRenderUtility.drawString(g, amountStr, rightX + rightW - 32 - amW, sy + 3, ColorUtility.getActiveColor(), false);
             }
 
-            // Cross to remove item from kit
+            
             FontRenderUtility.drawString(g, "§c✕", rightX + rightW - 14, sy + 3, 0xFFFF4455, false);
 
             sy += 18;
@@ -284,7 +284,7 @@ public class AutoReGearScreen extends Screen {
 
         g.disableScissor();
 
-        // Close button at the bottom
+        
         int btnY   = panelY + panelH - 36;
         int btnH   = 18;
         int quitW  = 120;
@@ -356,14 +356,14 @@ public class AutoReGearScreen extends Screen {
         int quitW = 120;
         int quitX = panelX + (panelW - quitW) / 2;
 
-        // Close button
+        
         if (mx >= quitX && mx <= quitX + quitW && my >= btnY && my <= btnY + btnH && btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             saveEditingTargetCount();
             onClose();
             return true;
         }
 
-        // Search bar click
+        
         int searchY = contentY + colHeaderH + 2;
         int searchH = 14;
         if (mx >= leftX + 4 && mx <= leftX + leftW - 4 && my >= searchY && my <= searchY + searchH) {
@@ -374,7 +374,7 @@ public class AutoReGearScreen extends Screen {
             searchFocus = false;
         }
 
-        // Prev/Next page click
+        
         int gridY = searchY + searchH + 3;
         int gridH = contentH - colHeaderH - searchH - 8;
         int pageY = gridY + gridH + 2;
@@ -390,7 +390,7 @@ public class AutoReGearScreen extends Screen {
             }
         }
 
-        // Left panel click -> toggle item
+        
         int gridX = leftX + 4;
         if (mx >= leftX && mx <= leftX + leftW && my >= gridY && my <= gridY + gridH) {
             int col = (mx - gridX) / ITEM_SIZE;
@@ -407,7 +407,7 @@ public class AutoReGearScreen extends Screen {
             }
         }
 
-        // Right panel click -> adjust count or deselect
+        
         int selContentY = contentY + colHeaderH + 3;
         int selContentH = contentH - colHeaderH - 6;
         if (mx >= rightX && mx <= rightX + rightW && my >= selContentY && my <= selContentY + selContentH) {
@@ -415,7 +415,7 @@ public class AutoReGearScreen extends Screen {
             int sy = selContentY + 3 - (int)selectedScroll;
             for (String itemId : selectedArr) {
                 if (my >= sy && my <= sy + 16) {
-                    // Check if clicked the red cross
+                    
                     if (mx >= rightX + rightW - 16 && mx <= rightX + rightW - 4) {
                         AutoReGearData.INSTANCE.deselect(itemId);
                         if (itemId.equals(editingItemId)) {
@@ -431,7 +431,7 @@ public class AutoReGearScreen extends Screen {
                         if (editingItemId != null && !editingItemId.equals(itemId)) {
                             saveEditingTargetCount();
                         }
-                        // Increase/Decrease target count
+                        
                         int count = AutoReGearData.INSTANCE.getTargetCount(itemId);
                         int maxStack = 64;
                         Identifier rId = Identifier.tryParse(itemId);
@@ -484,7 +484,7 @@ public class AutoReGearScreen extends Screen {
         int selContentH = contentH - colHeaderH - 6;
 
         if (mouseX >= rightX && mouseX <= rightX + rightW && mouseY >= selContentY && mouseY <= selContentY + selContentH) {
-            // Check if hovering over a specific item's count/row area
+            
             var selectedArr = AutoReGearData.INSTANCE.getSelectedItems().keySet().toArray(new String[0]);
             int sy = selContentY + 3 - (int)selectedScroll;
             for (String itemId : selectedArr) {
@@ -494,7 +494,7 @@ public class AutoReGearScreen extends Screen {
                         int change = (vAmt > 0) ? 1 : -1;
                         count = Math.max(1, Math.min(256, count + change));
                         AutoReGearData.INSTANCE.setTargetCount(itemId, count);
-                        // If we were editing this item, update the edit text too
+                        
                         if (itemId.equals(editingItemId)) {
                             editingText = String.valueOf(count);
                         }

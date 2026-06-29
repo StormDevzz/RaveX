@@ -17,4 +17,4 @@ std::vector<Animation> splitAnimations(const ModelData& model) {
     return model.animations;
 }
 
-} // namespace model
+} 

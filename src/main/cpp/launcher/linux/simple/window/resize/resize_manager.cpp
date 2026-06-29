@@ -15,7 +15,7 @@ void set_window_size_limit(GtkWidget *window, int max_w, int max_h) {
     (void)max_h;
 }
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

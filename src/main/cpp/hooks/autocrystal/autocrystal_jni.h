@@ -1,5 +1,5 @@
 #pragma once
-// autocrystal_jni.h — JNI-интерфейс для AutoCrystal
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -7,10 +7,7 @@ extern "C" {
 
 #include <jni.h>
 
-/*
- * Class:     ravex_modules_combat_AutoCrystal
- * Method:    nativeTick
- */
+
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_AutoCrystal_nativeTick(
     JNIEnv* env, jclass cls,
@@ -22,7 +19,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     jdoubleArray tStats,
     jdoubleArray blockData,
     jdoubleArray crystalData,
-    // Конфигурация
+    
     jdouble placeRange, jdouble placeWallRange,
     jdouble breakRange, jdouble breakWallRange,
     jdouble minTargetDmg, jdouble maxSelfDmg,
@@ -34,10 +31,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     jboolean placeMultiPlace, jboolean suicide
 );
 
-/*
- * Class:     ravex_modules_combat_AutoCrystal
- * Method:    nativeCalcDamage
- */
+
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_AutoCrystal_nativeCalcDamage(
     JNIEnv* env, jclass cls,

@@ -58,4 +58,4 @@ private:
 #define TXTR_TRY(expr) do { auto _r = (expr); if (_r != ErrorCode::Success) return _r; } while(0)
 #define TXTR_THROW(expr) do { if ((expr) != ErrorCode::Success) throw Error(expr); } while(0)
 
-} // namespace txtr
+} 

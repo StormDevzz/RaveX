@@ -116,7 +116,7 @@ void append_console_log(LauncherState *state, const char *text) {
     gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(state->console_text), mark, 0.0, FALSE, 0.0, 0.0);
 }
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

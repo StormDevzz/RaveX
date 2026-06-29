@@ -12,7 +12,7 @@ using InstanceInfo = simple::InstanceInfo;
 
 bool show_instance_editor(GtkWindow* parent, InstanceInfo& info, bool createMode);
 
-} // namespace instance
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

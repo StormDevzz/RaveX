@@ -18,4 +18,4 @@ void sleepMs(uint64_t ms);
 
 uint64_t currentTimeMs();
 
-} // namespace shieldfucker
+} 

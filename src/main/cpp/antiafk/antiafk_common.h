@@ -30,4 +30,4 @@ enum class OsBackend {
 
 OsBackend detectOs();
 
-} // namespace ravex
+} 

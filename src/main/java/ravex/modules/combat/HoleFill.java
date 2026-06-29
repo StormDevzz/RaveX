@@ -112,15 +112,15 @@ public class HoleFill extends Module {
             return;
         }
 
-        // Sort by distance to player
+        
         BlockPos playerPos = mc.player.blockPosition();
         holes.sort(Comparator.comparingDouble(p -> p.distSqr(playerPos)));
 
-        // Limit to maxBlocks
+        
         int max = maxBlocks.getValue().intValue();
         if (holes.size() > max) holes = holes.subList(0, max);
 
-        // Sync with render
+        
         holePositions.clear();
         holePositions.addAll(holes);
 
@@ -148,14 +148,14 @@ public class HoleFill extends Module {
 
         for (int dx = -r; dx <= r; dx++) {
             for (int dz = -r; dz <= r; dz++) {
-                // Check horizontal distance
+                
                 if (dx * dx + dz * dz > range * range) continue;
 
                 for (int dy = -2; dy <= 1; dy++) {
                     BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (!isValidHole(mc, pos)) continue;
 
-                    // Check if this hole is unique (not adjacent to another found hole)
+                    
                     boolean dup = false;
                     for (BlockPos existing : holes) {
                         if (existing.distSqr(pos) < 2.0) {
@@ -173,19 +173,19 @@ public class HoleFill extends Module {
         BlockPos below = pos.below();
         if (below.getY() < mc.level.getMinY()) return false;
 
-        // Position must be air
+        
         if (!mc.level.getBlockState(pos).isAir()) return false;
 
-        // Must have solid floor
+        
         BlockState floorState = mc.level.getBlockState(below);
         if (!floorState.isCollisionShapeFullBlock(mc.level, below)) return false;
 
-        // Must have air above (open top)
+        
         BlockPos above = pos.above();
         if (above.getY() >= mc.level.getMaxY()) return false;
         if (!mc.level.getBlockState(above).isAir()) return false;
 
-        // Count solid horizontal neighbors
+        
         int solidSides = 0;
         Direction[] horizontals = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
         for (Direction dir : horizontals) {
@@ -195,12 +195,12 @@ public class HoleFill extends Module {
             if (neighborState.isCollisionShapeFullBlock(mc.level, neighbor)) {
                 solidSides++;
             } else {
-                // Also check if the block at the same Y but in that direction is a hole fill candidate
-                // (for filling connected holes / multi-block holes)
+                
+                
             }
         }
 
-        // A valid hole has 3+ solid sides (or 2 for corner holes if fillAll is on)
+        
         if (fillAll.getValue()) {
             return solidSides >= 2;
         }
@@ -287,7 +287,7 @@ public class HoleFill extends Module {
             if (stack.isEmpty()) continue;
             if (stack.is(Items.OBSIDIAN) || stack.is(Items.CRYING_OBSIDIAN)) return i;
         }
-        // Fallback: use any block item from hotbar
+        
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (stack.isEmpty()) continue;

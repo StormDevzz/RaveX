@@ -6,4 +6,4 @@ namespace ravex::shaders {
     float calculateWave(float time, float x, float z);
 }
 
-#endif // RAVEX_COLOR_SHADER_H
+#endif 

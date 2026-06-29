@@ -14,13 +14,13 @@ struct ReleaseInfo {
 
 class GithubUtility {
 public:
-    // получаем инфо о последнем релизе с гитхаба
+    
     static ReleaseInfo getLatestRelease();
 
-    // скачиваем файл по ссылке
+    
     static bool downloadFile(const std::string& url, const std::string& destPath);
 };
 
-} // namespace plugins
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 

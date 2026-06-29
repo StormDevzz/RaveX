@@ -31,13 +31,13 @@ BreakAction tick(
     int currentSlot
 );
 
-} // namespace shieldfucker
+} 
 
-// Tracker functions
+
 namespace shieldfucker {
 void trackerReset();
 void trackerSetTarget(int entityId);
 bool trackerCanBreak(uint64_t delayMs);
 bool trackerCanSwitch(uint64_t delayMs);
 int trackerGetBreakCount();
-} // namespace shieldfucker
+} 

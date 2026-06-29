@@ -29,4 +29,4 @@ Vec3 findBestBedPlace(Vec3 playerPos, Vec3 enemyPos, double range) {
     return placePos;
 }
 
-} // namespace ravex
+} 

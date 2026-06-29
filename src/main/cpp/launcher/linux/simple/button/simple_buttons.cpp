@@ -20,13 +20,13 @@ namespace launcher {
 namespace simple {
 namespace button {
 
-// очищаем старые версии мода
+
 static void clearOldJars(const std::string& modsDir) {
     std::string cmd = "rm -f \"" + modsDir + "/ravex\"*.jar";
     system(cmd.c_str());
 }
 
-// таймер для обновления пульсации прогресс-бара
+
 static gboolean pulse_progressbar(gpointer user_data) {
     ProgressPulseData *data = static_cast<ProgressPulseData*>(user_data);
     if (!*(data->active)) {
@@ -37,7 +37,7 @@ static gboolean pulse_progressbar(gpointer user_data) {
     return TRUE;
 }
 
-// поток скачивания мода с github
+
 static void download_update_thread(UpdateTaskData *data) {
     g_idle_add([](gpointer w) -> gboolean {
         gtk_label_set_text(GTK_LABEL(w), "status: downloading mod from github...");
@@ -95,7 +95,7 @@ static void download_update_thread(UpdateTaskData *data) {
     }, data);
 }
 
-// получаем локальную версию мода
+
 static std::string get_local_version_internal(const std::string& ravexDir) {
     std::string path = ravexDir + "/version.txt";
     std::ifstream file(path);
@@ -108,7 +108,7 @@ static std::string get_local_version_internal(const std::string& ravexDir) {
     return "none";
 }
 
-// поток проверки обновлений мода
+
 static void check_updates_thread(LauncherState *state) {
     auto release = ravex::launcher::plugins::GithubUtility::getLatestRelease();
 
@@ -318,7 +318,7 @@ void on_launch_clicked(GtkWidget *widget, gpointer user_data) {
     }).detach();
 }
 
-} // namespace button
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

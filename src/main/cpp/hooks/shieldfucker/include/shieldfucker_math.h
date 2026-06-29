@@ -18,4 +18,4 @@ float normalizeYaw(float yaw);
 
 float clampPitch(float pitch);
 
-} // namespace shieldfucker
+} 

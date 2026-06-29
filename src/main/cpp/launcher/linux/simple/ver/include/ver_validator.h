@@ -15,7 +15,7 @@ struct ver_validator_result {
 ver_validator_result ver_validator_execute(const std::string& input);
 double ver_validator_calculate(const std::string& input);
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

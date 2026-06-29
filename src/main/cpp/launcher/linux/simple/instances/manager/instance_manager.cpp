@@ -25,7 +25,7 @@ static void ensureDir(const std::string& path) {
 InstanceInfo load_instance(const std::string& instDir) {
     InstanceInfo info;
     info.dir = instDir;
-    // extract name from dir name
+    
     size_t slash = instDir.rfind('/');
     if (slash != std::string::npos)
         info.name = instDir.substr(slash + 1);
@@ -54,7 +54,7 @@ std::vector<InstanceInfo> load_instances(const std::string& kickxDir) {
 
     DIR* dir = opendir(instancesDir.c_str());
     if (!dir) {
-        // create default instance
+        
         InstanceInfo def = create_default_instance(kickxDir);
         instances.push_back(def);
         return instances;
@@ -113,7 +113,7 @@ InstanceInfo create_default_instance(const std::string& kickxDir) {
     return def;
 }
 
-} // namespace instance
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

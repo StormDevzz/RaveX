@@ -15,7 +15,7 @@ struct compat_check_result {
 compat_check_result compat_check_execute(const std::string& input);
 double compat_check_calculate(const std::string& input);
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

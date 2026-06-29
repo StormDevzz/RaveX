@@ -16,7 +16,7 @@ public abstract class MixinNoWeb {
     @Inject(method = "makeStuckInBlock", at = @At("HEAD"), cancellable = true)
     private void onMakeStuckInBlock(net.minecraft.world.level.block.state.BlockState state, Vec3 motionMultiplier, CallbackInfo ci) {
         Entity self = (Entity)(Object)this;
-        // Apply only to local player to avoid strange behavior with other entities
+        
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
         if (NoWeb.INSTANCE.getEnabled() && state.is(net.minecraft.world.level.block.Blocks.COBWEB)) {
@@ -40,8 +40,8 @@ public abstract class MixinNoWeb {
 
             self.fallDistance = 0.0F;
 
-            // If multipliers are 1.0 (no slowdown), we set stuckSpeedMultiplier to Vec3.ZERO 
-            // so Entity.move won't apply any modifications.
+            
+            
             if (horizontal >= 1.0 && vertical >= 1.0) {
                 stuckSpeedMultiplier = Vec3.ZERO;
             } else {

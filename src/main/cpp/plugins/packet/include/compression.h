@@ -12,5 +12,5 @@ std::vector<uint8_t> zlibDecompress(const uint8_t* data, size_t len, size_t maxU
 std::vector<uint8_t> compressPacket(const std::vector<uint8_t>& data, int threshold);
 std::vector<uint8_t> decompressPacket(const std::vector<uint8_t>& data, int threshold);
 
-} // namespace compress
-} // namespace packet
+} 
+} 

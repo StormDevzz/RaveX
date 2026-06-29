@@ -16,10 +16,7 @@ import java.util.List;
 @Mixin(PlayerTabOverlay.class)
 public class MixinPlayerTabOverlay {
 
-    /**
-     * Intercept getPlayerInfos() to expand the player limit when ExtraTab is active.
-     * In MC 1.21, player list is built from a List<PlayerInfo>, not a Stream.
-     */
+    
     @Inject(method = "getPlayerInfos", at = @At("RETURN"), cancellable = true)
     private void onGetPlayerInfos(CallbackInfoReturnable<List<PlayerInfo>> cir) {
         if (ExtraTab.INSTANCE.getEnabled()) {
@@ -56,11 +53,11 @@ public class MixinPlayerTabOverlay {
             int latency = playerInfo.getLatency();
             String pingStr = latency + "ms";
 
-            int color = 0xFF55FF55; // Green
+            int color = 0xFF55FF55; 
             if (latency > 150) {
-                color = 0xFFFF5555; // Red
+                color = 0xFFFF5555; 
             } else if (latency > 85) {
-                color = 0xFFFFCC33; // Yellow
+                color = 0xFFFFCC33; 
             }
 
             int textW = net.minecraft.client.Minecraft.getInstance().font.width(pingStr);

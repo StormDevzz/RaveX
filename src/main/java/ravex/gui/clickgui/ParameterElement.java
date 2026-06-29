@@ -50,7 +50,7 @@ public class ParameterElement {
         boolean smoothOption = ravex.modules.render.ClickGui.INSTANCE.smoothOption.getValue();
         float optionSmoothness = ravex.modules.render.ClickGui.INSTANCE.optionSmoothness.getValue().floatValue();
 
-        // 1. Parameter visibility animation (for child options)
+        
         float targetExpand = parameter.isVisible() ? 1.0f : 0.0f;
         if (smoothOption) {
             float speed = (optionSmoothness / 100f) * (delta / 16f);
@@ -63,7 +63,7 @@ public class ParameterElement {
             expandAnimProgress = targetExpand;
         }
 
-        // 2. Dropdown expansion animation (for ModeParameter)
+        
         float targetDropdown = parameter.isExpanded() ? 1.0f : 0.0f;
         if (smoothOption) {
             float speed = (optionSmoothness / 100f) * (delta / 16f);
@@ -128,7 +128,7 @@ public class ParameterElement {
                 toggleAnimProgress = Math.max(0.0f, toggleAnimProgress - delta * 0.015f);
             }
 
-            // Track background color interpolated between off state and active state
+            
             int trackColor = lerpColor(0xFF2A2A38, activeColor, toggleAnimProgress);
             Identifier trackTex = ravex.utility.render.TextureLoader.getTrackWhiteTexture();
             if (trackTex != null) {
@@ -137,7 +137,7 @@ public class ParameterElement {
                 Render2DEngine.drawSmoothRound(graphics, swX, swY, swW, swH, 6.0f, trackColor);
             }
 
-            // Center knob with 2px margin inside track, sliding dynamically
+            
             int knobSize = 8;
             int knobRange = swW - knobSize - 4;
             int knobX = swX + 2 + (int)(toggleAnimProgress * knobRange);
@@ -230,7 +230,7 @@ public class ParameterElement {
             float knobDrawX = knobX - drawKnobSize / 2.0f;
             float knobDrawY = (slY + slH / 2.0f) - drawKnobSize / 2.0f;
 
-            // Render slider background track (dark grey)
+            
             Identifier trackTex = ravex.utility.render.TextureLoader.getTrackWhiteTexture();
             if (trackTex != null) {
                 drawTintedTexture(graphics, trackTex, slX, slY, slW, slH, 0xFF2A2A38);
@@ -238,7 +238,7 @@ public class ParameterElement {
                 Render2DEngine.drawSmoothRound(graphics, slX, slY, slW, slH, slH / 2.0f, 0xFF2A2A38);
             }
 
-            // Render active/filled slider track (sky blue or client color)
+            
             if (knobX > slX) {
                 if (trackTex != null) {
                     drawTintedTexture(graphics, trackTex, slX, slY, knobX - slX, slH, activeColor);
@@ -247,7 +247,7 @@ public class ParameterElement {
                 }
             }
 
-            // Render knob circle
+            
             Identifier circleTex = ravex.utility.render.TextureLoader.getCircleWhiteTexture();
             if (circleTex != null) {
                 drawTintedTexture(graphics, circleTex, (int)knobDrawX, (int)knobDrawY, drawKnobSize, drawKnobSize, knobColor);

@@ -100,4 +100,4 @@ ErrorCode savePng(const TextureData& tex, std::vector<uint8_t>& out, int) {
 }
 #endif
 
-} // namespace txtr
+} 

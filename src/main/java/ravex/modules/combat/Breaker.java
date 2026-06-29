@@ -145,11 +145,11 @@ public class Breaker extends Module {
 
                 boolean isTargetCover = false;
 
-                // Support block below feet
+                
                 if (px == tx && py == ty - 1 && pz == tz) {
                     isTargetCover = true;
                 }
-                // Feet/Legs level surround
+                
                 else if (py == ty) {
                     int dx = Math.abs(px - tx);
                     int dz = Math.abs(pz - tz);
@@ -157,7 +157,7 @@ public class Breaker extends Module {
                         isTargetCover = true;
                     }
                 }
-                // Head/Body level surround
+                
                 else if (py == ty + 1) {
                     int dx = Math.abs(px - tx);
                     int dz = Math.abs(pz - tz);
@@ -165,7 +165,7 @@ public class Breaker extends Module {
                         isTargetCover = true;
                     }
                 }
-                // Top block / Trap / Ceiling
+                
                 else if (px == tx && py == ty + 2 && pz == tz) {
                     isTargetCover = true;
                 }
@@ -240,7 +240,7 @@ public class Breaker extends Module {
 
         if (syncPacketMine.getValue()) {
             if (!ravex.modules.exploit.PacketMine.INSTANCE.isTargetBlock(targetPos)) {
-                // Focus only on the target block
+                
                 ravex.modules.exploit.PacketMine.miningBlocks.removeIf(m -> !m.done);
                 
                 String name = mc.level.getBlockState(targetPos).getBlock().getName().getString();

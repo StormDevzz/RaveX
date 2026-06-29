@@ -57,12 +57,12 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer player)) return;
 
-        // PortalGui: null out portal process to keep GUI accessible
+        
         if (ravex.modules.exploit.PortalGui.INSTANCE.getEnabled()) {
             self.portalProcess = null;
         }
 
-        // Avoid: check surrounding blocks and push player away from hazardous ones
+        
         if (ravex.modules.movement.Avoid.INSTANCE.getEnabled()) {
             net.minecraft.world.level.Level level = player.level();
             net.minecraft.world.phys.AABB box = player.getBoundingBox().inflate(0.15);
@@ -72,7 +72,7 @@ public abstract class MixinEntity {
             ).forEach(blockPos -> {
                 net.minecraft.world.level.block.state.BlockState state = level.getBlockState(blockPos);
                 if (ravex.modules.movement.Avoid.INSTANCE.shouldAvoid(state.getBlock())) {
-                    // Push the player away from the center of the hazardous block
+                    
                     double bx = blockPos.getX() + 0.5;
                     double bz = blockPos.getZ() + 0.5;
                     double px = player.getX();

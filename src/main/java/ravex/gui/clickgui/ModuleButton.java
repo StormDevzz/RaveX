@@ -102,10 +102,10 @@ public class ModuleButton {
         int activeColor = ColorUtility.getActiveColor();
         int disabledBg = 0xFF0D0D14;
 
-        // Draw base inactive background
+        
         graphics.fill(x, currentY, x + width, currentY + btnH, disabledBg);
 
-        // Slide fill animation from left to right
+        
         if (enableAnim > 0.001f) {
             int fillW = (int) (width * enableAnim);
             if (fillW > 0) {
@@ -113,7 +113,7 @@ public class ModuleButton {
             }
         }
 
-        // Hover highlight overlay
+        
         if (hoverProgress > 0.01f) {
             int alpha = (int) (hoverProgress * 0x1A);
             graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, alpha));
@@ -188,7 +188,7 @@ public class ModuleButton {
 
         currentY += btnH;
 
-        // Render inline expanded parameters
+        
         if (hasParams) {
             float targetExpand = expanded ? 1.0f : 0.0f;
             if (expandAnim < targetExpand) {
@@ -234,14 +234,14 @@ public class ModuleButton {
                 }
 
                 int maxScroll = Math.max(0, paramAreaH - MAX_INLINE_HEIGHT);
-                // Draw gradient indicators
+                
                 if (inlineScrollAnim > 0.5f) {
                     graphics.fillGradient(x + 1, currentY, x + width - 1, currentY + 12, bgCol, 0x000A0A14);
                 }
                 if (inlineScrollAnim < maxScroll - 0.5f) {
                     graphics.fillGradient(x + 1, currentY + actualH - 12, x + width - 1, currentY + actualH, 0x000A0A14, bgCol);
                 }
-                // Draw scrollbar
+                
                 if (maxScroll > 0) {
                     int sbX = x + width - 4;
                     int sbY = currentY + 2;

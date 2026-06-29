@@ -4,8 +4,8 @@ namespace ravex {
 namespace launcher {
 namespace simple {
 
-// инициализация состояния лаунчера
 
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+
+} 
+} 
+} 

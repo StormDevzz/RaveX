@@ -25,7 +25,7 @@ import java.util.List;
 public class Trap extends Module {
     public static final Trap INSTANCE = new Trap();
 
-    // ── Параметры ─────────────────────────────────────────────────────────────
+    
     public final NumberParameter  range          = new NumberParameter("Range",          4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay     = new NumberParameter("Place Delay",     50.0, 0.0, 500.0, 10.0);
     public final ModeParameter    swapMode       = new ModeParameter("Swap Mode", "Silent",
@@ -40,18 +40,18 @@ public class Trap extends Module {
     public final ModeParameter    targetType     = new ModeParameter("Target Type", "Players",
             java.util.List.of("Players", "Monsters", "Passives", "All"));
 
-    // Speed & Timings settings
+    
     public final ModeParameter    speedMode      = new ModeParameter("Speed Mode", "Normal",
             java.util.List.of("Legit", "Normal", "Aggressive"));
     public final NumberParameter  jitterDelay    = new NumberParameter("Jitter Delay", 0.0, 0.0, 100.0, 5.0);
     public final BooleanParameter strictRotation = new BooleanParameter("Strict Rotation", false);
     public final NumberParameter  maxRate        = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
 
-    // Swaps settings
+    
     public final BooleanParameter swapSwitchBack = new BooleanParameter("Swap Switch Back", true);
     public final BooleanParameter swapInventory  = new BooleanParameter("Swap Inventory", false);
 
-    // Visual settings
+    
     public final BooleanParameter render         = new BooleanParameter("Render",         true);
     public final ColorParameter   color          = new ColorParameter("Color",           0xFFFFAA00);
 
@@ -73,7 +73,7 @@ public class Trap extends Module {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_trap");
         } catch (UnsatisfiedLinkError e) {
-            // Fallback handled
+            
         }
     }
 
@@ -81,7 +81,7 @@ public class Trap extends Module {
         return hasSilentRotations;
     }
 
-    // ── JNI методы ────────────────────────────────────────────────────────────
+    
     private static native double[] nativeCalculateTrap(
             double playerX, double playerY, double playerZ,
             double targetX, double targetY, double targetZ,
@@ -109,7 +109,7 @@ public class Trap extends Module {
         addParameter(render);
         addParameter(color);
 
-        // Visibility triggers
+        
         jitterDelay.setVisible(() -> !speedMode.getValue().equals("Aggressive"));
         strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
         maxRate.setVisible(() -> !speedMode.getValue().equals("Legit"));
@@ -141,12 +141,12 @@ public class Trap extends Module {
 
         hasSilentRotations = false;
 
-        // Clear trapBlocks first
+        
         synchronized (trapBlocks) {
             trapBlocks.clear();
         }
 
-        // Выбор цели
+        
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             if (autoDisable.getValue()) {
@@ -155,14 +155,14 @@ public class Trap extends Module {
             return;
         }
 
-        // Сбор координат твердых блоков
+        
         double[] solidBlockData = collectSolidBlocks(mc);
         List<Double> activeSolidBlocks = new ArrayList<>();
         for (double d : solidBlockData) {
             activeSolidBlocks.add(d);
         }
 
-        // Запуск симуляции для поиска ВСЕХ блоков, необходимых для закрытия цели
+        
         int simLimit = 9; 
         int simCount = 0;
         List<BlockPos> simulatedBlocks = new ArrayList<>();
@@ -199,23 +199,23 @@ public class Trap extends Module {
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
 
-        // Обновляем список для подсветки/рендера
+        
         synchronized (trapBlocks) {
             trapBlocks.addAll(simulatedBlocks);
         }
 
-        // Проверка кулдауна
+        
         long now = System.currentTimeMillis();
         boolean checkPlaceDelay = !speedMode.getValue().equals("Aggressive");
         if (checkPlaceDelay && now - lastPlaceTime < currentPlaceDelay) {
             return;
         }
 
-        // Поиск обсидиана/блока
+        
         int blockSlot = findBlockSlot(mc);
         if (blockSlot == -1) return;
 
-        // Сбрасываем список симуляции для реальной установки
+        
         activeSolidBlocks.clear();
         for (double d : solidBlockData) {
             activeSolidBlocks.add(d);
@@ -259,16 +259,16 @@ public class Trap extends Module {
 
             Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
 
-            // Поворот головы к блоку
+            
             rotateTo(mc, hitVec);
 
-            // Проверка Strict Rotation
+            
             boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
             if (isStrict && !isRotationAligned(mc, hitVec)) {
                 break; 
             }
 
-            // Свап слота
+            
             String swap = swapMode.getValue();
             if (swap.equals("Normal")) {
                 mc.player.getInventory().setSelectedSlot(blockSlot);
@@ -282,7 +282,7 @@ public class Trap extends Module {
                 }
             }
 
-            // Размещение блока
+            
             BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
             mc.player.swing(InteractionHand.MAIN_HAND);
@@ -294,7 +294,7 @@ public class Trap extends Module {
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
 
-        // Возврат слота для Silent swap
+        
         if (placedAny && swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));

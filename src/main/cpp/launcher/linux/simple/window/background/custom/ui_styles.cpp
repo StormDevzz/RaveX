@@ -169,7 +169,7 @@ void apply_css() {
     g_object_unref(provider);
 }
 
-} // namespace window
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

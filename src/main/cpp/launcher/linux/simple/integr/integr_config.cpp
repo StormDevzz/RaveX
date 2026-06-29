@@ -18,7 +18,7 @@ void setIntegrEnabled(bool v) { integrEnabled = v; }
 void setFabricEnabled(bool v) { fabricEnabled = v; }
 void setForgeEnabled(bool v) { forgeEnabled = v; }
 
-} // namespace integr
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

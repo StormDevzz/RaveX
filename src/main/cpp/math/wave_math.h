@@ -5,4 +5,4 @@ namespace ravex::math {
     float calculateWave(float time, float x, float z);
 }
 
-#endif // RAVEX_WAVE_MATH_H
+#endif 

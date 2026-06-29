@@ -11,7 +11,7 @@ public class DependencyParameter<T, P extends Parameter<T>> extends Parameter<T>
         this.parent = parent;
         this.requiredValue = requiredValue;
         
-        // Wire up the visibility dependency
+        
         this.setVisible(() -> parent.getValue().equals(requiredValue));
     }
 

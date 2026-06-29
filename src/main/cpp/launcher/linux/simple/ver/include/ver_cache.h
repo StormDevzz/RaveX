@@ -15,7 +15,7 @@ struct ver_cache_result {
 ver_cache_result ver_cache_execute(const std::string& input);
 double ver_cache_calculate(const std::string& input);
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

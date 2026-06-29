@@ -103,7 +103,7 @@ public class LoaderWindow extends JFrame {
                 setIconImage(logoImage);
             }
         } catch (Exception e) {
-            // Ignore icon load failures
+            
         }
 
         JPanel panel = new JPanel() {
@@ -215,20 +215,20 @@ public class LoaderWindow extends JFrame {
         g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
-        // 1. Solid background
+        
         g.setColor(BG_DARK);
         g.fillRect(0, 0, w, h);
 
-        // 2. 1px flat border
+        
         g.setColor(ACCENT_BLUE);
         g.setStroke(new BasicStroke(1.0f));
         g.drawRect(0, 0, w - 1, h - 1);
 
-        // 3. Logo Image
+        
         if (logoImage != null) {
             g.drawImage(logoImage, 25, 25, 100, 100, null);
         } else {
-            // Fallback text logo if resource is missing
+            
             g.setFont(new Font("SansSerif", Font.BOLD, 26));
             g.setColor(Color.WHITE);
             g.drawString("Rave", 25, 75);
@@ -236,7 +236,7 @@ public class LoaderWindow extends JFrame {
             g.drawString("X", 25 + g.getFontMetrics().stringWidth("Rave"), 75);
         }
 
-        // 4. Logo Text (RaveX) beside the icon
+        
         g.setFont(new Font("SansSerif", Font.BOLD, 30));
         int w1 = g.getFontMetrics().stringWidth("Rave");
         g.setColor(Color.WHITE);
@@ -244,13 +244,13 @@ public class LoaderWindow extends JFrame {
         g.setColor(ACCENT_BLUE);
         g.drawString("X", 150 + w1, 58);
 
-        // 5. Subtitle with version and OS
+        
         g.setFont(new Font("SansSerif", Font.BOLD, 10));
         String sub = "LOADER v" + version.toUpperCase() + "  \u2022  " + osName;
         g.setColor(TEXT_MUTED);
         g.drawString(sub, 150, 78);
 
-        // 6. Status
+        
         g.setFont(new Font("SansSerif", Font.PLAIN, 13));
         if (error) {
             g.setColor(new Color(0xff, 0x4f, 0x4f));
@@ -261,14 +261,14 @@ public class LoaderWindow extends JFrame {
             g.drawString(status, 150, 115);
         }
 
-        // 7. Extra Info / Hardware details
+        
         if (!error && extraInfo != null && !extraInfo.isEmpty()) {
             g.setFont(new Font("SansSerif", Font.PLAIN, 10));
             g.setColor(TEXT_MUTED);
             g.drawString(extraInfo, 150, 135);
         }
 
-        // 8. Thin progress bar at the very bottom
+        
         int barH = 4;
         g.setColor(new Color(0x1F, 0x1F, 0x24));
         g.fillRect(0, h - barH, w, barH);
@@ -279,7 +279,7 @@ public class LoaderWindow extends JFrame {
             g.fillRect(0, h - barH, fillW, barH);
         }
 
-        // 9. Close button
+        
         if (closeHovered) {
             g.setColor(new Color(0xff, 0x4f, 0x4f));
         } else {

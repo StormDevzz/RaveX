@@ -22,7 +22,7 @@ private:
 
 void log_perf(const std::string &section, const std::string &detail, long ms);
 
-} // namespace analyze
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

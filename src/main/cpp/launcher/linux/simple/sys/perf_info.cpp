@@ -13,7 +13,7 @@ perf_info_t get_perf_info() {
     return result;
 }
 
-} // namespace sys
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

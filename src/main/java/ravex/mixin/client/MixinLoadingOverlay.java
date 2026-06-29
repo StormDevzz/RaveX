@@ -18,11 +18,11 @@ public class MixinLoadingOverlay {
     )
     private int redirectBrandBackground(IntSupplier instance) {
         long time = net.minecraft.util.Util.getMillis();
-        // Use a sine wave to smoothly interpolate between Mojang red and RaveX deep dark blue
+        
         double wave = Math.sin(time * 0.003) * 0.5 + 0.5;
 
-        int r1 = 0xEF, g1 = 0x32, b1 = 0x3D; // Mojang Red
-        int r2 = 0x1A, g2 = 0x3A, b2 = 0x7A; // RaveX Lighter Blue
+        int r1 = 0xEF, g1 = 0x32, b1 = 0x3D; 
+        int r2 = 0x1A, g2 = 0x3A, b2 = 0x7A; 
 
         int r = (int) (r1 + (r2 - r1) * wave);
         int g = (int) (g1 + (g2 - g1) * wave);

@@ -44,6 +44,6 @@ inline std::vector<PlaceTarget> findDropTargets(
     return targets;
 }
 
-} // namespace ravex
+} 
 
 #endif

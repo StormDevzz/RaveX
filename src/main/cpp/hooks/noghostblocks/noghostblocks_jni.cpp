@@ -2,7 +2,7 @@
 #include "noghostblocks.h"
 #include <string>
 
-// JNI exports for ravex.modules.player.NoGhostBlocks
+
 
 extern "C" {
 
@@ -48,4 +48,4 @@ Java_ravex_modules_player_NoGhostBlocks_nativeReset(
     ravex::NoGhostBlocksEngine::instance().reset();
 }
 
-} // extern "C"
+} 

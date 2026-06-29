@@ -77,7 +77,7 @@ public class ChestAura extends Module {
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
 
-        // Clean up old placed chests
+        
         long now = System.currentTimeMillis();
         double durationMs = fadeSpeed.getValue() * 1000.0;
         placedChests.removeIf(chest -> (now - chest.placeTime) > durationMs);
@@ -87,7 +87,7 @@ public class ChestAura extends Module {
             return;
         }
 
-        // Find Chest slot
+        
         int chestSlot = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = p.getInventory().getItem(i);
@@ -97,14 +97,14 @@ public class ChestAura extends Module {
             }
         }
 
-        if (chestSlot == -1) return; // No chests in hotbar
+        if (chestSlot == -1) return; 
 
         double r = range.getValue();
         BlockPos playerPos = p.blockPosition();
         BlockPos targetPos = null;
         double closestDistSq = r * r;
 
-        // Prioritize placing chests adjacent to other living entities (trapping/blocking path)
+        
         for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity == p || !entity.isAlive() || !(entity instanceof LivingEntity)) continue;
             if (p.distanceTo(entity) > r) continue;
@@ -126,7 +126,7 @@ public class ChestAura extends Module {
             }
         }
 
-        // Fallback: place around player
+        
         if (targetPos == null) {
             int rangeInt = (int) Math.ceil(r);
             for (int x = -rangeInt; x <= rangeInt; x++) {
@@ -149,14 +149,14 @@ public class ChestAura extends Module {
         }
 
         if (targetPos != null) {
-            // Place chest
+            
             int prevSlot = p.getInventory().getSelectedSlot();
             if (autoSwap.getValue() && chestSlot != prevSlot) {
                 p.getInventory().setSelectedSlot(chestSlot);
             }
 
             BlockPos below = targetPos.below();
-            Vec3 hitVec = Vec3.atCenterOf(below).add(0, 0.5, 0); // Top face
+            Vec3 hitVec = Vec3.atCenterOf(below).add(0, 0.5, 0); 
             BlockHitResult blockHit = new BlockHitResult(hitVec, Direction.UP, below, false);
             mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
             p.swing(InteractionHand.MAIN_HAND);

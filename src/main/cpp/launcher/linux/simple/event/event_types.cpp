@@ -14,7 +14,7 @@ ProgressMsg *alloc_progress_msg(LauncherState *state, const char *text, double f
     return msg;
 }
 
-} // namespace event
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

@@ -15,7 +15,7 @@ struct update_check_result {
 update_check_result update_check_execute(const std::string& input);
 double update_check_calculate(const std::string& input);
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

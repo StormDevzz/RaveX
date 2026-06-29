@@ -30,7 +30,7 @@ void TextOutput::write(const Packet& pkt) {
 
 void TextOutput::flush() { if (useFile_) file_.flush(); }
 
-// ---- JsonOutput -----------------------------------------------------------
+
 
 JsonOutput::JsonOutput(const std::string& path) {
     if (!path.empty()) {
@@ -79,5 +79,5 @@ void JsonOutput::end() {
 
 void JsonOutput::flush() { if (useFile_) file_.flush(); }
 
-} // namespace output
-} // namespace packet
+} 
+} 

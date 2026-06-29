@@ -34,5 +34,5 @@ private:
     std::vector<Rule> rules_;
 };
 
-} // namespace filter
-} // namespace packet
+} 
+} 

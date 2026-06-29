@@ -6,7 +6,7 @@
 
 namespace packet {
 
-// ---- PcapSniffer ----------------------------------------------------------
+
 
 #if defined(HAVE_PCAP)
 #include <pcap/pcap.h>
@@ -72,7 +72,7 @@ bool PcapSniffer::start(const SnifferConfig&) {
 void PcapSniffer::stop() { running_ = false; }
 #endif
 
-// ---- ProxySniffer ---------------------------------------------------------
+
 
 bool ProxySniffer::start(const SnifferConfig& cfg) {
     log::info("proxy sniffer not yet implemented");
@@ -86,4 +86,4 @@ void ProxySniffer::stop() {
     if (clientFd_ >= 0) { ::close(clientFd_); clientFd_ = -1; }
 }
 
-} // namespace packet
+} 

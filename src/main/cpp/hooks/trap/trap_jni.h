@@ -6,10 +6,7 @@ extern "C" {
 
 #include <jni.h>
 
-/*
- * Class:     ravex_modules_combat_Trap
- * Method:    nativeCalculateTrap
- */
+
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_Trap_nativeCalculateTrap(
     JNIEnv* env, jclass cls,

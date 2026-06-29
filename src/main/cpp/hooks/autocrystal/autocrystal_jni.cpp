@@ -6,7 +6,7 @@
 
 using namespace ravex;
 
-// ── Вспомогательные функции ────────────────────────────────────────────────
+
 
 static std::vector<Vec3> parseBlockData(JNIEnv* env, jdoubleArray arr) {
     std::vector<Vec3> result;
@@ -52,7 +52,7 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     EntityStats s{};
     if (!arr) return s;
     jsize len = env->GetArrayLength(arr);
-    if (len < 15) return s; // Защитная проверка на длину 15 элементов (включая тотемы)
+    if (len < 15) return s; 
 
     jdouble* data = env->GetDoubleArrayElements(arr, nullptr);
     if (!data) return s;
@@ -71,15 +71,15 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     s.motionX              = data[11];
     s.motionY              = data[12];
     s.motionZ              = data[13];
-    s.totemCount           = data[14]; // Тотемы
+    s.totemCount           = data[14]; 
 
     env->ReleaseDoubleArrayElements(arr, data, JNI_ABORT);
     return s;
 }
 
-// =============================================================================
-// Java_ravex_modules_combat_AutoCrystal_nativeTick
-// =============================================================================
+
+
+
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_AutoCrystal_nativeTick(
     JNIEnv* env, jclass cls,
@@ -122,7 +122,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     config.antiSuicideCheckBreaking = (antiSuicideCheckBreaking == JNI_TRUE);
     config.antiSuicideIgnoreWithTotem = (antiSuicideIgnoreWithTotem == JNI_TRUE);
     
-    // Новые настройки обхода и логики
+    
     config.armorBreaker     = (armorBreaker == JNI_TRUE);
     config.armorPercent     = armorPercent;
     config.predictTicks     = predictTicks;
@@ -166,9 +166,9 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     return out;
 }
 
-// =============================================================================
-// Java_ravex_modules_combat_AutoCrystal_nativeCalcDamage
-// =============================================================================
+
+
+
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_AutoCrystal_nativeCalcDamage(
     JNIEnv* env, jclass cls,

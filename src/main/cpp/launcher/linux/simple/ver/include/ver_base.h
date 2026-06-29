@@ -15,7 +15,7 @@ struct ver_base_result {
 ver_base_result ver_base_execute(const std::string& input);
 double ver_base_calculate(const std::string& input);
 
-} // namespace ver
-} // namespace simple
-} // namespace launcher
-} // namespace ravex
+} 
+} 
+} 
+} 

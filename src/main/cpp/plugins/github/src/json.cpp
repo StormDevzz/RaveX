@@ -8,7 +8,7 @@
 namespace ravex {
 namespace github {
 
-// ─── JsonValue implementation ────────────────────────────────────────────────
+
 
 bool JsonValue::asBool() const {
     if (m_type != Bool) throw std::runtime_error("not a bool");
@@ -74,7 +74,7 @@ size_t JsonValue::size() const {
 
 bool JsonValue::empty() const { return size() == 0; }
 
-// ─── Parser ──────────────────────────────────────────────────────────────────
+
 
 void JsonValue::Parser::skipWS() {
     while (p < end && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')) p++;
@@ -120,7 +120,7 @@ std::string JsonValue::Parser::parseRawString() {
                 case 'r': result += '\r'; break;
                 case 't': result += '\t'; break;
                 case 'u': {
-                    // 4-digit hex
+                    
                     char hex[5] = { next(), next(), next(), next(), '\0' };
                     unsigned long cp = strtoul(hex, nullptr, 16);
                     if (cp <= 0x7F) {
@@ -160,7 +160,7 @@ JsonValue JsonValue::Parser::parseNumber() {
 }
 
 JsonValue JsonValue::Parser::parseObject() {
-    next(); // skip '{'
+    next(); 
     JsonObject obj;
     skipWS();
     if (peek() == '}') { next(); return JsonValue(obj); }
@@ -182,7 +182,7 @@ JsonValue JsonValue::Parser::parseObject() {
 }
 
 JsonValue JsonValue::Parser::parseArray() {
-    next(); // skip '['
+    next(); 
     JsonArray arr;
     skipWS();
     if (peek() == ']') { next(); JsonValue v; v.m_type = Array; v.m_arr = std::move(arr); return v; }
@@ -218,7 +218,7 @@ JsonValue JsonValue::parse(const char* data, size_t len) {
     auto val = parser.parseValue();
     parser.skipWS();
     if (!parser.eof()) {
-        // Might have trailing whitespace or single object — ok
+        
     }
     return val;
 }
@@ -231,7 +231,7 @@ JsonValue JsonValue::parseFile(const std::string& path) {
     return parse(content);
 }
 
-// ─── Serializer ──────────────────────────────────────────────────────────────
+
 
 static std::string escapeJson(const std::string& s) {
     std::string out;
@@ -303,5 +303,5 @@ std::string JsonValue::serialize(bool pretty, int indent) const {
     return "null";
 }
 
-} // namespace github
-} // namespace ravex
+} 
+} 
