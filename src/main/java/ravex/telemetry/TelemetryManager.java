@@ -10,7 +10,7 @@ import java.time.Duration;
 public class TelemetryManager {
     public static final TelemetryManager INSTANCE = new TelemetryManager();
 
-    private static final String API_URL = "http://192.168.0.215:3001/api/telemetry";
+    private static final String API_URL = "https://ravex.serveousercontent.com/api/telemetry";
     private static final HttpClient CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
             .build();
@@ -18,6 +18,16 @@ public class TelemetryManager {
     private boolean sent = false;
 
     private TelemetryManager() {}
+
+    private static String handshake() {
+        int[] a = BuildConfig._p0;
+        int[] b = BuildConfig._p1;
+        char[] buf = new char[a.length];
+        for (int i = 0; i < a.length; i++) {
+            buf[i] = (char)(a[i] ^ b[i]);
+        }
+        return new String(buf);
+    }
 
     public void sendTelemetry() {
         if (sent) return;
@@ -43,6 +53,7 @@ public class TelemetryManager {
                 .uri(URI.create(API_URL))
                 .header("Content-Type", "application/json")
                 .header("User-Agent", "RaveX-Client")
+                .header("X-Telemetry-Token", handshake())
                 .timeout(Duration.ofSeconds(5))
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
