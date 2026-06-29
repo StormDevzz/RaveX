@@ -17,3 +17,4 @@ RaveX-main/
 src/main/native/encoded.h
 src/main/java/ravex/telemetry/BuildConfig.java
 build-release.sh
+src/main/src/
