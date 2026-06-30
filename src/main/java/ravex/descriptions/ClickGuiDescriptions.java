@@ -236,6 +236,8 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("MiddleClick", "Context-aware middle click actions.");
         DESCRIPTIONS.put("Telemetry", "Sends anonymous usage data to improve RaveX.");
         DESCRIPTIONS.put("PortalGodMode", "Makes you invulnerable inside portals by cancelling teleport confirm packets.");
+        DESCRIPTIONS.put("Baritone", "Baritone pathfinding.");
+        DESCRIPTIONS.put("PauseBaritone", "Pause baritone pathfinding instantly.");
     }
 
     public static String getDescription(String moduleName) {

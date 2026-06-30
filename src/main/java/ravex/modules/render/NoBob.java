@@ -21,6 +21,14 @@ public class NoBob extends Module {
     }
 
     @Override
+    public void onTick() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options.bobView().get()) {
+            mc.options.bobView().set(false);
+        }
+    }
+
+    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         mc.options.bobView().set(originalBob);
