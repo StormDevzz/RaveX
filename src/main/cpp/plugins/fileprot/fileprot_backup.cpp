@@ -3,7 +3,11 @@
 #include <ctime>
 #include <algorithm>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <dirent.h>
+#endif
 
 namespace ravex {
 namespace fileprot {
