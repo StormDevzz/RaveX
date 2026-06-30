@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="logo.png">
+<title>Рекомендуемые моды - RaveX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:linear-gradient(160deg,#0a0c18 0%,#0e1020 25%,#0c0e1a 50%,#0a0c18 75%,#080a14 100%);
+  color:#c0c4d0;
+  font-family:'Inter',sans-serif;
+  line-height:1.7;
+  overflow-x:hidden
+}
+::selection{background:rgba(50,130,255,.3);color:#fff}
+
+.back{
+  position:fixed;top:1rem;left:1rem;z-index:100;
+  background:#0e101a;border:1px solid #1e2030;border-radius:2rem;
+  padding:.35rem .75rem;font-size:.75rem;color:#555;text-decoration:none
+}
+.back:hover{border-color:#3270ff;color:#3270ff}
+.lang{
+  position:fixed;top:1rem;right:1rem;z-index:100;
+  background:#0e101a;border:1px solid #1e2030;border-radius:2rem;
+  padding:.35rem;display:flex;cursor:pointer;font-size:.75rem
+}
+.lang span{
+  padding:.2rem .6rem;border-radius:1.5rem;
+  font-weight:600;transition:all .2s;color:#555
+}
+.lang span.active{background:#3270ff;color:#fff}
+
+.header{
+  text-align:center;padding:3rem 1.5rem 1.5rem;max-width:600px;margin:0 auto
+}
+.header h1{font-size:1.8rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+.header h1 span{color:#3270ff}
+.header p{color:#555;font-size:.85rem}
+
+.list{max-width:900px;margin:0 auto;padding:0 1rem 2rem}
+.row{
+  display:flex;align-items:center;gap:.75rem;
+  background:#0e101a;border:1px solid #181a28;border-radius:.5rem;
+  padding:.75rem 1rem;margin-bottom:.5rem;transition:border-color .2s
+}
+.row:hover{border-color:#3270ff}
+.row .info{flex:1;min-width:0}
+.row .info h3{font-size:.9rem;font-weight:600;color:#fff}
+.row .info .desc{color:#555;font-size:.78rem;line-height:1.4;margin-top:.1rem}
+.row .info .sub{color:#444;font-size:.65rem;margin-top:.05rem}
+.row .dl{
+  flex-shrink:0;
+  background:#3270ff;color:#fff;padding:.3rem .8rem;
+  border-radius:2rem;font-size:.78rem;font-weight:500;
+  text-decoration:none;transition:background .2s;white-space:nowrap
+}
+.row .dl:hover{background:#2858d0}
+
+footer{
+  text-align:center;padding:2rem;border-top:1px solid #181a28;
+  color:#333;font-size:.8rem
+}
+footer a{color:#3270ff;text-decoration:none}
+
+@media(max-width:600px){
+  .header h1{font-size:1.4rem}
+  .row{flex-wrap:wrap;gap:.5rem}
+  .row .dl{margin-left:auto}
+}
+</style>
+</head>
+<body>
+
+<a class="back" href="index.html">&larr; RaveX</a>
+<div class="lang" onclick="toggleLang()">
+  <span class="active" data-lang="ru">RU</span>
+  <span data-lang="en">EN</span>
+</div>
+
+<div class="header">
+  <h1><span data-lang="t1">Рекомендуемые</span> <span data-lang="t2">моды</span></h1>
+  <p data-lang="t3">Для Minecraft 1.21.11 (Fabric)</p>
+</div>
+
+<div class="list" id="mods-list">
+  <div class="row" data-name="Baritone">
+    <div class="info">
+      <h3>Baritone</h3>
+      <div class="desc" data-lang="b-d">Автоматическая добыча, перемещение, стройка. Встроен в RaveX.</div>
+      <div class="sub">baritone.jar</div>
+    </div>
+    <a class="dl" href="mods/baritone.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="Sodium">
+    <div class="info">
+      <h3>Sodium</h3>
+      <div class="desc" data-lang="s-d">Рендер-движок. Даёт +100500 FPS на встроенной графике.</div>
+      <div class="sub">sodium-fabric-0.8.13-beta.2+mc1.21.11.jar</div>
+    </div>
+    <a class="dl" href="mods/sodium.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="Lithium">
+    <div class="info">
+      <h3>Lithium</h3>
+      <div class="desc" data-lang="l-d">Оптимизация логики игры: физика, мобы, тики. Без читов.</div>
+      <div class="sub">lithium-fabric-0.21.4+mc1.21.11.jar</div>
+    </div>
+    <a class="dl" href="mods/lithium.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="FerriteCore">
+    <div class="info">
+      <h3>FerriteCore</h3>
+      <div class="desc" data-lang="f-d">Жрёт меньше RAM. Актуально когда 8GB.</div>
+      <div class="sub">ferritecore-8.2.0-fabric.jar</div>
+    </div>
+    <a class="dl" href="mods/ferritecore.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="ImmediatelyFast">
+    <div class="info">
+      <h3>ImmediatelyFast</h3>
+      <div class="desc" data-lang="im-d">Инвентари и интерфейсы летают.</div>
+      <div class="sub">ImmediatelyFast-Fabric-1.14.2+1.21.11.jar</div>
+    </div>
+    <a class="dl" href="mods/imfast.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="EntityCulling">
+    <div class="info">
+      <h3>EntityCulling</h3>
+      <div class="desc" data-lang="e-d">Не рисует мобов за стенами, больше FPS.</div>
+      <div class="sub">entityculling-fabric-1.10.5-mc1.21.11.jar</div>
+    </div>
+    <a class="dl" href="mods/entityculling.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="Fabric API">
+    <div class="info">
+      <h3>Fabric API</h3>
+      <div class="desc" data-lang="fa-d">Прослойка для Fabric-модов. Нужна почти всем.</div>
+      <div class="sub">fabric-api-0.141.4+1.21.11.jar</div>
+    </div>
+    <a class="dl" href="mods/fabric-api-0.141.4+1.21.11.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="Xaero's Minimap">
+    <div class="info">
+      <h3>Xaero's Minimap</h3>
+      <div class="desc" data-lang="xm-d">Миникарта с метками и чанками.</div>
+      <div class="sub">xaerominimap-fabric-1.21.11-26.1.4.jar</div>
+    </div>
+    <a class="dl" href="mods/xaerominimap.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="Xaero's World Map">
+    <div class="info">
+      <h3>Xaero's World Map</h3>
+      <div class="desc" data-lang="xw-d">Полноэкранная карта мира.</div>
+      <div class="sub">xaeroworldmap-fabric-1.21.11-1.41.2.jar</div>
+    </div>
+    <a class="dl" href="mods/xaeroworldmap.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="Roughly Enough Items">
+    <div class="info">
+      <h3>Roughly Enough Items</h3>
+      <div class="desc" data-lang="rei-d">Рецепты крафта, плавки, зелий.</div>
+      <div class="sub">RoughlyEnoughItems-21.11.816-fabric.jar</div>
+    </div>
+    <a class="dl" href="mods/rei.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="Mouse Tweaks">
+    <div class="info">
+      <h3>Mouse Tweaks</h3>
+      <div class="desc" data-lang="mt-d">Удобное управление предметами мышкой.</div>
+      <div class="sub">MouseTweaks-fabric-mc1.21.11-2.30.jar</div>
+    </div>
+    <a class="dl" href="mods/mousetweaks.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="AppleSkin">
+    <div class="info">
+      <h3>AppleSkin</h3>
+      <div class="desc" data-lang="a-d">Показывает насыщение от еды.</div>
+      <div class="sub">appleskin-fabric-mc1.21.11-3.0.8.jar</div>
+    </div>
+    <a class="dl" href="mods/appleskin.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="Jade">
+    <div class="info">
+      <h3>Jade</h3>
+      <div class="desc" data-lang="j-d">Информация о блоке под прицелом.</div>
+      <div class="sub">Jade-1.21.11-Fabric-21.1.6.jar</div>
+    </div>
+    <a class="dl" href="mods/jade.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+  <div class="row" data-name="IAS">
+    <div class="info">
+      <h3>IAS</h3>
+      <div class="desc" data-lang="ia-d">Смена аккаунтов без перезапуска игры.</div>
+      <div class="sub">IAS-9.0.7+1.21.11-fabric.jar</div>
+    </div>
+    <a class="dl" href="mods/IAS-9.0.7+1.21.11-fabric.jar">&#8595; <span data-lang="dl">Скачать</span></a>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2026 <a href="https://github.com/StormDevzz" target="_blank">StormDevzz</a></p>
+</footer>
+
+<script>
+const lang = {
+  ru: {
+    't1':'Рекомендуемые','t2':'моды','t3':'Для Minecraft 1.21.11 (Fabric)','dl':'Скачать',
+    'b-d':'Автоматическая добыча, перемещение, стройка. Встроен в RaveX.',
+    's-d':'Рендер-движок. Даёт +100500 FPS на встроенной графике.',
+    'l-d':'Оптимизация логики игры: физика, мобы, тики. Без читов.',
+    'f-d':'Жрёт меньше RAM. Актуально когда 8GB.',
+    'im-d':'Инвентари и интерфейсы летают.',
+    'e-d':'Не рисует мобов за стенами, больше FPS.',
+    'fa-d':'Прослойка для Fabric-модов. Нужна почти всем.',
+    'xm-d':'Миникарта с метками и чанками.',
+    'xw-d':'Полноэкранная карта мира.',
+    'rei-d':'Рецепты крафта, плавки, зелий.',
+    'mt-d':'Удобное управление предметами мышкой.',
+    'a-d':'Показывает насыщение от еды.',
+    'j-d':'Информация о блоке под прицелом.',
+    'ia-d':'Смена аккаунтов без перезапуска игры.'
+  },
+  en: {
+    't1':'Recommended','t2':'mods','t3':'For Minecraft 1.21.11 (Fabric)','dl':'Download',
+    'b-d':'Automated mining, movement, building. Built into RaveX.',
+    's-d':'Render engine. Huge FPS boost on integrated graphics.',
+    'l-d':'Game logic optimization: physics, mobs, ticks. No cheats.',
+    'f-d':'Eats less RAM. Handy with 8GB.',
+    'im-d':'Inventories and UI run smooth.',
+    'e-d':'Skips rendering mobs behind walls, more FPS.',
+    'fa-d':'Core library for Fabric mods. Almost everyone needs it.',
+    'xm-d':'Minimap with waypoints and chunks.',
+    'xw-d':'Fullscreen world map.',
+    'rei-d':'Crafting, smelting, brewing recipes.',
+    'mt-d':'Better mouse controls in inventory.',
+    'a-d':'Shows food saturation.',
+    'j-d':'Block info on crosshair target.',
+    'ia-d':'Switch accounts without restart.'
+  }
+};
+let curLang = localStorage.getItem('ravex-lang') || 'ru';
+function toggleLang() {
+  curLang = curLang === 'ru' ? 'en' : 'ru';
+  localStorage.setItem('ravex-lang', curLang);
+  applyLang();
+}
+function applyLang() {
+  document.querySelectorAll('.lang span').forEach(s => {
+    s.classList.toggle('active', s.dataset.lang === curLang);
+  });
+  document.querySelectorAll('[data-lang]').forEach(el => {
+    const key = el.dataset.lang;
+    if (lang[curLang][key]) el.textContent = lang[curLang][key];
+  });
+}
+applyLang();
+</script>
+</body>
+</html>

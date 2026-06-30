@@ -17,6 +17,12 @@ RaveX — клиентский мод для Minecraft от организаци
 | **Lua** | Скриптинг — rich presence, взаимодействие с Discord, кастомные модули и Lua-аддоны |
 | **Makefile** | Генерируется CMake для сборки C++ компонентов (native-библиотеки) |
 
+### Скриншоты
+
+| Загрузка | GUI | Физика |
+|---|---|---|
+| ![](screenshots/loading.png) | ![](screenshots/gui.png) | ![](screenshots/physics.png) |
+
 ### Сборка
 
 ```bash
