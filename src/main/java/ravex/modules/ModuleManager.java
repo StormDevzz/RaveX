@@ -24,6 +24,7 @@ import ravex.modules.client.Notifications;
 import ravex.modules.client.DesktopGui;
 import ravex.modules.client.Settings;
 import ravex.modules.client.Calculator;
+import ravex.modules.client.BaritoneModule;
 
 
 import ravex.modules.player.InventoryCleaner;
@@ -70,6 +71,7 @@ import ravex.modules.misc.CustomDeathText;
 import ravex.modules.misc.NoNarrator;
 import ravex.modules.misc.NoPacketKick;
 import ravex.modules.misc.SoundBlocker;
+import ravex.modules.misc.PauseBaritone;
 import ravex.modules.misc.Announcer;
 import ravex.modules.misc.Welcomer;
 import ravex.modules.misc.CoordLogger;
@@ -419,7 +421,9 @@ public class ModuleManager {
         clickGuiModules.add(DesktopGui.INSTANCE);
         clickGuiModules.add(Settings.INSTANCE);
         clickGuiModules.add(Calculator.INSTANCE);
+        clickGuiModules.add(BaritoneModule.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Commands.INSTANCE);
+        clickGuiModules.add(ravex.modules.misc.PauseBaritone.INSTANCE);
 
         
         hudModules.add(new HudModule("Watermark", 10, 10, 80, 14) {

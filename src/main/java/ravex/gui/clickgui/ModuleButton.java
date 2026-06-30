@@ -18,7 +18,7 @@ import java.util.Set;
 public class ModuleButton {
     public static final Set<Module> expandedModules = new HashSet<>();
     private static long lastGearTick = System.currentTimeMillis();
-    private static final int MAX_INLINE_HEIGHT = 500;
+    private static final int MAX_INLINE_HEIGHT = 800;
 
     private int inlineScrollTarget = 0;
     private float inlineScrollAnim = 0f;

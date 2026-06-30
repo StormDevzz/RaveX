@@ -42,6 +42,7 @@ public abstract class Module {
     }
 
     private ravex.parameter.ModuleCondition enableCondition = () -> true;
+    private java.util.function.Supplier<Boolean> visibleCondition = () -> true;
 
     public boolean getEnabled() {
         return enabled;
@@ -49,6 +50,18 @@ public abstract class Module {
 
     public void setEnableCondition(ravex.parameter.ModuleCondition condition) {
         this.enableCondition = condition;
+    }
+
+    public boolean isVisible() {
+        return visibleCondition.get();
+    }
+
+    public void setVisibleCondition(java.util.function.Supplier<Boolean> condition) {
+        this.visibleCondition = condition != null ? condition : () -> true;
+    }
+
+    protected boolean hasToggleSound() {
+        return true;
     }
 
     public void setEnabled(boolean enabled) {
@@ -61,13 +74,13 @@ public abstract class Module {
             this.enabled = enabled;
             if (enabled) {
                 onEnable();
-                SoundUtility.playEnable();
+                if (hasToggleSound()) SoundUtility.playEnable();
                 if (ravex.modules.client.Notifications.INSTANCE != null) {
                     ravex.modules.client.Notifications.notifyToggle(this, true);
                 }
             } else {
                 onDisable();
-                SoundUtility.playDisable();
+                if (hasToggleSound()) SoundUtility.playDisable();
                 if (ravex.modules.client.Notifications.INSTANCE != null) {
                     ravex.modules.client.Notifications.notifyToggle(this, false);
                 }

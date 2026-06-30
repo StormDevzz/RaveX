@@ -23,7 +23,6 @@
         "minecraft": ">=${minecraft_version}"
     },
     "suggests": {
-        "notenoughanimations": "*",
         "locomotion": "*"
     }
 }

@@ -26,8 +26,8 @@ public class ClickGui extends Module {
     public final ravex.parameter.ColorParameter moduleOutlineColor = new ravex.parameter.ColorParameter("Button Border", 0xFF2A2A35);
 
     
-    public final NumberParameter buttonHeight = new NumberParameter("Button Height", 15, 12, 24, 1);
-    public final NumberParameter panelWidth   = new NumberParameter("Panel Width",  120, 80, 200, 5);
+    public final NumberParameter buttonHeight = new NumberParameter("Button Height", 20, 12, 30, 1);
+    public final NumberParameter panelWidth   = new NumberParameter("Panel Width",  190, 80, 280, 5);
 
     
     public final BooleanParameter moduleCounter = new BooleanParameter("Module Counter", true);

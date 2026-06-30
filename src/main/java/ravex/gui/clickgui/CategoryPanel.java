@@ -157,8 +157,9 @@ public class CategoryPanel {
 
         
         if (ClickGui.INSTANCE.moduleCounter.getValue()) {
-            int enabled = (int) allButtons.stream().filter(b -> b.getModule().getEnabled()).count();
-            int total = allButtons.size();
+            List<ModuleButton> visibleModules = filterButtons(searchQuery);
+            int enabled = (int) visibleModules.stream().filter(b -> b.getModule().getEnabled()).count();
+            int total = visibleModules.size();
             String countText = enabled + "/" + total;
             int cw = FontRenderUtility.getStringWidth(countText);
             int pad = 4;
@@ -196,9 +197,12 @@ public class CategoryPanel {
     }
 
     private List<ModuleButton> filterButtons(String query) {
-        if (query == null || query.isEmpty()) return allButtons;
+        List<ModuleButton> visible = allButtons.stream()
+            .filter(b -> b.getModule().isVisible())
+            .collect(Collectors.toList());
+        if (query == null || query.isEmpty()) return visible;
         String lower = query.toLowerCase();
-        return allButtons.stream()
+        return visible.stream()
             .filter(b -> b.getModule().getName().toLowerCase().contains(lower))
             .collect(Collectors.toList());
     }
