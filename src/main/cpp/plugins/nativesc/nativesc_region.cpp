@@ -1,4 +1,7 @@
 #include "include/nativesc.hpp"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace ravex {
 namespace nativesc {
