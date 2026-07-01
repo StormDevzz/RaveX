@@ -277,6 +277,10 @@ public class ModuleSettingsScreen extends Screen {
     @Override
     public boolean charTyped(CharacterEvent event) {
         if (ClickGUI.activeColorPalette != null) {
+            String text = event.codepointAsString();
+            if (!text.isEmpty()) {
+                return ClickGUI.activeColorPalette.charTyped(text.charAt(0));
+            }
             return true;
         }
         if (ClickGUI.activeKeybindElement != null) {
