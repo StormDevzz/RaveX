@@ -85,7 +85,7 @@ static bool downloadFabricLibraries(LauncherState *state,
 
     
     {
-        std::string installerMeta = http_get("https:
+        std::string installerMeta = http_get("https://meta.fabricmc.net/v2/versions/installer"
         if (!installerMeta.empty() && installerMeta != "[]" && installerMeta != "[\n]") {
             
             size_t verKey = installerMeta.find("\"version\":");
@@ -99,7 +99,7 @@ static bool downloadFabricLibraries(LauncherState *state,
                     size_t ivEnd = installerMeta.find("\"", verKey + 1);
                     if (ivEnd != std::string::npos) {
                         std::string instVersion = installerMeta.substr(verKey + 1, ivEnd - verKey - 1);
-                        std::string installerUrl = "https:
+                        std::string installerUrl = "https://maven.fabricmc.net/net/fabricmc/fabric-installer/"
                                                    + instVersion + "/fabric-installer-" + instVersion + ".jar";
                         std::string installerDest = state->kickx_dir + "/fabric-installer-" + instVersion + ".jar";
                         struct stat st;
@@ -121,7 +121,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
     using namespace event;
     queue_progress(state, "Fetching Mojang manifest...", 0.0);
 
-    std::string manifest = http_get("https:
+    std::string manifest = http_get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
     if (manifest.empty()) {
         queue_hide(state);
         return false;
@@ -193,7 +193,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
     size_t offset = 0;
     std::vector<std::string> lib_urls, lib_dests;
     while (true) {
-        size_t pos = version_json.find("https:
+        size_t pos = version_json.find("https://"
         if (pos == std::string::npos) break;
         size_t url_end = version_json.find("\"", pos);
         if (url_end == std::string::npos) break;
@@ -256,7 +256,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
                     std::string obj_path = state->kickx_dir + "/assets/objects/" + prefix + "/" + hash;
                     struct stat st;
                     if (stat(obj_path.c_str(), &st) != 0) {
-                        std::string url = "https:
+                        std::string url = "https://resources.download.minecraft.net/"
                         asset_urls.push_back(url);
                         asset_dests.push_back(obj_path);
                     }

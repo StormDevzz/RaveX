@@ -56,7 +56,7 @@ Java_ravex_modules_player_RichPresence_nativeUpdatePresence(
     if (jShowButton == JNI_TRUE) {
         DiscordButton btn;
         btn.label = "Download RaveX";
-        btn.url = "https:
+        btn.url = "https://github.com/StormDevzz/RaveX";
         presence.buttons.push_back(btn);
     }
     

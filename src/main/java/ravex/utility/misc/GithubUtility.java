@@ -11,7 +11,7 @@ public class GithubUtility {
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https:
+                .uri(URI.create("https://api.github.com/repos/StormDevzz/RaveX"))
                 .header("User-Agent", "RaveX-Client")
                 .build();
             

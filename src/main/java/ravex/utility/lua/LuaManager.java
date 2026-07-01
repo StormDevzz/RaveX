@@ -441,7 +441,7 @@ public class LuaManager {
 
             String buttonsBlock = "";
             if (showButton) {
-                buttonsBlock = ",\"buttons\":[{\"label\":\"Download RaveX\",\"url\":\"https:
+                buttonsBlock = ",\"buttons\":[{\"label\":\"Download RaveX\",\"url\":\"https://github.com/StormDevzz/RaveX\"}]";
             }
 
             String payload = "{"
