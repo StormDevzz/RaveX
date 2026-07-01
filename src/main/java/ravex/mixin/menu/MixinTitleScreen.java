@@ -46,7 +46,7 @@ public abstract class MixinTitleScreen extends Screen {
                 "HvH 1.12.2?",
                 "RaveX on top!",
                 "VoltHack?",
-                "Now with premium LUA scripts!",
+                "хачапури",
                 "Buttery smooth rendering!",
                 "Unmatched design aesthetics!",
                 "Akrien 1.12.2?",
@@ -55,7 +55,12 @@ public abstract class MixinTitleScreen extends Screen {
                 "RaveX on top",
                 "Buy minecraft license",
                 "1000 IQ play",
-                "CelkaPasta"
+                "CelkaPasta",
+                "1 IQ play",
+                "larper",
+                "mister larper",
+                "doxxxxxxx",
+                "ur sigma"
         };
 
         try {
@@ -107,11 +112,11 @@ public abstract class MixinTitleScreen extends Screen {
             scale = scale * 100.0F / (float) (font.width(ravexSplashText) + 32);
 
             double wave = Math.sin((double) (millis % 3500L) / 3500.0 * Math.PI * 2.0);
-            int r = (int) (225 + wave * 30);
-            int g = (int) (40 + wave * 25);
-            int b = (int) (60 + wave * 30);
-            int activeRedColor = 0xFF000000 | (r << 16) | (g << 8) | b;
-            int shadowColor = 0xAA200505;
+            int r = (int) (40 + wave * 20);
+            int g = (int) (100 + wave * 30);
+            int b = (int) (225 + wave * 30);
+            int activeBlueColor = 0xFF000000 | (r << 16) | (g << 8) | b;
+            int shadowColor = 0xAA050520;
 
             var pose = graphics.pose();
             pose.pushMatrix();
@@ -123,12 +128,12 @@ public abstract class MixinTitleScreen extends Screen {
             pose.scale(scale, scale);
 
             graphics.drawCenteredString(font, ravexSplashText, 1, -7, shadowColor);
-            graphics.drawCenteredString(font, ravexSplashText, 0, -8, activeRedColor);
+            graphics.drawCenteredString(font, ravexSplashText, 0, -8, activeBlueColor);
 
             pose.popMatrix();
         }
 
-        graphics.drawString(font, "RaveX Client", 8, 8, 0xFFE53935, true);
+        graphics.drawString(font, "RaveX Client", 8, 8, ravex.modules.client.Settings.INSTANCE.menuColor.getValue(), true);
         graphics.drawString(font, "Logged in as: §f" + mc.getUser().getName(), 8, 20, 0xFF888888, true);
         graphics.drawString(font, "Build: §7" + ravex.RaveX.version, 8, 32, 0xFF888888, true);
 

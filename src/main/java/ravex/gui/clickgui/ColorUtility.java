@@ -27,12 +27,9 @@ public class ColorUtility {
         Color c2 = new Color(cfg.color2.getValue());
 
         return switch (mode) {
-            case "Sky" -> Render2DEngine.skyRainbow(speed, index);
-            case "LightRainbow" -> Render2DEngine.rainbow(speed, index, 0.6f, 1f, 1f);
             case "Rainbow" -> Render2DEngine.rainbow(speed, index, 1f, 1f, 1f);
             case "Fade" -> Render2DEngine.fade(speed, index, c1, 1f);
             case "DoubleColor" -> Render2DEngine.twoColorEffect(c1, c2, speed, index);
-            case "Analogous" -> Render2DEngine.interpolateColorsBackAndForth(speed, index, c1, Render2DEngine.getAnalogousColor(c2), true);
             default -> c1;
         };
     }

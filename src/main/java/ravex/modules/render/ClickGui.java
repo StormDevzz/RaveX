@@ -12,13 +12,14 @@ public class ClickGui extends Module {
     public static final ClickGui INSTANCE = new ClickGui();
 
     public final BooleanParameter drawBackground = new BooleanParameter("Background", true);
-    public final ModeParameter colorMode = new ModeParameter("Color Mode", "Static", List.of("Static", "Sky", "LightRainbow", "Rainbow", "Fade", "DoubleColor", "Analogous"));
+    public final ModeParameter colorMode = new ModeParameter("Color Mode", "Positive", List.of("Positive", "Fade", "Rainbow", "DoubleColor"));
     public final NumberParameter colorSpeed = new NumberParameter("Speed", 18, 2, 54, 1);
     public final ravex.parameter.ColorParameter color1 = new ravex.parameter.ColorParameter("Color 1", 0xFF40A9F8);
     public final ravex.parameter.ColorParameter color2 = new ravex.parameter.ColorParameter("Color 2", 0xFFE63946);
     public final ModeParameter gradientMode = new ModeParameter("Gradient", "LeftToRight", List.of("LeftToRight", "UpsideDown", "Both"));
     public final BooleanParameter blur = new BooleanParameter("Blur", false);
     public final BooleanParameter customFont = new BooleanParameter("Custom Font", true);
+    public final BooleanParameter switchless = new BooleanParameter("Switchless Options", true);
 
     public final BooleanParameter outlines = new BooleanParameter("Outlines", false);
     public final ravex.parameter.ColorParameter outlineColor = new ravex.parameter.ColorParameter("Outline Color", 0x44FFFFFF);
@@ -71,6 +72,7 @@ public class ClickGui extends Module {
         addParameter(gradientMode);
         addParameter(blur);
         addParameter(customFont);
+        addParameter(switchless);
         addParameter(outlines);
         addParameter(outlineColor);
         addParameter(moduleOutlines);
@@ -93,8 +95,8 @@ public class ClickGui extends Module {
         addParameter(tooltipOffsetX);
         addParameter(tooltipOffsetY);
         optionSmoothness.setVisible(() -> smoothOption.getValue());
-        color1.setVisible(() -> "Static".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue()) || "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
-        color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()) || "Analogous".equals(colorMode.getValue()));
+        color1.setVisible(() -> "Positive".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue()) || "DoubleColor".equals(colorMode.getValue()));
+        color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()));
         setEnabled(true);
     }
 }

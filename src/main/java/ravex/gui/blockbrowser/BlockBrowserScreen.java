@@ -279,19 +279,19 @@ public class BlockBrowserScreen extends Screen {
         if (tabAll.mouseClicked(event.x(), event.y(), tabX, tabY)) {
             currentTab = Tab.ALL;
             updateFilter();
-            Minecraft.getInstance().player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.35f, 1.4f);
+            //Minecraft.getInstance().player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.35f, 1.4f);
             return true;
         }
         if (tabSelected.mouseClicked(event.x(), event.y(), tabX + 86, tabY)) {
             currentTab = Tab.SELECTED;
             updateFilter();
-            Minecraft.getInstance().player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.35f, 1.4f);
+            //Minecraft.getInstance().player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.35f, 1.4f);
             return true;
         }
         if (tabHidden.mouseClicked(event.x(), event.y(), tabX + 172, tabY)) {
             currentTab = Tab.HIDDEN;
             updateFilter();
-            Minecraft.getInstance().player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.35f, 1.4f);
+            //Minecraft.getInstance().player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.35f, 1.4f);
             return true;
         }
 
@@ -305,7 +305,7 @@ public class BlockBrowserScreen extends Screen {
                     BlockCacheEntry entry = filteredBlocksCache.get(index);
                     boolean current = isSelected.test(entry.identifier);
                     onToggle.accept(entry.block, !current);
-                    this.minecraft.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 1.4f);
+                    //this.minecraft.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 1.4f);
                     updateFilter();
                     return true;
                 }
