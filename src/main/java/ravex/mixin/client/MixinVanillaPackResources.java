@@ -59,7 +59,7 @@ public class MixinVanillaPackResources {
         if (!parent.exists()) {
             parent.mkdirs();
         }
-        String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/" + idPath;
+        String remoteUrl = "https:
         try {
             java.net.URL url = new java.net.URL(remoteUrl);
             java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();

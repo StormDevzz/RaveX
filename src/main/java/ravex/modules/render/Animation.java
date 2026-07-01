@@ -31,7 +31,7 @@ public class Animation extends Module {
     private static final String CLOTH_CONFIG_PROJECT = "9s6osm5g";
     private static final String PAL_PROJECT = "ha1mEyJS";
     private static final String FABRIC_API_PROJECT = "P7dR8mSH";
-    private static final String API_BASE = "https://api.modrinth.com/v2/project/%s/version";
+    private static final String API_BASE = "https:
 
     private static final String CPA_MAIN = "com.github.razorplay01.cpa.ModTemplate";
     private static final String CPA_PKG = "com.github.razorplay01";

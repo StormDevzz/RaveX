@@ -187,7 +187,7 @@ public class CurrencyHud extends HudModule {
     private void fetchRatesAsync() {
         new Thread(() -> {
             try {
-                URL url = new URL("https://open.er-api.com/v6/latest/USD");
+                URL url = new URL("https:
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setConnectTimeout(5000);

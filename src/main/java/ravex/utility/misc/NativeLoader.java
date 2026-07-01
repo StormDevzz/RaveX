@@ -75,7 +75,7 @@ public class NativeLoader {
             return cachedFile;
         }
 
-        String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/natives/" + libName;
+        String remoteUrl = "https:
         System.out.println("[RaveX] Downloading remote native: " + libName + " from " + remoteUrl);
         try {
             URL url = new URL(remoteUrl);

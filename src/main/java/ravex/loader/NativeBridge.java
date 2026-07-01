@@ -78,7 +78,7 @@ public class NativeBridge {
 
             if (!exists) {
                 
-                String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/natives/" + libName;
+                String remoteUrl = "https:
                 System.out.println("[RaveX-Loader] Downloading " + libName + " from " + remoteUrl);
                 RaveXLoader.updateWindowStatus("Downloading " + libName + "...", 10);
 
@@ -122,7 +122,7 @@ public class NativeBridge {
             
             try {
                 String libName = getLibName();
-                String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/natives/" + libName;
+                String remoteUrl = "https:
                 java.net.URL url = new java.net.URL(remoteUrl);
                 java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
                 conn.setConnectTimeout(10000);

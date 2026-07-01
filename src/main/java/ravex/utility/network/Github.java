@@ -13,7 +13,7 @@ public class Github {
             .build();
 
     public static CompletableFuture<String> fetchRawContent(String repoOwner, String repoName, String branch, String filePath) {
-        String url = String.format("https://raw.githubusercontent.com/%s/%s/%s/%s", repoOwner, repoName, branch, filePath);
+        String url = String.format("https:
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "RaveX-Client")
@@ -31,7 +31,7 @@ public class Github {
     }
 
     public static CompletableFuture<Boolean> isReachable(String repoOwner, String repoName) {
-        String url = String.format("https://api.github.com/repos/%s/%s", repoOwner, repoName);
+        String url = String.format("https:
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "RaveX-Client")
