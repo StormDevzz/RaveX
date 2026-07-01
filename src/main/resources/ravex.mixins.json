@@ -26,6 +26,7 @@
         "render.MixinLivingEntityRenderer",
         "render.MixinPlayerRenderer",
         "render.MixinItemInHandRenderer",
+        "render.MixinSubmitNodeStorage",
         "render.MixinItemEntityRenderer",
         "render.MixinItemEntityRenderState",
         "render.MixinItemStackRenderState",

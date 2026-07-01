@@ -10,7 +10,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.Shaders;
+import ravex.shaders.hand.HandShaderManager;
 import ravex.utility.render.animate.NativeAnimateVertexConsumer;
+import ravex.utility.render.animate.ShaderVertexConsumer;
 
 @Mixin(Model.class)
 public class MixinModel {
@@ -23,6 +25,13 @@ public class MixinModel {
     private VertexConsumer modifyVertexConsumer(VertexConsumer consumer) {
         if (!Shaders.INSTANCE.getEnabled()) {
             return consumer;
+        }
+
+        if (Shaders.RENDERING_HAND.get()) {
+            HandShaderManager.RenderInput ri = new HandShaderManager.RenderInput();
+            ri.config = Shaders.INSTANCE.createConfig();
+            ri.time = System.nanoTime() / 1e9f;
+            return new ShaderVertexConsumer(consumer, ri);
         }
 
         Model self = (Model)(Object)this;

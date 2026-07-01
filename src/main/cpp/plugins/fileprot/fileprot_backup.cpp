@@ -3,6 +3,11 @@
 #include <ctime>
 #include <algorithm>
 #include <sys/stat.h>
+
+#ifdef _WIN32
+#include <direct.h>
+#endif
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -18,7 +23,7 @@ bool createBackup(const std::string& sourcePath, const std::string& backupDir) {
 
 int createBackupWithVersion(const std::string& sourcePath, const std::string& backupDir, int maxVersions) {
 #ifdef _WIN32
-    mkdir(backupDir.c_str());
+    _mkdir(backupDir.c_str());
 #else
     mkdir(backupDir.c_str(), 0755);
 #endif
