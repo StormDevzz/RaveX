@@ -130,15 +130,7 @@ public class CategoryPanel {
         }
 
         
-        if (ClickGui.INSTANCE.headerGlow.getValue()) {
-            int glowIntensity = ClickGui.INSTANCE.headerGlowIntensity.getValue().intValue();
-            int glowCol = ColorUtility.withAlpha(activeColor, glowIntensity);
-            int textGlowW = FontRenderUtility.getStringWidth(category.getDisplayName()) + 20;
-            graphics.fill(ix + 20, iy, ix + 20 + textGlowW, iy + 17, glowCol);
-            Identifier catTexGlow = ClickGUI.getCategoryTexture(category);
-            if (catTexGlow != null)
-                graphics.fill(ix + 3, iy + 1, ix + 19, iy + 17, glowCol);
-        }
+
 
         
         Identifier catTexWhite = ravex.utility.render.TextureLoader.getCategoryTextureWhite(category);

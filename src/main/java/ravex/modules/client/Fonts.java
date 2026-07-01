@@ -13,7 +13,7 @@ public class Fonts extends Module {
     public static final Fonts INSTANCE = new Fonts();
 
     public final BooleanParameter enabled = new BooleanParameter("Enabled", true);
-    public final ModeParameter fontType = new ModeParameter("Font", "Comfortaa",
+    public final ModeParameter fontType = new ModeParameter("Font", "SF Bold",
         List.of("Comfortaa", "SF Medium", "SF Bold", "Vanilla"));
     public final NumberParameter fontSize = new NumberParameter("Font Size", 1.0, 0.5, 3.0, 0.1);
     public final BooleanParameter textShadow = new BooleanParameter("Text Shadow", true);

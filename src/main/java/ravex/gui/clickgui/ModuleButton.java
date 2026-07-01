@@ -102,31 +102,24 @@ public class ModuleButton {
         int activeColor = ColorUtility.getActiveColor();
         int disabledBg = 0xFF0D0D14;
 
-        
         graphics.fill(x, currentY, x + width, currentY + btnH, disabledBg);
 
-        
-        if (enableAnim > 0.001f) {
-            int fillW = (int) (width * enableAnim);
-            if (fillW > 0) {
-                graphics.fill(x, currentY, x + fillW, currentY + btnH, activeColor);
-            }
+        if (enableAnim > 0.01f) {
+            int enableAlpha = (int) (enableAnim * 0x22);
+            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(activeColor, enableAlpha));
         }
 
-        
         if (hoverProgress > 0.01f) {
-            int alpha = (int) (hoverProgress * 0x1A);
-            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, alpha));
+            int hoverAlpha = (int) (hoverProgress * 0x18);
+            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
         }
 
-        float textLerp = enableAnim;
-        if (textLerp < 0.001f) textLerp = hovered ? 0.5f : 0.0f;
-        int textColor = lerpColor(0xFF8F8FA0, 0xFFFFFFFF, textLerp);
+        int baseColor = lerpColor(0xFF8F8FA0, activeColor, enableAnim);
+        int textColor = hovered ? lerpColor(0xFFC0C0D0, 0xFFFFFFFF, enableAnim) : baseColor;
 
         if (searchQuery != null && !searchQuery.isEmpty()
             && module.getName().toLowerCase().contains(searchQuery.toLowerCase())) {
-            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(activeColor, 40));
-            graphics.fill(x, currentY, x + 2, currentY + btnH, activeColor);
+            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(activeColor, 50));
         }
 
         if (ClickGui.INSTANCE.moduleOutlines.getValue()) {
@@ -330,18 +323,18 @@ public class ModuleButton {
                         if (expanded) {
                             expandedModules.add(module);
                             inlineScrollTarget = 0;
-                            ravex.utility.sound.SoundUtility.playSettingsOpen();
+                            //ravex.utility.sound.SoundUtility.playSettingsOpen();
                         } else {
                             expandedModules.remove(module);
                             module.setGearAngle(0f, System.currentTimeMillis());
-                            ravex.utility.sound.SoundUtility.playSettingsClose();
+                            //ravex.utility.sound.SoundUtility.playSettingsClose();
                         }
                     }
                 } else if (button == 2) {
                     ClickGUI.bindingModuleButton = this;
-                    if (mc.player != null) {
-                        mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 1.5f);
-                    }
+                    //if (mc.player != null) {
+                    //    mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 1.5f);
+                    //}
                 }
             } else if (!sepMode && expanded) {
                 int scrollOffset = Math.round(inlineScrollAnim);

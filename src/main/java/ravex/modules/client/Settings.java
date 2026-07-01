@@ -13,6 +13,7 @@ public class Settings extends Module {
 
     public final NumberParameter headerTextX = new NumberParameter("Header Text X", 24, 10, 60, 1);
     public final NumberParameter moduleTextX = new NumberParameter("Module Text X", 9, 3, 30, 1);
+    public final ravex.parameter.ColorParameter menuColor = new ravex.parameter.ColorParameter("Menu Color", 0xFF0066FF);
 
     public final BooleanParameter telemetry = new BooleanParameter("Telemetry", true);
 
@@ -37,6 +38,7 @@ public class Settings extends Module {
         super("Settings", Category.CLIENT);
         addParameter(headerTextX);
         addParameter(moduleTextX);
+        addParameter(menuColor);
         addParameter(telemetry);
         addParameter(proxyEnabled);
         addParameter(proxyType);

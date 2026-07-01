@@ -339,6 +339,27 @@ public class ColorPaletteModal {
         graphics.fill(applyX + btnW, btnY - 1, applyX + btnW + 1, btnY + btnH + 1, applyBorder);
         int aw = FontRenderUtility.getStringWidth("Apply");
         FontRenderUtility.drawString(graphics, "Apply", applyX + (btnW - aw) / 2, btnY + 3, applyHovered ? 0xFFFFFFFF : 0xFFD0D0E8, false);
+
+        int syncX = mx + 145;
+        int syncY = my + 105;
+        int syncW = 40;
+        int syncH = 14;
+
+        FontRenderUtility.drawString(graphics, "ThemeSync", syncX, syncY, 0xFF7A7A8A, false);
+
+        boolean syncHovered = mouseX >= syncX && mouseX <= syncX + syncW && mouseY >= syncY + 10 && mouseY <= syncY + 10 + syncH;
+        int syncBg = parameter.isThemeSync() ? activeColor : (syncHovered ? 0x44222233 : 0xFF14141E);
+        int syncBorder = syncHovered ? (parameter.isThemeSync() ? 0xFFFFFFFF : 0xFF555555) : 0xFF3E3E4E;
+        
+        graphics.fill(syncX, syncY + 10, syncX + syncW, syncY + 10 + syncH, syncBg);
+        graphics.fill(syncX - 1, syncY + 9, syncX + syncW + 1, syncY + 10, syncBorder);
+        graphics.fill(syncX - 1, syncY + 10 + syncH, syncX + syncW + 1, syncY + 10 + syncH + 1, syncBorder);
+        graphics.fill(syncX - 1, syncY + 9, syncX, syncY + 10 + syncH + 1, syncBorder);
+        graphics.fill(syncX + syncW, syncY + 9, syncX + syncW + 1, syncY + 10 + syncH + 1, syncBorder);
+
+        String syncText = parameter.isThemeSync() ? "ON" : "OFF";
+        int stw = FontRenderUtility.getStringWidth(syncText);
+        FontRenderUtility.drawString(graphics, syncText, syncX + (syncW - stw) / 2, syncY + 13, parameter.isThemeSync() ? 0xFFFFFFFF : 0xFF808090, false);
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -362,6 +383,7 @@ public class ColorPaletteModal {
             draggingSV = true;
             saturation = (mx - svX) / (float) svSize;
             value = 1.0f - (my - svY) / (float) svSize;
+            parameter.setThemeSync(false);
             parameter.setValue(getArgb());
             return true;
         }
@@ -371,6 +393,7 @@ public class ColorPaletteModal {
         if (mx >= hueX && mx < hueX + svSize && my >= hueY && my < hueY + sliderHeight) {
             draggingHue = true;
             hue = (mx - hueX) / (float) svSize;
+            parameter.setThemeSync(false);
             parameter.setValue(getArgb());
             return true;
         }
@@ -380,6 +403,7 @@ public class ColorPaletteModal {
         if (mx >= alphaX && mx < alphaX + svSize && my >= alphaY && my < alphaY + sliderHeight) {
             draggingAlpha = true;
             alpha = (mx - alphaX) / (float) svSize;
+            parameter.setThemeSync(false);
             parameter.setValue(getArgb());
             return true;
         }
@@ -403,6 +427,20 @@ public class ColorPaletteModal {
             return true;
         }
 
+        int syncX = mxLeft + 145;
+        int syncY = myTop + 105;
+        int syncW = 40;
+        int syncH = 14;
+        if (mx >= syncX && mx <= syncX + syncW && my >= syncY + 10 && my <= syncY + 10 + syncH) {
+            parameter.setThemeSync(!parameter.isThemeSync());
+            if (parameter.isThemeSync()) {
+                setFromArgb(ColorUtility.getActiveColor());
+                parameter.setValue(ColorUtility.getActiveColor());
+            }
+            playClickSound();
+            return true;
+        }
+
         int sectionX = mxLeft + 15;
         int recentY = myTop + 200;
         int recentSwatchY = recentY + 12;
@@ -413,6 +451,7 @@ public class ColorPaletteModal {
             int py = recentSwatchY + (row * (swatchSize + swatchGap));
             if (mx >= px && mx <= px + swatchSize && my >= py && my <= py + swatchSize) {
                 setFromArgb(recentColors.get(i));
+                parameter.setThemeSync(false);
                 parameter.setValue(recentColors.get(i));
                 editingHex = false;
                 playClickSound();
@@ -435,6 +474,7 @@ public class ColorPaletteModal {
             int py = presetSwatchY + (row * (swatchSize + swatchGap));
             if (mx >= px && mx <= px + swatchSize && my >= py && my <= py + swatchSize) {
                 setFromArgb(presets[i]);
+                parameter.setThemeSync(false);
                 parameter.setValue(presets[i]);
                 editingHex = false;
                 playClickSound();
@@ -510,6 +550,7 @@ public class ColorPaletteModal {
         try {
             int argb = (int) Long.parseLong(hexInput, 16);
             setFromArgb(argb);
+            parameter.setThemeSync(false);
             parameter.setValue(argb);
         } catch (NumberFormatException ignored) {}
     }
@@ -520,9 +561,5 @@ public class ColorPaletteModal {
     }
 
     private void playClickSound() {
-        var mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.25f, 1.4f);
-        }
     }
 }
