@@ -10,7 +10,7 @@ namespace network {
 
 bool login_microsoft_account(LauncherState *state) {
     
-    system("xdg-open \"https://login.live.com/\" >/dev/null 2>&1 &");
+    system("xdg-open \"https:
     
     
     GtkWidget *dialog = gtk_dialog_new_with_buttons("Microsoft Authentication",

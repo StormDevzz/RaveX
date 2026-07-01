@@ -179,7 +179,7 @@ UpdateInfo ReleaseChecker::checkForUpdates(const std::string& currentVersion,
 }
 
 std::vector<GithubRelease> ReleaseChecker::listReleases(int count, ReleaseChannel channel) {
-    std::string url = "https://api.github.com/repos/" + m_impl->owner + "/" + m_impl->repo
+    std::string url = "https:
                     + "/releases?per_page=" + std::to_string(count);
     auto resp = m_impl->http.get(url);
     if (resp.error || resp.statusCode != 200) return {};
@@ -198,7 +198,7 @@ std::vector<GithubRelease> ReleaseChecker::listReleases(int count, ReleaseChanne
 }
 
 GithubRelease ReleaseChecker::getLatestRelease() {
-    std::string url = "https://api.github.com/repos/" + m_impl->owner + "/" + m_impl->repo
+    std::string url = "https:
                     + "/releases/latest";
     auto resp = m_impl->http.get(url);
     if (resp.error || resp.statusCode != 200) return {};
@@ -208,7 +208,7 @@ GithubRelease ReleaseChecker::getLatestRelease() {
 }
 
 GithubRelease ReleaseChecker::getReleaseByTag(const std::string& tag) {
-    std::string url = "https://api.github.com/repos/" + m_impl->owner + "/" + m_impl->repo
+    std::string url = "https:
                     + "/releases/tags/" + tag;
     auto resp = m_impl->http.get(url);
     if (resp.error || resp.statusCode != 200) return {};
@@ -218,7 +218,7 @@ GithubRelease ReleaseChecker::getReleaseByTag(const std::string& tag) {
 }
 
 GithubRepo ReleaseChecker::getRepoInfo() {
-    std::string url = "https://api.github.com/repos/" + m_impl->owner + "/" + m_impl->repo;
+    std::string url = "https:
     auto resp = m_impl->http.get(url);
     if (resp.error || resp.statusCode != 200) return {};
 

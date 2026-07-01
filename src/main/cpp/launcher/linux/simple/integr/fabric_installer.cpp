@@ -37,7 +37,7 @@ bool installFabricLoader(const std::string& kickxDir, const std::string& mcVersi
         return true;
     }
 
-    std::string url = "https://maven.fabricmc.net/net/fabricmc/fabric-loader/"
+    std::string url = "https:
                       + loaderVersion + "/" + jarName;
     bool ok = network::http_download(url, dest);
     std::cerr << "[RaveX] Fabric: downloading loader jar: " << (ok ? "OK" : "FAILED") << std::endl;
@@ -68,7 +68,7 @@ bool downloadFabricDependencies(const std::string& kickxDir, const std::string& 
                                 + mcVersion + "/" + interJar;
         struct stat st;
         if (stat(interDest.c_str(), &st) != 0) {
-            std::string interUrl = "https://maven.fabricmc.net/net/fabricmc/intermediary/"
+            std::string interUrl = "https:
                                    + mcVersion + "/" + interJar;
             if (network::http_download(interUrl, interDest)) dlCount++;
         }

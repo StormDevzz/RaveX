@@ -484,7 +484,7 @@ public class RaveXLoader {
                 parent.mkdirs();
             }
 
-            String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/src/main/resources/assets/ravex/" + assetPath;
+            String remoteUrl = "https:
             System.out.println("[RaveX-Loader] Pre-downloading asset: " + assetPath);
             updateWindowStatus("Downloading asset " + (i + 1) + "/" + assetList.size() + "...", 5 + (i * 2));
 

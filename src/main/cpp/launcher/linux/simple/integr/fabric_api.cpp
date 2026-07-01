@@ -47,7 +47,7 @@ static std::string fallbackLoaderVersion(const std::string& mcVersion) {
 }
 
 std::string getLatestFabricLoader(const std::string& mcVersion) {
-    std::string url = "https://meta.fabricmc.net/v2/versions/loader/" + mcVersion;
+    std::string url = "https:
     std::string json = network::http_get(url);
     if (!json.empty() && json != "[]" && json != "[\n]") {
         std::string ver = findJsonStringValue(json, "version");
@@ -59,7 +59,7 @@ std::string getLatestFabricLoader(const std::string& mcVersion) {
 }
 
 bool fetchFabricProfileJson(const std::string& mcVersion, const std::string& loaderVersion, std::string& outJson) {
-    std::string url = "https://meta.fabricmc.net/v2/versions/loader/"
+    std::string url = "https:
                       + mcVersion + "/" + loaderVersion + "/profile/json";
     outJson = network::http_get(url);
     return !outJson.empty();

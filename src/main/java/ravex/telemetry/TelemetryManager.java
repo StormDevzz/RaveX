@@ -10,7 +10,7 @@ import java.time.Duration;
 public class TelemetryManager {
     public static final TelemetryManager INSTANCE = new TelemetryManager();
 
-    private static final String API_URL = "https://ravex.serveousercontent.com/api/telemetry";
+    private static final String API_URL = "https:
     private static final HttpClient CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
             .build();
