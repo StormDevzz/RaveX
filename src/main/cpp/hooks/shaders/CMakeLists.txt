@@ -5,3 +5,5 @@ add_library(ravex_shaders STATIC
 target_include_directories(ravex_shaders PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/hand/include
 )
+
+target_include_directories(ravex_shaders PRIVATE ${JNI_INCLUDE_DIRS})
