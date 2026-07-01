@@ -81,7 +81,7 @@ Java_ravex_shaders_nativec_ShaderNative_nValueNoise2D(JNIEnv*, jclass, jfloat x,
 
 JNIEXPORT jfloat JNICALL
 Java_ravex_shaders_nativec_ShaderNative_nCellularNoise(JNIEnv*, jclass, jfloat x, jfloat y, jfloat z) {
-    return ravex::shaders::cellularNoise(x, y, z);
+    return ravex::shaders::cellularNoise(x, y, z, nullptr);
 }
 
 JNIEXPORT void JNICALL
