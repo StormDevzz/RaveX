@@ -41,7 +41,7 @@ static std::string urlEncode(const std::string& s) {
 
 static void parseUrl(const std::string& url, std::string& host, std::string& path,
                      int& port, bool& isHttps) {
-    isHttps = url.compare(0, 8, "https:
+    isHttps = url.compare(0, 8, "https://") == 0;
     size_t start = isHttps ? 8 : 7;
     size_t slash = url.find('/', start);
     std::string hostPart = (slash != std::string::npos) ? url.substr(start, slash - start) : url.substr(start);

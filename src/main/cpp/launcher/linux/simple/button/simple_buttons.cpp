@@ -60,7 +60,7 @@ static void download_update_thread(UpdateTaskData *data) {
             "font/comfortaa.ttf",
             "natives/libravex_jni.so"
         };
-        std::string remoteAssetBase = "https:
+        std::string remoteAssetBase = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/assets/"
         for (const auto& asset : assets) {
             std::string localPath = data->state->ravex_dir + "/" + asset;
             ravex::launcher::plugins::GithubUtility::downloadFile(remoteAssetBase + asset, localPath);
@@ -252,7 +252,7 @@ void on_launch_clicked(GtkWidget *widget, gpointer user_data) {
                         "font/comfortaa.ttf",
                         "natives/libravex_jni.so"
                     };
-                    std::string remoteAssetBase = "https:
+                    std::string remoteAssetBase = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/assets/"
                     for (const auto& asset : assets) {
                         std::string localPath = state->ravex_dir + "/" + asset;
                         plugins::GithubUtility::downloadFile(remoteAssetBase + asset, localPath);

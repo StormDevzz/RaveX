@@ -187,7 +187,7 @@ public class CurrencyHud extends HudModule {
     private void fetchRatesAsync() {
         new Thread(() -> {
             try {
-                URL url = new URL("https:
+                URL url = new URL("https://api.exchangerate-api.com/v4/latest/USD");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setConnectTimeout(5000);
