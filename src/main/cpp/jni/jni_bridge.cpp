@@ -3,7 +3,8 @@
 #include "../hooks/norender/norender.h"
 #include "../antiafk/antiafk.h"
 #include "../common/memory.h"
-#include "../hooks/shaders/color_shader.h"
+#include "../hooks/shaders/hand/include/shader_color.h"
+#include "../math/wave_math.h"
 #include "../plugins/optimize/optimize.h"
 #include "../plugins/manager/manager.h"
 #include "brand.h"
@@ -95,12 +96,15 @@ extern "C" {
 
 JNIEXPORT jfloat JNICALL
 Java_ravex_modules_render_Shaders_nativeCalculateWave(JNIEnv*, jclass, jfloat time, jfloat x, jfloat z) {
-    return ravex::shaders::calculateWave(time, x, z);
+    return ravex::math::calculateWave(time, x, z);
 }
 
 JNIEXPORT jint JNICALL
 Java_ravex_modules_render_Shaders_nativeBlendColors(JNIEnv*, jclass, jint color1, jint color2, jfloat ratio) {
-    return ravex::shaders::blendColors(color1, color2, ratio);
+    auto a = ravex::shaders::intToRgba((int)color1);
+    auto b = ravex::shaders::intToRgba((int)color2);
+    auto r = ravex::shaders::blendColors(a, b, ratio);
+    return (jint)ravex::shaders::rgbaToInt(r);
 }
 
 JNIEXPORT jboolean JNICALL
