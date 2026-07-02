@@ -1,4 +1,4 @@
-#include "crystal_tracker.h"
+#include "crystal_tracker.hpp"
 /* Source implementation for crystal_tracker */
 namespace ravex {
 namespace tracker {

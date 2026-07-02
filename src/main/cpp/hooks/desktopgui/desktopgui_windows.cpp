@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <cstdio>
 
-#include "desktopgui.h"
+#include "desktopgui.hpp"
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "gdi32.lib")

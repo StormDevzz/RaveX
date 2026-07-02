@@ -1,4 +1,4 @@
-#include "bowaim.h"
+#include "bowaim.hpp"
 #include <cmath>
 #include <algorithm>
 

@@ -1,4 +1,4 @@
-#include "include/integr_config.h"
+#include "include/integr_config.hpp"
 #include <string>
 
 namespace ravex {

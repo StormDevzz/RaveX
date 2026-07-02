@@ -1,4 +1,4 @@
-#include "witherroseaura.h"
+#include "witherroseaura.hpp"
 #include <cmath>
 
 WitherRoseResult calculateWitherRose(

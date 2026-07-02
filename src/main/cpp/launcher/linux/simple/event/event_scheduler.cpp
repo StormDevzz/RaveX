@@ -1,5 +1,5 @@
-#include "include/event_types.h"
-#include "include/event_queue.h"
+#include "include/event_types.hpp"
+#include "include/event_queue.hpp"
 #include <gtk/gtk.h>
 #include <thread>
 

@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "selffill.h"
+#include "selffill.hpp"
 
 extern "C" {
 

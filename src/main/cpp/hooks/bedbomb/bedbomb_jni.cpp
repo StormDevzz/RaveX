@@ -1,5 +1,5 @@
-#include "bedbomb_jni.h"
-#include "bedbomb.h"
+#include "bedbomb_jni.hpp"
+#include "bedbomb.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_combat_BedBomb_nativeFindBestPlace(
     JNIEnv* env, jclass cls,

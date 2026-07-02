@@ -1,4 +1,4 @@
-#include "antiregear.h"
+#include "antiregear.hpp"
 #include <cmath>
 
 int calculateClosestTarget(

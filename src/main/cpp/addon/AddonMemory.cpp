@@ -1,4 +1,4 @@
-#include "include/AddonMemory.h"
+#include "include/AddonMemory.hpp"
 #include <cstdlib>
 
 namespace ravex {

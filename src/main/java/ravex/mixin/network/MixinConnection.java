@@ -172,7 +172,7 @@ public class MixinConnection {
 
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"))
     private void onChannelRead(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
-        ravex.modules.misc.NewChunkDetector.INSTANCE.onPacketReceive(packet);
+        ravex.modules.exploit.NewChunks.INSTANCE.onPacketReceive(packet);
 
         if (PacketLogger.INSTANCE.getEnabled() && PacketLogger.INSTANCE.incoming.getValue()) {
             PacketLogger.INSTANCE.logPacket("S2C <-", packet);

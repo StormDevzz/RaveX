@@ -1,4 +1,4 @@
-#include "animations.h"
+#include "animations.hpp"
 #include <cmath>
 
 namespace ravex {

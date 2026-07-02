@@ -1,8 +1,8 @@
-#include "analyze.h"
+#include "analyze.hpp"
 #include <iostream>
 #include <iomanip>
 #include <map>
-#include "../../include/packet_utils.h"
+#include "../../include/packet_utils.hpp"
 
 namespace packet {
 namespace analyze {

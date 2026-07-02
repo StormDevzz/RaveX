@@ -1,4 +1,4 @@
-#include "noslow.h"
+#include "noslow.hpp"
 
 float getBypassFriction(const std::string& blockId, float defaultFriction) {
     if (blockId == "minecraft:slime_block" || 

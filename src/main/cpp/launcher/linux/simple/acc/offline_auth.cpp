@@ -1,4 +1,4 @@
-#include "include/offline_auth.h"
+#include "include/offline_auth.hpp"
 #include <sstream>
 #include <iomanip>
 #include <functional>

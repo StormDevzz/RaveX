@@ -1,4 +1,4 @@
-#include "protocol.h"
+#include "protocol.hpp"
 
 namespace packet {
 namespace proto {

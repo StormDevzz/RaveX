@@ -1,5 +1,5 @@
-#include "baseplace_jni.h"
-#include "baseplace.h"
+#include "baseplace_jni.hpp"
+#include "baseplace.hpp"
 #include <vector>
 
 using namespace ravex;

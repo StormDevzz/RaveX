@@ -1,6 +1,6 @@
 #include <jni.h>
 #include <cstring>
-#include "antibot.h"
+#include "antibot.hpp"
 
 extern "C" {
 

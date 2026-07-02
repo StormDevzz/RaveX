@@ -1,4 +1,4 @@
-#include "freecam.h"
+#include "freecam.hpp"
 #include <cmath>
 #include <algorithm>
 

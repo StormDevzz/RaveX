@@ -1,4 +1,4 @@
-#include "serialization.h"
+#include "serialization.hpp"
 #include <sstream>
 
 namespace DiscordSerialization {

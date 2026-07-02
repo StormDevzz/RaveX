@@ -1,4 +1,4 @@
-#include "optimize_windows.h"
+#include "optimize_windows.hpp"
 #include <windows.h>
 #include <avrt.h>
 #include <timeapi.h>

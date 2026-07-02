@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 //  03_overlay / main.cpp
 //
-//  RU: Оверлейное окно — аппаратно-ускоренное прозрачное окно поверх игры.
+//  RU: Оверлейное окно - аппаратно-ускоренное прозрачное окно поверх игры.
 //      Оверлей нужен для отображения информации (FPS, радар, чат) прямо
 //      на экране, поверх полноэкранных приложений.
 //
@@ -12,12 +12,12 @@
 //                 менеджер) + XDrawString для текста
 //
 //      Архитектура:
-//        1. Класс Win32Overlay — Win32-специфичная реализация
-//        2. Класс X11Overlay — X11-специфичная реализация
-//        3. OverlayAddon — обёртка, выбирающая нужную реализацию
+//        1. Класс Win32Overlay - Win32-специфичная реализация
+//        2. Класс X11Overlay - X11-специфичная реализация
+//        3. OverlayAddon - обёртка, выбирающая нужную реализацию
 //           через #ifdef _WIN32 / #ifndef _WIN32
 //
-//  EN: Overlay window — hardware-accelerated transparent window on top of games.
+//  EN: Overlay window - hardware-accelerated transparent window on top of games.
 //      The overlay is used to display info (FPS, radar, chat) directly
 //      on screen, on top of fullscreen applications.
 //
@@ -74,13 +74,13 @@
 #pragma comment(lib, "dwmapi.lib")
 
 // RU: Структура с метриками для отрисовки оверлея.
-//     fps — кадры в секунду (для отображения)
-//     cpu, gpu, mem — нагрузка (для мониторинга)
-//     customText — произвольный текст (например, название аддона)
+//     fps - кадры в секунду (для отображения)
+//     cpu, gpu, mem - нагрузка (для мониторинга)
+//     customText - произвольный текст (например, название аддона)
 // EN: Metrics structure for overlay rendering.
-//     fps — frames per second (for display)
-//     cpu, gpu, mem — load (for monitoring)
-//     customText — arbitrary text (e.g. addon name)
+//     fps - frames per second (for display)
+//     cpu, gpu, mem - load (for monitoring)
+//     customText - arbitrary text (e.g. addon name)
 struct OverlayMetrics {
     int width = 0, height = 0;
     int fps = 0;
@@ -88,20 +88,20 @@ struct OverlayMetrics {
     std::string customText;
 };
 
-// RU: Win32Overlay — полноценное прозрачное окно.
+// RU: Win32Overlay - полноценное прозрачное окно.
 //     Особенности:
-//       - WS_EX_TOPMOST — всегда поверх всех окон
-//       - WS_EX_LAYERED — поддержка прозрачности per-pixel
-//       - WS_EX_TRANSPARENT — пропуск кликов мыши (оверлей не мешает игре)
-//       - WS_EX_NOACTIVATE — окно не перехватывает фокус ввода
+//       - WS_EX_TOPMOST - всегда поверх всех окон
+//       - WS_EX_LAYERED - поддержка прозрачности per-pixel
+//       - WS_EX_TRANSPARENT - пропуск кликов мыши (оверлей не мешает игре)
+//       - WS_EX_NOACTIVATE - окно не перехватывает фокус ввода
 //       - Double-buffering через memory DC и BitBlt
 //       - UpdateLayeredWindow для отображения с альфа-каналом
-// EN: Win32Overlay — full transparent window.
+// EN: Win32Overlay - full transparent window.
 //     Features:
-//       - WS_EX_TOPMOST — always on top of all windows
-//       - WS_EX_LAYERED — per-pixel transparency support
-//       - WS_EX_TRANSPARENT — pass mouse clicks through (overlay doesn't interfere)
-//       - WS_EX_NOACTIVATE — window does not steal input focus
+//       - WS_EX_TOPMOST - always on top of all windows
+//       - WS_EX_LAYERED - per-pixel transparency support
+//       - WS_EX_TRANSPARENT - pass mouse clicks through (overlay doesn't interfere)
+//       - WS_EX_NOACTIVATE - window does not steal input focus
 //       - Double-buffering via memory DC and BitBlt
 //       - UpdateLayeredWindow for alpha-channel display
 class Win32Overlay {
@@ -113,14 +113,14 @@ class Win32Overlay {
     OverlayMetrics m_metrics;
     std::function<void(HDC, const OverlayMetrics&)> m_renderCb;
 
-    // RU: Оконная процедура — обрабатывает сообщения Windows.
-    //     WM_PAINT — перерисовка окна (BitBlt из memory DC).
-    //     WM_ERASEBKGND — подавляем стирание фона (чтобы не мерцало).
-    //     WM_DESTROY — завершение.
-    // EN: Window procedure — handles Windows messages.
-    //     WM_PAINT — redraw (BitBlt from memory DC).
-    //     WM_ERASEBKGND — suppress background erase (anti-flicker).
-    //     WM_DESTROY — quit.
+    // RU: Оконная процедура - обрабатывает сообщения Windows.
+    //     WM_PAINT - перерисовка окна (BitBlt из memory DC).
+    //     WM_ERASEBKGND - подавляем стирание фона (чтобы не мерцало).
+    //     WM_DESTROY - завершение.
+    // EN: Window procedure - handles Windows messages.
+    //     WM_PAINT - redraw (BitBlt from memory DC).
+    //     WM_ERASEBKGND - suppress background erase (anti-flicker).
+    //     WM_DESTROY - quit.
     static LRESULT CALLBACK wndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
         if (m == WM_DESTROY) { PostQuitMessage(0); return 0; }
         if (m == WM_CREATE) {
@@ -158,14 +158,14 @@ public:
         wc.lpszClassName = L"RavexOverlay";
         RegisterClassW(&wc);
 
-        // RU: WS_EX_TOPMOST — поверх всех окон.
-        //     WS_EX_LAYERED — per-pixel alpha (прозрачность).
-        //     WS_EX_TRANSPARENT — пропускать клики мыши сквозь окно.
-        //     WS_EX_NOACTIVATE — не перехватывать фокус.
-        // EN: WS_EX_TOPMOST — on top of all windows.
-        //     WS_EX_LAYERED — per-pixel alpha (transparency).
-        //     WS_EX_TRANSPARENT — let mouse clicks pass through.
-        //     WS_EX_NOACTIVATE — do not steal focus.
+        // RU: WS_EX_TOPMOST - поверх всех окон.
+        //     WS_EX_LAYERED - per-pixel alpha (прозрачность).
+        //     WS_EX_TRANSPARENT - пропускать клики мыши сквозь окно.
+        //     WS_EX_NOACTIVATE - не перехватывать фокус.
+        // EN: WS_EX_TOPMOST - on top of all windows.
+        //     WS_EX_LAYERED - per-pixel alpha (transparency).
+        //     WS_EX_TRANSPARENT - let mouse clicks pass through.
+        //     WS_EX_NOACTIVATE - do not steal focus.
         m_hwnd = CreateWindowExW(
             WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE,
             L"RavexOverlay", L"", WS_POPUP, x, y, w, h,
@@ -212,10 +212,10 @@ public:
     bool isVisible() const { return m_visible; }
 
     // RU: Начинает новый кадр: очищает фон, получает размеры окна.
-    //     FillRect с чёрным фоном — потом этот фон станет прозрачным
+    //     FillRect с чёрным фоном - потом этот фон станет прозрачным
     //     через UpdateLayeredWindow с альфа-каналом.
     // EN: Begins a new frame: clears background, gets window dimensions.
-    //     FillRect with black — this background becomes transparent
+    //     FillRect with black - this background becomes transparent
     //     via UpdateLayeredWindow with alpha channel.
     void beginFrame() {
         RECT rc; GetClientRect(m_hwnd, &rc);
@@ -267,12 +267,12 @@ public:
 #include <X11/Xutil.h>
 #include <cstdio>
 
-// RU: X11Overlay — простое оверлейное окно для Linux.
+// RU: X11Overlay - простое оверлейное окно для Linux.
 //     В отличие от Win32, здесь нет per-pixel alpha (только
 //     сплошной фон с текстом). Для полноценного оверлея с
 //     прозрачностью используй Compositing Manager (Compton/ Picom)
 //     и XRender или OpenGL.
-// EN: X11Overlay — simple overlay window for Linux.
+// EN: X11Overlay - simple overlay window for Linux.
 //     Unlike Win32, there is no per-pixel alpha (only
 //     solid background with text). For a full overlay with
 //     transparency use a Compositing Manager (Compton/Picom)
@@ -290,14 +290,14 @@ public:
     ~X11Overlay() { destroy(); }
 
     // RU: Создаёт X11 окно с override_redirect.
-    //     override_redirect = True — окно не управляется оконным менеджером.
-    //     _NET_WM_STATE_ABOVE — подсказка быть поверх других окон.
-    //     XSelectInput — подписываемся на ExposureMask (перерисовка) и
+    //     override_redirect = True - окно не управляется оконным менеджером.
+    //     _NET_WM_STATE_ABOVE - подсказка быть поверх других окон.
+    //     XSelectInput - подписываемся на ExposureMask (перерисовка) и
     //     StructureNotifyMask (изменение размеров).
     // EN: Creates X11 window with override_redirect.
-    //     override_redirect = True — window is not managed by the WM.
-    //     _NET_WM_STATE_ABOVE — hint to be above other windows.
-    //     XSelectInput — subscribe to ExposureMask (redraw) and
+    //     override_redirect = True - window is not managed by the WM.
+    //     _NET_WM_STATE_ABOVE - hint to be above other windows.
+    //     XSelectInput - subscribe to ExposureMask (redraw) and
     //     StructureNotifyMask (size changes).
     bool create(int x, int y, int w, int h) {
         m_display = XOpenDisplay(nullptr);
@@ -313,8 +313,8 @@ public:
                                        BlackPixel(m_display, screen));
         if (!m_window) { XCloseDisplay(m_display); m_display = nullptr; return false; }
 
-        // RU: override_redirect — обходим оконный менеджер.
-        // EN: override_redirect — bypass the window manager.
+        // RU: override_redirect - обходим оконный менеджер.
+        // EN: override_redirect - bypass the window manager.
         XSetWindowAttributes attrs = {};
         attrs.override_redirect = True;
         XChangeWindowAttributes(m_display, m_window, CWOverrideRedirect, &attrs);
@@ -350,10 +350,10 @@ public:
 
     bool isVisible() const { return m_visible; }
 
-    // RU: Рисует текст на окне. Очистка не требуется — X11 сам
+    // RU: Рисует текст на окне. Очистка не требуется - X11 сам
     //     управляет перерисовкой. Для более сложной графики
     //     используй XRender, Cairo или OpenGL.
-    // EN: Draws text on the window. No clearing needed — X11
+    // EN: Draws text on the window. No clearing needed - X11
     //     handles redraw itself. For more complex graphics
     //     use XRender, Cairo, or OpenGL.
     void render() {
@@ -374,10 +374,10 @@ public:
 //  Аддон-обёртка / Addon wrapper
 // ══════════════════════════════════════════════════════════════════════════════
 
-// RU: OverlayAddon — обёртка, которая выбирает нужную реализацию
+// RU: OverlayAddon - обёртка, которая выбирает нужную реализацию
 //     (Win32Overlay или X11Overlay) на этапе компиляции через #ifdef.
 //     Запускает поток с циклом отрисовки оверлея.
-// EN: OverlayAddon — wrapper that selects the right implementation
+// EN: OverlayAddon - wrapper that selects the right implementation
 //     (Win32Overlay or X11Overlay) at compile time via #ifdef.
 //     Starts a thread with the overlay draw loop.
 namespace ravex { namespace addon { namespace overlay_example {
@@ -392,11 +392,11 @@ class OverlayAddon : public Addon {
     X11Overlay overlay;
 #endif
 
-    // RU: Цикл оверлея — работает в отдельном потоке.
+    // RU: Цикл оверлея - работает в отдельном потоке.
     //     На Windows: beginFrame, обновление метрик, endFrame (~30 FPS).
     //     На Linux: установка текста, render.
     //     Скорость обновления 33 мс (примерно 30 FPS) через ADDON_SLEEP.
-    // EN: Overlay loop — runs in a separate thread.
+    // EN: Overlay loop - runs in a separate thread.
     //     On Windows: beginFrame, update metrics, endFrame (~30 FPS).
     //     On Linux: set text, render.
     //     Update rate 33 ms (roughly 30 FPS) via ADDON_SLEEP.

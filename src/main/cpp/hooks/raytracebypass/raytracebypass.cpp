@@ -1,4 +1,4 @@
-#include "raytracebypass.h"
+#include "raytracebypass.hpp"
 #include <cmath>
 
 #ifndef M_PI

@@ -1,5 +1,5 @@
-#include "autocrystal_jni.h"
-#include "autocrystal.h"
+#include "autocrystal_jni.hpp"
+#include "autocrystal.hpp"
 
 #include <vector>
 #include <cstdint>

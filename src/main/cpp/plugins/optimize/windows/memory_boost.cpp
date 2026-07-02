@@ -1,4 +1,4 @@
-#include "optimize_windows.h"
+#include "optimize_windows.hpp"
 #include <windows.h>
 #include <psapi.h>
 #include <iostream>

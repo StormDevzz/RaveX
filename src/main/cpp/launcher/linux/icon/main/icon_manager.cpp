@@ -1,4 +1,4 @@
-#include "icon_manager.h"
+#include "icon_manager.hpp"
 #include <gtk/gtk.h>
 
 namespace ravex {

@@ -1,5 +1,5 @@
-#include "selftrap_jni.h"
-#include "selftrap.h"
+#include "selftrap_jni.hpp"
+#include "selftrap.hpp"
 #include <vector>
 
 JNIEXPORT jdoubleArray JNICALL

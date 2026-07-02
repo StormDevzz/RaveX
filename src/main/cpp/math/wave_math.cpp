@@ -1,4 +1,4 @@
-#include "wave_math.h"
+#include "wave_math.hpp"
 #include <cmath>
 
 namespace ravex::math {

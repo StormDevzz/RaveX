@@ -1,4 +1,4 @@
-#include "include/console_window.h"
+#include "include/console_window.hpp"
 #include <gtk/gtk.h>
 #include <signal.h>
 #include <unistd.h>

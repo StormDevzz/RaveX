@@ -1,6 +1,6 @@
-#include "sniffer.h"
-#include "../include/packet_platform.h"
-#include "../include/logger.h"
+#include "sniffer.hpp"
+#include "../include/packet_platform.hpp"
+#include "../include/logger.hpp"
 #include <thread>
 #include <unistd.h>
 

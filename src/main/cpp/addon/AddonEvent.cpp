@@ -1,4 +1,4 @@
-#include "include/AddonEvent.h"
+#include "include/AddonEvent.hpp"
 
 namespace ravex {
 namespace addon {

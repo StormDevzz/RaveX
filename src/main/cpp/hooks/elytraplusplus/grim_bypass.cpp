@@ -1,4 +1,4 @@
-#include "grim_bypass.h"
+#include "grim_bypass.hpp"
 #include <algorithm>
 
 GrimBypassData getGrimBypassData() {

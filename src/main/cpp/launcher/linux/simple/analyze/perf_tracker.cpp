@@ -1,5 +1,5 @@
-#include "include/perf_tracker.h"
-#include "include/log_manager.h"
+#include "include/perf_tracker.hpp"
+#include "include/log_manager.hpp"
 #include <sstream>
 
 namespace ravex {

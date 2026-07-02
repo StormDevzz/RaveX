@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "desktopgui.h"
+#include "desktopgui.hpp"
 #include <string>
 #include <vector>
 #include <gtk/gtk.h>

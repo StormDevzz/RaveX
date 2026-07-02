@@ -1,5 +1,5 @@
-#include "treecutter_jni.h"
-#include "treecutter.h"
+#include "treecutter_jni.hpp"
+#include "treecutter.hpp"
 
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_world_TreeCutter_nativeFindBestLog(

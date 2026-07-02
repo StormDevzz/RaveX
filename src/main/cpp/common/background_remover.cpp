@@ -1,4 +1,4 @@
-#include "background_remover.h"
+#include "background_remover.hpp"
 #include <cmath>
 
 namespace ravex {

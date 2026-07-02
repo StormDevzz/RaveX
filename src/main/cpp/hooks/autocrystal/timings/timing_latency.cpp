@@ -1,4 +1,4 @@
-#include "timing_latency.h"
+#include "timing_latency.hpp"
 /* Source implementation for timing_latency */
 namespace ravex {
 namespace timings {

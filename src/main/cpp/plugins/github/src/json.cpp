@@ -1,4 +1,4 @@
-#include "ravex/github/json.h"
+#include "ravex/github/json.hpp"
 #include <fstream>
 #include <sstream>
 #include <cstdlib>

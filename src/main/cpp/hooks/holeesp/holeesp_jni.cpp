@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "holeesp.h"
+#include "holeesp.hpp"
 
 extern "C" {
 

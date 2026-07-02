@@ -1,9 +1,9 @@
-#include "include/mojang_api.h"
-#include "include/http_client.h"
-#include "include/mojang_downloader.h"
-#include "include/mojang_parser.h"
-#include "../event/include/event_queue.h"
-#include "../integr/include/fabric_installer.h"
+#include "include/mojang_api.hpp"
+#include "include/http_client.hpp"
+#include "include/mojang_downloader.hpp"
+#include "include/mojang_parser.hpp"
+#include "../event/include/event_queue.hpp"
+#include "../integr/include/fabric_installer.hpp"
 #include <iostream>
 #include <fstream>
 #include <vector>

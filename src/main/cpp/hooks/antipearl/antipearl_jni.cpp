@@ -1,5 +1,5 @@
-#include "antipearl_jni.h"
-#include "antipearl.h"
+#include "antipearl_jni.hpp"
+#include "antipearl.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_combat_AntiPearl_nativePredictLanding(
     JNIEnv* env, jclass cls,

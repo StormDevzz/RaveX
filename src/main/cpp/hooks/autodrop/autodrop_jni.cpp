@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "autodrop.h"
+#include "autodrop.hpp"
 
 extern "C" {
 

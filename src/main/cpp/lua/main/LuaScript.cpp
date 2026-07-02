@@ -8,9 +8,9 @@
 
 
 
-#include "LuaBridge.h"
-#include "LuaTypes.h"
-#include <lua.hpp>
+#include "LuaBridge.hpp"
+#include "LuaTypes.hpp"
+#include <lua.h>
 #include <string>
 #include <cstdio>
 #include <fstream>

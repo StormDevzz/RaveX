@@ -1,5 +1,5 @@
-#include "portalbuild_jni.h"
-#include "portalbuild.h"
+#include "portalbuild_jni.hpp"
+#include "portalbuild.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_misc_PortalBuild_nativeFindBestPortalPos(
     JNIEnv* env, jclass cls,

@@ -1,4 +1,4 @@
-#include "noghostblocks.h"
+#include "noghostblocks.hpp"
 #include <mutex>
 
 namespace ravex {

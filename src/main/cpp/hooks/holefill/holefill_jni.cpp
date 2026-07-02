@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "holefill.h"
+#include "holefill.hpp"
 
 extern "C" {
 

@@ -1,6 +1,6 @@
-#include "protocol.h"
-#include "../../include/logger.h"
-#include "../../include/packet_utils.h"
+#include "protocol.hpp"
+#include "../../include/logger.hpp"
+#include "../../include/packet_utils.hpp"
 
 namespace packet {
 namespace proto {

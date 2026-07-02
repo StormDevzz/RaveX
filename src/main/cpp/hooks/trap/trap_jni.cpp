@@ -1,5 +1,5 @@
-#include "trap_jni.h"
-#include "trap.h"
+#include "trap_jni.hpp"
+#include "trap.hpp"
 #include <vector>
 
 static std::vector<BlockPos> parseBlockData(JNIEnv* env, jdoubleArray arr) {

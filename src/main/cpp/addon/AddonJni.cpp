@@ -1,5 +1,5 @@
-#include "include/AddonJni.h"
-#include "include/AddonManager.h"
+#include "include/AddonJni.hpp"
+#include "include/AddonManager.hpp"
 #include <memory>
 
 static std::unique_ptr<ravex::addon::AddonManager> g_addonManager;

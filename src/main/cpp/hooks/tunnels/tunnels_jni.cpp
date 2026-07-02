@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "tunnels.h"
+#include "tunnels.hpp"
 
 extern "C" {
 

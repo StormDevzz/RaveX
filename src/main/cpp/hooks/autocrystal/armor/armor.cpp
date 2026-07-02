@@ -1,4 +1,4 @@
-#include "armor.h"
+#include "armor.hpp"
 #include <algorithm>
 
 namespace ravex {

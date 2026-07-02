@@ -1,5 +1,5 @@
-#include "include/event_queue.h"
-#include "include/progress_handler.h"
+#include "include/event_queue.hpp"
+#include "include/progress_handler.hpp"
 #include <gtk/gtk.h>
 
 namespace ravex {

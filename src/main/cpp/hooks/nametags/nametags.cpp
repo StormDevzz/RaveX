@@ -1,4 +1,4 @@
-#include "nametags.h"
+#include "nametags.hpp"
 #include <algorithm>
 
 NameTagsLayout calculateNameTagsLayout(

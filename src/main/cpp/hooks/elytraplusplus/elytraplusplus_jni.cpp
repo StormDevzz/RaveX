@@ -1,5 +1,5 @@
-#include "elytraplusplus_jni.h"
-#include "elytraplusplus.h"
+#include "elytraplusplus_jni.hpp"
+#include "elytraplusplus.hpp"
 #include <string>
 
 JNIEXPORT void JNICALL

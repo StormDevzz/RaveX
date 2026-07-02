@@ -1,5 +1,5 @@
-#include "include/ecfarmer_types.h"
-#include "include/ecfarmer_util.h"
+#include "include/ecfarmer_types.hpp"
+#include "include/ecfarmer_util.hpp"
 #include <cstring>
 
 bool isPickaxe(const char* toolId) {

@@ -1,4 +1,4 @@
-#include "pathfinder.h"
+#include "pathfinder.hpp"
 #include <algorithm>
 #include <unordered_set>
 #include <cmath>

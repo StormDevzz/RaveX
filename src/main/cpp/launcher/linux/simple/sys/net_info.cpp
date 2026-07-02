@@ -1,4 +1,4 @@
-#include "include/net_info.h"
+#include "include/net_info.hpp"
 
 namespace ravex {
 namespace launcher {

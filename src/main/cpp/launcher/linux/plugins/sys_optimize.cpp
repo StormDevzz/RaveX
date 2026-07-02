@@ -1,4 +1,4 @@
-#include "sys_optimize.h"
+#include "sys_optimize.hpp"
 #include <unistd.h>
 #include <sys/resource.h>
 

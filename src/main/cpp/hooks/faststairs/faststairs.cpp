@@ -1,4 +1,4 @@
-#include "faststairs.h"
+#include "faststairs.hpp"
 
 double calculateClimbSpeed(const std::string& mode, double currentY, double speedFactor) {
     double baseSpeed = (currentY > 0.0) ? currentY : 0.15;

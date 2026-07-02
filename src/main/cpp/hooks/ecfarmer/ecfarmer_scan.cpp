@@ -1,4 +1,4 @@
-#include "ecfarmer.h"
+#include "ecfarmer.hpp"
 
 int scanForEnderChest(int* outX, int* outY, int* outZ, int maxCount,
                       int px, int py, int pz, double range) {

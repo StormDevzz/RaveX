@@ -1,5 +1,5 @@
-#include "antivoid_jni.h"
-#include "antivoid.h"
+#include "antivoid_jni.hpp"
+#include "antivoid.hpp"
 
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_movement_AntiVoid_nativeIsVoidFall(

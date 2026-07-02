@@ -49,11 +49,11 @@ namespace jni {
 void onLoad(JavaVM* vm);
 
 // RU: Получает JNIEnv для текущего потока.
-//     Если текущий поток ещё не прикреплён к JVM — автоматически
+//     Если текущий поток ещё не прикреплён к JVM - автоматически
 //     прикрепляет его. Это нужно для вызова Java-методов
 //     из C++ потоков, которые не были созданы Java.
 // EN: Gets JNIEnv for the current thread.
-//     If the current thread is not attached to the JVM yet —
+//     If the current thread is not attached to the JVM yet -
 //     automatically attaches it. This is needed for calling Java
 //     methods from C++ threads that were not created by Java.
 JNIEnv* getEnv();

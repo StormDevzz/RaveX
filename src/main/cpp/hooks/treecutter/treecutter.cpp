@@ -1,4 +1,4 @@
-#include "treecutter.h"
+#include "treecutter.hpp"
 #include <cmath>
 #include <limits>
 

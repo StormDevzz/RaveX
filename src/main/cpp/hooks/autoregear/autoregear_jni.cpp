@@ -1,7 +1,7 @@
 #include <jni.h>
 #include <vector>
 #include <string>
-#include "autoregear.h"
+#include "autoregear.hpp"
 
 extern "C" {
 

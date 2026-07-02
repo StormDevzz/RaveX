@@ -1,5 +1,5 @@
-#include "include/crash_logger.h"
-#include "include/log_manager.h"
+#include "include/crash_logger.hpp"
+#include "include/log_manager.hpp"
 #include <signal.h>
 #include <cstring>
 #include <execinfo.h>

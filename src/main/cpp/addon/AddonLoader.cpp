@@ -1,2 +1,2 @@
-#include "include/AddonLoader.h"
+#include "include/AddonLoader.hpp"
 

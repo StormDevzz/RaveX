@@ -1,6 +1,6 @@
-#include "camera_correction.h"
-#include "freecam.h"
-#include "freecam_math.h"
+#include "camera_correction.hpp"
+#include "freecam.hpp"
+#include "freecam_math.hpp"
 
 namespace ravex::hooks::freecam {
 

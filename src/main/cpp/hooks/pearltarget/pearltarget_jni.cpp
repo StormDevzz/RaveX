@@ -1,5 +1,5 @@
-#include "pearltarget_jni.h"
-#include "pearltarget.h"
+#include "pearltarget_jni.hpp"
+#include "pearltarget.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_combat_PearlTarget_nativePredictPearl(
     JNIEnv* env, jclass cls,

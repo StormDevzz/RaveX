@@ -1,4 +1,4 @@
-#include "armorfucker.h"
+#include "armorfucker.hpp"
 /* Source implementation for armorfucker */
 namespace ravex {
 namespace armorfucker {

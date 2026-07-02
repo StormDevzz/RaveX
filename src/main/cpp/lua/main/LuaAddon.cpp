@@ -10,11 +10,11 @@
 
 
 
-#include "LuaAddon.h"
-#include "LuaBridge.h"
-#include "LuaRegistry.h"
-#include <AddonContext.h>
-#include <AddonConfig.h>
+#include "LuaAddon.hpp"
+#include "LuaBridge.hpp"
+#include "LuaRegistry.hpp"
+#include <AddonContext.hpp>
+#include <AddonConfig.hpp>
 #include <cstdio>
 #include <fstream>
 

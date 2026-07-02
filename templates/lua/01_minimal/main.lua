@@ -2,19 +2,19 @@
 --  01_minimal / main.lua
 --
 --  RU: Минимальный Lua-аддон для RaveX. Обязательный минимум:
---        getName()    -> string  — уникальное имя аддона
---        getVersion() -> string  — версия в формате semver
---        onLoad(ctx)  -> nil     — инициализация (вызывается при загрузке)
---        onUnload()   -> nil     — очистка (вызывается при выгрузке)
+--        getName()    -> string  - уникальное имя аддона
+--        getVersion() -> string  - версия в формате semver
+--        onLoad(ctx)  -> nil     - инициализация (вызывается при загрузке)
+--        onUnload()   -> nil     - очистка (вызывается при выгрузке)
 --
 --      RaveX сам находит этот файл в папке addons/lua/ и загружает его.
 --      Все функции API доступны как глобальные: logInfo, logWarn и т.д.
 --
 --  EN: Minimal Lua addon for RaveX. Required minimum:
---        getName()    -> string  — unique addon name
---        getVersion() -> string  — semver version string
---        onLoad(ctx)  -> nil     — initialization (called on load)
---        onUnload()   -> nil     — cleanup (called on unload)
+--        getName()    -> string  - unique addon name
+--        getVersion() -> string  - semver version string
+--        onLoad(ctx)  -> nil     - initialization (called on load)
+--        onUnload()   -> nil     - cleanup (called on unload)
 --
 --      RaveX finds this file in addons/lua/ and loads it automatically.
 --      All API functions are available globally: logInfo, logWarn, etc.

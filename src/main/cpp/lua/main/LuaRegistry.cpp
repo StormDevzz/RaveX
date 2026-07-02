@@ -8,7 +8,7 @@
 
 
 
-#include "LuaRegistry.h"
+#include "LuaRegistry.hpp"
 #include <algorithm>
 #include <cstdio>
 

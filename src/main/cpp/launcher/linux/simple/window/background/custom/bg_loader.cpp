@@ -1,5 +1,5 @@
-#include "include/bg_loader.h"
-#include "../../../file/include/file_manager.h"
+#include "include/bg_loader.hpp"
+#include "../../../file/include/file_manager.hpp"
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstdlib>

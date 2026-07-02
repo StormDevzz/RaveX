@@ -1,6 +1,6 @@
-#include "shieldfucker_jni.h"
-#include "include/shieldfucker.h"
-#include "include/shieldfucker_math.h"
+#include "shieldfucker_jni.hpp"
+#include "include/shieldfucker.hpp"
+#include "include/shieldfucker_math.hpp"
 
 #include <vector>
 #include <cstring>

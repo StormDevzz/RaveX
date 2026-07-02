@@ -8,7 +8,7 @@
 
 
 
-#include "LuaBridge.h"
+#include "LuaBridge.hpp"
 #include <cstdio>
 
 namespace ravex {

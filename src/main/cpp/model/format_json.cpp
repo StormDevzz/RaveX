@@ -1,5 +1,5 @@
-#include "model.h"
-#include "include/model_json.h"
+#include "model.hpp"
+#include "include/model_json.hpp"
 #include <sstream>
 
 namespace model {

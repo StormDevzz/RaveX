@@ -1,4 +1,4 @@
-#include "ecfarmer.h"
+#include "ecfarmer.hpp"
 #include <cmath>
 
 ToolInfo analyzeTool(const char* toolId, int efficiency, int haste, int durability, int maxDura) {

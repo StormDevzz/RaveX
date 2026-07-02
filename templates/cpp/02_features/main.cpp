@@ -3,37 +3,37 @@
 //
 //  RU: Полнофункциональный RaveX нативный аддон. Демонстрирует почти все
 //      возможности SDK, которые тебе понадобятся в реальном аддоне:
-//        1. Кроссплатформенный код (Windows / Linux) — одна реализация
+//        1. Кроссплатформенный код (Windows / Linux) - одна реализация
 //           для двух ОС через условную компиляцию (#ifdef _WIN32)
 //        2. Работа с конфигом AddonConfig (чтение/запись настроек)
 //        3. Обработка событий через AddonListener / AddonEvent
 //        4. Фоновый поток с платформенным приоритетом
 //        5. Определение аппаратных характеристик (RAM, CPU)
 //        6. JNI-мост для двусторонней связи с Java
-//        7. platform.hpp — единый заголовок с ADDON_* макросами
+//        7. platform.hpp - единый заголовок с ADDON_* макросами
 //
 //  EN: Full-featured RaveX native addon. Demonstrates almost all SDK
 //      capabilities you will need in a real addon:
-//        1. Cross-platform code (Windows / Linux) — one implementation
+//        1. Cross-platform code (Windows / Linux) - one implementation
 //           for two OSes via conditional compilation (#ifdef _WIN32)
 //        2. AddonConfig usage (read/write settings)
 //        3. Event handling via AddonListener / AddonEvent
 //        4. Background thread with platform-specific priority
 //        5. Hardware detection (RAM, CPU)
 //        6. JNI bridge for bidirectional Java communication
-//        7. platform.hpp — unified header with ADDON_* macros
+//        7. platform.hpp - unified header with ADDON_* macros
 //
 //  Подробности / Details: см. GUIDE.md → "02 Полнофункциональный аддон"
 // ══════════════════════════════════════════════════════════════════════════════
 
-// RU: platform.hpp — наш собственный кроссплатформенный заголовок.
+// RU: platform.hpp - наш собственный кроссплатформенный заголовок.
 //     Он определяет ADDON_* макросы (ADDON_SLEEP, ADDON_SET_HIGH_PRIORITY,
 //     ADDON_GET_TOTAL_RAM_MB и др.), которые работают одинаково
-//     на Windows и Linux. Загляни в этот файл — это ключ к портируемости.
-// EN: platform.hpp — our own cross-platform header.
+//     на Windows и Linux. Загляни в этот файл - это ключ к портируемости.
+// EN: platform.hpp - our own cross-platform header.
 //     It defines ADDON_* macros (ADDON_SLEEP, ADDON_SET_HIGH_PRIORITY,
 //     ADDON_GET_TOTAL_RAM_MB, etc.) that work identically
-//     on Windows and Linux. Look into this file — it is the key to portability.
+//     on Windows and Linux. Look into this file - it is the key to portability.
 #include "platform.hpp"
 
 // RU: Для SHGetFolderPathA (Win32 API получения стандартных папок) нужен shlobj.h.
@@ -44,17 +44,17 @@
 
 // RU: Подключаем заголовки RaveX SDK.
 //     Каждый из них отвечает за свою часть API:
-//     Addon.h        — базовый класс аддона
-//     AddonContext.h — контекст (логгер, конфиг, реестр)
-//     AddonRegistry.h — реестр аддонов (получение информации о других аддонах)
-//     AddonConfig.h  — конфигурация (ключ-значение)
-//     AddonEvent.h   — система событий
-//     AddonListener.h — подписка на события
-//     AddonThread.h  — утилиты для работы с потоками
-//     AddonMath.h    — математические функции (lerp, clamp...)
-//     AddonVersion.h — проверка совместимости версий API
-//     AddonLogger.h  — дополнительное логирование
-//     SystemUtils.h  — системные утилиты (информация об ОС, память)
+//     Addon.h        - базовый класс аддона
+//     AddonContext.h - контекст (логгер, конфиг, реестр)
+//     AddonRegistry.h - реестр аддонов (получение информации о других аддонах)
+//     AddonConfig.h  - конфигурация (ключ-значение)
+//     AddonEvent.h   - система событий
+//     AddonListener.h - подписка на события
+//     AddonThread.h  - утилиты для работы с потоками
+//     AddonMath.h    - математические функции (lerp, clamp...)
+//     AddonVersion.h - проверка совместимости версий API
+//     AddonLogger.h  - дополнительное логирование
+//     SystemUtils.h  - системные утилиты (информация об ОС, память)
 // EN: Include RaveX SDK headers.
 //     Each one covers its own part of the API.
 #include <Addon.h>
@@ -90,29 +90,29 @@ namespace my_addon {
 // ─── Платформенные утилиты / Platform utilities ──────────────────────────────
 
 // RU: Определяем директорию для данных аддона.
-//     На разных ОС — разные стандартные пути:
+//     На разных ОС - разные стандартные пути:
 //     Windows: %LOCALAPPDATA%\RaveX\FeatureAddon
 //     Linux:   ~/.ravex/FeatureAddon
-//     Если не удалось определить — используем запасной путь.
+//     Если не удалось определить - используем запасной путь.
 // EN: Determine the addon data directory.
 //     Different OSes have different standard paths:
 //     Windows: %LOCALAPPDATA%\RaveX\FeatureAddon
 //     Linux:   ~/.ravex/FeatureAddon
-//     If detection fails — use a fallback path.
+//     If detection fails - use a fallback path.
 static std::string getAddonDataDir() {
 #ifdef _WIN32
     char path[MAX_PATH];
-    // RU: SHGetFolderPathA — Win32 API для получения стандартных папок.
-    //     CSIDL_LOCAL_APPDATA — папка локальных данных приложения.
-    // EN: SHGetFolderPathA — Win32 API to get standard folders.
-    //     CSIDL_LOCAL_APPDATA — local application data folder.
+    // RU: SHGetFolderPathA - Win32 API для получения стандартных папок.
+    //     CSIDL_LOCAL_APPDATA - папка локальных данных приложения.
+    // EN: SHGetFolderPathA - Win32 API to get standard folders.
+    //     CSIDL_LOCAL_APPDATA - local application data folder.
     if (SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, path) == S_OK) {
         return std::string(path) + "\\RaveX\\FeatureAddon";
     }
     return "C:\\RaveX\\FeatureAddon";
 #else
-    // RU: На Linux используем $HOME. Если переменная не установлена — /tmp.
-    // EN: On Linux use $HOME. If the variable is not set — /tmp.
+    // RU: На Linux используем $HOME. Если переменная не установлена - /tmp.
+    // EN: On Linux use $HOME. If the variable is not set - /tmp.
     const char* home = getenv("HOME");
     if (home) return std::string(home) + "/.ravex/FeatureAddon";
     return "/tmp/ravex_FeatureAddon";
@@ -121,22 +121,22 @@ static std::string getAddonDataDir() {
 
 // ─── Слушатель событий / Event listener ──────────────────────────────────────
 
-// RU: FeatureListener — подписывается на события RaveX.
+// RU: FeatureListener - подписывается на события RaveX.
 //     События приходят из ядра: загрузка мира, изменение настроек,
 //     подключение к серверу и т.д. Ты можешь реагировать на них.
-// EN: FeatureListener — subscribes to RaveX events.
+// EN: FeatureListener - subscribes to RaveX events.
 //     Events come from the core: world load, settings change,
 //     server connection, etc. You can react to them.
 class FeatureListener : public AddonListener {
 public:
     // RU: onEvent вызывается каждый раз, когда происходит событие,
     //     на которое подписан этот слушатель.
-    //     event.getName() — имя события (строка).
-    //     event.isCancelled() — отменено ли событие (если применимо).
+    //     event.getName() - имя события (строка).
+    //     event.isCancelled() - отменено ли событие (если применимо).
     // EN: onEvent is called each time an event this listener
     //     is subscribed to occurs.
-    //     event.getName() — event name (string).
-    //     event.isCancelled() — whether the event was cancelled (if applicable).
+    //     event.getName() - event name (string).
+    //     event.isCancelled() - whether the event was cancelled (if applicable).
     void onEvent(AddonEvent& event) override {
         std::cout << "[Feature] Событие: " << event.getName();
         if (event.isCancelled()) std::cout << " (отменено)";
@@ -146,11 +146,11 @@ public:
 
 // ─── ГЛАВНЫЙ КЛАСС АДДОНА / MAIN ADDON CLASS ─────────────────────────────────
 
-// RU: FeatureAddon — основной класс. Демонстрирует:
+// RU: FeatureAddon - основной класс. Демонстрирует:
 //     - хранение контекста, конфига, слушателя, фонового потока
 //     - onLoad: инициализация всего
 //     - onUnload: корректная остановка и очистка
-// EN: FeatureAddon — the main class. Demonstrates:
+// EN: FeatureAddon - the main class. Demonstrates:
 //     - storing context, config, listener, background thread
 //     - onLoad: initialize everything
 //     - onUnload: clean shutdown and cleanup
@@ -164,15 +164,15 @@ private:
     std::mutex mtx;
 
     // RU: Фоновый рабочий поток. Запускается в onLoad, останавливается в onUnload.
-    //     ADDON_SET_NORMAL_PRIORITY() — устанавливает нормальный приоритет
-    //     потока (на Windows — SetThreadPriority, на Linux — setpriority).
-    //     ADDON_SLEEP(50) — платформенно-независимая задержка (50 мс).
+    //     ADDON_SET_NORMAL_PRIORITY() - устанавливает нормальный приоритет
+    //     потока (на Windows - SetThreadPriority, на Linux - setpriority).
+    //     ADDON_SLEEP(50) - платформенно-независимая задержка (50 мс).
     //     Внутри цикла можно делать периодические проверки, обновления и т.д.
     //     Используем мьютекс для потокобезопасного доступа к ctx.
     // EN: Background worker thread. Started in onLoad, stopped in onUnload.
-    //     ADDON_SET_NORMAL_PRIORITY() — sets normal thread priority
-    //     (on Windows — SetThreadPriority, on Linux — setpriority).
-    //     ADDON_SLEEP(50) — platform-independent delay (50 ms).
+    //     ADDON_SET_NORMAL_PRIORITY() - sets normal thread priority
+    //     (on Windows - SetThreadPriority, on Linux - setpriority).
+    //     ADDON_SLEEP(50) - platform-independent delay (50 ms).
     //     Inside the loop you can do periodic checks, updates, etc.
     //     We use a mutex for thread-safe access to ctx.
     void workerThread() {
@@ -204,10 +204,10 @@ public:
         ctx = context;
         ctx->logInfo("FeatureAddon: загрузка...");
 
-        // RU: Конфиг — простой key-value store. Значения хранятся как строки.
+        // RU: Конфиг - простой key-value store. Значения хранятся как строки.
         //     Можно сохранять/загружать из файла. RaveX сам управляет
         //     файлом конфига для каждого аддона.
-        // EN: Config — simple key-value store. Values are stored as strings.
+        // EN: Config - simple key-value store. Values are stored as strings.
         //     Can be saved/loaded from file. RaveX manages the config file
         //     for each addon automatically.
         config.set("enabled", "true");
@@ -217,14 +217,14 @@ public:
         // EN: Print addon data directory path.
         ctx->logInfo("Data dir: " + getAddonDataDir());
 
-        // RU: Платформенная информация — определяем ОС и объём RAM.
-        //     ADDON_GET_TOTAL_RAM_MB() — макрос из platform.hpp,
+        // RU: Платформенная информация - определяем ОС и объём RAM.
+        //     ADDON_GET_TOTAL_RAM_MB() - макрос из platform.hpp,
         //     который на Windows использует GlobalMemoryStatusEx,
-        //     а на Linux — sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGE_SIZE).
-        // EN: Platform info — detect OS and total RAM.
-        //     ADDON_GET_TOTAL_RAM_MB() — macro from platform.hpp,
+        //     а на Linux - sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGE_SIZE).
+        // EN: Platform info - detect OS and total RAM.
+        //     ADDON_GET_TOTAL_RAM_MB() - macro from platform.hpp,
         //     which on Windows uses GlobalMemoryStatusEx,
-        //     and on Linux — sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGE_SIZE).
+        //     and on Linux - sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGE_SIZE).
 #ifdef _WIN32
         ctx->logInfo("Платформа: Windows");
         ctx->logInfo("RAM: " + std::to_string(ADDON_GET_TOTAL_RAM_MB()) + " MB");
@@ -239,10 +239,10 @@ public:
 #endif
 
         // RU: Проверяем совместимость версии API.
-        //     Если API несовместим — лучше предупредить пользователя,
+        //     Если API несовместим - лучше предупредить пользователя,
         //     потому что некоторые функции могут работать неправильно.
         // EN: Check API version compatibility.
-        //     If the API is incompatible — better warn the user,
+        //     If the API is incompatible - better warn the user,
         //     because some features may not work correctly.
         std::string ver = AddonVersion::getApiVersion();
         ctx->logInfo("API версия: " + ver);
@@ -250,9 +250,9 @@ public:
             ctx->logInfo("ВНИМАНИЕ: API может быть несовместим!");
         }
 
-        // RU: Демо-событие — создаём и отправляем через слушатель.
+        // RU: Демо-событие - создаём и отправляем через слушатель.
         //     В реальном аддоне события приходят из RaveX.
-        // EN: Demo event — create and dispatch through the listener.
+        // EN: Demo event - create and dispatch through the listener.
         //     In a real addon events come from RaveX.
         AddonEvent ev("FeatureAddon:loaded");
         listener.onEvent(ev);
@@ -266,10 +266,10 @@ public:
     }
 
     // RU: Вызывается при выгрузке. Останавливаем поток, чистим ресурсы.
-    //     Это важно — если не остановить поток, после выгрузки аддона
+    //     Это важно - если не остановить поток, после выгрузки аддона
     //     он продолжит работать с висячим указателем ctx, что приведёт к крашу.
     // EN: Called on unload. Stop the thread, clean up resources.
-    //     This is important — if you don't stop the thread, after addon
+    //     This is important - if you don't stop the thread, after addon
     //     unload it will keep running with a dangling ctx pointer, causing a crash.
     void onUnload() override {
         ctx->logInfo("FeatureAddon: выгрузка...");
@@ -293,7 +293,7 @@ public:
 // ─── JNI: вызов Java из C++ / Calling Java from C++ ─────────────────────────
 //
 // RU: JNI (Java Native Interface) позволяет Java-классам вызывать C++ функции,
-//     а C++ — вызывать Java-методы. Это нужно, когда тебе нужна
+//     а C++ - вызывать Java-методы. Это нужно, когда тебе нужна
 //     производительность C++ в Java-аддоне или доступ к системным вызовам.
 //
 //     Java-сторона должна объявить native-методы в классе:
@@ -322,9 +322,9 @@ public:
 //       Java_<package>_<Class>_<method>
 //     where the package uses underscores instead of dots.
 
-// RU: Глобальный указатель на JavaVM — нужен для получения JNIEnv
+// RU: Глобальный указатель на JavaVM - нужен для получения JNIEnv
 //     из любого потока. Сохраняем его в JNI_OnLoad.
-// EN: Global JavaVM pointer — needed to get JNIEnv from any thread.
+// EN: Global JavaVM pointer - needed to get JNIEnv from any thread.
 //     We save it in JNI_OnLoad.
 static JavaVM* g_jvm = nullptr;
 
@@ -355,10 +355,10 @@ Java_ravex_addon_feature_FeatureAddon_nativeLog(JNIEnv* env, jclass, jstring msg
 }
 
 // RU: Возвращает PID текущего процесса.
-//     Java не может получить PID без JNI — это типичный случай,
+//     Java не может получить PID без JNI - это типичный случай,
 //     когда нужен C++.
 // EN: Returns the current process PID.
-//     Java cannot get PID without JNI — a typical case
+//     Java cannot get PID without JNI - a typical case
 //     where C++ is needed.
 extern "C" JNIEXPORT jint JNICALL
 Java_ravex_addon_feature_FeatureAddon_nativeGetPid(JNIEnv*, jclass) {
@@ -385,13 +385,13 @@ Java_ravex_addon_feature_FeatureAddon_nativeGetTotalRamMB(JNIEnv*, jclass) {
 // ─── Обязательные точки входа / Required entry points ────────────────────────
 //
 // RU: RaveX находит эти функции через dlsym / GetProcAddress.
-//     createAddon — создаёт экземпляр аддона.
-//     destroyAddon — удаляет его.
+//     createAddon - создаёт экземпляр аддона.
+//     destroyAddon - удаляет его.
 //     Они должны быть extern "C" и иметь видимость "default".
 //
 // EN: RaveX finds these functions via dlsym / GetProcAddress.
-//     createAddon — creates the addon instance.
-//     destroyAddon — destroys it.
+//     createAddon - creates the addon instance.
+//     destroyAddon - destroys it.
 //     They must be extern "C" with "default" visibility.
 
 extern "C" {
@@ -421,13 +421,13 @@ extern "C" {
 //
 //  RU: В этом примере JNI-функции встроены прямо в main.cpp.
 //      В больших проектах лучше вынести их в отдельные файлы
-//      JniBridge.hpp / JniBridge.cpp — они уже лежат в этой папке.
+//      JniBridge.hpp / JniBridge.cpp - они уже лежат в этой папке.
 //      Для этого раскомментируй в CMakeLists.txt строку "JniBridge.cpp"
 //      и перенеси JNI_OnLoad и native-функции туда.
 //
 //  EN: In this example JNI functions are embedded directly in main.cpp.
 //      In larger projects it is better to move them to separate files
-//      JniBridge.hpp / JniBridge.cpp — they are already in this folder.
+//      JniBridge.hpp / JniBridge.cpp - they are already in this folder.
 //      To do so, uncomment the "JniBridge.cpp" line in CMakeLists.txt
 //      and move JNI_OnLoad and native functions there.
 // ═════════════════════════════════════════════════════════════════════════════

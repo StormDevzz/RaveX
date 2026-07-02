@@ -1,4 +1,4 @@
-#include "shield_damage.h"
+#include "shield_damage.hpp"
 /* Source implementation for shield_damage */
 namespace ravex {
 namespace damage {

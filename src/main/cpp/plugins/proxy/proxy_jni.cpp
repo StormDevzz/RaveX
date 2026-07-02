@@ -1,6 +1,6 @@
-#include "proxy_jni.h"
-#include "proxy_handler.h"
-#include <logger.h>
+#include "proxy_jni.hpp"
+#include "proxy_handler.hpp"
+#include <logger.hpp>
 #include <cstring>
 
 using namespace packet;

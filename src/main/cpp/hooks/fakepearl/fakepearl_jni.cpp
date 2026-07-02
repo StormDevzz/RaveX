@@ -1,5 +1,5 @@
-#include "fakepearl_jni.h"
-#include "fakepearl.h"
+#include "fakepearl_jni.hpp"
+#include "fakepearl.hpp"
 
 JNIEXPORT void JNICALL
 Java_ravex_modules_exploit_FakePearl_nativeCalculateVelocity(

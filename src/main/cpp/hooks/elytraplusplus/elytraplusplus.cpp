@@ -1,4 +1,4 @@
-#include "elytraplusplus.h"
+#include "elytraplusplus.hpp"
 
 void calculateElytraVelocity(
     const std::string& modeStr,

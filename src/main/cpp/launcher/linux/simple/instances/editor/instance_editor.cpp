@@ -1,5 +1,5 @@
-#include "include/instance_editor.h"
-#include "../../state/include/launcher_state.h"
+#include "include/instance_editor.hpp"
+#include "../../state/include/launcher_state.hpp"
 #include <gtk/gtk.h>
 #include <cstdlib>
 #include <sys/stat.h>

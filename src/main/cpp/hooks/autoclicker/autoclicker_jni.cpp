@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "autoclicker.h"
+#include "autoclicker.hpp"
 
 extern "C" {
 

@@ -1,4 +1,4 @@
-#include "nuker.h"
+#include "nuker.hpp"
 #include <cmath>
 #include <limits>
 #include <cstdint>

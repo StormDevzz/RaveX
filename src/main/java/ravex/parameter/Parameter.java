@@ -7,7 +7,7 @@ public abstract class Parameter<T> {
     private boolean expanded = false;
 
     public Parameter(String name, T defaultValue) {
-        this.name = name;
+        this.name = name.replace(" ", "");
         this.value = defaultValue;
     }
 

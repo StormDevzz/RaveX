@@ -1,7 +1,7 @@
-#include "anchoraura.h"
-#include "../autocrystal/include/entity_tracker.h"
-#include "../autocrystal/include/effects.h"
-#include "../autocrystal/include/damage.h"
+#include "anchoraura.hpp"
+#include "../autocrystal/include/entity_tracker.hpp"
+#include "../autocrystal/include/effects.hpp"
+#include "../autocrystal/include/damage.hpp"
 #include <cmath>
 #include <algorithm>
 #include <limits>

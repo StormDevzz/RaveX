@@ -1,4 +1,4 @@
-#include "damage.h"
+#include "damage.hpp"
 #include <cmath>
 #include <algorithm>
 

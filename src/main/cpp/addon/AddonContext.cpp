@@ -1,5 +1,5 @@
-#include "include/AddonContext.h"
-#include "include/AddonLogger.h"
+#include "include/AddonContext.hpp"
+#include "include/AddonLogger.hpp"
 
 namespace ravex {
 namespace addon {

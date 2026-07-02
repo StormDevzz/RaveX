@@ -1,4 +1,4 @@
-#include "include/LinuxAddonLoader.h"
+#include "include/LinuxAddonLoader.hpp"
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif

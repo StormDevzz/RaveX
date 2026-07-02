@@ -1,5 +1,5 @@
-#include "proxy_handler.h"
-#include <logger.h>
+#include "proxy_handler.hpp"
+#include <logger.hpp>
 
 #include <sys/socket.h>
 #include <netinet/in.h>

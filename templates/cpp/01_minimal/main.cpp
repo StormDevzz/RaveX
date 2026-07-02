@@ -17,11 +17,11 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 // RU: Подключаем заголовочные файлы RaveX SDK.
-//     Addon.h  — базовый класс для всех аддонов (содержит виртуальные методы)
-//     AddonContext.h — контекст, через который аддон общается с ядром RaveX
+//     Addon.h  - базовый класс для всех аддонов (содержит виртуальные методы)
+//     AddonContext.h - контекст, через который аддон общается с ядром RaveX
 // EN: Include RaveX SDK headers.
-//     Addon.h  — base class for all addons (contains virtual methods)
-//     AddonContext.h — context through which the addon communicates with RaveX core
+//     Addon.h  - base class for all addons (contains virtual methods)
+//     AddonContext.h - context through which the addon communicates with RaveX core
 #include "../../../src/main/cpp/addon/include/Addon.h"
 #include "../../../src/main/cpp/addon/include/AddonContext.h"
 #include <iostream>
@@ -34,10 +34,10 @@ namespace ravex {
 namespace addon {
 namespace minimal_addon {
 
-// RU: MinimalAddon — главный (и единственный) класс аддона.
+// RU: MinimalAddon - главный (и единственный) класс аддона.
 //     Он наследует Addon и переопределяет четыре обязательных метода.
 //     RaveX вызывает эти методы в определённые моменты жизненного цикла.
-// EN: MinimalAddon — the main (and only) addon class.
+// EN: MinimalAddon - the main (and only) addon class.
 //     It inherits Addon and overrides four required methods.
 //     RaveX calls these methods at specific lifecycle moments.
 class MinimalAddon : public Addon {
@@ -51,9 +51,9 @@ public:
     //     configs, threads, event subscriptions.
     //     AddonContext* ctx provides access to logger, config and API.
     void onLoad(AddonContext* ctx) override {
-        // RU: Используем ctx->logInfo для логирования — сообщение попадёт
+        // RU: Используем ctx->logInfo для логирования - сообщение попадёт
         //     в основной лог RaveX. std::cout дублирует в консоль.
-        // EN: Use ctx->logInfo for logging — the message goes
+        // EN: Use ctx->logInfo for logging - the message goes
         //     to the main RaveX log. std::cout duplicates to console.
         ctx->logInfo("MinimalAddon загружен! (Windows/Linux)");
         std::cout << "[MinimalAddon] Работает на "
@@ -120,9 +120,9 @@ extern "C" {
     __attribute__((visibility("default")))
     ravex::addon::Addon* createAddon() {
 #endif
-        // RU: new — создаём объект в куче. RaveX сам вызовет destroyAddon,
+        // RU: new - создаём объект в куче. RaveX сам вызовет destroyAddon,
         //     когда аддон больше не нужен.
-        // EN: new — allocate on the heap. RaveX will call destroyAddon
+        // EN: new - allocate on the heap. RaveX will call destroyAddon
         //     when the addon is no longer needed.
         return new ravex::addon::minimal_addon::MinimalAddon();
     }

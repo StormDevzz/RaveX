@@ -1,5 +1,5 @@
-#include "faststairs_jni.h"
-#include "faststairs.h"
+#include "faststairs_jni.hpp"
+#include "faststairs.hpp"
 #include <string>
 
 JNIEXPORT jdouble JNICALL

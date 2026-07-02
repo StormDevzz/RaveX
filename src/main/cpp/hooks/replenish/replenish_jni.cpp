@@ -1,5 +1,5 @@
-#include "replenish_jni.h"
-#include "replenish.h"
+#include "replenish_jni.hpp"
+#include "replenish.hpp"
 #include <cstring>
 
 JNIEXPORT jintArray JNICALL

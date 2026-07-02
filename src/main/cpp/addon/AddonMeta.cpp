@@ -1,2 +1,2 @@
-#include "include/AddonMeta.h"
+#include "include/AddonMeta.hpp"
 

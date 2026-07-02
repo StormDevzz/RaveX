@@ -1,5 +1,5 @@
-#include "effects.h"
-#include "armor.h"
+#include "effects.hpp"
+#include "armor.hpp"
 #include <algorithm>
 
 namespace ravex {

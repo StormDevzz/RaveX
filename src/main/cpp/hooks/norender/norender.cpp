@@ -1,4 +1,4 @@
-#include "norender.h"
+#include "norender.hpp"
 
 namespace ravex::norender {
     bool shouldCull(double x, double y, double z, double camX, double camY, double camZ, double maxDist) {

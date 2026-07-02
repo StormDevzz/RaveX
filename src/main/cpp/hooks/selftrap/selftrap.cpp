@@ -1,4 +1,4 @@
-#include "selftrap.h"
+#include "selftrap.hpp"
 #include <cmath>
 #include <vector>
 #include <algorithm>

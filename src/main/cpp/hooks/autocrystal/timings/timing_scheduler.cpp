@@ -1,4 +1,4 @@
-#include "timing_scheduler.h"
+#include "timing_scheduler.hpp"
 /* Source implementation for timing_scheduler */
 namespace ravex {
 namespace timings {

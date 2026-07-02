@@ -1,11 +1,11 @@
-#include "include/window_layout.h"
-#include "include/window_signals.h"
-#include "include/widget_helpers.h"
-#include "../../../checks/system_checks.h"
-#include "../../instances/editor/include/instance_editor.h"
-#include "../../instances/manager/include/instance_manager.h"
-#include "../../button/include/simple_buttons.h"
-#include "../console/include/console_window.h"
+#include "include/window_layout.hpp"
+#include "include/window_signals.hpp"
+#include "include/widget_helpers.hpp"
+#include "../../../checks/system_checks.hpp"
+#include "../../instances/editor/include/instance_editor.hpp"
+#include "../../instances/manager/include/instance_manager.hpp"
+#include "../../button/include/simple_buttons.hpp"
+#include "../console/include/console_window.hpp"
 #include <fstream>
 #include <cstdlib>
 

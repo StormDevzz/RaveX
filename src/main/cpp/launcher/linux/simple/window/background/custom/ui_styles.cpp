@@ -1,4 +1,4 @@
-#include "include/ui_styles.h"
+#include "include/ui_styles.hpp"
 #include <gtk/gtk.h>
 
 namespace ravex {

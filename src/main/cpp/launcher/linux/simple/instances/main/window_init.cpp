@@ -1,6 +1,6 @@
-#include "include/window_init.h"
-#include "include/main_window.h"
-#include "../../window/background/custom/include/ui_styles.h"
+#include "include/window_init.hpp"
+#include "include/main_window.hpp"
+#include "../../window/background/custom/include/ui_styles.hpp"
 #include <gtk/gtk.h>
 #include <signal.h>
 #include <unistd.h>

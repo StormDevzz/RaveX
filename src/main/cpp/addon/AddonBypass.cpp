@@ -1,4 +1,4 @@
-#include "include/AddonBypass.h"
+#include "include/AddonBypass.hpp"
 #include <cstring>
 
 namespace ravex {

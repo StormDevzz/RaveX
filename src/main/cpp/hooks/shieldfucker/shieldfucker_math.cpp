@@ -1,4 +1,4 @@
-#include "include/shieldfucker_math.h"
+#include "include/shieldfucker_math.hpp"
 #include <cmath>
 
 namespace shieldfucker {

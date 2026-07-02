@@ -1,4 +1,4 @@
-#include "include/mojang_parser.h"
+#include "include/mojang_parser.hpp"
 
 namespace ravex {
 namespace launcher {

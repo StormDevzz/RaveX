@@ -1,4 +1,4 @@
-#include "include/AddonMath.h"
+#include "include/AddonMath.hpp"
 
 namespace ravex {
 namespace addon {

@@ -12,10 +12,10 @@
 
 
 
-#include "LuaLoader.h"
-#include "LuaRegistry.h"
-#include "LuaAddon.h"
-#include <AddonContext.h>
+#include "LuaLoader.hpp"
+#include "LuaRegistry.hpp"
+#include "LuaAddon.hpp"
+#include <AddonContext.hpp>
 #include <string>
 #include <vector>
 #include <memory>

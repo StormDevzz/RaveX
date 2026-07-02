@@ -1,6 +1,6 @@
-#include "include/launch_handler.h"
-#include "../network/include/mojang_api.h"
-#include "../integr/include/fabric_launcher.h"
+#include "include/launch_handler.hpp"
+#include "../network/include/mojang_api.hpp"
+#include "../integr/include/fabric_launcher.hpp"
 #include <vector>
 #include <sys/wait.h>
 #include <unistd.h>

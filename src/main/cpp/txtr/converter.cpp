@@ -1,5 +1,5 @@
-#include "txtr.h"
-#include "include/txtr_color.h"
+#include "txtr.hpp"
+#include "include/txtr_color.hpp"
 #include <cstring>
 
 namespace txtr {

@@ -1,4 +1,4 @@
-#include "include/resize_handler.h"
+#include "include/resize_handler.hpp"
 
 namespace ravex {
 namespace launcher {

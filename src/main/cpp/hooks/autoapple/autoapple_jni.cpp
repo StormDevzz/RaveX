@@ -1,5 +1,5 @@
-#include "autoapple_jni.h"
-#include "autoapple.h"
+#include "autoapple_jni.hpp"
+#include "autoapple.hpp"
 
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_combat_AutoApple_nativeShouldEat(

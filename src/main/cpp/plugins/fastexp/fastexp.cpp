@@ -1,4 +1,4 @@
-#include "fastexp.h"
+#include "fastexp.hpp"
 #include <chrono>
 
 namespace ravex {

@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "noghostblocks.h"
+#include "noghostblocks.hpp"
 #include <string>
 
 

@@ -1,6 +1,6 @@
 #include <jni.h>
-#include "discord_rpc.h"
-#include "checks.h"
+#include "discord_rpc.hpp"
+#include "checks.hpp"
 
 extern "C" {
 
@@ -21,7 +21,7 @@ JNIEXPORT void JNICALL
 Java_ravex_modules_player_RichPresence_nativeUpdatePresence(
     JNIEnv* env, jclass,
     jstring jState, jstring jDetails, jlong startTimestamp, jboolean jShowOS,
-    jboolean jShowButton
+    jboolean jShowButton, jstring jLargeImageKey
 ) {
     DiscordRichPresence presence;
     
@@ -50,7 +50,14 @@ Java_ravex_modules_player_RichPresence_nativeUpdatePresence(
     }
     
     presence.startTimestamp = static_cast<int64_t>(startTimestamp);
-    presence.largeImageKey = "icon";
+    
+    std::string largeImgKey = "icon";
+    if (jLargeImageKey) {
+        const char* imgKey = env->GetStringUTFChars(jLargeImageKey, nullptr);
+        largeImgKey = imgKey;
+        env->ReleaseStringUTFChars(jLargeImageKey, imgKey);
+    }
+    presence.largeImageKey = largeImgKey;
     presence.largeImageText = "RaveX";
     
     if (jShowButton == JNI_TRUE) {

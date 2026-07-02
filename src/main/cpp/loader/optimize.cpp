@@ -1,4 +1,4 @@
-#include "optimize.h"
+#include "optimize.hpp"
 
 #ifdef _WIN32
 #include <windows.h>

@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "quiver.h"
+#include "quiver.hpp"
 #include <vector>
 #include <string>
 

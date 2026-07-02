@@ -1,4 +1,4 @@
-#include "timing_ticks.h"
+#include "timing_ticks.hpp"
 /* Source implementation for timing_ticks */
 namespace ravex {
 namespace timings {

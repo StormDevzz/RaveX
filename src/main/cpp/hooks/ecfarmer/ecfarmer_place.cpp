@@ -1,4 +1,4 @@
-#include "ecfarmer.h"
+#include "ecfarmer.hpp"
 
 bool canPlaceOn(int bx, int by, int bz, int belowBx, int belowBy, int belowBz) {
     return true;
