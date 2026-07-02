@@ -28,7 +28,10 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     jboolean armorBreaker, jdouble armorPercent,
     jdouble predictTicks, jboolean totemDetection,
     jboolean totemCheckTarget, jboolean placeAirPlace,
-    jboolean placeMultiPlace, jboolean suicide
+    jboolean placeMultiPlace, jboolean suicide,
+    jboolean grimAC, jboolean ncpBypass,
+    jboolean bgBlockScanner, jboolean kbPrediction,
+    jboolean collateralPop
 );
 
 

@@ -21,6 +21,8 @@ public class ParameterElement {
     private float expandAnimProgress = 0f;
     private float dropdownAnimProgress = 0f;
     private float sliderKnobAnim = 0f;
+    private boolean isEditingNumber = false;
+    private String numberInputText = "";
     private long lastAnimTime = 0;
 
     public ParameterElement(Parameter<?> parameter) {
@@ -199,7 +201,15 @@ public class ParameterElement {
 
             FontRenderUtility.drawString(graphics, np.getName(), x + 8, y + 5, 0xFFC0C0D0, true);
 
-            String valStr = String.format("%.1f", val);
+            String valStr;
+            if (isEditingNumber) {
+                valStr = numberInputText;
+                if ((System.currentTimeMillis() / 500) % 2 == 0) {
+                    valStr += "_";
+                }
+            } else {
+                valStr = String.format("%.1f", val);
+            }
             int valW = FontRenderUtility.getStringWidth(valStr);
             FontRenderUtility.drawString(graphics, valStr, x + width - valW - 8, y + 5, activeColor, true);
 
@@ -319,6 +329,15 @@ public class ParameterElement {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int y, int width, int height) {
         if (!parameter.isVisible()) return false;
+
+        if (isEditingNumber) {
+            if (mouseX < x || mouseX > x + width || mouseY < y || mouseY > y + height) {
+                applyInput();
+                if (ClickGUI.activeNumberParameterElement == this) {
+                    ClickGUI.activeNumberParameterElement = null;
+                }
+            }
+        }
         
         if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
             if (parameter instanceof ModeParameter mp && mp.isExpanded()) {
@@ -330,6 +349,26 @@ public class ParameterElement {
                         return true;
                     }
                     modeY += 18;
+                }
+            }
+
+            if (parameter instanceof NumberParameter np) {
+                if (button == 1 || button == 2) {
+                    if (isEditingNumber) {
+                        isEditingNumber = false;
+                        if (ClickGUI.activeNumberParameterElement == this) {
+                            ClickGUI.activeNumberParameterElement = null;
+                        }
+                    } else {
+                        if (ClickGUI.activeNumberParameterElement != null && ClickGUI.activeNumberParameterElement != this) {
+                            ClickGUI.activeNumberParameterElement.applyInput();
+                        }
+                        ClickGUI.activeNumberParameterElement = this;
+                        isEditingNumber = true;
+                        numberInputText = "";
+                    }
+                    playSound();
+                    return true;
                 }
             }
 
@@ -379,6 +418,51 @@ public class ParameterElement {
                     ClickGUI.activeKeybindElement = this;
                 }
                 playSound();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void appendChar(char ch) {
+        if (numberInputText.length() < 12) {
+            numberInputText += ch;
+        }
+    }
+
+    public void removeLastChar() {
+        if (!numberInputText.isEmpty()) {
+            numberInputText = numberInputText.substring(0, numberInputText.length() - 1);
+        }
+    }
+
+    public void applyInput() {
+        if (isEditingNumber && parameter instanceof NumberParameter np) {
+            try {
+                double val = Double.parseDouble(numberInputText);
+                double min = np.getMin();
+                double max = np.getMax();
+                val = Math.max(min, Math.min(max, val));
+                double step = np.getStep();
+                val = Math.round(val / step) * step;
+                np.setValue(val);
+            } catch (NumberFormatException ignored) {}
+        }
+        isEditingNumber = false;
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount, int x, int y, int width, int height) {
+        if (!parameter.isVisible()) return false;
+        if (parameter instanceof NumberParameter np) {
+            if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
+                double val = np.getValue();
+                double step = np.getStep();
+                double min = np.getMin();
+                double max = np.getMax();
+                double newVal = val + amount * step;
+                newVal = Math.max(min, Math.min(max, newVal));
+                newVal = Math.round(newVal / step) * step;
+                np.setValue(newVal);
                 return true;
             }
         }

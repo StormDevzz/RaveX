@@ -124,12 +124,15 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
         Vec3 blockCenter = {block.x + 0.5, block.y + 0.5, block.z + 0.5};
         Vec3 eyePos = {playerPos.x, playerPos.y + 1.62, playerPos.z};
         bool visible = isPosVisible(eyePos, blockCenter, blocks, true, block);
+        if (config.grimAC && !visible) {
+            continue;
+        }
+
         double maxRange = visible ? config.placeRange : config.placeWallRange;
 
         double dist = distanceToCenter(playerPos, block);
         if (dist > maxRange) continue;
 
-        
         bool spaceBlocked = false;
         Vec3 above1 = {block.x, block.y + 1.0, block.z};
         Vec3 above2 = {block.x, block.y + 2.0, block.z};
@@ -145,16 +148,30 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
         }
         if (spaceBlocked) continue;
 
-        
-        double targetDmg = calcExplosionDamage(crystalPos, predictedTargetPos, targetHealth, targetAbsorption, targetStats, blocks);
+        Vec3 finalPredictedTargetPos = predictedTargetPos;
+        if (config.kbPrediction) {
+            Vec3 kbDir = predictedTargetPos - crystalPos;
+            double distToKb = kbDir.length();
+            if (distToKb > 0.1 && distToKb < 6.0) {
+                kbDir = kbDir * (1.0 / distToKb);
+                double exposure = 0.5;
+                double blastForce = (1.0 - (distToKb / 6.0)) * exposure;
+                Vec3 kbVelocity = kbDir * blastForce * 2.0;
+                finalPredictedTargetPos = predictedTargetPos + kbVelocity;
+            }
+        }
+
+        double targetDmg = calcExplosionDamage(crystalPos, finalPredictedTargetPos, targetHealth, targetAbsorption, targetStats, blocks);
         double selfDmg   = calcExplosionDamage(crystalPos, playerPos, playerHealth, playerAbsorption, playerStats, blocks);
 
-        
+        if (config.ncpBypass && (selfDmg > config.maxSelfDamage * 0.75)) {
+            continue;
+        }
+
         if (!ConditionValidator::isPlacementSafe(playerHealth, playerAbsorption, selfDmg, playerStats, config, playerInHole, false)) {
             continue;
         }
 
-        
         double requiredMinDmg = config.minTargetDamage;
         if (ConditionValidator::shouldForceArmorBreak(targetStats, targetEffHp, config.armorBreaker, config.armorPercent)) {
             requiredMinDmg = std::min(1.0, config.minTargetDamage);
@@ -162,25 +179,27 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
 
         if (targetDmg < requiredMinDmg) continue;
 
-        
         double deathBonus = 0.0;
         if (targetEffHp - targetDmg <= 0.0) {
             deathBonus = 20.0;
         }
 
-        
         double totemPopBonus = 0.0;
         if (ConditionValidator::shouldForcePopTotem(targetEffHp, targetDmg, targetStats.totemCount, config.totemDetection)) {
             totemPopBonus = 30.0;
         }
 
-        
         double healthBonus = 0.0;
         if (targetHealth < 8.0) {
             healthBonus = config.targetHealthBonus * (8.0 - targetHealth);
         }
 
-        double score = targetDmg - selfDmg * config.selfDamageWeight + deathBonus + totemPopBonus + healthBonus;
+        double popListBonus = 0.0;
+        if (config.collateralPop && (targetDmg >= targetEffHp)) {
+            popListBonus = 5.0;
+        }
+
+        double score = targetDmg - selfDmg * config.selfDamageWeight + deathBonus + totemPopBonus + healthBonus + popListBonus;
         if (config.suicide) {
             score = selfDmg * 100.0 + targetDmg;
         }

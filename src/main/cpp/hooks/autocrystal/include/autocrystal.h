@@ -81,6 +81,11 @@ struct AutoCrystalConfig {
     bool   placeAirPlace    = false;
     bool   placeMultiPlace  = false;
     bool   suicide          = false;
+    bool   grimAC           = false;
+    bool   ncpBypass        = false;
+    bool   bgBlockScanner   = true;
+    bool   kbPrediction     = true;
+    bool   collateralPop    = true;
 };
 
 

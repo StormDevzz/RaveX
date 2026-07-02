@@ -22,3 +22,13 @@ public:
 };
 
 } 
+
+namespace ravex {
+namespace effects {
+class VisualEffects {
+public:
+    VisualEffects();
+    void spawn();
+};
+}
+}

@@ -99,7 +99,10 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     jboolean armorBreaker, jdouble armorPercent,
     jdouble predictTicks, jboolean totemDetection,
     jboolean totemCheckTarget, jboolean placeAirPlace,
-    jboolean placeMultiPlace, jboolean suicide)
+    jboolean placeMultiPlace, jboolean suicide,
+    jboolean grimAC, jboolean ncpBypass,
+    jboolean bgBlockScanner, jboolean kbPrediction,
+    jboolean collateralPop)
 {
     Vec3 playerPos = {pX, pY, pZ};
     Vec3 targetPos = {tX, tY, tZ};
@@ -122,7 +125,6 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     config.antiSuicideCheckBreaking = (antiSuicideCheckBreaking == JNI_TRUE);
     config.antiSuicideIgnoreWithTotem = (antiSuicideIgnoreWithTotem == JNI_TRUE);
     
-    
     config.armorBreaker     = (armorBreaker == JNI_TRUE);
     config.armorPercent     = armorPercent;
     config.predictTicks     = predictTicks;
@@ -131,6 +133,11 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     config.placeAirPlace    = (placeAirPlace == JNI_TRUE);
     config.placeMultiPlace  = (placeMultiPlace == JNI_TRUE);
     config.suicide          = (suicide == JNI_TRUE);
+    config.grimAC           = (grimAC == JNI_TRUE);
+    config.ncpBypass        = (ncpBypass == JNI_TRUE);
+    config.bgBlockScanner   = (bgBlockScanner == JNI_TRUE);
+    config.kbPrediction     = (kbPrediction == JNI_TRUE);
+    config.collateralPop    = (collateralPop == JNI_TRUE);
 
     AutoCrystalResult result = AutoCrystalMath::tick(
         playerPos, pHp, pAbs, pStatsStruct,

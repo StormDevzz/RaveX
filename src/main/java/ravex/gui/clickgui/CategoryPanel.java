@@ -244,7 +244,7 @@ public class CategoryPanel {
                     if (btn.isExpanded()) {
                         int expH = btn.getExpandedHeight(width);
                         if (mouseY >= renderY + btnH && mouseY < renderY + btnH + expH) {
-                            if (btn.onInlineScroll(verticalAmount)) {
+                            if (btn.onInlineScroll(mouseX, mouseY, verticalAmount, ix, renderY + btnH, width)) {
                                 return true;
                             }
                         }

@@ -74,13 +74,13 @@ public abstract class Module {
             this.enabled = enabled;
             if (enabled) {
                 onEnable();
-                //if (hasToggleSound()) SoundUtility.playEnable();
+                if (hasToggleSound()) SoundUtility.playEnable();
                 if (ravex.modules.client.Notifications.INSTANCE != null) {
                     ravex.modules.client.Notifications.notifyToggle(this, true);
                 }
             } else {
                 onDisable();
-                //if (hasToggleSound()) SoundUtility.playDisable();
+                if (hasToggleSound()) SoundUtility.playDisable();
                 if (ravex.modules.client.Notifications.INSTANCE != null) {
                     ravex.modules.client.Notifications.notifyToggle(this, false);
                 }

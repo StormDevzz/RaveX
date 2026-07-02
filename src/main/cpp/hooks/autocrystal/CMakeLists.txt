@@ -1,13 +1,56 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_autocrystal SHARED
-    autocrystal.cpp
-    autocrystal_jni.cpp
-    damage.cpp
-    armor.cpp
-    effects.cpp
-    entity_tracker.cpp
-    conditions.cpp
+    main/autocrystal.cpp
+    main/autocrystal_jni.cpp
+    damage/damage.cpp
+    armor/armor.cpp
+    effects/effects.cpp
+    tracker/entity_tracker.cpp
+    conditions/conditions.cpp
+
+    armorfucker/armorfucker.cpp
+    armorfucker/armor_durability.cpp
+    armorfucker/armor_penetration.cpp
+    armorfucker/armor_evaluation.cpp
+    armorfucker/armor_prioritizer.cpp
+
+    conditions/player_conditions.cpp
+    conditions/world_conditions.cpp
+    conditions/grim_conditions.cpp
+
+    damage/damage_calculator.cpp
+    damage/explosion_damage.cpp
+    damage/raycast_damage.cpp
+    damage/armor_damage.cpp
+    damage/shield_damage.cpp
+    damage/collateral_damage.cpp
+    damage/pop_list.cpp
+    damage/damage_prediction.cpp
+    damage/damage_modifier.cpp
+    damage/damage_logger.cpp
+
+    effects/particle_effects.cpp
+    effects/render_effects.cpp
+    effects/sound_effects.cpp
+    effects/visual_effects.cpp
+
+    tracker/target_tracker.cpp
+    tracker/crystal_tracker.cpp
+    tracker/prediction_tracker.cpp
+    tracker/motion_tracker.cpp
+    tracker/knockback_tracker.cpp
+    tracker/block_scanner.cpp
+    tracker/velocity_tracker.cpp
+
+    timings/timings_manager.cpp
+    timings/timing_delay.cpp
+    timings/timing_ticks.cpp
+    timings/timing_latency.cpp
+    timings/timing_scheduler.cpp
+    timings/timing_predict.cpp
+    timings/timing_throttle.cpp
+    timings/ncp_timings.cpp
 )
 
 find_package(JNI REQUIRED)
@@ -19,7 +62,7 @@ else()
 endif()
 
 target_include_directories(ravex_autocrystal PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

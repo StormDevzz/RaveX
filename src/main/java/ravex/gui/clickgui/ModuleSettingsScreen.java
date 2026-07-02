@@ -188,7 +188,23 @@ public class ModuleSettingsScreen extends Screen {
         double mx = (mouseX - cxx) / s + cxx;
         double my = (mouseY - cyy) / s + cyy;
 
+        int px = lastPanelX;
+        int py = lastPanelY;
+        int pw = lastPanelW;
+        int hh = lastHeaderH;
+        int contentY = py + hh + 4;
+
         if (mx >= lastPanelX && mx <= lastPanelX + lastPanelW && my >= lastPanelY && my <= lastPanelY + lastPanelH) {
+            int paramY = contentY - (int) scrollOffset;
+            for (ParameterElement pe : paramElements) {
+                if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
+                int pHeight = pe.getHeight();
+                if (pe.mouseScrolled(mx, my, verticalAmount, px + 10, paramY, pw - 20, pHeight)) {
+                    return true;
+                }
+                paramY += pHeight;
+            }
+
             float maxScroll = Math.max(0, lastTotalContentH - lastContentH);
             targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset - (float)verticalAmount * 18));
             return true;

@@ -16,13 +16,16 @@ public class NoBob extends Module {
     @Override
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
-        originalBob = mc.options.bobView().get();
-        mc.options.bobView().set(false);
+        if (mc.options != null) {
+            originalBob = mc.options.bobView().get();
+            mc.options.bobView().set(false);
+        }
     }
 
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
+        if (mc.options == null) return;
         if (mc.options.bobView().get()) {
             mc.options.bobView().set(false);
         }
@@ -31,6 +34,7 @@ public class NoBob extends Module {
     @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
+        if (mc.options == null) return;
         mc.options.bobView().set(originalBob);
     }
 }

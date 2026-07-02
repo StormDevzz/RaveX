@@ -32,3 +32,13 @@ public:
 };
 
 } 
+
+namespace ravex {
+namespace conditions {
+class GrimConditions {
+public:
+    GrimConditions();
+    bool check();
+};
+}
+}

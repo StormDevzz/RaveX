@@ -28,6 +28,7 @@ public class ClickGUI extends Screen {
     public static ravex.parameter.ColorParameter activeColorParameter = null;
     public static ColorPaletteModal activeColorPalette = null;
     public static ParameterElement activeStringParameterElement = null;
+    public static ParameterElement activeNumberParameterElement = null;
     public static ParameterElement activeKeybindElement = null;
     public static boolean isDraggingSlider = false;
 
@@ -504,6 +505,19 @@ public class ClickGUI extends Screen {
             return true;
         }
 
+        if (activeNumberParameterElement != null) {
+            if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER) {
+                activeNumberParameterElement.applyInput();
+                activeNumberParameterElement = null;
+                return true;
+            }
+            if (key == GLFW.GLFW_KEY_BACKSPACE) {
+                activeNumberParameterElement.removeLastChar();
+                return true;
+            }
+            return true;
+        }
+
         if (activeStringParameterElement != null) {
             ravex.parameter.StringParameter sp = (ravex.parameter.StringParameter) activeStringParameterElement.getParameter();
             if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER) {
@@ -556,6 +570,16 @@ public class ClickGUI extends Screen {
         if (activeKeybindElement != null) {
             return true;
         }
+        if (activeNumberParameterElement != null) {
+            String text = event.codepointAsString();
+            if (!text.isEmpty()) {
+                char ch = text.charAt(0);
+                if ((ch >= '0' && ch <= '9') || ch == '.' || ch == '-') {
+                    activeNumberParameterElement.appendChar(ch);
+                }
+            }
+            return true;
+        }
         if (activeStringParameterElement != null) {
             ravex.parameter.StringParameter sp = (ravex.parameter.StringParameter) activeStringParameterElement.getParameter();
             String text = event.codepointAsString();
@@ -603,6 +627,10 @@ public class ClickGUI extends Screen {
             m.setGearAngle(0f, System.currentTimeMillis());
         }
         activeStringParameterElement = null;
+        if (activeNumberParameterElement != null) {
+            activeNumberParameterElement.applyInput();
+            activeNumberParameterElement = null;
+        }
         activeKeybindElement = null;
         if (!closing) {
             closing = true;
@@ -620,6 +648,10 @@ public class ClickGUI extends Screen {
     @Override
     public void removed() {
         isDraggingSlider = false;
+        if (activeNumberParameterElement != null) {
+            activeNumberParameterElement.applyInput();
+            activeNumberParameterElement = null;
+        }
         for (ravex.modules.Module m : ravex.modules.ModuleManager.INSTANCE.getModules()) {
             m.setGearAngle(0f, System.currentTimeMillis());
         }
