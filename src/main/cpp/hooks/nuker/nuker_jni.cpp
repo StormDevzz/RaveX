@@ -1,5 +1,5 @@
-#include "nuker_jni.h"
-#include "nuker.h"
+#include "nuker_jni.hpp"
+#include "nuker.hpp"
 
 JNIEXPORT jintArray JNICALL
 Java_ravex_modules_world_Nuker_nativeFindBlocks(

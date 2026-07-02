@@ -8,7 +8,7 @@
 
 
 
-#include "LuaTypes.h"
+#include "LuaTypes.hpp"
 
 namespace ravex {
 namespace lua {

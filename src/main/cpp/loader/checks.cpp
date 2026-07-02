@@ -1,4 +1,4 @@
-#include "checks.h"
+#include "checks.hpp"
 #include <fstream>
 #include <sstream>
 #include <algorithm>

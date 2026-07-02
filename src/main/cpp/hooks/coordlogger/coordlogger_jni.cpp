@@ -1,5 +1,5 @@
-#include "coordlogger_jni.h"
-#include "coordlogger.h"
+#include "coordlogger_jni.hpp"
+#include "coordlogger.hpp"
 
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_misc_CoordLogger_nativeEnsureDir(JNIEnv* env, jclass cls, jstring path) {

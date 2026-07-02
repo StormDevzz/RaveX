@@ -1,5 +1,5 @@
-#include "ecfarmer_jni.h"
-#include "ecfarmer.h"
+#include "ecfarmer_jni.hpp"
+#include "ecfarmer.hpp"
 
 JNIEXPORT jdouble JNICALL
 Java_ravex_modules_player_ECFarmer_nativeCalcBreakTime(

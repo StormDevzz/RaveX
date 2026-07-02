@@ -2,20 +2,20 @@
 //  02_features / JniBridge.cpp
 //
 //  RU: Реализация JNI-моста. Содержит:
-//      - onLoad() — сохранение JavaVM
-//      - getEnv() — получение JNIEnv (с автоматическим AttachCurrentThread)
-//      - fireCallback() — вызов Java-метода из C++
-//      - JNI_OnLoad() — стандартная точка входа JNI
+//      - onLoad() - сохранение JavaVM
+//      - getEnv() - получение JNIEnv (с автоматическим AttachCurrentThread)
+//      - fireCallback() - вызов Java-метода из C++
+//      - JNI_OnLoad() - стандартная точка входа JNI
 //      - Примеры native-функций: nativeInit, nativeAdd, nativeGetPlatformInfo...
 //
 //      Эти функции можно использовать как из Java (через native-объявления),
 //      так и из C++ (через fireCallback).
 //
 //  EN: JNI bridge implementation. Contains:
-//      - onLoad() — save JavaVM
-//      - getEnv() — get JNIEnv (with automatic AttachCurrentThread)
-//      - fireCallback() — call Java method from C++
-//      - JNI_OnLoad() — standard JNI entry point
+//      - onLoad() - save JavaVM
+//      - getEnv() - get JNIEnv (with automatic AttachCurrentThread)
+//      - fireCallback() - call Java method from C++
+//      - JNI_OnLoad() - standard JNI entry point
 //      - Example native functions: nativeInit, nativeAdd, nativeGetPlatformInfo...
 //
 //      These functions can be used both from Java (via native declarations)
@@ -34,15 +34,15 @@ namespace addon {
 namespace jni {
 
 // RU: Статические глобальные переменные:
-//     g_vm — указатель на JavaVM (устанавливается в onLoad)
-//     g_cls — глобальная ссылка на Java-класс (устанавливается из nativeInit)
-//     g_obj — глобальная ссылка на Java-объект (если нужны нестатические методы)
-//     g_mtx — мьютекс для потокобезопасности
+//     g_vm - указатель на JavaVM (устанавливается в onLoad)
+//     g_cls - глобальная ссылка на Java-класс (устанавливается из nativeInit)
+//     g_obj - глобальная ссылка на Java-объект (если нужны нестатические методы)
+//     g_mtx - мьютекс для потокобезопасности
 // EN: Static global variables:
-//     g_vm — JavaVM pointer (set in onLoad)
-//     g_cls — global reference to the Java class (set from nativeInit)
-//     g_obj — global reference to the Java object (for non-static methods)
-//     g_mtx — mutex for thread safety
+//     g_vm - JavaVM pointer (set in onLoad)
+//     g_cls - global reference to the Java class (set from nativeInit)
+//     g_obj - global reference to the Java object (for non-static methods)
+//     g_mtx - mutex for thread safety
 static JavaVM*  g_vm     = nullptr;
 static jclass   g_cls    = nullptr;
 static jobject  g_obj    = nullptr;
@@ -57,11 +57,11 @@ void onLoad(JavaVM* vm) {
 }
 
 // RU: Возвращает JNIEnv для текущего потока.
-//     Если поток не прикреплён к JVM — автоматически прикрепляет.
+//     Если поток не прикреплён к JVM - автоматически прикрепляет.
 //     Это необходимо, потому что C++ потоки (std::thread) не являются
 //     Java-потоками и не имеют JNIEnv по умолчанию.
 // EN: Returns JNIEnv for the current thread.
-//     If the thread is not attached to JVM — automatically attaches it.
+//     If the thread is not attached to JVM - automatically attaches it.
 //     This is necessary because C++ threads (std::thread) are not
 //     Java threads and don't have JNIEnv by default.
 JNIEnv* getEnv() {
@@ -78,15 +78,15 @@ JNIEnv* getEnv() {
 }
 
 // RU: Вызывает статический Void-метод Java-класса из C++.
-//     method — имя метода (например "onData")
-//     sig — JNI-сигнатура (например "(Ljava/lang/String;)V")
-//     arg — аргумент (jvalue)
+//     method - имя метода (например "onData")
+//     sig - JNI-сигнатура (например "(Ljava/lang/String;)V")
+//     arg - аргумент (jvalue)
 //     Пример: fireCallback("onData", "(Ljava/lang/String;)V", arg)
 //     вызовет Class.onData(String) из C++.
 // EN: Calls a static void method on a Java class from C++.
-//     method — method name (e.g. "onData")
-//     sig — JNI signature (e.g. "(Ljava/lang/String;)V")
-//     arg — argument (jvalue)
+//     method - method name (e.g. "onData")
+//     sig - JNI signature (e.g. "(Ljava/lang/String;)V")
+//     arg - argument (jvalue)
 //     Example: fireCallback("onData", "(Ljava/lang/String;)V", arg)
 //     calls Class.onData(String) from C++.
 void fireCallback(const char* method, const char* sig, jvalue arg) {
@@ -103,28 +103,28 @@ void fireCallback(const char* method, const char* sig, jvalue arg) {
 
 extern "C" {
 
-// RU: JNI_OnLoad — точка входа, вызываемая Java при System.loadLibrary().
+// RU: JNI_OnLoad - точка входа, вызываемая Java при System.loadLibrary().
 //     Сохраняем vm и возвращаем минимальную версию JNI.
-// EN: JNI_OnLoad — entry point called by Java on System.loadLibrary().
+// EN: JNI_OnLoad - entry point called by Java on System.loadLibrary().
 //     Save vm and return minimum JNI version.
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
     onLoad(vm);
     return JNI_VERSION_1_8;
 }
 
-// RU: nativeInit — вызывается из Java для инициализации JNI-моста.
+// RU: nativeInit - вызывается из Java для инициализации JNI-моста.
 //     Сохраняет глобальную ссылку на класс (чтобы можно было вызывать
 //     его методы позже из fireCallback).
-//     jstring msg — приветственное сообщение из Java.
-// EN: nativeInit — called from Java to initialize the JNI bridge.
+//     jstring msg - приветственное сообщение из Java.
+// EN: nativeInit - called from Java to initialize the JNI bridge.
 //     Saves a global reference to the class (so its methods can be
 //     called later via fireCallback).
-//     jstring msg — welcome message from Java.
+//     jstring msg - welcome message from Java.
 JNIEXPORT void JNICALL
 Java_ravex_addon_jni_JniBridge_nativeInit(JNIEnv* env, jclass cls, jstring msg) {
-    // RU: NewGlobalRef — создаём глобальную ссылку, чтобы класс
+    // RU: NewGlobalRef - создаём глобальную ссылку, чтобы класс
     //     не был выгружен сборщиком мусора.
-    // EN: NewGlobalRef — create a global reference so the class
+    // EN: NewGlobalRef - create a global reference so the class
     //     is not garbage collected.
     g_cls = (jclass)env->NewGlobalRef(cls);
     std::string str = jstring2str(env, msg);
@@ -175,10 +175,10 @@ Java_ravex_addon_jni_JniBridge_nativeSetPriority(JNIEnv*, jclass, jboolean high)
 }
 
 // RU: Очищает память процесса (working set).
-//     На Windows — EmptyWorkingSet, на Linux — malloc_trim(0).
+//     На Windows - EmptyWorkingSet, на Linux - malloc_trim(0).
 //     Полезно после интенсивной работы с памятью.
 // EN: Trims the process working set.
-//     On Windows — EmptyWorkingSet, on Linux — malloc_trim(0).
+//     On Windows - EmptyWorkingSet, on Linux - malloc_trim(0).
 //     Useful after intensive memory work.
 JNIEXPORT void JNICALL
 Java_ravex_addon_jni_JniBridge_nativeTrimMemory(JNIEnv*, jclass) {

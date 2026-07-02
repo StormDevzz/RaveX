@@ -1,7 +1,7 @@
-#include "discord_rpc.h"
-#include "connection.h"
-#include "serialization.h"
-#include "checks.h"
+#include "discord_rpc.hpp"
+#include "connection.hpp"
+#include "serialization.hpp"
+#include "checks.hpp"
 #include <mutex>
 #include <memory>
 #include <vector>

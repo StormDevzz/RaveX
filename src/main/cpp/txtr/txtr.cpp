@@ -1,6 +1,6 @@
-#include "txtr.h"
-#include "include/txtr_platform.h"
-#include "include/txtr_utils.h"
+#include "txtr.hpp"
+#include "include/txtr_platform.hpp"
+#include "include/txtr_utils.hpp"
 
 #include <cstring>
 

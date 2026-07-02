@@ -391,6 +391,20 @@ public class LuaManager {
         globals.set("timer", lib);
     }
 
+    private String getDiscordLargeImage() {
+        try {
+            var rp = ravex.modules.player.RichPresence.INSTANCE;
+            if (rp != null && rp.largeImage != null) {
+                String val = rp.largeImage.getValue();
+                if ("icon".equals(val)) {
+                    return "ravexdc";
+                }
+                return val;
+            }
+        } catch (Throwable ignored) {}
+        return "ravexdc";
+    }
+
     public boolean discordConnect() {
         for (int i = 0; i <= 9; i++) {
             for (String path : getIpcPaths(i)) {
@@ -444,6 +458,7 @@ public class LuaManager {
                 buttonsBlock = ",\"buttons\":[{\"label\":\"Download RaveX\",\"url\":\"https://github.com/StormDevzz/RaveX\"}]";
             }
 
+            String largeText = "RaveX " + ravex.RaveX.version + " :3";
             String payload = "{"
                 + "\"cmd\":\"SET_ACTIVITY\","
                 + "\"args\":{"
@@ -452,10 +467,11 @@ public class LuaManager {
                 + "\"details\":\"" + escJson(details) + "\","
                 + "\"state\":\"" + escJson(effectiveState) + "\""
                 + startBlock
-                + ",\"assets\":{\"large_image\":\"icon\",\"large_text\":\"RaveX\"}"
+                + ",\"assets\":{\"large_image\":\"" + escJson(getDiscordLargeImage()) + "\",\"large_text\":\"" + escJson(largeText) + "\"}"
                 + buttonsBlock
                 + "}},"
                 + "\"nonce\":\"" + nonce + "\"}";
+            ravex.RaveX.LOGGER.info("[RichPresence] Sending payload: " + payload);
             sendDiscordFrame(1, payload);
             return true;
         } catch (Exception e) {

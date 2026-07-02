@@ -1,6 +1,6 @@
-#include "conditions.h"
-#include "armor.h"
-#include "effects.h"
+#include "conditions.hpp"
+#include "armor.hpp"
+#include "effects.hpp"
 #include <cmath>
 #include <algorithm>
 

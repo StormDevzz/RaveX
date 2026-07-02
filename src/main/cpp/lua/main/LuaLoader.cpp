@@ -8,11 +8,11 @@
 
 
 
-#include "LuaLoader.h"
-#include "LuaRegistry.h"
-#include "LuaScript.h"
-#include <AddonContext.h>
-#include <AddonConfig.h>
+#include "LuaLoader.hpp"
+#include "LuaRegistry.hpp"
+#include "LuaScript.hpp"
+#include <AddonContext.hpp>
+#include <AddonConfig.hpp>
 #include <algorithm>
 #include <cstdio>
 #include <cstring>

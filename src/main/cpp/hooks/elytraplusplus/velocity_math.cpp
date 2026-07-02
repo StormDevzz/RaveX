@@ -1,4 +1,4 @@
-#include "velocity_math.h"
+#include "velocity_math.hpp"
 
 LookVector calculateLookVector(double yaw, double pitch) {
     double yawRad = degToRad(yaw);

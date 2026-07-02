@@ -1,4 +1,4 @@
-#include "system_checks.h"
+#include "system_checks.hpp"
 #include <sys/stat.h>
 #include <sys/utsname.h>
 

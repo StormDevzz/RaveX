@@ -1,4 +1,4 @@
-#include "packetmine.h"
+#include "packetmine.hpp"
 
 namespace ravex {
 

@@ -1,5 +1,5 @@
-#include "capture.h"
-#include "../../include/logger.h"
+#include "capture.hpp"
+#include "../../include/logger.hpp"
 
 #if defined(HAVE_PCAP)
 #include <pcap/pcap.h>

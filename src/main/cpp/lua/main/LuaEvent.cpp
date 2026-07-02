@@ -12,8 +12,8 @@
 
 
 
-#include "LuaBridge.h"
-#include "LuaRegistry.h"
+#include "LuaBridge.hpp"
+#include "LuaRegistry.hpp"
 #include <string>
 #include <vector>
 #include <map>

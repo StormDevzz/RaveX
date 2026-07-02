@@ -1,4 +1,4 @@
-#include "antivoid.h"
+#include "antivoid.hpp"
 
 bool isVoidFall(double playerY, double motionY,
                 int worldMinY, double fallDistance) {

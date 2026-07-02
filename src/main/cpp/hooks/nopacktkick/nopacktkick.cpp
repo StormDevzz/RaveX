@@ -1,4 +1,4 @@
-#include "nopacktkick.h"
+#include "nopacktkick.hpp"
 #include <chrono>
 #include <atomic>
 #include <algorithm>

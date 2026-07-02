@@ -1,4 +1,4 @@
-#include "damage_modifier.h"
+#include "damage_modifier.hpp"
 /* Source implementation for damage_modifier */
 namespace ravex {
 namespace damage {

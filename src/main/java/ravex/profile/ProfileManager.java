@@ -103,8 +103,17 @@ public class ProfileManager {
             if (profile.getModuleParameters().containsKey(name)) {
                 Map<String, Object> savedParams = profile.getModuleParameters().get(name);
                 for (Parameter<?> p : m.getParameters()) {
-                    if (!savedParams.containsKey(p.getName())) continue;
-                    Object val = savedParams.get(p.getName());
+                    String pName = p.getName();
+                    if (!savedParams.containsKey(pName)) {
+                        for (String k : savedParams.keySet()) {
+                            if (k.replace(" ", "").equals(pName)) {
+                                pName = k;
+                                break;
+                            }
+                        }
+                    }
+                    if (!savedParams.containsKey(pName)) continue;
+                    Object val = savedParams.get(pName);
                     if (p instanceof BooleanParameter bp && val instanceof Boolean bv) bp.setValue(bv);
                     else if (p instanceof NumberParameter np && val instanceof Double dv) np.setValue(dv);
                     else if (p instanceof ModeParameter mp && val instanceof String sv) mp.setValue(sv);

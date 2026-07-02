@@ -1,4 +1,4 @@
-#include "include/shieldfucker_platform.h"
+#include "include/shieldfucker_platform.hpp"
 
 namespace shieldfucker {
 

@@ -1,4 +1,4 @@
-#include "include/AddonLogger.h"
+#include "include/AddonLogger.hpp"
 #include <iostream>
 
 namespace ravex {

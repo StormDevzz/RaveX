@@ -1,4 +1,4 @@
-#include "tntaura.h"
+#include "tntaura.hpp"
 #include <cmath>
 #include <vector>
 #include <algorithm>

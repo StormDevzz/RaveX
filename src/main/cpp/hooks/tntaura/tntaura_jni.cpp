@@ -1,6 +1,6 @@
-#include "tntaura_jni.h"
-#include "tntaura.h"
-#include "damage_calc.h"
+#include "tntaura_jni.hpp"
+#include "tntaura.hpp"
+#include "damage_calc.hpp"
 #include <vector>
 
 

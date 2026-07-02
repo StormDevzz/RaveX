@@ -1,4 +1,4 @@
-#include "include/compat_check.h"
+#include "include/compat_check.hpp"
 
 namespace ravex {
 namespace launcher {

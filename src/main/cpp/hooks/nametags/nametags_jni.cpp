@@ -1,5 +1,5 @@
-#include "nametags_jni.h"
-#include "nametags.h"
+#include "nametags_jni.hpp"
+#include "nametags.hpp"
 
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_render_NameTags_nativeCalculateLayout(

@@ -1,4 +1,4 @@
-#include "safewalk.h"
+#include "safewalk.hpp"
 #include <cmath>
 
 static bool isSolid(int x, int y, int z, int* blocks, int count) {

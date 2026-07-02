@@ -1,13 +1,13 @@
-#include "sniffer.h"
-#include "../include/config.h"
-#include "../include/logger.h"
-#include "../include/packet_platform.h"
+#include "sniffer.hpp"
+#include "../include/config.hpp"
+#include "../include/logger.hpp"
+#include "../include/packet_platform.hpp"
 #include <iostream>
 #include <cstring>
 #include <csignal>
 #include <thread>
 #include <chrono>
-#include "../include/packet_utils.h"
+#include "../include/packet_utils.hpp"
 
 static packet::Sniffer* gSniffer = nullptr;
 

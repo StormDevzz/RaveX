@@ -1,5 +1,5 @@
-#include "txtr.h"
-#include "include/txtr_platform.h"
+#include "txtr.hpp"
+#include "include/txtr_platform.hpp"
 #include <gtk/gtk.h>
 #include <cstring>
 #include <string>

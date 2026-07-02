@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "calculator.h"
+#include "calculator.hpp"
 #include <gtk/gtk.h>
 #include <string>
 #include <vector>

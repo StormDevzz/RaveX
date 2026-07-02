@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "packetmine.h"
+#include "packetmine.hpp"
 
 extern "C" {
 

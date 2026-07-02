@@ -1,11 +1,11 @@
-#include "simple_launcher.h"
-#include "state/include/launcher_state.h"
-#include "instances/main/include/window_init.h"
-#include "acc/include/account_manager.h"
-#include "file/include/file_manager.h"
-#include "file/include/path_provider.h"
-#include "event/include/event_queue.h"
-#include "analyze/include/crash_logger.h"
+#include "simple_launcher.hpp"
+#include "state/include/launcher_state.hpp"
+#include "instances/main/include/window_init.hpp"
+#include "acc/include/account_manager.hpp"
+#include "file/include/file_manager.hpp"
+#include "file/include/path_provider.hpp"
+#include "event/include/event_queue.hpp"
+#include "analyze/include/crash_logger.hpp"
 #include <cstdlib>
 
 namespace ravex {

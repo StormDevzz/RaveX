@@ -1,4 +1,4 @@
-#include "bedbomb.h"
+#include "bedbomb.hpp"
 #include <cmath>
 #include <algorithm>
 #include <limits>

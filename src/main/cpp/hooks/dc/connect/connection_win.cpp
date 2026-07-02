@@ -1,5 +1,5 @@
 #ifdef _WIN32
-#include "connection.h"
+#include "connection.hpp"
 #include <windows.h>
 #include <iostream>
 

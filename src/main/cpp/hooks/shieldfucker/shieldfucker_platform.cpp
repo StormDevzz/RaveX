@@ -1,4 +1,4 @@
-#include "include/shieldfucker_platform.h"
+#include "include/shieldfucker_platform.hpp"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN

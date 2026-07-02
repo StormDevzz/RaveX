@@ -1,5 +1,5 @@
-#include "proxy.h"
-#include "../../include/logger.h"
+#include "proxy.hpp"
+#include "../../include/logger.hpp"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>

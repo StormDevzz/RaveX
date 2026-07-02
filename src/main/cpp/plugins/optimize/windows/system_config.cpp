@@ -1,4 +1,4 @@
-#include "optimize_windows.h"
+#include "optimize_windows.hpp"
 #include <winsock2.h>
 #include <windows.h>
 #include <powrprof.h>

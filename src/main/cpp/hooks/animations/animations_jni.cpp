@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "animations.h"
+#include "animations.hpp"
 
 extern "C" {
 

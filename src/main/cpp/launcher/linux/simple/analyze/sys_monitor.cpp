@@ -1,5 +1,5 @@
-#include "include/sys_monitor.h"
-#include "include/log_manager.h"
+#include "include/sys_monitor.hpp"
+#include "include/log_manager.hpp"
 #include <fstream>
 #include <sstream>
 #include <unistd.h>

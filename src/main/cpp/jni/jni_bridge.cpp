@@ -1,13 +1,13 @@
-#include "jni_bridge.h"
-#include "../hooks/norender/optimizer.h"
-#include "../hooks/norender/norender.h"
-#include "../antiafk/antiafk.h"
-#include "../common/memory.h"
-#include "../hooks/shaders/hand/include/shader_color.h"
-#include "../math/wave_math.h"
-#include "../plugins/optimize/optimize.h"
-#include "../plugins/manager/manager.h"
-#include "brand.h"
+#include "jni_bridge.hpp"
+#include "../hooks/norender/optimizer.hpp"
+#include "../hooks/norender/norender.hpp"
+#include "../antiafk/antiafk.hpp"
+#include "../common/memory.hpp"
+#include "../hooks/shaders/hand/include/shader_color.hpp"
+#include "../math/wave_math.hpp"
+#include "../plugins/optimize/optimize.hpp"
+#include "../plugins/manager/manager.hpp"
+#include "brand.hpp"
 
 #include <cstring>
 #include <vector>

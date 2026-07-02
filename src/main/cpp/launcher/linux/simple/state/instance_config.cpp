@@ -1,4 +1,4 @@
-#include "include/instance_config.h"
+#include "include/instance_config.hpp"
 #include <fstream>
 
 namespace ravex {

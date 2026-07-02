@@ -1,7 +1,7 @@
-#include "include/main_window.h"
-#include "include/window_layout.h"
-#include "../../window/background/custom/include/bg_loader.h"
-#include "../../../icon/include/icon_manager.h"
+#include "include/main_window.hpp"
+#include "include/window_layout.hpp"
+#include "../../window/background/custom/include/bg_loader.hpp"
+#include "../../../icon/include/icon_manager.hpp"
 
 namespace ravex {
 namespace launcher {

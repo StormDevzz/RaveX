@@ -1,6 +1,6 @@
-#include "txtr.h"
-#include "include/txtr_color.h"
-#include "include/txtr_utils.h"
+#include "txtr.hpp"
+#include "include/txtr_color.hpp"
+#include "include/txtr_utils.hpp"
 #include <cstring>
 #include <climits>
 #include <vector>

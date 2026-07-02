@@ -1,7 +1,7 @@
-#include "include/crash_logger.h"
-#include "include/sys_monitor.h"
-#include "include/perf_tracker.h"
-#include "include/log_manager.h"
+#include "include/crash_logger.hpp"
+#include "include/sys_monitor.hpp"
+#include "include/perf_tracker.hpp"
+#include "include/log_manager.hpp"
 
 namespace ravex {
 namespace launcher {

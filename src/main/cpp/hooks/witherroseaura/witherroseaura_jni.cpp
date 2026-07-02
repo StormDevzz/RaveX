@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "witherroseaura.h"
+#include "witherroseaura.hpp"
 
 extern "C" {
 

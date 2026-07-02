@@ -1,11 +1,11 @@
-#include "include/simple_buttons.h"
-#include "include/update_handler.h"
-#include "include/launch_handler.h"
-#include "../../checks/system_checks.h"
-#include "../../plugins/github_utility.h"
-#include "../../plugins/sys_optimize.h"
-#include "../network/include/mojang_api.h"
-#include "../instances/console/include/console_window.h"
+#include "include/simple_buttons.hpp"
+#include "include/update_handler.hpp"
+#include "include/launch_handler.hpp"
+#include "../../checks/system_checks.hpp"
+#include "../../plugins/github_utility.hpp"
+#include "../../plugins/sys_optimize.hpp"
+#include "../network/include/mojang_api.hpp"
+#include "../instances/console/include/console_window.hpp"
 #include <thread>
 #include <vector>
 #include <fstream>
@@ -60,7 +60,7 @@ static void download_update_thread(UpdateTaskData *data) {
             "font/comfortaa.ttf",
             "natives/libravex_jni.so"
         };
-        std::string remoteAssetBase = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/assets/"
+        std::string remoteAssetBase = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/assets/";
         for (const auto& asset : assets) {
             std::string localPath = data->state->ravex_dir + "/" + asset;
             ravex::launcher::plugins::GithubUtility::downloadFile(remoteAssetBase + asset, localPath);
@@ -252,7 +252,7 @@ void on_launch_clicked(GtkWidget *widget, gpointer user_data) {
                         "font/comfortaa.ttf",
                         "natives/libravex_jni.so"
                     };
-                    std::string remoteAssetBase = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/assets/"
+                    std::string remoteAssetBase = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/assets/";
                     for (const auto& asset : assets) {
                         std::string localPath = state->ravex_dir + "/" + asset;
                         plugins::GithubUtility::downloadFile(remoteAssetBase + asset, localPath);

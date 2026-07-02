@@ -1,4 +1,4 @@
-#include "autoregear.h"
+#include "autoregear.hpp"
 
 int calculateRegear(
     const std::vector<std::string>& containerItemIds,

@@ -1,9 +1,9 @@
-#include "include/window_signals.h"
-#include "../../window/background/custom/include/bg_loader.h"
-#include "../../acc/include/account_manager.h"
-#include "../../network/include/microsoft_auth.h"
-#include "../../button/include/simple_buttons.h"
-#include "../../button/include/update_handler.h"
+#include "include/window_signals.hpp"
+#include "../../window/background/custom/include/bg_loader.hpp"
+#include "../../acc/include/account_manager.hpp"
+#include "../../network/include/microsoft_auth.hpp"
+#include "../../button/include/simple_buttons.hpp"
+#include "../../button/include/update_handler.hpp"
 
 namespace ravex {
 namespace launcher {

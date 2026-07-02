@@ -1,5 +1,5 @@
-#include "noslow_jni.h"
-#include "noslow.h"
+#include "noslow_jni.hpp"
+#include "noslow.hpp"
 #include <string>
 
 JNIEXPORT jfloat JNICALL

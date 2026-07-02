@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "voidesp.h"
+#include "voidesp.hpp"
 
 extern "C" {
 

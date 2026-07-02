@@ -1,4 +1,4 @@
-#include "include/resize_animator.h"
+#include "include/resize_animator.hpp"
 
 namespace ravex {
 namespace launcher {

@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "breaker.h"
+#include "breaker.hpp"
 #include <vector>
 
 using namespace ravex;

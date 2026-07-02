@@ -45,8 +45,8 @@ function onLoad(ctx)
     local platform = getPlatform()
     logInfo("Platform: " .. platform)
 
-    -- RU: Читаем конфиг. Если ключа нет — используем значение по умолчанию.
-    -- EN: Read config. If key is missing — use default value.
+    -- RU: Читаем конфиг. Если ключа нет - используем значение по умолчанию.
+    -- EN: Read config. If key is missing - use default value.
     local enabled = configGet("enabled", "false")
     configEnabled = (enabled == "true")
     logInfo("Config enabled: " .. enabled)
@@ -97,9 +97,9 @@ function onTick()
 end
 
 -- RU: Вызывается при возникновении события.
---     eventName — строка с именем события (например "world_load", "config_change").
+--     eventName - строка с именем события (например "world_load", "config_change").
 -- EN: Called when an event occurs.
---     eventName — event name string (e.g. "world_load", "config_change").
+--     eventName - event name string (e.g. "world_load", "config_change").
 function onEvent(eventName)
     logInfo("Event received: " .. eventName)
 

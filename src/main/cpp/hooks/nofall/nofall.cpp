@@ -1,4 +1,4 @@
-#include "nofall.h"
+#include "nofall.hpp"
 
 bool calculateNoFall(
     const std::string& mode,

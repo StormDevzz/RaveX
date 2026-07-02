@@ -1,4 +1,4 @@
-#include "nonarrator.h"
+#include "nonarrator.hpp"
 #include <atomic>
 
 static std::atomic<bool> g_narratorForced{false};

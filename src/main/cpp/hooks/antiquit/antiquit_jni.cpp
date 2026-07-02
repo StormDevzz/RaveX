@@ -1,5 +1,5 @@
-#include "antiquit_jni.h"
-#include "antiquit.h"
+#include "antiquit_jni.hpp"
+#include "antiquit.hpp"
 
 JNIEXPORT void JNICALL
 Java_ravex_modules_misc_AntiQuit_nativeBlockQuit(JNIEnv* env, jclass cls, jboolean block) {

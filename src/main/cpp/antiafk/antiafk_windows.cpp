@@ -1,4 +1,4 @@
-#include "antiafk_input.h"
+#include "antiafk_input.hpp"
 
 #include <iostream>
 #include <thread>

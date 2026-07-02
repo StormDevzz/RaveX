@@ -1,5 +1,5 @@
-#include "safewalk_jni.h"
-#include "safewalk.h"
+#include "safewalk_jni.hpp"
+#include "safewalk.hpp"
 
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_movement_SafeWalk_nativeIsNearEdge(

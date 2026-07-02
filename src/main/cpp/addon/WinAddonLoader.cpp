@@ -1,4 +1,4 @@
-#include "include/WinAddonLoader.h"
+#include "include/WinAddonLoader.hpp"
 #ifdef _WIN32
 #include <windows.h>
 #endif

@@ -1,5 +1,5 @@
-#include "output.h"
-#include "../../include/packet_utils.h"
+#include "output.hpp"
+#include "../../include/packet_utils.hpp"
 #include <iostream>
 #include <sstream>
 

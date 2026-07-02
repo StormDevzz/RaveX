@@ -1,4 +1,4 @@
-#include "damage_calc.h"
+#include "damage_calc.hpp"
 #include <cmath>
 #include <algorithm>
 

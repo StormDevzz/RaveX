@@ -1,5 +1,5 @@
-#include "nofall_jni.h"
-#include "nofall.h"
+#include "nofall_jni.hpp"
+#include "nofall.hpp"
 #include <string>
 
 JNIEXPORT jboolean JNICALL

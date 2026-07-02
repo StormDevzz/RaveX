@@ -1,4 +1,4 @@
-#include "replenish.h"
+#include "replenish.hpp"
 
 std::vector<ReplenishResult> findReplenishTargets(
     const std::vector<InventorySlot>& hotbarSlots,

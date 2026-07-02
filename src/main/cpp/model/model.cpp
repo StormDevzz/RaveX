@@ -1,6 +1,6 @@
-#include "model.h"
-#include "include/model_platform.h"
-#include "include/model_utils.h"
+#include "model.hpp"
+#include "include/model_platform.hpp"
+#include "include/model_utils.hpp"
 
 namespace model {
 

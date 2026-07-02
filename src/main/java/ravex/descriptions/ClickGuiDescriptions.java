@@ -238,6 +238,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("PortalGodMode", "Makes you invulnerable inside portals by cancelling teleport confirm packets.");
         DESCRIPTIONS.put("Baritone", "Baritone pathfinding.");
         DESCRIPTIONS.put("PauseBaritone", "Pause baritone pathfinding instantly.");
+        DESCRIPTIONS.put("NewChunks", "Highlights recently loaded chunks.");
     }
 
     public static String getDescription(String moduleName) {

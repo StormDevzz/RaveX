@@ -1,4 +1,4 @@
-#include "include/AddonThread.h"
+#include "include/AddonThread.hpp"
 
 namespace ravex {
 namespace addon {

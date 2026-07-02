@@ -1,4 +1,4 @@
-#include "rocketextender.h"
+#include "rocketextender.hpp"
 #include <cmath>
 
 #ifndef M_PI

@@ -1,5 +1,5 @@
-#include "txtr.h"
-#include "include/txtr_utils.h"
+#include "txtr.hpp"
+#include "include/txtr_utils.hpp"
 #include <cstring>
 #include <algorithm>
 #include <cmath>

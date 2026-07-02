@@ -1,4 +1,4 @@
-#include "include/hash_check.h"
+#include "include/hash_check.hpp"
 
 namespace ravex {
 namespace launcher {

@@ -1,5 +1,5 @@
 #ifndef _WIN32
-#include "connection.h"
+#include "connection.hpp"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>

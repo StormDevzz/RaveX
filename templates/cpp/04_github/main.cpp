@@ -5,8 +5,8 @@
 //      автоматического обновления через GitHub Releases.
 //
 //      Демонстрирует:
-//        1. ReleaseChecker — проверить, вышла ли новая версия
-//        2. ReleaseManager — полный цикл: check -> download -> install -> rollback
+//        1. ReleaseChecker - проверить, вышла ли новая версия
+//        2. ReleaseManager - полный цикл: check -> download -> install -> rollback
 //        3. Собственные HTTP-запросы к GitHub API через HttpClient
 //        4. Парсинг JSON из ответа GitHub API
 //
@@ -19,8 +19,8 @@
 //      automatic updates via GitHub Releases.
 //
 //      Demonstrates:
-//        1. ReleaseChecker — check if a new version is available
-//        2. ReleaseManager — full cycle: check -> download -> install -> rollback
+//        1. ReleaseChecker - check if a new version is available
+//        2. ReleaseManager - full cycle: check -> download -> install -> rollback
 //        3. Custom HTTP requests to GitHub API via HttpClient
 //        4. JSON parsing from GitHub API response
 //
@@ -52,19 +52,19 @@
 //
 // RU: Эти функции передаются в ReleaseManager для отслеживания
 //     прогресса загрузки, логирования и статуса.
-//     Ты можешь заменить их на свои — например, показывать прогресс-бар
+//     Ты можешь заменить их на свои - например, показывать прогресс-бар
 //     в GUI оверлея.
 // EN: These functions are passed to ReleaseManager to track
 //     download progress, logging and status.
-//     You can replace them with your own — e.g. show a progress bar
+//     You can replace them with your own - e.g. show a progress bar
 //     in the GUI overlay.
 
-// RU: Колбэк прогресса — вызывается во время загрузки файла.
-//     downloaded — сколько байт уже скачано.
-//     total — общий размер файла (0, если неизвестен).
-// EN: Progress callback — called during file download.
-//     downloaded — bytes downloaded so far.
-//     total — total file size (0 if unknown).
+// RU: Колбэк прогресса - вызывается во время загрузки файла.
+//     downloaded - сколько байт уже скачано.
+//     total - общий размер файла (0, если неизвестен).
+// EN: Progress callback - called during file download.
+//     downloaded - bytes downloaded so far.
+//     total - total file size (0 if unknown).
 static void onProgress(int64_t downloaded, int64_t total) {
     if (total > 0) {
         int pct = (int)(downloaded * 100 / total);
@@ -76,19 +76,19 @@ static void onProgress(int64_t downloaded, int64_t total) {
     }
 }
 
-// RU: Колбэк логирования — получает сообщения от библиотеки.
-//     level — уровень логирования (DEBUG, INFO, WARN, ERROR).
-//     msg — текст сообщения.
-// EN: Logging callback — receives messages from the library.
-//     level — log level (DEBUG, INFO, WARN, ERROR).
-//     msg — message text.
+// RU: Колбэк логирования - получает сообщения от библиотеки.
+//     level - уровень логирования (DEBUG, INFO, WARN, ERROR).
+//     msg - текст сообщения.
+// EN: Logging callback - receives messages from the library.
+//     level - log level (DEBUG, INFO, WARN, ERROR).
+//     msg - message text.
 static void onLog(ravex::github::LogLevel level, const std::string& msg) {
     static const char* labels[] = { "DEBUG", "INFO", "WARN", "ERROR" };
     std::cout << "[" << labels[(int)level] << "] " << msg << std::endl;
 }
 
-// RU: Колбэк статуса — вызывается при изменении состояния менеджера.
-// EN: Status callback — called on manager state changes.
+// RU: Колбэк статуса - вызывается при изменении состояния менеджера.
+// EN: Status callback - called on manager state changes.
 static void onStatus(const std::string& status) {
     std::cout << "[STATUS] " << status << std::endl;
 }
@@ -98,13 +98,13 @@ static void onStatus(const std::string& status) {
 // RU: Простейшая проверка: получить последний релиз с GitHub,
 //     сравнить версии, посмотреть доступные ассеты для платформы.
 //
-//     ReleaseChecker не требует конфига — достаточно owner и repo.
+//     ReleaseChecker не требует конфига - достаточно owner и repo.
 //     Подходит, если тебе нужно только проверить наличие обновления.
 //
 // EN: Simplest check: fetch the latest release from GitHub,
 //     compare versions, look at matching assets for your platform.
 //
-//     ReleaseChecker does not need a config — just owner and repo.
+//     ReleaseChecker does not need a config - just owner and repo.
 //     Good when you only need to check if an update exists.
 
 void exampleReleaseChecker() {
@@ -140,10 +140,10 @@ void exampleReleaseChecker() {
         std::cout << "  Release URL:  " << info.release.htmlUrl << std::endl;
     }
 
-    // RU: Ассеты, подходящие под платформу (Windows — .dll/.exe/.zip,
-    //     Linux — .so/.tar.gz/AppImage и т.д.).
-    // EN: Assets matching the platform (Windows — .dll/.exe/.zip,
-    //     Linux — .so/.tar.gz/AppImage, etc.).
+    // RU: Ассеты, подходящие под платформу (Windows - .dll/.exe/.zip,
+    //     Linux - .so/.tar.gz/AppImage и т.д.).
+    // EN: Assets matching the platform (Windows - .dll/.exe/.zip,
+    //     Linux - .so/.tar.gz/AppImage, etc.).
     if (!info.matchingAssets.empty()) {
         std::cout << "  Matching assets for this platform:" << std::endl;
         for (const auto& asset : info.matchingAssets) {
@@ -177,14 +177,14 @@ void exampleReleaseChecker() {
 void exampleReleaseManager() {
     std::cout << "\n=== ReleaseManager Example ===" << std::endl;
 
-    // RU: Конфигурация — заполни своими данными.
-    //     currentVersion — текущая версия аддона (для сравнения).
-    //     channel — Stable (только стабильные релизы) или Preview (включая pre-release).
-    //     verifyChecksums — проверять SHA-256 после загрузки.
-    // EN: Configuration — fill with your own data.
-    //     currentVersion — current addon version (for comparison).
-    //     channel — Stable (only stable releases) or Preview (including pre-release).
-    //     verifyChecksums — verify SHA-256 after download.
+    // RU: Конфигурация - заполни своими данными.
+    //     currentVersion - текущая версия аддона (для сравнения).
+    //     channel - Stable (только стабильные релизы) или Preview (включая pre-release).
+    //     verifyChecksums - проверять SHA-256 после загрузки.
+    // EN: Configuration - fill with your own data.
+    //     currentVersion - current addon version (for comparison).
+    //     channel - Stable (only stable releases) or Preview (including pre-release).
+    //     verifyChecksums - verify SHA-256 after download.
     ravex::github::GithubConfig cfg;
     cfg.owner          = "StormDevzz";
     cfg.repo           = "RaveX";
@@ -274,7 +274,7 @@ void exampleCustomHttp() {
         return;
     }
 
-    // RU: Парсим JSON-ответ. JsonValue::parse — самописный парсер,
+    // RU: Парсим JSON-ответ. JsonValue::parse - самописный парсер,
     //     без внешних библиотек. Поддерживает объекты, массивы,
     //     строки, числа, bool, null.
     // EN: Parse the JSON response. JsonValue::parse is self-written,

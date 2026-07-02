@@ -1,4 +1,4 @@
-#include "include/update_check.h"
+#include "include/update_check.hpp"
 
 namespace ravex {
 namespace launcher {

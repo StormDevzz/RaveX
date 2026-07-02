@@ -1,6 +1,6 @@
-#include "include/event_types.h"
-#include "include/progress_handler.h"
-#include "include/event_queue.h"
+#include "include/event_types.hpp"
+#include "include/progress_handler.hpp"
+#include "include/event_queue.hpp"
 
 namespace ravex {
 namespace launcher {

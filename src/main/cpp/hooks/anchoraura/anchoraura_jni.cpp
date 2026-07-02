@@ -1,5 +1,5 @@
-#include "anchoraura_jni.h"
-#include "anchoraura.h"
+#include "anchoraura_jni.hpp"
+#include "anchoraura.hpp"
 #include <vector>
 
 using namespace ravex;

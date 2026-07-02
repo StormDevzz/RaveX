@@ -1,4 +1,4 @@
-#include "sound_effects.h"
+#include "sound_effects.hpp"
 /* Source implementation for sound_effects */
 namespace ravex {
 namespace effects {

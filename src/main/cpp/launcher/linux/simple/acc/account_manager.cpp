@@ -1,6 +1,6 @@
-#include "include/account_manager.h"
-#include "include/account_serializer.h"
-#include "include/offline_auth.h"
+#include "include/account_manager.hpp"
+#include "include/account_serializer.hpp"
+#include "include/offline_auth.hpp"
 
 namespace ravex {
 namespace launcher {

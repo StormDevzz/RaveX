@@ -1,4 +1,4 @@
-#include "damage_calculator.h"
+#include "damage_calculator.hpp"
 /* Source implementation for damage_calculator */
 namespace ravex {
 namespace damage {

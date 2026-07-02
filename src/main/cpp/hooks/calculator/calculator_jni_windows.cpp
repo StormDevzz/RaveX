@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <jni.h>
-#include "calculator.h"
+#include "calculator.hpp"
 #include <string>
 #include <vector>
 #include <deque>

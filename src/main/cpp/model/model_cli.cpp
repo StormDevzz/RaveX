@@ -1,5 +1,5 @@
-#include "model.h"
-#include "include/model_platform.h"
+#include "model.hpp"
+#include "include/model_platform.hpp"
 #include <iostream>
 #include <cstring>
 #include <string>

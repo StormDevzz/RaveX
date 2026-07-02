@@ -12,10 +12,10 @@
 
 
 
-#include "LuaContext.h"
-#include "LuaBridge.h"
-#include <AddonContext.h>
-#include <AddonConfig.h>
+#include "LuaContext.hpp"
+#include "LuaBridge.hpp"
+#include <AddonContext.hpp>
+#include <AddonConfig.hpp>
 #include <cstdio>
 #include <string>
 

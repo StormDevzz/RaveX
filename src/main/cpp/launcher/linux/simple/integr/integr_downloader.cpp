@@ -1,4 +1,4 @@
-#include "include/integr_utils.h"
+#include "include/integr_utils.hpp"
 #include <vector>
 #include <string>
 #include <cstdlib>

@@ -1,4 +1,4 @@
-#include "antiafk.h"
+#include "antiafk.hpp"
 
 #include <iostream>
 #include <cstdlib>

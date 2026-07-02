@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "fastexp.h"
+#include "fastexp.hpp"
 
 static ravex::FastXp fastXp;
 static JavaVM* cachedJvm = nullptr;

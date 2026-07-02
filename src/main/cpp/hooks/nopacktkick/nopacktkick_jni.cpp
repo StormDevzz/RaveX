@@ -1,5 +1,5 @@
-#include "nopacktkick_jni.h"
-#include "nopacktkick.h"
+#include "nopacktkick_jni.hpp"
+#include "nopacktkick.hpp"
 
 JNIEXPORT void JNICALL
 Java_ravex_modules_misc_NoPacketKick_nativeInit(JNIEnv* env, jclass cls, jint packetsPerSec, jint burst) {

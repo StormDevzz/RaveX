@@ -1,5 +1,5 @@
-#include "include/microsoft_auth.h"
-#include "../acc/include/account_manager.h"
+#include "include/microsoft_auth.hpp"
+#include "../acc/include/account_manager.hpp"
 #include <iostream>
 #include <cstdlib>
 

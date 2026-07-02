@@ -112,14 +112,32 @@ public class ConfigManager {
                     if (modObj.has("parameters")) {
                         JsonObject paramsObj = modObj.getAsJsonObject("parameters");
                         for (Parameter<?> p : m.getParameters()) {
-                            if (paramsObj.has(p.getName())) {
-                                String valStr = paramsObj.get(p.getName()).getAsString();
+                            String key = p.getName();
+                            if (!paramsObj.has(key)) {
+                                for (String k : paramsObj.keySet()) {
+                                    if (k.replace(" ", "").equals(key)) {
+                                        key = k;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (paramsObj.has(key)) {
+                                String valStr = paramsObj.get(key).getAsString();
                                 setParameterValueRaw(p, valStr);
                             }
                             if (p instanceof ravex.parameter.ColorParameter cp) {
                                 String syncKey = p.getName() + "_themeSync";
-                                if (paramsObj.has(syncKey)) {
-                                    cp.setThemeSync(paramsObj.get(syncKey).getAsBoolean());
+                                String actualSyncKey = syncKey;
+                                if (!paramsObj.has(syncKey)) {
+                                    for (String k : paramsObj.keySet()) {
+                                        if (k.replace(" ", "").equals(syncKey)) {
+                                            actualSyncKey = k;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (paramsObj.has(actualSyncKey)) {
+                                    cp.setThemeSync(paramsObj.get(actualSyncKey).getAsBoolean());
                                 }
                             }
                         }
@@ -149,8 +167,17 @@ public class ConfigManager {
                         if (hudObj.has("parameters")) {
                             JsonObject paramsObj = hudObj.getAsJsonObject("parameters");
                             for (Parameter<?> p : hm.getParameters()) {
-                                if (paramsObj.has(p.getName())) {
-                                    String valStr = paramsObj.get(p.getName()).getAsString();
+                                String key = p.getName();
+                                if (!paramsObj.has(key)) {
+                                    for (String k : paramsObj.keySet()) {
+                                        if (k.replace(" ", "").equals(key)) {
+                                            key = k;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (paramsObj.has(key)) {
+                                    String valStr = paramsObj.get(key).getAsString();
                                     setParameterValueRaw(p, valStr);
                                 }
                             }

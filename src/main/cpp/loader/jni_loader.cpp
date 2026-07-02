@@ -1,6 +1,6 @@
 #include <jni.h>
-#include "checks.h"
-#include "optimize.h"
+#include "checks.hpp"
+#include "optimize.hpp"
 #include <cstring>
 #include <string>
 #include <iostream>

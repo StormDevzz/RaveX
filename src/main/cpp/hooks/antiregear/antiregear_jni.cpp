@@ -1,6 +1,6 @@
 #include <jni.h>
 #include <vector>
-#include "antiregear.h"
+#include "antiregear.hpp"
 
 extern "C" {
 

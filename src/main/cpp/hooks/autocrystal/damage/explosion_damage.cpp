@@ -1,4 +1,4 @@
-#include "explosion_damage.h"
+#include "explosion_damage.hpp"
 /* Source implementation for explosion_damage */
 namespace ravex {
 namespace damage {

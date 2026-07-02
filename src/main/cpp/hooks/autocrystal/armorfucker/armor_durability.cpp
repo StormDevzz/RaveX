@@ -1,4 +1,4 @@
-#include "armor_durability.h"
+#include "armor_durability.hpp"
 /* Source implementation for armor_durability */
 namespace ravex {
 namespace armorfucker {

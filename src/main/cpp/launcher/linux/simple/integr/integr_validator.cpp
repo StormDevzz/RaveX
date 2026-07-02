@@ -1,6 +1,6 @@
-#include "include/integr_validator.h"
-#include "include/integr_core.h"
-#include "../../checks/fabric_check.h"
+#include "include/integr_validator.hpp"
+#include "include/integr_core.hpp"
+#include "../../checks/fabric_check.hpp"
 #include <sys/stat.h>
 
 namespace ravex {

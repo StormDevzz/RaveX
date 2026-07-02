@@ -1,5 +1,5 @@
-#include "rocketextender_jni.h"
-#include "rocketextender.h"
+#include "rocketextender_jni.hpp"
+#include "rocketextender.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_exploit_RocketExtender_nativeCalculateBoost(
     JNIEnv* env, jclass cls,

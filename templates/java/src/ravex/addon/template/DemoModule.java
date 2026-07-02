@@ -1,12 +1,12 @@
 // ══════════════════════════════════════════════════════════════════════════════
 //  DemoModule.java
 //
-//  RU: Пример модуля RaveX. Модуль — это подключаемая часть аддона,
+//  RU: Пример модуля RaveX. Модуль - это подключаемая часть аддона,
 //      которую пользователь может включать/выключать в GUI.
 //
 //      Демонстрирует:
 //        1. Параметры модуля (BooleanParameter, NumberParameter)
-//        2. Платформенные ветки в onTick() — разное поведение
+//        2. Платформенные ветки в onTick() - разное поведение
 //           на Windows и Linux
 //        3. Жизненный цикл модуля (onEnable, onDisable, onTick)
 //        4. Логирование через AddonModuleManager.getLogger()
@@ -16,7 +16,7 @@
 //
 //      Demonstrates:
 //        1. Module parameters (BooleanParameter, NumberParameter)
-//        2. Platform branches in onTick() — different behavior
+//        2. Platform branches in onTick() - different behavior
 //           on Windows and Linux
 //        3. Module lifecycle (onEnable, onDisable, onTick)
 //        4. Logging via AddonModuleManager.getLogger()
@@ -25,16 +25,16 @@
 package ravex.addon.template;
 
 // RU: Импорты RaveX API.
-//     AddonModule — базовый класс для всех модулей.
-//     AddonModuleInfo — метаданные модуля (категория для GUI).
-//     AddonModuleManager — менеджер модулей (логгер и управление).
-//     BooleanParameter / NumberParameter — типы параметров модуля,
+//     AddonModule - базовый класс для всех модулей.
+//     AddonModuleInfo - метаданные модуля (категория для GUI).
+//     AddonModuleManager - менеджер модулей (логгер и управление).
+//     BooleanParameter / NumberParameter - типы параметров модуля,
 //     которые отображаются в GUI RaveX как переключатели/ползунки.
 // EN: RaveX API imports.
-//     AddonModule — base class for all modules.
-//     AddonModuleInfo — module metadata (GUI category).
-//     AddonModuleManager — module manager (logger and control).
-//     BooleanParameter / NumberParameter — module parameter types
+//     AddonModule - base class for all modules.
+//     AddonModuleInfo - module metadata (GUI category).
+//     AddonModuleManager - module manager (logger and control).
+//     BooleanParameter / NumberParameter - module parameter types
 //     displayed in the RaveX GUI as toggles/sliders.
 import ravex.addon.AddonContext;
 import ravex.addon.AddonModule;
@@ -51,8 +51,8 @@ public class DemoModule extends AddonModule {
     //     пользователем. Они автоматически сохраняются и загружаются.
     //
     //     BooleanParameter: переключатель (true/false).
-    //       - Первый аргумент — уникальное имя (для сохранения в конфиг)
-    //       - Второй — значение по умолчанию
+    //       - Первый аргумент - уникальное имя (для сохранения в конфиг)
+    //       - Второй - значение по умолчанию
     //
     //     NumberParameter: числовой ползунок.
     //       - Имя, значение по умолчанию, минимум, максимум
@@ -62,8 +62,8 @@ public class DemoModule extends AddonModule {
     //     changed by the user. They are automatically saved and loaded.
     //
     //     BooleanParameter: toggle (true/false).
-    //       - First argument — unique name (for config persistence)
-    //       - Second — default value
+    //       - First argument - unique name (for config persistence)
+    //       - Second - default value
     //
     //     NumberParameter: numeric slider.
     //       - Name, default value, minimum, maximum
@@ -95,13 +95,13 @@ public class DemoModule extends AddonModule {
 
     // ─── Жизненный цикл / Lifecycle ────────────────────────────────────────
     //
-    // RU: onEnable — вызывается при включении модуля (пользователем в GUI).
-    //     onDisable — при выключении.
-    //     onTick — вызывается каждый игровой тик (~20 раз/сек).
+    // RU: onEnable - вызывается при включении модуля (пользователем в GUI).
+    //     onDisable - при выключении.
+    //     onTick - вызывается каждый игровой тик (~20 раз/сек).
     //
-    // EN: onEnable — called when the module is enabled (by user in GUI).
-    //     onDisable — when disabled.
-    //     onTick — called every game tick (~20 times/sec).
+    // EN: onEnable - called when the module is enabled (by user in GUI).
+    //     onDisable - when disabled.
+    //     onTick - called every game tick (~20 times/sec).
 
     @Override
     public void onEnable() {
@@ -115,12 +115,12 @@ public class DemoModule extends AddonModule {
         log("DemoModule выключен.");
     }
 
-    // RU: onTick — вызывается каждый тик. Здесь мы используем платформенную
-    //     ветку: на Windows выполняем tickWindows(), на Linux — tickLinux().
+    // RU: onTick - вызывается каждый тик. Здесь мы используем платформенную
+    //     ветку: на Windows выполняем tickWindows(), на Linux - tickLinux().
     //     Это позволяет иметь разную реализацию для разных ОС, не смешивая
     //     код в одном методе.
-    // EN: onTick — called every tick. Here we use platform branching:
-    //     on Windows call tickWindows(), on Linux — tickLinux().
+    // EN: onTick - called every tick. Here we use platform branching:
+    //     on Windows call tickWindows(), on Linux - tickLinux().
     //     This allows different implementations for different OSes
     //     without mixing code in one method.
     @Override
@@ -135,8 +135,8 @@ public class DemoModule extends AddonModule {
     // ─── Платформенные реализации / Platform implementations ──────────────
     //
     // RU: Эти методы содержат платформенно-специфичную логику.
-    //     tickWindows() — для Win32 API через JNI.
-    //     tickLinux() — для X11/POSIX через JNI.
+    //     tickWindows() - для Win32 API через JNI.
+    //     tickLinux() - для X11/POSIX через JNI.
     //
     //     В реальном аддоне здесь может быть:
     //       - Чтение памяти процесса (Windows: ReadProcessMemory)
@@ -145,8 +145,8 @@ public class DemoModule extends AddonModule {
     //       - HTTP-запросы или парсинг данных
     //
     // EN: These methods contain platform-specific logic.
-    //     tickWindows() — for Win32 API via JNI.
-    //     tickLinux() — for X11/POSIX via JNI.
+    //     tickWindows() - for Win32 API via JNI.
+    //     tickLinux() - for X11/POSIX via JNI.
     //
     //     In a real addon this could be:
     //       - Process memory reading (Windows: ReadProcessMemory)
@@ -169,10 +169,10 @@ public class DemoModule extends AddonModule {
     // ─── Утилиты / Utilities ───────────────────────────────────────────────
 
     // RU: Удобный метод для логирования с префиксом имени модуля.
-    //     Использует AddonModuleManager.getLogger() — стандартный
+    //     Использует AddonModuleManager.getLogger() - стандартный
     //     логгер RaveX для модулей.
     // EN: Convenience method for logging with module name prefix.
-    //     Uses AddonModuleManager.getLogger() — the standard
+    //     Uses AddonModuleManager.getLogger() - the standard
     //     RaveX logger for modules.
     private void log(String msg) {
         AddonModuleManager.getLogger().info("[" + getName() + "] " + msg);

@@ -1,4 +1,4 @@
-#include "armor_evaluation.h"
+#include "armor_evaluation.hpp"
 /* Source implementation for armor_evaluation */
 namespace ravex {
 namespace armorfucker {

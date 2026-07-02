@@ -1,4 +1,4 @@
-#include "bypass_handler.h"
+#include "bypass_handler.hpp"
 
 BypassConfig getBypassConfig(ElytraMode mode) {
     BypassConfig config{};

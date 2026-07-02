@@ -1,6 +1,6 @@
-#include "ravex/github/release_manager.h"
-#include "ravex/github/release_checker.h"
-#include "ravex/github/http_client.h"
+#include "ravex/github/release_manager.hpp"
+#include "ravex/github/release_checker.hpp"
+#include "ravex/github/http_client.hpp"
 #include <fstream>
 #include <sstream>
 #include <cstdio>

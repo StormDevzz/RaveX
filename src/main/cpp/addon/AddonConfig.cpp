@@ -1,4 +1,4 @@
-#include "include/AddonConfig.h"
+#include "include/AddonConfig.hpp"
 
 namespace ravex {
 namespace addon {

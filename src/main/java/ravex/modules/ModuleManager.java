@@ -65,7 +65,7 @@ import ravex.modules.misc.PacketLogger;
 import ravex.modules.movement.LongJump;
 import ravex.modules.misc.AutoLog;
 import ravex.modules.render.KillEffects;
-import ravex.modules.misc.NewChunkDetector;
+import ravex.modules.exploit.NewChunks;
 import ravex.modules.misc.AntiQuit;
 import ravex.modules.misc.CustomDeathText;
 import ravex.modules.misc.NoNarrator;
@@ -332,7 +332,7 @@ public class ModuleManager {
         clickGuiModules.add(Optimizer.INSTANCE);
         clickGuiModules.add(AutoEat.INSTANCE);
         clickGuiModules.add(PacketLogger.INSTANCE);
-        clickGuiModules.add(NewChunkDetector.INSTANCE);
+        clickGuiModules.add(NewChunks.INSTANCE);
         clickGuiModules.add(AutoLog.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.Spammer.INSTANCE);
         clickGuiModules.add(ravex.modules.misc.DurabAlert.INSTANCE);

@@ -1,5 +1,5 @@
-#include "include/mojang_downloader.h"
-#include "include/http_client.h"
+#include "include/mojang_downloader.hpp"
+#include "include/http_client.hpp"
 #include <sys/stat.h>
 
 namespace ravex {

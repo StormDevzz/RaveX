@@ -1,4 +1,4 @@
-#include "player_conditions.h"
+#include "player_conditions.hpp"
 /* Source implementation for player_conditions */
 namespace ravex {
 namespace conditions {

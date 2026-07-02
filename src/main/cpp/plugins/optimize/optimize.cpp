@@ -1,4 +1,4 @@
-#include "optimize.h"
+#include "optimize.hpp"
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -6,7 +6,7 @@
 #include <algorithm>
 
 #ifdef _WIN32
-#include "optimize_windows.h"
+#include "optimize_windows.hpp"
 #else
 #include <unistd.h>
 #include <sys/resource.h>

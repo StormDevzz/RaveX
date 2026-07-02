@@ -1,4 +1,4 @@
-#include "trap.h"
+#include "trap.hpp"
 #include <cmath>
 #include <vector>
 #include <algorithm>

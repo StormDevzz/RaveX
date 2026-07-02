@@ -3,6 +3,7 @@ package ravex.modules.player;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.parameter.StringParameter;
 import ravex.utility.lua.LuaManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -11,6 +12,7 @@ import net.minecraft.client.multiplayer.ServerData;
 public class RichPresence extends Module {
     public static final RichPresence INSTANCE = new RichPresence();
 
+    public final StringParameter largeImage = new StringParameter("Large Image", "ravexdc");
     public final BooleanParameter showHP     = new BooleanParameter("Show HP",     true);
     public final BooleanParameter showCoords = new BooleanParameter("Show Coords", false);
     public final BooleanParameter showIP     = new BooleanParameter("Show IP",     true);
@@ -23,6 +25,7 @@ public class RichPresence extends Module {
 
     private RichPresence() {
         super("RichPresence", Category.CLIENT);
+        addParameter(largeImage);
         addParameter(showHP);
         addParameter(showCoords);
         addParameter(showIP);

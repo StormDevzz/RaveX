@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "bowaim.h"
+#include "bowaim.hpp"
 
 extern "C" {
 

@@ -1,4 +1,4 @@
-#include "include/release_fetch.h"
+#include "include/release_fetch.hpp"
 
 namespace ravex {
 namespace launcher {

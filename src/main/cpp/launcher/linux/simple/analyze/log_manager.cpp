@@ -1,4 +1,4 @@
-#include "include/log_manager.h"
+#include "include/log_manager.hpp"
 #include <fstream>
 #include <sstream>
 #include <ctime>

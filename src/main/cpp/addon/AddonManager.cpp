@@ -1,8 +1,8 @@
-#include "include/AddonManager.h"
-#include "include/WinAddonLoader.h"
-#include "include/LinuxAddonLoader.h"
-#include "include/SystemUtils.h"
-#include "include/AddonContext.h"
+#include "include/AddonManager.hpp"
+#include "include/WinAddonLoader.hpp"
+#include "include/LinuxAddonLoader.hpp"
+#include "include/SystemUtils.hpp"
+#include "include/AddonContext.hpp"
 #include <iostream>
 
 namespace ravex {

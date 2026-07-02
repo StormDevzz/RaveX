@@ -1,5 +1,5 @@
-#include "raytracebypass_jni.h"
-#include "raytracebypass.h"
+#include "raytracebypass_jni.hpp"
+#include "raytracebypass.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_exploit_RaytraceBypass_nativeCalculateRotation(
     JNIEnv* env, jclass cls,

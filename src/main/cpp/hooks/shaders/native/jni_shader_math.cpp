@@ -1,7 +1,7 @@
 #include <jni.h>
-#include "../hand/include/shader_math.h"
-#include "../hand/include/shader_noise.h"
-#include "../hand/include/shader_color.h"
+#include "../hand/include/shader_math.hpp"
+#include "../hand/include/shader_noise.hpp"
+#include "../hand/include/shader_color.hpp"
 
 extern "C" {
 

@@ -1,4 +1,4 @@
-#include "mediaquery.h"
+#include "mediaquery.hpp"
 #include <jni.h>
 #include <cstring>
 

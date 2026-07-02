@@ -1,5 +1,5 @@
-#include "phase_jni.h"
-#include "phase.h"
+#include "phase_jni.hpp"
+#include "phase.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_exploit_Phase_nativeCalculateOffset(
     JNIEnv* env, jclass cls,

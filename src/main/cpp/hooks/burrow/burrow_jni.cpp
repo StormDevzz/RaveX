@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "burrow.h"
+#include "burrow.hpp"
 
 extern "C" {
 

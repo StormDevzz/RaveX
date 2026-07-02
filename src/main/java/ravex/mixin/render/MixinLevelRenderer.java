@@ -434,8 +434,9 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
-
+        if (ravex.modules.exploit.NewChunks.INSTANCE.getEnabled()) {
+            ravex.modules.exploit.NewChunks.INSTANCE.render(modelViewMatrix, camera);
+        }
 
         ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
         if (ac.getEnabled() && ac.renderPlacement.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {

@@ -1,9 +1,9 @@
-#include "autocrystal.h"
-#include "damage.h"
-#include "armor.h"
-#include "effects.h"
-#include "entity_tracker.h"
-#include "conditions.h"
+#include "autocrystal.hpp"
+#include "damage.hpp"
+#include "armor.hpp"
+#include "effects.hpp"
+#include "entity_tracker.hpp"
+#include "conditions.hpp"
 
 #include <cmath>
 #include <vector>

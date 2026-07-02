@@ -1,4 +1,4 @@
-#include "autoapple.h"
+#include "autoapple.hpp"
 
 bool calculateShouldEat(
     double health,

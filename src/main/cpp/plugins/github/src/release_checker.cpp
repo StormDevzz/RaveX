@@ -1,6 +1,6 @@
-#include "ravex/github/release_checker.h"
-#include "ravex/github/http_client.h"
-#include "ravex/github/json.h"
+#include "ravex/github/release_checker.hpp"
+#include "ravex/github/http_client.hpp"
+#include "ravex/github/json.hpp"
 #include <sstream>
 #include <algorithm>
 #include <regex>

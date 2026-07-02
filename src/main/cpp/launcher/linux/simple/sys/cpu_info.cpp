@@ -1,4 +1,4 @@
-#include "include/cpu_info.h"
+#include "include/cpu_info.hpp"
 
 namespace ravex {
 namespace launcher {
