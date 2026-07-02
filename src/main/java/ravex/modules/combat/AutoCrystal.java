@@ -93,6 +93,12 @@ public class AutoCrystal extends Module {
     public final NumberParameter  maxRate        = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
     public final BooleanParameter suicide        = new BooleanParameter("Suicide", false);
 
+    public final BooleanParameter grimAC         = new BooleanParameter("GrimAC Bypass", false);
+    public final BooleanParameter ncpBypass      = new BooleanParameter("NCP Bypass", false);
+    public final BooleanParameter bgBlockScanner = new BooleanParameter("BG Block Scanner", true);
+    public final BooleanParameter kbPrediction   = new BooleanParameter("KB Prediction", true);
+    public final BooleanParameter collateralPop  = new BooleanParameter("Collateral Pop List", true);
+
     
     public static BlockPos currentPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
@@ -134,7 +140,10 @@ public class AutoCrystal extends Module {
             boolean armorBreaker, double armorPercent,
             double predictTicks, boolean totemDetection,
             boolean totemCheckTarget, boolean placeAirPlace,
-            boolean placeMultiPlace, boolean suicide
+            boolean placeMultiPlace, boolean suicide,
+            boolean grimAC, boolean ncpBypass,
+            boolean bgBlockScanner, boolean kbPrediction,
+            boolean collateralPop
     );
 
     
@@ -192,6 +201,11 @@ public class AutoCrystal extends Module {
         addParameter(strictRotation);
         addParameter(maxRate);
         addParameter(suicide);
+        addParameter(grimAC);
+        addParameter(ncpBypass);
+        addParameter(bgBlockScanner);
+        addParameter(kbPrediction);
+        addParameter(collateralPop);
 
         
         armorPercent.setVisible(() -> armorBreaker.getValue());
@@ -221,6 +235,8 @@ public class AutoCrystal extends Module {
     public static float silentPitch = 0;
     private static boolean hasSilentRotations = false;
     private int originalSlot = -1;
+    private double[] cachedBlockData = null;
+    private long lastBlockScanTime = 0;
 
     private float lastSilentYaw = 0f;
     private float lastSilentPitch = 0f;
@@ -321,7 +337,10 @@ public class AutoCrystal extends Module {
                     armorBreaker.getValue(), armorPercent.getValue(),
                     predictTicks.getValue(), totemDetection.getValue(),
                     totemCheckTarget.getValue(), placeAirPlace.getValue(),
-                    placeMultiPlace.getValue(), suicide.getValue()
+                    placeMultiPlace.getValue(), suicide.getValue(),
+                    grimAC.getValue(), ncpBypass.getValue(),
+                    bgBlockScanner.getValue(), kbPrediction.getValue(),
+                    collateralPop.getValue()
             );
         } else {
             result = javaFallbackTick(
@@ -564,6 +583,11 @@ public class AutoCrystal extends Module {
 
     
     private double[] collectValidBlocks(Minecraft mc, Vec3 playerPos) {
+        long now = System.currentTimeMillis();
+        if (bgBlockScanner.getValue() && cachedBlockData != null && now - lastBlockScanTime < 150) {
+            return cachedBlockData;
+        }
+
         List<Double> data = new ArrayList<>();
         int r = (int) Math.ceil(placeRange.getValue()) + 1;
         BlockPos origin = BlockPos.containing(playerPos);
@@ -574,7 +598,6 @@ public class AutoCrystal extends Module {
                     BlockPos pos = origin.offset(dx, dy, dz);
                     BlockState state = mc.level.getBlockState(pos);
                     if (state.is(Blocks.OBSIDIAN) || state.is(Blocks.BEDROCK)) {
-                        
                         BlockState above = mc.level.getBlockState(pos.above());
                         BlockState above2 = mc.level.getBlockState(pos.above(2));
                         if (above.isAir() && above2.isAir()) {
@@ -587,7 +610,6 @@ public class AutoCrystal extends Module {
             }
         }
 
-        
         if (BasePlace.INSTANCE.getEnabled() && BasePlace.INSTANCE.autoCrystalSync.getValue() && BasePlace.lastPlacedBase != null) {
             long msLimit = (long) (BasePlace.INSTANCE.syncPredictTicks.getValue() * 50);
             if (System.currentTimeMillis() - BasePlace.lastPlacedTime <= msLimit) {
@@ -612,11 +634,17 @@ public class AutoCrystal extends Module {
             }
         }
 
-
         double[] arr = new double[data.size()];
         for (int i = 0; i < arr.length; i++) arr[i] = data.get(i);
-        return arr;
 
+        if (bgBlockScanner.getValue()) {
+            cachedBlockData = arr;
+            lastBlockScanTime = now;
+        } else {
+            cachedBlockData = null;
+        }
+
+        return arr;
     }
 
     

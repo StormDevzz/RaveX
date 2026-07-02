@@ -1,5 +1,5 @@
 #include "baseplace.h"
-#include "../autocrystal/entity_tracker.h"
+#include "../autocrystal/include/entity_tracker.h"
 #include <cmath>
 #include <algorithm>
 #include <limits>

@@ -61,7 +61,20 @@ public class ModuleButton {
         return (int) ((Math.min(h, MAX_INLINE_HEIGHT) + 4) * expandAnim);
     }
 
-    public boolean onInlineScroll(double amount) {
+    public boolean onInlineScroll(double mouseX, double mouseY, double amount, int x, int y, int width) {
+        int paramW = width - 6;
+        int scrollOffset = Math.round(inlineScrollAnim);
+        int pY = y + 2 - scrollOffset;
+
+        for (ParameterElement pe : parameterElements) {
+            if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
+            int pHeight = pe.getHeight();
+            if (pe.mouseScrolled(mouseX, mouseY, amount, x + 1, pY, paramW, pHeight)) {
+                return true;
+            }
+            pY += pHeight;
+        }
+
         int fullH = 0;
         for (ParameterElement pe : parameterElements) {
             if (pe.getParameter().isVisible() || pe.getExpandAnimProgress() > 0.001f) {

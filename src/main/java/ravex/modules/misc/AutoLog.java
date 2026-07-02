@@ -14,16 +14,12 @@ public class AutoLog extends Module {
     public final NumberParameter healthLimit = new NumberParameter("Min HP", 6.0, 1.0, 20.0, 0.5);
     public final BooleanParameter onPlayerNearby = new BooleanParameter("Player Nearby", false);
     public final NumberParameter playerRange = new NumberParameter("Range", 16.0, 4.0, 64.0, 1.0);
-    public final BooleanParameter onAdminNearby = new BooleanParameter("Admin Nearby", true);
-
     private AutoLog() {
         super("AutoLog", Category.MISC);
         addParameter(onLowHealth);
         addParameter(healthLimit);
         addParameter(onPlayerNearby);
-        addParameter(playerRange);
-        addParameter(onAdminNearby);
-    }
+        addParameter(playerRange);    }
 
     @Override
     public void onTick() {
@@ -45,22 +41,6 @@ public class AutoLog extends Module {
             if (onPlayerNearby.getValue() && dist <= playerRange.getValue()) {
                 disconnect("Player " + other.getGameProfile().name() + " is too close (" + String.format("%.1f", dist) + "m)");
                 return;
-            }
-
-            
-            if (onAdminNearby.getValue()) {
-                boolean isAdmin = other.isCreative() || other.isSpectator();
-                if (!isAdmin) {
-                    
-                    String name = other.getGameProfile().name().toLowerCase();
-                    if (name.contains("admin") || name.contains("mod") || name.contains("helper") || name.contains("owner")) {
-                        isAdmin = true;
-                    }
-                }
-                if (isAdmin && dist <= 64.0) {
-                    disconnect("Admin " + other.getGameProfile().name() + " detected nearby!");
-                    return;
-                }
             }
         }
     }

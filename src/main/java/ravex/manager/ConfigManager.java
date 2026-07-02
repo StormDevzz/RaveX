@@ -48,6 +48,9 @@ public class ConfigManager {
                 for (Parameter<?> p : m.getParameters()) {
                     if (p instanceof ravex.parameter.ActionParameter) continue;
                     paramsObj.addProperty(p.getName(), String.valueOf(p.getValue()));
+                    if (p instanceof ravex.parameter.ColorParameter cp) {
+                        paramsObj.addProperty(p.getName() + "_themeSync", cp.isThemeSync());
+                    }
                 }
                 modObj.add("parameters", paramsObj);
 
@@ -112,6 +115,12 @@ public class ConfigManager {
                             if (paramsObj.has(p.getName())) {
                                 String valStr = paramsObj.get(p.getName()).getAsString();
                                 setParameterValueRaw(p, valStr);
+                            }
+                            if (p instanceof ravex.parameter.ColorParameter cp) {
+                                String syncKey = p.getName() + "_themeSync";
+                                if (paramsObj.has(syncKey)) {
+                                    cp.setThemeSync(paramsObj.get(syncKey).getAsBoolean());
+                                }
                             }
                         }
                     }

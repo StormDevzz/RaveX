@@ -34,10 +34,16 @@ public class Notifications extends Module {
         if (!INSTANCE.getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            String c = argbToMcHex(INSTANCE.messageColor.getValue());
-            String status = c + (enabled ? "Enabled" : "Disabled");
-            String msg = "§7[" + c + "RaveX§7] Module " + c + module.getName() + " §7has been " + status + "§7.";
-            mc.player.displayClientMessage(Component.literal(msg), false);
+            int color = INSTANCE.messageColor.getValue();
+            Component message = Component.literal("[")
+                .withStyle(style -> style.withColor(0x7F7F7F))
+                .append(Component.literal("RaveX").withStyle(style -> style.withColor(color)))
+                .append(Component.literal("] Module ").withStyle(style -> style.withColor(0x7F7F7F)))
+                .append(Component.literal(module.getName()).withStyle(style -> style.withColor(color)))
+                .append(Component.literal(" has been ").withStyle(style -> style.withColor(0x7F7F7F)))
+                .append(Component.literal(enabled ? "Enabled" : "Disabled").withStyle(style -> style.withColor(color)))
+                .append(Component.literal(".").withStyle(style -> style.withColor(0x7F7F7F)));
+            mc.player.displayClientMessage(message, false);
         }
     }
 }

@@ -93,6 +93,9 @@ public class Render2DEngine {
         int minY = (int) Math.floor(y);
         int maxY = (int) Math.ceil(y + h);
 
+        float smoothWidth = 1.35f;
+        float halfSmooth = smoothWidth / 2.0f;
+
         for (int py = minY; py < maxY; py++) {
             float pCenterY = py + 0.5f;
             float dy = Math.abs(pCenterY - cy) - innerHalfH;
@@ -109,7 +112,7 @@ public class Render2DEngine {
                     dist = Math.max(dx, dy) - r;
                 }
 
-                if (dist <= -0.5f) {
+                if (dist <= -halfSmooth) {
                     if (startX == -1) {
                         startX = px;
                     }
@@ -119,8 +122,10 @@ public class Render2DEngine {
                         startX = -1;
                     }
 
-                    if (dist < 0.5f) {
-                        float alphaFactor = 0.5f - dist;
+                    if (dist < halfSmooth) {
+                        float t = (dist + halfSmooth) / smoothWidth;
+                        float alphaFactor = 1.0f - t;
+                        alphaFactor = alphaFactor * alphaFactor * (3.0f - 2.0f * alphaFactor);
                         int alpha = Math.round(aBase * alphaFactor);
                         if (alpha > 0) {
                             int edgeColor = (alpha << 24) | (rCol << 16) | (gCol << 8) | bCol;
