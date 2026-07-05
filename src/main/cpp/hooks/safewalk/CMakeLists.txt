@@ -1,54 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_safewalk SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-s
-a
-f
-e
-w
-a
-l
-k
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-s
-a
-f
-e
-w
-a
-l
-k
-_
-j
-n
-i
-.
-c
-p
-p
+    main/safewalk.cpp
+    main/safewalk_jni.cpp
 )
 
 find_package(JNI REQUIRED)

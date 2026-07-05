@@ -1,56 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_autoapple SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-a
-u
-t
-o
-a
-p
-p
-l
-e
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-a
-u
-t
-o
-a
-p
-p
-l
-e
-_
-j
-n
-i
-.
-c
-p
-p
+    main/autoapple.cpp
+    main/autoapple_jni.cpp
 )
 
 find_package(JNI REQUIRED)

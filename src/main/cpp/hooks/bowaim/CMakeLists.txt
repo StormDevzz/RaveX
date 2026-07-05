@@ -1,50 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_bowaim SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-b
-o
-w
-a
-i
-m
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-b
-o
-w
-a
-i
-m
-_
-j
-n
-i
-.
-c
-p
-p
+    main/bowaim.cpp
+    main/bowaim_jni.cpp
 )
 
 find_package(JNI REQUIRED)

@@ -1,48 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_nuker SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-n
-u
-k
-e
-r
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-n
-u
-k
-e
-r
-_
-j
-n
-i
-.
-c
-p
-p
+    main/nuker.cpp
+    main/nuker_jni.cpp
 )
 
 find_package(JNI REQUIRED)

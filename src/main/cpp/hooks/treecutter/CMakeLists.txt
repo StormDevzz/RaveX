@@ -1,58 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_treecutter SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-t
-r
-e
-e
-c
-u
-t
-t
-e
-r
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-t
-r
-e
-e
-c
-u
-t
-t
-e
-r
-_
-j
-n
-i
-.
-c
-p
-p
+    main/treecutter.cpp
+    main/treecutter_jni.cpp
 )
 
 find_package(JNI REQUIRED)

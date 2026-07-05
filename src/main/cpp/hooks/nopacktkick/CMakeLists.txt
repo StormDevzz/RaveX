@@ -1,60 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_nopacktkick SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-n
-o
-p
-a
-c
-k
-t
-k
-i
-c
-k
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-n
-o
-p
-a
-c
-k
-t
-k
-i
-c
-k
-_
-j
-n
-i
-.
-c
-p
-p
+    main/nopacktkick.cpp
+    main/nopacktkick_jni.cpp
 )
 
 find_package(JNI REQUIRED)

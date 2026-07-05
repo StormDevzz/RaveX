@@ -1,50 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_noslow SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-n
-o
-s
-l
-o
-w
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-n
-o
-s
-l
-o
-w
-_
-j
-n
-i
-.
-c
-p
-p
+    main/noslow.cpp
+    main/noslow_jni.cpp
 )
 
 find_package(JNI REQUIRED)

@@ -1,56 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_replenish SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-r
-e
-p
-l
-e
-n
-i
-s
-h
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-r
-e
-p
-l
-e
-n
-i
-s
-h
-_
-j
-n
-i
-.
-c
-p
-p
+    main/replenish.cpp
+    main/replenish_jni.cpp
 )
 
 find_package(JNI REQUIRED)

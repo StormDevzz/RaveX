@@ -1,54 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_nametags SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-n
-a
-m
-e
-t
-a
-g
-s
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-n
-a
-m
-e
-t
-a
-g
-s
-_
-j
-n
-i
-.
-c
-p
-p
+    main/nametags.cpp
+    main/nametags_jni.cpp
 )
 
 find_package(JNI REQUIRED)
