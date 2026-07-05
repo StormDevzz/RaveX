@@ -8,15 +8,15 @@ import net.minecraft.network.chat.Component;
 public class AntiAfk extends Module {
     public static final AntiAfk INSTANCE = new AntiAfk();
     public final NumberParameter interval   = new NumberParameter("Interval", 12.0, 5.0, 60.0, 1.0);
-    public final BooleanParameter mouseMove = new BooleanParameter("Mouse Move", true);
-    public final BooleanParameter keyPress  = new BooleanParameter("Key Press", true);
-    public final BooleanParameter lookAround = new BooleanParameter("Look Around", true);
+    public final BooleanParameter mouseMove = new BooleanParameter("MouseMove", true);
+    public final BooleanParameter keyPress  = new BooleanParameter("KeyPress", true);
+    public final BooleanParameter lookAround = new BooleanParameter("LookAround", true);
     public final BooleanParameter jump      = new BooleanParameter("Jump", true);
     public final NumberParameter rotationRange = new NumberParameter("Rotation", 45.0, 10.0, 180.0, 5.0);
-    public final BooleanParameter debugLog = new BooleanParameter("Debug Log", false);
+    public final BooleanParameter debugLog = new BooleanParameter("DebugLog", false);
 
     static {
-        ravex.utility.misc.NativeLoader.load();
+        ravex.utility.nativelib.NativeLoader.load();
     }
     @Override
     protected void onEnable() {

@@ -8,9 +8,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import ravex.modules.exploit.AntiHunger;
+import ravex.modules.player.AntiHunger;
 import ravex.modules.misc.PacketUtils;
-import ravex.modules.exploit.HandshakeSpoof;
+import ravex.modules.player.HandshakeSpoof;
 import io.netty.channel.ChannelHandlerContext;
 
 @Mixin(Connection.class)
@@ -49,13 +49,13 @@ public class MixinConnection {
         }
 
         if (packet instanceof ServerboundUseItemPacket usePacket) {
-            if (ravex.modules.exploit.FakePearl.INSTANCE.getEnabled()) {
-                String trg = ravex.modules.exploit.FakePearl.INSTANCE.trigger.getValue();
+            if (ravex.modules.misc.FakePearl.INSTANCE.getEnabled()) {
+                String trg = ravex.modules.misc.FakePearl.INSTANCE.trigger.getValue();
                 if ("Right Click".equals(trg) || "Both".equals(trg)) {
                     net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                     if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(net.minecraft.world.item.Items.ENDER_PEARL)) {
                         ci.cancel();
-                        ravex.modules.exploit.FakePearl.INSTANCE.throwFakePearl();
+                        ravex.modules.misc.FakePearl.INSTANCE.throwFakePearl();
                         mc.player.swing(usePacket.getHand());
                         return;
                     }
@@ -66,14 +66,14 @@ public class MixinConnection {
         if (packet instanceof ServerboundUseItemPacket usePacket) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(net.minecraft.world.item.Items.ENDER_PEARL)) {
-                if (ravex.modules.exploit.Phase.INSTANCE.getEnabled()) {
-                    ravex.modules.exploit.Phase.INSTANCE.clip();
+                if (ravex.modules.movement.Phase.INSTANCE.getEnabled()) {
+                    ravex.modules.movement.Phase.INSTANCE.clip();
                 }
             }
         }
 
         if (packet instanceof ServerboundSwingPacket) {
-            if (ravex.modules.exploit.NoMineAnimation.INSTANCE.getEnabled() && ravex.modules.exploit.NoMineAnimation.INSTANCE.hideSwing.getValue()) {
+            if (ravex.modules.player.NoMineAnimation.INSTANCE.getEnabled() && ravex.modules.player.NoMineAnimation.INSTANCE.hideSwing.getValue()) {
                 net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                 if (mc.gameMode != null && mc.gameMode.isDestroying()) {
                     ci.cancel();
@@ -82,29 +82,7 @@ public class MixinConnection {
             }
         }
 
-        if (ravex.modules.exploit.RaytraceBypass.INSTANCE.getEnabled()) {
-            net.minecraft.core.BlockPos pos = null;
-            if (packet instanceof ServerboundPlayerActionPacket actionPacket && actionPacket.getAction() == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK) {
-                pos = actionPacket.getPos();
-            } else if (packet instanceof ServerboundUseItemOnPacket useOnPacket) {
-                pos = useOnPacket.getHitResult().getBlockPos();
-            }
-
-            if (pos != null) {
-                float[] rot = ravex.modules.exploit.RaytraceBypass.INSTANCE.getBypassRotations(pos.getX(), pos.getY(), pos.getZ());
-                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-                if (mc.player != null && mc.getConnection() != null) {
-                    if (ravex.modules.exploit.RaytraceBypass.INSTANCE.silent.getValue()) {
-                        mc.getConnection().send(new ServerboundMovePlayerPacket.Rot(rot[0], rot[1], mc.player.onGround(), mc.player.horizontalCollision));
-                    } else {
-                        mc.player.setYRot(rot[0]);
-                        mc.player.setXRot(rot[1]);
-                    }
-                }
-            }
-        }
-
-        if (ravex.modules.exploit.PortalGodMode.INSTANCE.getEnabled()) {
+        if (ravex.modules.misc.PortalGodMode.INSTANCE.getEnabled()) {
             if (packet instanceof ServerboundAcceptTeleportationPacket) {
                 ci.cancel();
                 return;
@@ -160,7 +138,7 @@ public class MixinConnection {
 
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"))
     private void onChannelRead(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
-        ravex.modules.exploit.NewChunks.INSTANCE.onPacketReceive(packet);
+        ravex.modules.misc.NewChunks.INSTANCE.onPacketReceive(packet);
 
         if (PacketUtils.INSTANCE.getEnabled() && PacketUtils.INSTANCE.logIncoming.getValue()) {
             PacketUtils.INSTANCE.logPacket("S2C <-", packet);

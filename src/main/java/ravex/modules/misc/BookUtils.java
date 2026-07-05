@@ -16,11 +16,11 @@ import java.util.Optional;
 public class BookUtils extends Module {
     public static final BookUtils INSTANCE = new BookUtils();
     public final ModeParameter mode = new ModeParameter("Mode", "Edit", List.of("Edit", "Fill"));
-    public final StringParameter newTitle = new StringParameter("Title", "RaveX Book");
+    public final StringParameter newTitle = new StringParameter("Title", "RaveXBook");
     public final StringParameter newAuthor = new StringParameter("Author", "RaveX");
     public final StringParameter fillPattern = new StringParameter("Pattern", "书填装模块占用空间书填装模块占用空间");
     public final NumberParameter maxPages = new NumberParameter("Pages", 100.0, 1.0, 100.0, 1.0);
-    public final StringParameter bookTitle = new StringParameter("Book Title", "");
+    public final StringParameter bookTitle = new StringParameter("BookTitle", "");
 
     @Override
     protected void onEnable() {

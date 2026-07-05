@@ -25,7 +25,7 @@ public class ChatUtils extends Module {
     public final ModeParameter announceMode = new ModeParameter("AnnounceMode", "Periodic", List.of("Periodic", "Milestone"));
     public final BooleanParameter onlyFirstJoin = new BooleanParameter("FirstJoinOnly", true);
     public final BooleanParameter ezOnlyPlayers = new BooleanParameter("EZOnlyPlayers", true);
-    public final NumberParameter ezDelay = new NumberParameter("EZ Delay (ms)", 500.0, 0.0, 3000.0, 100.0);
+    public final NumberParameter ezDelay = new NumberParameter("EZDelay(ms)", 500.0, 0.0, 3000.0, 100.0);
     public final ModeParameter mode = new ModeParameter("Mode", "All", List.of("All", "Announcer", "Welcomer", "AutoEZ", "ExtraChat"));
     private double lastX, lastZ;
     private double blocksWalked;

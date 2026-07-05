@@ -14,9 +14,9 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 public class AutoFish extends Module {
     public static final AutoFish INSTANCE = new AutoFish();
-    public final NumberParameter castDelay = new NumberParameter("Cast Delay (ms)", 600, 200, 2000, 100);
-    public final BooleanParameter silent = new BooleanParameter("Silent Swap", true);
-    public final BooleanParameter autoCast = new BooleanParameter("Auto Cast", true);
+    public final NumberParameter castDelay = new NumberParameter("CastDelay(ms)", 600, 200, 2000, 100);
+    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
+    public final BooleanParameter autoCast = new BooleanParameter("AutoCast", true);
     private long lastActionTime = 0;
     private boolean wasIdle = false;
     private double prevY = 0;

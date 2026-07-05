@@ -23,9 +23,9 @@ public class ChestAura extends Module {
     public final NumberParameter delay = new NumberParameter("Delay", 2.0, 0.0, 20.0, 1.0);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter highlightColor = new ColorParameter("Color", 0xFF00FF88);
-    public final NumberParameter fadeSpeed = new NumberParameter("Fade Duration", 1.0, 0.1, 3.0, 0.1);
+    public final NumberParameter fadeSpeed = new NumberParameter("FadeDuration", 1.0, 0.1, 3.0, 0.1);
     public final BooleanParameter filled = new BooleanParameter("Filled", true);
-    public final BooleanParameter autoSwap = new BooleanParameter("Auto Swap", true);
+    public final BooleanParameter autoSwap = new BooleanParameter("AutoSwap", true);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
     public static class PlacedChest {
         public final BlockPos pos;

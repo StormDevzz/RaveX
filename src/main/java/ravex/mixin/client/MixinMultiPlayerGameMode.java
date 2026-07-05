@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.mixin.network.AccessorMultiPlayerGameMode;
-import ravex.modules.exploit.GrimInstantMine;
-import ravex.modules.exploit.PacketMine;
+import ravex.mixin.network.AccessorMultiPlayerGameMode;
+import ravex.modules.player.PacketMine;
 
 @Mixin(MultiPlayerGameMode.class)
 public class MixinMultiPlayerGameMode {
@@ -22,13 +22,6 @@ public class MixinMultiPlayerGameMode {
             if (PacketMine.INSTANCE.isTargetBlock(pos)) {
                 AccessorMultiPlayerGameMode accessor = (AccessorMultiPlayerGameMode) this;
                 accessor.setDestroyBlockPos(pos);
-            }
-        }
-
-        if (GrimInstantMine.INSTANCE.getEnabled()) {
-            boolean handled = GrimInstantMine.INSTANCE.onBlockClick(pos, facing);
-            if (handled) {
-                cir.setReturnValue(true);
             }
         }
     }

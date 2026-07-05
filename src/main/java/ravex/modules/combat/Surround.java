@@ -28,8 +28,8 @@ public class Surround extends Module {
     public static Vec3 animatedCenter = null;
     public final ModeParameter mode = new ModeParameter("Mode", "Full",
         java.util.List.of("Full", "AntiFace", "Extra"));
-    public final BooleanParameter autoCenter = new BooleanParameter("Auto Center", true);
-    public final BooleanParameter autoDisable = new BooleanParameter("Auto Disable", true);
+    public final BooleanParameter autoCenter = new BooleanParameter("AutoCenter", true);
+    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter animate = new BooleanParameter("Animate", true);
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
@@ -37,8 +37,8 @@ public class Surround extends Module {
     private static boolean nativeAvailable = false;
     static {
         try {
-            ravex.utility.misc.NativeLoader.load();
-            nativeAvailable = ravex.utility.misc.NativeLoader.isNativeAvailable();
+            ravex.utility.nativelib.NativeLoader.load();
+            nativeAvailable = ravex.utility.nativelib.NativeLoader.isNativeAvailable();
         } catch (Throwable t) {
             nativeAvailable = false;
         }

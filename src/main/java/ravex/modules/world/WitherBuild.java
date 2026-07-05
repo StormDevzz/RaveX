@@ -17,7 +17,7 @@ import ravex.parameter.NumberParameter;
 public class WitherBuild extends Module {
     public static final WitherBuild INSTANCE = new WitherBuild();
     public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0, 1.0);
-    public final BooleanParameter autoDisable = new BooleanParameter("Auto Disable", true);
+    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
     private enum State { IDLE, BUILDING, RETRY, DONE }
     private State state = State.IDLE;
     private BlockPos base = null;
@@ -129,7 +129,7 @@ public class WitherBuild extends Module {
                 }
             }
         }
-        sendMsg(mc, "No suitable position found");
+        sendMsg(mc, "NoSuitablePositionFound");
         setEnabled(false);
     }
     private void tryPlaceNext(Minecraft mc, long now) {
@@ -295,8 +295,8 @@ public class WitherBuild extends Module {
     }
     private String getMissingMsg() {
         return buildIndex < SOUL_SAND_COUNT
-            ? "Not enough soul sand/soil"
-            : "Not enough wither skeleton skulls";
+            ? "NotEnoughSoulSand/soil"
+            : "NotEnoughWitherSkeletonSkulls";
     }
     private void sendMsg(Minecraft mc, String msg) {
         if (mc.player != null) {

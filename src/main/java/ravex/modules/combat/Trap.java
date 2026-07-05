@@ -24,24 +24,24 @@ import ravex.utility.nativelib.NativeLibrary;
 public class Trap extends Module {
     public static final Trap INSTANCE = new Trap();
     public final NumberParameter  range          = new NumberParameter("Range",          4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  placeDelay     = new NumberParameter("Place Delay",     50.0, 0.0, 500.0, 10.0);
-    public final ModeParameter    swapMode       = new ModeParameter("Swap Mode", "Silent",
+    public final NumberParameter  placeDelay     = new NumberParameter("PlaceDelay",     50.0, 0.0, 500.0, 10.0);
+    public final ModeParameter    swapMode       = new ModeParameter("SwapMode", "Silent",
             java.util.List.of("Silent", "Normal", "None"));
-    public final ModeParameter    rotate         = new ModeParameter("Rotate Mode", "Silent",
+    public final ModeParameter    rotate         = new ModeParameter("RotateMode", "Silent",
             java.util.List.of("Silent", "Normal", "Packet", "None"));
     public final BooleanParameter roof           = new BooleanParameter("Roof",           true);
-    public final BooleanParameter autoDisable    = new BooleanParameter("Auto Disable",    true);
+    public final BooleanParameter autoDisable    = new BooleanParameter("AutoDisable",    true);
     public final ModeParameter    targetMode     = new ModeParameter("Target", "Closest",
-            java.util.List.of("Closest", "Lowest HP"));
-    public final ModeParameter    targetType     = new ModeParameter("Target Type", "Players",
+            java.util.List.of("Closest", "LowestHP"));
+    public final ModeParameter    targetType     = new ModeParameter("TargetType", "Players",
             java.util.List.of("Players", "Monsters", "Passives", "All"));
-    public final ModeParameter    speedMode      = new ModeParameter("Speed Mode", "Normal",
+    public final ModeParameter    speedMode      = new ModeParameter("SpeedMode", "Normal",
             java.util.List.of("Legit", "Normal", "Aggressive"));
-    public final NumberParameter  jitterDelay    = new NumberParameter("Jitter Delay", 0.0, 0.0, 100.0, 5.0);
-    public final BooleanParameter strictRotation = new BooleanParameter("Strict Rotation", false);
-    public final NumberParameter  maxRate        = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
-    public final BooleanParameter swapSwitchBack = new BooleanParameter("Swap Switch Back", true);
-    public final BooleanParameter swapInventory  = new BooleanParameter("Swap Inventory", false);
+    public final NumberParameter  jitterDelay    = new NumberParameter("JitterDelay", 0.0, 0.0, 100.0, 5.0);
+    public final BooleanParameter strictRotation = new BooleanParameter("StrictRotation", false);
+    public final NumberParameter  maxRate        = new NumberParameter("MaxRate", 2.0, 1.0, 5.0, 1.0);
+    public final BooleanParameter swapSwitchBack = new BooleanParameter("SwapSwitchBack", true);
+    public final BooleanParameter swapInventory  = new BooleanParameter("SwapInventory", false);
     public final BooleanParameter render         = new BooleanParameter("Render",         true);
     public final ColorParameter   color          = new ColorParameter("Color",           0xFFFFAA00);
     private long lastPlaceTime = 0;
@@ -251,7 +251,7 @@ public class Trap extends Module {
             if (dist > maxDist) continue;
             double metric = switch (mode) {
                 case "Closest"   -> dist;
-                case "Lowest HP" -> le.getHealth();
+                case "LowestHP" -> le.getHealth();
                 default          -> dist;
             };
             if (metric < bestMetric) {

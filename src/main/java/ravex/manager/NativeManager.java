@@ -1,6 +1,6 @@
 package ravex.manager;
 
-import ravex.utility.misc.NativeLoader;
+import ravex.utility.nativelib.NativeLoader;
 
 public class NativeManager {
     public static final NativeManager INSTANCE = new NativeManager();

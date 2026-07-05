@@ -26,7 +26,7 @@ public class FontRenderUtility {
     private static boolean renderOnce = false;
 
     private static final HashMap<Integer, Component> componentCache = new HashMap<>();
-    private static final int CACHE_MAX = 256;
+    private static final int CACHE_MAX = 1024;
 
     public enum FontType {
         SF_MEDIUM, SF_BOLD, COMFORTAA, VANILLA
@@ -51,9 +51,6 @@ public class FontRenderUtility {
         FontType actualType = fontType;
         boolean customFontActive = ravex.modules.client.Fonts.INSTANCE.enabled.getValue();
 
-        if (actualType == FontType.VANILLA && customFontActive) {
-            actualType = getCurrentFontType();
-        }
         if (actualType != FontType.VANILLA && !customFontActive) {
             actualType = FontType.VANILLA;
         }
@@ -94,14 +91,15 @@ public class FontRenderUtility {
             LOGGER.info("[RaveX/font] Custom fonts successfully initialized!");
         }
 
-        if (Math.abs(scale - 1.0) < 0.01) {
+        if (Math.abs(scale - 1.0) < 0.001) {
             graphics.drawString(Minecraft.getInstance().font, component, x, y, color, shadow);
         } else {
-            graphics.pose().pushMatrix();
-            graphics.pose().translate((float) x, (float) y);
-            graphics.pose().scale((float) scale, (float) scale);
+            var pose = graphics.pose();
+            pose.pushMatrix();
+            pose.translate((float) x, (float) y);
+            pose.scale((float) scale, (float) scale);
             graphics.drawString(Minecraft.getInstance().font, component, 0, 0, color, shadow);
-            graphics.pose().popMatrix();
+            pose.popMatrix();
         }
     }
 

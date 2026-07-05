@@ -22,9 +22,9 @@ import java.util.List;
 public class BedBomb extends Module {
     public static final BedBomb INSTANCE = new BedBomb();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.5);
-    public final NumberParameter targetRange = new NumberParameter("Target Range", 6.0, 1.0, 12.0, 0.5);
+    public final NumberParameter targetRange = new NumberParameter("TargetRange", 6.0, 1.0, 12.0, 0.5);
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
-    public final BooleanParameter autoSwitch = new BooleanParameter("Auto Switch", true);
+    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public static BlockPos currentTarget = null;

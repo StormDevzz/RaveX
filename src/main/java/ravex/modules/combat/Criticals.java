@@ -14,9 +14,9 @@ public class Criticals extends Module {
     public static final Criticals INSTANCE = new Criticals();
     public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         java.util.List.of("Legit", "Packet", "Grim", "MiniJump", "Watchdog"));
-    public final BooleanParameter autoAttack = new BooleanParameter("Auto Attack", true);
-    public final BooleanParameter stopOnWater = new BooleanParameter("Stop On Water", true);
-    public final BooleanParameter pauseAura = new BooleanParameter("Pause Aura", false);
+    public final BooleanParameter autoAttack = new BooleanParameter("AutoAttack", true);
+    public final BooleanParameter stopOnWater = new BooleanParameter("StopOnWater", true);
+    public final BooleanParameter pauseAura = new BooleanParameter("PauseAura", false);
     private enum Sequence { NONE, JUMPING, LANDING }
     private Sequence seq = Sequence.NONE;
     private int seqTicks = 0;

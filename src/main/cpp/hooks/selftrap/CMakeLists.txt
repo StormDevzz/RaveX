@@ -1,8 +1,54 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_selftrap SHARED
-    selftrap.cpp
-    selftrap_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+s
+e
+l
+f
+t
+r
+a
+p
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+s
+e
+l
+f
+t
+r
+a
+p
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
@@ -14,7 +60,7 @@ else()
 endif()
 
 target_include_directories(ravex_selftrap PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

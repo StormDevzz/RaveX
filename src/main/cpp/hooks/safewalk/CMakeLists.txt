@@ -1,8 +1,54 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_safewalk SHARED
-    safewalk.cpp
-    safewalk_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+s
+a
+f
+e
+w
+a
+l
+k
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+s
+a
+f
+e
+w
+a
+l
+k
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
@@ -14,7 +60,7 @@ else()
 endif()
 
 target_include_directories(ravex_safewalk PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

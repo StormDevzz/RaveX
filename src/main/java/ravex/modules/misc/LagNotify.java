@@ -6,7 +6,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 public class LagNotify extends Module {
     public static final LagNotify INSTANCE = new LagNotify();
-    public final NumberParameter threshold = new NumberParameter("Threshold TPS", 15.0, 5.0, 20.0, 1.0);
+    public final NumberParameter threshold = new NumberParameter("ThresholdTPS", 15.0, 5.0, 20.0, 1.0);
     public final BooleanParameter sound = new BooleanParameter("Sound", true);
     private long lastRealTime = 0;
     private long lastGameTick = -1;

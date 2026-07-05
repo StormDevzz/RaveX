@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_mediaquery SHARED
-    mediaquery.cpp
-    mediaquery_jni.cpp
+    main/mediaquery.cpp
+    main/mediaquery_jni.cpp
 )
 
 find_package(JNI REQUIRED)
@@ -10,7 +10,7 @@ target_include_directories(ravex_mediaquery PRIVATE ${JNI_INCLUDE_DIRS})
 target_link_libraries(ravex_mediaquery PRIVATE ${JNI_LIBRARIES})
 
 target_include_directories(ravex_mediaquery PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

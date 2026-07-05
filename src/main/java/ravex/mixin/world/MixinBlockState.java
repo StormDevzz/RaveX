@@ -41,7 +41,7 @@ public class MixinBlockState {
             }
         }
 
-        if (ravex.modules.exploit.Phase.INSTANCE.getEnabled()) {
+        if (ravex.modules.movement.Phase.INSTANCE.getEnabled()) {
             if (context instanceof net.minecraft.world.phys.shapes.EntityCollisionContext ecc) {
                 if (ecc.getEntity() != null && ecc.getEntity() instanceof net.minecraft.client.player.LocalPlayer) {
                     cir.setReturnValue(Shapes.empty());

@@ -20,7 +20,7 @@ import java.util.List;
 public class WebAura extends Module {
     public static final WebAura INSTANCE = new WebAura();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Positive", "Custom"));
-    public final NumberParameter customRange = new NumberParameter("Custom Range", 4.0, 2.0, 6.0, 0.1);
+    public final NumberParameter customRange = new NumberParameter("CustomRange", 4.0, 2.0, 6.0, 0.1);
     private int delay = 0;
 
     @Override

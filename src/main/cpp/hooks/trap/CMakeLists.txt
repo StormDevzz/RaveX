@@ -1,8 +1,46 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_trap SHARED
-    trap.cpp
-    trap_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+t
+r
+a
+p
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+t
+r
+a
+p
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
@@ -14,13 +52,13 @@ else()
 endif()
 
 target_include_directories(ravex_trap PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 
 target_link_libraries(ravex_trap PRIVATE ravex_common)
 
-set_property(TARGET ravex_trap PROPERTY CXX_STANDARD 17)
+set_property(TARGET ravex_trap PROPERTY CXX_STANDARD 23)
 set_property(TARGET ravex_trap PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")

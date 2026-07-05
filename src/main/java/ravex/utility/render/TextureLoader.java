@@ -14,6 +14,7 @@ import ravex.modules.Category;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class TextureLoader {
@@ -25,6 +26,11 @@ public class TextureLoader {
     private static final String CLASSPATH_PREFIX = "/assets/ravex/textures/";
 
     private static final int ICON_SIZE = 32;
+    private static final int MODULE_ICON_SIZE = 16;
+    private static final String MODULES_SUBDIR = "modules/";
+
+    private static final Map<String, Identifier> MODULE_ICONS = new HashMap<>();
+    private static final HashSet<String> MODULE_ICON_MISSING = new HashSet<>();
 
     public static final Identifier SEARCH = id("search");
     public static final Identifier SEARCH_WHITE = id("search_white");
@@ -98,6 +104,123 @@ public class TextureLoader {
         return dst;
     }
 
+    private static NativeImage removeBackground(NativeImage image, String name) {
+        if ("boykgun".equals(name) || "cutie".equals(name)) {
+            return removeWhiteBackground(image);
+        }
+        return removeBackground(image);
+    }
+
+    private static NativeImage removeWhiteBackground(NativeImage image) {
+        int w = image.getWidth();
+        int h = image.getHeight();
+        if (w <= 0 || h <= 0) return image;
+        int threshold = 230;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int rgba = image.getPixel(x, y);
+                if (((rgba >> 24) & 0xFF) > 0) {
+                    int r = (rgba >> 16) & 0xFF;
+                    int g = (rgba >> 8) & 0xFF;
+                    int b = rgba & 0xFF;
+                    if (r >= threshold && g >= threshold && b >= threshold) {
+                        image.setPixel(x, y, 0);
+                    }
+                }
+            }
+        }
+        return image;
+    }
+
+    private static NativeImage removeBackground(NativeImage image) {
+        int w = image.getWidth();
+        int h = image.getHeight();
+        if (w <= 0 || h <= 0) return image;
+
+        int bgR = 255, bgG = 255, bgB = 255;
+        int sampleSize = Math.min(5, Math.min(w / 2, h / 2));
+        int totalR = 0, totalG = 0, totalB = 0, samples = 0;
+        int[][] corners = {{0, 0}, {w - 1, 0}, {0, h - 1}, {w - 1, h - 1}};
+        for (int[] corner : corners) {
+            int cx = corner[0], cy = corner[1];
+            int sx = cx == 0 ? 0 : w - sampleSize;
+            int sy = cy == 0 ? 0 : h - sampleSize;
+            for (int x = sx; x < sx + sampleSize; x++) {
+                for (int y = sy; y < sy + sampleSize; y++) {
+                    int c = image.getPixel(x, y);
+                    if (((c >> 24) & 0xFF) > 0) {
+                        totalR += (c >> 16) & 0xFF;
+                        totalG += (c >> 8) & 0xFF;
+                        totalB += c & 0xFF;
+                        samples++;
+                    }
+                }
+            }
+        }
+        if (samples > 0) {
+            bgR = totalR / samples;
+            bgG = totalG / samples;
+            bgB = totalB / samples;
+        }
+
+        int tolerance = 40;
+        boolean[][] bg = new boolean[w][h];
+        java.util.ArrayDeque<int[]> queue = new java.util.ArrayDeque<>();
+
+        for (int x = 0; x < w; x++) {
+            for (int y : new int[]{0, h - 1}) {
+                if (!bg[x][y] && isClose(image.getPixel(x, y), bgR, bgG, bgB, tolerance)) {
+                    bg[x][y] = true;
+                    queue.addLast(new int[]{x, y});
+                }
+            }
+        }
+        for (int y = 0; y < h; y++) {
+            for (int x : new int[]{0, w - 1}) {
+                if (!bg[x][y] && isClose(image.getPixel(x, y), bgR, bgG, bgB, tolerance)) {
+                    bg[x][y] = true;
+                    queue.addLast(new int[]{x, y});
+                }
+            }
+        }
+
+        while (!queue.isEmpty()) {
+            int[] p = queue.removeFirst();
+            int px = p[0], py = p[1];
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    if (dx == 0 && dy == 0) continue;
+                    int nx = px + dx, ny = py + dy;
+                    if (nx < 0 || nx >= w || ny < 0 || ny >= h || bg[nx][ny]) continue;
+                    if (isClose(image.getPixel(nx, ny), bgR, bgG, bgB, tolerance)) {
+                        bg[nx][ny] = true;
+                        queue.addLast(new int[]{nx, ny});
+                    }
+                }
+            }
+        }
+
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                if (bg[x][y]) {
+                    image.setPixel(x, y, 0);
+                }
+            }
+        }
+        return image;
+    }
+
+    private static boolean isClose(int rgba, int bgR, int bgG, int bgB, int tolerance) {
+        int a = (rgba >> 24) & 0xFF;
+        if (a == 0) return false;
+        int r = (rgba >> 16) & 0xFF;
+        int g = (rgba >> 8) & 0xFF;
+        int b = rgba & 0xFF;
+        return Math.abs(r - bgR) <= tolerance
+            && Math.abs(g - bgG) <= tolerance
+            && Math.abs(b - bgB) <= tolerance;
+    }
+
     public static Identifier getCategoryTexture(Category cat) {
         if (cat == Category.CUSTOM) cat = Category.MISC;
         Identifier id = CAT_IDS.get(cat);
@@ -128,7 +251,7 @@ public class TextureLoader {
                     }
                 }
                 image = downscaleTo(image, ICON_SIZE);
-                AbstractTexture tex = new DynamicTexture(() -> "settings_white", image);
+                AbstractTexture tex = createLinearTexture(image);
                 Minecraft.getInstance().getTextureManager().register(SETTINGS_WHITE, tex);
                 loaded.put(SETTINGS_WHITE, tex);
             } catch (Exception e) {
@@ -169,7 +292,7 @@ public class TextureLoader {
                 }
             }
             image = downscaleTo(image, ICON_SIZE);
-            AbstractTexture tex = new DynamicTexture(() -> name, image);
+            AbstractTexture tex = createLinearTexture(image);
             Minecraft.getInstance().getTextureManager().register(targetId, tex);
             loaded.put(targetId, tex);
             return targetId;
@@ -193,7 +316,7 @@ public class TextureLoader {
                     }
                 }
                 image = downscaleTo(image, ICON_SIZE);
-                AbstractTexture tex = new DynamicTexture(() -> "circle_white", image);
+                AbstractTexture tex = createLinearTexture(image);
                 Minecraft.getInstance().getTextureManager().register(CIRCLE_WHITE, tex);
                 loaded.put(CIRCLE_WHITE, tex);
             } catch (Exception e) {
@@ -256,7 +379,7 @@ public class TextureLoader {
                     }
                 }
                 image = downscaleTo(image, ICON_SIZE);
-                AbstractTexture tex = new DynamicTexture(() -> "switcher", image);
+                AbstractTexture tex = createLinearTexture(image);
                 Minecraft.getInstance().getTextureManager().register(SWITCHER, tex);
                 loaded.put(SWITCHER, tex);
             } catch (Exception e) {
@@ -388,6 +511,41 @@ public class TextureLoader {
         }
     }
 
+    public static Identifier getModuleIcon(String moduleKey) {
+        if (MODULE_ICON_MISSING.contains(moduleKey)) return null;
+        Identifier cached = MODULE_ICONS.get(moduleKey);
+        if (cached != null) return cached;
+        String fileName = moduleKey.toLowerCase().replaceAll("[^a-z0-9/._-]", "");
+        if (fileName.isEmpty()) {
+            MODULE_ICON_MISSING.add(moduleKey);
+            return null;
+        }
+        Identifier id = Identifier.fromNamespaceAndPath(NS, GUI_PREFIX + MODULES_SUBDIR + fileName);
+        if (ensureModuleIcon(id, fileName)) {
+            MODULE_ICONS.put(moduleKey, id);
+            return id;
+        }
+        MODULE_ICON_MISSING.add(moduleKey);
+        return null;
+    }
+
+    private static boolean ensureModuleIcon(Identifier guiId, String fileName) {
+        if (loaded.containsKey(guiId)) return true;
+        String resourcePath = CLASSPATH_PREFIX + MODULES_SUBDIR + fileName + ".png";
+        try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
+            if (stream == null) return false;
+            NativeImage image = NativeImage.read(stream);
+            removeBackground(image);
+            image = downscaleTo(image, MODULE_ICON_SIZE);
+            AbstractTexture tex = createLinearTexture(image);
+            Minecraft.getInstance().getTextureManager().register(guiId, tex);
+            loaded.put(guiId, tex);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private static boolean ensureLoaded(Identifier guiId, String name) {
         if (loaded.containsKey(guiId)) return true;
 
@@ -405,8 +563,12 @@ public class TextureLoader {
             }
             NativeImage image = NativeImage.read(stream);
             boolean isImage = guiId.getPath().startsWith("img/");
-            if (!isImage) image = downscaleTo(image, ICON_SIZE);
-            AbstractTexture tex = isImage ? createLinearTexture(image) : new DynamicTexture(() -> name, image);
+            if (isImage) {
+                removeBackground(image, name);
+            } else {
+                image = downscaleTo(image, ICON_SIZE);
+            }
+            AbstractTexture tex = createLinearTexture(image);
             Minecraft.getInstance().getTextureManager().register(guiId, tex);
             loaded.put(guiId, tex);
             return true;

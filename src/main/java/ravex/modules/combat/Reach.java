@@ -6,8 +6,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 public class Reach extends Module {
     public static final Reach INSTANCE = new Reach();
-    public final NumberParameter entityRange = new NumberParameter("Entity Reach", 4.5, 3.0, 6.0, 0.1);
-    public final NumberParameter blockRange = new NumberParameter("Block Reach", 5.5, 4.5, 7.0, 0.1);
+    public final NumberParameter entityRange = new NumberParameter("EntityReach", 4.5, 3.0, 6.0, 0.1);
+    public final NumberParameter blockRange = new NumberParameter("BlockReach", 5.5, 4.5, 7.0, 0.1);
 
     @Override
     public void onTick() {

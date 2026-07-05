@@ -12,7 +12,7 @@ public class Spammer extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Text", List.of("Text", "File"));
     public final StringParameter text = new StringParameter("Text", "RaveX on top!");
     public final StringParameter filePath = new StringParameter("File", "spam.txt");
-    public final NumberParameter delay = new NumberParameter("Delay (ms)", 1000.0, 100.0, 10000.0, 100.0);
+    public final NumberParameter delay = new NumberParameter("Delay(ms)", 1000.0, 100.0, 10000.0, 100.0);
     private long lastSpamTime = 0;
 
     @Override

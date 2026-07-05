@@ -27,7 +27,7 @@ public class ElytraFly extends Module {
     public final BooleanParameter accelerate = new BooleanParameter("Accelerate", false);
     public final NumberParameter acceleration = new NumberParameter("Acceleration", 0.15, 0.01, 1.0, 0.01);
     public final NumberParameter timer = new NumberParameter("Timer", 1.0, 0.5, 3.0, 0.1);
-    public final BooleanParameter fallBypass = new BooleanParameter("Fall Bypass", true);
+    public final BooleanParameter fallBypass = new BooleanParameter("FallBypass", true);
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_elytraplusplus");
     static {
         NATIVE.load();

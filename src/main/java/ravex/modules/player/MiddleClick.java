@@ -14,8 +14,8 @@ import ravex.utility.nativelib.NativeLibrary;
 public class MiddleClick extends Module {
     public static final MiddleClick INSTANCE = new MiddleClick();
     public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Firework", List.of("Firework", "None"));
-    public final ModeParameter blockAction = new ModeParameter("BlockAction", "XP Bottle", List.of("XP Bottle", "XP Bottle Fast", "None"));
-    public final ModeParameter airAction = new ModeParameter("AirAction", "Ender Pearl", List.of("Ender Pearl", "None"));
+    public final ModeParameter blockAction = new ModeParameter("BlockAction", "XPBottle", List.of("XPBottle", "XPBottleFast", "None"));
+    public final ModeParameter airAction = new ModeParameter("AirAction", "EnderPearl", List.of("EnderPearl", "None"));
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
     private boolean pressed, heldBlockAction;
     private int holdTicks;
@@ -33,7 +33,7 @@ public class MiddleClick extends Module {
             if (!pressed) {
                 pressed = true;
                 if (useFastXp(mc)) { nativeStartFastXp(); }
-                else { click(mc); heldBlockAction = isBlockContext(mc) && "XP Bottle".equals(blockAction.getValue()); holdTicks = 0; }
+                else { click(mc); heldBlockAction = isBlockContext(mc) && "XPBottle".equals(blockAction.getValue()); holdTicks = 0; }
             } else if (heldBlockAction) { holdTicks++; if (holdTicks % 2 == 0) click(mc); }
         } else {
             if (pressed && NATIVE.isLoaded()) nativeStopFastXp();
@@ -41,7 +41,7 @@ public class MiddleClick extends Module {
         }
     }
     private boolean useFastXp(Minecraft mc) {
-        return !mc.player.isFallFlying() && isBlockContext(mc) && "XP Bottle Fast".equals(blockAction.getValue()) && NATIVE.isLoaded();
+        return !mc.player.isFallFlying() && isBlockContext(mc) && "XPBottleFast".equals(blockAction.getValue()) && NATIVE.isLoaded();
     }
     private boolean isBlockContext(Minecraft mc) {
         var p = mc.player;
@@ -65,8 +65,8 @@ public class MiddleClick extends Module {
         return switch (mode) {
             case "None" -> null;
             case "Firework" -> Items.FIREWORK_ROCKET;
-            case "XP Bottle", "XP Bottle Fast" -> Items.EXPERIENCE_BOTTLE;
-            case "Ender Pearl" -> Items.ENDER_PEARL;
+            case "XPBottle", "XPBottleFast" -> Items.EXPERIENCE_BOTTLE;
+            case "EnderPearl" -> Items.ENDER_PEARL;
             default -> defaultItem;
         };
     }

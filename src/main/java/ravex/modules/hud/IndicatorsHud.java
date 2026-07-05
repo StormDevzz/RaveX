@@ -4,7 +4,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
-import ravex.modules.render.Hud;
+import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 public class IndicatorsHud extends Module {

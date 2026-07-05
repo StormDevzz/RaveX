@@ -1,6 +1,6 @@
 package ravex.utility.nativelib;
 
-import ravex.utility.misc.NativeLoader;
+import ravex.utility.nativelib.NativeLoader;
 
 public class NativeLibrary {
     private final String name;

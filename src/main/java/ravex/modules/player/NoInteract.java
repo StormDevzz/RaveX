@@ -5,7 +5,7 @@ import ravex.parameter.BooleanParameter;
 public class NoInteract extends Module {
     public static final NoInteract INSTANCE = new NoInteract();
     public final BooleanParameter containers = new BooleanParameter("Containers", true);
-    public final BooleanParameter craftingTables = new BooleanParameter("Crafting Tables", false);
+    public final BooleanParameter craftingTables = new BooleanParameter("CraftingTables", false);
     public final BooleanParameter buttons = new BooleanParameter("Buttons/Levers", false);
 
 }

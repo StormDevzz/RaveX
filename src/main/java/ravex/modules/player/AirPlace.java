@@ -21,7 +21,7 @@ public class AirPlace extends Module {
     public static float renderB = 1.0f;
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter animate = new BooleanParameter("Animate", true);
-    public final ColorParameter highlightColor = new ColorParameter("Highlight Color", 0xFF55AAFF);
+    public final ColorParameter highlightColor = new ColorParameter("HighlightColor", 0xFF55AAFF);
     private final EasingAnimation fadeAnim = new EasingAnimation();
     private final EasingAnimation sizeAnim = new EasingAnimation();
     private final SlideAnimation slideAnim = new SlideAnimation();

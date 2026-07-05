@@ -8,15 +8,15 @@ import ravex.utility.nativelib.NativeLibrary;
 public class NameTags extends Module {
     public static final NameTags INSTANCE = new NameTags();
     public final BooleanParameter armor = new BooleanParameter("Armor", true);
-    public final BooleanParameter handItems = new BooleanParameter("Hand Items", true);
-    public final BooleanParameter distanceScaling = new BooleanParameter("Distance Scaling", true);
+    public final BooleanParameter handItems = new BooleanParameter("HandItems", true);
+    public final BooleanParameter distanceScaling = new BooleanParameter("DistanceScaling", true);
     public final NumberParameter scale = new NumberParameter("ScaleMultiplier", 1.0, 0.5, 3.0, 0.1);
     public final NumberParameter range = new NumberParameter("Range", 64.0, 5.0, 256.0, 1.0);
     public final BooleanParameter background = new BooleanParameter("Background", true);
-    public final ColorParameter backgroundColor = new ColorParameter("Background Color", 0xBB000000);
-    public final BooleanParameter topLine = new BooleanParameter("Top Line", false);
-    public final ColorParameter topLineColor = new ColorParameter("Top Line Color", 0xFFFF5555);
-    public final BooleanParameter customFont = new BooleanParameter("Custom Font", false);
+    public final ColorParameter backgroundColor = new ColorParameter("BackgroundColor", 0xBB000000);
+    public final BooleanParameter topLine = new BooleanParameter("TopLine", false);
+    public final ColorParameter topLineColor = new ColorParameter("TopLineColor", 0xFFFF5555);
+    public final BooleanParameter customFont = new BooleanParameter("CustomFont", false);
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_nametags");
     static {
         NATIVE.load();

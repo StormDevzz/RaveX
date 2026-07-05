@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_breaker SHARED
-    breaker.cpp
-    breaker_jni.cpp
+    main/breaker.cpp
+    main/breaker_jni.cpp
     ../autocrystal/main/autocrystal.cpp
     ../autocrystal/damage/damage.cpp
     ../autocrystal/armor/armor.cpp
@@ -18,7 +18,7 @@ if(JNI_FOUND)
 endif()
 
 target_include_directories(ravex_breaker PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../autocrystal/include
 )

@@ -11,8 +11,8 @@ public class BaritoneModule extends Module {
     public final ColorParameter colorNextPath = new ColorParameter("NextPath", 0xFF005500);
     public final ColorParameter colorBlocksToBreak = new ColorParameter("BlocksToBreak", 0xFFFF0000);
     public final ColorParameter colorBlocksToPlace = new ColorParameter("BlocksToPlace", 0xFF0000FF);
-    public final ColorParameter colorBlocksToWalkInto = new ColorParameter("BlocksToWalk Into", 0xFFFF00FF);
-    public final ColorParameter colorBestPathSoFar = new ColorParameter("Best PathSoFar", 0xFF0000FF);
+    public final ColorParameter colorBlocksToWalkInto = new ColorParameter("BlocksToWalkInto", 0xFFFF00FF);
+    public final ColorParameter colorBestPathSoFar = new ColorParameter("BestPathSoFar", 0xFF0000FF);
     public final ColorParameter colorMostRecentConsidered = new ColorParameter("RecentConsidered", 0xFFFF8800);
     public final ColorParameter colorGoalBox = new ColorParameter("GoalBox", 0xFFFF0000);
     public final ColorParameter colorInvertedGoalBox = new ColorParameter("InvertedGoalBox", 0xFFFF00FF);

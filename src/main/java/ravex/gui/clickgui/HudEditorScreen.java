@@ -166,7 +166,7 @@ public class HudEditorScreen extends Screen {
             graphics.fill(0, 44 + s - 1, this.width, 44 + s, ColorUtility.withAlpha(accentColor, 24 / s));
         }
 
-        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, "HUD Editor",
+        FontRenderUtility.drawString(graphics, "HUD Editor",
                 18, 9, 0xFFFFFFFF, true);
         FontRenderUtility.drawString(graphics, "Drag  |  G = snap  |  RMB = menu  |  ESC = save",
                 18, 22, 0xFF666688, false);
@@ -223,7 +223,7 @@ public class HudEditorScreen extends Screen {
         g.fill(px, py + headerH - 1, px + pw, py + headerH, accentColor);
 
         String title = "HUD Modules (" + huds.size() + ")";
-        FontRenderUtility.drawString(g, FontRenderUtility.FontType.VANILLA, title, px + 8, py + 4, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(g, title, px + 8, py + 4, 0xFFFFFFFF, true);
 
         
         int startIdx = Math.min(modulePanelScroll, Math.max(0, huds.size() - maxVisible));
@@ -248,7 +248,7 @@ public class HudEditorScreen extends Screen {
 
             String name = hud.getName();
             int textColor = enabled ? 0xFFFFFFF0 : 0xFF808090;
-            FontRenderUtility.drawString(g, FontRenderUtility.FontType.VANILLA, name, px + 18, cy + 2, textColor, true);
+            FontRenderUtility.drawString(g, name, px + 18, cy + 2, textColor, true);
 
             cy += rowH;
         }

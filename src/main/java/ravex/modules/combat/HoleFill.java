@@ -23,9 +23,9 @@ public class HoleFill extends Module {
     public static final HoleFill INSTANCE = new HoleFill();
     public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0, 0.5);
     public final NumberParameter delay = new NumberParameter("Delay", 80, 20, 300, 10);
-    public final NumberParameter maxBlocks = new NumberParameter("Max Blocks", 6, 1, 24, 1);
-    public final BooleanParameter fillAll = new BooleanParameter("Fill All", false);
-    public final BooleanParameter autoDisable = new BooleanParameter("Auto Disable", true);
+    public final NumberParameter maxBlocks = new NumberParameter("MaxBlocks", 6, 1, 24, 1);
+    public final BooleanParameter fillAll = new BooleanParameter("FillAll", false);
+    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00FF00);
     public static List<BlockPos> holePositions = new ArrayList<>();

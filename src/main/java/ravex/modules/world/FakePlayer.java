@@ -10,7 +10,7 @@ import java.util.UUID;
 public class FakePlayer extends Module {
     public static final FakePlayer INSTANCE = new FakePlayer();
     public final StringParameter nickname = new StringParameter("Nickname", "FakePlayer");
-    public final BooleanParameter copyInventory = new BooleanParameter("Copy Inv", true);
+    public final BooleanParameter copyInventory = new BooleanParameter("CopyInv", true);
     private RemotePlayer remotePlayer = null;
 
     @Override

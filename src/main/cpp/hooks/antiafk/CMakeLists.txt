@@ -1,17 +1,17 @@
 add_library(ravex_antiafk STATIC
-    antiafk.cpp
+    main/antiafk.cpp
 )
 
 target_link_libraries(ravex_antiafk PRIVATE ravex_common)
 target_include_directories(ravex_antiafk PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 
 if(WIN32)
-    target_sources(ravex_antiafk PRIVATE antiafk_windows.cpp)
+    target_sources(ravex_antiafk PRIVATE input/antiafk_windows.cpp)
 elseif(UNIX AND NOT APPLE)
-    target_sources(ravex_antiafk PRIVATE antiafk_linux.cpp)
+    target_sources(ravex_antiafk PRIVATE input/antiafk_linux.cpp)
     find_package(X11 REQUIRED)
     if(X11_FOUND)
         target_include_directories(ravex_antiafk PRIVATE ${X11_INCLUDE_DIR})

@@ -1,8 +1,66 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_witherroseaura SHARED
-    witherroseaura.cpp
-    witherroseaura_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+w
+i
+t
+h
+e
+r
+r
+o
+s
+e
+a
+u
+r
+a
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+w
+i
+t
+h
+e
+r
+r
+o
+s
+e
+a
+u
+r
+a
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
@@ -14,13 +72,13 @@ else()
 endif()
 
 target_include_directories(ravex_witherroseaura PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 
 target_link_libraries(ravex_witherroseaura PRIVATE ravex_common)
 
-set_property(TARGET ravex_witherroseaura PROPERTY CXX_STANDARD 17)
+set_property(TARGET ravex_witherroseaura PROPERTY CXX_STANDARD 23)
 set_property(TARGET ravex_witherroseaura PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")

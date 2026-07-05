@@ -28,45 +28,45 @@ public class PearlTarget extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Combat",
         List.of("Combat", "Pearl", "Follow"));
     public final NumberParameter range = new NumberParameter("Range", 16.0, 1.0, 32.0, 0.5);
-    public final ModeParameter targetMode = new ModeParameter("Target Mode", "Nearest",
+    public final ModeParameter targetMode = new ModeParameter("TargetMode", "Nearest",
         List.of("Nearest", "Health", "Crosshair", "Distance"));
-    public final NumberParameter switchDelay = new NumberParameter("Switch Delay", 500.0, 0.0, 2000.0, 50.0);
+    public final NumberParameter switchDelay = new NumberParameter("SwitchDelay", 500.0, 0.0, 2000.0, 50.0);
     public final NumberParameter speed = new NumberParameter("Speed", 1.8, 0.5, 5.0, 0.1);
-    public final NumberParameter speedSneak = new NumberParameter("Speed Sneak", 0.6, 0.1, 2.0, 0.1);
+    public final NumberParameter speedSneak = new NumberParameter("SpeedSneak", 0.6, 0.1, 2.0, 0.1);
     public final BooleanParameter strafe = new BooleanParameter("Strafe", true);
     public final BooleanParameter jump = new BooleanParameter("Jump", true);
-    public final NumberParameter jumpHeight = new NumberParameter("Jump Height", 0.42, 0.3, 0.6, 0.01);
-    public final NumberParameter predictTicks = new NumberParameter("Predict Ticks", 100.0, 20.0, 300.0, 10.0);
-    public final NumberParameter chaseTime = new NumberParameter("Chase Time", 3000.0, 500.0, 10000.0, 100.0);
-    public final NumberParameter stopDistance = new NumberParameter("Stop Distance", 3.5, 1.0, 6.0, 0.5);
+    public final NumberParameter jumpHeight = new NumberParameter("JumpHeight", 0.42, 0.3, 0.6, 0.01);
+    public final NumberParameter predictTicks = new NumberParameter("PredictTicks", 100.0, 20.0, 300.0, 10.0);
+    public final NumberParameter chaseTime = new NumberParameter("ChaseTime", 3000.0, 500.0, 10000.0, 100.0);
+    public final NumberParameter stopDistance = new NumberParameter("StopDistance", 3.5, 1.0, 6.0, 0.5);
     public final BooleanParameter sprint = new BooleanParameter("Sprint", true);
-    public final BooleanParameter autoWeapon = new BooleanParameter("Auto Weapon", true);
-    public final ModeParameter weaponMode = new ModeParameter("Weapon Mode", "Sword",
+    public final BooleanParameter autoWeapon = new BooleanParameter("AutoWeapon", true);
+    public final ModeParameter weaponMode = new ModeParameter("WeaponMode", "Sword",
         List.of("Sword", "Axe", "Both"));
-    public final BooleanParameter autoGap = new BooleanParameter("Auto Gap", false);
-    public final NumberParameter gapHealth = new NumberParameter("Gap Health", 10.0, 1.0, 20.0, 1.0);
-    public final BooleanParameter autoPearl = new BooleanParameter("Auto Pearl", false);
-    public final NumberParameter pearlRange = new NumberParameter("Pearl Range", 20.0, 5.0, 50.0, 5.0);
-    public final BooleanParameter autoTotem = new BooleanParameter("Auto Totem", false);
-    public final ModeParameter totemMode = new ModeParameter("Totem Mode", "Always",
-        List.of("Always", "Low HP", "After Kill"));
-    public final NumberParameter totemHealth = new NumberParameter("Totem Health", 6.0, 1.0, 20.0, 1.0);
+    public final BooleanParameter autoGap = new BooleanParameter("AutoGap", false);
+    public final NumberParameter gapHealth = new NumberParameter("GapHealth", 10.0, 1.0, 20.0, 1.0);
+    public final BooleanParameter autoPearl = new BooleanParameter("AutoPearl", false);
+    public final NumberParameter pearlRange = new NumberParameter("PearlRange", 20.0, 5.0, 50.0, 5.0);
+    public final BooleanParameter autoTotem = new BooleanParameter("AutoTotem", false);
+    public final ModeParameter totemMode = new ModeParameter("TotemMode", "Always",
+        List.of("Always", "LowHP", "AfterKill"));
+    public final NumberParameter totemHealth = new NumberParameter("TotemHealth", 6.0, 1.0, 20.0, 1.0);
     public final BooleanParameter attack = new BooleanParameter("Attack", true);
-    public final NumberParameter attackRange = new NumberParameter("Attack Range", 4.0, 2.0, 6.0, 0.1);
-    public final NumberParameter attackCps = new NumberParameter("Attack CPS", 12.0, 1.0, 20.0, 1.0);
+    public final NumberParameter attackRange = new NumberParameter("AttackRange", 4.0, 2.0, 6.0, 0.1);
+    public final NumberParameter attackCps = new NumberParameter("AttackCPS", 12.0, 1.0, 20.0, 1.0);
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
-    public final BooleanParameter keepRotate = new BooleanParameter("Keep Rotate", false);
+    public final BooleanParameter keepRotate = new BooleanParameter("KeepRotate", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter lineColor = new ColorParameter("Line Color", 0xFFFF5500);
-    public final ColorParameter landingColor = new ColorParameter("Landing Color", 0xFFFF3333);
-    public final ColorParameter pearlColor = new ColorParameter("Pearl Color", 0xFFFFFF00);
-    public final NumberParameter lineWidth = new NumberParameter("Line Width", 2.0, 0.5, 5.0, 0.5);
-    public final BooleanParameter renderLine = new BooleanParameter("Render Line", true);
-    public final BooleanParameter renderLanding = new BooleanParameter("Render Landing", true);
-    public final BooleanParameter renderTrail = new BooleanParameter("Render Trail", true);
-    public final BooleanParameter renderInfo = new BooleanParameter("Render Info", true);
-    public final BooleanParameter renderThroughWalls = new BooleanParameter("Through Walls", false);
-    public final BooleanParameter renderPredictionLine = new BooleanParameter("Prediction Line", true);
+    public final ColorParameter lineColor = new ColorParameter("LineColor", 0xFFFF5500);
+    public final ColorParameter landingColor = new ColorParameter("LandingColor", 0xFFFF3333);
+    public final ColorParameter pearlColor = new ColorParameter("PearlColor", 0xFFFFFF00);
+    public final NumberParameter lineWidth = new NumberParameter("LineWidth", 2.0, 0.5, 5.0, 0.5);
+    public final BooleanParameter renderLine = new BooleanParameter("RenderLine", true);
+    public final BooleanParameter renderLanding = new BooleanParameter("RenderLanding", true);
+    public final BooleanParameter renderTrail = new BooleanParameter("RenderTrail", true);
+    public final BooleanParameter renderInfo = new BooleanParameter("RenderInfo", true);
+    public final BooleanParameter renderThroughWalls = new BooleanParameter("ThroughWalls", false);
+    public final BooleanParameter renderPredictionLine = new BooleanParameter("PredictionLine", true);
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_pearltarget");
     private final Map<Integer, PearlData> trackedPearls = new HashMap<>();
     private Player target = null;
@@ -91,7 +91,7 @@ public class PearlTarget extends Module {
         weaponMode.setVisible(autoWeapon::getValue);
         gapHealth.setVisible(autoGap::getValue);
         pearlRange.setVisible(autoPearl::getValue);
-        totemHealth.setVisible(() -> autoTotem.getValue() && "Low HP".equals(totemMode.getValue()));
+        totemHealth.setVisible(() -> autoTotem.getValue() && "LowHP".equals(totemMode.getValue()));
         renderLine.setVisible(render::getValue);
         renderLanding.setVisible(render::getValue);
         renderTrail.setVisible(render::getValue);
@@ -241,7 +241,7 @@ public class PearlTarget extends Module {
     private void doAutoTotem(Minecraft mc) {
         String mode = totemMode.getValue();
         boolean shouldTotem = "Always".equals(mode)
-            || ("Low HP".equals(mode) && mc.player.getHealth() + mc.player.getAbsorptionAmount() <= totemHealth.getValue());
+            || ("LowHP".equals(mode) && mc.player.getHealth() + mc.player.getAbsorptionAmount() <= totemHealth.getValue());
         if (!shouldTotem) return;
         int totemSlot = -1;
         for (int i = 0; i < 36; i++) {

@@ -1,12 +1,56 @@
 cmake_minimum_required(VERSION 3.16)
 
 add_library(ravex_antibot SHARED
-    antibot.cpp
-    antibot_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+a
+n
+t
+i
+b
+o
+t
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+a
+n
+t
+i
+b
+o
+t
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 target_include_directories(ravex_antibot PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
 )
 

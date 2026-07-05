@@ -18,8 +18,8 @@ public class AutoArmor extends Module {
     public static final AutoArmor INSTANCE = new AutoArmor();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             List.of("Normal", "Legit"));
-    public final NumberParameter delay = new NumberParameter("Delay (ms)", 150.0, 0.0, 1000.0, 10.0);
-    public final BooleanParameter onlyBetter = new BooleanParameter("Only Better", true);
+    public final NumberParameter delay = new NumberParameter("Delay(ms)", 150.0, 0.0, 1000.0, 10.0);
+    public final BooleanParameter onlyBetter = new BooleanParameter("OnlyBetter", true);
     private long lastEquipTime = 0;
 
     @Override

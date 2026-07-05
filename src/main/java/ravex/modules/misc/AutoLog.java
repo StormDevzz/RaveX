@@ -7,9 +7,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 public class AutoLog extends Module {
     public static final AutoLog INSTANCE = new AutoLog();
-    public final BooleanParameter onLowHealth = new BooleanParameter("Low Health", true);
-    public final NumberParameter healthLimit = new NumberParameter("Min HP", 6.0, 1.0, 20.0, 0.5);
-    public final BooleanParameter onPlayerNearby = new BooleanParameter("Player Nearby", false);
+    public final BooleanParameter onLowHealth = new BooleanParameter("LowHealth", true);
+    public final NumberParameter healthLimit = new NumberParameter("MinHP", 6.0, 1.0, 20.0, 0.5);
+    public final BooleanParameter onPlayerNearby = new BooleanParameter("PlayerNearby", false);
     public final NumberParameter playerRange = new NumberParameter("Range", 16.0, 4.0, 64.0, 1.0);
 
     @Override
@@ -17,7 +17,7 @@ public class AutoLog extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (onLowHealth.getValue() && mc.player.getHealth() <= healthLimit.getValue()) {
-            disconnect("Low Health Triggered (" + mc.player.getHealth() + " HP)");
+            disconnect("LowHealthTriggered(" + mc.player.getHealth() + " HP)");
             return;
         }
         for (Player other : mc.level.players()) {

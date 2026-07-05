@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import ravex.modules.exploit.ChorusExploit;
+import ravex.modules.player.ChorusExploit;
 
 @Mixin(ClientPacketListener.class)
 public class MixinChorusPositionHandler {

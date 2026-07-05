@@ -10,9 +10,9 @@ import ravex.parameter.ModeParameter;
 import java.util.List;
 public class AutoWeapon extends Module {
     public static final AutoWeapon INSTANCE = new AutoWeapon();
-    public final ModeParameter swapMode = new ModeParameter("Swap Mode", "Normal",
+    public final ModeParameter swapMode = new ModeParameter("SwapMode", "Normal",
             List.of("Normal", "Silent", "None"));
-    public final BooleanParameter swordsOnly = new BooleanParameter("Swords Only", false);
+    public final BooleanParameter swordsOnly = new BooleanParameter("SwordsOnly", false);
 
     @Override
     public void onTick() {

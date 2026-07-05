@@ -1,24 +1,68 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_quiver SHARED
-    quiver.cpp
-    quiver_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+q
+u
+i
+v
+e
+r
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+q
+u
+i
+v
+e
+r
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
 if(JNI_FOUND)
     target_include_directories(ravex_quiver PRIVATE ${JNI_INCLUDE_DIRS})
     target_link_libraries(ravex_quiver PRIVATE ${JNI_LIBRARIES})
+else()
+    message(FATAL_ERROR "JNI not found — cannot build ravex_quiver")
 endif()
 
 target_include_directories(ravex_quiver PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 
 target_link_libraries(ravex_quiver PRIVATE ravex_common)
 
-set_property(TARGET ravex_quiver PROPERTY CXX_STANDARD 17)
+set_property(TARGET ravex_quiver PROPERTY CXX_STANDARD 23)
 set_property(TARGET ravex_quiver PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")

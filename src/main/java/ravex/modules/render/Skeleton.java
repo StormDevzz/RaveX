@@ -22,8 +22,8 @@ import java.util.List;
 public class Skeleton extends Module {
     public static final Skeleton INSTANCE = new Skeleton();
     public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
-    public final NumberParameter lineWidth = new NumberParameter("Line Width", 1.0, 0.5, 3.0, 0.1);
-    public final BooleanParameter throughWalls = new BooleanParameter("Through Walls", true);
+    public final NumberParameter lineWidth = new NumberParameter("LineWidth", 1.0, 0.5, 3.0, 0.1);
+    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter mobs = new BooleanParameter("Mobs", true);
     private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);

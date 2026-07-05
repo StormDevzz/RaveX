@@ -1,4 +1,5 @@
 package ravex.modules.render;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import ravex.modules.Category;
@@ -8,47 +9,61 @@ import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
+
 public class Waypoint extends Module {
     public static final Waypoint INSTANCE = new Waypoint();
-    public record WaypointData(String name, double x, double y, double z, String dimension) {}
+
+    public record WaypointData(String name, double x, double y, double z, String dimension) {
+    }
+
     public final List<WaypointData> waypoints = new ArrayList<>();
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     public final NumberParameter markerSize = new NumberParameter("Size", 2.0, 0.5, 5.0, 0.5);
     public final NumberParameter range = new NumberParameter("Range", 256.0, 16.0, 512.0, 16.0);
-    public final BooleanParameter showName = new BooleanParameter("Show Name", true);
-    public final BooleanParameter showDistance = new BooleanParameter("Show Distance", true);
+    public final BooleanParameter showName = new BooleanParameter("ShowName", true);
+    public final BooleanParameter showDistance = new BooleanParameter("ShowDistance", true);
     public final BooleanParameter showBeam = new BooleanParameter("Beam", true);
 
     public static List<WaypointData> getWaypoints() {
         return INSTANCE.waypoints;
     }
+
     public static int getColor() {
         return INSTANCE.color.getValue();
     }
+
     public static double getMarkerSize() {
         return INSTANCE.markerSize.getValue();
     }
+
     public static double getRange() {
         return INSTANCE.range.getValue();
     }
+
     public static boolean isShowName() {
         return INSTANCE.showName.getValue();
     }
+
     public static boolean isShowDistance() {
         return INSTANCE.showDistance.getValue();
     }
+
     public static boolean isShowBeam() {
         return INSTANCE.showBeam.getValue();
     }
+
     public void addWaypoint(String name, double x, double y, double z, String dimension) {
         waypoints.add(new WaypointData(name, x, y, z, dimension));
     }
+
     public boolean removeWaypoint(String name) {
         return waypoints.removeIf(w -> w.name().equalsIgnoreCase(name));
     }
+
     public void clearWaypoints() {
         waypoints.clear();
     }
+
     @Override
     public void saveExtra(JsonObject obj) {
         JsonArray arr = new JsonArray();
@@ -63,6 +78,7 @@ public class Waypoint extends Module {
         }
         obj.add("waypoints", arr);
     }
+
     @Override
     public void loadExtra(JsonObject obj) {
         waypoints.clear();

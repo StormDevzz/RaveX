@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_shieldfucker SHARED
-    shieldfucker.cpp
-    shieldfucker_jni.cpp
-    shieldfucker_target.cpp
-    shieldfucker_math.cpp
-    shieldfucker_platform.cpp
-    shieldfucker_tracker.cpp
+    main/shieldfucker.cpp
+    main/shieldfucker_jni.cpp
+    target/shieldfucker_target.cpp
+    math/shieldfucker_math.cpp
+    platform/shieldfucker_platform.cpp
+    tracker/shieldfucker_tracker.cpp
 )
 
 find_package(JNI REQUIRED)
@@ -18,7 +18,7 @@ else()
 endif()
 
 target_include_directories(ravex_shieldfucker PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

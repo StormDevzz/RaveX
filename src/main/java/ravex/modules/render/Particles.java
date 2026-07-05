@@ -20,22 +20,22 @@ public class Particles extends Module {
         List.of("Square", "Circle", "Triangle", "All"));
     public final ModeParameter trigger = new ModeParameter("Trigger", "Always",
         List.of("Always", "Walking", "Attack", "Mine", "Attack&Mine"));
-    public final BooleanParameter throughWalls = new BooleanParameter("Through Walls", true);
+    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
     public final NumberParameter amount = new NumberParameter("Amount", 30, 5, 200, 5);
     public final NumberParameter size = new NumberParameter("Size", 0.5, 0.05, 2.0, 0.05);
     public final NumberParameter speed = new NumberParameter("Speed", 1.5, 0.0, 5.0, 0.1);
     public final ColorParameter color = new ColorParameter("Color", 0xFFFF9BC4);
     public final NumberParameter lifetime = new NumberParameter("Lifetime", 4.0, 0.5, 10.0, 0.5);
-    public final NumberParameter spawnRate = new NumberParameter("Spawn Rate", 2, 1, 20, 1);
+    public final NumberParameter spawnRate = new NumberParameter("SpawnRate", 2, 1, 20, 1);
     public final NumberParameter spread = new NumberParameter("Spread", 2.0, 0.5, 10.0, 0.5);
     public final BooleanParameter gravity = new BooleanParameter("Gravity", false);
     public final ModeParameter mode = new ModeParameter("Mode", "AroundPlayer",
         List.of("AroundPlayer", "Fountain", "Rising", "Vortex", "Explosion"));
     public final NumberParameter alpha = new NumberParameter("Alpha", 1.0, 0.0, 1.0, 0.05);
-    public final NumberParameter rotationSpeed = new NumberParameter("Rotation Speed", 1.0, 0.0, 5.0, 0.1);
+    public final NumberParameter rotationSpeed = new NumberParameter("RotationSpeed", 1.0, 0.0, 5.0, 0.1);
     public final BooleanParameter glow = new BooleanParameter("Glow", true);
     public final BooleanParameter rainbow = new BooleanParameter("Rainbow", false);
-    public final NumberParameter lineWidth = new NumberParameter("Line Width", 3.5, 0.5, 10.0, 0.5);
+    public final NumberParameter lineWidth = new NumberParameter("LineWidth", 3.5, 0.5, 10.0, 0.5);
     public final NumberParameter segments = new NumberParameter("Segments", 16, 6, 32, 2);
     public final BooleanParameter collide = new BooleanParameter("Collision", true);
     public static boolean attackedThisTick = false;

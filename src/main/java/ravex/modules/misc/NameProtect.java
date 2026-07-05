@@ -6,7 +6,7 @@ import ravex.modules.Module;
 import ravex.parameter.StringParameter;
 public class NameProtect extends Module {
     public static final NameProtect INSTANCE = new NameProtect();
-    public final StringParameter replaceText = new StringParameter("Replace With", "RaveX");
+    public final StringParameter replaceText = new StringParameter("ReplaceWith", "RaveX");
 
     public Component protectComponent(Component component) {
         Minecraft mc = Minecraft.getInstance();

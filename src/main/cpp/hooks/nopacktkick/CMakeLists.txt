@@ -1,8 +1,60 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_nopacktkick SHARED
-    nopacktkick.cpp
-    nopacktkick_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+n
+o
+p
+a
+c
+k
+t
+k
+i
+c
+k
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+n
+o
+p
+a
+c
+k
+t
+k
+i
+c
+k
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
@@ -14,7 +66,7 @@ else()
 endif()
 
 target_include_directories(ravex_nopacktkick PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

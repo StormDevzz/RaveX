@@ -17,8 +17,8 @@ public class AutoBow extends Module {
     public static final AutoBow INSTANCE = new AutoBow();
     public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 100.0, 1.0);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
-    public final BooleanParameter autoSwitch = new BooleanParameter("Auto Switch", false);
-    public final BooleanParameter onlyWhenTarget = new BooleanParameter("Only When Target", false);
+    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", false);
+    public final BooleanParameter onlyWhenTarget = new BooleanParameter("OnlyWhenTarget", false);
     private long lastAction = 0;
 
     @Override

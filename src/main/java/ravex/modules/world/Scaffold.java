@@ -22,8 +22,8 @@ public class Scaffold extends Module {
     public static final Scaffold INSTANCE = new Scaffold();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Expand"));
     public final BooleanParameter tower = new BooleanParameter("Tower", true);
-    public final BooleanParameter silentRot = new BooleanParameter("Silent Rot", true);
-    public final BooleanParameter keepY = new BooleanParameter("Keep Y", false);
+    public final BooleanParameter silentRot = new BooleanParameter("SilentRot", true);
+    public final BooleanParameter keepY = new BooleanParameter("KeepY", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter animate = new BooleanParameter("Animate", true);
     public final ColorParameter highlightColor = new ColorParameter("Color", 0xFFFF33CC);

@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 public class AutoReGear extends Module {
     public static final AutoReGear INSTANCE = new AutoReGear();
-    public final NumberParameter delayParam = new NumberParameter("Delay (ms)", 200, 50, 1000, 50);
+    public final NumberParameter delayParam = new NumberParameter("Delay(ms)", 200, 50, 1000, 50);
     public final ActionParameter items = new ActionParameter("Items", () -> {
         Minecraft.getInstance().setScreen(
             new AutoReGearScreen(Minecraft.getInstance().screen)

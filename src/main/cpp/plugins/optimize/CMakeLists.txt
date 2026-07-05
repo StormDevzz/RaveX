@@ -2,11 +2,11 @@ add_library(ravex_optimize SHARED
     optimize.cpp
 )
 
-target_include_directories(ravex_optimize PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(ravex_optimize PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if(WIN32)
     add_subdirectory(windows)
-    target_include_directories(ravex_optimize PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/windows)
+    target_include_directories(ravex_optimize PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/windows)
     target_link_libraries(ravex_optimize PRIVATE ravex_optimize_windows)
 endif()
 

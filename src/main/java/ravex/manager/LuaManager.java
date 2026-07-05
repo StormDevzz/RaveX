@@ -42,7 +42,7 @@ public class LuaManager {
 
     static {
         try {
-            ravex.utility.misc.NativeLoader.load();
+            ravex.utility.nativelib.NativeLoader.load();
             nativeAvailable = true;
         } catch (Throwable ignored) {}
     }

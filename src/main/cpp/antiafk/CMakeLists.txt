@@ -4,7 +4,7 @@ add_library(ravex_antiafk STATIC
 
 target_link_libraries(ravex_antiafk PRIVATE ravex_common)
 target_include_directories(ravex_antiafk PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

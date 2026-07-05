@@ -18,7 +18,7 @@ public class WaxAura extends Module {
     public static final WaxAura INSTANCE = new WaxAura();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
     public final NumberParameter delay = new NumberParameter("Delay", 2.0, 0.0, 20.0, 1.0);
-    public final BooleanParameter autoSwap = new BooleanParameter("Auto Swap", true);
+    public final BooleanParameter autoSwap = new BooleanParameter("AutoSwap", true);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
     private int delayTimer = 0;
 

@@ -7,6 +7,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.animate.AnimationUtility;
 import ravex.modules.client.ClickGui;
 import ravex.utility.render.FontRenderUtility;
 import java.awt.*;
@@ -32,7 +33,6 @@ public class CategoryPanel {
     private final List<ModuleButton> allButtons = new ArrayList<>();
     private float headerAnim = 0f;
     private double scrollOffset = 0.0;
-    private double scrollVelocity = 0.0;
 
     public CategoryPanel(Category category, int x, int y) {
         this.category = category;
@@ -115,22 +115,18 @@ public class CategoryPanel {
         int totalH = 22;
         for (ModuleButton btn : visible) {
             totalH += Math.max(1, (int)(btnH * btn.getSearchReveal()));
-        }
-        boolean sepMode = ClickGui.INSTANCE.separateSettings.getValue();
-        if (!sepMode) {
-            for (ModuleButton btn : visible) {
-                if (btn.isExpanded()) totalH += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
-            }
+            if (btn.isExpanded()) totalH += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
         }
         int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.55f);
         int viewportH = Math.min(totalH, maxPanelHeight);
         int panelBot = iy + viewportH;
 
-        scrollVelocity *= 0.85;
-        if (Math.abs(scrollVelocity) < 0.5) scrollVelocity = 0;
-        scrollOffset += scrollVelocity;
         int maxScroll = max(0, totalH - viewportH);
-        scrollOffset = max(-maxScroll, min(0.0, scrollOffset));
+        if (maxScroll <= 0) {
+            scrollOffset = 0;
+        } else {
+            scrollOffset = max(-maxScroll, min(0.0, scrollOffset));
+        }
 
         int panelH = panelBot - iy;
         int r = Math.min(ClickGui.INSTANCE.cornerRadius.getValue().intValue(), panelH / 2);
@@ -153,7 +149,7 @@ public class CategoryPanel {
 
         String header = category.getDisplayName();
         int headerY = iy + (18 - FontRenderUtility.getFontHeight()) / 2 + 1;
-        FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header,
+        FontRenderUtility.drawString(graphics, header,
             ix + 23, headerY, 0xFFFFFFFF, true);
 
         if (ClickGui.INSTANCE.moduleCounter.getValue()) {
@@ -169,7 +165,7 @@ public class CategoryPanel {
             int badgeY = iy + 4;
             int badgeH = 14;
             Render2DEngine.drawRound(graphics, badgeX, badgeY, cw + pad * 2, badgeH, 4, 0x22000000);
-            FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, countText,
+            FontRenderUtility.drawString(graphics, countText,
                 badgeX + pad, badgeY + (badgeH - FontRenderUtility.getFontHeight()) / 2 + 1,
                 enabled == total ? 0xFFA0E0A0 : 0xFFE0E0E0, true);
         }
@@ -240,26 +236,24 @@ public class CategoryPanel {
         int panelBot = iy + Math.min(totalH, maxPanelHeight);
 
         if (mouseX >= ix && mouseX <= ix + width && mouseY >= iy && mouseY <= panelBot) {
-            if (!ClickGui.INSTANCE.separateSettings.getValue()) {
-                List<ModuleButton> visible = filterButtons(searchQuery);
-                int btnH = ClickGui.INSTANCE.buttonHeight.getValue().intValue();
-                int renderY = listTop + (int) Math.round(scrollOffset);
-                for (ModuleButton btn : visible) {
-                    if (btn.isExpanded()) {
-                        int expH = btn.getExpandedHeight(width);
-                        if (mouseY >= renderY + btnH && mouseY < renderY + btnH + expH) {
-                            if (btn.onInlineScroll(mouseX, mouseY, verticalAmount, ix, renderY + btnH, width)) {
-                                return true;
-                            }
+            List<ModuleButton> visible = filterButtons(searchQuery);
+            int btnH = ClickGui.INSTANCE.buttonHeight.getValue().intValue();
+            int renderY = listTop + (int) Math.round(scrollOffset);
+            for (ModuleButton btn : visible) {
+                if (btn.isExpanded()) {
+                    int expH = btn.getExpandedHeight(width);
+                    if (mouseY >= renderY + btnH && mouseY < renderY + btnH + expH) {
+                        if (btn.onInlineScroll(mouseX, mouseY, verticalAmount, ix, renderY + btnH, width)) {
+                            return true;
                         }
-                        renderY += btnH + expH;
-                    } else {
-                        renderY += btnH;
                     }
+                    renderY += btnH + expH;
+                } else {
+                    renderY += btnH;
                 }
             }
 
-            scrollVelocity += verticalAmount * 6;
+            scrollOffset += verticalAmount * 36;
             return true;
         }
         return false;
@@ -275,14 +269,8 @@ public class CategoryPanel {
         int h = 22;
         for (ModuleButton btn : visible) {
             h += Math.max(1, (int)(btnH * btn.getSearchReveal()));
-        }
-
-        boolean sepMode = ravex.modules.client.ClickGui.INSTANCE.separateSettings.getValue();
-        if (!sepMode) {
-            for (ModuleButton btn : visible) {
-                if (btn.isExpanded()) {
-                    h += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
-                }
+            if (btn.isExpanded()) {
+                h += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
             }
         }
         return h;

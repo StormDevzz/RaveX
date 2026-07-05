@@ -17,7 +17,7 @@ public class WindAura extends Module {
     public final NumberParameter range = new NumberParameter("Range", 10.0, 3.0, 30.0, 0.5);
     public final NumberParameter delay = new NumberParameter("Delay", 5.0, 1.0, 20.0, 1.0);
     public final BooleanParameter players = new BooleanParameter("Players", true);
-    public final BooleanParameter autoSwitch = new BooleanParameter("Auto Switch", true);
+    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
     private int tickCounter = 0;
 
     @Override

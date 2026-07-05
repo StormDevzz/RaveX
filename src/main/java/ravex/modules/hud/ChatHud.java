@@ -1,7 +1,7 @@
 package ravex.modules.hud;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.modules.Module;
-import ravex.modules.render.Hud;
+import ravex.modules.client.Hud;
 import ravex.parameter.NumberParameter;
 public class ChatHud extends Module {
     public static final ChatHud INSTANCE = new ChatHud();

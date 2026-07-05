@@ -24,7 +24,7 @@ public class Trigger extends Module {
     public final BooleanParameter raytrace = new BooleanParameter("Raytrace", true);
     public final ModeParameter swingMode = new ModeParameter("Swing", "Client",
             List.of("Client", "Server", "Off"));
-    public final ModeParameter clickMode = new ModeParameter("Click Mode", "Hold",
+    public final ModeParameter clickMode = new ModeParameter("ClickMode", "Hold",
             List.of("Hold", "Toggle"));
     private boolean toggled = false;
     private long lastAttackTime = 0;

@@ -18,8 +18,8 @@ add_library(packet_sniffer STATIC
     analyze/analyze.cpp
 )
 
-target_include_directories(packet_sniffer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_include_directories(packet_sniffer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(packet_sniffer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/../include)
+target_include_directories(packet_sniffer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 find_package(PkgConfig QUIET)
 if(PkgConfig_FOUND)

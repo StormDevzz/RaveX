@@ -11,7 +11,7 @@ import java.util.List;
 public class AutoEat extends Module {
     public static final AutoEat INSTANCE = new AutoEat();
     public final NumberParameter threshold = new NumberParameter("Hunger", 15.0, 1.0, 20.0, 1.0);
-    public final BooleanParameter priority = new BooleanParameter("Best Food", true);
+    public final BooleanParameter priority = new BooleanParameter("BestFood", true);
     public final BooleanParameter notify = new BooleanParameter("Notify", false);
     public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             List.of("Normal", "Silent", "Vanilla"));

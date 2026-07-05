@@ -11,7 +11,7 @@ public class MaceSwap extends Module {
     public static final MaceSwap INSTANCE = new MaceSwap();
     public final ModeParameter mode       = new ModeParameter("Mode", "Smart",
             List.of("Basic", "Smart"));
-    public final NumberParameter fallSpeed = new NumberParameter("Fall Speed", 0.5, 0.1, 3.0, 0.05);
+    public final NumberParameter fallSpeed = new NumberParameter("FallSpeed", 0.5, 0.1, 3.0, 0.05);
     private int previousSlot = -1;
 
     @Override

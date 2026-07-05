@@ -16,9 +16,9 @@ import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import java.util.List;
 public class AutoShear extends Module {
     public static final AutoShear INSTANCE = new AutoShear();
-    public final BooleanParameter silent = new BooleanParameter("Silent Swap", true);
+    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     public final NumberParameter range = new NumberParameter("Range", 4.5, 3.0, 6.0, 0.1);
-    public final ModeParameter exploitType = new ModeParameter("Exploit Type", "Packet", List.of("Client", "Packet"));
+    public final ModeParameter exploitType = new ModeParameter("ExploitType", "Packet", List.of("Client", "Packet"));
 
     @Override
     public void onTick() {

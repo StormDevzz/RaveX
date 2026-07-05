@@ -8,9 +8,9 @@ import net.minecraft.client.Minecraft;
 import java.util.List;
 public class AntiAim extends Module {
     public static final AntiAim INSTANCE = new AntiAim();
-    public final ModeParameter mode = new ModeParameter("Yaw Mode", "Spin", List.of("Spin", "Jitter", "Static"));
-    public final ModeParameter pitchMode = new ModeParameter("Pitch Mode", "Down", List.of("Down", "Up", "Jitter", "None"));
-    public final NumberParameter yawSpeed = new NumberParameter("Yaw Speed", 30.0, 1.0, 90.0, 1.0);
+    public final ModeParameter mode = new ModeParameter("YawMode", "Spin", List.of("Spin", "Jitter", "Static"));
+    public final ModeParameter pitchMode = new ModeParameter("PitchMode", "Down", List.of("Down", "Up", "Jitter", "None"));
+    public final NumberParameter yawSpeed = new NumberParameter("YawSpeed", 30.0, 1.0, 90.0, 1.0);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
     private static float silentYaw = 0;
     private static float silentPitch = 0;

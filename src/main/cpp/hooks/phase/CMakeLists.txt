@@ -1,8 +1,48 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_phase SHARED
-    phase.cpp
-    phase_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+p
+h
+a
+s
+e
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+p
+h
+a
+s
+e
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
@@ -14,7 +54,7 @@ else()
 endif()
 
 target_include_directories(ravex_phase PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

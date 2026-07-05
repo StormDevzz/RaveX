@@ -3,7 +3,7 @@ add_library(ravex_proxy SHARED
     proxy_jni.cpp
 )
 
-target_include_directories(ravex_proxy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(ravex_proxy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(ravex_proxy PRIVATE
     ${CMAKE_SOURCE_DIR}/plugins/packet/include
     ${CMAKE_SOURCE_DIR}

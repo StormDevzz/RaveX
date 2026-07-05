@@ -16,7 +16,7 @@ public class ChestUtils extends Module {
     public final BooleanParameter steal   = new BooleanParameter("Steal", true);
     public final BooleanParameter dump    = new BooleanParameter("Dump",  true);
     public final BooleanParameter fill    = new BooleanParameter("Fill",  true);
-    public final BooleanParameter dropAll = new BooleanParameter("Drop All", true);
+    public final BooleanParameter dropAll = new BooleanParameter("DropAll", true);
     private static final int BTN_W = 60, BTN_H = 20, BTN_GAP = 3;
 
     public void onRenderButtons(AbstractContainerScreen<?> screen, GuiGraphics graphics, int mouseX, int mouseY) {
