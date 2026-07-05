@@ -16,9 +16,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import ravex.modules.misc.ItemScroller;
+import ravex.modules.misc.FastItem;
 import ravex.modules.misc.StashFinder;
-import ravex.modules.player.ExtraChest;
+import ravex.modules.player.ChestUtils;
 
 @Mixin(AbstractContainerScreen.class)
 public abstract class MixinAbstractContainerScreen {
@@ -28,9 +28,6 @@ public abstract class MixinAbstractContainerScreen {
     @Invoker("getHoveredSlot")
     public abstract Slot invokeGetHoveredSlot(double mouseX, double mouseY);
 
-    private long scrollerLastTransfer = 0;
-    private boolean scrollerWasHolding = false;
-
     
     
     
@@ -39,7 +36,7 @@ public abstract class MixinAbstractContainerScreen {
     private void onMouseClicked(MouseButtonEvent event, boolean z, CallbackInfoReturnable<Boolean> cir) {
         if (event.button() != 0) return;
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
-        if (ExtraChest.INSTANCE.onMouseClicked(screen, (int) event.x(), (int) event.y())) {
+        if (ChestUtils.INSTANCE.onMouseClicked(screen, (int) event.x(), (int) event.y())) {
             cir.setReturnValue(true);
         }
     }
@@ -50,9 +47,9 @@ public abstract class MixinAbstractContainerScreen {
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderTail(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         
-        if (ItemScroller.INSTANCE.getEnabled()) {
+        {
             Minecraft mc = Minecraft.getInstance();
-            if (mc != null && mc.player != null && mc.getWindow() != null) {
+            if (mc != null && mc.player != null && mc.getWindow() != null && FastItem.INSTANCE.getEnabled()) {
                 long handle = mc.getWindow().handle();
                 if (handle != 0) {
                     boolean shift = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
@@ -63,17 +60,7 @@ public abstract class MixinAbstractContainerScreen {
                     if (slot == null) slot = this.hoveredSlot;
 
                     if (shift && lmb && slot != null && slot.hasItem()) {
-                        long now = System.currentTimeMillis();
-                        long delayMs = ItemScroller.INSTANCE.delay.getValue().longValue();
-                        if (!scrollerWasHolding || now - scrollerLastTransfer >= delayMs) {
-                            scrollerLastTransfer = now;
-                            scrollerWasHolding = true;
-                            mc.gameMode.handleInventoryMouseClick(
-                                ((AbstractContainerScreen<?>)(Object)this).getMenu().containerId,
-                                slot.index, 0, ClickType.QUICK_MOVE, mc.player);
-                        }
-                    } else {
-                        scrollerWasHolding = false;
+                        FastItem.INSTANCE.handleSlotHover(slot.index, System.currentTimeMillis());
                     }
                 }
             }
@@ -81,7 +68,7 @@ public abstract class MixinAbstractContainerScreen {
 
         
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
-        ExtraChest.INSTANCE.onRenderButtons(screen, graphics, mouseX, mouseY);
+        ChestUtils.INSTANCE.onRenderButtons(screen, graphics, mouseX, mouseY);
 
         
         if (StashFinder.INSTANCE.getEnabled()) {
@@ -105,7 +92,7 @@ public abstract class MixinAbstractContainerScreen {
     @Inject(method = "mouseScrolled(DDDD)Z", at = @At("HEAD"), cancellable = true)
     private void onMouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY,
                                   CallbackInfoReturnable<Boolean> cir) {
-        if (!ItemScroller.INSTANCE.getEnabled()) return;
+        if (!FastItem.INSTANCE.getEnabled()) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null || mc.getWindow() == null) return;

@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.misc.PopCounter;
-import ravex.modules.player.AutoEZ;
+import ravex.modules.misc.ChatUtils;
 
 @Mixin(LivingEntity.class)
 public class MixinLivingEntityTracker {
@@ -17,7 +17,7 @@ public class MixinLivingEntityTracker {
     @Inject(method = "die", at = @At("HEAD"))
     private void onDie(DamageSource source, CallbackInfo ci) {
         if ((Object)this instanceof Player player) {
-            AutoEZ.INSTANCE.onPlayerDeath(player, source);
+            ChatUtils.INSTANCE.onPlayerDeath(player, source);
         }
     }
 

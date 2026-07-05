@@ -42,8 +42,6 @@ public class SoundUtility {
             GUI_OPEN      = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_OPEN_ID,      SoundEvent.createVariableRangeEvent(GUI_OPEN_ID));
             GUI_CLOSE     = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_CLOSE_ID,     SoundEvent.createVariableRangeEvent(GUI_CLOSE_ID));
             FAILURE       = Registry.register(BuiltInRegistries.SOUND_EVENT, FAILURE_ID,       SoundEvent.createVariableRangeEvent(FAILURE_ID));
-
-            ravex.RaveX.LOGGER.info("[RaveX] SoundUtility: All 7 sound events registered successfully.");
         } catch (Exception e) {
             ravex.RaveX.LOGGER.error("[RaveX] SoundUtility: Failed to register sound events: " + e.getMessage());
         } finally {
@@ -71,7 +69,6 @@ public class SoundUtility {
                 frozenField.setAccessible(true);
                 if ((boolean) frozenField.get(registry)) {
                     frozenField.set(registry, false);
-                    ravex.RaveX.LOGGER.info("[RaveX] SoundUtility: Unfroze SOUND_EVENT registry for registration.");
                     return true;
                 }
             }
@@ -101,10 +98,6 @@ public class SoundUtility {
         }
 
         ravex.modules.render.Sounds sounds = ravex.modules.render.Sounds.INSTANCE;
-        boolean soundsEnabled = (sounds != null && sounds.getEnabled());
-        double volVal = (sounds != null) ? sounds.volume.getValue().doubleValue() : 1.0;
-        ravex.RaveX.LOGGER.info("[Sound] play() called for event: " + soundEvent.location() + " | sounds module enabled: " + soundsEnabled + " | multiplier: " + volVal);
-
         if (sounds != null && !sounds.getEnabled()) {
             return;
         }

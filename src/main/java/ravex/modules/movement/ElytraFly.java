@@ -1,5 +1,4 @@
 package ravex.modules.movement;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.MoverType;
@@ -11,50 +10,39 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-
 import java.util.List;
-
+import ravex.utility.nativelib.NativeLibrary;
 public class ElytraFly extends Module {
     public static final ElytraFly INSTANCE = new ElytraFly();
-
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         List.of("Vanilla", "Control", "Grim", "NCP", "Minemen", "Packet", "Boost", "TickShift"));
     public final NumberParameter hSpeed = new NumberParameter("H-Speed", 1.5, 0.1, 5.0, 0.1);
     public final NumberParameter vSpeed = new NumberParameter("V-Speed", 1.0, 0.1, 5.0, 0.1);
     public final NumberParameter glide = new NumberParameter("Glide", 0.005, 0.001, 0.1, 0.001);
-    public final BooleanParameter autoFirework = new BooleanParameter("Auto Firework", false);
-    public final NumberParameter fireworkDelay = new NumberParameter("Firework Delay", 10.0, 1.0, 30.0, 1.0);
-    public final NumberParameter fireworkBoost = new NumberParameter("Firework Boost", 1.0, 0.5, 5.0, 0.1);
-    public final BooleanParameter autoTakeoff = new BooleanParameter("Auto Takeoff", true);
-    public final BooleanParameter speedControl = new BooleanParameter("Speed Control", true);
+    public final BooleanParameter autoFirework = new BooleanParameter("AutoFirework", false);
+    public final NumberParameter fireworkDelay = new NumberParameter("FireworkDelay", 10.0, 1.0, 30.0, 1.0);
+    public final NumberParameter fireworkBoost = new NumberParameter("FireworkBoost", 1.0, 0.5, 5.0, 0.1);
+    public final BooleanParameter autoTakeoff = new BooleanParameter("AutoTakeoff", true);
+    public final BooleanParameter speedControl = new BooleanParameter("SpeedControl", true);
     public final BooleanParameter accelerate = new BooleanParameter("Accelerate", false);
     public final NumberParameter acceleration = new NumberParameter("Acceleration", 0.15, 0.01, 1.0, 0.01);
     public final NumberParameter timer = new NumberParameter("Timer", 1.0, 0.5, 3.0, 0.1);
     public final BooleanParameter fallBypass = new BooleanParameter("Fall Bypass", true);
-
-    private static boolean nativeLoaded = false;
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_elytraplusplus");
     static {
-        try {
-            nativeLoaded = ravex.utility.misc.NativeLoader.loadLibrary("ravex_elytraplusplus");
-        } catch (UnsatisfiedLinkError e) {
-            System.err.println("[ElytraFly JNI] Native lib load failed: " + e.getMessage());
-        }
+        NATIVE.load();
     }
-
     public static native void nativeCalculateVelocity(
         String mode, double hSpeed, double vSpeed, double glide,
         double yaw, double pitch, boolean jump, boolean sneak,
         double[] outVel
     );
-
     public static native void nativeApplyBypass(
         String mode, double[] motion, double yaw, double pitch,
         boolean jump, boolean sneak, boolean ground, double[] outMotion
     );
-
     private int fwTimer = 0;
     private double accelMul = 0.0;
-
     public Vec3 applyTimerAndAccel(Vec3 vel) {
         double t = timer.getValue();
         if (t != 1.0) {
@@ -65,7 +53,6 @@ public class ElytraFly extends Module {
         }
         return vel;
     }
-
     private void updateAccelState() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null) return;
@@ -82,32 +69,17 @@ public class ElytraFly extends Module {
             accelMul = 1.0;
         }
     }
-
     private ElytraFly() {
-        super("Elytra++", Category.MOVEMENT);
-        addParameter(mode);
-        addParameter(hSpeed);
-        addParameter(vSpeed);
-        addParameter(glide);
-        addParameter(autoFirework);
-        addParameter(fireworkDelay);
-        addParameter(fireworkBoost);
-        addParameter(autoTakeoff);
-        addParameter(speedControl);
-        addParameter(accelerate);
-        addParameter(acceleration);
-        addParameter(timer);
-        addParameter(fallBypass);
+        super("Elytra++");
         fireworkDelay.setVisible(() -> autoFirework.getValue());
         fireworkBoost.setVisible(() -> autoFirework.getValue());
         acceleration.setVisible(() -> accelerate.getValue());
     }
-
     public static double[] calculateVelocity(
         String mode, double hSpeed, double vSpeed, double glide,
         double yaw, double pitch, boolean jump, boolean sneak
     ) {
-        if (nativeLoaded && !mode.equals("Control")) {
+        if (NATIVE.isLoaded() && !mode.equals("Control")) {
             try {
                 double[] out = new double[3];
                 nativeCalculateVelocity(mode, hSpeed, vSpeed, glide, yaw, pitch, jump, sneak, out);
@@ -116,12 +88,11 @@ public class ElytraFly extends Module {
         }
         return javaCalculateVelocity(mode, hSpeed, vSpeed, glide, yaw, pitch, jump, sneak);
     }
-
     public static double[] applyBypass(
         String mode, double[] motion, double yaw, double pitch,
         boolean jump, boolean sneak, boolean ground
     ) {
-        if (nativeLoaded && !mode.equals("Control")) {
+        if (NATIVE.isLoaded() && !mode.equals("Control")) {
             try {
                 double[] out = new double[3];
                 nativeApplyBypass(mode, motion, yaw, pitch, jump, sneak, ground, out);
@@ -130,7 +101,6 @@ public class ElytraFly extends Module {
         }
         return javaApplyBypass(mode, motion, yaw, pitch, jump, sneak, ground);
     }
-
     private static double[] javaCalculateVelocity(
         String mode, double hSpeed, double vSpeed, double glide,
         double yaw, double pitch, boolean jump, boolean sneak
@@ -146,9 +116,7 @@ public class ElytraFly extends Module {
             if (mc.options.keyLeft.isDown()) str++;
             if (mc.options.keyRight.isDown()) str--;
         }
-
         double velX, velY, velZ;
-
         switch (mode) {
             case "Control" -> {
                 velX = (-Math.sin(rad) * fwd + Math.cos(rad) * str) * hSpeed;
@@ -191,7 +159,6 @@ public class ElytraFly extends Module {
         }
         return new double[]{velX, velY, velZ};
     }
-
     private static double[] javaApplyBypass(
         String mode, double[] motion, double yaw, double pitch,
         boolean jump, boolean sneak, boolean ground
@@ -205,7 +172,6 @@ public class ElytraFly extends Module {
             if (mc.options.keyLeft.isDown()) strafe++;
             if (mc.options.keyRight.isDown()) strafe--;
         }
-
         switch (mode) {
             case "Control" -> {
                 double fwd = forward;
@@ -249,34 +215,27 @@ public class ElytraFly extends Module {
         }
         return new double[]{mx, my, mz};
     }
-
     @Override
     protected void onEnable() {
         RaveX.LOGGER.info("[Elytra++] Enabled with mode: {}", mode.getValue());
         fwTimer = 0;
         accelMul = 0.0;
     }
-
     @Override
     protected void onDisable() {
         fwTimer = 0;
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gameMode == null) return;
-
         updateAccelState();
-
         if (autoTakeoff.getValue() && mc.player.onGround() && !mc.player.isFallFlying()) {
             if (mc.options.keyJump.isDown()) {
                 mc.player.jumpFromGround();
             }
         }
-
         if (!mc.player.isFallFlying()) return;
-
         double yaw = mc.player.getYRot();
         double pitch = mc.player.getXRot();
         boolean space = mc.options.keyJump.isDown();
@@ -286,10 +245,8 @@ public class ElytraFly extends Module {
         if (mc.options.keyDown.isDown()) forward--;
         if (mc.options.keyLeft.isDown()) strafe++;
         if (mc.options.keyRight.isDown()) strafe--;
-
         if (speedControl.getValue()) {
             String curMode = mode.getValue();
-
             if (curMode.equals("Control")) {
                 double rad = Math.toRadians(yaw);
                 double targetX = (-Math.sin(rad) * forward + Math.cos(rad) * strafe) * hSpeed.getValue();
@@ -316,7 +273,6 @@ public class ElytraFly extends Module {
                 mc.player.move(MoverType.SELF, v);
             }
         }
-
         if (autoFirework.getValue()) {
             fwTimer++;
             if (fwTimer >= fireworkDelay.getValue().intValue()) {
@@ -325,7 +281,6 @@ public class ElytraFly extends Module {
             }
         }
     }
-
     private void useFirework(Minecraft mc) {
         int slot = -1;
         for (int i = 0; i < 9; i++) {
@@ -335,7 +290,6 @@ public class ElytraFly extends Module {
             }
         }
         if (slot < 0) return;
-
         int prevSlot = mc.player.getInventory().getSelectedSlot();
         mc.player.getInventory().setSelectedSlot(slot);
         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);

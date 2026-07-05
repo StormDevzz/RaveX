@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 JNIEXPORT jint JNICALL
-Java_ravex_utility_network_ProxyNative_startLocalProxy(
+Java_ravex_proxy_ProxyNative_startLocalProxy(
     JNIEnv* env, jclass clazz,
     jstring proxyType,
     jstring proxyHost, jint proxyPort,
@@ -17,7 +17,7 @@ Java_ravex_utility_network_ProxyNative_startLocalProxy(
 );
 
 JNIEXPORT void JNICALL
-Java_ravex_utility_network_ProxyNative_stopLocalProxy(
+Java_ravex_proxy_ProxyNative_stopLocalProxy(
     JNIEnv* env, jclass clazz
 );
 

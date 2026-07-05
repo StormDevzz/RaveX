@@ -17,10 +17,10 @@ import ravex.utility.render.Render3DUtils;
 import ravex.modules.player.Xray;
 import ravex.modules.combat.Surround;
 import ravex.modules.render.BlockOutline;
-import ravex.modules.esp.Borders;
-import ravex.modules.esp.Tunnels;
-import ravex.modules.esp.HoleESP;
-import ravex.modules.esp.VoidESP;
+import ravex.modules.render.Borders;
+import ravex.modules.render.ESP;
+import ravex.modules.render.HoleESP;
+import ravex.modules.render.VoidESP;
 
 @Mixin(LevelRenderer.class)
 public class MixinLevelRenderer {
@@ -592,9 +592,9 @@ public class MixinLevelRenderer {
         }
 
         
-        ravex.modules.world.Nuker nk = ravex.modules.world.Nuker.INSTANCE;
-        if (nk.getEnabled() && nk.render.getValue() && ravex.modules.world.Nuker.currentTarget != null) {
-            BlockPos p = ravex.modules.world.Nuker.currentTarget;
+        ravex.modules.world.nuker.Nuker nk = ravex.modules.world.nuker.Nuker.INSTANCE;
+        if (nk.getEnabled() && nk.render.getValue() && ravex.modules.world.nuker.Nuker.currentTarget != null) {
+            BlockPos p = ravex.modules.world.nuker.Nuker.currentTarget;
             try {
                 modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
@@ -653,9 +653,9 @@ public class MixinLevelRenderer {
         }
 
         
-        ravex.modules.player.ECFarmer ec = ravex.modules.player.ECFarmer.INSTANCE;
-        if (ec.getEnabled() && ec.render.getValue() && ravex.modules.player.ECFarmer.currentTarget != null) {
-            BlockPos p = ravex.modules.player.ECFarmer.currentTarget;
+        ravex.modules.world.ECFarmer ec = ravex.modules.world.ECFarmer.INSTANCE;
+        if (ec.getEnabled() && ec.render.getValue() && ravex.modules.world.ECFarmer.currentTarget != null) {
+            BlockPos p = ravex.modules.world.ECFarmer.currentTarget;
             try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = ec.color.getValue();
@@ -753,15 +753,15 @@ public class MixinLevelRenderer {
         }
 
         
-        if (Tunnels.INSTANCE.getEnabled()) {
-            int tunnelColorVal = Tunnels.INSTANCE.tunnelColor.getValue();
+        if (ESP.INSTANCE.getEnabled() && ESP.INSTANCE.mode.getValue().equals("Tunnels")) {
+            int tunnelColorVal = ESP.INSTANCE.tunnelColor.getValue();
             float tr = ((tunnelColorVal >> 16) & 0xFF) / 255.0f;
             float tg = ((tunnelColorVal >> 8) & 0xFF) / 255.0f;
             float tb = (tunnelColorVal & 0xFF) / 255.0f;
             float ta = ((tunnelColorVal >> 24) & 0xFF) / 255.0f;
-            boolean filled = Tunnels.INSTANCE.filled.getValue();
-            boolean wire = Tunnels.INSTANCE.wireframe.getValue();
-            for (BlockPos pos : Tunnels.INSTANCE.getTunnelBlocks()) {
+            boolean filled = ESP.INSTANCE.tunnelFilled.getValue();
+            boolean wire = ESP.INSTANCE.tunnelWireframe.getValue();
+            for (BlockPos pos : ESP.INSTANCE.getTunnelBlocks()) {
                 try {
                     modelViewMatrix.translate((float)(pos.getX() - camPos.x), (float)(pos.getY() - camPos.y), (float)(pos.getZ() - camPos.z), REUSABLE_MATRIX);
                     if (filled) Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, tr, tg, tb, ta * 0.3f);

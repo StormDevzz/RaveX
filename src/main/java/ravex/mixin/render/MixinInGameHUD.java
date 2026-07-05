@@ -15,8 +15,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import ravex.modules.ModuleManager;
-import ravex.modules.HudModule;
+import ravex.manager.ModuleManager;
+import ravex.modules.Module;
 import ravex.modules.render.Ambient;
 import ravex.modules.render.ESP;
 import ravex.modules.render.NameTags;
@@ -986,7 +986,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        ravex.utility.notification.NotificationManager.render(context);
+        ravex.manager.NotificationManager.render(context);
 
         if (ravex.modules.render.Crosshair.INSTANCE.getEnabled()) {
             try {
@@ -998,8 +998,8 @@ public abstract class MixinInGameHUD {
     }
 
     private void renderHud(GuiGraphics context, DeltaTracker tickCounter) {
-        java.util.List<HudModule> enabledModules = new java.util.ArrayList<>();
-        for (HudModule hud : ModuleManager.INSTANCE.getHudModules()) {
+        java.util.List<Module> enabledModules = new java.util.ArrayList<>();
+        for (Module hud : ModuleManager.INSTANCE.getHudModules()) {
             if (hud.getEnabled()) {
                 enabledModules.add(hud);
             }
@@ -1008,7 +1008,7 @@ public abstract class MixinInGameHUD {
         
         ravex.utility.misc.GuiOptimizer.optimizeHudAnimations(enabledModules);
 
-        for (HudModule hud : enabledModules) {
+        for (Module hud : enabledModules) {
             try {
                 hud.render(context, tickCounter.getGameTimeDeltaTicks());
             } catch (Throwable ignored) {}

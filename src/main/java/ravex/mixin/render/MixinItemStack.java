@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.gui.tooltip.ShulkerDataTooltipComponent;
-import ravex.modules.esp.ToolTips;
+import ravex.modules.render.ToolTips;
 
 import java.util.ArrayList;
 import java.util.List;

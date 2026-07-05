@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,20 +15,17 @@ import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.utility.player.rotation.RotationUtility;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-
+import ravex.utility.nativelib.NativeLibrary;
 public class TntAura extends Module {
     public static final TntAura INSTANCE = new TntAura();
-
-    
     public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay   = new NumberParameter("Place Delay", 50.0, 0.0, 500.0, 10.0);
     public final NumberParameter  tntDelay     = new NumberParameter("TNT Delay", 200.0, 0.0, 1000.0, 10.0);
@@ -47,35 +43,20 @@ public class TntAura extends Module {
     public final NumberParameter  maxRate      = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
     public final BooleanParameter render       = new BooleanParameter("Render", true);
     public final ColorParameter   color        = new ColorParameter("Color", 0xFFFF4400);
-
-    
     private enum State { TRAPPING, PLACING_TNT, IGNITING, WAITING }
     private State currentState = State.TRAPPING;
-
     private long lastActionTime = 0;
     private int[] gapPos = null;      
     private net.minecraft.world.entity.LivingEntity currentTarget = null;
     private int failedTntPlacements = 0;
-
     public static final List<BlockPos> renderBlocks = new ArrayList<>();
-
-    
     public static float silentYaw = 0;
     public static float silentPitch = 0;
     private static boolean hasSilentRotations = false;
-
-    
-    private static boolean nativeAvailable = false;
-
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_tntaura");
     static {
-        try {
-            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_tntaura");
-        } catch (UnsatisfiedLinkError e) {
-            
-        }
+        NATIVE.load();
     }
-
-    
     private static native double[] nativeCalculateCage(
         double playerX, double playerY, double playerZ,
         double targetX, double targetY, double targetZ,
@@ -83,13 +64,11 @@ public class TntAura extends Module {
         double range, boolean roof,
         int gapDirection, double[] gapPosData
     );
-
     private static native double[] nativeCalculateTntSlot(
         double playerX, double playerY, double playerZ,
         double gapX, double gapY, double gapZ,
         double[] solidBlockData, double range
     );
-
     private static native double[] nativeEstimateDamage(
         double tntX, double tntY, double tntZ,
         double targetX, double targetY, double targetZ,
@@ -98,25 +77,7 @@ public class TntAura extends Module {
         int blastProtLevel,
         boolean hasResistance, int resistanceAmplifier
     );
-
     public static boolean hasSilentRotations() { return hasSilentRotations; }
-
-    private TntAura() {
-        super("TntAura", Category.COMBAT);
-        addParameter(range);
-        addParameter(placeDelay);
-        addParameter(tntDelay);
-        addParameter(igniteDelay);
-        addParameter(swapMode);
-        addParameter(rotateMode);
-        addParameter(roof);
-        addParameter(autoDisable);
-        addParameter(targetMode);
-        addParameter(targetType);
-        addParameter(maxRate);
-        addParameter(render);
-        addParameter(color);
-    }
 
     @Override
     protected void onEnable() {
@@ -127,7 +88,6 @@ public class TntAura extends Module {
         failedTntPlacements = 0;
         synchronized (renderBlocks) { renderBlocks.clear(); }
     }
-
     @Override
     protected void onDisable() {
         hasSilentRotations = false;
@@ -136,30 +96,22 @@ public class TntAura extends Module {
         failedTntPlacements = 0;
         synchronized (renderBlocks) { renderBlocks.clear(); }
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-
         hasSilentRotations = false;
-
-        
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             if (autoDisable.getValue()) setEnabled(false);
             return;
         }
-
-        
         if (currentTarget != target) {
             currentTarget = target;
             currentState = State.TRAPPING;
             gapPos = null;
         }
-
         long now = System.currentTimeMillis();
-
         switch (currentState) {
             case TRAPPING:
                 tickTrapping(mc, target, now);
@@ -175,17 +127,13 @@ public class TntAura extends Module {
                 break;
         }
     }
-
-    
     private void tickTrapping(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
         if (now - lastActionTime < placeDelay.getValue()) return;
-
         double[] solidData = collectSolidBlocks(mc);
         double[] gapData = gapPos != null ? new double[]{gapPos[0], gapPos[1], gapPos[2]} : null;
-
         double[] result = null;
         double placeRange = range.getValue() + 1.5;
-        if (nativeAvailable) {
+        if (NATIVE.isLoaded()) {
             result = nativeCalculateCage(
                 mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                 target.getX(), target.getY(), target.getZ(),
@@ -195,47 +143,32 @@ public class TntAura extends Module {
         } else {
             result = javaFallbackCage(mc, target, solidData);
         }
-
         if (result == null || result[0] < 0.5) {
-            
             currentState = State.PLACING_TNT;
             lastActionTime = now;
             return;
         }
-
-        
         if (gapPos == null && result.length >= 11) {
             gapPos = new int[]{(int) result[8], (int) result[9], (int) result[10]};
         }
-
-        
         int blockSlot = findObsidianSlot(mc);
         if (blockSlot == -1) return;
-
         BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
         Direction face = Direction.values()[(int) result[4]];
         BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
-
         Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(
             new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
-
         rotateTo(mc, hitVec);
         swapTo(mc, blockSlot);
-
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
         mc.player.swing(InteractionHand.MAIN_HAND);
-
         restoreSlot(mc, blockSlot);
-
         synchronized (renderBlocks) { renderBlocks.add(targetBlock); }
         lastActionTime = now;
     }
-
-    
     private void tickPlacingTnt(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
         if (now - lastActionTime < tntDelay.getValue()) return;
-
         if (gapPos == null) {
             BlockPos feet = target.blockPosition();
             double dx = mc.player.getX() - (feet.getX() + 0.5);
@@ -249,20 +182,15 @@ public class TntAura extends Module {
                                 : new int[]{feet.getX(), headY, feet.getZ() - 1};
             }
         }
-
         int tntSlot = findTntSlot(mc);
         if (tntSlot == -1) {
             if (autoDisable.getValue()) setEnabled(false);
             return;
         }
-
         double[] solidData = collectSolidBlocks(mc);
         double[] result = null;
-
-        
         double placeRange = range.getValue() + 1.5;
-
-        if (nativeAvailable) {
+        if (NATIVE.isLoaded()) {
             result = nativeCalculateTntSlot(
                 mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                 gapPos[0], gapPos[1], gapPos[2],
@@ -271,10 +199,8 @@ public class TntAura extends Module {
         } else {
             result = javaFallbackTntPlacement(mc);
         }
-
         if (result == null || result[0] < 0.5) {
             failedTntPlacements++;
-            
             if (failedTntPlacements >= 5) {
                 if (autoDisable.getValue()) {
                     setEnabled(false);
@@ -286,91 +212,63 @@ public class TntAura extends Module {
             }
             return;
         }
-
         failedTntPlacements = 0;
-
         BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
         Direction face = Direction.values()[(int) result[4]];
-
         Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(
             new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
-
         rotateTo(mc, hitVec);
         swapTo(mc, tntSlot);
-
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
         mc.player.swing(InteractionHand.MAIN_HAND);
-
         restoreSlot(mc, tntSlot);
-
         currentState = State.IGNITING;
         lastActionTime = now;
     }
-
-    
     private void tickIgniting(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
         if (now - lastActionTime < igniteDelay.getValue()) return;
-
         int flintSlot = findFlintAndSteelSlot(mc);
         if (flintSlot == -1) {
             if (autoDisable.getValue()) setEnabled(false);
             return;
         }
-
-        
         BlockPos tntPos = new BlockPos(gapPos[0], gapPos[1], gapPos[2]);
         Vec3 hitVec = Vec3.atCenterOf(tntPos);
-
         rotateTo(mc, hitVec);
         swapTo(mc, flintSlot);
-
-        
         BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, tntPos, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
         mc.player.swing(InteractionHand.MAIN_HAND);
-
         restoreSlot(mc, flintSlot);
-
         currentState = State.WAITING;
         lastActionTime = now;
     }
-
-    
     private void tickWaiting(Minecraft mc, long now) {
-        
         if (now - lastActionTime > 5000) {
             if (autoDisable.getValue()) {
                 setEnabled(false);
             } else {
-                
                 currentState = State.TRAPPING;
                 gapPos = null;
                 synchronized (renderBlocks) { renderBlocks.clear(); }
             }
         }
     }
-
-    
     private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
         double maxDist = range.getValue() + 2.0;
-
         String mode = targetMode.getValue();
         String typeFilter = targetType.getValue();
-
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (le == mc.player) continue;
             if (le.isDeadOrDying()) continue;
-
             if (typeFilter.equals("Players") && !(le instanceof Player)) continue;
             if (typeFilter.equals("Monsters") && !(le instanceof net.minecraft.world.entity.monster.Monster)) continue;
-
             double dist = mc.player.distanceTo(le);
             if (dist > maxDist) continue;
-
             double metric = mode.equals("Lowest HP") ? le.getHealth() : dist;
             if (metric < bestMetric) {
                 bestMetric = metric;
@@ -379,8 +277,6 @@ public class TntAura extends Module {
         }
         return closest;
     }
-
-    
     private int findObsidianSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
@@ -388,7 +284,6 @@ public class TntAura extends Module {
                 if (bi.getBlock() == Blocks.OBSIDIAN) return i;
             }
         }
-        
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
@@ -399,7 +294,6 @@ public class TntAura extends Module {
         }
         return -1;
     }
-
     private int findTntSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
@@ -409,7 +303,6 @@ public class TntAura extends Module {
         }
         return -1;
     }
-
     private int findFlintAndSteelSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
@@ -417,8 +310,6 @@ public class TntAura extends Module {
         }
         return -1;
     }
-
-    
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
         double r = range.getValue() + 3.0;
@@ -426,7 +317,6 @@ public class TntAura extends Module {
         int rx = (int) Math.ceil(r);
         int ry = 3;
         int rz = (int) Math.ceil(r);
-
         for (int dx = -rx; dx <= rx; dx++) {
             for (int dy = -ry; dy <= ry; dy++) {
                 for (int dz = -rz; dz <= rz; dz++) {
@@ -442,44 +332,27 @@ public class TntAura extends Module {
                 }
             }
         }
-
         double[] arr = new double[data.size()];
         for (int i = 0; i < arr.length; i++) arr[i] = data.get(i);
         return arr;
     }
-
-    
     private void rotateTo(Minecraft mc, Vec3 target) {
         String mode = rotateMode.getValue();
         if (mode.equals("None")) return;
-
-        Vec3 eyes = mc.player.getEyePosition();
-        double dx = target.x - eyes.x;
-        double dy = target.y - eyes.y;
-        double dz = target.z - eyes.z;
-        double dist = Math.sqrt(dx * dx + dz * dz);
-        float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90f;
-        float pitch = (float) -Math.toDegrees(Math.atan2(dy, dist));
-
+        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
+        float yaw = angles[0], pitch = angles[1];
         if (mode.equals("Normal")) {
             mc.player.setYRot(yaw);
             mc.player.setXRot(pitch);
         } else if (mode.equals("Silent")) {
-            silentYaw = yaw;
-            silentPitch = pitch;
-            hasSilentRotations = true;
-        } else if (mode.equals("Packet")) {
-            if (mc.player.connection != null) {
-                mc.player.connection.send(
-                    new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(
-                        yaw, pitch, mc.player.onGround(), mc.player.horizontalCollision));
-            }
+            silentYaw = yaw; silentPitch = pitch; hasSilentRotations = true;
+        } else if (mode.equals("Packet") && mc.player.connection != null) {
+            mc.player.connection.send(
+                new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(
+                    yaw, pitch, mc.player.onGround(), mc.player.horizontalCollision));
         }
     }
-
-    
     private int savedSlot = -1;
-
     private void swapTo(Minecraft mc, int slot) {
         String swap = swapMode.getValue();
         savedSlot = mc.player.getInventory().getSelectedSlot();
@@ -492,7 +365,6 @@ public class TntAura extends Module {
             }
         }
     }
-
     private void restoreSlot(Minecraft mc, int slot) {
         if (swapMode.getValue().equals("Silent") && savedSlot != -1) {
             if (mc.player.connection != null) {
@@ -501,12 +373,8 @@ public class TntAura extends Module {
             }
         }
     }
-
-    
     private double[] javaFallbackCage(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidData) {
         BlockPos feet = target.blockPosition();
-
-        
         double dx = mc.player.getX() - (feet.getX() + 0.5);
         double dz = mc.player.getZ() - (feet.getZ() + 0.5);
         int headY = feet.getY() + 1;
@@ -518,36 +386,27 @@ public class TntAura extends Module {
             gapBlock = dz > 0 ? new BlockPos(feet.getX(), headY, feet.getZ() + 1)
                               : new BlockPos(feet.getX(), headY, feet.getZ() - 1);
         }
-
         if (gapPos == null) {
             gapPos = new int[]{gapBlock.getX(), gapBlock.getY(), gapBlock.getZ()};
         }
-
-        
         List<BlockPos> candidates = new ArrayList<>();
-        
         candidates.add(feet.north()); candidates.add(feet.south());
         candidates.add(feet.east());  candidates.add(feet.west());
-        
         BlockPos[] headSides = {feet.above().north(), feet.above().south(),
                                 feet.above().east(), feet.above().west()};
         for (BlockPos h : headSides) {
             if (!h.equals(gapBlock)) candidates.add(h);
         }
         if (roof.getValue()) candidates.add(feet.above(2));
-
         Set<BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidData.length; i += 3) {
             solids.add(new BlockPos((int) solidData[i], (int) solidData[i + 1], (int) solidData[i + 2]));
         }
-
         Vec3 eyePos = mc.player.getEyePosition();
         double r = range.getValue();
-
         for (BlockPos cand : candidates) {
             if (solids.contains(cand)) continue;
             if (eyePos.distanceToSqr(Vec3.atCenterOf(cand)) > r * r) continue;
-
             for (Direction d : Direction.values()) {
                 BlockPos side = cand.relative(d);
                 if (solids.contains(side)) {
@@ -561,18 +420,14 @@ public class TntAura extends Module {
                 }
             }
         }
-
         return new double[]{0.0};
     }
-
     private double[] javaFallbackTntPlacement(Minecraft mc) {
         if (gapPos == null) return new double[]{0.0};
-
         BlockPos gap = new BlockPos(gapPos[0], gapPos[1], gapPos[2]);
         Vec3 eyePos = mc.player.getEyePosition();
         double r = range.getValue();
         if (eyePos.distanceToSqr(Vec3.atCenterOf(gap)) > r * r) return new double[]{0.0};
-
         for (Direction d : Direction.values()) {
             BlockPos side = gap.relative(d);
             BlockState state = mc.level.getBlockState(side);
@@ -585,7 +440,6 @@ public class TntAura extends Module {
                 };
             }
         }
-
         return new double[]{0.0};
     }
 }

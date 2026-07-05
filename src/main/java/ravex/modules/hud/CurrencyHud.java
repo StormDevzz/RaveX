@@ -1,25 +1,20 @@
 package ravex.modules.hud;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.HudModule;
+import ravex.modules.Module;
 import ravex.modules.render.Hud;
 import ravex.parameter.BooleanParameter;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-public class CurrencyHud extends HudModule {
+public class CurrencyHud extends Module {
     public static final CurrencyHud INSTANCE = new CurrencyHud();
-
-    
     public final BooleanParameter btc = new BooleanParameter("BTC/USD", true);
     public final BooleanParameter usd_rub = new BooleanParameter("USD/RUB", true);
     public final BooleanParameter eur_rub = new BooleanParameter("EUR/RUB", true);
@@ -41,8 +36,6 @@ public class CurrencyHud extends HudModule {
     public final BooleanParameter usd_huf = new BooleanParameter("USD/HUF", false);
     public final BooleanParameter usd_czk = new BooleanParameter("USD/CZK", false);
     public final BooleanParameter usd_ron = new BooleanParameter("USD/RON", false);
-
-    
     private double usdToRub = 89.50;
     private double usdToByn = 3.25;
     private double usdToKzt = 465.20;
@@ -63,35 +56,11 @@ public class CurrencyHud extends HudModule {
     private double usdToCzk = 23.20;
     private double usdToRon = 4.63;
     private double usdToBtc = 0.0000148; 
-
     private long lastFetchMs = 0;
     private long lastTickMs = 0;
-
     private CurrencyHud() {
         super("Currency", 10, 300, 110, 50);
-        addParameter(btc);
-        addParameter(usd_rub);
-        addParameter(eur_rub);
-        addParameter(usd_byn);
-        addParameter(usd_kzt);
-        addParameter(usd_uzs);
-        addParameter(usd_amd);
-        addParameter(usd_kgs);
-        addParameter(usd_tjs);
-        addParameter(usd_azn);
-        addParameter(usd_mdl);
-        addParameter(usd_eur);
-        addParameter(usd_gbp);
-        addParameter(usd_cad);
-        addParameter(usd_try);
-        addParameter(usd_pln);
-        addParameter(usd_nok);
-        addParameter(usd_dkk);
-        addParameter(usd_huf);
-        addParameter(usd_czk);
-        addParameter(usd_ron);
     }
-
     private static class DisplayPair {
         String label;
         String valStr;
@@ -100,26 +69,20 @@ public class CurrencyHud extends HudModule {
             this.valStr = valStr;
         }
     }
-
     @Override
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Hud.INSTANCE.getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-
         long now = System.currentTimeMillis();
-        
         if (now - lastFetchMs > 600000) {
             lastFetchMs = now;
             fetchRatesAsync();
         }
-
-        
         if (now - lastTickMs > 2000) {
             lastTickMs = now;
             simulateTicks();
         }
-
         List<DisplayPair> active = new ArrayList<>();
         if (btc.getValue()) {
             double price = usdToBtc > 0 ? 1.0 / usdToBtc : 67432.0;
@@ -148,24 +111,19 @@ public class CurrencyHud extends HudModule {
         if (usd_huf.getValue()) active.add(new DisplayPair("USD/HUF", String.format("%.1f HUF", usdToHuf)));
         if (usd_czk.getValue()) active.add(new DisplayPair("USD/CZK", String.format("%.2f CZK", usdToCzk)));
         if (usd_ron.getValue()) active.add(new DisplayPair("USD/RON", String.format("%.2f RON", usdToRon)));
-
         if (active.isEmpty()) {
             setWidth(80);
             setHeight(14);
             return;
         }
-
         int pw = 120;
         int rowH = 11;
         int ph = 16 + active.size() * rowH + 4;
         setWidth(pw);
         setHeight(ph);
-
         int bx = getX(), by = getY();
         ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, pw, ph, ColorUtility.getActiveColor());
-
         ravex.utility.render.FontRenderUtility.drawString(graphics, "Currency Rates", bx + 8, by + 4, ColorUtility.getActiveColor(), false);
-
         int cy = by + 16;
         for (DisplayPair dp : active) {
             ravex.utility.render.FontRenderUtility.drawString(graphics, dp.label, bx + 8, cy, 0xFF8080A0, false);
@@ -174,16 +132,13 @@ public class CurrencyHud extends HudModule {
             cy += rowH;
         }
     }
-
     private void simulateTicks() {
-        
         double jitter = 1.0 + (Math.random() - 0.5) * 0.0005; 
         usdToRub = Math.max(50.0, Math.min(150.0, usdToRub * jitter));
         usdToByn = Math.max(1.5, Math.min(5.0, usdToByn * jitter));
         usdToKzt = Math.max(300.0, Math.min(600.0, usdToKzt * jitter));
         usdToBtc = Math.max(0.000005, Math.min(0.00005, usdToBtc * (1.0 + (Math.random() - 0.5) * 0.001))); 
     }
-
     private void fetchRatesAsync() {
         new Thread(() -> {
             try {
@@ -226,7 +181,6 @@ public class CurrencyHud extends HudModule {
                     }
                 }
             } catch (Throwable ignored) {
-                
             }
         }).start();
     }

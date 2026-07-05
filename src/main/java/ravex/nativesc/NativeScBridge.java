@@ -1,16 +1,16 @@
 package ravex.nativesc;
 
-import ravex.utility.misc.NativeLoader;
+import ravex.utility.nativelib.NativeLibrary;
 
 public class NativeScBridge {
-    private static boolean nativeAvailable = false;
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_nativesc");
 
     static {
-        nativeAvailable = NativeLoader.loadLibrary("ravex_nativesc");
+        NATIVE.load();
     }
 
     public static boolean isNativeAvailable() {
-        return nativeAvailable;
+        return NATIVE.isLoaded();
     }
 
     public static native boolean nativeInit();

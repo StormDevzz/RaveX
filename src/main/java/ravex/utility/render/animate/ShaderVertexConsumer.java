@@ -7,8 +7,8 @@ import org.joml.Matrix3x2fc;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import ravex.shaders.*;
-import ravex.shaders.hand.HandShaderManager;
+import ravex.utility.shaders.*;
+import ravex.manager.HandShaderManager;
 
 public class ShaderVertexConsumer implements VertexConsumer {
     private final VertexConsumer delegate;

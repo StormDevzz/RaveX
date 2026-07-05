@@ -4,8 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import ravex.modules.Module;
-import ravex.modules.ModuleManager;
+import ravex.manager.ModuleManager;
 import ravex.parameter.Parameter;
 
 import java.io.File;
@@ -63,7 +64,7 @@ public class ConfigManager {
             }
 
             JsonObject hudRoot = new JsonObject();
-            for (ravex.modules.HudModule hm : ModuleManager.INSTANCE.getHudModules()) {
+            for (Module hm : ModuleManager.INSTANCE.getHudModules()) {
                 JsonObject hudObj = new JsonObject();
                 hudObj.addProperty("enabled", hm.getEnabled());
                 hudObj.addProperty("x", hm.getTargetX());
@@ -151,7 +152,7 @@ public class ConfigManager {
 
             if (root.has("hud_modules")) {
                 JsonObject hudRoot = root.getAsJsonObject("hud_modules");
-                for (ravex.modules.HudModule hm : ModuleManager.INSTANCE.getHudModules()) {
+                for (Module hm : ModuleManager.INSTANCE.getHudModules()) {
                     if (hudRoot.has(hm.getName())) {
                         JsonObject hudObj = hudRoot.getAsJsonObject(hm.getName());
                         if (hudObj.has("enabled")) {

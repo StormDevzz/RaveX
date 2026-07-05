@@ -7,15 +7,6 @@ extern "C" {
 #endif
 
 
-JNIEXPORT jstring JNICALL
-Java_ravex_modules_misc_Optimizer_nativeOptimize(JNIEnv* env, jclass clazz, jstring mode);
-
-JNIEXPORT jlong JNICALL
-Java_ravex_modules_misc_Optimizer_nativeFreeMemory(JNIEnv* env, jclass clazz);
-
-JNIEXPORT jobjectArray JNICALL
-Java_ravex_modules_misc_Optimizer_nativeListTechniques(JNIEnv* env, jclass clazz);
-
 JNIEXPORT void JNICALL
 Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeGui(JNIEnv* env, jclass clazz);
 

@@ -1,6 +1,5 @@
 add_library(ravex_norender STATIC
     norender.cpp
-    optimizer.cpp
 )
 
 target_link_libraries(ravex_norender PRIVATE ravex_common)

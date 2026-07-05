@@ -1,5 +1,4 @@
 package ravex.modules.world;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,43 +14,26 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-
 public class Igniter extends Module {
     public static final Igniter INSTANCE = new Igniter();
-
-    
     public final NumberParameter  range        = new NumberParameter("Range",        4.0, 1.0, 6.0, 0.1);
     public final ModeParameter    swapMode     = new ModeParameter("Swap Mode", "Silent",
             java.util.List.of("Silent", "Normal", "None"));
     public final BooleanParameter autoDisable  = new BooleanParameter("Auto Disable",  false);
     public final BooleanParameter rotate       = new BooleanParameter("Rotate",       true);
 
-    private Igniter() {
-        super("Igniter", Category.WORLD);
-        addParameter(range);
-        addParameter(swapMode);
-        addParameter(autoDisable);
-        addParameter(rotate);
-    }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-
         BlockPos tntPos = findNearestTNT(mc);
         if (tntPos == null) return;
-
         int itemSlot = findIgnitionItem(mc);
         if (itemSlot == -1) return;
-
-        
         Vec3 hitVec = Vec3.atCenterOf(tntPos);
         if (rotate.getValue()) {
             rotateTo(mc, hitVec);
         }
-
-        
         int originalSlot = mc.player.getInventory().getSelectedSlot();
         String swap = swapMode.getValue();
         if (swap.equals("Normal")) {
@@ -65,34 +47,26 @@ public class Igniter extends Module {
                 return;
             }
         }
-
-        
         BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, tntPos, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
         mc.player.swing(InteractionHand.MAIN_HAND);
-
-        
         if (swap.equals("Silent") && originalSlot != -1) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
             }
         }
-
         if (autoDisable.getValue()) {
             setEnabled(false);
         }
     }
-
     private BlockPos findNearestTNT(Minecraft mc) {
         BlockPos playerPos = mc.player.blockPosition();
         double r = range.getValue();
         int rx = (int) Math.ceil(r);
         int ry = (int) Math.ceil(r);
         int rz = (int) Math.ceil(r);
-
         BlockPos closest = null;
         double bestDistSqr = Double.MAX_VALUE;
-
         for (int dx = -rx; dx <= rx; dx++) {
             for (int dy = -ry; dy <= ry; dy++) {
                 for (int dz = -rz; dz <= rz; dz++) {
@@ -112,9 +86,7 @@ public class Igniter extends Module {
         }
         return closest;
     }
-
     private int findIgnitionItem(Minecraft mc) {
-        
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (!stack.isEmpty()) {
@@ -125,7 +97,6 @@ public class Igniter extends Module {
         }
         return -1;
     }
-
     private void rotateTo(Minecraft mc, Vec3 target) {
         Vec3 eyes = mc.player.getEyePosition();
         double dx = target.x - eyes.x;
@@ -134,7 +105,6 @@ public class Igniter extends Module {
         double dist = Math.sqrt(dx*dx + dz*dz);
         float targetYaw   = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90f;
         float targetPitch = (float) -Math.toDegrees(Math.atan2(dy, dist));
-
         mc.player.setYRot(targetYaw);
         mc.player.setXRot(targetPitch);
     }

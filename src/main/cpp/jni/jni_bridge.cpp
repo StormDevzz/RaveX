@@ -1,5 +1,4 @@
 #include "jni_bridge.hpp"
-#include "../hooks/norender/optimizer.hpp"
 #include "../hooks/norender/norender.hpp"
 #include "../antiafk/antiafk.hpp"
 #include "../common/memory.hpp"
@@ -15,40 +14,6 @@
 
 
 
-
-
-JNIEXPORT jstring JNICALL
-Java_ravex_modules_misc_Optimizer_nativeOptimize(JNIEnv* env, jclass, jstring mode) {
-    const char* modeStr = env->GetStringUTFChars(mode, nullptr);
-    auto result = ravex::Optimizer::run(std::string(modeStr));
-    env->ReleaseStringUTFChars(mode, modeStr);
-
-    std::string payload = result.message
-        + "|FREE_KB:" + std::to_string(result.freeMemoryKb)
-        + "|FREED_KB:" + std::to_string(result.freedKb)
-        + "|ACTIONS:"  + std::to_string(result.actionsPerformed);
-    return env->NewStringUTF(payload.c_str());
-}
-
-JNIEXPORT jlong JNICALL
-Java_ravex_modules_misc_Optimizer_nativeFreeMemory(JNIEnv*, jclass) {
-    return static_cast<jlong>(ravex::Memory::readMemInfo().free_kb);
-}
-
-JNIEXPORT jobjectArray JNICALL
-Java_ravex_modules_misc_Optimizer_nativeListTechniques(JNIEnv* env, jclass) {
-    auto techniques = ravex::Optimizer::listTechniques();
-    jobjectArray arr = env->NewObjectArray(
-        static_cast<jsize>(techniques.size()),
-        env->FindClass("java/lang/String"),
-        env->NewStringUTF("")
-    );
-    for (size_t i = 0; i < techniques.size(); i++) {
-        env->SetObjectArrayElement(arr, static_cast<jsize>(i),
-                                   env->NewStringUTF(techniques[i].c_str()));
-    }
-    return arr;
-}
 
 
 

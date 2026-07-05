@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,11 +14,9 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.misc.NativeLoader;
-
+import ravex.utility.nativelib.NativeLibrary;
 public class Burrow extends Module {
     public static final Burrow INSTANCE = new Burrow();
-
     public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         java.util.List.of("Obsidian", "Cobblestone", "Web", "Anvil"));
     public final BooleanParameter autoCenter = new BooleanParameter("AutoCenter", true);
@@ -27,45 +24,24 @@ public class Burrow extends Module {
     public final BooleanParameter instant = new BooleanParameter("Instant", true);
     public final NumberParameter height = new NumberParameter("Height", 0.42, 0.2, 1.0, 0.01);
     public final NumberParameter delay = new NumberParameter("Delay", 0, 0, 5, 1);
-
-    private static boolean nativeAvailable = false;
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_burrow");
     static {
-        try {
-            nativeAvailable = NativeLoader.loadLibrary("ravex_burrow");
-        } catch (Throwable t) {
-            nativeAvailable = false;
-        }
+        NATIVE.load();
     }
-
     private int tickCounter = 0;
     private boolean hasPlaced = false;
-
-    private Burrow() {
-        super("Burrow", Category.COMBAT);
-        addParameter(block);
-        addParameter(autoCenter);
-        addParameter(rotate);
-        addParameter(instant);
-        addParameter(height);
-        addParameter(delay);
-    }
 
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-
         if (hasPlaced) return;
-
         tickCounter++;
         if (tickCounter < delay.getValue().intValue()) return;
-
         BlockPos headPos = mc.player.blockPosition();
         if (!mc.level.getBlockState(headPos).isAir() && !mc.level.getBlockState(headPos).canBeReplaced()) return;
-
         int slot = findBlockSlot(mc);
         if (slot == -1) return;
-
         if (autoCenter.getValue()) {
             double centerX = Math.floor(mc.player.getX()) + 0.5;
             double centerZ = Math.floor(mc.player.getZ()) + 0.5;
@@ -74,7 +50,6 @@ public class Burrow extends Module {
                 mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(centerX, mc.player.getY(), centerZ, mc.player.onGround(), false));
             }
         }
-
         if (instant.getValue()) {
             double h = height.getValue();
             Vec3 orig = mc.player.position();
@@ -83,31 +58,25 @@ public class Burrow extends Module {
                 mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(orig.x, orig.y + h, orig.z, false, false));
             }
         }
-
         int prevSlot = mc.player.getInventory().getSelectedSlot();
         if (slot < 0 || slot > 8) return;
         mc.player.getInventory().setSelectedSlot(slot);
-
         BlockHitResult hit = new BlockHitResult(
             new Vec3(headPos.getX() + 0.5, headPos.getY() + 2, headPos.getZ() + 0.5),
             Direction.DOWN, headPos, false
         );
-
         if (mc.gameMode != null) {
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
         }
         mc.player.swing(InteractionHand.MAIN_HAND);
-
         mc.player.getInventory().setSelectedSlot(prevSlot);
         hasPlaced = true;
     }
-
     @Override
     protected void onDisable() {
         hasPlaced = false;
         tickCounter = 0;
     }
-
     private int findBlockSlot(Minecraft mc) {
         String b = block.getValue();
         for (int i = 0; i < 9; i++) {
@@ -121,6 +90,5 @@ public class Burrow extends Module {
         }
         return -1;
     }
-
     private static native double[] nativeCalculate(double px, double py, double pz, double height, boolean autoCenter);
 }

@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.modules.Module;
-import ravex.modules.render.ClickGui;
+import ravex.modules.client.ClickGui;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
 import ravex.parameter.Parameter;
@@ -22,6 +22,8 @@ public class ModuleButton {
 
     private int inlineScrollTarget = 0;
     private float inlineScrollAnim = 0f;
+    private float searchReveal = 1.0f;
+    private boolean matchesSearch = true;
 
     public static void tickAllGears() {
         float speed = ClickGui.INSTANCE.gearRotationSpeed.getValue().floatValue();
@@ -50,6 +52,17 @@ public class ModuleButton {
     }
 
     public boolean isExpanded() { return expanded || expandAnim > 0.001f; }
+
+    public float getSearchReveal() { return searchReveal; }
+
+    public void updateSearchReveal(boolean matches, boolean hasQuery) {
+        matchesSearch = matches;
+        float target = (!hasQuery || matches) ? 1.0f : 0.0f;
+        if (searchReveal < target)
+            searchReveal = Math.min(target, searchReveal + 0.35f);
+        else if (searchReveal > target)
+            searchReveal = Math.max(target, searchReveal - 0.30f);
+    }
 
     public int getExpandedHeight(int panelWidth) {
         int h = 0;
@@ -85,24 +98,25 @@ public class ModuleButton {
         if (maxScroll <= 0) return false;
 
         int prevTarget = inlineScrollTarget;
-        inlineScrollTarget = Math.max(0, Math.min(maxScroll, inlineScrollTarget - (int)amount * 12));
+        inlineScrollTarget = Math.max(0, Math.min(maxScroll, inlineScrollTarget - (int)amount * 4));
         return inlineScrollTarget != prevTarget;
     }
 
-    public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut) {
-        render(graphics, x, y, width, mouseX, mouseY, currentYOut, "");
+    public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut, int viewTop, int viewBot) {
+        render(graphics, x, y, width, mouseX, mouseY, currentYOut, "", viewTop, viewBot);
     }
 
-    public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut, String searchQuery) {
+    public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut, String searchQuery, int viewTop, int viewBot) {
         int currentY = currentYOut[0];
-        int btnH = ravex.modules.render.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
+        if (searchReveal < 0.001f) return;
+        int btnH = ravex.modules.client.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
         boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + btnH;
 
         if (hovered) {
             ClickGUI.hoveredDescription = module.getDescription();
-            hoverProgress = Math.min(1.0f, hoverProgress + 0.07f);
+            hoverProgress = Math.min(1.0f, hoverProgress + 0.10f);
         } else {
-            hoverProgress = Math.max(0.0f, hoverProgress - 0.07f);
+            hoverProgress = Math.max(0.0f, hoverProgress - 0.10f);
         }
 
         float targetAnim = module.getEnabled() ? 1.0f : 0.0f;
@@ -113,34 +127,29 @@ public class ModuleButton {
         }
 
         int activeColor = ColorUtility.getActiveColor();
-        int disabledBg = 0xFF0D0D14;
+        int btnAlpha = ravex.modules.client.ClickGui.INSTANCE.buttonOpacity.getValue().intValue();
+        int disabledBg = ColorUtility.withAlpha(0x252530, btnAlpha);
+        int btnRadius = Math.min(ClickGui.INSTANCE.cornerRadius.getValue().intValue(), btnH / 2);
 
-        graphics.fill(x, currentY, x + width, currentY + btnH, disabledBg);
-
+        int mergedBg = disabledBg;
         if (enableAnim > 0.01f) {
-            int enableAlpha = (int) (enableAnim * 0x22);
-            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(activeColor, enableAlpha));
+            int enableAlpha = (int) (enableAnim * Math.min(255, btnAlpha * 3));
+            mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(activeColor, enableAlpha));
         }
-
-        if (hoverProgress > 0.01f) {
-            int hoverAlpha = (int) (hoverProgress * 0x18);
-            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
+        if (hoverProgress > 0.01f && enableAnim < 0.01f) {
+            int hoverAlpha = (int) (hoverProgress * Math.min(30, btnAlpha / 2));
+            mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
         }
-
-        int baseColor = lerpColor(0xFF8F8FA0, activeColor, enableAnim);
-        int textColor = hovered ? lerpColor(0xFFC0C0D0, 0xFFFFFFFF, enableAnim) : baseColor;
+        Render2DEngine.drawRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, mergedBg);
 
         if (searchQuery != null && !searchQuery.isEmpty()
             && module.getName().toLowerCase().contains(searchQuery.toLowerCase())) {
-            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(activeColor, 50));
+            int searchBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(activeColor, 30));
+            Render2DEngine.drawRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, searchBg);
         }
 
-        if (ClickGui.INSTANCE.moduleOutlines.getValue()) {
-            int borderCol = ClickGui.INSTANCE.moduleOutlineColor.getValue();
-            Render2DEngine.drawBorder(graphics, x, currentY, width, btnH, 1, borderCol);
-        } else {
-            graphics.fill(x, currentY + btnH - 1, x + width, currentY + btnH, 0x1AFFFFFF);
-        }
+        int baseColor = lerpColor(0xFFB0B0C0, activeColor, enableAnim);
+        int textColor = (hovered && enableAnim < 0.01f) ? 0xFFD0D0E0 : baseColor;
 
         String displayName = module.getName();
         if (ClickGUI.bindingModuleButton == this) {
@@ -172,7 +181,7 @@ public class ModuleButton {
             if (settingsTex == null) settingsTex = ravex.utility.render.TextureLoader.getSettingsTexture();
             if (settingsTex != null) {
                 int iconSize = 10;
-                int iconX = x + width - iconSize - 6;
+                int iconX = x + width - iconSize - 8;
                 int iconY = currentY + (btnH - iconSize) / 2;
                 boolean rotating = !ClickGui.INSTANCE.separateSettings.getValue() && expanded;
                 float angle = module.getGearAngle();
@@ -194,13 +203,12 @@ public class ModuleButton {
 
         currentY += btnH;
 
-        
         if (hasParams) {
             float targetExpand = expanded ? 1.0f : 0.0f;
             if (expandAnim < targetExpand) {
-                expandAnim = Math.min(targetExpand, expandAnim + 0.08f);
+                expandAnim = Math.min(targetExpand, expandAnim + 0.10f);
             } else if (expandAnim > targetExpand) {
-                expandAnim = Math.max(targetExpand, expandAnim - 0.08f);
+                expandAnim = Math.max(targetExpand, expandAnim - 0.10f);
             }
 
             if (expandAnim > 0.01f) {
@@ -212,8 +220,8 @@ public class ModuleButton {
                     }
                 }
                 int actualH = getExpandedHeight(width);
-                int bgCol = 0xFF0A0A14;
-                graphics.fill(x + 1, currentY, x + width - 1, currentY + actualH, bgCol);
+                int bgCol = ColorUtility.withAlpha(0x0A0A14, Math.max(btnAlpha / 2, 24));
+                Render2DEngine.drawRound(graphics, x + 3, currentY, width - 6, actualH, Math.max(4, btnRadius - 2), bgCol);
 
                 if (ClickGui.INSTANCE.smoothScroll.getValue()) {
                     float lerp = ClickGui.INSTANCE.scrollSmoothness.getValue().floatValue() / 100f;
@@ -225,7 +233,7 @@ public class ModuleButton {
                 int pY = currentY + 2 - scrollOffset;
                 int visTop = currentY + 2;
                 int visBot = currentY + actualH - 2;
-                graphics.enableScissor(x + 1, currentY, x + width - 1, currentY + actualH);
+                graphics.enableScissor(x + 3, currentY, x + width - 3, currentY + actualH);
                 for (ParameterElement pe : parameterElements) {
                     if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
                     int pHeight = pe.getHeight();
@@ -233,30 +241,22 @@ public class ModuleButton {
                     if (pBot > visTop && pY < visBot) {
                         float oldExpand = expandAnim;
                         expandAnim = 1.0f;
-                        pe.render(graphics, x + 4, pY, paramW, pHeight, mouseX, mouseY);
+                        pe.render(graphics, x + 5, pY, paramW, pHeight, mouseX, mouseY);
                         expandAnim = oldExpand;
                     }
                     pY += pHeight;
                 }
 
                 int maxScroll = Math.max(0, paramAreaH - MAX_INLINE_HEIGHT);
-                
-                if (inlineScrollAnim > 0.5f) {
-                    graphics.fillGradient(x + 1, currentY, x + width - 1, currentY + 12, bgCol, 0x000A0A14);
-                }
-                if (inlineScrollAnim < maxScroll - 0.5f) {
-                    graphics.fillGradient(x + 1, currentY + actualH - 12, x + width - 1, currentY + actualH, 0x000A0A14, bgCol);
-                }
-                
                 if (maxScroll > 0) {
-                    int sbX = x + width - 4;
+                    int sbX = x + width - 5;
                     int sbY = currentY + 2;
                     int sbH = actualH - 4;
                     float ratio = sbH / (float) paramAreaH;
                     int thumbH = Math.max(8, (int) (sbH * ratio));
                     int thumbY = sbY + (int) ((sbH - thumbH) * (inlineScrollAnim / maxScroll));
                     graphics.fill(sbX, sbY, sbX + 2, sbY + sbH, 0x1515152A);
-                    graphics.fill(sbX, thumbY, sbX + 2, thumbY + thumbH, ColorUtility.withAlpha(0xFFFFFFFF, 60));
+                    graphics.fill(sbX, thumbY, sbX + 2, thumbY + thumbH, ColorUtility.withAlpha(0xFFFFFFFF, 40));
                 }
 
                 graphics.disableScissor();
@@ -266,7 +266,13 @@ public class ModuleButton {
             expandAnim = Math.max(0.0f, expandAnim - 0.10f);
         }
 
-        currentYOut[0] = currentY;
+        boolean searching = searchQuery != null && !searchQuery.isEmpty();
+        float revealH = (!searching || matchesSearch) ? 1.0f : searchReveal;
+        if (revealH < 0.99f) {
+            int fadeAlpha = (int)((1.0f - revealH) * 200);
+            Render2DEngine.drawRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min(ClickGui.INSTANCE.cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 0x050510);
+        }
+        currentYOut[0] = currentYOut[0] + (int)((currentY - currentYOut[0]) * revealH);
     }
 
     private void renderHighlightedName(GuiGraphics graphics, String text, int x, int y, int baseColor, String query) {
@@ -299,6 +305,27 @@ public class ModuleButton {
         }
     }
 
+    private static int blendSrcOver(int dst, int src) {
+        int sa = (src >> 24) & 0xFF;
+        if (sa == 0) return dst;
+        if (sa >= 254) return src;
+        int da = (dst >> 24) & 0xFF;
+        if (da == 0) return src;
+        int sr = (src >> 16) & 0xFF;
+        int sg = (src >> 8) & 0xFF;
+        int sb = src & 0xFF;
+        int dr = (dst >> 16) & 0xFF;
+        int dg = (dst >> 8) & 0xFF;
+        int db = dst & 0xFF;
+        float a = sa / 255f;
+        float invA = 1f - a;
+        int r = (int) (sr * a + dr * invA);
+        int g = (int) (sg * a + dg * invA);
+        int b = (int) (sb * a + db * invA);
+        int na = (int) (sa + da * invA);
+        return (Math.min(255, na) << 24) | (Math.min(255, r) << 16) | (Math.min(255, g) << 8) | Math.min(255, b);
+    }
+
     private static int lerpColor(int bg, int fg, float alpha) {
         int aBg = (bg >> 24) & 0xFF;
         int rBg = (bg >> 16) & 0xFF;
@@ -320,7 +347,7 @@ public class ModuleButton {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int width, int[] currentYOut, net.minecraft.client.Minecraft mc) {
         int currentY = currentYOut[0];
-        int btnH = ravex.modules.render.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
+        int btnH = ravex.modules.client.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
         int totalH = btnH + (expanded && !ClickGui.INSTANCE.separateSettings.getValue() ? getExpandedHeight(width) : 0);
         boolean sepMode = ClickGui.INSTANCE.separateSettings.getValue();
 
@@ -336,18 +363,13 @@ public class ModuleButton {
                         if (expanded) {
                             expandedModules.add(module);
                             inlineScrollTarget = 0;
-                            //ravex.utility.sound.SoundUtility.playSettingsOpen();
                         } else {
                             expandedModules.remove(module);
                             module.setGearAngle(0f, System.currentTimeMillis());
-                            //ravex.utility.sound.SoundUtility.playSettingsClose();
                         }
                     }
                 } else if (button == 2) {
                     ClickGUI.bindingModuleButton = this;
-                    //if (mc.player != null) {
-                    //    mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 1.5f);
-                    //}
                 }
             } else if (!sepMode && expanded) {
                 int scrollOffset = Math.round(inlineScrollAnim);

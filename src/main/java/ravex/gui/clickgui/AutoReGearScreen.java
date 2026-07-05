@@ -13,8 +13,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
-import ravex.modules.player.AutoReGear.AutoReGearData;
-import ravex.modules.player.AutoReGear.AutoReGear;
+import ravex.modules.player.autoregear.AutoReGearData;
+import ravex.modules.player.autoregear.AutoReGear;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
 

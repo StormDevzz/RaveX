@@ -11,7 +11,7 @@ import org.lwjgl.glfw.GLFW;
 import ravex.macro.Macro;
 import ravex.macro.MacroAction;
 import ravex.macro.MacroAction.Type;
-import ravex.macro.MacroManager;
+import ravex.manager.MacroManager;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,7 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;
@@ -16,7 +17,6 @@ public class ParameterElement {
     private boolean isDragging = false;
     private float toggleAnimProgress = 0f;
     private long toggleLastUpdate = 0;
-    private long modeExpandedAt = 0;
     
     private float expandAnimProgress = 0f;
     private float dropdownAnimProgress = 0f;
@@ -50,10 +50,9 @@ public class ParameterElement {
         lastAnimTime = now;
         if (delta > 100) delta = 16;
 
-        boolean smoothOption = ravex.modules.render.ClickGui.INSTANCE.smoothOption.getValue();
-        float optionSmoothness = ravex.modules.render.ClickGui.INSTANCE.optionSmoothness.getValue().floatValue();
+        boolean smoothOption = ravex.modules.client.ClickGui.INSTANCE.smoothOption.getValue();
+        float optionSmoothness = ravex.modules.client.ClickGui.INSTANCE.optionSmoothness.getValue().floatValue();
 
-        
         float targetExpand = parameter.isVisible() ? 1.0f : 0.0f;
         if (smoothOption) {
             float speed = (optionSmoothness / 100f) * (delta / 16f);
@@ -66,7 +65,6 @@ public class ParameterElement {
             expandAnimProgress = targetExpand;
         }
 
-        
         float targetDropdown = parameter.isExpanded() ? 1.0f : 0.0f;
         if (smoothOption) {
             float speed = (optionSmoothness / 100f) * (delta / 16f);
@@ -101,62 +99,44 @@ public class ParameterElement {
 
         graphics.enableScissor(x, y, x + width, y + height);
 
-        long now = System.currentTimeMillis();
-        if (toggleLastUpdate == 0) toggleLastUpdate = now;
-        long delta = now - toggleLastUpdate;
-        toggleLastUpdate = now;
-        if (delta > 100) delta = 16;
-
         int activeColor = ColorUtility.getActiveColor();
         boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
 
-        int bg = hovered ? 0xFF111122 : 0xFF0D0D18;
+        int bg = hovered ? 0x11000000 : 0x08000000;
         graphics.fill(x, y, x + width, y + height, bg);
 
-        boolean switchless = ravex.modules.render.ClickGui.INSTANCE.switchless.getValue();
+        boolean switchless = ravex.modules.client.ClickGui.INSTANCE.switchless.getValue();
 
         if (parameter instanceof BooleanParameter bp) {
-            if (bp.getValue()) {
-                toggleAnimProgress = Math.min(1.0f, toggleAnimProgress + delta * 0.015f);
-            } else {
-                toggleAnimProgress = Math.max(0.0f, toggleAnimProgress - delta * 0.015f);
-            }
+            toggleAnimProgress = bp.getValue() ? 1.0f : 0.0f;
 
             if (switchless) {
                 if (toggleAnimProgress > 0.01f) {
-                    int glowAlpha = (int) (toggleAnimProgress * 0x22);
+                    int glowAlpha = (int) (toggleAnimProgress * 0x18);
                     graphics.fill(x, y, x + width, y + height, ColorUtility.withAlpha(activeColor, glowAlpha));
                 }
-                int baseCol = lerpColor(0xFF8F8FA0, activeColor, toggleAnimProgress);
-                int textCol = hovered ? lerpColor(0xFFC0C0D0, 0xFFFFFFFF, toggleAnimProgress) : baseCol;
+                int baseCol = lerpColor(0xFFA0A0B0, activeColor, toggleAnimProgress);
+                int textCol = hovered ? lerpColor(0xFFD0D0E0, 0xFFFFFFFF, toggleAnimProgress) : baseCol;
                 FontRenderUtility.drawString(graphics, bp.getName(), x + 8, y + 7, textCol, true);
             } else {
                 int textCol = bp.getValue() ? 0xFFD0D0E0 : 0xFF9090A0;
                 FontRenderUtility.drawString(graphics, bp.getName(), x + 8, y + 7, textCol, true);
 
-                int swW = 26;
+                int swW = 28;
                 int swH = 14;
                 int swX = x + width - swW - 8;
                 int swY = y + (height - swH) / 2;
 
-                int trackColor = lerpColor(0xFF232330, activeColor, toggleAnimProgress);
-                int trackBorderColor = lerpColor(0xFF35354A, ColorUtility.withAlpha(activeColor, 120), toggleAnimProgress);
-                
-                Render2DEngine.drawSmoothRound(graphics, swX - 0.5f, swY - 0.5f, swW + 1.0f, swH + 1.0f, swH / 2.0f + 0.5f, trackBorderColor);
-                Render2DEngine.drawSmoothRound(graphics, swX, swY, swW, swH, swH / 2.0f, trackColor);
+                int trackColor = lerpColor(0xFF2A2A3A, activeColor, toggleAnimProgress);
+                Render2DEngine.drawRound(graphics, swX, swY, swW, swH, swH / 2, trackColor);
 
                 int knobSize = 12;
                 int knobRange = swW - knobSize - 2;
-                int knobX = swX + 1 + (int)(toggleAnimProgress * knobRange);
+                int knobX = Math.round(swX + 1 + toggleAnimProgress * knobRange);
                 int knobY = swY + 1;
 
-                double stretch = Math.sin(toggleAnimProgress * Math.PI) * 2.5;
-                float currentKnobWidth = (float) (knobSize + stretch);
-                float drawKnobX = knobX - (float)(stretch / 2.0);
-                float drawKnobY = knobY;
-
-                Render2DEngine.drawSmoothRound(graphics, drawKnobX - 0.5f, drawKnobY + 0.5f, currentKnobWidth + 1.0f, knobSize + 1.0f, knobSize / 2.0f, 0x1F000000);
-                Render2DEngine.drawSmoothRound(graphics, drawKnobX, drawKnobY, currentKnobWidth, knobSize, knobSize / 2.0f, 0xFFFFFFFF);
+                Identifier knobTex = Render2DEngine.getSmoothCircle(knobSize);
+                graphics.blit(RenderPipelines.GUI_TEXTURED, knobTex, knobX, knobY, 0f, 0f, knobSize, knobSize, knobSize, knobSize, 0xFFFFFFFF);
             }
 
         } else if (parameter instanceof ModeParameter mp) {
@@ -168,13 +148,12 @@ public class ParameterElement {
                     boolean isCurrent = m.equals(mp.getValue());
                     boolean mHovered = mouseX >= x && mouseX <= x + width && mouseY >= modeY && mouseY <= modeY + 18;
 
-                    int mBg = mHovered ? 0x22FFFFFF : 0;
+                    int mBg = mHovered ? 0x18FFFFFF : 0;
                     if (mBg != 0) {
                         graphics.fill(x + 2, modeY, x + width - 2, modeY + 18, mBg);
                     }
                     if (isCurrent) {
                         graphics.fill(x + 2, modeY, x + 4, modeY + 18, activeColor);
-                        graphics.fill(x + 2, modeY + 17, x + width - 2, modeY + 18, ColorUtility.withAlpha(activeColor, 50));
                     }
 
                     int mCol = isCurrent ? activeColor : 0xFF808090;
@@ -189,8 +168,8 @@ public class ParameterElement {
                 int valX = x + width - mw - 8;
                 FontRenderUtility.drawString(graphics, modeVal, valX, y + 7, activeColor, true);
 
-                FontRenderUtility.drawString(graphics, "<", valX - FontRenderUtility.getStringWidth("<") - 3, y + 7, ColorUtility.withAlpha(activeColor, 120), true);
-                FontRenderUtility.drawString(graphics, ">", x + width - 8, y + 7, ColorUtility.withAlpha(activeColor, 120), true);
+                FontRenderUtility.drawString(graphics, "<", valX - FontRenderUtility.getStringWidth("<") - 3, y + 7, ColorUtility.withAlpha(activeColor, 100), true);
+                FontRenderUtility.drawString(graphics, ">", x + width - 8, y + 7, ColorUtility.withAlpha(activeColor, 100), true);
             }
 
         } else if (parameter instanceof NumberParameter np) {
@@ -202,21 +181,30 @@ public class ParameterElement {
             FontRenderUtility.drawString(graphics, np.getName(), x + 8, y + 5, 0xFFC0C0D0, true);
 
             String valStr;
+            int extraCursor = 0;
             if (isEditingNumber) {
                 valStr = numberInputText;
-                if ((System.currentTimeMillis() / 500) % 2 == 0) {
-                    valStr += "_";
+                float cursorBlink = (float)Math.sin(System.currentTimeMillis() * 0.003f);
+                if (cursorBlink > 0) {
+                    extraCursor = 1;
                 }
             } else {
                 valStr = String.format("%.1f", val);
             }
             int valW = FontRenderUtility.getStringWidth(valStr);
             FontRenderUtility.drawString(graphics, valStr, x + width - valW - 8, y + 5, activeColor, true);
+            if (extraCursor > 0) {
+                int cursorX = x + width - 8;
+                float cursorBlink = (float)(Math.sin(System.currentTimeMillis() * 0.003f) * 0.5f + 0.5f);
+                int cursorAlpha = (int)(80 + 175 * cursorBlink * cursorBlink * cursorBlink);
+                int fontH = FontRenderUtility.getFontHeight();
+                graphics.fill(cursorX, y + 5, cursorX + 2, y + 5 + fontH, ColorUtility.withAlpha(activeColor, cursorAlpha));
+            }
 
             int slX = x + 8;
             int slY = y + 16;
             int slW = width - 16;
-            int slH = 4;
+            int slH = 3;
 
             if (isDragging) {
                 if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(net.minecraft.client.Minecraft.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
@@ -234,38 +222,19 @@ public class ParameterElement {
                 }
             }
 
-            boolean slHovered = mouseX >= slX && mouseX <= slX + slW && mouseY >= slY - 4 && mouseY <= slY + slH + 4;
-            boolean active = slHovered || isDragging;
-            float targetKnob = active ? 1.0f : 0.0f;
-            if (sliderKnobAnim < targetKnob) {
-                sliderKnobAnim = Math.min(targetKnob, sliderKnobAnim + delta * 0.008f);
-            } else if (sliderKnobAnim > targetKnob) {
-                sliderKnobAnim = Math.max(targetKnob, sliderKnobAnim - delta * 0.008f);
-            }
+            Render2DEngine.drawRound(graphics, slX, slY, slW, slH, slH / 2, 0xFF1D1D2A);
 
-            int baseKnobSize = 10;
-            int knobRange = slW - baseKnobSize;
-            int knobX = slX + baseKnobSize / 2 + (int)(knobRange * progress);
-
-            Render2DEngine.drawSmoothRound(graphics, slX, slY, slW, slH, slH / 2.0f, 0xFF1D1D2A);
-            
+            int knobX = slX + (int)(slW * progress);
             if (knobX > slX) {
-                Render2DEngine.drawSmoothRound(graphics, slX, slY, (float)(knobX - slX), slH, slH / 2.0f, activeColor);
+                Render2DEngine.drawRound(graphics, slX, slY, knobX - slX, slH, slH / 2, activeColor);
             }
 
-            float currentKnobSize = 8.0f + sliderKnobAnim * 3.5f;
-            float knobDrawX = knobX - currentKnobSize / 2.0f;
-            float knobDrawY = (slY + slH / 2.0f) - currentKnobSize / 2.0f;
+            int knobSize = 7;
+            int knobDrawX = knobX - knobSize / 2;
+            int knobDrawY = (slY + slH / 2) - knobSize / 2;
 
-            int outerColor = lerpColor(0xFF808090, activeColor, sliderKnobAnim);
-            
-            Render2DEngine.drawSmoothRound(graphics, knobDrawX - 0.5f, knobDrawY + 0.5f, currentKnobSize + 1.0f, currentKnobSize + 1.0f, currentKnobSize / 2.0f, 0x1B000000);
-            Render2DEngine.drawSmoothRound(graphics, knobDrawX, knobDrawY, currentKnobSize, currentKnobSize, currentKnobSize / 2.0f, outerColor);
-            
-            float innerSize = currentKnobSize * 0.5f;
-            float innerDrawX = knobX - innerSize / 2.0f;
-            float innerDrawY = (slY + slH / 2.0f) - innerSize / 2.0f;
-            Render2DEngine.drawSmoothRound(graphics, innerDrawX, innerDrawY, innerSize, innerSize, innerSize / 2.0f, 0xFFFFFFFF);
+            Identifier sliderTex = Render2DEngine.getSmoothCircle(knobSize);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, sliderTex, knobDrawX, knobDrawY, 0f, 0f, knobSize, knobSize, knobSize, knobSize, 0xFFFFFFFF);
 
         } else if (parameter instanceof ColorParameter cp) {
             FontRenderUtility.drawString(graphics, cp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
@@ -295,11 +264,14 @@ public class ParameterElement {
             FontRenderUtility.drawString(graphics, sp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
             boolean isFocused = ClickGUI.activeStringParameterElement != null && ClickGUI.activeStringParameterElement.getParameter() == sp;
             String text = sp.getValue();
-            if (isFocused && (System.currentTimeMillis() / 500) % 2 == 0) {
-                text += "_";
-            }
             int tw = FontRenderUtility.getStringWidth(text);
             FontRenderUtility.drawString(graphics, text, x + width - tw - 8, y + 7, activeColor, true);
+            if (isFocused) {
+                float cursorBlink = (float)(Math.sin(System.currentTimeMillis() * 0.003f) * 0.5f + 0.5f);
+                int cursorAlpha = (int)(80 + 175 * cursorBlink * cursorBlink * cursorBlink);
+                int fontH = FontRenderUtility.getFontHeight();
+                graphics.fill(x + width - 8, y + 7, x + width - 6, y + 7 + fontH, ColorUtility.withAlpha(activeColor, cursorAlpha));
+            }
 
         } else if (parameter instanceof KeybindParameter kp) {
             FontRenderUtility.drawString(graphics, kp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
@@ -453,7 +425,7 @@ public class ParameterElement {
 
     public boolean mouseScrolled(double mouseX, double mouseY, double amount, int x, int y, int width, int height) {
         if (!parameter.isVisible()) return false;
-        if (parameter instanceof NumberParameter np) {
+        if (parameter instanceof NumberParameter np && ravex.modules.client.ClickGui.INSTANCE.wheelControl.getValue()) {
             if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
                 double val = np.getValue();
                 double step = np.getStep();

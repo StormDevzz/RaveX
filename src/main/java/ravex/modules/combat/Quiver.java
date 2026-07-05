@@ -1,33 +1,27 @@
 package ravex.modules.combat;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.core.component.DataComponents;
-
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-
+import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
-
 public class Quiver extends Module {
     public static final Quiver INSTANCE = new Quiver();
-
     public final ModeParameter arrowType = new ModeParameter("Arrow Type", "Speed", List.of("Healing", "Speed", "Strength", "Fire Resistance"));
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal"));
     public final NumberParameter chargeDuration = new NumberParameter("Charge Ticks", 3.0, 2.0, 10.0, 1.0);
     public final BooleanParameter autoSwapBow = new BooleanParameter("Auto Swap Bow", true);
-
     public static float silentYaw = 0;
     public static float silentPitch = 0;
     public static boolean hasSilentRotations = false;
-
     private int state = 0; 
     private int ticksHolding = 0;
     private int cooldownTicks = 0;
@@ -36,18 +30,9 @@ public class Quiver extends Module {
     private int previousSelectedSlot = -1;
     private float savedClientYaw = 0.0f;
     private float savedClientPitch = 0.0f;
-
-    private static boolean nativeAvailable = false;
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_quiver");
     static {
-        nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_quiver");
-    }
-
-    private Quiver() {
-        super("Quiver", Category.COMBAT);
-        addParameter(arrowType);
-        addParameter(rotate);
-        addParameter(chargeDuration);
-        addParameter(autoSwapBow);
+        NATIVE.load();
     }
 
     @Override
@@ -71,7 +56,6 @@ public class Quiver extends Module {
         previousSelectedSlot = -1;
         hasSilentRotations = false;
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
@@ -79,7 +63,6 @@ public class Quiver extends Module {
             onDisable();
             return;
         }
-
         if (state == 2) {
             cooldownTicks--;
             if (cooldownTicks <= 0) {
@@ -87,9 +70,7 @@ public class Quiver extends Module {
             }
             return;
         }
-
         if (state == 1) {
-            
             if (rotate.getValue().equals("Normal")) {
                 mc.player.setXRot(-90.0f);
             } else {
@@ -97,30 +78,19 @@ public class Quiver extends Module {
                 silentPitch = -90.0f;
                 hasSilentRotations = true;
             }
-
             mc.options.keyUse.setDown(true);
-
             ticksHolding++;
             if (ticksHolding >= chargeDuration.getValue().intValue()) {
-                
                 mc.options.keyUse.setDown(false);
-
-                
                 mc.player.releaseUsingItem();
                 mc.gameMode.releaseUsingItem(mc.player);
-
-                
                 restoreOffhandAndBow(mc);
-
-                
                 state = 2;
                 cooldownTicks = 20;
                 hasSilentRotations = false;
             }
             return;
         }
-
-        
         int bowSlot = findBowSlot(mc);
         if (bowSlot == -1) {
             mc.player.displayClientMessage(
@@ -130,7 +100,6 @@ public class Quiver extends Module {
             setEnabled(false);
             return;
         }
-
         int bestArrowIndex = findBestArrowIndex(mc);
         if (bestArrowIndex == -1) {
             mc.player.displayClientMessage(
@@ -140,25 +109,17 @@ public class Quiver extends Module {
             setEnabled(false);
             return;
         }
-
         arrowInvSlot = bestArrowIndex;
-
-        
         previousSelectedSlot = mc.player.getInventory().getSelectedSlot();
         if (autoSwapBow.getValue() && previousSelectedSlot != bowSlot) {
             mc.player.getInventory().setSelectedSlot(bowSlot);
         }
-
-        
         int containerSlot = arrowInvSlot < 9 ? arrowInvSlot + 36 : arrowInvSlot;
         mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
         mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, 45, 0, ClickType.PICKUP, mc.player);
         mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
-
-        
         savedClientYaw = mc.player.getYRot();
         savedClientPitch = mc.player.getXRot();
-
         if (rotate.getValue().equals("Normal")) {
             mc.player.setXRot(-90.0f);
         } else {
@@ -166,19 +127,14 @@ public class Quiver extends Module {
             silentPitch = -90.0f;
             hasSilentRotations = true;
         }
-
-        
         mc.options.keyUse.setDown(true);
         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-
         state = 1;
         ticksHolding = 0;
     }
-
     private void restoreOffhandAndBow(Minecraft mc) {
         if (arrowInvSlot != -1) {
             int containerSlot = arrowInvSlot < 9 ? arrowInvSlot + 36 : arrowInvSlot;
-            
             mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
             mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, 45, 0, ClickType.PICKUP, mc.player);
             mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
@@ -188,13 +144,11 @@ public class Quiver extends Module {
             mc.player.getInventory().setSelectedSlot(previousSelectedSlot);
             previousSelectedSlot = -1;
         }
-        
         if (rotate.getValue().equals("Normal") && mc.player != null) {
             mc.player.setYRot(savedClientYaw);
             mc.player.setXRot(savedClientPitch);
         }
     }
-
     private int findBowSlot(Minecraft mc) {
         if (mc.player.getMainHandItem().is(Items.BOW)) {
             return mc.player.getInventory().getSelectedSlot();
@@ -206,23 +160,19 @@ public class Quiver extends Module {
         }
         return -1;
     }
-
     private int findBestArrowIndex(Minecraft mc) {
         List<String> activeEffects = new ArrayList<>();
         List<Integer> activeAmps = new ArrayList<>();
         List<Double> activeDurs = new ArrayList<>();
-
         for (net.minecraft.world.effect.MobEffectInstance inst : mc.player.getActiveEffects()) {
             String id = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getKey(inst.getEffect().value()).toString();
             activeEffects.add(id);
             activeAmps.add(inst.getAmplifier());
             activeDurs.add((double) inst.getDuration() / 20.0);
         }
-
         List<Integer> inventorySlots = new ArrayList<>();
         List<String> arrowEffects = new ArrayList<>();
         List<Integer> arrowAmplifiers = new ArrayList<>();
-
         for (int i = 0; i < 36; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (stack.is(Items.TIPPED_ARROW)) {
@@ -244,18 +194,14 @@ public class Quiver extends Module {
                 }
             }
         }
-
         if (arrowEffects.isEmpty()) return -1;
-
         String[] activeEffArr = activeEffects.toArray(new String[0]);
         int[] activeAmpArr = activeAmps.stream().mapToInt(Integer::intValue).toArray();
         double[] activeDurArr = activeDurs.stream().mapToDouble(Double::doubleValue).toArray();
-
         String[] arrowEffArr = arrowEffects.toArray(new String[0]);
         int[] arrowAmpArr = arrowAmplifiers.stream().mapToInt(Integer::intValue).toArray();
-
         int resultIdx;
-        if (nativeAvailable) {
+        if (NATIVE.isLoaded()) {
             resultIdx = nativeSelectBestArrow(
                 activeEffArr, activeAmpArr, activeDurArr,
                 arrowEffArr, arrowAmpArr,
@@ -268,14 +214,11 @@ public class Quiver extends Module {
                 arrowType.getValue()
             );
         }
-
         if (resultIdx >= 0 && resultIdx < inventorySlots.size()) {
             return inventorySlots.get(resultIdx);
         }
-
         return -1;
     }
-
     private int javaSelectBestArrow(
         List<String> activeEffects,
         List<Integer> activeAmplifiers,
@@ -287,14 +230,11 @@ public class Quiver extends Module {
         int bestIndex = -1;
         double bestScore = -999.0;
         String pref = preferredType.toLowerCase();
-
         for (int i = 0; i < arrowEffects.size(); i++) {
             String eName = arrowEffects.get(i).toLowerCase();
             int amp = arrowAmplifiers.get(i);
-
             boolean match = false;
             double typeScore = 0.0;
-
             if (pref.equals("strength") && eName.contains("strength")) {
                 match = true;
                 typeScore = 1000.0;
@@ -308,22 +248,17 @@ public class Quiver extends Module {
                 match = true;
                 typeScore = 400.0;
             }
-
             if (!match) continue;
-
             double score = typeScore + amp * 10.0;
-
             for (int j = 0; j < activeEffects.size(); j++) {
                 String actEff = activeEffects.get(j).toLowerCase();
                 int actAmp = activeAmplifiers.get(j);
                 double actDur = activeDurations.get(j);
-
                 boolean effMatch = actEff.equals(eName) || actEff.contains(eName) || eName.contains(actEff);
                 if (effMatch && actAmp >= amp && actDur > 3.0) {
                     score -= 200.0;
                 }
             }
-
             if (score > bestScore) {
                 bestScore = score;
                 bestIndex = i;
@@ -331,11 +266,9 @@ public class Quiver extends Module {
         }
         return bestIndex;
     }
-
     public static boolean hasSilentRotations() {
         return hasSilentRotations;
     }
-
     private static native int nativeSelectBestArrow(
         String[] activeEffects,
         int[] activeAmplifiers,

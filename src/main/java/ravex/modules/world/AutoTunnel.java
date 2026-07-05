@@ -1,5 +1,4 @@
 package ravex.modules.world;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,13 +13,10 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-
 import java.util.ArrayList;
 import java.util.List;
-
 public class AutoTunnel extends Module {
     public static final AutoTunnel INSTANCE = new AutoTunnel();
-
     public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
     public final NumberParameter height = new NumberParameter("Height", 2, 1, 3, 1);
     public final NumberParameter width = new NumberParameter("Width", 2, 1, 3, 1);
@@ -29,23 +25,9 @@ public class AutoTunnel extends Module {
     public final BooleanParameter autoWalk = new BooleanParameter("AutoWalk", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFFFF00);
-
     public static BlockPos currentTarget = null;
-
     private long lastActionTime = 0;
     private BlockPos currentMiningTarget = null;
-
-    private AutoTunnel() {
-        super("AutoTunnel", Category.WORLD);
-        addParameter(range);
-        addParameter(height);
-        addParameter(width);
-        addParameter(delay);
-        addParameter(fillLava);
-        addParameter(autoWalk);
-        addParameter(render);
-        addParameter(color);
-    }
 
     @Override
     protected void onDisable() {
@@ -56,24 +38,17 @@ public class AutoTunnel extends Module {
         currentMiningTarget = null;
         currentTarget = null;
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-
         long now = System.currentTimeMillis();
         if (now - lastActionTime < delay.getValue()) return;
-
         if (autoWalk.getValue()) {
             mc.options.keyUp.setDown(true);
         }
-
         List<BlockPos> blocks = getTunnelBlocks(mc);
-
         if (blocks.isEmpty()) return;
-
-        
         if (fillLava.getValue()) {
             for (BlockPos pos : blocks) {
                 BlockState state = mc.level.getBlockState(pos);
@@ -84,13 +59,10 @@ public class AutoTunnel extends Module {
                 }
             }
         }
-
-        
         for (BlockPos pos : blocks) {
             BlockState state = mc.level.getBlockState(pos);
             if (state.isAir() || state.liquid()) continue;
             if (state.getDestroySpeed(mc.level, pos) < 0) continue;
-
             if (currentMiningTarget != null && !pos.equals(currentMiningTarget)) {
                 mc.gameMode.stopDestroyBlock();
             }
@@ -101,19 +73,15 @@ public class AutoTunnel extends Module {
             lastActionTime = now;
             return;
         }
-
-        
         if (currentMiningTarget != null) {
             mc.gameMode.stopDestroyBlock();
         }
         currentMiningTarget = null;
         currentTarget = null;
     }
-
     private void fillBlock(Minecraft mc, BlockPos pos) {
         BlockState state = mc.level.getBlockState(pos);
         if (!state.liquid()) return;
-
         int fillSlot = -1;
         for (int i = 0; i < 9; i++) {
             var stack = mc.player.getInventory().getItem(i);
@@ -126,19 +94,15 @@ public class AutoTunnel extends Module {
             }
         }
         if (fillSlot == -1) return;
-
         int prevSlot = mc.player.getInventory().getSelectedSlot();
         mc.player.getInventory().setSelectedSlot(fillSlot);
-
         BlockPos placeOn = pos;
         BlockHitResult hit = new BlockHitResult(
             Vec3.atCenterOf(placeOn), Direction.UP, placeOn, true
         );
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
-
         mc.player.getInventory().setSelectedSlot(prevSlot);
     }
-
     private List<BlockPos> getTunnelBlocks(Minecraft mc) {
         List<BlockPos> result = new ArrayList<>();
         Vec3 eye = mc.player.getEyePosition();
@@ -147,8 +111,6 @@ public class AutoTunnel extends Module {
         int w = width.getValue().intValue();
         double r = range.getValue();
         BlockPos startPos = mc.player.blockPosition();
-
-        
         for (int f = 0; f < 3; f++) {
             int step = f + 1;
             for (int dy = 0; dy < h; dy++) {
@@ -169,10 +131,8 @@ public class AutoTunnel extends Module {
             }
             if (!result.isEmpty()) break;
         }
-
         return result;
     }
-
     private static BlockPos offsetPos(BlockPos origin, Direction facing, int forward, int right, int up) {
         int offsetX = 0, offsetZ = 0;
         switch (facing) {
@@ -183,7 +143,6 @@ public class AutoTunnel extends Module {
         }
         return origin.offset(offsetX, up, offsetZ);
     }
-
     public static Direction getDirection(Vec3 eye, BlockPos pos) {
         Vec3 center = Vec3.atCenterOf(pos);
         double dx = eye.x - center.x;

@@ -12,9 +12,9 @@
     },
     "environment": "client",
     "entrypoints": {
-        "main": ["ravex.RaveXCommon"],
+        "main": ["ravex.RaveX"],
         "client": ["ravex.RaveX"],
-        "preLaunch": ["ravex.RaveXPreLaunch"]
+        "preLaunch": ["ravex.RaveX"]
     },
     "mixins": ["ravex.mixins.json"],
     "accessWidener": "ravex.accesswidener",

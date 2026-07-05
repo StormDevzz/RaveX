@@ -9,9 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.exploit.AntiHunger;
-import ravex.modules.exploit.PacketCanceller;
-import ravex.modules.misc.PacketLogger;
-import ravex.modules.misc.NoPacketKick;
+import ravex.modules.misc.PacketUtils;
 import ravex.modules.exploit.HandshakeSpoof;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -41,13 +39,13 @@ public class MixinConnection {
             }
         }
 
-        if (NoPacketKick.INSTANCE.getEnabled() && !NoPacketKick.INSTANCE.shouldAllow(packet)) {
+        if (PacketUtils.INSTANCE.getEnabled() && !PacketUtils.INSTANCE.shouldAllow(packet)) {
             ci.cancel();
             return;
         }
 
-        if (PacketLogger.INSTANCE.getEnabled() && PacketLogger.INSTANCE.outgoing.getValue()) {
-            PacketLogger.INSTANCE.logPacket("C2S ->", packet);
+        if (PacketUtils.INSTANCE.getEnabled() && PacketUtils.INSTANCE.logOutgoing.getValue()) {
+            PacketUtils.INSTANCE.logPacket("C2S ->", packet);
         }
 
         if (packet instanceof ServerboundUseItemPacket usePacket) {
@@ -113,19 +111,9 @@ public class MixinConnection {
             }
         }
 
-        if (PacketCanceller.INSTANCE.getEnabled()) {
-            boolean cancel = false;
-            if (packet instanceof ServerboundMovePlayerPacket && PacketCanceller.INSTANCE.move.getValue()) cancel = true;
-            if (packet instanceof ServerboundPlayerInputPacket && PacketCanceller.INSTANCE.input.getValue()) cancel = true;
-            if (packet instanceof ServerboundInteractPacket && PacketCanceller.INSTANCE.interact.getValue()) cancel = true;
-            if (packet instanceof ServerboundSwingPacket && PacketCanceller.INSTANCE.swing.getValue()) cancel = true;
-            if (packet instanceof ServerboundUseItemPacket && PacketCanceller.INSTANCE.use.getValue()) cancel = true;
-            if (packet instanceof ServerboundUseItemOnPacket && PacketCanceller.INSTANCE.use.getValue()) cancel = true;
-            
-            if (cancel) {
-                ci.cancel();
-                return;
-            }
+        if (PacketUtils.INSTANCE.getEnabled() && PacketUtils.INSTANCE.shouldCancel(packet)) {
+            ci.cancel();
+            return;
         }
 
         if (ravex.modules.movement.NoFall.INSTANCE.getEnabled() && packet instanceof ServerboundMovePlayerPacket movePacket) {
@@ -174,8 +162,8 @@ public class MixinConnection {
     private void onChannelRead(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
         ravex.modules.exploit.NewChunks.INSTANCE.onPacketReceive(packet);
 
-        if (PacketLogger.INSTANCE.getEnabled() && PacketLogger.INSTANCE.incoming.getValue()) {
-            PacketLogger.INSTANCE.logPacket("S2C <-", packet);
+        if (PacketUtils.INSTANCE.getEnabled() && PacketUtils.INSTANCE.logIncoming.getValue()) {
+            PacketUtils.INSTANCE.logPacket("S2C <-", packet);
         }
 
         if (ravex.modules.world.NoGhostBlocks.INSTANCE.getEnabled()) {

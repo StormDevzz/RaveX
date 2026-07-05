@@ -1,16 +1,16 @@
 package ravex.benchmark;
 
-import ravex.utility.misc.NativeLoader;
+import ravex.utility.nativelib.NativeLibrary;
 
 public class BenchmarkBridge {
-    private static boolean nativeAvailable = false;
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_benchmark");
 
     static {
-        nativeAvailable = NativeLoader.loadLibrary("ravex_benchmark");
+        NATIVE.load();
     }
 
     public static boolean isNativeAvailable() {
-        return nativeAvailable;
+        return NATIVE.isLoaded();
     }
 
     public static native String runCPUBenchmark();

@@ -59,7 +59,7 @@ public class GuiOptimizer {
         }
     }
 
-    public static void optimizeHudAnimations(java.util.List<ravex.modules.HudModule> modules) {
+    public static void optimizeHudAnimations(java.util.List<ravex.modules.Module> modules) {
         if (modules == null || modules.isEmpty()) return;
         for (var m : modules) {
             m.updateAnimation();

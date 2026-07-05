@@ -24,7 +24,7 @@
         "render.MixinEntityRenderer",
         "render.MixinDeltaTrackerTimer",
         "render.MixinLivingEntityRenderer",
-        "render.MixinPlayerRenderer",
+        // "render.MixinPlayerRenderer",  // disabled: @Shadow model removed from AvatarRenderer in 1.21.11
         "render.MixinItemInHandRenderer",
         "render.MixinSubmitNodeStorage",
         "render.MixinItemEntityRenderer",
@@ -100,7 +100,6 @@
         "combat.MixinPlayerNoHitDelay",
         "render.MixinItemStack",
         "render.MixinCrosshair",
-        "render.MixinPlayerModel",
         "render.MixinClientTooltipComponent",
         "render.AccessorRenderType",
         "font.MixinTrueTypeGlyphProviderDefinition"

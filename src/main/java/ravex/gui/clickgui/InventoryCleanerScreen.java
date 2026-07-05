@@ -13,8 +13,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
-import ravex.modules.player.InventoryCleanerData;
-import ravex.modules.player.InventoryCleaner;
+import ravex.modules.player.inventorycleaner.InventoryCleanerData;
+import ravex.modules.player.inventorycleaner.InventoryCleaner;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
 
@@ -516,8 +516,8 @@ public class InventoryCleanerScreen extends Screen {
     @Override
     public void onClose() {
         
-        if (ravex.modules.player.InventoryCleaner.INSTANCE.getEnabled()) {
-            ravex.modules.player.InventoryCleaner.INSTANCE.setEnabled(false);
+        if (InventoryCleaner.INSTANCE.getEnabled()) {
+            InventoryCleaner.INSTANCE.setEnabled(false);
         }
         Minecraft.getInstance().setScreen(parent);
     }

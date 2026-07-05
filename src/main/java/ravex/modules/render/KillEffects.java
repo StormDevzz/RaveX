@@ -1,5 +1,4 @@
 package ravex.modules.render;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -19,48 +18,32 @@ import ravex.parameter.ModeParameter;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
-
 public class KillEffects extends Module {
     public static final KillEffects INSTANCE = new KillEffects();
-
     public final ModeParameter effect = new ModeParameter("Effect", "Lightning",
         List.of("Lightning", "Fire", "Both"));
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", false);
     public final BooleanParameter animals = new BooleanParameter("Animals", false);
-
     private final Set<Entity> processed = new HashSet<>();
-
-    private KillEffects() {
-        super("KillEffects", Category.RENDER);
-        addParameter(effect);
-        addParameter(players);
-        addParameter(monsters);
-        addParameter(animals);
-    }
 
     @Override
     protected void onEnable() {
         processed.clear();
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null) return;
-
         String eff = effect.getValue();
-
         for (Entity e : level.entitiesForRendering()) {
             if (!(e instanceof LivingEntity living)) continue;
             if (living == mc.player) continue;
             if (!living.isDeadOrDying()) continue;
             if (processed.contains(e)) continue;
             if (!shouldAffect(living)) continue;
-
             processed.add(e);
-
             if (eff.equals("Lightning") || eff.equals("Both")) {
                 spawnLightning(level, living.getX(), living.getY(), living.getZ());
             }
@@ -68,24 +51,20 @@ public class KillEffects extends Module {
                 spawnFireParticles(level, living.getX(), living.getY(), living.getZ());
             }
         }
-
         processed.removeIf(e -> !e.isAlive());
     }
-
     private boolean shouldAffect(LivingEntity e) {
         if (e instanceof Player && players.getValue()) return true;
         if (e instanceof Monster && monsters.getValue()) return true;
         if (e instanceof Animal && animals.getValue()) return true;
         return false;
     }
-
     private void spawnLightning(ClientLevel level, double x, double y, double z) {
         LightningBolt bolt = new LightningBolt(
             net.minecraft.world.entity.EntityType.LIGHTNING_BOLT, level);
         bolt.setPos(x, y, z);
         bolt.setVisualOnly(true);
         level.addEntity(bolt);
-
         level.playLocalSound(x, y, z,
             SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER,
             10000.0F, 0.8F + level.random.nextFloat() * 0.2F, false);
@@ -93,7 +72,6 @@ public class KillEffects extends Module {
             SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER,
             2.0F, 0.5F + level.random.nextFloat() * 0.2F, false);
     }
-
     private void spawnFireParticles(ClientLevel level, double x, double y, double z) {
         for (int i = 0; i < 20; i++) {
             double dx = (level.random.nextDouble() - 0.5) * 2.0;
