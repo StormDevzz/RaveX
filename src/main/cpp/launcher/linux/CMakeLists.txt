@@ -133,7 +133,7 @@ target_include_directories(kickx_launcher PRIVATE
     simple/window/background/custom/include
     simple/window/resize/include
     icon/include
-    checks
+    checks/include
     ${GTK3_INCLUDE_DIRS}
 )
 target_link_libraries(kickx_launcher PRIVATE pthread ${GTK3_LIBRARIES})
