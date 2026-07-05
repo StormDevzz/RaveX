@@ -315,3 +315,8 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
     queue_progress(state, "Ready!", 1.0);
     return true;
 }
+
+} 
+} 
+} 
+} 
