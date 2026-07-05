@@ -20,6 +20,7 @@ if(TARGET ravex_lua)
 endif()
 
 target_include_directories(ravex_jni PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/common
     ${CMAKE_SOURCE_DIR}/antiafk
