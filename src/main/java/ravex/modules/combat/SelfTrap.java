@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
 public class SelfTrap extends Module {
-    public static final SelfTrap INSTANCE = new SelfTrap();
+    public static final SelfTrap INSTANCE = new SelfTrap(); //Xiaomi
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.blockbrowser.BlockBrowserScreen(
             Minecraft.getInstance().screen,
