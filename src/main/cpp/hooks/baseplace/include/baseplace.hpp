@@ -1,5 +1,5 @@
 #pragma once
-#include "../autocrystal/include/autocrystal.hpp"
+#include "../../autocrystal/include/autocrystal.hpp"
 #include <vector>
 
 namespace ravex {
