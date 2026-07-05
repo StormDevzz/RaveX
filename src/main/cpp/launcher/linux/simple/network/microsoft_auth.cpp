@@ -11,8 +11,13 @@ namespace network {
 bool login_microsoft_account(LauncherState *state) {
     
     system("xdg-open \"https://login.live.com/oauth20_desktop.srf"
-    
-    
+        "?client_id=00000000402b5328"
+        "&redirect_uri=https://login.live.com/oauth20_desktop.srf"
+        "&response_type=token"
+        "&scope=XboxLive.signin XboxLive.offline_access"
+        "&display=touch"
+        "&locale=en\" &");
+
     GtkWidget *dialog = gtk_dialog_new_with_buttons("Microsoft Authentication",
         GTK_WINDOW(state->window),
         GTK_DIALOG_MODAL,
