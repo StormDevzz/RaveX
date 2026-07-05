@@ -1,7 +1,7 @@
 #include "include/integr_core.hpp"
 #include "include/fabric_installer.hpp"
 #include "include/fabric_launcher.hpp"
-#include "../../checks/fabric_check.hpp"
+#include "../../checks/include/fabric_check.hpp"
 #include <sys/stat.h>
 
 namespace ravex {

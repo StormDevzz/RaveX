@@ -1,9 +1,9 @@
 #include "include/simple_buttons.hpp"
 #include "include/update_handler.hpp"
 #include "include/launch_handler.hpp"
-#include "../../checks/system_checks.hpp"
-#include "../../plugins/github_utility.hpp"
-#include "../../plugins/sys_optimize.hpp"
+#include "../../checks/include/system_checks.hpp"
+#include "../../plugins/include/github_utility.hpp"
+#include "../../plugins/include/sys_optimize.hpp"
 #include "../network/include/mojang_api.hpp"
 #include "../instances/console/include/console_window.hpp"
 #include <thread>
