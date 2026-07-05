@@ -316,6 +316,28 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
     return true;
 }
 
+std::string detect_java_path() {
+    const char* java_home = std::getenv("JAVA_HOME");
+    if (java_home) {
+        std::string path = std::string(java_home) + "/bin/java";
+        if (access(path.c_str(), X_OK) == 0)
+            return path;
+    }
+    FILE* pipe = popen("which java 2>/dev/null", "r");
+    if (pipe) {
+        char buf[256] = {};
+        if (fgets(buf, sizeof(buf), pipe)) {
+            std::string result(buf);
+            pclose(pipe);
+            result.erase(result.find_last_not_of("\n\r") + 1);
+            if (!result.empty() && access(result.c_str(), X_OK) == 0)
+                return result;
+        }
+        pclose(pipe);
+    }
+    return "java";
+}
+
 } 
 } 
 } 
