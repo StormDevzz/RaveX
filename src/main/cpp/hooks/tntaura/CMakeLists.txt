@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_tntaura SHARED
-    tntaura.cpp
-    pathfinder.cpp
-    damage_calc.cpp
-    tntaura_jni.cpp
+    main/tntaura.cpp
+    main/tntaura_jni.cpp
+    damage/damage_calc.cpp
+    pathfinder/pathfinder.cpp
 )
 
 find_package(JNI REQUIRED)
@@ -16,13 +16,13 @@ else()
 endif()
 
 target_include_directories(ravex_tntaura PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 
 target_link_libraries(ravex_tntaura PRIVATE ravex_common)
 
-set_property(TARGET ravex_tntaura PROPERTY CXX_STANDARD 17)
+set_property(TARGET ravex_tntaura PROPERTY CXX_STANDARD 23)
 set_property(TARGET ravex_tntaura PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")

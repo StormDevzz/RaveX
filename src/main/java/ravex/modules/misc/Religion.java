@@ -23,9 +23,9 @@ public class Religion extends Module {
         } else if (atheism.getValue()) {
             player.connection.sendChat("Nothing?");
         } else if (islam.getValue()) {
-            player.connection.sendChat("Allahu Akbar");
+            player.connection.sendChat("AllahuAkbar");
         } else if (buddhism.getValue()) {
-            player.connection.sendChat("Om Mani Padme Hum");
+            player.connection.sendChat("OmManiPadmeHum");
         } else if (hinduism.getValue()) {
             player.connection.sendChat("Hare Krishna!");
         }

@@ -15,7 +15,7 @@ import ravex.parameter.NumberParameter;
 public class AutoBrew extends Module {
     public static final AutoBrew INSTANCE = new AutoBrew();
     public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 6.0, 0.5);
-    public final BooleanParameter autoFuel = new BooleanParameter("Auto Fuel", true);
+    public final BooleanParameter autoFuel = new BooleanParameter("AutoFuel", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FCC44FF);
     public static BlockPos currentTarget = null;

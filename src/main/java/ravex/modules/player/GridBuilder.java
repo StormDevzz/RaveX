@@ -26,7 +26,7 @@ public class GridBuilder extends Module {
     public static final GridBuilder INSTANCE = new GridBuilder();
     public final NumberParameter range = new NumberParameter("Range", 3.0, 1.0, 5.0, 1.0);
     public final NumberParameter placementLoops = new NumberParameter("Loops", 3.0, 1.0, 10.0, 1.0);
-    public final NumberParameter tickDelay = new NumberParameter("Tick Delay", 1.0, 0.0, 10.0, 1.0);
+    public final NumberParameter tickDelay = new NumberParameter("TickDelay", 1.0, 0.0, 10.0, 1.0);
     public final ModeParameter orientation = new ModeParameter("Orientation", "Auto", List.of("Auto", "Horizontal", "Vertical"));
     public final ModeParameter pattern = new ModeParameter("Pattern", "Pillar", List.of("Full", "Pillar", "Hollow", "Cross", "Custom"));
     private boolean[][] grid = new boolean[5][5];

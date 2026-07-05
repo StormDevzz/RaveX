@@ -6,7 +6,7 @@ add_library(ravex_fastexp SHARED
 )
 
 target_include_directories(ravex_fastexp PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
 )
 

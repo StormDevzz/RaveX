@@ -16,11 +16,11 @@ public class FreeCam extends Module {
     public final NumberParameter speed = new NumberParameter("Speed", 0.5, 0.1, 2.0, 0.1);
     public final NumberParameter smoothness = new NumberParameter("Smoothness", 0.2, 0.0, 0.9, 0.05);
     public final BooleanParameter freeze = new BooleanParameter("Freeze", false);
-    public final BooleanParameter placeTrace = new BooleanParameter("Place Trace", true);
+    public final BooleanParameter placeTrace = new BooleanParameter("PlaceTrace", true);
     private static boolean nativeAvailable = false;
     static {
         try {
-            ravex.utility.misc.NativeLoader.load();
+            ravex.utility.nativelib.NativeLoader.load();
             nativeAvailable = true;
         } catch (Throwable t) {
             nativeAvailable = false;

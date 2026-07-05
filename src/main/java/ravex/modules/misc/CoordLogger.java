@@ -2,7 +2,7 @@ package ravex.modules.misc;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
-import ravex.utility.misc.NativeLoader;
+import ravex.utility.nativelib.NativeLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -10,9 +10,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 public class CoordLogger extends Module {
     public static final CoordLogger INSTANCE = new CoordLogger();
-    public final BooleanParameter logDeath = new BooleanParameter("Log Death", true);
-    public final BooleanParameter logJoin = new BooleanParameter("Log Join", false);
-    public final BooleanParameter chatNotify = new BooleanParameter("Chat Notify", true);
+    public final BooleanParameter logDeath = new BooleanParameter("LogDeath", true);
+    public final BooleanParameter logJoin = new BooleanParameter("LogJoin", false);
+    public final BooleanParameter chatNotify = new BooleanParameter("ChatNotify", true);
     private static final String LOG_DIR = "ravex/coordlogs";
     private String currentFile = null;
 

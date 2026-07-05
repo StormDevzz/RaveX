@@ -27,20 +27,20 @@ import ravex.utility.nativelib.NativeLibrary;
 public class TntAura extends Module {
     public static final TntAura INSTANCE = new TntAura();
     public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  placeDelay   = new NumberParameter("Place Delay", 50.0, 0.0, 500.0, 10.0);
-    public final NumberParameter  tntDelay     = new NumberParameter("TNT Delay", 200.0, 0.0, 1000.0, 10.0);
-    public final NumberParameter  igniteDelay  = new NumberParameter("Ignite Delay", 100.0, 0.0, 500.0, 10.0);
-    public final ModeParameter    swapMode     = new ModeParameter("Swap Mode", "Silent",
+    public final NumberParameter  placeDelay   = new NumberParameter("PlaceDelay", 50.0, 0.0, 500.0, 10.0);
+    public final NumberParameter  tntDelay     = new NumberParameter("TNTDelay", 200.0, 0.0, 1000.0, 10.0);
+    public final NumberParameter  igniteDelay  = new NumberParameter("IgniteDelay", 100.0, 0.0, 500.0, 10.0);
+    public final ModeParameter    swapMode     = new ModeParameter("SwapMode", "Silent",
             java.util.List.of("Silent", "Normal", "None"));
-    public final ModeParameter    rotateMode   = new ModeParameter("Rotate Mode", "Silent",
+    public final ModeParameter    rotateMode   = new ModeParameter("RotateMode", "Silent",
             java.util.List.of("Silent", "Normal", "Packet", "None"));
     public final BooleanParameter roof         = new BooleanParameter("Roof", true);
-    public final BooleanParameter autoDisable  = new BooleanParameter("Auto Disable", true);
+    public final BooleanParameter autoDisable  = new BooleanParameter("AutoDisable", true);
     public final ModeParameter    targetMode   = new ModeParameter("Target", "Closest",
-            java.util.List.of("Closest", "Lowest HP"));
-    public final ModeParameter    targetType   = new ModeParameter("Target Type", "Players",
+            java.util.List.of("Closest", "LowestHP"));
+    public final ModeParameter    targetType   = new ModeParameter("TargetType", "Players",
             java.util.List.of("Players", "Monsters", "All"));
-    public final NumberParameter  maxRate      = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
+    public final NumberParameter  maxRate      = new NumberParameter("MaxRate", 2.0, 1.0, 5.0, 1.0);
     public final BooleanParameter render       = new BooleanParameter("Render", true);
     public final ColorParameter   color        = new ColorParameter("Color", 0xFFFF4400);
     private enum State { TRAPPING, PLACING_TNT, IGNITING, WAITING }
@@ -269,7 +269,7 @@ public class TntAura extends Module {
             if (typeFilter.equals("Monsters") && !(le instanceof net.minecraft.world.entity.monster.Monster)) continue;
             double dist = mc.player.distanceTo(le);
             if (dist > maxDist) continue;
-            double metric = mode.equals("Lowest HP") ? le.getHealth() : dist;
+            double metric = mode.equals("LowestHP") ? le.getHealth() : dist;
             if (metric < bestMetric) {
                 bestMetric = metric;
                 closest = le;

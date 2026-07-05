@@ -6,7 +6,7 @@ import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 public class FastItem extends Module {
     public static final FastItem INSTANCE = new FastItem();
-    public final NumberParameter delay = new NumberParameter("Delay (ms)", 80.0, 0.0, 500.0, 10.0);
+    public final NumberParameter delay = new NumberParameter("Delay(ms)", 80.0, 0.0, 500.0, 10.0);
     private long lastTransfer = 0;
 
     public boolean handleSlotHover(int slotIndex, long now) {

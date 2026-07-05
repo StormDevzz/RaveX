@@ -17,9 +17,9 @@ import ravex.parameter.NumberParameter;
 public class Igniter extends Module {
     public static final Igniter INSTANCE = new Igniter();
     public final NumberParameter  range        = new NumberParameter("Range",        4.0, 1.0, 6.0, 0.1);
-    public final ModeParameter    swapMode     = new ModeParameter("Swap Mode", "Silent",
+    public final ModeParameter    swapMode     = new ModeParameter("SwapMode", "Silent",
             java.util.List.of("Silent", "Normal", "None"));
-    public final BooleanParameter autoDisable  = new BooleanParameter("Auto Disable",  false);
+    public final BooleanParameter autoDisable  = new BooleanParameter("AutoDisable",  false);
     public final BooleanParameter rotate       = new BooleanParameter("Rotate",       true);
 
     @Override

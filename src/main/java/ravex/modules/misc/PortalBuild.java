@@ -18,12 +18,12 @@ import ravex.utility.nativelib.NativeLibrary;
 public class PortalBuild extends Module {
     public static final PortalBuild INSTANCE = new PortalBuild();
     public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0, 0.5);
-    public final NumberParameter minRange = new NumberParameter("Min Range", 2.0, 1.0, 4.0, 0.5);
+    public final NumberParameter minRange = new NumberParameter("MinRange", 2.0, 1.0, 4.0, 0.5);
     public final NumberParameter avoidRange = new NumberParameter("Avoid", 8.0, 1.0, 24.0, 1.0);
     public final BooleanParameter build = new BooleanParameter("Build", true);
     public final BooleanParameter light = new BooleanParameter("Light", true);
     public final NumberParameter portalsToBuild = new NumberParameter("Portals", 2.0, 1.0, 6.0, 1.0);
-    public final BooleanParameter autoDisable = new BooleanParameter("Auto Disable", true);
+    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FAA00FF);
     public static BlockPos currentTarget = null;

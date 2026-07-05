@@ -24,14 +24,14 @@ import java.util.List;
 public class AutoCart extends Module {
     public static final AutoCart INSTANCE = new AutoCart();
     public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
-    public final NumberParameter targetRange = new NumberParameter("Target Range", 20, 5, 50, 1);
-    public final ModeParameter cartType = new ModeParameter("Cart Type", "TNT",
+    public final NumberParameter targetRange = new NumberParameter("TargetRange", 20, 5, 50, 1);
+    public final ModeParameter cartType = new ModeParameter("CartType", "TNT",
             List.of("TNT", "Chest", "Furnace", "Hopper"));
-    public final ModeParameter swapMode = new ModeParameter("Swap Mode", "Normal",
+    public final ModeParameter swapMode = new ModeParameter("SwapMode", "Normal",
             List.of("Normal", "Silent"));
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
     public final BooleanParameter repeat = new BooleanParameter("Repeat", false);
-    public final NumberParameter repeatDelay = new NumberParameter("Repeat Delay", 20, 5, 100, 5);
+    public final NumberParameter repeatDelay = new NumberParameter("RepeatDelay", 20, 5, 100, 5);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
     public static BlockPos targetRenderPos = null;

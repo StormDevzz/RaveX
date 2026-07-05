@@ -12,15 +12,15 @@ public class Crosshair extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         java.util.List.of("Normal", "Circle", "Triangle"));
     public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
-    public final ColorParameter dotColor = new ColorParameter("Dot Color", 0xFFFF3333);
+    public final ColorParameter dotColor = new ColorParameter("DotColor", 0xFFFF3333);
     public final NumberParameter size = new NumberParameter("Size", 4.0, 2.0, 10.0, 0.5);
     public final NumberParameter gap = new NumberParameter("Gap", 3.0, 1.0, 10.0, 0.5);
     public final NumberParameter thickness = new NumberParameter("Thickness", 1.5, 1.0, 4.0, 0.5);
     public final BooleanParameter dot = new BooleanParameter("Dot", true);
     public final BooleanParameter dynamic = new BooleanParameter("Dynamic", true);
-    public final NumberParameter hitEffect = new NumberParameter("Hit Effect", 6.0, 0.0, 16.0, 0.5);
-    public final NumberParameter hitDuration = new NumberParameter("Hit Duration", 250.0, 50.0, 500.0, 25.0);
-    public final NumberParameter moveEffect = new NumberParameter("Move Effect", 3.0, 0.0, 10.0, 0.5);
+    public final NumberParameter hitEffect = new NumberParameter("HitEffect", 6.0, 0.0, 16.0, 0.5);
+    public final NumberParameter hitDuration = new NumberParameter("HitDuration", 250.0, 50.0, 500.0, 25.0);
+    public final NumberParameter moveEffect = new NumberParameter("MoveEffect", 3.0, 0.0, 10.0, 0.5);
     private long lastHitTime = 0;
     private float hitSpread = 0;
     private Crosshair() {

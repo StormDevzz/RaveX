@@ -9,7 +9,7 @@ import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 public class AutoReconnect extends Module {
     public static final AutoReconnect INSTANCE = new AutoReconnect();
-    public final NumberParameter delay = new NumberParameter("Delay (s)", 3.0, 0.0, 30.0, 1.0);
+    public final NumberParameter delay = new NumberParameter("Delay(s)", 3.0, 0.0, 30.0, 1.0);
     private static ServerData lastServer = null;
     private static boolean pendingAutoReconnect = false;
     private static long reconnectAt = 0;

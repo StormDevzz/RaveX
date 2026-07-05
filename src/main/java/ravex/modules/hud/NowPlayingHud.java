@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
-import ravex.modules.render.Hud;
+import ravex.modules.client.Hud;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.render.HudRenderer;
 public class NowPlayingHud extends Module {

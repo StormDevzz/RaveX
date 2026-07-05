@@ -13,7 +13,7 @@ public class StashFinder extends Module {
     public static final StashFinder INSTANCE = new StashFinder();
     public final NumberParameter range = new NumberParameter("Range", 64.0, 16.0, 256.0, 8.0);
     public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final BooleanParameter logToChat = new BooleanParameter("Chat Log", true);
+    public final BooleanParameter logToChat = new BooleanParameter("ChatLog", true);
     private final List<StashEntry> stashes = new ArrayList<>();
     private double lastCheckX, lastCheckY, lastCheckZ;
     private boolean hasChecked = false;
@@ -53,7 +53,7 @@ public class StashFinder extends Module {
         if (name.contains("diamond") || name.contains("emerald") || name.contains("gold")
             || name.contains("iron") || name.contains("netherite") || name.contains("enchanted")
             || name.contains("beacon") || name.contains("elytra") || name.contains("shulker")
-            || name.contains("totem") || name.contains("god apple") || name.contains("notch apple")
+            || name.contains("totem") || name.contains("godApple") || name.contains("notchApple")
             || name.contains("trident") || name.contains("spawner")) return true;
         var enchantments = stack.get(net.minecraft.core.component.DataComponents.ENCHANTMENTS);
         if (enchantments != null && !enchantments.isEmpty()) return true;

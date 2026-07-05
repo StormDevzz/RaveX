@@ -23,8 +23,8 @@ import java.util.Set;
 public class AutoReplant extends Module {
     public static final AutoReplant INSTANCE = new AutoReplant();
     public final NumberParameter range = new NumberParameter("Range", 4.0, 1.0, 6.0, 0.5);
-    public final NumberParameter delay = new NumberParameter("Delay (ms)", 300, 100, 1000, 50);
-    public final BooleanParameter silent = new BooleanParameter("Silent Swap", true);
+    public final NumberParameter delay = new NumberParameter("Delay(ms)", 300, 100, 1000, 50);
+    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     private long lastReplantTime = 0;
     private static final Set<Block> farmBlocks = new HashSet<>();
     static {

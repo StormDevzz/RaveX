@@ -56,7 +56,7 @@ public abstract class MixinEntity {
         if (!(self instanceof net.minecraft.client.player.LocalPlayer player)) return;
 
         
-        if (ravex.modules.exploit.PortalGui.INSTANCE.getEnabled()) {
+        if (ravex.modules.misc.PortalGui.INSTANCE.getEnabled()) {
             self.portalProcess = null;
         }
 
@@ -158,7 +158,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         var mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player != null && self.getControllingPassenger() == mc.player) {
-            if (ravex.modules.exploit.RideExploit.INSTANCE.getEnabled()) {
+            if (ravex.modules.misc.RideExploit.INSTANCE.getEnabled()) {
                 cir.setReturnValue(true);
             }
         }

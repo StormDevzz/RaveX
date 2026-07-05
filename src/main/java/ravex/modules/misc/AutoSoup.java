@@ -14,7 +14,7 @@ import ravex.parameter.NumberParameter;
 public class AutoSoup extends Module {
     public static final AutoSoup INSTANCE = new AutoSoup();
     public final NumberParameter health = new NumberParameter("Health", 10.0, 1.0, 20.0, 1.0);
-    public final BooleanParameter hotbarOnly = new BooleanParameter("Hotbar Only", true);
+    public final BooleanParameter hotbarOnly = new BooleanParameter("HotbarOnly", true);
     private long lastUse = 0;
 
     @Override

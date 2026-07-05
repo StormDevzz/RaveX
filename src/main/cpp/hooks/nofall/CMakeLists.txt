@@ -1,8 +1,50 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_nofall SHARED
-    nofall.cpp
-    nofall_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+n
+o
+f
+a
+l
+l
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+n
+o
+f
+a
+l
+l
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
@@ -14,7 +56,7 @@ else()
 endif()
 
 target_include_directories(ravex_nofall PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

@@ -14,8 +14,8 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 public class InventoryCleaner extends Module {
     public static final InventoryCleaner INSTANCE = new InventoryCleaner();
-    public final BooleanParameter autoClean = new BooleanParameter("Auto Clean", false);
-    public final NumberParameter interval   = new NumberParameter("Interval (s)", 10, 2, 60, 1);
+    public final BooleanParameter autoClean = new BooleanParameter("AutoClean", false);
+    public final NumberParameter interval   = new NumberParameter("Interval(s)", 10, 2, 60, 1);
     public final ActionParameter items = new ActionParameter("Items", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.clickgui.InventoryCleanerScreen(Minecraft.getInstance().screen));
     });

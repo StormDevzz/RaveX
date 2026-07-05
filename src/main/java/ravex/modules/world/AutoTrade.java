@@ -18,8 +18,8 @@ public class AutoTrade extends Module {
     public static final AutoTrade INSTANCE = new AutoTrade();
     public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Best", List.of("Best", "Cheapest", "First"));
-    public final NumberParameter maxTrades = new NumberParameter("Max Trades", 10, 1, 100, 1);
-    public final BooleanParameter autoOpen = new BooleanParameter("Auto Open", true);
+    public final NumberParameter maxTrades = new NumberParameter("MaxTrades", 10, 1, 100, 1);
+    public final BooleanParameter autoOpen = new BooleanParameter("AutoOpen", true);
     private int tradesDone = 0;
     private long lastActionTime = 0;
 

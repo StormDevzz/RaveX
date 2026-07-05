@@ -13,8 +13,8 @@ import java.util.List;
 public class AutoTotem extends Module {
     public static final AutoTotem INSTANCE = new AutoTotem();
     public final ModeParameter offhandItem = new ModeParameter("Offhand", "Totem", List.of("Totem", "Gapple", "Crystal", "Shield", "None"));
-    public final ModeParameter mainHandItem = new ModeParameter("Main Hand", "Sword", List.of("Sword", "Gapple", "Crystal", "Shield", "Totem", "None"));
-    public final NumberParameter minHealth = new NumberParameter("Min HP", 8.0, 1.0, 20.0, 0.5);
+    public final ModeParameter mainHandItem = new ModeParameter("MainHand", "Sword", List.of("Sword", "Gapple", "Crystal", "Shield", "Totem", "None"));
+    public final NumberParameter minHealth = new NumberParameter("MinHP", 8.0, 1.0, 20.0, 0.5);
 
     @Override
     public void onTick() {

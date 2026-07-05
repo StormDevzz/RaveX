@@ -20,7 +20,7 @@ public class BreadCrumbs extends Module {
     public static final Map<Integer, List<Vec3>> trails = new HashMap<>();
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     public final NumberParameter width = new NumberParameter("Width", 2.0, 1.0, 6.0, 0.5);
-    public final NumberParameter maxPoints = new NumberParameter("Max Points", 200.0, 10.0, 1000.0, 10.0);
+    public final NumberParameter maxPoints = new NumberParameter("MaxPoints", 200.0, 10.0, 1000.0, 10.0);
     public final BooleanParameter self = new BooleanParameter("Self", true);
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter mobs = new BooleanParameter("Mobs", false);

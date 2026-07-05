@@ -2,18 +2,18 @@ cmake_minimum_required(VERSION 3.16)
 
 if(WIN32)
     add_library(ravex_calculator SHARED
-        calculator.cpp
-        calculator_jni_windows.cpp
+        main/calculator.cpp
+        main/calculator_jni_windows.cpp
     )
 else()
     add_library(ravex_calculator SHARED
-        calculator.cpp
-        calculator_jni.cpp
+        main/calculator.cpp
+        main/calculator_jni.cpp
     )
 endif()
 
 target_include_directories(ravex_calculator PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
 )
 

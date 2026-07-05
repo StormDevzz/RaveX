@@ -434,8 +434,8 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        if (ravex.modules.exploit.NewChunks.INSTANCE.getEnabled()) {
-            ravex.modules.exploit.NewChunks.INSTANCE.render(modelViewMatrix, camera);
+        if (ravex.modules.misc.NewChunks.INSTANCE.getEnabled()) {
+            ravex.modules.misc.NewChunks.INSTANCE.render(modelViewMatrix, camera);
         }
 
         ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
@@ -827,10 +827,10 @@ public class MixinLevelRenderer {
         }
 
         
-        ravex.modules.exploit.PacketMine pm = ravex.modules.exploit.PacketMine.INSTANCE;
+        ravex.modules.player.PacketMine pm = ravex.modules.player.PacketMine.INSTANCE;
         if (pm.getEnabled() && pm.render.getValue()) {
             long globalTime = System.currentTimeMillis();
-            for (var mb : ravex.modules.exploit.PacketMine.miningBlocks) {
+            for (var mb : ravex.modules.player.PacketMine.miningBlocks) {
                 if (mb == null || mb.pos == null) continue;
                 try {
                     modelViewMatrix.translate((float)(mb.pos.getX() - camPos.x), (float)(mb.pos.getY() - camPos.y), (float)(mb.pos.getZ() - camPos.z), REUSABLE_MATRIX);

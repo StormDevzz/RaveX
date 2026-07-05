@@ -27,7 +27,7 @@ public class ModuleManager {
         render(
             "Crosshair", "ESP", "Skeleton", "NameTags", "Tracers",
             "NoBob", "Ambient", "Weather", "CustomFog",
-            "Hud", "Shaders", "FreeLook", "FreeCam", "ViewClip",
+            "Shaders", "FreeLook", "FreeCam", "ViewClip",
             "Glint", "Sounds", "ItemPhysics", "Fullbright", "BlockOutline",
             "BreadCrumbs", "ViewModel", "Animations", "NoRender",
             "ShiftInterp", "BabyDude", "SkyColor", "CloudColor", "Trails",
@@ -43,7 +43,9 @@ public class ModuleManager {
             "MiddleClick", "ElytraUtils",
             "ViewLock", "ItemSaver", "AntiAim",
             "inventorycleaner.InventoryCleaner", "Replenish", "MobOwner", "NoSwing",
-            "Swing", "GridBuilder", "Xray"
+            "Swing", "GridBuilder", "Xray",
+            "AntiHunger", "ChorusExploit", "GhostHand", "HandshakeSpoof",
+            "MultiTask", "NoMineAnimation", "PacketMine"
         );
         register(Category.PLAYER, "ravex.modules.player.autoregear.AutoReGear");
 
@@ -53,7 +55,9 @@ public class ModuleManager {
             "NoPush", "AutoSprint", "Spider", "Speed", "NoRotate",
             "Avoid", "RocketUtils", "RidingUtils", "SafeWalk",
             "HighJump", "FastStairs", "NoFall", "ElytraFly", "Flight",
-            "LiquidCollision"
+            "LiquidCollision",
+            "Blink", "ClickFly", "ClickTP", "PacketFly", "Phase",
+            "TickShift", "Timer", "TridentBoost"
         );
 
         misc(
@@ -65,7 +69,9 @@ public class ModuleManager {
             "AutoAuth", "AntiQuit", "CustomDeathText",
             "SoundBlocker", "ChatUtils",
             "CoordLogger", "BookUtils", "Religion",
-            "Commands", "PauseBaritone", "PortalBuild"
+            "Commands", "PauseBaritone", "PortalBuild",
+            "FakePearl", "NewChunks", "PortalGodMode", "PortalGui",
+            "PingSpoof", "RideExploit"
         );
 
         world(
@@ -77,19 +83,9 @@ public class ModuleManager {
             "WitherBuild"
         );
 
-        exploit(
-            "RideExploit", "HandshakeSpoof", "GhostHand",
-            "Timer", "PortalGui", "PortalGodMode", "MultiTask",
-            "ClickTP", "GrimInstantMine", "ClickFly", "ChorusExploit",
-            "TickShift", "TridentBoost", "Blink", "PacketFly",
-            "FakePearl", "Phase", "RocketExtender", "RaytraceBypass",
-            "PacketMine", "AntiHunger", "NewChunks",
-            "NoMineAnimation", "PacketEat", "PingSpoof"
-        );
-
         client(
             "RichPresence", "GuiParticles", "FastLatency", "Fonts",
-            "Notifications", "DesktopGui", "Settings", "Calculator",
+            "Notifications", "Hud", "DesktopGui", "Settings", "Calculator",
             "ClickGui", "BaritoneModule"
         );
 
@@ -146,7 +142,6 @@ public class ModuleManager {
     private void movement(String... names)   { each(Category.MOVEMENT, "ravex.modules.movement", names); }
     private void misc(String... names)       { each(Category.MISC, "ravex.modules.misc", names); }
     private void world(String... names)      { each(Category.WORLD, "ravex.modules.world", names); }
-    private void exploit(String... names)    { each(Category.EXPLOIT, "ravex.modules.exploit", names); }
     private void client(String... names)     { each(Category.CLIENT, "ravex.modules.client", names); }
     private void hud(String... names)        { each(Category.HUD, "ravex.modules.hud", names); }
 

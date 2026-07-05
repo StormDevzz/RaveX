@@ -20,7 +20,7 @@ public class AutoTame extends Module {
     public final ModeParameter animal = new ModeParameter("Animal", "Wolf",
         List.of("Wolf", "Cat", "Llama"));
     public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0, 0.5);
-    public final BooleanParameter autoSwitch = new BooleanParameter("Auto Switch", true);
+    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
 
     @Override
     public void onTick() {

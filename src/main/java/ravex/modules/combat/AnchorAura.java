@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,28 +33,31 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
+
 public class AnchorAura extends Module {
     public static final AnchorAura INSTANCE = new AnchorAura();
-    public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "Lowest HP"));
-    public final ModeParameter   targetType      = new ModeParameter("Target Type", "Players", List.of("Players", "Monsters", "Passives", "All"));
-    public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter targetRange     = new NumberParameter("Target Range", 6.0, 1.0, 10.0, 0.1);
-    public final NumberParameter minDamage       = new NumberParameter("Min Damage", 4.0, 1.0, 20.0, 0.5);
-    public final NumberParameter maxSelfDmg      = new NumberParameter("Max Self Dmg", 8.0, 1.0, 20.0, 0.5);
-    public final NumberParameter selfDamageWeight = new NumberParameter("Self Dmg Weight", 1.2, 0.0, 5.0, 0.1);
-    public final BooleanParameter antiSuicide    = new BooleanParameter("Anti Suicide", true);
-    public final NumberParameter antiSuicideMinHp = new NumberParameter("Anti Suicide Min HP", 6.0, 1.0, 20.0, 0.5);
-    public final NumberParameter predictTicks    = new NumberParameter("Predict Ticks", 1.0, 0.0, 4.0, 0.1);
-    public final BooleanParameter alwaysConsiderDurability = new BooleanParameter("Consider Durability", true);
-    public final NumberParameter armorDurabilityThreshold = new NumberParameter("Durability Threshold", 20.0, 1.0, 100.0, 5.0);
-    public final NumberParameter placeDelay      = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
-    public final ModeParameter   rotate          = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
-    public final BooleanParameter strictRotation = new BooleanParameter("Strict Rotation", false);
-    public final ModeParameter   swapMode        = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal", "None"));
-    public final BooleanParameter swapSwitchBack  = new BooleanParameter("Switch Back", true);
-    public final BooleanParameter swapInventory   = new BooleanParameter("Swap Inv", true);
-    public final BooleanParameter render          = new BooleanParameter("Render", true);
-    public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FFFF); 
+    public final ModeParameter targetMode = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
+    public final ModeParameter targetType = new ModeParameter("TargetType", "Players",
+            List.of("Players", "Monsters", "Passives", "All"));
+    public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
+    public final NumberParameter targetRange = new NumberParameter("TargetRange", 6.0, 1.0, 10.0, 0.1);
+    public final NumberParameter minDamage = new NumberParameter("MinDamage", 4.0, 1.0, 20.0, 0.5);
+    public final NumberParameter maxSelfDmg = new NumberParameter("MaxSelfDmg", 8.0, 1.0, 20.0, 0.5);
+    public final NumberParameter selfDamageWeight = new NumberParameter("SelfDmgWeight", 1.2, 0.0, 5.0, 0.1);
+    public final BooleanParameter antiSuicide = new BooleanParameter("AntiSuicide", true);
+    public final NumberParameter antiSuicideMinHp = new NumberParameter("AntiSuicideMinHP", 6.0, 1.0, 20.0, 0.5);
+    public final NumberParameter predictTicks = new NumberParameter("PredictTicks", 1.0, 0.0, 4.0, 0.1);
+    public final BooleanParameter alwaysConsiderDurability = new BooleanParameter("ConsiderDurability", true);
+    public final NumberParameter armorDurabilityThreshold = new NumberParameter("DurabilityThreshold", 20.0, 1.0, 100.0,
+            5.0);
+    public final NumberParameter placeDelay = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
+    public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
+    public final BooleanParameter strictRotation = new BooleanParameter("StrictRotation", false);
+    public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal", "None"));
+    public final BooleanParameter swapSwitchBack = new BooleanParameter("SwitchBack", true);
+    public final BooleanParameter swapInventory = new BooleanParameter("SwapInv", true);
+    public final BooleanParameter render = new BooleanParameter("Render", true);
+    public final ColorParameter color = new ColorParameter("Color", 0x3F00FFFF);
     public static BlockPos simulatedPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
@@ -65,6 +69,7 @@ public class AnchorAura extends Module {
     static {
         NATIVE.load();
     }
+
     private AnchorAura() {
         super("AnchorAura");
         strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
@@ -72,15 +77,19 @@ public class AnchorAura extends Module {
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
         armorDurabilityThreshold.setVisible(alwaysConsiderDurability::getValue);
     }
+
     public static boolean hasSilentRotations() {
         return hasSilentRotations;
     }
+
     public static float getSilentYaw() {
         return silentYaw;
     }
+
     public static float getSilentPitch() {
         return silentPitch;
     }
+
     @Override
     protected void onEnable() {
         lastActionTime = 0;
@@ -89,15 +98,18 @@ public class AnchorAura extends Module {
         currentTargetDamage = 0.0;
         currentSelfDamage = 0.0;
     }
+
     @Override
     protected void onDisable() {
         hasSilentRotations = false;
         simulatedPlacementBlock = null;
     }
+
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        if (mc.player == null || mc.level == null || mc.gameMode == null)
+            return;
         hasSilentRotations = false;
         LivingEntity target = findTarget(mc);
         if (target == null) {
@@ -112,20 +124,25 @@ public class AnchorAura extends Module {
             BlockState state = mc.level.getBlockState(existingAnchor);
             int charges = getAnchorCharges(state);
             calculateExpectedDamages(mc, target, existingAnchor);
-            if (!canAct) return;
+            if (!canAct)
+                return;
             if (charges == 0) {
                 int glowstoneSlot = findItemSlot(mc, Items.GLOWSTONE);
-                if (glowstoneSlot == -1) return;
+                if (glowstoneSlot == -1)
+                    return;
                 Vec3 hitVec = Vec3.atCenterOf(existingAnchor);
                 rotateTo(mc, hitVec);
-                if (strictRotation.getValue() && !isRotationAligned(mc, hitVec)) return;
+                if (strictRotation.getValue() && !isRotationAligned(mc, hitVec))
+                    return;
                 performUse(mc, glowstoneSlot, existingAnchor, Direction.UP, hitVec);
             } else {
                 int triggerSlot = findNonGlowstoneSlot(mc);
-                if (triggerSlot == -1) return;
+                if (triggerSlot == -1)
+                    return;
                 Vec3 hitVec = Vec3.atCenterOf(existingAnchor);
                 rotateTo(mc, hitVec);
-                if (strictRotation.getValue() && !isRotationAligned(mc, hitVec)) return;
+                if (strictRotation.getValue() && !isRotationAligned(mc, hitVec))
+                    return;
                 performUse(mc, triggerSlot, existingAnchor, Direction.UP, hitVec);
             }
             return;
@@ -134,22 +151,21 @@ public class AnchorAura extends Module {
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeCalculateAnchorAura(
-                mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
-                target.getX(), target.getY(), target.getZ(),
-                target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
-                solidBlockData,
-                range.getValue(),
-                targetRange.getValue(),
-                minDamage.getValue(),
-                maxSelfDmg.getValue(),
-                selfDamageWeight.getValue(),
-                antiSuicide.getValue(),
-                antiSuicideMinHp.getValue(),
-                predictTicks.getValue(),
-                alwaysConsiderDurability.getValue(),
-                armorDurabilityThreshold.getValue()
-            );
+                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                    mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
+                    target.getX(), target.getY(), target.getZ(),
+                    target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
+                    solidBlockData,
+                    range.getValue(),
+                    targetRange.getValue(),
+                    minDamage.getValue(),
+                    maxSelfDmg.getValue(),
+                    selfDamageWeight.getValue(),
+                    antiSuicide.getValue(),
+                    antiSuicideMinHp.getValue(),
+                    predictTicks.getValue(),
+                    alwaysConsiderDurability.getValue(),
+                    armorDurabilityThreshold.getValue());
         } else {
             result = javaFallbackCalculate(mc, target, solidBlockData);
         }
@@ -167,17 +183,22 @@ public class AnchorAura extends Module {
             currentTargetDamage = 0.0;
             currentSelfDamage = 0.0;
         }
-        if (!canAct) return;
+        if (!canAct)
+            return;
         int anchorSlot = findItemSlot(mc, Items.RESPAWN_ANCHOR);
-        if (anchorSlot == -1) return;
+        if (anchorSlot == -1)
+            return;
         BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
         Direction face = Direction.values()[(int) result[4]];
         BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
-        Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        Vec3 hitVec = Vec3.atCenterOf(neighborPos)
+                .add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
-        if (strictRotation.getValue() && !isRotationAligned(mc, hitVec)) return;
+        if (strictRotation.getValue() && !isRotationAligned(mc, hitVec))
+            return;
         performUse(mc, anchorSlot, neighborPos, face, hitVec);
     }
+
     private void performUse(Minecraft mc, int slot, BlockPos targetBlock, Direction face, Vec3 hitVec) {
         int originalSlot = mc.player.getInventory().getSelectedSlot();
         String swap = swapMode.getValue();
@@ -185,10 +206,12 @@ public class AnchorAura extends Module {
             mc.player.getInventory().setSelectedSlot(slot);
         } else if (swap.equals("Silent")) {
             if (mc.player.connection != null) {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
+                mc.player.connection
+                        .send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
             }
         } else if (swap.equals("None")) {
-            if (mc.player.getInventory().getSelectedSlot() != slot) return;
+            if (mc.player.getInventory().getSelectedSlot() != slot)
+                return;
         }
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, targetBlock, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
@@ -196,30 +219,31 @@ public class AnchorAura extends Module {
         lastActionTime = System.currentTimeMillis();
         if (swap.equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
             if (mc.player.connection != null) {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
+                mc.player.connection
+                        .send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
             }
         }
     }
+
     private void calculateExpectedDamages(Minecraft mc, LivingEntity target, BlockPos anchorPos) {
         if (NATIVE.isLoaded()) {
             double[] solidBlockData = collectSolidBlocks(mc);
             double[] result = nativeCalculateAnchorAura(
-                mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
-                target.getX(), target.getY(), target.getZ(),
-                target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
-                solidBlockData,
-                range.getValue(),
-                targetRange.getValue(),
-                minDamage.getValue(),
-                maxSelfDmg.getValue(),
-                selfDamageWeight.getValue(),
-                antiSuicide.getValue(),
-                antiSuicideMinHp.getValue(),
-                predictTicks.getValue(),
-                alwaysConsiderDurability.getValue(),
-                armorDurabilityThreshold.getValue()
-            );
+                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                    mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
+                    target.getX(), target.getY(), target.getZ(),
+                    target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
+                    solidBlockData,
+                    range.getValue(),
+                    targetRange.getValue(),
+                    minDamage.getValue(),
+                    maxSelfDmg.getValue(),
+                    selfDamageWeight.getValue(),
+                    antiSuicide.getValue(),
+                    antiSuicideMinHp.getValue(),
+                    predictTicks.getValue(),
+                    alwaysConsiderDurability.getValue(),
+                    armorDurabilityThreshold.getValue());
             if (result != null && result[0] > 0.5) {
                 currentTargetDamage = result[8];
                 currentSelfDamage = result[9];
@@ -229,6 +253,7 @@ public class AnchorAura extends Module {
             currentSelfDamage = 2.1;
         }
     }
+
     private BlockPos findExistingAnchor(Minecraft mc, LivingEntity target) {
         BlockPos tPos = target.blockPosition();
         double maxDist = targetRange.getValue();
@@ -241,7 +266,8 @@ public class AnchorAura extends Module {
                 for (int dz = -r; dz <= r; dz++) {
                     BlockPos p = tPos.offset(dx, dy, dz);
                     if (mc.level.getBlockState(p).is(Blocks.RESPAWN_ANCHOR)) {
-                        double pDist = Math.sqrt(p.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
+                        double pDist = Math
+                                .sqrt(p.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
                         if (pDist <= maxPlaceDist) {
                             double tDist = Math.sqrt(p.distToCenterSqr(target.getX(), target.getY(), target.getZ()));
                             if (tDist <= maxDist) {
@@ -257,6 +283,7 @@ public class AnchorAura extends Module {
         }
         return bestAnchor;
     }
+
     private int findItemSlot(Minecraft mc, net.minecraft.world.item.Item item) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
@@ -270,15 +297,15 @@ public class AnchorAura extends Module {
                 if (!stack.isEmpty() && stack.getItem() == item) {
                     int hotbarSlot = mc.player.getInventory().getSelectedSlot();
                     mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId, i, hotbarSlot, 
-                        net.minecraft.world.inventory.ClickType.SWAP, mc.player
-                    );
+                            mc.player.containerMenu.containerId, i, hotbarSlot,
+                            net.minecraft.world.inventory.ClickType.SWAP, mc.player);
                     return hotbarSlot;
                 }
             }
         }
         return -1;
     }
+
     private int findNonGlowstoneSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
@@ -294,11 +321,13 @@ public class AnchorAura extends Module {
         }
         return -1;
     }
+
     private void rotateTo(Minecraft mc, Vec3 target) {
         String mode = rotate.getValue();
-        if (mode.equals("None")) return;
+        if (mode.equals("None"))
+            return;
         float[] angles = RotationUtility.anglesTo(
-            mc.player.getEyePosition(), target);
+                mc.player.getEyePosition(), target);
         if (mode.equals("Normal")) {
             mc.player.setYRot(angles[0]);
             mc.player.setXRot(angles[1]);
@@ -308,13 +337,15 @@ public class AnchorAura extends Module {
             hasSilentRotations = true;
         }
     }
+
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
         float[] targetAngles = RotationUtility.anglesTo(
-            mc.player.getEyePosition(), target);
+                mc.player.getEyePosition(), target);
         float yawDiff = Math.abs(RotationUtility.diffYaw(mc.player.getYRot(), targetAngles[0]));
         float pitchDiff = Math.abs(RotationUtility.diffPitch(mc.player.getXRot(), targetAngles[1]));
         return yawDiff < 12.0F && pitchDiff < 12.0F;
     }
+
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
         BlockPos playerPos = mc.player.blockPosition();
@@ -340,6 +371,7 @@ public class AnchorAura extends Module {
         }
         return arr;
     }
+
     private LivingEntity findTarget(Minecraft mc) {
         LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
@@ -347,22 +379,33 @@ public class AnchorAura extends Module {
         String mode = targetMode.getValue();
         String typeFilter = targetType.getValue();
         for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le)) continue;
-            if (le == mc.player) continue;
-            if (le.isDeadOrDying()) continue;
+            if (!(e instanceof LivingEntity le))
+                continue;
+            if (le == mc.player)
+                continue;
+            if (le.isDeadOrDying())
+                continue;
             if (typeFilter.equals("Players")) {
-                if (!(le instanceof Player)) continue;
+                if (!(le instanceof Player))
+                    continue;
             } else if (typeFilter.equals("Monsters")) {
-                if (!(le instanceof net.minecraft.world.entity.monster.Monster || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss)) continue;
+                if (!(le instanceof net.minecraft.world.entity.monster.Monster
+                        || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
+                        || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss))
+                    continue;
             } else if (typeFilter.equals("Passives")) {
-                if (le instanceof Player || le instanceof net.minecraft.world.entity.monster.Monster || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss) continue;
+                if (le instanceof Player || le instanceof net.minecraft.world.entity.monster.Monster
+                        || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
+                        || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss)
+                    continue;
             }
             double dist = mc.player.distanceTo(le);
-            if (dist > maxDist) continue;
+            if (dist > maxDist)
+                continue;
             double metric = switch (mode) {
-                case "Closest"   -> dist;
-                case "Lowest HP" -> le.getHealth();
-                default          -> dist;
+                case "Closest" -> dist;
+                case "LowestHP" -> le.getHealth();
+                default -> dist;
             };
             if (metric < bestMetric) {
                 bestMetric = metric;
@@ -371,18 +414,20 @@ public class AnchorAura extends Module {
         }
         return closest;
     }
+
     private double[] getEntityStats(LivingEntity player) {
         int protectionEpf = 0;
         int blastProtectionEpf = 0;
         net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
-            net.minecraft.world.entity.EquipmentSlot.FEET,
-            net.minecraft.world.entity.EquipmentSlot.LEGS,
-            net.minecraft.world.entity.EquipmentSlot.CHEST,
-            net.minecraft.world.entity.EquipmentSlot.HEAD
+                net.minecraft.world.entity.EquipmentSlot.FEET,
+                net.minecraft.world.entity.EquipmentSlot.LEGS,
+                net.minecraft.world.entity.EquipmentSlot.CHEST,
+                net.minecraft.world.entity.EquipmentSlot.HEAD
         };
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
             ItemStack armor = player.getItemBySlot(slot);
-            if (armor.isEmpty()) continue;
+            if (armor.isEmpty())
+                continue;
             ItemEnchantments enchants = armor.get(DataComponents.ENCHANTMENTS);
             if (enchants != null) {
                 for (var enchantment : enchants.keySet()) {
@@ -397,8 +442,10 @@ public class AnchorAura extends Module {
             }
         }
         int totems = 0;
-        if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;
-        if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;
+        if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING)
+            totems++;
+        if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING)
+            totems++;
         if (player instanceof Player p) {
             for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
                 if (p.getInventory().getItem(i).getItem() == Items.TOTEM_OF_UNDYING) {
@@ -443,11 +490,13 @@ public class AnchorAura extends Module {
         stats[14] = totems;
         return stats;
     }
+
     private double[] javaFallbackCalculate(Minecraft mc, LivingEntity target, double[] solidBlocksData) {
         BlockPos tPos = target.blockPosition();
         Set<BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
-            solids.add(new BlockPos((int) solidBlocksData[i], (int) solidBlocksData[i+1], (int) solidBlocksData[i+2]));
+            solids.add(
+                    new BlockPos((int) solidBlocksData[i], (int) solidBlocksData[i + 1], (int) solidBlocksData[i + 2]));
         }
         BlockPos bestBlock = null;
         double bestDist = Double.MAX_VALUE;
@@ -460,13 +509,19 @@ public class AnchorAura extends Module {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
                     BlockPos c = tPos.offset(dx, dy, dz);
-                    if (solids.contains(c)) continue;
-                    double pDist = Math.sqrt(c.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
-                    if (pDist > maxPlaceRange) continue;
+                    if (solids.contains(c))
+                        continue;
+                    double pDist = Math
+                            .sqrt(c.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
+                    if (pDist > maxPlaceRange)
+                        continue;
                     double tDist = Math.sqrt(c.distToCenterSqr(target.getX(), target.getY(), target.getZ()));
-                    if (tDist > maxTargetRange) continue;
-                    if (solids.contains(c.above())) continue;
-                    if (intersectsEntity(mc.player, c) || intersectsEntity(target, c)) continue;
+                    if (tDist > maxTargetRange)
+                        continue;
+                    if (solids.contains(c.above()))
+                        continue;
+                    if (intersectsEntity(mc.player, c) || intersectsEntity(target, c))
+                        continue;
                     boolean hasNeighbor = false;
                     BlockPos neighbor = null;
                     int faceIndex = 1;
@@ -479,7 +534,8 @@ public class AnchorAura extends Module {
                             break;
                         }
                     }
-                    if (!hasNeighbor) continue;
+                    if (!hasNeighbor)
+                        continue;
                     double priorityDist = c.distSqr(tPos.below());
                     if (priorityDist < bestDist) {
                         bestDist = priorityDist;
@@ -491,10 +547,12 @@ public class AnchorAura extends Module {
             }
         }
         if (bestBlock != null) {
-            return new double[]{1.0, bestNeighbor.getX(), bestNeighbor.getY(), bestNeighbor.getZ(), bestFace, bestBlock.getX(), bestBlock.getY(), bestBlock.getZ(), 8.0, 2.0};
+            return new double[] { 1.0, bestNeighbor.getX(), bestNeighbor.getY(), bestNeighbor.getZ(), bestFace,
+                    bestBlock.getX(), bestBlock.getY(), bestBlock.getZ(), 8.0, 2.0 };
         }
-        return new double[]{0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        return new double[] { 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     }
+
     private boolean intersectsEntity(Entity entity, BlockPos pos) {
         double minX = entity.getX() - 0.3;
         double maxX = entity.getX() + 0.3;
@@ -512,31 +570,33 @@ public class AnchorAura extends Module {
                 bMaxY > minY && bMinY < maxY &&
                 bMaxZ > minZ && bMinZ < maxZ);
     }
+
     private int getAnchorCharges(BlockState state) {
         for (net.minecraft.world.level.block.state.properties.Property<?> prop : state.getProperties()) {
-            if (prop.getName().equals("charges") && prop instanceof net.minecraft.world.level.block.state.properties.IntegerProperty intProp) {
+            if (prop.getName().equals("charges")
+                    && prop instanceof net.minecraft.world.level.block.state.properties.IntegerProperty intProp) {
                 return state.getValue(intProp);
             }
         }
         return 0;
     }
+
     private static native double[] nativeCalculateAnchorAura(
-        double playerX, double playerY, double playerZ,
-        double playerHp, double playerAbs,
-        double[] playerStats,
-        double targetX, double targetY, double targetZ,
-        double targetHp, double targetAbs,
-        double[] targetStats,
-        double[] solidBlocksData,
-        double placeRange,
-        double targetRange,
-        double minTargetDmg,
-        double maxSelfDmg,
-        double selfDmgWeight,
-        boolean antiSuicide,
-        double antiSuicideMinHp,
-        double predictTicks,
-        boolean alwaysConsiderDurability,
-        double armorDurabilityThreshold
-    );
+            double playerX, double playerY, double playerZ,
+            double playerHp, double playerAbs,
+            double[] playerStats,
+            double targetX, double targetY, double targetZ,
+            double targetHp, double targetAbs,
+            double[] targetStats,
+            double[] solidBlocksData,
+            double placeRange,
+            double targetRange,
+            double minTargetDmg,
+            double maxSelfDmg,
+            double selfDmgWeight,
+            boolean antiSuicide,
+            double antiSuicideMinHp,
+            double predictTicks,
+            boolean alwaysConsiderDurability,
+            double armorDurabilityThreshold);
 }

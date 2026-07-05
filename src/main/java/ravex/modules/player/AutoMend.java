@@ -12,8 +12,8 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.EquipmentSlot;
 public class AutoMend extends Module {
     public static final AutoMend INSTANCE = new AutoMend();
-    public final NumberParameter threshold = new NumberParameter("Threshold %", 50.0, 10.0, 95.0, 5.0);
-    public final BooleanParameter silent = new BooleanParameter("Silent Swap", true);
+    public final NumberParameter threshold = new NumberParameter("Threshold%", 50.0, 10.0, 95.0, 5.0);
+    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
 
     @Override
     public void onTick() {

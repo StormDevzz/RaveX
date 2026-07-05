@@ -14,9 +14,9 @@ import java.util.List;
 public class ElytraUtils extends Module {
     public static final ElytraUtils INSTANCE = new ElytraUtils();
     public final ModeParameter mode = new ModeParameter("Mode", "Swap", List.of("Swap", "Replace", "Auto"));
-    public final ModeParameter swapMode = new ModeParameter("Swap Mode", "Positive1", List.of("Positive1", "Positive2", "Positive3"));
-    public final NumberParameter minDurability = new NumberParameter("Min Durability", 10.0, 1.0, 50.0, 1.0);
-    public final BooleanParameter preferBetter = new BooleanParameter("Prefer Better", true);
+    public final ModeParameter swapMode = new ModeParameter("SwapMode", "Positive1", List.of("Positive1", "Positive2", "Positive3"));
+    public final NumberParameter minDurability = new NumberParameter("MinDurability", 10.0, 1.0, 50.0, 1.0);
+    public final BooleanParameter preferBetter = new BooleanParameter("PreferBetter", true);
     private int state = 0, targetInvSlot = -1;
     private long lastActionTime = 0;
 

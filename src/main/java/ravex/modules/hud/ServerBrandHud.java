@@ -3,7 +3,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
-import ravex.modules.render.Hud;
+import ravex.modules.client.Hud;
 import ravex.utility.interfaces.IClientPacketListener;
 import ravex.utility.nativelib.NativeLibrary;
 public class ServerBrandHud extends Module {

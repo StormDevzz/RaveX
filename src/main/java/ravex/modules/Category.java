@@ -6,7 +6,6 @@ public enum Category {
     MOVEMENT("Movement"),
     MISC("Misc"),
     WORLD("World"),
-    EXPLOIT("Exploit"),
     CLIENT("Client"),
     HUD("HUD"),
     CUSTOM("Custom");

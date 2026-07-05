@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_anchoraura SHARED
-    anchoraura.cpp
-    anchoraura_jni.cpp
+    main/anchoraura.cpp
+    main/anchoraura_jni.cpp
     ../autocrystal/main/autocrystal.cpp
     ../autocrystal/damage/damage.cpp
     ../autocrystal/armor/armor.cpp
@@ -20,7 +20,7 @@ else()
 endif()
 
 target_include_directories(ravex_anchoraura PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../autocrystal/include
 )

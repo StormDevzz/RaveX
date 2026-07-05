@@ -15,10 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 public class Quiver extends Module {
     public static final Quiver INSTANCE = new Quiver();
-    public final ModeParameter arrowType = new ModeParameter("Arrow Type", "Speed", List.of("Healing", "Speed", "Strength", "Fire Resistance"));
+    public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", List.of("Healing", "Speed", "Strength", "FireResistance"));
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal"));
-    public final NumberParameter chargeDuration = new NumberParameter("Charge Ticks", 3.0, 2.0, 10.0, 1.0);
-    public final BooleanParameter autoSwapBow = new BooleanParameter("Auto Swap Bow", true);
+    public final NumberParameter chargeDuration = new NumberParameter("ChargeTicks", 3.0, 2.0, 10.0, 1.0);
+    public final BooleanParameter autoSwapBow = new BooleanParameter("AutoSwapBow", true);
     public static float silentYaw = 0;
     public static float silentPitch = 0;
     public static boolean hasSilentRotations = false;
@@ -244,7 +244,7 @@ public class Quiver extends Module {
             } else if (pref.equals("healing") && (eName.contains("instant_health") || eName.contains("healing") || eName.contains("regeneration") || eName.contains("regen"))) {
                 match = true;
                 typeScore = 600.0;
-            } else if (pref.equals("fire resistance") && (eName.contains("fire_resistance") || eName.contains("fireres"))) {
+            } else if (pref.equals("fireResistance") && (eName.contains("fire_resistance") || eName.contains("fireres"))) {
                 match = true;
                 typeScore = 400.0;
             }

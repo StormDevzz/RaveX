@@ -1,36 +1,41 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.14)
 
 if(WIN32)
     add_library(ravex_desktopgui SHARED
-        desktopgui_windows.cpp
+        main/desktopgui.cpp
+        main/desktopgui_windows.cpp
     )
 else()
     add_library(ravex_desktopgui SHARED
-        desktopgui_jni.cpp
+        main/desktopgui.cpp
+        main/desktopgui_jni.cpp
     )
 endif()
 
+find_package(JNI REQUIRED)
+if(JNI_FOUND)
+    target_include_directories(ravex_desktopgui PRIVATE ${JNI_INCLUDE_DIRS})
+    target_link_libraries(ravex_desktopgui PRIVATE ${JNI_LIBRARIES})
+else()
+    message(FATAL_ERROR "JNI not found — cannot build ravex_desktopgui")
+endif()
+
 target_include_directories(ravex_desktopgui PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${JNI_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 
-target_link_libraries(ravex_desktopgui PRIVATE
-    ravex_common
-    ${JNI_LIBRARIES}
-)
+target_link_libraries(ravex_desktopgui PRIVATE ravex_common)
 
-if(WIN32)
-    target_link_libraries(ravex_desktopgui PRIVATE comctl32)
-endif()
+set_property(TARGET ravex_desktopgui PROPERTY CXX_STANDARD 23)
+set_property(TARGET ravex_desktopgui PROPERTY CXX_STANDARD_REQUIRED ON)
 
-if(NOT WIN32)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
-    target_include_directories(ravex_desktopgui PRIVATE ${GTK3_INCLUDE_DIRS})
-    target_link_libraries(ravex_desktopgui PRIVATE ${GTK3_LIBRARIES})
-    target_link_libraries(ravex_desktopgui PRIVATE pthread)
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    if(MSVC)
+        target_compile_options(ravex_desktopgui PRIVATE /O2 /fp:fast)
+    else()
+        target_compile_options(ravex_desktopgui PRIVATE -O3 -march=native -ffast-math)
+    endif()
 endif()
 
 set_target_properties(ravex_desktopgui PROPERTIES

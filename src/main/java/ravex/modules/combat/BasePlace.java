@@ -33,25 +33,25 @@ import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
 public class BasePlace extends Module {
     public static final BasePlace INSTANCE = new BasePlace();
-    public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "Lowest HP"));
-    public final ModeParameter   targetType      = new ModeParameter("Target Type", "Players", List.of("Players", "Monsters", "Passives", "All"));
+    public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
+    public final ModeParameter   targetType      = new ModeParameter("TargetType", "Players", List.of("Players", "Monsters", "Passives", "All"));
     public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter targetRange     = new NumberParameter("Target Range", 6.0, 1.0, 10.0, 0.1);
-    public final NumberParameter minDamage       = new NumberParameter("Min Damage", 4.0, 1.0, 20.0, 0.5);
-    public final NumberParameter maxSelfDmg      = new NumberParameter("Max Self Dmg", 8.0, 1.0, 20.0, 0.5);
-    public final NumberParameter selfDamageWeight = new NumberParameter("Self Dmg Weight", 1.2, 0.0, 5.0, 0.1);
-    public final BooleanParameter antiSuicide    = new BooleanParameter("Anti Suicide", true);
-    public final NumberParameter antiSuicideMinHp = new NumberParameter("Anti Suicide Min HP", 6.0, 1.0, 20.0, 0.5);
-    public final NumberParameter predictTicks    = new NumberParameter("Predict Ticks", 1.0, 0.0, 4.0, 0.1);
-    public final BooleanParameter airPlace       = new BooleanParameter("Air Place", false);
+    public final NumberParameter targetRange     = new NumberParameter("TargetRange", 6.0, 1.0, 10.0, 0.1);
+    public final NumberParameter minDamage       = new NumberParameter("MinDamage", 4.0, 1.0, 20.0, 0.5);
+    public final NumberParameter maxSelfDmg      = new NumberParameter("MaxSelfDmg", 8.0, 1.0, 20.0, 0.5);
+    public final NumberParameter selfDamageWeight = new NumberParameter("SelfDmgWeight", 1.2, 0.0, 5.0, 0.1);
+    public final BooleanParameter antiSuicide    = new BooleanParameter("AntiSuicide", true);
+    public final NumberParameter antiSuicideMinHp = new NumberParameter("AntiSuicideMinHP", 6.0, 1.0, 20.0, 0.5);
+    public final NumberParameter predictTicks    = new NumberParameter("PredictTicks", 1.0, 0.0, 4.0, 0.1);
+    public final BooleanParameter airPlace       = new BooleanParameter("AirPlace", false);
     public final NumberParameter placeDelay      = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
     public final ModeParameter   rotate          = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
-    public final BooleanParameter strictRotation = new BooleanParameter("Strict Rotation", false);
+    public final BooleanParameter strictRotation = new BooleanParameter("StrictRotation", false);
     public final ModeParameter   swapMode        = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal", "None"));
-    public final BooleanParameter swapSwitchBack  = new BooleanParameter("Switch Back", true);
-    public final BooleanParameter swapInventory   = new BooleanParameter("Swap Inv", true);
-    public final BooleanParameter autoCrystalSync = new BooleanParameter("AutoCrystal Sync", true);
-    public final NumberParameter  syncPredictTicks = new NumberParameter("Sync Predict Ticks", 5.0, 1.0, 10.0, 1.0);
+    public final BooleanParameter swapSwitchBack  = new BooleanParameter("SwitchBack", true);
+    public final BooleanParameter swapInventory   = new BooleanParameter("SwapInv", true);
+    public final BooleanParameter autoCrystalSync = new BooleanParameter("AutoCrystalSync", true);
+    public final NumberParameter  syncPredictTicks = new NumberParameter("SyncPredictTicks", 5.0, 1.0, 10.0, 1.0);
     public final BooleanParameter render          = new BooleanParameter("Render", true);
     public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FF00);
     public static BlockPos lastPlacedBase = null;
@@ -273,7 +273,7 @@ public class BasePlace extends Module {
                 if (blockItem.getBlock() == Blocks.OBSIDIAN) {
                     int hotbarSlot = mc.player.getInventory().getSelectedSlot();
                     mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId, i, hotbarSlot, 
+                        mc.player.containerMenu.containerId, i, hotbarSlot,
                         net.minecraft.world.inventory.ClickType.SWAP, mc.player
                     );
                     return hotbarSlot;
@@ -303,7 +303,7 @@ public class BasePlace extends Module {
             if (dist > maxDist) continue;
             double metric = switch (mode) {
                 case "Closest"   -> dist;
-                case "Lowest HP" -> le.getHealth();
+                case "LowestHP" -> le.getHealth();
                 default          -> dist;
             };
             if (metric < bestMetric) {

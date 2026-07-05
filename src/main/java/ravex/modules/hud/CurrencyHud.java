@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
-import ravex.modules.render.Hud;
+import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -123,7 +123,7 @@ public class CurrencyHud extends Module {
         setHeight(ph);
         int bx = getX(), by = getY();
         ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, pw, ph, ColorUtility.getActiveColor());
-        ravex.utility.render.FontRenderUtility.drawString(graphics, "Currency Rates", bx + 8, by + 4, ColorUtility.getActiveColor(), false);
+        ravex.utility.render.FontRenderUtility.drawString(graphics, "CurrencyRates", bx + 8, by + 4, ColorUtility.getActiveColor(), false);
         int cy = by + 16;
         for (DisplayPair dp : active) {
             ravex.utility.render.FontRenderUtility.drawString(graphics, dp.label, bx + 8, cy, 0xFF8080A0, false);

@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 public class PopCounter extends Module {
     public static final PopCounter INSTANCE = new PopCounter();
-    public final BooleanParameter onlyOwn = new BooleanParameter("Only Own", false);
+    public final BooleanParameter onlyOwn = new BooleanParameter("OnlyOwn", false);
     private final Map<String, Integer> popCounts = new HashMap<>();
 
     public void onPop(Player player) {

@@ -19,19 +19,19 @@ public class KillAura extends Module {
     public static final KillAura INSTANCE = new KillAura();
     public final NumberParameter range = new NumberParameter("Range", 4.2, 3.0, 6.0, 0.1);
     public final NumberParameter cooldownThreshold = new NumberParameter("Cooldown", 0.9, 0.0, 1.0, 0.05);
-    public final NumberParameter switchDelay = new NumberParameter("Switch Delay", 100, 0, 1000, 10);
-    public final NumberParameter rotationSpeed = new NumberParameter("Rotate Speed", 180, 10, 180, 5);
-    public final NumberParameter rotationRandomize = new NumberParameter("Rotate Randomize", 0.0, 0.0, 3.0, 0.1);
+    public final NumberParameter switchDelay = new NumberParameter("SwitchDelay", 100, 0, 1000, 10);
+    public final NumberParameter rotationSpeed = new NumberParameter("RotatSpeed", 180, 10, 180, 5);
+    public final NumberParameter rotationRandomize = new NumberParameter("RotateRandomize", 0.0, 0.0, 3.0, 0.1);
     public final NumberParameter cps = new NumberParameter("CPS", 10, 1, 20, 1);
-    public final NumberParameter wallRange = new NumberParameter("Wall Range", 3.0, 1.0, 6.0, 0.1);
+    public final NumberParameter wallRange = new NumberParameter("WallRange", 3.0, 1.0, 6.0, 0.1);
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", true);
     public final BooleanParameter passives = new BooleanParameter("Passives", false);
     public final BooleanParameter invisibles = new BooleanParameter("Invisibles", true);
-    public final BooleanParameter throughWalls = new BooleanParameter("Through Walls", true);
+    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
     public final ModeParameter mode = new ModeParameter("Mode", "Single", List.of("Single", "Switch"));
     public final ModeParameter targetMode = new ModeParameter("Target", "Closest",
-            List.of("Closest", "Lowest HP", "Farthest", "Most Aura", "Least Aura"));
+            List.of("Closest", "LowestHP", "Farthest", "MostAura", "LeastAura"));
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent",
             List.of("Silent", "Normal", "None"));
     public final ModeParameter swingMode = new ModeParameter("Swing", "Client",
@@ -173,18 +173,18 @@ public class KillAura extends Module {
         list.sort((a, b) -> {
             double ma = switch (mode) {
                 case "Closest" -> mc.player.distanceTo(a);
-                case "Lowest HP" -> a.getHealth();
+                case "LowestHP" -> a.getHealth();
                 case "Farthest" -> -mc.player.distanceTo(a);
-                case "Most Aura" -> -(mc.player.getArmorValue() + a.getArmorValue());
-                case "Least Aura" -> mc.player.getArmorValue() + a.getArmorValue();
+                case "MostAura" -> -(mc.player.getArmorValue() + a.getArmorValue());
+                case "LeastAura" -> mc.player.getArmorValue() + a.getArmorValue();
                 default -> mc.player.distanceTo(a);
             };
             double mb = switch (mode) {
                 case "Closest" -> mc.player.distanceTo(b);
-                case "Lowest HP" -> b.getHealth();
+                case "LowestHP" -> b.getHealth();
                 case "Farthest" -> -mc.player.distanceTo(b);
-                case "Most Aura" -> -(mc.player.getArmorValue() + b.getArmorValue());
-                case "Least Aura" -> mc.player.getArmorValue() + b.getArmorValue();
+                case "MostAura" -> -(mc.player.getArmorValue() + b.getArmorValue());
+                case "LeastAura" -> mc.player.getArmorValue() + b.getArmorValue();
                 default -> mc.player.distanceTo(b);
             };
             return Double.compare(ma, mb);

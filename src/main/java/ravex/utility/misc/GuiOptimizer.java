@@ -1,5 +1,7 @@
 package ravex.utility.misc;
 
+import ravex.utility.nativelib.NativeLoader;
+
 public class GuiOptimizer {
     public static native void nativeOptimizeGui();
 

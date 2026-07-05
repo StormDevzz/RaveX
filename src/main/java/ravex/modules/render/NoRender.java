@@ -1,14 +1,11 @@
 package ravex.modules.render;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.NarratorStatus;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
-import ravex.utility.misc.NativeLoader;
+import ravex.utility.nativelib.NativeLoader;
 import ravex.utility.nativelib.NativeLibrary;
 public class NoRender extends Module {
     public static final NoRender INSTANCE = new NoRender();
-    public final BooleanParameter blockParticles = new BooleanParameter("Block Particles", true);
+    public final BooleanParameter blockParticles = new BooleanParameter("BlockParticles", true);
     public final BooleanParameter explosions = new BooleanParameter("Explosions", true);
     public final BooleanParameter weather = new BooleanParameter("Weather", true);
     public final BooleanParameter portal = new BooleanParameter("Portal", true);
@@ -19,8 +16,7 @@ public class NoRender extends Module {
     public final BooleanParameter signs = new BooleanParameter("Signs", false);
     public final BooleanParameter fog = new BooleanParameter("Fog", true);
     public final BooleanParameter fire = new BooleanParameter("Fire", true);
-    public final BooleanParameter inventoryBackground = new BooleanParameter("Inventory Background", false);
-    public final BooleanParameter noNarrator = new BooleanParameter("NoNarrator", false);
+    public final BooleanParameter inventoryBackground = new BooleanParameter("InventoryBackground", false);
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_norender");
     static {
         try {
@@ -29,15 +25,6 @@ public class NoRender extends Module {
         NATIVE.load();
     }
 
-    @Override
-    public void onTick() {
-        if (noNarrator.getValue()) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.options != null && mc.options.narrator().get() != NarratorStatus.OFF) {
-                mc.options.narrator().set(NarratorStatus.OFF);
-            }
-        }
-    }
     public static native boolean nativeShouldCull(double x, double y, double z, double camX, double camY, double camZ, double maxDist);
     public static native int nativeOptimizeBudget(int activeCount, int currentFps, int minFps);
     public static native float[] nativeOptimizeFog(float envStart, float envEnd, float rdStart, float rdEnd, float skyEnd, float cloudEnd);

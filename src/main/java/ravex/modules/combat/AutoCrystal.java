@@ -28,60 +28,60 @@ import java.util.ArrayList;
 import java.util.List;
 public class AutoCrystal extends Module {
     public static final AutoCrystal INSTANCE = new AutoCrystal();
-    public final NumberParameter  placeRange     = new NumberParameter("Place Range",    4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  breakRange     = new NumberParameter("Break Range",    4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  placeDelay     = new NumberParameter("Place Delay",   100, 0, 500, 10);
-    public final NumberParameter  breakDelay     = new NumberParameter("Break Delay",    50, 0, 500, 10);
-    public final NumberParameter  minDamage      = new NumberParameter("Min Damage",     4.0, 1.0, 20.0, 0.5);
-    public final NumberParameter  maxSelfDmg     = new NumberParameter("Max Self Dmg",   8.0, 1.0, 20.0, 0.5);
-    public final BooleanParameter antiSuicide    = new BooleanParameter("Anti Suicide",  true);
-    public final NumberParameter  antiSuicideMinHp = new NumberParameter("Anti Suicide Min HP", 6.0, 1.0, 20.0, 0.5);
-    public final ModeParameter    rotate         = new ModeParameter("Rotate Mode", "Silent",
+    public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",    4.5, 1.0, 6.0, 0.1);
+    public final NumberParameter  breakRange     = new NumberParameter("BreakRange",    4.5, 1.0, 6.0, 0.1);
+    public final NumberParameter  placeDelay     = new NumberParameter("PlaceDelay",   100, 0, 500, 10);
+    public final NumberParameter  breakDelay     = new NumberParameter("BreakDelay",    50, 0, 500, 10);
+    public final NumberParameter  minDamage      = new NumberParameter("MinDamage",     4.0, 1.0, 20.0, 0.5);
+    public final NumberParameter  maxSelfDmg     = new NumberParameter("MaxSelfDmg",   8.0, 1.0, 20.0, 0.5);
+    public final BooleanParameter antiSuicide    = new BooleanParameter("AntiSuicide",  true);
+    public final NumberParameter  antiSuicideMinHp = new NumberParameter("AntiSuicideMinHP", 6.0, 1.0, 20.0, 0.5);
+    public final ModeParameter    rotate         = new ModeParameter("RotateMode", "Silent",
             java.util.List.of("Silent", "Normal", "Packet", "None"));
-    public final ModeParameter    swapMode       = new ModeParameter("Swap Mode", "Silent",
+    public final ModeParameter    swapMode       = new ModeParameter("SwapMode", "Silent",
             java.util.List.of("Silent", "Normal", "None"));
-    public final NumberParameter  swapDelay      = new NumberParameter("Swap Delay", 0.0, 0.0, 500.0, 10.0);
-    public final BooleanParameter onlyInRender   = new BooleanParameter("Only Render",   false);
+    public final NumberParameter  swapDelay      = new NumberParameter("SwapDelay", 0.0, 0.0, 500.0, 10.0);
+    public final BooleanParameter onlyInRender   = new BooleanParameter("OnlyRender",   false);
     public final ModeParameter    targetMode     = new ModeParameter("Target", "Closest",
-            java.util.List.of("Closest", "Lowest HP", "Highest Damage"));
-    public final ModeParameter    targetType     = new ModeParameter("Target Type", "Players",
+            java.util.List.of("Closest", "LowestHP", "HighestDamage"));
+    public final ModeParameter    targetType     = new ModeParameter("TargetType", "Players",
             java.util.List.of("Players", "Monsters", "Passives", "All"));
-    public final BooleanParameter renderPlacement = new BooleanParameter("Render Placement", true);
-    public final BooleanParameter renderDamage    = new BooleanParameter("Render Damage", true);
-    public final BooleanParameter armorBreaker    = new BooleanParameter("Armor Breaker", true);
-    public final NumberParameter  armorPercent    = new NumberParameter("Armor Percent", 15.0, 1.0, 50.0, 1.0);
-    public final NumberParameter  predictTicks    = new NumberParameter("Predict Ticks", 1.0, 0.0, 4.0, 0.1);
-    public final BooleanParameter totemDetection  = new BooleanParameter("Totem Detection", true);
-    public final NumberParameter  totemMinDamage  = new NumberParameter("Totem Min Damage", 1.5, 0.5, 10.0, 0.5);
-    public final NumberParameter  totemSelfMinHp  = new NumberParameter("Totem Self Min HP", 8.0, 2.0, 20.0, 0.5);
-    public final ModeParameter    placeMode      = new ModeParameter("Place Mode", "Normal",
+    public final BooleanParameter renderPlacement = new BooleanParameter("RenderPlacement", true);
+    public final BooleanParameter renderDamage    = new BooleanParameter("RenderDamage", true);
+    public final BooleanParameter armorBreaker    = new BooleanParameter("ArmorBreaker", true);
+    public final NumberParameter  armorPercent    = new NumberParameter("ArmorPercent", 15.0, 1.0, 50.0, 1.0);
+    public final NumberParameter  predictTicks    = new NumberParameter("PredictTicks", 1.0, 0.0, 4.0, 0.1);
+    public final BooleanParameter totemDetection  = new BooleanParameter("TotemDetection", true);
+    public final NumberParameter  totemMinDamage  = new NumberParameter("TotemMinDamage", 1.5, 0.5, 10.0, 0.5);
+    public final NumberParameter  totemSelfMinHp  = new NumberParameter("TotemSelfMinHP", 8.0, 2.0, 20.0, 0.5);
+    public final ModeParameter    placeMode      = new ModeParameter("PlaceMode", "Normal",
             java.util.List.of("Normal", "Aggressive", "Smart"));
-    public final NumberParameter  rotateSpeed     = new NumberParameter("Rotate Speed", 180.0, 10.0, 180.0, 5.0);
-    public final NumberParameter  rotateRandomize = new NumberParameter("Rotate Randomize", 0.0, 0.0, 3.0, 0.1);
-    public final BooleanParameter antiSuicideCheckBreaking = new BooleanParameter("AntiSuicide Break", true);
-    public final BooleanParameter antiSuicideIgnoreWithTotem = new BooleanParameter("AntiSuicide Ignore Totem", false);
-    public final BooleanParameter totemCheckTarget = new BooleanParameter("Totem Check Target", true);
-    public final BooleanParameter totemPopSwap     = new BooleanParameter("Totem Pop Swap", false);
-    public final NumberParameter  totemPopHp       = new NumberParameter("Totem Pop HP", 6.0, 1.0, 20.0, 0.5);
-    public final NumberParameter  placeWallRange  = new NumberParameter("Place Wall Range", 3.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  breakWallRange  = new NumberParameter("Break Wall Range", 3.5, 1.0, 6.0, 0.1);
-    public final BooleanParameter placeAirPlace   = new BooleanParameter("Air Place", false);
-    public final NumberParameter  placeUnderHp     = new NumberParameter("Place Under HP", 10.0, 0.0, 36.0, 0.5);
-    public final BooleanParameter placeMultiPlace  = new BooleanParameter("Multi Place", false);
-    public final BooleanParameter swapSwitchBack   = new BooleanParameter("Swap Switch Back", true);
-    public final BooleanParameter swapNoGap        = new BooleanParameter("Swap No Gap", true);
-    public final BooleanParameter swapInventory   = new BooleanParameter("Swap Inventory", false);
-    public final ModeParameter    speedMode      = new ModeParameter("Speed Mode", "Normal",
+    public final NumberParameter  rotateSpeed     = new NumberParameter("RotateSpeed", 180.0, 10.0, 180.0, 5.0);
+    public final NumberParameter  rotateRandomize = new NumberParameter("RotateRandomize", 0.0, 0.0, 3.0, 0.1);
+    public final BooleanParameter antiSuicideCheckBreaking = new BooleanParameter("AntiSuicideBreak", true);
+    public final BooleanParameter antiSuicideIgnoreWithTotem = new BooleanParameter("AntiSuicideIgnoreTotem", false);
+    public final BooleanParameter totemCheckTarget = new BooleanParameter("TotemCheckTarget", true);
+    public final BooleanParameter totemPopSwap     = new BooleanParameter("TotemPopSwap", false);
+    public final NumberParameter  totemPopHp       = new NumberParameter("TotemPopHP", 6.0, 1.0, 20.0, 0.5);
+    public final NumberParameter  placeWallRange  = new NumberParameter("PlaceWallRange", 3.5, 1.0, 6.0, 0.1);
+    public final NumberParameter  breakWallRange  = new NumberParameter("BreakWallRange", 3.5, 1.0, 6.0, 0.1);
+    public final BooleanParameter placeAirPlace   = new BooleanParameter("AirPlace", false);
+    public final NumberParameter  placeUnderHp     = new NumberParameter("PlaceUnderHP", 10.0, 0.0, 36.0, 0.5);
+    public final BooleanParameter placeMultiPlace  = new BooleanParameter("MultiPlace", false);
+    public final BooleanParameter swapSwitchBack   = new BooleanParameter("SwapSwitchBack", true);
+    public final BooleanParameter swapNoGap        = new BooleanParameter("SwapNoGap", true);
+    public final BooleanParameter swapInventory   = new BooleanParameter("SwapInventory", false);
+    public final ModeParameter    speedMode      = new ModeParameter("SpeedMode", "Normal",
             java.util.List.of("Legit", "Normal", "Aggressive"));
-    public final NumberParameter  jitterDelay    = new NumberParameter("Jitter Delay", 0.0, 0.0, 100.0, 5.0);
-    public final BooleanParameter strictRotation = new BooleanParameter("Strict Rotation", false);
-    public final NumberParameter  maxRate        = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
+    public final NumberParameter  jitterDelay    = new NumberParameter("JitterDelay", 0.0, 0.0, 100.0, 5.0);
+    public final BooleanParameter strictRotation = new BooleanParameter("StrictRotation", false);
+    public final NumberParameter  maxRate        = new NumberParameter("MaxRate", 2.0, 1.0, 5.0, 1.0);
     public final BooleanParameter suicide        = new BooleanParameter("Suicide", false);
-    public final BooleanParameter grimAC         = new BooleanParameter("GrimAC Bypass", false);
-    public final BooleanParameter ncpBypass      = new BooleanParameter("NCP Bypass", false);
-    public final BooleanParameter bgBlockScanner = new BooleanParameter("BG Block Scanner", true);
-    public final BooleanParameter kbPrediction   = new BooleanParameter("KB Prediction", true);
-    public final BooleanParameter collateralPop  = new BooleanParameter("Collateral Pop List", true);
+    public final BooleanParameter grimAC         = new BooleanParameter("GrimACBypass", false);
+    public final BooleanParameter ncpBypass      = new BooleanParameter("NCPBypass", false);
+    public final BooleanParameter bgBlockScanner = new BooleanParameter("BGBlockScanner", true);
+    public final BooleanParameter kbPrediction   = new BooleanParameter("KBPrediction", true);
+    public final BooleanParameter collateralPop  = new BooleanParameter("CollateralPopList", true);
     public static BlockPos currentPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
@@ -301,7 +301,7 @@ public class AutoCrystal extends Module {
         if (shouldBreak && aligned && actionsThisTick < limit) {
             if (!checkBreakDelay || now - lastBreakTime >= currentBreakDelay) {
                 int entityId = (int) result[7];
-                if (entityId != lastBreakId) { 
+                if (entityId != lastBreakId) {
                     Entity crystal = mc.level.getEntity(entityId);
                     if (crystal instanceof EndCrystal) {
                         mc.gameMode.attack(mc.player, crystal);
@@ -416,8 +416,8 @@ public class AutoCrystal extends Module {
             if (dist > maxDist) continue;
             double metric = switch (mode) {
                 case "Closest"        -> dist;
-                case "Lowest HP"      -> le.getHealth();
-                case "Highest Damage" -> -calcQuickDamage(mc, le);
+                case "LowestHP"      -> le.getHealth();
+                case "HighestDamage" -> -calcQuickDamage(mc, le);
                 default               -> dist;
             };
             if (metric < bestMetric) {

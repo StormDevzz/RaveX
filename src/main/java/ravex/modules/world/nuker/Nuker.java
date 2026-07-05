@@ -24,8 +24,8 @@ public class Nuker extends Module {
     public static final Nuker INSTANCE = new Nuker();
     public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Sphere", List.of("Sphere", "Cube"));
-    public final NumberParameter delay = new NumberParameter("Delay (ms)", 200, 50, 1000, 50);
-    public final BooleanParameter autoDisable = new BooleanParameter("Auto Disable", false);
+    public final NumberParameter delay = new NumberParameter("Delay(ms)", 200, 50, 1000, 50);
+    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {

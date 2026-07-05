@@ -1,8 +1,54 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_antivoid SHARED
-    antivoid.cpp
-    antivoid_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+a
+n
+t
+i
+v
+o
+i
+d
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+a
+n
+t
+i
+v
+o
+i
+d
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
@@ -14,7 +60,7 @@ else()
 endif()
 
 target_include_directories(ravex_antivoid PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

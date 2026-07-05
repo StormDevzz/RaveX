@@ -1,12 +1,58 @@
 cmake_minimum_required(VERSION 3.16)
 
 add_library(ravex_selffill SHARED
-    selffill.cpp
-    selffill_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+s
+e
+l
+f
+f
+i
+l
+l
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+s
+e
+l
+f
+f
+i
+l
+l
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 target_include_directories(ravex_selffill PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
 )
 

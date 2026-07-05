@@ -8,8 +8,8 @@ import ravex.parameter.NumberParameter;
 public class AutoRespawn extends Module {
     public static final AutoRespawn INSTANCE = new AutoRespawn();
     public final BooleanParameter instant = new BooleanParameter("Instant", true);
-    public final NumberParameter delay = new NumberParameter("Delay (ms)", 0, 0, 5000, 100);
-    public final BooleanParameter showDeathScreen = new BooleanParameter("Show Death Screen", false);
+    public final NumberParameter delay = new NumberParameter("Delay(ms)", 0, 0, 5000, 100);
+    public final BooleanParameter showDeathScreen = new BooleanParameter("ShowDeathScreen", false);
     private long deathTime = 0;
 
     @Override

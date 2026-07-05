@@ -11,21 +11,21 @@ import ravex.parameter.NumberParameter;
 import java.util.List;
 public class Animations extends Module {
     public static final Animations INSTANCE = new Animations();
-    public final ModeParameter walkingAnimation = new ModeParameter("Walk Animation", "Smooth",
+    public final ModeParameter walkingAnimation = new ModeParameter("WalkAnimation", "Smooth",
             List.of("Smooth", "Bouncy", "Robotic", "Off"));
-    public final ModeParameter sprintAnimation = new ModeParameter("Sprint Animation", "Smooth",
+    public final ModeParameter sprintAnimation = new ModeParameter("SprintAnimation", "Smooth",
             List.of("Smooth", "Bouncy", "Robotic", "Off"));
-    public final ModeParameter sneakAnimation = new ModeParameter("Sneak Animation", "Smooth",
+    public final ModeParameter sneakAnimation = new ModeParameter("SneakAnimation", "Smooth",
             List.of("Smooth", "Crawl", "Off"));
-    public final ModeParameter jumpAnimation = new ModeParameter("Jump Animation", "Normal",
+    public final ModeParameter jumpAnimation = new ModeParameter("JumpAnimation", "Normal",
             List.of("Normal", "Tuck", "Spread", "Off"));
-    public final ModeParameter swimmingAnimation = new ModeParameter("Swim Animation", "Smooth",
+    public final ModeParameter swimmingAnimation = new ModeParameter("SwimAnimation", "Smooth",
             List.of("Smooth", "Dolphin", "Off"));
-    public final ModeParameter elytraAnimation = new ModeParameter("Elytra Animation", "Smooth",
+    public final ModeParameter elytraAnimation = new ModeParameter("ElytraAnimation", "Smooth",
             List.of("Smooth", "Bird", "Off"));
     public final NumberParameter animationSpeed = new NumberParameter("Speed", 1.0, 0.5, 2.0, 0.1);
-    public final BooleanParameter smoothTransitions = new BooleanParameter("Smooth Transitions", true);
-    public final BooleanParameter disableVanillaSwing = new BooleanParameter("Disable Vanilla Swing", false);
+    public final BooleanParameter smoothTransitions = new BooleanParameter("SmoothTransitions", true);
+    public final BooleanParameter disableVanillaSwing = new BooleanParameter("DisableVanillaSwing", false);
     public static float swingProgress = 0f;
     public static float prevSwingProgress = 0f;
     public static float bodyBob = 0f;

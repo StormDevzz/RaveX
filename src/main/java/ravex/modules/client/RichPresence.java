@@ -9,13 +9,13 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
 public class RichPresence extends Module {
     public static final RichPresence INSTANCE = new RichPresence();
-    public final StringParameter largeImage = new StringParameter("Large Image", "ravexdc");
-    public final BooleanParameter showHP     = new BooleanParameter("Show HP",     true);
-    public final BooleanParameter showCoords = new BooleanParameter("Show Coords", false);
-    public final BooleanParameter showIP     = new BooleanParameter("Show IP",     true);
-    public final BooleanParameter showPing   = new BooleanParameter("Show Ping",   true);
-    public final BooleanParameter showButton = new BooleanParameter("Show Button", true);
-    public final BooleanParameter showOS     = new BooleanParameter("Show OS",     true);
+    public final StringParameter largeImage = new StringParameter("LargeImage", "ravexdc");
+    public final BooleanParameter showHP     = new BooleanParameter("ShowHP",     true);
+    public final BooleanParameter showCoords = new BooleanParameter("ShowCoords", false);
+    public final BooleanParameter showIP     = new BooleanParameter("ShowIP",     true);
+    public final BooleanParameter showPing   = new BooleanParameter("ShowPing",   true);
+    public final BooleanParameter showButton = new BooleanParameter("ShowButton", true);
+    public final BooleanParameter showOS     = new BooleanParameter("ShowOS",     true);
     private Thread updateThread;
     private volatile boolean running = false;
 
@@ -65,7 +65,7 @@ public class RichPresence extends Module {
         String state;
         if (mc.player == null || mc.level == null) {
             details = "Menu";
-            state = "In main menu";
+            state = "InMainMenu";
         } else {
             details = "RaveX — " + mc.player.getGameProfile().name();
             StringBuilder stateBuilder = new StringBuilder();

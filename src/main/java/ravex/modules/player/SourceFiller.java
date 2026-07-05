@@ -22,7 +22,7 @@ public class SourceFiller extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Smart", List.of("Normal", "Smart"));
     public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
-    public final NumberParameter delay = new NumberParameter("Delay (ms)", 200.0, 0.0, 1000.0, 10.0);
+    public final NumberParameter delay = new NumberParameter("Delay(ms)", 200.0, 0.0, 1000.0, 10.0);
     private long lastPlaceTime = 0;
 
     @Override

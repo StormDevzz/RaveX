@@ -7,7 +7,7 @@ add_library(ravex_loader SHARED
 )
 
 target_include_directories(ravex_loader PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
 )
 

@@ -16,11 +16,11 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 public class AutoApple extends Module {
     public static final AutoApple INSTANCE = new AutoApple();
-    public final ModeParameter appleType = new ModeParameter("Apple Type", "Both", 
+    public final ModeParameter appleType = new ModeParameter("AppleType", "Both",
             java.util.List.of("Golden", "Enchanted", "Both"));
-    public final ModeParameter swapMode = new ModeParameter("Swap Mode", "Silent", 
+    public final ModeParameter swapMode = new ModeParameter("SwapMode", "Silent",
             java.util.List.of("Silent", "Normal"));
-    public final NumberParameter healthThreshold = new NumberParameter("Health Threshold", 10.0, 1.0, 20.0, 0.5);
+    public final NumberParameter healthThreshold = new NumberParameter("HealthThreshold", 10.0, 1.0, 20.0, 0.5);
     private int originalSlot = -1;
     private boolean isEating = false;
     private int eatingSlot = -1;

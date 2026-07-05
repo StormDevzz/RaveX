@@ -3,7 +3,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
-import ravex.modules.render.Hud;
+import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.render.HudRenderer;
 public class CoordsHud extends Module {

@@ -20,8 +20,8 @@ public class AutoTunnel extends Module {
     public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
     public final NumberParameter height = new NumberParameter("Height", 2, 1, 3, 1);
     public final NumberParameter width = new NumberParameter("Width", 2, 1, 3, 1);
-    public final NumberParameter delay = new NumberParameter("Delay (ms)", 200, 50, 1000, 50);
-    public final BooleanParameter fillLava = new BooleanParameter("Fill Lava", true);
+    public final NumberParameter delay = new NumberParameter("Delay(ms)", 200, 50, 1000, 50);
+    public final BooleanParameter fillLava = new BooleanParameter("FillLava", true);
     public final BooleanParameter autoWalk = new BooleanParameter("AutoWalk", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFFFF00);

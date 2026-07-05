@@ -16,7 +16,7 @@ import java.util.List;
 public class AntiPearl extends Module {
     public static final AntiPearl INSTANCE = new AntiPearl();
     public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0, 0.5);
-    public final BooleanParameter autoAttack = new BooleanParameter("Auto Attack", true);
+    public final BooleanParameter autoAttack = new BooleanParameter("AutoAttack", true);
     public final BooleanParameter autoWarn = new BooleanParameter("Warn", true);
     public final BooleanParameter predict = new BooleanParameter("Predict", true);
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_antipearl");
@@ -49,7 +49,7 @@ public class AntiPearl extends Module {
                 if (autoWarn.getValue() && distToMe < 3.0) {
                     mc.player.displayClientMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "§7[§cRaveX§7] §ePearl incoming! §f" + String.format("%.1f", distToMe) + "m away"
+                            "§7[§cRaveX§7] §ePearl incoming! §f" + String.format("%.1f", distToMe) + "mAway"
                         ), true
                     );
                 }

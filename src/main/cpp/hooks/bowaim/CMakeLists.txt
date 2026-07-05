@@ -1,24 +1,68 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_bowaim SHARED
-    bowaim.cpp
-    bowaim_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+b
+o
+w
+a
+i
+m
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+b
+o
+w
+a
+i
+m
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 find_package(JNI REQUIRED)
 if(JNI_FOUND)
     target_include_directories(ravex_bowaim PRIVATE ${JNI_INCLUDE_DIRS})
     target_link_libraries(ravex_bowaim PRIVATE ${JNI_LIBRARIES})
+else()
+    message(FATAL_ERROR "JNI not found — cannot build ravex_bowaim")
 endif()
 
 target_include_directories(ravex_bowaim PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 
 target_link_libraries(ravex_bowaim PRIVATE ravex_common)
 
-set_property(TARGET ravex_bowaim PROPERTY CXX_STANDARD 17)
+set_property(TARGET ravex_bowaim PROPERTY CXX_STANDARD 23)
 set_property(TARGET ravex_bowaim PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")

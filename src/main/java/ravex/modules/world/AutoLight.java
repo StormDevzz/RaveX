@@ -15,9 +15,9 @@ import ravex.parameter.NumberParameter;
 public class AutoLight extends Module {
     public static final AutoLight INSTANCE = new AutoLight();
     public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0, 0.5);
-    public final NumberParameter lightLevel = new NumberParameter("Light Level", 8, 0, 15, 1);
-    public final NumberParameter delay = new NumberParameter("Delay (ms)", 500, 100, 2000, 50);
-    public final BooleanParameter silent = new BooleanParameter("Silent Swap", true);
+    public final NumberParameter lightLevel = new NumberParameter("LightLevel", 8, 0, 15, 1);
+    public final NumberParameter delay = new NumberParameter("Delay(ms)", 500, 100, 2000, 50);
+    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     private long lastPlaceTime = 0;
 
     @Override

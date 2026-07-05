@@ -24,15 +24,15 @@ import java.util.List;
 public class ShieldFucker extends Module {
     public static final ShieldFucker INSTANCE = new ShieldFucker();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter wallRange = new NumberParameter("Wall Range", 3.0, 1.0, 6.0, 0.1);
-    public final NumberParameter switchDelay = new NumberParameter("Switch Delay", 100, 0, 500, 10);
-    public final NumberParameter attackDelay = new NumberParameter("Attack Delay", 200, 50, 1000, 10);
-    public final NumberParameter rotateSpeed = new NumberParameter("Rotate Speed", 180, 10, 180, 5);
-    public final BooleanParameter throughWalls = new BooleanParameter("Through Walls", true);
+    public final NumberParameter wallRange = new NumberParameter("WallRange", 3.0, 1.0, 6.0, 0.1);
+    public final NumberParameter switchDelay = new NumberParameter("SwitchDelay", 100, 0, 500, 10);
+    public final NumberParameter attackDelay = new NumberParameter("AttackDelay", 200, 50, 1000, 10);
+    public final NumberParameter rotateSpeed = new NumberParameter("RotateSpeed", 180, 10, 180, 5);
+    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
     public final BooleanParameter targetPlayers = new BooleanParameter("Players", true);
     public final BooleanParameter targetMonsters = new BooleanParameter("Monsters", false);
-    public final BooleanParameter onlyAxe = new BooleanParameter("Only Axe", true);
-    public final BooleanParameter autoSwitch = new BooleanParameter("Auto Switch", true);
+    public final BooleanParameter onlyAxe = new BooleanParameter("OnlyAxe", true);
+    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent",
             List.of("Silent", "Normal", "None"));
     public static float silentYaw = 0;

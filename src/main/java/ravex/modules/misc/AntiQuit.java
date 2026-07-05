@@ -2,7 +2,7 @@ package ravex.modules.misc;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
-import ravex.utility.misc.NativeLoader;
+import ravex.utility.nativelib.NativeLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.PauseScreen;

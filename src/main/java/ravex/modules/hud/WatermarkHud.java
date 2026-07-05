@@ -1,7 +1,7 @@
 package ravex.modules.hud;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.modules.Module;
-import ravex.modules.render.Hud;
+import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.HudRenderer;
@@ -22,7 +22,7 @@ public class WatermarkHud extends Module {
             if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) shadow = bp.getValue();
         }
         int bx = getX(), by = getY();
-        String text = "RaveX v" + ravex.RaveX.version + " NextGen";
+        String text = "RaveXV" + ravex.RaveX.version + " NextGen";
         int tw = HudRenderer.textWidth(text);
         int pw = tw + 12;
         int ph = 14;

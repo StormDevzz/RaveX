@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_elytraplusplus SHARED
-    elytraplusplus.cpp
-    elytraplusplus_jni.cpp
-    velocity_math.cpp
-    bypass_handler.cpp
-    grim_bypass.cpp
+    main/elytraplusplus.cpp
+    main/elytraplusplus_jni.cpp
+    bypass/bypass_handler.cpp
+    grim/grim_bypass.cpp
+    velocity/velocity_math.cpp
 )
 
 find_package(JNI REQUIRED)
@@ -17,7 +17,7 @@ else()
 endif()
 
 target_include_directories(ravex_elytraplusplus PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
 )
 

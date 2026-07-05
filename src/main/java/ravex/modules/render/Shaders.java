@@ -14,10 +14,10 @@ public class Shaders extends Module {
     public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> RENDERING_HAND = ThreadLocal.withInitial(() -> false);
     public final BooleanParameter players = new BooleanParameter("Players", true);
-    public final BooleanParameter throughWalls = new BooleanParameter("Through Walls", false);
+    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", false);
     public final ColorParameter fillColor = new ColorParameter("Color", 0x77FF00A4);
-    public final ModeParameter effectMode = new ModeParameter("Effect", "Fire Aura",
-        List.of("Fire Aura", "Energy Glow", "Chroma", "Ripple", "Pulse"));
+    public final ModeParameter effectMode = new ModeParameter("Effect", "FireAura",
+        List.of("FireAura", "EnergyGlow", "Chroma", "Ripple", "Pulse"));
     public Shaders() {
         super("Shaders");
     }
@@ -39,8 +39,8 @@ public class Shaders extends Module {
         cfg.intensity = 1f;
         cfg.throughWalls = throughWalls.getValue();
         switch (effectMode.getValue()) {
-            case "Fire Aura":   cfg.effect = EffectType.FIRE_AURA; break;
-            case "Energy Glow": cfg.effect = EffectType.ENERGY_GLOW; break;
+            case "FireAura":   cfg.effect = EffectType.FIRE_AURA; break;
+            case "EnergyGlow": cfg.effect = EffectType.ENERGY_GLOW; break;
             case "Chroma":      cfg.effect = EffectType.CHROMA; break;
             case "Ripple":      cfg.effect = EffectType.RIPPLE; break;
             case "Pulse":       cfg.effect = EffectType.PULSE; break;

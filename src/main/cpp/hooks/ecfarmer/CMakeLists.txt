@@ -1,14 +1,13 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_ecfarmer SHARED
-    ecfarmer.cpp
-    ecfarmer_jni.cpp
-    ecfarmer_break.cpp
-    ecfarmer_util.cpp
-    ecfarmer_place.cpp
-    ecfarmer_scan.cpp
-    ecfarmer_rotation.cpp
-    ecfarmer_util.cpp
+    main/ecfarmer.cpp
+    main/ecfarmer_jni.cpp
+    break/ecfarmer_break.cpp
+    place/ecfarmer_place.cpp
+    rotation/ecfarmer_rotation.cpp
+    scan/ecfarmer_scan.cpp
+    util/ecfarmer_util.cpp
 )
 
 find_package(JNI REQUIRED)
@@ -20,8 +19,9 @@ else()
 endif()
 
 target_include_directories(ravex_ecfarmer PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/common
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(ravex_ecfarmer PRIVATE ravex_common)

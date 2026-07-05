@@ -2,7 +2,7 @@ add_library(ravex_manager SHARED
     manager.cpp
 )
 
-target_include_directories(ravex_manager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(ravex_manager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set_target_properties(ravex_manager PROPERTIES
     OUTPUT_NAME "ravex_manager"

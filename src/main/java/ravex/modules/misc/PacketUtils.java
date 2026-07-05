@@ -17,19 +17,19 @@ import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 public class PacketUtils extends Module {
     public static final PacketUtils INSTANCE = new PacketUtils();
-    public final BooleanParameter logOutgoing = new BooleanParameter("Log Outgoing", true);
-    public final BooleanParameter logIncoming = new BooleanParameter("Log Incoming", false);
-    public final BooleanParameter logToChat = new BooleanParameter("Log To Chat", true);
-    public final NumberParameter rateLimit = new NumberParameter("Rate Limit", 80, 10, 500, 5);
+    public final BooleanParameter logOutgoing = new BooleanParameter("LogOutgoing", true);
+    public final BooleanParameter logIncoming = new BooleanParameter("LogIncoming", false);
+    public final BooleanParameter logToChat = new BooleanParameter("LogToChat", true);
+    public final NumberParameter rateLimit = new NumberParameter("RateLimit", 80, 10, 500, 5);
     public final NumberParameter burst = new NumberParameter("Burst", 15, 5, 50, 1);
-    public final BooleanParameter filterMove = new BooleanParameter("Filter Move", true);
-    public final BooleanParameter filterInteract = new BooleanParameter("Filter Interact", false);
-    public final BooleanParameter filterChat = new BooleanParameter("Filter Chat", false);
-    public final BooleanParameter cancelMove = new BooleanParameter("Cancel Move (C2S)", false);
-    public final BooleanParameter cancelInput = new BooleanParameter("Cancel Input (C2S)", false);
-    public final BooleanParameter cancelInteract = new BooleanParameter("Cancel Interact (C2S)", false);
-    public final BooleanParameter cancelSwing = new BooleanParameter("Cancel Swing (C2S)", false);
-    public final BooleanParameter cancelUse = new BooleanParameter("Cancel Use (C2S)", false);
+    public final BooleanParameter filterMove = new BooleanParameter("FilterMove", true);
+    public final BooleanParameter filterInteract = new BooleanParameter("FilterInteract", false);
+    public final BooleanParameter filterChat = new BooleanParameter("FilterChat", false);
+    public final BooleanParameter cancelMove = new BooleanParameter("CancelMove(C2S)", false);
+    public final BooleanParameter cancelInput = new BooleanParameter("CancelInput(C2S)", false);
+    public final BooleanParameter cancelInteract = new BooleanParameter("CancelInteract(C2S)", false);
+    public final BooleanParameter cancelSwing = new BooleanParameter("CancelSwing(C2S)", false);
+    public final BooleanParameter cancelUse = new BooleanParameter("CancelUse(C2S)", false);
 
     public void logPacket(String direction, Object packet) {
         if (!getEnabled()) return;

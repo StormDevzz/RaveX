@@ -1,12 +1,56 @@
 cmake_minimum_required(VERSION 3.16)
 
 add_library(ravex_voidesp SHARED
-    voidesp.cpp
-    voidesp_jni.cpp
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+v
+o
+i
+d
+e
+s
+p
+.
+c
+p
+p
+
+
+ 
+ 
+ 
+ 
+m
+a
+i
+n
+/
+v
+o
+i
+d
+e
+s
+p
+_
+j
+n
+i
+.
+c
+p
+p
 )
 
 target_include_directories(ravex_voidesp PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
 )
 

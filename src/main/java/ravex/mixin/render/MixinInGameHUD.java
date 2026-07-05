@@ -8,7 +8,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.monster.Monster;
+
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -86,16 +86,16 @@ public abstract class MixinInGameHUD {
             if (firstPerson && dist < 1.2 && !nameTagsEnabled) continue;
 
             boolean isPlayer = target instanceof Player;
-            boolean isMonster = target instanceof Monster;
+            boolean isMonster = target instanceof LivingEntity le && ravex.utility.misc.MobUtility.isHostile(le);
             boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
-                               target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
+                                target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
             boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
             boolean isFrame = target instanceof net.minecraft.world.entity.decoration.ItemFrame;
 
-            if (isPlayer && !ESP.INSTANCE.players.getValue()) continue;
-            if (isMonster && !ESP.INSTANCE.monsters.getValue()) continue;
-            if (isAnimal && !ESP.INSTANCE.animals.getValue()) continue;
-            if (isItem && !ESP.INSTANCE.items.getValue()) continue;
+            if (isPlayer && !ESP.INSTANCE.players.getValue() && !(tracersEnabled && ravex.modules.render.Tracers.INSTANCE.players.getValue())) continue;
+            if (isMonster && !ESP.INSTANCE.monsters.getValue() && !(tracersEnabled && ravex.modules.render.Tracers.INSTANCE.monsters.getValue())) continue;
+            if (isAnimal && !ESP.INSTANCE.animals.getValue() && !(tracersEnabled && ravex.modules.render.Tracers.INSTANCE.animals.getValue())) continue;
+            if (isItem && !ESP.INSTANCE.items.getValue() && !(tracersEnabled && ravex.modules.render.Tracers.INSTANCE.items.getValue())) continue;
             if (isFrame && !ESP.INSTANCE.frames.getValue()) continue;
 
             if (!isPlayer && !isMonster && !isAnimal && !isItem && !isFrame) continue;
@@ -106,16 +106,14 @@ public abstract class MixinInGameHUD {
         
         if (tracersEnabled) {
             ravex.modules.render.Tracers tracers = ravex.modules.render.Tracers.INSTANCE;
-            float width = tracers.lineWidth.getValue().floatValue();
 
-            
             java.util.List<Entity> tracerEntities = new java.util.ArrayList<>();
             java.util.List<Integer> tracerColors = new java.util.ArrayList<>();
 
             for (Entity target : candidates) {
                 boolean isPlayer = target instanceof Player;
-                boolean isMonster = target instanceof Monster;
-                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
+                boolean isMonster = target instanceof LivingEntity le && ravex.utility.misc.MobUtility.isHostile(le);
+                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal ||
                                    target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
                 boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
 
@@ -141,11 +139,14 @@ public abstract class MixinInGameHUD {
                 }
             }
 
-            int tracerCount = tracerEntities.size();
-            boolean tracersNativeDone = false;
+            String mode = tracers.mode.getValue();
 
-            if (!tracersNativeDone) {
-                
+            if (mode.equals("Arrows")) {
+                ravex.modules.render.Tracers.renderArrows(context, tracerEntities, tracerColors, pt, cameraPos, cameraLook, guiWidth, guiHeight);
+            } else {
+                float width = tracers.lineWidth.getValue().floatValue();
+                int tracerCount = tracerEntities.size();
+
                 for (int i = 0; i < tracerCount; i++) {
                     Entity target = tracerEntities.get(i);
                     int color = tracerColors.get(i);
@@ -215,7 +216,7 @@ public abstract class MixinInGameHUD {
         double[] outLayouts = null;
         int[] outIndices = null;
 
-        if (false && count > 0 && ravex.utility.misc.NativeLoader.isNativeAvailable()) {
+        if (false && count > 0 && ravex.utility.nativelib.NativeLoader.isNativeAvailable()) {
             try {
                 double[] cameraPosArr = new double[] { cameraPos.x, cameraPos.y, cameraPos.z };
                 org.joml.Matrix4f projMatrix = ravex.manager.ShaderManager.INSTANCE.getProjectionMatrix();
@@ -370,7 +371,7 @@ public abstract class MixinInGameHUD {
                 int y = Math.min(by, hy);
 
                 boolean isPlayer = target instanceof Player;
-                boolean isMonster = target instanceof Monster;
+                boolean isMonster = target instanceof LivingEntity le && ravex.utility.misc.MobUtility.isHostile(le);
                 boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
                                    target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
                 boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
@@ -505,7 +506,7 @@ public abstract class MixinInGameHUD {
             
             for (Entity target : candidates) {
                 boolean isPlayer = target instanceof Player;
-                boolean isMonster = target instanceof Monster;
+                boolean isMonster = target instanceof LivingEntity le && ravex.utility.misc.MobUtility.isHostile(le);
                 boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
                                    target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
                 boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
@@ -910,9 +911,9 @@ public abstract class MixinInGameHUD {
         }
 
         
-        ravex.modules.exploit.PacketMine pm = ravex.modules.exploit.PacketMine.INSTANCE;
+        ravex.modules.player.PacketMine pm = ravex.modules.player.PacketMine.INSTANCE;
         if (pm.getEnabled() && pm.render.getValue()) {
-            for (var mb : ravex.modules.exploit.PacketMine.miningBlocks) {
+            for (var mb : ravex.modules.player.PacketMine.miningBlocks) {
                 if (mb == null || mb.pos == null) continue;
                 long now = System.currentTimeMillis();
                 boolean expired = mb.done && now > mb.visibleUntil;
