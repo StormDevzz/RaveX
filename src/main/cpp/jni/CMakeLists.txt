@@ -22,12 +22,12 @@ endif()
 target_include_directories(ravex_jni PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/common
-    ${CMAKE_SOURCE_DIR}/antiafk
-    ${CMAKE_SOURCE_DIR}/hooks/shaders
-    ${CMAKE_SOURCE_DIR}/hooks/norender
-    ${CMAKE_SOURCE_DIR}/plugins/optimize
-    ${CMAKE_SOURCE_DIR}/plugins/manager
+    ${CMAKE_SOURCE_DIR}/common/include
+    ${CMAKE_SOURCE_DIR}/antiafk/include
+    ${CMAKE_SOURCE_DIR}/hooks/shaders/hand/include
+    ${CMAKE_SOURCE_DIR}/hooks/norender/include
+    ${CMAKE_SOURCE_DIR}/plugins/optimize/include
+    ${CMAKE_SOURCE_DIR}/plugins/manager/include
     ${CMAKE_SOURCE_DIR}/plugins/github/include
     ${CMAKE_SOURCE_DIR}/plugins/brand/include
 )

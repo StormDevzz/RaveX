@@ -1,7 +1,7 @@
 #include "include/window_layout.hpp"
 #include "include/window_signals.hpp"
 #include "include/widget_helpers.hpp"
-#include "../../../checks/system_checks.hpp"
+#include "../../../checks/include/system_checks.hpp"
 #include "../../instances/editor/include/instance_editor.hpp"
 #include "../../instances/manager/include/instance_manager.hpp"
 #include "../../button/include/simple_buttons.hpp"
