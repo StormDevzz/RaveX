@@ -2,7 +2,7 @@
 #include <string>
 #include <cstdlib>
 #include <sys/stat.h>
-#include "simple/simple_launcher.hpp"
+#include "simple/include/simple_launcher.hpp"
 
 
 void ensureDirectory(const std::string& path) {
