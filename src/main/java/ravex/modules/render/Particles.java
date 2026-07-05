@@ -1,5 +1,4 @@
 package ravex.modules.render;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
@@ -12,14 +11,11 @@ import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.render.Render3DUtils;
-
 import java.util.ArrayList;
 import java.util.List;
-
 public class Particles extends Module {
     public static final Particles INSTANCE = new Particles();
     private static String lastTrigger = "";
-
     public final ModeParameter shape = new ModeParameter("Shape", "All",
         List.of("Square", "Circle", "Triangle", "All"));
     public final ModeParameter trigger = new ModeParameter("Trigger", "Always",
@@ -42,16 +38,13 @@ public class Particles extends Module {
     public final NumberParameter lineWidth = new NumberParameter("Line Width", 3.5, 0.5, 10.0, 0.5);
     public final NumberParameter segments = new NumberParameter("Segments", 16, 6, 32, 2);
     public final BooleanParameter collide = new BooleanParameter("Collision", true);
-
     public static boolean attackedThisTick = false;
     public static boolean minedThisTick = false;
     public static Vec3 lastAttackPos = null;
     public static Vec3 lastMinePos = null;
-
     private final List<Particle> particles = new ArrayList<>();
     private int spawnTimer = 0;
     private static final String[] SHAPES = {"Square", "Circle", "Triangle"};
-
     private static class Particle {
         Vec3 pos;
         Vec3 velocity;
@@ -61,7 +54,6 @@ public class Particles extends Module {
         float rotSpeed;
         String shapeType;
         int colorSeed;
-
         Particle(Vec3 pos, Vec3 velocity, long spawnTime, float sizeMod, float rotation, float rotSpeed, String shapeType, int colorSeed) {
             this.pos = pos;
             this.velocity = velocity;
@@ -74,54 +66,25 @@ public class Particles extends Module {
         }
     }
 
-    private Particles() {
-        super("Particles", Category.RENDER);
-        addParameter(shape);
-        addParameter(trigger);
-        addParameter(throughWalls);
-        addParameter(amount);
-        addParameter(size);
-        addParameter(speed);
-        addParameter(color);
-        addParameter(lifetime);
-        addParameter(spawnRate);
-        addParameter(spread);
-        addParameter(gravity);
-        addParameter(mode);
-        addParameter(alpha);
-        addParameter(rotationSpeed);
-        addParameter(glow);
-        addParameter(rainbow);
-        addParameter(lineWidth);
-        addParameter(segments);
-        addParameter(collide);
-    }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
-
         long now = System.currentTimeMillis();
         long maxAge = (long)(lifetime.getValue() * 1000);
-
         String trig = trigger.getValue();
         if (!trig.equals(lastTrigger)) {
             particles.clear();
             lastTrigger = trig;
         }
-
         particles.removeIf(p -> now - p.spawnTime > maxAge);
-
         int maxParticles = amount.getValue().intValue() * 3;
         while (particles.size() > maxParticles) {
             particles.remove(0);
         }
-
         for (Particle p : particles) {
             updateParticle(p, mc);
         }
-
         switch (trig) {
             case "Walking" -> {
                 double dx = mc.player.getX() - mc.player.xo;
@@ -155,13 +118,10 @@ public class Particles extends Module {
                 }
             }
         }
-
         boolean isEventTrigger = trig.equals("Attack") || trig.equals("Mine") || trig.equals("Attack&Mine");
         boolean usePlayerPos = !trig.equals("Attack") && !trig.equals("Mine") && !trig.equals("Attack&Mine");
-
         attackedThisTick = false;
         minedThisTick = false;
-
         if (isEventTrigger) {
             spawnParticles(mc, now, usePlayerPos);
         } else {
@@ -172,7 +132,6 @@ public class Particles extends Module {
             }
         }
     }
-
     private void spawnParticles(Minecraft mc, long now, boolean usePlayerPos) {
         Vec3 center;
         if (usePlayerPos) {
@@ -194,15 +153,12 @@ public class Particles extends Module {
         String spawnMode = mode.getValue();
         double spreadVal = spread.getValue();
         float spd = speed.getValue().floatValue();
-
         for (int i = 0; i < 3; i++) {
             String s = shapeType.equals("All")
                 ? SHAPES[rnd.nextInt(SHAPES.length)]
                 : shapeType;
-
             Vec3 pos;
             Vec3 vel;
-
             switch (spawnMode) {
                 case "AroundPlayer" -> {
                     double theta = rnd.nextDouble() * Math.PI * 2;
@@ -273,7 +229,6 @@ public class Particles extends Module {
                     vel = Vec3.ZERO;
                 }
             }
-
             particles.add(new Particle(
                 pos, vel, now,
                 0.5f + rnd.nextFloat() * 0.5f,
@@ -284,38 +239,29 @@ public class Particles extends Module {
             ));
         }
     }
-
     private void updateParticle(Particle p, Minecraft mc) {
         long age = System.currentTimeMillis() - p.spawnTime;
         float lifeProgress = (float) age / (float) (lifetime.getValue() * 1000);
-
         p.rotation += p.rotSpeed;
         if (p.rotation > 360) p.rotation -= 360;
         if (p.rotation < 0) p.rotation += 360;
-
         Vec3 vel = p.velocity;
         double ax = vel.x, ay = vel.y, az = vel.z;
-
         if (gravity.getValue()) {
             ay -= 0.004;
         }
-
         Vec3 newPos = p.pos.add(ax, ay, az);
-
         if (collide.getValue() && mc.level != null) {
             BlockPos blockPos = BlockPos.containing(newPos);
             if (!mc.level.getBlockState(blockPos).isAir()) {
                 return;
             }
         }
-
         p.velocity = new Vec3(ax * 0.98, ay * 0.98, az * 0.98);
         p.pos = newPos;
     }
-
     public static void renderParticles(Matrix4f matrix, Vec3 camPos) {
         if (!INSTANCE.getEnabled() || INSTANCE.particles.isEmpty()) return;
-
         long now = System.currentTimeMillis();
         long maxAge = (long) (INSTANCE.lifetime.getValue() * 1000);
         float baseAlpha = INSTANCE.alpha.getValue().floatValue();
@@ -325,17 +271,13 @@ public class Particles extends Module {
         int seg = INSTANCE.segments.getValue().intValue();
         boolean rainbowMode = INSTANCE.rainbow.getValue();
         int mainColor = INSTANCE.color.getValue();
-
         for (Particle p : INSTANCE.particles) {
             long age = now - p.spawnTime;
             float lifeProgress = (float) age / (float) maxAge;
             if (lifeProgress >= 1.0f) continue;
-
             float alpha = baseAlpha * Math.max(0.0f, 1.0f - lifeProgress);
             if (alpha <= 0.01f) continue;
-
             float particleSize = baseSize * p.sizeMod;
-
             int color;
             if (rainbowMode) {
                 float hue = (System.currentTimeMillis() % 3600) / 3600f;
@@ -343,11 +285,9 @@ public class Particles extends Module {
             } else {
                 color = mainColor;
             }
-
             float r = ((color >> 16) & 0xFF) / 255.0f;
             float g = ((color >> 8) & 0xFF) / 255.0f;
             float b = (color & 0xFF) / 255.0f;
-
             Vec3 toCamera = new Vec3(
                 camPos.x - p.pos.x,
                 camPos.y - p.pos.y,
@@ -356,16 +296,13 @@ public class Particles extends Module {
             double dist = toCamera.length();
             if (dist < 0.01) continue;
             toCamera = toCamera.scale(1.0 / dist);
-
             Vec3 up = new Vec3(0, 1, 0);
             if (Math.abs(toCamera.dot(up)) > 0.99) {
                 up = new Vec3(1, 0, 0);
             }
             Vec3 right = toCamera.cross(up).normalize();
             up = right.cross(toCamera).normalize();
-
             float rad = particleSize * 0.5f;
-
             switch (p.shapeType) {
                 case "Square" -> renderSquare(matrix, camPos, p, right, up, rad, r, g, b, alpha, lineW, glowEnabled);
                 case "Circle" -> renderCircle(matrix, camPos, p, right, up, rad, r, g, b, alpha, lineW, glowEnabled, seg);
@@ -373,19 +310,16 @@ public class Particles extends Module {
             }
         }
     }
-
     private static void renderSquare(Matrix4f matrix, Vec3 camPos, Particle p, Vec3 right, Vec3 up, float rad, float r, float g, float b, float alpha, float lineWidth, boolean glow) {
         double angle = Math.toRadians(p.rotation);
         float cos = (float) Math.cos(angle);
         float sin = (float) Math.sin(angle);
-
         double rx = right.x * cos + up.x * sin;
         double ry = right.y * cos + up.y * sin;
         double rz = right.z * cos + up.z * sin;
         double ux = right.x * -sin + up.x * cos;
         double uy = right.y * -sin + up.y * cos;
         double uz = right.z * -sin + up.z * cos;
-
         List<Vector3f> pts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             float a = (float) (i * Math.PI / 2);
@@ -398,26 +332,22 @@ public class Particles extends Module {
             ));
         }
         pts.add(pts.get(0));
-
         boolean tw = INSTANCE.throughWalls.getValue();
         if (glow) {
             Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
         Render3DUtils.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
     }
-
     private static void renderCircle(Matrix4f matrix, Vec3 camPos, Particle p, Vec3 right, Vec3 up, float rad, float r, float g, float b, float alpha, float lineWidth, boolean glow, int segments) {
         double angle = Math.toRadians(p.rotation);
         float cos = (float) Math.cos(angle);
         float sin = (float) Math.sin(angle);
-
         double rx = right.x * cos + up.x * sin;
         double ry = right.y * cos + up.y * sin;
         double rz = right.z * cos + up.z * sin;
         double ux = right.x * -sin + up.x * cos;
         double uy = right.y * -sin + up.y * cos;
         double uz = right.z * -sin + up.z * cos;
-
         List<Vector3f> pts = new ArrayList<>();
         for (int i = 0; i <= segments; i++) {
             float a = (float) (i * 2 * Math.PI / segments);
@@ -429,26 +359,22 @@ public class Particles extends Module {
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-
         boolean tw = INSTANCE.throughWalls.getValue();
         if (glow) {
             Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
         Render3DUtils.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
     }
-
     private static void renderTriangle(Matrix4f matrix, Vec3 camPos, Particle p, Vec3 right, Vec3 up, float rad, float r, float g, float b, float alpha, float lineWidth, boolean glow) {
         double angle = Math.toRadians(p.rotation);
         float cos = (float) Math.cos(angle);
         float sin = (float) Math.sin(angle);
-
         double rx = right.x * cos + up.x * sin;
         double ry = right.y * cos + up.y * sin;
         double rz = right.z * cos + up.z * sin;
         double ux = right.x * -sin + up.x * cos;
         double uy = right.y * -sin + up.y * cos;
         double uz = right.z * -sin + up.z * cos;
-
         List<Vector3f> pts = new ArrayList<>();
         for (int i = 0; i <= 3; i++) {
             float a = (float) (i * 2 * Math.PI / 3 + Math.toRadians(270));
@@ -460,14 +386,12 @@ public class Particles extends Module {
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-
         boolean tw = INSTANCE.throughWalls.getValue();
         if (glow) {
             Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
         Render3DUtils.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
     }
-
     @Override
     protected void onDisable() {
         particles.clear();

@@ -1,37 +1,58 @@
 package ravex.gui.clickgui;
 
-import ravex.modules.render.ClickGui;
+import ravex.modules.client.ClickGui;
 import ravex.utility.render.Render2DEngine;
 
-import java.awt.*;
-
 public class ColorUtility {
-    public static final int HEADER_COLOR = 0xFF151915;
-    public static final int HEADER_GRADIENT_END = 0xFF151915;
-    public static final int PANEL_BORDER_COLOR = 0xCC8A8A8A;
-    public static final int BACKGROUND_START = 0x990A0A10;
-    public static final int BACKGROUND_END = 0xDD0E0E18;
-    public static final int PANEL_BODY_START = 0xCC232522;
-    public static final int PANEL_BODY_END = 0xE6232522;
-    public static final int SHADOW_COLOR = 0x60000000;
+    public static final int HEADER_COLOR = 0x330A0A12;
+    public static final int HEADER_GRADIENT_END = 0x330A0A12;
+    public static final int PANEL_BORDER_COLOR = 0x228A8A8A;
+    public static final int BACKGROUND_START = 0x18080810;
+    public static final int BACKGROUND_END = 0x300A0A14;
+    public static final int PANEL_BODY_START = 0x22101210;
+    public static final int PANEL_BODY_END = 0x30101210;
+    public static final int SHADOW_COLOR = 0x20000000;
+
+    private static int cachedActiveColor = 0xFF40A9F8;
+    private static long lastColorCacheTime = 0;
+    private static final long COLOR_CACHE_INTERVAL = 50;
 
     public static int getActiveColor() {
-        return getColor(0).getRGB();
+        long now = System.currentTimeMillis();
+        if (now - lastColorCacheTime < COLOR_CACHE_INTERVAL) {
+            return cachedActiveColor;
+        }
+        lastColorCacheTime = now;
+        cachedActiveColor = computeActiveColor();
+        return cachedActiveColor;
     }
 
-    public static Color getColor(int index) {
+    private static int computeActiveColor() {
+        return getColorRGB(0);
+    }
+
+    public static void invalidateColorCache() {
+        lastColorCacheTime = 0;
+    }
+
+    public static int getColorRGB(int index) {
         ClickGui cfg = ClickGui.INSTANCE;
         String mode = cfg.colorMode.getValue();
         int speed = cfg.colorSpeed.getValue().intValue();
-        Color c1 = new Color(cfg.color1.getValue());
-        Color c2 = new Color(cfg.color2.getValue());
+        int c1 = cfg.color1.getValue();
+        int c2 = cfg.color2.getValue();
 
         return switch (mode) {
-            case "Rainbow" -> Render2DEngine.rainbow(speed, index, 1f, 1f, 1f);
-            case "Fade" -> Render2DEngine.fade(speed, index, c1, 1f);
-            case "DoubleColor" -> Render2DEngine.twoColorEffect(c1, c2, speed, index);
-            default -> c1;
+            case "Rainbow" -> Render2DEngine.rainbowInt(speed, index, 1f, 1f, 1f);
+            case "Fade" -> Render2DEngine.fadeInt(speed, index, c1, 1f);
+            case "DoubleColor" -> Render2DEngine.twoColorEffectInt(c1, c2, speed, index);
+            default -> 0xFF000000 | c1;
         };
+    }
+
+    public static java.awt.Color getColor(int index) {
+        int argb = getColorRGB(index);
+        return new java.awt.Color((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, (argb >> 24) & 0xFF);
     }
 
     public static int getRainbowColor(int index, int speed) {
@@ -48,7 +69,7 @@ public class ColorUtility {
 
     public static int getModuleColor(boolean enabled, boolean hovered) {
         if (enabled) {
-            return getColor(0).getRGB();
+            return getColorRGB(0);
         }
         return hovered ? 0xFF202035 : 0xFF0D0D14;
     }

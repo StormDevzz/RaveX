@@ -24,6 +24,8 @@ public class TextureLoader {
     private static final String GUI_PREFIX = "gui/";
     private static final String CLASSPATH_PREFIX = "/assets/ravex/textures/";
 
+    private static final int ICON_SIZE = 32;
+
     public static final Identifier SEARCH = id("search");
     public static final Identifier SEARCH_WHITE = id("search_white");
     public static final Identifier SETTINGS = id("settings");
@@ -58,6 +60,44 @@ public class TextureLoader {
         return Identifier.fromNamespaceAndPath(NS, GUI_PREFIX + name);
     }
 
+    private static NativeImage downscaleTo(NativeImage image, int maxDim) {
+        int sw = image.getWidth();
+        int sh = image.getHeight();
+        if (sw <= maxDim && sh <= maxDim) return image;
+        float scale = Math.min((float) maxDim / sw, (float) maxDim / sh);
+        int tw = Math.max(1, Math.round(sw * scale));
+        int th = Math.max(1, Math.round(sh * scale));
+        NativeImage dst = new NativeImage(tw, th, false);
+
+        for (int dy = 0; dy < th; dy++) {
+            int sy0 = dy * sh / th;
+            int sy1 = Math.min(sh, (dy + 1) * sh / th);
+            for (int dx = 0; dx < tw; dx++) {
+                int sx0 = dx * sw / tw;
+                int sx1 = Math.min(sw, (dx + 1) * sw / tw);
+
+                int maxA = 0, sumA = 0, opaqueCount = 0, count = 0;
+                for (int sy = sy0; sy < sy1; sy++) {
+                    for (int sx = sx0; sx < sx1; sx++) {
+                        int a = (image.getPixel(sx, sy) >> 24) & 0xFF;
+                        if (a > maxA) maxA = a;
+                        if (a > 0) opaqueCount++;
+                        sumA += a;
+                        count++;
+                    }
+                }
+                float coverage = (float) opaqueCount / count;
+                float blend = Math.min(1.0f, coverage * 2.5f);
+                int avgA = sumA / count;
+                int resultA = Math.round(avgA * (1.0f - blend) + maxA * blend);
+                dst.setPixel(dx, dy, (resultA << 24) | 0xFFFFFF);
+            }
+        }
+
+        image.close();
+        return dst;
+    }
+
     public static Identifier getCategoryTexture(Category cat) {
         if (cat == Category.CUSTOM) cat = Category.MISC;
         Identifier id = CAT_IDS.get(cat);
@@ -84,14 +124,11 @@ public class TextureLoader {
                     for (int x = 0; x < image.getWidth(); x++) {
                         int rgba = image.getPixel(x, y);
                         int a = (rgba >> 24) & 0xFF;
-                        if (a > 0) {
-                            int gray = 0xA0A0A0;
-                            image.setPixel(x, y, (a << 24) | gray);
-                        }
+                        image.setPixel(x, y, (a << 24) | 0xFFFFFF);
                     }
                 }
-                AbstractTexture tex = createLinearTexture(image);
-                image.close();
+                image = downscaleTo(image, ICON_SIZE);
+                AbstractTexture tex = new DynamicTexture(() -> "settings_white", image);
                 Minecraft.getInstance().getTextureManager().register(SETTINGS_WHITE, tex);
                 loaded.put(SETTINGS_WHITE, tex);
             } catch (Exception e) {
@@ -109,7 +146,7 @@ public class TextureLoader {
         if (loaded.containsKey(whiteId)) return whiteId;
         Identifier originalId = CAT_IDS.get(cat);
         if (!ensureLoaded(originalId, cat.name().toLowerCase())) return null;
-        Identifier result = makeWhiteCopyNearest(originalId, whiteId, cat.name().toLowerCase());
+        Identifier result = makeWhiteCopy(originalId, whiteId, cat.name().toLowerCase());
         return result != null ? result : originalId;
     }
 
@@ -128,13 +165,11 @@ public class TextureLoader {
                 for (int x = 0; x < image.getWidth(); x++) {
                     int rgba = image.getPixel(x, y);
                     int a = (rgba >> 24) & 0xFF;
-                    if (a > 0) {
-                        image.setPixel(x, y, (a << 24) | 0xFFFFFF);
-                    }
+                    image.setPixel(x, y, (a << 24) | 0xFFFFFF);
                 }
             }
-            AbstractTexture tex = createLinearTexture(image);
-            image.close();
+            image = downscaleTo(image, ICON_SIZE);
+            AbstractTexture tex = new DynamicTexture(() -> name, image);
             Minecraft.getInstance().getTextureManager().register(targetId, tex);
             loaded.put(targetId, tex);
             return targetId;
@@ -154,13 +189,11 @@ public class TextureLoader {
                     for (int x = 0; x < image.getWidth(); x++) {
                         int rgba = image.getPixel(x, y);
                         int a = (rgba >> 24) & 0xFF;
-                        if (a > 0) {
-                            image.setPixel(x, y, (a << 24) | 0xFFFFFF);
-                        }
+                        image.setPixel(x, y, (a << 24) | 0xFFFFFF);
                     }
                 }
-                AbstractTexture tex = createLinearTexture(image);
-                image.close();
+                image = downscaleTo(image, ICON_SIZE);
+                AbstractTexture tex = new DynamicTexture(() -> "circle_white", image);
                 Minecraft.getInstance().getTextureManager().register(CIRCLE_WHITE, tex);
                 loaded.put(CIRCLE_WHITE, tex);
             } catch (Exception e) {
@@ -194,7 +227,6 @@ public class TextureLoader {
                 }
             }
             AbstractTexture tex = createLinearTexture(image);
-            image.close();
             Minecraft.getInstance().getTextureManager().register(TRACK, tex);
             loaded.put(TRACK, tex);
         }
@@ -223,8 +255,8 @@ public class TextureLoader {
                         }
                     }
                 }
-                AbstractTexture tex = createLinearTexture(image);
-                image.close();
+                image = downscaleTo(image, ICON_SIZE);
+                AbstractTexture tex = new DynamicTexture(() -> "switcher", image);
                 Minecraft.getInstance().getTextureManager().register(SWITCHER, tex);
                 loaded.put(SWITCHER, tex);
             } catch (Exception e) {
@@ -247,7 +279,6 @@ public class TextureLoader {
         }
 
         String resPath = "/assets/ravex/particles/" + name + ".png";
-        RaveX.LOGGER.info("[TextureLoader] getParticleTexture: name={}, resPath={}", name, resPath);
         try (InputStream stream = TextureLoader.class.getResourceAsStream(resPath)) {
             if (stream == null) {
                 RaveX.LOGGER.warn("[TextureLoader] Particle stream NULL: {}", resPath);
@@ -267,7 +298,6 @@ public class TextureLoader {
                 }
             }
             AbstractTexture tex = createLinearTexture(image);
-            image.close();
             Minecraft.getInstance().getTextureManager().register(tintedId, tex);
             loaded.put(tintedId, tex);
             lastTintedColor.put(tintedId, color);
@@ -291,6 +321,7 @@ public class TextureLoader {
         getTrackWhiteTexture();
         getSwitcherTexture();
         for (Map.Entry<Category, Identifier> e : CAT_IDS.entrySet()) {
+            if (e.getKey() == Category.CUSTOM) continue;
             ensureLoaded(e.getValue(), e.getKey().name().toLowerCase());
             getCategoryTextureWhite(e.getKey());
         }
@@ -347,7 +378,6 @@ public class TextureLoader {
                 }
             }
             AbstractTexture tex = createLinearTexture(image);
-            image.close();
             Minecraft.getInstance().getTextureManager().register(tintedId, tex);
             loaded.put(tintedId, tex);
             lastTintedColor.put(tintedId, color);
@@ -362,11 +392,7 @@ public class TextureLoader {
         if (loaded.containsKey(guiId)) return true;
 
         String resourcePath;
-        if (guiId.getPath().startsWith("companion/")) {
-            resourcePath = "/assets/ravex/" + guiId.getPath() + ".png";
-        } else if (guiId.getPath().startsWith("img/")) {
-            resourcePath = "/assets/ravex/" + guiId.getPath() + ".png";
-        } else if (guiId.getPath().startsWith("particles/")) {
+        if (guiId.getPath().startsWith("companion/") || guiId.getPath().startsWith("img/") || guiId.getPath().startsWith("particles/")) {
             resourcePath = "/assets/ravex/" + guiId.getPath() + ".png";
         } else {
             resourcePath = CLASSPATH_PREFIX + name + ".png";
@@ -378,42 +404,15 @@ public class TextureLoader {
                 return false;
             }
             NativeImage image = NativeImage.read(stream);
-
-
-
-            AbstractTexture tex = createLinearTexture(image);
-            image.close();
+            boolean isImage = guiId.getPath().startsWith("img/");
+            if (!isImage) image = downscaleTo(image, ICON_SIZE);
+            AbstractTexture tex = isImage ? createLinearTexture(image) : new DynamicTexture(() -> name, image);
             Minecraft.getInstance().getTextureManager().register(guiId, tex);
             loaded.put(guiId, tex);
-            RaveX.LOGGER.info("[TextureLoader] Loaded {} ({}x{}) from classpath", guiId, image.getWidth(), image.getHeight());
             return true;
         } catch (Exception e) {
             RaveX.LOGGER.warn("[TextureLoader] Failed to load {}: {}", guiId, e.getMessage());
             return false;
-        }
-    }
-
-    private static Identifier makeWhiteCopyNearest(Identifier sourceId, Identifier targetId, String name) {
-        try (InputStream stream = TextureLoader.class.getResourceAsStream(CLASSPATH_PREFIX + name + ".png")) {
-            if (stream == null) return null;
-            NativeImage image = NativeImage.read(stream);
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
-                    int rgba = image.getPixel(x, y);
-                    int a = (rgba >> 24) & 0xFF;
-                    if (a > 0) {
-                        image.setPixel(x, y, (a << 24) | 0xFFFFFF);
-                    }
-                }
-            }
-            AbstractTexture tex = createNearestTexture(image);
-            image.close();
-            Minecraft.getInstance().getTextureManager().register(targetId, tex);
-            loaded.put(targetId, tex);
-            return targetId;
-        } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to load white {}: {}", name, e.getMessage());
-            return null;
         }
     }
 

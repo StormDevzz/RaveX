@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -7,76 +6,50 @@ import net.minecraft.world.entity.player.Player;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
-import ravex.utility.misc.NativeLoader;
-
+import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
-
 public class AntiBot extends Module {
     public static final AntiBot INSTANCE = new AntiBot();
-
     public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKillAura", false);
     public final BooleanParameter onlyOnTrigger = new BooleanParameter("OnlyWithTrigger", false);
     public final BooleanParameter removeInvisible = new BooleanParameter("RemoveInvisible", true);
     public final BooleanParameter checkPing = new BooleanParameter("PingCheck", true);
     public final BooleanParameter checkName = new BooleanParameter("NameCheck", true);
     public final BooleanParameter checkMovement = new BooleanParameter("MovementCheck", true);
-
-    private static boolean nativeAvailable = false;
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_antibot");
     static {
-        try {
-            nativeAvailable = NativeLoader.loadLibrary("ravex_antibot");
-        } catch (Throwable t) {
-            nativeAvailable = false;
-        }
+        NATIVE.load();
     }
-
     private final List<Entity> botList = new ArrayList<>();
     private long lastCleanup = 0;
-
-    private AntiBot() {
-        super("AntiBot", Category.COMBAT);
-        addParameter(onlyOnKillAura);
-        addParameter(onlyOnTrigger);
-        addParameter(removeInvisible);
-        addParameter(checkPing);
-        addParameter(checkName);
-        addParameter(checkMovement);
-    }
 
     public boolean isBot(Entity entity) {
         return botList.contains(entity);
     }
-
     public boolean shouldProtectTarget() {
         if (onlyOnKillAura.getValue() && !KillAura.INSTANCE.getEnabled()) return false;
         if (onlyOnTrigger.getValue() && !Trigger.INSTANCE.getEnabled()) return false;
         return true;
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (!shouldProtectTarget()) return;
-
         long now = System.currentTimeMillis();
         if (now - lastCleanup < 500) return;
         lastCleanup = now;
-
         List<Entity> newBots = new ArrayList<>();
         for (Entity e : mc.level.entitiesForRendering()) {
             if (e == mc.player) continue;
             if (!(e instanceof Player) || !e.isAlive()) continue;
             Player p = (Player) e;
-
             boolean suspect = false;
-
             if (removeInvisible.getValue() && p.isInvisible()) {
                 suspect = true;
             }
-
-            if (nativeAvailable) {
+            if (NATIVE.isLoaded()) {
                 double[] result = nativeAnalyze(
                     p.getName().getString(),
                     p.tickCount,
@@ -111,13 +84,11 @@ public class AntiBot extends Module {
                     }
                 }
             }
-
             if (suspect) newBots.add(e);
         }
         botList.clear();
         botList.addAll(newBots);
     }
-
     private boolean isSuspiciousName(String name) {
         String lower = name.toLowerCase();
         String[] patterns = {"bot", "npc", "entity", "test", "dummy", "npc_", "bot_"};
@@ -128,7 +99,6 @@ public class AntiBot extends Module {
         if (name.length() > 24) return true;
         return false;
     }
-
     private static native double[] nativeAnalyze(
         String name, int ticks, double x, double y, double z,
         double mx, double my, double mz, double dist,

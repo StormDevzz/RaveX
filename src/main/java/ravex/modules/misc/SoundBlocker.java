@@ -1,5 +1,4 @@
 package ravex.modules.misc;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.player.LocalPlayer;
@@ -8,10 +7,8 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import java.util.List;
-
 public class SoundBlocker extends Module {
     public static final SoundBlocker INSTANCE = new SoundBlocker();
-
     public final BooleanParameter blockAmbient   = new BooleanParameter("Ambient", false);
     public final BooleanParameter blockBlocks    = new BooleanParameter("Blocks", false);
     public final BooleanParameter blockWeather   = new BooleanParameter("Weather", false);
@@ -22,20 +19,10 @@ public class SoundBlocker extends Module {
     public final BooleanParameter blockMusic     = new BooleanParameter("Music", false);
     public final BooleanParameter blockRecords   = new BooleanParameter("Records", false);
 
-    private SoundBlocker() {
-        super("SoundBlocker", Category.MISC);
-        addParameter(blockAmbient); addParameter(blockBlocks);
-        addParameter(blockWeather); addParameter(blockHostile);
-        addParameter(blockNeutral); addParameter(blockPlayers);
-        addParameter(blockVoice);   addParameter(blockMusic);
-        addParameter(blockRecords);
-    }
-
     public boolean shouldBlock(SoundInstance sound) {
         if (!getEnabled()) return false;
         var source = sound.getSource();
         if (source == null) return false;
-
         return switch (source) {
             case AMBIENT -> blockAmbient.getValue();
             case BLOCKS -> blockBlocks.getValue();

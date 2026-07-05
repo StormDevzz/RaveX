@@ -1,5 +1,4 @@
 package ravex.modules.render;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -20,13 +19,9 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.render.Render3DUtils;
-
 import java.util.*;
-
 public class Trails extends Module {
     public static final Trails INSTANCE = new Trails();
-
-    
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     public final NumberParameter width = new NumberParameter("Width", 2.0, 1.0, 6.0, 0.5);
     public final NumberParameter time = new NumberParameter("Time", 3.0, 0.5, 10.0, 0.5);
@@ -38,72 +33,36 @@ public class Trails extends Module {
     public final BooleanParameter fireballs = new BooleanParameter("Fireballs", true);
     public final BooleanParameter windCharges = new BooleanParameter("Wind Charges", true);
     public final BooleanParameter other = new BooleanParameter("Other Projectiles", false);
-
-    
     public final BooleanParameter self = new BooleanParameter("Self", true);
-
-    
     public final BooleanParameter playerEnabled = new BooleanParameter("Players", false);
     public final ColorParameter playerColor = new ColorParameter("Player Color", 0xFFFF4444);
     public final NumberParameter playerWidth = new NumberParameter("Player Width", 2.0, 1.0, 6.0, 0.5);
     public final NumberParameter playerTime = new NumberParameter("Player Time", 3.0, 0.5, 10.0, 0.5);
-
-    
     public final BooleanParameter glow = new BooleanParameter("Glow", true);
     public final NumberParameter glowLayers = new NumberParameter("Glow Layers", 4, 1, 8, 1);
     public final NumberParameter glowSpread = new NumberParameter("Glow Spread", 1.5, 0.5, 5.0, 0.5);
-
-    
     public final BooleanParameter mobs = new BooleanParameter("Mobs", false);
-
     private static final Map<Integer, List<TrailPoint>> entityTrails = new HashMap<>();
     private static final Map<Integer, List<TrailPoint>> playerTrails = new HashMap<>();
-
     private record TrailPoint(Vec3 pos, long time) {}
-
     private Trails() {
-        super("Trails", Category.RENDER);
-        addParameter(color);
-        addParameter(width);
-        addParameter(time);
-        addParameter(arrows);
-        addParameter(pearls);
-        addParameter(tridents);
-        addParameter(fireworks);
-        addParameter(potions);
-        addParameter(fireballs);
-        addParameter(windCharges);
-        addParameter(other);
-        addParameter(self);
-        addParameter(playerEnabled);
-        addParameter(playerColor);
-        addParameter(playerWidth);
-        addParameter(playerTime);
-        addParameter(glow);
-        addParameter(glowLayers);
-        addParameter(glowSpread);
-        addParameter(mobs);
-
+        super("Trails");
         playerColor.setVisible(() -> playerEnabled.getValue());
         playerWidth.setVisible(() -> playerEnabled.getValue());
         playerTime.setVisible(() -> playerEnabled.getValue());
         glowLayers.setVisible(() -> glow.getValue());
         glowSpread.setVisible(() -> glow.getValue());
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
-
         long now = System.currentTimeMillis();
         purgeOldPoints(entityTrails, (long)(time.getValue() * 1000.0), now);
         purgeOldPoints(playerTrails, (long)(playerTime.getValue() * 1000.0), now);
-
         if (self.getValue()) {
             addPoint(entityTrails, mc.player.getId(), mc.player.position(), now);
         }
-
         for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity == mc.player) continue;
             if (entity instanceof Player && playerEnabled.getValue()) {
@@ -113,7 +72,6 @@ public class Trails extends Module {
             }
         }
     }
-
     private boolean shouldTrack(Entity entity) {
         if (arrows.getValue() && entity instanceof Arrow) return true;
         if (pearls.getValue() && entity instanceof ThrownEnderpearl) return true;
@@ -126,14 +84,12 @@ public class Trails extends Module {
         if (mobs.getValue() && !(entity instanceof Projectile)) return true;
         return false;
     }
-
     private static void addPoint(Map<Integer, List<TrailPoint>> map, int id, Vec3 pos, long now) {
         List<TrailPoint> trail = map.computeIfAbsent(id, k -> new ArrayList<>());
         TrailPoint last = trail.isEmpty() ? null : trail.get(trail.size() - 1);
         if (last != null && last.pos.distanceToSqr(pos) < 0.01) return;
         trail.add(new TrailPoint(pos, now));
     }
-
     private static void purgeOldPoints(Map<Integer, List<TrailPoint>> map, long maxAge, long now) {
         Iterator<Map.Entry<Integer, List<TrailPoint>>> it = map.entrySet().iterator();
         while (it.hasNext()) {
@@ -142,19 +98,16 @@ public class Trails extends Module {
             if (points.isEmpty()) it.remove();
         }
     }
-
     public static void renderTrails(Matrix4f modelViewMatrix, Vec3 camPos) {
         try {
             long now = System.currentTimeMillis();
             boolean glowEnabled = INSTANCE.glow.getValue();
             int glowLayersVal = INSTANCE.glowLayers.getValue().intValue();
             float glowSpreadVal = INSTANCE.glowSpread.getValue().floatValue();
-
             renderFadingTrail(entityTrails, modelViewMatrix, camPos, now,
                 INSTANCE.color.getValue(), INSTANCE.width.getValue().floatValue(),
                 (long)(INSTANCE.time.getValue() * 1000.0),
                 glowEnabled, glowLayersVal, glowSpreadVal);
-
             renderFadingTrail(playerTrails, modelViewMatrix, camPos, now,
                 INSTANCE.playerColor.getValue(), INSTANCE.playerWidth.getValue().floatValue(),
                 (long)(INSTANCE.playerTime.getValue() * 1000.0),
@@ -163,7 +116,6 @@ public class Trails extends Module {
             System.err.println("[RaveX] Trails render error: " + t.getMessage());
         }
     }
-
     private static void renderFadingTrail(Map<Integer, List<TrailPoint>> map,
                                            Matrix4f matrix, Vec3 camPos, long now,
                                            int colorARGB, float lineWidth, long maxAge,
@@ -171,10 +123,8 @@ public class Trails extends Module {
         float cr = ((colorARGB >> 16) & 0xFF) / 255.0f;
         float cg = ((colorARGB >> 8) & 0xFF) / 255.0f;
         float cb = (colorARGB & 0xFF) / 255.0f;
-
         List<Float> segList = new ArrayList<>();
         int segCount = 0;
-
         for (List<TrailPoint> trail : map.values()) {
             if (trail.size() < 2) continue;
             for (int i = 1; i < trail.size(); i++) {
@@ -183,7 +133,6 @@ public class Trails extends Module {
                 float age = (float)(now - p1.time) / maxAge;
                 float alpha = Math.max(0.0f, 1.0f - age);
                 if (alpha <= 0.001f) continue;
-
                 segList.add((float)(p0.pos.x - camPos.x));
                 segList.add((float)(p0.pos.y - camPos.y));
                 segList.add((float)(p0.pos.z - camPos.z));
@@ -195,9 +144,7 @@ public class Trails extends Module {
                 segCount++;
             }
         }
-
         if (segCount == 0) return;
-
         if (glowEnabled) {
             int layers = Math.max(1, glowLayersVal);
             float spread = Math.max(0.5f, glowSpreadVal);
@@ -212,7 +159,6 @@ public class Trails extends Module {
                 float alpha = segList.get(off + 6);
                 float w = segList.get(off + 7);
                 if (alpha <= 0.001f) continue;
-
                 float glowAlpha = Math.min(alpha * 2.0f, 1.0f);
                 for (int l = layers - 1; l >= 0; l--) {
                     float t = (float)(l + 1) / (float)layers;
@@ -234,15 +180,12 @@ public class Trails extends Module {
             }
         }
     }
-
     private static void renderGlowSeg(Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2, float cr, float cg, float cb, float alpha, float width) {
         Render3DUtils.batchLineAdditive(matrix, List.of(new Vector3f(x1, y1, z1), new Vector3f(x2, y2, z2)), cr, cg, cb, alpha, width);
     }
-
     private static void renderCoreSeg(Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2, float cr, float cg, float cb, float alpha, float width) {
         Render3DUtils.batchLineStrip(matrix, List.of(new Vector3f(x1, y1, z1), new Vector3f(x2, y2, z2)), cr, cg, cb, alpha, width);
     }
-
     @Override
     protected void onDisable() {
         entityTrails.clear();

@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,13 +15,10 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
-
 import java.util.ArrayList;
 import java.util.List;
-
 public class Surround extends Module {
     public static final Surround INSTANCE = new Surround();
-
     public static final List<BlockPos> surroundBlocks = new ArrayList<>();
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
@@ -30,7 +26,6 @@ public class Surround extends Module {
     public static float renderG = 0.8f;
     public static float renderB = 1.0f;
     public static Vec3 animatedCenter = null;
-
     public final ModeParameter mode = new ModeParameter("Mode", "Full",
         java.util.List.of("Full", "AntiFace", "Extra"));
     public final BooleanParameter autoCenter = new BooleanParameter("Auto Center", true);
@@ -39,7 +34,6 @@ public class Surround extends Module {
     public final BooleanParameter animate = new BooleanParameter("Animate", true);
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     public final NumberParameter delay = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
-
     private static boolean nativeAvailable = false;
     static {
         try {
@@ -49,25 +43,12 @@ public class Surround extends Module {
             nativeAvailable = false;
         }
     }
-
     private static native double[] nativeGetCenter(double px, double py, double pz, boolean autoCenter);
-
     private final EasingAnimation fadeAnim = new EasingAnimation();
     private final EasingAnimation sizeAnim = new EasingAnimation();
     private final SlideAnimation slideAnim = new SlideAnimation();
     private long lastPlaceTime = 0;
     private boolean placed = false;
-
-    private Surround() {
-        super("Surround", Category.COMBAT);
-        addParameter(mode);
-        addParameter(autoCenter);
-        addParameter(autoDisable);
-        addParameter(render);
-        addParameter(animate);
-        addParameter(color);
-        addParameter(delay);
-    }
 
     @Override
     protected void onEnable() {
@@ -81,7 +62,6 @@ public class Surround extends Module {
         sizeAnim.reset();
         slideAnim.reset();
     }
-
     @Override
     protected void onDisable() {
         surroundBlocks.clear();
@@ -89,7 +69,6 @@ public class Surround extends Module {
         renderSize = 0.0;
         animatedCenter = null;
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
@@ -99,14 +78,10 @@ public class Surround extends Module {
             renderSize = sizeAnim.update(false, 0.15);
             return;
         }
-
-        
         if (autoDisable.getValue() && (!mc.player.onGround() || mc.options.keyJump.isDown())) {
             setEnabled(false);
             return;
         }
-
-        
         if (autoCenter.getValue()) {
             double[] center;
             if (nativeAvailable) {
@@ -133,16 +108,13 @@ public class Surround extends Module {
                 ));
             }
         }
-
         BlockPos playerPos = mc.player.blockPosition();
-
         int blockSlot = findBlockSlot(mc.player);
         if (blockSlot == -1) {
             surroundBlocks.clear();
             renderAlpha = fadeAnim.updateFloat(false, 0.2f);
             return;
         }
-
         List<BlockPos> targets = new ArrayList<>();
         String m = mode.getValue();
         switch (m) {
@@ -176,42 +148,32 @@ public class Surround extends Module {
                 targets.add(playerPos.above());
             }
         }
-
         List<BlockPos> toPlace = new ArrayList<>();
         for (BlockPos target : targets) {
             if (isReplaceable(target)) {
-                
                 if (handleBlockingEntities(target)) {
                     continue;
                 }
-
-                
                 if (findNeighbor(target) == null) {
                     BlockPos below = target.below();
                     if (isReplaceable(below) && !toPlace.contains(below)) {
                         toPlace.add(below);
                     }
                 }
-
                 if (!toPlace.contains(target)) {
                     toPlace.add(target);
                 }
             }
         }
-
         surroundBlocks.clear();
         surroundBlocks.addAll(toPlace);
-
-        
         if (render.getValue()) {
             int c = color.getValue();
             renderR = ((c >> 16) & 0xFF) / 255.0f;
             renderG = ((c >> 8) & 0xFF) / 255.0f;
             renderB = (c & 0xFF) / 255.0f;
-
             renderAlpha = fadeAnim.updateFloat(!toPlace.isEmpty(), 0.2f);
             renderSize = sizeAnim.update(!toPlace.isEmpty(), 0.15);
-
             if (animate.getValue() && !toPlace.isEmpty()) {
                 double avgX = toPlace.stream().mapToDouble(b -> b.getX() + 0.5).average().orElse(0);
                 double avgY = toPlace.stream().mapToDouble(b -> b.getY() + 0.5).average().orElse(0);
@@ -225,27 +187,21 @@ public class Surround extends Module {
             renderSize = 0.0;
             animatedCenter = null;
         }
-
-        
         if (toPlace.isEmpty()) {
             if (autoDisable.getValue() && placed) {
                 setEnabled(false);
             }
             return;
         }
-
         long now = System.currentTimeMillis();
         long msDelay = delay.getValue().longValue();
         if (now - lastPlaceTime < msDelay) return;
         lastPlaceTime = now;
-
         int prevSlot = mc.player.getInventory().getSelectedSlot();
         mc.player.getInventory().setSelectedSlot(blockSlot);
-
         for (BlockPos target : toPlace) {
             BlockPos neighbor = findNeighbor(target);
             if (neighbor == null) continue;
-
             Direction face = null;
             for (Direction d : Direction.values()) {
                 if (target.equals(neighbor.relative(d))) {
@@ -254,28 +210,23 @@ public class Surround extends Module {
                 }
             }
             if (face == null) face = Direction.UP;
-
             Vec3 hitVec = Vec3.atCenterOf(neighbor)
                 .add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             BlockHitResult blockHit = new BlockHitResult(hitVec, face, neighbor, false);
-
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, blockHit);
             mc.player.swing(InteractionHand.MAIN_HAND);
             placed = true;
         }
-
         if (prevSlot != blockSlot) {
             mc.player.getInventory().setSelectedSlot(prevSlot);
         }
     }
-
     private boolean isReplaceable(BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return false;
         net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
         return state.isAir() || state.canBeReplaced();
     }
-
     private boolean handleBlockingEntities(BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return false;
@@ -296,11 +247,9 @@ public class Surround extends Module {
         }
         return false;
     }
-
     private BlockPos findNeighbor(BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return null;
-
         for (Direction face : Direction.values()) {
             BlockPos side = pos.relative(face);
             if (!isReplaceable(side)) {
@@ -309,7 +258,6 @@ public class Surround extends Module {
         }
         return pos.below();
     }
-
     private int findBlockSlot(net.minecraft.client.player.LocalPlayer player) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = player.getInventory().getItem(i);

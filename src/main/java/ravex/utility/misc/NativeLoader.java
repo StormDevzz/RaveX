@@ -67,7 +67,6 @@ public class NativeLoader {
         File cacheDir = getCacheDir();
         if (!cacheDir.exists()) cacheDir.mkdirs();
 
-        
         extractAllFromJar(cacheDir);
 
         File cachedFile = new File(cacheDir, libName);
@@ -75,67 +74,11 @@ public class NativeLoader {
             return cachedFile;
         }
 
-        String remoteUrl = "https://github.com/StormDevzz/RaveX/releases/latest/download/" + libName;
-        System.out.println("[RaveX] Downloading remote native: " + libName + " from " + remoteUrl);
-        try {
-            URL url = new URL(remoteUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(10000);
-            conn.setRequestMethod("GET");
-
-            int responseCode = conn.getResponseCode();
-            if (responseCode == 200) {
-                File tempDownload = new File(cacheDir, libName + ".tmp");
-                try (InputStream in = conn.getInputStream();
-                     FileOutputStream out = new FileOutputStream(tempDownload)) {
-                    byte[] buffer = new byte[8192];
-                    int bytesRead;
-                    while ((bytesRead = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-                }
-                if (tempDownload.renameTo(cachedFile)) {
-                    return cachedFile;
-                } else {
-                    Files.copy(tempDownload.toPath(), cachedFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    tempDownload.delete();
-                    return cachedFile;
-                }
-            } else {
-                System.err.println("[RaveX] Failed to download native " + libName + ": HTTP code " + responseCode);
-            }
-        } catch (Throwable t) {
-            System.err.println("[RaveX] Error downloading native " + libName + ": " + t.getMessage());
-        }
-
-        try {
-            URL url = new URL(remoteUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(10000);
-            if (conn.getResponseCode() == 200) {
-                File tempFile = File.createTempFile(tempPrefix, tempSuffix);
-                tempFile.deleteOnExit();
-                try (InputStream in = conn.getInputStream();
-                     FileOutputStream out = new FileOutputStream(tempFile)) {
-                    byte[] buffer = new byte[8192];
-                    int bytesRead;
-                    while ((bytesRead = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-                }
-                return tempFile;
-            }
-        } catch (Throwable t) {
-            System.err.println("[RaveX] Fallback download failed: " + t.getMessage());
-        }
-
         return null;
     }
 
     private static void loadDependencies(File dir) {
-        
+        if (isWindows()) return;
         String[] deps = {"libravex_optimize.so", "libravex_manager.so", "libravex_github_tools.so"};
         for (String dep : deps) {
             File f = new File(dir, dep);

@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.ESP;
 import ravex.modules.render.FreeCam;
 import ravex.modules.render.FreeLook;
+import ravex.utility.player.rotation.RotationUtility;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity {
@@ -26,15 +27,12 @@ public abstract class MixinEntity {
             if (lockYaw && lockPitch) {
                 ci.cancel();
             } else {
-                float currentPitch = self.getXRot();
                 float currentYaw = self.getYRot();
-                if (!lockYaw) {
-                    self.setYRot(currentYaw + (float)yRot * 0.15F);
-                }
-                if (!lockPitch) {
-                    float newPitch = currentPitch + (float)xRot * 0.15F;
-                    self.setXRot(Math.max(-90.0F, Math.min(90.0F, newPitch)));
-                }
+                float currentPitch = self.getXRot();
+                if (!lockYaw)
+                    self.setYRot(RotationUtility.normalizeYaw(currentYaw + (float)yRot * 0.15F));
+                if (!lockPitch)
+                    self.setXRot(RotationUtility.clampPitch(currentPitch + (float)xRot * 0.15F));
                 ci.cancel();
             }
             return;

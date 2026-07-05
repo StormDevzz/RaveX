@@ -1,5 +1,4 @@
 package ravex.modules.world;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
@@ -16,32 +15,21 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
-
 public class AutoTame extends Module {
     public static final AutoTame INSTANCE = new AutoTame();
-
     public final ModeParameter animal = new ModeParameter("Animal", "Wolf",
         List.of("Wolf", "Cat", "Llama"));
     public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0, 0.5);
     public final BooleanParameter autoSwitch = new BooleanParameter("Auto Switch", true);
-
-    private AutoTame() {
-        super("AutoTame", Category.WORLD);
-        addParameter(animal);
-        addParameter(range);
-        addParameter(autoSwitch);
-    }
 
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
-
         double r = range.getValue();
         AABB box = p.getBoundingBox().inflate(r);
         List<Entity> entities = mc.level.getEntities(p, box, e -> isTarget(e) && e.isAlive());
-
         for (Entity e : entities) {
             LivingEntity target = (LivingEntity) e;
             if (!p.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
@@ -57,7 +45,6 @@ public class AutoTame extends Module {
             }
         }
     }
-
     private boolean isTarget(Entity e) {
         String mode = animal.getValue();
         return switch (mode) {
@@ -67,14 +54,11 @@ public class AutoTame extends Module {
             default -> false;
         };
     }
-
     private int findTameItem() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return -1;
-
         String mode = animal.getValue();
         var inv = mc.player.getInventory();
-
         for (int i = 0; i < 9; i++) {
             var stack = inv.getItem(i);
             if (stack.isEmpty()) continue;

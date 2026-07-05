@@ -9,6 +9,8 @@ import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+
 public class FontRenderUtility {
     private static final Logger LOGGER = LoggerFactory.getLogger("ravex/font");
 
@@ -21,8 +23,10 @@ public class FontRenderUtility {
     private static final Identifier SF_BOLD_FONT = Identifier.fromNamespaceAndPath("ravex", "sf_bold");
     private static final FontDescription SF_BOLD_DESC = new FontDescription.Resource(SF_BOLD_FONT);
 
-    private static int fontSelectionCount = 0;
     private static boolean renderOnce = false;
+
+    private static final HashMap<Integer, Component> componentCache = new HashMap<>();
+    private static final int CACHE_MAX = 256;
 
     public enum FontType {
         SF_MEDIUM, SF_BOLD, COMFORTAA, VANILLA
@@ -43,10 +47,10 @@ public class FontRenderUtility {
 
     private static Component getFontComponent(FontType fontType, String text) {
         if (text == null) return Component.empty();
-        
+
         FontType actualType = fontType;
         boolean customFontActive = ravex.modules.client.Fonts.INSTANCE.enabled.getValue();
-        
+
         if (actualType == FontType.VANILLA && customFontActive) {
             actualType = getCurrentFontType();
         }
@@ -54,18 +58,27 @@ public class FontRenderUtility {
             actualType = FontType.VANILLA;
         }
 
+        int key = text.hashCode() * 31 + actualType.ordinal();
+        Component cached = componentCache.get(key);
+        if (cached != null) return cached;
+
+        Component result;
         if (actualType == FontType.VANILLA) {
-            return Component.literal(text);
+            result = Component.literal(text);
+        } else {
+            FontDescription desc;
+            switch (actualType) {
+                case COMFORTAA:     desc = COMFORTAA_DESC; break;
+                case SF_MEDIUM:     desc = SF_MEDIUM_DESC; break;
+                case SF_BOLD:       desc = SF_BOLD_DESC; break;
+                default:            result = Component.literal(text); componentCache.put(key, result); return result;
+            }
+            result = Component.literal(text).withStyle(Style.EMPTY.withFont(desc));
         }
 
-        FontDescription desc;
-        switch (actualType) {
-            case COMFORTAA:     desc = COMFORTAA_DESC; break;
-            case SF_MEDIUM:     desc = SF_MEDIUM_DESC; break;
-            case SF_BOLD:       desc = SF_BOLD_DESC; break;
-            default:            return Component.literal(text);
-        }
-        return Component.literal(text).withStyle(Style.EMPTY.withFont(desc));
+        componentCache.put(key, result);
+        if (componentCache.size() > CACHE_MAX) componentCache.clear();
+        return result;
     }
 
     public static void drawString(GuiGraphics graphics, String text, int x, int y, int color, boolean shadow) {

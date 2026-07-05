@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import org.lwjgl.glfw.GLFW;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.world.NukerData;
+import ravex.modules.world.nuker.NukerData;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
 

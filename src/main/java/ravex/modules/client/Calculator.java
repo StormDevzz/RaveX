@@ -1,28 +1,19 @@
 package ravex.modules.client;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import ravex.modules.Category;
 import ravex.modules.Module;
-import ravex.utility.misc.NativeLoader;
-
-
+import ravex.utility.nativelib.NativeLibrary;
 public class Calculator extends Module {
     public static final Calculator INSTANCE = new Calculator();
-
-    private static boolean nativeAvailable = false;
-
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_calculator");
     static {
-        nativeAvailable = NativeLoader.loadLibrary("ravex_calculator");
-    }
-
-    private Calculator() {
-        super("Calculator", Category.CLIENT);
+        NATIVE.load();
     }
 
     @Override
     protected void onEnable() {
-        if (!nativeAvailable) {
+        if (!NATIVE.isLoaded()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
                 mc.player.displayClientMessage(
@@ -33,14 +24,12 @@ public class Calculator extends Module {
         }
         openCalculator();
     }
-
     @Override
     protected void onDisable() {
-        if (nativeAvailable) {
+        if (NATIVE.isLoaded()) {
             closeCalculator();
         }
     }
-
     public static void onNativeClose() {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
@@ -49,8 +38,6 @@ public class Calculator extends Module {
             }
         });
     }
-
-    
     private static native void openCalculator();
     private static native void closeCalculator();
     public static native String nativeEvaluate(String expr);

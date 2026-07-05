@@ -31,8 +31,8 @@ package ravex.addon.template;
 //     every addon must implement. AddonContext is the context
 //     for interacting with the core. AddonInfo is addon metadata.
 import ravex.addon.Addon;
-import ravex.addon.AddonContext;
-import ravex.addon.AddonInfo;
+import ravex.addon.core.AddonContext;
+import ravex.addon.core.AddonInfo;
 
 public class MainAddon implements Addon {
 
@@ -210,11 +210,7 @@ public class MainAddon implements Addon {
         return new AddonInfo(
             "MainAddon",
             isWindows() ? "Windows Edition" : "Linux Edition",
-<<<<<<< HEAD
-            "1.4.3",
-=======
-            "1.4.6",
->>>>>>> d5789b70550118b35e864d8afa6cd32033b90fc8
+"1.4.7",
             "RaveX Team",
             "ravex.addon.template.MainAddon"
         );

@@ -10,15 +10,13 @@ import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Category;
-import ravex.utility.render.BlurUtility;
+import ravex.manager.ModuleManager;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 import java.util.stream.Collectors;
 
 public class ClickGUI extends Screen {
@@ -40,10 +38,11 @@ public class ClickGUI extends Screen {
         return ravex.utility.render.TextureLoader.getSearchTexture();
     }
 
-    private final Map<Category, CategoryPanel> panelMap = new HashMap<>();
+
     private final List<CategoryPanel> panels = new ArrayList<>();
     private final long initTime;
     private double smoothedMaxH = 200.0;
+    private int panelStartY = 65;
     private float currentScale = -1;
 
     private boolean closing = false;
@@ -53,6 +52,7 @@ public class ClickGUI extends Screen {
 
     private boolean searchFocused = false;
     private float searchAnimProgress = 0f;
+    private float searchResultAnim = 0f;
     private long searchLastUpdate = System.currentTimeMillis();
     private String searchBeforeEdit = "";
     private int searchCursorCounter = 0;
@@ -62,80 +62,57 @@ public class ClickGUI extends Screen {
     private boolean configsHovered;
     private boolean resetLayoutHovered;
 
-    
-    private final float[] starX   = new float[150];
-    private final float[] starY   = new float[150];
-    private final float[] starVx  = new float[150];
-    private final float[] starVy  = new float[150];
-    private final float[] starAlpha = new float[150];
-    private final float[] starSize  = new float[150];
+    private final float[] starX   = new float[120];
+    private final float[] starY   = new float[120];
+    private final float[] starVx  = new float[120];
+    private final float[] starVy  = new float[120];
+    private final float[] starAlpha = new float[120];
+    private final float[] starSize  = new float[120];
     private boolean starsInit = false;
     private String lastParticleType = "";
     private float lastParticleSpeed = 0;
     private float lastParticleSize = 0;
 
     private long lastStarTick = 0;
+    private int cachedActiveColor = 0xFF40A9F8;
 
     public ClickGUI() {
         super(Component.literal("RaveX ClickGUI"));
         this.initTime = System.currentTimeMillis();
 
-        
         ravex.utility.misc.GuiOptimizer.optimize();
 
-        if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {
-            BlurUtility.enable();
-        }
-
+        
         ravex.utility.render.TextureLoader.preloadAll();
 
+        int panelW = ravex.modules.client.ClickGui.INSTANCE.panelWidth.getValue().intValue();
         int spacing = 10;
-        int panelW = 120;
-        Category[] categories = Category.values();
-        for (Category cat : categories) {
-            int i = cat.ordinal();
-            int px = 20 + i * (panelW + spacing);
+        int panelIndex = 0;
+        for (Category cat : Category.values()) {
+            boolean hasModules = ModuleManager.INSTANCE.getByCategory(cat).stream().anyMatch(m -> !m.isHud());
+            if (!hasModules) continue;
+            int px = 20 + panelIndex * (panelW + spacing);
             int py = 65;
             CategoryPanel p = new CategoryPanel(cat, px, py);
             panels.add(p);
-            panelMap.put(cat, p);
+            panelIndex++;
         }
-        //ravex.utility.sound.SoundUtility.playGuiOpen();
     }
 
     @Override
     protected void init() {
-        Map<Category, double[]> saved = ravex.manager.LayoutManager.INSTANCE.load();
-
-        int panelW = 120;
+        int panelW = ravex.modules.client.ClickGui.INSTANCE.panelWidth.getValue().intValue();
         int spacing = 10;
         int num = panels.size();
 
         float totalW = num * panelW + (num - 1) * spacing;
         float startX = Math.max(10, (this.width - totalW) / 2f);
-        float startY = Math.max(30, this.height * 0.04f);
+        float startY = Math.max(65, (this.height - Math.min(this.height * 0.55f, getMaxPanelHeight())) / 2f);
+        this.panelStartY = (int) startY;
 
         for (int i = 0; i < num; i++) {
             int px = (int) (startX + i * (panelW + spacing));
             int py = (int) startY;
-
-            double[] pos = saved.get(panels.get(i).getCategory());
-            if (pos != null) {
-                double rx = pos[0];
-                double ry = pos[1];
-                if (rx <= 1.0 && ry <= 1.0) {
-                    px = (int) (this.width / 2.0 + (rx - 0.5) * this.width);
-                    py = (int) (this.height / 2.0 + (ry - 0.5) * this.height);
-                } else {
-                    px = (int) rx;
-                    py = (int) ry;
-                }
-                if (py > this.height - 200)
-                    py = (int) startY;
-            }
-            px = Math.max(10, px);
-            py = Math.max(30, py);
-
             panels.get(i).setX(px);
             panels.get(i).setY(py);
         }
@@ -156,7 +133,7 @@ public class ClickGUI extends Screen {
     }
 
     private float getResponsiveScale() {
-        float target = ravex.modules.render.ClickGui.INSTANCE.guiScale.getValue().floatValue();
+        float target = ravex.modules.client.ClickGui.INSTANCE.guiScale.getValue().floatValue();
         if (currentScale < 0) {
             currentScale = target;
         }
@@ -174,14 +151,20 @@ public class ClickGUI extends Screen {
 
     private float getAdaptiveScale() {
         long elapsed = System.currentTimeMillis() - initTime;
-        float animProgress = Math.min(1.0f, elapsed / 180.0f);
-        float animScale = animProgress * (2.0f - animProgress);
+        float animProgress = Math.min(1.0f, elapsed / 120.0f);
+        float animScale;
+        if (animProgress < 0.5f) {
+            animScale = 2 * animProgress * animProgress;
+        } else {
+            animScale = 1 - (float)Math.pow(-2 * animProgress + 2, 2) / 2;
+        }
 
         if (closing) {
             long closingElapsed = System.currentTimeMillis() - closingStartTime;
-            if (closingElapsed < 130) {
-                float closingProgress = Math.max(0.0f, 1.0f - (closingElapsed / 130.0f));
-                animScale = closingProgress * (2.0f - closingProgress);
+            if (closingElapsed < 150) {
+                float closingProgress = closingElapsed / 150.0f;
+                float easeIn = closingProgress * closingProgress;
+                animScale = 1.0f + easeIn * 1.5f;
             }
         }
 
@@ -195,20 +178,20 @@ public class ClickGUI extends Screen {
         int targetMaxH = getMaxPanelHeight();
         smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.35;
 
-        
-        boolean drawBg = ravex.modules.render.ClickGui.INSTANCE.drawBackground.getValue();
+        cachedActiveColor = ColorUtility.getActiveColor();
+
+        boolean drawBg = ravex.modules.client.ClickGui.INSTANCE.drawBackground.getValue();
         if (drawBg) {
-            graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.BACKGROUND_START, ColorUtility.BACKGROUND_END);
-            
-            int edgeColor = ColorUtility.withAlpha(ColorUtility.getActiveColor(), 6);
-            graphics.fillGradient(0, 0, this.width, 1, edgeColor, 0x00000000);
+            int bgOpacity = ravex.modules.client.ClickGui.INSTANCE.backgroundOpacity.getValue().intValue();
+            graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.withAlpha(ColorUtility.BACKGROUND_START, bgOpacity), ColorUtility.withAlpha(ColorUtility.BACKGROUND_END, bgOpacity));
         }
+
         if (ravex.modules.client.GuiParticles.INSTANCE.getEnabled()) {
             renderStars(graphics);
         }
 
-        if (ravex.modules.render.ClickGui.INSTANCE.companionImage.getValue()) {
-            String type = ravex.modules.render.ClickGui.INSTANCE.companionType.getValue();
+        if (ravex.modules.client.ClickGui.INSTANCE.companionImage.getValue()) {
+            String type = ravex.modules.client.ClickGui.INSTANCE.companionType.getValue();
             Identifier imgId = null;
             if ("Femboy".equals(type)) {
                 imgId = ravex.utility.render.TextureLoader.FEMBOY;
@@ -238,45 +221,43 @@ public class ClickGUI extends Screen {
             }
         }
 
-        String tips = "";
-
-        
-        
         float btnScale = Math.max(0.65f, getResponsiveScale());
         int mgW = (int)(44 * btnScale);
         int mgH = (int)(20 * btnScale);
         int mgGap = (int)(40 * btnScale);
         int totalBtnW = 4 * mgW + 3 * mgGap;
         int mgX = (this.width - totalBtnW) / 2;
-        int mgY = this.height - (int)(38 * btnScale);
+        int mgY = Math.max(4, panelStartY - mgH - 6);
 
         macrosHovered      = mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
         profilesHovered    = mouseX >= mgX + mgW + mgGap && mouseX <= mgX + 2 * mgW + mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
         configsHovered     = mouseX >= mgX + 2 * (mgW + mgGap) && mouseX <= mgX + 3 * mgW + 2 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
         resetLayoutHovered = mouseX >= mgX + 3 * (mgW + mgGap) && mouseX <= mgX + 4 * mgW + 3 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
 
-        int activeColor = ColorUtility.getActiveColor();
-
         int[] bxArr   = { mgX, mgX + mgW + mgGap, mgX + 2 * (mgW + mgGap), mgX + 3 * (mgW + mgGap) };
         boolean[] hovArr = { macrosHovered, profilesHovered, configsHovered, resetLayoutHovered };
         String[] labArr  = { "Macros", "Profiles", "Configs", "Reset" };
 
+        int btnR = Math.min(8, mgH / 2);
         for (int i = 0; i < 4; i++) {
             int bx  = bxArr[i];
             boolean h = hovArr[i];
 
-            graphics.fillGradient(bx, mgY, bx + mgW, mgY + mgH, h ? activeColor : 0xFF202038, h ? activeColor : 0xFF161624);
+            Render2DEngine.drawRound(graphics, bx, mgY, mgW, mgH, btnR, h ? ColorUtility.withAlpha(cachedActiveColor, 40) : 0x18000000);
+            if (h) {
+                Render2DEngine.drawRound(graphics, bx, mgY, mgW, mgH, btnR, ColorUtility.withAlpha(cachedActiveColor, 20));
+            }
 
             int textW = FontRenderUtility.getStringWidth(labArr[i]);
             int textY = mgY + (mgH - FontRenderUtility.getFontHeight()) / 2;
             FontRenderUtility.drawString(graphics, labArr[i], bx + (mgW - textW) / 2, textY,
-                    h ? 0xFFFFFFFF : 0xFFB0B0CC, false);
+                    h ? 0xFFFFFFFF : 0xFF808090, false);
         }
 
         hoveredDescription = null;
 
         float finalScale = getAdaptiveScale();
-        if (closing && (System.currentTimeMillis() - closingStartTime >= 130)) {
+        if (closing && (System.currentTimeMillis() - closingStartTime >= 150)) {
             this.minecraft.setScreen(null);
             return;
         }
@@ -287,7 +268,6 @@ public class ClickGUI extends Screen {
         int mx = (int) ((mouseX - cx) / finalScale + cx);
         int my = (int) ((mouseY - cy) / finalScale + cy);
 
-        
         renderSearchBar(graphics, mouseX, mouseY);
 
         var pose = graphics.pose();
@@ -304,16 +284,16 @@ public class ClickGUI extends Screen {
 
         if (hoveredDescription != null) {
             activeTooltipText = hoveredDescription;
-            float speed = ravex.modules.render.ClickGui.INSTANCE.tooltipSpeed.getValue().floatValue() / 10f;
+            float speed = ravex.modules.client.ClickGui.INSTANCE.tooltipSpeed.getValue().floatValue() / 10f;
             tooltipAlpha = Math.min(1.0f, tooltipAlpha + 0.10f * speed);
         } else {
-            float speed = ravex.modules.render.ClickGui.INSTANCE.tooltipSpeed.getValue().floatValue() / 10f;
+            float speed = ravex.modules.client.ClickGui.INSTANCE.tooltipSpeed.getValue().floatValue() / 10f;
             tooltipAlpha = Math.max(0.0f, tooltipAlpha - 0.15f * speed);
         }
 
         if (tooltipAlpha > 0.02f && !activeTooltipText.isEmpty()) {
-            int ox = ravex.modules.render.ClickGui.INSTANCE.tooltipOffsetX.getValue().intValue();
-            int oy = ravex.modules.render.ClickGui.INSTANCE.tooltipOffsetY.getValue().intValue();
+            int ox = ravex.modules.client.ClickGui.INSTANCE.tooltipOffsetX.getValue().intValue();
+            int oy = ravex.modules.client.ClickGui.INSTANCE.tooltipOffsetY.getValue().intValue();
             int tx = mouseX + ox;
             int ty = mouseY + oy;
             int tw = FontRenderUtility.getStringWidth(activeTooltipText) + 6;
@@ -322,11 +302,10 @@ public class ClickGUI extends Screen {
             if (tx + tw > this.width) tx = mouseX - tw - 4;
             if (ty + th > this.height) ty = mouseY - th - 4;
 
-            int ba = (int)(tooltipAlpha * 238);
+            int ba = (int)(tooltipAlpha * 180);
             int ta = (int)(tooltipAlpha * 255);
-            int bga = Math.min(255, (int)(tooltipAlpha * 100));
-            graphics.fill(tx, ty, tx + tw, ty + th, (ba << 24) | 0x141414);
-            Render2DEngine.drawBorder(graphics, tx, ty, tw, th, 1, (ta << 24) | 0x2C2C2C);
+            Render2DEngine.drawRound(graphics, tx, ty, tw, th, 4, (ba << 24) | 0x0A0A10);
+            Render2DEngine.drawBorder(graphics, tx, ty, tw, th, 1, (ta << 24) | 0x2C2C3C);
             FontRenderUtility.drawString(graphics, activeTooltipText, tx + 3, ty + 3, (ta << 24) | 0xE0E0E0, true);
         }
 
@@ -338,24 +317,18 @@ public class ClickGUI extends Screen {
     }
 
     private void renderSearchBar(GuiGraphics graphics, int mouseX, int mouseY) {
+        int barH = 20;
+        int barY = Math.max(4, panelStartY - (int)(20 * Math.max(0.65f, getResponsiveScale())) - 6 - 4 - barH);
         int barW = Math.min(200, this.width - 60);
         int barX = (this.width - barW) / 2;
-        int barY = 14;
-        int barH = 20;
 
-        long now = System.currentTimeMillis();
-        long delta = now - searchLastUpdate;
-        searchLastUpdate = now;
-        if (delta > 100) delta = 16;
+        float target = searchFocused ? 1.0f : 0.0f;
+        searchAnimProgress += (target - searchAnimProgress) * 0.12f;
+        searchCursorCounter++;
 
-        if (searchFocused) {
-            searchCursorCounter++;
-        }
-
-        int glowColor = ColorUtility.getActiveColor();
-
-        graphics.fillGradient(barX, barY, barX + barW, barY + barH, 0xF0121228, 0xF00E0E1A);
-        Render2DEngine.drawBorder(graphics, barX, barY, barW, barH, 1, ColorUtility.withAlpha(glowColor, 60));
+        int pAlpha = ravex.modules.client.ClickGui.INSTANCE.panelOpacity.getValue().intValue();
+        int barBg = ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, searchFocused ? Math.min(pAlpha + 15, 255) : pAlpha);
+        Render2DEngine.drawRound(graphics, barX, barY, barW, barH, 10, barBg);
 
         int iconSize = 14;
         Identifier searchTex = ravex.utility.render.TextureLoader.getSearchWhiteTexture();
@@ -368,15 +341,18 @@ public class ClickGUI extends Screen {
         int textOffset = 8 + iconSize + 4;
         String searchText = searchQuery;
         int textY = barY + (barH - FontRenderUtility.getFontHeight()) / 2 + 1;
+        int textColor = lerpColor(0xFF606080, 0xFFD0D0E0, searchAnimProgress);
         if (searchText.isEmpty() && !searchFocused) {
-            FontRenderUtility.drawString(graphics, "Search...", barX + textOffset, textY, 0xFF505068, true);
+            FontRenderUtility.drawString(graphics, "Search...", barX + textOffset, textY, textColor, true);
         } else {
-            FontRenderUtility.drawString(graphics, searchText, barX + textOffset, textY, 0xFFC0C0D0, true);
+            FontRenderUtility.drawString(graphics, searchText, barX + textOffset, textY, textColor, true);
             if (searchFocused) {
                 int textW = FontRenderUtility.getStringWidth(searchText);
-                float cursorBlink = (float)Math.sin(searchCursorCounter * 0.1f);
-                int cursorAlpha = (int)(150 + 105 * cursorBlink * cursorBlink * cursorBlink);
-                graphics.fill(barX + textOffset + textW, textY - 1, barX + textOffset + 2 + textW, textY + FontRenderUtility.getFontHeight() + 1, (cursorAlpha << 24) | (glowColor & 0xFFFFFF));
+                boolean cursorOn = (searchCursorCounter / 30) % 2 == 0;
+                if (cursorOn) {
+                    graphics.fill(barX + textOffset + textW, textY - 1, barX + textOffset + 2 + textW, textY + FontRenderUtility.getFontHeight() + 1,
+                        0xC8FFFFFF);
+                }
             }
         }
 
@@ -385,12 +361,29 @@ public class ClickGUI extends Screen {
             for (var panel : panels) {
                 resultCount += panel.getMatchCount(searchQuery);
             }
-            if (resultCount > 0) {
-                String countText = String.valueOf(resultCount);
-                int cw = FontRenderUtility.getStringWidth(countText);
-                FontRenderUtility.drawString(graphics, countText, barX + barW - cw - 8, textY, 0xFF606080, true);
+        }
+        float resultTarget = (!searchQuery.isEmpty() && resultCount > 0) ? 1.0f : 0.0f;
+        searchResultAnim += (resultTarget - searchResultAnim) * 0.10f;
+        if (searchResultAnim > 0.01f) {
+            String countText = String.valueOf(resultCount);
+            int cw = FontRenderUtility.getStringWidth(countText);
+            int ra = (int)(searchResultAnim * 180);
+            FontRenderUtility.drawString(graphics, countText, barX + barW - cw - 8, textY, (ra << 24) | 0xA0A0C0, true);
+            if (searchResultAnim > 0.95f) {
+                graphics.fill(barX + barW - cw - 10, textY - 1, barX + barW - cw - 8, textY + FontRenderUtility.getFontHeight() + 1,
+                    ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, Math.min(pAlpha + 30, 200)));
             }
         }
+    }
+
+    private int lerpColor(int bg, int fg, float alpha) {
+        int aBg = (bg >> 24) & 0xFF, rBg = (bg >> 16) & 0xFF, gBg = (bg >> 8) & 0xFF, bBg = bg & 0xFF;
+        int aFg = (fg >> 24) & 0xFF, rFg = (fg >> 16) & 0xFF, gFg = (fg >> 8) & 0xFF, bFg = fg & 0xFF;
+        int r = (int)(rBg + (rFg - rBg) * alpha);
+        int g = (int)(gBg + (gFg - gBg) * alpha);
+        int b = (int)(bBg + (bFg - bBg) * alpha);
+        int a = (int)(aBg + (aFg - aBg) * alpha);
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
     @Override
@@ -408,8 +401,10 @@ public class ClickGUI extends Screen {
 
         int barW = Math.min(200, this.width - 60);
         int barX = (this.width - barW) / 2;
-        int barY = 14;
+        float btnScaleM = Math.max(0.65f, getResponsiveScale());
+        int mgHForCalc = (int)(20 * btnScaleM);
         int barH = 20;
+        int barY = Math.max(4, panelStartY - mgHForCalc - 6 - 4 - barH);
 
         if (event.x() >= barX && event.x() <= barX + barW && event.y() >= barY && event.y() <= barY + barH) {
             searchFocused = true;
@@ -420,13 +415,12 @@ public class ClickGUI extends Screen {
             return super.mouseClicked(event, handled);
         }
 
-        
         float btnScale = Math.max(0.65f, getResponsiveScale());
         int mgW   = (int)(44 * btnScale);
         int mgH   = (int)(20 * btnScale);
         int mgGap = (int)(40 * btnScale);
         int mgX   = (this.width - (4 * mgW + 3 * mgGap)) / 2;
-        int mgY   = this.height - (int)(38 * btnScale);
+        int mgY   = Math.max(4, panelStartY - mgH - 6);
 
         if (event.x() >= mgX && event.x() <= mgX + mgW && event.y() >= mgY && event.y() <= mgY + mgH) {
             this.minecraft.setScreen(new MacroScreen(this));
@@ -478,12 +472,6 @@ public class ClickGUI extends Screen {
                 bindingModuleButton.getModule().setKeyBind(key);
             }
             bindingModuleButton = null;
-            //if (this.minecraft.player != null) {
-            //    this.minecraft.player.playSound(
-            //        net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(),
-            //        0.5f, 1.5f
-            //    );
-            //}
             return true;
         }
 
@@ -496,12 +484,6 @@ public class ClickGUI extends Screen {
                 kp.setValue(key);
                 activeKeybindElement = null;
             }
-            //if (this.minecraft.player != null) {
-            //    this.minecraft.player.playSound(
-            //        net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(),
-            //        0.5f, 1.5f
-            //    );
-            //}
             return true;
         }
 
@@ -623,7 +605,7 @@ public class ClickGUI extends Screen {
     public void onClose() {
         isDraggingSlider = false;
         ModuleButton.expandedModules.clear();
-        for (ravex.modules.Module m : ravex.modules.ModuleManager.INSTANCE.getModules()) {
+        for (ravex.modules.Module m : ravex.manager.ModuleManager.INSTANCE.getModules()) {
             m.setGearAngle(0f, System.currentTimeMillis());
         }
         activeStringParameterElement = null;
@@ -635,13 +617,7 @@ public class ClickGUI extends Screen {
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
-            
-            ravex.manager.LayoutManager.INSTANCE.save(panelMap, this.width, this.height, 1.0f);
-            //ravex.utility.sound.SoundUtility.playGuiClose();
             ravex.manager.ConfigManager.INSTANCE.save("default");
-            if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {
-                BlurUtility.disable();
-            }
         }
     }
 
@@ -652,20 +628,18 @@ public class ClickGUI extends Screen {
             activeNumberParameterElement.applyInput();
             activeNumberParameterElement = null;
         }
-        for (ravex.modules.Module m : ravex.modules.ModuleManager.INSTANCE.getModules()) {
+        for (ravex.modules.Module m : ravex.manager.ModuleManager.INSTANCE.getModules()) {
             m.setGearAngle(0f, System.currentTimeMillis());
         }
         super.removed();
     }
-
-    
 
     private void renderStars(GuiGraphics graphics) {
         if (this.width <= 0 || this.height <= 0) return;
 
         var gp = ravex.modules.client.GuiParticles.INSTANCE;
         int count = gp.amount.getValue().intValue();
-        count = Math.min(count, 150);
+        count = Math.min(count, 120);
         String pType = gp.type.getValue();
         int pColor = gp.color.getValue();
         float pSize = gp.size.getValue().floatValue();
@@ -682,7 +656,7 @@ public class ClickGUI extends Screen {
             lastParticleSpeed = pSpeed;
             lastParticleSize = pSize;
             java.util.Random rng = new java.util.Random(0xDEADBEEFL);
-            for (int i = 0; i < 150; i++) {
+            for (int i = 0; i < 120; i++) {
                 starX[i]     = rng.nextFloat() * this.width;
                 starY[i]     = rng.nextFloat() * this.height;
                 float s = 0.5f + rng.nextFloat() * 1.5f;
@@ -699,6 +673,10 @@ public class ClickGUI extends Screen {
         lastStarTick = now;
 
         Identifier particleTex = ravex.utility.render.TextureLoader.getParticleTexture(pType, pColor);
+
+        int pR = (pColor >> 16) & 0xFF;
+        int pG = (pColor >> 8) & 0xFF;
+        int pB = pColor & 0xFF;
 
         for (int i = 0; i < count; i++) {
             starX[i] += starVx[i] * dt;
@@ -720,16 +698,8 @@ public class ClickGUI extends Screen {
             if (particleTex != null) {
                 graphics.blit(particleTex, sx, sy, sx + sz, sy + sz, 0.0f, 1.0f, 0.0f, 1.0f);
             } else {
-                int col = (alpha << 24) | (pColor & 0x00FFFFFF);
+                int col = (alpha << 24) | (pR << 16) | (pG << 8) | pB;
                 graphics.fill(sx, sy, sx + sz, sy + sz, col);
-                if (sz > 4) {
-                    int g1 = Math.max(0, alpha / 3);
-                    int gc1 = (g1 << 24) | (pColor & 0x00FFFFFF);
-                    graphics.fill(sx - 1, sy - 1, sx + sz + 1, sy + sz + 1, gc1);
-                    int g2 = Math.max(0, alpha / 7);
-                    int gc2 = (g2 << 24) | (pColor & 0x00FFFFFF);
-                    graphics.fill(sx - 2, sy - 2, sx + sz + 2, sy + sz + 2, gc2);
-                }
             }
         }
     }

@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -21,15 +20,13 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import ravex.utility.nativelib.NativeLibrary;
 public class SelfTrap extends Module {
     public static final SelfTrap INSTANCE = new SelfTrap();
-
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.blockbrowser.BlockBrowserScreen(
             Minecraft.getInstance().screen,
@@ -37,7 +34,6 @@ public class SelfTrap extends Module {
             SelfTrap.INSTANCE::setBlockSelected
         ));
     });
-
     public final ModeParameter mode = new ModeParameter("Mode", "Full", List.of("Full", "Simple", "Roof"));
     public final ModeParameter speedMode = new ModeParameter("Speed", "Normal", List.of("Legit", "Normal", "Aggressive"));
     public final NumberParameter maxRate = new NumberParameter("Max Rate", 2.0, 1.0, 5.0, 1.0);
@@ -50,69 +46,40 @@ public class SelfTrap extends Module {
     public final BooleanParameter autoDisable = new BooleanParameter("Auto Disable", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00DDFF);
-
     private final Set<Identifier> selectedBlocks = new HashSet<>();
     private static final List<BlockPos> selfTrapBlocks = new ArrayList<>();
-    
     private long lastPlaceTime = 0;
     private static float silentYaw = 0;
     private static float silentPitch = 0;
     private static boolean hasSilentRotations = false;
-
-    private static boolean nativeAvailable = false;
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_selftrap");
     static {
-        try {
-            nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_selftrap");
-        } catch (UnsatisfiedLinkError e) {
-            
-            RaveX.LOGGER.warn("[SelfTrap JNI] Failed to load native library: {}", e.getMessage());
-        }
+        NATIVE.load();
     }
-
     private SelfTrap() {
-        super("SelfTrap", Category.COMBAT);
-        addParameter(blocks);
-        addParameter(mode);
-        addParameter(speedMode);
-        addParameter(maxRate);
-        addParameter(placeDelay);
-        addParameter(rotate);
-        addParameter(strictRotation);
-        addParameter(swapMode);
-        addParameter(swapSwitchBack);
-        addParameter(swapInventory);
-        addParameter(autoDisable);
-        addParameter(render);
-        addParameter(color);
-
+        super("SelfTrap");
         maxRate.setVisible(() -> !speedMode.getValue().equals("Legit"));
         strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
     }
-
     public static boolean hasSilentRotations() {
         return hasSilentRotations;
     }
-
     public static float getSilentYaw() {
         return silentYaw;
     }
-
     public static float getSilentPitch() {
         return silentPitch;
     }
-
     public static List<BlockPos> getSelfTrapBlocks() {
         synchronized (selfTrapBlocks) {
             return new ArrayList<>(selfTrapBlocks);
         }
     }
-
     public boolean isBlockSelected(Identifier id) {
         return selectedBlocks.contains(id);
     }
-
     public void setBlockSelected(Block block, boolean selected) {
         Identifier id = BuiltInRegistries.BLOCK.getKey(block);
         if (selected) {
@@ -121,7 +88,6 @@ public class SelfTrap extends Module {
             selectedBlocks.remove(id);
         }
     }
-
     @Override
     protected void onEnable() {
         lastPlaceTime = 0;
@@ -133,7 +99,6 @@ public class SelfTrap extends Module {
             selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.OBSIDIAN));
         }
     }
-
     @Override
     protected void onDisable() {
         hasSilentRotations = false;
@@ -141,28 +106,20 @@ public class SelfTrap extends Module {
             selfTrapBlocks.clear();
         }
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-
         hasSilentRotations = false;
-
-        
         double[] solidBlockData = collectSolidBlocks(mc);
         List<Double> activeSolidBlocks = new ArrayList<>();
         for (double d : solidBlockData) {
             activeSolidBlocks.add(d);
         }
-
-        
         int modeVal = 0;
         String mStr = mode.getValue();
         if ("Simple".equals(mStr)) modeVal = 1;
         else if ("Roof".equals(mStr)) modeVal = 2;
-
-        
         int simLimit = 9;
         int simCount = 0;
         List<BlockPos> simulatedBlocks = new ArrayList<>();
@@ -171,9 +128,8 @@ public class SelfTrap extends Module {
             for (int i = 0; i < currentSolidData.length; i++) {
                 currentSolidData[i] = activeSolidBlocks.get(i);
             }
-
             double[] result;
-            if (nativeAvailable) {
+            if (NATIVE.isLoaded()) {
                 result = nativeCalculateSelfTrap(
                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                     currentSolidData,
@@ -183,42 +139,31 @@ public class SelfTrap extends Module {
             } else {
                 result = javaFallbackCalculate(mc, currentSolidData, modeVal);
             }
-
             if (result == null || result[0] < 0.5) {
                 break;
             }
-
             BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
             simulatedBlocks.add(targetBlock);
             simCount++;
-
             activeSolidBlocks.add((double) targetBlock.getX());
             activeSolidBlocks.add((double) targetBlock.getY());
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
-
         synchronized (selfTrapBlocks) {
             selfTrapBlocks.clear();
             selfTrapBlocks.addAll(simulatedBlocks);
         }
-
-        
         long now = System.currentTimeMillis();
         boolean checkDelay = !speedMode.getValue().equals("Aggressive");
         if (checkDelay && now - lastPlaceTime < placeDelay.getValue().longValue()) {
             return;
         }
-
-        
         int blockSlot = findBlockSlot(mc);
         if (blockSlot == -1) return;
-
-        
         activeSolidBlocks.clear();
         for (double d : solidBlockData) {
             activeSolidBlocks.add(d);
         }
-
         int limit = maxRate.getValue().intValue();
         if (speedMode.getValue().equals("Legit")) {
             limit = 1;
@@ -226,15 +171,13 @@ public class SelfTrap extends Module {
         int actionsThisTick = 0;
         int originalSlot = mc.player.getInventory().getSelectedSlot();
         boolean placedAny = false;
-
         while (actionsThisTick < limit) {
             double[] currentSolidData = new double[activeSolidBlocks.size()];
             for (int i = 0; i < currentSolidData.length; i++) {
                 currentSolidData[i] = activeSolidBlocks.get(i);
             }
-
             double[] result;
-            if (nativeAvailable) {
+            if (NATIVE.isLoaded()) {
                 result = nativeCalculateSelfTrap(
                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                     currentSolidData,
@@ -244,27 +187,18 @@ public class SelfTrap extends Module {
             } else {
                 result = javaFallbackCalculate(mc, currentSolidData, modeVal);
             }
-
             if (result == null || result[0] < 0.5) {
                 break;
             }
-
             BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
             Direction face = Direction.values()[(int) result[4]];
             BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
-
             Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
-
-            
             rotateTo(mc, hitVec);
-
-            
             boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
             if (isStrict && !isRotationAligned(mc, hitVec)) {
                 break;
             }
-
-            
             String swap = swapMode.getValue();
             if (swap.equals("Normal")) {
                 mc.player.getInventory().setSelectedSlot(blockSlot);
@@ -277,26 +211,20 @@ public class SelfTrap extends Module {
                     break;
                 }
             }
-
-            
             BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
             mc.player.swing(InteractionHand.MAIN_HAND);
             placedAny = true;
             actionsThisTick++;
-
             activeSolidBlocks.add((double) targetBlock.getX());
             activeSolidBlocks.add((double) targetBlock.getY());
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
-
-        
         if (placedAny && swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
             }
         }
-
         if (placedAny) {
             lastPlaceTime = now;
         } else {
@@ -305,18 +233,14 @@ public class SelfTrap extends Module {
             }
         }
     }
-
     private void rotateTo(Minecraft mc, Vec3 target) {
         if (rotate.getValue().equals("None")) return;
-        
         double dx = target.x - mc.player.getX();
         double dy = target.y - mc.player.getEyeY();
         double dz = target.z - mc.player.getZ();
         double dXZ = Math.sqrt(dx * dx + dz * dz);
-        
         float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
         float pitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
-        
         if (rotate.getValue().equals("Normal")) {
             mc.player.setYRot(yaw);
             mc.player.setXRot(pitch);
@@ -326,36 +250,29 @@ public class SelfTrap extends Module {
             hasSilentRotations = true;
         }
     }
-
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
         double dx = target.x - mc.player.getX();
         double dy = target.y - mc.player.getEyeY();
         double dz = target.z - mc.player.getZ();
         double dXZ = Math.sqrt(dx * dx + dz * dz);
-        
         float targetYaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
         float targetPitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
-        
         float diffYaw = Math.abs(normalizeAngle(mc.player.getYRot() - targetYaw));
         float diffPitch = Math.abs(normalizeAngle(mc.player.getXRot() - targetPitch));
-        
         return diffYaw < 12.0F && diffPitch < 12.0F;
     }
-
     private float normalizeAngle(float angle) {
         float normal = angle % 360.0F;
         if (normal >= 180.0F) normal -= 360.0F;
         if (normal < -180.0F) normal += 360.0F;
         return normal;
     }
-
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
         BlockPos playerPos = mc.player.blockPosition();
         int rx = 3;
         int ry = 3;
         int rz = 3;
-
         for (int dx = -rx; dx <= rx; dx++) {
             for (int dy = -ry; dy <= ry; dy++) {
                 for (int dz = -rz; dz <= rz; dz++) {
@@ -371,18 +288,14 @@ public class SelfTrap extends Module {
                 }
             }
         }
-
         double[] arr = new double[data.size()];
         for (int i = 0; i < arr.length; i++) {
             arr[i] = data.get(i);
         }
         return arr;
     }
-
     private int findBlockSlot(Minecraft mc) {
         if (selectedBlocks.isEmpty()) return -1;
-        
-        
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
@@ -391,15 +304,12 @@ public class SelfTrap extends Module {
                 return i;
             }
         }
-        
         if (swapInventory.getValue()) {
-            
             for (int i = 9; i < 36; i++) {
                 ItemStack stack = mc.player.getInventory().getItem(i);
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
                 Identifier id = BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
                 if (selectedBlocks.contains(id)) {
-                    
                     int hotbarSlot = mc.player.getInventory().getSelectedSlot();
                     mc.gameMode.handleInventoryMouseClick(
                         mc.player.containerMenu.containerId, i, hotbarSlot, 
@@ -411,11 +321,9 @@ public class SelfTrap extends Module {
         }
         return -1;
     }
-
     private double[] javaFallbackCalculate(Minecraft mc, double[] solidBlocksData, int modeVal) {
         BlockPos pf = mc.player.blockPosition();
         List<BlockPos> candidates = new ArrayList<>();
-        
         if (modeVal == 0 || modeVal == 1) {
             candidates.add(pf.north());
             candidates.add(pf.south());
@@ -429,20 +337,14 @@ public class SelfTrap extends Module {
         if (modeVal == 0 || modeVal == 2) {
             candidates.add(pf.above(2));
         }
-
         Set<BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
             solids.add(new BlockPos((int)solidBlocksData[i], (int)solidBlocksData[i+1], (int)solidBlocksData[i+2]));
         }
-
-        
         solids.remove(pf);
         solids.remove(pf.above());
-
-        
         for (BlockPos c : candidates) {
             if (solids.contains(c)) continue;
-            
             for (Direction face : Direction.values()) {
                 BlockPos n = c.relative(face);
                 if (solids.contains(n)) {
@@ -450,14 +352,10 @@ public class SelfTrap extends Module {
                 }
             }
         }
-
-        
         for (BlockPos c : candidates) {
             if (solids.contains(c)) continue;
-            
             BlockPos support = c.below();
             if (solids.contains(support)) continue;
-            
             for (Direction face : Direction.values()) {
                 BlockPos n = support.relative(face);
                 if (solids.contains(n)) {
@@ -465,10 +363,8 @@ public class SelfTrap extends Module {
                 }
             }
         }
-
         return new double[]{0.0, 0, 0, 0, 0, 0, 0, 0};
     }
-
     private static native double[] nativeCalculateSelfTrap(
         double playerX, double playerY, double playerZ,
         double[] solidBlockData,

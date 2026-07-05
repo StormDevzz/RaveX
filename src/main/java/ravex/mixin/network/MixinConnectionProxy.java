@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.misc.Proxy;
-import ravex.utility.network.ProxyNative;
+import ravex.proxy.ProxyNative;
 
 import java.net.InetSocketAddress;
 

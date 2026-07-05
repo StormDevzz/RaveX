@@ -1,7 +1,7 @@
 package ravex.parameter;
 
 import ravex.modules.Module;
-import ravex.modules.ModuleManager;
+import ravex.manager.ModuleManager;
 
 @FunctionalInterface
 public interface ModuleCondition {

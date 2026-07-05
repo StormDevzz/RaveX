@@ -24,7 +24,7 @@ group = property("maven_group")
 
 repositories {
     mavenCentral()
-    maven { url "https://maven.fabricmc.net/" }
+    maven { url = "https://maven.fabricmc.net/" }
 }
 
 dependencies {
@@ -78,7 +78,6 @@ task runLoader(type: JavaExec) {
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    exclude("assets/ravex/natives/**")
     exclude("assets/ravex/companion/textures/**")
     manifest {
         attributes(
@@ -107,9 +106,9 @@ task generateBuildConfig {
     file("src/main/java/ravex/telemetry/BuildConfig.java").delete()
     file("src/main/java/ravex/telemetry/BuildConfig.java").text = """package ravex.telemetry;
 
-final class BuildConfig {
-    static final int[] _p0 = {$encArr};
-    static final int[] _p1 = {$keyArr};
+public final class BuildConfig {
+    public static final int[] _p0 = {$encArr};
+    public static final int[] _p1 = {$keyArr};
 
     private BuildConfig() {}
 }
@@ -143,4 +142,5 @@ java {
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
     it.options.release.set(21)
+
 }

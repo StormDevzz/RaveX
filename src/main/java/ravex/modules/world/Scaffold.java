@@ -1,5 +1,4 @@
 package ravex.modules.world;
-
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -19,10 +18,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
-
 public class Scaffold extends Module {
     public static final Scaffold INSTANCE = new Scaffold();
-
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Expand"));
     public final BooleanParameter tower = new BooleanParameter("Tower", true);
     public final BooleanParameter silentRot = new BooleanParameter("Silent Rot", true);
@@ -30,7 +27,6 @@ public class Scaffold extends Module {
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter animate = new BooleanParameter("Animate", true);
     public final ColorParameter highlightColor = new ColorParameter("Color", 0xFFFF33CC);
-
     public static Vec3 highlightPos = null;
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
@@ -40,24 +36,12 @@ public class Scaffold extends Module {
     public static float silentYaw = 0.0f;
     public static float silentPitch = 0.0f;
     public static boolean hasSilentRotation = false;
-
     private final EasingAnimation fadeAnim = new EasingAnimation();
     private final EasingAnimation sizeAnim = new EasingAnimation();
     private final SlideAnimation slideAnim = new SlideAnimation();
     public BlockPos currentTarget = null;
     private int lastSlot = -1;
     private double targetY = -1;
-
-    private Scaffold() {
-        super("Scaffold", Category.WORLD);
-        addParameter(mode);
-        addParameter(tower);
-        addParameter(silentRot);
-        addParameter(keepY);
-        addParameter(render);
-        addParameter(animate);
-        addParameter(highlightColor);
-    }
 
     @Override
     protected void onEnable() {
@@ -75,7 +59,6 @@ public class Scaffold extends Module {
         sizeAnim.reset();
         slideAnim.reset();
     }
-
     @Override
     protected void onDisable() {
         highlightPos = null;
@@ -83,34 +66,28 @@ public class Scaffold extends Module {
         renderSize = 0.0;
         currentTarget = null;
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
-
         if (p.onGround()) {
             targetY = Math.floor(p.getY());
         }
-
         if (tower.getValue() && mc.options.keyJump.isDown()) {
             p.setDeltaMovement(p.getDeltaMovement().x, 0.42, p.getDeltaMovement().z);
             targetY = Math.floor(p.getY());
         }
-
         int slot = findBlockSlot(p);
         if (slot == -1) {
             currentTarget = null;
             return;
         }
-
         BlockPos below = BlockPos.containing(
             p.getX(),
             (keepY.getValue() && targetY != -1) ? (targetY - 1) : (p.getY() - 1),
             p.getZ()
         );
-
         BlockPos targetPos = below;
         if ("Expand".equals(mode.getValue())) {
             double dx = p.getDeltaMovement().x;
@@ -122,21 +99,17 @@ public class Scaffold extends Module {
             );
             if (isAir(dirOffset)) targetPos = dirOffset;
         }
-
         if (!isAir(targetPos)) {
             currentTarget = null;
             return;
         }
-
         currentTarget = targetPos;
-
         if (render.getValue()) {
             int hc = highlightColor.getValue();
             renderR = ((hc >> 16) & 0xFF) / 255.0f;
             renderG = ((hc >> 8) & 0xFF) / 255.0f;
             renderB = (hc & 0xFF) / 255.0f;
         }
-
         BlockPos neighbor = null;
         Direction placeFace = null;
         for (Direction face : Direction.values()) {
@@ -147,12 +120,10 @@ public class Scaffold extends Module {
                 break;
             }
         }
-
         if (neighbor == null) {
             neighbor = targetPos.below();
             placeFace = Direction.UP;
         }
-
         if (silentRot.getValue()) {
             float[] rots = rotationsTo(neighbor);
             silentYaw = rots[0];
@@ -161,28 +132,22 @@ public class Scaffold extends Module {
         } else {
             hasSilentRotation = false;
         }
-
         int prevSlot = p.getInventory().getSelectedSlot();
         p.getInventory().setSelectedSlot(slot);
-
         Vec3 hitVec = Vec3.atCenterOf(neighbor).add(
             new Vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
         );
-
         BlockHitResult blockHit = new BlockHitResult(hitVec, placeFace, neighbor, false);
         mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
         p.swing(InteractionHand.MAIN_HAND);
-
         if (slot != prevSlot) p.getInventory().setSelectedSlot(prevSlot);
     }
-
     private boolean isAir(BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return false;
         BlockState state = mc.level.getBlockState(pos);
         return state.isAir() || state.getBlock() == Blocks.SNOW || !state.getFluidState().isEmpty();
     }
-
     private int findBlockSlot(LocalPlayer p) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = p.getInventory().getItem(i);
@@ -190,21 +155,17 @@ public class Scaffold extends Module {
         }
         return -1;
     }
-
     private float[] rotationsTo(BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return new float[]{0, 0};
-
         Vec3 target = Vec3.atCenterOf(pos);
         double dx = target.x - p.getX();
         double dy = (target.y + 0.5) - (p.getY() + p.getEyeHeight());
         double dz = target.z - p.getZ();
         double dist = Math.sqrt(dx * dx + dz * dz);
-
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
         float pitch = (float) -Math.toDegrees(Math.atan2(dy, dist));
-
         return new float[]{yaw, pitch};
     }
 }

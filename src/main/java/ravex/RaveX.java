@@ -1,16 +1,19 @@
 package ravex;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ravex.modules.ModuleManager;
+import ravex.manager.ModuleManager;
 import ravex.utility.misc.GithubUtility;
+import ravex.utility.nativelib.NativeLibrary;
 import net.minecraft.client.Minecraft;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RaveX implements ClientModInitializer {
+public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEntrypoint {
     public static final String MOD_ID = "ravex";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
@@ -20,6 +23,12 @@ public class RaveX implements ClientModInitializer {
         .getMetadata()
         .getVersion()
         .getFriendlyString();
+
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_addon");
+
+    static {
+        NATIVE.load();
+    }
 
     private static boolean rightShiftWasDown = false;
     private static Process loaderProcess = null;
@@ -41,7 +50,6 @@ public class RaveX implements ClientModInitializer {
         try {
             java.io.File signal = new java.io.File(System.getProperty("java.io.tmpdir"), ".ravex_ready");
             signal.createNewFile();
-            LOGGER.info("[RaveX] Created ready signal file: " + signal.getAbsolutePath());
         } catch (Exception e) {
             LOGGER.error("Failed to create ready signal file", e);
         }
@@ -99,77 +107,94 @@ public class RaveX implements ClientModInitializer {
         loaderProcess = p;
     }
 
+    @Override
+    public void onInitialize() {
+        ravex.utility.sound.SoundUtility.register();
+    }
+
+    @Override
+    public void onPreLaunch() {
+        try {
+            java.io.File signal = new java.io.File(System.getProperty("java.io.tmpdir"), ".ravex_ready");
+            if (signal.exists()) signal.delete();
+        } catch (Exception ignored) {}
+
+        if (!"true".equals(System.getenv("RAVEX_LOADER_ACTIVE"))) {
+            try {
+                String jarPath = getModJarPath();
+                if (jarPath != null && !jarPath.isEmpty()) {
+                    String javaExe = System.getProperty("java.home") + "/bin/java";
+                    java.io.File exeFile = new java.io.File(javaExe);
+                    if (!exeFile.exists()) javaExe = "java";
+
+                    java.util.List<String> cmd = new java.util.ArrayList<>();
+                    cmd.add(javaExe);
+                    cmd.add("-Djava.awt.headless=false");
+                    cmd.add("-cp");
+                    cmd.add(jarPath);
+                    cmd.add("ravex.loader.RaveXLoader");
+                    cmd.add("--integrated-gui");
+
+                    ProcessBuilder pb = new ProcessBuilder(cmd);
+                    pb.redirectErrorStream(true);
+                    Process p = pb.start();
+                    setLoaderProcess(p);
+
+                    new Thread(() -> {
+                        try (java.io.BufferedReader r = new java.io.BufferedReader(
+                                new java.io.InputStreamReader(p.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+                            String line;
+                            while ((line = r.readLine()) != null) {
+                                LOGGER.info("[RaveX-Loader] " + line);
+                            }
+                        } catch (Exception ignored) {}
+                    }).start();
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+
     private static final boolean[] keysState = new boolean[512];
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("===== Initializing RaveX client v" + version + " =====");
-        
-        
         String osName = ravex.loader.RaveXLoader.getDetailedOSName();
-        System.out.println("\u001B[35m┌────────────────────────────────────────────────────────┐\u001B[0m");
-        System.out.println("\u001B[35m│\u001B[36m   RaveX Client loaded on Operating System:              \u001B[35m│\u001B[0m");
-        System.out.printf("\u001B[35m│\u001B[32m   %-53s\u001B[35m│\u001B[0m\n", osName);
-        System.out.println("\u001B[35m└────────────────────────────────────────────────────────┘\u001B[0m");
+        LOGGER.info("RaveX v{} on {}", version, osName);
 
-        LOGGER.info("[RaveX] Operating System: " + osName);
-
-        
         ravex.manager.NativeManager.INSTANCE.check();
-
-        
         ravex.utility.misc.GuiOptimizer.optimize();
 
-        
-        LOGGER.info("Initializing ModuleManager...");
         ModuleManager.INSTANCE.init();
-        LOGGER.info("Successfully registered " + ModuleManager.INSTANCE.getModules().size() + " modules!");
+        LOGGER.info("Registered {} modules", ModuleManager.INSTANCE.getModules().size());
 
-        
         try {
-            ravex.utility.misc.NativeLoader.loadLibrary("ravex_addon");
-        } catch (UnsatisfiedLinkError e) {
-            LOGGER.error("[Addon System] Native library ravex_addon load failed", e);
-        }
-        try {
-            LOGGER.info("Initializing AddonManager...");
-            ravex.addon.AddonManager.INSTANCE.init();
+            ravex.manager.AddonManager.INSTANCE.init();
         } catch (Exception e) {
-            LOGGER.error("[Addon System] Failed to initialize AddonManager", e);
+            LOGGER.error("AddonManager init failed", e);
         }
 
-        
-        LOGGER.info("Loading macros...");
-        ravex.macro.MacroManager.INSTANCE.load();
-        LOGGER.info("Loaded " + ravex.macro.MacroManager.INSTANCE.getMacros().size() + " macros!");
+        ravex.manager.MacroManager.INSTANCE.load();
+        int mc = ravex.manager.MacroManager.INSTANCE.getMacros().size();
+        if (mc > 0) LOGGER.info("Loaded {} macro(s)", mc);
 
-        
-        LOGGER.info("Loading profiles...");
-        ravex.profile.ProfileManager.INSTANCE.load();
-        LOGGER.info("Loaded " + ravex.profile.ProfileManager.INSTANCE.getProfiles().size() + " profiles!");
+        ravex.manager.ProfileManager.INSTANCE.load();
+        int pc = ravex.manager.ProfileManager.INSTANCE.getProfiles().size();
+        if (pc > 0) LOGGER.info("Loaded {} profile(s)", pc);
 
-        
         try {
-            LOGGER.info("[RaveX] Loading default configuration...");
             ravex.manager.ConfigManager.INSTANCE.load("default");
         } catch (Exception e) {
             LOGGER.error("Failed to load default config", e);
         }
 
-        
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.info("[RaveX] Game shutting down! Automatically saving default configuration...");
             try {
-                ravex.addon.AddonManager.INSTANCE.shutdown();
+                ravex.manager.AddonManager.INSTANCE.shutdown();
             } catch (Throwable ignored) {}
             ravex.manager.ConfigManager.INSTANCE.save("default");
         }));
 
-        LOGGER.info("Connecting to Github API...");
         new Thread(ravex.utility.misc.GithubUtility::checkUpdates).start();
-
-        System.out.println("[RaveX-Java] Loading complete");
-        LOGGER.info("===== RaveX successfully initialized! =====");
     }
 
     public static void onClientTick() {
@@ -180,8 +205,8 @@ public class RaveX implements ClientModInitializer {
         }
 
         ModuleManager.INSTANCE.onTick();
-        ravex.macro.MacroManager.INSTANCE.onTick();
-        ravex.utility.lua.LuaManager.INSTANCE.onTick(); 
+        ravex.manager.MacroManager.INSTANCE.onTick();
+        ravex.manager.LuaManager.INSTANCE.onTick(); 
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.getWindow() == null) return;

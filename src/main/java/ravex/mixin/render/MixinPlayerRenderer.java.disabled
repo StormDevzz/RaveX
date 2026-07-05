@@ -1,0 +1,213 @@
+package ravex.mixin.render;
+
+import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.model.player.PlayerModel;
+import net.minecraft.world.entity.player.Player;
+import com.mojang.blaze3d.vertex.PoseStack;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import ravex.modules.render.Animations;
+import ravex.modules.render.BabyDude;
+import ravex.modules.render.ShiftInterp;
+
+@SuppressWarnings("MixinAnnotationTarget")
+@Mixin(AvatarRenderer.class)
+public class MixinPlayerRenderer {
+
+    @Shadow
+    private PlayerModel model;
+
+    @Inject(
+        method = "extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V",
+        at = @At("TAIL")
+    )
+    private void onExtractPlayerRenderState(net.minecraft.world.entity.Avatar entity, AvatarRenderState state, float partialTicks, CallbackInfo ci) {
+        if (entity instanceof Player player) {
+
+            if (ShiftInterp.INSTANCE.getEnabled()) {
+                if (ShiftInterp.INSTANCE.shouldCrouch(player)) {
+                    state.isCrouching = true;
+                }
+            }
+
+            if (BabyDude.INSTANCE.getEnabled()) {
+                if (BabyDude.INSTANCE.shouldScale(player)) {
+                    state.isBaby = true;
+                    BabyDude.INSTANCE.stateScaleMap.put(state, BabyDude.INSTANCE.scale.getValue().floatValue());
+                } else {
+                    BabyDude.INSTANCE.stateScaleMap.remove(state);
+                }
+            } else {
+                BabyDude.INSTANCE.stateScaleMap.remove(state);
+            }
+
+            if (Animations.INSTANCE.getEnabled()) {
+                state.attackTime = 0f;
+                state.swimAmount = 0f;
+                
+                float limb = Animations.getLimbSwing(partialTicks);
+                float bob = Animations.getBodyBob(partialTicks);
+                
+                if (player.isSprinting() && !Animations.INSTANCE.sprintAnimation.getValue().equals("Off")) {
+                    state.walkAnimationSpeed = 0.8f;
+                    state.walkAnimationPos = limb * 2f;
+                }
+                
+                if (player.isShiftKeyDown() && Animations.INSTANCE.sneakAnimation.getValue().equals("Crawl")) {
+                    state.isCrouching = true;
+                    state.isBaby = true;
+                }
+                
+
+            }
+        }
+    }
+
+    @Inject(
+        method = "scale(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;)V",
+        at = @At("TAIL")
+    )
+    private void onScalePlayer(AvatarRenderState state, PoseStack poseStack, CallbackInfo ci) {
+        Float s = BabyDude.INSTANCE.stateScaleMap.get(state);
+        if (s != null) {
+            poseStack.scale(s, s, s);
+        }
+
+        if (Animations.INSTANCE.getEnabled()) {
+            float bob = Animations.getBodyBob(0f);
+            if (bob > 0.01f) {
+                poseStack.translate(0, bob * 0.02f, 0);
+            }
+        }
+    }
+
+    @Inject(
+        method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/Avatar;FFFFFF)V",
+        at = @At("HEAD")
+    )
+    private void onRender(PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource buffer, int packedLight,
+                         net.minecraft.world.entity.Avatar entity, float limbSwing, float limbSwingAmount,
+                         float partialTicks, float ageInTicks, float netHeadYaw, float headPitch,
+                         CallbackInfo ci) {
+        if (!Animations.INSTANCE.getEnabled()) return;
+        if (!(entity instanceof Player player)) return;
+
+        float limb = Animations.getLimbSwing(partialTicks);
+        float bob = Animations.getBodyBob(partialTicks);
+
+        if (player.isSprinting() && !Animations.INSTANCE.sprintAnimation.getValue().equals("Off")) {
+            String mode = Animations.INSTANCE.sprintAnimation.getValue();
+            if (mode.equals("Bouncy")) {
+                model.body.xRot = bob * 0.1f;
+                model.leftLeg.xRot += limb * 0.5f;
+                model.rightLeg.xRot += limb * 0.5f;
+                model.leftArm.xRot += limb * 0.3f;
+                model.rightArm.xRot += limb * 0.3f;
+            } else if (mode.equals("Robotic")) {
+                model.body.xRot = 0f;
+                model.leftLeg.xRot = limb * 0.1f;
+                model.rightLeg.xRot = limb * 0.1f;
+                model.leftArm.xRot = limb * 0.1f;
+                model.rightArm.xRot = limb * 0.1f;
+            }
+        }
+
+        if (!player.isSprinting() && player.onGround() && !Animations.INSTANCE.walkingAnimation.getValue().equals("Off")) {
+            String mode = Animations.INSTANCE.walkingAnimation.getValue();
+            if (mode.equals("Bouncy")) {
+                model.body.xRot = bob * 0.08f;
+                model.leftLeg.xRot += limb * 0.6f;
+                model.rightLeg.xRot += limb * 0.6f;
+                model.leftArm.xRot += limb * 0.4f;
+                model.rightArm.xRot += limb * 0.4f;
+            } else if (mode.equals("Robotic")) {
+                model.leftLeg.xRot = limb * 0.2f;
+                model.rightLeg.xRot = limb * 0.2f;
+                model.leftArm.xRot = limb * 0.2f;
+                model.rightArm.xRot = limb * 0.2f;
+            }
+        }
+
+        if (!player.onGround() && !player.isFallFlying()) {
+            String jumpMode = Animations.INSTANCE.jumpAnimation.getValue();
+            if (jumpMode.equals("Tuck")) {
+                model.leftLeg.xRot = -1.2f;
+                model.rightLeg.xRot = -1.2f;
+                model.leftArm.xRot = -1.5f;
+                model.rightArm.xRot = -1.5f;
+            } else if (jumpMode.equals("Spread")) {
+                model.leftLeg.zRot = 0.3f;
+                model.rightLeg.zRot = -0.3f;
+                model.leftArm.zRot = -0.2f;
+                model.rightArm.zRot = 0.2f;
+            }
+        }
+
+        if (player.isFallFlying()) {
+            String elytraMode = Animations.INSTANCE.elytraAnimation.getValue();
+            if (elytraMode.equals("Bird")) {
+                model.leftArm.xRot = -2.5f + limb * 0.3f;
+                model.rightArm.xRot = -2.5f + limb * 0.3f;
+                model.leftLeg.xRot = -1.0f + limb * 0.2f;
+                model.rightLeg.xRot = -1.0f + limb * 0.2f;
+            }
+        }
+
+        if (player.isSwimming()) {
+            String swimMode = Animations.INSTANCE.swimmingAnimation.getValue();
+            if (swimMode.equals("Dolphin")) {
+                model.leftArm.xRot = -2.0f + limb * 0.5f;
+                model.rightArm.xRot = -2.0f + limb * 0.5f;
+                model.leftLeg.xRot = -1.5f + limb * 0.4f;
+                model.rightLeg.xRot = -1.5f + limb * 0.4f;
+            }
+        }
+
+        if (player.isShiftKeyDown() && Animations.INSTANCE.sneakAnimation.getValue().equals("Crawl")) {
+            model.leftLeg.xRot = -1.2f;
+            model.rightLeg.xRot = -1.2f;
+            model.body.xRot = 0.3f;
+        }
+    }
+
+    @Inject(
+        method = "renderArmWithItem",
+        at = @At("HEAD")
+    )
+    private void onRenderArmWithItem(net.minecraft.client.player.LocalPlayer player, float partialTicks, float pitch,
+                                     net.minecraft.world.InteractionHand hand, float swingProgress,
+                                     net.minecraft.world.item.ItemStack item, float equipProgress,
+                                     PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource buffer,
+                                     int combinedLight, CallbackInfo ci) {
+        if (!Animations.INSTANCE.getEnabled()) return;
+
+        float limb = Animations.getLimbSwing(partialTicks);
+
+        if (player.isSprinting() && !Animations.INSTANCE.sprintAnimation.getValue().equals("Off")) {
+            if (hand == net.minecraft.world.InteractionHand.MAIN_HAND) {
+                poseStack.translate(0, limb * 0.02f, 0);
+                poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(limb * 0.5f));
+            }
+        }
+
+        if (player.isSwimming() && Animations.INSTANCE.swimmingAnimation.getValue().equals("Dolphin")) {
+            if (hand == net.minecraft.world.InteractionHand.MAIN_HAND) {
+                poseStack.translate(0, -0.2f + limb * 0.05f, 0);
+            }
+        }
+
+        if (!player.onGround() && !player.isFallFlying()) {
+            String jumpMode = Animations.INSTANCE.jumpAnimation.getValue();
+            if (jumpMode.equals("Tuck")) {
+                poseStack.translate(0, -0.1f, 0);
+                poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(10f));
+            } else if (jumpMode.equals("Spread")) {
+                poseStack.translate(0.05f, 0, 0);
+            }
+        }
+    }
+}

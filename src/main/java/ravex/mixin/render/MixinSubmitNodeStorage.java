@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.Shaders;
-import ravex.shaders.hand.HandShaderManager;
+import ravex.manager.HandShaderManager;
 import ravex.utility.render.animate.ShaderVertexConsumer;
 
 @Mixin(SubmitNodeStorage.class)

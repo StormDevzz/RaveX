@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,49 +14,29 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.misc.NativeLoader;
+import ravex.utility.nativelib.NativeLibrary;
 import ravex.modules.world.NoGhostBlocks;
-
 import java.util.ArrayList;
 import java.util.List;
-
 public class AntiReGear extends Module {
     public static final AntiReGear INSTANCE = new AntiReGear();
-
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter delay = new NumberParameter("Delay (ms)", 100, 0, 1000, 50);
     public final BooleanParameter shulkersParam = new BooleanParameter("Shulkers", true);
     public final BooleanParameter chestsParam = new BooleanParameter("Chests", true);
     public final BooleanParameter enderChestsParam = new BooleanParameter("Ender Chests", true);
     public final BooleanParameter barrelsParam = new BooleanParameter("Barrels", false);
-
     private BlockPos currentMiningTarget = null;
     private long lastBreakTime = 0;
-
-    private static boolean nativeLibLoaded = false;
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_antiregear");
     static {
-        try {
-            nativeLibLoaded = NativeLoader.loadLibrary("ravex_antiregear");
-        } catch (UnsatisfiedLinkError e) {
-            System.err.println("[AntiReGear JNI] Failed to load native library: " + e.getMessage());
-        }
+        NATIVE.load();
     }
-
     public static native int nativeCalculateTarget(
         double playerX, double playerY, double playerZ,
         int[] blockX, int[] blockY, int[] blockZ,
         double range
     );
-
-    private AntiReGear() {
-        super("AntiReGear", Category.COMBAT);
-        addParameter(range);
-        addParameter(delay);
-        addParameter(shulkersParam);
-        addParameter(chestsParam);
-        addParameter(enderChestsParam);
-        addParameter(barrelsParam);
-    }
 
     @Override
     protected void onDisable() {
@@ -67,14 +46,11 @@ public class AntiReGear extends Module {
         }
         currentMiningTarget = null;
     }
-
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-
         long now = System.currentTimeMillis();
-
         if (currentMiningTarget != null) {
             BlockState state = mc.level.getBlockState(currentMiningTarget);
             if (state.isAir() || !isTargetBlock(state)) {
@@ -87,9 +63,7 @@ public class AntiReGear extends Module {
                 return;
             }
         }
-
         if (now - lastBreakTime < delay.getValue().longValue()) return;
-
         double r = range.getValue();
         BlockPos playerPos = mc.player.blockPosition();
         int minX = (int) Math.floor(playerPos.getX() - r);
@@ -98,7 +72,6 @@ public class AntiReGear extends Module {
         int maxY = (int) Math.min(mc.level.getMaxY(), Math.ceil(playerPos.getY() + r));
         int minZ = (int) Math.floor(playerPos.getZ() - r);
         int maxZ = (int) Math.ceil(playerPos.getZ() + r);
-
         List<BlockPos> candidates = new ArrayList<>();
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
@@ -113,12 +86,9 @@ public class AntiReGear extends Module {
                 }
             }
         }
-
         if (candidates.isEmpty()) return;
-
         BlockPos target = null;
-
-        if (nativeLibLoaded) {
+        if (NATIVE.isLoaded()) {
             try {
                 int cnt = candidates.size();
                 int[] bx = new int[cnt];
@@ -129,13 +99,11 @@ public class AntiReGear extends Module {
                     by[i] = candidates.get(i).getY();
                     bz[i] = candidates.get(i).getZ();
                 }
-
                 Vec3 eye = mc.player.getEyePosition();
                 int resultIdx = nativeCalculateTarget(
                     eye.x, eye.y, eye.z,
                     bx, by, bz, r
                 );
-
                 if (resultIdx >= 0 && resultIdx < cnt) {
                     target = candidates.get(resultIdx);
                 }
@@ -143,11 +111,9 @@ public class AntiReGear extends Module {
                 target = null;
             }
         }
-
         if (target == null) {
             target = fallbackFindTarget(candidates, mc);
         }
-
         if (target != null) {
             currentMiningTarget = target;
             Direction dir = getDirection(mc.player.getEyePosition(), target);
@@ -157,7 +123,6 @@ public class AntiReGear extends Module {
             lastBreakTime = now;
         }
     }
-
     private boolean isTargetBlock(BlockState state) {
         Block block = state.getBlock();
         if (block instanceof ShulkerBoxBlock) return shulkersParam.getValue();
@@ -166,12 +131,10 @@ public class AntiReGear extends Module {
         if (block instanceof BarrelBlock) return barrelsParam.getValue();
         return false;
     }
-
     private BlockPos fallbackFindTarget(List<BlockPos> candidates, Minecraft mc) {
         Vec3 eye = mc.player.getEyePosition();
         BlockPos closest = null;
         double closestDist = Double.MAX_VALUE;
-
         for (BlockPos pos : candidates) {
             double distSq = eye.distanceToSqr(Vec3.atCenterOf(pos));
             if (distSq < closestDist) {
@@ -181,17 +144,14 @@ public class AntiReGear extends Module {
         }
         return closest;
     }
-
     public static Direction getDirection(Vec3 eye, BlockPos pos) {
         Vec3 center = Vec3.atCenterOf(pos);
         double dx = eye.x - center.x;
         double dy = eye.y - pos.getY() - 0.5;
         double dz = eye.z - center.z;
-
         double absX = Math.abs(dx);
         double absY = Math.abs(dy);
         double absZ = Math.abs(dz);
-
         if (absY <= absX && absY <= absZ) {
             if (absX >= absZ) {
                 return dx > 0 ? Direction.EAST : Direction.WEST;

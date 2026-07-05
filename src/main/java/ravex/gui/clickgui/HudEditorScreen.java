@@ -6,36 +6,35 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
 import org.lwjgl.glfw.GLFW;
-import ravex.modules.ModuleManager;
-import ravex.modules.HudModule;
+import ravex.manager.ModuleManager;
+import ravex.modules.Module;
 import ravex.parameter.*;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
-import ravex.utility.render.BlurUtility;
 
 import java.util.List;
 
 public class HudEditorScreen extends Screen {
     private final Screen parentScreen;
 
-    private HudModule draggingHud   = null;
+    private Module draggingHud   = null;
     private int       dragOffsetX   = 0;
     private int       dragOffsetY   = 0;
 
     private boolean snapToGrid = true;
     private static final int GRID = 8;
 
-    private HudModule lastHovered    = null;
+    private Module lastHovered    = null;
     private long      hoverStartMs   = 0;
     private float     tooltipAlpha   = 0f;
 
-    private HudModule ctxModule = null;
+    private Module ctxModule = null;
     private int       ctxX      = 0;
     private int       ctxY      = 0;
 
     private long savedFlashMs = -1;
 
-    private HudModule settingsModule = null;
+    private Module settingsModule = null;
 
     private boolean modulePanelOpen = true;
     private int modulePanelScroll = 0;
@@ -83,10 +82,10 @@ public class HudEditorScreen extends Screen {
             draggingHud.setY(ny);
         }
 
-        HudModule hoveredModule = null;
-        List<HudModule> hudMods = ModuleManager.INSTANCE.getHudModules();
+        Module hoveredModule = null;
+        List<Module> hudMods = ModuleManager.INSTANCE.getHudModules();
 
-        for (HudModule hm : hudMods) {
+        for (Module hm : hudMods) {
             if (!hm.getEnabled()) continue;
 
             int x1 = hm.getTargetX(), y1 = hm.getTargetY();
@@ -130,7 +129,7 @@ public class HudEditorScreen extends Screen {
             FontRenderUtility.drawString(graphics, tag, tagX, tagY, hov ? accentColor : 0xFFAAAAAA, false);
         }
 
-        for (HudModule hm : hudMods) {
+        for (Module hm : hudMods) {
             if (hm.getEnabled()) continue;
             int x1 = hm.getTargetX(), y1 = hm.getTargetY();
             int x2 = x1 + hm.getWidth(), y2 = y1 + hm.getHeight();
@@ -206,7 +205,7 @@ public class HudEditorScreen extends Screen {
     private void renderModulePanel(GuiGraphics g, int mx, int my, int accentColor) {
         int pw = 130;
         int headerH = 18;
-        List<HudModule> huds = ModuleManager.INSTANCE.getHudModules();
+        List<Module> huds = ModuleManager.INSTANCE.getHudModules();
         int rowH = 14;
         int maxVisible = Math.min(huds.size(), 18);
         int ph = headerH + maxVisible * rowH + 4;
@@ -230,7 +229,7 @@ public class HudEditorScreen extends Screen {
         int startIdx = Math.min(modulePanelScroll, Math.max(0, huds.size() - maxVisible));
         int cy = py + headerH + 2;
         for (int i = startIdx; i < huds.size() && i < startIdx + maxVisible; i++) {
-            HudModule hud = huds.get(i);
+            Module hud = huds.get(i);
             boolean enabled = hud.getEnabled();
             boolean hovered = mx >= px + 2 && mx <= px + pw - 2 && my >= cy && my <= cy + rowH;
 
@@ -343,7 +342,7 @@ public class HudEditorScreen extends Screen {
         return String.valueOf(p.getValue());
     }
 
-    private void toggleParam(HudModule mod, int index) {
+    private void toggleParam(Module mod, int index) {
         List<Parameter<?>> pars = mod.getParameters();
         if (index < 0 || index >= pars.size()) return;
         Parameter<?> p = pars.get(index);
@@ -433,7 +432,7 @@ public class HudEditorScreen extends Screen {
         if (mx >= px && mx <= px + pw && my >= py && my <= py + ph) {
             if (event.button() == 0 && my >= py + headerH + 2) {
                 int idx = (my - py - headerH - 2) / rowH + modulePanelScroll;
-                List<HudModule> huds = ModuleManager.INSTANCE.getHudModules();
+                List<Module> huds = ModuleManager.INSTANCE.getHudModules();
                 if (idx >= 0 && idx < huds.size()) {
                     huds.get(idx).toggle();
                 }
@@ -443,7 +442,7 @@ public class HudEditorScreen extends Screen {
         }
 
         if (event.button() == 1) {
-            for (HudModule hm : ModuleManager.INSTANCE.getHudModules()) {
+            for (Module hm : ModuleManager.INSTANCE.getHudModules()) {
                 if (mx >= hm.getTargetX() && mx <= hm.getTargetX() + hm.getWidth() &&
                     my >= hm.getTargetY() && my <= hm.getTargetY() + hm.getHeight()) {
                     ctxModule = hm;
@@ -465,7 +464,7 @@ public class HudEditorScreen extends Screen {
                 return true;
             }
 
-            for (HudModule hm : ModuleManager.INSTANCE.getHudModules()) {
+            for (Module hm : ModuleManager.INSTANCE.getHudModules()) {
                 if (!hm.getEnabled()) continue;
                 if (mx >= hm.getTargetX() && mx <= hm.getTargetX() + hm.getWidth() &&
                     my >= hm.getTargetY() && my <= hm.getTargetY() + hm.getHeight()) {
@@ -525,7 +524,6 @@ public class HudEditorScreen extends Screen {
     @Override
     public void removed() {
         
-        BlurUtility.disable();
         super.removed();
     }
 }

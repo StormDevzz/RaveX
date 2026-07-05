@@ -36,10 +36,10 @@ package ravex.addon.template;
 //     AddonModuleManager - module manager (logger and control).
 //     BooleanParameter / NumberParameter - module parameter types
 //     displayed in the RaveX GUI as toggles/sliders.
-import ravex.addon.AddonContext;
-import ravex.addon.AddonModule;
-import ravex.addon.AddonModuleInfo;
-import ravex.addon.AddonModuleManager;
+import ravex.addon.core.AddonContext;
+import ravex.addon.module.AddonModule;
+import ravex.addon.module.AddonModuleInfo;
+import ravex.addon.core.AddonModuleManager;
 import ravex.addon.module.BooleanParameter;
 import ravex.addon.module.NumberParameter;
 

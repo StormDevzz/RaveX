@@ -78,6 +78,18 @@ public class NativeBridge {
 
             if (!exists) {
                 
+                try {
+                    java.io.InputStream is = NativeBridge.class.getResourceAsStream("/assets/ravex/natives/" + libName);
+                    if (is != null) {
+                        java.nio.file.Files.copy(is, cachedFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        cachedFile.setExecutable(true);
+                        exists = true;
+                    }
+                } catch (Throwable ignored) {}
+            }
+
+            if (!exists) {
+                
                 String remoteUrl = "https://github.com/StormDevzz/RaveX/releases/latest/download/" + libName;
                 System.out.println("[RaveX-Loader] Downloading " + libName + " from " + remoteUrl);
                 RaveXLoader.updateWindowStatus("Downloading " + libName + "...", 10);

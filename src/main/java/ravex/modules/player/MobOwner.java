@@ -1,24 +1,16 @@
 package ravex.modules.player;
-
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
-
 public class MobOwner extends Module {
     public static final MobOwner INSTANCE = new MobOwner();
-
     public final BooleanParameter animals = new BooleanParameter("Animals", true);
-    public final BooleanParameter displayUUID = new BooleanParameter("Show UUID", false);
+    public final BooleanParameter displayUUID = new BooleanParameter("ShowUUID", false);
     public final BooleanParameter background = new BooleanParameter("Background", false);
-    public final ColorParameter textColor = new ColorParameter("Text Color", 0xFFFFAA00);
-
-    private MobOwner() {
-        super("MobOwner", Category.PLAYER);
-        addParameter(textColor);
-    }
+    public final ColorParameter textColor = new ColorParameter("TextColor", 0xFFFFAA00);
 
     private static String resolveName(java.util.UUID uuid) {
         if (uuid == null) return null;
@@ -40,10 +32,8 @@ public class MobOwner extends Module {
         } catch (Exception ignored) {}
         return null;
     }
-
     public static String getOwnerName(LivingEntity entity) {
         if (!(entity instanceof OwnableEntity owned)) return null;
-        
         java.util.UUID uuid = null;
         try {
             for (java.lang.reflect.Method m : owned.getClass().getMethods()) {
@@ -53,32 +43,26 @@ public class MobOwner extends Module {
                 }
             }
         } catch (Exception ignored) {}
-
         if (uuid == null) {
             try {
                 net.minecraft.world.entity.Entity owner = owned.getOwner();
                 if (owner != null) uuid = owner.getUUID();
             } catch (Exception ignored) {}
         }
-
         if (uuid == null) return null;
-
         if (INSTANCE.displayUUID.getValue()) {
             return uuid.toString();
         }
-
         try {
             net.minecraft.world.entity.Entity owner = owned.getOwner();
             if (owner != null) {
                 return owner.getScoreboardName();
             }
         } catch (Exception ignored) {}
-
         String resolved = resolveName(uuid);
         if (resolved != null) {
             return resolved;
         }
-
         return uuid.toString();
     }
 }

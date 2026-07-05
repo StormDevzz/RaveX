@@ -6,8 +6,8 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import ravex.profile.Profile;
-import ravex.profile.ProfileManager;
+import ravex.gui.profile.Profile;
+import ravex.manager.ProfileManager;
 import ravex.utility.render.FontRenderUtility;
 
 import java.util.ArrayList;

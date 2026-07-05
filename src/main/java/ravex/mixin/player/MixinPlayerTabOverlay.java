@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import ravex.modules.player.ExtraTab;
+import ravex.modules.player.TabUtils;
 
 import java.util.List;
 
@@ -19,9 +19,9 @@ public class MixinPlayerTabOverlay {
     
     @Inject(method = "getPlayerInfos", at = @At("RETURN"), cancellable = true)
     private void onGetPlayerInfos(CallbackInfoReturnable<List<PlayerInfo>> cir) {
-        if (ExtraTab.INSTANCE.getEnabled()) {
+        if (TabUtils.INSTANCE.getEnabled()) {
             List<PlayerInfo> list = cir.getReturnValue();
-            int limit = ExtraTab.INSTANCE.limit.getValue().intValue();
+            int limit = TabUtils.INSTANCE.limit.getValue().intValue();
             if (list.size() > limit) {
                 cir.setReturnValue(list.subList(0, limit));
             }
@@ -30,17 +30,17 @@ public class MixinPlayerTabOverlay {
 
     @Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true)
     private void onGetNameForDisplay(PlayerInfo playerInfo, CallbackInfoReturnable<Component> cir) {
-        if (ExtraTab.INSTANCE.getEnabled()) {
+        if (TabUtils.INSTANCE.getEnabled()) {
             Component name = cir.getReturnValue();
             String rawName = playerInfo.getProfile().name();
             String nameStr = name != null ? name.getString() : rawName;
 
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (rawName.equals(mc.getUser().getName())) {
-                int selfColor = ExtraTab.INSTANCE.selfColor.getValue();
+                int selfColor = TabUtils.INSTANCE.selfColor.getValue();
                 cir.setReturnValue(Component.literal(nameStr).withStyle(style -> style.withColor(selfColor)));
             } else if (ravex.manager.FriendManager.INSTANCE.isFriend(rawName)) {
-                int friendColor = ExtraTab.INSTANCE.friendColor.getValue();
+                int friendColor = TabUtils.INSTANCE.friendColor.getValue();
                 cir.setReturnValue(Component.literal(nameStr).withStyle(style -> style.withColor(friendColor)));
             }
         }
@@ -48,7 +48,7 @@ public class MixinPlayerTabOverlay {
 
     @Inject(method = "renderPingIcon", at = @At("HEAD"), cancellable = true)
     private void onRenderPingIcon(GuiGraphics graphics, int width, int x, int y, PlayerInfo playerInfo, CallbackInfo ci) {
-        if (ExtraTab.INSTANCE.getEnabled() && ExtraTab.INSTANCE.showPing.getValue()) {
+        if (TabUtils.INSTANCE.getEnabled() && TabUtils.INSTANCE.showPing.getValue()) {
             ci.cancel();
             int latency = playerInfo.getLatency();
             String pingStr = latency + "ms";

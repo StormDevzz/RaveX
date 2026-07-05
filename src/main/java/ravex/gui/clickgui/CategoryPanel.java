@@ -5,8 +5,9 @@ import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ClickGUI;
 import ravex.modules.Category;
 import ravex.modules.Module;
-import ravex.modules.ModuleManager;
-import ravex.modules.render.ClickGui;
+import ravex.manager.ModuleManager;
+import ravex.utility.render.Render2DEngine;
+import ravex.modules.client.ClickGui;
 import ravex.utility.render.FontRenderUtility;
 import java.awt.*;
 import java.util.ArrayList;
@@ -28,7 +29,6 @@ public class CategoryPanel {
     private double dragOffsetX = 0;
     private double dragOffsetY = 0;
 
-    private final int width = 120;
     private final List<ModuleButton> allButtons = new ArrayList<>();
     private float headerAnim = 0f;
     private double scrollOffset = 0.0;
@@ -41,6 +41,7 @@ public class CategoryPanel {
         this.targetX = x;
         this.targetY = y;
         List<Module> modules = new ArrayList<>(ModuleManager.INSTANCE.getByCategory(category));
+        modules.removeIf(Module::isHud);
         modules.sort((m1, m2) -> m1.getName().compareToIgnoreCase(m2.getName()));
         for (Module m : modules) {
             allButtons.add(new ModuleButton(m));
@@ -95,84 +96,90 @@ public class CategoryPanel {
 
         int ix = (int) Math.round(x);
         int iy = (int) Math.round(y);
+        int width = ClickGui.INSTANCE.panelWidth.getValue().intValue();
+        int activeColor = ColorUtility.getActiveColor();
+
+        boolean hasSearch = searchQuery != null && !searchQuery.isEmpty();
+        for (ModuleButton btn : allButtons) {
+            if (!btn.getModule().isVisible()) continue;
+            boolean matches = !hasSearch || btn.getModule().getName().toLowerCase().contains(searchQuery.toLowerCase());
+            btn.updateSearchReveal(matches, hasSearch);
+        }
 
         List<ModuleButton> visible = filterButtons(searchQuery);
-        if (visible.isEmpty() && !searchQuery.isEmpty()) return;
+        if (visible.isEmpty() && hasSearch) return;
         if (visible.isEmpty() && allButtons.isEmpty()) return;
 
         int btnH = ClickGui.INSTANCE.buttonHeight.getValue().intValue();
         int listTop = iy + 18;
-        int totalH = getCurrentHeight(searchQuery);
-        int viewportH = getBaseHeight(searchQuery);
-        int panelBot = iy + totalH;
+        int totalH = 22;
+        for (ModuleButton btn : visible) {
+            totalH += Math.max(1, (int)(btnH * btn.getSearchReveal()));
+        }
+        boolean sepMode = ClickGui.INSTANCE.separateSettings.getValue();
+        if (!sepMode) {
+            for (ModuleButton btn : visible) {
+                if (btn.isExpanded()) totalH += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
+            }
+        }
+        int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.55f);
+        int viewportH = Math.min(totalH, maxPanelHeight);
+        int panelBot = iy + viewportH;
 
-        
-        scrollVelocity *= 0.92;
+        scrollVelocity *= 0.85;
         if (Math.abs(scrollVelocity) < 0.5) scrollVelocity = 0;
         scrollOffset += scrollVelocity;
         int maxScroll = max(0, totalH - viewportH);
         scrollOffset = max(-maxScroll, min(0.0, scrollOffset));
 
-        int activeColor = ColorUtility.getActiveColor();
+        int panelH = panelBot - iy;
+        int r = Math.min(ClickGui.INSTANCE.cornerRadius.getValue().intValue(), panelH / 2);
 
-        
-        graphics.fill(ix + 3, iy + 3, ix + width + 3, panelBot + 3, 0x40000000);
+        int pAlpha = ravex.modules.client.ClickGui.INSTANCE.panelOpacity.getValue().intValue();
+        Render2DEngine.drawRound(graphics, ix, iy, width, panelH, r, ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, pAlpha));
+
         if (ClickGui.INSTANCE.outlines.getValue()) {
             int borderColor = ClickGui.INSTANCE.outlineColor.getValue();
-            graphics.fill(ix - 1, iy - 1, ix + width + 1, panelBot + 1, borderColor);
-        }
-        graphics.fill(ix, iy, ix + width, panelBot, ColorUtility.PANEL_BODY_END);
-        graphics.fill(ix, iy, ix + width, iy + 18, ColorUtility.HEADER_COLOR);
-        if (ClickGui.INSTANCE.outlines.getValue()) {
-            graphics.fill(ix, iy + 17, ix + width, iy + 18, ClickGui.INSTANCE.outlineColor.getValue());
-        } else {
-            graphics.fill(ix, iy + 17, ix + width, iy + 18, 0x15FFFFFF);
+            Render2DEngine.drawRound(graphics, ix - 1, iy - 1, width + 2, panelH + 2, r, borderColor);
         }
 
-        
-
-
-        
         Identifier catTexWhite = ravex.utility.render.TextureLoader.getCategoryTextureWhite(category);
         if (catTexWhite != null) {
-            int iconSize = 18;
-            int iconX = ix + 2;
-            int iconY = iy;
+            int iconSize = 14;
+            int iconX = ix + 5;
+            int iconY = iy + 2;
             graphics.blit(catTexWhite, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
         }
 
-        
         String header = category.getDisplayName();
         int headerY = iy + (18 - FontRenderUtility.getFontHeight()) / 2 + 1;
         FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header,
-            ix + ravex.modules.client.Settings.INSTANCE.headerTextX.getValue().intValue(), headerY, 0xFFFFFFFF, true);
+            ix + 23, headerY, 0xFFFFFFFF, true);
 
-        
         if (ClickGui.INSTANCE.moduleCounter.getValue()) {
-            List<ModuleButton> visibleModules = filterButtons(searchQuery);
-            int enabled = (int) visibleModules.stream().filter(b -> b.getModule().getEnabled()).count();
-            int total = visibleModules.size();
+            int enabled = 0;
+            for (ModuleButton b : visible) {
+                if (b.getModule().getEnabled()) enabled++;
+            }
+            int total = visible.size();
             String countText = enabled + "/" + total;
             int cw = FontRenderUtility.getStringWidth(countText);
             int pad = 4;
-            int badgeX = ix + width - cw - pad - 4;
-            int badgeY = iy + 3;
-            int badgeH = 12;
-            graphics.fill(badgeX, badgeY, badgeX + cw + pad * 2, badgeY + badgeH, 0x30000000);
-            graphics.fill(badgeX, badgeY, badgeX + cw + pad * 2, badgeY + badgeH, ColorUtility.withAlpha(activeColor, 20));
-            graphics.fill(badgeX, badgeY + badgeH - 1, badgeX + cw + pad * 2, badgeY + badgeH, ColorUtility.withAlpha(activeColor, 60));
+            int badgeX = ix + width - cw - pad - 8;
+            int badgeY = iy + 4;
+            int badgeH = 14;
+            Render2DEngine.drawRound(graphics, badgeX, badgeY, cw + pad * 2, badgeH, 4, 0x22000000);
             FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, countText,
                 badgeX + pad, badgeY + (badgeH - FontRenderUtility.getFontHeight()) / 2 + 1,
                 enabled == total ? 0xFFA0E0A0 : 0xFFE0E0E0, true);
         }
 
-        
         if (totalH > viewportH || scrollOffset != 0) {
             graphics.enableScissor(ix, listTop, ix + width, panelBot);
         }
         int[] renderYOut = { listTop + (int) Math.round(scrollOffset) };
         for (ModuleButton btn : visible)
-            btn.render(graphics, ix, iy, width, mouseX, mouseY, renderYOut, searchQuery);
+            btn.render(graphics, ix, iy, width, mouseX, mouseY, renderYOut, searchQuery, listTop, panelBot);
         if (totalH > viewportH || scrollOffset != 0) {
             graphics.disableScissor();
         }
@@ -189,19 +196,15 @@ public class CategoryPanel {
     }
 
     private List<ModuleButton> filterButtons(String query) {
-        List<ModuleButton> visible = allButtons.stream()
-            .filter(b -> b.getModule().isVisible())
-            .collect(Collectors.toList());
-        if (query == null || query.isEmpty()) return visible;
-        String lower = query.toLowerCase();
-        return visible.stream()
-            .filter(b -> b.getModule().getName().toLowerCase().contains(lower))
+        return allButtons.stream()
+            .filter(b -> b.getModule().isVisible() && b.getSearchReveal() > 0.001f)
             .collect(Collectors.toList());
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, net.minecraft.client.Minecraft mc) {
         int ix = (int) x;
         int iy = (int) y;
+        int width = ClickGui.INSTANCE.panelWidth.getValue().intValue();
 
         if (button == 0 && mouseX >= ix && mouseX <= ix + width && mouseY >= iy && mouseY <= iy + 18) {
             dragging = true;
@@ -211,9 +214,10 @@ public class CategoryPanel {
         }
 
         String query = ClickGUI.searchQuery;
-        int listTop = iy + 18;
+        int listTop = iy + 22;
         int totalH = getCurrentHeight(query);
-        int panelBot = iy + totalH;
+        int maxPanelHeight = (int)(mc.getWindow().getGuiScaledHeight() * 0.55f);
+        int panelBot = iy + Math.min(totalH, maxPanelHeight);
 
         if (mouseY < listTop || mouseY > panelBot) return false;
 
@@ -229,13 +233,13 @@ public class CategoryPanel {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, String searchQuery) {
         int ix = (int) x;
         int iy = (int) y;
-        int listTop = iy + 18;
+        int width = ClickGui.INSTANCE.panelWidth.getValue().intValue();
+        int listTop = iy + 22;
         int totalH = getCurrentHeight(searchQuery);
-        int panelBot = iy + totalH;
+        int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.55f);
+        int panelBot = iy + Math.min(totalH, maxPanelHeight);
 
-        
         if (mouseX >= ix && mouseX <= ix + width && mouseY >= iy && mouseY <= panelBot) {
-            
             if (!ClickGui.INSTANCE.separateSettings.getValue()) {
                 List<ModuleButton> visible = filterButtons(searchQuery);
                 int btnH = ClickGui.INSTANCE.buttonHeight.getValue().intValue();
@@ -255,38 +259,35 @@ public class CategoryPanel {
                 }
             }
 
-            
-            int screenH = net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight();
-            double minY = -totalH + 40;
-            double maxY = screenH - 20;
-            targetY = Math.max(minY, Math.min(maxY, targetY + verticalAmount * 16.0));
+            scrollVelocity += verticalAmount * 6;
             return true;
         }
         return false;
     }
 
-    
     public int getCurrentHeight(String searchQuery) {
+        int width = ClickGui.INSTANCE.panelWidth.getValue().intValue();
         List<ModuleButton> visible = filterButtons(searchQuery);
         if (visible.isEmpty() && !searchQuery.isEmpty()) return 0;
         if (visible.isEmpty() && allButtons.isEmpty()) return 0;
 
-        int btnH = ravex.modules.render.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
-        int h = 18 + visible.size() * btnH;
+        int btnH = ravex.modules.client.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
+        int h = 22;
+        for (ModuleButton btn : visible) {
+            h += Math.max(1, (int)(btnH * btn.getSearchReveal()));
+        }
 
-        boolean sepMode = ravex.modules.render.ClickGui.INSTANCE.separateSettings.getValue();
+        boolean sepMode = ravex.modules.client.ClickGui.INSTANCE.separateSettings.getValue();
         if (!sepMode) {
-            int panelW = this.width;
             for (ModuleButton btn : visible) {
                 if (btn.isExpanded()) {
-                    h += btn.getExpandedHeight(panelW);
+                    h += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
                 }
             }
         }
         return h;
     }
 
-    
     public int getBaseHeight(String searchQuery) {
         return getCurrentHeight(searchQuery);
     }

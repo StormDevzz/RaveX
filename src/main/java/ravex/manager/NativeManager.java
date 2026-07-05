@@ -18,24 +18,17 @@ public class NativeManager {
         if (checked) return;
         checked = true;
 
-        System.out.println("[RaveX] [NativeManager] firing up native checks, let's roll!");
-
         try {
-            
             NativeLoader.load();
             if (NativeLoader.isNativeAvailable()) {
-                System.out.println("[RaveX] [NativeManager] main ravex_jni library loaded successfully, let's go!");
-                
-                
                 nativeCheckNatives();
-                
                 nativeAvailable = true;
+                ravex.RaveX.LOGGER.info("[NativeManager] Native checks passed");
             } else {
-                System.err.println("[RaveX] [NativeManager] WARNING: native ravex_jni library is MIA!");
+                ravex.RaveX.LOGGER.warn("[NativeManager] Native library not available");
             }
         } catch (Throwable t) {
-            System.err.println("[RaveX] [NativeManager] damn, check failed for native library: " + t.getMessage());
-            t.printStackTrace();
+            ravex.RaveX.LOGGER.error("[NativeManager] Check failed: {}", t.getMessage());
         }
     }
 

@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -9,33 +8,21 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import java.util.List;
-
 public class AutoWeapon extends Module {
     public static final AutoWeapon INSTANCE = new AutoWeapon();
-
     public final ModeParameter swapMode = new ModeParameter("Swap Mode", "Normal",
             List.of("Normal", "Silent", "None"));
     public final BooleanParameter swordsOnly = new BooleanParameter("Swords Only", false);
-
-    private AutoWeapon() {
-        super("AutoWeapon", Category.COMBAT);
-        addParameter(swapMode);
-        addParameter(swordsOnly);
-    }
 
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-
         if (swapMode.getValue().equals("None")) return;
-
         if (mc.options.keyAttack.isDown() && mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof LivingEntity target) {
             if (!target.isAlive() || target == mc.player) return;
-
             int bestSlot = -1;
             double bestDmg = -1.0;
-
             for (int i = 0; i < 9; i++) {
                 ItemStack stack = mc.player.getInventory().getItem(i);
                 if (swordsOnly.getValue() && !isSword(stack.getItem())) continue;
@@ -45,7 +32,6 @@ public class AutoWeapon extends Module {
                     bestSlot = i;
                 }
             }
-
             if (bestSlot != -1 && bestSlot != mc.player.getInventory().getSelectedSlot() && bestDmg > 1.0) {
                 if (swapMode.getValue().equals("Silent")) {
                     mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(bestSlot));
@@ -55,7 +41,6 @@ public class AutoWeapon extends Module {
             }
         }
     }
-
     private boolean isSword(net.minecraft.world.item.Item item) {
         return item == net.minecraft.world.item.Items.WOODEN_SWORD ||
                item == net.minecraft.world.item.Items.STONE_SWORD ||
@@ -64,7 +49,6 @@ public class AutoWeapon extends Module {
                item == net.minecraft.world.item.Items.DIAMOND_SWORD ||
                item == net.minecraft.world.item.Items.NETHERITE_SWORD;
     }
-
     private double getWeaponDamage(ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
         String name = stack.getItem().toString().toLowerCase();

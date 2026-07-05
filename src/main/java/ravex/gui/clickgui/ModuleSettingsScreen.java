@@ -25,7 +25,6 @@ public class ModuleSettingsScreen extends Screen {
     private final Module module;
     private final List<ParameterElement> paramElements = new ArrayList<>();
     private float scrollOffset = 0;
-    private float targetScrollOffset = 0;
 
     private long openTime = -1;
     private boolean closing = false;
@@ -125,13 +124,7 @@ public class ModuleSettingsScreen extends Screen {
         int contentH = lastContentH;
 
         float maxScroll = Math.max(0, lastTotalContentH - contentH);
-        if (targetScrollOffset < scrollOffset) {
-            scrollOffset = Math.max(targetScrollOffset, scrollOffset - 8.0f);
-        } else if (targetScrollOffset > scrollOffset) {
-            scrollOffset = Math.min(targetScrollOffset, scrollOffset + 8.0f);
-        }
         scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset));
-        targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset));
 
         graphics.enableScissor(px + 4, contentY, px + pw - 4, contentY + contentH);
 
@@ -205,8 +198,7 @@ public class ModuleSettingsScreen extends Screen {
                 paramY += pHeight;
             }
 
-            float maxScroll = Math.max(0, lastTotalContentH - lastContentH);
-            targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset - (float)verticalAmount * 18));
+            scrollOffset += (float)verticalAmount * 18;
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);

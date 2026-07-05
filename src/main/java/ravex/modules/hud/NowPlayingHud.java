@@ -1,77 +1,55 @@
 package ravex.modules.hud;
-
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.HudModule;
+import ravex.modules.Module;
 import ravex.modules.render.Hud;
-import ravex.utility.misc.NativeLoader;
+import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.render.HudRenderer;
-
-public class NowPlayingHud extends HudModule {
+public class NowPlayingHud extends Module {
     public static final NowPlayingHud INSTANCE = new NowPlayingHud();
-
-    private static boolean nativeAvailable = false;
-
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_mediaquery");
     private String title = "";
     private String artist = "";
     private String artUrl = "";
     private boolean playing = false;
     private long lastQuery = 0;
-
     private DynamicTexture coverTexture;
     private Identifier coverId;
     private String lastLoadedUrl = "";
     private int coverSize = 28;
     private String displayText = "";
-
     static {
-        try {
-            nativeAvailable = NativeLoader.loadLibrary("ravex_mediaquery");
-            if (nativeAvailable) {
-                nativeAvailable = nativeIsAvailable();
-            }
-        } catch (Throwable t) {
-            nativeAvailable = false;
-        }
+        NATIVE.load();
     }
-
     private NowPlayingHud() {
         super("NowPlaying", 10, 310, 180, 20);
     }
-
     @Override
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Hud.INSTANCE.getEnabled()) return;
-
         long now = System.currentTimeMillis();
         if (now - lastQuery > 2000) {
             lastQuery = now;
             triggerQuery();
         }
-
         if (displayText.isEmpty()) return;
-
         int activeColor = ColorUtility.getActiveColor();
         int bx = getX();
         int by = getY();
         int pad = 4;
         int textX = bx + pad + coverSize + pad;
         int textY = by + pad;
-
         String titleStr = (playing ? "\u25B6 " : "\u23F8 ") + displayText;
         String subStr = playing && !artist.isEmpty() ? artist : "";
-
         int tw = HudRenderer.textWidth(titleStr);
         int sw = HudRenderer.textWidth(subStr);
         int pw = Math.max(tw, sw) + pad * 2 + coverSize + pad;
         int ph = Math.max(HudRenderer.fontHeight() + (subStr.isEmpty() ? 0 : HudRenderer.fontHeight() + 2), coverSize) + pad * 2;
-
         HudRenderer.drawPanel(graphics, bx, by, pw, ph, activeColor);
-
         int covY = by + pad + (ph - coverSize - pad * 2) / 2;
         if (coverTexture != null && coverId != null) {
             graphics.blit(coverId, bx + pad, covY, 0, 0, coverSize, coverSize, coverSize, coverSize);
@@ -80,15 +58,13 @@ public class NowPlayingHud extends HudModule {
             graphics.fill(bx + pad + coverSize / 2 - 4, covY + coverSize / 2 - 4,
                     bx + pad + coverSize / 2 + 4, covY + coverSize / 2 + 4, activeColor);
         }
-
         HudRenderer.drawText(graphics, titleStr, textX, textY, playing ? 0xFFD0D0E0 : 0xFF8080A0, true);
         if (!subStr.isEmpty()) {
             HudRenderer.drawText(graphics, subStr, textX, textY + HudRenderer.fontHeight() + 2, 0xFF707090, false);
         }
     }
-
     private void triggerQuery() {
-        if (!nativeAvailable) return;
+        if (!NATIVE.isLoaded()) return;
         Minecraft.getInstance().execute(() -> {
             try {
                 String raw = nativeGetNowPlaying();
@@ -117,7 +93,6 @@ public class NowPlayingHud extends HudModule {
             }
         });
     }
-
     private void downloadCoverAsync(String url) {
         new Thread(() -> {
             try {
@@ -148,7 +123,6 @@ public class NowPlayingHud extends HudModule {
             }
         }, "RaveX-Cover").start();
     }
-
     private void clearTrack() {
         title = "";
         artist = "";
@@ -156,7 +130,6 @@ public class NowPlayingHud extends HudModule {
         lastLoadedUrl = "";
         displayText = "";
     }
-
     @Override
     protected void onDisable() {
         if (coverTexture != null) {
@@ -166,7 +139,6 @@ public class NowPlayingHud extends HudModule {
         coverId = null;
         clearTrack();
     }
-
     private static native String nativeGetNowPlaying();
     private static native boolean nativeIsAvailable();
     private static native byte[] nativeDownloadArt(String url);

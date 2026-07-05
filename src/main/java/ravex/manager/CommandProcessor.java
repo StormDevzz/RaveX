@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import ravex.modules.misc.Commands;
 import ravex.modules.Module;
-import ravex.modules.ModuleManager;
+import ravex.manager.ModuleManager;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
