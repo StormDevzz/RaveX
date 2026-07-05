@@ -1,54 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_antiquit SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-a
-n
-t
-i
-q
-u
-i
-t
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-a
-n
-t
-i
-q
-u
-i
-t
-_
-j
-n
-i
-.
-c
-p
-p
+    main/antiquit.cpp
+    main/antiquit_jni.cpp
 )
 
 find_package(JNI REQUIRED)

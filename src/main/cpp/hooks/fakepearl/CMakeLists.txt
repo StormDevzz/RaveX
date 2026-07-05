@@ -1,56 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_fakepearl SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-f
-a
-k
-e
-p
-e
-a
-r
-l
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-f
-a
-k
-e
-p
-e
-a
-r
-l
-_
-j
-n
-i
-.
-c
-p
-p
+    main/fakepearl.cpp
+    main/fakepearl_jni.cpp
 )
 
 find_package(JNI REQUIRED)

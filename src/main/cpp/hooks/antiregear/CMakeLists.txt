@@ -1,58 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_antiregear SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-a
-n
-t
-i
-r
-e
-g
-e
-a
-r
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-a
-n
-t
-i
-r
-e
-g
-e
-a
-r
-_
-j
-n
-i
-.
-c
-p
-p
+    main/antiregear.cpp
+    main/antiregear_jni.cpp
 )
 
 find_package(JNI REQUIRED)

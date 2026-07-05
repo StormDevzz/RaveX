@@ -1,58 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_faststairs SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-f
-a
-s
-t
-s
-t
-a
-i
-r
-s
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-f
-a
-s
-t
-s
-t
-a
-i
-r
-s
-_
-j
-n
-i
-.
-c
-p
-p
+    main/faststairs.cpp
+    main/faststairs_jni.cpp
 )
 
 find_package(JNI REQUIRED)

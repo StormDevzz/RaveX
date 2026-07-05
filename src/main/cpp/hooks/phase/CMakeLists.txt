@@ -1,48 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_library(ravex_phase SHARED
- 
- 
- 
- 
-m
-a
-i
-n
-/
-p
-h
-a
-s
-e
-.
-c
-p
-p
-
-
- 
- 
- 
- 
-m
-a
-i
-n
-/
-p
-h
-a
-s
-e
-_
-j
-n
-i
-.
-c
-p
-p
+    main/phase.cpp
+    main/phase_jni.cpp
 )
 
 find_package(JNI REQUIRED)
