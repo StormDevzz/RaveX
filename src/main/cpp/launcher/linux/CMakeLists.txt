@@ -115,6 +115,7 @@ add_executable(kickx_launcher
 )
 target_include_directories(kickx_launcher PRIVATE
     .
+    simple/include
     simple/acc/include
     simple/button/include
     simple/file/include
