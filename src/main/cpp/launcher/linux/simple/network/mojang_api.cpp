@@ -85,7 +85,7 @@ static bool downloadFabricLibraries(LauncherState *state,
 
     
     {
-        std::string installerMeta = http_get("https://meta.fabricmc.net/v2/versions/installer"
+        std::string installerMeta = http_get("https://meta.fabricmc.net/v2/versions/installer");
         if (!installerMeta.empty() && installerMeta != "[]" && installerMeta != "[\n]") {
             
             size_t verKey = installerMeta.find("\"version\":");
@@ -121,7 +121,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
     using namespace event;
     queue_progress(state, "Fetching Mojang manifest...", 0.0);
 
-    std::string manifest = http_get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
+    std::string manifest = http_get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json");
     if (manifest.empty()) {
         queue_hide(state);
         return false;
@@ -193,7 +193,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
     size_t offset = 0;
     std::vector<std::string> lib_urls, lib_dests;
     while (true) {
-        size_t pos = version_json.find("https://"
+        size_t pos = version_json.find("https://");
         if (pos == std::string::npos) break;
         size_t url_end = version_json.find("\"", pos);
         if (url_end == std::string::npos) break;
@@ -256,7 +256,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
                     std::string obj_path = state->kickx_dir + "/assets/objects/" + prefix + "/" + hash;
                     struct stat st;
                     if (stat(obj_path.c_str(), &st) != 0) {
-                        std::string url = "https://resources.download.minecraft.net/"
+                        std::string url = "https://resources.download.minecraft.net/" + prefix + "/" + hash;
                         asset_urls.push_back(url);
                         asset_dests.push_back(obj_path);
                     }
@@ -275,6 +275,43 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
 
                     
                     
-                    std::string cmd =
+                    std::string cmd = "cat \"" + list_path + "\" | "
                         "xargs -P 32 -n 2 sh -c '"
-                        "mkdir -p \"${2%
+                        "mkdir -p \"${2%}\" \"${3%}\" && "
+                        "cp \"${3}\" \"${2}\"' _";
+                    system(cmd.c_str());
+                }
+            }
+        }
+    }
+
+    queue_progress(state, "Downloading assets done!", 0.65);
+
+    queue_progress(state, "Checking logging config...", 0.66);
+
+    size_t logging_pos = version_json.find("\"logging\":");
+    if (logging_pos != std::string::npos) {
+        size_t log_url_pos = version_json.find("\"url\":", logging_pos);
+        if (log_url_pos != std::string::npos) {
+            start = version_json.find("\"", log_url_pos + 6);
+            end = version_json.find("\"", start + 1);
+            if (start != std::string::npos && end != std::string::npos) {
+                std::string log_url = version_json.substr(start + 1, end - start - 1);
+                size_t log_id_pos = version_json.find("\"id\":", logging_pos);
+                if (log_id_pos != std::string::npos) {
+                    start = version_json.find("\"", log_id_pos + 5);
+                    end = version_json.find("\"", start + 1);
+                    if (start != std::string::npos && end != std::string::npos) {
+                        std::string log_id = version_json.substr(start + 1, end - start - 1);
+                        std::string log_path = state->kickx_dir + "/logging/" + log_id;
+                        ensureDirectory(state->kickx_dir + "/logging");
+                        http_download(log_url, log_path);
+                    }
+                }
+            }
+        }
+    }
+
+    queue_progress(state, "Ready!", 1.0);
+    return true;
+}
