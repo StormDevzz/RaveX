@@ -33,7 +33,7 @@ static std::string extractJsonValue(const std::string& json, const std::string& 
 ReleaseInfo GithubUtility::getLatestRelease() {
     ReleaseInfo info;
     info.success = false;
-    std::string json = fetchUrl("https://api.github.com/repos/StormDevzz/RaveX/releases/latest"
+    std::string json = fetchUrl("https://api.github.com/repos/StormDevzz/RaveX/releases/latest");
     if (json.empty()) return info;
 
     info.tagName = extractJsonValue(json, "tag_name");
