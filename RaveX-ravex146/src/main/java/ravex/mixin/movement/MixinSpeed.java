@@ -1,0 +1,170 @@
+package ravex.mixin.movement;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import ravex.modules.movement.Speed;
+
+@Mixin(LocalPlayer.class)
+public abstract class MixinSpeed {
+
+    private static float getForward() {
+        Minecraft mc = Minecraft.getInstance();
+        float f = 0;
+        if (mc.options.keyUp.isDown()) f++;
+        if (mc.options.keyDown.isDown()) f--;
+        return f;
+    }
+
+    private static float getStrafe() {
+        Minecraft mc = Minecraft.getInstance();
+        float s = 0;
+        if (mc.options.keyLeft.isDown()) s++;
+        if (mc.options.keyRight.isDown()) s--;
+        return s;
+    }
+
+    private static boolean isJumping() {
+        return Minecraft.getInstance().options.keyJump.isDown();
+    }
+
+    @Inject(method = "aiStep", at = @At("TAIL"))
+    private void onAiStep(CallbackInfo ci) {
+        if (!Speed.INSTANCE.getEnabled()) return;
+
+        LocalPlayer player = (LocalPlayer)(Object)this;
+        if (player.horizontalCollision || player.isFallFlying()) return;
+
+        String mode = Speed.INSTANCE.mode.getValue();
+        double baseSpeed = Speed.INSTANCE.speed.getValue();
+
+        Vec3 motion = player.getDeltaMovement();
+
+        switch (mode) {
+            case "Vanilla" -> {
+                float forward = getForward();
+                float strafe = getStrafe();
+                if (forward == 0 && strafe == 0) return;
+
+                double speedVal = baseSpeed * 0.15;
+                double yaw = Math.toRadians(player.getYRot());
+                double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+
+                if (player.onGround()) {
+                    player.setDeltaMovement(velX, motion.y, velZ);
+                } else {
+                    double factor = 0.8;
+                    player.setDeltaMovement(
+                        motion.x * factor + velX * (1 - factor),
+                        motion.y,
+                        motion.z * factor + velZ * (1 - factor)
+                    );
+                }
+            }
+            case "Strafe" -> {
+                if (!Speed.INSTANCE.strafeJump.getValue()) return;
+
+                float forward = getForward();
+                float strafe = getStrafe();
+                if (forward == 0 && strafe == 0) return;
+
+                if (player.onGround()) {
+                    double speedVal = baseSpeed * 0.12;
+                    double yaw = Math.toRadians(player.getYRot());
+                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+
+                    double currentHorizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
+                    double newHorizontal = Math.sqrt(velX * velX + velZ * velZ);
+
+                    if (newHorizontal > currentHorizontal) {
+                        player.setDeltaMovement(velX, motion.y, velZ);
+                    }
+                } else {
+                    double speedVal = baseSpeed * 0.08;
+                    double yaw = Math.toRadians(player.getYRot());
+                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+
+                    double currentHorizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
+                    double newHorizontal = Math.sqrt(velX * velX + velZ * velZ);
+
+                    if (newHorizontal > currentHorizontal) {
+                        double ratio = Math.min(1.0, currentHorizontal / Math.max(0.01, newHorizontal));
+                        player.setDeltaMovement(
+                            motion.x + velX * (1 - ratio) * 0.35,
+                            motion.y,
+                            motion.z + velZ * (1 - ratio) * 0.35
+                        );
+                    }
+                }
+            }
+            case "NCP" -> {
+                if (player.onGround()) {
+                    float forward = getForward();
+                    float strafe = getStrafe();
+                    if (forward == 0 && strafe == 0) return;
+
+                    double speedVal = baseSpeed * 0.10;
+                    double yaw = Math.toRadians(player.getYRot());
+                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+
+                    player.setDeltaMovement(velX, motion.y, velZ);
+                    if (isJumping()) {
+                        player.setDeltaMovement(player.getDeltaMovement().x, 0.42, player.getDeltaMovement().z);
+                    }
+                } else if (player.getDeltaMovement().y < 0) {
+                    double speedVal = baseSpeed * 0.06;
+                    float forward = getForward();
+                    float strafe = getStrafe();
+                    double yaw = Math.toRadians(player.getYRot());
+                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+
+                    player.setDeltaMovement(
+                        motion.x * 0.91 + velX * 0.5,
+                        motion.y,
+                        motion.z * 0.91 + velZ * 0.5
+                    );
+                }
+            }
+            case "Matrix" -> {
+                if (player.onGround()) {
+                    float forward = getForward();
+                    float strafe = getStrafe();
+                    if (forward == 0 && strafe == 0) return;
+
+                    double speedVal = baseSpeed * 0.08;
+                    double yaw = Math.toRadians(player.getYRot());
+                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+
+                    player.setDeltaMovement(velX, motion.y, velZ);
+
+                    if (isJumping() && player.tickCount % 2 == 0) {
+                        player.setDeltaMovement(player.getDeltaMovement().x, 0.38, player.getDeltaMovement().z);
+                    }
+                } else if (motion.y < -0.1) {
+                    double speedVal = baseSpeed * 0.04;
+                    float forward = getForward();
+                    float strafe = getStrafe();
+                    double yaw = Math.toRadians(player.getYRot());
+                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+
+                    player.setDeltaMovement(
+                        motion.x + velX * 0.3,
+                        motion.y,
+                        motion.z + velZ * 0.3
+                    );
+                }
+            }
+        }
+    }
+}
