@@ -6,7 +6,6 @@ import net.minecraft.client.gui.screens.inventory.SmokerScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.inventory.AbstractFurnaceMenu;
 import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import ravex.modules.Category;
@@ -57,7 +56,7 @@ public class AutoSmelt extends Module {
         if (furnace.getBurnProgress() > 0.01f) return;
         if (!furnace.getSlot(0).hasItem()) {
             for (int i = playerInvStart; i < furnace.slots.size(); i++) {
-                ItemStack stack = furnace.slots.get(i).getItem();
+                var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (furnace.canSmelt(stack)) {
                     mc.gameMode.handleInventoryMouseClick(
@@ -67,7 +66,7 @@ public class AutoSmelt extends Module {
                 }
             }
             for (int i = hotbarStart; i < furnace.slots.size(); i++) {
-                ItemStack stack = furnace.slots.get(i).getItem();
+                var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (furnace.canSmelt(stack)) {
                     mc.gameMode.handleInventoryMouseClick(
@@ -79,7 +78,7 @@ public class AutoSmelt extends Module {
         }
         if (autoFuel.getValue() && !furnace.getSlot(1).hasItem()) {
             for (int i = playerInvStart; i < furnace.slots.size(); i++) {
-                ItemStack stack = furnace.slots.get(i).getItem();
+                var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (furnace.isFuel(stack)) {
                     mc.gameMode.handleInventoryMouseClick(

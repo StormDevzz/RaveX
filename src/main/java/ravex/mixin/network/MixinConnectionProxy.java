@@ -7,8 +7,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import ravex.modules.misc.Proxy;
-import ravex.proxy.ProxyNative;
+import ravex.proxy.Proxy;
+import ravex.proxy.ProxyServer;
 
 import java.net.InetSocketAddress;
 
@@ -24,23 +24,22 @@ public class MixinConnectionProxy {
                                            CallbackInfoReturnable<Connection> ci) {
         if (recursing.get()) return;
 
-        Proxy proxy = Proxy.INSTANCE;
-        if (!proxy.getEnabled()) return;
+        if (!Proxy.isEnabled()) return;
 
         String targetHost = address.getHostString();
         int targetPort = address.getPort();
 
-        if (!ProxyNative.start(
-            proxy.getType(),
-            proxy.getHost(),
-            proxy.getPort(),
+        if (!ProxyServer.start(
+            Proxy.getType(),
+            Proxy.getHost(),
+            Proxy.getPort(),
             targetHost,
             targetPort,
-            proxy.hasAuth() ? proxy.getUsername() : "",
-            proxy.hasAuth() ? proxy.getPassword() : ""
+            Proxy.hasAuth() ? Proxy.getUsername() : "",
+            Proxy.hasAuth() ? Proxy.getPassword() : ""
         )) return;
 
-        int localPort = ProxyNative.getLocalPort();
+        int localPort = ProxyServer.getLocalPort();
         InetSocketAddress proxyAddr = new InetSocketAddress("127.0.0.1", localPort);
 
         recursing.set(true);

@@ -1,16 +1,13 @@
 package ravex.modules.render;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.Blocks;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 public class VoidESP extends Module {
     public static final VoidESP INSTANCE = new VoidESP();
     public final NumberParameter range = new NumberParameter("Range", 32, 8, 64, 4);
@@ -20,12 +17,8 @@ public class VoidESP extends Module {
     public final BooleanParameter wireframe = new BooleanParameter("Wireframe", true);
     public final BooleanParameter floorOnly = new BooleanParameter("FloorOnly", true);
     public final NumberParameter updateInterval = new NumberParameter("UpdateInterval", 20, 5, 100, 5);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_voidesp");
     private List<BlockPos> voidBlocks = new ArrayList<>();
     private long lastScan = 0;
-    static {
-        NATIVE.load();
-    }
 
     @Override
     public void onTick() {
@@ -34,27 +27,6 @@ public class VoidESP extends Module {
         long now = System.currentTimeMillis();
         if (now - lastScan < updateInterval.getValue().intValue() * 50) return;
         lastScan = now;
-        if (NATIVE.isLoaded()) {
-            double px = mc.player.getX();
-            double pz = mc.player.getZ();
-            double r = range.getValue();
-            int h = height.getValue().intValue();
-            boolean floor = floorOnly.getValue();
-            CompletableFuture.runAsync(() -> {
-                int[] data = nativeScanVoid(px, pz, r, h, floor);
-                List<BlockPos> result = new ArrayList<>();
-                if (data != null) {
-                    for (int i = 0; i < data.length; i += 2) {
-                        result.add(new BlockPos(data[i], 0, data[i + 1]));
-                    }
-                }
-                mc.execute(() -> voidBlocks = result);
-            });
-        } else {
-            scanVoidJava(mc);
-        }
-    }
-    private void scanVoidJava(Minecraft mc) {
         List<BlockPos> result = new ArrayList<>();
         BlockPos center = mc.player.blockPosition();
         int r = range.getValue().intValue();
@@ -73,9 +45,7 @@ public class VoidESP extends Module {
                                 break;
                             }
                         }
-                        if (!hasFloor) {
-                            result.add(pos);
-                        }
+                        if (!hasFloor) result.add(pos);
                     }
                 }
             }
@@ -85,5 +55,4 @@ public class VoidESP extends Module {
     public List<BlockPos> getVoidBlocks() {
         return voidBlocks;
     }
-    private static native int[] nativeScanVoid(double px, double pz, double range, int height, boolean floorOnly);
 }

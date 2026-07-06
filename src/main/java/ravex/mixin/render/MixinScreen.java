@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import ravex.manager.NotificationManager;
 import ravex.modules.render.NoRender;
 
 @Mixin(Screen.class)
@@ -18,5 +19,10 @@ public class MixinScreen {
                 ci.cancel();
             }
         }
+    }
+
+    @Inject(method = "render", at = @At("TAIL"))
+    private void onRenderTail(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+        NotificationManager.renderToasts(guiGraphics);
     }
 }

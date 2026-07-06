@@ -6,6 +6,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.EntityHitResult;
+import ravex.utility.misc.MobUtility;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -44,7 +45,8 @@ public class Criticals extends Module {
         if (seq == Sequence.LANDING) {
             if (autoAttack.getValue() && mc.hitResult instanceof EntityHitResult ehr) {
                 Entity target = ehr.getEntity();
-                if (target instanceof LivingEntity lt && lt.isAlive() && target != mc.player
+                LivingEntity lt = MobUtility.asLivingEntity(target);
+                if (lt != null && MobUtility.isAlive(lt) && target != mc.player
                     && mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
                     mc.player.connection.send(
                         ServerboundInteractPacket.createAttackPacket(target, mc.player.isShiftKeyDown()));

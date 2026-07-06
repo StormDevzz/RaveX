@@ -98,4 +98,120 @@ public class MobUtility {
         }
         return false;
     }
+
+    public static boolean isMountable(Entity entity) {
+        if (entity instanceof net.minecraft.world.entity.animal.equine.Horse) return true;
+        if (entity instanceof net.minecraft.world.entity.animal.equine.Donkey) return true;
+        if (entity instanceof net.minecraft.world.entity.animal.equine.Mule) return true;
+        if (entity instanceof net.minecraft.world.entity.animal.equine.SkeletonHorse) return true;
+        if (entity instanceof net.minecraft.world.entity.animal.equine.ZombieHorse) return true;
+        if (entity instanceof net.minecraft.world.entity.animal.equine.Llama) return true;
+        if (entity instanceof net.minecraft.world.entity.animal.pig.Pig pig && pig.isSaddled()) return true;
+        if (entity instanceof net.minecraft.world.entity.monster.Strider strider && strider.isSaddled()) return true;
+        return false;
+    }
+
+    public static boolean isVehicle(Entity entity) {
+        return entity != null && entity.isVehicle();
+    }
+
+    public static void interact(Minecraft mc, Entity target) {
+        if (mc.player != null && mc.gameMode != null) {
+            mc.gameMode.interact(mc.player, target, net.minecraft.world.InteractionHand.MAIN_HAND);
+        }
+    }
+
+    public static boolean isShearable(net.minecraft.world.entity.animal.sheep.Sheep sheep) {
+        return sheep.isAlive() && !sheep.isBaby() && !sheep.isSheared();
+    }
+
+    public static boolean isAdultSheep(Entity entity) {
+        return entity instanceof net.minecraft.world.entity.animal.sheep.Sheep sheep && isShearable(sheep);
+    }
+
+    public static boolean isVillager(Entity entity) {
+        return entity instanceof net.minecraft.world.entity.npc.villager.AbstractVillager v && v.isAlive() && !v.isBaby();
+    }
+
+    public static boolean isNameable(Entity entity) {
+        return entity instanceof LivingEntity living && !(entity instanceof Player)
+            && !(entity instanceof net.minecraft.world.entity.decoration.ArmorStand) && living.isAlive();
+    }
+
+    public static boolean hasName(Entity entity, String name) {
+        var cn = entity.getCustomName();
+        return cn != null && cn.getString().equals(name);
+    }
+
+    public static boolean isDead(LivingEntity entity) {
+        return entity == null || entity.isDeadOrDying();
+    }
+
+    public static double getAbsorption(LivingEntity entity) {
+        return entity.getAbsorptionAmount();
+    }
+
+    public static double getHealthWithAbsorption(LivingEntity entity) {
+        return entity.getHealth() + entity.getAbsorptionAmount();
+    }
+
+    public static void attack(Minecraft mc, Entity target) {
+        if (mc.player != null && mc.gameMode != null) {
+            mc.gameMode.attack(mc.player, target);
+        }
+    }
+
+    public static void swingHand(Minecraft mc) {
+        if (mc.player != null) {
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        }
+    }
+
+    public static boolean isMob(Entity entity) {
+        return entity instanceof net.minecraft.world.entity.Mob;
+    }
+
+    public static double distanceToPlayer(Entity entity) {
+        LocalPlayer p = Minecraft.getInstance().player;
+        return p != null ? p.distanceTo(entity) : Double.MAX_VALUE;
+    }
+
+    public static String getOwnerName(Entity entity, boolean displayUuid) {
+        if (!(entity instanceof net.minecraft.world.entity.OwnableEntity owned)) return null;
+        java.util.UUID uuid = null;
+        try {
+            for (var m : owned.getClass().getMethods()) {
+                if (m.getParameterCount() == 0 && m.getReturnType() == java.util.UUID.class) {
+                    uuid = (java.util.UUID) m.invoke(owned);
+                    if (uuid != null) break;
+                }
+            }
+        } catch (Exception ignored) {}
+        if (uuid == null) {
+            try {
+                var owner = owned.getOwner();
+                if (owner != null) uuid = owner.getUUID();
+            } catch (Exception ignored) {}
+        }
+        if (uuid == null) return null;
+        if (displayUuid) return uuid.toString();
+        try {
+            var owner = owned.getOwner();
+            if (owner != null) return owner.getScoreboardName();
+        } catch (Exception ignored) {}
+        try {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            var conn = mc.getConnection();
+            if (conn != null) {
+                var info = conn.getClass().getMethod("getPlayerInfo", java.util.UUID.class).invoke(conn, uuid);
+                if (info != null) {
+                    var profile = info.getClass().getMethod("getProfile").invoke(info);
+                    if (profile != null)
+                        return (String) profile.getClass().getMethod("getName").invoke(profile);
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
 }

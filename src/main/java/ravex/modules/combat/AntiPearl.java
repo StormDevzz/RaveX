@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
 import ravex.modules.Module;

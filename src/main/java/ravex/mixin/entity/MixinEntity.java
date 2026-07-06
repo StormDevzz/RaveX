@@ -222,7 +222,7 @@ public abstract class MixinEntity {
     private void onIsInWater(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled() && ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue()) {
+            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled() && ravex.modules.movement.LiquidControl.INSTANCE.water.getValue()) {
                 cir.setReturnValue(false);
             }
         }
@@ -232,7 +232,7 @@ public abstract class MixinEntity {
     private void onIsInLava(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled() && ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue()) {
+            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled() && ravex.modules.movement.LiquidControl.INSTANCE.lava.getValue()) {
                 cir.setReturnValue(false);
             }
         }
@@ -242,7 +242,7 @@ public abstract class MixinEntity {
     private void onUpdateInWaterStateAndDoFluidPushing(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled() && ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue()) {
+            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled() && ravex.modules.movement.LiquidControl.INSTANCE.water.getValue()) {
                 cir.setReturnValue(false);
             }
         }
@@ -252,10 +252,10 @@ public abstract class MixinEntity {
     private void onUpdateFluidHeightAndDoFluidPushing(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, double d, CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled()) {
-                boolean bypassWater = ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue();
-                boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
-                boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
+            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled()) {
+                boolean bypassWater = ravex.modules.movement.LiquidControl.INSTANCE.water.getValue();
+                boolean bypassLava = ravex.modules.movement.LiquidControl.INSTANCE.lava.getValue();
+                boolean bypassOthers = ravex.modules.movement.LiquidControl.INSTANCE.others.getValue();
                 
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
@@ -274,10 +274,10 @@ public abstract class MixinEntity {
     private void onIsEyeInFluid(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled()) {
-                boolean bypassWater = ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue();
-                boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
-                boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
+            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled()) {
+                boolean bypassWater = ravex.modules.movement.LiquidControl.INSTANCE.water.getValue();
+                boolean bypassLava = ravex.modules.movement.LiquidControl.INSTANCE.lava.getValue();
+                boolean bypassOthers = ravex.modules.movement.LiquidControl.INSTANCE.others.getValue();
                 
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);

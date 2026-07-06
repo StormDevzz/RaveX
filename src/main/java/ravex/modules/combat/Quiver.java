@@ -1,16 +1,15 @@
 package ravex.modules.combat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.inventory.ClickType;
-import net.minecraft.core.component.DataComponents;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import java.util.ArrayList;
 import java.util.List;
 public class Quiver extends Module {
@@ -19,9 +18,7 @@ public class Quiver extends Module {
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal"));
     public final NumberParameter chargeDuration = new NumberParameter("ChargeTicks", 3.0, 2.0, 10.0, 1.0);
     public final BooleanParameter autoSwapBow = new BooleanParameter("AutoSwapBow", true);
-    public static float silentYaw = 0;
-    public static float silentPitch = 0;
-    public static boolean hasSilentRotations = false;
+    public static final SilentRotation silentRotation = new SilentRotation();
     private int state = 0; 
     private int ticksHolding = 0;
     private int cooldownTicks = 0;
@@ -54,7 +51,7 @@ public class Quiver extends Module {
         arrowInvSlot = -1;
         originalBowHotbarSlot = -1;
         previousSelectedSlot = -1;
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
     }
     @Override
     public void onTick() {
@@ -74,9 +71,7 @@ public class Quiver extends Module {
             if (rotate.getValue().equals("Normal")) {
                 mc.player.setXRot(-90.0f);
             } else {
-                silentYaw = mc.player.getYRot();
-                silentPitch = -90.0f;
-                hasSilentRotations = true;
+                silentRotation.set(mc.player.getYRot(), -90.0f);
             }
             mc.options.keyUse.setDown(true);
             ticksHolding++;
@@ -87,7 +82,7 @@ public class Quiver extends Module {
                 restoreOffhandAndBow(mc);
                 state = 2;
                 cooldownTicks = 20;
-                hasSilentRotations = false;
+                silentRotation.hasRotation = false;
             }
             return;
         }
@@ -110,22 +105,17 @@ public class Quiver extends Module {
             return;
         }
         arrowInvSlot = bestArrowIndex;
-        previousSelectedSlot = mc.player.getInventory().getSelectedSlot();
+        previousSelectedSlot = InventoryUtility.getSelectedSlot(mc.player);
         if (autoSwapBow.getValue() && previousSelectedSlot != bowSlot) {
-            mc.player.getInventory().setSelectedSlot(bowSlot);
+            InventoryUtility.selectSlot(mc.player, bowSlot);
         }
-        int containerSlot = arrowInvSlot < 9 ? arrowInvSlot + 36 : arrowInvSlot;
-        mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
-        mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, 45, 0, ClickType.PICKUP, mc.player);
-        mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
+        InventoryUtility.swapToOffhand(mc, mc.player, arrowInvSlot);
         savedClientYaw = mc.player.getYRot();
         savedClientPitch = mc.player.getXRot();
         if (rotate.getValue().equals("Normal")) {
             mc.player.setXRot(-90.0f);
         } else {
-            silentYaw = mc.player.getYRot();
-            silentPitch = -90.0f;
-            hasSilentRotations = true;
+            silentRotation.set(mc.player.getYRot(), -90.0f);
         }
         mc.options.keyUse.setDown(true);
         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
@@ -134,14 +124,11 @@ public class Quiver extends Module {
     }
     private void restoreOffhandAndBow(Minecraft mc) {
         if (arrowInvSlot != -1) {
-            int containerSlot = arrowInvSlot < 9 ? arrowInvSlot + 36 : arrowInvSlot;
-            mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
-            mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, 45, 0, ClickType.PICKUP, mc.player);
-            mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
+            InventoryUtility.swapToOffhand(mc, mc.player, arrowInvSlot);
             arrowInvSlot = -1;
         }
         if (previousSelectedSlot != -1) {
-            mc.player.getInventory().setSelectedSlot(previousSelectedSlot);
+            InventoryUtility.selectSlot(mc.player, previousSelectedSlot);
             previousSelectedSlot = -1;
         }
         if (rotate.getValue().equals("Normal") && mc.player != null) {
@@ -150,11 +137,11 @@ public class Quiver extends Module {
         }
     }
     private int findBowSlot(Minecraft mc) {
-        if (mc.player.getMainHandItem().is(Items.BOW)) {
-            return mc.player.getInventory().getSelectedSlot();
+        if (InventoryUtility.isBow(mc.player.getMainHandItem())) {
+            return InventoryUtility.getSelectedSlot(mc.player);
         }
         for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getItem(i).is(Items.BOW)) {
+            if (InventoryUtility.isBow(InventoryUtility.getItem(mc.player, i))) {
                 return i;
             }
         }
@@ -174,9 +161,9 @@ public class Quiver extends Module {
         List<String> arrowEffects = new ArrayList<>();
         List<Integer> arrowAmplifiers = new ArrayList<>();
         for (int i = 0; i < 36; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (stack.is(Items.TIPPED_ARROW)) {
-                net.minecraft.world.item.alchemy.PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
+            var stack = InventoryUtility.getItem(mc.player, i);
+            if (InventoryUtility.isTippedArrow(stack)) {
+                var contents = InventoryUtility.getPotionContents(stack);
                 if (contents != null) {
                     if (contents.potion().isPresent()) {
                         var potion = contents.potion().get().value();
@@ -267,7 +254,7 @@ public class Quiver extends Module {
         return bestIndex;
     }
     public static boolean hasSilentRotations() {
-        return hasSilentRotations;
+        return silentRotation.hasRotation;
     }
     private static native int nativeSelectBestArrow(
         String[] activeEffects,

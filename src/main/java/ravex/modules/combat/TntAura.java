@@ -3,11 +3,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -16,6 +13,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -24,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
 public class TntAura extends Module {
     public static final TntAura INSTANCE = new TntAura();
     public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
@@ -50,9 +49,7 @@ public class TntAura extends Module {
     private net.minecraft.world.entity.LivingEntity currentTarget = null;
     private int failedTntPlacements = 0;
     public static final List<BlockPos> renderBlocks = new ArrayList<>();
-    public static float silentYaw = 0;
-    public static float silentPitch = 0;
-    private static boolean hasSilentRotations = false;
+    public static final SilentRotation silentRotation = new SilentRotation();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_tntaura");
     static {
         NATIVE.load();
@@ -77,7 +74,7 @@ public class TntAura extends Module {
         int blastProtLevel,
         boolean hasResistance, int resistanceAmplifier
     );
-    public static boolean hasSilentRotations() { return hasSilentRotations; }
+    public static boolean hasSilentRotations() { return silentRotation.hasRotation; }
 
     @Override
     protected void onEnable() {
@@ -90,7 +87,7 @@ public class TntAura extends Module {
     }
     @Override
     protected void onDisable() {
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         currentTarget = null;
         gapPos = null;
         failedTntPlacements = 0;
@@ -100,7 +97,7 @@ public class TntAura extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             if (autoDisable.getValue()) setEnabled(false);
@@ -263,13 +260,13 @@ public class TntAura extends Module {
         String typeFilter = targetType.getValue();
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
-            if (le == mc.player) continue;
-            if (le.isDeadOrDying()) continue;
-            if (typeFilter.equals("Players") && !(le instanceof Player)) continue;
+            if (MobUtility.isSelf(le)) continue;
+            if (MobUtility.isDead(le)) continue;
+            if (typeFilter.equals("Players") && !MobUtility.isPlayer(le)) continue;
             if (typeFilter.equals("Monsters") && !(le instanceof net.minecraft.world.entity.monster.Monster)) continue;
-            double dist = mc.player.distanceTo(le);
+            double dist = MobUtility.distanceToPlayer(le);
             if (dist > maxDist) continue;
-            double metric = mode.equals("LowestHP") ? le.getHealth() : dist;
+            double metric = mode.equals("LowestHP") ? MobUtility.getHealth(le) : dist;
             if (metric < bestMetric) {
                 bestMetric = metric;
                 closest = le;
@@ -279,13 +276,13 @@ public class TntAura extends Module {
     }
     private int findObsidianSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
                 if (bi.getBlock() == Blocks.OBSIDIAN) return i;
             }
         }
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
                 if (bi.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, BlockPos.ZERO)) {
                     return i;
@@ -296,7 +293,7 @@ public class TntAura extends Module {
     }
     private int findTntSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
                 if (bi.getBlock() == Blocks.TNT) return i;
             }
@@ -305,8 +302,8 @@ public class TntAura extends Module {
     }
     private int findFlintAndSteelSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (!stack.isEmpty() && stack.is(Items.FLINT_AND_STEEL)) return i;
+            var stack = InventoryUtility.getItem(mc.player, i);
+            if (!stack.isEmpty() && InventoryUtility.isItem(stack, "flint_and_steel")) return i;
         }
         return -1;
     }
@@ -345,7 +342,7 @@ public class TntAura extends Module {
             mc.player.setYRot(yaw);
             mc.player.setXRot(pitch);
         } else if (mode.equals("Silent")) {
-            silentYaw = yaw; silentPitch = pitch; hasSilentRotations = true;
+            silentRotation.set(yaw, pitch);
         } else if (mode.equals("Packet") && mc.player.connection != null) {
             mc.player.connection.send(
                 new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(
@@ -355,9 +352,9 @@ public class TntAura extends Module {
     private int savedSlot = -1;
     private void swapTo(Minecraft mc, int slot) {
         String swap = swapMode.getValue();
-        savedSlot = mc.player.getInventory().getSelectedSlot();
+        savedSlot = InventoryUtility.getSelectedSlot(mc.player);
         if (swap.equals("Normal")) {
-            mc.player.getInventory().setSelectedSlot(slot);
+            InventoryUtility.selectSlot(mc.player, slot);
         } else if (swap.equals("Silent")) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(

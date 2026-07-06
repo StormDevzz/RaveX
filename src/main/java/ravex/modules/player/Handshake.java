@@ -1,0 +1,46 @@
+package ravex.modules.player;
+import ravex.modules.Category;
+import ravex.modules.Module;
+import ravex.parameter.StringParameter;
+import ravex.parameter.NumberParameter;
+import ravex.manager.LuaManager;
+import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.LuaFunction;
+public class Handshake extends Module {
+    public static final Handshake INSTANCE = new Handshake();
+    public final StringParameter hostSuffix = new StringParameter("Suffix", "\u0000LUNAR\u0000");
+    public final NumberParameter protocol = new NumberParameter("Protocol", 767.0, 47.0, 1000.0, 1.0); 
+
+    public String getSpoofedHost(String originalHost) {
+        if (!getEnabled()) return originalHost;
+        LuaValue fn = LuaManager.INSTANCE.getGlobals().get("onHandshake");
+        if (fn.isfunction()) {
+            try {
+                LuaValue[] args = { LuaValue.valueOf(originalHost), LuaValue.valueOf((int) protocol.getValue().doubleValue()) };
+                org.luaj.vm2.Varargs res = ((LuaFunction) fn).invoke(LuaValue.varargsOf(args));
+                if (res.narg() >= 1 && !res.arg(1).isnil()) {
+                    return res.arg(1).tojstring();
+                }
+            } catch (Exception e) {
+                System.err.println("[Lua Handshake Error] " + e.getMessage());
+            }
+        }
+        return originalHost + hostSuffix.getValue();
+    }
+    public int getSpoofedProtocol(int originalProtocol) {
+        if (!getEnabled()) return originalProtocol;
+        LuaValue fn = LuaManager.INSTANCE.getGlobals().get("onHandshake");
+        if (fn.isfunction()) {
+            try {
+                LuaValue[] args = { LuaValue.valueOf(""), LuaValue.valueOf(originalProtocol) };
+                org.luaj.vm2.Varargs res = ((LuaFunction) fn).invoke(LuaValue.varargsOf(args));
+                if (res.narg() >= 2 && !res.arg(2).isnil()) {
+                    return res.arg(2).toint();
+                }
+            } catch (Exception e) {
+                System.err.println("[Lua Handshake Error] " + e.getMessage());
+            }
+        }
+        return (int) protocol.getValue().doubleValue();
+    }
+}

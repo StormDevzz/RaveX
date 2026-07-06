@@ -4,12 +4,9 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.ModeParameter;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.animal.sheep.Sheep;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
@@ -23,47 +20,44 @@ public class AutoShear extends Module {
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        var p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
-        Sheep target = null;
+        var target = (net.minecraft.world.entity.animal.sheep.Sheep) null;
         double closestDist = range.getValue();
         for (var entity : mc.level.entitiesForRendering()) {
-            if (entity instanceof Sheep sheep) {
-                if (sheep.isAlive() && !sheep.isBaby() && !sheep.isSheared()) {
-                    double dist = p.distanceTo(sheep);
-                    if (dist < closestDist) {
-                        closestDist = dist;
-                        target = sheep;
-                    }
+            if (entity instanceof net.minecraft.world.entity.animal.sheep.Sheep sheep && MobUtility.isShearable(sheep)) {
+                double dist = p.distanceTo(sheep);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    target = sheep;
                 }
             }
         }
         if (target == null) return;
         int shearSlot = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = p.getInventory().getItem(i);
-            if (stack.is(Items.SHEARS)) {
+            if (InventoryUtility.isItemInSlot(p, i, "shears")) {
                 shearSlot = i;
                 break;
             }
         }
-        if (shearSlot == -1) return; 
-        int prevSlot = p.getInventory().getSelectedSlot();
+        if (shearSlot == -1) return;
+        int prevSlot = InventoryUtility.getSelectedSlot(p);
         if ("Packet".equals(exploitType.getValue())) {
             if (shearSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(shearSlot));
             }
-            p.connection.send(ServerboundInteractPacket.createInteractionPacket(target, p.isShiftKeyDown(), InteractionHand.MAIN_HAND));
-            p.connection.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+            p.connection.send(ServerboundInteractPacket.createInteractionPacket(target, p.isShiftKeyDown(), net.minecraft.world.InteractionHand.MAIN_HAND));
+            p.connection.send(new ServerboundSwingPacket(net.minecraft.world.InteractionHand.MAIN_HAND));
             if (silent.getValue() && shearSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(prevSlot));
             }
         } else {
-            p.getInventory().setSelectedSlot(shearSlot);
-            mc.gameMode.interact(p, target, InteractionHand.MAIN_HAND);
-            p.swing(InteractionHand.MAIN_HAND);
+            InventoryUtility.selectSlot(p, shearSlot);
+            mc.gameMode.interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
+            ravex.utility.player.SwingUtility.swingMainHand(p);
             if (silent.getValue() && shearSlot != prevSlot) {
-                p.getInventory().setSelectedSlot(prevSlot);
+                InventoryUtility.selectSlot(p, prevSlot);
             }
         }
     }

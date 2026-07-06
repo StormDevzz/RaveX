@@ -2,14 +2,13 @@ package ravex.modules.player;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
+import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 public class AirPlace extends Module {
     public static final AirPlace INSTANCE = new AirPlace();
@@ -53,9 +52,9 @@ public class AirPlace extends Module {
             return;
         }
         boolean mainHolding = InventoryUtility.isHoldingBlock(mc.player);
-        ItemStack off = mc.player.getOffhandItem();
+        var off = mc.player.getOffhandItem();
         boolean offHolding = !off.isEmpty() && off.getItem() instanceof net.minecraft.world.item.BlockItem;
-        InteractionHand hand = mainHolding ? InteractionHand.MAIN_HAND : (offHolding ? InteractionHand.OFF_HAND : null);
+        var hand = mainHolding ? net.minecraft.world.InteractionHand.MAIN_HAND : (offHolding ? net.minecraft.world.InteractionHand.OFF_HAND : null);
         if (hand == null) {
             currentTarget = null;
             renderAlpha = fadeAnim.updateFloat(false, 0.25f);
@@ -66,12 +65,12 @@ public class AirPlace extends Module {
             return;
         }
         double dist = 4.5;
-        net.minecraft.world.phys.HitResult hit = mc.player.pick(dist, 1.0F, false);
+        var hit = mc.player.pick(dist, 1.0F, false);
         BlockPos targetPos;
         BlockPos neighbor;
         net.minecraft.core.Direction placeFace;
         if (hit != null && hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
-            net.minecraft.world.phys.BlockHitResult bhr = (net.minecraft.world.phys.BlockHitResult) hit;
+            var bhr = (net.minecraft.world.phys.BlockHitResult) hit;
             neighbor = bhr.getBlockPos();
             placeFace = bhr.getDirection();
             targetPos = neighbor.relative(placeFace);
@@ -79,16 +78,15 @@ public class AirPlace extends Module {
             Vec3 eye = mc.player.getEyePosition(1.0F);
             Vec3 look = mc.player.getViewVector(1.0F);
             Vec3 target = eye.add(look.x * dist, look.y * dist, look.z * dist);
-            targetPos = BlockPos.containing(target);
+            targetPos = BlockUtility.containing(target.x, target.y, target.z);
             neighbor = targetPos;
             placeFace = net.minecraft.core.Direction.UP;
             for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
                 BlockPos side = targetPos.relative(face);
-                if (!mc.level.getBlockState(side).isAir()) {
-                    neighbor = side;
-                    placeFace = face.getOpposite();
-                    break;
-                }
+                if (BlockUtility.isAir(mc.level, side)) continue;
+                neighbor = side;
+                placeFace = face.getOpposite();
+                break;
             }
         }
         currentTarget = targetPos;
@@ -104,10 +102,10 @@ public class AirPlace extends Module {
                 Vec3 hitVec = Vec3.atCenterOf(neighbor).add(
                     new Vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                 );
-                net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(
+                var blockHit = new net.minecraft.world.phys.BlockHitResult(
                     hitVec, placeFace, neighbor, false
                 );
-                mc.gameMode.useItemOn(mc.player, hand, blockHit);
+                BlockUtility.useItemOn(mc, blockHit, hand);
                 SwingUtility.swing(mc.player, hand);
                 lastPlaceTime = now;
             }

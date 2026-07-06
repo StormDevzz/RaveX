@@ -9,7 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
-import ravex.modules.client.Settings;
+import ravex.proxy.Proxy;
 import ravex.utility.render.FontRenderUtility;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class ProxyConfigScreen extends Screen {
 
     private String typeLabel = "Type: SOCKS5";
     private int selectedType = 0;
-    private final List<String> types = List.of("SOCKS5", "SOCKS4", "HTTP");
+    private final List<String> types = List.of("SOCKS5", "SOCKS4", "HTTP", "SHADOWSOCKS");
 
     private boolean authEnabled = false;
     private String statusMessage = "";
@@ -50,41 +50,36 @@ public class ProxyConfigScreen extends Screen {
         Font font = Minecraft.getInstance().font;
         int cx = width / 2;
 
-        Settings s = Settings.INSTANCE;
-
         hostField = new EditBox(font, cx - 90, 80, 180, 18, Component.literal("Proxy Host"));
-        hostField.setValue(s.proxyHost.getValue());
-        hostField.setResponder(val -> s.proxyHost.setValue(val));
+        hostField.setValue(Proxy.getHost());
+        hostField.setResponder(Proxy::setHost);
 
         portField = new EditBox(font, cx - 90, 115, 180, 18, Component.literal("Proxy Port"));
-        portField.setValue(String.valueOf(s.proxyPort.getValue().intValue()));
+        portField.setValue(String.valueOf(Proxy.getPort()));
         portField.setFilter(val -> val.isEmpty() || val.matches("\\d{0,5}"));
         portField.setResponder(val -> {
-            if (!val.isEmpty()) {
-                int p = Math.max(1, Math.min(65535, Integer.parseInt(val)));
-                s.proxyPort.setValue((double) p);
-            }
+            if (!val.isEmpty()) Proxy.setPort(Math.max(1, Math.min(65535, Integer.parseInt(val))));
         });
         portField.setMaxLength(5);
 
         usernameField = new EditBox(font, cx - 90, 165, 180, 18, Component.literal("Username"));
-        usernameField.setValue(s.proxyUsername.getValue());
-        usernameField.setResponder(val -> s.proxyUsername.setValue(val));
+        usernameField.setValue(Proxy.getUsername());
+        usernameField.setResponder(Proxy::setUsername);
 
         passwordField = new EditBox(font, cx - 90, 200, 180, 18, Component.literal("Password"));
-        passwordField.setValue(s.proxyPassword.getValue());
-        passwordField.setResponder(val -> s.proxyPassword.setValue(val));
+        passwordField.setValue(Proxy.getPassword());
+        passwordField.setResponder(Proxy::setPassword);
         passwordField.addFormatter((text, cursorPos) -> {
             StringBuilder masked = new StringBuilder();
             for (int i = 0; i < text.length(); i++) masked.append('*');
             return FormattedCharSequence.forward(masked.toString(), Style.EMPTY);
         });
 
-        selectedType = types.indexOf(s.proxyType.getValue());
+        selectedType = types.indexOf(Proxy.getType());
         if (selectedType < 0) selectedType = 0;
         typeLabel = "Type: " + types.get(selectedType);
 
-        authEnabled = s.proxyAuth.getValue();
+        authEnabled = Proxy.hasAuth();
 
         addRenderableWidget(hostField);
         addRenderableWidget(portField);
@@ -92,10 +87,10 @@ public class ProxyConfigScreen extends Screen {
         addRenderableWidget(passwordField);
 
         toggleBtn = Button.builder(
-            Component.literal("Proxy: " + (s.proxyEnabled.getValue() ? "§aON" : "§cOFF")),
+            Component.literal("Proxy: " + (Proxy.isEnabled() ? "§aON" : "§cOFF")),
             btn -> {
-                s.proxyEnabled.setValue(!s.proxyEnabled.getValue());
-                btn.setMessage(Component.literal("Proxy: " + (s.proxyEnabled.getValue() ? "§aON" : "§cOFF")));
+                Proxy.setEnabled(!Proxy.isEnabled());
+                btn.setMessage(Component.literal("Proxy: " + (Proxy.isEnabled() ? "§aON" : "§cOFF")));
             }
         ).bounds(cx - 50, 50, 100, 20).build();
         addRenderableWidget(toggleBtn);
@@ -104,7 +99,7 @@ public class ProxyConfigScreen extends Screen {
             Component.literal(typeLabel),
             btn -> {
                 selectedType = (selectedType + 1) % types.size();
-                s.proxyType.setValue(types.get(selectedType));
+                Proxy.setType(types.get(selectedType));
                 btn.setMessage(Component.literal("Type: " + types.get(selectedType)));
             }
         ).bounds(cx - 50, 145, 100, 20).build());
@@ -113,7 +108,7 @@ public class ProxyConfigScreen extends Screen {
             Component.literal("Auth: " + (authEnabled ? "ON" : "OFF")),
             btn -> {
                 authEnabled = !authEnabled;
-                s.proxyAuth.setValue(authEnabled);
+                Proxy.setAuth(authEnabled);
                 btn.setMessage(Component.literal("Auth: " + (authEnabled ? "ON" : "OFF")));
             }
         ).bounds(cx - 50, 230, 100, 20).build());
@@ -129,21 +124,20 @@ public class ProxyConfigScreen extends Screen {
     }
 
     private void saveSettings() {
-        Settings s = Settings.INSTANCE;
-        s.proxyHost.setValue(hostField.getValue());
+        Proxy.setHost(hostField.getValue());
         try {
             int p = Integer.parseInt(portField.getValue());
             p = Math.max(1, Math.min(65535, p));
             portField.setValue(String.valueOf(p));
-            s.proxyPort.setValue((double) p);
+            Proxy.setPort(p);
         } catch (NumberFormatException ignored) {
             portField.setValue("1080");
-            s.proxyPort.setValue(1080.0);
+            Proxy.setPort(1080);
         }
-        s.proxyType.setValue(types.get(selectedType));
-        s.proxyAuth.setValue(authEnabled);
-        s.proxyUsername.setValue(usernameField.getValue());
-        s.proxyPassword.setValue(passwordField.getValue());
+        Proxy.setType(types.get(selectedType));
+        Proxy.setAuth(authEnabled);
+        Proxy.setUsername(usernameField.getValue());
+        Proxy.setPassword(passwordField.getValue());
     }
 
     @Override

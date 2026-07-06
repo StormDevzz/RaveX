@@ -1,12 +1,12 @@
 package ravex.modules.hud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.world.item.ItemStack;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
+import ravex.utility.player.InventoryUtility;
 public class InvPreviewHud extends Module {
     public static final InvPreviewHud INSTANCE = new InvPreviewHud();
     private static final int CELL = 16;
@@ -53,7 +53,7 @@ public class InvPreviewHud extends Module {
         int hotbarY = startY + PAD + 3 * (CELL + PAD);
         graphics.fill(bx + 1, hotbarY - 1, bx + w - 1, hotbarY + CELL + PAD + 1, 0x22FFFFFF);
         for (int col = 0; col < COLS; col++) {
-            boolean isSelected = mc.player.getInventory().getSelectedSlot() == col;
+            boolean isSelected = InventoryUtility.getSelectedSlot(mc.player) == col;
             renderSlot(graphics, mc, col, bx + PAD + col * (CELL + PAD), hotbarY, isSelected, accent);
         }
     }
@@ -63,7 +63,7 @@ public class InvPreviewHud extends Module {
         if (highlight) {
             graphics.fill(x, y, x + CELL, y + 1, accent);
         }
-        ItemStack stack = mc.player.getInventory().getItem(inventorySlot);
+        var stack = InventoryUtility.getItem(mc.player, inventorySlot);
         if (!stack.isEmpty()) {
             graphics.renderItem(stack, x, y);
             if (stack.getCount() > 1) {

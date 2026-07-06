@@ -4,8 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import ravex.modules.Category;
@@ -16,6 +15,8 @@ import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.render.Render3DUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -112,12 +113,12 @@ public class PearlTarget extends Module {
         List<Player> players = new ArrayList<>();
         for (Entity e : mc.level.entitiesForRendering()) {
             if (e instanceof ThrownEnderpearl pearl) {
-                if (mc.player.distanceTo(pearl) <= r) {
+                if (MobUtility.distanceToPlayer(pearl) <= r) {
                     pearls.add(pearl);
                 }
             }
-            if (e instanceof Player p && p != mc.player && !p.isSpectator()) {
-                if (mc.player.distanceTo(p) <= r * 1.5) {
+            if (e instanceof Player p && !MobUtility.isSelf(p) && !p.isSpectator()) {
+                if (MobUtility.distanceToPlayer(p) <= r * 1.5) {
                     players.add(p);
                 }
             }
@@ -162,8 +163,8 @@ public class PearlTarget extends Module {
             target = findBestTarget(mc, players);
             if (target != null) targetPos = target.position();
         }
-        if (target != null && (target.isRemoved() || target.isDeadOrDying()
-            || mc.player.distanceTo(target) > r * 2)) {
+        if (target != null && (target.isRemoved() || MobUtility.isDead(target)
+            || MobUtility.distanceToPlayer(target) > r * 2)) {
             target = null;
             targetPos = null;
         }
@@ -227,7 +228,7 @@ public class PearlTarget extends Module {
         if (now - lastAttackTime < attackDelay) return;
         if (autoWeapon.getValue()) {
             int bestSlot = findBestWeaponSlot(mc);
-            if (bestSlot != -1) mc.player.getInventory().setSelectedSlot(bestSlot);
+            if (bestSlot != -1) InventoryUtility.selectSlot(mc.player, bestSlot);
         }
         if (rotate.getValue()) {
             float[] angles = RotationUtility.anglesTo(mc.player, target.position().add(0, target.getEyeHeight() * 0.8, 0));
@@ -241,18 +242,18 @@ public class PearlTarget extends Module {
     private void doAutoTotem(Minecraft mc) {
         String mode = totemMode.getValue();
         boolean shouldTotem = "Always".equals(mode)
-            || ("LowHP".equals(mode) && mc.player.getHealth() + mc.player.getAbsorptionAmount() <= totemHealth.getValue());
+            || ("LowHP".equals(mode) && MobUtility.getHealthWithAbsorption(mc.player) <= totemHealth.getValue());
         if (!shouldTotem) return;
         int totemSlot = -1;
         for (int i = 0; i < 36; i++) {
-            var stack = mc.player.getInventory().getItem(i < 9 ? i + 36 : i);
-            if (stack.is(Items.TOTEM_OF_UNDYING)) {
+            var stack = InventoryUtility.getItem(mc.player, i < 9 ? i + 36 : i);
+            if (InventoryUtility.isTotem(stack)) {
                 totemSlot = i < 9 ? i + 36 : i;
                 break;
             }
         }
         if (totemSlot == -1) return;
-        if (mc.player.getOffhandItem().is(Items.TOTEM_OF_UNDYING)) return;
+        if (InventoryUtility.isTotem(mc.player.getOffhandItem())) return;
         if (!mc.player.getOffhandItem().isEmpty()) return;
         mc.gameMode.handleInventoryMouseClick(
             mc.player.containerMenu.containerId,
@@ -263,37 +264,31 @@ public class PearlTarget extends Module {
         );
     }
     private void doAutoGap(Minecraft mc) {
-        if (mc.player.getHealth() + mc.player.getAbsorptionAmount() > gapHealth.getValue()) return;
+        if (MobUtility.getHealthWithAbsorption(mc.player) > gapHealth.getValue()) return;
         if (mc.player.isUsingItem()) return;
-        int gapSlot = -1;
-        for (int i = 0; i < 9; i++) {
-            var stack = mc.player.getInventory().getItem(i);
-            if (stack.is(Items.ENCHANTED_GOLDEN_APPLE) || stack.is(Items.GOLDEN_APPLE)) {
-                gapSlot = i;
-                break;
-            }
-        }
-        if (gapSlot == -1) return;
-        int prevSlot = mc.player.getInventory().getSelectedSlot();
-        mc.player.getInventory().setSelectedSlot(gapSlot);
+        var gap = FoodUtility.findFood(f -> f.isAnyGoldenApple());
+        if (gap == null) return;
+        int gapSlot = gap.getSlot();
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
+        InventoryUtility.selectSlot(mc.player, gapSlot);
         mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         if (keepRotate.getValue()) {
-            mc.player.getInventory().setSelectedSlot(prevSlot);
+            InventoryUtility.selectSlot(mc.player, prevSlot);
         }
     }
     private void doAutoPearl(Minecraft mc) {
         if (mc.player.isUsingItem()) return;
         int pearlSlot = -1;
         for (int i = 0; i < 9; i++) {
-            var stack = mc.player.getInventory().getItem(i);
-            if (stack.is(Items.ENDER_PEARL)) {
+            var stack = InventoryUtility.getItem(mc.player, i);
+            if (InventoryUtility.isItem(stack, "ender_pearl")) {
                 pearlSlot = i;
                 break;
             }
         }
         if (pearlSlot == -1) return;
-        int prevSlot = mc.player.getInventory().getSelectedSlot();
-        mc.player.getInventory().setSelectedSlot(pearlSlot);
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
+        InventoryUtility.selectSlot(mc.player, pearlSlot);
         if (rotate.getValue() && target != null) {
             float[] angles = RotationUtility.anglesTo(mc.player, target.position());
             mc.player.setYRot(angles[0]);
@@ -301,7 +296,7 @@ public class PearlTarget extends Module {
         }
         mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         if (!keepRotate.getValue()) {
-            mc.player.getInventory().setSelectedSlot(prevSlot);
+            InventoryUtility.selectSlot(mc.player, prevSlot);
         }
     }
     private int findBestWeaponSlot(Minecraft mc) {
@@ -309,7 +304,7 @@ public class PearlTarget extends Module {
         double bestDamage = -1;
         String weaponModeVal = weaponMode.getValue();
         for (int i = 0; i < 9; i++) {
-            var stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             double dmg = getWeaponDamage(stack);
             if (dmg <= 0) continue;
             String name = stack.getItem().toString().toLowerCase();
@@ -324,7 +319,7 @@ public class PearlTarget extends Module {
         }
         return bestSlot;
     }
-    private double getWeaponDamage(ItemStack stack) {
+    private double getWeaponDamage(net.minecraft.world.item.ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
         String name = stack.getItem().toString().toLowerCase();
         if (name.contains("netherite_sword")) return 8.0;
@@ -345,7 +340,7 @@ public class PearlTarget extends Module {
         String mode = targetMode.getValue();
         return switch (mode) {
             case "Health" -> players.stream()
-                .min(java.util.Comparator.comparingDouble(p -> p.getHealth() + p.getAbsorptionAmount()))
+                .min(java.util.Comparator.comparingDouble(p -> MobUtility.getHealthWithAbsorption(p)))
                 .orElse(null);
             case "Crosshair" -> {
                 Player closest = null;
@@ -363,11 +358,11 @@ public class PearlTarget extends Module {
                 yield closest;
             }
             case "Distance" -> players.stream()
-                .min(java.util.Comparator.comparingDouble(p -> mc.player.distanceTo(p)))
+                .min(java.util.Comparator.comparingDouble(p -> MobUtility.distanceToPlayer(p)))
                 .orElse(null);
             default -> 
                 players.stream()
-                    .min(java.util.Comparator.comparingDouble(p -> mc.player.distanceTo(p)))
+                    .min(java.util.Comparator.comparingDouble(p -> MobUtility.distanceToPlayer(p)))
                     .orElse(null);
         };
     }

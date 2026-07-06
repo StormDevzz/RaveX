@@ -2,14 +2,6 @@ package ravex.modules.player;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
 import ravex.modules.Module;
@@ -17,7 +9,12 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import java.util.ArrayList;
 import java.util.List;
 public class PacketMine extends Module {
@@ -36,9 +33,7 @@ public class PacketMine extends Module {
     public final BooleanParameter switchBack = new BooleanParameter("SwitchBack", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
-    public static float silentYaw = 0;
-    public static float silentPitch = 0;
-    public static boolean hasSilentRotations = false;
+    public static final SilentRotation silentRotation = new SilentRotation();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_packetmine");
     static {
         NATIVE.load();
@@ -100,7 +95,7 @@ public class PacketMine extends Module {
         attackWasDown = false;
     }
     public long calcBreakTime(Minecraft mc, BlockPos pos) {
-        BlockState state = mc.level.getBlockState(pos);
+        var state = BlockUtility.getState(mc.level, pos.getX(), pos.getY(), pos.getZ());
         float destroyProgress = state.getDestroyProgress(mc.player, mc.level, pos);
         if (destroyProgress <= 0) return 2000;
         float ticks = (float)Math.ceil(1.0 / destroyProgress);
@@ -118,13 +113,13 @@ public class PacketMine extends Module {
         boolean leftClick = mc.options.keyAttack.isDown();
         boolean clicked = leftClick && !attackWasDown;
         attackWasDown = leftClick;
-        if (clicked && mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK) {
+        if (clicked && mc.hitResult != null && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
             BlockPos target = ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos();
             if (isBreakable(mc, target) && !isTargetBlock(target)) {
                 int max = doubleMine.getValue() ? maxBlocks.getValue().intValue() : 1;
                 long activeCount = miningBlocks.stream().filter(m -> !m.done).count();
                 if (activeCount >= max) return;
-                String name = mc.level.getBlockState(target).getBlock().getName().getString();
+                String name = BlockUtility.getState(mc.level, target.getX(), target.getY(), target.getZ()).getBlock().getName().getString();
                 long breakMs = calcBreakTime(mc, target);
                 MiningBlock mb = new MiningBlock(target, breakMs, name);
                 miningBlocks.add(mb);
@@ -133,11 +128,11 @@ public class PacketMine extends Module {
                 }
             }
         }
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         long now = System.currentTimeMillis();
         miningBlocks.removeIf(m -> m.done && now > m.visibleUntil);
-        MinecraftServer server = mc.getSingleplayerServer();
-        ServerLevel serverLevel = (server != null) ? server.getLevel(mc.level.dimension()) : null;
+        var server = mc.getSingleplayerServer();
+        var serverLevel = (server != null) ? server.getLevel(mc.level.dimension()) : null;
         BlockPos firstPos = null;
         for (MiningBlock mb : miningBlocks) {
             if (!mb.done) { firstPos = mb.pos; break; }
@@ -166,7 +161,7 @@ public class PacketMine extends Module {
                         mb.done = true;
                         mb.visibleUntil = now + 2500;
                     }
-                } else if (mc.level.getBlockState(mb.pos).isAir() || predTime > 20000) {
+                } else if (BlockUtility.isAir(mc.level, mb.pos) || predTime > 20000) {
                     mb.done = true;
                     mb.visibleUntil = now + 2500;
                 }
@@ -201,26 +196,20 @@ public class PacketMine extends Module {
         return false;
     }
     private boolean isBreakable(Minecraft mc, BlockPos pos) {
-        BlockState state = mc.level.getBlockState(pos);
+        var state = BlockUtility.getState(mc.level, pos.getX(), pos.getY(), pos.getZ());
         if (state.isAir()) return false;
-        if (state.is(Blocks.BEDROCK)) return false;
-        if (state.getDestroySpeed(mc.level, pos) < 0) return false;
+        if (BlockUtility.isBlock(state, "bedrock")) return false;
+        if (BlockUtility.destroySpeed(mc.level, pos) < 0) return false;
         if (!mc.level.getWorldBorder().isWithinBounds(pos)) return false;
         double dist = Vec3.atCenterOf(pos).distanceTo(mc.player.getEyePosition());
         double maxDist = grimStrict.getValue() ? grimRange.getValue() : range.getValue();
         return dist <= maxDist;
     }
     private void sendStart(Minecraft mc, BlockPos pos, int seq) {
-        mc.player.connection.send(new ServerboundPlayerActionPacket(
-            ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK,
-            pos, getDirection(mc, pos), seq
-        ));
+        NetworkUtility.sendStartDestroy(pos, getDirection(mc, pos), seq);
     }
     private void sendStop(Minecraft mc, BlockPos pos) {
-        mc.player.connection.send(new ServerboundPlayerActionPacket(
-            ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK,
-            pos, getDirection(mc, pos), 0
-        ));
+        NetworkUtility.sendStopDestroy(pos, getDirection(mc, pos), 0);
     }
     private Direction getDirection(Minecraft mc, BlockPos pos) {
         Vec3 eye = mc.player.getEyePosition();
@@ -232,11 +221,11 @@ public class PacketMine extends Module {
         return diff.z > 0 ? Direction.SOUTH : Direction.NORTH;
     }
     private int findBestToolSlot(Minecraft mc, BlockPos pos) {
-        BlockState state = mc.level.getBlockState(pos);
-        int bestSlot = mc.player.getInventory().getSelectedSlot();
-        float bestSpeed = mc.player.getInventory().getItem(bestSlot).getDestroySpeed(state);
+        var state = BlockUtility.getState(mc.level, pos.getX(), pos.getY(), pos.getZ());
+        int bestSlot = InventoryUtility.getSelectedSlot(mc.player);
+        float bestSpeed = InventoryUtility.getItem(mc.player, bestSlot).getDestroySpeed(state);
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty()) continue;
             float speed = stack.getDestroySpeed(state);
             if (speed > bestSpeed) {
@@ -244,16 +233,16 @@ public class PacketMine extends Module {
                 bestSlot = i;
             }
         }
-        return bestSlot != mc.player.getInventory().getSelectedSlot() ? bestSlot : -1;
+        return bestSlot != InventoryUtility.getSelectedSlot(mc.player) ? bestSlot : -1;
     }
     private void applySwap(Minecraft mc) {
         String swap = grimStrict.getValue() ? (swapMode.getValue().equals("None") ? "None" : "Normal") : swapMode.getValue();
         if (toolSlot < 0 || swap.equals("None")) return;
-        int prev = mc.player.getInventory().getSelectedSlot();
-        if (swap.equals("Silent") && mc.player.connection != null) {
-            mc.player.connection.send(new ServerboundSetCarriedItemPacket(toolSlot));
+        int prev = InventoryUtility.getSelectedSlot(mc.player);
+        if (swap.equals("Silent")) {
+            NetworkUtility.sendSetCarriedItem(toolSlot);
         } else if (swap.equals("Normal")) {
-            mc.player.getInventory().setSelectedSlot(toolSlot);
+            InventoryUtility.selectSlot(mc.player, toolSlot);
         }
         restoreSlot = prev;
         needRestore = true;
@@ -263,31 +252,22 @@ public class PacketMine extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         String swap = grimStrict.getValue() ? (swapMode.getValue().equals("None") ? "None" : "Normal") : swapMode.getValue();
-        if (swap.equals("Silent") && mc.player.connection != null) {
-            mc.player.connection.send(new ServerboundSetCarriedItemPacket(restoreSlot));
+        if (swap.equals("Silent")) {
+            NetworkUtility.sendSetCarriedItem(restoreSlot);
         } else if (swap.equals("Normal")) {
-            mc.player.getInventory().setSelectedSlot(restoreSlot);
+            InventoryUtility.selectSlot(mc.player, restoreSlot);
         }
         needRestore = false;
     }
     private void rotateTo(Minecraft mc, BlockPos pos) {
         String mode = rotate.getValue();
         if (mode.equals("None")) return;
-        Vec3 target = Vec3.atCenterOf(pos);
-        Vec3 eyes = mc.player.getEyePosition();
-        double dx = target.x - eyes.x;
-        double dy = target.y - eyes.y;
-        double dz = target.z - eyes.z;
-        double dist = Math.sqrt(dx * dx + dz * dz);
-        float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90f;
-        float pitch = (float) -Math.toDegrees(Math.atan2(dy, dist));
+        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), Vec3.atCenterOf(pos));
         if (mode.equals("Normal")) {
-            mc.player.setYRot(yaw);
-            mc.player.setXRot(pitch);
+            mc.player.setYRot(angles[0]);
+            mc.player.setXRot(angles[1]);
         } else if (mode.equals("Silent")) {
-            silentYaw = yaw;
-            silentPitch = pitch;
-            hasSilentRotations = true;
+            silentRotation.set(angles[0], angles[1]);
         }
     }
     public static native int[] nativeFindTargets(

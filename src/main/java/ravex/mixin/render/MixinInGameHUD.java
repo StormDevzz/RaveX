@@ -873,8 +873,9 @@ public abstract class MixinInGameHUD {
 
         
         ravex.modules.world.AutoBrew ab = ravex.modules.world.AutoBrew.INSTANCE;
-        if (ab.getEnabled() && ab.render.getValue() && ravex.modules.world.AutoBrew.currentTarget != null) {
-            BlockPos p = ravex.modules.world.AutoBrew.currentTarget;
+        if (ab.getEnabled() && ab.render.getValue()) {
+            BlockPos p = ravex.modules.world.AutoBrew.getCurrentTarget();
+            if (p != null) {
             Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
             Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
             if (proj != null) {
@@ -908,6 +909,7 @@ public abstract class MixinInGameHUD {
                     }
                 }
             }
+        }
         }
 
         

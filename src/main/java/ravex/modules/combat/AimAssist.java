@@ -8,9 +8,8 @@ import ravex.utility.player.rotation.RotationUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.BowItem;
+import ravex.utility.misc.MobUtility;
 public class AimAssist extends Module {
     public static final AimAssist INSTANCE = new AimAssist();
     public final ModeParameter targetMode = new ModeParameter("Target", "Players", java.util.List.of("Players", "Monsters", "All"));
@@ -29,11 +28,11 @@ public class AimAssist extends Module {
         double bestDist = Double.MAX_VALUE;
         for (Entity entity : mc.level.entitiesForRendering()) {
             if (!(entity instanceof LivingEntity p)) continue;
-            if (p == mc.player || !p.isAlive()) continue;
+            if (MobUtility.isSelf(p) || !MobUtility.isAlive(p)) continue;
             String mode = targetMode.getValue();
-            if (mode.equals("Players") && !(p instanceof Player)) continue;
-            if (mode.equals("Monsters") && !(p instanceof Monster)) continue;
-            double dist = mc.player.distanceTo(p);
+            if (mode.equals("Players") && !MobUtility.isPlayer(p)) continue;
+            if (mode.equals("Monsters") && !MobUtility.isHostile(p)) continue;
+            double dist = MobUtility.distanceToPlayer(p);
             if (dist < bestDist && dist <= 40.0) {
                 target = p;
                 bestDist = dist;

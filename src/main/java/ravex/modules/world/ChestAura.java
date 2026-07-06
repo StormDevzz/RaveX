@@ -4,17 +4,9 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 public class ChestAura extends Module {
@@ -28,10 +20,10 @@ public class ChestAura extends Module {
     public final BooleanParameter autoSwap = new BooleanParameter("AutoSwap", true);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
     public static class PlacedChest {
-        public final BlockPos pos;
+        public final long packedPos;
         public final long placeTime;
-        public PlacedChest(BlockPos pos, long placeTime) {
-            this.pos = pos;
+        public PlacedChest(long packedPos, long placeTime) {
+            this.packedPos = packedPos;
             this.placeTime = placeTime;
         }
     }
@@ -55,7 +47,7 @@ public class ChestAura extends Module {
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        var p = mc.player;
         if (p == null || mc.level == null) return;
         long now = System.currentTimeMillis();
         double durationMs = fadeSpeed.getValue() * 1000.0;
@@ -66,49 +58,54 @@ public class ChestAura extends Module {
         }
         int chestSlot = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = p.getInventory().getItem(i);
-            if (!stack.isEmpty() && (stack.is(Items.CHEST) || stack.is(Items.TRAPPED_CHEST))) {
+            var stack = InventoryUtility.getItem(p, i);
+            if (!stack.isEmpty() && (InventoryUtility.isItem(stack, "chest") || InventoryUtility.isItem(stack, "trapped_chest"))) {
                 chestSlot = i;
                 break;
             }
         }
-        if (chestSlot == -1) return; 
+        if (chestSlot == -1) return;
         double r = range.getValue();
-        BlockPos playerPos = p.blockPosition();
-        BlockPos targetPos = null;
+        var playerPos = p.blockPosition();
+        long targetPacked = 0;
+        boolean hasTarget = false;
         double closestDistSq = r * r;
-        for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity == p || !entity.isAlive() || !(entity instanceof LivingEntity)) continue;
+        for (var entity : mc.level.entitiesForRendering()) {
+            if (entity == p || !entity.isAlive() || !(entity instanceof net.minecraft.world.entity.LivingEntity)) continue;
             if (p.distanceTo(entity) > r) continue;
-            BlockPos entityPos = entity.blockPosition();
-            for (Direction dir : Direction.values()) {
-                if (dir == Direction.DOWN || dir == Direction.UP) continue;
-                BlockPos adjacentPos = entityPos.relative(dir);
-                if (mc.level.getBlockState(adjacentPos).isAir()) {
-                    BlockPos below = adjacentPos.below();
-                    if (!mc.level.getBlockState(below).isAir() && mc.level.getBlockState(below).isCollisionShapeFullBlock(mc.level, below)) {
-                        double distSq = p.distanceToSqr(adjacentPos.getX() + 0.5, adjacentPos.getY() + 0.5, adjacentPos.getZ() + 0.5);
+            var entityPos = entity.blockPosition();
+            int ex = entityPos.getX(), ey = entityPos.getY(), ez = entityPos.getZ();
+            for (var dir : net.minecraft.core.Direction.values()) {
+                if (dir == net.minecraft.core.Direction.DOWN || dir == net.minecraft.core.Direction.UP) continue;
+                int ax = ex + dir.getStepX(), ay = ey + dir.getStepY(), az = ez + dir.getStepZ();
+                if (BlockUtility.isAir(mc.level, ax, ay, az)) {
+                    int by = BlockUtility.belowY(ay);
+                    if (BlockUtility.isSolid(mc.level, ax, by, az)) {
+                        double distSq = p.distanceToSqr(ax + 0.5, ay + 0.5, az + 0.5);
                         if (distSq < closestDistSq) {
                             closestDistSq = distSq;
-                            targetPos = adjacentPos;
+                            targetPacked = BlockUtility.packPos(ax, ay, az);
+                            hasTarget = true;
                         }
                     }
                 }
             }
         }
-        if (targetPos == null) {
+        if (!hasTarget) {
             int rangeInt = (int) Math.ceil(r);
+            int px = playerPos.getX(), py = playerPos.getY(), pz = playerPos.getZ();
             for (int x = -rangeInt; x <= rangeInt; x++) {
                 for (int y = -rangeInt; y <= rangeInt; y++) {
                     for (int z = -rangeInt; z <= rangeInt; z++) {
-                        BlockPos pos = playerPos.offset(x, y, z);
-                        double distSq = p.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+                        int wx = px + x, wy = py + y, wz = pz + z;
+                        double distSq = p.distanceToSqr(wx + 0.5, wy + 0.5, wz + 0.5);
                         if (distSq < closestDistSq) {
-                            if (mc.level.getBlockState(pos).isAir()) {
-                                BlockPos below = pos.below();
-                                if (!mc.level.getBlockState(below).isAir() && mc.level.getBlockState(below).isCollisionShapeFullBlock(mc.level, below)) {
+                            if (BlockUtility.isAir(mc.level, wx, wy, wz)) {
+                                int by = BlockUtility.belowY(wy);
+                                if (BlockUtility.isSolid(mc.level, wx, by, wz)) {
                                     closestDistSq = distSq;
-                                    targetPos = pos;
+                                    targetPacked = BlockUtility.packPos(wx, wy, wz);
+                                    hasTarget = true;
                                 }
                             }
                         }
@@ -116,20 +113,21 @@ public class ChestAura extends Module {
                 }
             }
         }
-        if (targetPos != null) {
-            int prevSlot = p.getInventory().getSelectedSlot();
+        if (hasTarget) {
+            int tx = BlockUtility.unpackX(targetPacked), ty = BlockUtility.unpackY(targetPacked), tz = BlockUtility.unpackZ(targetPacked);
+            int prevSlot = InventoryUtility.getSelectedSlot(p);
             if (autoSwap.getValue() && chestSlot != prevSlot) {
-                p.getInventory().setSelectedSlot(chestSlot);
+                InventoryUtility.selectSlot(p, chestSlot);
             }
-            BlockPos below = targetPos.below();
-            Vec3 hitVec = Vec3.atCenterOf(below).add(0, 0.5, 0); 
-            BlockHitResult blockHit = new BlockHitResult(hitVec, Direction.UP, below, false);
-            mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
-            p.swing(InteractionHand.MAIN_HAND);
+            var below = BlockUtility.pos(tx, BlockUtility.belowY(ty), tz);
+            BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
+                net.minecraft.world.phys.Vec3.atCenterOf(below).add(0, 0.5, 0),
+                net.minecraft.core.Direction.UP, below, false));
+            ravex.utility.player.SwingUtility.swingMainHand(p);
             if (autoSwap.getValue() && silent.getValue() && chestSlot != prevSlot) {
-                p.getInventory().setSelectedSlot(prevSlot);
+                InventoryUtility.selectSlot(p, prevSlot);
             }
-            placedChests.add(new PlacedChest(targetPos, now));
+            placedChests.add(new PlacedChest(targetPacked, now));
             delayTimer = delay.getValue().intValue();
         }
     }

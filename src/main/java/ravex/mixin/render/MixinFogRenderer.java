@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import ravex.modules.render.NoRender;
-import ravex.modules.render.CustomFog;
+import ravex.modules.render.Fog;
 import ravex.modules.render.SkyColor;
 
 @Mixin(FogRenderer.class)
@@ -37,8 +37,8 @@ public class MixinFogRenderer {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V")
     )
     private void onUpdateBufferArgs(Args args) {
-        if (CustomFog.INSTANCE.getEnabled()) {
-            int argb = CustomFog.INSTANCE.color.getValue();
+        if (Fog.INSTANCE.getEnabled()) {
+            int argb = Fog.INSTANCE.color.getValue();
             float r = ((argb >> 16) & 0xFF) / 255.0f;
             float g = ((argb >>  8) & 0xFF) / 255.0f;
             float b = ( argb        & 0xFF) / 255.0f;

@@ -62,6 +62,8 @@ public abstract class Module {
         return category;
     }
     public String getDescription() {
+        String translated = ravex.utility.misc.LanguageUtility.getDescription(getName());
+        if (translated != null && !translated.startsWith("desc_")) return translated;
         if (hud) return ravex.gui.descriptions.HudDescriptions.getDescription(getName());
         return ravex.gui.descriptions.ClickGuiDescriptions.getDescription(getName());
     }

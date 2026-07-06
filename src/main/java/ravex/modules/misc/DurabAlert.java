@@ -2,8 +2,8 @@ package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
 import ravex.modules.Category;
+import ravex.utility.misc.MobUtility;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -36,7 +36,7 @@ public class DurabAlert extends Module {
         EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
         String[] names = {"Boots", "Leggings", "Chestplate", "Helmet"};
         for (int i = 0; i < slots.length; i++) {
-            ItemStack stack = mc.player.getItemBySlot(slots[i]);
+            var stack = mc.player.getItemBySlot(slots[i]);
             if (stack.isEmpty() || !stack.isDamageableItem()) continue;
             int maxDmg = stack.getMaxDamage();
             int curDmg = stack.getDamageValue();
@@ -47,11 +47,12 @@ public class DurabAlert extends Module {
         }
     }
     private void checkEnemyArmor(Minecraft mc, double thresh) {
-        if (mc.crosshairPickEntity instanceof LivingEntity living && !living.equals(mc.player)) {
+        LivingEntity living = MobUtility.asLivingEntity(mc.crosshairPickEntity);
+        if (living != null && !living.equals(mc.player)) {
             EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
             String[] names = {"Boots", "Leggings", "Chestplate", "Helmet"};
             for (int i = 0; i < slots.length; i++) {
-                ItemStack stack = living.getItemBySlot(slots[i]);
+                var stack = living.getItemBySlot(slots[i]);
                 if (stack.isEmpty() || !stack.isDamageableItem()) continue;
                 int maxDmg = stack.getMaxDamage();
                 int curDmg = stack.getDamageValue();

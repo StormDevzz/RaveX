@@ -1,57 +1,48 @@
 package ravex.modules.world;
 import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.InteractionHand;
 public class AutoNameTag extends Module {
     public static final AutoNameTag INSTANCE = new AutoNameTag();
 
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        var p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
         int tagSlot = -1;
-        ItemStack tagStack = null;
+        var tagStack = (net.minecraft.world.item.ItemStack) null;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = p.getInventory().getItem(i);
-            if (stack.is(Items.NAME_TAG) && stack.getCustomName() != null) {
+            var stack = InventoryUtility.getItem(p, i);
+            if (InventoryUtility.isItem(stack, "name_tag") && stack.getCustomName() != null) {
                 tagSlot = i;
                 tagStack = stack;
                 break;
             }
         }
-        if (tagSlot == -1 || tagStack == null) return; 
+        if (tagSlot == -1 || tagStack == null) return;
         String tagName = tagStack.getHoverName().getString();
-        LivingEntity target = null;
+        var target = (net.minecraft.world.entity.LivingEntity) null;
         double closestDist = 4.5;
         for (var entity : mc.level.entitiesForRendering()) {
-            if (entity instanceof LivingEntity living && !(entity instanceof Player) && !(entity instanceof ArmorStand)) {
-                if (living.isAlive()) {
-                    if (living.getCustomName() != null && tagName.equals(living.getCustomName().getString())) {
-                        continue;
-                    }
-                    double dist = p.distanceTo(living);
-                    if (dist < closestDist) {
-                        closestDist = dist;
-                        target = living;
-                    }
+            if (MobUtility.isNameable(entity) && !MobUtility.hasName(entity, tagName)) {
+                double dist = p.distanceTo(entity);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    target = (net.minecraft.world.entity.LivingEntity) entity;
                 }
             }
         }
         if (target == null) return;
-        int prevSlot = p.getInventory().getSelectedSlot();
-        p.getInventory().setSelectedSlot(tagSlot);
-        mc.gameMode.interact(p, target, InteractionHand.MAIN_HAND);
-        p.swing(InteractionHand.MAIN_HAND);
+        int prevSlot = InventoryUtility.getSelectedSlot(p);
+        InventoryUtility.selectSlot(p, tagSlot);
+        MobUtility.interact(mc, target);
+        SwingUtility.swingMainHand(p);
         if (tagSlot != prevSlot) {
-            p.getInventory().setSelectedSlot(prevSlot);
+            InventoryUtility.selectSlot(p, prevSlot);
         }
     }
 }

@@ -7,18 +7,18 @@ public class ClickGuiDescriptions {
     private static final Map<String, String> DESCRIPTIONS = new HashMap<>();
 
     static {
-        DESCRIPTIONS.put("KillAura", "Attack enemies");
+        DESCRIPTIONS.put("KillAura", "Fucks all retardz");
         DESCRIPTIONS.put("ESP", "See through walls");
         DESCRIPTIONS.put("AutoTool", "Swap best tool");
         DESCRIPTIONS.put("AntiAfk", "No idle kick");
         DESCRIPTIONS.put("BoneMeal", "Fertilize crops");
         DESCRIPTIONS.put("ClickGui", "Open menu");
         DESCRIPTIONS.put("Notifications", "Screen alerts");
-        DESCRIPTIONS.put("VisualRange", "Player alerts");
+
         DESCRIPTIONS.put("NoBob", "No head bob");
         DESCRIPTIONS.put("Ambient", "Change light");
         DESCRIPTIONS.put("Weather", "Change weather");
-        DESCRIPTIONS.put("CustomFog", "Change fog");
+        DESCRIPTIONS.put("Fog", "Change fog");
         DESCRIPTIONS.put("SkyColor", "Change sky");
         DESCRIPTIONS.put("CloudColor", "Change clouds");
         DESCRIPTIONS.put("Trails", "Show paths");
@@ -64,7 +64,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("AutoRespawn", "Instant respawn");
         DESCRIPTIONS.put("AutoArmor", "Equip armor");
         DESCRIPTIONS.put("FastItem", "Quick item move");
-        DESCRIPTIONS.put("HandshakeSpoof", "Fake handshake");
+        DESCRIPTIONS.put("Handshake", "Fake handshake");
         DESCRIPTIONS.put("LongJump", "Jump far");
         DESCRIPTIONS.put("AutoLog", "Leave fight");
         DESCRIPTIONS.put("WebAura", "Place webs");
@@ -114,7 +114,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("WindAura", "Throw wind");
         DESCRIPTIONS.put("BreadCrumbs", "Show trail");
         DESCRIPTIONS.put("ViewModel", "Move hands");
-        DESCRIPTIONS.put("AutoCrystal", "Break crystals");
+        DESCRIPTIONS.put("AutoCrystal", "Blow all retardz");
         DESCRIPTIONS.put("Trap", "Trap targets");
         DESCRIPTIONS.put("Igniter", "Light TNT");
         DESCRIPTIONS.put("RocketUtils", "Rocket boost");
@@ -151,18 +151,18 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("ShieldFucker", "Break shields");
         DESCRIPTIONS.put("KillEffects", "Death effects");
         DESCRIPTIONS.put("AntiQuit", "No leaving");
-        DESCRIPTIONS.put("CustomDeathText", "Death message");
-        DESCRIPTIONS.put("SoundBlocker", "Mute sounds");
+        DESCRIPTIONS.put("DeathText", "Death message");
+        DESCRIPTIONS.put("SoundBlock", "Mute sounds");
         DESCRIPTIONS.put("CoordLogger", "Log position");
         DESCRIPTIONS.put("Religion", "Show religions");
         DESCRIPTIONS.put("Phase", "Walk through walls");
-        DESCRIPTIONS.put("NoMineAnimation", "Hide cracks");
+        DESCRIPTIONS.put("MineAnimation", "Hide cracks");
         DESCRIPTIONS.put("HighJump", "High jump");
         DESCRIPTIONS.put("FastStairs", "Climb fast");
         DESCRIPTIONS.put("NoFall", "Safe fall");
         DESCRIPTIONS.put("Elytra++", "Elytra fly");
         DESCRIPTIONS.put("Flight", "Creative fly");
-        DESCRIPTIONS.put("InventoryCleaner", "Clean inventory");
+        DESCRIPTIONS.put("InvClean", "Clean inventory");
         DESCRIPTIONS.put("Replenish", "Refill items");
         DESCRIPTIONS.put("AutoLight", "Place torches");
         DESCRIPTIONS.put("AutoReplant", "Replant crops");
@@ -173,11 +173,11 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("AutoSmelt", "Smelt items");
         DESCRIPTIONS.put("AutoBrew", "Brew potions");
         DESCRIPTIONS.put("ECFarmer", "Farm chests");
-        DESCRIPTIONS.put("NoGhostBlocks", "No fake blocks");
-        DESCRIPTIONS.put("NoHitDelay", "No cooldown");
+        DESCRIPTIONS.put("GhostBlocks", "No fake blocks");
+
         DESCRIPTIONS.put("AntiPearl", "Pearl warning");
         DESCRIPTIONS.put("BedBomb", "Blow beds");
-        DESCRIPTIONS.put("PortalBuild", "Build portals");
+        DESCRIPTIONS.put("AutoPortal", "Build portals");
         DESCRIPTIONS.put("Criticals", "Crit hits");
         DESCRIPTIONS.put("AutoBow", "Release bow");
         DESCRIPTIONS.put("HoleFill", "Fill holes");
@@ -188,10 +188,9 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Burrow", "Hide in block");
         DESCRIPTIONS.put("PacketMine", "Click mine");
         DESCRIPTIONS.put("PacketUtils", "Network tools");
-        DESCRIPTIONS.put("WitherBuild", "Build wither");
+        DESCRIPTIONS.put("AutoWither", "Build wither");
         DESCRIPTIONS.put("Borders", "Show borders");
         DESCRIPTIONS.put("Zoom", "Camera zoom");
-        DESCRIPTIONS.put("HoleESP", "Show holes");
         DESCRIPTIONS.put("Blur", "Blur background");
         DESCRIPTIONS.put("ToolTips", "Item info");
         DESCRIPTIONS.put("VoidESP", "Show void");
@@ -210,16 +209,16 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("PingSpoof", "Fake ping");
         DESCRIPTIONS.put("ShiftInterp", "Force crouch");
         DESCRIPTIONS.put("BabyDude", "Small players");
-        DESCRIPTIONS.put("LiquidCollision", "Swim freely");
+        DESCRIPTIONS.put("LiquidControl", "Swim freely");
         DESCRIPTIONS.put("TntAura", "Bomb targets");
-        DESCRIPTIONS.put("WitherRoseAura", "Place roses");
+
         DESCRIPTIONS.put("GridBuilder", "Build grids");
         DESCRIPTIONS.put("Particles", "Pretty particles");
         DESCRIPTIONS.put("Crosshair", "Custom crosshair");
         DESCRIPTIONS.put("PearlTarget", "Track pearls");
         DESCRIPTIONS.put("MiddleClick", "Middle click");
         DESCRIPTIONS.put("Telemetry", "Send data");
-        DESCRIPTIONS.put("PortalGodMode", "Portal shield");
+        DESCRIPTIONS.put("PortalGod", "Portal shield");
         DESCRIPTIONS.put("Baritone", "Find path");
         DESCRIPTIONS.put("PauseBaritone", "Pause path");
         DESCRIPTIONS.put("NewChunks", "New chunks");

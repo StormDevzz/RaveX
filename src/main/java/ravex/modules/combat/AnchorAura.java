@@ -10,8 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RespawnAnchorBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,12 +18,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.item.enchantment.ItemEnchantments;
-import net.minecraft.core.component.DataComponents;
 import ravex.RaveX;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -61,9 +60,7 @@ public class AnchorAura extends Module {
     public static BlockPos simulatedPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
-    private static float silentYaw = 0;
-    private static float silentPitch = 0;
-    private static boolean hasSilentRotations = false;
+    private static final SilentRotation silentRotation = new SilentRotation();
     private long lastActionTime = 0;
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_anchoraura");
     static {
@@ -79,21 +76,21 @@ public class AnchorAura extends Module {
     }
 
     public static boolean hasSilentRotations() {
-        return hasSilentRotations;
+        return silentRotation.hasRotation;
     }
 
     public static float getSilentYaw() {
-        return silentYaw;
+        return silentRotation.yaw;
     }
 
     public static float getSilentPitch() {
-        return silentPitch;
+        return silentRotation.pitch;
     }
 
     @Override
     protected void onEnable() {
         lastActionTime = 0;
-        hasSilentRotations = false;
+        silentRotation.reset();
         simulatedPlacementBlock = null;
         currentTargetDamage = 0.0;
         currentSelfDamage = 0.0;
@@ -101,7 +98,7 @@ public class AnchorAura extends Module {
 
     @Override
     protected void onDisable() {
-        hasSilentRotations = false;
+        silentRotation.reset();
         simulatedPlacementBlock = null;
     }
 
@@ -110,7 +107,7 @@ public class AnchorAura extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null)
             return;
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         LivingEntity target = findTarget(mc);
         if (target == null) {
             simulatedPlacementBlock = null;
@@ -127,7 +124,7 @@ public class AnchorAura extends Module {
             if (!canAct)
                 return;
             if (charges == 0) {
-                int glowstoneSlot = findItemSlot(mc, Items.GLOWSTONE);
+                int glowstoneSlot = findItemSlot(mc, "glowstone");
                 if (glowstoneSlot == -1)
                     return;
                 Vec3 hitVec = Vec3.atCenterOf(existingAnchor);
@@ -185,7 +182,7 @@ public class AnchorAura extends Module {
         }
         if (!canAct)
             return;
-        int anchorSlot = findItemSlot(mc, Items.RESPAWN_ANCHOR);
+        int anchorSlot = findItemSlot(mc, "respawn_anchor");
         if (anchorSlot == -1)
             return;
         BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
@@ -200,17 +197,14 @@ public class AnchorAura extends Module {
     }
 
     private void performUse(Minecraft mc, int slot, BlockPos targetBlock, Direction face, Vec3 hitVec) {
-        int originalSlot = mc.player.getInventory().getSelectedSlot();
+        int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
         String swap = swapMode.getValue();
         if (swap.equals("Normal")) {
-            mc.player.getInventory().setSelectedSlot(slot);
+            InventoryUtility.selectSlot(mc.player, slot);
         } else if (swap.equals("Silent")) {
-            if (mc.player.connection != null) {
-                mc.player.connection
-                        .send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
-            }
+            InventoryUtility.silentSelectSlot(mc.player, slot);
         } else if (swap.equals("None")) {
-            if (mc.player.getInventory().getSelectedSlot() != slot)
+            if (InventoryUtility.getSelectedSlot(mc.player) != slot)
                 return;
         }
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, targetBlock, false);
@@ -218,10 +212,7 @@ public class AnchorAura extends Module {
         mc.player.swing(InteractionHand.MAIN_HAND);
         lastActionTime = System.currentTimeMillis();
         if (swap.equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
-            if (mc.player.connection != null) {
-                mc.player.connection
-                        .send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
-            }
+            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
     }
 
@@ -284,23 +275,15 @@ public class AnchorAura extends Module {
         return bestAnchor;
     }
 
-    private int findItemSlot(Minecraft mc, net.minecraft.world.item.Item item) {
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (!stack.isEmpty() && stack.getItem() == item) {
-                return i;
-            }
-        }
+    private int findItemSlot(Minecraft mc, String itemName) {
+        int slot = InventoryUtility.findHotbarSlot(mc.player, itemName);
+        if (slot != -1) return slot;
         if (swapInventory.getValue()) {
-            for (int i = 9; i < 36; i++) {
-                ItemStack stack = mc.player.getInventory().getItem(i);
-                if (!stack.isEmpty() && stack.getItem() == item) {
-                    int hotbarSlot = mc.player.getInventory().getSelectedSlot();
-                    mc.gameMode.handleInventoryMouseClick(
-                            mc.player.containerMenu.containerId, i, hotbarSlot,
-                            net.minecraft.world.inventory.ClickType.SWAP, mc.player);
-                    return hotbarSlot;
-                }
+            slot = InventoryUtility.findSlot(mc.player, itemName, 9, 36);
+            if (slot != -1) {
+                int hotbarSlot = InventoryUtility.getSelectedSlot(mc.player);
+                InventoryUtility.handleInventoryClick(mc, mc.player, slot, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                return hotbarSlot;
             }
         }
         return -1;
@@ -308,13 +291,13 @@ public class AnchorAura extends Module {
 
     private int findNonGlowstoneSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (!stack.isEmpty() && stack.getItem() != Items.GLOWSTONE) {
+            var stack = InventoryUtility.getItem(mc.player, i);
+            if (!stack.isEmpty() && !InventoryUtility.isGlowstone(stack)) {
                 return i;
             }
         }
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty()) {
                 return i;
             }
@@ -332,18 +315,12 @@ public class AnchorAura extends Module {
             mc.player.setYRot(angles[0]);
             mc.player.setXRot(angles[1]);
         } else if (mode.equals("Silent")) {
-            silentYaw = angles[0];
-            silentPitch = angles[1];
-            hasSilentRotations = true;
+            silentRotation.set(angles[0], angles[1]);
         }
     }
 
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
-        float[] targetAngles = RotationUtility.anglesTo(
-                mc.player.getEyePosition(), target);
-        float yawDiff = Math.abs(RotationUtility.diffYaw(mc.player.getYRot(), targetAngles[0]));
-        float pitchDiff = Math.abs(RotationUtility.diffPitch(mc.player.getXRot(), targetAngles[1]));
-        return yawDiff < 12.0F && pitchDiff < 12.0F;
+        return silentRotation.isRotationAligned(mc, target, 12.0F);
     }
 
     private double[] collectSolidBlocks(Minecraft mc) {
@@ -381,30 +358,26 @@ public class AnchorAura extends Module {
         for (Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof LivingEntity le))
                 continue;
-            if (le == mc.player)
+            if (MobUtility.isSelf(le))
                 continue;
-            if (le.isDeadOrDying())
+            if (MobUtility.isDead(le))
                 continue;
             if (typeFilter.equals("Players")) {
-                if (!(le instanceof Player))
+                if (!MobUtility.isPlayer(le))
                     continue;
             } else if (typeFilter.equals("Monsters")) {
-                if (!(le instanceof net.minecraft.world.entity.monster.Monster
-                        || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
-                        || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss))
+                if (!MobUtility.isHostile(le))
                     continue;
             } else if (typeFilter.equals("Passives")) {
-                if (le instanceof Player || le instanceof net.minecraft.world.entity.monster.Monster
-                        || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
-                        || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss)
+                if (MobUtility.isPlayer(le) || MobUtility.isHostile(le))
                     continue;
             }
-            double dist = mc.player.distanceTo(le);
+            double dist = MobUtility.distanceToPlayer(le);
             if (dist > maxDist)
                 continue;
             double metric = switch (mode) {
                 case "Closest" -> dist;
-                case "LowestHP" -> le.getHealth();
+                case "LowestHP" -> MobUtility.getHealth(le);
                 default -> dist;
             };
             if (metric < bestMetric) {
@@ -425,10 +398,10 @@ public class AnchorAura extends Module {
                 net.minecraft.world.entity.EquipmentSlot.HEAD
         };
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            ItemStack armor = player.getItemBySlot(slot);
+            var armor = player.getItemBySlot(slot);
             if (armor.isEmpty())
                 continue;
-            ItemEnchantments enchants = armor.get(DataComponents.ENCHANTMENTS);
+            var enchants = InventoryUtility.getEnchantments(armor);
             if (enchants != null) {
                 for (var enchantment : enchants.keySet()) {
                     String id = enchantment.getRegisteredName().toLowerCase();
@@ -442,16 +415,12 @@ public class AnchorAura extends Module {
             }
         }
         int totems = 0;
-        if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING)
+        if (InventoryUtility.isTotem(player.getMainHandItem()))
             totems++;
-        if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING)
+        if (InventoryUtility.isTotem(player.getOffhandItem()))
             totems++;
         if (player instanceof Player p) {
-            for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
-                if (p.getInventory().getItem(i).getItem() == Items.TOTEM_OF_UNDYING) {
-                    totems++;
-                }
-            }
+            totems += InventoryUtility.countItem(p, "totem_of_undying");
         }
         double[] stats = new double[15];
         stats[0] = player.getArmorValue();
@@ -467,7 +436,7 @@ public class AnchorAura extends Module {
         stats[6] = strEffect != null ? strEffect.getAmplifier() + 1 : 0;
         int idx = 7;
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            ItemStack armor = player.getItemBySlot(slot);
+            var armor = player.getItemBySlot(slot);
             if (armor.isEmpty()) {
                 stats[idx++] = 0.0;
             } else if (!armor.isDamageableItem()) {

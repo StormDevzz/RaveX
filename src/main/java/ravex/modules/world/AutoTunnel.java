@@ -1,18 +1,12 @@
 package ravex.modules.world;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.List;
 public class AutoTunnel extends Module {
@@ -25,18 +19,25 @@ public class AutoTunnel extends Module {
     public final BooleanParameter autoWalk = new BooleanParameter("AutoWalk", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFFFF00);
-    public static BlockPos currentTarget = null;
+    private static int targetX, targetY, targetZ;
+    private static boolean hasTarget;
     private long lastActionTime = 0;
-    private BlockPos currentMiningTarget = null;
+    private int miningX, miningY, miningZ;
+    private boolean hasMiningTarget;
+
+    public static net.minecraft.core.BlockPos getCurrentTarget() {
+        if (!hasTarget) return null;
+        return BlockUtility.pos(targetX, targetY, targetZ);
+    }
 
     @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
-        if (currentMiningTarget != null && mc.gameMode != null) {
+        if (hasMiningTarget && mc.gameMode != null) {
             mc.gameMode.stopDestroyBlock();
         }
-        currentMiningTarget = null;
-        currentTarget = null;
+        hasMiningTarget = false;
+        hasTarget = false;
     }
     @Override
     public void onTick() {
@@ -47,119 +48,97 @@ public class AutoTunnel extends Module {
         if (autoWalk.getValue()) {
             mc.options.keyUp.setDown(true);
         }
-        List<BlockPos> blocks = getTunnelBlocks(mc);
+        List<Long> blocks = getTunnelBlocks(mc);
         if (blocks.isEmpty()) return;
         if (fillLava.getValue()) {
-            for (BlockPos pos : blocks) {
-                BlockState state = mc.level.getBlockState(pos);
-                if (state.liquid()) {
-                    fillBlock(mc, pos);
+            for (long packed : blocks) {
+                int bx = BlockUtility.unpackX(packed), by = BlockUtility.unpackY(packed), bz = BlockUtility.unpackZ(packed);
+                if (BlockUtility.isLiquid(mc.level, bx, by, bz)) {
+                    fillBlock(mc, bx, by, bz);
                     lastActionTime = now;
                     return;
                 }
             }
         }
-        for (BlockPos pos : blocks) {
-            BlockState state = mc.level.getBlockState(pos);
+        for (long packed : blocks) {
+            int bx = BlockUtility.unpackX(packed), by = BlockUtility.unpackY(packed), bz = BlockUtility.unpackZ(packed);
+            var state = BlockUtility.getState(mc.level, bx, by, bz);
             if (state.isAir() || state.liquid()) continue;
-            if (state.getDestroySpeed(mc.level, pos) < 0) continue;
-            if (currentMiningTarget != null && !pos.equals(currentMiningTarget)) {
+            if (state.getDestroySpeed(mc.level, BlockUtility.pos(bx, by, bz)) < 0) continue;
+            if (hasMiningTarget && (miningX != bx || miningY != by || miningZ != bz)) {
                 mc.gameMode.stopDestroyBlock();
             }
-            currentMiningTarget = pos;
-            currentTarget = pos;
-            mc.gameMode.startDestroyBlock(pos, getDirection(mc.player.getEyePosition(), pos));
-            mc.player.swing(InteractionHand.MAIN_HAND);
+            miningX = bx; miningY = by; miningZ = bz;
+            hasMiningTarget = true;
+            targetX = bx; targetY = by; targetZ = bz;
+            hasTarget = true;
+            BlockUtility.breakBlock(mc, BlockUtility.pos(bx, by, bz));
             lastActionTime = now;
             return;
         }
-        if (currentMiningTarget != null) {
+        if (hasMiningTarget) {
             mc.gameMode.stopDestroyBlock();
         }
-        currentMiningTarget = null;
-        currentTarget = null;
+        hasMiningTarget = false;
+        hasTarget = false;
     }
-    private void fillBlock(Minecraft mc, BlockPos pos) {
-        BlockState state = mc.level.getBlockState(pos);
-        if (!state.liquid()) return;
+    private void fillBlock(Minecraft mc, int x, int y, int z) {
+        if (!BlockUtility.isLiquid(mc.level, x, y, z)) return;
         int fillSlot = -1;
         for (int i = 0; i < 9; i++) {
-            var stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty()) continue;
-            if (stack.is(Items.COBBLESTONE) || stack.is(Items.DIRT) || stack.is(Items.STONE)
-                || stack.is(Items.GRAVEL) || stack.is(Items.NETHERRACK) || stack.is(Items.END_STONE)
-                || stack.is(Items.COBBLED_DEEPSLATE)) {
+            if (InventoryUtility.isItem(stack, "cobblestone") || InventoryUtility.isItem(stack, "dirt")
+                || InventoryUtility.isItem(stack, "stone") || InventoryUtility.isItem(stack, "gravel")
+                || InventoryUtility.isItem(stack, "netherrack") || InventoryUtility.isItem(stack, "end_stone")
+                || InventoryUtility.isItem(stack, "cobbled_deepslate")) {
                 fillSlot = i;
                 break;
             }
         }
         if (fillSlot == -1) return;
-        int prevSlot = mc.player.getInventory().getSelectedSlot();
-        mc.player.getInventory().setSelectedSlot(fillSlot);
-        BlockPos placeOn = pos;
-        BlockHitResult hit = new BlockHitResult(
-            Vec3.atCenterOf(placeOn), Direction.UP, placeOn, true
-        );
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
-        mc.player.getInventory().setSelectedSlot(prevSlot);
+        BlockUtility.placeBlock(mc, BlockUtility.pos(x, y, z), fillSlot);
     }
-    private List<BlockPos> getTunnelBlocks(Minecraft mc) {
-        List<BlockPos> result = new ArrayList<>();
-        Vec3 eye = mc.player.getEyePosition();
-        Direction facing = mc.player.getDirection();
+    private List<Long> getTunnelBlocks(Minecraft mc) {
+        List<Long> result = new ArrayList<>();
+        var eye = mc.player.getEyePosition();
+        var facing = mc.player.getDirection();
         int h = height.getValue().intValue();
         int w = width.getValue().intValue();
         double r = range.getValue();
-        BlockPos startPos = mc.player.blockPosition();
+        var startPos = mc.player.blockPosition();
+        int sx = startPos.getX(), sy = startPos.getY(), sz = startPos.getZ();
         for (int f = 0; f < 3; f++) {
             int step = f + 1;
             for (int dy = 0; dy < h; dy++) {
                 for (int dx = 0; dx < w; dx++) {
-                    BlockPos pos = offsetPos(startPos, facing, step, dx - (w/2), dy);
-                    if (pos.distToCenterSqr(eye.x, eye.y, eye.z) > r * r) continue;
-                    BlockState state = mc.level.getBlockState(pos);
+                    int[] off = offsetCoords(facing, step, dx - (w / 2), dy);
+                    int px = sx + off[0], py = sy + off[1], pz = sz + off[2];
+                    if (BlockUtility.distToSqr(mc.level, px, py, pz, eye.x, eye.y, eye.z) > r * r) continue;
+                    var state = BlockUtility.getState(mc.level, px, py, pz);
                     if (state.isAir()) continue;
                     if (state.liquid()) {
                         if (fillLava.getValue()) {
-                            result.add(pos);
+                            result.add(BlockUtility.packPos(px, py, pz));
                         }
                         continue;
                     }
-                    if (state.getDestroySpeed(mc.level, pos) < 0) continue;
-                    result.add(pos);
+                    if (state.getDestroySpeed(mc.level, BlockUtility.pos(px, py, pz)) < 0) continue;
+                    result.add(BlockUtility.packPos(px, py, pz));
                 }
             }
             if (!result.isEmpty()) break;
         }
         return result;
     }
-    private static BlockPos offsetPos(BlockPos origin, Direction facing, int forward, int right, int up) {
-        int offsetX = 0, offsetZ = 0;
+    private static int[] offsetCoords(net.minecraft.core.Direction facing, int forward, int right, int up) {
+        int ox = 0, oz = 0;
         switch (facing) {
-            case NORTH: offsetX = -right; offsetZ = -forward; break;
-            case SOUTH: offsetX = right; offsetZ = forward; break;
-            case WEST: offsetX = -forward; offsetZ = right; break;
-            case EAST: offsetX = forward; offsetZ = -right; break;
+            case NORTH: ox = -right; oz = -forward; break;
+            case SOUTH: ox = right; oz = forward; break;
+            case WEST: ox = -forward; oz = right; break;
+            case EAST: ox = forward; oz = -right; break;
         }
-        return origin.offset(offsetX, up, offsetZ);
-    }
-    public static Direction getDirection(Vec3 eye, BlockPos pos) {
-        Vec3 center = Vec3.atCenterOf(pos);
-        double dx = eye.x - center.x;
-        double dy = eye.y - pos.getY() - 0.5;
-        double dz = eye.z - center.z;
-        double absX = Math.abs(dx);
-        double absY = Math.abs(dy);
-        double absZ = Math.abs(dz);
-        if (absY <= absX && absY <= absZ) {
-            if (absX >= absZ) return dx > 0 ? Direction.EAST : Direction.WEST;
-            else return dz > 0 ? Direction.SOUTH : Direction.NORTH;
-        } else if (absX <= absY && absX <= absZ) {
-            if (absY >= absZ) return dy > 0 ? Direction.DOWN : Direction.UP;
-            else return dz > 0 ? Direction.SOUTH : Direction.NORTH;
-        } else {
-            if (absY >= absX) return dy > 0 ? Direction.DOWN : Direction.UP;
-            else return dx > 0 ? Direction.EAST : Direction.WEST;
-        }
+        return new int[]{ox, up, oz};
     }
 }

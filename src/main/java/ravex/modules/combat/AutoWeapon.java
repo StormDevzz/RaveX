@@ -1,13 +1,14 @@
 package ravex.modules.combat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
+import ravex.utility.misc.MobUtility;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import java.util.List;
+import ravex.utility.player.InventoryUtility;
 public class AutoWeapon extends Module {
     public static final AutoWeapon INSTANCE = new AutoWeapon();
     public final ModeParameter swapMode = new ModeParameter("SwapMode", "Normal",
@@ -19,12 +20,14 @@ public class AutoWeapon extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (swapMode.getValue().equals("None")) return;
-        if (mc.options.keyAttack.isDown() && mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof LivingEntity target) {
-            if (!target.isAlive() || target == mc.player) return;
+        if (mc.options.keyAttack.isDown() && mc.hitResult instanceof EntityHitResult hit) {
+            LivingEntity target = MobUtility.asLivingEntity(hit.getEntity());
+            if (target == null) return;
+            if (MobUtility.isDead(target) || MobUtility.isSelf(target)) return;
             int bestSlot = -1;
             double bestDmg = -1.0;
             for (int i = 0; i < 9; i++) {
-                ItemStack stack = mc.player.getInventory().getItem(i);
+                var stack = InventoryUtility.getItem(mc.player, i);
                 if (swordsOnly.getValue() && !isSword(stack.getItem())) continue;
                 double dmg = getWeaponDamage(stack);
                 if (dmg > bestDmg) {
@@ -32,11 +35,11 @@ public class AutoWeapon extends Module {
                     bestSlot = i;
                 }
             }
-            if (bestSlot != -1 && bestSlot != mc.player.getInventory().getSelectedSlot() && bestDmg > 1.0) {
+            if (bestSlot != -1 && bestSlot != InventoryUtility.getSelectedSlot(mc.player) && bestDmg > 1.0) {
                 if (swapMode.getValue().equals("Silent")) {
                     mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(bestSlot));
                 } else {
-                    mc.player.getInventory().setSelectedSlot(bestSlot);
+                    InventoryUtility.selectSlot(mc.player, bestSlot);
                 }
             }
         }
@@ -49,7 +52,7 @@ public class AutoWeapon extends Module {
                item == net.minecraft.world.item.Items.DIAMOND_SWORD ||
                item == net.minecraft.world.item.Items.NETHERITE_SWORD;
     }
-    private double getWeaponDamage(ItemStack stack) {
+    private double getWeaponDamage(net.minecraft.world.item.ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
         String name = stack.getItem().toString().toLowerCase();
         double dmg = 0.0;

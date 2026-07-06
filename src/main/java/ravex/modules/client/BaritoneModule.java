@@ -1,5 +1,5 @@
 package ravex.modules.client;
-import ravex.integrations.BaritoneIntegration;
+import ravex.integrations.baritone.BaritoneIntegration;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;

@@ -1,11 +1,7 @@
 package ravex.modules.render;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ItemContainerContents;
+import ravex.utility.player.InventoryUtility;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -19,11 +15,11 @@ public class ToolTips extends Module {
     public final BooleanParameter showFood = new BooleanParameter("ShowFood", true);
     public final BooleanParameter showEnchants = new BooleanParameter("ShowEnchants", true);
     public final NumberParameter maxLines = new NumberParameter("MaxLines", 10, 2, 30, 1);
-    public ItemStack lastStack = ItemStack.EMPTY;
+    public net.minecraft.world.item.ItemStack lastStack = net.minecraft.world.item.ItemStack.EMPTY;
     public int lastX;
     public int lastY;
 
-    public List<Component> getTooltip(ItemStack stack) {
+    public List<Component> getTooltip(net.minecraft.world.item.ItemStack stack) {
         List<Component> lines = new ArrayList<>();
         if (stack.isEmpty()) return lines;
         int max = maxLines.getValue().intValue();
@@ -34,7 +30,7 @@ public class ToolTips extends Module {
             count++;
         }
         if (showFood.getValue()) {
-            FoodProperties food = stack.get(DataComponents.FOOD);
+            var food = InventoryUtility.getFoodProperties(stack);
             if (food != null) {
                 if (count < max) {
                     lines.add(Component.literal("§cFood: §f" + food.nutrition() + " hunger, " + String.format("%.1f", food.saturation() * 2.0f) + " sat"));
@@ -43,7 +39,7 @@ public class ToolTips extends Module {
             }
         }
         if (showEnchants.getValue()) {
-            var ench = stack.get(DataComponents.ENCHANTMENTS);
+            var ench = InventoryUtility.getEnchantments(stack);
             if (ench != null && ench.entrySet() != null) {
                 for (var entry : ench.entrySet()) {
                     if (count >= max) break;
@@ -55,23 +51,7 @@ public class ToolTips extends Module {
         }
         return lines;
     }
-    public boolean isShulker(ItemStack stack) {
-        return stack.getItem() == Items.SHULKER_BOX
-            || stack.getItem() == Items.WHITE_SHULKER_BOX
-            || stack.getItem() == Items.ORANGE_SHULKER_BOX
-            || stack.getItem() == Items.MAGENTA_SHULKER_BOX
-            || stack.getItem() == Items.LIGHT_BLUE_SHULKER_BOX
-            || stack.getItem() == Items.YELLOW_SHULKER_BOX
-            || stack.getItem() == Items.LIME_SHULKER_BOX
-            || stack.getItem() == Items.PINK_SHULKER_BOX
-            || stack.getItem() == Items.GRAY_SHULKER_BOX
-            || stack.getItem() == Items.LIGHT_GRAY_SHULKER_BOX
-            || stack.getItem() == Items.CYAN_SHULKER_BOX
-            || stack.getItem() == Items.PURPLE_SHULKER_BOX
-            || stack.getItem() == Items.BLUE_SHULKER_BOX
-            || stack.getItem() == Items.BROWN_SHULKER_BOX
-            || stack.getItem() == Items.GREEN_SHULKER_BOX
-            || stack.getItem() == Items.RED_SHULKER_BOX
-            || stack.getItem() == Items.BLACK_SHULKER_BOX;
+    public boolean isShulker(net.minecraft.world.item.ItemStack stack) {
+        return InventoryUtility.isShulkerBox(stack);
     }
 }

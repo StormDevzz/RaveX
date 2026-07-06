@@ -3,7 +3,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -37,7 +36,7 @@ public class WebSelf extends Module {
         if (!mc.level.getBlockState(below).isAir() && !mc.level.getBlockState(below).is(Blocks.COBWEB)) {
             targetPos = null; return;
         }
-        int webSlot = InventoryUtility.findHotbarSlot(mc.player, Items.COBWEB);
+        int webSlot = InventoryUtility.findHotbarSlot(mc.player, "cobweb");
         if (webSlot == -1) { targetPos = null; return; }
         targetPos = below;
         if (render.getValue()) {

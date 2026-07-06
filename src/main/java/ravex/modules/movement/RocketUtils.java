@@ -1,13 +1,13 @@
 package ravex.modules.movement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
+import ravex.utility.player.InventoryUtility;
 public class RocketUtils extends Module {
     public static final RocketUtils INSTANCE = new RocketUtils();
     public final ModeParameter mode = new ModeParameter("Mode", "Auto", List.of("Auto", "Boost"));
@@ -43,13 +43,13 @@ public class RocketUtils extends Module {
     private void useFirework(Minecraft mc) {
         int slot = -1;
         for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getItem(i).is(Items.FIREWORK_ROCKET)) {
+            if (InventoryUtility.isItem(InventoryUtility.getItem(mc.player, i), "firework_rocket")) {
                 slot = i;
                 break;
             }
         }
         if (slot < 0) return;
-        mc.player.getInventory().setSelectedSlot(slot);
+        InventoryUtility.selectSlot(mc.player, slot);
         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
     }
 }

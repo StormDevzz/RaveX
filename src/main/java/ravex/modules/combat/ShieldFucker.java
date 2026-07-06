@@ -1,21 +1,13 @@
 package ravex.modules.combat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
-import net.minecraft.world.entity.boss.wither.WitherBoss;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.AxeItem;
-import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
+import ravex.utility.misc.MobUtility;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
@@ -35,9 +27,7 @@ public class ShieldFucker extends Module {
     public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent",
             List.of("Silent", "Normal", "None"));
-    public static float silentYaw = 0;
-    public static float silentPitch = 0;
-    private static boolean hasSilentRotations = false;
+    public static final SilentRotation silentRotation = new SilentRotation();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_shieldfucker");
     static {
         NATIVE.load();
@@ -61,11 +51,11 @@ public class ShieldFucker extends Module {
     }
 
     public static boolean hasSilentRotations() {
-        return hasSilentRotations;
+        return silentRotation.hasRotation;
     }
     @Override
     protected void onDisable() {
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         if (NATIVE.isLoaded()) {
             nativeReset();
         }
@@ -74,10 +64,10 @@ public class ShieldFucker extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
-            hasSilentRotations = false;
+            silentRotation.hasRotation = false;
             return;
         }
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         if (NATIVE.isLoaded()) {
             nativeTick(mc);
         } else {
@@ -85,7 +75,7 @@ public class ShieldFucker extends Module {
         }
     }
     private void nativeTick(Minecraft mc) {
-        Vec3 pos = mc.player.position();
+        var pos = mc.player.position();
         double[] entityData = collectEntityData(mc);
         BreakAction action = nativeTick(
             pos.x, pos.y, pos.z,
@@ -98,23 +88,23 @@ public class ShieldFucker extends Module {
             targetPlayers.getValue(), targetMonsters.getValue(),
             onlyAxe.getValue(),
             mc.player.getMainHandItem().getItem().toString(),
-            mc.player.getInventory().getSelectedSlot()
+            InventoryUtility.getSelectedSlot(mc.player)
         );
         if (action == null) return;
         processAction(mc, action);
     }
     private void javaTick(Minecraft mc) {
         double maxDist = range.getValue();
-        LivingEntity target = null;
+        var target = (net.minecraft.world.entity.LivingEntity) null;
         double bestDist = Double.MAX_VALUE;
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le)) continue;
-            if (le == mc.player || le.isDeadOrDying()) continue;
-            if (le instanceof net.minecraft.world.entity.decoration.ArmorStand) continue;
-            if (!targetPlayers.getValue() && le instanceof Player) continue;
-            if (!targetMonsters.getValue() && (le instanceof Monster || le instanceof EnderDragon || le instanceof WitherBoss)) continue;
+        for (var e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
+            if (MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
+            if (MobUtility.isArmorStand(le)) continue;
+            if (!targetPlayers.getValue() && MobUtility.isPlayer(le)) continue;
+            if (!targetMonsters.getValue() && MobUtility.isHostile(le)) continue;
             if (!hasShield(le)) continue;
-            if (!isBlockingWithShield(le)) continue;
+            if (!le.isBlocking()) continue;
             double dist = mc.player.distanceTo(le);
             if (dist > maxDist) continue;
             if (!throughWalls.getValue() && !mc.player.hasLineOfSight(le)) continue;
@@ -124,73 +114,64 @@ public class ShieldFucker extends Module {
             }
         }
         if (target == null) {
-            hasSilentRotations = false;
+            silentRotation.hasRotation = false;
             return;
         }
         handleAction(mc, target);
     }
-    private boolean hasShield(LivingEntity entity) {
+    private boolean hasShield(net.minecraft.world.entity.LivingEntity entity) {
         if (entity instanceof Player player) {
-            ItemStack offhand = player.getOffhandItem();
-            ItemStack mainhand = player.getMainHandItem();
-            return offhand.is(Items.SHIELD) || mainhand.is(Items.SHIELD);
+            return InventoryUtility.isItem(player.getOffhandItem(), "shield")
+                || InventoryUtility.isItem(player.getMainHandItem(), "shield");
         }
         return false;
     }
-    private boolean isBlockingWithShield(LivingEntity entity) {
-        return entity.isBlocking();
-    }
-    private void handleAction(Minecraft mc, LivingEntity target) {
+    private void handleAction(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
         String rotMode = rotate.getValue();
         boolean doRotate = !rotMode.equals("None");
         if (doRotate) {
-            float[] angles = calculateAngles(mc, target.position());
+            float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target.position().add(0, 0.25, 0));
             if (rotMode.equals("Silent")) {
-                silentYaw = angles[0];
-                silentPitch = angles[1];
-                hasSilentRotations = true;
+                silentRotation.set(angles[0], angles[1]);
             } else {
                 mc.player.setYRot(angles[0]);
                 mc.player.setXRot(angles[1]);
             }
         }
-        if (onlyAxe.getValue() && !(mc.player.getMainHandItem().getItem() instanceof AxeItem)) {
+        if (onlyAxe.getValue() && !InventoryUtility.isAxeItem(mc.player.getMainHandItem())) {
             if (autoSwitch.getValue()) {
                 int axeSlot = findAxeSlot(mc);
-                if (axeSlot != -1 && axeSlot != mc.player.getInventory().getSelectedSlot()) {
-                    mc.player.getInventory().setSelectedSlot(axeSlot);
+                if (axeSlot != -1 && axeSlot != InventoryUtility.getSelectedSlot(mc.player)) {
+                    InventoryUtility.selectSlot(mc.player, axeSlot);
                 }
             }
             return;
         }
         if (mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
-            mc.gameMode.attack(mc.player, target);
-            mc.player.swing(InteractionHand.MAIN_HAND);
+            MobUtility.attack(mc, target);
+            ravex.utility.player.SwingUtility.swingMainHand(mc.player);
         }
     }
     private int findAxeSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (stack.getItem() instanceof AxeItem) return i;
+            if (InventoryUtility.isAxeItem(InventoryUtility.getItem(mc.player, i))) return i;
         }
         return -1;
     }
     private void processAction(Minecraft mc, BreakAction action) {
         if (action.targetId < 0) {
-            hasSilentRotations = false;
+            silentRotation.hasRotation = false;
             return;
         }
-        Entity target = mc.level.getEntity(action.targetId);
-        if (!(target instanceof LivingEntity le) || !le.isAlive()) {
-            hasSilentRotations = false;
+        var target = mc.level.getEntity(action.targetId);
+        if (!(target instanceof net.minecraft.world.entity.LivingEntity le) || !le.isAlive()) {
+            silentRotation.hasRotation = false;
             return;
         }
         String rotMode = rotate.getValue();
         if (!rotMode.equals("None")) {
             if (rotMode.equals("Silent")) {
-                silentYaw = action.yaw;
-                silentPitch = action.pitch;
-                hasSilentRotations = true;
+                silentRotation.set(action.yaw, action.pitch);
             } else {
                 mc.player.setYRot(action.yaw);
                 mc.player.setXRot(action.pitch);
@@ -198,29 +179,30 @@ public class ShieldFucker extends Module {
         }
         if (action.shouldSwitch && autoSwitch.getValue()) {
             int slot = action.switchSlot >= 0 ? action.switchSlot : findAxeSlot(mc);
-            if (slot != -1 && slot != mc.player.getInventory().getSelectedSlot()) {
-                mc.player.getInventory().setSelectedSlot(slot);
+            if (slot != -1 && slot != InventoryUtility.getSelectedSlot(mc.player)) {
+                InventoryUtility.selectSlot(mc.player, slot);
             }
         }
         if (action.shouldBreak) {
             if (mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
-                mc.gameMode.attack(mc.player, le);
-                mc.player.swing(InteractionHand.MAIN_HAND);
+                MobUtility.attack(mc, le);
+                ravex.utility.player.SwingUtility.swingMainHand(mc.player);
             }
         }
     }
     private double[] collectEntityData(Minecraft mc) {
         List<Double> data = new ArrayList<>();
         double maxDist = range.getValue();
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le)) continue;
-            if (le == mc.player || le.isDeadOrDying()) continue;
-            if (le instanceof net.minecraft.world.entity.decoration.ArmorStand) continue;
-            if (!targetPlayers.getValue() && le instanceof Player) continue;
-            if (!targetMonsters.getValue() && (le instanceof Monster || le instanceof EnderDragon || le instanceof WitherBoss)) continue;
-            if (mc.player.distanceTo(le) > maxDist) continue;
+        for (var e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
+            if (MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
+            if (MobUtility.isArmorStand(le)) continue;
+            if (!targetPlayers.getValue() && MobUtility.isPlayer(le)) continue;
+            if (!targetMonsters.getValue() && MobUtility.isHostile(le)) continue;
+            if (MobUtility.distanceToPlayer(le) > maxDist) continue;
             if (!(le instanceof Player player)) continue;
-            boolean shield = player.getOffhandItem().is(Items.SHIELD) || player.getMainHandItem().is(Items.SHIELD);
+            boolean shield = InventoryUtility.isItem(player.getOffhandItem(), "shield")
+                || InventoryUtility.isItem(player.getMainHandItem(), "shield");
             boolean blocking = player.isBlocking();
             if (!shield || !blocking) continue;
             data.add((double) le.getId());
@@ -234,9 +216,6 @@ public class ShieldFucker extends Module {
         double[] arr = new double[data.size()];
         for (int i = 0; i < data.size(); i++) arr[i] = data.get(i);
         return arr;
-    }
-    private float[] calculateAngles(Minecraft mc, Vec3 targetPos) {
-        return RotationUtility.anglesTo(mc.player.getEyePosition(), targetPos.add(0, 0.25, 0));
     }
     private static native BreakAction nativeTick(
         double pX, double pY, double pZ,

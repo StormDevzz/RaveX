@@ -6,8 +6,6 @@ import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
@@ -17,6 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import java.util.List;
+import ravex.utility.player.InventoryUtility;
 public class WebAura extends Module {
     public static final WebAura INSTANCE = new WebAura();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Positive", "Custom"));
@@ -56,8 +55,8 @@ public class WebAura extends Module {
         if (target == null) return;
         int webSlot = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = p.getInventory().getItem(i);
-            if (stack.is(Items.COBWEB)) {
+            var stack = InventoryUtility.getItem(p, i);
+            if (InventoryUtility.isItem(stack, "cobweb")) {
                 webSlot = i;
                 break;
             }
@@ -65,7 +64,7 @@ public class WebAura extends Module {
         if (webSlot == -1) return;
         BlockPos targetPos = BlockPos.containing(target.getX(), target.getY(), target.getZ());
         if (mc.level.getBlockState(targetPos).isAir()) {
-            int prevSlot = p.getInventory().getSelectedSlot();
+            int prevSlot = InventoryUtility.getSelectedSlot(p);
             if (webSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(webSlot));
             }

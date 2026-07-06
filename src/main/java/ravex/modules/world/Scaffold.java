@@ -6,16 +6,10 @@ import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
 public class Scaffold extends Module {
@@ -33,13 +27,16 @@ public class Scaffold extends Module {
     public static float renderR = 1.0f;
     public static float renderG = 0.2f;
     public static float renderB = 0.8f;
-    public static float silentYaw = 0.0f;
-    public static float silentPitch = 0.0f;
-    public static boolean hasSilentRotation = false;
+    public static final SilentRotation silentRotation = new SilentRotation();
     private final EasingAnimation fadeAnim = new EasingAnimation();
     private final EasingAnimation sizeAnim = new EasingAnimation();
     private final SlideAnimation slideAnim = new SlideAnimation();
-    public BlockPos currentTarget = null;
+    private int currX, currY, currZ;
+    private boolean hasCurr;
+
+    public net.minecraft.core.BlockPos getCurrentPos() {
+        return hasCurr ? ravex.utility.misc.block.BlockUtility.pos(currX, currY, currZ) : null;
+    }
     private int lastSlot = -1;
     private double targetY = -1;
 
@@ -54,7 +51,7 @@ public class Scaffold extends Module {
         highlightPos = null;
         renderAlpha = 0.0f;
         renderSize = 0.0;
-        currentTarget = null;
+        hasCurr = false;
         fadeAnim.reset();
         sizeAnim.reset();
         slideAnim.reset();
@@ -64,12 +61,12 @@ public class Scaffold extends Module {
         highlightPos = null;
         renderAlpha = 0.0f;
         renderSize = 0.0;
-        currentTarget = null;
+        hasCurr = false;
     }
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        var p = mc.player;
         if (p == null || mc.level == null) return;
         if (p.onGround()) {
             targetY = Math.floor(p.getY());
@@ -80,92 +77,71 @@ public class Scaffold extends Module {
         }
         int slot = findBlockSlot(p);
         if (slot == -1) {
-            currentTarget = null;
+            hasCurr = false;
             return;
         }
-        BlockPos below = BlockPos.containing(
-            p.getX(),
-            (keepY.getValue() && targetY != -1) ? (targetY - 1) : (p.getY() - 1),
-            p.getZ()
-        );
-        BlockPos targetPos = below;
+        int bx = (int) Math.floor(p.getX());
+        int by = (int) ((keepY.getValue() && targetY != -1) ? (targetY - 1) : (p.getY() - 1));
+        int bz = (int) Math.floor(p.getZ());
+        int tx = bx, ty = by, tz = bz;
         if ("Expand".equals(mode.getValue())) {
             double dx = p.getDeltaMovement().x;
             double dz = p.getDeltaMovement().z;
-            BlockPos dirOffset = below.offset(
-                dx > 0.05 ? 1 : (dx < -0.05 ? -1 : 0),
-                0,
-                dz > 0.05 ? 1 : (dz < -0.05 ? -1 : 0)
-            );
-            if (isAir(dirOffset)) targetPos = dirOffset;
+            int offX = dx > 0.05 ? 1 : (dx < -0.05 ? -1 : 0);
+            int offZ = dz > 0.05 ? 1 : (dz < -0.05 ? -1 : 0);
+            int ex = bx + offX, ez = bz + offZ;
+            if (isAir(ex, by, ez)) { tx = ex; tz = ez; }
         }
-        if (!isAir(targetPos)) {
-            currentTarget = null;
+        if (!isAir(tx, ty, tz)) {
+            hasCurr = false;
             return;
         }
-        currentTarget = targetPos;
+        currX = tx; currY = ty; currZ = tz; hasCurr = true;
         if (render.getValue()) {
             int hc = highlightColor.getValue();
             renderR = ((hc >> 16) & 0xFF) / 255.0f;
             renderG = ((hc >> 8) & 0xFF) / 255.0f;
             renderB = (hc & 0xFF) / 255.0f;
         }
-        BlockPos neighbor = null;
-        Direction placeFace = null;
-        for (Direction face : Direction.values()) {
-            BlockPos side = targetPos.relative(face);
-            if (!isAir(side)) {
-                neighbor = side;
+        var neighbor = (net.minecraft.core.BlockPos) null;
+        var placeFace = net.minecraft.core.Direction.UP;
+        for (var face : net.minecraft.core.Direction.values()) {
+            int sx = tx + face.getStepX(), sy = ty + face.getStepY(), sz = tz + face.getStepZ();
+            if (!isAir(sx, sy, sz)) {
+                neighbor = BlockUtility.pos(sx, sy, sz);
                 placeFace = face.getOpposite();
                 break;
             }
         }
         if (neighbor == null) {
-            neighbor = targetPos.below();
-            placeFace = Direction.UP;
+            int by2 = BlockUtility.belowY(ty);
+            neighbor = BlockUtility.pos(tx, by2, tz);
+            placeFace = net.minecraft.core.Direction.UP;
         }
         if (silentRot.getValue()) {
-            float[] rots = rotationsTo(neighbor);
-            silentYaw = rots[0];
-            silentPitch = rots[1];
-            hasSilentRotation = true;
+            silentRotation.setAnglesTo(mc, neighbor.getCenter());
         } else {
-            hasSilentRotation = false;
+            silentRotation.hasRotation = false;
         }
-        int prevSlot = p.getInventory().getSelectedSlot();
-        p.getInventory().setSelectedSlot(slot);
-        Vec3 hitVec = Vec3.atCenterOf(neighbor).add(
-            new Vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
-        );
-        BlockHitResult blockHit = new BlockHitResult(hitVec, placeFace, neighbor, false);
-        mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
-        p.swing(InteractionHand.MAIN_HAND);
-        if (slot != prevSlot) p.getInventory().setSelectedSlot(prevSlot);
+        int prevSlot = InventoryUtility.getSelectedSlot(p);
+        InventoryUtility.selectSlot(p, slot);
+        var center = Vec3.atCenterOf(neighbor);
+        var hitVec = center.add(new Vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5));
+        BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(hitVec, placeFace, neighbor, false));
+        BlockUtility.swing(mc);
+        if (slot != prevSlot) InventoryUtility.selectSlot(p, prevSlot);
     }
-    private boolean isAir(BlockPos pos) {
+    private boolean isAir(int x, int y, int z) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return false;
-        BlockState state = mc.level.getBlockState(pos);
-        return state.isAir() || state.getBlock() == Blocks.SNOW || !state.getFluidState().isEmpty();
+        var state = BlockUtility.getState(mc.level, x, y, z);
+        return state.isAir() || BlockUtility.isBlock(state, "snow") || !state.getFluidState().isEmpty();
     }
-    private int findBlockSlot(LocalPlayer p) {
+    private int findBlockSlot(net.minecraft.client.player.LocalPlayer p) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = p.getInventory().getItem(i);
-            if (!stack.isEmpty() && stack.getItem() instanceof BlockItem) return i;
+            var stack = InventoryUtility.getItem(p, i);
+            if (!stack.isEmpty() && InventoryUtility.isBlockItem(stack)) return i;
         }
         return -1;
-    }
-    private float[] rotationsTo(BlockPos pos) {
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
-        if (p == null) return new float[]{0, 0};
-        Vec3 target = Vec3.atCenterOf(pos);
-        double dx = target.x - p.getX();
-        double dy = (target.y + 0.5) - (p.getY() + p.getEyeHeight());
-        double dz = target.z - p.getZ();
-        double dist = Math.sqrt(dx * dx + dz * dz);
-        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-        float pitch = (float) -Math.toDegrees(Math.atan2(dy, dist));
-        return new float[]{yaw, pitch};
     }
 }

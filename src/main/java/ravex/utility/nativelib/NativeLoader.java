@@ -99,19 +99,17 @@ public class NativeLoader {
             "libravex_trap.so", "libravex_selftrap.so", "libravex_baseplace.so",
             "libravex_bowaim.so", "libravex_quiver.so", "libravex_autoapple.so",
             "libravex_pearltarget.so", "libravex_antipearl.so", "libravex_bedbomb.so",
-            "libravex_ecfarmer.so", "libravex_shieldfucker.so", "libravex_noghostblocks.so",
+            "libravex_ecfarmer.so", "libravex_shieldfucker.so",
             "libravex_portalbuild.so", "libravex_chunkexploit.so", "libravex_packetmine.so",
             "libravex_nuker.so", "libravex_treecutter.so", "libravex_autoclicker.so",
             "libravex_antibot.so", "libravex_autodrop.so", "libravex_selffill.so",
             "libravex_burrow.so", "libravex_autoregear.so", "libravex_antiregear.so",
-            "libravex_witherroseaura.so", "libravex_elytraplusplus.so",
-            "libravex_desktopgui.so", "libravex_calculator.so", "libravex_voidesp.so",
+            "libravex_elytraplusplus.so",
+            "libravex_desktopgui.so", "libravex_calculator.so",
             "libravex_faststairs.so", "libravex_noslow.so", "libravex_nofall.so",
-            "libravex_replenish.so",
-            "libravex_fakepearl.so", "libravex_coordlogger.so", "libravex_antivoid.so",
+            "libravex_fakepearl.so", "libravex_antivoid.so",
             "libravex_antiquit.so", "libravex_safewalk.so", "libravex_mediaquery.so",
             "libravex_dc.so", "libravex_nametags.so", "libravex_animations.so",
-            "libravex_tunnels.so", "libravex_holeesp.so",
             "libravex_shaders_native.so"
         };
         for (String lib : knownLibs) {

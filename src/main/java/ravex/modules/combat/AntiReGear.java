@@ -15,7 +15,7 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
-import ravex.modules.world.NoGhostBlocks;
+import ravex.modules.world.GhostBlocks;
 import java.util.ArrayList;
 import java.util.List;
 public class AntiReGear extends Module {
@@ -119,7 +119,7 @@ public class AntiReGear extends Module {
             Direction dir = getDirection(mc.player.getEyePosition(), target);
             mc.gameMode.startDestroyBlock(target, dir);
             mc.player.swing(InteractionHand.MAIN_HAND);
-            NoGhostBlocks.markMined(target);
+            GhostBlocks.markMined(target);
             lastBreakTime = now;
         }
     }

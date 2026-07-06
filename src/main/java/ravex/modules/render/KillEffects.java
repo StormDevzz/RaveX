@@ -6,10 +6,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.core.particles.ParticleTypes;
 import ravex.modules.Category;
 import ravex.modules.Module;
@@ -40,7 +38,7 @@ public class KillEffects extends Module {
         for (Entity e : level.entitiesForRendering()) {
             if (!(e instanceof LivingEntity living)) continue;
             if (living == mc.player) continue;
-            if (!living.isDeadOrDying()) continue;
+            if (!MobUtility.isDead(living)) continue;
             if (processed.contains(e)) continue;
             if (!shouldAffect(living)) continue;
             processed.add(e);
@@ -54,9 +52,9 @@ public class KillEffects extends Module {
         processed.removeIf(e -> !e.isAlive());
     }
     private boolean shouldAffect(LivingEntity e) {
-        if (e instanceof Player && players.getValue()) return true;
-        if (e instanceof Monster && monsters.getValue()) return true;
-        if (e instanceof Animal && animals.getValue()) return true;
+        if (MobUtility.isPlayer(e) && players.getValue()) return true;
+        if (MobUtility.isHostile(e) && monsters.getValue()) return true;
+        if (MobUtility.isPassive(e) && animals.getValue()) return true;
         return false;
     }
     private void spawnLightning(ClientLevel level, double x, double y, double z) {

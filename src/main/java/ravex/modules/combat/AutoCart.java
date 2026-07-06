@@ -4,8 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RailBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -73,7 +71,7 @@ public class AutoCart extends Module {
                 }
             }
         }
-        boolean isUsingBow = mc.player.isUsingItem() && mc.player.getUseItem().is(Items.BOW);
+        boolean isUsingBow = mc.player.isUsingItem() && InventoryUtility.isBow(mc.player.getUseItem());
         if (isUsingBow) {
             lastBowCharge = mc.player.getTicksUsingItem();
         }
@@ -92,7 +90,7 @@ public class AutoCart extends Module {
         if (landingPos == null) return;
         double dist = mc.player.getEyePosition().distanceTo(Vec3.atCenterOf(landingPos));
         if (dist > targetRange.getValue()) return;
-        int railSlot = findItemSlot(mc, Items.RAIL);
+        int railSlot = findItemSlot(mc, net.minecraft.world.item.Items.RAIL);
         if (railSlot == -1) return;
         int cartSlot = findCartSlot(mc);
         if (cartSlot == -1) return;
@@ -102,13 +100,13 @@ public class AutoCart extends Module {
         placeCart(mc, landingPos);
     }
     private void placeCart(Minecraft mc, BlockPos pos) {
-        int railSlot = findItemSlot(mc, Items.RAIL);
+        int railSlot = findItemSlot(mc, net.minecraft.world.item.Items.RAIL);
         int cartSlot = findCartSlot(mc);
         if (railSlot == -1 || cartSlot == -1) return;
         long now = System.currentTimeMillis();
         if (now - lastPlaceTime < 100) return;
         lastPlaceTime = now;
-        originalSlot = mc.player.getInventory().getSelectedSlot();
+            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
         RaveX.LOGGER.info("[AutoCart] Placing at {}", pos);
         if (rotate.getValue()) {
             faceBlock(mc, pos);
@@ -154,11 +152,11 @@ public class AutoCart extends Module {
     }
     private int findItemSlot(Minecraft mc, net.minecraft.world.item.Item item) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.is(item)) return i;
         }
         for (int i = 9; i < 36; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.is(item)) {
                 int freeSlot = findEmptySlot(mc);
                 if (freeSlot != -1) {
@@ -177,16 +175,16 @@ public class AutoCart extends Module {
     }
     private int findCartSlot(Minecraft mc) {
         net.minecraft.world.item.Item targetItem = switch (cartType.getValue()) {
-            case "Chest" -> Items.CHEST_MINECART;
-            case "Furnace" -> Items.FURNACE_MINECART;
-            case "Hopper" -> Items.HOPPER_MINECART;
-            default -> Items.TNT_MINECART;
+            case "Chest" -> net.minecraft.world.item.Items.CHEST_MINECART;
+            case "Furnace" -> net.minecraft.world.item.Items.FURNACE_MINECART;
+            case "Hopper" -> net.minecraft.world.item.Items.HOPPER_MINECART;
+            default -> net.minecraft.world.item.Items.TNT_MINECART;
         };
         return findItemSlot(mc, targetItem);
     }
     private int findEmptySlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getItem(i).isEmpty()) return i;
+            if (InventoryUtility.getItem(mc.player, i).isEmpty()) return i;
         }
         return -1;
     }

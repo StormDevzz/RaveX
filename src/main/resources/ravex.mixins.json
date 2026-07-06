@@ -97,7 +97,6 @@
         "misc.MixinDeathScreen",
         "render.MixinGameRenderer",
         "render.MixinGameRendererFreeCam",
-        "combat.MixinPlayerNoHitDelay",
         "render.MixinItemStack",
         "render.MixinCrosshair",
         "render.MixinClientTooltipComponent",

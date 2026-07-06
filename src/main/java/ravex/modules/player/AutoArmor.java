@@ -7,10 +7,7 @@ import ravex.utility.player.ArmorUtility;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import java.util.List;
@@ -31,10 +28,10 @@ public class AutoArmor extends Module {
         if (System.currentTimeMillis() - lastEquipTime < delay.getValue()) return;
         for (int armorIndex = 0; armorIndex < 4; armorIndex++) {
             EquipmentSlot equipSlot = ArmorUtility.getEquipmentSlotForIndex(armorIndex);
-            ItemStack currentArmor = p.getItemBySlot(equipSlot);
+            var currentArmor = p.getItemBySlot(equipSlot);
             int bestSlot = ArmorUtility.findBestArmorSlot(p, armorIndex);
             if (bestSlot == -1) continue;
-            ItemStack bestStack = p.getInventory().getItem(bestSlot);
+            var bestStack = InventoryUtility.getItem(p, bestSlot);
             if (!ArmorUtility.isArmorItem(bestStack) || !ArmorUtility.slotMatches(bestStack, equipSlot)) continue;
             if (onlyBetter.getValue() && !currentArmor.isEmpty()
                 && !ArmorUtility.isBetterArmor(bestStack, currentArmor, equipSlot)) continue;
@@ -44,10 +41,10 @@ public class AutoArmor extends Module {
                 if (hotbarSlot == -1 || hotbarSlot > 8) continue;
                 InventoryUtility.quickMoveStack(mc, p, bestSlot);
                 InventoryUtility.quickMoveStack(mc, p, hotbarSlot);
-                int prevSlot = p.getInventory().getSelectedSlot();
-                p.getInventory().setSelectedSlot(hotbarSlot);
+                int prevSlot = InventoryUtility.getSelectedSlot(p);
+                InventoryUtility.selectSlot(p, hotbarSlot);
                 mc.gameMode.useItem(p, InteractionHand.MAIN_HAND);
-                if (prevSlot != hotbarSlot) p.getInventory().setSelectedSlot(prevSlot);
+                if (prevSlot != hotbarSlot) InventoryUtility.selectSlot(p, prevSlot);
             } else {
                 InventoryUtility.quickMoveStack(mc, p, bestSlot);
             }
@@ -59,11 +56,11 @@ public class AutoArmor extends Module {
         int worstSlot = 0;
         double worstScore = Double.MAX_VALUE;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = p.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(p, i);
             double score = 0;
             if (!stack.isEmpty()) {
                 if (ArmorUtility.isArmorItem(stack)) {
-                    EquipmentSlot slot = stack.get(DataComponents.EQUIPPABLE).slot();
+                    EquipmentSlot slot = InventoryUtility.getEquippableSlot(stack);
                     score = ArmorUtility.getArmorScore(stack, slot);
                 } else {
                     score = 1;

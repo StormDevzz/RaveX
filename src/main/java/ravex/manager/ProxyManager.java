@@ -1,7 +1,7 @@
 package ravex.manager;
 
 import ravex.proxy.ProxyConfig;
-import ravex.proxy.ProxyNative;
+import ravex.proxy.ProxyServer;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -31,7 +31,7 @@ public class ProxyManager {
         }
         stop();
         this.config = config;
-        boolean ok = ProxyNative.start(
+        boolean ok = ProxyServer.start(
             config.getType(),
             config.getHost(),
             config.getPort(),
@@ -44,14 +44,14 @@ public class ProxyManager {
             running = true;
             lastError = null;
         } else {
-            lastError = "Native proxy failed to start";
+            lastError = "Proxy server failed to start";
         }
         return ok;
     }
 
     public void stop() {
         if (running) {
-            ProxyNative.stop();
+            ProxyServer.stop();
             running = false;
         }
     }
@@ -62,11 +62,11 @@ public class ProxyManager {
     }
 
     public int getLocalPort() {
-        return ProxyNative.getLocalPort();
+        return ProxyServer.getLocalPort();
     }
 
     public boolean isRunning() {
-        return running && ProxyNative.isRunning();
+        return running && ProxyServer.isRunning();
     }
 
     public String getLastError() {

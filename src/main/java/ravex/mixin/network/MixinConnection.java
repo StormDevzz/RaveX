@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.player.AntiHunger;
 import ravex.modules.misc.PacketUtils;
-import ravex.modules.player.HandshakeSpoof;
+import ravex.modules.player.Handshake;
 import io.netty.channel.ChannelHandlerContext;
 
 @Mixin(Connection.class)
@@ -26,13 +26,13 @@ public class MixinConnection {
         }
 
         if (packet instanceof ClientIntentionPacket handshakePacket) {
-            if (HandshakeSpoof.INSTANCE.getEnabled()) {
+            if (Handshake.INSTANCE.getEnabled()) {
                 AccessorClientIntentionPacket accessor = (AccessorClientIntentionPacket) (Object) handshakePacket;
                 String originalHost = handshakePacket.hostName();
                 int originalProtocol = handshakePacket.protocolVersion();
                 
-                String spoofedHost = HandshakeSpoof.INSTANCE.getSpoofedHost(originalHost);
-                int spoofedProtocol = HandshakeSpoof.INSTANCE.getSpoofedProtocol(originalProtocol);
+                String spoofedHost = Handshake.INSTANCE.getSpoofedHost(originalHost);
+                int spoofedProtocol = Handshake.INSTANCE.getSpoofedProtocol(originalProtocol);
 
                 accessor.setHostName(spoofedHost);
                 accessor.setProtocolVersion(spoofedProtocol);
@@ -73,7 +73,7 @@ public class MixinConnection {
         }
 
         if (packet instanceof ServerboundSwingPacket) {
-            if (ravex.modules.player.NoMineAnimation.INSTANCE.getEnabled() && ravex.modules.player.NoMineAnimation.INSTANCE.hideSwing.getValue()) {
+            if (ravex.modules.player.MineAnimation.INSTANCE.getEnabled() && ravex.modules.player.MineAnimation.INSTANCE.hideSwing.getValue()) {
                 net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                 if (mc.gameMode != null && mc.gameMode.isDestroying()) {
                     ci.cancel();
@@ -82,7 +82,7 @@ public class MixinConnection {
             }
         }
 
-        if (ravex.modules.misc.PortalGodMode.INSTANCE.getEnabled()) {
+        if (ravex.modules.misc.PortalGod.INSTANCE.getEnabled()) {
             if (packet instanceof ServerboundAcceptTeleportationPacket) {
                 ci.cancel();
                 return;
@@ -144,15 +144,15 @@ public class MixinConnection {
             PacketUtils.INSTANCE.logPacket("S2C <-", packet);
         }
 
-        if (ravex.modules.world.NoGhostBlocks.INSTANCE.getEnabled()) {
+        if (ravex.modules.world.GhostBlocks.INSTANCE.getEnabled()) {
             if (packet instanceof ClientboundBlockUpdatePacket blockUpdate) {
                 net.minecraft.core.BlockPos pos = blockUpdate.getPos();
-                String blockId = ravex.modules.world.NoGhostBlocks.getBlockId(blockUpdate.getBlockState());
-                ravex.modules.world.NoGhostBlocks.onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), blockId);
+                String blockId = ravex.modules.world.GhostBlocks.getBlockId(blockUpdate.getBlockState());
+                ravex.modules.world.GhostBlocks.onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), blockId);
             } else if (packet instanceof ClientboundSectionBlocksUpdatePacket sectionUpdate) {
                 sectionUpdate.runUpdates((pos, state) -> {
-                    String blockId = ravex.modules.world.NoGhostBlocks.getBlockId(state);
-                    ravex.modules.world.NoGhostBlocks.onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), blockId);
+                    String blockId = ravex.modules.world.GhostBlocks.getBlockId(state);
+                    ravex.modules.world.GhostBlocks.onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), blockId);
                 });
             }
         }

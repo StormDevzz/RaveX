@@ -2,11 +2,12 @@ package ravex.modules.combat;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
+import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.EntityHitResult;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.world.InteractionHand;
@@ -19,9 +20,11 @@ public class MaceAura extends Module {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
-        if (p.getMainHandItem().is(Items.MACE) && mc.options.keyAttack.isDown()) {
-            if (mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof LivingEntity target) {
-                if (!target.isAlive() || target == p) return;
+        if (InventoryUtility.isItem(p.getMainHandItem(), "mace") && mc.options.keyAttack.isDown()) {
+            if (mc.hitResult instanceof EntityHitResult hit) {
+                LivingEntity target = MobUtility.asLivingEntity(hit.getEntity());
+                if (target == null) return;
+                if (MobUtility.isDead(target) || MobUtility.isSelf(target)) return;
                 double h = height.getValue();
                 double x = p.getX();
                 double y = p.getY();

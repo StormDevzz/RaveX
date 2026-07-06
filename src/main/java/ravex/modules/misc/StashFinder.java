@@ -2,7 +2,6 @@ package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.ItemStack;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -18,12 +17,12 @@ public class StashFinder extends Module {
     private double lastCheckX, lastCheckY, lastCheckZ;
     private boolean hasChecked = false;
 
-    public void onContainerOpened(BlockPos pos, List<ItemStack> contents) {
+    public void onContainerOpened(BlockPos pos, List<net.minecraft.world.item.ItemStack> contents) {
         if (!getEnabled()) return;
         if (stashes.stream().anyMatch(s -> s.pos.equals(pos))) return;
         int valuableCount = 0;
         int totalItems = 0;
-        for (ItemStack stack : contents) {
+        for (var stack : contents) {
             if (stack.isEmpty()) continue;
             totalItems++;
             if (isValuable(stack)) valuableCount++;
@@ -48,7 +47,7 @@ public class StashFinder extends Module {
     public void clearStashes() {
         stashes.clear();
     }
-    private boolean isValuable(ItemStack stack) {
+    private boolean isValuable(net.minecraft.world.item.ItemStack stack) {
         String name = stack.getItem().getName(stack.getItem().getDefaultInstance()).getString().toLowerCase();
         if (name.contains("diamond") || name.contains("emerald") || name.contains("gold")
             || name.contains("iron") || name.contains("netherite") || name.contains("enchanted")

@@ -12,27 +12,20 @@ public class Settings extends Module {
     public final NumberParameter moduleTextX = new NumberParameter("ModuleTextX", 9, 3, 30, 1);
     public final ravex.parameter.ColorParameter menuColor = new ravex.parameter.ColorParameter("MenuColor", 0xFF0066FF);
     public final BooleanParameter telemetry = new BooleanParameter("Telemetry", true);
-    public final BooleanParameter proxyEnabled = new BooleanParameter("Proxy", false);
-    public final Parameter<String> proxyType = new ModeParameter("ProxyType", "SOCKS5",
-        java.util.List.of("SOCKS5", "SOCKS4", "HTTP"))
-        .setVisible(() -> proxyEnabled.getValue());
-    public final Parameter<String> proxyHost = new StringParameter("ProxyHost", "127.0.0.1")
-        .setVisible(() -> proxyEnabled.getValue());
-    public final Parameter<Double> proxyPort = new NumberParameter("ProxyPort", 1080.0, 1.0, 65535.0, 1.0)
-        .setVisible(() -> proxyEnabled.getValue());
-    public final Parameter<Boolean> proxyAuth = new BooleanParameter("ProxyAuth", false)
-        .setVisible(() -> proxyEnabled.getValue());
-    public final Parameter<String> proxyUsername = new StringParameter("ProxyUsername", "")
-        .setVisible(() -> proxyEnabled.getValue() && proxyAuth.getValue());
-    public final Parameter<String> proxyPassword = new StringParameter("ProxyPassword", "")
-        .setVisible(() -> proxyEnabled.getValue() && proxyAuth.getValue());
+    public final Parameter<String> language = new ModeParameter("Language", "English", java.util.List.of("English", "Russian"));
     private boolean prevTelemetry = false;
+    private String prevLanguage = "English";
     private Settings() {
         super("Settings");
         setEnabled(true);
     }
     @Override
     public void onTick() {
+        String lang = language.getValue();
+        if (!lang.equals(prevLanguage)) {
+            prevLanguage = lang;
+            ravex.utility.misc.LanguageUtility.setLanguage(lang);
+        }
         boolean now = telemetry.getValue();
         if (now != prevTelemetry) {
             prevTelemetry = now;

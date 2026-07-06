@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 public class ESP extends Module {
     public static final ESP INSTANCE = new ESP();
-    public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util.List.of("Outline", "Box2D", "Tunnels"));
+    public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util.List.of("Outline", "Box2D", "Tunnels", "Holes"));
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", true);
     public final BooleanParameter animals = new BooleanParameter("Animals", false);
@@ -31,8 +31,14 @@ public class ESP extends Module {
     public final BooleanParameter tunnelFilled = new BooleanParameter("TunnelFilled", false);
     public final BooleanParameter tunnelWireframe = new BooleanParameter("TunnelWireframe", true);
     public final NumberParameter tunnelUpdateInterval = new NumberParameter("TunnelUpdate", 20, 5, 100, 5);
+    public final NumberParameter holeRange = new NumberParameter("HoleRange", 8, 4, 24, 2);
+    public final ColorParameter safeColor = new ColorParameter("SafeColor", 0xAA00FF00);
+    public final BooleanParameter holeFilled = new BooleanParameter("HoleFilled", true);
+    public final BooleanParameter holeWireframe = new BooleanParameter("HoleWireframe", true);
     private List<BlockPos> tunnelBlocks = new ArrayList<>();
     private long lastTunnelScan = 0;
+    private final List<BlockPos> holes = new ArrayList<>();
+    private int holeTick = 0;
     private ESP() {
         super("ESP");
         playerColor.setVisible(players::getValue);
@@ -40,6 +46,7 @@ public class ESP extends Module {
         animalColor.setVisible(animals::getValue);
         itemColor.setVisible(items::getValue);
         frameColor.setVisible(frames::getValue);
+        boolean t = mode.getValue().equals("Tunnels");
         tunnelRange.setVisible(() -> mode.getValue().equals("Tunnels"));
         tunnelMaxY.setVisible(() -> mode.getValue().equals("Tunnels"));
         tunnelMinY.setVisible(() -> mode.getValue().equals("Tunnels"));
@@ -47,18 +54,23 @@ public class ESP extends Module {
         tunnelFilled.setVisible(() -> mode.getValue().equals("Tunnels"));
         tunnelWireframe.setVisible(() -> mode.getValue().equals("Tunnels"));
         tunnelUpdateInterval.setVisible(() -> mode.getValue().equals("Tunnels"));
+        holeRange.setVisible(() -> mode.getValue().equals("Holes"));
+        safeColor.setVisible(() -> mode.getValue().equals("Holes"));
+        holeFilled.setVisible(() -> mode.getValue().equals("Holes"));
+        holeWireframe.setVisible(() -> mode.getValue().equals("Holes"));
     }
     @Override
     public void onTick() {
-        if (!mode.getValue().equals("Tunnels")) return;
+        String m = mode.getValue();
+        if (m.equals("Tunnels")) scanTunnels();
+        else if (m.equals("Holes")) scanHoles();
+    }
+    private void scanTunnels() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
         if (now - lastTunnelScan < tunnelUpdateInterval.getValue().intValue() * 50) return;
         lastTunnelScan = now;
-        scanTunnels(mc);
-    }
-    private void scanTunnels(Minecraft mc) {
         List<BlockPos> result = new ArrayList<>();
         BlockPos center = mc.player.blockPosition();
         int r = tunnelRange.getValue().intValue();
@@ -87,7 +99,35 @@ public class ESP extends Module {
         }
         tunnelBlocks = result;
     }
-    public List<BlockPos> getTunnelBlocks() {
-        return tunnelBlocks;
+    private void scanHoles() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+        if (++holeTick % 5 != 0) return;
+        holeTick = 0;
+        holes.clear();
+        BlockPos center = mc.player.blockPosition();
+        int r = holeRange.getValue().intValue();
+        for (int x = -r; x <= r; x++) {
+            for (int z = -r; z <= r; z++) {
+                for (int y = -4; y <= 2; y++) {
+                    BlockPos pos = center.offset(x, y, z);
+                    if (!mc.level.getBlockState(pos).isAir()) continue;
+                    if (isSafeHole(mc, pos)) holes.add(pos);
+                }
+            }
+        }
     }
+    private boolean isSafeHole(Minecraft mc, BlockPos pos) {
+        if (!mc.level.getBlockState(pos.below()).isSolid()) return false;
+        BlockPos[] sides = {
+            pos.east(), pos.west(), pos.south(), pos.north()
+        };
+        for (BlockPos side : sides) {
+            BlockState state = mc.level.getBlockState(side);
+            if (state.isAir() || !state.isSolid()) return false;
+        }
+        return true;
+    }
+    public List<BlockPos> getTunnelBlocks() { return tunnelBlocks; }
+    public List<BlockPos> getHoles() { return holes; }
 }

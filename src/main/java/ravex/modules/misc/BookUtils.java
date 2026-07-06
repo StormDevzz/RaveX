@@ -1,10 +1,8 @@
 package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundEditBookPacket;
 import net.minecraft.server.network.Filterable;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.WrittenBookContent;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
@@ -13,6 +11,7 @@ import ravex.parameter.StringParameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import ravex.utility.player.InventoryUtility;
 public class BookUtils extends Module {
     public static final BookUtils INSTANCE = new BookUtils();
     public final ModeParameter mode = new ModeParameter("Mode", "Edit", List.of("Edit", "Fill"));
@@ -37,7 +36,7 @@ public class BookUtils extends Module {
     }
 
     private void onEdit(Minecraft mc) {
-        int slot = mc.player.getInventory().getSelectedSlot();
+        int slot = InventoryUtility.getSelectedSlot(mc.player);
         var stack = mc.player.getMainHandItem();
         if (stack.isEmpty()) {
             mc.player.displayClientMessage(
@@ -50,8 +49,8 @@ public class BookUtils extends Module {
         String author = newAuthor.getValue();
         if (title == null) title = "";
         if (author == null) author = "";
-        if (stack.is(Items.WRITTEN_BOOK)) {
-            WrittenBookContent content = stack.get(DataComponents.WRITTEN_BOOK_CONTENT);
+        if (InventoryUtility.isWrittenBook(stack)) {
+            WrittenBookContent content = InventoryUtility.getWrittenBookContent(stack);
             if (content != null) {
                 Filterable<String> titleFilterable = title.isEmpty()
                     ? content.title()
@@ -64,7 +63,7 @@ public class BookUtils extends Module {
                     content.pages(),
                     content.resolved()
                 );
-                stack.set(DataComponents.WRITTEN_BOOK_CONTENT, modified);
+                InventoryUtility.setWrittenBookContent(stack, modified);
                 mc.player.displayClientMessage(
                     Component.literal("§7[§cRaveX§7] §aBook updated: title=§f" + titleFilterable.raw()
                         + " §aauthor=§f" + newAuthorStr),
@@ -76,7 +75,7 @@ public class BookUtils extends Module {
                     false
                 );
             }
-        } else if (stack.is(Items.WRITABLE_BOOK)) {
+        } else if (InventoryUtility.isWritableBook(stack)) {
             if (title.isEmpty()) {
                 mc.player.displayClientMessage(
                     Component.literal("§7[§cRaveX§7] §eProvide a title to sign the book"),
@@ -85,7 +84,7 @@ public class BookUtils extends Module {
                 return;
             }
             List<String> existingPages = new ArrayList<>();
-            var writableContent = stack.get(DataComponents.WRITABLE_BOOK_CONTENT);
+            var writableContent = InventoryUtility.getWritableBookContent(stack);
             if (writableContent != null) {
                 for (var page : writableContent.pages()) {
                     existingPages.add(page.raw());
@@ -106,9 +105,9 @@ public class BookUtils extends Module {
     }
 
     private void onFill(Minecraft mc) {
-        int slot = mc.player.getInventory().getSelectedSlot();
+        int slot = InventoryUtility.getSelectedSlot(mc.player);
         var stack = mc.player.getMainHandItem();
-        if (!stack.is(Items.WRITABLE_BOOK)) {
+        if (!InventoryUtility.isWritableBook(stack)) {
             mc.player.displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §eHold a writable book in main hand"),
                 false

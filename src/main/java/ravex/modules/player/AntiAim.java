@@ -6,22 +6,23 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
+import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 public class AntiAim extends Module {
     public static final AntiAim INSTANCE = new AntiAim();
     public final ModeParameter mode = new ModeParameter("YawMode", "Spin", List.of("Spin", "Jitter", "Static"));
     public final ModeParameter pitchMode = new ModeParameter("PitchMode", "Down", List.of("Down", "Up", "Jitter", "None"));
     public final NumberParameter yawSpeed = new NumberParameter("YawSpeed", 30.0, 1.0, 90.0, 1.0);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
-    private static float silentYaw = 0;
-    private static float silentPitch = 0;
+    public static final SilentRotation silentRotation = new SilentRotation();
     private float spinYaw = 0;
     private int ticks = 0;
 
     public static float getSilentYaw() {
-        return silentYaw;
+        return silentRotation.yaw;
     }
     public static float getSilentPitch() {
-        return silentPitch;
+        return silentRotation.pitch;
     }
     @Override
     public void onTick() {
@@ -29,7 +30,7 @@ public class AntiAim extends Module {
         if (mc.player == null) return;
         ticks++;
         spinYaw += yawSpeed.getValue().floatValue();
-        if (spinYaw >= 360f) spinYaw -= 360f;
+        spinYaw = RotationUtility.normalizeYaw(spinYaw);
         float targetYaw = mc.player.getYRot();
         float targetPitch = mc.player.getXRot();
         String yawModeStr = mode.getValue();
@@ -49,8 +50,7 @@ public class AntiAim extends Module {
             targetPitch = ticks % 2 == 0 ? 90f : -90f;
         }
         if (silent.getValue()) {
-            silentYaw = targetYaw;
-            silentPitch = targetPitch;
+            silentRotation.set(targetYaw, targetPitch);
         } else {
             mc.player.setYRot(targetYaw);
             mc.player.setXRot(targetPitch);

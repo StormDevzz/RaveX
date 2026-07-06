@@ -3,9 +3,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,7 +13,9 @@ import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -46,19 +47,14 @@ public class Trap extends Module {
     public final ColorParameter   color          = new ColorParameter("Color",           0xFFFFAA00);
     private long lastPlaceTime = 0;
     private long currentPlaceDelay = 0;
-    public static float silentYaw = 0;
-    public static float silentPitch = 0;
-    private static boolean hasSilentRotations = false;
-    private float lastSilentYaw = 0f;
-    private float lastSilentPitch = 0f;
-    private boolean lastSilentInit = false;
+    public static final SilentRotation silentRotation = new SilentRotation();
     public static final List<BlockPos> trapBlocks = new ArrayList<>();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_trap");
     static {
         NATIVE.load();
     }
     public static boolean hasSilentRotations() {
-        return hasSilentRotations;
+        return silentRotation.hasRotation;
     }
     private static native double[] nativeCalculateTrap(
             double playerX, double playerY, double playerZ,
@@ -79,7 +75,7 @@ public class Trap extends Module {
     protected void onEnable() {
         lastPlaceTime = 0;
         currentPlaceDelay = 0;
-        lastSilentInit = false;
+        silentRotation.initialized = false;
         synchronized (trapBlocks) {
             trapBlocks.clear();
         }
@@ -94,7 +90,7 @@ public class Trap extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         synchronized (trapBlocks) {
             trapBlocks.clear();
         }
@@ -159,7 +155,7 @@ public class Trap extends Module {
             limit = 1;
         }
         int actionsThisTick = 0;
-        int originalSlot = mc.player.getInventory().getSelectedSlot();
+        int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
         boolean placedAny = false;
         while (actionsThisTick < limit) {
             double[] currentSolidData = new double[activeSolidBlocks.size()];
@@ -192,13 +188,11 @@ public class Trap extends Module {
             }
             String swap = swapMode.getValue();
             if (swap.equals("Normal")) {
-                mc.player.getInventory().setSelectedSlot(blockSlot);
+                InventoryUtility.selectSlot(mc.player, blockSlot);
             } else if (swap.equals("Silent")) {
-                if (mc.player.connection != null) {
-                    mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(blockSlot));
-                }
+                InventoryUtility.silentSelectSlot(mc.player, blockSlot);
             } else if (swap.equals("None")) {
-                if (mc.player.getInventory().getSelectedSlot() != blockSlot) {
+                if (InventoryUtility.getSelectedSlot(mc.player) != blockSlot) {
                     break;
                 }
             }
@@ -212,9 +206,7 @@ public class Trap extends Module {
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
         if (placedAny && swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
-            if (mc.player.connection != null) {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
-            }
+            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
         if (placedAny) {
             lastPlaceTime = now;
@@ -226,8 +218,8 @@ public class Trap extends Module {
                 setEnabled(false);
             }
         }
-        if (!hasSilentRotations) {
-            lastSilentInit = false;
+        if (!silentRotation.hasRotation) {
+            silentRotation.initialized = false;
         }
     }
     private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
@@ -238,20 +230,20 @@ public class Trap extends Module {
         String typeFilter = targetType.getValue();
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
-            if (le == mc.player) continue;
-            if (le.isDeadOrDying()) continue;
+            if (MobUtility.isSelf(le)) continue;
+            if (MobUtility.isDead(le)) continue;
             if (typeFilter.equals("Players")) {
-                if (!(le instanceof Player)) continue;
+                if (!MobUtility.isPlayer(le)) continue;
             } else if (typeFilter.equals("Monsters")) {
-                if (!(le instanceof net.minecraft.world.entity.monster.Monster || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss)) continue;
+                if (!MobUtility.isHostile(le)) continue;
             } else if (typeFilter.equals("Passives")) {
-                if (le instanceof Player || le instanceof net.minecraft.world.entity.monster.Monster || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss) continue;
+                if (MobUtility.isPlayer(le) || MobUtility.isHostile(le)) continue;
             }
-            double dist = mc.player.distanceTo(le);
+            double dist = MobUtility.distanceToPlayer(le);
             if (dist > maxDist) continue;
             double metric = switch (mode) {
                 case "Closest"   -> dist;
-                case "LowestHP" -> le.getHealth();
+                case "LowestHP" -> MobUtility.getHealth(le);
                 default          -> dist;
             };
             if (metric < bestMetric) {
@@ -263,7 +255,7 @@ public class Trap extends Module {
     }
     private int findBlockSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem) {
                 if (blockItem.getBlock() == Blocks.OBSIDIAN) {
                     return i;
@@ -272,23 +264,17 @@ public class Trap extends Module {
         }
         if (swapInventory.getValue()) {
             for (int i = 9; i < 36; i++) {
-                ItemStack stack = mc.player.getInventory().getItem(i);
+                var stack = InventoryUtility.getItem(mc.player, i);
                 if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() == Blocks.OBSIDIAN) {
-                    mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId,
-                        i,
-                        0,
-                        net.minecraft.world.inventory.ClickType.SWAP,
-                        mc.player
-                    );
+                    InventoryUtility.handleInventoryClick(mc, mc.player, i, 0, net.minecraft.world.inventory.ClickType.SWAP);
                     return 0;
                 }
             }
         }
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem) {
-                Block block = blockItem.getBlock();
+                var block = blockItem.getBlock();
                 if (block.defaultBlockState().isCollisionShapeFullBlock(mc.level, BlockPos.ZERO)) {
                     return i;
                 }
@@ -390,33 +376,25 @@ public class Trap extends Module {
         String mode = rotate.getValue();
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        float targetYaw = angles[0], targetPitch = angles[1];
         float currentYaw = mc.player.getYRot(), currentPitch = mc.player.getXRot();
         if (mode.equals("Silent")) {
-            if (!lastSilentInit) {
-                lastSilentYaw = currentYaw; lastSilentPitch = currentPitch; lastSilentInit = true;
+            if (!silentRotation.initialized) {
+                silentRotation.init(currentYaw, currentPitch);
             }
-            currentYaw = lastSilentYaw; currentPitch = lastSilentPitch;
+            currentYaw = silentRotation.lastYaw; currentPitch = silentRotation.lastPitch;
         }
         if (mode.equals("Normal")) {
-            mc.player.setYRot(targetYaw); mc.player.setXRot(targetPitch);
+            mc.player.setYRot(angles[0]); mc.player.setXRot(angles[1]);
         } else if (mode.equals("Silent")) {
-            silentYaw = targetYaw; silentPitch = targetPitch; hasSilentRotations = true;
-            lastSilentYaw = targetYaw; lastSilentPitch = targetPitch;
+            silentRotation.set(angles[0], angles[1]);
+            silentRotation.lastYaw = angles[0]; silentRotation.lastPitch = angles[1];
         } else if (mode.equals("Packet") && mc.player.connection != null) {
-            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(targetYaw, targetPitch, mc.player.onGround(), mc.player.horizontalCollision));
+            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(angles[0], angles[1], mc.player.onGround(), mc.player.horizontalCollision));
         }
     }
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
         if (rotate.getValue().equals("None")) return true;
-        float[] targetAngles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        float currentYaw = mc.player.getYRot(), currentPitch = mc.player.getXRot();
-        if (rotate.getValue().equals("Silent") && lastSilentInit) {
-            currentYaw = lastSilentYaw; currentPitch = lastSilentPitch;
-        }
-        float diffYaw = Math.abs(RotationUtility.diffYaw(currentYaw, targetAngles[0]));
-        float diffPitch = Math.abs(RotationUtility.diffPitch(currentPitch, targetAngles[1]));
-        return diffYaw <= 10.0f && diffPitch <= 10.0f;
+        return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
     public static boolean isNativeAvailable() {
         return NATIVE.isLoaded();

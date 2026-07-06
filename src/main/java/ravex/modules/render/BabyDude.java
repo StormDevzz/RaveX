@@ -3,6 +3,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.utility.misc.MobUtility;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.Map;
@@ -16,7 +17,7 @@ public class BabyDude extends Module {
     public boolean shouldScale(Player player) {
         if (!getEnabled()) return false;
         Minecraft mc = Minecraft.getInstance();
-        boolean isSelf = (player == mc.player);
+        boolean isSelf = MobUtility.isSelf(player);
         String t = target.getValue();
         if (t.equals("Self")) {
             return isSelf;

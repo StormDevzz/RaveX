@@ -1,9 +1,5 @@
 package ravex.modules.world;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
@@ -12,6 +8,7 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
+import ravex.utility.misc.MobUtility;
 import java.util.Comparator;
 import java.util.List;
 public class AutoTrade extends Module {
@@ -30,7 +27,7 @@ public class AutoTrade extends Module {
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
+        var player = mc.player;
         if (player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < 200) return;
@@ -53,13 +50,11 @@ public class AutoTrade extends Module {
         }
         if (!autoOpen.getValue()) return;
         double r = range.getValue();
-        for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity instanceof AbstractVillager villager) {
-                if (villager.isAlive() && player.distanceToSqr(villager) <= r * r && !villager.isBaby()) {
-                    player.interactOn(villager, InteractionHand.MAIN_HAND);
-                    lastActionTime = now;
-                    break;
-                }
+        for (var entity : mc.level.entitiesForRendering()) {
+            if (MobUtility.isVillager(entity)) {
+                player.interactOn(entity, net.minecraft.world.InteractionHand.MAIN_HAND);
+                lastActionTime = now;
+                break;
             }
         }
     }

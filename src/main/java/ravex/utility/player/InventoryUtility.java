@@ -3,14 +3,21 @@ package ravex.utility.player;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.phys.EntityHitResult;
 import java.util.function.Predicate;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.Holder;
+import net.minecraft.world.item.enchantment.Enchantment;
 
 public class InventoryUtility {
     public static int inventorySlotToContainerSlot(int slot) {
@@ -18,46 +25,46 @@ public class InventoryUtility {
         return slot < 9 ? slot + 36 : slot;
     }
 
-    public static int findSlot(LocalPlayer player, Item target) {
+    public static int findSlot(net.minecraft.world.entity.player.Player player, Item target) {
         for (int i = 0; i < 36; i++) {
             if (player.getInventory().getItem(i).is(target)) return i;
         }
         return -1;
     }
 
-    public static int findSlot(LocalPlayer player, Predicate<ItemStack> predicate) {
+    public static int findSlot(net.minecraft.world.entity.player.Player player, Predicate<ItemStack> predicate) {
         for (int i = 0; i < 36; i++) {
             if (predicate.test(player.getInventory().getItem(i))) return i;
         }
         return -1;
     }
 
-    public static int findSlot(LocalPlayer player, Item target, int startInclusive, int endExclusive) {
+    public static int findSlot(net.minecraft.world.entity.player.Player player, Item target, int startInclusive, int endExclusive) {
         for (int i = startInclusive; i < endExclusive; i++) {
             if (player.getInventory().getItem(i).is(target)) return i;
         }
         return -1;
     }
 
-    public static int findSlot(LocalPlayer player, Predicate<ItemStack> predicate, int startInclusive, int endExclusive) {
+    public static int findSlot(net.minecraft.world.entity.player.Player player, Predicate<ItemStack> predicate, int startInclusive, int endExclusive) {
         for (int i = startInclusive; i < endExclusive; i++) {
             if (predicate.test(player.getInventory().getItem(i))) return i;
         }
         return -1;
     }
 
-    public static int findHotbarSlot(LocalPlayer player, Item target) {
+    public static int findHotbarSlot(net.minecraft.world.entity.player.Player player, Item target) {
         return findSlot(player, target, 0, 9);
     }
 
-    public static int findEmptyHotbarSlot(LocalPlayer player) {
+    public static int findEmptyHotbarSlot(net.minecraft.world.entity.player.Player player) {
         for (int i = 0; i < 9; i++) {
             if (player.getInventory().getItem(i).isEmpty()) return i;
         }
         return -1;
     }
 
-    public static int countItem(LocalPlayer player, Item target) {
+    public static int countItem(net.minecraft.world.entity.player.Player player, Item target) {
         int count = 0;
         for (int i = 0; i < 36; i++) {
             ItemStack stack = player.getInventory().getItem(i);
@@ -66,7 +73,16 @@ public class InventoryUtility {
         return count;
     }
 
-    public static ItemStack getMainHand(LocalPlayer player) {
+    public static int countItem(net.minecraft.world.entity.player.Player player, String itemName) {
+        int count = 0;
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (isItem(stack, itemName)) count += stack.getCount();
+        }
+        return count;
+    }
+
+    public static ItemStack getMainHand(net.minecraft.world.entity.player.Player player) {
         return player.getMainHandItem();
     }
 
@@ -97,21 +113,25 @@ public class InventoryUtility {
             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
     }
 
-    public static boolean isHoldingBlock(LocalPlayer player) {
+    public static boolean isBlockItem(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem;
+    }
+
+    public static boolean isHoldingBlock(net.minecraft.world.entity.player.Player player) {
         ItemStack stack = player.getMainHandItem();
         return !stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem;
     }
 
-    public static boolean isHoldingItem(LocalPlayer player) {
+    public static boolean isHoldingItem(net.minecraft.world.entity.player.Player player) {
         ItemStack stack = player.getMainHandItem();
         return !stack.isEmpty() && !(stack.getItem() instanceof net.minecraft.world.item.BlockItem);
     }
 
-    public static int getSelectedSlot(LocalPlayer player) {
+    public static int getSelectedSlot(net.minecraft.world.entity.player.Player player) {
         return player.getInventory().getSelectedSlot();
     }
 
-    public static void selectSlot(LocalPlayer player, int slot) {
+    public static void selectSlot(net.minecraft.world.entity.player.Player player, int slot) {
         player.getInventory().setSelectedSlot(slot);
     }
 
@@ -138,5 +158,202 @@ public class InventoryUtility {
         int containerSlot = inventorySlotToContainerSlot(inventorySlot);
         if (containerSlot == -1) return;
         mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, button, type, player);
+    }
+
+    public static ItemStack getOffhand(net.minecraft.world.entity.player.Player player) {
+        return player.getOffhandItem();
+    }
+
+    public static boolean isHolding(net.minecraft.world.entity.player.Player player, Item item) {
+        return player.getMainHandItem().is(item);
+    }
+
+    public static boolean isHolding(net.minecraft.world.entity.player.Player player, String itemName) {
+        return isItem(player.getMainHandItem(), itemName);
+    }
+
+    public static boolean isOffhand(net.minecraft.world.entity.player.Player player, Item item) {
+        return player.getOffhandItem().is(item);
+    }
+
+    public static boolean isOffhand(net.minecraft.world.entity.player.Player player, String itemName) {
+        return isItem(player.getOffhandItem(), itemName);
+    }
+
+    public static ItemStack getItem(net.minecraft.world.entity.player.Player player, int slot) {
+        return player.getInventory().getItem(slot);
+    }
+
+    public static int getContainerSize(net.minecraft.world.entity.player.Player player) {
+        return player.getInventory().getContainerSize();
+    }
+
+    public static int containerMenuId(net.minecraft.world.entity.player.Player player) {
+        return player.containerMenu.containerId;
+    }
+
+    public static void handleInventoryClick(Minecraft mc, LocalPlayer player, int containerSlot, int button, ClickType type) {
+        mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, button, type, player);
+    }
+
+    public static boolean isItemInSlot(net.minecraft.world.entity.player.Player player, int slot, String itemName) {
+        ItemStack stack = getItem(player, slot);
+        return !stack.isEmpty() && matchesItemId(stack, itemName);
+    }
+
+    public static boolean isItem(ItemStack stack, String itemName) {
+        return !stack.isEmpty() && matchesItemId(stack, itemName);
+    }
+
+    public static boolean isAxeItem(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.AxeItem;
+    }
+
+    public static boolean isShovelItem(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.ShovelItem;
+    }
+
+    public static boolean isPickaxeItem(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+        return path.endsWith("_pickaxe");
+    }
+
+    public static boolean isSwordItem(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+        return path.endsWith("_sword");
+    }
+
+    public static boolean isToolItem(ItemStack stack) {
+        return isAxeItem(stack) || isPickaxeItem(stack) || isShovelItem(stack) || isSwordItem(stack);
+    }
+
+    private static boolean matchesItemId(ItemStack stack, String itemName) {
+        Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        return id.getPath().equals(itemName) || id.toString().equals(itemName);
+    }
+
+    public static int findHotbarSlot(net.minecraft.world.entity.player.Player player, String itemName) {
+        for (int i = 0; i < 9; i++) {
+            if (isItemInSlot(player, i, itemName)) return i;
+        }
+        return -1;
+    }
+
+    public static int findSlot(net.minecraft.world.entity.player.Player player, String itemName) {
+        return findSlot(player, itemName, 0, 36);
+    }
+
+    public static int findSlot(net.minecraft.world.entity.player.Player player, String itemName, int start, int end) {
+        for (int i = start; i < end; i++) {
+            if (isItemInSlot(player, i, itemName)) return i;
+        }
+        return -1;
+    }
+
+    public static ItemEnchantments getEnchantments(ItemStack stack) {
+        return stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+    }
+
+    public static int getEnchantmentLevel(ItemStack stack, String enchantmentName) {
+        ItemEnchantments enchants = getEnchantments(stack);
+        for (Holder<Enchantment> holder : enchants.keySet()) {
+            if (holder.getRegisteredName().equals(enchantmentName)) {
+                return enchants.getLevel(holder);
+            }
+        }
+        return 0;
+    }
+
+    public static boolean hasEnchantment(ItemStack stack, String enchantmentName) {
+        return getEnchantmentLevel(stack, enchantmentName) > 0;
+    }
+
+    public static <T> T getComponent(ItemStack stack, net.minecraft.core.component.DataComponentType<? extends T> type) {
+        return stack.get(type);
+    }
+
+    public static <T> T getComponentOrDefault(ItemStack stack, net.minecraft.core.component.DataComponentType<? extends T> type, T defaultValue) {
+        return stack.getOrDefault(type, defaultValue);
+    }
+
+    public static boolean isTotem(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.TOTEM_OF_UNDYING);
+    }
+
+    public static boolean isCrystal(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.END_CRYSTAL);
+    }
+
+    public static boolean isAnchor(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.RESPAWN_ANCHOR);
+    }
+
+    public static boolean isGlowstone(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.GLOWSTONE);
+    }
+
+    public static boolean isGoldenApple(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.GOLDEN_APPLE);
+    }
+
+    public static boolean isEnchantedGoldenApple(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.ENCHANTED_GOLDEN_APPLE);
+    }
+
+    public static boolean isTrident(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.TRIDENT);
+    }
+
+    public static boolean isBow(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.BOW);
+    }
+
+    public static boolean isShulkerBox(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+        return path.contains("shulker_box");
+    }
+
+    public static boolean isPotion(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.POTION);
+    }
+
+    public static boolean isTippedArrow(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.TIPPED_ARROW);
+    }
+
+    public static net.minecraft.world.entity.EquipmentSlot getEquippableSlot(ItemStack stack) {
+        var equippable = stack.get(DataComponents.EQUIPPABLE);
+        return equippable != null ? equippable.slot() : null;
+    }
+
+    public static net.minecraft.world.food.FoodProperties getFoodProperties(ItemStack stack) {
+        return stack.get(DataComponents.FOOD);
+    }
+
+    public static net.minecraft.world.item.alchemy.PotionContents getPotionContents(ItemStack stack) {
+        return stack.get(DataComponents.POTION_CONTENTS);
+    }
+
+    public static net.minecraft.world.item.component.WrittenBookContent getWrittenBookContent(ItemStack stack) {
+        return stack.get(DataComponents.WRITTEN_BOOK_CONTENT);
+    }
+
+    public static void setWrittenBookContent(ItemStack stack, net.minecraft.world.item.component.WrittenBookContent content) {
+        stack.set(DataComponents.WRITTEN_BOOK_CONTENT, content);
+    }
+
+    public static net.minecraft.world.item.component.WritableBookContent getWritableBookContent(ItemStack stack) {
+        return stack.get(DataComponents.WRITABLE_BOOK_CONTENT);
+    }
+
+    public static boolean isWrittenBook(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.WRITTEN_BOOK);
+    }
+
+    public static boolean isWritableBook(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(Items.WRITABLE_BOOK);
     }
 }

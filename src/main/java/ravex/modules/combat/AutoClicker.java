@@ -1,14 +1,14 @@
 package ravex.modules.combat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.Items;
 import ravex.modules.Category;
+import ravex.utility.misc.MobUtility;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
 public class AutoClicker extends Module {
     public static final AutoClicker INSTANCE = new AutoClicker();
     public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40.0, 0.5);
@@ -36,11 +36,11 @@ public class AutoClicker extends Module {
         long now = System.currentTimeMillis();
         if (weaponOnly.getValue()) {
             var held = mc.player.getMainHandItem();
-            if (!isSword(held.getItem()) && held.getItem() != Items.TRIDENT) return;
+            if (!InventoryUtility.isSwordItem(held) && !InventoryUtility.isTrident(held)) return;
         }
         boolean targetValid = false;
         if (onlyOnTarget.getValue()) {
-            if (mc.crosshairPickEntity instanceof LivingEntity) {
+            if (MobUtility.asLivingEntity(mc.crosshairPickEntity) != null) {
                 targetValid = true;
             }
         } else {
@@ -77,7 +77,7 @@ public class AutoClicker extends Module {
     }
     private void clickLeft(Minecraft mc) {
         mc.options.keyAttack.setDown(true);
-        if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit && hit.getEntity() instanceof LivingEntity) {
+        if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit && MobUtility.asLivingEntity(hit.getEntity()) != null) {
             mc.gameMode.attack(mc.player, hit.getEntity());
         }
         mc.player.swing(InteractionHand.MAIN_HAND);
@@ -107,11 +107,6 @@ public class AutoClicker extends Module {
         }
         holding = false;
         nextClick = 0;
-    }
-    private boolean isSword(net.minecraft.world.item.Item item) {
-        return item == Items.WOODEN_SWORD || item == Items.STONE_SWORD ||
-               item == Items.IRON_SWORD || item == Items.GOLDEN_SWORD ||
-               item == Items.DIAMOND_SWORD || item == Items.NETHERITE_SWORD;
     }
     private static native long nativeCalculateDelay(double minCps, double maxCps, boolean randomize);
 }

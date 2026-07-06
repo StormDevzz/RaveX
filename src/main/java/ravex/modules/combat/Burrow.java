@@ -5,7 +5,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -15,6 +14,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
 public class Burrow extends Module {
     public static final Burrow INSTANCE = new Burrow();
     public final ModeParameter block = new ModeParameter("Block", "Obsidian",
@@ -58,9 +58,9 @@ public class Burrow extends Module {
                 mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(orig.x, orig.y + h, orig.z, false, false));
             }
         }
-        int prevSlot = mc.player.getInventory().getSelectedSlot();
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
         if (slot < 0 || slot > 8) return;
-        mc.player.getInventory().setSelectedSlot(slot);
+        InventoryUtility.selectSlot(mc.player, slot);
         BlockHitResult hit = new BlockHitResult(
             new Vec3(headPos.getX() + 0.5, headPos.getY() + 2, headPos.getZ() + 0.5),
             Direction.DOWN, headPos, false
@@ -69,7 +69,7 @@ public class Burrow extends Module {
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
         }
         mc.player.swing(InteractionHand.MAIN_HAND);
-        mc.player.getInventory().setSelectedSlot(prevSlot);
+        InventoryUtility.selectSlot(mc.player, prevSlot);
         hasPlaced = true;
     }
     @Override
@@ -80,7 +80,7 @@ public class Burrow extends Module {
     private int findBlockSlot(Minecraft mc) {
         String b = block.getValue();
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) continue;
             var blk = ((BlockItem) stack.getItem()).getBlock();
             if (b.equals("Obsidian") && blk == Blocks.OBSIDIAN) return i;

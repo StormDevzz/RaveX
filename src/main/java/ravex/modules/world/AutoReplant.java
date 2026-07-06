@@ -5,8 +5,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
@@ -18,6 +16,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
+import ravex.utility.player.InventoryUtility;
 import java.util.HashSet;
 import java.util.Set;
 public class AutoReplant extends Module {
@@ -55,14 +54,14 @@ public class AutoReplant extends Module {
                     if (!state.is(Blocks.FARMLAND)) continue;
                     if (!mc.level.getBlockState(pos.above()).isAir()) continue;
                     if (Vec3.atCenterOf(pos).distanceToSqr(mc.player.getEyePosition()) > r * r) continue;
-                    int prevSlot = mc.player.getInventory().getSelectedSlot();
-                    mc.player.getInventory().setSelectedSlot(seedSlot);
+                    int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
+                    InventoryUtility.selectSlot(mc.player, seedSlot);
                     BlockHitResult hit = new BlockHitResult(
                         Vec3.atCenterOf(pos), Direction.UP, pos, false
                     );
                     mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
                     if (silent.getValue()) {
-                        mc.player.getInventory().setSelectedSlot(prevSlot);
+                        InventoryUtility.selectSlot(mc.player, prevSlot);
                     }
                     lastReplantTime = now;
                     return;
@@ -72,7 +71,7 @@ public class AutoReplant extends Module {
     }
     private int findSeedSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty()) {
                 Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
                 if (id != null && id.getNamespace().equals("minecraft") &&

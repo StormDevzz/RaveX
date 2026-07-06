@@ -5,6 +5,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.utility.misc.MobUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class AntiBot extends Module {
         List<Entity> newBots = new ArrayList<>();
         for (Entity e : mc.level.entitiesForRendering()) {
             if (e == mc.player) continue;
-            if (!(e instanceof Player) || !e.isAlive()) continue;
+            if (!MobUtility.isPlayer(MobUtility.asLivingEntity(e)) || !e.isAlive()) continue;
             Player p = (Player) e;
             boolean suspect = false;
             if (removeInvisible.getValue() && p.isInvisible()) {

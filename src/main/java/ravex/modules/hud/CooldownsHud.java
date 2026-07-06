@@ -2,7 +2,6 @@ package ravex.modules.hud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemCooldowns;
-import net.minecraft.world.item.ItemStack;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
@@ -32,7 +31,7 @@ public class CooldownsHud extends Module {
         List<String> lines = new ArrayList<>();
         var inv = mc.player.getInventory();
         for (int slot = 0; slot < inv.getContainerSize(); slot++) {
-            ItemStack stack = inv.getItem(slot);
+            var stack = inv.getItem(slot);
             if (stack.isEmpty()) continue;
             String id = stack.getItem().getDescriptionId();
             if (seen.add(id) && cd.isOnCooldown(stack)) {

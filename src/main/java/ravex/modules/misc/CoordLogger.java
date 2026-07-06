@@ -2,10 +2,10 @@ package ravex.modules.misc;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
-import ravex.utility.nativelib.NativeLoader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import java.io.File;
+import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 public class CoordLogger extends Module {
@@ -16,21 +16,12 @@ public class CoordLogger extends Module {
     private static final String LOG_DIR = "ravex/coordlogs";
     private String currentFile = null;
 
-    static {
-        NativeLoader.load();
-    }
     @Override
     protected void onEnable() {
-        try {
-            nativeEnsureDir(LOG_DIR);
-        } catch (UnsatisfiedLinkError ignored) {
-            new java.io.File(LOG_DIR).mkdirs();
-        }
+        new File(LOG_DIR).mkdirs();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         currentFile = LOG_DIR + "/session_" + sdf.format(new Date()) + ".log";
-        try {
-            nativeWriteLog(currentFile, "=== CoordLogger Session Started ===\n");
-        } catch (UnsatisfiedLinkError ignored) {}
+        writeLine("=== CoordLogger Session Started ===");
         if (logJoin.getValue()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
@@ -48,17 +39,7 @@ public class CoordLogger extends Module {
         String timestamp = sdf.format(new Date());
         String line = String.format("[%s] %s | X: %.1f Y: %.1f Z: %.1f | Dim: %s\n",
             timestamp, type, x, y, z, dim);
-        if (currentFile != null) {
-            try {
-                nativeWriteLog(currentFile, line);
-            } catch (UnsatisfiedLinkError e) {
-                try {
-                    java.io.FileWriter fw = new java.io.FileWriter(currentFile, true);
-                    fw.write(line);
-                    fw.close();
-                } catch (Exception ignored) {}
-            }
-        }
+        writeLine(line);
         if (chatNotify.getValue()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
@@ -71,6 +52,10 @@ public class CoordLogger extends Module {
             }
         }
     }
-    private native boolean nativeEnsureDir(String path);
-    private native boolean nativeWriteLog(String filePath, String content);
+    private void writeLine(String line) {
+        if (currentFile == null) return;
+        try (FileWriter fw = new FileWriter(currentFile, true)) {
+            fw.write(line);
+        } catch (Exception ignored) {}
+    }
 }

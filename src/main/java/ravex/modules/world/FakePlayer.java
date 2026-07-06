@@ -3,6 +3,7 @@ import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.StringParameter;
 import ravex.parameter.BooleanParameter;
+import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.RemotePlayer;
 import com.mojang.authlib.GameProfile;
@@ -28,8 +29,8 @@ public class FakePlayer extends Module {
         remotePlayer.yHeadRot = mc.player.yHeadRot;
         remotePlayer.setId(-9999); 
         if (copyInventory.getValue()) {
-            for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
-                remotePlayer.getInventory().setItem(i, mc.player.getInventory().getItem(i).copy());
+            for (int i = 0; i < InventoryUtility.getContainerSize(mc.player); i++) {
+                remotePlayer.getInventory().setItem(i, InventoryUtility.getItem(mc.player, i).copy());
             }
         }
         mc.level.addEntity(remotePlayer);

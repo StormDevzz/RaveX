@@ -5,6 +5,7 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
+
 import java.lang.reflect.Field;
 import java.util.List;
 public class Swing extends Module {

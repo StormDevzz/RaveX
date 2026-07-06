@@ -6,17 +6,17 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.enchantment.ItemEnchantments;
+
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -37,9 +37,7 @@ public class Breaker extends Module {
     public final BooleanParameter syncPacketMine=new BooleanParameter("SyncPacketMine",false){@Override public void setValue(Boolean val){if(val){net.minecraft.client.Minecraft mc=net.minecraft.client.Minecraft.getInstance();boolean packetMineEnabled=ravex.manager.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();if(!packetMineEnabled){if(mc.player!=null){mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal("§7[§cBreaker§7] §cPlease enable PacketMine module first!"),false);}super.setValue(false);return;}}super.setValue(val);}};
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00FFFF);
-    public static float silentYaw = 0;
-    public static float silentPitch = 0;
-    public static boolean hasSilentRotations = false;
+    public static final SilentRotation silentRotation = new SilentRotation();
     public static BlockPos currentMiningBlock = null;
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_breaker");
     static {
@@ -53,7 +51,7 @@ public class Breaker extends Module {
             mc.gameMode.stopDestroyBlock();
         }
         currentMiningBlock = null;
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
     }
 
     @Override
@@ -61,10 +59,10 @@ public class Breaker extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) {
             currentMiningBlock = null;
-            hasSilentRotations = false;
+            silentRotation.hasRotation = false;
             return;
         }
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         if (syncPacketMine.getValue()) {
             boolean packetMineEnabled = ravex.manager.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();
             if (!packetMineEnabled) {
@@ -171,9 +169,7 @@ public class Breaker extends Module {
             if (rotMode.equals("Normal")) {
                 rotateTo(mc, Vec3.atCenterOf(targetPos));
             } else if (rotMode.equals("Silent")) {
-                silentYaw = calculateYaw(mc, Vec3.atCenterOf(targetPos));
-                silentPitch = calculatePitch(mc, Vec3.atCenterOf(targetPos));
-                hasSilentRotations = true;
+                silentRotation.setAnglesTo(mc, Vec3.atCenterOf(targetPos));
             }
         }
         if (syncPacketMine.getValue()) {
@@ -204,9 +200,9 @@ public class Breaker extends Module {
         double bestDist = Double.MAX_VALUE;
         double maxDist = range.getValue() + 3.0;
         for (Player p : mc.level.players()) {
-            if (p == mc.player || p.isDeadOrDying())
+            if (MobUtility.isSelf(p) || MobUtility.isDead(p))
                 continue;
-            double dist = mc.player.distanceTo(p);
+            double dist = MobUtility.distanceToPlayer(p);
             if (dist <= maxDist && dist < bestDist) {
                 bestDist = dist;
                 closest = p;
@@ -246,14 +242,6 @@ public class Breaker extends Module {
         return arr;
     }
 
-    private float calculateYaw(Minecraft mc, Vec3 target) {
-        return RotationUtility.yawTo(mc.player.getEyePosition(), target);
-    }
-
-    private float calculatePitch(Minecraft mc, Vec3 target) {
-        return RotationUtility.pitchTo(mc.player.getEyePosition(), target);
-    }
-
     private void rotateTo(Minecraft mc, Vec3 target) {
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
         mc.player.setYRot(angles[0]);
@@ -270,10 +258,10 @@ public class Breaker extends Module {
                 net.minecraft.world.entity.EquipmentSlot.HEAD
         };
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            ItemStack armor = player.getItemBySlot(slot);
+            var armor = player.getItemBySlot(slot);
             if (armor.isEmpty())
                 continue;
-            ItemEnchantments enchants = armor.get(DataComponents.ENCHANTMENTS);
+            var enchants = InventoryUtility.getEnchantments(armor);
             if (enchants != null) {
                 for (var enchantment : enchants.keySet()) {
                     String id = enchantment.getRegisteredName().toLowerCase();
@@ -287,14 +275,10 @@ public class Breaker extends Module {
             }
         }
         int totems = 0;
-        if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING)
-            totems++;
-        if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING)
-            totems++;
-        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-            if (player.getInventory().getItem(i).getItem() == Items.TOTEM_OF_UNDYING) {
-                totems++;
-            }
+        if (InventoryUtility.isHolding(player, "totem_of_undying")) totems++;
+        if (InventoryUtility.isOffhand(player, "totem_of_undying")) totems++;
+        for (int i = 0; i < InventoryUtility.getContainerSize(player); i++) {
+            if (InventoryUtility.isItem(InventoryUtility.getItem(player, i), "totem_of_undying")) totems++;
         }
         double[] stats = new double[15];
         stats[0] = player.getArmorValue();
@@ -310,7 +294,7 @@ public class Breaker extends Module {
         stats[6] = strEffect != null ? strEffect.getAmplifier() + 1 : 0;
         int idx = 7;
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            ItemStack armor = player.getItemBySlot(slot);
+            var armor = player.getItemBySlot(slot);
             if (armor.isEmpty()) {
                 stats[idx++] = 0.0;
             } else if (!armor.isDamageableItem()) {

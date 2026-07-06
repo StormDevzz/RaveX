@@ -5,6 +5,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.MobUtility;
 public class AutoLog extends Module {
     public static final AutoLog INSTANCE = new AutoLog();
     public final BooleanParameter onLowHealth = new BooleanParameter("LowHealth", true);
@@ -22,7 +23,7 @@ public class AutoLog extends Module {
         }
         for (Player other : mc.level.players()) {
             if (other == mc.player) continue;
-            double dist = mc.player.distanceTo(other);
+            double dist = MobUtility.distanceToPlayer(other);
             if (onPlayerNearby.getValue() && dist <= playerRange.getValue()) {
                 disconnect("Player " + other.getGameProfile().name() + " is too close (" + String.format("%.1f", dist) + "m)");
                 return;

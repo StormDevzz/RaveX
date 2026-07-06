@@ -4,9 +4,8 @@ import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ItemStack;
 import java.util.List;
+import ravex.utility.player.InventoryUtility;
 public class MaceSwap extends Module {
     public static final MaceSwap INSTANCE = new MaceSwap();
     public final ModeParameter mode       = new ModeParameter("Mode", "Smart",
@@ -25,14 +24,14 @@ public class MaceSwap extends Module {
             if (falling && targetingEntity) {
                 swapToMace(mc);
             } else if (!falling && previousSlot != -1 && mc.player.onGround()) {
-                mc.player.getInventory().setSelectedSlot(previousSlot);
+                InventoryUtility.selectSlot(mc.player, previousSlot);
                 previousSlot = -1;
             }
         } else {
             if (falling) {
                 swapToMace(mc);
             } else if (!falling && previousSlot != -1 && mc.player.onGround()) {
-                mc.player.getInventory().setSelectedSlot(previousSlot);
+                InventoryUtility.selectSlot(mc.player, previousSlot);
                 previousSlot = -1;
             }
         }
@@ -40,17 +39,17 @@ public class MaceSwap extends Module {
     private void swapToMace(Minecraft mc) {
         int maceSlot = findMaceInHotbar(mc);
         if (maceSlot != -1) {
-            int current = mc.player.getInventory().getSelectedSlot();
+            int current = InventoryUtility.getSelectedSlot(mc.player);
             if (current != maceSlot) {
                 if (previousSlot == -1) previousSlot = current;
-                mc.player.getInventory().setSelectedSlot(maceSlot);
+                InventoryUtility.selectSlot(mc.player, maceSlot);
             }
         }
     }
     private int findMaceInHotbar(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (stack.getItem() == Items.MACE) return i;
+            var stack = InventoryUtility.getItem(mc.player, i);
+            if (InventoryUtility.isItem(stack, "mace")) return i;
         }
         return -1;
     }

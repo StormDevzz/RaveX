@@ -1,16 +1,6 @@
 package ravex.modules.world;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.ItemEnchantments;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
 import ravex.modules.Module;
@@ -19,6 +9,8 @@ import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.misc.block.BlockUtility;
 import java.util.List;
 public class ECFarmer extends Module {
     public static final ECFarmer INSTANCE = new ECFarmer();
@@ -26,36 +18,43 @@ public class ECFarmer extends Module {
     public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal"));
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F8800FF);
-    public static BlockPos currentTarget = null;
     private enum State { IDLE, FIND_BREAK, BREAKING, FIND_PLACE, PLACING }
     private State state = State.IDLE;
-    private BlockPos ecPos = null;
+    private int ecX, ecY, ecZ;
+    private boolean hasEc;
     private long lastActionTime = 0;
     private long breakStartTime = 0;
     private int prevSlot = -1;
+    private static int targetX, targetY, targetZ;
+    private static boolean hasRenderTarget;
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_ecfarmer");
     static {
         NATIVE.load();
     }
 
+    public static net.minecraft.core.BlockPos getCurrentTarget() {
+        if (!hasRenderTarget) return null;
+        return BlockUtility.pos(targetX, targetY, targetZ);
+    }
+
     @Override
     protected void onEnable() {
         state = State.IDLE;
-        ecPos = null;
-        currentTarget = null;
+        hasEc = false;
+        hasRenderTarget = false;
         prevSlot = -1;
     }
     @Override
     protected void onDisable() {
-        if (ecPos != null) {
-            BlockState st = Minecraft.getInstance().level.getBlockState(ecPos);
-            if (st.is(Blocks.ENDER_CHEST)) {
+        if (hasEc) {
+            var st = BlockUtility.getState(Minecraft.getInstance().level, ecX, ecY, ecZ);
+            if (BlockUtility.isBlock(st, "ender_chest")) {
                 Minecraft.getInstance().gameMode.stopDestroyBlock();
             }
         }
         if (prevSlot != -1) swapBack(Minecraft.getInstance(), prevSlot);
-        ecPos = null;
-        currentTarget = null;
+        hasEc = false;
+        hasRenderTarget = false;
         prevSlot = -1;
         state = State.IDLE;
     }
@@ -73,10 +72,11 @@ public class ECFarmer extends Module {
         }
     }
     private void findBreakTarget(Minecraft mc) {
-        BlockPos found = scanForEC(mc);
+        int[] found = scanForEC(mc);
         if (found != null) {
-            ecPos = found;
-            currentTarget = found;
+            ecX = found[0]; ecY = found[1]; ecZ = found[2];
+            hasEc = true;
+            targetX = ecX; targetY = ecY; targetZ = ecZ; hasRenderTarget = true;
             state = State.BREAKING;
             breakStartTime = 0;
             prevSlot = -1;
@@ -87,16 +87,17 @@ public class ECFarmer extends Module {
     private void findPlaceTarget(Minecraft mc) {
         int ecSlot = findECSlot(mc);
         if (ecSlot == -1) return;
-        BlockPos placeOn = findPlacePos(mc);
+        int[] placeOn = findPlacePos(mc);
         if (placeOn == null) return;
-        ecPos = placeOn.above();
-        currentTarget = ecPos;
+        ecX = placeOn[0]; ecY = placeOn[1] + 1; ecZ = placeOn[2];
+        hasEc = true;
+        targetX = ecX; targetY = ecY; targetZ = ecZ; hasRenderTarget = true;
         state = State.PLACING;
     }
     private void doPlace(Minecraft mc, long now) {
         if (now - lastActionTime < 100) return;
         lastActionTime = now;
-        if (ecPos == null || !mc.level.getBlockState(ecPos).isAir()) {
+        if (!hasEc || !BlockUtility.isAir(mc.level, ecX, ecY, ecZ)) {
             state = State.IDLE;
             return;
         }
@@ -105,25 +106,28 @@ public class ECFarmer extends Module {
             state = State.IDLE;
             return;
         }
-        int original = mc.player.getInventory().getSelectedSlot();
+        int original = InventoryUtility.getSelectedSlot(mc.player);
         if (!doSwap(mc, ecSlot)) {
             state = State.IDLE;
             return;
         }
-        BlockPos below = ecPos.below();
-        BlockHitResult hit = new BlockHitResult(
-            Vec3.atCenterOf(below), Direction.UP, below, false
-        );
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        var below = BlockUtility.pos(ecX, ecY - 1, ecZ);
+        BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
+            Vec3.atCenterOf(below), Direction.UP, below, false));
+        BlockUtility.swing(mc);
         swapBack(mc, original);
         state = State.IDLE;
     }
     private void doBreak(Minecraft mc, long now) {
-        if (ecPos == null || !mc.level.getBlockState(ecPos).is(Blocks.ENDER_CHEST)) {
+        if (!hasEc) {
+            state = State.IDLE;
+            return;
+        }
+        var cur = BlockUtility.getState(mc.level, ecX, ecY, ecZ);
+        if (!BlockUtility.isBlock(cur, "ender_chest")) {
             if (prevSlot != -1) swapBack(mc, prevSlot);
-            ecPos = null;
-            currentTarget = null;
+            hasEc = false;
+            hasRenderTarget = false;
             prevSlot = -1;
             state = State.IDLE;
             return;
@@ -134,26 +138,26 @@ public class ECFarmer extends Module {
                 state = State.IDLE;
                 return;
             }
-            prevSlot = mc.player.getInventory().getSelectedSlot();
+            prevSlot = InventoryUtility.getSelectedSlot(mc.player);
             if (!doSwap(mc, pickSlot)) {
                 prevSlot = -1;
                 state = State.IDLE;
                 return;
             }
             breakStartTime = now;
-            Direction dir = getDirection(mc.player.getEyePosition(), ecPos);
-            mc.gameMode.startDestroyBlock(ecPos, dir);
-            mc.player.swing(InteractionHand.MAIN_HAND);
+            var dir = getDirection(mc.player.getEyePosition(), ecX, ecY, ecZ);
+            mc.gameMode.startDestroyBlock(BlockUtility.pos(ecX, ecY, ecZ), dir);
+            BlockUtility.swing(mc);
             return;
         }
-        Direction dir = getDirection(mc.player.getEyePosition(), ecPos);
-        mc.gameMode.continueDestroyBlock(ecPos, dir);
-        mc.player.swing(InteractionHand.MAIN_HAND);
-        BlockState st = mc.level.getBlockState(ecPos);
-        if (st.isAir() || !st.is(Blocks.ENDER_CHEST)) {
+        var dir2 = getDirection(mc.player.getEyePosition(), ecX, ecY, ecZ);
+        mc.gameMode.continueDestroyBlock(BlockUtility.pos(ecX, ecY, ecZ), dir2);
+        BlockUtility.swing(mc);
+        var st = BlockUtility.getState(mc.level, ecX, ecY, ecZ);
+        if (st.isAir() || !BlockUtility.isBlock(st, "ender_chest")) {
             if (prevSlot != -1) swapBack(mc, prevSlot);
-            ecPos = null;
-            currentTarget = null;
+            hasEc = false;
+            hasRenderTarget = false;
             prevSlot = -1;
             state = State.IDLE;
         }
@@ -161,14 +165,11 @@ public class ECFarmer extends Module {
     private boolean doSwap(Minecraft mc, int targetSlot) {
         String mode = swapMode.getValue();
         if (mode.equals("Normal")) {
-            mc.player.getInventory().setSelectedSlot(targetSlot);
+            InventoryUtility.selectSlot(mc.player, targetSlot);
             return true;
         } else if (mode.equals("Silent")) {
-            if (mc.player.connection != null) {
-                mc.player.connection.send(new ServerboundSetCarriedItemPacket(targetSlot));
-                return true;
-            }
-            return false;
+            InventoryUtility.silentSelectSlot(mc.player, targetSlot);
+            return true;
         }
         return false;
     }
@@ -176,35 +177,32 @@ public class ECFarmer extends Module {
         if (originalSlot == -1) return;
         String mode = swapMode.getValue();
         if (mode.equals("Normal")) {
-            mc.player.getInventory().setSelectedSlot(originalSlot);
+            InventoryUtility.selectSlot(mc.player, originalSlot);
         } else if (mode.equals("Silent")) {
-            if (mc.player.connection != null) {
-                mc.player.connection.send(new ServerboundSetCarriedItemPacket(originalSlot));
-            }
+            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
     }
-    private BlockPos scanForEC(Minecraft mc) {
+    private int[] scanForEC(Minecraft mc) {
         double r = range.getValue();
-        Vec3 eye = mc.player.getEyePosition();
-        BlockPos pPos = mc.player.blockPosition();
+        var eye = mc.player.getEyePosition();
+        var pPos = mc.player.blockPosition();
         int minX = (int) Math.floor(pPos.getX() - r);
         int maxX = (int) Math.ceil(pPos.getX() + r);
         int minY = (int) Math.max(mc.level.getMinY(), Math.floor(pPos.getY() - r));
         int maxY = (int) Math.min(mc.level.getMaxY(), Math.ceil(pPos.getY() + r));
         int minZ = (int) Math.floor(pPos.getZ() - r);
         int maxZ = (int) Math.ceil(pPos.getZ() + r);
-        BlockPos closest = null;
+        int[] closest = null;
         double closestDist = Double.MAX_VALUE;
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
-                    BlockPos pos = new BlockPos(x, y, z);
-                    BlockState st = mc.level.getBlockState(pos);
-                    if (st.is(Blocks.ENDER_CHEST)) {
-                        double dist = pos.distToCenterSqr(eye);
+                    var st = BlockUtility.getState(mc.level, x, y, z);
+                    if (BlockUtility.isBlock(st, "ender_chest")) {
+                        double dist = BlockUtility.distToSqr(mc.level, x, y, z, eye.x, eye.y, eye.z);
                         if (dist < closestDist) {
                             closestDist = dist;
-                            closest = pos;
+                            closest = new int[]{x, y, z};
                         }
                     }
                 }
@@ -213,61 +211,51 @@ public class ECFarmer extends Module {
         return closest;
     }
     private int findECSlot(Minecraft mc) {
-        for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getItem(i).is(Items.ENDER_CHEST)) return i;
-        }
-        for (int i = 9; i < 36; i++) {
-            if (mc.player.getInventory().getItem(i).is(Items.ENDER_CHEST)) {
-                int free = findEmptyHotbarSlot(mc);
-                if (free != -1) {
-                    mc.player.getInventory().setSelectedSlot(free);
-                    mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId, i, free,
-                        net.minecraft.world.inventory.ClickType.SWAP, mc.player
-                    );
-                    return free;
-                }
+        int slot = InventoryUtility.findHotbarSlot(mc.player, "ender_chest");
+        if (slot != -1) return slot;
+        slot = InventoryUtility.findSlot(mc.player, "ender_chest", 9, 36);
+        if (slot != -1) {
+            int free = InventoryUtility.findEmptyHotbarSlot(mc.player);
+            if (free != -1) {
+                InventoryUtility.selectSlot(mc.player, free);
+                InventoryUtility.handleInventoryClick(mc, mc.player, slot, free, net.minecraft.world.inventory.ClickType.SWAP);
+                return free;
             }
-        }
-        return -1;
-    }
-    private int findEmptyHotbarSlot(Minecraft mc) {
-        for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getItem(i).isEmpty()) return i;
         }
         return -1;
     }
     private int findPickaxeSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (stack.is(Items.NETHERITE_PICKAXE) || stack.is(Items.DIAMOND_PICKAXE)
-                || stack.is(Items.IRON_PICKAXE) || stack.is(Items.STONE_PICKAXE)
-                || stack.is(Items.WOODEN_PICKAXE)) return i;
+            var stack = InventoryUtility.getItem(mc.player, i);
+            if (InventoryUtility.isItem(stack, "netherite_pickaxe") || InventoryUtility.isItem(stack, "diamond_pickaxe")
+                || InventoryUtility.isItem(stack, "iron_pickaxe") || InventoryUtility.isItem(stack, "stone_pickaxe")
+                || InventoryUtility.isItem(stack, "wooden_pickaxe")) return i;
         }
         return -1;
     }
-    private BlockPos findPlacePos(Minecraft mc) {
-        Vec3 eye = mc.player.getEyePosition();
-        Direction facing = mc.player.getDirection();
+    private int[] findPlacePos(Minecraft mc) {
+        var eye = mc.player.getEyePosition();
+        var facing = mc.player.getDirection();
         double r = range.getValue();
-        BlockPos start = mc.player.blockPosition();
+        var start = mc.player.blockPosition();
+        int sx = start.getX(), sy = start.getY(), sz = start.getZ();
         for (int f = 1; f <= 3; f++) {
             for (int dy = -1; dy <= 1; dy++) {
-                BlockPos pos = start.offset(facing.getStepX() * f, dy, facing.getStepZ() * f);
-                if (pos.distToCenterSqr(eye.x, eye.y, eye.z) > r * r) continue;
-                BlockState below = mc.level.getBlockState(pos.below());
-                BlockState target = mc.level.getBlockState(pos);
-                if (below.isCollisionShapeFullBlock(mc.level, pos.below()) && target.isAir()) {
-                    return pos.below();
+                int px = sx + facing.getStepX() * f;
+                int py = sy + dy;
+                int pz = sz + facing.getStepZ() * f;
+                if (BlockUtility.distToSqr(mc.level, px, py, pz, eye.x, eye.y, eye.z) > r * r) continue;
+                if (BlockUtility.isSolid(mc.level, px, py - 1, pz) && BlockUtility.isAir(mc.level, px, py, pz)) {
+                    return new int[]{px, py - 1, pz};
                 }
             }
         }
         return null;
     }
-    public static Direction getDirection(Vec3 eye, BlockPos pos) {
-        Vec3 center = Vec3.atCenterOf(pos);
+    private static Direction getDirection(Vec3 eye, int x, int y, int z) {
+        var center = Vec3.atCenterOf(BlockUtility.pos(x, y, z));
         double dx = eye.x - center.x;
-        double dy = eye.y - pos.getY() - 0.5;
+        double dy = eye.y - y - 0.5;
         double dz = eye.z - center.z;
         double absX = Math.abs(dx);
         double absY = Math.abs(dy);

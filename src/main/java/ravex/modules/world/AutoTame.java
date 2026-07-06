@@ -2,11 +2,10 @@ package ravex.modules.world;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.equine.Llama;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.animal.wolf.Wolf;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.AABB;
 import ravex.modules.Category;
@@ -14,6 +13,7 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
+import ravex.utility.player.InventoryUtility;
 import java.util.List;
 public class AutoTame extends Module {
     public static final AutoTame INSTANCE = new AutoTame();
@@ -31,14 +31,14 @@ public class AutoTame extends Module {
         AABB box = p.getBoundingBox().inflate(r);
         List<Entity> entities = mc.level.getEntities(p, box, e -> isTarget(e) && e.isAlive());
         for (Entity e : entities) {
-            LivingEntity target = (LivingEntity) e;
+            var target = MobUtility.asLivingEntity(e);
             if (!p.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
                 mc.gameMode.interact(p, target, InteractionHand.MAIN_HAND);
                 break;
             } else if (autoSwitch.getValue()) {
                 int slot = findTameItem();
                 if (slot != -1) {
-                    p.getInventory().setSelectedSlot(slot);
+                    InventoryUtility.selectSlot(p, slot);
                     mc.gameMode.interact(p, target, InteractionHand.MAIN_HAND);
                     break;
                 }
@@ -58,14 +58,13 @@ public class AutoTame extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return -1;
         String mode = animal.getValue();
-        var inv = mc.player.getInventory();
         for (int i = 0; i < 9; i++) {
-            var stack = inv.getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty()) continue;
             boolean match = switch (mode) {
-                case "Wolf" -> stack.is(Items.BONE);
-                case "Cat" -> stack.is(Items.COD) || stack.is(Items.SALMON);
-                case "Llama" -> stack.is(Items.HAY_BLOCK);
+                case "Wolf" -> InventoryUtility.isItem(stack, "bone");
+                case "Cat" -> InventoryUtility.isItem(stack, "cod") || InventoryUtility.isItem(stack, "salmon");
+                case "Llama" -> InventoryUtility.isItem(stack, "hay_block");
                 default -> false;
             };
             if (match) return i;

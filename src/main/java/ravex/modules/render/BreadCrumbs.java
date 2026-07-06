@@ -1,8 +1,8 @@
 package ravex.modules.render;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.MobUtility;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import ravex.modules.Category;
@@ -36,8 +36,8 @@ public class BreadCrumbs extends Module {
         if (players.getValue() || mobs.getValue()) {
             for (Entity entity : mc.level.entitiesForRendering()) {
                 if (entity == mc.player) continue;
-                if (entity instanceof Player && !players.getValue()) continue;
-                if (!(entity instanceof Player) && !mobs.getValue()) continue;
+                if (MobUtility.isPlayer(MobUtility.asLivingEntity(entity)) && !players.getValue()) continue;
+                if (!MobUtility.isPlayer(MobUtility.asLivingEntity(entity)) && !mobs.getValue()) continue;
                 addPoint(entity.getId(), entity.position(), max);
             }
         }

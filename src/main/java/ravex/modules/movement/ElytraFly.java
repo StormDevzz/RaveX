@@ -2,7 +2,6 @@ package ravex.modules.movement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import ravex.RaveX;
 import ravex.modules.Category;
@@ -12,6 +11,7 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
 public class ElytraFly extends Module {
     public static final ElytraFly INSTANCE = new ElytraFly();
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
@@ -284,15 +284,15 @@ public class ElytraFly extends Module {
     private void useFirework(Minecraft mc) {
         int slot = -1;
         for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getItem(i).is(Items.FIREWORK_ROCKET)) {
+            if (InventoryUtility.isItem(InventoryUtility.getItem(mc.player, i), "firework_rocket")) {
                 slot = i;
                 break;
             }
         }
         if (slot < 0) return;
-        int prevSlot = mc.player.getInventory().getSelectedSlot();
-        mc.player.getInventory().setSelectedSlot(slot);
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
+        InventoryUtility.selectSlot(mc.player, slot);
         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-        mc.player.getInventory().setSelectedSlot(prevSlot);
+        InventoryUtility.selectSlot(mc.player, prevSlot);
     }
 }

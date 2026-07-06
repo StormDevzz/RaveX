@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -86,7 +85,7 @@ public class SelfFill extends Module {
     private int findBlockSlot(Minecraft mc) {
         String b = block.getValue();
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) continue;
             var blk = ((BlockItem) stack.getItem()).getBlock();
             if (b.equals("Obsidian") && blk == Blocks.OBSIDIAN) return i;

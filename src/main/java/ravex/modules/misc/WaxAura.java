@@ -8,12 +8,11 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.HoneycombItem;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import ravex.utility.player.InventoryUtility;
 public class WaxAura extends Module {
     public static final WaxAura INSTANCE = new WaxAura();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
@@ -37,8 +36,8 @@ public class WaxAura extends Module {
         }
         int honeycombSlot = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = p.getInventory().getItem(i);
-            if (stack.is(Items.HONEYCOMB)) {
+            var stack = InventoryUtility.getItem(p, i);
+            if (InventoryUtility.isItem(stack, "honeycomb")) {
                 honeycombSlot = i;
                 break;
             }
@@ -65,16 +64,16 @@ public class WaxAura extends Module {
             }
         }
         if (targetPos != null) {
-            int prevSlot = p.getInventory().getSelectedSlot();
+            int prevSlot = InventoryUtility.getSelectedSlot(p);
             if (autoSwap.getValue() && honeycombSlot != prevSlot) {
-                p.getInventory().setSelectedSlot(honeycombSlot);
+                InventoryUtility.selectSlot(p, honeycombSlot);
             }
             Vec3 hitVec = Vec3.atCenterOf(targetPos);
             BlockHitResult blockHit = new BlockHitResult(hitVec, Direction.UP, targetPos, false);
             mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
             p.swing(InteractionHand.MAIN_HAND);
             if (autoSwap.getValue() && silent.getValue() && honeycombSlot != prevSlot) {
-                p.getInventory().setSelectedSlot(prevSlot);
+                InventoryUtility.selectSlot(p, prevSlot);
             }
             delayTimer = delay.getValue().intValue();
         }

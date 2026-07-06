@@ -16,7 +16,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.modules.world.NoGhostBlocks;
+import ravex.modules.world.GhostBlocks;
 import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
@@ -161,7 +161,7 @@ public class Nuker extends Module {
             Direction dir = getDirection(mc.player.getEyePosition(), target);
             mc.gameMode.startDestroyBlock(target, dir);
             mc.player.swing(InteractionHand.MAIN_HAND);
-            NoGhostBlocks.markMined(target);
+            GhostBlocks.markMined(target);
             lastBreakTime = now;
         }
     }

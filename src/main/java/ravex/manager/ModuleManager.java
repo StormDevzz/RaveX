@@ -18,22 +18,22 @@ public class ModuleManager {
             "Reach", "Surround", "SelfTrap", "BasePlace",
             "AnchorAura", "BowAim", "Breaker", "Quiver", "WindAura",
             "Trap", "AutoApple", "WebSelf", "KeyPearl", "PearlTarget",
-            "NoHitDelay", "AntiPearl", "BedBomb", "Criticals", "AutoBow",
+            "AntiPearl", "BedBomb", "Criticals", "AutoBow",
             "HoleFill", "AutoClicker", "AntiBot", "AutoDrop", "SelfFill",
-            "Burrow", "AntiReGear", "TntAura", "WitherRoseAura",
+            "Burrow", "AntiReGear", "TntAura",
             "KeepSprint", "ShieldFucker", "AutoCart", "AutoTotem"
         );
 
         render(
             "Crosshair", "ESP", "Skeleton", "NameTags", "Tracers",
-            "NoBob", "Ambient", "Weather", "CustomFog",
+            "NoBob", "Ambient", "Weather", "Fog",
             "Shaders", "FreeLook", "FreeCam", "ViewClip",
             "Glint", "Sounds", "ItemPhysics", "Fullbright", "BlockOutline",
             "BreadCrumbs", "ViewModel", "Animations", "NoRender",
             "ShiftInterp", "BabyDude", "SkyColor", "CloudColor", "Trails",
             "Waypoint", "KillEffects", "Particles", "AspectRatio",
-            "Borders", "Zoom", "HoleESP", "Blur", "ToolTips",
-            "VoidESP"
+            "Borders", "Zoom", "Blur", "ToolTips",
+            "VoidESP", "DeathText"
         );
 
         player(
@@ -42,10 +42,10 @@ public class ModuleManager {
             "FastBreak", "InstaBreak", "TabUtils", "ChestUtils",
             "MiddleClick", "ElytraUtils",
             "ViewLock", "ItemSaver", "AntiAim",
-            "inventorycleaner.InventoryCleaner", "Replenish", "MobOwner", "NoSwing",
+            "invclean.InvClean", "Replenish", "MobOwner", "NoSwing",
             "Swing", "GridBuilder", "Xray",
-            "AntiHunger", "ChorusExploit", "GhostHand", "HandshakeSpoof",
-            "MultiTask", "NoMineAnimation", "PacketMine"
+            "AntiHunger", "ChorusExploit", "GhostHand", "Handshake",
+            "MultiTask", "MineAnimation", "PacketMine"
         );
         register(Category.PLAYER, "ravex.modules.player.autoregear.AutoReGear");
 
@@ -55,22 +55,22 @@ public class ModuleManager {
             "NoPush", "AutoSprint", "Spider", "Speed", "NoRotate",
             "Avoid", "RocketUtils", "RidingUtils", "SafeWalk",
             "HighJump", "FastStairs", "NoFall", "ElytraFly", "Flight",
-            "LiquidCollision",
+            "LiquidControl",
             "Blink", "ClickFly", "ClickTP", "PacketFly", "Phase",
             "TickShift", "Timer", "TridentBoost"
         );
 
         misc(
-            "AntiAfk", "VisualRange", "AutoEat",
+            "AntiAfk", "AutoEat",
             "PacketUtils", "AutoLog", "Spammer",
             "DurabAlert", "AntiAttack", "LagNotify", "PopCounter",
             "WaxAura", "AutoReconnect", "FastItem",
             "BlockSelector", "AutoSoup", "NameProtect", "StashFinder",
-            "AutoAuth", "AntiQuit", "CustomDeathText",
-            "SoundBlocker", "ChatUtils",
+            "AutoAuth", "AntiQuit",
+            "SoundBlock", "ChatUtils",
             "CoordLogger", "BookUtils", "Religion",
-            "Commands", "PauseBaritone", "PortalBuild",
-            "FakePearl", "NewChunks", "PortalGodMode", "PortalGui",
+            "Commands", "PauseBaritone", "AutoPortal",
+            "FakePearl", "NewChunks", "PortalGod", "PortalGui",
             "PingSpoof", "RideExploit"
         );
 
@@ -79,8 +79,8 @@ public class ModuleManager {
             "AutoNameTag", "AutoMount", "FakePlayer", "ChestAura",
             "Igniter", "TreeCutter", "AutoTame", "AutoLight",
             "AutoReplant", "nuker.Nuker", "AutoTrade", "AutoFish", "AutoTunnel",
-            "AutoSmelt", "AutoBrew", "ECFarmer", "NoGhostBlocks",
-            "WitherBuild"
+            "AutoSmelt", "AutoBrew", "ECFarmer", "GhostBlocks",
+            "AutoWither"
         );
 
         client(

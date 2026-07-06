@@ -5,8 +5,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import ravex.utility.misc.MobUtility;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -15,15 +14,15 @@ import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.item.enchantment.ItemEnchantments;
-import net.minecraft.core.component.DataComponents;
 import java.util.ArrayList;
 import java.util.List;
 public class AutoCrystal extends Module {
@@ -144,61 +143,25 @@ public class AutoCrystal extends Module {
         strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
         maxRate.setVisible(() -> !speedMode.getValue().equals("Legit"));
     }
-    public static float silentYaw = 0;
-    public static float silentPitch = 0;
-    private static boolean hasSilentRotations = false;
+    public static final SilentRotation silentRotation = new SilentRotation();
     private int originalSlot = -1;
     private double[] cachedBlockData = null;
     private long lastBlockScanTime = 0;
-    private float lastSilentYaw = 0f;
-    private float lastSilentPitch = 0f;
-    private boolean lastSilentInit = false;
     public static boolean hasSilentRotations() {
-        return hasSilentRotations;
+        return silentRotation.hasRotation;
     }
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         if (totemPopSwap.getValue()) {
-            double selfHp = mc.player.getHealth() + mc.player.getAbsorptionAmount();
+            double selfHp = MobUtility.getHealthWithAbsorption(mc.player);
             if (selfHp <= totemPopHp.getValue()) {
-                ItemStack offhandItem = mc.player.getOffhandItem();
-                if (offhandItem.getItem() != Items.TOTEM_OF_UNDYING) {
-                    int totemSlot = -1;
-                    for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
-                        if (mc.player.getInventory().getItem(i).getItem() == Items.TOTEM_OF_UNDYING) {
-                            totemSlot = i;
-                            break;
-                        }
-                    }
+                if (!InventoryUtility.isOffhand(mc.player, "totem_of_undying")) {
+                    int totemSlot = InventoryUtility.findSlot(mc.player, "totem_of_undying");
                     if (totemSlot != -1) {
-                        int containerSlot = totemSlot;
-                        if (totemSlot < 9) {
-                            containerSlot = 36 + totemSlot;
-                        }
-                        mc.gameMode.handleInventoryMouseClick(
-                            mc.player.inventoryMenu.containerId,
-                            containerSlot,
-                            0,
-                            net.minecraft.world.inventory.ClickType.PICKUP,
-                            mc.player
-                        );
-                        mc.gameMode.handleInventoryMouseClick(
-                            mc.player.inventoryMenu.containerId,
-                            45,
-                            0,
-                            net.minecraft.world.inventory.ClickType.PICKUP,
-                            mc.player
-                        );
-                        mc.gameMode.handleInventoryMouseClick(
-                            mc.player.inventoryMenu.containerId,
-                            containerSlot,
-                            0,
-                            net.minecraft.world.inventory.ClickType.PICKUP,
-                            mc.player
-                        );
+                        InventoryUtility.swapToOffhand(mc, mc.player, totemSlot);
                     }
                 }
             }
@@ -209,11 +172,11 @@ public class AutoCrystal extends Module {
             return;
         }
         Vec3 playerPos = mc.player.position();
-        double pHp  = mc.player.getHealth();
-        double pAbs = mc.player.getAbsorptionAmount();
+        double pHp  = MobUtility.getHealth(mc.player);
+        double pAbs = MobUtility.getAbsorption(mc.player);
         Vec3 targetPos = target.position();
-        double tHp  = target.getHealth();
-        double tAbs = target.getAbsorptionAmount();
+        double tHp  = MobUtility.getHealth(target);
+        double tAbs = MobUtility.getAbsorption(target);
         double[] blockData  = collectValidBlocks(mc, playerPos);
         double[] crystalData = collectCrystals(mc, playerPos);
         double[] pStats = getEntityStats(mc.player);
@@ -304,8 +267,8 @@ public class AutoCrystal extends Module {
                 if (entityId != lastBreakId) {
                     Entity crystal = mc.level.getEntity(entityId);
                     if (crystal instanceof EndCrystal) {
-                        mc.gameMode.attack(mc.player, crystal);
-                        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                        MobUtility.attack(mc, crystal);
+                        MobUtility.swingHand(mc);
                         lastBreakTime = now;
                         lastBreakId   = entityId;
                         actionsThisTick++;
@@ -320,12 +283,12 @@ public class AutoCrystal extends Module {
         if (speedMode.getValue().equals("Aggressive")) {
             checkPlaceDelay = false;
         } else if (placeMode.getValue().equals("Smart")) {
-            if (currentTargetDamage < minDamage.getValue() && currentTargetDamage < target.getHealth() + target.getAbsorptionAmount()) {
+                if (currentTargetDamage < minDamage.getValue() && currentTargetDamage < MobUtility.getHealthWithAbsorption(target)) {
                 shouldPlace = false;
             }
         }
         if (target != null) {
-            double targetEffHp = target.getHealth() + target.getAbsorptionAmount();
+            double targetEffHp = MobUtility.getHealthWithAbsorption(target);
             if (targetEffHp <= placeUnderHp.getValue()) {
                 checkPlaceDelay = false;
             }
@@ -391,9 +354,6 @@ public class AutoCrystal extends Module {
                 }
             }
         }
-        if (!hasSilentRotations) {
-            lastSilentInit = false;
-        }
     }
     private LivingEntity findTarget(Minecraft mc) {
         LivingEntity closest = null;
@@ -403,20 +363,20 @@ public class AutoCrystal extends Module {
         String typeFilter = targetType.getValue();
         for (Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof LivingEntity le)) continue;
-            if (le == mc.player) continue;
-            if (le.isDeadOrDying()) continue;
+            if (MobUtility.isSelf(le)) continue;
+            if (MobUtility.isDead(le)) continue;
             if (typeFilter.equals("Players")) {
-                if (!(le instanceof Player)) continue;
+                if (!MobUtility.isPlayer(le)) continue;
             } else if (typeFilter.equals("Monsters")) {
-                if (!(le instanceof net.minecraft.world.entity.monster.Monster || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss)) continue;
+                if (!MobUtility.isHostile(le)) continue;
             } else if (typeFilter.equals("Passives")) {
-                if (le instanceof Player || le instanceof net.minecraft.world.entity.monster.Monster || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss) continue;
+                if (MobUtility.isPlayer(le) || MobUtility.isHostile(le)) continue;
             }
-            double dist = mc.player.distanceTo(le);
+            double dist = MobUtility.distanceToPlayer(le);
             if (dist > maxDist) continue;
             double metric = switch (mode) {
                 case "Closest"        -> dist;
-                case "LowestHP"      -> le.getHealth();
+                case "LowestHP"      -> MobUtility.getHealth(le);
                 case "HighestDamage" -> -calcQuickDamage(mc, le);
                 default               -> dist;
             };
@@ -500,50 +460,37 @@ public class AutoCrystal extends Module {
         return arr;
     }
     private boolean switchToCrystal(Minecraft mc) {
-        ItemStack mainHand = mc.player.getMainHandItem();
-        if (mainHand.getItem() == Items.END_CRYSTAL) return true;
+        if (InventoryUtility.isHolding(mc.player, "end_crystal")) return true;
         String mode = swapMode.getValue();
         if (mode.equals("None")) return false;
         if (swapNoGap.getValue() && mc.player.isUsingItem()) {
-            ItemStack usingItem = mc.player.getUseItem();
-            if (usingItem.getItem() == Items.GOLDEN_APPLE || usingItem.getItem() == Items.ENCHANTED_GOLDEN_APPLE) {
+            var usingItem = mc.player.getUseItem();
+            if (InventoryUtility.isGoldenApple(usingItem) || InventoryUtility.isEnchantedGoldenApple(usingItem)) {
                 return false;
             }
         }
-        for (int slot = 0; slot < 9; slot++) {
-            if (mc.player.getInventory().getItem(slot).getItem() == Items.END_CRYSTAL) {
-                if (mode.equals("Normal")) {
-                    mc.player.getInventory().setSelectedSlot(slot);
-                } else if (mode.equals("Silent")) {
-                    originalSlot = mc.player.getInventory().getSelectedSlot();
-                    if (mc.player.connection != null) {
-                        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
-                    }
-                }
-                return true;
+        int slot = InventoryUtility.findHotbarSlot(mc.player, "end_crystal");
+        if (slot != -1) {
+            if (mode.equals("Normal")) {
+                InventoryUtility.selectSlot(mc.player, slot);
+            } else if (mode.equals("Silent")) {
+                originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+                InventoryUtility.silentSelectSlot(mc.player, slot);
             }
+            return true;
         }
         if (swapInventory.getValue()) {
-            for (int slot = 9; slot < 36; slot++) {
-                if (mc.player.getInventory().getItem(slot).getItem() == Items.END_CRYSTAL) {
-                    int targetHotbarSlot = 0;
-                    mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId,
-                        slot,
-                        targetHotbarSlot,
-                        net.minecraft.world.inventory.ClickType.SWAP,
-                        mc.player
-                    );
-                    if (mode.equals("Normal")) {
-                        mc.player.getInventory().setSelectedSlot(targetHotbarSlot);
-                    } else if (mode.equals("Silent")) {
-                        originalSlot = mc.player.getInventory().getSelectedSlot();
-                        if (mc.player.connection != null) {
-                            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(targetHotbarSlot));
-                        }
-                    }
-                    return true;
+            slot = InventoryUtility.findSlot(mc.player, "end_crystal", 9, 36);
+            if (slot != -1) {
+                int targetHotbarSlot = 0;
+                InventoryUtility.handleInventoryClick(mc, mc.player, slot, targetHotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                if (mode.equals("Normal")) {
+                    InventoryUtility.selectSlot(mc.player, targetHotbarSlot);
+                } else if (mode.equals("Silent")) {
+                    originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+                    InventoryUtility.silentSelectSlot(mc.player, targetHotbarSlot);
                 }
+                return true;
             }
         }
         return false;
@@ -555,9 +502,9 @@ public class AutoCrystal extends Module {
         float currentYaw = mc.player.getYRot();
         float currentPitch = mc.player.getXRot();
         if (mode.equals("Silent")) {
-            if (!lastSilentInit) { lastSilentYaw = currentYaw; lastSilentPitch = currentPitch; lastSilentInit = true; }
-            currentYaw = lastSilentYaw;
-            currentPitch = lastSilentPitch;
+            if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
+            currentYaw = silentRotation.lastYaw;
+            currentPitch = silentRotation.lastPitch;
         }
         float maxSpeed = rotateSpeed.getValue().floatValue();
         float[] limited = AimUtility.limitAngles(currentYaw, targetAngles[0], currentPitch, targetAngles[1], maxSpeed);
@@ -570,9 +517,8 @@ public class AutoCrystal extends Module {
             mc.player.setYRot(finalYaw);
             mc.player.setXRot(finalPitch);
         } else if (mode.equals("Silent")) {
-            silentYaw = finalYaw; silentPitch = finalPitch;
-            hasSilentRotations = true;
-            lastSilentYaw = finalYaw; lastSilentPitch = finalPitch;
+            silentRotation.set(finalYaw, finalPitch);
+            silentRotation.lastYaw = finalYaw; silentRotation.lastPitch = finalPitch;
         } else if (mode.equals("Packet")) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(finalYaw, finalPitch, mc.player.onGround(), mc.player.horizontalCollision));
@@ -583,15 +529,7 @@ public class AutoCrystal extends Module {
     private long currentBreakDelay = 0;
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
         if (rotate.getValue().equals("None")) return true;
-        float[] targetAngles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        float currentYaw = mc.player.getYRot();
-        float currentPitch = mc.player.getXRot();
-        if (rotate.getValue().equals("Silent") && lastSilentInit) {
-            currentYaw = lastSilentYaw;
-            currentPitch = lastSilentPitch;
-        }
-        return Math.abs(RotationUtility.diffYaw(targetAngles[0], currentYaw)) <= 10.0f
-            && Math.abs(targetAngles[1] - currentPitch) <= 10.0f;
+        return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
     private double calcQuickDamage(Minecraft mc, LivingEntity target) {
         Vec3 playerPos = mc.player.position();
@@ -659,9 +597,9 @@ public class AutoCrystal extends Module {
             net.minecraft.world.entity.EquipmentSlot.HEAD
         };
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            ItemStack armor = player.getItemBySlot(slot);
+            var armor = player.getItemBySlot(slot);
             if (armor.isEmpty()) continue;
-            ItemEnchantments enchants = armor.get(DataComponents.ENCHANTMENTS);
+            var enchants = InventoryUtility.getEnchantments(armor);
             if (enchants != null) {
                 for (var enchantment : enchants.keySet()) {
                     String id = enchantment.getRegisteredName().toLowerCase();
@@ -675,14 +613,10 @@ public class AutoCrystal extends Module {
             }
         }
         int totems = 0;
-        if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;
-        if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;
+        if (InventoryUtility.isTotem(player.getMainHandItem())) totems++;
+        if (InventoryUtility.isTotem(player.getOffhandItem())) totems++;
         if (player instanceof Player p) {
-            for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
-                if (p.getInventory().getItem(i).getItem() == Items.TOTEM_OF_UNDYING) {
-                    totems++;
-                }
-            }
+            totems += InventoryUtility.countItem(p, "totem_of_undying");
         }
         double[] stats = new double[15];
         stats[0] = player.getArmorValue();
@@ -698,7 +632,7 @@ public class AutoCrystal extends Module {
         stats[6] = strEffect != null ? strEffect.getAmplifier() + 1 : 0;
         int idx = 7;
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            ItemStack armor = player.getItemBySlot(slot);
+            var armor = player.getItemBySlot(slot);
             if (armor.isEmpty()) {
                 stats[idx++] = 0.0;
             } else if (!armor.isDamageableItem()) {

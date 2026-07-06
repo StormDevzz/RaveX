@@ -1,6 +1,5 @@
 package ravex.modules.player;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import ravex.modules.Module;
 import ravex.parameter.ActionParameter;
@@ -12,7 +11,7 @@ public class Xray extends Module {
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.blockbrowser.XRayBlockBrowserScreen(Minecraft.getInstance().screen));
     });
-    private final Set<Identifier> selectedBlocks = new HashSet<>();
+    private final Set<net.minecraft.resources.Identifier> selectedBlocks = new HashSet<>();
 
     private Xray() {
         super("Xray");
@@ -22,14 +21,14 @@ public class Xray extends Module {
         return selectedBlocks.contains(OreUtility.getIdentifier(block));
     }
     public void setBlockSelected(Block block, boolean selected) {
-        Identifier id = OreUtility.getIdentifier(block);
+        var id = OreUtility.getIdentifier(block);
         if (selected) selectedBlocks.add(id);
         else selectedBlocks.remove(id);
     }
-    public boolean isBlockSelected(Identifier id) {
+    public boolean isBlockSelected(net.minecraft.resources.Identifier id) {
         return selectedBlocks.contains(id);
     }
-    public Set<Identifier> getSelectedBlocks() {
+    public Set<net.minecraft.resources.Identifier> getSelectedBlocks() {
         return selectedBlocks;
     }
     @Override

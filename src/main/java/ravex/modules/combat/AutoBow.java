@@ -7,12 +7,12 @@ import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BowItem;
-import net.minecraft.world.item.Items;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
+import ravex.utility.player.InventoryUtility;
 public class AutoBow extends Module {
     public static final AutoBow INSTANCE = new AutoBow();
     public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 100.0, 1.0);
@@ -27,7 +27,7 @@ public class AutoBow extends Module {
         if (mc.player == null || mc.player.connection == null) return;
         long now = System.currentTimeMillis();
         if (now - lastAction < 100) return;
-        boolean holdingBow = mc.player.getMainHandItem().is(Items.BOW);
+        boolean holdingBow = InventoryUtility.isBow(mc.player.getMainHandItem());
         if (!holdingBow && !autoSwitch.getValue()) return;
         int bowSlot = -1;
         if (!holdingBow) {
@@ -44,7 +44,7 @@ public class AutoBow extends Module {
         if (bowSlot != -1 && silent.getValue()) {
             mc.player.connection.send(new ServerboundSetCarriedItemPacket(bowSlot));
         } else if (bowSlot != -1) {
-            mc.player.getInventory().setSelectedSlot(bowSlot);
+            InventoryUtility.selectSlot(mc.player, bowSlot);
         }
         mc.player.connection.send(new ServerboundPlayerActionPacket(
             ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM,
@@ -54,7 +54,7 @@ public class AutoBow extends Module {
     }
     private int findBowSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getItem(i).is(Items.BOW)) return i;
+            if (InventoryUtility.isBow(InventoryUtility.getItem(mc.player, i))) return i;
         }
         return -1;
     }

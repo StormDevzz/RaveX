@@ -3,14 +3,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.MobUtility;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.InventoryUtility;
 public class WindAura extends Module {
     public static final WindAura INSTANCE = new WindAura();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.List.of("Normal", "Silent"));
@@ -28,7 +28,7 @@ public class WindAura extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return -1;
         for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getItem(i).is(Items.WIND_CHARGE)) return i;
+            if (InventoryUtility.isItem(InventoryUtility.getItem(mc.player, i), "wind_charge")) return i;
         }
         return -1;
     }
@@ -43,10 +43,10 @@ public class WindAura extends Module {
         Entity target = null;
         double nearest = r + 1;
         for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity == mc.player) continue;
-            if (!(entity instanceof LivingEntity)) continue;
-            if (!players.getValue() && entity instanceof Player) continue;
-            double dist = mc.player.distanceTo(entity);
+            var living = MobUtility.asLivingEntity(entity);
+            if (living == null || MobUtility.isSelf(living)) continue;
+            if (!players.getValue() && MobUtility.isPlayer(living)) continue;
+            double dist = MobUtility.distanceToPlayer(entity);
             if (dist > r) continue;
             if (dist < nearest) {
                 nearest = dist;
@@ -57,9 +57,9 @@ public class WindAura extends Module {
         if (autoSwitch.getValue()) {
             int slot = findWindChargeSlot();
             if (slot < 0) return;
-            mc.player.getInventory().setSelectedSlot(slot);
+            InventoryUtility.selectSlot(mc.player, slot);
         } else {
-            if (!mc.player.getMainHandItem().is(Items.WIND_CHARGE)) return;
+            if (!InventoryUtility.isItem(mc.player.getMainHandItem(), "wind_charge")) return;
         }
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target.getBoundingBox().getCenter());
         float yaw = angles[0], pitch = angles[1];

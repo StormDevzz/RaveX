@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
@@ -15,6 +14,7 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
+import ravex.utility.player.InventoryUtility;
 import java.util.ArrayList;
 import java.util.List;
 public class Surround extends Module {
@@ -197,8 +197,8 @@ public class Surround extends Module {
         long msDelay = delay.getValue().longValue();
         if (now - lastPlaceTime < msDelay) return;
         lastPlaceTime = now;
-        int prevSlot = mc.player.getInventory().getSelectedSlot();
-        mc.player.getInventory().setSelectedSlot(blockSlot);
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
+        InventoryUtility.selectSlot(mc.player, blockSlot);
         for (BlockPos target : toPlace) {
             BlockPos neighbor = findNeighbor(target);
             if (neighbor == null) continue;
@@ -218,7 +218,7 @@ public class Surround extends Module {
             placed = true;
         }
         if (prevSlot != blockSlot) {
-            mc.player.getInventory().setSelectedSlot(prevSlot);
+            InventoryUtility.selectSlot(mc.player, prevSlot);
         }
     }
     private boolean isReplaceable(BlockPos pos) {
@@ -260,7 +260,7 @@ public class Surround extends Module {
     }
     private int findBlockSlot(net.minecraft.client.player.LocalPlayer player) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem) return i;
         }
         return -1;

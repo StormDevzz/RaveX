@@ -3,8 +3,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
@@ -18,6 +16,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
 import java.util.List;
 public class BedBomb extends Module {
     public static final BedBomb INSTANCE = new BedBomb();
@@ -102,14 +101,14 @@ public class BedBomb extends Module {
         }
         int slot = findBedSlot(mc);
         if (slot == -1) { state = State.IDLE; return; }
-        int prev = mc.player.getInventory().getSelectedSlot();
-        mc.player.getInventory().setSelectedSlot(slot);
+        int prev = InventoryUtility.getSelectedSlot(mc.player);
+        InventoryUtility.selectSlot(mc.player, slot);
         BlockHitResult hit = new BlockHitResult(
             Vec3.atCenterOf(placePos), Direction.UP, placePos, false
         );
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
         mc.player.swing(InteractionHand.MAIN_HAND);
-        mc.player.getInventory().setSelectedSlot(prev);
+        InventoryUtility.selectSlot(mc.player, prev);
         state = State.WAITING;
     }
     private void doWait(Minecraft mc, long now) {
@@ -171,15 +170,15 @@ public class BedBomb extends Module {
     }
     private int findBedSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.getItem() instanceof net.minecraft.world.item.BedItem) return i;
         }
         for (int i = 9; i < 36; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.getItem() instanceof net.minecraft.world.item.BedItem) {
                 int free = findEmptySlot(mc);
                 if (free != -1) {
-                    mc.player.getInventory().setSelectedSlot(free);
+                    InventoryUtility.selectSlot(mc.player, free);
                     mc.gameMode.handleInventoryMouseClick(
                         mc.player.containerMenu.containerId, i, free,
                         net.minecraft.world.inventory.ClickType.SWAP, mc.player
@@ -192,7 +191,7 @@ public class BedBomb extends Module {
     }
     private int findEmptySlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getItem(i).isEmpty()) return i;
+            if (InventoryUtility.getItem(mc.player, i).isEmpty()) return i;
         }
         return -1;
     }

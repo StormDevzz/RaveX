@@ -5,11 +5,9 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.inventory.ClickType;
 import java.util.List;
+import ravex.utility.player.InventoryUtility;
 public class AutoTotem extends Module {
     public static final AutoTotem INSTANCE = new AutoTotem();
     public final ModeParameter offhandItem = new ModeParameter("Offhand", "Totem", List.of("Totem", "Gapple", "Crystal", "Shield", "None"));
@@ -28,26 +26,26 @@ public class AutoTotem extends Module {
     private void handleOffhand(Minecraft mc, LocalPlayer p, boolean forceTotem) {
         String choice = offhandItem.getValue();
         if (choice.equals("None") && !forceTotem) return;
-        Item targetItem = Items.TOTEM_OF_UNDYING;
+        net.minecraft.world.item.Item targetItem = net.minecraft.world.item.Items.TOTEM_OF_UNDYING;
         if (!forceTotem) {
-            if (choice.equals("Totem")) targetItem = Items.TOTEM_OF_UNDYING;
-            else if (choice.equals("Gapple")) targetItem = Items.GOLDEN_APPLE;
-            else if (choice.equals("Crystal")) targetItem = Items.END_CRYSTAL;
-            else if (choice.equals("Shield")) targetItem = Items.SHIELD;
+            if (choice.equals("Totem")) targetItem = net.minecraft.world.item.Items.TOTEM_OF_UNDYING;
+            else if (choice.equals("Gapple")) targetItem = net.minecraft.world.item.Items.GOLDEN_APPLE;
+            else if (choice.equals("Crystal")) targetItem = net.minecraft.world.item.Items.END_CRYSTAL;
+            else if (choice.equals("Shield")) targetItem = net.minecraft.world.item.Items.SHIELD;
         }
         if (p.getOffhandItem().is(targetItem)) return;
-        if (targetItem == Items.TOTEM_OF_UNDYING && !p.getOffhandItem().isEmpty() && !p.getOffhandItem().is(Items.TOTEM_OF_UNDYING)) return;
+        if (targetItem == net.minecraft.world.item.Items.TOTEM_OF_UNDYING && !p.getOffhandItem().isEmpty() && !InventoryUtility.isTotem(p.getOffhandItem())) return;
         int foundSlot = -1;
         for (int i = 0; i < 36; i++) {
-            ItemStack stack = p.getInventory().getItem(i);
-            if (stack.is(targetItem) || (targetItem == Items.GOLDEN_APPLE && stack.is(Items.ENCHANTED_GOLDEN_APPLE))) {
+            var stack = InventoryUtility.getItem(p, i);
+            if (stack.is(targetItem) || (targetItem == net.minecraft.world.item.Items.GOLDEN_APPLE && InventoryUtility.isEnchantedGoldenApple(stack))) {
                 foundSlot = i;
                 break;
             }
         }
-        if (foundSlot == -1 && !targetItem.equals(Items.TOTEM_OF_UNDYING)) {
+        if (foundSlot == -1 && !targetItem.equals(net.minecraft.world.item.Items.TOTEM_OF_UNDYING)) {
             for (int i = 0; i < 36; i++) {
-                if (p.getInventory().getItem(i).is(Items.TOTEM_OF_UNDYING)) {
+                if (InventoryUtility.isTotem(InventoryUtility.getItem(p, i))) {
                     foundSlot = i;
                     break;
                 }
@@ -60,35 +58,35 @@ public class AutoTotem extends Module {
     private void handleMainHand(Minecraft mc, LocalPlayer p, boolean forceTotem) {
         String mainChoice = mainHandItem.getValue();
         if (mainChoice.equals("None")) return;
-        Item targetItem = Items.AIR;
+        net.minecraft.world.item.Item targetItem = null;
         if (forceTotem) {
-            targetItem = Items.TOTEM_OF_UNDYING;
+            targetItem = net.minecraft.world.item.Items.TOTEM_OF_UNDYING;
         } else {
             if (mainChoice.equals("Sword")) {
                 int swordSlot = findSwordSlot();
                 if (swordSlot != -1) {
-                    p.getInventory().setSelectedSlot(swordSlot);
+                    InventoryUtility.selectSlot(p, swordSlot);
                     return;
                 }
-            } else if (mainChoice.equals("Gapple")) targetItem = Items.GOLDEN_APPLE;
-            else if (mainChoice.equals("Crystal")) targetItem = Items.END_CRYSTAL;
-            else if (mainChoice.equals("Shield")) targetItem = Items.SHIELD;
-            else if (mainChoice.equals("Totem")) targetItem = Items.TOTEM_OF_UNDYING;
+            } else if (mainChoice.equals("Gapple")) targetItem = net.minecraft.world.item.Items.GOLDEN_APPLE;
+            else if (mainChoice.equals("Crystal")) targetItem = net.minecraft.world.item.Items.END_CRYSTAL;
+            else if (mainChoice.equals("Shield")) targetItem = net.minecraft.world.item.Items.SHIELD;
+            else if (mainChoice.equals("Totem")) targetItem = net.minecraft.world.item.Items.TOTEM_OF_UNDYING;
         }
-        if (targetItem == Items.AIR) return;
-        if (p.getMainHandItem().is(targetItem) || (targetItem == Items.GOLDEN_APPLE && p.getMainHandItem().is(Items.ENCHANTED_GOLDEN_APPLE))) {
+        if (targetItem == null) return;
+        if (p.getMainHandItem().is(targetItem) || (targetItem == net.minecraft.world.item.Items.GOLDEN_APPLE && InventoryUtility.isEnchantedGoldenApple(p.getMainHandItem()))) {
             return;
         }
         int slot = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = p.getInventory().getItem(i);
-            if (stack.is(targetItem) || (targetItem == Items.GOLDEN_APPLE && stack.is(Items.ENCHANTED_GOLDEN_APPLE))) {
+            var stack = InventoryUtility.getItem(p, i);
+            if (stack.is(targetItem) || (targetItem == net.minecraft.world.item.Items.GOLDEN_APPLE && InventoryUtility.isEnchantedGoldenApple(stack))) {
                 slot = i;
                 break;
             }
         }
         if (slot != -1) {
-            p.getInventory().setSelectedSlot(slot);
+            InventoryUtility.selectSlot(p, slot);
         }
     }
     private void swapToOffhand(Minecraft mc, LocalPlayer p, int invSlot) {
@@ -101,7 +99,7 @@ public class AutoTotem extends Module {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
         for (int i = 0; i < 9; i++) {
-            String name = p.getInventory().getItem(i).getItem().toString().toLowerCase();
+            String name = InventoryUtility.getItem(p, i).getItem().toString().toLowerCase();
             if (name.contains("sword")) return i;
         }
         return -1;

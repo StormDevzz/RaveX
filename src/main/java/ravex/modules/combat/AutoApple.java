@@ -1,11 +1,6 @@
 package ravex.modules.combat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import ravex.modules.Category;
@@ -13,7 +8,8 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.misc.food.FoodUtility;
+import ravex.utility.player.InventoryUtility;
 public class AutoApple extends Module {
     public static final AutoApple INSTANCE = new AutoApple();
     public final ModeParameter appleType = new ModeParameter("AppleType", "Both",
@@ -25,10 +21,7 @@ public class AutoApple extends Module {
     private boolean isEating = false;
     private int eatingSlot = -1;
     private int eatTicks = 0;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_autoapple");
-    static {
-        NATIVE.load();
-    }
+
 
     @Override
     protected void onDisable() {
@@ -43,8 +36,8 @@ public class AutoApple extends Module {
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         if (isEating) {
             eatTicks++;
-            ItemStack currentStack = mc.player.getInventory().getItem(eatingSlot);
-            if (!isApple(currentStack)) {
+            var currentStack = InventoryUtility.getItem(mc.player, eatingSlot);
+            if (!InventoryUtility.isItem(currentStack, "golden_apple") && !InventoryUtility.isItem(currentStack, "enchanted_golden_apple")) {
                 stopEating(mc);
                 return;
             }
@@ -71,20 +64,11 @@ public class AutoApple extends Module {
             }
             return;
         }
-        boolean shouldEat = false;
-        if (NATIVE.isLoaded()) {
-            shouldEat = nativeShouldEat(
-                mc.player.getHealth(),
-                mc.player.getAbsorptionAmount(),
-                healthThreshold.getValue()
-            );
-        } else {
-            shouldEat = javaFallbackShouldEat(
-                mc.player.getHealth(),
-                mc.player.getAbsorptionAmount(),
-                healthThreshold.getValue()
-            );
-        }
+        boolean shouldEat = javaFallbackShouldEat(
+            mc.player.getHealth(),
+            mc.player.getAbsorptionAmount(),
+            healthThreshold.getValue()
+        );
         if (shouldEat) {
             int appleSlot = findAppleSlot(mc);
             if (appleSlot != -1) {
@@ -93,12 +77,12 @@ public class AutoApple extends Module {
         }
     }
     private void startEating(Minecraft mc, int slot) {
-        originalSlot = mc.player.getInventory().getSelectedSlot();
+        originalSlot = InventoryUtility.getSelectedSlot(mc.player);
         eatingSlot = slot;
         isEating = true;
         eatTicks = 0;
         if (swapMode.getValue().equals("Normal")) {
-            mc.player.getInventory().setSelectedSlot(slot);
+            InventoryUtility.selectSlot(mc.player, slot);
             mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
             mc.options.keyUse.setDown(true);
         } else {
@@ -113,7 +97,7 @@ public class AutoApple extends Module {
         if (swapMode.getValue().equals("Normal")) {
             mc.options.keyUse.setDown(false);
             if (originalSlot != -1 && originalSlot >= 0 && originalSlot < 9) {
-                mc.player.getInventory().setSelectedSlot(originalSlot);
+                InventoryUtility.selectSlot(mc.player, originalSlot);
             }
         } else {
             if (mc.player.connection != null && originalSlot != -1 && originalSlot >= 0 && originalSlot < 9) {
@@ -125,43 +109,15 @@ public class AutoApple extends Module {
         originalSlot = -1;
         eatTicks = 0;
     }
-    private boolean isApple(ItemStack stack) {
-        if (stack.isEmpty()) return false;
-        String mode = appleType.getValue();
-        if (mode.equals("Golden")) {
-            return stack.is(Items.GOLDEN_APPLE);
-        } else if (mode.equals("Enchanted")) {
-            return stack.is(Items.ENCHANTED_GOLDEN_APPLE);
-        } else {
-            return stack.is(Items.GOLDEN_APPLE) || stack.is(Items.ENCHANTED_GOLDEN_APPLE);
-        }
-    }
     private int findAppleSlot(Minecraft mc) {
         boolean highDanger = (mc.player.getHealth() + mc.player.getAbsorptionAmount()) <= 6.0;
-        if (highDanger && (appleType.getValue().equals("Both") || appleType.getValue().equals("Enchanted"))) {
-            for (int i = 0; i < 9; i++) {
-                ItemStack stack = mc.player.getInventory().getItem(i);
-                if (stack.is(Items.ENCHANTED_GOLDEN_APPLE)) {
-                    return i;
-                }
-            }
+        if (highDanger && !appleType.getValue().equals("Golden")) {
+            FoodUtility.Data enchanted = FoodUtility.findEnchantedApple();
+            if (enchanted != null) return enchanted.getSlot();
         }
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (isApple(stack)) {
-                return i;
-            }
-        }
-        return -1;
+        FoodUtility.Data best = FoodUtility.findApple(appleType.getValue());
+        return best != null ? best.getSlot() : -1;
     }
-    public static boolean isNativeAvailable() {
-        return NATIVE.isLoaded();
-    }
-    public static native boolean nativeShouldEat(
-        double health,
-        double absorption,
-        double healthThreshold
-    );
     public static boolean javaFallbackShouldEat(
         double health,
         double absorption,

@@ -5,6 +5,7 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
+import ravex.utility.player.InventoryUtility;
 public class HighJump extends Module {
     public static final HighJump INSTANCE = new HighJump();
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "GrimShulker"));
@@ -20,8 +21,8 @@ public class HighJump extends Module {
             } else if ("GrimShulker".equals(mode.getValue())) {
                 int shulkerSlot = findShulkerBox();
                 if (shulkerSlot != -1) {
-                    int oldSlot = ravex.manager.HotbarManager.INSTANCE.getSelectedSlot();
-                    ravex.manager.HotbarManager.INSTANCE.swapToSlot(shulkerSlot);
+                    int oldSlot = InventoryUtility.getSelectedSlot(mc.player);
+                    InventoryUtility.selectSlot(mc.player, shulkerSlot);
                     net.minecraft.core.BlockPos pos = mc.player.blockPosition().below();
                     net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
                         new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5),
@@ -39,7 +40,7 @@ public class HighJump extends Module {
                         net.minecraft.world.InteractionHand.MAIN_HAND, openHit, 0
                     ));
                     mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, height.getValue(), mc.player.getDeltaMovement().z);
-                    ravex.manager.HotbarManager.INSTANCE.swapToSlot(oldSlot);
+                    InventoryUtility.selectSlot(mc.player, oldSlot);
                 }
             }
         }
@@ -47,7 +48,7 @@ public class HighJump extends Module {
     private int findShulkerBox() {
         Minecraft mc = Minecraft.getInstance();
         for (int i = 0; i < 9; i++) {
-            net.minecraft.world.item.ItemStack stack = mc.player.getInventory().getItem(i);
+            net.minecraft.world.item.ItemStack stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem) {
                 if (blockItem.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock) {
                     return i;

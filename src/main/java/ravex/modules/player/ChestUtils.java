@@ -1,14 +1,9 @@
 package ravex.modules.player;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.inventory.Slot;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.ContainerUtility;
-import ravex.mixin.player.AccessorContainerScreen;
 import java.util.ArrayList;
 import java.util.List;
 public class ChestUtils extends Module {
@@ -17,43 +12,31 @@ public class ChestUtils extends Module {
     public final BooleanParameter dump    = new BooleanParameter("Dump",  true);
     public final BooleanParameter fill    = new BooleanParameter("Fill",  true);
     public final BooleanParameter dropAll = new BooleanParameter("DropAll", true);
-    private static final int BTN_W = 60, BTN_H = 20, BTN_GAP = 3;
 
-    public void onRenderButtons(AbstractContainerScreen<?> screen, GuiGraphics graphics, int mouseX, int mouseY) {
+    public void onRenderButtons(AbstractContainerScreen<?> screen, net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY) {
         if (!getEnabled() || !ContainerUtility.isChestLike(screen.getMenu())) return;
-        var acc = (AccessorContainerScreen) screen;
-        int startX = acc.getLeftPos() + acc.getImageWidth() + 5, startY = acc.getTopPos();
+        int startX = ContainerUtility.getButtonStartX(screen), startY = ContainerUtility.getButtonStartY(screen);
         List<ButtonDef> btns = getButtons();
-        for (int i = 0; i < btns.size(); i++)
-            drawVanillaButton(graphics, btns.get(i).label(), startX, startY + i * (BTN_H + BTN_GAP), mouseX, mouseY);
+        for (int i = 0; i < btns.size(); i++) {
+            int bx = startX, by = startY + i * (ContainerUtility.CHEST_BTN_H + ContainerUtility.CHEST_BTN_GAP);
+            ContainerUtility.drawChestButton(graphics, btns.get(i).label(), bx, by, ContainerUtility.isMouseOverButton(mouseX, mouseY, bx, by));
+        }
     }
     public boolean onMouseClicked(AbstractContainerScreen<?> screen, int mouseX, int mouseY) {
         if (!getEnabled() || !ContainerUtility.isChestLike(screen.getMenu())) return false;
-        var acc = (AccessorContainerScreen) screen;
-        int startX = acc.getLeftPos() + acc.getImageWidth() + 5, startY = acc.getTopPos();
+        int startX = ContainerUtility.getButtonStartX(screen), startY = ContainerUtility.getButtonStartY(screen);
         List<ButtonDef> btns = getButtons();
         for (int i = 0; i < btns.size(); i++) {
-            int by = startY + i * (BTN_H + BTN_GAP);
-            if (mouseX >= startX && mouseX <= startX + BTN_W && mouseY >= by && mouseY <= by + BTN_H) {
+            int by = startY + i * (ContainerUtility.CHEST_BTN_H + ContainerUtility.CHEST_BTN_GAP);
+            if (ContainerUtility.isMouseOverButton(mouseX, mouseY, startX, by)) {
                 handleAction(screen, btns.get(i).action()); return true;
             }
         }
         return false;
     }
-    private void drawVanillaButton(GuiGraphics graphics, String label, int x, int y, int mouseX, int mouseY) {
-        boolean h = mouseX >= x && mouseX <= x + BTN_W && mouseY >= y && mouseY <= y + BTN_H;
-        int topCol = h ? 0xFFBEBEBE : 0xFFA0A0A0, botCol = h ? 0xFF6E6E6E : 0xFF505050, bgCol = h ? 0xFF8C8C8C : 0xFF6C6C6C;
-        graphics.fill(x, y, x + BTN_W, y + BTN_H, bgCol);
-        graphics.fill(x, y, x + BTN_W, y + 1, topCol);
-        graphics.fill(x, y, x + 1, y + BTN_H, topCol);
-        graphics.fill(x, y + BTN_H - 1, x + BTN_W, y + BTN_H, botCol);
-        graphics.fill(x + BTN_W - 1, y, x + BTN_W, y + BTN_H, botCol);
-        int tw = Minecraft.getInstance().font.width(label);
-        graphics.drawString(Minecraft.getInstance().font, label, x + (BTN_W - tw) / 2, y + (BTN_H - 8) / 2, 0xFFFFFFFF, true);
-    }
     private void handleAction(AbstractContainerScreen<?> screen, String action) {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
+        var player = mc.player;
         if (player == null) return;
         var menu = screen.getMenu();
         switch (action) {

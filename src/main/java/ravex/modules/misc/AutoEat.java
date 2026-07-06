@@ -4,7 +4,7 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.misc.food.FoodEater;
+import ravex.utility.misc.food.FoodUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import java.util.List;
@@ -25,17 +25,17 @@ public class AutoEat extends Module {
             mc.options.keyUse.setDown(hunger < threshold.getValue());
             return;
         }
-        if (FoodEater.INSTANCE.isEating()) {
-            FoodEater.EatResult result = FoodEater.INSTANCE.tryEat();
-            if (result == FoodEater.EatResult.FINISHED && notify.getValue()) {
+        if (FoodUtility.INSTANCE.isEating()) {
+            FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
+            if (result == FoodUtility.Result.FINISHED && notify.getValue()) {
                 mc.player.displayClientMessage(
                     Component.literal("§7[§cAutoEat§7] §aDone eating"), false);
             }
             return;
         }
         if (hunger >= threshold.getValue()) return;
-        FoodEater.EatResult result = FoodEater.INSTANCE.tryEat();
-        if (result == FoodEater.EatResult.STARTED && notify.getValue()) {
+        FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
+        if (result == FoodUtility.Result.STARTED && notify.getValue()) {
             mc.player.displayClientMessage(
                 Component.literal("§7[§cAutoEat§7] §aEating (" + (int)hunger + " hunger)"),
                 false);
@@ -47,6 +47,6 @@ public class AutoEat extends Module {
             Minecraft mc = Minecraft.getInstance();
             if (mc.options != null) mc.options.keyUse.setDown(false);
         }
-        FoodEater.INSTANCE.reset();
+        FoodUtility.INSTANCE.reset();
     }
 }

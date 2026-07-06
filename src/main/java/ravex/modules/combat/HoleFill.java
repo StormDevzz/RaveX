@@ -1,14 +1,7 @@
 package ravex.modules.combat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.modules.Category;
 import ravex.modules.Module;
@@ -16,6 +9,8 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.parameter.ColorParameter;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -28,14 +23,14 @@ public class HoleFill extends Module {
     public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00FF00);
-    public static List<BlockPos> holePositions = new ArrayList<>();
+    public static List<Long> holePositions = new ArrayList<>();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_holefill");
     static {
         NATIVE.load();
     }
     private enum State { IDLE, SEARCH, PLACING, DONE }
     private State state = State.IDLE;
-    private List<BlockPos> holes = new ArrayList<>();
+    private List<Long> holes = new ArrayList<>();
     private int holeIndex = 0;
     private long lastActionTime = 0;
     private int totalPlaced = 0;
@@ -82,8 +77,14 @@ public class HoleFill extends Module {
             state = State.DONE;
             return;
         }
-        BlockPos playerPos = mc.player.blockPosition();
-        holes.sort(Comparator.comparingDouble(p -> p.distSqr(playerPos)));
+        var playerPos = mc.player.blockPosition();
+        int px = playerPos.getX(), py = playerPos.getY(), pz = playerPos.getZ();
+        holes.sort(Comparator.comparingDouble(p -> {
+            double dx = BlockUtility.unpackX(p) - px;
+            double dy = BlockUtility.unpackY(p) - py;
+            double dz = BlockUtility.unpackZ(p) - pz;
+            return dx * dx + dy * dy + dz * dz;
+        }));
         int max = maxBlocks.getValue().intValue();
         if (holes.size() > max) holes = holes.subList(0, max);
         holePositions.clear();
@@ -98,51 +99,53 @@ public class HoleFill extends Module {
         );
         if (result == null) return;
         for (int i = 0; i < result.length; i += 3) {
-            BlockPos pos = new BlockPos(result[i], result[i+1], result[i+2]);
-            if (isValidHole(mc, pos)) {
-                holes.add(pos);
+            long packed = BlockUtility.packPos(result[i], result[i + 1], result[i + 2]);
+            if (isValidHole(mc, result[i], result[i + 1], result[i + 2])) {
+                holes.add(packed);
             }
         }
     }
     private void searchJava(Minecraft mc, double range) {
-        BlockPos playerPos = mc.player.blockPosition();
+        var playerPos = mc.player.blockPosition();
+        int px = playerPos.getX(), py = playerPos.getY(), pz = playerPos.getZ();
         int r = (int) Math.ceil(range);
         for (int dx = -r; dx <= r; dx++) {
             for (int dz = -r; dz <= r; dz++) {
                 if (dx * dx + dz * dz > range * range) continue;
                 for (int dy = -2; dy <= 1; dy++) {
-                    BlockPos pos = playerPos.offset(dx, dy, dz);
-                    if (!isValidHole(mc, pos)) continue;
+                    int x = px + dx, y = py + dy, z = pz + dz;
+                    if (!isValidHole(mc, x, y, z)) continue;
+                    long packed = BlockUtility.packPos(x, y, z);
                     boolean dup = false;
-                    for (BlockPos existing : holes) {
-                        if (existing.distSqr(pos) < 2.0) {
+                    for (long existing : holes) {
+                        double ex = BlockUtility.unpackX(existing) - x;
+                        double ey = BlockUtility.unpackY(existing) - y;
+                        double ez = BlockUtility.unpackZ(existing) - z;
+                        if (ex * ex + ey * ey + ez * ez < 2.0) {
                             dup = true;
                             break;
                         }
                     }
-                    if (!dup) holes.add(pos);
+                    if (!dup) holes.add(packed);
                 }
             }
         }
     }
-    private boolean isValidHole(Minecraft mc, BlockPos pos) {
-        BlockPos below = pos.below();
-        if (below.getY() < mc.level.getMinY()) return false;
-        if (!mc.level.getBlockState(pos).isAir()) return false;
-        BlockState floorState = mc.level.getBlockState(below);
-        if (!floorState.isCollisionShapeFullBlock(mc.level, below)) return false;
-        BlockPos above = pos.above();
-        if (above.getY() >= mc.level.getMaxY()) return false;
-        if (!mc.level.getBlockState(above).isAir()) return false;
+    private boolean isValidHole(Minecraft mc, int x, int y, int z) {
+        int by = y - 1;
+        if (by < mc.level.getMinY()) return false;
+        if (!mc.level.getBlockState(BlockUtility.pos(x, y, z)).isAir()) return false;
+        if (!BlockUtility.isSolid(mc.level, x, by, z)) return false;
+        int ay = y + 1;
+        if (ay >= mc.level.getMaxY()) return false;
+        if (!BlockUtility.isAir(mc.level, x, ay, z)) return false;
         int solidSides = 0;
         Direction[] horizontals = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
         for (Direction dir : horizontals) {
-            BlockPos neighbor = pos.relative(dir);
-            if (!mc.level.getWorldBorder().isWithinBounds(neighbor)) return false;
-            BlockState neighborState = mc.level.getBlockState(neighbor);
-            if (neighborState.isCollisionShapeFullBlock(mc.level, neighbor)) {
+            int nx = x + dir.getStepX(), ny = y + dir.getStepY(), nz = z + dir.getStepZ();
+            if (!mc.level.getWorldBorder().isWithinBounds(BlockUtility.pos(nx, ny, nz))) return false;
+            if (BlockUtility.isSolid(mc.level, nx, ny, nz)) {
                 solidSides++;
-            } else {
             }
         }
         if (fillAll.getValue()) {
@@ -158,9 +161,8 @@ public class HoleFill extends Module {
             state = State.DONE;
             return;
         }
-        BlockPos target = holes.get(holeIndex);
-        BlockState existing = mc.level.getBlockState(target);
-        if (!existing.isAir()) {
+        long targetPacked = holes.get(holeIndex);
+        if (!BlockUtility.isAir(mc.level, BlockUtility.unpackX(targetPacked), BlockUtility.unpackY(targetPacked), BlockUtility.unpackZ(targetPacked))) {
             holeIndex++;
             return;
         }
@@ -170,57 +172,21 @@ public class HoleFill extends Module {
             setEnabled(false);
             return;
         }
-        int prev = mc.player.getInventory().getSelectedSlot();
-        mc.player.getInventory().setSelectedSlot(slot);
-        BlockHitResult hit = findPlaceTarget(mc, target);
-        if (hit == null) {
-            mc.player.getInventory().setSelectedSlot(prev);
+        if (!BlockUtility.placeBlock(mc, BlockUtility.fromPacked(targetPacked), slot)) {
             holeIndex++;
             return;
         }
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
-        mc.player.swing(InteractionHand.MAIN_HAND);
-        mc.player.getInventory().setSelectedSlot(prev);
         totalPlaced++;
         holeIndex++;
     }
-    private BlockHitResult findPlaceTarget(Minecraft mc, BlockPos target) {
-        Vec3 eye = mc.player.getEyePosition();
-        BlockPos bestNeighbor = null;
-        Direction bestFace = Direction.UP;
-        double bestDist = Double.MAX_VALUE;
-        for (Direction dir : Direction.values()) {
-            BlockPos neighbor = target.relative(dir);
-            BlockState st = mc.level.getBlockState(neighbor);
-            if (st.isCollisionShapeFullBlock(mc.level, neighbor)) {
-                double d = neighbor.distToCenterSqr(eye);
-                if (d < bestDist) {
-                    bestDist = d;
-                    bestNeighbor = neighbor;
-                    bestFace = dir.getOpposite();
-                }
-            }
-        }
-        if (bestNeighbor != null) {
-            Vec3 hitVec = Vec3.atCenterOf(bestNeighbor)
-                .add(new Vec3(bestFace.getStepX(), bestFace.getStepY(), bestFace.getStepZ()).scale(0.5));
-            return new BlockHitResult(hitVec, bestFace, bestNeighbor, false);
-        }
-        if (target.distToCenterSqr(eye) < 36.0) {
-            return new BlockHitResult(Vec3.atCenterOf(target), Direction.UP, target, false);
-        }
-        return null;
-    }
     private int findBlockSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (stack.isEmpty()) continue;
-            if (stack.is(Items.OBSIDIAN) || stack.is(Items.CRYING_OBSIDIAN)) return i;
+            var stack = InventoryUtility.getItem(mc.player, i);
+            if (InventoryUtility.isItem(stack, "obsidian") || InventoryUtility.isItem(stack, "crying_obsidian")) return i;
         }
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (stack.isEmpty()) continue;
-            if (stack.getItem() instanceof net.minecraft.world.item.BlockItem) return i;
+            var stack = InventoryUtility.getItem(mc.player, i);
+            if (InventoryUtility.isBlockItem(stack)) return i;
         }
         return -1;
     }

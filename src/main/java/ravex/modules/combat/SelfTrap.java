@@ -6,7 +6,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,6 +24,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 public class SelfTrap extends Module {
     public static final SelfTrap INSTANCE = new SelfTrap(); //Xiaomii
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
@@ -49,9 +51,7 @@ public class SelfTrap extends Module {
     private final Set<Identifier> selectedBlocks = new HashSet<>();
     private static final List<BlockPos> selfTrapBlocks = new ArrayList<>();
     private long lastPlaceTime = 0;
-    private static float silentYaw = 0;
-    private static float silentPitch = 0;
-    private static boolean hasSilentRotations = false;
+    private static final SilentRotation silentRotation = new SilentRotation();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_selftrap");
     static {
         NATIVE.load();
@@ -64,13 +64,13 @@ public class SelfTrap extends Module {
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
     }
     public static boolean hasSilentRotations() {
-        return hasSilentRotations;
+        return silentRotation.hasRotation;
     }
     public static float getSilentYaw() {
-        return silentYaw;
+        return silentRotation.yaw;
     }
     public static float getSilentPitch() {
-        return silentPitch;
+        return silentRotation.pitch;
     }
     public static List<BlockPos> getSelfTrapBlocks() {
         synchronized (selfTrapBlocks) {
@@ -91,7 +91,7 @@ public class SelfTrap extends Module {
     @Override
     protected void onEnable() {
         lastPlaceTime = 0;
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         synchronized (selfTrapBlocks) {
             selfTrapBlocks.clear();
         }
@@ -101,7 +101,7 @@ public class SelfTrap extends Module {
     }
     @Override
     protected void onDisable() {
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         synchronized (selfTrapBlocks) {
             selfTrapBlocks.clear();
         }
@@ -110,7 +110,7 @@ public class SelfTrap extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-        hasSilentRotations = false;
+        silentRotation.hasRotation = false;
         double[] solidBlockData = collectSolidBlocks(mc);
         List<Double> activeSolidBlocks = new ArrayList<>();
         for (double d : solidBlockData) {
@@ -169,7 +169,7 @@ public class SelfTrap extends Module {
             limit = 1;
         }
         int actionsThisTick = 0;
-        int originalSlot = mc.player.getInventory().getSelectedSlot();
+        int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
         boolean placedAny = false;
         while (actionsThisTick < limit) {
             double[] currentSolidData = new double[activeSolidBlocks.size()];
@@ -201,13 +201,11 @@ public class SelfTrap extends Module {
             }
             String swap = swapMode.getValue();
             if (swap.equals("Normal")) {
-                mc.player.getInventory().setSelectedSlot(blockSlot);
+                InventoryUtility.selectSlot(mc.player, blockSlot);
             } else if (swap.equals("Silent")) {
-                if (mc.player.connection != null) {
-                    mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(blockSlot));
-                }
+                InventoryUtility.silentSelectSlot(mc.player, blockSlot);
             } else if (swap.equals("None")) {
-                if (mc.player.getInventory().getSelectedSlot() != blockSlot) {
+                if (InventoryUtility.getSelectedSlot(mc.player) != blockSlot) {
                     break;
                 }
             }
@@ -221,9 +219,7 @@ public class SelfTrap extends Module {
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
         if (placedAny && swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
-            if (mc.player.connection != null) {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
-            }
+            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
         if (placedAny) {
             lastPlaceTime = now;
@@ -235,37 +231,17 @@ public class SelfTrap extends Module {
     }
     private void rotateTo(Minecraft mc, Vec3 target) {
         if (rotate.getValue().equals("None")) return;
-        double dx = target.x - mc.player.getX();
-        double dy = target.y - mc.player.getEyeY();
-        double dz = target.z - mc.player.getZ();
-        double dXZ = Math.sqrt(dx * dx + dz * dz);
-        float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
-        float pitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
+        float[] angles = RotationUtility.anglesTo(mc.player, target);
         if (rotate.getValue().equals("Normal")) {
-            mc.player.setYRot(yaw);
-            mc.player.setXRot(pitch);
+            mc.player.setYRot(angles[0]);
+            mc.player.setXRot(angles[1]);
         } else if (rotate.getValue().equals("Silent")) {
-            silentYaw = yaw;
-            silentPitch = pitch;
-            hasSilentRotations = true;
+            silentRotation.set(angles[0], angles[1]);
         }
     }
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
-        double dx = target.x - mc.player.getX();
-        double dy = target.y - mc.player.getEyeY();
-        double dz = target.z - mc.player.getZ();
-        double dXZ = Math.sqrt(dx * dx + dz * dz);
-        float targetYaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
-        float targetPitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
-        float diffYaw = Math.abs(normalizeAngle(mc.player.getYRot() - targetYaw));
-        float diffPitch = Math.abs(normalizeAngle(mc.player.getXRot() - targetPitch));
-        return diffYaw < 12.0F && diffPitch < 12.0F;
-    }
-    private float normalizeAngle(float angle) {
-        float normal = angle % 360.0F;
-        if (normal >= 180.0F) normal -= 360.0F;
-        if (normal < -180.0F) normal += 360.0F;
-        return normal;
+        if (rotate.getValue().equals("None")) return true;
+        return silentRotation.isRotationAligned(mc, target, 12.0F);
     }
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
@@ -297,7 +273,7 @@ public class SelfTrap extends Module {
     private int findBlockSlot(Minecraft mc) {
         if (selectedBlocks.isEmpty()) return -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
             Identifier id = BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
             if (selectedBlocks.contains(id)) {
@@ -306,15 +282,12 @@ public class SelfTrap extends Module {
         }
         if (swapInventory.getValue()) {
             for (int i = 9; i < 36; i++) {
-                ItemStack stack = mc.player.getInventory().getItem(i);
+                var stack = InventoryUtility.getItem(mc.player, i);
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
                 Identifier id = BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
                 if (selectedBlocks.contains(id)) {
-                    int hotbarSlot = mc.player.getInventory().getSelectedSlot();
-                    mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId, i, hotbarSlot, 
-                        net.minecraft.world.inventory.ClickType.SWAP, mc.player
-                    );
+                    int hotbarSlot = InventoryUtility.getSelectedSlot(mc.player);
+                    InventoryUtility.handleInventoryClick(mc, mc.player, i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
                     return hotbarSlot;
                 }
             }

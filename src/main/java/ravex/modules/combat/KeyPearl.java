@@ -1,11 +1,10 @@
 package ravex.modules.combat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.utility.player.InventoryUtility;
 public class KeyPearl extends Module {
     public static final KeyPearl INSTANCE = new KeyPearl();
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
@@ -16,17 +15,17 @@ public class KeyPearl extends Module {
         if (mc.player == null || mc.level == null) return;
         int pearlSlot = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (stack.is(Items.ENDER_PEARL)) { pearlSlot = i; break; }
+            var stack = InventoryUtility.getItem(mc.player, i);
+            if (InventoryUtility.isItem(stack, "ender_pearl")) { pearlSlot = i; break; }
         }
         if (pearlSlot == -1) return;
-        int prevSlot = mc.player.getInventory().getSelectedSlot();
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
         if (silent.getValue()) {
-            mc.player.getInventory().setSelectedSlot(pearlSlot);
+            InventoryUtility.selectSlot(mc.player, pearlSlot);
             mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-            mc.player.getInventory().setSelectedSlot(prevSlot);
+            InventoryUtility.selectSlot(mc.player, prevSlot);
         } else {
-            mc.player.getInventory().setSelectedSlot(pearlSlot);
+            InventoryUtility.selectSlot(mc.player, pearlSlot);
             mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
         }
         setEnabled(false);

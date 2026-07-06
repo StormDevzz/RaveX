@@ -19,7 +19,7 @@ import ravex.modules.combat.Surround;
 import ravex.modules.render.BlockOutline;
 import ravex.modules.render.Borders;
 import ravex.modules.render.ESP;
-import ravex.modules.render.HoleESP;
+
 import ravex.modules.render.VoidESP;
 
 @Mixin(LevelRenderer.class)
@@ -218,10 +218,12 @@ public class MixinLevelRenderer {
 
         
         ravex.modules.world.Scaffold sc = ravex.modules.world.Scaffold.INSTANCE;
-        if (sc.getEnabled() && sc.render.getValue() && sc.currentTarget != null) {
-            double tx = sc.currentTarget.getX();
-            double ty = sc.currentTarget.getY();
-            double tz = sc.currentTarget.getZ();
+        if (sc.getEnabled() && sc.render.getValue()) {
+            var currPos = sc.getCurrentPos();
+            if (currPos == null) {} else {
+            double tx = currPos.getX();
+            double ty = currPos.getY();
+            double tz = currPos.getZ();
             if (sc.animate.getValue()) {
                 if (!scInitialized) {
                     scX = tx; scY = ty; scZ = tz;
@@ -241,7 +243,7 @@ public class MixinLevelRenderer {
             ravex.modules.world.Scaffold.highlightPos = new Vec3(scX, scY, scZ);
             ravex.modules.world.Scaffold.renderAlpha = scAlpha;
             ravex.modules.world.Scaffold.renderSize = scSize;
-        } else {
+            } } else {
             scAlpha += (0.0f - scAlpha) * factor;
             scSize += (0.0 - scSize) * factor;
             if (scAlpha < 0.01f) {
@@ -288,9 +290,9 @@ public class MixinLevelRenderer {
 
                 try {
                     modelViewMatrix.translate(
-                        (float)(chest.pos.getX() - camPos.x),
-                        (float)(chest.pos.getY() - camPos.y),
-                        (float)(chest.pos.getZ() - camPos.z),
+                        (float)(ravex.utility.misc.block.BlockUtility.unpackX(chest.packedPos) - camPos.x),
+                        (float)(ravex.utility.misc.block.BlockUtility.unpackY(chest.packedPos) - camPos.y),
+                        (float)(ravex.utility.misc.block.BlockUtility.unpackZ(chest.packedPos) - camPos.z),
                         mat
                     );
 
@@ -498,8 +500,9 @@ public class MixinLevelRenderer {
 
         
         ravex.modules.world.TreeCutter tc = ravex.modules.world.TreeCutter.INSTANCE;
-        if (tc.getEnabled() && tc.render.getValue() && ravex.modules.world.TreeCutter.currentMiningBlock != null) {
-            BlockPos p = ravex.modules.world.TreeCutter.currentMiningBlock;
+        BlockPos mp = ravex.modules.world.TreeCutter.getMiningPos();
+        if (tc.getEnabled() && tc.render.getValue() && mp != null) {
+            BlockPos p = mp;
             try {
                 modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
@@ -568,9 +571,9 @@ public class MixinLevelRenderer {
 
         
         ravex.modules.world.AutoTunnel at = ravex.modules.world.AutoTunnel.INSTANCE;
-        if (at.getEnabled() && at.render.getValue() && ravex.modules.world.AutoTunnel.currentTarget != null) {
-            BlockPos p = ravex.modules.world.AutoTunnel.currentTarget;
-            try {
+        if (at.getEnabled() && at.render.getValue()) {
+            BlockPos p = ravex.modules.world.AutoTunnel.getCurrentTarget();
+            if (p != null) try {
                 modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
                         (float)(p.getY() - camPos.y),
@@ -636,9 +639,9 @@ public class MixinLevelRenderer {
 
         
         ravex.modules.world.AutoBrew bw = ravex.modules.world.AutoBrew.INSTANCE;
-        if (bw.getEnabled() && bw.render.getValue() && ravex.modules.world.AutoBrew.currentTarget != null) {
-            BlockPos p = ravex.modules.world.AutoBrew.currentTarget;
-            try {
+        if (bw.getEnabled() && bw.render.getValue()) {
+            BlockPos p = ravex.modules.world.AutoBrew.getCurrentTarget();
+            if (p != null) try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = bw.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -654,9 +657,9 @@ public class MixinLevelRenderer {
 
         
         ravex.modules.world.ECFarmer ec = ravex.modules.world.ECFarmer.INSTANCE;
-        if (ec.getEnabled() && ec.render.getValue() && ravex.modules.world.ECFarmer.currentTarget != null) {
-            BlockPos p = ravex.modules.world.ECFarmer.currentTarget;
-            try {
+        if (ec.getEnabled() && ec.render.getValue()) {
+            BlockPos p = ravex.modules.world.ECFarmer.getCurrentTarget();
+            if (p != null) try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = ec.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -671,10 +674,10 @@ public class MixinLevelRenderer {
         }
 
         
-        ravex.modules.misc.PortalBuild pb = ravex.modules.misc.PortalBuild.INSTANCE;
-        if (pb.getEnabled() && pb.render.getValue() && ravex.modules.misc.PortalBuild.currentTarget != null) {
-            BlockPos p = ravex.modules.misc.PortalBuild.currentTarget;
-            try {
+        ravex.modules.misc.AutoPortal pb = ravex.modules.misc.AutoPortal.INSTANCE;
+        if (pb.getEnabled() && pb.render.getValue()) {
+            BlockPos p = ravex.modules.misc.AutoPortal.getCurrentTarget();
+            if (p != null) try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = pb.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -694,7 +697,11 @@ public class MixinLevelRenderer {
             for (var hole : ravex.modules.combat.HoleFill.holePositions) {
                 if (hole == null) continue;
                 try {
-                    modelViewMatrix.translate((float)(hole.getX() - camPos.x), (float)(hole.getY() - camPos.y), (float)(hole.getZ() - camPos.z), REUSABLE_MATRIX);
+                    modelViewMatrix.translate(
+                        (float)(ravex.utility.misc.block.BlockUtility.unpackX(hole) - camPos.x),
+                        (float)(ravex.utility.misc.block.BlockUtility.unpackY(hole) - camPos.y),
+                        (float)(ravex.utility.misc.block.BlockUtility.unpackZ(hole) - camPos.z),
+                        REUSABLE_MATRIX);
                     int c = hf.color.getValue();
                     float r = ((c >> 16) & 0xFF) / 255.0f;
                     float g = ((c >> 8) & 0xFF) / 255.0f;
@@ -771,23 +778,23 @@ public class MixinLevelRenderer {
         }
 
         
-        if (HoleESP.INSTANCE.getEnabled()) {
-            int c = HoleESP.INSTANCE.safeColor.getValue();
+        if (ESP.INSTANCE.getEnabled() && ESP.INSTANCE.mode.getValue().equals("Holes")) {
+            int c = ESP.INSTANCE.safeColor.getValue();
             float hr = ((c >> 16) & 0xFF) / 255.0f;
             float hg = ((c >> 8) & 0xFF) / 255.0f;
             float hb = (c & 0xFF) / 255.0f;
             float ha = ((c >> 24) & 0xFF) / 255.0f;
             float hw = 0.04f;
-            for (var pos : HoleESP.INSTANCE.getHoles()) {
+            for (var pos : ESP.INSTANCE.getHoles()) {
                 try {
                     float px = (float)(pos.getX() - camPos.x);
                     float py = (float)(pos.getY() - camPos.y);
                     float pz = (float)(pos.getZ() - camPos.z);
-                    if (HoleESP.INSTANCE.filled.getValue()) {
+                    if (ESP.INSTANCE.holeFilled.getValue()) {
                         modelViewMatrix.translate(px, py, pz, REUSABLE_MATRIX);
                         Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, hr, hg, hb, ha * 0.3f, true);
                     }
-                    if (HoleESP.INSTANCE.wireframe.getValue()) {
+                    if (ESP.INSTANCE.holeWireframe.getValue()) {
                         
                         Render3DUtils.batchAxisLine(modelViewMatrix, px, py, pz, px + 1, py, pz, hw, hr, hg, hb, ha, true);
                         Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py, pz + 1, hw, hr, hg, hb, ha, true);

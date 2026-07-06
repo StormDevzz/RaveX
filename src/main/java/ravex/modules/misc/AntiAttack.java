@@ -5,8 +5,8 @@ import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.entity.animal.equine.Horse;
 import net.minecraft.world.entity.animal.equine.Llama;
 import net.minecraft.world.entity.npc.villager.Villager;
-import net.minecraft.world.entity.player.Player;
 import ravex.modules.Category;
+import ravex.utility.misc.MobUtility;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 public class AntiAttack extends Module {
@@ -25,7 +25,7 @@ public class AntiAttack extends Module {
         if (target instanceof Wolf && wolves.getValue()) return true;
         if (target instanceof Cat && cats.getValue()) return true;
         if (target instanceof Llama && llamas.getValue()) return true;
-        if (target instanceof Player && friends.getValue()) return true;
+        if (MobUtility.isPlayer(MobUtility.asLivingEntity(target)) && friends.getValue()) return true;
         return false;
     }
 }
