@@ -1,0 +1,28 @@
+{
+    "schemaVersion": 1,
+    "id": "ravex",
+    "version": "${version}",
+    "name": "RaveX",
+    "description": "RaveX Minecraft Client by StormDevzz",
+    "authors": ["StormDevzz"],
+    "contact": {
+        "homepage": "https://github.com/StormDevzz",
+        "sources": "https://github.com/StormDevzz/RaveX",
+        "issues": "https://github.com/StormDevzz/RaveX/issues"
+    },
+    "environment": "client",
+    "entrypoints": {
+        "main": ["ravex.RaveXCommon"],
+        "client": ["ravex.RaveX"],
+        "preLaunch": ["ravex.RaveXPreLaunch"]
+    },
+    "mixins": ["ravex.mixins.json"],
+    "accessWidener": "ravex.accesswidener",
+    "depends": {
+        "fabricloader": ">=${loader_version}",
+        "minecraft": ">=${minecraft_version}"
+    },
+    "suggests": {
+        "locomotion": "*"
+    }
+}

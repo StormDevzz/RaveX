@@ -1,0 +1,14 @@
+# Explicit language detection for GitHub Linguist
+src/main/cpp/CMakeLists.txt linguist-language=CMake
+**/CMakeLists.txt linguist-language=CMake
+gradlew linguist-language=Shell
+gradlew.bat linguist-language=Batchfile
+*.bat linguist-language=Batchfile
+*.gradle linguist-language=Groovy
+
+# C++ headers and sources
+*.hpp linguist-language=C++
+*.cpp linguist-language=C++
+*.h linguist-language=C
+
+build-native/ linguist-vendored
