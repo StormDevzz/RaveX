@@ -113,18 +113,18 @@ public class ModuleButton {
         }
 
         int activeColor = ColorUtility.getActiveColor();
-        int disabledBg = 0xFF000000;
+        int disabledBg = 0xCC0A0A0A;
 
-        graphics.fill(x, currentY, x + width, currentY + btnH, disabledBg);
+        Render2DEngine.drawSmoothRound(graphics, x, currentY, width, btnH, 4, disabledBg);
 
         if (enableAnim > 0.01f) {
             int enableAlpha = (int) (enableAnim * 0x22);
-            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(activeColor, enableAlpha));
+            Render2DEngine.drawSmoothRound(graphics, x, currentY, width, btnH, 4, ColorUtility.withAlpha(activeColor, enableAlpha));
         }
 
         if (hoverProgress > 0.01f) {
             int hoverAlpha = (int) (hoverProgress * 0x18);
-            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
+            Render2DEngine.drawSmoothRound(graphics, x, currentY, width, btnH, 4, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
         }
 
         int baseColor = lerpColor(0xFFCCCCCC, activeColor, enableAnim);
@@ -132,7 +132,7 @@ public class ModuleButton {
 
         if (searchQuery != null && !searchQuery.isEmpty()
             && module.getName().toLowerCase().contains(searchQuery.toLowerCase())) {
-            graphics.fill(x, currentY, x + width, currentY + btnH, ColorUtility.withAlpha(activeColor, 50));
+            Render2DEngine.drawSmoothRound(graphics, x, currentY, width, btnH, 4, ColorUtility.withAlpha(activeColor, 50));
         }
 
         if (ClickGui.INSTANCE.moduleOutlines.getValue()) {
@@ -212,8 +212,8 @@ public class ModuleButton {
                     }
                 }
                 int actualH = getExpandedHeight(width);
-                int bgCol = 0xFF000000;
-                graphics.fill(x + 1, currentY, x + width - 1, currentY + actualH, bgCol);
+                int bgCol = 0xCC0A0A0A;
+                Render2DEngine.drawSmoothRound(graphics, x + 1, currentY, width - 2, actualH, 4, bgCol);
 
                 if (ClickGui.INSTANCE.smoothScroll.getValue()) {
                     float lerp = ClickGui.INSTANCE.scrollSmoothness.getValue().floatValue() / 100f;

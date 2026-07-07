@@ -265,7 +265,7 @@ public class ClickGUI extends Screen {
             int bx  = bxArr[i];
             boolean h = hovArr[i];
 
-            graphics.fillGradient(bx, mgY, bx + mgW, mgY + mgH, h ? activeColor : 0xFF000000, h ? activeColor : 0xFF000000);
+            Render2DEngine.drawSmoothRound(graphics, bx, mgY, mgW, mgH, 4, h ? activeColor : 0xCC0A0A0A);
 
             int textW = FontRenderUtility.getStringWidth(labArr[i]);
             int textY = mgY + (mgH - FontRenderUtility.getFontHeight()) / 2;
@@ -354,7 +354,7 @@ public class ClickGUI extends Screen {
 
         int glowColor = ColorUtility.getActiveColor();
 
-        graphics.fillGradient(barX, barY, barX + barW, barY + barH, 0xF0000000, 0xF0000000);
+        Render2DEngine.drawSmoothRound(graphics, barX, barY, barW, barH, 4, 0xCC0A0A0A);
         Render2DEngine.drawBorder(graphics, barX, barY, barW, barH, 1, ColorUtility.withAlpha(glowColor, 60));
 
         int iconSize = 14;

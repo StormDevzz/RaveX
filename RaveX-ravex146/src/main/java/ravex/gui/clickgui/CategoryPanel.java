@@ -116,13 +116,13 @@ public class CategoryPanel {
         int activeColor = ColorUtility.getActiveColor();
 
         
-        graphics.fill(ix + 3, iy + 3, ix + width + 3, panelBot + 3, 0x40000000);
+        Render2DEngine.drawSmoothRound(graphics, ix + 3, iy + 3, width, panelBot - iy, 8, 0x40000000);
         if (ClickGui.INSTANCE.outlines.getValue()) {
             int borderColor = ClickGui.INSTANCE.outlineColor.getValue();
-            graphics.fill(ix - 1, iy - 1, ix + width + 1, panelBot + 1, borderColor);
+            Render2DEngine.drawSmoothRound(graphics, ix - 1, iy - 1, width + 2, panelBot - iy + 2, 8, borderColor);
         }
-        graphics.fill(ix, iy, ix + width, panelBot, ColorUtility.PANEL_BODY_END);
-        graphics.fill(ix, iy, ix + width, iy + 18, ColorUtility.HEADER_COLOR);
+        Render2DEngine.drawSmoothRound(graphics, ix, iy, width, panelBot - iy, 8, ColorUtility.PANEL_BODY_END);
+        Render2DEngine.drawSmoothRound(graphics, ix, iy, width, 18, 8, ColorUtility.HEADER_COLOR);
         if (ClickGui.INSTANCE.outlines.getValue()) {
             graphics.fill(ix, iy + 17, ix + width, iy + 18, ClickGui.INSTANCE.outlineColor.getValue());
         } else {
