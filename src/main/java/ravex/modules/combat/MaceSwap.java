@@ -1,5 +1,5 @@
 package ravex.modules.combat;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 public class MaceSwap extends Module {
-    public static final MaceSwap INSTANCE = new MaceSwap();
     public final ModeParameter mode       = new ModeParameter("Mode", "Smart",
             List.of("Basic", "Smart"));
     public final NumberParameter fallSpeed = new NumberParameter("FallSpeed", 0.5, 0.1, 3.0, 0.05);
@@ -53,4 +52,11 @@ public class MaceSwap extends Module {
         }
         return -1;
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(MaceSwap.class);
+    }
+    public static MaceSwap itz() {
+        return ModuleManager.get(MaceSwap.class);
+    }
+
 }

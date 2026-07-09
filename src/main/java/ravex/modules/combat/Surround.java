@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -6,7 +7,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -18,7 +18,6 @@ import ravex.utility.player.InventoryUtility;
 import java.util.ArrayList;
 import java.util.List;
 public class Surround extends Module {
-    public static final Surround INSTANCE = new Surround();
     public static final List<BlockPos> surroundBlocks = new ArrayList<>();
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
@@ -264,5 +263,11 @@ public class Surround extends Module {
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem) return i;
         }
         return -1;
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Surround.class);
+    }
+    public static Surround itz() {
+        return ModuleManager.get(Surround.class);
     }
 }

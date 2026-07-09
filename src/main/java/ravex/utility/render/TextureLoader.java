@@ -54,6 +54,32 @@ public class TextureLoader {
     public static final Identifier PILLOW = Identifier.fromNamespaceAndPath(NS, "img/pillow");
     public static final Identifier MARKER = Identifier.fromNamespaceAndPath(NS, "wp_marker");
 
+    public static final Identifier HUD_COORDS = hudId("coords");
+    public static final Identifier HUD_TPS = hudId("tps");
+    public static final Identifier HUD_INDICATORS = hudId("indicators");
+    public static final Identifier HUD_CURRENCY = hudId("currency");
+    public static final Identifier HUD_MEDIA = hudId("media");
+    public static final Identifier HUD_COOLDOWN = hudId("cooldown");
+    public static final Identifier HUD_INVENTORY = hudId("inventory");
+    public static final Identifier HUD_CHAT = hudId("chat");
+    public static final Identifier HUD_SERVERBRAND = hudId("serverbrand");
+    public static final Identifier HUD_WAYPOINT = hudId("waypoint");
+    public static final Identifier HUD_FPS = hudId("fps");
+    public static final Identifier HUD_ARRAYLIST = hudId("arraylist");
+
+    public static final Identifier HUD_COORDS_WHITE = hudWhiteId("coords");
+    public static final Identifier HUD_TPS_WHITE = hudWhiteId("tps");
+    public static final Identifier HUD_INDICATORS_WHITE = hudWhiteId("indicators");
+    public static final Identifier HUD_CURRENCY_WHITE = hudWhiteId("currency");
+    public static final Identifier HUD_MEDIA_WHITE = hudWhiteId("media");
+    public static final Identifier HUD_COOLDOWN_WHITE = hudWhiteId("cooldown");
+    public static final Identifier HUD_INVENTORY_WHITE = hudWhiteId("inventory");
+    public static final Identifier HUD_CHAT_WHITE = hudWhiteId("chat");
+    public static final Identifier HUD_SERVERBRAND_WHITE = hudWhiteId("serverbrand");
+    public static final Identifier HUD_WAYPOINT_WHITE = hudWhiteId("waypoint");
+    public static final Identifier HUD_FPS_WHITE = hudWhiteId("fps");
+    public static final Identifier HUD_ARRAYLIST_WHITE = hudWhiteId("arraylist");
+
     static {
         for (Category cat : Category.values()) {
             String name = cat.name().toLowerCase();
@@ -64,6 +90,14 @@ public class TextureLoader {
 
     private static Identifier id(String name) {
         return Identifier.fromNamespaceAndPath(NS, GUI_PREFIX + name);
+    }
+
+    private static Identifier hudId(String name) {
+        return Identifier.fromNamespaceAndPath(NS, "hud/" + name);
+    }
+
+    private static Identifier hudWhiteId(String name) {
+        return Identifier.fromNamespaceAndPath(NS, "hud_white/" + name);
     }
 
     private static NativeImage downscaleTo(NativeImage image, int maxDim) {
@@ -235,6 +269,28 @@ public class TextureLoader {
 
     public static Identifier getSettingsTexture() {
         return ensureLoaded(SETTINGS, "settings") ? SETTINGS : null;
+    }
+
+    public static final Identifier PALETTE = Identifier.fromNamespaceAndPath(NS, "hud/palette");
+
+    public static Identifier getPaletteTexture() {
+        if (loaded.containsKey(PALETTE)) return PALETTE;
+        String resourcePath = "/assets/ravex/textures/hud/palette.png";
+        try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
+            if (stream == null) {
+                RaveX.LOGGER.warn("[TextureLoader] Palette icon not found: {}", resourcePath);
+                return null;
+            }
+            NativeImage image = NativeImage.read(stream);
+            image = downscaleTo(image, ICON_SIZE);
+            AbstractTexture tex = createLinearTexture(image);
+            Minecraft.getInstance().getTextureManager().register(PALETTE, tex);
+            loaded.put(PALETTE, tex);
+            return PALETTE;
+        } catch (Exception e) {
+            RaveX.LOGGER.warn("[TextureLoader] Failed to load palette icon: {}", e.getMessage());
+            return null;
+        }
     }
 
     public static Identifier getSettingsWhiteTexture() {
@@ -466,6 +522,10 @@ public class TextureLoader {
         } catch (Exception e) {
             RaveX.LOGGER.warn("[TextureLoader] Failed to load marker: {}", e.getMessage());
         }
+
+        for (String hudName : new String[]{"coords", "tps", "indicators", "currency", "media", "cooldown", "inventory", "chat", "serverbrand", "waypoint", "fps", "arraylist"}) {
+            getHudIconWhite(hudName);
+        }
     }
 
     public static Identifier getMarkerTexture(int color) {
@@ -527,6 +587,42 @@ public class TextureLoader {
         }
         MODULE_ICON_MISSING.add(moduleKey);
         return null;
+    }
+
+    public static Identifier getHudIcon(String name) {
+        Identifier id = hudId(name);
+        if (loaded.containsKey(id)) return id;
+        if (ensureHudIcon(id, name)) return id;
+        return null;
+    }
+
+    public static Identifier getHudIconWhite(String name) {
+        Identifier colored = getHudIcon(name);
+        if (colored == null) return null;
+        Identifier whiteId = Identifier.fromNamespaceAndPath(NS, "hud_white/" + name);
+        if (loaded.containsKey(whiteId)) return whiteId;
+        Identifier result = makeWhiteCopy(colored, whiteId, "hud/" + name);
+        return result != null ? result : colored;
+    }
+
+    private static boolean ensureHudIcon(Identifier id, String name) {
+        if (loaded.containsKey(id)) return true;
+        String resourcePath = "/assets/ravex/textures/hud/" + name + ".png";
+        try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
+            if (stream == null) {
+                RaveX.LOGGER.warn("[TextureLoader] HUD icon not found: {}", resourcePath);
+                return false;
+            }
+            NativeImage image = NativeImage.read(stream);
+            image = downscaleTo(image, 16);
+            AbstractTexture tex = createLinearTexture(image);
+            Minecraft.getInstance().getTextureManager().register(id, tex);
+            loaded.put(id, tex);
+            return true;
+        } catch (Exception e) {
+            RaveX.LOGGER.warn("[TextureLoader] Failed to load HUD icon {}: {}", name, e.getMessage());
+            return false;
+        }
     }
 
     private static boolean ensureModuleIcon(Identifier guiId, String fileName) {

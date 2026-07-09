@@ -70,4 +70,53 @@ long estimateBreakTime(int bx, int by, int bz, double px, double py, double pz) 
     return static_cast<long>(50.0 + dist * 10.0);
 }
 
+bool canSee(
+    double ex, double ey, double ez,
+    double tx, double ty, double tz,
+    const std::vector<Vec3i>& solidBlocks)
+{
+    double dx = tx - ex;
+    double dy = ty - ey;
+    double dz = tz - ez;
+    double len = std::sqrt(dx * dx + dy * dy + dz * dz);
+    if (len < 0.001) return true;
+
+    double nx = dx / len;
+    double ny = dy / len;
+    double nz = dz / len;
+
+    int steps = std::max(8, static_cast<int>(len / 0.5));
+    for (int i = 1; i < steps; i++) {
+        double t = static_cast<double>(i) / steps * len;
+        double px = ex + nx * t;
+        double py = ey + ny * t;
+        double pz = ez + nz * t;
+
+        int bx = static_cast<int>(std::floor(px));
+        int by = static_cast<int>(std::floor(py));
+        int bz = static_cast<int>(std::floor(pz));
+
+        for (const auto& blk : solidBlocks) {
+            if (blk.x == bx && blk.y == by && blk.z == bz)
+                return false;
+        }
+    }
+    return true;
+}
+
+void filterVisibleBlocks(
+    const std::vector<Vec3i>& candidates,
+    const std::vector<Vec3i>& solidBlocks,
+    double ex, double ey, double ez,
+    std::vector<Vec3i>& out)
+{
+    out.clear();
+    out.reserve(candidates.size());
+    for (const auto& c : candidates) {
+        if (canSee(ex, ey, ez, c.x + 0.5, c.y + 0.5, c.z + 0.5, solidBlocks)) {
+            out.push_back(c);
+        }
+    }
+}
+
 } 

@@ -1,5 +1,5 @@
 package ravex.modules.movement;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
 public class LongJump extends Module {
-    public static final LongJump INSTANCE = new LongJump();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Good", "Custom"));
     public final NumberParameter customBoost = new NumberParameter("Boost", 2.0, 1.0, 5.0, 0.1);
     private boolean boosted = false;
@@ -38,5 +37,8 @@ public class LongJump extends Module {
                 boosted = true;
             }
         }
+    }
+    public static LongJump itz() {
+        return ModuleManager.get(LongJump.class);
     }
 }

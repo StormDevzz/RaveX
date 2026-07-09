@@ -1,5 +1,5 @@
 package ravex.modules.movement;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 public class HighJump extends Module {
-    public static final HighJump INSTANCE = new HighJump();
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "GrimShulker"));
     public final NumberParameter height = new NumberParameter("Height", 2.0, 0.5, 10.0, 0.1);
 
@@ -56,5 +55,11 @@ public class HighJump extends Module {
             }
         }
         return -1;
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(HighJump.class);
+    }
+    public static HighJump itz() {
+        return ModuleManager.get(HighJump.class);
     }
 }

@@ -1,5 +1,7 @@
 package ravex.modules.client;
-import ravex.modules.Category;
+import ravex.event.EventBusHolder;
+import ravex.event.Subscribe;
+import ravex.event.combat.ModuleToggleEvent;
 import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.parameter.*;
@@ -7,7 +9,6 @@ import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
 public class DesktopGui extends Module {
-    public static final DesktopGui INSTANCE = new DesktopGui();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_desktopgui");
     static {
         NATIVE.load();
@@ -24,6 +25,7 @@ public class DesktopGui extends Module {
             setEnabled(false);
             return;
         }
+        EventBusHolder.get().subscribe(this);
         List<Module> modules = ModuleManager.INSTANCE.getModules();
         String[] names = new String[modules.size()];
         boolean[] states = new boolean[modules.size()];
@@ -35,13 +37,16 @@ public class DesktopGui extends Module {
     }
     @Override
     protected void onDisable() {
+        EventBusHolder.get().unsubscribe(this);
         if (NATIVE.isLoaded()) {
             closeDesktopGui();
         }
     }
-    public static void onModuleToggle(String name, boolean enabled) {
-        if (INSTANCE.getEnabled() && NATIVE.isLoaded()) {
-            updateModuleState(name, enabled);
+
+    @Subscribe
+    public void onModuleToggle(ModuleToggleEvent event) {
+        if (NATIVE.isLoaded()) {
+            updateModuleState(event.getModule().getName(), event.isEnabled());
         }
     }
     public static void toggleModuleFromNative(String name) {
@@ -56,8 +61,8 @@ public class DesktopGui extends Module {
     public static void onNativeClose() {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
-            if (INSTANCE.getEnabled()) {
-                INSTANCE.setEnabled(false);
+            if (ModuleManager.get(DesktopGui.class).getEnabled()) {
+                ModuleManager.get(DesktopGui.class).setEnabled(false);
             }
         });
     }
@@ -116,4 +121,12 @@ public class DesktopGui extends Module {
     private static native void openDesktopGui(String[] names, boolean[] states);
     private static native void updateModuleState(String name, boolean enabled);
     private static native void closeDesktopGui();
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(DesktopGui.class);
+    }
+
+    public static DesktopGui itz() {
+        return ModuleManager.get(DesktopGui.class);
+    }
 }

@@ -47,7 +47,7 @@ public abstract class MixinItemInHandRenderer {
         at = @At("RETURN")
     )
     private void onApplyItemArmTransform(PoseStack poseStack, HumanoidArm arm, float f, CallbackInfo ci) {
-        ViewModel vm = ViewModel.INSTANCE;
+        ViewModel vm = ViewModel.itz();
         if (!vm.getEnabled()) return;
 
         boolean isRight = arm == HumanoidArm.RIGHT;
@@ -92,7 +92,7 @@ public abstract class MixinItemInHandRenderer {
                                       InteractionHand hand, float swingProgress, ItemStack stack,
                                       float equipProgress, PoseStack poseStack,
                                       SubmitNodeCollector collector, int light, CallbackInfo ci) {
-        ViewModel vm = ViewModel.INSTANCE;
+        ViewModel vm = ViewModel.itz();
         if (!vm.getEnabled()) return;
 
         boolean isMainHand = hand == InteractionHand.MAIN_HAND;
@@ -133,14 +133,14 @@ public abstract class MixinItemInHandRenderer {
 
         boolean isSelf = Minecraft.getInstance().player == capturedPlayer;
 
-        if (NoSwing.INSTANCE.getEnabled()) {
-            if (NoSwing.INSTANCE.self.getValue() && isSelf) return 1.0f;
-            if (NoSwing.INSTANCE.others.getValue() && !isSelf) return 1.0f;
+        if (NoSwing.maybeEnabled()) {
+            if (NoSwing.itz().self.getValue() && isSelf) return 1.0f;
+            if (NoSwing.itz().others.getValue() && !isSelf) return 1.0f;
         }
 
-        if (Swing.INSTANCE.getEnabled() && "Custom".equals(Swing.INSTANCE.mode.getValue())) {
+        if (Swing.maybeEnabled() && "Custom".equals(Swing.itz().mode.getValue())) {
             float p = swingProgress;
-            String path = Swing.INSTANCE.swingPath.getValue();
+            String path = Swing.itz().swingPath.getValue();
             if ("Smooth".equals(path)) {
                 float t = 1 - p;
                 t = t * t * (3 - 2 * t);
@@ -153,9 +153,9 @@ public abstract class MixinItemInHandRenderer {
             } else if ("Reverse".equals(path)) {
                 p = 1 - p;
             }
-            p = (float) Math.pow(p, Swing.INSTANCE.swingCurve.getValue().floatValue());
-            p = Math.min(p, Swing.INSTANCE.progressCap.getValue().floatValue());
-            p = Math.max(p, Swing.INSTANCE.progressFloor.getValue().floatValue());
+            p = (float) Math.pow(p, Swing.itz().swingCurve.getValue().floatValue());
+            p = Math.min(p, Swing.itz().progressCap.getValue().floatValue());
+            p = Math.max(p, Swing.itz().progressFloor.getValue().floatValue());
             return p;
         }
 
@@ -169,9 +169,9 @@ public abstract class MixinItemInHandRenderer {
         argsOnly = true
     )
     private float modifyEquipProgress(float equipProgress) {
-        if (Swing.INSTANCE.getEnabled()
-            && ("1.8".equals(Swing.INSTANCE.mode.getValue())
-                || ("Custom".equals(Swing.INSTANCE.mode.getValue()) && Swing.INSTANCE.noEquip.getValue()))) {
+        if (Swing.maybeEnabled()
+            && ("1.8".equals(Swing.itz().mode.getValue())
+                || ("Custom".equals(Swing.itz().mode.getValue()) && Swing.itz().noEquip.getValue()))) {
             return 0.0f;
         }
         return equipProgress;

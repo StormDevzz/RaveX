@@ -1,6 +1,5 @@
 #include "jni_bridge.hpp"
 #include "../hooks/norender/include/norender.hpp"
-#include "../antiafk/include/antiafk.hpp"
 #include "../common/include/memory.hpp"
 #include "../hooks/shaders/hand/include/shader_color.hpp"
 #include "../math/include/wave_math.hpp"
@@ -17,41 +16,6 @@
 
 
 
-
-
-JNIEXPORT jboolean JNICALL
-Java_ravex_modules_misc_AntiAfk_nativeStart(JNIEnv* env, jclass,
-    jint intervalMs, jint maxJitterMs,
-    jboolean mouseMove, jboolean mouseClick, jboolean keyPress,
-    jboolean lookAround, jboolean jumpSim, jint rotationRange) {
-
-    ravex::AfkConfig cfg;
-    cfg.intervalMs      = static_cast<int>(intervalMs);
-    cfg.maxJitterMs     = static_cast<int>(maxJitterMs);
-    cfg.mouseMove       = mouseMove == JNI_TRUE;
-    cfg.mouseClick      = mouseClick == JNI_TRUE;
-    cfg.keyPress        = keyPress == JNI_TRUE;
-    cfg.lookAround      = lookAround == JNI_TRUE;
-    cfg.jumpSimulation  = jumpSim == JNI_TRUE;
-    cfg.rotationRange   = static_cast<int>(rotationRange);
-
-    return ravex::AntiAfk::start(cfg) ? JNI_TRUE : JNI_FALSE;
-}
-
-JNIEXPORT void JNICALL
-Java_ravex_modules_misc_AntiAfk_nativeStop(JNIEnv*, jclass) {
-    ravex::AntiAfk::stop();
-}
-
-JNIEXPORT jboolean JNICALL
-Java_ravex_modules_misc_AntiAfk_nativeIsRunning(JNIEnv*, jclass) {
-    return ravex::AntiAfk::isRunning() ? JNI_TRUE : JNI_FALSE;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_ravex_modules_misc_AntiAfk_nativePerformAction(JNIEnv*, jclass) {
-    return ravex::AntiAfk::performRandomAction() ? JNI_TRUE : JNI_FALSE;
-}
 
 
 

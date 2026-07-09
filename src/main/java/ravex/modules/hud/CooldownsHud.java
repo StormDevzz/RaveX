@@ -1,15 +1,20 @@
 package ravex.modules.hud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemCooldowns;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
+import ravex.utility.render.HudRenderer;
+import ravex.utility.render.TextureLoader;
 import java.util.*;
+import ravex.manager.ModuleManager;
 public class CooldownsHud extends Module {
-    public static final CooldownsHud INSTANCE = new CooldownsHud();
+    private static final Identifier ICON = TextureLoader.HUD_COOLDOWN_WHITE;
+    private static final int IS = HudRenderer.getIconSize();
     private CooldownsHud() {
         super("Cooldowns", 10, 260, 90, 14);
         addParameter(new ColorParameter("Color", 0xFFFFCC33));
@@ -17,7 +22,7 @@ public class CooldownsHud extends Module {
     }
     @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!Hud.INSTANCE.getEnabled()) return;
+        if (!ModuleManager.get(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         int col = 0xFFFFCC33;
@@ -45,17 +50,27 @@ public class CooldownsHud extends Module {
         int lh = 10;
         int pw = 10;
         for (var line : lines) {
-            int nw = ravex.utility.render.HudRenderer.textWidth(line) + 10;
+            int nw = HudRenderer.textWidth(line) + 10;
             if (nw > pw) pw = nw;
         }
-        int ph = lines.size() * lh + 6;
+        pw = 4 + pw + 4 + IS + 4;
+        int ph = lines.size() * lh + 8;
         setWidth(pw);
         setHeight(ph);
-        ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, pw, ph, ColorUtility.getActiveColor());
-        int cy = by + 4;
+        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        int cy = by + 5;
         for (var line : lines) {
-            ravex.utility.render.HudRenderer.drawText(graphics, line, bx + 5, cy, col, shadow);
+            HudRenderer.drawText(graphics, line, bx + 4, cy, col, shadow);
             cy += lh;
         }
+        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(CooldownsHud.class);
+    }
+
+    public static CooldownsHud itz() {
+        return ModuleManager.get(CooldownsHud.class);
     }
 }

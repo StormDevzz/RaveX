@@ -1,5 +1,5 @@
 package ravex.modules.combat;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -9,7 +9,6 @@ import net.minecraft.world.inventory.ClickType;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 public class AutoTotem extends Module {
-    public static final AutoTotem INSTANCE = new AutoTotem();
     public final ModeParameter offhandItem = new ModeParameter("Offhand", "Totem", List.of("Totem", "Gapple", "Crystal", "Shield", "None"));
     public final ModeParameter mainHandItem = new ModeParameter("MainHand", "Sword", List.of("Sword", "Gapple", "Crystal", "Shield", "Totem", "None"));
     public final NumberParameter minHealth = new NumberParameter("MinHP", 8.0, 1.0, 20.0, 0.5);
@@ -104,4 +103,11 @@ public class AutoTotem extends Module {
         }
         return -1;
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoTotem.class);
+    }
+    public static AutoTotem itz() {
+        return ModuleManager.get(AutoTotem.class);
+    }
+
 }

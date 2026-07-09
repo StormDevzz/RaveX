@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-Addon-Name: AnotherAddon
-Addon-Version: 1.0.0
-Addon-Author: RaveXDeveloper
-Addon-Main-Class: ravex.addon.template.AnotherAddon

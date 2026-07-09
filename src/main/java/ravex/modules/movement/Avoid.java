@@ -1,11 +1,10 @@
 package ravex.modules.movement;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 public class Avoid extends Module {
-    public static final Avoid INSTANCE = new Avoid();
     public final BooleanParameter cactus = new BooleanParameter("Cactus", true);
     public final BooleanParameter berryBush = new BooleanParameter("BerryBush", true);
     public final BooleanParameter witherRose = new BooleanParameter("WitherRose", true);
@@ -20,5 +19,11 @@ public class Avoid extends Module {
         if (block == Blocks.FIRE || block == Blocks.SOUL_FIRE) return fire.getValue();
         if (block == Blocks.MAGMA_BLOCK) return magma.getValue();
         return false;
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Avoid.class);
+    }
+    public static Avoid itz() {
+        return ModuleManager.get(Avoid.class);
     }
 }

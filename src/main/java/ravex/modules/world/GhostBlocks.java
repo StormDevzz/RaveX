@@ -1,7 +1,13 @@
 package ravex.modules.world;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
+import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.resources.Identifier;
+import ravex.event.Subscribe;
+import ravex.event.network.PacketEvent;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -12,7 +18,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 public class GhostBlocks extends Module {
-    public static final GhostBlocks INSTANCE = new GhostBlocks();
     public final ModeParameter mode = new ModeParameter("Mode", "Strict", java.util.List.of("Strict", "Smooth"));
     public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0, 0.5);
     private final Set<Long> recentlyMined = new HashSet<>();
@@ -53,30 +58,51 @@ public class GhostBlocks extends Module {
         }
     }
     public static void markMined(net.minecraft.core.BlockPos pos) {
-        if (INSTANCE.getEnabled()) {
-            INSTANCE.recentlyMined.add(pos.asLong());
+        if (ModuleManager.get(GhostBlocks.class).getEnabled()) {
+            ModuleManager.get(GhostBlocks.class).recentlyMined.add(pos.asLong());
         }
     }
+    @Subscribe
+    public void onPacketEvent(PacketEvent event) {
+        if (!getEnabled() || !event.isReceive()) return;
+        Object packet = event.getPacket();
+        if (packet instanceof ClientboundBlockUpdatePacket blockUpdate) {
+            BlockPos pos = blockUpdate.getPos();
+            onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), getBlockId(blockUpdate.getBlockState()));
+        } else if (packet instanceof ClientboundSectionBlocksUpdatePacket sectionUpdate) {
+            sectionUpdate.runUpdates((pos, state) -> {
+                onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), getBlockId(state));
+            });
+        }
+    }
+
     public static void onServerBlockUpdate(int x, int y, int z, String blockId) {
-        if (!INSTANCE.getEnabled()) return;
+        if (!ModuleManager.get(GhostBlocks.class).getEnabled()) return;
         long packed = BlockUtility.packPos(x, y, z);
-        INSTANCE.recentlyMined.remove(packed);
+        ModuleManager.get(GhostBlocks.class).recentlyMined.remove(packed);
         if (blockId != null && !blockId.equals("minecraft:air")) {
-            INSTANCE.serverBlocks.put(packed, blockId);
+            ModuleManager.get(GhostBlocks.class).serverBlocks.put(packed, blockId);
         } else {
-            INSTANCE.serverBlocks.remove(packed);
+            ModuleManager.get(GhostBlocks.class).serverBlocks.remove(packed);
         }
     }
     public static boolean isGhostBlock(int x, int y, int z, String clientBlockId) {
-        if (!INSTANCE.getEnabled()) return false;
+        if (!ModuleManager.get(GhostBlocks.class).getEnabled()) return false;
         long packed = BlockUtility.packPos(x, y, z);
-        if (INSTANCE.recentlyMined.contains(packed)) return true;
-        String serverBlock = INSTANCE.serverBlocks.get(packed);
+        if (ModuleManager.get(GhostBlocks.class).recentlyMined.contains(packed)) return true;
+        String serverBlock = ModuleManager.get(GhostBlocks.class).serverBlocks.get(packed);
         if (serverBlock != null && !serverBlock.equals(clientBlockId)) return true;
         return false;
     }
     public static String getBlockId(net.minecraft.world.level.block.state.BlockState state) {
         Identifier rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         return rl != null ? rl.toString() : "minecraft:air";
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(GhostBlocks.class);
+    }
+    public static GhostBlocks itz() {
+        return ModuleManager.get(GhostBlocks.class);
     }
 }

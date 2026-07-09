@@ -2,13 +2,14 @@ package ravex.gui.clickgui;
 
 import ravex.modules.client.ClickGui;
 import ravex.utility.render.Render2DEngine;
+import ravex.manager.ModuleManager;
 
 public class ColorUtility {
     public static final int HEADER_COLOR = 0x330A0A12;
     public static final int HEADER_GRADIENT_END = 0x330A0A12;
     public static final int PANEL_BORDER_COLOR = 0x228A8A8A;
-    public static final int BACKGROUND_START = 0x18080810;
-    public static final int BACKGROUND_END = 0x300A0A14;
+    public static final int BACKGROUND_START = 0x180C0C0C;
+    public static final int BACKGROUND_END = 0x30101010;
     public static final int PANEL_BODY_START = 0x22101210;
     public static final int PANEL_BODY_END = 0x30101210;
     public static final int SHADOW_COLOR = 0x20000000;
@@ -36,7 +37,7 @@ public class ColorUtility {
     }
 
     public static int getColorRGB(int index) {
-        ClickGui cfg = ClickGui.INSTANCE;
+        ClickGui cfg = ModuleManager.get(ClickGui.class);
         String mode = cfg.colorMode.getValue();
         int speed = cfg.colorSpeed.getValue().intValue();
         int c1 = cfg.color1.getValue();

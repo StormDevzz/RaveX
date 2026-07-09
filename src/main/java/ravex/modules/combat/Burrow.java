@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -8,7 +9,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -16,7 +16,6 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
 public class Burrow extends Module {
-    public static final Burrow INSTANCE = new Burrow();
     public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         java.util.List.of("Obsidian", "Cobblestone", "Web", "Anvil"));
     public final BooleanParameter autoCenter = new BooleanParameter("AutoCenter", true);
@@ -91,4 +90,11 @@ public class Burrow extends Module {
         return -1;
     }
     private static native double[] nativeCalculate(double px, double py, double pz, double height, boolean autoCenter);
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Burrow.class);
+    }
+    public static Burrow itz() {
+        return ModuleManager.get(Burrow.class);
+    }
+
 }

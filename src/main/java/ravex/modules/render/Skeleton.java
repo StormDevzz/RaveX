@@ -1,5 +1,5 @@
 package ravex.modules.render;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 public class Skeleton extends Module {
-    public static final Skeleton INSTANCE = new Skeleton();
     public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
     public final NumberParameter lineWidth = new NumberParameter("LineWidth", 1.0, 0.5, 3.0, 0.1);
     public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
@@ -151,5 +150,12 @@ public class Skeleton extends Module {
                                  float x1, float y1, float z1, float x2, float y2, float z2,
                                  int r, int g, int b, int a, float lineWidth) {
         BlockRenderer.renderLine3D(builder, matrix, x1, y1, z1, x2, y2, z2, r, g, b, a, lineWidth);
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Skeleton.class);
+    }
+
+    public static Skeleton itz() {
+        return ModuleManager.get(Skeleton.class);
     }
 }

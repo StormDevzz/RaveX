@@ -447,6 +447,50 @@ public class Render2DEngine {
         drawRoundBorder(graphics, x, y, width, height, radius, borderWidth, borderColor);
     }
 
+    private static final Map<String, Identifier> PERFECT_RR_CACHE = new HashMap<>();
+
+    public static void drawPixelPerfectRound(GuiGraphics graphics, int x, int y, int width, int height, int radius, int color) {
+        if (width <= 1 || height <= 1) { drawRect(graphics, x, y, width, height, color); return; }
+        if (radius <= 0) { drawRect(graphics, x, y, width, height, color); return; }
+        int maxR = Math.min(width, height) / 2;
+        if (radius > maxR) radius = maxR;
+        if (radius <= 0) { drawRect(graphics, x, y, width, height, color); return; }
+        int a = (color >> 24) & 0xFF;
+        if (a == 0) return;
+
+        String key = width + "_" + height + "_" + radius;
+        Identifier tex = PERFECT_RR_CACHE.get(key);
+        if (tex == null) {
+            NativeImage img = new NativeImage(width, height, false);
+            float r = radius;
+            float rx = width / 2f;
+            float ry = height / 2f;
+            for (int py = 0; py < height; py++) {
+                for (int px = 0; px < width; px++) {
+                    float fx = px + 0.5f;
+                    float fy = py + 0.5f;
+                    float cx = Math.max(r, Math.min(width - r, fx));
+                    float cy = Math.max(r, Math.min(height - r, fy));
+                    float dx = fx - cx;
+                    float dy = fy - cy;
+                    float dist = (float) Math.sqrt(dx * dx + dy * dy) - r;
+                    float alpha = Math.max(0, Math.min(1, 0.5f - dist));
+                    int aa = Math.round(alpha * 255);
+                    if (aa > 0) {
+                        img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
+                    }
+                }
+            }
+            DynamicTexture dt = new DynamicTexture(() -> "perfect_rr_" + key, img);
+            setLinearSampler(dt);
+            tex = Identifier.fromNamespaceAndPath("ravex", "perfect_rr_" + key);
+            Minecraft.getInstance().getTextureManager().register(tex, dt);
+            PERFECT_RR_CACHE.put(key, tex);
+        }
+
+        graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, width, height, width, height, color);
+    }
+
     public static void drawCheckmark(GuiGraphics graphics, int x, int y, int size, int color) {
         int s = size / 3;
         int x1 = x, y1 = y + s;

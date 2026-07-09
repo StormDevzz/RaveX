@@ -12,7 +12,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.RaveX;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.ActionParameter;
 import ravex.parameter.BooleanParameter;
@@ -27,13 +26,14 @@ import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
+import ravex.manager.ModuleManager;
 public class SelfTrap extends Module {
     public static final SelfTrap INSTANCE = new SelfTrap(); //Xiaomii
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
-        Minecraft.getInstance().setScreen(new ravex.gui.blockbrowser.BlockBrowserScreen(
+        Minecraft.getInstance().setScreen(new ravex.gui.browser.BlockBrowserScreen(
             Minecraft.getInstance().screen,
-            SelfTrap.INSTANCE::isBlockSelected,
-            SelfTrap.INSTANCE::setBlockSelected
+            ModuleManager.get(ravex.modules.combat.SelfTrap.class)::isBlockSelected,
+            ModuleManager.get(ravex.modules.combat.SelfTrap.class)::setBlockSelected
         ));
     });
     public final ModeParameter mode = new ModeParameter("Mode", "Full", List.of("Full", "Simple", "Roof"));
@@ -62,6 +62,12 @@ public class SelfTrap extends Module {
         strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(SelfTrap.class);
+    }
+    public static SelfTrap itz() {
+        return ModuleManager.get(SelfTrap.class);
     }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;

@@ -1,4 +1,5 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -14,7 +15,6 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThr
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -23,7 +23,6 @@ import ravex.utility.render.Render3DUtils;
 import java.util.*;
 
 public class Trails extends Module {
-    public static final Trails INSTANCE = new Trails();
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     public final NumberParameter width = new NumberParameter("Width", 2.0, 1.0, 6.0, 0.5);
     public final NumberParameter time = new NumberParameter("Time", 3.0, 0.5, 10.0, 0.5);
@@ -124,16 +123,16 @@ public class Trails extends Module {
     public static void renderTrails(Matrix4f modelViewMatrix, Vec3 camPos) {
         try {
             long now = System.currentTimeMillis();
-            boolean glowEnabled = INSTANCE.glow.getValue();
-            int glowLayersVal = INSTANCE.glowLayers.getValue().intValue();
-            float glowSpreadVal = INSTANCE.glowSpread.getValue().floatValue();
+            boolean glowEnabled = ModuleManager.get(Trails.class).glow.getValue();
+            int glowLayersVal = ModuleManager.get(Trails.class).glowLayers.getValue().intValue();
+            float glowSpreadVal = ModuleManager.get(Trails.class).glowSpread.getValue().floatValue();
             renderFadingTrail(entityTrails, modelViewMatrix, camPos, now,
-                    INSTANCE.color.getValue(), INSTANCE.width.getValue().floatValue(),
-                    (long) (INSTANCE.time.getValue() * 1000.0),
+                    ModuleManager.get(Trails.class).color.getValue(), ModuleManager.get(Trails.class).width.getValue().floatValue(),
+                    (long) (ModuleManager.get(Trails.class).time.getValue() * 1000.0),
                     glowEnabled, glowLayersVal, glowSpreadVal);
             renderFadingTrail(playerTrails, modelViewMatrix, camPos, now,
-                    INSTANCE.playerColor.getValue(), INSTANCE.playerWidth.getValue().floatValue(),
-                    (long) (INSTANCE.playerTime.getValue() * 1000.0),
+                    ModuleManager.get(Trails.class).playerColor.getValue(), ModuleManager.get(Trails.class).playerWidth.getValue().floatValue(),
+                    (long) (ModuleManager.get(Trails.class).playerTime.getValue() * 1000.0),
                     glowEnabled, glowLayersVal, glowSpreadVal);
         } catch (Throwable t) {
             System.err.println("[RaveX] Trails render error: " + t.getMessage());
@@ -226,5 +225,12 @@ public class Trails extends Module {
     protected void onDisable() {
         entityTrails.clear();
         playerTrails.clear();
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Trails.class);
+    }
+
+    public static Trails itz() {
+        return ModuleManager.get(Trails.class);
     }
 }

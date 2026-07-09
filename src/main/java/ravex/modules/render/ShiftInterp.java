@@ -1,12 +1,11 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 public class ShiftInterp extends Module {
-    public static final ShiftInterp INSTANCE = new ShiftInterp();
     public final ModeParameter target = new ModeParameter("Target", "All", java.util.List.of("All", "Others", "Self"));
 
     public boolean shouldCrouch(Entity entity) {
@@ -22,5 +21,12 @@ public class ShiftInterp extends Module {
         } else {
             return true;
         }
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(ShiftInterp.class);
+    }
+
+    public static ShiftInterp itz() {
+        return ModuleManager.get(ShiftInterp.class);
     }
 }

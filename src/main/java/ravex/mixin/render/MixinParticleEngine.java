@@ -25,7 +25,7 @@ public class MixinParticleEngine {
 
     @Inject(method = "createParticle", at = @At("HEAD"), cancellable = true)
     private void onCreateParticle(ParticleOptions options, double x, double y, double z, double dx, double dy, double dz, CallbackInfoReturnable<Particle> cir) {
-        if (NoRender.INSTANCE.getEnabled()) {
+        if (NoRender.maybeEnabled()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             net.minecraft.world.entity.Entity cam = mc.getCameraEntity();
             if (cam != null) {
@@ -38,19 +38,19 @@ public class MixinParticleEngine {
                 }
             }
 
-            if (NoRender.INSTANCE.blockParticles.getValue() && (
+            if (NoRender.itz().blockParticles.getValue() && (
                 options.getType() == ParticleTypes.BLOCK ||
                 options.getType() == ParticleTypes.BLOCK_MARKER ||
                 options.getType() == ParticleTypes.BLOCK_CRUMBLE ||
                 options.getType() == ParticleTypes.FALLING_DUST
             )) {
                 cir.setReturnValue(null);
-            } else if (NoRender.INSTANCE.explosions.getValue() && (
+            } else if (NoRender.itz().explosions.getValue() && (
                 options.getType() == ParticleTypes.EXPLOSION ||
                 options.getType() == ParticleTypes.EXPLOSION_EMITTER
             )) {
                 cir.setReturnValue(null);
-            } else if (NoRender.INSTANCE.sprint.getValue() && options.getType() == ParticleTypes.CLOUD) {
+            } else if (NoRender.itz().sprint.getValue() && options.getType() == ParticleTypes.CLOUD) {
                 cir.setReturnValue(null);
             }
         }
@@ -70,8 +70,8 @@ public class MixinParticleEngine {
 
     @Inject(method = "add", at = @At("HEAD"), cancellable = true)
     private void onAdd(Particle particle, CallbackInfo ci) {
-        if (NoRender.INSTANCE.getEnabled()) {
-            if (NoRender.INSTANCE.blockParticles.getValue() && particle instanceof net.minecraft.client.particle.TerrainParticle) {
+        if (NoRender.maybeEnabled()) {
+            if (NoRender.itz().blockParticles.getValue() && particle instanceof net.minecraft.client.particle.TerrainParticle) {
                 ci.cancel();
                 return;
             }

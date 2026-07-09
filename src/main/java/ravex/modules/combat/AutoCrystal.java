@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
@@ -25,8 +24,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.manager.ModuleManager;
 public class AutoCrystal extends Module {
-    public static final AutoCrystal INSTANCE = new AutoCrystal();
     public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",    4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  breakRange     = new NumberParameter("BreakRange",    4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay     = new NumberParameter("PlaceDelay",   100, 0, 500, 10);
@@ -412,8 +411,8 @@ public class AutoCrystal extends Module {
                 }
             }
         }
-        if (BasePlace.INSTANCE.getEnabled() && BasePlace.INSTANCE.autoCrystalSync.getValue() && BasePlace.lastPlacedBase != null) {
-            long msLimit = (long) (BasePlace.INSTANCE.syncPredictTicks.getValue() * 50);
+        if (ModuleManager.get(ravex.modules.combat.BasePlace.class).getEnabled() && ModuleManager.get(ravex.modules.combat.BasePlace.class).autoCrystalSync.getValue() && BasePlace.lastPlacedBase != null) {
+            long msLimit = (long) (ModuleManager.get(ravex.modules.combat.BasePlace.class).syncPredictTicks.getValue() * 50);
             if (System.currentTimeMillis() - BasePlace.lastPlacedTime <= msLimit) {
                 BlockPos predictedPos = BasePlace.lastPlacedBase;
                 double dist = Math.sqrt(predictedPos.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
@@ -586,6 +585,12 @@ public class AutoCrystal extends Module {
     }
     public static boolean isNativeAvailable() {
         return NATIVE.isLoaded();
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoCrystal.class);
+    }
+    public static AutoCrystal itz() {
+        return ModuleManager.get(AutoCrystal.class);
     }
     private double[] getEntityStats(LivingEntity player) {
         int protectionEpf = 0;

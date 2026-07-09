@@ -1,14 +1,13 @@
 package ravex.modules.world;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 public class AutoWither extends Module {
-    public static final AutoWither INSTANCE = new AutoWither();
     public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0, 1.0);
     public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
     private enum State { IDLE, BUILDING, RETRY, DONE }
@@ -256,5 +255,8 @@ public class AutoWither extends Module {
         if (mc.player != null) {
             mc.player.displayClientMessage(Component.literal("§8[§5AutoWither§8] §7" + msg), false);
         }
+    }
+    public static AutoWither itz() {
+        return ModuleManager.get(AutoWither.class);
     }
 }

@@ -13,7 +13,7 @@ import ravex.modules.render.NameTags;
 public class MixinEntityRenderer {
     @Inject(method = "shouldShowName", at = @At("HEAD"), cancellable = true)
     private void onShouldShowName(Entity entity, double distance, CallbackInfoReturnable<Boolean> cir) {
-        if (NameTags.INSTANCE.getEnabled() && entity instanceof LivingEntity) {
+        if (NameTags.maybeEnabled() && entity instanceof LivingEntity) {
             cir.setReturnValue(false); 
         }
     }

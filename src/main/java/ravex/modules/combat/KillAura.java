@@ -13,8 +13,8 @@ import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 import java.util.List;
+import ravex.manager.ModuleManager;
 public class KillAura extends Module {
-    public static final KillAura INSTANCE = new KillAura();
     public final NumberParameter range = new NumberParameter("Range", 4.2, 3.0, 6.0, 0.1);
     public final NumberParameter cooldownThreshold = new NumberParameter("Cooldown", 0.9, 0.0, 1.0, 0.05);
     public final NumberParameter switchDelay = new NumberParameter("SwitchDelay", 100, 0, 1000, 10);
@@ -42,6 +42,12 @@ public class KillAura extends Module {
     private float prevYaw = 0;
     private float prevPitch = 0;
 
+    public static boolean maybeEnabled() {
+        return maybeEnabled(KillAura.class);
+    }
+    public static KillAura itz() {
+        return ModuleManager.get(KillAura.class);
+    }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
@@ -156,7 +162,7 @@ public class KillAura extends Module {
             if (dist > maxDist) continue;
             if (!throughWalls.getValue() && !mc.player.hasLineOfSight(le)) continue;
             if (throughWalls.getValue() && !mc.player.hasLineOfSight(le) && dist > wallDist) continue;
-            if (AntiBot.INSTANCE.getEnabled() && AntiBot.INSTANCE.isBot(e)) continue;
+            if (ModuleManager.get(ravex.modules.combat.AntiBot.class).getEnabled() && ModuleManager.get(ravex.modules.combat.AntiBot.class).isBot(e)) continue;
             list.add(le);
         }
         String mode = targetMode.getValue();

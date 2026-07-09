@@ -6,6 +6,7 @@
     "compatibilityLevel": "JAVA_21",
     "mixins": [
         "client.MixinMinecraftClient",
+        "client.MixinKeyMapping",
         "client.AccessorMinecraft",
         "client.MixinClientBrandRetriever",
         "client.MixinKeyboard",
@@ -68,7 +69,7 @@
         "network.MixinBlink",
         "movement.MixinExplosionVelocity",
         "movement.MixinPacketEntityVelocity",
-        "movement.MixinGuiWalk",
+        "movement.MixinGuiMove",
         "movement.MixinNoSlowDown",
         "movement.MixinSpider",
         "movement.MixinSpeed",
@@ -99,9 +100,12 @@
         "render.MixinGameRendererFreeCam",
         "render.MixinItemStack",
         "render.MixinCrosshair",
+        
         "render.MixinClientTooltipComponent",
         "render.AccessorRenderType",
-        "font.MixinTrueTypeGlyphProviderDefinition"
+        "font.MixinTrueTypeGlyphProviderDefinition",
+        "text2speech.MixinNarrator",
+        "realms.MixinRealmsClient",
     ],
     "client": [        "player.MixinChorusExploit", "player.MixinChorusPositionHandler", "player.MixinTridentBoost", "player.MixinLivingEntityTracker"],
     "server": [],

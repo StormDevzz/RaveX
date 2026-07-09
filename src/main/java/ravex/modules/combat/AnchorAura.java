@@ -1,5 +1,6 @@
 package ravex.modules.combat;
 
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -34,7 +35,6 @@ import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
 
 public class AnchorAura extends Module {
-    public static final AnchorAura INSTANCE = new AnchorAura();
     public final ModeParameter targetMode = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
     public final ModeParameter targetType = new ModeParameter("TargetType", "Players",
             List.of("Players", "Monsters", "Passives", "All"));
@@ -75,6 +75,12 @@ public class AnchorAura extends Module {
         armorDurabilityThreshold.setVisible(alwaysConsiderDurability::getValue);
     }
 
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AnchorAura.class);
+    }
+    public static AnchorAura itz() {
+        return ModuleManager.get(AnchorAura.class);
+    }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }

@@ -3,7 +3,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -12,7 +12,6 @@ import ravex.utility.misc.MobUtility;
 import java.util.Comparator;
 import java.util.List;
 public class AutoTrade extends Module {
-    public static final AutoTrade INSTANCE = new AutoTrade();
     public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Best", List.of("Best", "Cheapest", "First"));
     public final NumberParameter maxTrades = new NumberParameter("MaxTrades", 10, 1, 100, 1);
@@ -82,5 +81,8 @@ public class AutoTrade extends Module {
         if (!a.isEmpty()) cost += a.getCount();
         if (!b.isEmpty()) cost += b.getCount();
         return cost;
+    }
+    public static AutoTrade itz() {
+        return ModuleManager.get(AutoTrade.class);
     }
 }

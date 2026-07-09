@@ -1,7 +1,12 @@
 package ravex.modules.misc;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
+import net.minecraft.world.item.Items;
 import ravex.RaveX;
+import ravex.event.Subscribe;
+import ravex.event.network.PacketEvent;
 import ravex.utility.nativelib.NativeLibrary;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
@@ -10,7 +15,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.phys.Vec3;
 public class FakePearl extends Module {
-    public static final FakePearl INSTANCE = new FakePearl();
     public final ModeParameter trigger = new ModeParameter("Trigger", "OnEnable", java.util.List.of("OnEnable", "RightClick", "Both"));
     public final NumberParameter velocity = new NumberParameter("Velocity", 1.5, 0.5, 3.0, 0.1);
     public final NumberParameter gravity = new NumberParameter("Gravity", 0.03, 0.01, 0.1, 0.01);
@@ -18,6 +22,22 @@ public class FakePearl extends Module {
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_fakepearl");
     static {
         NATIVE.load();
+    }
+
+    @Subscribe
+    public void onPacket(PacketEvent event) {
+        if (!getEnabled() || !event.isSend()) return;
+        Packet<?> packet = event.getPacket();
+        if (!(packet instanceof ServerboundUseItemPacket usePacket)) return;
+        String trg = trigger.getValue();
+        if ("Right Click".equals(trg) || "Both".equals(trg)) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
+                event.setCancelled(true);
+                throwFakePearl();
+                mc.player.swing(usePacket.getHand());
+            }
+        }
     }
 
     @Override
@@ -74,4 +94,8 @@ public class FakePearl extends Module {
         outVel[2] = Math.cos(yawRad) * Math.cos(pitchRad) * speed;
     }
     private static native void nativeCalculateVelocity(double yaw, double pitch, double speed, double[] outVel);
+
+    public static FakePearl itz() {
+        return ModuleManager.get(FakePearl.class);
+    }
 }

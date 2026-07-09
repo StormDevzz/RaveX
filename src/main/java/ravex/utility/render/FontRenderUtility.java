@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import ravex.manager.ModuleManager;
 
 public class FontRenderUtility {
     private static final Logger LOGGER = LoggerFactory.getLogger("ravex/font");
@@ -33,14 +34,14 @@ public class FontRenderUtility {
     }
 
     public static FontType getCurrentFontType() {
-        if (!ravex.modules.client.Fonts.INSTANCE.enabled.getValue()) {
+        if (!ModuleManager.get(ravex.modules.client.Fonts.class).enabled.getValue()) {
             return FontType.VANILLA;
         }
-        String font = ravex.modules.client.Fonts.INSTANCE.fontType.getValue();
+        String font = ModuleManager.get(ravex.modules.client.Fonts.class).fontType.getValue();
         switch (font) {
             case "Comfortaa":     return FontType.COMFORTAA;
-            case "SF Medium":     return FontType.SF_MEDIUM;
-            case "SF Bold":       return FontType.SF_BOLD;
+            case "SFMedium":      return FontType.SF_MEDIUM;
+            case "SFBold":        return FontType.SF_BOLD;
             default:              return FontType.VANILLA;
         }
     }
@@ -49,7 +50,7 @@ public class FontRenderUtility {
         if (text == null) return Component.empty();
 
         FontType actualType = fontType;
-        boolean customFontActive = ravex.modules.client.Fonts.INSTANCE.enabled.getValue();
+        boolean customFontActive = ModuleManager.get(ravex.modules.client.Fonts.class).enabled.getValue();
 
         if (actualType != FontType.VANILLA && !customFontActive) {
             actualType = FontType.VANILLA;
@@ -78,12 +79,50 @@ public class FontRenderUtility {
         return result;
     }
 
+    public static Component getTextComponent(String text) {
+        return getFontComponent(getCurrentFontType(), text);
+    }
+
+    public static FontDescription getCurrentFontDescription() {
+        FontType type = getCurrentFontType();
+        switch (type) {
+            case COMFORTAA: return COMFORTAA_DESC;
+            case SF_MEDIUM: return SF_MEDIUM_DESC;
+            case SF_BOLD:   return SF_BOLD_DESC;
+            default:        return null;
+        }
+    }
+
+    public static Component applyGlobalFont(Component component) {
+        FontDescription desc = getCurrentFontDescription();
+        if (desc == null) return component;
+        return applyFont(component, desc);
+    }
+
+    private static Component applyFont(Component component, FontDescription desc) {
+        if (component.getSiblings().isEmpty()) {
+            if (component.getStyle().getFont() != null) return component;
+            return component.copy().withStyle(component.getStyle().withFont(desc));
+        }
+        net.minecraft.network.chat.MutableComponent result;
+        if (component.getStyle().getFont() == null) {
+            result = component.copy().withStyle(component.getStyle().withFont(desc));
+        } else {
+            result = component.copy();
+        }
+        result.getSiblings().clear();
+        for (Component sib : component.getSiblings()) {
+            result.append(applyFont(sib, desc));
+        }
+        return result;
+    }
+
     public static void drawString(GuiGraphics graphics, String text, int x, int y, int color, boolean shadow) {
         drawString(graphics, getCurrentFontType(), text, x, y, color, shadow);
     }
 
     public static void drawString(GuiGraphics graphics, FontType fontType, String text, int x, int y, int color, boolean shadow) {
-        double scale = ravex.modules.client.Fonts.INSTANCE.fontSize.getValue();
+        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize.getValue();
         Component component = getFontComponent(fontType, text);
 
         if (!renderOnce) {
@@ -108,12 +147,12 @@ public class FontRenderUtility {
     }
 
     public static int getStringWidth(FontType fontType, String text) {
-        double scale = ravex.modules.client.Fonts.INSTANCE.fontSize.getValue();
+        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize.getValue();
         return (int) (Minecraft.getInstance().font.width(getFontComponent(fontType, text)) * scale);
     }
 
     public static int getFontHeight() {
-        double scale = ravex.modules.client.Fonts.INSTANCE.fontSize.getValue();
+        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize.getValue();
         return (int) (Minecraft.getInstance().font.lineHeight * scale);
     }
 }

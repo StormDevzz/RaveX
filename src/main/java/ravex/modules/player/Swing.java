@@ -1,6 +1,6 @@
 package ravex.modules.player;
+import ravex.manager.ModuleManager;
 import com.google.gson.Gson;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -9,7 +9,6 @@ import ravex.parameter.NumberParameter;
 import java.lang.reflect.Field;
 import java.util.List;
 public class Swing extends Module {
-    public static final Swing INSTANCE = new Swing();
     public final ModeParameter mode = new ModeParameter("Mode", "1.8", List.of("1.8", "1.12.2", "Custom"));
     public final NumberParameter duration = new NumberParameter("Duration", 6, 1, 20, 1);
     public final ModeParameter swingPath = new ModeParameter("SwingPath", "Normal", List.of("Normal", "Smooth", "Bounce", "Reverse"));
@@ -74,5 +73,11 @@ public class Swing extends Module {
     protected void onDisable() {
         super.onDisable();
         setLocomotionEnabled(false);
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Swing.class);
+    }
+    public static Swing itz() {
+        return ModuleManager.get(Swing.class);
     }
 }

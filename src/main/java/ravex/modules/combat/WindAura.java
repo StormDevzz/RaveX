@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -12,7 +13,6 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.InventoryUtility;
 public class WindAura extends Module {
-    public static final WindAura INSTANCE = new WindAura();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.List.of("Normal", "Silent"));
     public final NumberParameter range = new NumberParameter("Range", 10.0, 3.0, 30.0, 0.5);
     public final NumberParameter delay = new NumberParameter("Delay", 5.0, 1.0, 20.0, 1.0);
@@ -74,4 +74,11 @@ public class WindAura extends Module {
             mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
         }
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(WindAura.class);
+    }
+    public static WindAura itz() {
+        return ModuleManager.get(WindAura.class);
+    }
+
 }

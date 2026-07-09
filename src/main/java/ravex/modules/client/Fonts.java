@@ -1,6 +1,6 @@
 package ravex.modules.client;
+import ravex.manager.ModuleManager;
 
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -9,7 +9,6 @@ import ravex.parameter.ToggleLockParameter;
 import java.util.List;
 
 public class Fonts extends Module {
-    public static final Fonts INSTANCE = new Fonts();
     public final BooleanParameter enabled = new BooleanParameter("Enabled", true);
     public final ModeParameter fontType = new ModeParameter("Font", "SFBold",
             List.of("Comfortaa", "SFMedium", "SFBold", "Vanilla"));
@@ -19,24 +18,28 @@ public class Fonts extends Module {
             List.of("Normal", "Upper", "Lower"));
     public final ToggleLockParameter lockToggle = new ToggleLockParameter("LockToggle", true);
 
-    public static boolean isEnabled() {
-        return INSTANCE.enabled.getValue();
+    public static boolean maybeEnabled() {
+        return ModuleManager.get(Fonts.class).enabled.getValue();
+    }
+
+    public static Fonts itz() {
+        return ModuleManager.get(Fonts.class);
     }
 
     public static String getActiveFont() {
-        return INSTANCE.fontType.getValue();
+        return ModuleManager.get(Fonts.class).fontType.getValue();
     }
 
     public static float getActiveFontSize() {
-        return INSTANCE.fontSize.getValue().floatValue();
+        return ModuleManager.get(Fonts.class).fontSize.getValue().floatValue();
     }
 
     public static boolean hasTextShadow() {
-        return INSTANCE.textShadow.getValue();
+        return ModuleManager.get(Fonts.class).textShadow.getValue();
     }
 
     public static String applyTextCase(String text) {
-        String val = INSTANCE.textCase.getValue();
+        String val = ModuleManager.get(Fonts.class).textCase.getValue();
         if ("Upper".equals(val))
             return text.toUpperCase();
         if ("Lower".equals(val))

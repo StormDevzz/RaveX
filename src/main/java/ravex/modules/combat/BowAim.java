@@ -1,10 +1,10 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import ravex.utility.misc.MobUtility;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -12,7 +12,6 @@ import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.rotation.SilentRotation;
 public class BowAim extends Module {
-    public static final BowAim INSTANCE = new BowAim();
     public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.0, 1.0);
     public final ModeParameter targetType = new ModeParameter("Targets", "Players", List.of("Players", "Mobs", "Both"));
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
@@ -164,6 +163,12 @@ public class BowAim extends Module {
     }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(BowAim.class);
+    }
+    public static BowAim itz() {
+        return ModuleManager.get(BowAim.class);
     }
     private static native double[] nativeCalculateBowAim(
         double playerX, double playerY, double playerZ,

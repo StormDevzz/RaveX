@@ -1,13 +1,18 @@
 package ravex.modules.hud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
+import ravex.utility.render.HudRenderer;
+import ravex.utility.render.TextureLoader;
+import ravex.manager.ModuleManager;
 public class TpsHud extends Module {
-    public static final TpsHud INSTANCE = new TpsHud();
+    private static final Identifier ICON = TextureLoader.HUD_TPS_WHITE;
+    private static final int IS = HudRenderer.getIconSize();
     private long lastRealTime = 0;
     private long lastGameTick = -1;
     private float smoothedTPS = 20.0f;
@@ -18,7 +23,7 @@ public class TpsHud extends Module {
     }
     @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!Hud.INSTANCE.getEnabled()) return;
+        if (!ModuleManager.get(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         updateTPS(mc);
@@ -31,17 +36,19 @@ public class TpsHud extends Module {
         for (var p : getParameters()) {
             if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) shadow = bp.getValue();
         }
-        int pw = 66;
+        String text = String.format("%.1f", smoothedTPS);
+        int tw = ravex.utility.render.FontRenderUtility.getStringWidth(text);
+        String label = "TPS";
+        int lw = ravex.utility.render.FontRenderUtility.getStringWidth(label);
+        int pw = 4 + Math.max(tw, lw) + 4 + IS + 4;
         int ph = 26;
         setWidth(pw);
         setHeight(ph);
-        ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, pw, ph, ColorUtility.getActiveColor());
-        String text = String.format("%.1f", smoothedTPS);
-        int tw = ravex.utility.render.FontRenderUtility.getStringWidth(text);
-        ravex.utility.render.FontRenderUtility.drawString(graphics, text, bx + (pw - tw) / 2, by + 4, col, shadow);
-        String label = "TPS";
-        int lw = ravex.utility.render.FontRenderUtility.getStringWidth(label);
-        ravex.utility.render.FontRenderUtility.drawString(graphics, label, bx + (pw - lw) / 2, by + 16, 0xFF8080A0, false);
+        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        int cx = bx + 4;
+        ravex.utility.render.FontRenderUtility.drawString(graphics, text, cx, by + 4, col, shadow);
+        ravex.utility.render.FontRenderUtility.drawString(graphics, label, cx, by + 16, 0xFF8080A0, false);
+        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
     }
     private void updateTPS(Minecraft mc) {
         long now = System.currentTimeMillis();
@@ -59,5 +66,13 @@ public class TpsHud extends Module {
             lastGameTick = gameTick;
             lastRealTime = now;
         }
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(TpsHud.class);
+    }
+
+    public static TpsHud itz() {
+        return ModuleManager.get(TpsHud.class);
     }
 }

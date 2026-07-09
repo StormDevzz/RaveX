@@ -44,7 +44,6 @@ public class NativeLoader {
 
     private static void extractResourceToDir(File dir, String resourcePath, String fileName) {
         File outFile = new File(dir, fileName);
-        if (outFile.exists() && outFile.length() > 0) return;
         try (InputStream in = NativeLoader.class.getResourceAsStream(resourcePath)) {
             if (in == null) return;
             try (FileOutputStream out = new FileOutputStream(outFile)) {
@@ -92,7 +91,7 @@ public class NativeLoader {
         String[] knownLibs = {
             "libravex_jni.so", "libravex_optimize.so", "libravex_manager.so",
             "libravex_github_tools.so", "libravex_loader.so", "libravex_addon.so",
-            "libravex_benchmark.so", "libravex_fileprot.so", "libravex_fastexp.so",
+            "libravex_fileprot.so", "libravex_fastexp.so",
             "libravex_nativesc.so",
             "libravex_autocrystal.so", "libravex_phase.so", "libravex_tntaura.so",
             "libravex_anchoraura.so", "libravex_breaker.so", "libravex_holefill.so",
@@ -106,7 +105,7 @@ public class NativeLoader {
             "libravex_burrow.so", "libravex_autoregear.so", "libravex_antiregear.so",
             "libravex_elytraplusplus.so",
             "libravex_desktopgui.so", "libravex_calculator.so",
-            "libravex_faststairs.so", "libravex_noslow.so", "libravex_nofall.so",
+            "libravex_faststairs.so", "libravex_noslow.so",
             "libravex_fakepearl.so", "libravex_antivoid.so",
             "libravex_antiquit.so", "libravex_safewalk.so", "libravex_mediaquery.so",
             "libravex_dc.so", "libravex_nametags.so", "libravex_animations.so",

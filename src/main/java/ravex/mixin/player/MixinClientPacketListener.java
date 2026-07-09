@@ -6,23 +6,22 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import ravex.modules.misc.ChatUtils;
+import ravex.modules.misc.ChatHelper;
+import ravex.modules.movement.HighJump;
 
 @Mixin(ClientPacketListener.class)
 public class MixinClientPacketListener {
 
     @ModifyVariable(method = "sendChat", at = @At("HEAD"), argsOnly = true)
     private String modifyChatMessage(String message) {
-        if (ChatUtils.INSTANCE.getEnabled() && ChatUtils.INSTANCE.zov.getValue()) {
-            return message.replace('з', 'Z').replace('З', 'Z')
-                         .replace('в', 'V').replace('В', 'V');
-        }
-        return message;
+        ChatHelper ch = ChatHelper.itz();
+        if (!ch.getEnabled() || !ch.zov.getValue()) return message;
+        return ch.applyZov(message);
     }
 
     @Inject(method = "handleOpenScreen", at = @At("HEAD"), cancellable = true)
     private void onHandleOpenScreen(net.minecraft.network.protocol.game.ClientboundOpenScreenPacket packet, CallbackInfo ci) {
-        if (ravex.modules.movement.HighJump.INSTANCE.getEnabled() && "GrimShulker".equals(ravex.modules.movement.HighJump.INSTANCE.mode.getValue())) {
+        if (HighJump.maybeEnabled() && "GrimShulker".equals(HighJump.itz().mode.getValue())) {
             if (packet.getType() == net.minecraft.world.inventory.MenuType.SHULKER_BOX) {
                 ci.cancel();
             }

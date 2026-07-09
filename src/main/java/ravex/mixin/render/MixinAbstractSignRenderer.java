@@ -15,7 +15,7 @@ import ravex.modules.render.NoRender;
 public class MixinAbstractSignRenderer {
     @Inject(method = "submit(Lnet/minecraft/client/renderer/blockentity/state/SignRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V", at = @At("HEAD"), cancellable = true)
     private void onSubmit(SignRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState, CallbackInfo ci) {
-        if (NoRender.INSTANCE.getEnabled() && NoRender.INSTANCE.signs.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().signs.getValue()) {
             ci.cancel();
         }
     }

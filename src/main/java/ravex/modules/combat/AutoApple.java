@@ -1,9 +1,9 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -11,7 +11,6 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.player.InventoryUtility;
 public class AutoApple extends Module {
-    public static final AutoApple INSTANCE = new AutoApple();
     public final ModeParameter appleType = new ModeParameter("AppleType", "Both",
             java.util.List.of("Golden", "Enchanted", "Both"));
     public final ModeParameter swapMode = new ModeParameter("SwapMode", "Silent",
@@ -21,7 +20,6 @@ public class AutoApple extends Module {
     private boolean isEating = false;
     private int eatingSlot = -1;
     private int eatTicks = 0;
-
 
     @Override
     protected void onDisable() {
@@ -132,4 +130,11 @@ public class AutoApple extends Module {
         }
         return false;
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoApple.class);
+    }
+    public static AutoApple itz() {
+        return ModuleManager.get(AutoApple.class);
+    }
+
 }

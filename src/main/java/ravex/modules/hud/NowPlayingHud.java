@@ -9,8 +9,11 @@ import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.render.HudRenderer;
+import ravex.utility.render.TextureLoader;
+import ravex.manager.ModuleManager;
 public class NowPlayingHud extends Module {
-    public static final NowPlayingHud INSTANCE = new NowPlayingHud();
+    private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
+    private static final int IS = HudRenderer.getIconSize();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_mediaquery");
     private String title = "";
     private String artist = "";
@@ -30,7 +33,7 @@ public class NowPlayingHud extends Module {
     }
     @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!Hud.INSTANCE.getEnabled()) return;
+        if (!ModuleManager.get(Hud.class).getEnabled()) return;
         long now = System.currentTimeMillis();
         if (now - lastQuery > 2000) {
             lastQuery = now;
@@ -41,23 +44,28 @@ public class NowPlayingHud extends Module {
         int bx = getX();
         int by = getY();
         int pad = 4;
-        int textX = bx + pad + coverSize + pad;
-        int textY = by + pad;
         String titleStr = (playing ? "\u25B6 " : "\u23F8 ") + displayText;
         String subStr = playing && !artist.isEmpty() ? artist : "";
         int tw = HudRenderer.textWidth(titleStr);
         int sw = HudRenderer.textWidth(subStr);
-        int pw = Math.max(tw, sw) + pad * 2 + coverSize + pad;
+        int contentW = Math.max(tw, sw);
+        int pw = 4 + contentW + pad + coverSize + pad + IS + pad;
         int ph = Math.max(HudRenderer.fontHeight() + (subStr.isEmpty() ? 0 : HudRenderer.fontHeight() + 2), coverSize) + pad * 2;
-        HudRenderer.drawPanel(graphics, bx, by, pw, ph, activeColor);
+        setWidth(pw);
+        setHeight(ph);
+        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        int textX = bx + 4;
+        int textY = by + pad;
         int covY = by + pad + (ph - coverSize - pad * 2) / 2;
+        int coverX = bx + 4 + contentW + pad;
         if (coverTexture != null && coverId != null) {
-            graphics.blit(coverId, bx + pad, covY, 0, 0, coverSize, coverSize, coverSize, coverSize);
+            graphics.blit(coverId, coverX, covY, 0, 0, coverSize, coverSize, coverSize, coverSize);
         } else {
-            graphics.fill(bx + pad, covY, bx + pad + coverSize, covY + coverSize, 0xFF222244);
-            graphics.fill(bx + pad + coverSize / 2 - 4, covY + coverSize / 2 - 4,
-                    bx + pad + coverSize / 2 + 4, covY + coverSize / 2 + 4, activeColor);
+            graphics.fill(coverX, covY, coverX + coverSize, covY + coverSize, 0xFF222244);
+            graphics.fill(coverX + coverSize / 2 - 4, covY + coverSize / 2 - 4,
+                    coverX + coverSize / 2 + 4, covY + coverSize / 2 + 4, activeColor);
         }
+        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, activeColor);
         HudRenderer.drawText(graphics, titleStr, textX, textY, playing ? 0xFFD0D0E0 : 0xFF8080A0, true);
         if (!subStr.isEmpty()) {
             HudRenderer.drawText(graphics, subStr, textX, textY + HudRenderer.fontHeight() + 2, 0xFF707090, false);
@@ -142,4 +150,12 @@ public class NowPlayingHud extends Module {
     private static native String nativeGetNowPlaying();
     private static native boolean nativeIsAvailable();
     private static native byte[] nativeDownloadArt(String url);
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(NowPlayingHud.class);
+    }
+
+    public static NowPlayingHud itz() {
+        return ModuleManager.get(NowPlayingHud.class);
+    }
 }

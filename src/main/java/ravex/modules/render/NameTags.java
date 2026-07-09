@@ -1,12 +1,11 @@
 package ravex.modules.render;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 public class NameTags extends Module {
-    public static final NameTags INSTANCE = new NameTags();
     public final BooleanParameter armor = new BooleanParameter("Armor", true);
     public final BooleanParameter handItems = new BooleanParameter("HandItems", true);
     public final BooleanParameter distanceScaling = new BooleanParameter("DistanceScaling", true);
@@ -151,5 +150,12 @@ public class NameTags extends Module {
             armorW,
             0.0
         };
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(NameTags.class);
+    }
+
+    public static NameTags itz() {
+        return ModuleManager.get(NameTags.class);
     }
 }

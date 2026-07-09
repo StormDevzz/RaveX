@@ -1,7 +1,7 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
-import ravex.modules.Category;
 import ravex.utility.misc.MobUtility;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -14,7 +14,6 @@ import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
 public class ShieldFucker extends Module {
-    public static final ShieldFucker INSTANCE = new ShieldFucker();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter wallRange = new NumberParameter("WallRange", 3.0, 1.0, 6.0, 0.1);
     public final NumberParameter switchDelay = new NumberParameter("SwitchDelay", 100, 0, 500, 10);
@@ -31,6 +30,12 @@ public class ShieldFucker extends Module {
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_shieldfucker");
     static {
         NATIVE.load();
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(ShieldFucker.class);
+    }
+    public static ShieldFucker itz() {
+        return ModuleManager.get(ShieldFucker.class);
     }
     public static class BreakAction {
         public final int targetId;

@@ -1,4 +1,5 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.textures.FilterMode;
@@ -11,7 +12,6 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Tracers extends Module {
-    public static final Tracers INSTANCE = new Tracers();
     public final ModeParameter mode = new ModeParameter("Mode", "Default", List.of("Default", "Arrows"));
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", false);
@@ -87,7 +86,7 @@ public class Tracers extends Module {
         if (tex == null)
             return;
 
-        Tracers t = INSTANCE;
+        Tracers t = ModuleManager.get(Tracers.class);
         if (!t.getEnabled() || !t.mode.getValue().equals("Arrows"))
             return;
 
@@ -221,5 +220,11 @@ public class Tracers extends Module {
             context.pose().popMatrix();
         }
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Tracers.class);
+    }
 
+    public static Tracers itz() {
+        return ModuleManager.get(Tracers.class);
+    }
 }

@@ -1,14 +1,13 @@
 package ravex.modules.movement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 public class TridentBoost extends Module {
-    public static final TridentBoost INSTANCE = new TridentBoost();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Always"));
     public final NumberParameter speed = new NumberParameter("Speed", 1.0, 0.5, 3.0, 0.1);
     public final NumberParameter vertical = new NumberParameter("Vertical", 0.5, 0.0, 2.0, 0.1);
@@ -32,5 +31,11 @@ public class TridentBoost extends Module {
         double dz = Math.cos(yaw) * Math.cos(pitch) * mult;
         mc.player.setDeltaMovement(new Vec3(dx, dy, dz));
         mc.player.hurtMarked = true;
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(TridentBoost.class);
+    }
+    public static TridentBoost itz() {
+        return ModuleManager.get(TridentBoost.class);
     }
 }

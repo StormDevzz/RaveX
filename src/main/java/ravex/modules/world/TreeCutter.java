@@ -1,4 +1,5 @@
 package ravex.modules.world;
+import ravex.manager.ModuleManager;
 
 import net.minecraft.client.Minecraft;
 import ravex.modules.Module;
@@ -8,7 +9,6 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.misc.block.BlockUtility;
 
 public class TreeCutter extends Module {
-    public static final TreeCutter INSTANCE = new TreeCutter();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
@@ -18,7 +18,7 @@ public class TreeCutter extends Module {
     private int currentToolSlot = -1;
 
     public static net.minecraft.core.BlockPos getMiningPos() {
-        TreeCutter t = INSTANCE;
+        TreeCutter t = ModuleManager.get(TreeCutter.class);
         if (!t.hasTarget) return null;
         return BlockUtility.pos(t.miningX, t.miningY, t.miningZ);
     }
@@ -64,5 +64,12 @@ public class TreeCutter extends Module {
         } else {
             BlockUtility.continueBreak(mc, tx, ty, tz, cfg);
         }
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(TreeCutter.class);
+    }
+    public static TreeCutter itz() {
+        return ModuleManager.get(TreeCutter.class);
     }
 }

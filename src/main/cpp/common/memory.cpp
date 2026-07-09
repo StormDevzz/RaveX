@@ -27,7 +27,7 @@
 namespace ravex {
 
 #ifndef _WIN32
-static std::unordered_map<std::string, std::string> parseProcMeminfo() {
+std::unordered_map<std::string, std::string> Memory::parseProcMeminfo() {
     std::unordered_map<std::string, std::string> result;
     std::ifstream meminfo("/proc/meminfo");
     std::string line;

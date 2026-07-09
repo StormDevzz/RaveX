@@ -392,7 +392,7 @@ public class LuaManager {
 
     private String getDiscordLargeImage() {
         try {
-            var rp = ravex.modules.client.RichPresence.INSTANCE;
+            var rp = ModuleManager.get(ravex.modules.client.RichPresence.class);
             if (rp != null && rp.largeImage != null) {
                 String val = rp.largeImage.getValue();
                 if ("icon".equals(val)) {
@@ -469,7 +469,7 @@ public class LuaManager {
                 + buttonsBlock
                 + "}},"
                 + "\"nonce\":\"" + nonce + "\"}";
-            ravex.RaveX.LOGGER.info("[RichPresence] Sending payload: " + payload);
+            ravex.RaveX.LOGGER.debug("[RichPresence] Sending payload");
             sendDiscordFrame(1, payload);
             return true;
         } catch (Exception e) {
@@ -604,7 +604,7 @@ public class LuaManager {
 
     public void loadAndRunScripts() {
         Minecraft mc = Minecraft.getInstance();
-        File scriptsFolder = new File(mc.gameDirectory, "ravex/scripts");
+        File scriptsFolder = new File(mc.gameDirectory, "RaveX/scripts");
         if (!scriptsFolder.exists()) {
             scriptsFolder.mkdirs();
         }

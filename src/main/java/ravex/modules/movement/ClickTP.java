@@ -6,13 +6,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 public class ClickTP extends Module {
-    public static final ClickTP INSTANCE = new ClickTP();
     public final ModeParameter mode = new ModeParameter("Mode", "Instant", List.of("Instant", "Blink"));
     public final NumberParameter range = new NumberParameter("Range", 50.0, 10.0, 200.0, 5.0);
     public final NumberParameter cooldown = new NumberParameter("Cooldown", 500, 100, 2000, 50);
@@ -72,5 +71,8 @@ public class ClickTP extends Module {
                     x, y, z, true, p.horizontalCollision));
         }
         p.setPos(target.x, target.y, target.z);
+    }
+    public static ClickTP itz() {
+        return ModuleManager.get(ClickTP.class);
     }
 }

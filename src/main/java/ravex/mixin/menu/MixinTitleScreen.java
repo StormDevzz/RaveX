@@ -15,6 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.gui.proxy.ProxyConfigScreen;
 
 import java.util.Random;
+import ravex.modules.client.Settings;
+import ravex.utility.render.FontRenderUtility;
 
 @Mixin(TitleScreen.class)
 public abstract class MixinTitleScreen extends Screen {
@@ -106,10 +108,11 @@ public abstract class MixinTitleScreen extends Screen {
 
         if (ravexSplashText != null && !ravexSplashText.isEmpty()) {
             long millis = System.currentTimeMillis();
+            Component splashComponent = FontRenderUtility.getTextComponent(ravexSplashText);
 
             float basePulse = (float) Math.sin((double) (millis % 1500L) / 1500.0 * Math.PI * 2.0);
             float scale = 1.8F - Math.abs(basePulse * 0.15F);
-            scale = scale * 100.0F / (float) (font.width(ravexSplashText) + 32);
+            scale = scale * 100.0F / (float) (font.width(splashComponent) + 32);
 
             double wave = Math.sin((double) (millis % 3500L) / 3500.0 * Math.PI * 2.0);
             int r = (int) (40 + wave * 20);
@@ -127,13 +130,13 @@ public abstract class MixinTitleScreen extends Screen {
             pose.rotate((float) Math.toRadians(rotationAngle));
             pose.scale(scale, scale);
 
-            graphics.drawCenteredString(font, ravexSplashText, 1, -7, shadowColor);
-            graphics.drawCenteredString(font, ravexSplashText, 0, -8, activeBlueColor);
+            graphics.drawCenteredString(font, splashComponent, 1, -7, shadowColor);
+            graphics.drawCenteredString(font, splashComponent, 0, -8, activeBlueColor);
 
             pose.popMatrix();
         }
 
-        graphics.drawString(font, "RaveX Client", 8, 8, ravex.modules.client.Settings.INSTANCE.menuColor.getValue(), true);
+        graphics.drawString(font, "RaveX Client", 8, 8, Settings.itz().menuColor.getValue(), true);
         graphics.drawString(font, "Logged in as: §f" + mc.getUser().getName(), 8, 20, 0xFF888888, true);
         graphics.drawString(font, "Build: §7" + ravex.RaveX.version, 8, 32, 0xFF888888, true);
 

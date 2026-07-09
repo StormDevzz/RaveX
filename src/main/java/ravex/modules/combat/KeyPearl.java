@@ -1,13 +1,13 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
-import ravex.modules.Category;
 import ravex.modules.Module;
-import ravex.parameter.BooleanParameter;
+import ravex.parameter.ModeParameter;
 import ravex.utility.player.InventoryUtility;
+import java.util.List;
 public class KeyPearl extends Module {
-    public static final KeyPearl INSTANCE = new KeyPearl();
-    public final BooleanParameter silent = new BooleanParameter("Silent", true);
+    public final ModeParameter swap = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal"));
 
     @Override
     protected void onEnable() {
@@ -20,14 +20,18 @@ public class KeyPearl extends Module {
         }
         if (pearlSlot == -1) return;
         int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
-        if (silent.getValue()) {
-            InventoryUtility.selectSlot(mc.player, pearlSlot);
-            mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+        InventoryUtility.selectSlot(mc.player, pearlSlot);
+        mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+        if ("Silent".equals(swap.getValue())) {
             InventoryUtility.selectSlot(mc.player, prevSlot);
-        } else {
-            InventoryUtility.selectSlot(mc.player, pearlSlot);
-            mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
         }
         setEnabled(false);
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(KeyPearl.class);
+    }
+    public static KeyPearl itz() {
+        return ModuleManager.get(KeyPearl.class);
+    }
+
 }

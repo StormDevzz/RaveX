@@ -16,8 +16,8 @@ public class MixinSkyColor {
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void onExtractRenderState(ClientLevel level, float partialTick, Camera camera,
                                       SkyRenderState state, CallbackInfo ci) {
-        if (!SkyColor.INSTANCE.getEnabled()) return;
-        state.skyColor = SkyColor.INSTANCE.skyColor.getValue();
+        if (!SkyColor.maybeEnabled()) return;
+        state.skyColor = SkyColor.itz().skyColor.getValue();
         state.sunriseAndSunsetColor = 0;
         state.starBrightness = 0.0f;
         state.rainBrightness = 0.0f;

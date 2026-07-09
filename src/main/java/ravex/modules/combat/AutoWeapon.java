@@ -1,16 +1,15 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.EntityHitResult;
 import ravex.utility.misc.MobUtility;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 public class AutoWeapon extends Module {
-    public static final AutoWeapon INSTANCE = new AutoWeapon();
     public final ModeParameter swapMode = new ModeParameter("SwapMode", "Normal",
             List.of("Normal", "Silent", "None"));
     public final BooleanParameter swordsOnly = new BooleanParameter("SwordsOnly", false);
@@ -68,4 +67,11 @@ public class AutoWeapon extends Module {
         else if (name.contains("golden_sword") || name.contains("wooden_sword")) dmg = 4.0;
         return dmg;
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoWeapon.class);
+    }
+    public static AutoWeapon itz() {
+        return ModuleManager.get(AutoWeapon.class);
+    }
+
 }

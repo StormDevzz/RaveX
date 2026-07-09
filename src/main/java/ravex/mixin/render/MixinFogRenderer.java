@@ -10,6 +10,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
+import ravex.event.EventBusHolder;
+import ravex.event.render.FogEvent;
+import ravex.modules.player.Xray;
 import ravex.modules.render.NoRender;
 import ravex.modules.render.Fog;
 import ravex.modules.render.SkyColor;
@@ -17,14 +20,23 @@ import ravex.modules.render.SkyColor;
 @Mixin(FogRenderer.class)
 public class MixinFogRenderer {
 
+    @Inject(method = "computeFogColor", at = @At("HEAD"), cancellable = true)
+    private void onComputeFogColorHead(Camera camera, float partialTick, ClientLevel level,
+                                       int renderDistance, float bossColorModifier,
+                                       CallbackInfoReturnable<Vector4f> cir) {
+        FogEvent event = new FogEvent(FogEvent.FogType.DEFAULT, 0.0f, 0.0f);
+        EventBusHolder.get().post(event);
+        if (event.isCancelled()) { cir.setReturnValue(new Vector4f(0, 0, 0, 0)); return; }
+    }
+
     @Inject(method = "computeFogColor", at = @At("RETURN"), cancellable = true)
     private void onComputeFogColor(Camera camera, float partialTick, ClientLevel level,
                                    int renderDistance, float bossColorModifier,
                                    CallbackInfoReturnable<Vector4f> cir) {
-        if (ravex.modules.player.Xray.INSTANCE.getEnabled()) {
+        if (Xray.maybeEnabled()) {
             cir.setReturnValue(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
-        } else if (SkyColor.INSTANCE.getEnabled()) {
-            int col = SkyColor.INSTANCE.skyColor.getValue();
+        } else if (SkyColor.maybeEnabled()) {
+            int col = SkyColor.itz().skyColor.getValue();
             float r = ((col >> 16) & 0xFF) / 255.0f;
             float g = ((col >> 8) & 0xFF) / 255.0f;
             float b = (col & 0xFF) / 255.0f;
@@ -37,14 +49,14 @@ public class MixinFogRenderer {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V")
     )
     private void onUpdateBufferArgs(Args args) {
-        if (Fog.INSTANCE.getEnabled()) {
-            int argb = Fog.INSTANCE.color.getValue();
+        if (Fog.maybeEnabled()) {
+            int argb = Fog.itz().color.getValue();
             float r = ((argb >> 16) & 0xFF) / 255.0f;
             float g = ((argb >>  8) & 0xFF) / 255.0f;
             float b = ( argb        & 0xFF) / 255.0f;
             args.set(2, new Vector4f(r, g, b, 1.0f));
         }
-        if (NoRender.INSTANCE.getEnabled() && NoRender.INSTANCE.fog.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().fog.getValue()) {
             float envStart = args.get(3);
             float envEnd = args.get(4);
             float rdStart = args.get(5);

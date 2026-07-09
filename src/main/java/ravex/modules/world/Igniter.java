@@ -1,7 +1,7 @@
 package ravex.modules.world;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -10,7 +10,6 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.rotation.RotationUtility;
 public class Igniter extends Module {
-    public static final Igniter INSTANCE = new Igniter();
     public final NumberParameter  range        = new NumberParameter("Range",        4.0, 1.0, 6.0, 0.1);
     public final ModeParameter    swapMode     = new ModeParameter("SwapMode", "Silent",
             java.util.List.of("Silent", "Normal", "None"));
@@ -89,5 +88,8 @@ public class Igniter extends Module {
             }
         }
         return -1;
+    }
+    public static Igniter itz() {
+        return ModuleManager.get(Igniter.class);
     }
 }

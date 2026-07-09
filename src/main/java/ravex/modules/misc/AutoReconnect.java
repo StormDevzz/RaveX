@@ -4,12 +4,11 @@ import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
-import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.manager.ModuleManager;
 import ravex.parameter.NumberParameter;
 public class AutoReconnect extends Module {
-    public static final AutoReconnect INSTANCE = new AutoReconnect();
-    public final NumberParameter delay = new NumberParameter("Delay(s)", 3.0, 0.0, 30.0, 1.0);
+    public final NumberParameter delay = new NumberParameter("Delay", 3.0, 0.0, 30.0, 1.0);
     private static ServerData lastServer = null;
     private static boolean pendingAutoReconnect = false;
     private static long reconnectAt = 0;
@@ -41,5 +40,13 @@ public class AutoReconnect extends Module {
         if (!hasLastServer()) return;
         ServerAddress addr = ServerAddress.parseString(lastServer.ip);
         ConnectScreen.startConnecting(new TitleScreen(), mc, addr, lastServer, false, null);
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoReconnect.class);
+    }
+
+    public static AutoReconnect itz() {
+        return ModuleManager.get(AutoReconnect.class);
     }
 }

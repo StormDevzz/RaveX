@@ -4,7 +4,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
 import ravex.RaveX;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -13,7 +13,6 @@ import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
 public class ElytraFly extends Module {
-    public static final ElytraFly INSTANCE = new ElytraFly();
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         List.of("Vanilla", "Control", "Grim", "NCP", "Minemen", "Packet", "Boost", "TickShift"));
     public final NumberParameter hSpeed = new NumberParameter("H-Speed", 1.5, 0.1, 5.0, 0.1);
@@ -280,6 +279,12 @@ public class ElytraFly extends Module {
                 fwTimer = 0;
             }
         }
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(ElytraFly.class);
+    }
+    public static ElytraFly itz() {
+        return ModuleManager.get(ElytraFly.class);
     }
     private void useFirework(Minecraft mc) {
         int slot = -1;

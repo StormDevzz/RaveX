@@ -20,7 +20,7 @@ public class GithubUtility {
                     if (response.statusCode() == 200) {
                         RaveX.LOGGER.info("Connected to GitHub successfully! Latest version is online.");
                     } else {
-                        RaveX.LOGGER.warn("GitHub API returned status code: " + response.statusCode());
+                        RaveX.LOGGER.info("GitHub API returned status code: " + response.statusCode());
                     }
                 });
         } catch (Exception e) {

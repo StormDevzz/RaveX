@@ -1,14 +1,13 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.core.BlockPos;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 public class Borders extends Module {
-    public static final Borders INSTANCE = new Borders();
     public final BooleanParameter showChunkBorders = new BooleanParameter("ChunkBorders", true);
     public final BooleanParameter showCurrentChunk = new BooleanParameter("CurrentChunk", true);
     public final ColorParameter chunkColor = new ColorParameter("ChunkColor", 0x55FFFFFF);
@@ -25,5 +24,12 @@ public class Borders extends Module {
     }
     public ChunkPos getCurrentChunk() {
         return lastChunk;
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Borders.class);
+    }
+
+    public static Borders itz() {
+        return ModuleManager.get(Borders.class);
     }
 }

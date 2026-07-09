@@ -29,7 +29,7 @@ public class ConfigManager {
         if (baseDir == null) {
             baseDir = new File(".");
         }
-        configDir = new File(baseDir, "ravex/configs");
+        configDir = new File(baseDir, "RaveX/configs");
         if (!configDir.exists()) {
             configDir.mkdirs();
         }

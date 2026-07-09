@@ -1,15 +1,14 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import ravex.utility.player.InventoryUtility;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 public class ToolTips extends Module {
-    public static final ToolTips INSTANCE = new ToolTips();
     public final BooleanParameter showId = new BooleanParameter("ShowID", true);
     public final BooleanParameter showShulker = new BooleanParameter("ShowShulker", true);
     public final BooleanParameter showFood = new BooleanParameter("ShowFood", true);
@@ -53,5 +52,12 @@ public class ToolTips extends Module {
     }
     public boolean isShulker(net.minecraft.world.item.ItemStack stack) {
         return InventoryUtility.isShulkerBox(stack);
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(ToolTips.class);
+    }
+
+    public static ToolTips itz() {
+        return ModuleManager.get(ToolTips.class);
     }
 }

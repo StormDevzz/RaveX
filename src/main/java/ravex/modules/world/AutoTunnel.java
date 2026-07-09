@@ -1,20 +1,19 @@
 package ravex.modules.world;
 import net.minecraft.client.Minecraft;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
+import ravex.manager.ModuleManager;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.List;
 public class AutoTunnel extends Module {
-    public static final AutoTunnel INSTANCE = new AutoTunnel();
     public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
     public final NumberParameter height = new NumberParameter("Height", 2, 1, 3, 1);
     public final NumberParameter width = new NumberParameter("Width", 2, 1, 3, 1);
-    public final NumberParameter delay = new NumberParameter("Delay(ms)", 200, 50, 1000, 50);
+    public final NumberParameter delay = new NumberParameter("Delay", 200, 50, 1000, 50);
     public final BooleanParameter fillLava = new BooleanParameter("FillLava", true);
     public final BooleanParameter autoWalk = new BooleanParameter("AutoWalk", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
@@ -140,5 +139,12 @@ public class AutoTunnel extends Module {
             case EAST: ox = forward; oz = -right; break;
         }
         return new int[]{ox, up, oz};
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoTunnel.class);
+    }
+    public static AutoTunnel itz() {
+        return ModuleManager.get(AutoTunnel.class);
     }
 }

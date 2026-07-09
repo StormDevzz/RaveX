@@ -26,7 +26,7 @@ public class LayoutManager {
             baseDir = Minecraft.getInstance().gameDirectory;
         } catch (Throwable ignored) {}
         if (baseDir == null) baseDir = new File(".");
-        layoutFile = new File(baseDir, "ravex/clickgui_layout.json");
+        layoutFile = new File(baseDir, "RaveX/clickgui_layout.json");
         layoutFile.getParentFile().mkdirs();
     }
 

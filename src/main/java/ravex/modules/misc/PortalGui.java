@@ -1,7 +1,13 @@
 package ravex.modules.misc;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 public class PortalGui extends Module {
-    public static final PortalGui INSTANCE = new PortalGui();
 
+    public static boolean maybeEnabled() {
+        return maybeEnabled(PortalGui.class);
+    }
+
+    public static PortalGui itz() {
+        return ModuleManager.get(PortalGui.class);
+    }
 }

@@ -1,11 +1,10 @@
 package ravex.modules.world;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.SwingUtility;
 public class AutoMount extends Module {
-    public static final AutoMount INSTANCE = new AutoMount();
     public final ravex.parameter.ModeParameter mode = new ravex.parameter.ModeParameter("Mode", "Normal", java.util.List.of("Normal", "Fast"));
     private int cooldown = 0;
 
@@ -39,5 +38,8 @@ public class AutoMount extends Module {
             SwingUtility.swingMainHand(p);
             cooldown = 20;
         }
+    }
+    public static AutoMount itz() {
+        return ModuleManager.get(AutoMount.class);
     }
 }

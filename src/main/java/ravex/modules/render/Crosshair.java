@@ -1,14 +1,15 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import ravex.modules.Category;
+import ravex.event.Subscribe;
+import ravex.event.combat.AttackEvent;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 public class Crosshair extends Module {
-    public static final Crosshair INSTANCE = new Crosshair();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         java.util.List.of("Normal", "Circle", "Triangle"));
     public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
@@ -27,6 +28,11 @@ public class Crosshair extends Module {
         super("Crosshair");
         dotColor.setVisible(dot::getValue);
     }
+    @Subscribe
+    public void onAttack(AttackEvent event) {
+        onHit();
+    }
+
     public void onHit() {
         lastHitTime = System.currentTimeMillis();
     }
@@ -141,5 +147,12 @@ public class Crosshair extends Module {
         g.pose().translate(0.0f, -0.5f);
         g.fill(0, 0, (int) len, 1, color);
         g.pose().popMatrix();
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Crosshair.class);
+    }
+
+    public static Crosshair itz() {
+        return ModuleManager.get(Crosshair.class);
     }
 }

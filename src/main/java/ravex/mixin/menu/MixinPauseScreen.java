@@ -20,7 +20,7 @@ public abstract class MixinPauseScreen extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        if (!AutoReconnect.INSTANCE.getEnabled()) return;
+        if (!AutoReconnect.maybeEnabled()) return;
         if (!AutoReconnect.hasLastServer()) return;
 
         int btnW = 200;

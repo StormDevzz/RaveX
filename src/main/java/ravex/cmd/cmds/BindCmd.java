@@ -4,6 +4,7 @@ import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
+import ravex.modules.client.Commands;
 import java.util.Locale;
 public class BindCmd extends Cmd {
     public BindCmd() {
@@ -11,17 +12,43 @@ public class BindCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        if (args.length < 3) { CmdReg.print("§c[RaveX] Usage: .bind <module> <key>  e.g. .bind KillAura K"); return; }
-        Module m = ModuleManager.INSTANCE.getByName(args[1]);
-        if (m == null) { CmdReg.print("§c[RaveX] Module not found: §e" + args[1]); return; }
-        String keyName = args[2].toUpperCase(Locale.ROOT);
-        int glfwKey = glfwKeyFromName(keyName);
-        if (glfwKey == GLFW.GLFW_KEY_UNKNOWN) {
-            CmdReg.print("§c[RaveX] Unknown key: §e" + keyName + "  §7(use A-Z, F1-F12, etc.)");
-            return;
+        String pref = ModuleManager.get(Commands.class).prefix.getValue();
+        if (args.length < 2) { CmdReg.print("§c[RaveX] Usage: " + pref + "bind <module/list/clear> [key]"); return; }
+        String sub = args[1].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "list": {
+                boolean any = false;
+                for (Module m : ModuleManager.INSTANCE.getModules()) {
+                    if (m.getKeyBind() != -1) {
+                        if (!any) { CmdReg.print("§7Bound modules:"); any = true; }
+                        CmdReg.print(" §e" + m.getName() + " §7→ §e" + glfwNameFromKey(m.getKeyBind()));
+                    }
+                }
+                if (!any) CmdReg.print("§e[RaveX] No modules are bound.");
+                break;
+            }
+            case "clear": {
+                int count = 0;
+                for (Module m : ModuleManager.INSTANCE.getModules()) {
+                    if (m.getKeyBind() != -1) { m.setKeyBind(-1); count++; }
+                }
+                CmdReg.print("§a[RaveX] Cleared §e" + count + " §abind(s).");
+                break;
+            }
+            default: {
+                Module m = ModuleManager.INSTANCE.getByName(args[1]);
+                if (m == null) { CmdReg.print("§c[RaveX] Module not found: §e" + args[1]); return; }
+                if (args.length < 3) { CmdReg.print("§c[RaveX] Usage: " + pref + "bind <module> <key>"); return; }
+                String keyName = args[2].toUpperCase(Locale.ROOT);
+                int glfwKey = glfwKeyFromName(keyName);
+                if (glfwKey == GLFW.GLFW_KEY_UNKNOWN) {
+                    CmdReg.print("§c[RaveX] Unknown key: §e" + keyName + "  §7(use A-Z, F1-F12, etc.)");
+                    return;
+                }
+                m.setKeyBind(glfwKey);
+                CmdReg.print("§a[RaveX] Bound §e" + m.getName() + " §7→ §e" + keyName);
+            }
         }
-        m.setKeyBind(glfwKey);
-        CmdReg.print("§a[RaveX] Bound §e" + m.getName() + " §7→ §e" + keyName);
     }
     private int glfwKeyFromName(String key) {
         switch (key) {
@@ -48,6 +75,33 @@ public class BindCmd extends Cmd {
             case "INSERT": return GLFW.GLFW_KEY_INSERT; case "DELETE": return GLFW.GLFW_KEY_DELETE;
             case "PAGEUP": return GLFW.GLFW_KEY_PAGE_UP; case "PAGEDOWN": return GLFW.GLFW_KEY_PAGE_DOWN;
             default: return GLFW.GLFW_KEY_UNKNOWN;
+        }
+    }
+    private String glfwNameFromKey(int key) {
+        switch (key) {
+            case GLFW.GLFW_KEY_A: return "A"; case GLFW.GLFW_KEY_B: return "B";
+            case GLFW.GLFW_KEY_C: return "C"; case GLFW.GLFW_KEY_D: return "D";
+            case GLFW.GLFW_KEY_E: return "E"; case GLFW.GLFW_KEY_F: return "F";
+            case GLFW.GLFW_KEY_G: return "G"; case GLFW.GLFW_KEY_H: return "H";
+            case GLFW.GLFW_KEY_I: return "I"; case GLFW.GLFW_KEY_J: return "J";
+            case GLFW.GLFW_KEY_K: return "K"; case GLFW.GLFW_KEY_L: return "L";
+            case GLFW.GLFW_KEY_M: return "M"; case GLFW.GLFW_KEY_N: return "N";
+            case GLFW.GLFW_KEY_O: return "O"; case GLFW.GLFW_KEY_P: return "P";
+            case GLFW.GLFW_KEY_Q: return "Q"; case GLFW.GLFW_KEY_R: return "R";
+            case GLFW.GLFW_KEY_S: return "S"; case GLFW.GLFW_KEY_T: return "T";
+            case GLFW.GLFW_KEY_U: return "U"; case GLFW.GLFW_KEY_V: return "V";
+            case GLFW.GLFW_KEY_W: return "W"; case GLFW.GLFW_KEY_X: return "X";
+            case GLFW.GLFW_KEY_Y: return "Y"; case GLFW.GLFW_KEY_Z: return "Z";
+            case GLFW.GLFW_KEY_F1: return "F1"; case GLFW.GLFW_KEY_F2: return "F2";
+            case GLFW.GLFW_KEY_F3: return "F3"; case GLFW.GLFW_KEY_F4: return "F4";
+            case GLFW.GLFW_KEY_F5: return "F5"; case GLFW.GLFW_KEY_F6: return "F6";
+            case GLFW.GLFW_KEY_F7: return "F7"; case GLFW.GLFW_KEY_F8: return "F8";
+            case GLFW.GLFW_KEY_F9: return "F9"; case GLFW.GLFW_KEY_F10: return "F10";
+            case GLFW.GLFW_KEY_F11: return "F11"; case GLFW.GLFW_KEY_F12: return "F12";
+            case GLFW.GLFW_KEY_HOME: return "HOME"; case GLFW.GLFW_KEY_END: return "END";
+            case GLFW.GLFW_KEY_INSERT: return "INSERT"; case GLFW.GLFW_KEY_DELETE: return "DELETE";
+            case GLFW.GLFW_KEY_PAGE_UP: return "PAGEUP"; case GLFW.GLFW_KEY_PAGE_DOWN: return "PAGEDOWN";
+            default: return "NONE";
         }
     }
 }

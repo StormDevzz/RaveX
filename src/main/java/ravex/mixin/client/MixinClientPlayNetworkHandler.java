@@ -11,7 +11,7 @@ import ravex.manager.CmdManager;
 public class MixinClientPlayNetworkHandler {
     @Inject(method = "sendChat", at = @At("HEAD"), cancellable = true)
     private void onSendChat(String message, CallbackInfo ci) {
-        if (CmdManager.INSTANCE.processCommand(message)) {
+        if (CmdManager.processCommand(message)) {
             ci.cancel();
         }
     }

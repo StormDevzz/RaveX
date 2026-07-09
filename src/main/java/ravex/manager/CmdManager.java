@@ -7,7 +7,7 @@ public class CmdManager {
 
     private CmdManager() {}
 
-    public boolean processCommand(String message) {
-        return CmdReg.INSTANCE.process(message);
+    public static boolean processCommand(String message) {
+        return CmdReg.process(message);
     }
 }

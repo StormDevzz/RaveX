@@ -1,4 +1,5 @@
 package ravex.modules.player;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -9,7 +10,6 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
 public class MiddleClick extends Module {
-    public static final MiddleClick INSTANCE = new MiddleClick();
     public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Firework", List.of("Firework", "None"));
     public final ModeParameter blockAction = new ModeParameter("BlockAction", "XPBottle", List.of("XPBottle", "XPBottleFast", "None"));
     public final ModeParameter airAction = new ModeParameter("AirAction", "EnderPearl", List.of("EnderPearl", "None"));
@@ -75,8 +75,15 @@ public class MiddleClick extends Module {
         int prev = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, slot);
         mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (INSTANCE.silent.getValue()) InventoryUtility.selectSlot(mc.player, prev);
+        if (ModuleManager.get(MiddleClick.class).silent.getValue()) InventoryUtility.selectSlot(mc.player, prev);
     }
     private static native void nativeStartFastXp();
     private static native void nativeStopFastXp();
+    public static boolean maybeEnabled() {
+        return maybeEnabled(MiddleClick.class);
+    }
+    public static MiddleClick itz() {
+        return ModuleManager.get(MiddleClick.class);
+    }
+
 }

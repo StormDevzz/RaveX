@@ -1,14 +1,19 @@
 package ravex.modules.hud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.render.HudRenderer;
+import ravex.utility.render.TextureLoader;
+import ravex.manager.ModuleManager;
 public class InvPreviewHud extends Module {
-    public static final InvPreviewHud INSTANCE = new InvPreviewHud();
+    private static final Identifier ICON = TextureLoader.HUD_INVENTORY_WHITE;
+    private static final int IS = HudRenderer.getIconSize();
     private static final int CELL = 16;
     private static final int PAD  = 2;
     private static final int COLS = 9;
@@ -31,7 +36,7 @@ public class InvPreviewHud extends Module {
     }
     @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!Hud.INSTANCE.getEnabled()) return;
+        if (!ModuleManager.get(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         int accent = getAccent();
@@ -39,11 +44,12 @@ public class InvPreviewHud extends Module {
         int by = getY();
         int w  = getWidth();
         int h  = getHeight();
-        ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, w, h, accent);
+        HudRenderer.drawBackground(graphics, bx, by, w, h);
         if (showLabel()) {
-            ravex.utility.render.HudRenderer.drawLabel(graphics, "Inventory", bx, by, accent);
+            HudRenderer.drawLabel(graphics, "Inventory", bx + 4, by, accent);
+            HudRenderer.drawIcon(graphics, ICON, bx + w - 4 - IS, by + 4, accent);
         }
-        int startY = by + (showLabel() ? 12 : 3);
+        int startY = by + (showLabel() ? 14 : 5);
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < COLS; col++) {
                 int slot = 9 + row * COLS + col;
@@ -71,5 +77,13 @@ public class InvPreviewHud extends Module {
                 graphics.renderItemDecorations(mc.font, stack, x, y, countStr);
             }
         }
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(InvPreviewHud.class);
+    }
+
+    public static InvPreviewHud itz() {
+        return ModuleManager.get(InvPreviewHud.class);
     }
 }

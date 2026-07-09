@@ -3,14 +3,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.phys.AABB;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 public class AutoFish extends Module {
-    public static final AutoFish INSTANCE = new AutoFish();
-    public final NumberParameter castDelay = new NumberParameter("CastDelay(ms)", 600, 200, 2000, 100);
+    public final NumberParameter castDelay = new NumberParameter("CastDelay", 600, 200, 2000, 100);
     public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     public final BooleanParameter autoCast = new BooleanParameter("AutoCast", true);
     private long lastActionTime = 0;
@@ -73,5 +72,8 @@ public class AutoFish extends Module {
     }
     private void reelIn(Minecraft mc, LocalPlayer player) {
         useRod(mc, player);
+    }
+    public static AutoFish itz() {
+        return ModuleManager.get(AutoFish.class);
     }
 }

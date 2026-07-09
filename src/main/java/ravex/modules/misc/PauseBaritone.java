@@ -1,9 +1,8 @@
 package ravex.modules.misc;
 import ravex.integrations.baritone.BaritoneIntegration;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 public class PauseBaritone extends Module {
-    public static final PauseBaritone INSTANCE = new PauseBaritone();
     private final BaritoneIntegration baritone = new BaritoneIntegration();
     private PauseBaritone() {
         super("PauseBaritone");
@@ -25,5 +24,9 @@ public class PauseBaritone extends Module {
             baritone.cancelPathing();
         }
         super.setEnabled(false);
+    }
+
+    public static PauseBaritone itz() {
+        return ModuleManager.get(PauseBaritone.class);
     }
 }

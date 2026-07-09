@@ -20,13 +20,13 @@ public class MixinModelPart {
         index = 1
     )
     private VertexConsumer wrapHandConsumer(VertexConsumer consumer) {
-        boolean active = Shaders.INSTANCE.getEnabled() && Shaders.RENDERING_HAND.get();
-        System.out.println("[RaveX-DEBUG] ModelPart.render(5) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.INSTANCE.getEnabled() + " wrapping=" + active);
+        boolean active = Shaders.maybeEnabled() && Shaders.RENDERING_HAND.get();
+        System.out.println("[RaveX-DEBUG] ModelPart.render(5) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.maybeEnabled() + " wrapping=" + active);
         if (!active) {
             return consumer;
         }
         HandShaderManager.RenderInput ri = new HandShaderManager.RenderInput();
-        ri.config = Shaders.INSTANCE.createConfig();
+        ri.config = Shaders.itz().createConfig();
         ri.time = System.nanoTime() / 1e9f;
         return new ShaderVertexConsumer(consumer, ri);
     }
@@ -38,13 +38,13 @@ public class MixinModelPart {
         index = 1
     )
     private VertexConsumer wrapHandConsumer4(VertexConsumer consumer) {
-        boolean active = Shaders.INSTANCE.getEnabled() && Shaders.RENDERING_HAND.get();
-        System.out.println("[RaveX-DEBUG] ModelPart.render(4) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.INSTANCE.getEnabled() + " wrapping=" + active);
+        boolean active = Shaders.maybeEnabled() && Shaders.RENDERING_HAND.get();
+        System.out.println("[RaveX-DEBUG] ModelPart.render(4) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.maybeEnabled() + " wrapping=" + active);
         if (!active) {
             return consumer;
         }
         HandShaderManager.RenderInput ri = new HandShaderManager.RenderInput();
-        ri.config = Shaders.INSTANCE.createConfig();
+        ri.config = Shaders.itz().createConfig();
         ri.time = System.nanoTime() / 1e9f;
         return new ShaderVertexConsumer(consumer, ri);
     }

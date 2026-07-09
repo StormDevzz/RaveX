@@ -1,7 +1,7 @@
 package ravex.modules.player.invclean;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.ActionParameter;
 import ravex.parameter.BooleanParameter;
@@ -9,9 +9,8 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 public class InvClean extends Module {
-    public static final InvClean INSTANCE = new InvClean();
     public final BooleanParameter autoClean = new BooleanParameter("AutoClean", false);
-    public final NumberParameter interval   = new NumberParameter("Interval(s)", 10, 2, 60, 1);
+    public final NumberParameter interval   = new NumberParameter("Interval", 10, 2, 60, 1);
     public final ActionParameter items = new ActionParameter("Items", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.clickgui.InvCleanScreen(Minecraft.getInstance().screen));
     });

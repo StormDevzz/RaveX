@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -7,12 +8,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.EntityHitResult;
 import ravex.utility.misc.MobUtility;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 public class Criticals extends Module {
-    public static final Criticals INSTANCE = new Criticals();
     public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         java.util.List.of("Legit", "Packet", "Grim", "MiniJump", "Watchdog"));
     public final BooleanParameter autoAttack = new BooleanParameter("AutoAttack", true);
@@ -113,4 +112,11 @@ public class Criticals extends Module {
             }
         }
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Criticals.class);
+    }
+    public static Criticals itz() {
+        return ModuleManager.get(Criticals.class);
+    }
+
 }

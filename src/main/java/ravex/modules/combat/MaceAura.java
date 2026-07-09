@@ -1,5 +1,5 @@
 package ravex.modules.combat;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
@@ -12,7 +12,6 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.world.InteractionHand;
 public class MaceAura extends Module {
-    public static final MaceAura INSTANCE = new MaceAura();
     public final NumberParameter height = new NumberParameter("Height", 10.0, 2.0, 40.0, 1.0);
 
     @Override
@@ -43,4 +42,11 @@ public class MaceAura extends Module {
             }
         }
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(MaceAura.class);
+    }
+    public static MaceAura itz() {
+        return ModuleManager.get(MaceAura.class);
+    }
+
 }

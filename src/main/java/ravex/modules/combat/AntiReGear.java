@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -10,7 +11,6 @@ import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
@@ -19,9 +19,8 @@ import ravex.modules.world.GhostBlocks;
 import java.util.ArrayList;
 import java.util.List;
 public class AntiReGear extends Module {
-    public static final AntiReGear INSTANCE = new AntiReGear();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter delay = new NumberParameter("Delay(ms)", 100, 0, 1000, 50);
+    public final NumberParameter delay = new NumberParameter("Delay", 100, 0, 1000, 50);
     public final BooleanParameter shulkersParam = new BooleanParameter("Shulkers", true);
     public final BooleanParameter chestsParam = new BooleanParameter("Chests", true);
     public final BooleanParameter enderChestsParam = new BooleanParameter("EnderChests", true);
@@ -172,4 +171,11 @@ public class AntiReGear extends Module {
             }
         }
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AntiReGear.class);
+    }
+    public static AntiReGear itz() {
+        return ModuleManager.get(AntiReGear.class);
+    }
+
 }

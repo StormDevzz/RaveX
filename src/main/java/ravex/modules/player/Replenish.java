@@ -1,4 +1,5 @@
 package ravex.modules.player;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -8,7 +9,6 @@ import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 public class Replenish extends Module {
-    public static final Replenish INSTANCE = new Replenish();
     public final NumberParameter threshold = new NumberParameter("Threshold", 32, 1, 64, 1);
     private long lastActionTime = 0;
 
@@ -43,4 +43,11 @@ public class Replenish extends Module {
             }
         }
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Replenish.class);
+    }
+    public static Replenish itz() {
+        return ModuleManager.get(Replenish.class);
+    }
+
 }

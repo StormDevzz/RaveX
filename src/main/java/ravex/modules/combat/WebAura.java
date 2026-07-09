@@ -1,5 +1,5 @@
 package ravex.modules.combat;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -17,7 +17,6 @@ import net.minecraft.core.Direction;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 public class WebAura extends Module {
-    public static final WebAura INSTANCE = new WebAura();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Positive", "Custom"));
     public final NumberParameter customRange = new NumberParameter("CustomRange", 4.0, 2.0, 6.0, 0.1);
     private int delay = 0;
@@ -82,4 +81,11 @@ public class WebAura extends Module {
             delay = 4; 
         }
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(WebAura.class);
+    }
+    public static WebAura itz() {
+        return ModuleManager.get(WebAura.class);
+    }
+
 }

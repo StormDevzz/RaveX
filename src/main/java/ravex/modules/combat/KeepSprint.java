@@ -1,12 +1,11 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 public class KeepSprint extends Module {
-    public static final KeepSprint INSTANCE = new KeepSprint();
     public final NumberParameter speed = new NumberParameter("Speed", 100, 0, 100, 5);
 
     @Override
@@ -25,4 +24,11 @@ public class KeepSprint extends Module {
             mc.player.setSprinting(false);
         }
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(KeepSprint.class);
+    }
+    public static KeepSprint itz() {
+        return ModuleManager.get(KeepSprint.class);
+    }
+
 }

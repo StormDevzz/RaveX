@@ -1,5 +1,5 @@
 package ravex.modules.world;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.StringParameter;
 import ravex.parameter.BooleanParameter;
@@ -9,7 +9,6 @@ import net.minecraft.client.player.RemotePlayer;
 import com.mojang.authlib.GameProfile;
 import java.util.UUID;
 public class FakePlayer extends Module {
-    public static final FakePlayer INSTANCE = new FakePlayer();
     public final StringParameter nickname = new StringParameter("Nickname", "FakePlayer");
     public final BooleanParameter copyInventory = new BooleanParameter("CopyInv", true);
     private RemotePlayer remotePlayer = null;
@@ -42,5 +41,8 @@ public class FakePlayer extends Module {
             mc.level.removeEntity(remotePlayer.getId(), net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
         }
         remotePlayer = null;
+    }
+    public static FakePlayer itz() {
+        return ModuleManager.get(FakePlayer.class);
     }
 }

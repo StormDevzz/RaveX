@@ -1,5 +1,5 @@
 package ravex.modules.misc;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -9,7 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import java.util.List;
 public class AutoEat extends Module {
-    public static final AutoEat INSTANCE = new AutoEat();
     public final NumberParameter threshold = new NumberParameter("Hunger", 15.0, 1.0, 20.0, 1.0);
     public final BooleanParameter priority = new BooleanParameter("BestFood", true);
     public final BooleanParameter notify = new BooleanParameter("Notify", false);
@@ -48,5 +47,9 @@ public class AutoEat extends Module {
             if (mc.options != null) mc.options.keyUse.setDown(false);
         }
         FoodUtility.INSTANCE.reset();
+    }
+
+    public static AutoEat itz() {
+        return ModuleManager.get(AutoEat.class);
     }
 }

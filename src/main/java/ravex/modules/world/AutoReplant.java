@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
@@ -20,9 +20,8 @@ import ravex.utility.player.InventoryUtility;
 import java.util.HashSet;
 import java.util.Set;
 public class AutoReplant extends Module {
-    public static final AutoReplant INSTANCE = new AutoReplant();
     public final NumberParameter range = new NumberParameter("Range", 4.0, 1.0, 6.0, 0.5);
-    public final NumberParameter delay = new NumberParameter("Delay(ms)", 300, 100, 1000, 50);
+    public final NumberParameter delay = new NumberParameter("Delay", 300, 100, 1000, 50);
     public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     private long lastReplantTime = 0;
     private static final Set<Block> farmBlocks = new HashSet<>();
@@ -81,5 +80,8 @@ public class AutoReplant extends Module {
             }
         }
         return -1;
+    }
+    public static AutoReplant itz() {
+        return ModuleManager.get(AutoReplant.class);
     }
 }

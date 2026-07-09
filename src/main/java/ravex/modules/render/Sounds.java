@@ -1,12 +1,18 @@
 package ravex.modules.render;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 public class Sounds extends Module {
-    public static final Sounds INSTANCE = new Sounds();
     public final NumberParameter volume = new NumberParameter("Volume", 1.0, 0.0, 1.0, 0.1);
     private Sounds() {
         super("Sounds");
         setEnabled(true); 
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Sounds.class);
+    }
+
+    public static Sounds itz() {
+        return ModuleManager.get(Sounds.class);
     }
 }

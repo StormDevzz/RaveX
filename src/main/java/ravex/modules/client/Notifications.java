@@ -1,4 +1,5 @@
 package ravex.modules.client;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -22,13 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 public class Notifications extends Module {
-    public static final Notifications INSTANCE = new Notifications();
     public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Text", "Toast"));
     public final ModeParameter visualRange = new ModeParameter("VisualRange", "Toast", List.of("Off", "Text", "Toast"));
     public final ModeParameter itemCollection = new ModeParameter("ItemCollection", "Off", List.of("Off", "Toast", "Text"));
     public final ModeParameter tracker = new ModeParameter("Tracker", "Off", List.of("Off", "Toast", "Text"));
     public final ColorParameter messageColor = new ColorParameter("MessageColor", 0xFF0066FF);
-    public final NumberParameter toastOpacity = new NumberParameter("ToastOpacity", 0.85, 0.25, 1.0, 0.05);
+    public final NumberParameter toastOpacity = new NumberParameter("ToastOpacity", 0.25, 0.25, 1.0, 0.05);
     public final NumberParameter toastSize = new NumberParameter("ToastSize", 16.0, 12.0, 32.0, 1.0);
     public final BooleanParameter itemMonsters = new BooleanParameter("Monsters", true);
     public final BooleanParameter itemAnimals = new BooleanParameter("Animals", true);
@@ -124,6 +124,7 @@ public class Notifications extends Module {
                 double nearestDist = Double.MAX_VALUE;
                 AABB pickRange = new AABB(entry.x - 2, entry.y - 2, entry.z - 2, entry.x + 2, entry.y + 2, entry.z + 2);
                 for (LivingEntity le : mc.level.getEntitiesOfClass(LivingEntity.class, pickRange)) {
+                    if (!canPickUpItems(le)) continue;
                     double d = le.distanceToSqr(entry.x, entry.y, entry.z);
                     boolean self = le == mc.player;
                     boolean player = le instanceof Player && !self;
@@ -182,6 +183,16 @@ public class Notifications extends Module {
         }
     }
 
+    private boolean canPickUpItems(LivingEntity entity) {
+        if (entity instanceof Player) return true;
+        if (MobUtility.isHostile(entity)) return true;
+        if (entity instanceof net.minecraft.world.entity.npc.villager.Villager) return true;
+        if (entity instanceof net.minecraft.world.entity.animal.equine.Llama) return true;
+        if (entity instanceof net.minecraft.world.entity.animal.equine.Donkey) return true;
+        if (entity instanceof net.minecraft.world.entity.animal.equine.Mule) return true;
+        return false;
+    }
+
     private boolean hasItemInHands(Player p, net.minecraft.world.item.Item item) {
         return p.getMainHandItem().is(item) || p.getOffhandItem().is(item);
     }
@@ -200,11 +211,11 @@ public class Notifications extends Module {
     }
 
     public static void notifyToggle(Module module, boolean enabled) {
-        if (!INSTANCE.getEnabled()) return;
+        if (!ModuleManager.get(Notifications.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
-        int color = INSTANCE.messageColor.getValue();
-        if (INSTANCE.mode.getValue().equals("Toast")) {
-            NotificationManager.addToast(module.getName(), color, enabled, INSTANCE.toastOpacity.getValue().floatValue(), INSTANCE.toastSize.getValue().intValue());
+        int color = ModuleManager.get(Notifications.class).messageColor.getValue();
+        if (ModuleManager.get(Notifications.class).mode.getValue().equals("Toast")) {
+            NotificationManager.addToast(module.getName(), color, enabled, ModuleManager.get(Notifications.class).toastOpacity.getValue().floatValue(), ModuleManager.get(Notifications.class).toastSize.getValue().intValue());
             return;
         }
         String action = enabled ? "Enabled" : "Disabled";
@@ -219,5 +230,13 @@ public class Notifications extends Module {
                 .append(Component.literal(".").withStyle(style -> style.withColor(0x7F7F7F)));
             mc.player.displayClientMessage(message, false);
         }
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Notifications.class);
+    }
+
+    public static Notifications itz() {
+        return ModuleManager.get(Notifications.class);
     }
 }

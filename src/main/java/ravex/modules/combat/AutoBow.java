@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -7,14 +8,12 @@ import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BowItem;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 public class AutoBow extends Module {
-    public static final AutoBow INSTANCE = new AutoBow();
     public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 100.0, 1.0);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
     public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", false);
@@ -58,4 +57,11 @@ public class AutoBow extends Module {
         }
         return -1;
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoBow.class);
+    }
+    public static AutoBow itz() {
+        return ModuleManager.get(AutoBow.class);
+    }
+
 }

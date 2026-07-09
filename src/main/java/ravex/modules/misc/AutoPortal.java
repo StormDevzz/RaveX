@@ -1,15 +1,14 @@
 package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.manager.ModuleManager;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 public class AutoPortal extends Module {
-    public static final AutoPortal INSTANCE = new AutoPortal();
     public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0, 0.5);
     public final NumberParameter minRange = new NumberParameter("MinRange", 2.0, 1.0, 4.0, 0.5);
     public final NumberParameter avoidRange = new NumberParameter("Avoid", 8.0, 1.0, 24.0, 1.0);
@@ -350,5 +349,13 @@ public class AutoPortal extends Module {
                 || InventoryUtility.isItemInSlot(mc.player, i, "fire_charge")) return i;
         }
         return -1;
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoPortal.class);
+    }
+
+    public static AutoPortal itz() {
+        return ModuleManager.get(AutoPortal.class);
     }
 }

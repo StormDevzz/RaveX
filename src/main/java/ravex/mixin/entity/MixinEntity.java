@@ -9,6 +9,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import ravex.modules.combat.Hitboxes;
+import ravex.modules.misc.PortalGui;
+import ravex.modules.misc.RideExploit;
+import ravex.modules.movement.Avoid;
+import ravex.modules.movement.LiquidControl;
+import ravex.modules.movement.NoPush;
+import ravex.modules.movement.NoSlow;
+import ravex.modules.movement.NoWeb;
+import ravex.modules.player.ViewLock;
 import ravex.modules.render.ESP;
 import ravex.modules.render.FreeCam;
 import ravex.modules.render.FreeLook;
@@ -21,9 +30,9 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (ravex.modules.player.ViewLock.INSTANCE.getEnabled()) {
-            boolean lockYaw = ravex.modules.player.ViewLock.INSTANCE.shouldLockYaw(yRot, xRot);
-            boolean lockPitch = ravex.modules.player.ViewLock.INSTANCE.shouldLockPitch(yRot, xRot);
+        if (ViewLock.maybeEnabled()) {
+            boolean lockYaw = ViewLock.itz().shouldLockYaw(yRot, xRot);
+            boolean lockPitch = ViewLock.itz().shouldLockPitch(yRot, xRot);
             if (lockYaw && lockPitch) {
                 ci.cancel();
             } else {
@@ -38,14 +47,14 @@ public abstract class MixinEntity {
             return;
         }
 
-        if (FreeCam.INSTANCE.getEnabled()) {
-            FreeCam.INSTANCE.turnMixin(yRot * 0.15, xRot * 0.15);
+        if (FreeCam.maybeEnabled()) {
+            FreeCam.itz().turnMixin(yRot * 0.15, xRot * 0.15);
             ci.cancel();
             return;
         }
 
-        if (FreeLook.INSTANCE.getEnabled() && "Camera".equals(FreeLook.INSTANCE.mode.getValue())) {
-            FreeLook.INSTANCE.turn(yRot * 0.15, xRot * 0.15);
+        if (FreeLook.maybeEnabled() && "Camera".equals(FreeLook.itz().mode.getValue())) {
+            FreeLook.itz().turn(yRot * 0.15, xRot * 0.15);
             ci.cancel();
         }
     }
@@ -56,12 +65,12 @@ public abstract class MixinEntity {
         if (!(self instanceof net.minecraft.client.player.LocalPlayer player)) return;
 
         
-        if (ravex.modules.misc.PortalGui.INSTANCE.getEnabled()) {
+        if (PortalGui.maybeEnabled()) {
             self.portalProcess = null;
         }
 
         
-        if (ravex.modules.movement.Avoid.INSTANCE.getEnabled()) {
+        if (Avoid.maybeEnabled()) {
             net.minecraft.world.level.Level level = player.level();
             net.minecraft.world.phys.AABB box = player.getBoundingBox().inflate(0.15);
             net.minecraft.core.BlockPos.betweenClosedStream(
@@ -69,7 +78,7 @@ public abstract class MixinEntity {
                     (int) Math.floor(box.maxX), (int) Math.floor(box.maxY), (int) Math.floor(box.maxZ)
             ).forEach(blockPos -> {
                 net.minecraft.world.level.block.state.BlockState state = level.getBlockState(blockPos);
-                if (ravex.modules.movement.Avoid.INSTANCE.shouldAvoid(state.getBlock())) {
+                if (Avoid.itz().shouldAvoid(state.getBlock())) {
                     
                     double bx = blockPos.getX() + 0.5;
                     double bz = blockPos.getZ() + 0.5;
@@ -93,7 +102,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (ravex.modules.movement.NoSlowDown.INSTANCE.getEnabled() && ravex.modules.movement.NoSlowDown.INSTANCE.blocks.getValue()) {
+        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks.getValue()) {
             cir.setReturnValue(1.0F);
         }
     }
@@ -103,7 +112,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (ravex.modules.movement.NoSlowDown.INSTANCE.getEnabled() && ravex.modules.movement.NoSlowDown.INSTANCE.blocks.getValue()) {
+        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks.getValue()) {
             cir.setReturnValue(1.0F);
         }
     }
@@ -113,41 +122,41 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (ravex.modules.movement.NoWeb.INSTANCE.getEnabled()) {
+        if (NoWeb.maybeEnabled()) {
             return;
         }
     }
 
     @Inject(method = "getTeamColor", at = @At("HEAD"), cancellable = true)
     private void onGetTeamColor(CallbackInfoReturnable<Integer> cir) {
-        if (ESP.INSTANCE.getEnabled() && ESP.INSTANCE.mode.getValue().equals("Outline")) {
+        if (ESP.maybeEnabled() && ESP.itz().mode.getValue().equals("Outline")) {
             Entity self = (Entity) (Object) this;
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (self == mc.player) return;
 
-            if (mc.player != null && mc.player.distanceTo(self) > ESP.INSTANCE.maxDistance.getValue()) {
+            if (mc.player != null && mc.player.distanceTo(self) > ESP.itz().maxDistance.getValue()) {
                 return;
             }
 
             if (self instanceof Player) {
-                if (ESP.INSTANCE.players.getValue()) {
-                    cir.setReturnValue(ESP.INSTANCE.playerColor.getValue());
+                if (ESP.itz().players.getValue()) {
+                    cir.setReturnValue(ESP.itz().playerColor.getValue());
                 }
             } else if (self instanceof Monster) {
-                if (ESP.INSTANCE.monsters.getValue()) {
-                    cir.setReturnValue(ESP.INSTANCE.mobColor.getValue());
+                if (ESP.itz().monsters.getValue()) {
+                    cir.setReturnValue(ESP.itz().mobColor.getValue());
                 }
             } else if (self instanceof net.minecraft.world.entity.animal.Animal || self instanceof net.minecraft.world.entity.ambient.AmbientCreature) {
-                if (ESP.INSTANCE.animals.getValue()) {
-                    cir.setReturnValue(ESP.INSTANCE.animalColor.getValue());
+                if (ESP.itz().animals.getValue()) {
+                    cir.setReturnValue(ESP.itz().animalColor.getValue());
                 }
             } else if (self instanceof net.minecraft.world.entity.item.ItemEntity) {
-                if (ESP.INSTANCE.items.getValue()) {
-                    cir.setReturnValue(ESP.INSTANCE.itemColor.getValue());
+                if (ESP.itz().items.getValue()) {
+                    cir.setReturnValue(ESP.itz().itemColor.getValue());
                 }
             } else if (self instanceof net.minecraft.world.entity.decoration.ItemFrame) {
-                if (ESP.INSTANCE.frames.getValue()) {
-                    cir.setReturnValue(ESP.INSTANCE.frameColor.getValue());
+                if (ESP.itz().frames.getValue()) {
+                    cir.setReturnValue(ESP.itz().frameColor.getValue());
                 }
             }
         }
@@ -158,7 +167,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         var mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player != null && self.getControllingPassenger() == mc.player) {
-            if (ravex.modules.misc.RideExploit.INSTANCE.getEnabled()) {
+            if (RideExploit.maybeEnabled()) {
                 cir.setReturnValue(true);
             }
         }
@@ -166,7 +175,7 @@ public abstract class MixinEntity {
 
     @Inject(method = "getBoundingBox", at = @At("RETURN"), cancellable = true)
     private void onGetBoundingBox(CallbackInfoReturnable<net.minecraft.world.phys.AABB> cir) {
-        if (ravex.modules.combat.Hitboxes.INSTANCE.getEnabled()) {
+        if (Hitboxes.maybeEnabled()) {
             Entity self = (Entity)(Object)this;
             if (self != net.minecraft.client.Minecraft.getInstance().player && self instanceof LivingEntity) {
                 boolean isRaytracing = false;
@@ -179,7 +188,7 @@ public abstract class MixinEntity {
                     }
                 }
                 if (isRaytracing) {
-                    double size = ravex.modules.combat.Hitboxes.INSTANCE.size.getValue();
+                    double size = Hitboxes.itz().size.getValue();
                     if (cir.getReturnValue() != null) {
                         cir.setReturnValue(cir.getReturnValue().inflate(size));
                     }
@@ -190,10 +199,10 @@ public abstract class MixinEntity {
 
     @Inject(method = "push(DDD)V", at = @At("HEAD"), cancellable = true)
     private void onPushVelocity(double x, double y, double z, CallbackInfo ci) {
-        if (ravex.modules.movement.NoPush.INSTANCE.getEnabled()) {
+        if (NoPush.maybeEnabled()) {
             Entity self = (Entity)(Object)this;
             if (self instanceof net.minecraft.client.player.LocalPlayer) {
-                if (ravex.modules.movement.NoPush.INSTANCE.water.getValue()) {
+                if (NoPush.itz().water.getValue()) {
                     ci.cancel();
                 }
             }
@@ -202,16 +211,16 @@ public abstract class MixinEntity {
 
     @Inject(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"), cancellable = true)
     private void onPushEntity(Entity other, CallbackInfo ci) {
-        if (ravex.modules.movement.NoPush.INSTANCE.getEnabled()) {
+        if (NoPush.maybeEnabled()) {
             Entity self = (Entity)(Object)this;
             if (self instanceof net.minecraft.client.player.LocalPlayer) {
-                if (ravex.modules.movement.NoPush.INSTANCE.shouldCancelPush(self, other)) {
+                if (NoPush.itz().shouldCancelPush(self, other)) {
                     ci.cancel();
                     return;
                 }
             }
             if (other instanceof net.minecraft.client.player.LocalPlayer) {
-                if (ravex.modules.movement.NoPush.INSTANCE.shouldCancelPush(other, self)) {
+                if (NoPush.itz().shouldCancelPush(other, self)) {
                     ci.cancel();
                 }
             }
@@ -222,7 +231,7 @@ public abstract class MixinEntity {
     private void onIsInWater(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled() && ravex.modules.movement.LiquidControl.INSTANCE.water.getValue()) {
+            if (LiquidControl.maybeEnabled() && LiquidControl.itz().water.getValue()) {
                 cir.setReturnValue(false);
             }
         }
@@ -232,7 +241,7 @@ public abstract class MixinEntity {
     private void onIsInLava(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled() && ravex.modules.movement.LiquidControl.INSTANCE.lava.getValue()) {
+            if (LiquidControl.maybeEnabled() && LiquidControl.itz().lava.getValue()) {
                 cir.setReturnValue(false);
             }
         }
@@ -242,7 +251,7 @@ public abstract class MixinEntity {
     private void onUpdateInWaterStateAndDoFluidPushing(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled() && ravex.modules.movement.LiquidControl.INSTANCE.water.getValue()) {
+            if (LiquidControl.maybeEnabled() && LiquidControl.itz().water.getValue()) {
                 cir.setReturnValue(false);
             }
         }
@@ -252,10 +261,10 @@ public abstract class MixinEntity {
     private void onUpdateFluidHeightAndDoFluidPushing(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, double d, CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled()) {
-                boolean bypassWater = ravex.modules.movement.LiquidControl.INSTANCE.water.getValue();
-                boolean bypassLava = ravex.modules.movement.LiquidControl.INSTANCE.lava.getValue();
-                boolean bypassOthers = ravex.modules.movement.LiquidControl.INSTANCE.others.getValue();
+            if (LiquidControl.maybeEnabled()) {
+                boolean bypassWater = LiquidControl.itz().water.getValue();
+                boolean bypassLava = LiquidControl.itz().lava.getValue();
+                boolean bypassOthers = LiquidControl.itz().others.getValue();
                 
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
@@ -274,10 +283,10 @@ public abstract class MixinEntity {
     private void onIsEyeInFluid(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (ravex.modules.movement.LiquidControl.INSTANCE.getEnabled()) {
-                boolean bypassWater = ravex.modules.movement.LiquidControl.INSTANCE.water.getValue();
-                boolean bypassLava = ravex.modules.movement.LiquidControl.INSTANCE.lava.getValue();
-                boolean bypassOthers = ravex.modules.movement.LiquidControl.INSTANCE.others.getValue();
+            if (LiquidControl.maybeEnabled()) {
+                boolean bypassWater = LiquidControl.itz().water.getValue();
+                boolean bypassLava = LiquidControl.itz().lava.getValue();
+                boolean bypassOthers = LiquidControl.itz().others.getValue();
                 
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);

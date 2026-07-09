@@ -1,8 +1,8 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.ClickType;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -13,7 +13,6 @@ import ravex.utility.player.rotation.SilentRotation;
 import java.util.ArrayList;
 import java.util.List;
 public class Quiver extends Module {
-    public static final Quiver INSTANCE = new Quiver();
     public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", List.of("Healing", "Speed", "Strength", "FireResistance"));
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal"));
     public final NumberParameter chargeDuration = new NumberParameter("ChargeTicks", 3.0, 2.0, 10.0, 1.0);
@@ -252,6 +251,12 @@ public class Quiver extends Module {
             }
         }
         return bestIndex;
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Quiver.class);
+    }
+    public static Quiver itz() {
+        return ModuleManager.get(Quiver.class);
     }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;

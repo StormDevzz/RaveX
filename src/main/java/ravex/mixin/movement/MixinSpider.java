@@ -14,20 +14,20 @@ import ravex.modules.movement.Spider;
 public class MixinSpider {
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
-        if (!Spider.INSTANCE.getEnabled()) return;
+        if (!Spider.maybeEnabled()) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
         if (!player.input.keyPresses.jump()) return;
 
         if (!player.horizontalCollision && !isAgainstWall(player)) return;
 
-        String mode = Spider.INSTANCE.mode.getValue();
+        String mode = Spider.itz().mode.getValue();
         double motion;
 
         switch (mode) {
             case "Normal" -> motion = 0.2;
             case "NCP" -> motion = 0.18;
-            case "Custom" -> motion = Spider.INSTANCE.motion.getValue();
+            case "Custom" -> motion = Spider.itz().motion.getValue();
             default -> motion = 0.2;
         }
 

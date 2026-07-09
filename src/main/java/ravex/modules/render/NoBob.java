@@ -1,9 +1,8 @@
 package ravex.modules.render;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import net.minecraft.client.Minecraft;
 public class NoBob extends Module {
-    public static final NoBob INSTANCE = new NoBob();
     private boolean originalBob = true;
 
     @Override
@@ -27,5 +26,12 @@ public class NoBob extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null) return;
         mc.options.bobView().set(originalBob);
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(NoBob.class);
+    }
+
+    public static NoBob itz() {
+        return ModuleManager.get(NoBob.class);
     }
 }

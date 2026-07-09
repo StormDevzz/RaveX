@@ -1,6 +1,6 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 import java.util.List;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -10,7 +10,6 @@ import ravex.manager.HandShaderManager;
 import ravex.manager.PlayerShaderManager;
 import ravex.utility.shaders.nativec.ShaderNative;
 public class Shaders extends Module {
-    public static final Shaders INSTANCE = new Shaders();
     public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> RENDERING_HAND = ThreadLocal.withInitial(() -> false);
     public final BooleanParameter players = new BooleanParameter("Players", true);
@@ -46,5 +45,12 @@ public class Shaders extends Module {
             case "Pulse":       cfg.effect = EffectType.PULSE; break;
         }
         return cfg;
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Shaders.class);
+    }
+
+    public static Shaders itz() {
+        return ModuleManager.get(Shaders.class);
     }
 }

@@ -32,15 +32,25 @@ public abstract class MixinSpeed {
         return Minecraft.getInstance().options.keyJump.isDown();
     }
 
+    private static void applySpeedLimit(LocalPlayer player, double limit) {
+        Vec3 m = player.getDeltaMovement();
+        double horiz = Math.sqrt(m.x * m.x + m.z * m.z);
+        if (horiz > limit) {
+            double scale = limit / horiz;
+            player.setDeltaMovement(m.x * scale, m.y, m.z * scale);
+        }
+    }
+
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
-        if (!Speed.INSTANCE.getEnabled()) return;
+        if (!Speed.maybeEnabled()) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
         if (player.horizontalCollision || player.isFallFlying()) return;
 
-        String mode = Speed.INSTANCE.mode.getValue();
-        double baseSpeed = Speed.INSTANCE.speed.getValue();
+        String mode = Speed.itz().mode.getValue();
+        double baseSpeed = Speed.itz().speed.getValue();
+        double globalLimit = Speed.itz().speedLimit.getValue();
 
         Vec3 motion = player.getDeltaMovement();
 
@@ -65,9 +75,10 @@ public abstract class MixinSpeed {
                         motion.z * factor + velZ * (1 - factor)
                     );
                 }
+                applySpeedLimit(player, globalLimit);
             }
             case "Strafe" -> {
-                if (!Speed.INSTANCE.strafeJump.getValue()) return;
+                if (!Speed.itz().strafeJump.getValue()) return;
 
                 float forward = getForward();
                 float strafe = getStrafe();
@@ -103,6 +114,7 @@ public abstract class MixinSpeed {
                         );
                     }
                 }
+                applySpeedLimit(player, globalLimit);
             }
             case "NCP" -> {
                 if (player.onGround()) {
@@ -133,6 +145,38 @@ public abstract class MixinSpeed {
                         motion.z * 0.91 + velZ * 0.5
                     );
                 }
+                applySpeedLimit(player, globalLimit);
+            }
+            case "NCPStrict" -> {
+                if (player.onGround()) {
+                    float forward = getForward();
+                    float strafe = getStrafe();
+                    if (forward == 0 && strafe == 0) return;
+
+                    double speedVal = baseSpeed * 0.08;
+                    double yaw = Math.toRadians(player.getYRot());
+                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+
+                    player.setDeltaMovement(velX, motion.y, velZ);
+                    if (isJumping()) {
+                        player.setDeltaMovement(player.getDeltaMovement().x, 0.40, player.getDeltaMovement().z);
+                    }
+                } else if (player.getDeltaMovement().y < 0) {
+                    double speedVal = baseSpeed * 0.04;
+                    float forward = getForward();
+                    float strafe = getStrafe();
+                    double yaw = Math.toRadians(player.getYRot());
+                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+
+                    player.setDeltaMovement(
+                        motion.x * 0.91 + velX * 0.3,
+                        motion.y,
+                        motion.z * 0.91 + velZ * 0.3
+                    );
+                }
+                applySpeedLimit(player, Math.min(globalLimit, 0.22));
             }
             case "Matrix" -> {
                 if (player.onGround()) {
@@ -163,6 +207,37 @@ public abstract class MixinSpeed {
                         motion.y,
                         motion.z + velZ * 0.3
                     );
+                }
+                applySpeedLimit(player, globalLimit);
+            }
+            case "Grim" -> {
+                if (!player.onGround()) return;
+                float forward = getForward();
+                float strafe = getStrafe();
+                if (forward == 0 && strafe == 0) return;
+
+                double boost = Speed.itz().grimBoost.getValue();
+                double currentHoriz = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
+                double speedVal = baseSpeed * 0.04 * boost;
+                double yaw = Math.toRadians(player.getYRot());
+                double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+                double newHoriz = Math.sqrt(velX * velX + velZ * velZ);
+
+                if (newHoriz > currentHoriz) {
+                    double addX = velX * 0.4;
+                    double addZ = velZ * 0.4;
+                    player.setDeltaMovement(motion.x + addX, motion.y, motion.z + addZ);
+                }
+
+                applySpeedLimit(player, Math.min(globalLimit, 0.22));
+            }
+            case "GrimStrict" -> {
+                double grimB = Speed.itz().grimBoost.getValue();
+                float currentSpeed = player.getAbilities().getWalkingSpeed();
+                float targetSpeed = (float)(0.1 * (0.7 + grimB * 0.3));
+                if (currentSpeed != targetSpeed) {
+                    player.getAbilities().setWalkingSpeed(targetSpeed);
                 }
             }
         }

@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -20,7 +21,6 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
 public class AutoDrop extends Module {
-    public static final AutoDrop INSTANCE = new AutoDrop();
     public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
         java.util.List.of("Gravel", "Anvil", "Sand", "Both"));
     public final ModeParameter target = new ModeParameter("Target", "Self",
@@ -104,4 +104,11 @@ public class AutoDrop extends Module {
         }
         return -1;
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoDrop.class);
+    }
+    public static AutoDrop itz() {
+        return ModuleManager.get(AutoDrop.class);
+    }
+
 }

@@ -1,13 +1,12 @@
 package ravex.modules.movement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 public class PacketFly extends Module {
-    public static final PacketFly INSTANCE = new PacketFly();
     public final ModeParameter mode = new ModeParameter("Mode", "Fast", List.of("Fast", "Damage", "Setback"));
     public final NumberParameter speed = new NumberParameter("Speed", 0.2, 0.05, 1.0, 0.05);
     public final NumberParameter vertical = new NumberParameter("Vertical", 0.2, 0.0, 1.0, 0.05);
@@ -45,5 +44,8 @@ public class PacketFly extends Module {
                 x, y + vert, z, false, onGround
             ));
         }
+    }
+    public static PacketFly itz() {
+        return ModuleManager.get(PacketFly.class);
     }
 }

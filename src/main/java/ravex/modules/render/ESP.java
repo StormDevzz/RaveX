@@ -1,8 +1,8 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -11,8 +11,7 @@ import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 public class ESP extends Module {
-    public static final ESP INSTANCE = new ESP();
-    public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util.List.of("Outline", "Box2D", "Tunnels", "Holes"));
+    public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util.List.of("Outline", "Box2D", "Tunnels", "Holes", "Void"));
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", true);
     public final BooleanParameter animals = new BooleanParameter("Animals", false);
@@ -35,10 +34,19 @@ public class ESP extends Module {
     public final ColorParameter safeColor = new ColorParameter("SafeColor", 0xAA00FF00);
     public final BooleanParameter holeFilled = new BooleanParameter("HoleFilled", true);
     public final BooleanParameter holeWireframe = new BooleanParameter("HoleWireframe", true);
+    public final NumberParameter voidRange = new NumberParameter("VoidRange", 32, 8, 64, 4);
+    public final NumberParameter voidHeight = new NumberParameter("VoidHeight", 10, 2, 30, 2);
+    public final ColorParameter voidColor = new ColorParameter("VoidColor", 0x66FF0000);
+    public final BooleanParameter voidFilled = new BooleanParameter("VoidFilled", true);
+    public final BooleanParameter voidWireframe = new BooleanParameter("VoidWireframe", true);
+    public final BooleanParameter voidFloorOnly = new BooleanParameter("VoidFloorOnly", true);
+    public final NumberParameter voidUpdateInterval = new NumberParameter("VoidUpdate", 20, 5, 100, 5);
     private List<BlockPos> tunnelBlocks = new ArrayList<>();
     private long lastTunnelScan = 0;
     private final List<BlockPos> holes = new ArrayList<>();
     private int holeTick = 0;
+    private List<BlockPos> voidBlocks = new ArrayList<>();
+    private long lastVoidScan = 0;
     private ESP() {
         super("ESP");
         playerColor.setVisible(players::getValue);
@@ -46,7 +54,6 @@ public class ESP extends Module {
         animalColor.setVisible(animals::getValue);
         itemColor.setVisible(items::getValue);
         frameColor.setVisible(frames::getValue);
-        boolean t = mode.getValue().equals("Tunnels");
         tunnelRange.setVisible(() -> mode.getValue().equals("Tunnels"));
         tunnelMaxY.setVisible(() -> mode.getValue().equals("Tunnels"));
         tunnelMinY.setVisible(() -> mode.getValue().equals("Tunnels"));
@@ -58,12 +65,20 @@ public class ESP extends Module {
         safeColor.setVisible(() -> mode.getValue().equals("Holes"));
         holeFilled.setVisible(() -> mode.getValue().equals("Holes"));
         holeWireframe.setVisible(() -> mode.getValue().equals("Holes"));
+        voidRange.setVisible(() -> mode.getValue().equals("Void"));
+        voidHeight.setVisible(() -> mode.getValue().equals("Void"));
+        voidColor.setVisible(() -> mode.getValue().equals("Void"));
+        voidFilled.setVisible(() -> mode.getValue().equals("Void"));
+        voidWireframe.setVisible(() -> mode.getValue().equals("Void"));
+        voidFloorOnly.setVisible(() -> mode.getValue().equals("Void"));
+        voidUpdateInterval.setVisible(() -> mode.getValue().equals("Void"));
     }
     @Override
     public void onTick() {
         String m = mode.getValue();
         if (m.equals("Tunnels")) scanTunnels();
         else if (m.equals("Holes")) scanHoles();
+        else if (m.equals("Void")) scanVoid();
     }
     private void scanTunnels() {
         Minecraft mc = Minecraft.getInstance();
@@ -128,6 +143,59 @@ public class ESP extends Module {
         }
         return true;
     }
+    private void scanVoid() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+        long now = System.currentTimeMillis();
+        if (now - lastVoidScan < voidUpdateInterval.getValue().intValue() * 50) return;
+        lastVoidScan = now;
+        List<BlockPos> result = new ArrayList<>();
+        BlockPos center = mc.player.blockPosition();
+        int r = voidRange.getValue().intValue();
+        int h = voidHeight.getValue().intValue();
+        int floorH = voidFloorOnly.getValue() ? 1 : h;
+        for (int x = -r; x <= r; x++) {
+            for (int z = -r; z <= r; z++) {
+                for (int y = 1; y <= floorH; y++) {
+                    if (center.getY() - y <= mc.level.getMinY()) continue;
+                    BlockPos pos = center.offset(x, -y, z);
+                    if (mc.level.getBlockState(pos).isAir()) {
+                        boolean hasFloor = false;
+                        for (int checkY = pos.getY() + 1; checkY <= mc.level.getMaxY(); checkY++) {
+                            if (!mc.level.getBlockState(new BlockPos(pos.getX(), checkY, pos.getZ())).isAir()) {
+                                hasFloor = true;
+                                break;
+                            }
+                        }
+                        if (!hasFloor) result.add(pos);
+                    }
+                }
+            }
+        }
+        voidBlocks = result;
+    }
+    public static boolean shouldGlow(net.minecraft.world.entity.Entity entity) {
+        ESP $ = ravex.manager.ModuleManager.get(ESP.class);
+        if ($ == null || !$.getEnabled() || !$.mode.getValue().equals("Outline")) return false;
+        var mc = Minecraft.getInstance();
+        if (entity == mc.player) return false;
+        if (mc.player != null && mc.player.distanceTo(entity) > $.maxDistance.getValue()) return false;
+        if (entity instanceof net.minecraft.world.entity.player.Player && $.players.getValue()) return true;
+        if (entity instanceof net.minecraft.world.entity.monster.Monster && $.monsters.getValue()) return true;
+        if ((entity instanceof net.minecraft.world.entity.animal.Animal || entity instanceof net.minecraft.world.entity.ambient.AmbientCreature) && $.animals.getValue()) return true;
+        if (entity instanceof net.minecraft.world.entity.item.ItemEntity && $.items.getValue()) return true;
+        if (entity instanceof net.minecraft.world.entity.decoration.ItemFrame && $.frames.getValue()) return true;
+        return false;
+    }
+
     public List<BlockPos> getTunnelBlocks() { return tunnelBlocks; }
     public List<BlockPos> getHoles() { return holes; }
+    public List<BlockPos> getVoidBlocks() { return voidBlocks; }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(ESP.class);
+    }
+
+    public static ESP itz() {
+        return ModuleManager.get(ESP.class);
+    }
 }

@@ -2,15 +2,21 @@ package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import ravex.modules.Category;
+import ravex.event.Subscribe;
+import ravex.event.combat.TotemPopEvent;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import java.util.HashMap;
 import java.util.Map;
 public class PopCounter extends Module {
-    public static final PopCounter INSTANCE = new PopCounter();
     public final BooleanParameter onlyOwn = new BooleanParameter("OnlyOwn", false);
     private final Map<String, Integer> popCounts = new HashMap<>();
+
+    @Subscribe
+    public void onTotemPop(TotemPopEvent event) {
+        onPop(event.getPlayer());
+    }
 
     public void onPop(Player player) {
         if (!getEnabled()) return;
@@ -29,5 +35,9 @@ public class PopCounter extends Module {
         if (mc.player != null) {
             mc.player.displayClientMessage(Component.literal(msg), false);
         }
+    }
+
+    public static PopCounter itz() {
+        return ModuleManager.get(PopCounter.class);
     }
 }

@@ -5,13 +5,12 @@ import ravex.mixin.client.AccessorMinecraft;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 public class AutoSoup extends Module {
-    public static final AutoSoup INSTANCE = new AutoSoup();
     public final NumberParameter health = new NumberParameter("Health", 10.0, 1.0, 20.0, 1.0);
     public final BooleanParameter hotbarOnly = new BooleanParameter("HotbarOnly", true);
     private long lastUse = 0;
@@ -57,5 +56,9 @@ public class AutoSoup extends Module {
             && contents.potion().isPresent()
             && (contents.potion().get() == Potions.HEALING
              || contents.potion().get() == Potions.STRONG_HEALING);
+    }
+
+    public static AutoSoup itz() {
+        return ModuleManager.get(AutoSoup.class);
     }
 }

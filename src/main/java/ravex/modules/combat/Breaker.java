@@ -11,7 +11,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
@@ -23,9 +22,9 @@ import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.manager.ModuleManager;
 
 public class Breaker extends Module {
-    public static final Breaker INSTANCE = new Breaker();
     public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter crystalRange = new NumberParameter("CrystalRange", 5.0, 1.0, 6.0, 0.1);
     public final NumberParameter minDamage = new NumberParameter("MinDamage", 4.0, 1.0, 20.0, 0.5);
@@ -173,10 +172,10 @@ public class Breaker extends Module {
             }
         }
         if (syncPacketMine.getValue()) {
-            if (!ravex.modules.player.PacketMine.INSTANCE.isTargetBlock(targetPos)) {
+            if (!ModuleManager.get(ravex.modules.player.PacketMine.class).isTargetBlock(targetPos)) {
                 ravex.modules.player.PacketMine.miningBlocks.removeIf(m -> !m.done);
                 String name = mc.level.getBlockState(targetPos).getBlock().getName().getString();
-                long breakMs = ravex.modules.player.PacketMine.INSTANCE.calcBreakTime(mc, targetPos);
+                long breakMs = ModuleManager.get(ravex.modules.player.PacketMine.class).calcBreakTime(mc, targetPos);
                 ravex.modules.player.PacketMine.miningBlocks.add(
                         new ravex.modules.player.PacketMine.MiningBlock(targetPos, breakMs, name));
             }
@@ -332,4 +331,11 @@ public class Breaker extends Module {
             double selfDmgWeight,
             boolean antiSuicide,
             double antiSuicideMinHp);
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Breaker.class);
+    }
+    public static Breaker itz() {
+        return ModuleManager.get(Breaker.class);
+    }
 }

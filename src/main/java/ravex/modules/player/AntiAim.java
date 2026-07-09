@@ -1,5 +1,5 @@
 package ravex.modules.player;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -9,7 +9,6 @@ import java.util.List;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 public class AntiAim extends Module {
-    public static final AntiAim INSTANCE = new AntiAim();
     public final ModeParameter mode = new ModeParameter("YawMode", "Spin", List.of("Spin", "Jitter", "Static"));
     public final ModeParameter pitchMode = new ModeParameter("PitchMode", "Down", List.of("Down", "Up", "Jitter", "None"));
     public final NumberParameter yawSpeed = new NumberParameter("YawSpeed", 30.0, 1.0, 90.0, 1.0);
@@ -55,5 +54,11 @@ public class AntiAim extends Module {
             mc.player.setYRot(targetYaw);
             mc.player.setXRot(targetPitch);
         }
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AntiAim.class);
+    }
+    public static AntiAim itz() {
+        return ModuleManager.get(AntiAim.class);
     }
 }

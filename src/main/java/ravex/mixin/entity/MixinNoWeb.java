@@ -19,30 +19,21 @@ public abstract class MixinNoWeb {
         
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (NoWeb.INSTANCE.getEnabled() && state.is(net.minecraft.world.level.block.Blocks.COBWEB)) {
-            String mode = NoWeb.INSTANCE.mode.getValue();
+        if (NoWeb.maybeEnabled() && state.is(net.minecraft.world.level.block.Blocks.COBWEB)) {
+            String mode = NoWeb.itz().mode.getValue();
             double horizontal = 1.0;
             double vertical = 1.0;
 
             if (mode.equals("Custom")) {
-                horizontal = NoWeb.INSTANCE.horizontalSpeed.getValue();
-                vertical = NoWeb.INSTANCE.verticalSpeed.getValue();
-            } else if (mode.equals("Positive")) {
-                horizontal = 1.0;
-                vertical = 1.0;
-            } else if (mode.equals("Positive2")) {
-                horizontal = 0.6;
-                vertical = 0.5;
-            } else if (mode.equals("Positive3")) {
-                horizontal = 0.4;
-                vertical = 0.3;
+                horizontal = NoWeb.itz().horizontalSpeed.getValue();
+                vertical = NoWeb.itz().verticalSpeed.getValue();
             }
 
             self.fallDistance = 0.0F;
 
-            
-            
-            if (horizontal >= 1.0 && vertical >= 1.0) {
+            if (mode.equals("GrimStrict")) {
+                stuckSpeedMultiplier = new Vec3(0.5, 1.0, 0.5);
+            } else if (horizontal >= 1.0 && vertical >= 1.0) {
                 stuckSpeedMultiplier = Vec3.ZERO;
             } else {
                 stuckSpeedMultiplier = new Vec3(horizontal, vertical, horizontal);

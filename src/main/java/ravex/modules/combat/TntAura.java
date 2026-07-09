@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -9,7 +10,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.rotation.RotationUtility;
@@ -24,7 +24,6 @@ import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
 public class TntAura extends Module {
-    public static final TntAura INSTANCE = new TntAura();
     public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay   = new NumberParameter("PlaceDelay", 50.0, 0.0, 500.0, 10.0);
     public final NumberParameter  tntDelay     = new NumberParameter("TNTDelay", 200.0, 0.0, 1000.0, 10.0);
@@ -439,4 +438,11 @@ public class TntAura extends Module {
         }
         return new double[]{0.0};
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(TntAura.class);
+    }
+    public static TntAura itz() {
+        return ModuleManager.get(TntAura.class);
+    }
+
 }

@@ -1,5 +1,5 @@
 package ravex.modules.world;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
@@ -12,7 +12,6 @@ import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import java.util.List;
 public class AutoShear extends Module {
-    public static final AutoShear INSTANCE = new AutoShear();
     public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     public final NumberParameter range = new NumberParameter("Range", 4.5, 3.0, 6.0, 0.1);
     public final ModeParameter exploitType = new ModeParameter("ExploitType", "Packet", List.of("Client", "Packet"));
@@ -60,5 +59,8 @@ public class AutoShear extends Module {
                 InventoryUtility.selectSlot(p, prevSlot);
             }
         }
+    }
+    public static AutoShear itz() {
+        return ModuleManager.get(AutoShear.class);
     }
 }

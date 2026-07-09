@@ -19,7 +19,7 @@ public class LanguageUtility {
         en.put("desc_ESP", "See through walls");
         en.put("desc_AutoTool", "Swap best tool");
         en.put("desc_AntiAfk", "No idle kick");
-        en.put("desc_BoneMeal", "Fertilize crops");
+        en.put("desc_PVEUtils", "Smelt, tame, brew, bone meal & light");
         en.put("desc_ClickGui", "Open menu");
         en.put("desc_Notifications", "Screen alerts");
         en.put("desc_DeathText", "Death message");
@@ -48,8 +48,8 @@ public class LanguageUtility {
         en.put("desc_NoWeb", "Walk through webs");
         en.put("desc_Glint", "Item glow");
         en.put("desc_RichPresence", "Discord status");
-        en.put("desc_GuiWalk", "Walk in menus");
-        en.put("desc_NoSlowDown", "No slow down");
+        en.put("desc_GuiMove", "Walk in menus");
+        en.put("desc_NoSlow", "No slow down");
         en.put("desc_Velocity", "Change knockback");
         en.put("desc_AutoEat", "Eat food");
         en.put("desc_NoInteract", "No misclicks");
@@ -62,7 +62,6 @@ public class LanguageUtility {
         en.put("desc_ViewClip", "See through blocks");
         en.put("desc_Step", "Step up");
         en.put("desc_ReverseStep", "Pull down");
-        en.put("desc_Spammer", "Spam chat");
         en.put("desc_Commands", "Run commands");
         en.put("desc_ItemPhysics", "Item physics");
         en.put("desc_Sounds", "Play sounds");
@@ -75,7 +74,7 @@ public class LanguageUtility {
         en.put("desc_AntiVoid", "Void save");
         en.put("desc_AutoMend", "Repair gear");
         en.put("desc_FakePlayer", "Practice dummy");
-        en.put("desc_FastUse", "Fast use");
+        en.put("desc_NoDelay", "No delay");
         en.put("desc_AutoRespawn", "Instant respawn");
         en.put("desc_AutoArmor", "Equip armor");
         en.put("desc_FastItem", "Quick item move");
@@ -110,13 +109,13 @@ public class LanguageUtility {
         en.put("desc_ChestAura", "Place chests");
         en.put("desc_PortalGui", "Use in portals");
         en.put("desc_Avoid", "Avoid damage");
-        en.put("desc_TabUtils", "Better list");
-        en.put("desc_ChatUtils", "Chat helpers");
-        en.put("desc_ChestUtils", "Chest helpers");
+        en.put("desc_TabHelper", "Better list");
+        en.put("desc_ChatHelper", "Chat helpers");
+        en.put("desc_ChestHelper", "Chest helpers");
         en.put("desc_AutoReconnect", "Rejoin server");
         en.put("desc_FastLatency", "Fast ping");
         en.put("desc_MultiTask", "Do two things");
-        en.put("desc_BlockSelector", "Pick blocks");
+        en.put("desc_BlockMixer", "Shuffle blocks");
         en.put("desc_AutoSoup", "Drink soup");
         en.put("desc_NameProtect", "Hide names");
         en.put("desc_StashFinder", "Find loot");
@@ -131,8 +130,7 @@ public class LanguageUtility {
         en.put("desc_AutoCrystal", "Break crystals");
         en.put("desc_Trap", "Trap targets");
         en.put("desc_Igniter", "Light TNT");
-        en.put("desc_RocketUtils", "Rocket boost");
-        en.put("desc_RidingUtils", "Faster riding");
+        en.put("desc_RidingHelper", "Faster riding");
         en.put("desc_Blink", "Delay moves");
         en.put("desc_PacketFly", "Fly freely");
         en.put("desc_AutoApple", "Eat apples");
@@ -140,7 +138,7 @@ public class LanguageUtility {
         en.put("desc_FakePearl", "Fake pearl");
         en.put("desc_BasePlace", "Place obsidian");
         en.put("desc_AnchorAura", "Explode anchors");
-        en.put("desc_ElytraUtils", "Elytra swap");
+        en.put("desc_ElytraHelper", "Elytra swap");
         en.put("desc_ViewLock", "Lock view");
         en.put("desc_ItemSaver", "Save items");
         en.put("desc_AntiAim", "Spin head");
@@ -155,13 +153,14 @@ public class LanguageUtility {
         en.put("desc_AntiAttack", "No friendly hits");
         en.put("desc_LagNotify", "Lag warning");
         en.put("desc_PopCounter", "Count totems");
-        en.put("desc_BookUtils", "Edit books");
+        en.put("desc_BookHelper", "Edit books");
         en.put("desc_WebSelf", "Web yourself");
         en.put("desc_KeyPearl", "Throw pearl");
         en.put("desc_KeepSprint", "Keep sprint");
         en.put("desc_AutoAuth", "Login helper");
         en.put("desc_SafeWalk", "Safe walk");
-        en.put("desc_AutoTame", "Tame pets");
+        
+
         en.put("desc_ShieldFucker", "Break shields");
         en.put("desc_KillEffects", "Death effects");
         en.put("desc_AntiQuit", "No leaving");
@@ -175,14 +174,15 @@ public class LanguageUtility {
         en.put("desc_ElytraPlusPlus", "Elytra fly");
         en.put("desc_Flight", "Creative fly");
         en.put("desc_Replenish", "Refill items");
-        en.put("desc_AutoLight", "Place torches");
+        
+
         en.put("desc_AutoReplant", "Replant crops");
         en.put("desc_Nuker", "Mass break");
         en.put("desc_AutoTrade", "Trade villagers");
         en.put("desc_AutoFish", "Catch fish");
         en.put("desc_AutoTunnel", "Dig tunnel");
-        en.put("desc_AutoSmelt", "Smelt items");
-        en.put("desc_AutoBrew", "Brew potions");
+
+
         en.put("desc_ECFarmer", "Farm chests");
         en.put("desc_GhostBlocks", "No fake blocks");
         en.put("desc_AntiPearl", "Pearl warning");
@@ -193,15 +193,15 @@ public class LanguageUtility {
         en.put("desc_AutoClicker", "Click fast");
         en.put("desc_AntiBot", "Block bots");
         en.put("desc_AutoDrop", "Drop blocks");
-        en.put("desc_SelfFill", "Fill around");
+
         en.put("desc_Burrow", "Hide in block");
         en.put("desc_PacketMine", "Click mine");
-        en.put("desc_PacketUtils", "Network tools");
+        en.put("desc_PacketHelper", "Network tools");
         en.put("desc_Borders", "Show borders");
         en.put("desc_Zoom", "Camera zoom");
         en.put("desc_Blur", "Blur background");
         en.put("desc_ToolTips", "Item info");
-        en.put("desc_VoidESP", "Show void");
+        en.put("desc_ESP_Void", "Show void");
         en.put("desc_AutoReGear", "Refill items");
         en.put("desc_AntiReGear", "Break containers");
         en.put("desc_Skeleton", "Show bodies");
@@ -216,7 +216,7 @@ public class LanguageUtility {
         en.put("desc_Fonts", "Change fonts");
         en.put("desc_PingSpoof", "Fake ping");
         en.put("desc_ShiftInterp", "Force crouch");
-        en.put("desc_BabyDude", "Small players");
+        en.put("desc_SmallUser", "Small players");
         en.put("desc_TntAura", "Bomb targets");
         en.put("desc_GridBuilder", "Build grids");
         en.put("desc_Particles", "Pretty particles");
@@ -229,7 +229,7 @@ public class LanguageUtility {
         en.put("desc_NewChunks", "New chunks");
         en.put("desc_AutoCart", "Send carts");
         en.put("hud_desc_Watermark", "Renders the premium RaveX Client watermark on screen.");
-        en.put("hud_desc_ActiveModules", "Renders the active (enabled) modules array list.");
+        en.put("hud_desc_ArrayList", "Renders the active (enabled) modules array list.");
         en.put("hud_desc_Coords", "Renders player's current X, Y, Z coordinates.");
         en.put("hud_desc_Fps", "Renders the current game frames per second (FPS) count.");
         en.put("hud_desc_NowPlaying", "Shows currently playing music from your system.");
@@ -240,6 +240,22 @@ public class LanguageUtility {
         en.put("hud_desc_Cooldowns", "Displays item cooldowns (Ender Pearl, Chorus, etc.) with remaining percentage.");
         en.put("hud_desc_Currency", "Renders custom live/simulated currency exchange rates for CIS & NATO countries + BTC.");
         en.put("hud_desc_ServerBrand", "Displays the server implementation brand using C++ JNI formatting.");
+        en.put("cmd_help", "Help");
+        en.put("cmd_config", "Config");
+        en.put("cmd_calc", "Calc");
+        en.put("cmd_toggle", "Toggle");
+        en.put("cmd_bind", "Bind");
+        en.put("cmd_panic", "Panic");
+        en.put("cmd_say", "Say");
+        en.put("cmd_time", "Time");
+        en.put("cmd_modules", "Modules");
+        en.put("cmd_coords", "Coords");
+        en.put("cmd_waypoint", "Waypoint");
+        en.put("cmd_friend", "Friend");
+        en.put("cmd_plugins", "Plugins");
+        en.put("cmd_clear", "Clear");
+        en.put("cmd_uuid", "UUID");
+        en.put("cmd_nbt", "NBT");
 
         Map<String, String> ru = new HashMap<>();
         ru.put("entered", "§f{0} §7зашёл");
@@ -254,7 +270,7 @@ public class LanguageUtility {
         ru.put("desc_ESP", "Видеть сквозь стены");
         ru.put("desc_AutoTool", "Автосмена инструмента");
         ru.put("desc_AntiAfk", "Не уходить в AFK");
-        ru.put("desc_BoneMeal", "Удобрять растения");
+        ru.put("desc_PVEUtils", "Плавка, приручение, варка, удобрение и свет");
         ru.put("desc_ClickGui", "Открыть меню");
         ru.put("desc_Notifications", "Уведомления на экране");
         ru.put("desc_DeathText", "Кастомный текст смерти");
@@ -283,8 +299,8 @@ public class LanguageUtility {
         ru.put("desc_NoWeb", "Ходьба в паутине");
         ru.put("desc_Glint", "Свечение предметов");
         ru.put("desc_RichPresence", "Статус в Discord");
-        ru.put("desc_GuiWalk", "Ходьба в меню");
-        ru.put("desc_NoSlowDown", "Без замедления");
+        ru.put("desc_GuiMove", "Ходьба в меню");
+        ru.put("desc_NoSlow", "Без замедления");
         ru.put("desc_Velocity", "Изменение отдачи");
         ru.put("desc_AutoEat", "Автоед");
         ru.put("desc_NoInteract", "Без лишних кликов");
@@ -297,7 +313,6 @@ public class LanguageUtility {
         ru.put("desc_ViewClip", "Сквозь блоки");
         ru.put("desc_Step", "Шаг вверх");
         ru.put("desc_ReverseStep", "Тянуть вниз");
-        ru.put("desc_Spammer", "Спам в чат");
         ru.put("desc_Commands", "Команды");
         ru.put("desc_ItemPhysics", "Физика предметов");
         ru.put("desc_Sounds", "Звуки");
@@ -310,7 +325,7 @@ public class LanguageUtility {
         ru.put("desc_AntiVoid", "Спасение от пустоты");
         ru.put("desc_AutoMend", "Ремонт снаряжения");
         ru.put("desc_FakePlayer", "Фейковый игрок");
-        ru.put("desc_FastUse", "Быстрое использование");
+        ru.put("desc_NoDelay", "Без задержек");
         ru.put("desc_AutoRespawn", "Мгновенное возрождение");
         ru.put("desc_AutoArmor", "Автоодевание брони");
         ru.put("desc_FastItem", "Быстрое перемещение");
@@ -345,13 +360,13 @@ public class LanguageUtility {
         ru.put("desc_ChestAura", "Ставить сундуки");
         ru.put("desc_PortalGui", "Использовать в портале");
         ru.put("desc_Avoid", "Избегать урона");
-        ru.put("desc_TabUtils", "Улучшенный таб");
-        ru.put("desc_ChatUtils", "Помощники чата");
-        ru.put("desc_ChestUtils", "Помощники сундуков");
+        ru.put("desc_TabHelper", "Улучшенный таб");
+        ru.put("desc_ChatHelper", "Помощники чата");
+        ru.put("desc_ChestHelper", "Помощники сундуков");
         ru.put("desc_AutoReconnect", "Перезаходить на сервер");
         ru.put("desc_FastLatency", "Быстрый пинг");
         ru.put("desc_MultiTask", "Два дела сразу");
-        ru.put("desc_BlockSelector", "Выбор блоков");
+        ru.put("desc_BlockMixer", "Перемешивание блоков");
         ru.put("desc_AutoSoup", "Пить суп");
         ru.put("desc_NameProtect", "Скрыть имена");
         ru.put("desc_StashFinder", "Поиск лута");
@@ -366,8 +381,7 @@ public class LanguageUtility {
         ru.put("desc_AutoCrystal", "Бить кристаллы");
         ru.put("desc_Trap", "Заблокировать врага");
         ru.put("desc_Igniter", "Поджигать TNT");
-        ru.put("desc_RocketUtils", "Ракетное ускорение");
-        ru.put("desc_RidingUtils", "Быстрая езда");
+        ru.put("desc_RidingHelper", "Быстрая езда");
         ru.put("desc_Blink", "Задержка движений");
         ru.put("desc_PacketFly", "Пакетный полёт");
         ru.put("desc_AutoApple", "Автояблоко");
@@ -375,7 +389,7 @@ public class LanguageUtility {
         ru.put("desc_FakePearl", "Фейковый жемчуг");
         ru.put("desc_BasePlace", "Ставить обсидиан");
         ru.put("desc_AnchorAura", "Взрывать якоря");
-        ru.put("desc_ElytraUtils", "Смена элитры");
+        ru.put("desc_ElytraHelper", "Смена элитры");
         ru.put("desc_ViewLock", "Заблокировать взгляд");
         ru.put("desc_ItemSaver", "Сохранить предметы");
         ru.put("desc_AntiAim", "Вращать голову");
@@ -390,13 +404,14 @@ public class LanguageUtility {
         ru.put("desc_AntiAttack", "Без ударов по своим");
         ru.put("desc_LagNotify", "Предупреждение о лагах");
         ru.put("desc_PopCounter", "Счётчик тотемов");
-        ru.put("desc_BookUtils", "Редактор книг");
+        ru.put("desc_BookHelper", "Редактор книг");
         ru.put("desc_WebSelf", "Паутина на себя");
         ru.put("desc_KeyPearl", "Бросок жемчуга");
         ru.put("desc_KeepSprint", "Сохранять спринт");
         ru.put("desc_AutoAuth", "Автовход");
         ru.put("desc_SafeWalk", "Безопасная ходьба");
-        ru.put("desc_AutoTame", "Приручать питомцев");
+        
+
         ru.put("desc_ShieldFucker", "Ломать щиты");
         ru.put("desc_KillEffects", "Эффекты смерти");
         ru.put("desc_AntiQuit", "Блокировать выход");
@@ -410,14 +425,15 @@ public class LanguageUtility {
         ru.put("desc_ElytraPlusPlus", "Элитра полёт");
         ru.put("desc_Flight", "Креативный полёт");
         ru.put("desc_Replenish", "Пополнять предметы");
-        ru.put("desc_AutoLight", "Ставить факелы");
+        
+
         ru.put("desc_AutoReplant", "Сажать заново");
         ru.put("desc_Nuker", "Массовое разрушение");
         ru.put("desc_AutoTrade", "Торговля с жителями");
         ru.put("desc_AutoFish", "Авторыбалка");
         ru.put("desc_AutoTunnel", "Копать тоннель");
-        ru.put("desc_AutoSmelt", "Плавка предметов");
-        ru.put("desc_AutoBrew", "Варка зелий");
+
+
         ru.put("desc_ECFarmer", "Ферма сундуков");
         ru.put("desc_GhostBlocks", "Убрать фейк-блоки");
         ru.put("desc_AntiPearl", "Предупреждение о жемчуге");
@@ -428,15 +444,14 @@ public class LanguageUtility {
         ru.put("desc_AutoClicker", "Автокликер");
         ru.put("desc_AntiBot", "Блокировка ботов");
         ru.put("desc_AutoDrop", "Автовыброс");
-        ru.put("desc_SelfFill", "Заполнять вокруг");
         ru.put("desc_Burrow", "Спрятаться в блок");
         ru.put("desc_PacketMine", "Клик-майн");
-        ru.put("desc_PacketUtils", "Сетевые инструменты");
+        ru.put("desc_PacketHelper", "Сетевые инструменты");
         ru.put("desc_Borders", "Границы мира");
         ru.put("desc_Zoom", "Зум камеры");
         ru.put("desc_Blur", "Размытие фона");
         ru.put("desc_ToolTips", "Информация о предмете");
-        ru.put("desc_VoidESP", "Подсветка пустоты");
+        ru.put("desc_ESP_Void", "Подсветка пустоты");
         ru.put("desc_AutoReGear", "Пополнять предметы");
         ru.put("desc_AntiReGear", "Ломать контейнеры");
         ru.put("desc_Skeleton", "Показать тела");
@@ -451,7 +466,7 @@ public class LanguageUtility {
         ru.put("desc_Fonts", "Шрифты");
         ru.put("desc_PingSpoof", "Фейковый пинг");
         ru.put("desc_ShiftInterp", "Принудительный шифт");
-        ru.put("desc_BabyDude", "Маленькие игроки");
+        ru.put("desc_SmallUser", "Маленькие игроки");
         ru.put("desc_TntAura", "Бомбить врагов");
         ru.put("desc_GridBuilder", "Строить сетки");
         ru.put("desc_Particles", "Красивые частицы");
@@ -464,7 +479,7 @@ public class LanguageUtility {
         ru.put("desc_NewChunks", "Новые чанки");
         ru.put("desc_AutoCart", "Отправлять вагонетки");
         ru.put("hud_desc_Watermark", "Ватермарка RaveX на экране");
-        ru.put("hud_desc_ActiveModules", "Список активных модулей");
+        ru.put("hud_desc_ArrayList", "Список активных модулей");
         ru.put("hud_desc_Coords", "Текущие координаты X Y Z");
         ru.put("hud_desc_Fps", "Счётчик FPS");
         ru.put("hud_desc_NowPlaying", "Сейчас играет из системы");
@@ -475,6 +490,22 @@ public class LanguageUtility {
         ru.put("hud_desc_Cooldowns", "Кулдауны предметов с процентами");
         ru.put("hud_desc_Currency", "Курсы валют CIS, NATO и BTC");
         ru.put("hud_desc_ServerBrand", "Бренд сервера через JNI");
+        ru.put("cmd_help", "Помощь");
+        ru.put("cmd_config", "Конфиг");
+        ru.put("cmd_calc", "Кальк");
+        ru.put("cmd_toggle", "Тогл");
+        ru.put("cmd_bind", "Бинд");
+        ru.put("cmd_panic", "Паника");
+        ru.put("cmd_say", "Сказать");
+        ru.put("cmd_time", "Время");
+        ru.put("cmd_modules", "Модули");
+        ru.put("cmd_coords", "Коорды");
+        ru.put("cmd_waypoint", "Вейпоинты");
+        ru.put("cmd_friend", "Друзья");
+        ru.put("cmd_plugins", "Плагины");
+        ru.put("cmd_clear", "Очистка");
+        ru.put("cmd_uuid", "UUID");
+        ru.put("cmd_nbt", "NBT");
 
         STRINGS.put("English", en);
         STRINGS.put("Russian", ru);
@@ -486,6 +517,10 @@ public class LanguageUtility {
 
     public static String getLanguage() {
         return currentLang;
+    }
+
+    public static String cmdName(String cmdKey) {
+        return t("cmd_" + cmdKey, cmdKey);
     }
 
     public static String t(String key, Object... args) {

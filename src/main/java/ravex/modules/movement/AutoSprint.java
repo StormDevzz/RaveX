@@ -1,11 +1,10 @@
 package ravex.modules.movement;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 public class AutoSprint extends Module {
-    public static final AutoSprint INSTANCE = new AutoSprint();
     public final ModeParameter mode = new ModeParameter("Mode", "Rage", List.of("Legit", "Rage"));
 
     @Override
@@ -19,5 +18,8 @@ public class AutoSprint extends Module {
                 mc.player.setSprinting(true);
             }
         }
+    }
+    public static AutoSprint itz() {
+        return ModuleManager.get(AutoSprint.class);
     }
 }

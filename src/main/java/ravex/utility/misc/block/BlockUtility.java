@@ -57,6 +57,24 @@ public class BlockUtility {
         return true;
     }
 
+    public static boolean breakBlock(Minecraft mc, BlockPos pos, String grimMode) {
+        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
+        switch (grimMode) {
+            case "Strict":
+                mc.gameMode.continueDestroyBlock(pos, Direction.UP);
+                return true;
+            case "Dev":
+                mc.gameMode.startDestroyBlock(pos, Direction.UP);
+                SwingUtility.swing(mc.player, InteractionHand.MAIN_HAND);
+                for (int i = 0; i < 3; i++) {
+                    mc.gameMode.continueDestroyBlock(pos, Direction.UP);
+                }
+                return true;
+            default:
+                return breakBlock(mc, pos);
+        }
+    }
+
     public static int startBreak(Minecraft mc, BlockPos pos, BreakConfig cfg) {
         if (mc.player == null || mc.level == null || mc.gameMode == null) return -1;
         BlockState state = mc.level.getBlockState(pos);
@@ -293,4 +311,56 @@ public class BlockUtility {
     public static BlockPos below(BlockPos pos) { return pos.below(); }
     public static BlockPos above(BlockPos pos) { return pos.above(); }
     public static BlockPos relative(BlockPos pos, Direction dir) { return pos.relative(dir); }
+
+    public static boolean grimAirPlace(Minecraft mc, BlockPos target, InteractionHand hand) {
+        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
+        for (Direction dir : Direction.values()) {
+            BlockPos side = target.relative(dir);
+            BlockState state = mc.level.getBlockState(side);
+            if (state.isAir() || state.liquid()) continue;
+            Vec3 hitVec = Vec3.atCenterOf(side).add(
+                new Vec3(dir.getStepX(), dir.getStepY(), dir.getStepZ()).scale(0.5)
+            );
+            BlockHitResult bhr = new BlockHitResult(hitVec, dir.getOpposite(), side, false);
+            useItemOn(mc, bhr, hand);
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean grimAirPlaceDesync(Minecraft mc, BlockPos target, BlockPos breakPos, InteractionHand hand) {
+        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
+        mc.gameMode.startDestroyBlock(breakPos, Direction.UP);
+        for (Direction dir : Direction.values()) {
+            BlockPos side = target.relative(dir);
+            if (side.equals(breakPos)) {
+                Vec3 hitVec = Vec3.atCenterOf(side).add(
+                    new Vec3(dir.getStepX(), dir.getStepY(), dir.getStepZ()).scale(0.5)
+                );
+                BlockHitResult bhr = new BlockHitResult(hitVec, dir.getOpposite(), side, false);
+                useItemOn(mc, bhr, hand);
+                return true;
+            }
+        }
+        return grimAirPlace(mc, target, hand);
+    }
+
+    public static boolean ncpBreakBlock(Minecraft mc, BlockPos pos, Direction face) {
+        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
+        if (mc.player.distanceToSqr(Vec3.atCenterOf(pos)) > 6.25) return false;
+        mc.gameMode.startDestroyBlock(pos, face);
+        SwingUtility.swing(mc.player, InteractionHand.MAIN_HAND);
+        return true;
+    }
+
+    public static boolean ncpAirPlace(Minecraft mc, BlockPos pos, Direction face, InteractionHand hand) {
+        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
+        if (mc.player.distanceToSqr(Vec3.atCenterOf(pos)) > 6.25) return false;
+        Vec3 hitVec = Vec3.atCenterOf(pos).add(
+            new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5)
+        );
+        BlockHitResult bhr = new BlockHitResult(hitVec, face.getOpposite(), pos, false);
+        useItemOn(mc, bhr, hand);
+        return true;
+    }
 }

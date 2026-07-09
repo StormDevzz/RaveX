@@ -1,11 +1,15 @@
 package ravex.modules.movement;
 import net.minecraft.client.Minecraft;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
+import ravex.parameter.ModeParameter;
+import java.util.List;
+import java.util.Random;
 public class NoRotate extends Module {
-    public static final NoRotate INSTANCE = new NoRotate();
+    public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Strict"));
     private float savedYaw;
     private float savedPitch;
+    private final Random random = new Random();
 
     public void saveRotation() {
         Minecraft mc = Minecraft.getInstance();
@@ -18,8 +22,24 @@ public class NoRotate extends Module {
         if (!getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            mc.player.setYRot(savedYaw);
-            mc.player.setXRot(savedPitch);
+            if ("Strict".equals(mode.getValue())) {
+                float yaw = savedYaw;
+                float pitch = savedPitch;
+                if (yaw % 90 == 0) yaw += (random.nextFloat() - 0.5f) * 0.1f;
+                if (yaw % 180 == 0) yaw += (random.nextFloat() - 0.5f) * 0.1f;
+                if (pitch == 0 || pitch == 90 || pitch == -90) pitch += (random.nextFloat() - 0.5f) * 0.1f;
+                mc.player.setYRot(yaw);
+                mc.player.setXRot(pitch);
+            } else {
+                mc.player.setYRot(savedYaw);
+                mc.player.setXRot(savedPitch);
+            }
         }
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(NoRotate.class);
+    }
+    public static NoRotate itz() {
+        return ModuleManager.get(NoRotate.class);
     }
 }

@@ -1,11 +1,22 @@
 package ravex.modules;
 import com.google.gson.JsonObject;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.event.EventBusHolder;
+import ravex.event.combat.ModuleToggleEvent;
+
+import ravex.event.client.SoundEvent;
 import ravex.parameter.Parameter;
-import ravex.utility.sound.SoundUtility;
 import java.util.ArrayList;
 import java.util.List;
 public abstract class Module {
+    protected static <T extends Module> T self(Class<T> type) {
+        return ModuleManager.get(type);
+    }
+    protected static boolean maybeEnabled(Class<? extends Module> type) {
+        Module m = ModuleManager.get(type);
+        return m != null && m.getEnabled();
+    }
     private String name;
     private Category category;
     private boolean enabled;
@@ -95,25 +106,20 @@ public abstract class Module {
         }
         if (isToggleLocked()) return;
         if (enabled && !enableCondition.canEnable()) {
-            SoundUtility.playFailure();
+            EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.FAILURE));
             return;
         }
         if (this.enabled != enabled) {
             this.enabled = enabled;
+            var bus = EventBusHolder.get();
             if (enabled) {
                 onEnable();
-                if (hasToggleSound()) SoundUtility.playEnable();
-                if (ravex.modules.client.Notifications.INSTANCE != null) {
-                    ravex.modules.client.Notifications.notifyToggle(this, true);
-                }
+                if (hasToggleSound()) bus.post(new SoundEvent(SoundEvent.Type.ENABLE));
             } else {
                 onDisable();
-                if (hasToggleSound()) SoundUtility.playDisable();
-                if (ravex.modules.client.Notifications.INSTANCE != null) {
-                    ravex.modules.client.Notifications.notifyToggle(this, false);
-                }
+                if (hasToggleSound()) bus.post(new SoundEvent(SoundEvent.Type.DISABLE));
             }
-            ravex.modules.client.DesktopGui.onModuleToggle(this.getName(), enabled);
+            bus.post(new ModuleToggleEvent(this, enabled));
         }
     }
     public boolean isToggleLocked() {

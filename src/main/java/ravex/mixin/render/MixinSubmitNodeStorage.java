@@ -25,7 +25,7 @@ public class MixinSubmitNodeStorage {
         cancellable = true
     )
     private void onSubmitModelPart(ModelPart modelPart, PoseStack poseStack, RenderType renderType, int light, int overlay, TextureAtlasSprite sprite, boolean glint, boolean glint2, int breakingId, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay, int color, CallbackInfo ci) {
-        if (!Shaders.RENDERING_HAND.get() || !Shaders.INSTANCE.getEnabled()) return;
+        if (!Shaders.RENDERING_HAND.get() || !Shaders.maybeEnabled()) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null || mc.renderBuffers() == null) return;
@@ -36,7 +36,7 @@ public class MixinSubmitNodeStorage {
         VertexConsumer original = mc.renderBuffers().bufferSource().getBuffer(renderType);
 
         HandShaderManager.RenderInput renderInput = new HandShaderManager.RenderInput();
-        renderInput.config = Shaders.INSTANCE.createConfig();
+        renderInput.config = Shaders.itz().createConfig();
         renderInput.time = mc.level.getGameTime() + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         renderInput.deltaTime = mc.getDeltaTracker().getGameTimeDeltaTicks();
 

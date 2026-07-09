@@ -20,7 +20,7 @@ public abstract class MixinDisconnectedScreen extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        if (!AutoReconnect.INSTANCE.getEnabled()) return;
+        if (!AutoReconnect.maybeEnabled()) return;
         if (!AutoReconnect.hasLastServer()) return;
 
         int btnW = 200;
@@ -35,6 +35,6 @@ public abstract class MixinDisconnectedScreen extends Screen {
             }
         ).bounds(btnX, btnY, btnW, 20).build());
 
-        AutoReconnect.INSTANCE.scheduleAutoReconnect();
+        AutoReconnect.itz().scheduleAutoReconnect();
     }
 }

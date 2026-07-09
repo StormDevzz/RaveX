@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(ClientboundSetEntityMotionPacket.class)
 public interface AccessorSetEntityMotionPacket {
+    @Accessor("movement")
+    Vec3 getMovement();
+
     @Mutable
     @Accessor("movement")
     void setMovement(Vec3 movement);

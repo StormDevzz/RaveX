@@ -1,9 +1,9 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 public class HoleFill extends Module {
-    public static final HoleFill INSTANCE = new HoleFill();
     public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0, 0.5);
     public final NumberParameter delay = new NumberParameter("Delay", 80, 20, 300, 10);
     public final NumberParameter maxBlocks = new NumberParameter("MaxBlocks", 6, 1, 24, 1);
@@ -197,4 +196,11 @@ public class HoleFill extends Module {
     }
     private static native int[] nativeFindHoles(
         double px, double py, double pz, double range, int maxResults);
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(HoleFill.class);
+    }
+    public static HoleFill itz() {
+        return ModuleManager.get(HoleFill.class);
+    }
 }

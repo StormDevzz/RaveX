@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import ravex.modules.misc.CoordLogger;
+import ravex.modules.misc.ChatHelper;
 
 @Mixin(LocalPlayer.class)
 public abstract class MixinLocalPlayerDeath {
@@ -13,7 +13,7 @@ public abstract class MixinLocalPlayerDeath {
     private void onDeathScreen(boolean show, CallbackInfo ci) {
         if (!show) return;
         var self = (LocalPlayer)(Object)this;
-        CoordLogger.INSTANCE.onDeath(
+        ChatHelper.itz().onDeath(
             self.getX(), self.getY(), self.getZ(),
             self.level().dimension().identifier().toString()
         );

@@ -1,6 +1,8 @@
 package ravex.modules.player;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
+import ravex.parameter.DependencyParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.ArmorUtility;
@@ -12,11 +14,16 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import java.util.List;
 public class AutoArmor extends Module {
-    public static final AutoArmor INSTANCE = new AutoArmor();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal",
-            List.of("Normal", "Legit"));
-    public final NumberParameter delay = new NumberParameter("Delay(ms)", 150.0, 0.0, 1000.0, 10.0);
+            List.of("Normal", "Legit", "Custom"));
+    public final NumberParameter delay = new NumberParameter("Delay", 150.0, 0.0, 1000.0, 10.0);
     public final BooleanParameter onlyBetter = new BooleanParameter("OnlyBetter", true);
+    public final DependencyParameter<Double, NumberParameter> customDelay =
+            new DependencyParameter<>(new NumberParameter("CustomDelay", 50.0, 0.0, 500.0, 10.0), mode, "Custom");
+    public final DependencyParameter<Boolean, BooleanParameter> openInventory =
+            new DependencyParameter<>(new BooleanParameter("OpenInventory", true), mode, "Custom");
+    public final DependencyParameter<Boolean, BooleanParameter> ignoreEnchants =
+            new DependencyParameter<>(new BooleanParameter("IgnoreEnchants", false), mode, "Custom");
     private long lastEquipTime = 0;
 
     @Override
@@ -24,6 +31,15 @@ public class AutoArmor extends Module {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
+        String currentMode = mode.getValue();
+        if ("Custom".equals(currentMode)) {
+            tickCustom(mc, p);
+        } else {
+            tickNormal(mc, p, currentMode);
+        }
+    }
+
+    private void tickNormal(Minecraft mc, LocalPlayer p, String currentMode) {
         if (mc.screen != null && !(mc.screen instanceof InventoryScreen)) return;
         if (System.currentTimeMillis() - lastEquipTime < delay.getValue()) return;
         for (int armorIndex = 0; armorIndex < 4; armorIndex++) {
@@ -35,7 +51,7 @@ public class AutoArmor extends Module {
             if (!ArmorUtility.isArmorItem(bestStack) || !ArmorUtility.slotMatches(bestStack, equipSlot)) continue;
             if (onlyBetter.getValue() && !currentArmor.isEmpty()
                 && !ArmorUtility.isBetterArmor(bestStack, currentArmor, equipSlot)) continue;
-            if ("Legit".equals(mode.getValue())) {
+            if ("Legit".equals(currentMode)) {
                 int hotbarSlot = InventoryUtility.findEmptyHotbarSlot(p);
                 if (hotbarSlot == -1) hotbarSlot = getLowestPriorityHotbarSlot(p);
                 if (hotbarSlot == -1 || hotbarSlot > 8) continue;
@@ -52,6 +68,36 @@ public class AutoArmor extends Module {
             break;
         }
     }
+
+    private void tickCustom(Minecraft mc, LocalPlayer p) {
+        if (openInventory.getValue() && !(mc.screen instanceof InventoryScreen)) {
+            return;
+        }
+        if (System.currentTimeMillis() - lastEquipTime < customDelay.getValue()) return;
+        for (int armorIndex = 0; armorIndex < 4; armorIndex++) {
+            EquipmentSlot equipSlot = ArmorUtility.getEquipmentSlotForIndex(armorIndex);
+            var currentArmor = p.getItemBySlot(equipSlot);
+            int bestSlot = ArmorUtility.findBestArmorSlot(p, armorIndex);
+            if (bestSlot == -1) continue;
+            var bestStack = InventoryUtility.getItem(p, bestSlot);
+            if (!ArmorUtility.isArmorItem(bestStack) || !ArmorUtility.slotMatches(bestStack, equipSlot)) continue;
+            if (onlyBetter.getValue() && !currentArmor.isEmpty()
+                && !isBetterArmorIgnoreEnchants(bestStack, currentArmor, equipSlot)) continue;
+            InventoryUtility.quickMoveStack(mc, p, bestSlot);
+            lastEquipTime = System.currentTimeMillis();
+            break;
+        }
+    }
+
+    private boolean isBetterArmorIgnoreEnchants(net.minecraft.world.item.ItemStack a, net.minecraft.world.item.ItemStack b, EquipmentSlot slot) {
+        if (!ArmorUtility.isArmorItem(a)) return false;
+        if (!ArmorUtility.isArmorItem(b)) return true;
+        if (ignoreEnchants.getValue()) {
+            return ArmorUtility.getArmorScore(a, slot) > ArmorUtility.getArmorScore(b, slot);
+        }
+        return ArmorUtility.isBetterArmor(a, b, slot);
+    }
+
     private int getLowestPriorityHotbarSlot(LocalPlayer p) {
         int worstSlot = 0;
         double worstScore = Double.MAX_VALUE;
@@ -70,4 +116,11 @@ public class AutoArmor extends Module {
         }
         return worstSlot;
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoArmor.class);
+    }
+    public static AutoArmor itz() {
+        return ModuleManager.get(AutoArmor.class);
+    }
+
 }

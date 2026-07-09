@@ -12,13 +12,13 @@ import ravex.modules.movement.NoRotate;
 public class MixinNoRotate {
     @Inject(method = "handleMovePlayer", at = @At("HEAD"))
     private void onHandleMovePlayerHead(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
-        if (NoRotate.INSTANCE.getEnabled()) {
-            NoRotate.INSTANCE.saveRotation();
+        if (NoRotate.maybeEnabled()) {
+            NoRotate.itz().saveRotation();
         }
     }
 
     @Inject(method = "handleMovePlayer", at = @At("TAIL"))
     private void onHandleMovePlayerTail(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
-        NoRotate.INSTANCE.restoreRotation();
+        NoRotate.itz().restoreRotation();
     }
 }

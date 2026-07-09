@@ -11,7 +11,7 @@ import ravex.modules.player.Xray;
 public class MixinLightTexture {
 
     private static boolean isFullbright() {
-        return Fullbright.INSTANCE.getEnabled() || Xray.INSTANCE.getEnabled();
+        return Fullbright.maybeEnabled() || Xray.maybeEnabled();
     }
 
     @ModifyArg(
@@ -20,7 +20,7 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyAmbientLight(float value) {
-        return isFullbright() ? Fullbright.INSTANCE.brightness.getValue().floatValue() : value;
+        return isFullbright() ? Fullbright.itz().brightness.getValue().floatValue() : value;
     }
 
     @ModifyArg(
@@ -29,7 +29,7 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyNightVision(float value) {
-        return isFullbright() ? Fullbright.INSTANCE.brightness.getValue().floatValue() : value;
+        return isFullbright() ? Fullbright.itz().brightness.getValue().floatValue() : value;
     }
 
     @ModifyArg(
@@ -38,6 +38,6 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyDarkness(float value) {
-        return isFullbright() ? Fullbright.INSTANCE.darknessMult.getValue().floatValue() : value;
+        return isFullbright() ? Fullbright.itz().darknessMult.getValue().floatValue() : value;
     }
 }

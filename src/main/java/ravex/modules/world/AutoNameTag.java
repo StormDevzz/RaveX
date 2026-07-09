@@ -1,12 +1,11 @@
 package ravex.modules.world;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.MobUtility;
 import net.minecraft.client.Minecraft;
 public class AutoNameTag extends Module {
-    public static final AutoNameTag INSTANCE = new AutoNameTag();
 
     @Override
     public void onTick() {
@@ -44,5 +43,8 @@ public class AutoNameTag extends Module {
         if (tagSlot != prevSlot) {
             InventoryUtility.selectSlot(p, prevSlot);
         }
+    }
+    public static AutoNameTag itz() {
+        return ModuleManager.get(AutoNameTag.class);
     }
 }

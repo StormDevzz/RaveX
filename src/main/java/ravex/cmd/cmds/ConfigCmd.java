@@ -2,16 +2,17 @@ package ravex.cmd.cmds;
 import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
 import ravex.manager.ConfigManager;
-import ravex.modules.misc.Commands;
+import ravex.modules.client.Commands;
 import java.util.List;
 import java.util.Locale;
+import ravex.manager.ModuleManager;
 public class ConfigCmd extends Cmd {
     public ConfigCmd() {
         super("config", "Manage configs", "cfg");
     }
     @Override
     public void execute(String[] args) {
-        String pref = Commands.INSTANCE.prefix.getValue();
+        String pref = ModuleManager.get(Commands.class).prefix.getValue();
         if (args.length < 2) {
             CmdReg.print("§5[RaveX] Config commands: §e" + pref + "config save/load/list/delete <name>");
             return;

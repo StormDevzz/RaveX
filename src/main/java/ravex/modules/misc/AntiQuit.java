@@ -1,5 +1,5 @@
 package ravex.modules.misc;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.utility.nativelib.NativeLoader;
@@ -11,7 +11,6 @@ import com.mojang.blaze3d.platform.Window;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
 public class AntiQuit extends Module {
-    public static final AntiQuit INSTANCE = new AntiQuit();
     public final ModeParameter mode = new ModeParameter("Mode", "Server",
         List.of("Server", "Game", "Both"));
 
@@ -62,11 +61,16 @@ public class AntiQuit extends Module {
             window.setWindowCloseCallback(null);
         }
     }
-    public boolean shouldBlockDisconnect() {
-        if (!getEnabled()) return false;
-        String m = mode.getValue();
+    public static boolean shouldBlockDisconnect() {
+        AntiQuit $ = ravex.manager.ModuleManager.get(AntiQuit.class);
+        if ($ == null || !$.getEnabled()) return false;
+        String m = $.mode.getValue();
         return m.equals("Server") || m.equals("Both");
     }
     private native void nativeBlockQuit(boolean block);
     private native boolean nativeIsQuitBlocked();
+
+    public static AntiQuit itz() {
+        return ModuleManager.get(AntiQuit.class);
+    }
 }

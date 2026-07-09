@@ -2,13 +2,12 @@ package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.player.LocalPlayer;
-import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.manager.ModuleManager;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import java.util.List;
 public class SoundBlock extends Module {
-    public static final SoundBlock INSTANCE = new SoundBlock();
     public final BooleanParameter blockAmbient   = new BooleanParameter("Ambient", false);
     public final BooleanParameter blockBlocks    = new BooleanParameter("Blocks", false);
     public final BooleanParameter blockWeather   = new BooleanParameter("Weather", false);
@@ -35,5 +34,13 @@ public class SoundBlock extends Module {
             case RECORDS -> blockRecords.getValue();
             default -> false;
         };
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(SoundBlock.class);
+    }
+
+    public static SoundBlock itz() {
+        return ModuleManager.get(SoundBlock.class);
     }
 }

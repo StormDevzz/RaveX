@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -10,7 +11,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -19,7 +19,6 @@ import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 public class BedBomb extends Module {
-    public static final BedBomb INSTANCE = new BedBomb();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.5);
     public final NumberParameter targetRange = new NumberParameter("TargetRange", 6.0, 1.0, 12.0, 0.5);
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
@@ -196,4 +195,11 @@ public class BedBomb extends Module {
         return -1;
     }
     private static native void nativeFindBestPlace(double px, double py, double pz, double ex, double ey, double ez, double range, double[] out);
+    public static boolean maybeEnabled() {
+        return maybeEnabled(BedBomb.class);
+    }
+    public static BedBomb itz() {
+        return ModuleManager.get(BedBomb.class);
+    }
+
 }

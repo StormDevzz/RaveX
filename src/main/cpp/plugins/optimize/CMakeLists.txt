@@ -12,6 +12,7 @@ endif()
 
 set_target_properties(ravex_optimize PROPERTIES
     OUTPUT_NAME "ravex_optimize"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 

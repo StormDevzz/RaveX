@@ -34,7 +34,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     if(MSVC)
         target_compile_options(ravex_baseplace PRIVATE /O2 /fp:fast)
     else()
-        target_compile_options(ravex_baseplace PRIVATE -O3 -march=native -ffast-math)
+        target_compile_options(ravex_baseplace PRIVATE -O2)
     endif()
 endif()
 

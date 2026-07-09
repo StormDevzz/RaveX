@@ -19,7 +19,7 @@ public class MixinGameRenderer {
     private float modifyAspectRatio(float aspect) {
         Window window = Minecraft.getInstance().getWindow();
         float original = (float) window.getWidth() / (float) window.getHeight();
-        return AspectRatio.INSTANCE.getAspectRatio(original);
+        return AspectRatio.itz().getAspectRatio(original);
     }
 
     @org.spongepowered.asm.mixin.injection.Inject(

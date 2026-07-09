@@ -1,9 +1,12 @@
 package ravex.utility.player;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.core.component.DataComponents;
 
 public class ElytraUtility {
@@ -50,6 +53,43 @@ public class ElytraUtility {
             }
         }
         return best;
+    }
+
+    public static boolean useFirework(LocalPlayer player) {
+        if (player == null || !player.isFallFlying()) return false;
+        Minecraft mc = Minecraft.getInstance();
+        int prevSlot = player.getInventory().getSelectedSlot();
+        int slot = InventoryUtility.findSlot(player, Items.FIREWORK_ROCKET);
+        if (slot == -1) return false;
+        player.getInventory().setSelectedSlot(slot);
+        mc.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        player.getInventory().setSelectedSlot(prevSlot);
+        return true;
+    }
+
+    public static void setPitch(LocalPlayer player, float pitch) {
+        if (player != null) player.setXRot(pitch);
+    }
+
+    public static boolean swapToChestplate(LocalPlayer player) {
+        if (player == null || !isElytraEquipped(player)) return false;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.gameMode == null) return false;
+        int slot = findChestplateSlot(player);
+        if (slot == -1) return false;
+        int containerSlot = InventoryUtility.inventorySlotToContainerSlot(slot);
+        if (containerSlot == -1) return false;
+        mc.gameMode.handleInventoryMouseClick(
+            player.containerMenu.containerId, 6, 0, ClickType.PICKUP, player);
+        mc.gameMode.handleInventoryMouseClick(
+            player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, player);
+        mc.gameMode.handleInventoryMouseClick(
+            player.containerMenu.containerId, 6, 0, ClickType.PICKUP, player);
+        return true;
+    }
+
+    public static boolean isFallFlying(LocalPlayer player) {
+        return player != null && player.isFallFlying();
     }
 
     private static boolean isBetterChestplate(ItemStack a, ItemStack b) {

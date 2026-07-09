@@ -11,6 +11,7 @@ import ravex.parameter.ColorParameter;
 import ravex.parameter.KeybindParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
+import ravex.manager.ModuleManager;
 
 public class ParameterElement {
     private final Parameter<?> parameter;
@@ -50,8 +51,8 @@ public class ParameterElement {
         lastAnimTime = now;
         if (delta > 100) delta = 16;
 
-        boolean smoothOption = ravex.modules.client.ClickGui.INSTANCE.smoothOption.getValue();
-        float optionSmoothness = ravex.modules.client.ClickGui.INSTANCE.optionSmoothness.getValue().floatValue();
+        boolean smoothOption = ModuleManager.get(ravex.modules.client.ClickGui.class).smoothOption.getValue();
+        float optionSmoothness = ModuleManager.get(ravex.modules.client.ClickGui.class).optionSmoothness.getValue().floatValue();
 
         float targetExpand = parameter.isVisible() ? 1.0f : 0.0f;
         if (smoothOption) {
@@ -105,7 +106,7 @@ public class ParameterElement {
         int bg = hovered ? 0x11000000 : 0x08000000;
         graphics.fill(x, y, x + width, y + height, bg);
 
-        boolean switchless = ravex.modules.client.ClickGui.INSTANCE.switchless.getValue();
+        boolean switchless = ModuleManager.get(ravex.modules.client.ClickGui.class).switchless.getValue();
 
         if (parameter instanceof BooleanParameter bp) {
             toggleAnimProgress = bp.getValue() ? 1.0f : 0.0f;
@@ -425,7 +426,7 @@ public class ParameterElement {
 
     public boolean mouseScrolled(double mouseX, double mouseY, double amount, int x, int y, int width, int height) {
         if (!parameter.isVisible()) return false;
-        if (parameter instanceof NumberParameter np && ravex.modules.client.ClickGui.INSTANCE.wheelControl.getValue()) {
+        if (parameter instanceof NumberParameter np && ModuleManager.get(ravex.modules.client.ClickGui.class).wheelControl.getValue()) {
             if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
                 double val = np.getValue();
                 double step = np.getStep();

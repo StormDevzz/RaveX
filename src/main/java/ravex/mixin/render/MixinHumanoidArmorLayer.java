@@ -14,7 +14,7 @@ import ravex.modules.render.NoRender;
 public class MixinHumanoidArmorLayer {
     @Inject(method = "submit(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/client/renderer/entity/state/HumanoidRenderState;FF)V", at = @At("HEAD"), cancellable = true)
     private void onSubmit(PoseStack poseStack, SubmitNodeCollector collector, int light, HumanoidRenderState state, float f1, float f2, CallbackInfo ci) {
-        if (NoRender.INSTANCE.getEnabled() && NoRender.INSTANCE.armor.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().armor.getValue()) {
             ci.cancel();
         }
     }

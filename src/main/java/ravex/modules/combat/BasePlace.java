@@ -30,8 +30,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.manager.ModuleManager;
 public class BasePlace extends Module {
-    public static final BasePlace INSTANCE = new BasePlace();
     public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
     public final ModeParameter   targetType      = new ModeParameter("TargetType", "Players", List.of("Players", "Monsters", "Passives", "All"));
     public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
@@ -72,6 +72,12 @@ public class BasePlace extends Module {
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
         syncPredictTicks.setVisible(autoCrystalSync::getValue);
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(BasePlace.class);
+    }
+    public static BasePlace itz() {
+        return ModuleManager.get(BasePlace.class);
+    }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
@@ -105,7 +111,7 @@ public class BasePlace extends Module {
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         silentRotation.hasRotation = false;
         if (autoCrystalSync.getValue()) {
-            if (!AutoCrystal.INSTANCE.getEnabled()) {
+            if (!ModuleManager.get(ravex.modules.combat.AutoCrystal.class).getEnabled()) {
                 simulatedPlacementBlock = null;
                 return;
             }

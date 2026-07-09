@@ -1,4 +1,5 @@
 package ravex.modules.player;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
@@ -16,12 +17,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 public class SourceFiller extends Module {
-    public static final SourceFiller INSTANCE = new SourceFiller();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final ModeParameter mode = new ModeParameter("Mode", "Smart", List.of("Normal", "Smart"));
     public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
-    public final NumberParameter delay = new NumberParameter("Delay(ms)", 200.0, 0.0, 1000.0, 10.0);
+    public final NumberParameter delay = new NumberParameter("Delay", 200.0, 0.0, 1000.0, 10.0);
     private long lastPlaceTime = 0;
 
     @Override
@@ -70,4 +70,11 @@ public class SourceFiller extends Module {
             if (mc.level.getFluidState(pos.relative(dir)).is(net.minecraft.tags.FluidTags.WATER)) count++;
         return count;
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(SourceFiller.class);
+    }
+    public static SourceFiller itz() {
+        return ModuleManager.get(SourceFiller.class);
+    }
+
 }

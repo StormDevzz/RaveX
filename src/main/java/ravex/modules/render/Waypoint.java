@@ -1,8 +1,8 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Waypoint extends Module {
-    public static final Waypoint INSTANCE = new Waypoint();
 
     public record WaypointData(String name, double x, double y, double z, String dimension) {
     }
@@ -25,31 +24,31 @@ public class Waypoint extends Module {
     public final BooleanParameter showBeam = new BooleanParameter("Beam", true);
 
     public static List<WaypointData> getWaypoints() {
-        return INSTANCE.waypoints;
+        return ModuleManager.get(Waypoint.class).waypoints;
     }
 
     public static int getColor() {
-        return INSTANCE.color.getValue();
+        return ModuleManager.get(Waypoint.class).color.getValue();
     }
 
     public static double getMarkerSize() {
-        return INSTANCE.markerSize.getValue();
+        return ModuleManager.get(Waypoint.class).markerSize.getValue();
     }
 
     public static double getRange() {
-        return INSTANCE.range.getValue();
+        return ModuleManager.get(Waypoint.class).range.getValue();
     }
 
     public static boolean isShowName() {
-        return INSTANCE.showName.getValue();
+        return ModuleManager.get(Waypoint.class).showName.getValue();
     }
 
     public static boolean isShowDistance() {
-        return INSTANCE.showDistance.getValue();
+        return ModuleManager.get(Waypoint.class).showDistance.getValue();
     }
 
     public static boolean isShowBeam() {
-        return INSTANCE.showBeam.getValue();
+        return ModuleManager.get(Waypoint.class).showBeam.getValue();
     }
 
     public void addWaypoint(String name, double x, double y, double z, String dimension) {
@@ -94,5 +93,12 @@ public class Waypoint extends Module {
                 waypoints.add(new WaypointData(name, x, y, z, dimension));
             }
         }
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Waypoint.class);
+    }
+
+    public static Waypoint itz() {
+        return ModuleManager.get(Waypoint.class);
     }
 }

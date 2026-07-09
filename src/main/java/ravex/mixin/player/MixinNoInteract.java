@@ -16,7 +16,13 @@ public class MixinNoInteract {
 
     @Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
     private void onStartUseItem(CallbackInfo ci) {
-        if (!NoInteract.INSTANCE.getEnabled()) return;
+        NoInteract ni = NoInteract.itz();
+        if (!ni.getEnabled()) return;
+
+        if (ni.allBlocks.getValue()) {
+            ci.cancel();
+            return;
+        }
 
         Minecraft mc = (Minecraft)(Object)this;
         LocalPlayer player = mc.player;
@@ -27,40 +33,27 @@ public class MixinNoInteract {
             BlockState state = mc.level.getBlockState(pos);
             Block block = state.getBlock();
 
-            if (NoInteract.INSTANCE.containers.getValue() && isContainer(block)) {
+            if (ni.chests.getValue() && isChestLike(block)) {
                 ci.cancel();
             }
-            if (NoInteract.INSTANCE.craftingTables.getValue() && block instanceof CraftingTableBlock) {
+            if (ni.enderChests.getValue() && block instanceof EnderChestBlock) {
                 ci.cancel();
             }
-            if (NoInteract.INSTANCE.buttons.getValue() && isButtonOrLever(block)) {
+            if (ni.furnaces.getValue() && block instanceof AbstractFurnaceBlock) {
+                ci.cancel();
+            }
+            if (ni.crafting.getValue() && block instanceof CraftingTableBlock) {
+                ci.cancel();
+            }
+            if (ni.enchanting.getValue() && block instanceof EnchantingTableBlock) {
                 ci.cancel();
             }
         }
     }
 
-    private static boolean isContainer(Block block) {
+    private static boolean isChestLike(Block block) {
         return block instanceof ChestBlock
-            || block instanceof EnderChestBlock
             || block instanceof BarrelBlock
-            || block instanceof ShulkerBoxBlock
-            || block instanceof HopperBlock
-            || block instanceof DispenserBlock
-            || block instanceof DropperBlock
-            || block instanceof FurnaceBlock
-            || block instanceof AbstractFurnaceBlock
-            || block instanceof BrewingStandBlock
-            || block instanceof BeaconBlock
-            || block instanceof EnchantingTableBlock
-            || block instanceof AnvilBlock
-            || block instanceof GrindstoneBlock
-            || block instanceof StonecutterBlock
-            || block instanceof LoomBlock
-            || block instanceof CartographyTableBlock
-            || block instanceof SmithingTableBlock;
-    }
-
-    private static boolean isButtonOrLever(Block block) {
-        return block instanceof ButtonBlock || block instanceof LeverBlock;
+            || block instanceof ShulkerBoxBlock;
     }
 }

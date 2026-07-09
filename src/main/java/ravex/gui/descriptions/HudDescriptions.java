@@ -8,7 +8,7 @@ public class HudDescriptions {
 
     static {
         DESCRIPTIONS.put("Watermark", "Renders the premium RaveX Client watermark on screen.");
-        DESCRIPTIONS.put("ActiveModules", "Renders the active (enabled) modules array list.");
+        DESCRIPTIONS.put("ArrayList", "Renders the active (enabled) modules array list.");
         DESCRIPTIONS.put("Coords", "Renders player's current X, Y, Z coordinates.");
         DESCRIPTIONS.put("Fps", "Renders the current game frames per second (FPS) count.");
         DESCRIPTIONS.put("NowPlaying", "Shows currently playing music from your system.");

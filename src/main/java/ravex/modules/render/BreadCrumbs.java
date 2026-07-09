@@ -1,11 +1,11 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import ravex.utility.misc.MobUtility;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 public class BreadCrumbs extends Module {
-    public static final BreadCrumbs INSTANCE = new BreadCrumbs();
     public static final Map<Integer, List<Vec3>> trails = new HashMap<>();
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     public final NumberParameter width = new NumberParameter("Width", 2.0, 1.0, 6.0, 0.5);
@@ -52,11 +51,11 @@ public class BreadCrumbs extends Module {
         }
     }
     public static void renderTrails(Matrix4f modelViewMatrix, Vec3 camPos) {
-        int color = INSTANCE.color.getValue();
+        int color = ModuleManager.get(BreadCrumbs.class).color.getValue();
         float cr = ((color >> 16) & 0xFF) / 255.0f;
         float cg = ((color >> 8) & 0xFF) / 255.0f;
         float cb = (color & 0xFF) / 255.0f;
-        float lineWidth = INSTANCE.width.getValue().floatValue();
+        float lineWidth = ModuleManager.get(BreadCrumbs.class).width.getValue().floatValue();
         for (Map.Entry<Integer, List<Vec3>> entry : trails.entrySet()) {
             List<Vec3> trail = entry.getValue();
             if (trail.size() < 2) continue;
@@ -74,5 +73,12 @@ public class BreadCrumbs extends Module {
     @Override
     protected void onDisable() {
         trails.clear();
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(BreadCrumbs.class);
+    }
+
+    public static BreadCrumbs itz() {
+        return ModuleManager.get(BreadCrumbs.class);
     }
 }

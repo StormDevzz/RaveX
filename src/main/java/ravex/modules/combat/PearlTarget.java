@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -7,7 +8,6 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnder
 import ravex.utility.misc.MobUtility;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.rotation.RotationUtility;
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 public class PearlTarget extends Module {
-    public static final PearlTarget INSTANCE = new PearlTarget();
     public final ModeParameter mode = new ModeParameter("Mode", "Combat",
         List.of("Combat", "Pearl", "Follow"));
     public final NumberParameter range = new NumberParameter("Range", 16.0, 1.0, 32.0, 0.5);
@@ -463,6 +462,12 @@ public class PearlTarget extends Module {
         }
     }
     private static native void nativePredictPearl(double x, double y, double z, double mx, double my, double mz, int maxTicks, double[] out);
+    public static boolean maybeEnabled() {
+        return maybeEnabled(PearlTarget.class);
+    }
+    public static PearlTarget itz() {
+        return ModuleManager.get(PearlTarget.class);
+    }
     private static class PearlData {
         int entityId;
         UUID ownerUUID;

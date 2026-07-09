@@ -10,6 +10,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import ravex.event.EventBusHolder;
+import ravex.event.render.CameraEvent;
 import ravex.modules.render.FreeLook;
 import ravex.modules.render.FreeCam;
 import ravex.modules.render.ViewClip;
@@ -26,16 +28,23 @@ public abstract class MixinCamera {
     @Shadow protected abstract void setPosition(net.minecraft.world.phys.Vec3 pos);
 
 
+    @Inject(method = "setup", at = @At("HEAD"), cancellable = true)
+    private void onSetupCamera(Level area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
+        CameraEvent event = new CameraEvent(CameraEvent.CameraMode.NORMAL, position.x, position.y, position.z, yRot, xRot);
+        EventBusHolder.get().post(event);
+        if (event.isCancelled()) { ci.cancel(); return; }
+    }
+
     @Inject(method = "setup", at = @At("RETURN"))
     private void onSetup(Level area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
-        if (FreeCam.INSTANCE.getEnabled()) {
-            double[] coords = FreeCam.INSTANCE.getCorrectedRenderCoordinates(tickDelta);
+        if (FreeCam.maybeEnabled()) {
+            double[] coords = FreeCam.itz().getCorrectedRenderCoordinates(tickDelta);
             net.minecraft.world.phys.Vec3 targetPos = new net.minecraft.world.phys.Vec3(coords[0], coords[1], coords[2]);
             this.setPosition(targetPos);
             this.setRotation((float) coords[3], (float) coords[4]);
-        } else if (FreeLook.INSTANCE.getEnabled()) {
-            float yaw = FreeLook.INSTANCE.getLookYaw();
-            float pitch = FreeLook.INSTANCE.getLookPitch();
+        } else if (FreeLook.maybeEnabled()) {
+            float yaw = FreeLook.itz().getLookYaw();
+            float pitch = FreeLook.itz().getLookPitch();
 
             
             double renderX = focusedEntity.xo + (focusedEntity.getX() - focusedEntity.xo) * tickDelta;
@@ -58,7 +67,7 @@ public abstract class MixinCamera {
             );
 
             
-            float startingDist = ViewClip.INSTANCE.getEnabled() ? ViewClip.INSTANCE.cameraDistance.getValue().floatValue() : 4.0f;
+            float startingDist = ViewClip.maybeEnabled() ? ViewClip.itz().cameraDistance.getValue().floatValue() : 4.0f;
             float zoom = getMaxZoom(startingDist);
             net.minecraft.world.phys.Vec3 targetPos = eyePos.subtract(dirVec.scale(zoom));
             this.setPosition(targetPos);
@@ -70,7 +79,7 @@ public abstract class MixinCamera {
     @Inject(method = "isDetached", at = @At("HEAD"), cancellable = true)
     private void onIsDetached(CallbackInfoReturnable<Boolean> cir) {
         
-        if (FreeCam.INSTANCE.getEnabled()) {
+        if (FreeCam.maybeEnabled()) {
             cir.setReturnValue(true);
         }
     }
@@ -80,9 +89,9 @@ public abstract class MixinCamera {
     @Inject(method = "getMaxZoom", at = @At("HEAD"), cancellable = true)
     private void onGetMaxZoom(float startingDistance, CallbackInfoReturnable<Float> cir) {
         if (inGetMaxZoom) return;
-        if (ViewClip.INSTANCE.getEnabled()) {
-            float dist = ViewClip.INSTANCE.cameraDistance.getValue().floatValue();
-            if (ViewClip.INSTANCE.bypassWalls.getValue()) {
+        if (ViewClip.maybeEnabled()) {
+            float dist = ViewClip.itz().cameraDistance.getValue().floatValue();
+            if (ViewClip.itz().bypassWalls.getValue()) {
                 cir.setReturnValue(dist);
             } else {
                 inGetMaxZoom = true;

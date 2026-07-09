@@ -2,7 +2,6 @@ package ravex.loader;
 
 import java.io.*;
 import java.util.*;
-import javax.swing.SwingUtilities;
 
 public class RaveXLoader {
     private static volatile boolean ready = false;
@@ -11,78 +10,22 @@ public class RaveXLoader {
     private static boolean nativeAvailable = false;
 
     public static void main(String[] args) {
-
-        
         System.setProperty("sun.awt.noerasebackground", "true");
 
         if (args.length > 0 && args[0].equals("--integrated-gui")) {
-            System.setProperty("java.awt.headless", "false");
-            nativeAvailable = false; 
-            
-            window = new LoaderWindow();
-            window.setVersion("1.0");
-            window.setVisible(true);
-            window.updateStatus("Initializing client optimization...", 0);
-
-            new Thread(() -> {
-                try {
-                    runChecksPhase();
-                    runOptimizePhase();
-                    window.updateStatus("Optimizing game environment...", 70);
-                    sleep(300);
-                    window.updateStatus("Optimization completed! Starting game...", 95);
-                    window.setSystemScore(100);
-                    
-                    
-                    while (true) {
-                        sleep(1000);
-                    }
-                } catch (Exception ignored) {}
-            }).start();
-
-            
-            new Thread(() -> {
-                sleep(30000);
-                closeLoader();
-                System.exit(0);
-            }).start();
+            startIntegratedMode();
             return;
         }
 
         if (java.awt.GraphicsEnvironment.isHeadless()) {
-            System.out.println("[RaveX-Loader] Headless environment detected. Skipping GUI, running optimizations only.");
-            nativeAvailable = NativeBridge.load();
-            if (nativeAvailable) {
-                try {
-                    NativeBridge.trimMemory();
-                    NativeBridge.setHighPriority();
-                    NativeBridge.optimize();
-                } catch (Exception ignored) {}
-            }
+            runHeadlessMode();
             return;
         }
 
         boolean isGradleDev = new java.io.File("gradlew").exists() || new java.io.File("gradlew.bat").exists();
-        
+
         if (!isGradleDev) {
-            
-            window = new LoaderWindow();
-            window.setVersion("1.0");
-            window.setVisible(true);
-            window.updateStatus("Initializing Standalone Optimizer...", 0);
-            
-            new Thread(() -> {
-                try {
-                    runChecksPhase();
-                    runOptimizePhase();
-                    window.updateStatus("Arch Linux JNI Kernel Tuning...", 70);
-                    sleep(800);
-                    window.updateStatus("JVM Garbage Collector Optimized!", 90);
-                    sleep(600);
-                    window.updateStatus("System Optimized! Ready to play.", 100);
-                    window.setSystemScore(100);
-                } catch (Exception ignored) {}
-            }).start();
+            runStandaloneOptimizer();
             return;
         }
 
@@ -110,10 +53,8 @@ public class RaveXLoader {
             try {
                 window.updateStatus("Loading components...", 2);
                 nativeAvailable = NativeBridge.load();
-                downloadRequiredAssets();
-                runChecksPhase();
-                runOptimizePhase();
-                runLaunchPhase(command, extraArgs);
+                new AssetDownloader().downloadRequiredAssets();
+                runFullWorkflow(command, extraArgs);
             } catch (Exception e) {
                 window.setError(e.getMessage());
                 sleep(3000);
@@ -122,9 +63,91 @@ public class RaveXLoader {
         }).start();
     }
 
+    private static void startIntegratedMode() {
+        System.setProperty("java.awt.headless", "false");
+        nativeAvailable = false;
+
+        window = new LoaderWindow();
+        window.setVersion("1.0");
+        window.setVisible(true);
+        window.updateStatus("Initializing client optimization...", 0);
+
+        new Thread(() -> {
+            try {
+                AssetDownloader downloader = new AssetDownloader();
+                downloader.downloadRequiredAssets();
+                runOptimizationOnly();
+            } catch (Exception ignored) {}
+        }).start();
+
+        new Thread(() -> {
+            sleep(30000);
+            closeLoader();
+            System.exit(0);
+        }).start();
+    }
+
+    private static void runHeadlessMode() {
+        System.out.println("[RaveX-Loader] Headless environment detected. Skipping GUI, running optimizations only.");
+        nativeAvailable = NativeBridge.load();
+        if (nativeAvailable) {
+            try {
+                NativeBridge.trimMemory();
+                NativeBridge.setHighPriority();
+                NativeBridge.optimize();
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private static void runStandaloneOptimizer() {
+        window = new LoaderWindow();
+        window.setVersion("1.0");
+        window.setVisible(true);
+        window.updateStatus("Initializing Standalone Optimizer...", 0);
+
+        new Thread(() -> {
+            try {
+                String osDetails = getDetailedOSName();
+                SystemOptimizer optimizer = new SystemOptimizer(nativeAvailable);
+                optimizer.runChecks(window, osDetails);
+                optimizer.optimize(window);
+                window.updateStatus("Arch Linux JNI Kernel Tuning...", 70);
+                sleep(800);
+                window.updateStatus("JVM Garbage Collector Optimized!", 90);
+                sleep(600);
+                window.updateStatus("System Optimized! Ready to play.", 100);
+                window.setSystemScore(100);
+            } catch (Exception ignored) {}
+        }).start();
+    }
+
+    private static void runFullWorkflow(String command, String[] extraArgs) {
+        String osDetails = getDetailedOSName();
+        SystemOptimizer optimizer = new SystemOptimizer(nativeAvailable);
+        optimizer.runChecks(window, osDetails);
+        optimizer.optimize(window);
+
+        window.updateStatus("Launching client...", 50);
+        ProcessLauncher launcher = new ProcessLauncher();
+        launcher.launch(command, extraArgs, window);
+    }
+
+    private static void runOptimizationOnly() {
+        String osDetails = getDetailedOSName();
+        SystemOptimizer optimizer = new SystemOptimizer(nativeAvailable);
+        optimizer.runChecks(window, osDetails);
+        optimizer.optimize(window);
+        window.updateStatus("Optimization completed! Starting game...", 95);
+        window.setSystemScore(100);
+
+        while (true) {
+            sleep(1000);
+        }
+    }
+
     public static void closeLoader() {
         if (window != null) {
-            SwingUtilities.invokeLater(() -> {
+            javax.swing.SwingUtilities.invokeLater(() -> {
                 try {
                     window.dispose();
                 } catch (Exception ignored) {}
@@ -135,11 +158,10 @@ public class RaveXLoader {
 
     public static void startIntegrated(String version) {
         System.setProperty("sun.awt.noerasebackground", "true");
-        
         System.setProperty("java.awt.headless", "false");
 
         if (java.awt.GraphicsEnvironment.isHeadless()) {
-            System.out.println("[RaveX-Loader] Integrated Mode: Headless override failed or environment is non-graphical. Running background optimization only.");
+            System.out.println("[RaveX-Loader] Integrated Mode: Headless override failed. Running background optimization only.");
             new Thread(() -> {
                 try {
                     nativeAvailable = NativeBridge.load();
@@ -158,18 +180,17 @@ public class RaveXLoader {
         window = new LoaderWindow();
         window.setVersion(version);
         window.setVisible(true);
-
         window.updateStatus("Initializing client optimization...", 0);
 
         new Thread(() -> {
             try {
                 window.updateStatus("Loading components...", 2);
                 nativeAvailable = NativeBridge.load();
-                downloadRequiredAssets();
-                runChecksPhase();
-                runOptimizePhase();
-                window.updateStatus("Optimizing game environment...", 70);
-                sleep(300);
+                new AssetDownloader().downloadRequiredAssets();
+                String osDetails = getDetailedOSName();
+                SystemOptimizer optimizer = new SystemOptimizer(nativeAvailable);
+                optimizer.runChecks(window, osDetails);
+                optimizer.optimize(window);
                 window.updateStatus("Optimization completed! Starting game...", 95);
                 window.setSystemScore(100);
             } catch (Exception e) {
@@ -179,7 +200,6 @@ public class RaveXLoader {
             }
         }).start();
 
-        
         new Thread(() -> {
             sleep(20000);
             closeLoader();
@@ -195,9 +215,9 @@ public class RaveXLoader {
         }
 
         if (osName.toLowerCase().contains("linux")) {
-            java.io.File osRelease = new java.io.File("/etc/os-release");
+            File osRelease = new File("/etc/os-release");
             if (osRelease.exists()) {
-                try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(osRelease))) {
+                try (BufferedReader br = new BufferedReader(new FileReader(osRelease))) {
                     String line;
                     while ((line = br.readLine()) != null) {
                         if (line.startsWith("PRETTY_NAME=")) {
@@ -216,158 +236,11 @@ public class RaveXLoader {
         return osName + " (" + osVersion + ")";
     }
 
-    private static void runChecksPhase() {
-        window.updateStatus("Checking system...", 5);
-        String osDetails = getDetailedOSName();
-
-        if (nativeAvailable) {
+    static void updateWindowStatus(String status, int progress) {
+        if (window != null) {
             try {
-                String json = NativeBridge.runChecks();
-                int score = NativeBridge.getScore();
-                window.setSystemScore(score);
-                window.setExtraInfo("Score: " + score + "/100");
-                
-                Runtime rt = Runtime.getRuntime();
-                long maxMem = rt.maxMemory() / (1024 * 1024);
-                long totalMem = rt.totalMemory() / (1024 * 1024);
-                long freeMem = rt.freeMemory() / (1024 * 1024);
-                long usedMem = totalMem - freeMem;
-                
-                String info = osDetails + " | Heap: " + usedMem + "/" + maxMem + " MB";
-                window.setSystemInfo(info);
-                
-                window.updateStatus("System checked: " + score + "/100", 20);
-                sleep(400);
-            } catch (Exception e) {
-                window.updateStatus("Native checks unavailable, using Java fallback", 15);
-                javaFallbackChecks();
-            }
-        } else {
-            window.setExtraInfo("Native optimizer not loaded");
-            window.updateStatus("Native library unavailable", 15);
-            javaFallbackChecks();
-        }
-    }
-
-    private static void javaFallbackChecks() {
-        Runtime rt = Runtime.getRuntime();
-        long maxMem = rt.maxMemory() / (1024 * 1024);
-        long totalMem = rt.totalMemory() / (1024 * 1024);
-        long freeMem = rt.freeMemory() / (1024 * 1024);
-        long usedMem = totalMem - freeMem;
-
-        String info = getDetailedOSName() + " | Heap: " + usedMem + "/" + maxMem + " MB";
-        window.setSystemInfo(info);
-
-        int score = 100;
-        if (usedMem > maxMem * 0.8) score -= 20;
-        else if (usedMem > maxMem * 0.6) score -= 10;
-        window.setSystemScore(score);
-        window.setExtraInfo("Score: " + score + "/100 (Java fallback)");
-        window.updateStatus("System check done: " + score + "/100", 20);
-        sleep(400);
-    }
-
-    private static void runOptimizePhase() {
-        window.updateStatus("Optimizing system...", 25);
-
-        if (nativeAvailable) {
-            try {
-                NativeBridge.trimMemory();
-                window.updateStatus("Memory trimmed", 30);
-                sleep(200);
-
-                NativeBridge.setHighPriority();
-                window.updateStatus("Priority adjusted", 35);
-                sleep(200);
-
-                String json = NativeBridge.optimize();
-                window.updateStatus("System optimized", 40);
-                sleep(300);
-            } catch (Exception e) {
-                window.updateStatus("Optimization skipped", 40);
-            }
-        } else {
-            
-            System.gc();
-            window.updateStatus("GC completed", 35);
-            sleep(200);
-            window.updateStatus("Optimization skipped (no native)", 40);
-        }
-    }
-
-    private static void runLaunchPhase(String command, String[] extraArgs) {
-        window.updateStatus("Launching client...", 50);
-
-        
-        java.io.File signalFile = new java.io.File(System.getProperty("java.io.tmpdir"), ".ravex_ready");
-        if (signalFile.exists()) {
-            signalFile.delete();
-        }
-
-        try {
-            List<String> cmd = new ArrayList<>();
-            cmd.add(command);
-            cmd.addAll(Arrays.asList(extraArgs));
-
-            ProcessBuilder pb = new ProcessBuilder(cmd);
-            pb.redirectErrorStream(true);
-            
-            
-            pb.environment().put("RAVEX_LOADER_ACTIVE", "true");
-            
-            Process process = pb.start();
-            childProcess = process;
-
-            window.updateStatus("Client starting...", 55);
-
-            
-            new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(process.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        System.out.println(line);
-                    }
-                } catch (IOException ignored) {}
-            }).start();
-
-            
-            boolean detected = false;
-            for (int i = 0; i < 300; i++) { 
-                if (signalFile.exists()) {
-                    detected = true;
-                    break;
-                }
-                
-                if (!process.isAlive()) {
-                    break;
-                }
-                sleep(200);
-            }
-
-            if (detected) {
-                window.updateStatus("Client ready!", 100);
-                window.setSystemScore(100);
-                sleep(800);
-                signalFile.delete(); 
-            } else {
-                int exitCode = process.isAlive() ? 0 : process.exitValue();
-                if (!process.isAlive() && exitCode != 0) {
-                    window.setError("Client crashed during startup (code " + exitCode + ")");
-                    sleep(3000);
-                } else {
-                    
-                    window.updateStatus("Client ready!", 100);
-                    sleep(800);
-                }
-            }
-
-        } catch (IOException e) {
-            window.setError("Launch failed: " + e.getMessage());
-            sleep(3000);
-        } finally {
-            closeLoader();
+                window.updateStatus(status, progress);
+            } catch (Throwable ignored) {}
         }
     }
 
@@ -386,131 +259,5 @@ public class RaveXLoader {
 
     private static void sleep(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
-    }
-
-    private static void waitForMinecraftWindow() {
-        String os = System.getProperty("os.name").toLowerCase();
-        boolean found = false;
-
-        if (os.contains("linux")) {
-            
-            boolean xdotoolExists = false;
-            try {
-                Process p = new ProcessBuilder("which", "xdotool").start();
-                xdotoolExists = p.waitFor() == 0;
-            } catch (Exception ignored) {}
-
-            if (xdotoolExists) {
-                for (int i = 0; i < 20; i++) {
-                    try {
-                        Process p = new ProcessBuilder("xdotool", "search", "--name", "Minecraft")
-                            .redirectErrorStream(true).start();
-                        try (java.util.Scanner s = new java.util.Scanner(p.getInputStream())) {
-                            if (s.hasNextInt()) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        p.waitFor();
-                    } catch (Exception ignored) {}
-                    sleep(200);
-                }
-            }
-        }
-
-        sleep(found ? 1000 : 1500);
-    }
-
-    static void updateWindowStatus(String status, int progress) {
-        if (window != null) {
-            try {
-                window.updateStatus(status, progress);
-            } catch (Throwable ignored) {}
-        }
-    }
-
-    private static void downloadRequiredAssets() {
-        String os = System.getProperty("os.name").toLowerCase();
-        boolean isWin = os.contains("win");
-
-        List<String> assetList = new ArrayList<>(Arrays.asList(
-            "font/sf_medium.ttf",
-            "font/sf_bold.ttf",
-            "font/comfortaa.ttf"
-        ));
-
-        String loaderLib = isWin ? "ravex_loader.dll" : "libravex_loader.so";
-        String jniLib = isWin ? "ravex_jni.dll" : "libravex_jni.so";
-
-        assetList.add("natives/" + loaderLib);
-        assetList.add("natives/" + jniLib);
-
-        
-        java.io.File localSrc = new java.io.File("src/main/resources/assets/ravex");
-        java.io.File buildNative = new java.io.File("build/native");
-
-        java.io.File cacheDir = new java.io.File(System.getProperty("user.home"), ".ravex");
-
-        for (int i = 0; i < assetList.size(); i++) {
-            String assetPath = assetList.get(i);
-            java.io.File cachedFile = new java.io.File(cacheDir, assetPath);
-
-            if (cachedFile.exists() && cachedFile.length() > 0) {
-                continue;
-            }
-
-            
-            java.io.File localFile = new java.io.File(localSrc, assetPath);
-            if (!localFile.exists() || localFile.length() == 0) {
-                
-                localFile = new java.io.File(buildNative, assetPath.replace("natives/", ""));
-                if (!localFile.exists() || localFile.length() == 0) {
-                    localFile = null;
-                }
-            }
-
-            if (localFile != null && localFile.exists() && localFile.length() > 0) {
-                java.io.File parent = cachedFile.getParentFile();
-                if (!parent.exists()) parent.mkdirs();
-                try {
-                    java.nio.file.Files.copy(localFile.toPath(), cachedFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    System.out.println("[RaveX-Loader] Cached local asset: " + assetPath);
-                    continue;
-                } catch (Exception ignored) {}
-            }
-
-            java.io.File parent = cachedFile.getParentFile();
-            if (!parent.exists()) {
-                parent.mkdirs();
-            }
-
-            String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/" + assetPath;
-            System.out.println("[RaveX-Loader] Pre-downloading asset: " + assetPath);
-            updateWindowStatus("Downloading asset " + (i + 1) + "/" + assetList.size() + "...", 5 + (i * 2));
-
-            try {
-                java.net.URL url = new java.net.URL(remoteUrl);
-                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                conn.setConnectTimeout(8000);
-                conn.setReadTimeout(8000);
-                if (conn.getResponseCode() == 200) {
-                    java.io.File tempDownload = new java.io.File(parent, cachedFile.getName() + ".tmp");
-                    try (java.io.InputStream in = conn.getInputStream();
-                         java.io.FileOutputStream out = new java.io.FileOutputStream(tempDownload)) {
-                        byte[] buffer = new byte[8192];
-                        int bytesRead;
-                        while ((bytesRead = in.read(buffer)) != -1) {
-                            out.write(buffer, 0, bytesRead);
-                        }
-                    }
-                    if (!tempDownload.renameTo(cachedFile)) {
-                        java.nio.file.Files.copy(tempDownload.toPath(), cachedFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                        tempDownload.delete();
-                    }
-                }
-            } catch (Throwable t) {
-                System.err.println("[RaveX-Loader] Failed to pre-download " + assetPath + ": " + t.getMessage());
-            }
-        }
     }
 }

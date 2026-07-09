@@ -2,14 +2,13 @@ package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.manager.ModuleManager;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 public class StashFinder extends Module {
-    public static final StashFinder INSTANCE = new StashFinder();
     public final NumberParameter range = new NumberParameter("Range", 64.0, 16.0, 256.0, 8.0);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter logToChat = new BooleanParameter("ChatLog", true);
@@ -69,5 +68,13 @@ public class StashFinder extends Module {
             this.valuableItems = valuableItems;
             this.discoveredAt = discoveredAt;
         }
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(StashFinder.class);
+    }
+
+    public static StashFinder itz() {
+        return ModuleManager.get(StashFinder.class);
     }
 }

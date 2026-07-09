@@ -1,5 +1,10 @@
 package ravex.modules.movement;
-import ravex.modules.Category;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
+import net.minecraft.world.item.Items;
+import ravex.event.Subscribe;
+import ravex.event.network.PacketEvent;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -7,12 +12,23 @@ import ravex.utility.nativelib.NativeLibrary;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 public class Phase extends Module {
-    public static final Phase INSTANCE = new Phase();
     public final ModeParameter mode = new ModeParameter("Mode", "Positive1", List.of("Positive1", "Positive2"));
     public final NumberParameter distance = new NumberParameter("Distance", 2.0, 0.5, 4.0, 0.1);
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_phase");
     static {
         NATIVE.load();
+    }
+
+    @Subscribe
+    public void onPacket(PacketEvent event) {
+        if (!getEnabled() || !event.isSend()) return;
+        Packet<?> packet = event.getPacket();
+        if (packet instanceof ServerboundUseItemPacket usePacket) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
+                clip();
+            }
+        }
     }
 
     public void clip() {
@@ -54,4 +70,10 @@ public class Phase extends Module {
         outOffset[2] = Math.cos(yawRad) * Math.cos(pitchRad) * distance;
     }
     private static native void nativeCalculateOffset(double yaw, double pitch, double distance, double[] outOffset);
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Phase.class);
+    }
+    public static Phase itz() {
+        return ModuleManager.get(Phase.class);
+    }
 }

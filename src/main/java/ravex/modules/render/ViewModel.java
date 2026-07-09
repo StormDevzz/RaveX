@@ -1,12 +1,11 @@
 package ravex.modules.render;
+import ravex.manager.ModuleManager;
 
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 
 public class ViewModel extends Module {
-    public static final ViewModel INSTANCE = new ViewModel();
     public final NumberParameter mainX = new NumberParameter("MainX", 0.0, -2.0, 2.0, 0.01);
     public final NumberParameter mainY = new NumberParameter("MainY", 0.0, -2.0, 2.0, 0.01);
     public final NumberParameter mainZ = new NumberParameter("MainZ", 0.0, -2.0, 2.0, 0.01);
@@ -26,4 +25,11 @@ public class ViewModel extends Module {
     public final BooleanParameter hideOffHand = new BooleanParameter("HideOff", false);
     public final BooleanParameter noSwing = new BooleanParameter("NoSwing", false);
 
+    public static boolean maybeEnabled() {
+        return maybeEnabled(ViewModel.class);
+    }
+
+    public static ViewModel itz() {
+        return ModuleManager.get(ViewModel.class);
+    }
 }

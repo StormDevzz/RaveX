@@ -1,13 +1,12 @@
 package ravex.modules.movement;
 import ravex.RaveX;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 public class Flight extends Module {
-    public static final Flight INSTANCE = new Flight();
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         List.of("Vanilla", "Creative", "NCP", "Grim", "Minemen", "Jetpack"));
     public final NumberParameter speed = new NumberParameter("Speed", 2.0, 0.5, 10.0, 0.1);
@@ -66,6 +65,12 @@ public class Flight extends Module {
                 break;
         }
         return new double[]{velX, velY, velZ};
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Flight.class);
+    }
+    public static Flight itz() {
+        return ModuleManager.get(Flight.class);
     }
     private static double javaHandleAirFriction(String mode, double currentSpeed, double acceleration, double friction) {
         if (mode.equals("NCP") || mode.equals("Grim")) {

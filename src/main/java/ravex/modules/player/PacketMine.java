@@ -1,9 +1,9 @@
 package ravex.modules.player;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -16,15 +16,13 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 public class PacketMine extends Module {
-    public static final PacketMine INSTANCE = new PacketMine();
+    public final ModeParameter mode = new ModeParameter("Mode", "Normal",
+        java.util.List.of("Normal", "Grim", "NCP"));
     public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 10.0, 0.5);
-    public final BooleanParameter grimStrict = new BooleanParameter("GrimStrict", false);
-    public final NumberParameter grimRange = new NumberParameter("GrimRange", 4.3, 2.0, 10.0, 0.1);
-    public final BooleanParameter doubleMine = new BooleanParameter("DoubleMine", false);
-    public final NumberParameter maxBlocks = new NumberParameter("MaxBlocks", 2, 2, 10, 1);
-    public final NumberParameter speed = new NumberParameter("Speed", 1.0, 0.2, 5.0, 0.1);
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent",
         java.util.List.of("Silent", "Normal", "None"));
     public final ModeParameter swapMode = new ModeParameter("SwapMode", "Silent",
@@ -33,6 +31,13 @@ public class PacketMine extends Module {
     public final BooleanParameter switchBack = new BooleanParameter("SwitchBack", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
+    public final BooleanParameter doubleMine = new BooleanParameter("DoubleMine", false);
+    public final NumberParameter maxBlocks = new NumberParameter("MaxBlocks", 2, 2, 10, 1);
+    public final NumberParameter speed = new NumberParameter("Speed", 1.0, 0.2, 5.0, 0.1);
+    public final BooleanParameter raycast = new BooleanParameter("Raycast", false);
+    public final NumberParameter grimRange = new NumberParameter("GrimRange", 4.5, 0.0, 6.0, 0.1);
+    public final ModeParameter grimMode = new ModeParameter("GrimMode", "Strict",
+        java.util.List.of("Strict", "Normal", "Dev"));
     public static final SilentRotation silentRotation = new SilentRotation();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_packetmine");
     static {
@@ -65,7 +70,11 @@ public class PacketMine extends Module {
     private boolean attackWasDown = false;
     private PacketMine() {
         super("PacketMine");
-        grimRange.setVisible(grimStrict::getValue);
+        range.setVisible(() -> mode.getValue().equals("Normal"));
+        swapMode.setVisible(() -> !mode.getValue().equals("Grim"));
+        rotate.setVisible(() -> !mode.getValue().equals("Grim"));
+        grimRange.setVisible(() -> mode.getValue().equals("Grim"));
+        grimMode.setVisible(() -> mode.getValue().equals("Grim"));
         maxBlocks.setVisible(doubleMine::getValue);
         speed.setVisible(doubleMine::getValue);
     }
@@ -85,7 +94,7 @@ public class PacketMine extends Module {
         }
         for (var block : miningBlocks) {
             if (!block.sentStop) {
-                if (!grimStrict.getValue()) {
+                if (!mode.getValue().equals("Grim")) {
                     sendStop(mc, block.pos);
                 }
             }
@@ -100,7 +109,7 @@ public class PacketMine extends Module {
         if (destroyProgress <= 0) return 2000;
         float ticks = (float)Math.ceil(1.0 / destroyProgress);
         long ms = (long)(ticks * 50);
-        ms = Math.max(100, Math.min(grimStrict.getValue() ? 20000 : 5000, ms));
+        ms = Math.max(100, Math.min(mode.getValue().equals("Grim") ? 20000 : mode.getValue().equals("NCP") ? 10000 : 5000, ms));
         if (doubleMine.getValue()) {
             ms = (long)(ms / speed.getValue());
         }
@@ -123,7 +132,7 @@ public class PacketMine extends Module {
                 long breakMs = calcBreakTime(mc, target);
                 MiningBlock mb = new MiningBlock(target, breakMs, name);
                 miningBlocks.add(mb);
-                if (grimStrict.getValue()) {
+                if (mode.getValue().equals("Grim")) {
                     mc.options.keyAttack.setDown(false);
                 }
             }
@@ -142,7 +151,7 @@ public class PacketMine extends Module {
             applySwap(mc);
             rotateTo(mc, firstPos);
         }
-        if (grimStrict.getValue() && !doubleMine.getValue()) {
+        if (mode.getValue().equals("Grim") && !doubleMine.getValue()) {
             MiningBlock mb = miningBlocks.stream().filter(m -> !m.done).findFirst().orElse(null);
             if (mb != null) {
                 if (!mb.started) {
@@ -202,8 +211,11 @@ public class PacketMine extends Module {
         if (BlockUtility.destroySpeed(mc.level, pos) < 0) return false;
         if (!mc.level.getWorldBorder().isWithinBounds(pos)) return false;
         double dist = Vec3.atCenterOf(pos).distanceTo(mc.player.getEyePosition());
-        double maxDist = grimStrict.getValue() ? grimRange.getValue() : range.getValue();
-        return dist <= maxDist;
+        double maxDist = mode.getValue().equals("Grim") ? grimRange.getValue()
+            : mode.getValue().equals("NCP") ? 4.5 : range.getValue();
+        if (dist > maxDist) return false;
+        if (!checkVisibility(mc, pos)) return false;
+        return true;
     }
     private void sendStart(Minecraft mc, BlockPos pos, int seq) {
         NetworkUtility.sendStartDestroy(pos, getDirection(mc, pos), seq);
@@ -236,7 +248,7 @@ public class PacketMine extends Module {
         return bestSlot != InventoryUtility.getSelectedSlot(mc.player) ? bestSlot : -1;
     }
     private void applySwap(Minecraft mc) {
-        String swap = grimStrict.getValue() ? (swapMode.getValue().equals("None") ? "None" : "Normal") : swapMode.getValue();
+        String swap = mode.getValue().equals("Grim") ? (swapMode.getValue().equals("None") ? "None" : "Normal") : swapMode.getValue();
         if (toolSlot < 0 || swap.equals("None")) return;
         int prev = InventoryUtility.getSelectedSlot(mc.player);
         if (swap.equals("Silent")) {
@@ -251,7 +263,7 @@ public class PacketMine extends Module {
         if (!needRestore || !switchBack.getValue() || restoreSlot < 0) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        String swap = grimStrict.getValue() ? (swapMode.getValue().equals("None") ? "None" : "Normal") : swapMode.getValue();
+        String swap = mode.getValue().equals("Grim") ? (swapMode.getValue().equals("None") ? "None" : "Normal") : swapMode.getValue();
         if (swap.equals("Silent")) {
             NetworkUtility.sendSetCarriedItem(restoreSlot);
         } else if (swap.equals("Normal")) {
@@ -260,16 +272,62 @@ public class PacketMine extends Module {
         needRestore = false;
     }
     private void rotateTo(Minecraft mc, BlockPos pos) {
-        String mode = rotate.getValue();
-        if (mode.equals("None")) return;
+        String modeVal = rotate.getValue();
+        if (modeVal.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), Vec3.atCenterOf(pos));
-        if (mode.equals("Normal")) {
+        if (modeVal.equals("Normal")) {
             mc.player.setYRot(angles[0]);
             mc.player.setXRot(angles[1]);
-        } else if (mode.equals("Silent")) {
+        } else if (modeVal.equals("Silent")) {
             silentRotation.set(angles[0], angles[1]);
         }
     }
     public static native int[] nativeFindTargets(
         double px, double py, double pz, double range, int maxResults, int targetBlockId);
+    public static native boolean nativeCanSee(
+        double ex, double ey, double ez,
+        double tx, double ty, double tz,
+        int[] solidBlocks);
+    public static native int[] nativeFilterVisible(
+        int[] candidates, int[] solidBlocks,
+        double ex, double ey, double ez);
+
+    private int[] collectSolidBlocks(Minecraft mc, BlockPos center, double range) {
+        Set<BlockPos> blocks = new HashSet<>();
+        int r = (int) Math.ceil(range);
+        for (int x = -r; x <= r; x++) {
+            for (int y = -r; y <= r; y++) {
+                for (int z = -r; z <= r; z++) {
+                    BlockPos p = center.offset(x, y, z);
+                    var state = mc.level.getBlockState(p);
+                    if (!state.isAir() && state.canOcclude()) {
+                        blocks.add(p.immutable());
+                    }
+                }
+            }
+        }
+        int[] arr = new int[blocks.size() * 3];
+        int i = 0;
+        for (BlockPos p : blocks) {
+            arr[i++] = p.getX();
+            arr[i++] = p.getY();
+            arr[i++] = p.getZ();
+        }
+        return arr;
+    }
+
+    private boolean checkVisibility(Minecraft mc, BlockPos pos) {
+        if (!raycast.getValue() || !NATIVE.isLoaded()) return true;
+        Vec3 eye = mc.player.getEyePosition();
+        double maxDist = mode.getValue().equals("Grim") ? grimRange.getValue()
+            : mode.getValue().equals("NCP") ? 4.5 : range.getValue();
+        int[] solids = collectSolidBlocks(mc, mc.player.blockPosition(), maxDist + 2);
+        return nativeCanSee(eye.x, eye.y, eye.z, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, solids);
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(PacketMine.class);
+    }
+    public static PacketMine itz() {
+        return ModuleManager.get(PacketMine.class);
+    }
 }

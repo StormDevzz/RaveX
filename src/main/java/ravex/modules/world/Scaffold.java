@@ -1,9 +1,9 @@
 package ravex.modules.world;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
+import ravex.manager.ModuleManager;
 import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
 import ravex.utility.misc.block.BlockUtility;
@@ -13,7 +13,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
 public class Scaffold extends Module {
-    public static final Scaffold INSTANCE = new Scaffold();
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Expand"));
     public final BooleanParameter tower = new BooleanParameter("Tower", true);
     public final BooleanParameter silentRot = new BooleanParameter("SilentRot", true);
@@ -143,5 +142,12 @@ public class Scaffold extends Module {
             if (!stack.isEmpty() && InventoryUtility.isBlockItem(stack)) return i;
         }
         return -1;
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Scaffold.class);
+    }
+    public static Scaffold itz() {
+        return ModuleManager.get(Scaffold.class);
     }
 }

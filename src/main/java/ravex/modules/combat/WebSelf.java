@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,7 +15,6 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
 public class WebSelf extends Module {
-    public static final WebSelf INSTANCE = new WebSelf();
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x88FFFFFF);
@@ -22,6 +22,12 @@ public class WebSelf extends Module {
     public static BlockPos targetPos = null;
     public static float renderR = 1.0f, renderG = 1.0f, renderB = 1.0f;
     private int delay = 0;
+    public static boolean maybeEnabled() {
+        return maybeEnabled(WebSelf.class);
+    }
+    public static WebSelf itz() {
+        return ModuleManager.get(WebSelf.class);
+    }
 
     @Override
     protected void onEnable() { targetPos = null; delay = 0; }

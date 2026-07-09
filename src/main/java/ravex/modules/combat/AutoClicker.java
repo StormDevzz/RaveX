@@ -1,7 +1,7 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
-import ravex.modules.Category;
 import ravex.utility.misc.MobUtility;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -10,7 +10,6 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
 public class AutoClicker extends Module {
-    public static final AutoClicker INSTANCE = new AutoClicker();
     public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40.0, 0.5);
     public final NumberParameter maxCps = new NumberParameter("MaxCPS", 12.0, 1.0, 40.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Left", java.util.List.of("Left", "Right", "Both"));
@@ -109,4 +108,11 @@ public class AutoClicker extends Module {
         nextClick = 0;
     }
     private static native long nativeCalculateDelay(double minCps, double maxCps, boolean randomize);
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoClicker.class);
+    }
+    public static AutoClicker itz() {
+        return ModuleManager.get(AutoClicker.class);
+    }
+
 }

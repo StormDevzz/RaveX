@@ -1,10 +1,10 @@
 package ravex.modules.player.autoregear;
+import ravex.manager.ModuleManager;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
 
 import net.minecraft.world.inventory.ClickType;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.ActionParameter;
 import ravex.parameter.NumberParameter;
@@ -14,8 +14,7 @@ import ravex.gui.clickgui.AutoReGearScreen;
 import java.util.HashMap;
 import java.util.Map;
 public class AutoReGear extends Module {
-    public static final AutoReGear INSTANCE = new AutoReGear();
-    public final NumberParameter delayParam = new NumberParameter("Delay(ms)", 200, 50, 1000, 50);
+    public final NumberParameter delayParam = new NumberParameter("Delay", 200, 50, 1000, 50);
     public final ActionParameter items = new ActionParameter("Items", () -> {
         Minecraft.getInstance().setScreen(
             new AutoReGearScreen(Minecraft.getInstance().screen)

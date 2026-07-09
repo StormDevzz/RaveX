@@ -6,14 +6,13 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 public class ClickFly extends Module {
-    public static final ClickFly INSTANCE = new ClickFly();
     public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly", "TP"));
     public final NumberParameter speed = new NumberParameter("Speed", 1.5, 0.5, 5.0, 0.25);
     public final NumberParameter range = new NumberParameter("Range", 100.0, 10.0, 300.0, 10.0);
@@ -112,5 +111,8 @@ public class ClickFly extends Module {
         p.connection.send(new ServerboundMovePlayerPacket.Pos(
                 next.x, next.y, next.z, true, p.horizontalCollision));
         p.setPos(next.x, next.y, next.z);
+    }
+    public static ClickFly itz() {
+        return ModuleManager.get(ClickFly.class);
     }
 }

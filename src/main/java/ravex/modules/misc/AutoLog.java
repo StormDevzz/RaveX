@@ -1,5 +1,5 @@
 package ravex.modules.misc;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import ravex.utility.misc.MobUtility;
 public class AutoLog extends Module {
-    public static final AutoLog INSTANCE = new AutoLog();
     public final BooleanParameter onLowHealth = new BooleanParameter("LowHealth", true);
     public final NumberParameter healthLimit = new NumberParameter("MinHP", 6.0, 1.0, 20.0, 0.5);
     public final BooleanParameter onPlayerNearby = new BooleanParameter("PlayerNearby", false);
@@ -36,5 +35,9 @@ public class AutoLog extends Module {
             mc.getConnection().getConnection().disconnect(net.minecraft.network.chat.Component.literal("§c[RaveX AutoLog] §f" + reason));
         }
         setEnabled(false);
+    }
+
+    public static AutoLog itz() {
+        return ModuleManager.get(AutoLog.class);
     }
 }

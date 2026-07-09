@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -10,7 +11,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
 public class Trap extends Module {
-    public static final Trap INSTANCE = new Trap();
     public final NumberParameter  range          = new NumberParameter("Range",          4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay     = new NumberParameter("PlaceDelay",     50.0, 0.0, 500.0, 10.0);
     public final ModeParameter    swapMode       = new ModeParameter("SwapMode", "Silent",
@@ -398,5 +397,11 @@ public class Trap extends Module {
     }
     public static boolean isNativeAvailable() {
         return NATIVE.isLoaded();
+    }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Trap.class);
+    }
+    public static Trap itz() {
+        return ModuleManager.get(Trap.class);
     }
 }

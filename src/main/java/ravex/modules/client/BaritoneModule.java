@@ -1,11 +1,10 @@
 package ravex.modules.client;
 import ravex.integrations.baritone.BaritoneIntegration;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 public class BaritoneModule extends Module {
-    public static final BaritoneModule INSTANCE = new BaritoneModule();
     private final BaritoneIntegration baritone = new BaritoneIntegration();
     public final ColorParameter colorCurrentPath = new ColorParameter("CurrentPath", 0xFF00AA00);
     public final ColorParameter colorNextPath = new ColorParameter("NextPath", 0xFF005500);
@@ -229,5 +228,9 @@ public class BaritoneModule extends Module {
     }
     private void syncBoolean(String name, boolean value) {
         baritone.applyBoolean(name, value);
+    }
+
+    public static BaritoneModule itz() {
+        return ModuleManager.get(BaritoneModule.class);
     }
 }

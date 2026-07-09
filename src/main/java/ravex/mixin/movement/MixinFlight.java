@@ -13,7 +13,7 @@ public class MixinFlight {
 
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
-        Flight flight = Flight.INSTANCE;
+        Flight flight = Flight.itz();
         if (!flight.getEnabled()) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;

@@ -16,11 +16,11 @@ public class MixinItemRenderer {
 
     @Inject(method = "getFoilBuffer(Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/rendertype/RenderType;ZZ)Lcom/mojang/blaze3d/vertex/VertexConsumer;", at = @At("RETURN"), cancellable = true)
     private static void onGetFoilBuffer(MultiBufferSource bufferSource, RenderType renderType, boolean isItem, boolean glint, CallbackInfoReturnable<VertexConsumer> cir) {
-        if (Glint.INSTANCE.getEnabled() && glint) {
-            if (isItem && Glint.INSTANCE.items.getValue()) {
-                cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.INSTANCE.color.getValue()));
-            } else if (!isItem && Glint.INSTANCE.armor.getValue()) {
-                cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.INSTANCE.color.getValue()));
+        if (Glint.maybeEnabled() && glint) {
+            if (isItem && Glint.itz().items.getValue()) {
+                cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.itz().color.getValue()));
+            } else if (!isItem && Glint.itz().armor.getValue()) {
+                cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.itz().color.getValue()));
             }
         }
     }

@@ -13,10 +13,10 @@ public class MixinTimer {
 
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
-        if (!Timer.INSTANCE.getEnabled()) return;
+        if (!Timer.maybeEnabled()) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
-        float multiplier = Timer.INSTANCE.speed.getValue().floatValue();
+        float multiplier = Timer.itz().speed.getValue().floatValue();
 
         if (multiplier == 1.0f) return;
 

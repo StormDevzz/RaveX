@@ -20,7 +20,6 @@ find_package(JNI REQUIRED)
 add_subdirectory(common)
 # add_subdirectory(lua)  # вырублен тк нужен LuaScript.h которого нету
 add_subdirectory(math)
-add_subdirectory(antiafk)
 # add_subdirectory(hooks/voidesp)  # теперь на джаве
 add_subdirectory(hooks/shaders)
 add_subdirectory(hooks/norender)
@@ -46,17 +45,17 @@ add_subdirectory(hooks/antiquit)
 add_subdirectory(hooks/nopacktkick)
 add_subdirectory(hooks/phase)
 # add_subdirectory(hooks/coordlogger)  # теперь на джаве
-add_subdirectory(hooks/noslow)
+
 # add_subdirectory(hooks/faststairs)  # теперь на джаве
 # add_subdirectory(hooks/tunnels)  # теперь нету (обьединен в модуль ESP)
-add_subdirectory(hooks/nofall)
+# add_subdirectory(hooks/nofall) # теперь на джаве
 add_subdirectory(hooks/nuker)
 add_subdirectory(hooks/holefill)
 add_subdirectory(hooks/packetmine)
 add_subdirectory(hooks/autoclicker)
 add_subdirectory(hooks/antibot)
 add_subdirectory(hooks/autodrop)
-add_subdirectory(hooks/selffill)
+# add_subdirectory(hooks/selffill)  # теперь НЕТУ
 add_subdirectory(hooks/burrow)
 add_subdirectory(hooks/animations)
 add_subdirectory(hooks/autoregear)
@@ -82,7 +81,6 @@ add_subdirectory(plugins/optimize)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/plugins/brand/CMakeLists.txt)
     add_subdirectory(plugins/brand)
 endif()
-add_subdirectory(plugins/benchmark)
 add_subdirectory(plugins/nativesc)
 add_subdirectory(plugins/fileprot)
 add_subdirectory(plugins/manager)

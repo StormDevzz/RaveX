@@ -1,10 +1,9 @@
 package ravex.modules.movement;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 public class ReverseStep extends Module {
-    public static final ReverseStep INSTANCE = new ReverseStep();
     public final NumberParameter force = new NumberParameter("Force", 1.5, 1.0, 4.0, 0.5);
 
     @Override
@@ -32,5 +31,8 @@ public class ReverseStep extends Module {
             var motion = mc.player.getDeltaMovement();
             mc.player.setDeltaMovement(motion.x, -force.getValue(), motion.z);
         }
+    }
+    public static ReverseStep itz() {
+        return ModuleManager.get(ReverseStep.class);
     }
 }

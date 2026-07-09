@@ -2,18 +2,17 @@ package ravex.modules.world;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+import ravex.manager.ModuleManager;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.List;
 public class ECFarmer extends Module {
-    public static final ECFarmer INSTANCE = new ECFarmer();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.5);
     public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal"));
     public final BooleanParameter render = new BooleanParameter("Render", true);
@@ -273,4 +272,11 @@ public class ECFarmer extends Module {
     }
     private static native double nativeCalcBreakTime(String toolId, int efficiency, int haste, int durability, int maxDura);
     private static native int nativeCalcDurabilityLoss(String toolId, int efficiency);
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(ECFarmer.class);
+    }
+    public static ECFarmer itz() {
+        return ModuleManager.get(ECFarmer.class);
+    }
 }

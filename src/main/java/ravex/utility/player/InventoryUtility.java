@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.phys.EntityHitResult;
 import java.util.function.Predicate;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -158,6 +159,31 @@ public class InventoryUtility {
         int containerSlot = inventorySlotToContainerSlot(inventorySlot);
         if (containerSlot == -1) return;
         mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, button, type, player);
+    }
+
+    public static void openInventoryScreen(LocalPlayer player) {
+        Minecraft.getInstance().setScreen(new InventoryScreen(player));
+    }
+
+    public static void clickChestSlot(Minecraft mc, LocalPlayer player, int containerSlot, ClickType type) {
+        mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, type, player);
+    }
+
+    public static void quickMoveSlot(Minecraft mc, int containerId, int slotIndex) {
+        mc.gameMode.handleInventoryMouseClick(containerId, slotIndex, 0, ClickType.QUICK_MOVE, mc.player);
+    }
+
+    public static void swapSlots(Minecraft mc, int containerId, int slotA, int slotB) {
+        mc.gameMode.handleInventoryMouseClick(containerId, slotA, slotB, ClickType.SWAP, mc.player);
+    }
+
+    public static int getItemUseCooldown(LocalPlayer player, ItemStack stack) {
+        return player.getItemInHand(InteractionHand.MAIN_HAND).getItem() == stack.getItem()
+            ? (int) player.getCurrentItemAttackStrengthDelay() : 0;
+    }
+
+    public static boolean isItemOnCooldown(LocalPlayer player, ItemStack stack) {
+        return player.getCooldowns().isOnCooldown(stack);
     }
 
     public static ItemStack getOffhand(net.minecraft.world.entity.player.Player player) {

@@ -1,11 +1,10 @@
 package ravex.modules.render;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 public class FreeCam extends Module {
-    public static final FreeCam INSTANCE = new FreeCam();
     public double x, y, z;
     public float yaw, pitch;
     public double prevX, prevY, prevZ;
@@ -211,4 +210,11 @@ public class FreeCam extends Module {
     private static native double nativeGetPrevZ();
     private static native float nativeGetPrevYaw();
     private static native float nativeGetPrevPitch();
+    public static boolean maybeEnabled() {
+        return maybeEnabled(FreeCam.class);
+    }
+
+    public static FreeCam itz() {
+        return ModuleManager.get(FreeCam.class);
+    }
 }

@@ -20,9 +20,9 @@ public class MixinBlockXRay {
 
     @Inject(method = "getRenderShape", at = @At("HEAD"), cancellable = true)
     private void onGetRenderShape(CallbackInfoReturnable<RenderShape> cir) {
-        if (!Xray.INSTANCE.getEnabled()) return;
+        if (!Xray.maybeEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (!Xray.INSTANCE.isBlockSelected(self.getBlock())) {
+        if (!Xray.itz().isBlockSelected(self.getBlock())) {
             cir.setReturnValue(RenderShape.INVISIBLE);
         }
     }
@@ -31,9 +31,9 @@ public class MixinBlockXRay {
 
     @Inject(method = "skipRendering", at = @At("HEAD"), cancellable = true)
     private void onSkipRendering(BlockState adjacent, Direction dir, CallbackInfoReturnable<Boolean> cir) {
-        if (!Xray.INSTANCE.getEnabled()) return;
+        if (!Xray.maybeEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (Xray.INSTANCE.isBlockSelected(self.getBlock())) {
+        if (Xray.itz().isBlockSelected(self.getBlock())) {
             
             cir.setReturnValue(false);
         } else {
@@ -52,18 +52,18 @@ public class MixinBlockXRay {
 
     @Inject(method = "getOcclusionShape", at = @At("HEAD"), cancellable = true)
     private void onGetOcclusionShape(CallbackInfoReturnable<VoxelShape> cir) {
-        if (!Xray.INSTANCE.getEnabled()) return;
+        if (!Xray.maybeEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (!Xray.INSTANCE.isBlockSelected(self.getBlock())) {
+        if (!Xray.itz().isBlockSelected(self.getBlock())) {
             cir.setReturnValue(Shapes.empty());
         }
     }
 
     @Inject(method = "getFaceOcclusionShape", at = @At("HEAD"), cancellable = true)
     private void onGetFaceOcclusionShape(Direction direction, CallbackInfoReturnable<VoxelShape> cir) {
-        if (!Xray.INSTANCE.getEnabled()) return;
+        if (!Xray.maybeEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (!Xray.INSTANCE.isBlockSelected(self.getBlock())) {
+        if (!Xray.itz().isBlockSelected(self.getBlock())) {
             cir.setReturnValue(Shapes.empty());
         }
     }
@@ -72,9 +72,9 @@ public class MixinBlockXRay {
 
     @Inject(method = "isSolidRender", at = @At("HEAD"), cancellable = true)
     private void onIsSolidRender(CallbackInfoReturnable<Boolean> cir) {
-        if (!Xray.INSTANCE.getEnabled()) return;
+        if (!Xray.maybeEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (!Xray.INSTANCE.isBlockSelected(self.getBlock())) {
+        if (!Xray.itz().isBlockSelected(self.getBlock())) {
             cir.setReturnValue(false);
         }
     }
@@ -83,16 +83,16 @@ public class MixinBlockXRay {
 
     @Inject(method = "getLightBlock", at = @At("HEAD"), cancellable = true)
     private void onGetLightBlock(CallbackInfoReturnable<Integer> cir) {
-        if (Xray.INSTANCE.getEnabled()) {
+        if (Xray.maybeEnabled()) {
             cir.setReturnValue(0);
         }
     }
 
     @Inject(method = "getLightEmission", at = @At("HEAD"), cancellable = true)
     private void onGetLightEmission(CallbackInfoReturnable<Integer> cir) {
-        if (!Xray.INSTANCE.getEnabled()) return;
+        if (!Xray.maybeEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (Xray.INSTANCE.isBlockSelected(self.getBlock())) {
+        if (Xray.itz().isBlockSelected(self.getBlock())) {
             
             cir.setReturnValue(15);
         }

@@ -3,15 +3,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.utility.misc.MobUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.manager.ModuleManager;
 public class AntiBot extends Module {
-    public static final AntiBot INSTANCE = new AntiBot();
     public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKillAura", false);
     public final BooleanParameter onlyOnTrigger = new BooleanParameter("OnlyWithTrigger", false);
     public final BooleanParameter removeInvisible = new BooleanParameter("RemoveInvisible", true);
@@ -29,8 +28,8 @@ public class AntiBot extends Module {
         return botList.contains(entity);
     }
     public boolean shouldProtectTarget() {
-        if (onlyOnKillAura.getValue() && !KillAura.INSTANCE.getEnabled()) return false;
-        if (onlyOnTrigger.getValue() && !Trigger.INSTANCE.getEnabled()) return false;
+        if (onlyOnKillAura.getValue() && !ModuleManager.get(ravex.modules.combat.KillAura.class).getEnabled()) return false;
+        if (onlyOnTrigger.getValue() && !ModuleManager.get(ravex.modules.combat.Trigger.class).getEnabled()) return false;
         return true;
     }
     @Override
@@ -105,4 +104,11 @@ public class AntiBot extends Module {
         double mx, double my, double mz, double dist,
         boolean pingCheck, boolean nameCheck, boolean moveCheck
     );
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AntiBot.class);
+    }
+    public static AntiBot itz() {
+        return ModuleManager.get(AntiBot.class);
+    }
+
 }

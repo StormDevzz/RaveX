@@ -20,12 +20,12 @@ public class MixinMultiBufferSource {
         if (name.contains("glint")) {
             boolean isArmor = name.contains("armor");
             if (isArmor) {
-                if (Glint.INSTANCE.getEnabled() && Glint.INSTANCE.armor.getValue()) {
-                    cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.INSTANCE.color.getValue()));
+                if (Glint.maybeEnabled() && Glint.itz().armor.getValue()) {
+                    cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.itz().color.getValue()));
                 }
             } else {
-                if (Glint.INSTANCE.getEnabled() && Glint.INSTANCE.items.getValue()) {
-                    cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.INSTANCE.color.getValue()));
+                if (Glint.maybeEnabled() && Glint.itz().items.getValue()) {
+                    cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.itz().color.getValue()));
                 }
             }
         }

@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -9,7 +10,6 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import java.util.List;
 public class Trigger extends Module {
-    public static final Trigger INSTANCE = new Trigger();
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter cooldown = new NumberParameter("Cooldown", 0.9, 0.0, 1.0, 0.05);
     public final NumberParameter cps = new NumberParameter("CPS", 10, 1, 20, 1);
@@ -67,4 +67,11 @@ public class Trigger extends Module {
         InventoryUtility.attackEntity(mc, target, swingMode.getValue());
         lastAttackTime = System.currentTimeMillis();
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Trigger.class);
+    }
+    public static Trigger itz() {
+        return ModuleManager.get(Trigger.class);
+    }
+
 }

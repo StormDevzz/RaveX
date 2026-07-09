@@ -12,7 +12,7 @@ import ravex.modules.movement.Blink;
 public class MixinBlink {
     @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void onBlinkSend(Packet<?> packet, CallbackInfo ci) {
-        if (Blink.INSTANCE.shouldCancel(packet)) {
+        if (Blink.itz().shouldCancel(packet)) {
             ci.cancel();
         }
     }

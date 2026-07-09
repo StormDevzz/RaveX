@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
@@ -11,7 +12,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.BowItem;
 import ravex.utility.misc.MobUtility;
 public class AimAssist extends Module {
-    public static final AimAssist INSTANCE = new AimAssist();
     public final ModeParameter targetMode = new ModeParameter("Target", "Players", java.util.List.of("Players", "Monsters", "All"));
     public final NumberParameter fov = new NumberParameter("FOV", 45.0, 10.0, 180.0, 5.0);
     public final NumberParameter speed = new NumberParameter("Speed", 5.0, 1.0, 20.0, 0.5);
@@ -49,4 +49,11 @@ public class AimAssist extends Module {
             }
         }
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AimAssist.class);
+    }
+    public static AimAssist itz() {
+        return ModuleManager.get(AimAssist.class);
+    }
+
 }

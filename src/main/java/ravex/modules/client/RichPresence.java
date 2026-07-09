@@ -1,5 +1,5 @@
 package ravex.modules.client;
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.StringParameter;
@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
 public class RichPresence extends Module {
-    public static final RichPresence INSTANCE = new RichPresence();
     public final StringParameter largeImage = new StringParameter("LargeImage", "ravexdc");
     public final BooleanParameter showHP     = new BooleanParameter("ShowHP",     true);
     public final BooleanParameter showCoords = new BooleanParameter("ShowCoords", false);
@@ -110,5 +109,13 @@ public class RichPresence extends Module {
         } catch (Throwable t) {
             System.err.println("[RichPresence] discordSetActivity failed: " + t.getMessage());
         }
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(RichPresence.class);
+    }
+
+    public static RichPresence itz() {
+        return ModuleManager.get(RichPresence.class);
     }
 }

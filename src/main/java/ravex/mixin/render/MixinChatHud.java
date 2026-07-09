@@ -17,19 +17,19 @@ public abstract class MixinChatHud {
 
     @Inject(method = "render", at = @At("HEAD"))
     private void onChatRenderPre(GuiGraphics graphics, Font font, int mouseX, int mouseY, int something, boolean focused, boolean canFocus, CallbackInfo ci) {
-        if (!ChatHud.INSTANCE.getEnabled()) return;
+        if (!ChatHud.maybeEnabled()) return;
         if (ravex$transformed.get()) return;
         ravex$transformed.set(true);
         var pose = graphics.pose();
         pose.pushMatrix();
-        pose.translate(ChatHud.INSTANCE.getX(), ChatHud.INSTANCE.getY());
-        float s = ChatHud.INSTANCE.scale.getValue().floatValue();
+        pose.translate(ChatHud.itz().getX(), ChatHud.itz().getY());
+        float s = ChatHud.itz().scale.getValue().floatValue();
         pose.scale(s, s);
     }
 
     @Inject(method = "render", at = @At("RETURN"))
     private void onChatRenderPost(GuiGraphics graphics, Font font, int mouseX, int mouseY, int something, boolean focused, boolean canFocus, CallbackInfo ci) {
-        if (!ChatHud.INSTANCE.getEnabled()) return;
+        if (!ChatHud.maybeEnabled()) return;
         if (!ravex$transformed.get()) return;
         ravex$transformed.set(false);
         graphics.pose().popMatrix();

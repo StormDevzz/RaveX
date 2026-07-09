@@ -13,13 +13,13 @@ public abstract class MixinGameRendererFreeCam {
 
     @Inject(method = "pick", at = @At("HEAD"))
     private void onPickPre(float tickDelta, CallbackInfo ci) {
-        if (!FreeCam.INSTANCE.getEnabled() || !FreeCam.INSTANCE.placeTrace.getValue()) return;
+        if (!FreeCam.maybeEnabled() || !FreeCam.itz().placeTrace.getValue()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        mc.player.setYRot(FreeCam.INSTANCE.yaw);
-        mc.player.setXRot(FreeCam.INSTANCE.pitch);
-        FreeCam.Vec3 eye = FreeCam.INSTANCE.getEyePosition(tickDelta);
+        mc.player.setYRot(FreeCam.itz().yaw);
+        mc.player.setXRot(FreeCam.itz().pitch);
+        FreeCam.Vec3 eye = FreeCam.itz().getEyePosition(tickDelta);
         mc.player.setPos(eye.x(), eye.y() - mc.player.getEyeHeight(), eye.z());
     }
 }

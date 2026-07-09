@@ -13,7 +13,7 @@ public class MixinNameProtect {
 
     @Inject(method = "getDisplayName", at = @At("RETURN"), cancellable = true)
     private void onGetDisplayName(CallbackInfoReturnable<Component> cir) {
-        if (!NameProtect.INSTANCE.getEnabled()) return;
-        cir.setReturnValue(NameProtect.INSTANCE.protectComponent(cir.getReturnValue()));
+        if (!NameProtect.maybeEnabled()) return;
+        cir.setReturnValue(NameProtect.itz().protectComponent(cir.getReturnValue()));
     }
 }

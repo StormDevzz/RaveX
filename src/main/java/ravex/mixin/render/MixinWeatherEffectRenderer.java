@@ -19,22 +19,22 @@ import ravex.modules.render.Weather;
 public class MixinWeatherEffectRenderer {
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void onRender(MultiBufferSource multiBufferSource, Vec3 vec3, WeatherRenderState weatherRenderState, CallbackInfo ci) {
-        if (NoRender.INSTANCE.getEnabled() && NoRender.INSTANCE.weather.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().weather.getValue()) {
             ci.cancel();
         }
     }
 
     @Inject(method = "tickRainParticles", at = @At("HEAD"), cancellable = true)
     private void onTickRainParticles(ClientLevel clientLevel, Camera camera, int i, ParticleStatus particleStatus, int j, CallbackInfo ci) {
-        if (NoRender.INSTANCE.getEnabled() && NoRender.INSTANCE.weather.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().weather.getValue()) {
             ci.cancel();
         }
     }
 
     @Inject(method = "getPrecipitationAt", at = @At("HEAD"), cancellable = true)
     private void onGetPrecipitationAt(net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos, CallbackInfoReturnable<net.minecraft.world.level.biome.Biome.Precipitation> cir) {
-        if (Weather.INSTANCE.getEnabled()) {
-            String modeValue = Weather.INSTANCE.mode.getValue();
+        if (Weather.maybeEnabled()) {
+            String modeValue = Weather.itz().mode.getValue();
             if ("Rain".equals(modeValue)) {
                 cir.setReturnValue(net.minecraft.world.level.biome.Biome.Precipitation.RAIN);
             } else if ("Snow".equals(modeValue)) {

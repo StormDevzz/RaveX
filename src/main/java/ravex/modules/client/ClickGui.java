@@ -1,6 +1,6 @@
 package ravex.modules.client;
 
-import ravex.modules.Category;
+import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -8,7 +8,6 @@ import ravex.parameter.NumberParameter;
 import java.util.List;
 
 public class ClickGui extends Module {
-    public static final ClickGui INSTANCE = new ClickGui();
     public final BooleanParameter drawBackground = new BooleanParameter("Background", true);
     public final ModeParameter colorMode = new ModeParameter("ColorMode", "Positive",
             List.of("Positive", "Fade", "Rainbow", "DoubleColor"));
@@ -50,6 +49,7 @@ public class ClickGui extends Module {
     public final NumberParameter tooltipOffsetX = new NumberParameter("TooltipOffsetX", 8, 0, 30, 1);
     public final NumberParameter tooltipOffsetY = new NumberParameter("TooltipOffsetY", 8, 0, 30, 1);
     public final BooleanParameter showToolbar = new BooleanParameter("ShowToolbar", false);
+    public final BooleanParameter descriptionPanel = new BooleanParameter("DescriptionPanel", false);
     public final BooleanParameter showGear = new BooleanParameter("ShowGear", false);
 
     private ClickGui() {
@@ -59,5 +59,9 @@ public class ClickGui extends Module {
                 || "DoubleColor".equals(colorMode.getValue()));
         color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()));
         setEnabled(true);
+    }
+
+    public static ClickGui itz() {
+        return ModuleManager.get(ClickGui.class);
     }
 }

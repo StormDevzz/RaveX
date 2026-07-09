@@ -18,7 +18,7 @@ import ravex.modules.player.GhostHand;
 public class MixinGhostHand {
     @Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
     private void onStartUseItem(CallbackInfo ci) {
-        if (!GhostHand.INSTANCE.getEnabled()) return;
+        if (!GhostHand.maybeEnabled()) return;
 
         Minecraft mc = (Minecraft)(Object)this;
         if (mc.player == null || mc.level == null) return;
@@ -27,7 +27,7 @@ public class MixinGhostHand {
         if (hit != null && hit.getType() == HitResult.Type.BLOCK) return;
 
         net.minecraft.client.player.LocalPlayer player = mc.player;
-        double range = GhostHand.INSTANCE.range.getValue();
+        double range = GhostHand.itz().range.getValue();
         Vec3 eye = player.getEyePosition(1.0F);
         Vec3 look = player.getViewVector(1.0F);
         Vec3 end = eye.add(look.x * range, look.y * range, look.z * range);
@@ -40,13 +40,13 @@ public class MixinGhostHand {
             BlockState state = mc.level.getBlockState(pos);
             Block block = state.getBlock();
 
-            boolean canInteract = GhostHand.INSTANCE.allBlocks.getValue();
+            boolean canInteract = GhostHand.itz().allBlocks.getValue();
             if (!canInteract) {
-                if (GhostHand.INSTANCE.chests.getValue() && isChest(block)) canInteract = true;
-                else if (GhostHand.INSTANCE.enderChests.getValue() && block instanceof EnderChestBlock) canInteract = true;
-                else if (GhostHand.INSTANCE.furnaces.getValue() && (block instanceof AbstractFurnaceBlock || block instanceof FurnaceBlock)) canInteract = true;
-                else if (GhostHand.INSTANCE.craftingTables.getValue() && block instanceof CraftingTableBlock) canInteract = true;
-                else if (GhostHand.INSTANCE.enchantTables.getValue() && block instanceof EnchantingTableBlock) canInteract = true;
+                if (GhostHand.itz().chests.getValue() && isChest(block)) canInteract = true;
+                else if (GhostHand.itz().enderChests.getValue() && block instanceof EnderChestBlock) canInteract = true;
+                else if (GhostHand.itz().furnaces.getValue() && (block instanceof AbstractFurnaceBlock || block instanceof FurnaceBlock)) canInteract = true;
+                else if (GhostHand.itz().craftingTables.getValue() && block instanceof CraftingTableBlock) canInteract = true;
+                else if (GhostHand.itz().enchantTables.getValue() && block instanceof EnchantingTableBlock) canInteract = true;
             }
 
             if (canInteract) {

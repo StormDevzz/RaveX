@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -20,7 +21,6 @@ import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
 import java.util.List;
 public class AutoCart extends Module {
-    public static final AutoCart INSTANCE = new AutoCart();
     public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
     public final NumberParameter targetRange = new NumberParameter("TargetRange", 20, 5, 50, 1);
     public final ModeParameter cartType = new ModeParameter("CartType", "TNT",
@@ -216,4 +216,11 @@ public class AutoCart extends Module {
         Vec3 targetPos = Vec3.atCenterOf(pos);
         return playerPos.distanceTo(targetPos) <= range.getValue();
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(AutoCart.class);
+    }
+    public static AutoCart itz() {
+        return ModuleManager.get(AutoCart.class);
+    }
+
 }

@@ -8,8 +8,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import ravex.modules.misc.PopCounter;
-import ravex.modules.misc.ChatUtils;
+import ravex.event.EventBusHolder;
+import ravex.event.player.DeathEvent;
+import ravex.event.combat.TotemPopEvent;
 
 @Mixin(LivingEntity.class)
 public class MixinLivingEntityTracker {
@@ -17,14 +18,14 @@ public class MixinLivingEntityTracker {
     @Inject(method = "die", at = @At("HEAD"))
     private void onDie(DamageSource source, CallbackInfo ci) {
         if ((Object)this instanceof Player player) {
-            ChatUtils.INSTANCE.onPlayerDeath(player, source);
+            EventBusHolder.get().post(new DeathEvent(player, source));
         }
     }
 
     @Inject(method = "checkTotemDeathProtection", at = @At("RETURN"))
     private void onCheckTotem(DamageSource source, CallbackInfoReturnable<Boolean> cir) {
         if (cir.getReturnValue() && (Object)this instanceof Player player) {
-            PopCounter.INSTANCE.onPop(player);
+            EventBusHolder.get().post(new TotemPopEvent(player));
         }
     }
 }
