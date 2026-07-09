@@ -199,7 +199,11 @@ public class Nuker extends Module {
             Direction dir = getDirection(mc.player.getEyePosition(), target);
             mc.gameMode.startDestroyBlock(target, dir);
             mc.player.swing(InteractionHand.MAIN_HAND);
-            NoGhostBlocks.markMined(target);
+            try {
+                NoGhostBlocks.markMined(target);
+            } catch (Exception e) {
+                // Ignore errors from NoGhostBlocks
+            }
             lastBreakTime = now;
         }
     }
