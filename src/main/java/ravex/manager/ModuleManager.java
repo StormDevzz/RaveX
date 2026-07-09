@@ -35,7 +35,7 @@ public class ModuleManager {
             "HoleFill", "AutoClicker", "AntiBot",
             "AutoDrop", "Burrow", "AntiReGear",
             "TntAura", "KeepSprint", "ShieldFucker",
-            "AutoCart", "AutoTotem"
+            "AutoCart", "AutoTotem", "TPAura"
         );
 
         register(Category.RENDER,
@@ -90,7 +90,7 @@ public class ModuleManager {
             "BookHelper", "Religion", "PauseBaritone",
             "AutoPortal", "FakePearl", "NewChunks",
             "PortalGod", "PortalGui", "PingSpoof",
-            "RideExploit", "Xray"
+            "RideExploit", "Xray", "AutoEz"
         );
 
         register(Category.WORLD,
