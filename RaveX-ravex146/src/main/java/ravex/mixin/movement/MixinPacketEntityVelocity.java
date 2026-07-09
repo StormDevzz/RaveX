@@ -14,25 +14,35 @@ import ravex.modules.movement.Velocity;
 @Mixin(ClientPacketListener.class)
 public class MixinPacketEntityVelocity {
 
-    @Inject(method = "handleSetEntityMotion", at = @At("TAIL"))
+    @Inject(method = "handleSetEntityMotion", at = @At("HEAD"), cancellable = true)
     private void onHandleSetEntityMotion(ClientboundSetEntityMotionPacket packet, CallbackInfo ci) {
         if (!Velocity.INSTANCE.getEnabled()) return;
 
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || packet.getId() != player.getId()) return;
 
-        Vec3 cur = player.getDeltaMovement();
         String mode = Velocity.INSTANCE.mode.getValue();
         double h = Velocity.INSTANCE.horizontal.getValue();
         double v = Velocity.INSTANCE.vertical.getValue();
 
+        Vec3 velocity = new Vec3(packet.getXa(), packet.getYa(), packet.getZa());
+
         switch (mode) {
-            case "Cancel" -> player.setDeltaMovement(Vec3.ZERO);
+            case "Cancel" -> {
+                player.setDeltaMovement(Vec3.ZERO);
+                ci.cancel();
+            }
             case "Matrix" -> {
                 double noise = (Math.random() - 0.5) * 0.015;
-                player.setDeltaMovement(cur.x * h + noise, cur.y * v, cur.z * h + noise);
+                Vec3 modified = new Vec3(velocity.x * h + noise, velocity.y * v, velocity.z * h + noise);
+                player.setDeltaMovement(modified);
+                ci.cancel();
             }
-            case "NCP" -> player.setDeltaMovement(cur.x * h, cur.y, cur.z * h);
+            case "NCP" -> {
+                Vec3 modified = new Vec3(velocity.x * h, velocity.y, velocity.z * h);
+                player.setDeltaMovement(modified);
+                ci.cancel();
+            }
         }
     }
 }
