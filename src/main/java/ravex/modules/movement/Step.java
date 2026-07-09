@@ -1,5 +1,9 @@
 package ravex.modules.movement;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -7,7 +11,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.List;
 public class Step extends Module {
+<<<<<<< HEAD
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "Packet", "Grim"));
+=======
+    public static final Step INSTANCE = new Step();
+    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "Packet"));
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter height = new NumberParameter("Height", 1.0, 1.0, 2.5, 0.5);
 
     @Override
@@ -19,8 +28,12 @@ public class Step extends Module {
         if (attr != null) {
             attr.setBaseValue(stepHeight);
         }
+<<<<<<< HEAD
         String modeVal = mode.getValue();
         if (modeVal.equalsIgnoreCase("Packet")) {
+=======
+        if (mode.getValue().equalsIgnoreCase("Packet")) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (mc.player.horizontalCollision && mc.player.onGround()) {
                 var connection = mc.player.connection;
                 if (connection != null) {

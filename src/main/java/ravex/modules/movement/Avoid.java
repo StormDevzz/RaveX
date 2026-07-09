@@ -1,10 +1,18 @@
 package ravex.modules.movement;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 public class Avoid extends Module {
+<<<<<<< HEAD
+=======
+    public static final Avoid INSTANCE = new Avoid();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter cactus = new BooleanParameter("Cactus", true);
     public final BooleanParameter berryBush = new BooleanParameter("BerryBush", true);
     public final BooleanParameter witherRose = new BooleanParameter("WitherRose", true);

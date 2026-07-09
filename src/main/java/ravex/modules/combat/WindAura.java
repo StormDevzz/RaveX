@@ -1,18 +1,29 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+<<<<<<< HEAD
 import ravex.utility.misc.MobUtility;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.rotation.RotationUtility;
+<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 public class WindAura extends Module {
+=======
+public class WindAura extends Module {
+    public static final WindAura INSTANCE = new WindAura();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.List.of("Normal", "Silent"));
     public final NumberParameter range = new NumberParameter("Range", 10.0, 3.0, 30.0, 0.5);
     public final NumberParameter delay = new NumberParameter("Delay", 5.0, 1.0, 20.0, 1.0);

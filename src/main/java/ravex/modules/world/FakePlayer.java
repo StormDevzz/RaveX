@@ -1,5 +1,9 @@
 package ravex.modules.world;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.StringParameter;
 import ravex.parameter.BooleanParameter;
@@ -9,6 +13,10 @@ import net.minecraft.client.player.RemotePlayer;
 import com.mojang.authlib.GameProfile;
 import java.util.UUID;
 public class FakePlayer extends Module {
+<<<<<<< HEAD
+=======
+    public static final FakePlayer INSTANCE = new FakePlayer();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final StringParameter nickname = new StringParameter("Nickname", "FakePlayer");
     public final BooleanParameter copyInventory = new BooleanParameter("CopyInv", true);
     private RemotePlayer remotePlayer = null;

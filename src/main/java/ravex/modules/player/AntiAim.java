@@ -1,19 +1,33 @@
 package ravex.modules.player;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
+<<<<<<< HEAD
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 public class AntiAim extends Module {
+=======
+public class AntiAim extends Module {
+    public static final AntiAim INSTANCE = new AntiAim();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("YawMode", "Spin", List.of("Spin", "Jitter", "Static"));
     public final ModeParameter pitchMode = new ModeParameter("PitchMode", "Down", List.of("Down", "Up", "Jitter", "None"));
     public final NumberParameter yawSpeed = new NumberParameter("YawSpeed", 30.0, 1.0, 90.0, 1.0);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
+<<<<<<< HEAD
     public static final SilentRotation silentRotation = new SilentRotation();
+=======
+    private static float silentYaw = 0;
+    private static float silentPitch = 0;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private float spinYaw = 0;
     private int ticks = 0;
 
@@ -29,7 +43,11 @@ public class AntiAim extends Module {
         if (mc.player == null) return;
         ticks++;
         spinYaw += yawSpeed.getValue().floatValue();
+<<<<<<< HEAD
         spinYaw = RotationUtility.normalizeYaw(spinYaw);
+=======
+        if (spinYaw >= 360f) spinYaw -= 360f;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         float targetYaw = mc.player.getYRot();
         float targetPitch = mc.player.getXRot();
         String yawModeStr = mode.getValue();

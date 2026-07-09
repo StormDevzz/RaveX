@@ -10,21 +10,38 @@ import ravex.utility.misc.MobUtility;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
+<<<<<<< HEAD
 
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
+=======
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import ravex.modules.Category;
+import ravex.modules.Module;
+import ravex.parameter.BooleanParameter;
+import ravex.utility.player.rotation.RotationUtility;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 
 public class Breaker extends Module {
+=======
+
+public class Breaker extends Module {
+    public static final Breaker INSTANCE = new Breaker();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter crystalRange = new NumberParameter("CrystalRange", 5.0, 1.0, 6.0, 0.1);
     public final NumberParameter minDamage = new NumberParameter("MinDamage", 4.0, 1.0, 20.0, 0.5);
@@ -36,7 +53,13 @@ public class Breaker extends Module {
     public final BooleanParameter syncPacketMine=new BooleanParameter("SyncPacketMine",false){@Override public void setValue(Boolean val){if(val){net.minecraft.client.Minecraft mc=net.minecraft.client.Minecraft.getInstance();boolean packetMineEnabled=ravex.manager.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();if(!packetMineEnabled){if(mc.player!=null){mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal("§7[§cBreaker§7] §cPlease enable PacketMine module first!"),false);}super.setValue(false);return;}}super.setValue(val);}};
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00FFFF);
+<<<<<<< HEAD
     public static final SilentRotation silentRotation = new SilentRotation();
+=======
+    public static float silentYaw = 0;
+    public static float silentPitch = 0;
+    public static boolean hasSilentRotations = false;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static BlockPos currentMiningBlock = null;
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_breaker");
     static {
@@ -61,7 +84,11 @@ public class Breaker extends Module {
             silentRotation.hasRotation = false;
             return;
         }
+<<<<<<< HEAD
         silentRotation.hasRotation = false;
+=======
+        hasSilentRotations = false;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (syncPacketMine.getValue()) {
             boolean packetMineEnabled = ravex.manager.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();
             if (!packetMineEnabled) {
@@ -168,6 +195,7 @@ public class Breaker extends Module {
             if (rotMode.equals("Normal")) {
                 rotateTo(mc, Vec3.atCenterOf(targetPos));
             } else if (rotMode.equals("Silent")) {
+<<<<<<< HEAD
                 silentRotation.setAnglesTo(mc, Vec3.atCenterOf(targetPos));
             }
         }
@@ -176,6 +204,18 @@ public class Breaker extends Module {
                 ravex.modules.player.PacketMine.miningBlocks.removeIf(m -> !m.done);
                 String name = mc.level.getBlockState(targetPos).getBlock().getName().getString();
                 long breakMs = ModuleManager.get(ravex.modules.player.PacketMine.class).calcBreakTime(mc, targetPos);
+=======
+                silentYaw = calculateYaw(mc, Vec3.atCenterOf(targetPos));
+                silentPitch = calculatePitch(mc, Vec3.atCenterOf(targetPos));
+                hasSilentRotations = true;
+            }
+        }
+        if (syncPacketMine.getValue()) {
+            if (!ravex.modules.player.PacketMine.INSTANCE.isTargetBlock(targetPos)) {
+                ravex.modules.player.PacketMine.miningBlocks.removeIf(m -> !m.done);
+                String name = mc.level.getBlockState(targetPos).getBlock().getName().getString();
+                long breakMs = ravex.modules.player.PacketMine.INSTANCE.calcBreakTime(mc, targetPos);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 ravex.modules.player.PacketMine.miningBlocks.add(
                         new ravex.modules.player.PacketMine.MiningBlock(targetPos, breakMs, name));
             }
@@ -199,9 +239,15 @@ public class Breaker extends Module {
         double bestDist = Double.MAX_VALUE;
         double maxDist = range.getValue() + 3.0;
         for (Player p : mc.level.players()) {
+<<<<<<< HEAD
             if (MobUtility.isSelf(p) || MobUtility.isDead(p))
                 continue;
             double dist = MobUtility.distanceToPlayer(p);
+=======
+            if (p == mc.player || p.isDeadOrDying())
+                continue;
+            double dist = mc.player.distanceTo(p);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (dist <= maxDist && dist < bestDist) {
                 bestDist = dist;
                 closest = p;
@@ -241,6 +287,17 @@ public class Breaker extends Module {
         return arr;
     }
 
+<<<<<<< HEAD
+=======
+    private float calculateYaw(Minecraft mc, Vec3 target) {
+        return RotationUtility.yawTo(mc.player.getEyePosition(), target);
+    }
+
+    private float calculatePitch(Minecraft mc, Vec3 target) {
+        return RotationUtility.pitchTo(mc.player.getEyePosition(), target);
+    }
+
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private void rotateTo(Minecraft mc, Vec3 target) {
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
         mc.player.setYRot(angles[0]);
@@ -257,10 +314,17 @@ public class Breaker extends Module {
                 net.minecraft.world.entity.EquipmentSlot.HEAD
         };
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
+<<<<<<< HEAD
             var armor = player.getItemBySlot(slot);
             if (armor.isEmpty())
                 continue;
             var enchants = InventoryUtility.getEnchantments(armor);
+=======
+            ItemStack armor = player.getItemBySlot(slot);
+            if (armor.isEmpty())
+                continue;
+            ItemEnchantments enchants = armor.get(DataComponents.ENCHANTMENTS);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (enchants != null) {
                 for (var enchantment : enchants.keySet()) {
                     String id = enchantment.getRegisteredName().toLowerCase();
@@ -274,10 +338,21 @@ public class Breaker extends Module {
             }
         }
         int totems = 0;
+<<<<<<< HEAD
         if (InventoryUtility.isHolding(player, "totem_of_undying")) totems++;
         if (InventoryUtility.isOffhand(player, "totem_of_undying")) totems++;
         for (int i = 0; i < InventoryUtility.getContainerSize(player); i++) {
             if (InventoryUtility.isItem(InventoryUtility.getItem(player, i), "totem_of_undying")) totems++;
+=======
+        if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING)
+            totems++;
+        if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING)
+            totems++;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            if (player.getInventory().getItem(i).getItem() == Items.TOTEM_OF_UNDYING) {
+                totems++;
+            }
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
         double[] stats = new double[15];
         stats[0] = player.getArmorValue();
@@ -331,6 +406,7 @@ public class Breaker extends Module {
             double selfDmgWeight,
             boolean antiSuicide,
             double antiSuicideMinHp);
+<<<<<<< HEAD
 
     public static boolean maybeEnabled() {
         return maybeEnabled(Breaker.class);
@@ -338,4 +414,6 @@ public class Breaker extends Module {
     public static Breaker itz() {
         return ModuleManager.get(Breaker.class);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

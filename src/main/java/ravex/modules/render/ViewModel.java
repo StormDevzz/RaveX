@@ -6,6 +6,10 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 
 public class ViewModel extends Module {
+<<<<<<< HEAD
+=======
+    public static final ViewModel INSTANCE = new ViewModel();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter mainX = new NumberParameter("MainX", 0.0, -2.0, 2.0, 0.01);
     public final NumberParameter mainY = new NumberParameter("MainY", 0.0, -2.0, 2.0, 0.01);
     public final NumberParameter mainZ = new NumberParameter("MainZ", 0.0, -2.0, 2.0, 0.01);
@@ -25,6 +29,7 @@ public class ViewModel extends Module {
     public final BooleanParameter hideOffHand = new BooleanParameter("HideOff", false);
     public final BooleanParameter noSwing = new BooleanParameter("NoSwing", false);
 
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(ViewModel.class);
     }
@@ -32,4 +37,6 @@ public class ViewModel extends Module {
     public static ViewModel itz() {
         return ModuleManager.get(ViewModel.class);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

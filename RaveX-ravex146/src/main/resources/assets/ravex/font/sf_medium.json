@@ -1,0 +1,10 @@
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "ravex:sf_medium.ttf",
+      "size": 11.0,
+      "oversample": 4.0
+    }
+  ]
+}

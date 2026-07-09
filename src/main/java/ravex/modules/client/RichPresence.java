@@ -1,5 +1,9 @@
 package ravex.modules.client;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.StringParameter;
@@ -8,6 +12,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
 public class RichPresence extends Module {
+<<<<<<< HEAD
+=======
+    public static final RichPresence INSTANCE = new RichPresence();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final StringParameter largeImage = new StringParameter("LargeImage", "ravexdc");
     public final BooleanParameter showHP     = new BooleanParameter("ShowHP",     true);
     public final BooleanParameter showCoords = new BooleanParameter("ShowCoords", false);
@@ -110,6 +118,7 @@ public class RichPresence extends Module {
             System.err.println("[RichPresence] discordSetActivity failed: " + t.getMessage());
         }
     }
+<<<<<<< HEAD
 
     public static boolean maybeEnabled() {
         return maybeEnabled(RichPresence.class);
@@ -118,4 +127,6 @@ public class RichPresence extends Module {
     public static RichPresence itz() {
         return ModuleManager.get(RichPresence.class);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

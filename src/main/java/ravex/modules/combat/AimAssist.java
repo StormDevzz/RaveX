@@ -1,5 +1,8 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
@@ -10,8 +13,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.BowItem;
+<<<<<<< HEAD
 import ravex.utility.misc.MobUtility;
 public class AimAssist extends Module {
+=======
+public class AimAssist extends Module {
+    public static final AimAssist INSTANCE = new AimAssist();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter targetMode = new ModeParameter("Target", "Players", java.util.List.of("Players", "Monsters", "All"));
     public final NumberParameter fov = new NumberParameter("FOV", 45.0, 10.0, 180.0, 5.0);
     public final NumberParameter speed = new NumberParameter("Speed", 5.0, 1.0, 20.0, 0.5);
@@ -28,11 +36,19 @@ public class AimAssist extends Module {
         double bestDist = Double.MAX_VALUE;
         for (Entity entity : mc.level.entitiesForRendering()) {
             if (!(entity instanceof LivingEntity p)) continue;
+<<<<<<< HEAD
             if (MobUtility.isSelf(p) || !MobUtility.isAlive(p)) continue;
             String mode = targetMode.getValue();
             if (mode.equals("Players") && !MobUtility.isPlayer(p)) continue;
             if (mode.equals("Monsters") && !MobUtility.isHostile(p)) continue;
             double dist = MobUtility.distanceToPlayer(p);
+=======
+            if (p == mc.player || !p.isAlive()) continue;
+            String mode = targetMode.getValue();
+            if (mode.equals("Players") && !(p instanceof Player)) continue;
+            if (mode.equals("Monsters") && !(p instanceof Monster)) continue;
+            double dist = mc.player.distanceTo(p);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (dist < bestDist && dist <= 40.0) {
                 target = p;
                 bestDist = dist;

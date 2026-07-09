@@ -1,7 +1,11 @@
 package ravex.manager;
 
 import ravex.proxy.ProxyConfig;
+<<<<<<< HEAD
 import ravex.proxy.ProxyServer;
+=======
+import ravex.proxy.ProxyNative;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -31,7 +35,11 @@ public class ProxyManager {
         }
         stop();
         this.config = config;
+<<<<<<< HEAD
         boolean ok = ProxyServer.start(
+=======
+        boolean ok = ProxyNative.start(
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             config.getType(),
             config.getHost(),
             config.getPort(),
@@ -44,14 +52,22 @@ public class ProxyManager {
             running = true;
             lastError = null;
         } else {
+<<<<<<< HEAD
             lastError = "Proxy server failed to start";
+=======
+            lastError = "Native proxy failed to start";
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
         return ok;
     }
 
     public void stop() {
         if (running) {
+<<<<<<< HEAD
             ProxyServer.stop();
+=======
+            ProxyNative.stop();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             running = false;
         }
     }
@@ -62,11 +78,19 @@ public class ProxyManager {
     }
 
     public int getLocalPort() {
+<<<<<<< HEAD
         return ProxyServer.getLocalPort();
     }
 
     public boolean isRunning() {
         return running && ProxyServer.isRunning();
+=======
+        return ProxyNative.getLocalPort();
+    }
+
+    public boolean isRunning() {
+        return running && ProxyNative.isRunning();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     public String getLastError() {

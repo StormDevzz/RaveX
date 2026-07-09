@@ -1,21 +1,31 @@
 package ravex.modules.movement;
+<<<<<<< HEAD
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import ravex.event.Subscribe;
 import ravex.event.movement.VelocityEvent;
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
+<<<<<<< HEAD
 import java.util.Random;
 public class Velocity extends Module {
+=======
+public class Velocity extends Module {
+    public static final Velocity INSTANCE = new Velocity();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode       = new ModeParameter("Mode", "Cancel",
             List.of("Cancel", "Matrix", "NCP", "Grim", "GrimStrict"));
     public final NumberParameter horizontal = new NumberParameter("Horizontal", 0.0, 0.0, 1.0, 0.05);
     public final NumberParameter vertical   = new NumberParameter("Vertical",   0.0, 0.0, 1.0, 0.05);
     public final BooleanParameter explosion = new BooleanParameter("Explosion", true);
+<<<<<<< HEAD
     public final NumberParameter grimHorizontal = new NumberParameter("GrimHorizontal", 70.0, 0.0, 100.0, 1.0);
     public final NumberParameter grimVertical = new NumberParameter("GrimVertical", 80.0, 0.0, 100.0, 1.0);
 
@@ -25,6 +35,8 @@ public class Velocity extends Module {
     public int grimDelayTicks = 0;
     public Vec3 grimSavedVelocity = Vec3.ZERO;
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private Velocity() {
         super("Velocity");
         horizontal.setVisible(() -> !mode.getValue().equals("Cancel"));

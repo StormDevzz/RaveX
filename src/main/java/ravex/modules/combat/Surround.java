@@ -1,5 +1,8 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,10 +17,17 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
+<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 import java.util.ArrayList;
 import java.util.List;
 public class Surround extends Module {
+=======
+import java.util.ArrayList;
+import java.util.List;
+public class Surround extends Module {
+    public static final Surround INSTANCE = new Surround();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static final List<BlockPos> surroundBlocks = new ArrayList<>();
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
@@ -196,8 +206,13 @@ public class Surround extends Module {
         long msDelay = delay.getValue().longValue();
         if (now - lastPlaceTime < msDelay) return;
         lastPlaceTime = now;
+<<<<<<< HEAD
         int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, blockSlot);
+=======
+        int prevSlot = mc.player.getInventory().getSelectedSlot();
+        mc.player.getInventory().setSelectedSlot(blockSlot);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         for (BlockPos target : toPlace) {
             BlockPos neighbor = findNeighbor(target);
             if (neighbor == null) continue;

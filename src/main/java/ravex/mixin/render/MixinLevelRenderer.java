@@ -13,12 +13,17 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+<<<<<<< HEAD
 import ravex.modules.combat.AnchorAura;
 import ravex.modules.combat.AutoCrystal;
 import ravex.modules.combat.BasePlace;
 import ravex.modules.combat.Breaker;
 import ravex.modules.combat.HoleFill;
 import ravex.modules.combat.SelfTrap;
+=======
+import ravex.utility.render.Render3DUtils;
+import ravex.modules.player.Xray;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.combat.Surround;
 import ravex.modules.combat.Trap;
 import ravex.modules.combat.WebSelf;
@@ -29,6 +34,7 @@ import ravex.modules.player.AirPlace;
 import ravex.modules.player.PacketMine;
 import ravex.modules.render.BlockOutline;
 import ravex.modules.render.Borders;
+<<<<<<< HEAD
 import ravex.modules.render.BreadCrumbs;
 import ravex.modules.render.ESP;
 import ravex.modules.render.Particles;
@@ -45,6 +51,11 @@ import ravex.modules.world.AutoTunnel;
 import ravex.utility.render.Render3DUtils;
 
 
+=======
+import ravex.modules.render.ESP;
+import ravex.modules.render.HoleESP;
+import ravex.modules.render.VoidESP;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
 @Mixin(LevelRenderer.class)
 public class MixinLevelRenderer {
@@ -76,7 +87,11 @@ public class MixinLevelRenderer {
     )
     private boolean disableVanillaBlockOutline(boolean original) {
         
+<<<<<<< HEAD
         if (BlockOutline.maybeEnabled()) {
+=======
+        if (BlockOutline.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             return false;
         }
         return original;
@@ -118,7 +133,11 @@ public class MixinLevelRenderer {
         double slideFactor = Math.min(1.0, (deltaMs / 50.0) * 0.35);
 
         
+<<<<<<< HEAD
         if (BlockOutline.maybeEnabled()) {
+=======
+        if (BlockOutline.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             HitResult hit = mc.hitResult;
             if (hit != null && hit.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockHit = (BlockHitResult) hit;
@@ -145,14 +164,23 @@ public class MixinLevelRenderer {
             }
 
             if (boAlpha > 0.0f) {
+<<<<<<< HEAD
                 int color = BlockOutline.itz().color.getValue();
+=======
+                int color = BlockOutline.INSTANCE.color.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 float r = ((color >> 16) & 0xFF) / 255.0f;
                 float g = ((color >> 8) & 0xFF) / 255.0f;
                 float b = (color & 0xFF) / 255.0f;
                 float baseAlpha = ((color >> 24) & 0xFF) / 255.0f;
                 float a = baseAlpha * boAlpha;
+<<<<<<< HEAD
                 boolean filled = BlockOutline.itz().filled.getValue();
                 float lineWidth = BlockOutline.itz().width.getValue().floatValue();
+=======
+                boolean filled = BlockOutline.INSTANCE.filled.getValue();
+                float lineWidth = BlockOutline.INSTANCE.width.getValue().floatValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
                 try {
                     float bx = (float)(boX - camPos.x);
@@ -189,7 +217,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         AirPlace ap = AirPlace.itz();
+=======
+        ravex.modules.player.AirPlace ap = ravex.modules.player.AirPlace.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (ap.getEnabled() && ap.render.getValue() && ap.currentTarget != null) {
             double tx = ap.currentTarget.getX();
             double ty = ap.currentTarget.getY();
@@ -241,6 +273,7 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         Scaffold sc = Scaffold.itz();
         if (sc.getEnabled() && sc.render.getValue()) {
             var currPos = sc.getCurrentPos();
@@ -248,6 +281,13 @@ public class MixinLevelRenderer {
             double tx = currPos.getX();
             double ty = currPos.getY();
             double tz = currPos.getZ();
+=======
+        ravex.modules.world.Scaffold sc = ravex.modules.world.Scaffold.INSTANCE;
+        if (sc.getEnabled() && sc.render.getValue() && sc.currentTarget != null) {
+            double tx = sc.currentTarget.getX();
+            double ty = sc.currentTarget.getY();
+            double tz = sc.currentTarget.getZ();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (sc.animate.getValue()) {
                 if (!scInitialized) {
                     scX = tx; scY = ty; scZ = tz;
@@ -295,7 +335,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (ChestAura.maybeEnabled() && ChestAura.itz().render.getValue() && !ChestAura.placedChests.isEmpty()) {
+=======
+        if (ravex.modules.world.ChestAura.INSTANCE.getEnabled() && ravex.modules.world.ChestAura.INSTANCE.render.getValue() && !ravex.modules.world.ChestAura.placedChests.isEmpty()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             long chestNow = System.currentTimeMillis();
             double durationMs = ChestAura.itz().fadeSpeed.getValue() * 1000.0;
             int color = ChestAura.itz().highlightColor.getValue();
@@ -314,9 +358,15 @@ public class MixinLevelRenderer {
 
                 try {
                     modelViewMatrix.translate(
+<<<<<<< HEAD
                         (float)(ravex.utility.misc.block.BlockUtility.unpackX(chest.packedPos) - camPos.x),
                         (float)(ravex.utility.misc.block.BlockUtility.unpackY(chest.packedPos) - camPos.y),
                         (float)(ravex.utility.misc.block.BlockUtility.unpackZ(chest.packedPos) - camPos.z),
+=======
+                        (float)(chest.pos.getX() - camPos.x),
+                        (float)(chest.pos.getY() - camPos.y),
+                        (float)(chest.pos.getZ() - camPos.z),
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                         mat
                     );
 
@@ -331,7 +381,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (Surround.maybeEnabled()) {
+=======
+        if (Surround.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             synchronized (Surround.surroundBlocks) {
                 for (BlockPos pos : Surround.surroundBlocks) {
                     if (pos == null) continue;
@@ -358,7 +412,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         Trap trap = Trap.itz();
+=======
+        ravex.modules.combat.Trap trap = ravex.modules.combat.Trap.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (trap.getEnabled() && trap.render.getValue()) {
             synchronized (ravex.modules.combat.Trap.trapBlocks) {
                 for (BlockPos pos : ravex.modules.combat.Trap.trapBlocks) {
@@ -386,7 +444,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         SelfTrap selfTrap = SelfTrap.itz();
+=======
+        ravex.modules.combat.SelfTrap selfTrap = ravex.modules.combat.SelfTrap.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (selfTrap.getEnabled() && selfTrap.render.getValue()) {
             for (BlockPos pos : ravex.modules.combat.SelfTrap.getSelfTrapBlocks()) {
                 if (pos == null) continue;
@@ -411,7 +473,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         BasePlace basePlace = BasePlace.itz();
+=======
+        ravex.modules.combat.BasePlace basePlace = ravex.modules.combat.BasePlace.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (basePlace.getEnabled() && basePlace.render.getValue() && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
             BlockPos pos = ravex.modules.combat.BasePlace.getSimulatedPlacementBlock();
             try {
@@ -436,7 +502,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         AnchorAura anchorAura = AnchorAura.itz();
+=======
+        ravex.modules.combat.AnchorAura anchorAura = ravex.modules.combat.AnchorAura.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (anchorAura.getEnabled() && anchorAura.render.getValue() && ravex.modules.combat.AnchorAura.simulatedPlacementBlock != null) {
             BlockPos pos = ravex.modules.combat.AnchorAura.simulatedPlacementBlock;
             try {
@@ -460,11 +530,19 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
+<<<<<<< HEAD
         if (NewChunks.maybeEnabled()) {
             NewChunks.itz().render(modelViewMatrix, camera);
         }
 
         AutoCrystal ac = AutoCrystal.itz();
+=======
+        if (ravex.modules.misc.NewChunks.INSTANCE.getEnabled()) {
+            ravex.modules.misc.NewChunks.INSTANCE.render(modelViewMatrix, camera);
+        }
+
+        ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (ac.getEnabled() && ac.renderPlacement.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
             BlockPos p = ravex.modules.combat.AutoCrystal.currentPlacementBlock;
             try {
@@ -483,9 +561,15 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (StashFinder.maybeEnabled()) {
             double maxDist = StashFinder.itz().range.getValue();
             for (StashFinder.StashEntry stash : StashFinder.itz().getStashes()) {
+=======
+        if (ravex.modules.misc.StashFinder.INSTANCE.getEnabled()) {
+            double maxDist = ravex.modules.misc.StashFinder.INSTANCE.range.getValue();
+            for (ravex.modules.misc.StashFinder.StashEntry stash : ravex.modules.misc.StashFinder.INSTANCE.getStashes()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 Vec3 stashPos = Vec3.atBottomCenterOf(stash.pos);
                 double dist = stashPos.distanceTo(camPos);
                 if (dist > maxDist) continue;
@@ -508,25 +592,43 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (BreadCrumbs.maybeEnabled()) {
+=======
+        if (ravex.modules.render.BreadCrumbs.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ravex.modules.render.BreadCrumbs.renderTrails(modelViewMatrix, camPos);
         }
 
         
+<<<<<<< HEAD
         if (Trails.maybeEnabled()) {
+=======
+        if (ravex.modules.render.Trails.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ravex.modules.render.Trails.renderTrails(modelViewMatrix, camPos);
         }
 
         
+<<<<<<< HEAD
         if (Particles.maybeEnabled()) {
+=======
+        if (ravex.modules.render.Particles.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ravex.modules.render.Particles.renderParticles(modelViewMatrix, camPos);
         }
 
         
+<<<<<<< HEAD
         TreeCutter tc = TreeCutter.itz();
         BlockPos mp = ravex.modules.world.TreeCutter.getMiningPos();
         if (tc.getEnabled() && tc.render.getValue() && mp != null) {
             BlockPos p = mp;
+=======
+        ravex.modules.world.TreeCutter tc = ravex.modules.world.TreeCutter.INSTANCE;
+        if (tc.getEnabled() && tc.render.getValue() && ravex.modules.world.TreeCutter.currentMiningBlock != null) {
+            BlockPos p = ravex.modules.world.TreeCutter.currentMiningBlock;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             try {
                 modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
@@ -549,7 +651,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         WebSelf ws = WebSelf.itz();
+=======
+        ravex.modules.combat.WebSelf ws = ravex.modules.combat.WebSelf.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (ws.getEnabled() && ws.render.getValue() && ravex.modules.combat.WebSelf.targetPos != null) {
             BlockPos p = ravex.modules.combat.WebSelf.targetPos;
             try {
@@ -570,7 +676,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         Breaker br = Breaker.itz();
+=======
+        ravex.modules.combat.Breaker br = ravex.modules.combat.Breaker.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (br.getEnabled() && br.render.getValue() && ravex.modules.combat.Breaker.currentMiningBlock != null) {
             BlockPos p = ravex.modules.combat.Breaker.currentMiningBlock;
             try {
@@ -594,10 +704,17 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         AutoTunnel at = AutoTunnel.itz();
         if (at.getEnabled() && at.render.getValue()) {
             BlockPos p = ravex.modules.world.AutoTunnel.getCurrentTarget();
             if (p != null) try {
+=======
+        ravex.modules.world.AutoTunnel at = ravex.modules.world.AutoTunnel.INSTANCE;
+        if (at.getEnabled() && at.render.getValue() && ravex.modules.world.AutoTunnel.currentTarget != null) {
+            BlockPos p = ravex.modules.world.AutoTunnel.currentTarget;
+            try {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 modelViewMatrix.translate(
                         (float)(p.getX() - camPos.x),
                         (float)(p.getY() - camPos.y),
@@ -619,7 +736,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         Nuker nk = Nuker.itz();
+=======
+        ravex.modules.world.nuker.Nuker nk = ravex.modules.world.nuker.Nuker.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (nk.getEnabled() && nk.render.getValue() && ravex.modules.world.nuker.Nuker.currentTarget != null) {
             BlockPos p = ravex.modules.world.nuker.Nuker.currentTarget;
             try {
@@ -644,12 +765,21 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         PVEUtils sm = PVEUtils.itz();
         if (sm.getEnabled() && sm.mode.getValue().equals("AutoSmelt") && sm.smeltRender.getValue() && ravex.modules.world.PVEUtils.smeltTarget != null) {
             BlockPos p = ravex.modules.world.PVEUtils.smeltTarget;
             try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = sm.smeltColor.getValue();
+=======
+        ravex.modules.world.AutoSmelt sm = ravex.modules.world.AutoSmelt.INSTANCE;
+        if (sm.getEnabled() && sm.render.getValue() && ravex.modules.world.AutoSmelt.currentTarget != null) {
+            BlockPos p = ravex.modules.world.AutoSmelt.currentTarget;
+            try {
+                modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
+                int c = sm.color.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 float r = ((c >> 16) & 0xFF) / 255.0f;
                 float g = ((c >> 8) & 0xFF) / 255.0f;
                 float b = (c & 0xFF) / 255.0f;
@@ -662,12 +792,21 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         PVEUtils bw = PVEUtils.itz();
         if (bw.getEnabled() && bw.mode.getValue().equals("AutoBrew") && bw.brewRender.getValue()) {
             BlockPos p = ravex.modules.world.PVEUtils.getBrewTarget();
             if (p != null) try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = bw.brewColor.getValue();
+=======
+        ravex.modules.world.AutoBrew bw = ravex.modules.world.AutoBrew.INSTANCE;
+        if (bw.getEnabled() && bw.render.getValue() && ravex.modules.world.AutoBrew.currentTarget != null) {
+            BlockPos p = ravex.modules.world.AutoBrew.currentTarget;
+            try {
+                modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
+                int c = bw.color.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 float r = ((c >> 16) & 0xFF) / 255.0f;
                 float g = ((c >> 8) & 0xFF) / 255.0f;
                 float b = (c & 0xFF) / 255.0f;
@@ -680,10 +819,17 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         ECFarmer ec = ECFarmer.itz();
         if (ec.getEnabled() && ec.render.getValue()) {
             BlockPos p = ravex.modules.world.ECFarmer.getCurrentTarget();
             if (p != null) try {
+=======
+        ravex.modules.world.ECFarmer ec = ravex.modules.world.ECFarmer.INSTANCE;
+        if (ec.getEnabled() && ec.render.getValue() && ravex.modules.world.ECFarmer.currentTarget != null) {
+            BlockPos p = ravex.modules.world.ECFarmer.currentTarget;
+            try {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = ec.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -698,10 +844,17 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         AutoPortal pb = AutoPortal.itz();
         if (pb.getEnabled() && pb.render.getValue()) {
             BlockPos p = ravex.modules.misc.AutoPortal.getCurrentTarget();
             if (p != null) try {
+=======
+        ravex.modules.misc.PortalBuild pb = ravex.modules.misc.PortalBuild.INSTANCE;
+        if (pb.getEnabled() && pb.render.getValue() && ravex.modules.misc.PortalBuild.currentTarget != null) {
+            BlockPos p = ravex.modules.misc.PortalBuild.currentTarget;
+            try {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
                 int c = pb.color.getValue();
                 float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -716,16 +869,24 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         HoleFill hf = HoleFill.itz();
+=======
+        ravex.modules.combat.HoleFill hf = ravex.modules.combat.HoleFill.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (hf.getEnabled() && hf.render.getValue()) {
             for (var hole : ravex.modules.combat.HoleFill.holePositions) {
                 if (hole == null) continue;
                 try {
+<<<<<<< HEAD
                     modelViewMatrix.translate(
                         (float)(ravex.utility.misc.block.BlockUtility.unpackX(hole) - camPos.x),
                         (float)(ravex.utility.misc.block.BlockUtility.unpackY(hole) - camPos.y),
                         (float)(ravex.utility.misc.block.BlockUtility.unpackZ(hole) - camPos.z),
                         REUSABLE_MATRIX);
+=======
+                    modelViewMatrix.translate((float)(hole.getX() - camPos.x), (float)(hole.getY() - camPos.y), (float)(hole.getZ() - camPos.z), REUSABLE_MATRIX);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                     int c = hf.color.getValue();
                     float r = ((c >> 16) & 0xFF) / 255.0f;
                     float g = ((c >> 8) & 0xFF) / 255.0f;
@@ -739,16 +900,28 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (Borders.maybeEnabled()) {
             int rd = Borders.itz().renderDistance.getValue().intValue();
             boolean showCurrent = Borders.itz().showCurrentChunk.getValue();
             boolean showAll = Borders.itz().showChunkBorders.getValue();
             int lc = Borders.itz().chunkColor.getValue();
+=======
+        if (Borders.INSTANCE.getEnabled()) {
+            int rd = Borders.INSTANCE.renderDistance.getValue().intValue();
+            boolean showCurrent = Borders.INSTANCE.showCurrentChunk.getValue();
+            boolean showAll = Borders.INSTANCE.showChunkBorders.getValue();
+            int lc = Borders.INSTANCE.chunkColor.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             float lr = ((lc >> 16) & 0xFF) / 255.0f;
             float lg = ((lc >> 8) & 0xFF) / 255.0f;
             float lb = (lc & 0xFF) / 255.0f;
             float la = ((lc >> 24) & 0xFF) / 255.0f;
+<<<<<<< HEAD
             float lw = Borders.itz().lineWidth.getValue().floatValue();
+=======
+            float lw = Borders.INSTANCE.lineWidth.getValue().floatValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
             if (showAll && mc.player != null) {
                 int cx = mc.player.chunkPosition().x;
@@ -766,7 +939,11 @@ public class MixinLevelRenderer {
             }
 
             if (showCurrent) {
+<<<<<<< HEAD
                 int cc = Borders.itz().currentColor.getValue();
+=======
+                int cc = Borders.INSTANCE.currentColor.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 float cr = ((cc >> 16) & 0xFF) / 255.0f;
                 float cg = ((cc >> 8) & 0xFF) / 255.0f;
                 float cb = (cc & 0xFF) / 255.0f;
@@ -784,15 +961,26 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (ESP.maybeEnabled() && ESP.itz().mode.getValue().equals("Tunnels")) {
             int tunnelColorVal = ESP.itz().tunnelColor.getValue();
+=======
+        if (ESP.INSTANCE.getEnabled() && ESP.INSTANCE.mode.getValue().equals("Tunnels")) {
+            int tunnelColorVal = ESP.INSTANCE.tunnelColor.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             float tr = ((tunnelColorVal >> 16) & 0xFF) / 255.0f;
             float tg = ((tunnelColorVal >> 8) & 0xFF) / 255.0f;
             float tb = (tunnelColorVal & 0xFF) / 255.0f;
             float ta = ((tunnelColorVal >> 24) & 0xFF) / 255.0f;
+<<<<<<< HEAD
             boolean filled = ESP.itz().tunnelFilled.getValue();
             boolean wire = ESP.itz().tunnelWireframe.getValue();
             for (BlockPos pos : ESP.itz().getTunnelBlocks()) {
+=======
+            boolean filled = ESP.INSTANCE.tunnelFilled.getValue();
+            boolean wire = ESP.INSTANCE.tunnelWireframe.getValue();
+            for (BlockPos pos : ESP.INSTANCE.getTunnelBlocks()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 try {
                     modelViewMatrix.translate((float)(pos.getX() - camPos.x), (float)(pos.getY() - camPos.y), (float)(pos.getZ() - camPos.z), REUSABLE_MATRIX);
                     if (filled) Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, tr, tg, tb, ta * 0.3f);
@@ -802,23 +990,40 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (ESP.maybeEnabled() && ESP.itz().mode.getValue().equals("Holes")) {
             int c = ESP.itz().safeColor.getValue();
+=======
+        if (HoleESP.INSTANCE.getEnabled()) {
+            int c = HoleESP.INSTANCE.safeColor.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             float hr = ((c >> 16) & 0xFF) / 255.0f;
             float hg = ((c >> 8) & 0xFF) / 255.0f;
             float hb = (c & 0xFF) / 255.0f;
             float ha = ((c >> 24) & 0xFF) / 255.0f;
             float hw = 0.04f;
+<<<<<<< HEAD
             for (var pos : ESP.itz().getHoles()) {
+=======
+            for (var pos : HoleESP.INSTANCE.getHoles()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 try {
                     float px = (float)(pos.getX() - camPos.x);
                     float py = (float)(pos.getY() - camPos.y);
                     float pz = (float)(pos.getZ() - camPos.z);
+<<<<<<< HEAD
                     if (ESP.itz().holeFilled.getValue()) {
                         modelViewMatrix.translate(px, py, pz, REUSABLE_MATRIX);
                         Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, hr, hg, hb, ha * 0.3f, true);
                     }
                     if (ESP.itz().holeWireframe.getValue()) {
+=======
+                    if (HoleESP.INSTANCE.filled.getValue()) {
+                        modelViewMatrix.translate(px, py, pz, REUSABLE_MATRIX);
+                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, hr, hg, hb, ha * 0.3f, true);
+                    }
+                    if (HoleESP.INSTANCE.wireframe.getValue()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                         
                         Render3DUtils.batchAxisLine(modelViewMatrix, px, py, pz, px + 1, py, pz, hw, hr, hg, hb, ha, true);
                         Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py, pz + 1, hw, hr, hg, hb, ha, true);
@@ -840,15 +1045,26 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (ESP.maybeEnabled() && ESP.itz().mode.getValue().equals("Void")) {
             int vc = ESP.itz().voidColor.getValue();
+=======
+        if (VoidESP.INSTANCE.getEnabled()) {
+            int vc = VoidESP.INSTANCE.voidColor.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             float vr = ((vc >> 16) & 0xFF) / 255.0f;
             float vg = ((vc >> 8) & 0xFF) / 255.0f;
             float vb = (vc & 0xFF) / 255.0f;
             float va = ((vc >> 24) & 0xFF) / 255.0f;
+<<<<<<< HEAD
             boolean vf = ESP.itz().voidFilled.getValue();
             boolean vw = ESP.itz().voidWireframe.getValue();
             for (BlockPos pos : ESP.itz().getVoidBlocks()) {
+=======
+            boolean vf = VoidESP.INSTANCE.filled.getValue();
+            boolean vw = VoidESP.INSTANCE.wireframe.getValue();
+            for (BlockPos pos : VoidESP.INSTANCE.getVoidBlocks()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 try {
                     modelViewMatrix.translate((float)(pos.getX() - camPos.x), 0, (float)(pos.getZ() - camPos.z), REUSABLE_MATRIX);
                     if (vf) Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 16.0, vr, vg, vb, va * 0.15f);
@@ -858,7 +1074,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         PacketMine pm = PacketMine.itz();
+=======
+        ravex.modules.player.PacketMine pm = ravex.modules.player.PacketMine.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (pm.getEnabled() && pm.render.getValue()) {
             long globalTime = System.currentTimeMillis();
             for (var mb : ravex.modules.player.PacketMine.miningBlocks) {
@@ -908,7 +1128,11 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (Waypoint.maybeEnabled()) {
+=======
+        if (ravex.modules.render.Waypoint.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             int wpColor = ravex.modules.render.Waypoint.getColor();
             float wr = ((wpColor >> 16) & 0xFF) / 255.0f;
             float wg = ((wpColor >> 8) & 0xFF) / 255.0f;
@@ -955,9 +1179,15 @@ public class MixinLevelRenderer {
         }
 
         
+<<<<<<< HEAD
         if (PearlTarget.maybeEnabled()) {
             try {
                 PearlTarget.itz().render(modelViewMatrix, camera);
+=======
+        if (ravex.modules.combat.PearlTarget.INSTANCE.getEnabled()) {
+            try {
+                ravex.modules.combat.PearlTarget.INSTANCE.render(modelViewMatrix, camera);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             } catch (Exception ignored) {}
         }
 

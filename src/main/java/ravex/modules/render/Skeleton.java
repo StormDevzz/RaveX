@@ -1,5 +1,9 @@
 package ravex.modules.render;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -20,6 +24,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 public class Skeleton extends Module {
+<<<<<<< HEAD
+=======
+    public static final Skeleton INSTANCE = new Skeleton();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
     public final NumberParameter lineWidth = new NumberParameter("LineWidth", 1.0, 0.5, 3.0, 0.1);
     public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);

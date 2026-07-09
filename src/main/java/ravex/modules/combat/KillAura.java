@@ -3,18 +3,33 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+<<<<<<< HEAD
 import net.minecraft.world.phys.Vec3;
 import ravex.modules.Module;
 import ravex.utility.misc.MobUtility;
+=======
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.phys.Vec3;
+import ravex.modules.Module;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
+<<<<<<< HEAD
 import ravex.utility.player.rotation.SilentRotation;
 import java.util.List;
 import ravex.manager.ModuleManager;
 public class KillAura extends Module {
+=======
+import java.util.List;
+public class KillAura extends Module {
+    public static final KillAura INSTANCE = new KillAura();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("Range", 4.2, 3.0, 6.0, 0.1);
     public final NumberParameter cooldownThreshold = new NumberParameter("Cooldown", 0.9, 0.0, 1.0, 0.05);
     public final NumberParameter switchDelay = new NumberParameter("SwitchDelay", 100, 0, 1000, 10);
@@ -34,7 +49,13 @@ public class KillAura extends Module {
             List.of("Silent", "Normal", "None"));
     public final ModeParameter swingMode = new ModeParameter("Swing", "Client",
             List.of("Client", "Server", "Off"));
+<<<<<<< HEAD
     public static final SilentRotation silentRotation = new SilentRotation();
+=======
+    public static float silentYaw = 0;
+    public static float silentPitch = 0;
+    private static boolean hasSilentRotations = false;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private LivingEntity currentTarget = null;
     private long lastAttackTime = 0;
     private long lastSwitchTime = 0;
@@ -42,6 +63,7 @@ public class KillAura extends Module {
     private float prevYaw = 0;
     private float prevPitch = 0;
 
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(KillAura.class);
     }
@@ -54,16 +76,31 @@ public class KillAura extends Module {
     @Override
     protected void onDisable() {
         silentRotation.hasRotation = false;
+=======
+    public static boolean hasSilentRotations() {
+        return hasSilentRotations;
+    }
+    @Override
+    protected void onDisable() {
+        hasSilentRotations = false;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         currentTarget = null;
     }
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
+<<<<<<< HEAD
             silentRotation.hasRotation = false;
             return;
         }
         silentRotation.hasRotation = false;
+=======
+            hasSilentRotations = false;
+            return;
+        }
+        hasSilentRotations = false;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         String rotMode = rotate.getValue();
         boolean doRotate = !rotMode.equals("None");
         long now = System.currentTimeMillis();
@@ -89,7 +126,13 @@ public class KillAura extends Module {
             float pitch = angles[1];
             pitch = RotationUtility.clampPitch(pitch);
             if (rotMode.equals("Silent")) {
+<<<<<<< HEAD
                 silentRotation.set(yaw, pitch);
+=======
+                silentYaw = yaw;
+                silentPitch = pitch;
+                hasSilentRotations = true;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             } else {
                 mc.player.setYRot(yaw);
                 mc.player.setXRot(pitch);
@@ -111,7 +154,13 @@ public class KillAura extends Module {
                 if (doRotate) {
                     float[] angles = calculateAngles(mc, currentTarget.position());
                     if (rotMode.equals("Silent")) {
+<<<<<<< HEAD
                         silentRotation.set(angles[0], RotationUtility.clampPitch(angles[1]));
+=======
+                        silentYaw = angles[0];
+                        silentPitch = RotationUtility.clampPitch(angles[1]);
+                        hasSilentRotations = true;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                     } else {
                         mc.player.setYRot(angles[0]);
                         mc.player.setXRot(RotationUtility.clampPitch(angles[1]));
@@ -130,7 +179,13 @@ public class KillAura extends Module {
         if (doRotate) {
             float[] angles = calculateAngles(mc, currentTarget.position());
             if (rotMode.equals("Silent")) {
+<<<<<<< HEAD
                 silentRotation.set(angles[0], Math.max(-90, Math.min(90, angles[1])));
+=======
+                silentYaw = angles[0];
+                silentPitch = Math.max(-90, Math.min(90, angles[1]));
+                hasSilentRotations = true;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             } else {
                 mc.player.setYRot(angles[0]);
                 mc.player.setXRot(Math.max(-90, Math.min(90, angles[1])));
@@ -151,6 +206,7 @@ public class KillAura extends Module {
         double wallDist = throughWalls.getValue() ? wallRange.getValue() : maxDist;
         for (Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof LivingEntity le)) continue;
+<<<<<<< HEAD
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
             if (!invisibles.getValue() && le.isInvisible()) continue;
@@ -163,11 +219,26 @@ public class KillAura extends Module {
             if (!throughWalls.getValue() && !mc.player.hasLineOfSight(le)) continue;
             if (throughWalls.getValue() && !mc.player.hasLineOfSight(le) && dist > wallDist) continue;
             if (ModuleManager.get(ravex.modules.combat.AntiBot.class).getEnabled() && ModuleManager.get(ravex.modules.combat.AntiBot.class).isBot(e)) continue;
+=======
+            if (le == mc.player) continue;
+            if (le.isDeadOrDying()) continue;
+            if (!invisibles.getValue() && le.isInvisible()) continue;
+            if (le instanceof net.minecraft.world.entity.decoration.ArmorStand) continue;
+            if (!players.getValue() && le instanceof Player) continue;
+            if (!monsters.getValue() && (le instanceof Monster || le instanceof EnderDragon || le instanceof WitherBoss)) continue;
+            if (!passives.getValue() && isPassive(le)) continue;
+            double dist = mc.player.distanceTo(le);
+            if (dist > maxDist) continue;
+            if (!throughWalls.getValue() && !mc.player.hasLineOfSight(le)) continue;
+            if (throughWalls.getValue() && !mc.player.hasLineOfSight(le) && dist > wallDist) continue;
+            if (AntiBot.INSTANCE.getEnabled() && AntiBot.INSTANCE.isBot(e)) continue;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             list.add(le);
         }
         String mode = targetMode.getValue();
         list.sort((a, b) -> {
             double ma = switch (mode) {
+<<<<<<< HEAD
                 case "Closest" -> MobUtility.distanceToPlayer(a);
                 case "LowestHP" -> MobUtility.getHealth(a);
                 case "Farthest" -> -MobUtility.distanceToPlayer(a);
@@ -182,16 +253,47 @@ public class KillAura extends Module {
                 case "MostAura" -> -(mc.player.getArmorValue() + b.getArmorValue());
                 case "LeastAura" -> mc.player.getArmorValue() + b.getArmorValue();
                 default -> MobUtility.distanceToPlayer(b);
+=======
+                case "Closest" -> mc.player.distanceTo(a);
+                case "LowestHP" -> a.getHealth();
+                case "Farthest" -> -mc.player.distanceTo(a);
+                case "MostAura" -> -(mc.player.getArmorValue() + a.getArmorValue());
+                case "LeastAura" -> mc.player.getArmorValue() + a.getArmorValue();
+                default -> mc.player.distanceTo(a);
+            };
+            double mb = switch (mode) {
+                case "Closest" -> mc.player.distanceTo(b);
+                case "LowestHP" -> b.getHealth();
+                case "Farthest" -> -mc.player.distanceTo(b);
+                case "MostAura" -> -(mc.player.getArmorValue() + b.getArmorValue());
+                case "LeastAura" -> mc.player.getArmorValue() + b.getArmorValue();
+                default -> mc.player.distanceTo(b);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             };
             return Double.compare(ma, mb);
         });
         return list;
     }
+<<<<<<< HEAD
     private void attack(Minecraft mc, LivingEntity target) {
         MobUtility.attack(mc, target);
         String sMode = swingMode.getValue();
         if (sMode.equals("Client")) {
             MobUtility.swingHand(mc);
+=======
+    private boolean isPassive(LivingEntity e) {
+        if (e instanceof Player || e instanceof Monster || e instanceof EnderDragon || e instanceof WitherBoss) return false;
+        if (e instanceof net.minecraft.world.entity.animal.Animal) return true;
+        if (e instanceof net.minecraft.world.entity.npc.villager.AbstractVillager) return true;
+        if (e instanceof net.minecraft.world.entity.ambient.AmbientCreature) return true;
+        return false;
+    }
+    private void attack(Minecraft mc, LivingEntity target) {
+        mc.gameMode.attack(mc.player, target);
+        String sMode = swingMode.getValue();
+        if (sMode.equals("Client")) {
+            mc.player.swing(InteractionHand.MAIN_HAND);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         } else if (sMode.equals("Server")) {
             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
         }

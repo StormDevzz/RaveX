@@ -1,23 +1,44 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.ClickType;
+<<<<<<< HEAD
+=======
+import net.minecraft.core.component.DataComponents;
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.SilentRotation;
 import java.util.ArrayList;
 import java.util.List;
 public class Quiver extends Module {
+=======
+import java.util.ArrayList;
+import java.util.List;
+public class Quiver extends Module {
+    public static final Quiver INSTANCE = new Quiver();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", List.of("Healing", "Speed", "Strength", "FireResistance"));
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal"));
     public final NumberParameter chargeDuration = new NumberParameter("ChargeTicks", 3.0, 2.0, 10.0, 1.0);
     public final BooleanParameter autoSwapBow = new BooleanParameter("AutoSwapBow", true);
+<<<<<<< HEAD
     public static final SilentRotation silentRotation = new SilentRotation();
+=======
+    public static float silentYaw = 0;
+    public static float silentPitch = 0;
+    public static boolean hasSilentRotations = false;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private int state = 0; 
     private int ticksHolding = 0;
     private int cooldownTicks = 0;
@@ -104,11 +125,22 @@ public class Quiver extends Module {
             return;
         }
         arrowInvSlot = bestArrowIndex;
+<<<<<<< HEAD
         previousSelectedSlot = InventoryUtility.getSelectedSlot(mc.player);
+=======
+        previousSelectedSlot = mc.player.getInventory().getSelectedSlot();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (autoSwapBow.getValue() && previousSelectedSlot != bowSlot) {
             InventoryUtility.selectSlot(mc.player, bowSlot);
         }
+<<<<<<< HEAD
         InventoryUtility.swapToOffhand(mc, mc.player, arrowInvSlot);
+=======
+        int containerSlot = arrowInvSlot < 9 ? arrowInvSlot + 36 : arrowInvSlot;
+        mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
+        mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, 45, 0, ClickType.PICKUP, mc.player);
+        mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         savedClientYaw = mc.player.getYRot();
         savedClientPitch = mc.player.getXRot();
         if (rotate.getValue().equals("Normal")) {
@@ -123,7 +155,14 @@ public class Quiver extends Module {
     }
     private void restoreOffhandAndBow(Minecraft mc) {
         if (arrowInvSlot != -1) {
+<<<<<<< HEAD
             InventoryUtility.swapToOffhand(mc, mc.player, arrowInvSlot);
+=======
+            int containerSlot = arrowInvSlot < 9 ? arrowInvSlot + 36 : arrowInvSlot;
+            mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
+            mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, 45, 0, ClickType.PICKUP, mc.player);
+            mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, mc.player);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             arrowInvSlot = -1;
         }
         if (previousSelectedSlot != -1) {
@@ -252,12 +291,15 @@ public class Quiver extends Module {
         }
         return bestIndex;
     }
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(Quiver.class);
     }
     public static Quiver itz() {
         return ModuleManager.get(Quiver.class);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }

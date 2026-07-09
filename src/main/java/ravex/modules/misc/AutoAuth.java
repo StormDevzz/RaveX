@@ -1,10 +1,18 @@
 package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.StringParameter;
 public class AutoAuth extends Module {
+<<<<<<< HEAD
+=======
+    public static final AutoAuth INSTANCE = new AutoAuth();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final StringParameter password = new StringParameter("Password", "r1v2x");
     public final NumberParameter delay = new NumberParameter("Delay", 3.0, 0.0, 20.0, 1.0);
     private int tickCounter = 0;
@@ -28,8 +36,11 @@ public class AutoAuth extends Module {
             hasRegistered = true;
         }
     }
+<<<<<<< HEAD
 
     public static AutoAuth itz() {
         return ModuleManager.get(AutoAuth.class);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

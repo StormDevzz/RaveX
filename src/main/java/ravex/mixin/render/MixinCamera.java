@@ -28,6 +28,7 @@ public abstract class MixinCamera {
     @Shadow protected abstract void setPosition(net.minecraft.world.phys.Vec3 pos);
 
 
+<<<<<<< HEAD
     @Inject(method = "setup", at = @At("HEAD"), cancellable = true)
     private void onSetupCamera(Level area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
         CameraEvent event = new CameraEvent(CameraEvent.CameraMode.NORMAL, position.x, position.y, position.z, yRot, xRot);
@@ -35,6 +36,8 @@ public abstract class MixinCamera {
         if (event.isCancelled()) { ci.cancel(); return; }
     }
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     @Inject(method = "setup", at = @At("RETURN"))
     private void onSetup(Level area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
         if (FreeCam.maybeEnabled()) {
@@ -67,7 +70,11 @@ public abstract class MixinCamera {
             );
 
             
+<<<<<<< HEAD
             float startingDist = ViewClip.maybeEnabled() ? ViewClip.itz().cameraDistance.getValue().floatValue() : 4.0f;
+=======
+            float startingDist = ViewClip.INSTANCE.getEnabled() ? ViewClip.INSTANCE.cameraDistance.getValue().floatValue() : 4.0f;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             float zoom = getMaxZoom(startingDist);
             net.minecraft.world.phys.Vec3 targetPos = eyePos.subtract(dirVec.scale(zoom));
             this.setPosition(targetPos);
@@ -79,7 +86,11 @@ public abstract class MixinCamera {
     @Inject(method = "isDetached", at = @At("HEAD"), cancellable = true)
     private void onIsDetached(CallbackInfoReturnable<Boolean> cir) {
         
+<<<<<<< HEAD
         if (FreeCam.maybeEnabled()) {
+=======
+        if (FreeCam.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             cir.setReturnValue(true);
         }
     }

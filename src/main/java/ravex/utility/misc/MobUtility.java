@@ -98,6 +98,7 @@ public class MobUtility {
         }
         return false;
     }
+<<<<<<< HEAD
 
     public static boolean isMountable(Entity entity) {
         if (entity instanceof net.minecraft.world.entity.animal.equine.Horse) return true;
@@ -214,4 +215,6 @@ public class MobUtility {
         return null;
     }
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

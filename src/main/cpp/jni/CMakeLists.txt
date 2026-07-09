@@ -5,6 +5,10 @@ add_library(ravex_jni SHARED
 target_link_libraries(ravex_jni PRIVATE
     ravex_common
     ravex_math
+<<<<<<< HEAD
+=======
+    ravex_antiafk
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     ravex_shaders
     ravex_norender
     ravex_optimize
@@ -22,6 +26,10 @@ target_include_directories(ravex_jni PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/common/include
+<<<<<<< HEAD
+=======
+    ${CMAKE_SOURCE_DIR}/antiafk/include
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     ${CMAKE_SOURCE_DIR}/hooks/shaders/hand/include
     ${CMAKE_SOURCE_DIR}/hooks/norender/include
     ${CMAKE_SOURCE_DIR}/plugins/optimize/include

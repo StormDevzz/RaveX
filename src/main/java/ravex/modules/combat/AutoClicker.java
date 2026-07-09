@@ -1,15 +1,28 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import ravex.utility.misc.MobUtility;
+=======
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Items;
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 public class AutoClicker extends Module {
+=======
+public class AutoClicker extends Module {
+    public static final AutoClicker INSTANCE = new AutoClicker();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40.0, 0.5);
     public final NumberParameter maxCps = new NumberParameter("MaxCPS", 12.0, 1.0, 40.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Left", java.util.List.of("Left", "Right", "Both"));
@@ -35,11 +48,19 @@ public class AutoClicker extends Module {
         long now = System.currentTimeMillis();
         if (weaponOnly.getValue()) {
             var held = mc.player.getMainHandItem();
+<<<<<<< HEAD
             if (!InventoryUtility.isSwordItem(held) && !InventoryUtility.isTrident(held)) return;
         }
         boolean targetValid = false;
         if (onlyOnTarget.getValue()) {
             if (MobUtility.asLivingEntity(mc.crosshairPickEntity) != null) {
+=======
+            if (!isSword(held.getItem()) && held.getItem() != Items.TRIDENT) return;
+        }
+        boolean targetValid = false;
+        if (onlyOnTarget.getValue()) {
+            if (mc.crosshairPickEntity instanceof LivingEntity) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 targetValid = true;
             }
         } else {
@@ -76,7 +97,11 @@ public class AutoClicker extends Module {
     }
     private void clickLeft(Minecraft mc) {
         mc.options.keyAttack.setDown(true);
+<<<<<<< HEAD
         if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit && MobUtility.asLivingEntity(hit.getEntity()) != null) {
+=======
+        if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit && hit.getEntity() instanceof LivingEntity) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             mc.gameMode.attack(mc.player, hit.getEntity());
         }
         mc.player.swing(InteractionHand.MAIN_HAND);
@@ -107,6 +132,7 @@ public class AutoClicker extends Module {
         holding = false;
         nextClick = 0;
     }
+<<<<<<< HEAD
     private static native long nativeCalculateDelay(double minCps, double maxCps, boolean randomize);
     public static boolean maybeEnabled() {
         return maybeEnabled(AutoClicker.class);
@@ -116,3 +142,12 @@ public class AutoClicker extends Module {
     }
 
 }
+=======
+    private boolean isSword(net.minecraft.world.item.Item item) {
+        return item == Items.WOODEN_SWORD || item == Items.STONE_SWORD ||
+               item == Items.IRON_SWORD || item == Items.GOLDEN_SWORD ||
+               item == Items.DIAMOND_SWORD || item == Items.NETHERITE_SWORD;
+    }
+    private static native long nativeCalculateDelay(double minCps, double maxCps, boolean randomize);
+}
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

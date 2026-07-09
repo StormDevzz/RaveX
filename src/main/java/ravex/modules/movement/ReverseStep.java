@@ -1,9 +1,17 @@
 package ravex.modules.movement;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 public class ReverseStep extends Module {
+<<<<<<< HEAD
+=======
+    public static final ReverseStep INSTANCE = new ReverseStep();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter force = new NumberParameter("Force", 1.5, 1.0, 4.0, 0.5);
 
     @Override

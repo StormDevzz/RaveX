@@ -1,18 +1,26 @@
 package ravex.modules.movement;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
 import net.minecraft.client.Minecraft;
+<<<<<<< HEAD
 import java.util.List;
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 public class AutoWalk extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Simple", List.of("Simple", "Baritone"));
     public final NumberParameter baritoneInterval = new NumberParameter("Interval", 30.0, 5.0, 120.0, 5.0);
     public final NumberParameter baritoneRange = new NumberParameter("Range", 2000.0, 100.0, 10000.0, 100.0);
     public final BooleanParameter silentMode = new BooleanParameter("SilentMode", true);
 
+<<<<<<< HEAD
     {
         baritoneInterval.setVisible(() -> "Baritone".equals(mode.getValue()));
         baritoneRange.setVisible(() -> "Baritone".equals(mode.getValue()));
@@ -21,6 +29,8 @@ public class AutoWalk extends Module {
 
     private long lastGotoTime = 0;
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
@@ -50,7 +60,6 @@ public class AutoWalk extends Module {
             }
         }
     }
-
     @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();

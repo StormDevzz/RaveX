@@ -1,5 +1,9 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -15,8 +19,13 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import java.util.List;
+<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 public class WebAura extends Module {
+=======
+public class WebAura extends Module {
+    public static final WebAura INSTANCE = new WebAura();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Positive", "Custom"));
     public final NumberParameter customRange = new NumberParameter("CustomRange", 4.0, 2.0, 6.0, 0.1);
     private int delay = 0;
@@ -63,7 +72,11 @@ public class WebAura extends Module {
         if (webSlot == -1) return;
         BlockPos targetPos = BlockPos.containing(target.getX(), target.getY(), target.getZ());
         if (mc.level.getBlockState(targetPos).isAir()) {
+<<<<<<< HEAD
             int prevSlot = InventoryUtility.getSelectedSlot(p);
+=======
+            int prevSlot = p.getInventory().getSelectedSlot();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (webSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(webSlot));
             }

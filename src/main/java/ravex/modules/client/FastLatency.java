@@ -8,7 +8,12 @@ import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 
 public class FastLatency extends Module {
+<<<<<<< HEAD
     public final NumberParameter interval = new NumberParameter("Interval", 1000.0, 200.0, 5000.0, 100.0);
+=======
+    public static final FastLatency INSTANCE = new FastLatency();
+    public final NumberParameter interval = new NumberParameter("Interval(ms)", 1000.0, 200.0, 5000.0, 100.0);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private long lastPingTime = 0;
     private long lastPingSentAt = 0;
     private int measuredPing = -1;

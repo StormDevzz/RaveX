@@ -1,5 +1,6 @@
 package ravex.utility.player;
 
+<<<<<<< HEAD
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -7,6 +8,12 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.ClickType;
+=======
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.entity.EquipmentSlot;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.core.component.DataComponents;
 
 public class ElytraUtility {
@@ -55,6 +62,7 @@ public class ElytraUtility {
         return best;
     }
 
+<<<<<<< HEAD
     public static boolean useFirework(LocalPlayer player) {
         if (player == null || !player.isFallFlying()) return false;
         Minecraft mc = Minecraft.getInstance();
@@ -92,6 +100,8 @@ public class ElytraUtility {
         return player != null && player.isFallFlying();
     }
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static boolean isBetterChestplate(ItemStack a, ItemStack b) {
         if (b.isEmpty()) return true;
         var modA = a.get(DataComponents.ATTRIBUTE_MODIFIERS);

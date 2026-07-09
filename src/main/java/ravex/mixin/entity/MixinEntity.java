@@ -47,14 +47,24 @@ public abstract class MixinEntity {
             return;
         }
 
+<<<<<<< HEAD
         if (FreeCam.maybeEnabled()) {
             FreeCam.itz().turnMixin(yRot * 0.15, xRot * 0.15);
+=======
+        if (FreeCam.INSTANCE.getEnabled()) {
+            FreeCam.INSTANCE.turnMixin(yRot * 0.15, xRot * 0.15);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ci.cancel();
             return;
         }
 
+<<<<<<< HEAD
         if (FreeLook.maybeEnabled() && "Camera".equals(FreeLook.itz().mode.getValue())) {
             FreeLook.itz().turn(yRot * 0.15, xRot * 0.15);
+=======
+        if (FreeLook.INSTANCE.getEnabled() && "Camera".equals(FreeLook.INSTANCE.mode.getValue())) {
+            FreeLook.INSTANCE.turn(yRot * 0.15, xRot * 0.15);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ci.cancel();
         }
     }
@@ -65,12 +75,20 @@ public abstract class MixinEntity {
         if (!(self instanceof net.minecraft.client.player.LocalPlayer player)) return;
 
         
+<<<<<<< HEAD
         if (PortalGui.maybeEnabled()) {
+=======
+        if (ravex.modules.misc.PortalGui.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             self.portalProcess = null;
         }
 
         
+<<<<<<< HEAD
         if (Avoid.maybeEnabled()) {
+=======
+        if (ravex.modules.movement.Avoid.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             net.minecraft.world.level.Level level = player.level();
             net.minecraft.world.phys.AABB box = player.getBoundingBox().inflate(0.15);
             net.minecraft.core.BlockPos.betweenClosedStream(
@@ -78,7 +96,11 @@ public abstract class MixinEntity {
                     (int) Math.floor(box.maxX), (int) Math.floor(box.maxY), (int) Math.floor(box.maxZ)
             ).forEach(blockPos -> {
                 net.minecraft.world.level.block.state.BlockState state = level.getBlockState(blockPos);
+<<<<<<< HEAD
                 if (Avoid.itz().shouldAvoid(state.getBlock())) {
+=======
+                if (ravex.modules.movement.Avoid.INSTANCE.shouldAvoid(state.getBlock())) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                     
                     double bx = blockPos.getX() + 0.5;
                     double bz = blockPos.getZ() + 0.5;
@@ -167,7 +189,11 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         var mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player != null && self.getControllingPassenger() == mc.player) {
+<<<<<<< HEAD
             if (RideExploit.maybeEnabled()) {
+=======
+            if (ravex.modules.misc.RideExploit.INSTANCE.getEnabled()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 cir.setReturnValue(true);
             }
         }
@@ -222,6 +248,86 @@ public abstract class MixinEntity {
             if (other instanceof net.minecraft.client.player.LocalPlayer) {
                 if (NoPush.itz().shouldCancelPush(other, self)) {
                     ci.cancel();
+                    return;
+                }
+            }
+            if (other instanceof net.minecraft.client.player.LocalPlayer) {
+                if (ravex.modules.movement.NoPush.INSTANCE.shouldCancelPush(other, self)) {
+                    ci.cancel();
+                }
+            }
+        }
+    }
+
+    @Inject(method = "isInWater()Z", at = @At("HEAD"), cancellable = true)
+    private void onIsInWater(CallbackInfoReturnable<Boolean> cir) {
+        Entity self = (Entity)(Object)this;
+        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled() && ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue()) {
+                cir.setReturnValue(false);
+            }
+        }
+    }
+
+    @Inject(method = "isInLava()Z", at = @At("HEAD"), cancellable = true)
+    private void onIsInLava(CallbackInfoReturnable<Boolean> cir) {
+        Entity self = (Entity)(Object)this;
+        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled() && ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue()) {
+                cir.setReturnValue(false);
+            }
+        }
+    }
+
+    @Inject(method = "updateInWaterStateAndDoFluidPushing()Z", at = @At("HEAD"), cancellable = true)
+    private void onUpdateInWaterStateAndDoFluidPushing(CallbackInfoReturnable<Boolean> cir) {
+        Entity self = (Entity)(Object)this;
+        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled() && ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue()) {
+                cir.setReturnValue(false);
+            }
+        }
+    }
+
+    @Inject(method = "updateFluidHeightAndDoFluidPushing(Lnet/minecraft/tags/TagKey;D)Z", at = @At("HEAD"), cancellable = true)
+    private void onUpdateFluidHeightAndDoFluidPushing(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, double d, CallbackInfoReturnable<Boolean> cir) {
+        Entity self = (Entity)(Object)this;
+        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled()) {
+                boolean bypassWater = ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue();
+                boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
+                boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
+                
+                if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
+                    cir.setReturnValue(false);
+                } else if (tag.equals(net.minecraft.tags.FluidTags.LAVA) && bypassLava) {
+                    cir.setReturnValue(false);
+                } else if (bypassOthers) {
+                    if (!tag.equals(net.minecraft.tags.FluidTags.WATER) && !tag.equals(net.minecraft.tags.FluidTags.LAVA)) {
+                        cir.setReturnValue(false);
+                    }
+                }
+            }
+        }
+    }
+
+    @Inject(method = "isEyeInFluid(Lnet/minecraft/tags/TagKey;)Z", at = @At("HEAD"), cancellable = true)
+    private void onIsEyeInFluid(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, CallbackInfoReturnable<Boolean> cir) {
+        Entity self = (Entity)(Object)this;
+        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+            if (ravex.modules.movement.LiquidCollision.INSTANCE.getEnabled()) {
+                boolean bypassWater = ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue();
+                boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
+                boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
+                
+                if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
+                    cir.setReturnValue(false);
+                } else if (tag.equals(net.minecraft.tags.FluidTags.LAVA) && bypassLava) {
+                    cir.setReturnValue(false);
+                } else if (bypassOthers) {
+                    if (!tag.equals(net.minecraft.tags.FluidTags.WATER) && !tag.equals(net.minecraft.tags.FluidTags.LAVA)) {
+                        cir.setReturnValue(false);
+                    }
                 }
             }
         }

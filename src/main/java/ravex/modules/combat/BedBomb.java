@@ -1,9 +1,17 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
+<<<<<<< HEAD
+=======
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
@@ -11,14 +19,24 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+<<<<<<< HEAD
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
+<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 public class BedBomb extends Module {
+=======
+import java.util.List;
+public class BedBomb extends Module {
+    public static final BedBomb INSTANCE = new BedBomb();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.5);
     public final NumberParameter targetRange = new NumberParameter("TargetRange", 6.0, 1.0, 12.0, 0.5);
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
@@ -100,14 +118,23 @@ public class BedBomb extends Module {
         }
         int slot = findBedSlot(mc);
         if (slot == -1) { state = State.IDLE; return; }
+<<<<<<< HEAD
         int prev = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, slot);
+=======
+        int prev = mc.player.getInventory().getSelectedSlot();
+        mc.player.getInventory().setSelectedSlot(slot);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         BlockHitResult hit = new BlockHitResult(
             Vec3.atCenterOf(placePos), Direction.UP, placePos, false
         );
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
         mc.player.swing(InteractionHand.MAIN_HAND);
+<<<<<<< HEAD
         InventoryUtility.selectSlot(mc.player, prev);
+=======
+        mc.player.getInventory().setSelectedSlot(prev);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         state = State.WAITING;
     }
     private void doWait(Minecraft mc, long now) {
@@ -169,6 +196,7 @@ public class BedBomb extends Module {
     }
     private int findBedSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
+<<<<<<< HEAD
             var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.getItem() instanceof net.minecraft.world.item.BedItem) return i;
         }
@@ -178,6 +206,17 @@ public class BedBomb extends Module {
                 int free = findEmptySlot(mc);
                 if (free != -1) {
                     InventoryUtility.selectSlot(mc.player, free);
+=======
+            ItemStack stack = mc.player.getInventory().getItem(i);
+            if (stack.getItem() instanceof net.minecraft.world.item.BedItem) return i;
+        }
+        for (int i = 9; i < 36; i++) {
+            ItemStack stack = mc.player.getInventory().getItem(i);
+            if (stack.getItem() instanceof net.minecraft.world.item.BedItem) {
+                int free = findEmptySlot(mc);
+                if (free != -1) {
+                    mc.player.getInventory().setSelectedSlot(free);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                     mc.gameMode.handleInventoryMouseClick(
                         mc.player.containerMenu.containerId, i, free,
                         net.minecraft.world.inventory.ClickType.SWAP, mc.player
@@ -190,11 +229,16 @@ public class BedBomb extends Module {
     }
     private int findEmptySlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
+<<<<<<< HEAD
             if (InventoryUtility.getItem(mc.player, i).isEmpty()) return i;
+=======
+            if (mc.player.getInventory().getItem(i).isEmpty()) return i;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
         return -1;
     }
     private static native void nativeFindBestPlace(double px, double py, double pz, double ex, double ey, double ez, double range, double[] out);
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(BedBomb.class);
     }
@@ -203,3 +247,6 @@ public class BedBomb extends Module {
     }
 
 }
+=======
+}
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

@@ -51,8 +51,13 @@ public class ParameterElement {
         lastAnimTime = now;
         if (delta > 100) delta = 16;
 
+<<<<<<< HEAD
         boolean smoothOption = ModuleManager.get(ravex.modules.client.ClickGui.class).smoothOption.getValue();
         float optionSmoothness = ModuleManager.get(ravex.modules.client.ClickGui.class).optionSmoothness.getValue().floatValue();
+=======
+        boolean smoothOption = ravex.modules.client.ClickGui.INSTANCE.smoothOption.getValue();
+        float optionSmoothness = ravex.modules.client.ClickGui.INSTANCE.optionSmoothness.getValue().floatValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
         float targetExpand = parameter.isVisible() ? 1.0f : 0.0f;
         if (smoothOption) {
@@ -106,7 +111,11 @@ public class ParameterElement {
         int bg = hovered ? 0x11000000 : 0x08000000;
         graphics.fill(x, y, x + width, y + height, bg);
 
+<<<<<<< HEAD
         boolean switchless = ModuleManager.get(ravex.modules.client.ClickGui.class).switchless.getValue();
+=======
+        boolean switchless = ravex.modules.client.ClickGui.INSTANCE.switchless.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
         if (parameter instanceof BooleanParameter bp) {
             toggleAnimProgress = bp.getValue() ? 1.0f : 0.0f;
@@ -426,7 +435,11 @@ public class ParameterElement {
 
     public boolean mouseScrolled(double mouseX, double mouseY, double amount, int x, int y, int width, int height) {
         if (!parameter.isVisible()) return false;
+<<<<<<< HEAD
         if (parameter instanceof NumberParameter np && ModuleManager.get(ravex.modules.client.ClickGui.class).wheelControl.getValue()) {
+=======
+        if (parameter instanceof NumberParameter np && ravex.modules.client.ClickGui.INSTANCE.wheelControl.getValue()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
                 double val = np.getValue();
                 double step = np.getStep();

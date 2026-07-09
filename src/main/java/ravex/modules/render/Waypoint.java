@@ -1,8 +1,15 @@
 package ravex.modules.render;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+=======
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -11,6 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Waypoint extends Module {
+<<<<<<< HEAD
+=======
+    public static final Waypoint INSTANCE = new Waypoint();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
     public record WaypointData(String name, double x, double y, double z, String dimension) {
     }
@@ -24,6 +35,7 @@ public class Waypoint extends Module {
     public final BooleanParameter showBeam = new BooleanParameter("Beam", true);
 
     public static List<WaypointData> getWaypoints() {
+<<<<<<< HEAD
         return ModuleManager.get(Waypoint.class).waypoints;
     }
 
@@ -49,6 +61,33 @@ public class Waypoint extends Module {
 
     public static boolean isShowBeam() {
         return ModuleManager.get(Waypoint.class).showBeam.getValue();
+=======
+        return INSTANCE.waypoints;
+    }
+
+    public static int getColor() {
+        return INSTANCE.color.getValue();
+    }
+
+    public static double getMarkerSize() {
+        return INSTANCE.markerSize.getValue();
+    }
+
+    public static double getRange() {
+        return INSTANCE.range.getValue();
+    }
+
+    public static boolean isShowName() {
+        return INSTANCE.showName.getValue();
+    }
+
+    public static boolean isShowDistance() {
+        return INSTANCE.showDistance.getValue();
+    }
+
+    public static boolean isShowBeam() {
+        return INSTANCE.showBeam.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     public void addWaypoint(String name, double x, double y, double z, String dimension) {
@@ -94,6 +133,7 @@ public class Waypoint extends Module {
             }
         }
     }
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(Waypoint.class);
     }
@@ -101,4 +141,6 @@ public class Waypoint extends Module {
     public static Waypoint itz() {
         return ModuleManager.get(Waypoint.class);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

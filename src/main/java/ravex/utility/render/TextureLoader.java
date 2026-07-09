@@ -54,6 +54,7 @@ public class TextureLoader {
     public static final Identifier PILLOW = Identifier.fromNamespaceAndPath(NS, "img/pillow");
     public static final Identifier MARKER = Identifier.fromNamespaceAndPath(NS, "wp_marker");
 
+<<<<<<< HEAD
     public static final Identifier HUD_COORDS = hudId("coords");
     public static final Identifier HUD_TPS = hudId("tps");
     public static final Identifier HUD_INDICATORS = hudId("indicators");
@@ -80,6 +81,8 @@ public class TextureLoader {
     public static final Identifier HUD_FPS_WHITE = hudWhiteId("fps");
     public static final Identifier HUD_ARRAYLIST_WHITE = hudWhiteId("arraylist");
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     static {
         for (Category cat : Category.values()) {
             String name = cat.name().toLowerCase();
@@ -92,6 +95,7 @@ public class TextureLoader {
         return Identifier.fromNamespaceAndPath(NS, GUI_PREFIX + name);
     }
 
+<<<<<<< HEAD
     private static Identifier hudId(String name) {
         return Identifier.fromNamespaceAndPath(NS, "hud/" + name);
     }
@@ -100,6 +104,8 @@ public class TextureLoader {
         return Identifier.fromNamespaceAndPath(NS, "hud_white/" + name);
     }
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static NativeImage downscaleTo(NativeImage image, int maxDim) {
         int sw = image.getWidth();
         int sh = image.getHeight();
@@ -271,6 +277,7 @@ public class TextureLoader {
         return ensureLoaded(SETTINGS, "settings") ? SETTINGS : null;
     }
 
+<<<<<<< HEAD
     public static final Identifier PALETTE = Identifier.fromNamespaceAndPath(NS, "hud/palette");
 
     public static Identifier getPaletteTexture() {
@@ -293,6 +300,8 @@ public class TextureLoader {
         }
     }
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static Identifier getSettingsWhiteTexture() {
         if (!loaded.containsKey(SETTINGS_WHITE)) {
             if (!ensureLoaded(SETTINGS, "settings")) return null;
@@ -522,10 +531,13 @@ public class TextureLoader {
         } catch (Exception e) {
             RaveX.LOGGER.warn("[TextureLoader] Failed to load marker: {}", e.getMessage());
         }
+<<<<<<< HEAD
 
         for (String hudName : new String[]{"coords", "tps", "indicators", "currency", "media", "cooldown", "inventory", "chat", "serverbrand", "waypoint", "fps", "arraylist"}) {
             getHudIconWhite(hudName);
         }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     public static Identifier getMarkerTexture(int color) {
@@ -589,6 +601,7 @@ public class TextureLoader {
         return null;
     }
 
+<<<<<<< HEAD
     public static Identifier getHudIcon(String name) {
         Identifier id = hudId(name);
         if (loaded.containsKey(id)) return id;
@@ -625,6 +638,8 @@ public class TextureLoader {
         }
     }
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static boolean ensureModuleIcon(Identifier guiId, String fileName) {
         if (loaded.containsKey(guiId)) return true;
         String resourcePath = CLASSPATH_PREFIX + MODULES_SUBDIR + fileName + ".png";

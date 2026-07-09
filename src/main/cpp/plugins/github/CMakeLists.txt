@@ -18,7 +18,10 @@ endif()
 
 set_target_properties(ravex_github_tools PROPERTIES
     OUTPUT_NAME "ravex_github_tools"
+<<<<<<< HEAD
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 

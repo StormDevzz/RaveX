@@ -2,6 +2,7 @@ package ravex.modules.movement;
 import net.minecraft.client.Minecraft;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
+<<<<<<< HEAD
 import ravex.parameter.ModeParameter;
 import java.util.List;
 import java.util.Random;
@@ -10,6 +11,12 @@ public class NoRotate extends Module {
     private float savedYaw;
     private float savedPitch;
     private final Random random = new Random();
+=======
+public class NoRotate extends Module {
+    public static final NoRotate INSTANCE = new NoRotate();
+    private float savedYaw;
+    private float savedPitch;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
     public void saveRotation() {
         Minecraft mc = Minecraft.getInstance();

@@ -3,6 +3,7 @@ package ravex.utility.player;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
+<<<<<<< HEAD
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,6 +20,16 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Holder;
 import net.minecraft.world.item.enchantment.Enchantment;
+=======
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.phys.EntityHitResult;
+import java.util.function.Predicate;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
 public class InventoryUtility {
     public static int inventorySlotToContainerSlot(int slot) {
@@ -26,46 +37,74 @@ public class InventoryUtility {
         return slot < 9 ? slot + 36 : slot;
     }
 
+<<<<<<< HEAD
     public static int findSlot(net.minecraft.world.entity.player.Player player, Item target) {
+=======
+    public static int findSlot(LocalPlayer player, Item target) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         for (int i = 0; i < 36; i++) {
             if (player.getInventory().getItem(i).is(target)) return i;
         }
         return -1;
     }
 
+<<<<<<< HEAD
     public static int findSlot(net.minecraft.world.entity.player.Player player, Predicate<ItemStack> predicate) {
+=======
+    public static int findSlot(LocalPlayer player, Predicate<ItemStack> predicate) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         for (int i = 0; i < 36; i++) {
             if (predicate.test(player.getInventory().getItem(i))) return i;
         }
         return -1;
     }
 
+<<<<<<< HEAD
     public static int findSlot(net.minecraft.world.entity.player.Player player, Item target, int startInclusive, int endExclusive) {
+=======
+    public static int findSlot(LocalPlayer player, Item target, int startInclusive, int endExclusive) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         for (int i = startInclusive; i < endExclusive; i++) {
             if (player.getInventory().getItem(i).is(target)) return i;
         }
         return -1;
     }
 
+<<<<<<< HEAD
     public static int findSlot(net.minecraft.world.entity.player.Player player, Predicate<ItemStack> predicate, int startInclusive, int endExclusive) {
+=======
+    public static int findSlot(LocalPlayer player, Predicate<ItemStack> predicate, int startInclusive, int endExclusive) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         for (int i = startInclusive; i < endExclusive; i++) {
             if (predicate.test(player.getInventory().getItem(i))) return i;
         }
         return -1;
     }
 
+<<<<<<< HEAD
     public static int findHotbarSlot(net.minecraft.world.entity.player.Player player, Item target) {
         return findSlot(player, target, 0, 9);
     }
 
     public static int findEmptyHotbarSlot(net.minecraft.world.entity.player.Player player) {
+=======
+    public static int findHotbarSlot(LocalPlayer player, Item target) {
+        return findSlot(player, target, 0, 9);
+    }
+
+    public static int findEmptyHotbarSlot(LocalPlayer player) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         for (int i = 0; i < 9; i++) {
             if (player.getInventory().getItem(i).isEmpty()) return i;
         }
         return -1;
     }
 
+<<<<<<< HEAD
     public static int countItem(net.minecraft.world.entity.player.Player player, Item target) {
+=======
+    public static int countItem(LocalPlayer player, Item target) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         int count = 0;
         for (int i = 0; i < 36; i++) {
             ItemStack stack = player.getInventory().getItem(i);
@@ -74,6 +113,7 @@ public class InventoryUtility {
         return count;
     }
 
+<<<<<<< HEAD
     public static int countItem(net.minecraft.world.entity.player.Player player, String itemName) {
         int count = 0;
         for (int i = 0; i < 36; i++) {
@@ -84,6 +124,9 @@ public class InventoryUtility {
     }
 
     public static ItemStack getMainHand(net.minecraft.world.entity.player.Player player) {
+=======
+    public static ItemStack getMainHand(LocalPlayer player) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         return player.getMainHandItem();
     }
 
@@ -114,25 +157,41 @@ public class InventoryUtility {
             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
     }
 
+<<<<<<< HEAD
     public static boolean isBlockItem(ItemStack stack) {
         return !stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem;
     }
 
     public static boolean isHoldingBlock(net.minecraft.world.entity.player.Player player) {
+=======
+    public static boolean isHoldingBlock(LocalPlayer player) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         ItemStack stack = player.getMainHandItem();
         return !stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem;
     }
 
+<<<<<<< HEAD
     public static boolean isHoldingItem(net.minecraft.world.entity.player.Player player) {
+=======
+    public static boolean isHoldingItem(LocalPlayer player) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         ItemStack stack = player.getMainHandItem();
         return !stack.isEmpty() && !(stack.getItem() instanceof net.minecraft.world.item.BlockItem);
     }
 
+<<<<<<< HEAD
     public static int getSelectedSlot(net.minecraft.world.entity.player.Player player) {
         return player.getInventory().getSelectedSlot();
     }
 
     public static void selectSlot(net.minecraft.world.entity.player.Player player, int slot) {
+=======
+    public static int getSelectedSlot(LocalPlayer player) {
+        return player.getInventory().getSelectedSlot();
+    }
+
+    public static void selectSlot(LocalPlayer player, int slot) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         player.getInventory().setSelectedSlot(slot);
     }
 
@@ -160,6 +219,7 @@ public class InventoryUtility {
         if (containerSlot == -1) return;
         mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, button, type, player);
     }
+<<<<<<< HEAD
 
     public static void openInventoryScreen(LocalPlayer player) {
         Minecraft.getInstance().setScreen(new InventoryScreen(player));
@@ -382,4 +442,6 @@ public class InventoryUtility {
     public static boolean isWritableBook(ItemStack stack) {
         return !stack.isEmpty() && stack.is(Items.WRITABLE_BOOK);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

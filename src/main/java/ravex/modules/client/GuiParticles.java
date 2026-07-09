@@ -1,10 +1,18 @@
 package ravex.modules.client;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 public class GuiParticles extends Module {
+<<<<<<< HEAD
+=======
+    public static final GuiParticles INSTANCE = new GuiParticles();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter type = new ModeParameter("Type", "Star",
         java.util.List.of("Star", "Bone", "Fire", "Sun", "Thunder", "Wave"));
     public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);

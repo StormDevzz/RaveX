@@ -1,12 +1,21 @@
 package ravex.modules.movement;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
+<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 public class HighJump extends Module {
+=======
+public class HighJump extends Module {
+    public static final HighJump INSTANCE = new HighJump();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "GrimShulker"));
     public final NumberParameter height = new NumberParameter("Height", 2.0, 0.5, 10.0, 0.1);
 
@@ -20,8 +29,13 @@ public class HighJump extends Module {
             } else if ("GrimShulker".equals(mode.getValue())) {
                 int shulkerSlot = findShulkerBox();
                 if (shulkerSlot != -1) {
+<<<<<<< HEAD
                     int oldSlot = InventoryUtility.getSelectedSlot(mc.player);
                     InventoryUtility.selectSlot(mc.player, shulkerSlot);
+=======
+                    int oldSlot = ravex.manager.HotbarManager.INSTANCE.getSelectedSlot();
+                    ravex.manager.HotbarManager.INSTANCE.swapToSlot(shulkerSlot);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                     net.minecraft.core.BlockPos pos = mc.player.blockPosition().below();
                     net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
                         new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5),
@@ -39,7 +53,11 @@ public class HighJump extends Module {
                         net.minecraft.world.InteractionHand.MAIN_HAND, openHit, 0
                     ));
                     mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, height.getValue(), mc.player.getDeltaMovement().z);
+<<<<<<< HEAD
                     InventoryUtility.selectSlot(mc.player, oldSlot);
+=======
+                    ravex.manager.HotbarManager.INSTANCE.swapToSlot(oldSlot);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 }
             }
         }
@@ -47,7 +65,11 @@ public class HighJump extends Module {
     private int findShulkerBox() {
         Minecraft mc = Minecraft.getInstance();
         for (int i = 0; i < 9; i++) {
+<<<<<<< HEAD
             net.minecraft.world.item.ItemStack stack = InventoryUtility.getItem(mc.player, i);
+=======
+            net.minecraft.world.item.ItemStack stack = mc.player.getInventory().getItem(i);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (!stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem) {
                 if (blockItem.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock) {
                     return i;
@@ -56,10 +78,13 @@ public class HighJump extends Module {
         }
         return -1;
     }
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(HighJump.class);
     }
     public static HighJump itz() {
         return ModuleManager.get(HighJump.class);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

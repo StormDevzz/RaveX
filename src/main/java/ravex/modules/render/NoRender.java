@@ -1,10 +1,17 @@
 package ravex.modules.render;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.nativelib.NativeLoader;
 import ravex.utility.nativelib.NativeLibrary;
 public class NoRender extends Module {
+<<<<<<< HEAD
+=======
+    public static final NoRender INSTANCE = new NoRender();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter blockParticles = new BooleanParameter("BlockParticles", true);
     public final BooleanParameter explosions = new BooleanParameter("Explosions", true);
     public final BooleanParameter weather = new BooleanParameter("Weather", true);

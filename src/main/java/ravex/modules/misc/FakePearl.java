@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+<<<<<<<< HEAD:src/main/java/ravex/modules/misc/FakePearl.java
 package ravex.modules.misc;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
@@ -7,6 +9,18 @@ import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.manager.ModuleManager;
+========
+package ravex.modules.exploit;
+
+import ravex.RaveX;
+import ravex.modules.Category;
+>>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3:RaveX-ravex146/src/main/java/ravex/modules/exploit/FakePearl.java
+=======
+package ravex.modules.misc;
+import ravex.RaveX;
+import ravex.utility.nativelib.NativeLibrary;
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
@@ -15,13 +29,30 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.phys.Vec3;
 public class FakePearl extends Module {
+<<<<<<< HEAD
+=======
+    public static final FakePearl INSTANCE = new FakePearl();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter trigger = new ModeParameter("Trigger", "OnEnable", java.util.List.of("OnEnable", "RightClick", "Both"));
     public final NumberParameter velocity = new NumberParameter("Velocity", 1.5, 0.5, 3.0, 0.1);
     public final NumberParameter gravity = new NumberParameter("Gravity", 0.03, 0.01, 0.1, 0.01);
     public final BooleanParameter sound = new BooleanParameter("Sound", true);
+<<<<<<< HEAD
+<<<<<<<< HEAD:src/main/java/ravex/modules/misc/FakePearl.java
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_fakepearl");
     static {
         NATIVE.load();
+========
+
+    
+    private static boolean nativeLibLoaded = false;
+    static {
+        try {
+            nativeLibLoaded = ravex.utility.misc.NativeLoader.loadLibrary("ravex_fakepearl");
+        } catch (UnsatisfiedLinkError e) {
+            RaveX.LOGGER.warn("[FakePearl JNI] Failed to load native library: {}", e.getMessage());
+        }
+>>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3:RaveX-ravex146/src/main/java/ravex/modules/exploit/FakePearl.java
     }
 
     @Subscribe
@@ -38,6 +69,11 @@ public class FakePearl extends Module {
                 mc.player.swing(usePacket.getHand());
             }
         }
+=======
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_fakepearl");
+    static {
+        NATIVE.load();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     @Override
@@ -78,7 +114,19 @@ public class FakePearl extends Module {
         };
         pearl.setPos(mc.player.getX(), mc.player.getEyeY() - 0.1, mc.player.getZ());
         pearl.setDeltaMovement(new Vec3(vel[0], vel[1], vel[2]));
+<<<<<<< HEAD
+<<<<<<<< HEAD:src/main/java/ravex/modules/misc/FakePearl.java
         mc.level.addEntity(pearl);
+========
+
+        
+        mc.level.addEntity(pearl);
+
+        
+>>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3:RaveX-ravex146/src/main/java/ravex/modules/exploit/FakePearl.java
+=======
+        mc.level.addEntity(pearl);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (sound.getValue()) {
             mc.level.playLocalSound(mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                 net.minecraft.sounds.SoundEvents.ENDER_PEARL_THROW,
@@ -93,9 +141,18 @@ public class FakePearl extends Module {
         outVel[1] = -Math.sin(pitchRad) * speed;
         outVel[2] = Math.cos(yawRad) * Math.cos(pitchRad) * speed;
     }
+<<<<<<< HEAD
+<<<<<<<< HEAD:src/main/java/ravex/modules/misc/FakePearl.java
+========
+
+    
+>>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3:RaveX-ravex146/src/main/java/ravex/modules/exploit/FakePearl.java
     private static native void nativeCalculateVelocity(double yaw, double pitch, double speed, double[] outVel);
 
     public static FakePearl itz() {
         return ModuleManager.get(FakePearl.class);
     }
+=======
+    private static native void nativeCalculateVelocity(double yaw, double pitch, double speed, double[] outVel);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

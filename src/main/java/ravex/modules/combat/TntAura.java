@@ -1,19 +1,37 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
+<<<<<<< HEAD
 import net.minecraft.world.item.BlockItem;
 import ravex.utility.misc.MobUtility;
+=======
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+<<<<<<< HEAD
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
+=======
+import ravex.modules.Category;
+import ravex.modules.Module;
+import ravex.parameter.BooleanParameter;
+import ravex.utility.player.rotation.RotationUtility;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -22,8 +40,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
+<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 public class TntAura extends Module {
+=======
+public class TntAura extends Module {
+    public static final TntAura INSTANCE = new TntAura();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay   = new NumberParameter("PlaceDelay", 50.0, 0.0, 500.0, 10.0);
     public final NumberParameter  tntDelay     = new NumberParameter("TNTDelay", 200.0, 0.0, 1000.0, 10.0);
@@ -48,7 +71,13 @@ public class TntAura extends Module {
     private net.minecraft.world.entity.LivingEntity currentTarget = null;
     private int failedTntPlacements = 0;
     public static final List<BlockPos> renderBlocks = new ArrayList<>();
+<<<<<<< HEAD
     public static final SilentRotation silentRotation = new SilentRotation();
+=======
+    public static float silentYaw = 0;
+    public static float silentPitch = 0;
+    private static boolean hasSilentRotations = false;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_tntaura");
     static {
         NATIVE.load();
@@ -73,7 +102,11 @@ public class TntAura extends Module {
         int blastProtLevel,
         boolean hasResistance, int resistanceAmplifier
     );
+<<<<<<< HEAD
     public static boolean hasSilentRotations() { return silentRotation.hasRotation; }
+=======
+    public static boolean hasSilentRotations() { return hasSilentRotations; }
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
     @Override
     protected void onEnable() {
@@ -86,7 +119,11 @@ public class TntAura extends Module {
     }
     @Override
     protected void onDisable() {
+<<<<<<< HEAD
         silentRotation.hasRotation = false;
+=======
+        hasSilentRotations = false;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         currentTarget = null;
         gapPos = null;
         failedTntPlacements = 0;
@@ -96,7 +133,11 @@ public class TntAura extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+<<<<<<< HEAD
         silentRotation.hasRotation = false;
+=======
+        hasSilentRotations = false;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             if (autoDisable.getValue()) setEnabled(false);
@@ -259,6 +300,7 @@ public class TntAura extends Module {
         String typeFilter = targetType.getValue();
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
+<<<<<<< HEAD
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
             if (typeFilter.equals("Players") && !MobUtility.isPlayer(le)) continue;
@@ -266,6 +308,15 @@ public class TntAura extends Module {
             double dist = MobUtility.distanceToPlayer(le);
             if (dist > maxDist) continue;
             double metric = mode.equals("LowestHP") ? MobUtility.getHealth(le) : dist;
+=======
+            if (le == mc.player) continue;
+            if (le.isDeadOrDying()) continue;
+            if (typeFilter.equals("Players") && !(le instanceof Player)) continue;
+            if (typeFilter.equals("Monsters") && !(le instanceof net.minecraft.world.entity.monster.Monster)) continue;
+            double dist = mc.player.distanceTo(le);
+            if (dist > maxDist) continue;
+            double metric = mode.equals("LowestHP") ? le.getHealth() : dist;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (metric < bestMetric) {
                 bestMetric = metric;
                 closest = le;
@@ -275,13 +326,21 @@ public class TntAura extends Module {
     }
     private int findObsidianSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
+<<<<<<< HEAD
             var stack = InventoryUtility.getItem(mc.player, i);
+=======
+            ItemStack stack = mc.player.getInventory().getItem(i);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
                 if (bi.getBlock() == Blocks.OBSIDIAN) return i;
             }
         }
         for (int i = 0; i < 9; i++) {
+<<<<<<< HEAD
             var stack = InventoryUtility.getItem(mc.player, i);
+=======
+            ItemStack stack = mc.player.getInventory().getItem(i);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
                 if (bi.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, BlockPos.ZERO)) {
                     return i;
@@ -292,7 +351,11 @@ public class TntAura extends Module {
     }
     private int findTntSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
+<<<<<<< HEAD
             var stack = InventoryUtility.getItem(mc.player, i);
+=======
+            ItemStack stack = mc.player.getInventory().getItem(i);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
                 if (bi.getBlock() == Blocks.TNT) return i;
             }
@@ -301,8 +364,13 @@ public class TntAura extends Module {
     }
     private int findFlintAndSteelSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
+<<<<<<< HEAD
             var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && InventoryUtility.isItem(stack, "flint_and_steel")) return i;
+=======
+            ItemStack stack = mc.player.getInventory().getItem(i);
+            if (!stack.isEmpty() && stack.is(Items.FLINT_AND_STEEL)) return i;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
         return -1;
     }
@@ -341,7 +409,11 @@ public class TntAura extends Module {
             mc.player.setYRot(yaw);
             mc.player.setXRot(pitch);
         } else if (mode.equals("Silent")) {
+<<<<<<< HEAD
             silentRotation.set(yaw, pitch);
+=======
+            silentYaw = yaw; silentPitch = pitch; hasSilentRotations = true;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         } else if (mode.equals("Packet") && mc.player.connection != null) {
             mc.player.connection.send(
                 new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(
@@ -351,9 +423,15 @@ public class TntAura extends Module {
     private int savedSlot = -1;
     private void swapTo(Minecraft mc, int slot) {
         String swap = swapMode.getValue();
+<<<<<<< HEAD
         savedSlot = InventoryUtility.getSelectedSlot(mc.player);
         if (swap.equals("Normal")) {
             InventoryUtility.selectSlot(mc.player, slot);
+=======
+        savedSlot = mc.player.getInventory().getSelectedSlot();
+        if (swap.equals("Normal")) {
+            mc.player.getInventory().setSelectedSlot(slot);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         } else if (swap.equals("Silent")) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(
@@ -438,6 +516,7 @@ public class TntAura extends Module {
         }
         return new double[]{0.0};
     }
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(TntAura.class);
     }
@@ -446,3 +525,6 @@ public class TntAura extends Module {
     }
 
 }
+=======
+}
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

@@ -6,6 +6,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+<<<<<<< HEAD
 import ravex.di.Injector;
 import ravex.di.ServiceLocator;
 import ravex.event.EventBusHolder;
@@ -30,6 +31,11 @@ import ravex.utility.misc.GuiOptimizer;
 import ravex.utility.misc.GithubUtility;
 import ravex.utility.render.TextureLoader;
 import ravex.utility.sound.SoundEventDispatcher;
+=======
+import ravex.manager.ModuleManager;
+import ravex.utility.misc.GithubUtility;
+import ravex.utility.nativelib.NativeLibrary;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 
 public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEntrypoint {
@@ -42,6 +48,12 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         .getMetadata()
         .getVersion()
         .getFriendlyString();
+
+    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_addon");
+
+    static {
+        NATIVE.load();
+    }
 
     private static boolean rightShiftWasDown = false;
     private static Process loaderProcess = null;
@@ -69,6 +81,10 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
     }
 
     public static String getModJarPath() {
+<<<<<<< HEAD
+=======
+        
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         try {
             var container = FabricLoader.getInstance().getModContainer("ravex");
             if (container.isPresent()) {
@@ -82,6 +98,10 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
             }
         } catch (Exception ignored) {}
 
+<<<<<<< HEAD
+=======
+        
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         try {
             java.io.File file = new java.io.File(
                 ravex.loader.RaveXLoader.class.getProtectionDomain()
@@ -92,6 +112,10 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
             }
         } catch (Exception ignored) {}
 
+<<<<<<< HEAD
+=======
+        
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         try {
             java.io.File modsDir = new java.io.File(
                 FabricLoader.getInstance().getGameDir().toFile(), "mods"
@@ -167,6 +191,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
     @Override
     public void onInitializeClient() {
+<<<<<<< HEAD
         try {
             org.apache.logging.log4j.core.config.Configurator.setLevel("net.minecraft.class_1059", org.apache.logging.log4j.Level.WARN);
             org.apache.logging.log4j.core.config.Configurator.setLevel("net.minecraft.class_310", org.apache.logging.log4j.Level.WARN);
@@ -204,12 +229,40 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
         try {
             ServiceLocator.resolve(ConfigManager.class).load("default");
+=======
+        String osName = ravex.loader.RaveXLoader.getDetailedOSName();
+        LOGGER.info("RaveX v{} on {}", version, osName);
+
+        ravex.manager.NativeManager.INSTANCE.check();
+        ravex.utility.misc.GuiOptimizer.optimize();
+
+        ModuleManager.INSTANCE.init();
+        LOGGER.info("Registered {} modules", ModuleManager.INSTANCE.getModules().size());
+
+        try {
+            ravex.manager.AddonManager.INSTANCE.init();
+        } catch (Exception e) {
+            LOGGER.error("AddonManager init failed", e);
+        }
+
+        ravex.manager.MacroManager.INSTANCE.load();
+        int mc = ravex.manager.MacroManager.INSTANCE.getMacros().size();
+        if (mc > 0) LOGGER.info("Loaded {} macro(s)", mc);
+
+        ravex.manager.ProfileManager.INSTANCE.load();
+        int pc = ravex.manager.ProfileManager.INSTANCE.getProfiles().size();
+        if (pc > 0) LOGGER.info("Loaded {} profile(s)", pc);
+
+        try {
+            ravex.manager.ConfigManager.INSTANCE.load("default");
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         } catch (Exception e) {
             LOGGER.error("Failed to load default config", e);
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
+<<<<<<< HEAD
                 ServiceLocator.resolveOrNull(AddonManager.class);
                 if (ServiceLocator.isRegistered(AddonManager.class)) {
                     ServiceLocator.resolve(AddonManager.class).shutdown();
@@ -249,6 +302,14 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         Injector.injectAll();
 
         LOGGER.info("[RaveX] Services registered");
+=======
+                ravex.manager.AddonManager.INSTANCE.shutdown();
+            } catch (Throwable ignored) {}
+            ravex.manager.ConfigManager.INSTANCE.save("default");
+        }));
+
+        new Thread(ravex.utility.misc.GithubUtility::checkUpdates).start();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     public static void onClientTick() {
@@ -266,13 +327,23 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
             loaderProcessClosed = true;
         }
 
+<<<<<<< HEAD
         EventBusHolder.get().post(new TickEvent.Client());
+=======
+        ModuleManager.INSTANCE.onTick();
+        ravex.manager.MacroManager.INSTANCE.onTick();
+        ravex.manager.LuaManager.INSTANCE.onTick(); 
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.getWindow() == null) return;
 
         com.mojang.blaze3d.platform.Window window = mc.getWindow();
 
+<<<<<<< HEAD
+=======
+        
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
         if (isDown && !rightShiftWasDown) {
             if (mc.screen instanceof ClickGUI) {
@@ -283,7 +354,12 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         }
         rightShiftWasDown = isDown;
 
+<<<<<<< HEAD
         for (Module m : ServiceLocator.resolve(ModuleManager.class).getModules()) {
+=======
+        
+        for (ravex.modules.Module m : ModuleManager.INSTANCE.getModules()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             int bind = m.getKeyBind();
             if (bind > 0 && bind < keysState.length) {
                 boolean isKeyBindDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, bind);

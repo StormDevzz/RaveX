@@ -69,7 +69,11 @@
         "network.MixinBlink",
         "movement.MixinExplosionVelocity",
         "movement.MixinPacketEntityVelocity",
+<<<<<<< HEAD
         "movement.MixinGuiMove",
+=======
+        "movement.MixinGuiWalk",
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         "movement.MixinNoSlowDown",
         "movement.MixinSpider",
         "movement.MixinSpeed",
@@ -98,6 +102,7 @@
         "misc.MixinDeathScreen",
         "render.MixinGameRenderer",
         "render.MixinGameRendererFreeCam",
+<<<<<<< HEAD
         "render.MixinItemStack",
         "render.MixinCrosshair",
         
@@ -107,6 +112,14 @@
         "text2speech.MixinNarrator",
         "realms.MixinRealmsClient",
         "render.MixinPlayerModel",
+=======
+        "combat.MixinPlayerNoHitDelay",
+        "render.MixinItemStack",
+        "render.MixinCrosshair",
+        "render.MixinClientTooltipComponent",
+        "render.AccessorRenderType",
+        "font.MixinTrueTypeGlyphProviderDefinition"
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     ],
     "client": [        "player.MixinChorusExploit", "player.MixinChorusPositionHandler", "player.MixinTridentBoost", "player.MixinLivingEntityTracker"],
     "server": [],

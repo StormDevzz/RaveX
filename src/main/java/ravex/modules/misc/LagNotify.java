@@ -1,12 +1,20 @@
 package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
+<<<<<<< HEAD
 import ravex.event.EventBusHolder;
 import ravex.event.client.SoundEvent;
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 public class LagNotify extends Module {
+<<<<<<< HEAD
+=======
+    public static final LagNotify INSTANCE = new LagNotify();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter threshold = new NumberParameter("ThresholdTPS", 15.0, 5.0, 20.0, 1.0);
     public final BooleanParameter sound = new BooleanParameter("Sound", true);
     private long lastRealTime = 0;
@@ -39,7 +47,11 @@ public class LagNotify extends Module {
                 ravex.manager.NotificationManager.add(
                         "Server lag: " + tps + " TPS", 0xFFFFCC33, 3000);
                 if (sound.getValue()) {
+<<<<<<< HEAD
                     EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.FAILURE));
+=======
+                    ravex.utility.sound.SoundUtility.playFailure();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 }
             } else if (!isLagging && wasLagging) {
                 String tps = String.format("%.1f", smoothedTPS);
@@ -49,8 +61,11 @@ public class LagNotify extends Module {
             wasLagging = isLagging;
         }
     }
+<<<<<<< HEAD
 
     public static LagNotify itz() {
         return ModuleManager.get(LagNotify.class);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

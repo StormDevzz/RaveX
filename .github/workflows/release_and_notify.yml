@@ -228,7 +228,11 @@ jobs:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
           BRANCH: ${{ github.ref_name }}
+<<<<<<< HEAD
           PUSHER: ${{ github.event.head_commit.author.name }}
+=======
+          PUSHER: ${{ github.actor }}
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
           REPO: ${{ github.repository }}
           COMPARE_URL: ${{ github.event.compare }}
           HEAD_COMMIT_MSG: ${{ github.event.head_commit.message }}

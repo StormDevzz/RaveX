@@ -14,7 +14,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
 public class ModuleButton {
     public static final Set<Module> expandedModules = new HashSet<>();
@@ -27,7 +30,11 @@ public class ModuleButton {
     private boolean matchesSearch = true;
 
     public static void tickAllGears() {
+<<<<<<< HEAD
         float speed = ModuleManager.get(ClickGui.class).gearRotationSpeed.getValue().floatValue();
+=======
+        float speed = ClickGui.INSTANCE.gearRotationSpeed.getValue().floatValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (speed <= 0 || expandedModules.isEmpty()) return;
         long now = System.currentTimeMillis();
         float dt = Math.min(100f, now - lastGearTick) / 1000f;
@@ -113,7 +120,11 @@ public class ModuleButton {
     public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut, String searchQuery, int viewTop, int viewBot) {
         int currentY = currentYOut[0];
         if (searchReveal < 0.001f) return;
+<<<<<<< HEAD
         int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+=======
+        int btnH = ravex.modules.client.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + btnH
             && currentY + btnH > viewTop && currentY < viewBot;
 
@@ -132,9 +143,15 @@ public class ModuleButton {
         }
 
         int activeColor = ColorUtility.getActiveColor();
+<<<<<<< HEAD
         int btnAlpha = ModuleManager.get(ClickGui.class).buttonOpacity.getValue().intValue();
         int disabledBg = ColorUtility.withAlpha(0x252530, btnAlpha);
         int btnRadius = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2);
+=======
+        int btnAlpha = ravex.modules.client.ClickGui.INSTANCE.buttonOpacity.getValue().intValue();
+        int disabledBg = ColorUtility.withAlpha(0x252530, btnAlpha);
+        int btnRadius = Math.min(ClickGui.INSTANCE.cornerRadius.getValue().intValue(), btnH / 2);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
         int mergedBg = disabledBg;
         if (enableAnim > 0.01f) {
@@ -175,6 +192,7 @@ public class ModuleButton {
         int textY = currentY + (btnH - FontRenderUtility.getFontHeight()) / 2 + 1;
 
         if (searchQuery != null && !searchQuery.isEmpty() && !module.getName().isEmpty()) {
+<<<<<<< HEAD
             renderHighlightedName(graphics, displayName, x + ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, searchQuery);
         } else {
             FontRenderUtility.drawString(graphics, displayName, x + ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, true);
@@ -182,6 +200,15 @@ public class ModuleButton {
 
         boolean hasParams = !module.getParameters().isEmpty();
         if (hasParams && ModuleManager.get(ClickGui.class).showGear.getValue()) {
+=======
+            renderHighlightedName(graphics, displayName, x + ravex.modules.client.Settings.INSTANCE.moduleTextX.getValue().intValue(), textY, textColor, searchQuery);
+        } else {
+            FontRenderUtility.drawString(graphics, displayName, x + ravex.modules.client.Settings.INSTANCE.moduleTextX.getValue().intValue(), textY, textColor, true);
+        }
+
+        boolean hasParams = !module.getParameters().isEmpty();
+        if (hasParams && ClickGui.INSTANCE.showGear.getValue()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             Identifier settingsTex = ravex.utility.render.TextureLoader.getSettingsWhiteTexture();
             if (settingsTex == null) settingsTex = ravex.utility.render.TextureLoader.getSettingsTexture();
             if (settingsTex != null) {
@@ -277,7 +304,11 @@ public class ModuleButton {
         float revealH = (!searching || matchesSearch) ? 1.0f : searchReveal;
         if (revealH < 0.99f) {
             int fadeAlpha = (int)((1.0f - revealH) * 200);
+<<<<<<< HEAD
             Render2DEngine.drawRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 0x050510);
+=======
+            Render2DEngine.drawRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min(ClickGui.INSTANCE.cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 0x050510);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
         currentYOut[0] = currentYOut[0] + (int)((currentY - currentYOut[0]) * revealH);
     }
@@ -354,7 +385,11 @@ public class ModuleButton {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int width, int[] currentYOut, net.minecraft.client.Minecraft mc) {
         int currentY = currentYOut[0];
+<<<<<<< HEAD
         int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+=======
+        int btnH = ravex.modules.client.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         int totalH = btnH + (expanded ? getExpandedHeight(width) : 0);
 
         if (mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + totalH) {

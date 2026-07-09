@@ -2,17 +2,29 @@ package ravex.modules.movement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.MoverType;
+<<<<<<< HEAD
 import net.minecraft.world.phys.Vec3;
 import ravex.RaveX;
 import ravex.manager.ModuleManager;
+=======
+import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
+import ravex.RaveX;
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
+<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 public class ElytraFly extends Module {
+=======
+public class ElytraFly extends Module {
+    public static final ElytraFly INSTANCE = new ElytraFly();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         List.of("Vanilla", "Control", "Grim", "NCP", "Minemen", "Packet", "Boost", "TickShift"));
     public final NumberParameter hSpeed = new NumberParameter("H-Speed", 1.5, 0.1, 5.0, 0.1);
@@ -280,6 +292,7 @@ public class ElytraFly extends Module {
             }
         }
     }
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(ElytraFly.class);
     }
@@ -290,14 +303,27 @@ public class ElytraFly extends Module {
         int slot = -1;
         for (int i = 0; i < 9; i++) {
             if (InventoryUtility.isItem(InventoryUtility.getItem(mc.player, i), "firework_rocket")) {
+=======
+    private void useFirework(Minecraft mc) {
+        int slot = -1;
+        for (int i = 0; i < 9; i++) {
+            if (mc.player.getInventory().getItem(i).is(Items.FIREWORK_ROCKET)) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 slot = i;
                 break;
             }
         }
         if (slot < 0) return;
+<<<<<<< HEAD
         int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, slot);
         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
         InventoryUtility.selectSlot(mc.player, prevSlot);
+=======
+        int prevSlot = mc.player.getInventory().getSelectedSlot();
+        mc.player.getInventory().setSelectedSlot(slot);
+        mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+        mc.player.getInventory().setSelectedSlot(prevSlot);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 }

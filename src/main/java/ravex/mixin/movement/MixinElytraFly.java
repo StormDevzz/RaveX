@@ -16,7 +16,11 @@ public abstract class MixinElytraFly {
 
     @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
     private void onTravel(Vec3 travelVector, CallbackInfo ci) {
+<<<<<<< HEAD
         if (!ElytraFly.maybeEnabled()) return;
+=======
+        if (!ElytraFly.INSTANCE.getEnabled()) return;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         LivingEntity entity = (LivingEntity)(Object)this;
         if (!(entity instanceof LocalPlayer)) return;
         LocalPlayer player = (LocalPlayer) entity;
@@ -26,13 +30,18 @@ public abstract class MixinElytraFly {
 
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
+<<<<<<< HEAD
         if (!ElytraFly.maybeEnabled()) return;
+=======
+        if (!ElytraFly.INSTANCE.getEnabled()) return;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
         LivingEntity entity = (LivingEntity)(Object)this;
         if (!(entity instanceof LocalPlayer)) return;
         LocalPlayer player = (LocalPlayer) entity;
         if (!player.isFallFlying()) return;
 
+<<<<<<< HEAD
         if (ElytraFly.itz().speedControl.getValue()) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -40,6 +49,15 @@ public abstract class MixinElytraFly {
         double hSpeed = ElytraFly.itz().hSpeed.getValue();
         double vSpeed = ElytraFly.itz().vSpeed.getValue();
         double glide = ElytraFly.itz().glide.getValue();
+=======
+        if (ElytraFly.INSTANCE.speedControl.getValue()) return;
+
+        Minecraft mc = Minecraft.getInstance();
+        String mode = ElytraFly.INSTANCE.mode.getValue();
+        double hSpeed = ElytraFly.INSTANCE.hSpeed.getValue();
+        double vSpeed = ElytraFly.INSTANCE.vSpeed.getValue();
+        double glide = ElytraFly.INSTANCE.glide.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
         boolean space = mc.options.keyJump.isDown();
         boolean shift = mc.options.keyShift.isDown();
@@ -70,7 +88,11 @@ public abstract class MixinElytraFly {
             vel = new Vec3(v[0], v[1], v[2]);
         }
 
+<<<<<<< HEAD
         vel = ElytraFly.itz().applyTimerAndAccel(vel);
+=======
+        vel = ElytraFly.INSTANCE.applyTimerAndAccel(vel);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         player.setDeltaMovement(vel);
         player.move(MoverType.SELF, vel);
     }

@@ -18,9 +18,15 @@ endif()
 find_package(JNI REQUIRED)
 
 add_subdirectory(common)
+<<<<<<< HEAD
 # add_subdirectory(lua)  # вырублен тк нужен LuaScript.h которого нету
 add_subdirectory(math)
 # add_subdirectory(hooks/voidesp)  # теперь на джаве
+=======
+# add_subdirectory(lua)  # disabled: needs LuaScript.h which is missing
+add_subdirectory(math)
+add_subdirectory(antiafk)
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 add_subdirectory(hooks/shaders)
 add_subdirectory(hooks/norender)
 add_subdirectory(hooks/dc)
@@ -39,6 +45,7 @@ add_subdirectory(hooks/bowaim)
 add_subdirectory(hooks/quiver)
 add_subdirectory(hooks/mediaquery)
 add_subdirectory(hooks/safewalk)
+<<<<<<< HEAD
 # add_subdirectory(hooks/antivoid)  # теперь на джаве
 # add_subdirectory(hooks/replenish)  # теперь на джаве
 add_subdirectory(hooks/antiquit)
@@ -49,12 +56,24 @@ add_subdirectory(hooks/phase)
 # add_subdirectory(hooks/faststairs)  # теперь на джаве
 # add_subdirectory(hooks/tunnels)  # теперь нету (обьединен в модуль ESP)
 # add_subdirectory(hooks/nofall) # теперь на джаве
+=======
+add_subdirectory(hooks/antivoid)
+add_subdirectory(hooks/antiquit)
+add_subdirectory(hooks/nopacktkick)
+add_subdirectory(hooks/coordlogger)
+add_subdirectory(hooks/phase)
+add_subdirectory(hooks/noslow)
+add_subdirectory(hooks/faststairs)
+add_subdirectory(hooks/nofall)
+add_subdirectory(hooks/replenish)
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 add_subdirectory(hooks/nuker)
 add_subdirectory(hooks/holefill)
 add_subdirectory(hooks/packetmine)
 add_subdirectory(hooks/autoclicker)
 add_subdirectory(hooks/antibot)
 add_subdirectory(hooks/autodrop)
+<<<<<<< HEAD
 # add_subdirectory(hooks/selffill)  # теперь НЕТУ
 add_subdirectory(hooks/burrow)
 add_subdirectory(hooks/animations)
@@ -66,13 +85,33 @@ add_subdirectory(hooks/tntaura)
 add_subdirectory(hooks/elytraplusplus)
 add_subdirectory(hooks/desktopgui) #смехуятина
 add_subdirectory(hooks/calculator) #калькУлятор
+=======
+add_subdirectory(hooks/selffill)
+add_subdirectory(hooks/burrow)
+add_subdirectory(hooks/animations)
+add_subdirectory(hooks/tunnels)
+add_subdirectory(hooks/holeesp)
+add_subdirectory(hooks/voidesp)
+add_subdirectory(hooks/autoregear)
+add_subdirectory(hooks/antiregear)
+add_subdirectory(hooks/tntaura)
+add_subdirectory(hooks/witherroseaura)
+add_subdirectory(hooks/elytraplusplus)
+add_subdirectory(hooks/desktopgui)
+add_subdirectory(hooks/calculator)
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 add_subdirectory(hooks/pearltarget)
 add_subdirectory(hooks/antipearl)
 add_subdirectory(hooks/bedbomb)
 add_subdirectory(hooks/ecfarmer)
 add_subdirectory(hooks/shieldfucker)
+<<<<<<< HEAD
 # add_subdirectory(hooks/noghostblocks)  # теперь на джаве и переименован в GhostBlocks
 # add_subdirectory(hooks/portalbuild)  # теперь на джаве и переименован в AutoPortal
+=======
+add_subdirectory(hooks/noghostblocks)
+add_subdirectory(hooks/portalbuild)
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 add_subdirectory(hooks/chunkexploit)
 add_subdirectory(addon)
 add_subdirectory(loader)
@@ -81,8 +120,18 @@ add_subdirectory(plugins/optimize)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/plugins/brand/CMakeLists.txt)
     add_subdirectory(plugins/brand)
 endif()
+<<<<<<< HEAD
+=======
+add_subdirectory(plugins/benchmark)
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 add_subdirectory(plugins/nativesc)
 add_subdirectory(plugins/fileprot)
 add_subdirectory(plugins/manager)
 add_subdirectory(plugins/github)
+<<<<<<< HEAD
+=======
+if(NOT WIN32)
+    add_subdirectory(plugins/proxy)
+endif()
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 add_subdirectory(launcher)

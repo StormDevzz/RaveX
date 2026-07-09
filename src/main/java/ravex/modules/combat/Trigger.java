@@ -1,5 +1,8 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -10,6 +13,10 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import java.util.List;
 public class Trigger extends Module {
+<<<<<<< HEAD
+=======
+    public static final Trigger INSTANCE = new Trigger();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter cooldown = new NumberParameter("Cooldown", 0.9, 0.0, 1.0, 0.05);
     public final NumberParameter cps = new NumberParameter("CPS", 10, 1, 20, 1);

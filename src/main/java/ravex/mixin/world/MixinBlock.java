@@ -13,11 +13,19 @@ import ravex.modules.movement.Sleepy;
 public class MixinBlock {
     @Inject(method = "getFriction", at = @At("RETURN"), cancellable = true)
     private void onGetFriction(CallbackInfoReturnable<Float> cir) {
+<<<<<<< HEAD
         if (Sleepy.maybeEnabled()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null) {
                 if (!Sleepy.itz().onlyOnGround.getValue() || mc.player.onGround()) {
                     cir.setReturnValue(Sleepy.itz().friction.getValue().floatValue());
+=======
+        if (ravex.modules.movement.Sleepy.INSTANCE.getEnabled()) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+                if (!ravex.modules.movement.Sleepy.INSTANCE.onlyOnGround.getValue() || mc.player.onGround()) {
+                    cir.setReturnValue(ravex.modules.movement.Sleepy.INSTANCE.friction.getValue().floatValue());
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                     return;
                 }
             }
@@ -37,7 +45,11 @@ public class MixinBlock {
                 cir.setReturnValue(0.6F); 
             } else {
                 String blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(self).toString();
+<<<<<<< HEAD
                 float customFriction = NoSlow.getBlockFriction(blockId, cir.getReturnValue());
+=======
+                float customFriction = NoSlowDown.getBlockFriction(blockId, cir.getReturnValue());
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 cir.setReturnValue(customFriction);
             }
         }

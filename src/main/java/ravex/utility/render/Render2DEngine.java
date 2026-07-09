@@ -447,6 +447,7 @@ public class Render2DEngine {
         drawRoundBorder(graphics, x, y, width, height, radius, borderWidth, borderColor);
     }
 
+<<<<<<< HEAD
     private static final Map<String, Identifier> PERFECT_RR_CACHE = new HashMap<>();
 
     public static void drawPixelPerfectRound(GuiGraphics graphics, int x, int y, int width, int height, int radius, int color) {
@@ -491,6 +492,8 @@ public class Render2DEngine {
         graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, width, height, width, height, color);
     }
 
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static void drawCheckmark(GuiGraphics graphics, int x, int y, int size, int color) {
         int s = size / 3;
         int x1 = x, y1 = y + s;

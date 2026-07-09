@@ -392,7 +392,15 @@ public class LuaManager {
 
     private String getDiscordLargeImage() {
         try {
+<<<<<<< HEAD
+<<<<<<<< HEAD:src/main/java/ravex/manager/LuaManager.java
             var rp = ModuleManager.get(ravex.modules.client.RichPresence.class);
+========
+            var rp = ravex.modules.player.RichPresence.INSTANCE;
+>>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3:RaveX-ravex146/src/main/java/ravex/utility/lua/LuaManager.java
+=======
+            var rp = ravex.modules.client.RichPresence.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (rp != null && rp.largeImage != null) {
                 String val = rp.largeImage.getValue();
                 if ("icon".equals(val)) {
@@ -469,7 +477,15 @@ public class LuaManager {
                 + buttonsBlock
                 + "}},"
                 + "\"nonce\":\"" + nonce + "\"}";
+<<<<<<< HEAD
+<<<<<<<< HEAD:src/main/java/ravex/manager/LuaManager.java
             ravex.RaveX.LOGGER.debug("[RichPresence] Sending payload");
+========
+            ravex.RaveX.LOGGER.info("[RichPresence] Sending payload: " + payload);
+>>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3:RaveX-ravex146/src/main/java/ravex/utility/lua/LuaManager.java
+=======
+            ravex.RaveX.LOGGER.info("[RichPresence] Sending payload: " + payload);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             sendDiscordFrame(1, payload);
             return true;
         } catch (Exception e) {
@@ -604,7 +620,11 @@ public class LuaManager {
 
     public void loadAndRunScripts() {
         Minecraft mc = Minecraft.getInstance();
+<<<<<<< HEAD
         File scriptsFolder = new File(mc.gameDirectory, "RaveX/scripts");
+=======
+        File scriptsFolder = new File(mc.gameDirectory, "ravex/scripts");
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (!scriptsFolder.exists()) {
             scriptsFolder.mkdirs();
         }

@@ -15,7 +15,11 @@ public class MixinScreenEffectRenderer {
 
     @Inject(method = "renderFire", at = @At("HEAD"), cancellable = true)
     private static void onRenderFire(PoseStack poseStack, MultiBufferSource multiBufferSource, TextureAtlasSprite textureAtlasSprite, CallbackInfo ci) {
+<<<<<<< HEAD
         if (NoRender.maybeEnabled() && NoRender.itz().fire.getValue()) {
+=======
+        if (NoRender.INSTANCE.getEnabled() && NoRender.INSTANCE.fire.getValue()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ci.cancel();
         }
     }

@@ -1,5 +1,9 @@
 package ravex.modules.misc;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -9,6 +13,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import java.util.List;
 public class AutoEat extends Module {
+<<<<<<< HEAD
+=======
+    public static final AutoEat INSTANCE = new AutoEat();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter threshold = new NumberParameter("Hunger", 15.0, 1.0, 20.0, 1.0);
     public final BooleanParameter priority = new BooleanParameter("BestFood", true);
     public final BooleanParameter notify = new BooleanParameter("Notify", false);
@@ -24,17 +32,28 @@ public class AutoEat extends Module {
             mc.options.keyUse.setDown(hunger < threshold.getValue());
             return;
         }
+<<<<<<< HEAD
         if (FoodUtility.INSTANCE.isEating()) {
             FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
             if (result == FoodUtility.Result.FINISHED && notify.getValue()) {
+=======
+        if (FoodEater.INSTANCE.isEating()) {
+            FoodEater.EatResult result = FoodEater.INSTANCE.tryEat();
+            if (result == FoodEater.EatResult.FINISHED && notify.getValue()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 mc.player.displayClientMessage(
                     Component.literal("§7[§cAutoEat§7] §aDone eating"), false);
             }
             return;
         }
         if (hunger >= threshold.getValue()) return;
+<<<<<<< HEAD
         FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
         if (result == FoodUtility.Result.STARTED && notify.getValue()) {
+=======
+        FoodEater.EatResult result = FoodEater.INSTANCE.tryEat();
+        if (result == FoodEater.EatResult.STARTED && notify.getValue()) {
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             mc.player.displayClientMessage(
                 Component.literal("§7[§cAutoEat§7] §aEating (" + (int)hunger + " hunger)"),
                 false);

@@ -82,7 +82,11 @@ public class MixinItemEntityRenderer {
         poseStack.translate(0, floatOffset + 0.1875F, 0);
 
         
+<<<<<<< HEAD
         float baseScale = 0.5F * ItemPhysics.itz().scale.getValue().floatValue();
+=======
+        float baseScale = 0.5F * ItemPhysics.INSTANCE.scale.getValue().floatValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         poseStack.scale(baseScale, baseScale, baseScale);
 
         

@@ -12,6 +12,10 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
+<<<<<<< HEAD
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -23,6 +27,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Tracers extends Module {
+<<<<<<< HEAD
+=======
+    public static final Tracers INSTANCE = new Tracers();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "Default", List.of("Default", "Arrows"));
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", false);
@@ -86,7 +94,11 @@ public class Tracers extends Module {
         if (tex == null)
             return;
 
+<<<<<<< HEAD
         Tracers t = ModuleManager.get(Tracers.class);
+=======
+        Tracers t = INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (!t.getEnabled() || !t.mode.getValue().equals("Arrows"))
             return;
 
@@ -220,6 +232,7 @@ public class Tracers extends Module {
             context.pose().popMatrix();
         }
     }
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(Tracers.class);
     }
@@ -227,4 +240,7 @@ public class Tracers extends Module {
     public static Tracers itz() {
         return ModuleManager.get(Tracers.class);
     }
+=======
+
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

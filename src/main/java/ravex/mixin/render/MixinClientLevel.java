@@ -12,8 +12,13 @@ public class MixinClientLevel {
     @Inject(method = "getRainLevel", at = @At("HEAD"), cancellable = true)
     private void onGetRainLevel(float f, CallbackInfoReturnable<Float> cir) {
         Level level = (Level) (Object) this;
+<<<<<<< HEAD
         if (level.isClientSide() && Weather.maybeEnabled()) {
             String mode = Weather.itz().mode.getValue();
+=======
+        if (level.isClientSide() && Weather.INSTANCE.getEnabled()) {
+            String mode = Weather.INSTANCE.mode.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if ("Rain".equals(mode) || "Snow".equals(mode) || "Thunder".equals(mode)) {
                 cir.setReturnValue(1.0f);
             } else if ("Clear".equals(mode)) {
@@ -25,8 +30,13 @@ public class MixinClientLevel {
     @Inject(method = "getThunderLevel", at = @At("HEAD"), cancellable = true)
     private void onGetThunderLevel(float f, CallbackInfoReturnable<Float> cir) {
         Level level = (Level) (Object) this;
+<<<<<<< HEAD
         if (level.isClientSide() && Weather.maybeEnabled()) {
             String mode = Weather.itz().mode.getValue();
+=======
+        if (level.isClientSide() && Weather.INSTANCE.getEnabled()) {
+            String mode = Weather.INSTANCE.mode.getValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if ("Thunder".equals(mode)) {
                 cir.setReturnValue(1.0f);
             } else if ("Clear".equals(mode) || "Rain".equals(mode) || "Snow".equals(mode)) {

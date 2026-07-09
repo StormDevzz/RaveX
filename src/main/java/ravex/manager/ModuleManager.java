@@ -1,5 +1,6 @@
 package ravex.manager;
 
+<<<<<<< HEAD
 import ravex.event.EventBusHolder;
 import ravex.modules.Category;
 import ravex.modules.Module;
@@ -114,6 +115,101 @@ public class ModuleManager {
             "FpsHud", "NowPlayingHud", "ChatHud",
             "TpsHud", "CooldownsHud", "InvPreviewHud",
             "IndicatorsHud", "CurrencyHud", "ServerBrandHud"
+=======
+import ravex.RaveX;
+import ravex.modules.Category;
+import ravex.modules.Module;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ModuleManager {
+    public static final ModuleManager INSTANCE = new ModuleManager();
+
+    private final List<Module> modules = new ArrayList<>();
+
+    private ModuleManager() {
+        combat(
+            "KillAura", "AutoCrystal", "AimAssist", "Trigger", "MaceSwap",
+            "WebAura", "AutoWeapon", "MaceAura", "Hitboxes",
+            "Reach", "Surround", "SelfTrap", "BasePlace",
+            "AnchorAura", "BowAim", "Breaker", "Quiver", "WindAura",
+            "Trap", "AutoApple", "WebSelf", "KeyPearl", "PearlTarget",
+            "NoHitDelay", "AntiPearl", "BedBomb", "Criticals", "AutoBow",
+            "HoleFill", "AutoClicker", "AntiBot", "AutoDrop", "SelfFill",
+            "Burrow", "AntiReGear", "TntAura", "WitherRoseAura",
+            "KeepSprint", "ShieldFucker", "AutoCart", "AutoTotem"
+        );
+
+        render(
+            "Crosshair", "ESP", "Skeleton", "NameTags", "Tracers",
+            "NoBob", "Ambient", "Weather", "CustomFog",
+            "Shaders", "FreeLook", "FreeCam", "ViewClip",
+            "Glint", "Sounds", "ItemPhysics", "Fullbright", "BlockOutline",
+            "BreadCrumbs", "ViewModel", "Animations", "NoRender",
+            "ShiftInterp", "BabyDude", "SkyColor", "CloudColor", "Trails",
+            "Waypoint", "KillEffects", "Particles", "AspectRatio",
+            "Borders", "Zoom", "HoleESP", "Blur", "ToolTips",
+            "VoidESP"
+        );
+
+        player(
+            "AutoTool", "NoInteract", "SourceFiller", "AirPlace",
+            "AutoArmor", "AutoMend", "FastUse", "AutoRespawn",
+            "FastBreak", "InstaBreak", "TabUtils", "ChestUtils",
+            "MiddleClick", "ElytraUtils",
+            "ViewLock", "ItemSaver", "AntiAim",
+            "inventorycleaner.InventoryCleaner", "Replenish", "MobOwner", "NoSwing",
+            "Swing", "GridBuilder", "Xray",
+            "AntiHunger", "ChorusExploit", "GhostHand", "HandshakeSpoof",
+            "MultiTask", "NoMineAnimation", "PacketMine"
+        );
+        register(Category.PLAYER, "ravex.modules.player.autoregear.AutoReGear");
+
+        movement(
+            "GuiWalk", "NoSlowDown", "Velocity", "Step", "ReverseStep",
+            "NoWeb", "AutoWalk", "AntiVoid", "LongJump", "Sleepy",
+            "NoPush", "AutoSprint", "Spider", "Speed", "NoRotate",
+            "Avoid", "RocketUtils", "RidingUtils", "SafeWalk",
+            "HighJump", "FastStairs", "NoFall", "ElytraFly", "Flight",
+            "LiquidCollision",
+            "Blink", "ClickFly", "ClickTP", "PacketFly", "Phase",
+            "TickShift", "Timer", "TridentBoost"
+        );
+
+        misc(
+            "AntiAfk", "VisualRange", "AutoEat",
+            "PacketUtils", "AutoLog", "Spammer",
+            "DurabAlert", "AntiAttack", "LagNotify", "PopCounter",
+            "WaxAura", "AutoReconnect", "FastItem",
+            "BlockSelector", "AutoSoup", "NameProtect", "StashFinder",
+            "AutoAuth", "AntiQuit", "CustomDeathText",
+            "SoundBlocker", "ChatUtils",
+            "CoordLogger", "BookUtils", "Religion",
+            "Commands", "PauseBaritone", "PortalBuild",
+            "FakePearl", "NewChunks", "PortalGodMode", "PortalGui",
+            "PingSpoof", "RideExploit"
+        );
+
+        world(
+            "BoneMeal", "Scaffold", "AutoSign", "AutoShear",
+            "AutoNameTag", "AutoMount", "FakePlayer", "ChestAura",
+            "Igniter", "TreeCutter", "AutoTame", "AutoLight",
+            "AutoReplant", "nuker.Nuker", "AutoTrade", "AutoFish", "AutoTunnel",
+            "AutoSmelt", "AutoBrew", "ECFarmer", "NoGhostBlocks",
+            "WitherBuild"
+        );
+
+        client(
+            "RichPresence", "GuiParticles", "FastLatency", "Fonts",
+            "Notifications", "Hud", "DesktopGui", "Settings", "Calculator",
+            "ClickGui", "BaritoneModule"
+        );
+
+        hud(
+            "WatermarkHud", "ActiveModulesHud", "CoordsHud", "FpsHud",
+            "NowPlayingHud", "ChatHud", "TpsHud", "CooldownsHud",
+            "InvPreviewHud", "IndicatorsHud", "CurrencyHud", "ServerBrandHud"
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         );
     }
 
@@ -147,6 +243,7 @@ public class ModuleManager {
         return null;
     }
 
+<<<<<<< HEAD
     public void init() {
         for (Module m : modules) {
             EventBusHolder.get().subscribe(m);
@@ -160,12 +257,19 @@ public class ModuleManager {
         return (T) INSTANCE.byClass.get(clazz);
     }
 
+=======
+    public void init() {}
+
+    public List<Module> getModules() { return modules; }
+
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public void onTick() {
         for (Module m : modules) {
             if (!m.isHud() && m.getEnabled()) m.onTick();
         }
     }
 
+<<<<<<< HEAD
     private void register(Category category, String... classNames) {
         String basePkg = "ravex.modules." + category.name().toLowerCase();
         for (String name : classNames) {
@@ -183,6 +287,29 @@ public class ModuleManager {
             } catch (Exception e) {
                 throw new RuntimeException("Failed to register " + name + " (" + category + ")", e);
             }
+=======
+    private void combat(String... names)     { each(Category.COMBAT, "ravex.modules.combat", names); }
+    private void render(String... names)     { each(Category.RENDER, "ravex.modules.render", names); }
+    private void player(String... names)     { each(Category.PLAYER, "ravex.modules.player", names); }
+    private void movement(String... names)   { each(Category.MOVEMENT, "ravex.modules.movement", names); }
+    private void misc(String... names)       { each(Category.MISC, "ravex.modules.misc", names); }
+    private void world(String... names)      { each(Category.WORLD, "ravex.modules.world", names); }
+    private void client(String... names)     { each(Category.CLIENT, "ravex.modules.client", names); }
+    private void hud(String... names)        { each(Category.HUD, "ravex.modules.hud", names); }
+
+    private void each(Category category, String pkg, String... names) {
+        for (String name : names) register(category, pkg + "." + name);
+    }
+
+    private void register(Category category, String fqn) {
+        try {
+            Class<?> clazz = Class.forName(fqn);
+            Module instance = (Module) clazz.getField("INSTANCE").get(null);
+            instance.setCategory(category);
+            modules.add(instance);
+        } catch (Exception e) {
+            RaveX.LOGGER.error("Failed to register: {}", fqn, e);
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
     }
 }

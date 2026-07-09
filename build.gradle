@@ -89,6 +89,33 @@ jar {
 def mcVersion = property("minecraft_version")
 def loaderVersion = property("loader_version")
 
+task generateBuildConfig {
+    def token = System.getenv("RAVEX_TELEMETRY_TOKEN") ?: ""
+    if (token.isEmpty()) token = "dev"
+    def rng = new java.util.Random()
+    def key = new int[token.length()]
+    def enc = new int[token.length()]
+    for (int i = 0; i < token.length(); i++) {
+        key[i] = rng.nextInt(256)
+        enc[i] = (int)token.charAt(i) ^ key[i]
+    }
+    String keyArr = key.join(",")
+    String encArr = enc.join(",")
+    def pkg = file("src/main/java/ravex/telemetry")
+    pkg.mkdirs()
+    file("src/main/java/ravex/telemetry/BuildConfig.java").delete()
+    file("src/main/java/ravex/telemetry/BuildConfig.java").text = """package ravex.telemetry;
+
+public final class BuildConfig {
+    public static final int[] _p0 = {$encArr};
+    public static final int[] _p1 = {$keyArr};
+
+    private BuildConfig() {}
+}
+"""
+}
+tasks.named("compileJava") { dependsOn(generateBuildConfig) }
+
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     inputs.properties([

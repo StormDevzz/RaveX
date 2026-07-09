@@ -1,10 +1,18 @@
 package ravex.modules.render;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 public class AspectRatio extends Module {
+<<<<<<< HEAD
+=======
+    public static final AspectRatio INSTANCE = new AspectRatio();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter ratio = new ModeParameter("Ratio", "16:9", List.of("16:9", "16:10", "4:3", "21:9", "Custom"));
     public final NumberParameter customWidth = new NumberParameter("Width", 16, 1, 100, 1);
     public final NumberParameter customHeight = new NumberParameter("Height", 9, 1, 100, 1);
@@ -24,6 +32,7 @@ public class AspectRatio extends Module {
             default -> original;
         };
     }
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(AspectRatio.class);
     }
@@ -31,4 +40,6 @@ public class AspectRatio extends Module {
     public static AspectRatio itz() {
         return ModuleManager.get(AspectRatio.class);
     }
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

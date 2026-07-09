@@ -98,7 +98,11 @@ public class SoundUtility {
             return;
         }
 
+<<<<<<< HEAD
         ravex.modules.render.Sounds sounds = ModuleManager.get(ravex.modules.render.Sounds.class);
+=======
+        ravex.modules.render.Sounds sounds = ravex.modules.render.Sounds.INSTANCE;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (sounds != null && !sounds.getEnabled()) {
             return;
         }

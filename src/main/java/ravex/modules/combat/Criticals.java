@@ -1,5 +1,8 @@
 package ravex.modules.combat;
+<<<<<<< HEAD
 import ravex.manager.ModuleManager;
+=======
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -7,11 +10,19 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.EntityHitResult;
+<<<<<<< HEAD
 import ravex.utility.misc.MobUtility;
+=======
+import ravex.modules.Category;
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 public class Criticals extends Module {
+<<<<<<< HEAD
+=======
+    public static final Criticals INSTANCE = new Criticals();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         java.util.List.of("Legit", "Packet", "Grim", "MiniJump", "Watchdog"));
     public final BooleanParameter autoAttack = new BooleanParameter("AutoAttack", true);
@@ -44,8 +55,12 @@ public class Criticals extends Module {
         if (seq == Sequence.LANDING) {
             if (autoAttack.getValue() && mc.hitResult instanceof EntityHitResult ehr) {
                 Entity target = ehr.getEntity();
+<<<<<<< HEAD
                 LivingEntity lt = MobUtility.asLivingEntity(target);
                 if (lt != null && MobUtility.isAlive(lt) && target != mc.player
+=======
+                if (target instanceof LivingEntity lt && lt.isAlive() && target != mc.player
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                     && mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
                     mc.player.connection.send(
                         ServerboundInteractPacket.createAttackPacket(target, mc.player.isShiftKeyDown()));
@@ -112,6 +127,7 @@ public class Criticals extends Module {
             }
         }
     }
+<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(Criticals.class);
     }
@@ -120,3 +136,6 @@ public class Criticals extends Module {
     }
 
 }
+=======
+}
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

@@ -12,12 +12,21 @@ public class MixinLivingEntity {
 
     @Inject(method = "getCurrentSwingDuration", at = @At("HEAD"), cancellable = true)
     private void onGetCurrentSwingDuration(CallbackInfoReturnable<Integer> cir) {
+<<<<<<< HEAD
         if (Swing.maybeEnabled()) {
             String mode = Swing.itz().mode.getValue();
             int duration = switch (mode) {
                 case "1.8" -> 6;
                 case "1.12.2" -> 8;
                 case "Custom" -> Swing.itz().duration.getValue().intValue();
+=======
+        if (Swing.INSTANCE.getEnabled()) {
+            String mode = Swing.INSTANCE.mode.getValue();
+            int duration = switch (mode) {
+                case "1.8" -> 6;
+                case "1.12.2" -> 8;
+                case "Custom" -> Swing.INSTANCE.duration.getValue().intValue();
+>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 default -> 6;
             };
             cir.setReturnValue(duration);
