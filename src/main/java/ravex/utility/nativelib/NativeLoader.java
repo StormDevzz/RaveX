@@ -97,10 +97,14 @@ public class NativeLoader {
             "libravex_github_tools.so", "libravex_loader.so", "libravex_addon.so",
 <<<<<<< HEAD
             "libravex_fileprot.so", "libravex_fastexp.so",
+<<<<<<< HEAD
 =======
             "libravex_benchmark.so", "libravex_fileprot.so", "libravex_fastexp.so",
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             "libravex_nativesc.so",
+=======
+            "libravex_nativesc.so", "libravex_c_addon_loader.so",
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
             "libravex_autocrystal.so", "libravex_phase.so", "libravex_tntaura.so",
             "libravex_anchoraura.so", "libravex_breaker.so", "libravex_holefill.so",
             "libravex_trap.so", "libravex_selftrap.so", "libravex_baseplace.so",

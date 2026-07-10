@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import ravex.manager.ModuleManager;
+import com.mojang.blaze3d.textures.FilterMode;
 
 public class BlockBrowserScreen extends Screen {
     private final Screen parent;
@@ -109,8 +110,8 @@ public class BlockBrowserScreen extends Screen {
         int w = width, h = height;
         g.fill(0, 0, w, h, (int)(0x60 * alpha) << 24);
 
-        int pw = Math.min(680, w - 40);
-        int ph = Math.min(480, h - 40);
+        int pw = Math.min(480, w - 40);
+        int ph = Math.min(360, h - 40);
         int px = (w - pw) / 2;
         int py = (h - ph) / 2;
 
@@ -129,7 +130,7 @@ public class BlockBrowserScreen extends Screen {
 
         Render2DEngine.drawRound(g, px, py, pw, ph, r, 0xF00A0A0E);
         Render2DEngine.drawRoundBorder(g, px, py, pw, ph, r, 1,
-            ColorUtility.withAlpha(0xFF202020, alpha255));
+            ColorUtility.withAlpha(ac, alpha255));
 
         g.fill(px, py + 28, px + pw, py + 29, 0x22FFFFFF);
 
@@ -152,7 +153,7 @@ public class BlockBrowserScreen extends Screen {
                 ta ? 0x20FFFFFF : (th ? 0x15151515 : 0x05000000));
             if (ta)
                 Render2DEngine.drawRoundBorder(g, tix, tabY, tabW, tabH, 4, 1,
-                    ColorUtility.withAlpha(0xFF404040, (int)(180 * alpha)));
+                    ColorUtility.withAlpha(ac, (int)(220 * alpha)));
             String tabLabel = ti == 0 ? "All" : "Selected";
             int tabLabelW = FontRenderUtility.getStringWidth(tabLabel);
             FontRenderUtility.drawString(g, tabLabel,
@@ -164,7 +165,7 @@ public class BlockBrowserScreen extends Screen {
         boolean sHov = amx >= sx && amx <= sx + sw && amy >= sy2 && amy <= sy2 + sh;
         Render2DEngine.drawRound(g, sx, sy2, sw, sh, 4, searchFocused ? 0xFF141418 : (sHov ? 0xFF121216 : 0xFF0C0C10));
         Render2DEngine.drawRoundBorder(g, sx, sy2, sw, sh, 4, 1,
-            searchFocused ? ColorUtility.withAlpha(0xFF555555, (int)(200 * alpha))
+            searchFocused ? ColorUtility.withAlpha(ac, (int)(255 * alpha))
                 : ColorUtility.withAlpha(0xFF222222, alpha255));
         String st = searchQuery.isEmpty() && !searchFocused ? "\u00A78Search..." :
             searchQuery + (searchFocused ? "\u00A78|" : "");
@@ -172,8 +173,8 @@ public class BlockBrowserScreen extends Screen {
             ColorUtility.withAlpha(0xFF909090, alpha255), true);
 
         int gx = px + 10, gy = cy + 24, gw = pw - 20, gh = ch - 28;
-        int cols = Math.max(4, (gw + 2) / 24);
-        int cell = 24;
+        int cols = Math.max(4, (gw + 2) / 28);
+        int cell = 28;
         int rows = (filtered.size() + cols - 1) / cols;
         int maxScroll = Math.max(0, rows - (gh / cell));
 
@@ -185,9 +186,7 @@ public class BlockBrowserScreen extends Screen {
             if (Math.abs(tabTransition - 1f) < 0.001f) tabTransition = 1f;
         }
 
-        Render2DEngine.drawRound(g, gx, gy, gw, gh, 6, 0xAA06060A);
-        Render2DEngine.drawRoundBorder(g, gx, gy, gw, gh, 6, 1,
-            ColorUtility.withAlpha(0xFF1A1A1A, alpha255));
+        Render2DEngine.drawRound(g, gx, gy, gw, gh, 6, 0xFF06060A);
 
         g.enableScissor(gx, gy, gx + gw, gy + gh);
 
@@ -201,9 +200,10 @@ public class BlockBrowserScreen extends Screen {
 
         boolean transitioning = tabTransition < 1f;
 
+        SearchBrowserScreen.setAtlasFilter(FilterMode.LINEAR);
         if (transitioning && !previousFiltered.isEmpty()) {
             float oldOffX = -swipeDirection * tabTransition * gw;
-            int oldCols = Math.max(4, (gw + 2) / 24);
+            int oldCols = Math.max(4, (gw + 2) / 28);
             int oldRows = (previousFiltered.size() + oldCols - 1) / oldCols;
             int oldSr = (int) previousScrollAnim;
             int oldEr = Math.min(oldRows, oldSr + (gh / cell) + 1);
@@ -215,11 +215,10 @@ public class BlockBrowserScreen extends Screen {
                     int idx = r2 * oldCols + c;
                     if (idx >= previousFiltered.size()) break;
                     Entry e = previousFiltered.get(idx);
-                    if (selectedIds.contains(e.id)) {
-                        Render2DEngine.drawPixelPerfectRound(g, gx + c * cell, gy + (r2 - oldSr) * cell,
-                            cell, cell, 6, selColor);
-                    }
-                    g.renderItem(e.stack, gx + c * cell + 4, gy + (r2 - oldSr) * cell + 4);
+                    boolean sel = selectedIds.contains(e.id);
+                    int cellBg2 = sel ? ColorUtility.withAlpha(ac, (int)(30 * alpha)) : 0xFF06060A;
+                    Render2DEngine.drawRound(g, gx + c * cell, gy + (r2 - oldSr) * cell, cell, cell, 6, cellBg2);
+                    g.renderItem(e.stack, gx + c * cell + 6, gy + (r2 - oldSr) * cell + 6);
                 }
             }
             oldPose.popMatrix();
@@ -230,11 +229,12 @@ public class BlockBrowserScreen extends Screen {
             var newPose = g.pose();
             newPose.pushMatrix();
             newPose.translate(newOffX, 0);
-            renderGrid(g, sr, er, cols, gx, gy, cell, amx, amy, false, selColor, selHovColor, hovColor, transitioning);
+            renderGrid(g, sr, er, cols, gx, gy, cell, amx, amy, false, selColor, selHovColor, hovColor, transitioning, alpha);
             newPose.popMatrix();
         } else {
-            renderGrid(g, sr, er, cols, gx, gy, cell, amx, amy, true, selColor, selHovColor, hovColor, false);
+            renderGrid(g, sr, er, cols, gx, gy, cell, amx, amy, true, selColor, selHovColor, hovColor, false, alpha);
         }
+        SearchBrowserScreen.setAtlasFilter(FilterMode.NEAREST);
 
         g.disableScissor();
 
@@ -295,7 +295,7 @@ public class BlockBrowserScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         int w = width, h = height;
-        int pw = Math.min(680, w - 40), ph = Math.min(480, h - 40);
+        int pw = Math.min(480, w - 40), ph = Math.min(360, h - 40);
         int px = (w - pw) / 2, py = (h - ph) / 2;
 
         float scale = 0.85f + 0.15f * Math.min(1f, (System.currentTimeMillis() - openTime) / 150f);
@@ -343,7 +343,7 @@ public class BlockBrowserScreen extends Screen {
                 return true;
             }
 
-            int gx = px + 10, gy = py + 58, cols = Math.max(4, (pw - 22) / 24), cell = 24;
+            int gx = px + 10, gy = py + 58, cols = Math.max(4, (pw - 22) / 28), cell = 28;
             int col = (int)((amx - gx) / cell);
             int row = (int)((amy - gy) / cell) + (int)scrollAnim;
             if (col >= 0 && col < cols && row >= 0) {
@@ -363,12 +363,12 @@ public class BlockBrowserScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double hAmt, double vAmt) {
-        int pw = Math.min(680, width - 40);
-        int ph = Math.min(480, height - 40);
-        int gw = pw - 20, cols = Math.max(4, (gw + 2) / 24);
+        int pw = Math.min(480, width - 40);
+        int ph = Math.min(360, height - 40);
+        int gw = pw - 20, cols = Math.max(4, (gw + 2) / 28);
         int rows = (filtered.size() + cols - 1) / cols;
         float gh = (ph - 64) - 28;
-        int maxScroll = Math.max(0, rows - (int)(gh / 24));
+        int maxScroll = Math.max(0, rows - (int)(gh / 28));
         scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset - (float)vAmt * 1.5f));
         return true;
     }
@@ -430,7 +430,7 @@ public class BlockBrowserScreen extends Screen {
 
     private void renderGrid(GuiGraphics g, int sr, int er, int cols, int gx, int gy, int cell,
                             int amx, int amy, boolean hoverable, int selColor, int selHovColor, int hovColor,
-                            boolean transitioning) {
+                            boolean transitioning, float alpha) {
         for (int r2 = sr; r2 < er; r2++) {
             for (int c = 0; c < cols; c++) {
                 int idx = r2 * cols + c;
@@ -442,14 +442,22 @@ public class BlockBrowserScreen extends Screen {
 
                 if (hov) hoveredStack = e.stack;
 
-                if (selectedIds.contains(e.id)) {
-                    Render2DEngine.drawPixelPerfectRound(g, tx, ty, cell, cell, 6,
-                        hov ? selHovColor : selColor);
+                boolean sel = selectedIds.contains(e.id);
+                int cellBg = 0xFF06060A;
+                int ac = ColorUtility.getActiveColor();
+                int a255 = (int)(255 * alpha);
+                if (sel && hov) {
+                    cellBg = ColorUtility.withAlpha(ac, (int)(60 * alpha));
+                } else if (sel) {
+                    cellBg = ColorUtility.withAlpha(ac, (int)(30 * alpha));
                 } else if (hov) {
-                    Render2DEngine.drawRound(g, tx, ty, cell, cell, 6, hovColor);
+                    cellBg = ColorUtility.withAlpha(0xFF1A1A1E, a255);
+                } else {
+                    cellBg = ColorUtility.withAlpha(0xFF06060A, a255);
                 }
+                Render2DEngine.drawRound(g, tx, ty, cell, cell, 6, cellBg);
 
-                g.renderItem(e.stack, tx + 4, ty + 4);
+                g.renderItem(e.stack, tx + 6, ty + 6);
             }
         }
     }

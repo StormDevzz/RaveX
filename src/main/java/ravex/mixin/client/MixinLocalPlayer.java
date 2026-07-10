@@ -113,7 +113,7 @@ public class MixinLocalPlayer {
             ravexSavedPitch = player.getXRot();
             player.setYRot(Scaffold.silentRotation.yaw);
             player.setXRot(Scaffold.silentRotation.pitch);
-        } else if (KillAura.maybeEnabled() && KillAura.itz().rotate.getValue().equals("Silent") && KillAura.hasSilentRotations()) {
+        } else if (KillAura.maybeEnabled() && KillAura.hasSilentRotations()) {
             ravexSavedYaw = player.getYRot();
             ravexSavedPitch = player.getXRot();
             player.setYRot(KillAura.silentRotation.yaw);
@@ -159,7 +159,7 @@ public class MixinLocalPlayer {
         boolean quiverActive = Quiver.maybeEnabled() && Quiver.hasSilentRotations();
         boolean breakerActive = Breaker.maybeEnabled() && Breaker.itz().rotate.getValue().equals("Silent") && Breaker.silentRotation.hasRotation;
         boolean pmActive = PacketMine.maybeEnabled() && PacketMine.itz().rotate.getValue().equals("Silent") && PacketMine.silentRotation.hasRotation;
-        boolean kaActive = KillAura.maybeEnabled() && KillAura.itz().rotate.getValue().equals("Silent") && KillAura.hasSilentRotations();
+        boolean kaActive = KillAura.maybeEnabled() && KillAura.hasSilentRotations();
         boolean sfActive = ShieldFucker.maybeEnabled() && ShieldFucker.itz().rotate.getValue().equals("Silent") && ShieldFucker.hasSilentRotations();
         boolean scaffoldSilent = Scaffold.maybeEnabled() && Scaffold.silentRotation.hasRotation;
 =======

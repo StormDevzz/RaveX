@@ -30,6 +30,15 @@ public abstract class MixinNoSlowDown {
             cir.setReturnValue(false);
             return;
         }
+        if ("GrimAlternative".equals(mode)) {
+            cir.setReturnValue(false);
+            return;
+        }
+        if ("GrimV3".equals(mode)) {
+            if (ns.isInGrace()) return;
+            cir.setReturnValue(false);
+            return;
+        }
         cir.setReturnValue(false);
 =======
     @Inject(method = "isSlowDueToUsingItem", at = @At("HEAD"), cancellable = true)
@@ -55,6 +64,8 @@ public abstract class MixinNoSlowDown {
             }
             return true;
         }
+        if ("GrimAlternative".equals(mode)) return ns.isSlowPhase();
+        if ("GrimV3".equals(mode)) return false;
         return false;
 =======
         if (NoSlowDown.INSTANCE.getEnabled() && NoSlowDown.INSTANCE.items.getValue()) {

@@ -40,10 +40,7 @@ public class HudModuleEntry {
             ? ColorUtility.withAlpha(0xFFFFFFFF, alpha)
             : ColorUtility.withAlpha(0xFF707080, alpha);
         FontRenderUtility.drawString(g, module.getName(), x + 6, y + 4, textColor, true);
-        if (enabled) {
-            FontRenderUtility.drawString(g, "\u25CF", x + width - 14, y + 4,
-                ColorUtility.withAlpha(accentColor, alpha), true);
-        }
+        // No circle indicator
     }
     public int getExpandedParamCount() {
         int count = 0;
@@ -58,7 +55,7 @@ public class HudModuleEntry {
             if (!pe.getParam().isVisible()) continue;
             int ph = pe.getHeight();
             if (ph <= 0) { cy += ph; continue; }
-            if (pe.mouseClicked(mouseX, mouseY, x + 2, cy, width - 4)) return true;
+            if (pe.mouseClicked(mouseX, mouseY, x + 2, cy, width - 4, 0)) return true;
             cy += ph;
         }
         return false;

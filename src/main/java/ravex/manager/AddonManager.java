@@ -4,6 +4,8 @@ import ravex.addon.Addon;
 import ravex.addon.core.AddonContext;
 import ravex.addon.core.AddonLoader;
 import ravex.addon.module.AddonRegistry;
+import ravex.addon.security.AddonSignature;
+import ravex.addon.util.AddonException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,11 +17,15 @@ public class AddonManager {
 
     private AddonManager() {}
 
-    private native void nativeInitAddons(String dirPath);
+    private native void nativeInitAddons(String[] paths);
     private native void nativeUnloadAddons();
 
     public void init() {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        ravex.addon.core.CAddonManager.init();
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
         File addonsDir = new File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "RaveX/addons");
 =======
         File addonsDir = new File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "ravex/addons");
@@ -28,14 +34,35 @@ public class AddonManager {
 
         File nativeAddonsDir = new File(addonsDir, "native");
         if (!nativeAddonsDir.exists()) nativeAddonsDir.mkdirs();
-        try {
-            nativeInitAddons(nativeAddonsDir.getAbsolutePath());
-        } catch (UnsatisfiedLinkError ignored) {}
 
-        File[] files = addonsDir.listFiles((dir, name) -> name.endsWith(".jar"));
+        File[] nativeFiles = nativeAddonsDir.listFiles((dir, name) -> {
+            String lower = name.toLowerCase();
+            return lower.endsWith(".so") || lower.endsWith(".dll");
+        });
+
+        List<String> verifiedNative = new ArrayList<>();
+        if (nativeFiles != null) {
+            for (File f : nativeFiles) {
+                try {
+                    AddonSignature.requireSignature(f.toPath());
+                    verifiedNative.add(f.getAbsolutePath());
+                } catch (AddonException e) {
+                    ravex.RaveX.LOGGER.warn("[AddonManager] Skipping unsigned native addon: {} - {}",
+                        f.getName(), e.getMessage());
+                }
+            }
+        }
+
+        if (!verifiedNative.isEmpty()) {
+            try {
+                nativeInitAddons(verifiedNative.toArray(new String[0]));
+            } catch (UnsatisfiedLinkError ignored) {}
+        }
+
+        File[] jarFiles = addonsDir.listFiles((dir, name) -> name.endsWith(".jar"));
         int count = 0;
-        if (files != null) {
-            for (File f : files) {
+        if (jarFiles != null) {
+            for (File f : jarFiles) {
                 try {
                     Addon addon = AddonLoader.loadAddon(f);
                     AddonContext context = new AddonContext(addon.getInfo());
@@ -48,13 +75,14 @@ public class AddonManager {
                 }
             }
         }
-        ravex.RaveX.LOGGER.info("[AddonManager] Loaded {} addon(s)", count);
+        ravex.RaveX.LOGGER.info("[AddonManager] Loaded {} Java addon(s), {} native addon(s)", count, verifiedNative.size());
     }
 
     public List<Addon> getLoadedAddons() { return loadedAddons; }
     public AddonRegistry getRegistry() { return registry; }
 
     public void shutdown() {
+        ravex.addon.core.CAddonManager.shutdown();
         try {
             nativeUnloadAddons();
         } catch (UnsatisfiedLinkError ignored) {}

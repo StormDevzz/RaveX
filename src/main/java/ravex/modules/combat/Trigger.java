@@ -35,14 +35,25 @@ public class Trigger extends Module {
             List.of("Hold", "Toggle"));
     private boolean toggled = false;
     private long lastAttackTime = 0;
+    private net.minecraft.world.entity.LivingEntity currentTarget = null;
+
+    public net.minecraft.world.entity.LivingEntity getCurrentTarget() {
+        return currentTarget;
+    }
 
     @Override
-    protected void onDisable() { toggled = false; }
+    protected void onDisable() {
+        toggled = false;
+        currentTarget = null;
+    }
 
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        if (mc.player == null || mc.level == null) {
+            currentTarget = null;
+            return;
+        }
         String clickModeVal = clickMode.getValue();
         boolean shouldAttack;
         if (clickModeVal.equals("Toggle")) {
@@ -51,26 +62,60 @@ public class Trigger extends Module {
         } else {
             shouldAttack = mc.options.keyAttack.isDown();
         }
-        if (!shouldAttack) return;
-        if (weaponOnly.getValue() && !InventoryUtility.isWeapon(mc.player.getMainHandItem().getItem())) return;
+        if (!shouldAttack) {
+            currentTarget = null;
+            return;
+        }
+        if (weaponOnly.getValue() && !InventoryUtility.isWeapon(mc.player.getMainHandItem().getItem())) {
+            currentTarget = null;
+            return;
+        }
         var target = MobUtility.asLivingEntity(InventoryUtility.getHitEntity(mc));
-        if (target == null || !MobUtility.isAlive(target) || MobUtility.isSelf(target) || MobUtility.isArmorStand(target)) return;
-        if (MobUtility.distanceToPlayer(target) > range.getValue()) return;
-        if (!invisibles.getValue() && target.isInvisible()) return;
-        if (!players.getValue() && MobUtility.isPlayer(target)) return;
-        if (!monsters.getValue() && MobUtility.isHostile(target)) return;
-        if (!passives.getValue() && MobUtility.isPassive(target)) return;
-        if (!throughWalls.getValue() && !mc.player.hasLineOfSight(target)) return;
-        if (raytrace.getValue() && !InventoryUtility.isLookingAtEntity(mc, target, 20.0)) return;
+        if (target == null || !MobUtility.isAlive(target) || MobUtility.isSelf(target) || MobUtility.isArmorStand(target)) {
+            currentTarget = null;
+            return;
+        }
+        if (MobUtility.distanceToPlayer(target) > range.getValue()) {
+            currentTarget = null;
+            return;
+        }
+        if (!invisibles.getValue() && target.isInvisible()) {
+            currentTarget = null;
+            return;
+        }
+        if (!players.getValue() && MobUtility.isPlayer(target)) {
+            currentTarget = null;
+            return;
+        }
+        if (!monsters.getValue() && MobUtility.isHostile(target)) {
+            currentTarget = null;
+            return;
+        }
+        if (!passives.getValue() && MobUtility.isPassive(target)) {
+            currentTarget = null;
+            return;
+        }
+        if (!throughWalls.getValue() && !mc.player.hasLineOfSight(target)) {
+            currentTarget = null;
+            return;
+        }
+        if (raytrace.getValue() && !InventoryUtility.isLookingAtEntity(mc, target, 20.0)) {
+            currentTarget = null;
+            return;
+        }
+        float[] angles = RotationUtility.anglesTo(mc.player, target.position().add(0, target.getEyeHeight(target.getPose()) * 0.75, 0));
+        float diffYaw = net.minecraft.util.Mth.wrapDegrees(angles[0] - mc.player.getYRot());
+        float diffPitch = net.minecraft.util.Mth.wrapDegrees(angles[1] - mc.player.getXRot());
+        if (Math.abs(diffYaw) > fov.getValue() || Math.abs(diffPitch) > fov.getValue()) {
+            currentTarget = null;
+            return;
+        }
+        currentTarget = target;
         long interval = 1000L / (long) cps.getValue().doubleValue();
         double r = randomization.getValue();
         if (r > 0.01) interval += (long) ((Math.random() - 0.5) * r * 100.0);
         if (System.currentTimeMillis() - lastAttackTime < interval) return;
         if (mc.player.getAttackStrengthScale(0.0f) < cooldown.getValue().floatValue()) return;
-        float[] angles = RotationUtility.anglesTo(mc.player, target.position().add(0, target.getEyeHeight(target.getPose()) * 0.75, 0));
-        float diffYaw = net.minecraft.util.Mth.wrapDegrees(angles[0] - mc.player.getYRot());
-        float diffPitch = net.minecraft.util.Mth.wrapDegrees(angles[1] - mc.player.getXRot());
-        if (Math.abs(diffYaw) > fov.getValue() || Math.abs(diffPitch) > fov.getValue()) return;
         InventoryUtility.attackEntity(mc, target, swingMode.getValue());
         lastAttackTime = System.currentTimeMillis();
     }

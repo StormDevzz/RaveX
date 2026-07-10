@@ -51,7 +51,8 @@ public class ModuleManager {
             "SkyColor", "CloudColor", "Trails",
             "Waypoint", "KillEffects", "Particles",
             "AspectRatio", "Borders", "Zoom",
-            "ToolTips", "DeathText"
+            "ToolTips", "DeathText",
+            "Search"
         );
 
         register(Category.PLAYER,
@@ -114,6 +115,7 @@ public class ModuleManager {
             "WatermarkHud", "ArrayListHud", "CoordsHud",
             "FpsHud", "NowPlayingHud", "ChatHud",
             "TpsHud", "CooldownsHud", "InvPreviewHud",
+<<<<<<< HEAD
             "IndicatorsHud", "CurrencyHud", "ServerBrandHud"
 =======
 import ravex.RaveX;
@@ -210,6 +212,10 @@ public class ModuleManager {
             "NowPlayingHud", "ChatHud", "TpsHud", "CooldownsHud",
             "InvPreviewHud", "IndicatorsHud", "CurrencyHud", "ServerBrandHud"
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
+=======
+            "IndicatorsHud", "CurrencyHud", "ServerBrandHud",
+            "TargetHud"
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
         );
     }
 

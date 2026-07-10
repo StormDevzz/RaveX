@@ -329,11 +329,16 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
 <<<<<<< HEAD
         EventBusHolder.get().post(new TickEvent.Client());
+<<<<<<< HEAD
 =======
         ModuleManager.INSTANCE.onTick();
         ravex.manager.MacroManager.INSTANCE.onTick();
         ravex.manager.LuaManager.INSTANCE.onTick(); 
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
+=======
+        ravex.addon.core.CAddonManager.onTick();
+        ServiceLocator.resolve(ModuleManager.class).onTick();
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.getWindow() == null) return;

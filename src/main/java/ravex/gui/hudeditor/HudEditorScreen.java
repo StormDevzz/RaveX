@@ -2,13 +2,16 @@ package ravex.gui.hudeditor;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
 import org.lwjgl.glfw.GLFW;
+import ravex.gui.clickgui.ColorPaletteModal;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
+import ravex.parameter.ColorParameter;
 import ravex.utility.misc.GuiOptimizer;
 import ravex.utility.render.FontRenderUtility;
 import java.util.HashMap;
@@ -25,6 +28,8 @@ public class HudEditorScreen extends Screen {
     private long savedFlashMs = -1;
     private final HudPanel panel = new HudPanel();
     private final Map<Module, Float> hoverProgress = new HashMap<>();
+    ColorPaletteModal activeColorPalette = null;
+    ColorParameter activeColorParameter = null;
     public HudEditorScreen(Screen parentScreen) {
         super(Component.literal("RaveX HUD Editor"));
         this.parentScreen = parentScreen;
@@ -134,11 +139,22 @@ public class HudEditorScreen extends Screen {
             FontRenderUtility.drawString(graphics, tag, tagX, tagY, hov ? accentColor : 0xFFAAAAAA, false);
         }
         panel.render(graphics, mouseX, mouseY, this.width, this.height, alpha, accentColor);
+        if (activeColorPalette != null) {
+            activeColorPalette.render(graphics, mouseX, mouseY, this.width, this.height);
+        }
         super.render(graphics, mouseX, mouseY, partialTicks);
     }
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         if (closing) return true;
+        if (activeColorPalette != null) {
+            boolean result = activeColorPalette.mouseClicked(event.x(), event.y(), event.button());
+            if (!activeColorPalette.isOpen()) {
+                activeColorPalette = null;
+                activeColorParameter = null;
+            }
+            return true;
+        }
         int mx = (int) event.x(), my = (int) event.y();
         int btn = event.button();
         if (panel.mouseClicked(mx, my, btn, this.width, this.height)) return true;
@@ -191,8 +207,34 @@ public class HudEditorScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         if (closing) return true;
+        if (activeColorPalette != null) {
+            boolean result = activeColorPalette.keyPressed(event.key());
+            if (!activeColorPalette.isOpen()) {
+                activeColorPalette = null;
+                activeColorParameter = null;
+            }
+            return true;
+        }
         if (event.key() == GLFW.GLFW_KEY_ESCAPE) { doSave(); return true; }
         return super.keyPressed(event);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent event) {
+        if (closing) return true;
+        if (activeColorPalette != null) {
+            String text = event.codepointAsString();
+            if (!text.isEmpty()) {
+                boolean result = activeColorPalette.charTyped(text.charAt(0));
+                if (!activeColorPalette.isOpen()) {
+                    activeColorPalette = null;
+                    activeColorParameter = null;
+                }
+                return true;
+            }
+            return true;
+        }
+        return super.charTyped(event);
     }
     private void doSave() {
         savedFlashMs = System.currentTimeMillis();

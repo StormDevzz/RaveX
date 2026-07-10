@@ -6,7 +6,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import java.util.List;
 public class GuiMove extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "NoClick", "NCPStrict", "Grim"));
+    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "NoClick", "NCPStrict", "Grim", "Matrix"));
     public final BooleanParameter sneak = new BooleanParameter("Sneak", false);
     public final BooleanParameter noJump = new BooleanParameter("NoJump", false);
     public final BooleanParameter noSprint = new BooleanParameter("NoSprint", false);

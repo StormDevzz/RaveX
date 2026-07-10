@@ -121,13 +121,17 @@ public class CategoryPanel {
 
 <<<<<<< HEAD
         int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+<<<<<<< HEAD
 =======
         int btnH = ClickGui.INSTANCE.buttonHeight.getValue().intValue();
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         int listTop = iy + 18;
+=======
+        int listTop = iy + 22;
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
         int totalH = 22;
         for (ModuleButton btn : visible) {
-            totalH += Math.max(1, (int)(btnH * btn.getSearchReveal()));
+            totalH += Math.max(1, (int)(btnH * btn.getSearchReveal())) + 2;
             if (btn.isExpanded()) totalH += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
         }
         int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.55f);
@@ -286,9 +290,9 @@ public class CategoryPanel {
                             return true;
                         }
                     }
-                    renderY += btnH + expH;
+                    renderY += btnH + 2 + expH;
                 } else {
-                    renderY += btnH;
+                    renderY += btnH + 2;
                 }
             }
 
@@ -315,7 +319,7 @@ public class CategoryPanel {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         int h = 22;
         for (ModuleButton btn : visible) {
-            h += Math.max(1, (int)(btnH * btn.getSearchReveal()));
+            h += Math.max(1, (int)(btnH * btn.getSearchReveal())) + 2;
             if (btn.isExpanded()) {
                 h += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
             }

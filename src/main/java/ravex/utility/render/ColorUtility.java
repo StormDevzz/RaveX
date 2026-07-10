@@ -65,6 +65,13 @@ public class ColorUtility {
         return toRGBA(getRed(rgb), getGreen(rgb), getBlue(rgb), a);
     }
 
+    public static int rainbowDistributed(int index, int total, long speedMs, float saturation, float brightness) {
+        long time = System.currentTimeMillis();
+        float hue = ((time + index * (speedMs / Math.max(1, total))) % speedMs) / (float) speedMs;
+        int rgb = Color.HSBtoRGB(hue, saturation, brightness);
+        return (0xFF << 24) | (rgb & 0xFFFFFF);
+    }
+
     public static int fade(int speed, int index, int color, float alpha) {
         float[] hsb = Color.RGBtoHSB(getRed(color), getGreen(color), getBlue(color), null);
         int angle = (int) ((System.currentTimeMillis() / (double) speed + index) % 360);

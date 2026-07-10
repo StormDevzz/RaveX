@@ -162,16 +162,17 @@ public class ModuleButton {
             int hoverAlpha = (int) (hoverProgress * Math.min(30, btnAlpha / 2));
             mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
         }
-        Render2DEngine.drawRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, mergedBg);
+
+        Render2DEngine.drawPixelPerfectRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, mergedBg);
 
         if (searchQuery != null && !searchQuery.isEmpty()
             && module.getName().toLowerCase().contains(searchQuery.toLowerCase())) {
             int searchBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(activeColor, 30));
-            Render2DEngine.drawRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, searchBg);
+            Render2DEngine.drawPixelPerfectRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, searchBg);
         }
 
         int baseColor = lerpColor(0xFFB0B0C0, activeColor, enableAnim);
-        int textColor = (hovered && enableAnim < 0.01f) ? 0xFFD0D0E0 : baseColor;
+        int textColor = hovered ? 0xFFFFFFFF : baseColor;
 
         String displayName = module.getName();
         if (ClickGUI.bindingModuleButton == this) {
@@ -240,7 +241,7 @@ public class ModuleButton {
             graphics.blit(modIcon, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
         }
 
-        currentY += btnH;
+        currentY += btnH + 2;
 
         if (hasParams) {
             float targetExpand = expanded ? 1.0f : 0.0f;
@@ -260,7 +261,7 @@ public class ModuleButton {
                 }
                 int actualH = getExpandedHeight(width);
                 int bgCol = ColorUtility.withAlpha(0x0A0A14, Math.max(btnAlpha / 2, 24));
-                Render2DEngine.drawRound(graphics, x + 3, currentY, width - 6, actualH, Math.max(4, btnRadius - 2), bgCol);
+                Render2DEngine.drawPixelPerfectRound(graphics, x + 3, currentY, width - 6, actualH, Math.max(4, btnRadius - 2), bgCol);
 
                 inlineScrollAnim = inlineScrollTarget;
                 int scrollOffset = Math.round(inlineScrollAnim);
@@ -305,10 +306,14 @@ public class ModuleButton {
         if (revealH < 0.99f) {
             int fadeAlpha = (int)((1.0f - revealH) * 200);
 <<<<<<< HEAD
+<<<<<<< HEAD
             Render2DEngine.drawRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 0x050510);
 =======
             Render2DEngine.drawRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min(ClickGui.INSTANCE.cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 0x050510);
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
+=======
+            Render2DEngine.drawPixelPerfectRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 0x050510);
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
         }
         currentYOut[0] = currentYOut[0] + (int)((currentY - currentYOut[0]) * revealH);
     }
@@ -387,10 +392,17 @@ public class ModuleButton {
         int currentY = currentYOut[0];
 <<<<<<< HEAD
         int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+<<<<<<< HEAD
 =======
         int btnH = ravex.modules.client.ClickGui.INSTANCE.buttonHeight.getValue().intValue();
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         int totalH = btnH + (expanded ? getExpandedHeight(width) : 0);
+=======
+        int gap = 2;
+        int paramH = expanded ? getExpandedHeight(width) : 0;
+        int totalH = btnH + paramH + (expanded ? gap : 0);
+        int advanceY = btnH + paramH + gap;
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
 
         if (mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + totalH) {
             if (mouseY <= currentY + btnH) {
@@ -410,25 +422,25 @@ public class ModuleButton {
                 }
             } else if (expanded) {
                 int scrollOffset = Math.round(inlineScrollAnim);
-                int pY = currentY + btnH + 2 - scrollOffset;
+                int pY = currentY + btnH + gap - scrollOffset;
                 int paramW = width - 6;
                 for (ParameterElement pe : parameterElements) {
                     if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
                     int pH = pe.getHeight();
                     if (mouseX >= x + 4 && mouseX <= x + 4 + paramW && mouseY >= pY && mouseY <= pY + pH) {
                         if (pe.mouseClicked(mouseX, mouseY, button, x + 4, pY, paramW, pH)) {
-                            currentYOut[0] = currentY + totalH;
+                            currentYOut[0] = currentY + advanceY;
                             return true;
                         }
                     }
                     pY += pH;
                 }
             }
-            currentYOut[0] = currentY + totalH;
+            currentYOut[0] = currentY + advanceY;
             return true;
         }
 
-        currentYOut[0] = currentY + totalH;
+        currentYOut[0] = currentY + advanceY;
         return false;
     }
 

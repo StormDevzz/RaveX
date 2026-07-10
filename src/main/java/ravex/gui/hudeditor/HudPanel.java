@@ -31,7 +31,7 @@ public class HudPanel {
     private float velX;
     private float velY;
     private float rotation;
-    private int lastPanelX;
+    private float lastRenderX;
     private final Set<Module> expandedModules = new HashSet<>();
     private final Map<Module, Float> expandAnimMap = new HashMap<>();
     private final List<HudModuleEntry> entries = new ArrayList<>();
@@ -98,27 +98,31 @@ public class HudPanel {
         int ph = headerH + totalRows + 4;
         if (targetY + ph > screenH) targetY = screenH - ph - 4;
         if (targetY < 0) targetY = 4;
-        boolean moving = panelDragging || Math.abs(velX) > 0.5f || Math.abs(velY) > 0.5f
-            || Math.abs(renderX - targetX) > 0.5f || Math.abs(renderY - targetY) > 0.5f;
-        if (moving) {
-            float ax = (targetX - renderX) * 0.12f - velX * 0.55f;
-            float ay = (targetY - renderY) * 0.12f - velY * 0.55f;
-            velX += ax;
-            velY += ay;
-            renderX += velX;
-            renderY += velY;
+
+        double dragLerp = ModuleManager.get(ravex.modules.client.ClickGui.class).smoothScroll.getValue()
+            ? (ModuleManager.get(ravex.modules.client.ClickGui.class).scrollSmoothness.getValue().doubleValue() / 100.0)
+            : 1.0;
+        float dragFactor = (float) Math.min(1.0, dragLerp * 0.85);
+
+        if (Math.abs(targetX - renderX) > 0.05f) {
+            renderX += (targetX - renderX) * dragFactor;
         } else {
             renderX = targetX;
-            renderY = targetY;
-            velX = 0;
-            velY = 0;
         }
-        int deltaX = panelX - lastPanelX;
+        if (Math.abs(targetY - renderY) > 0.05f) {
+            renderY += (targetY - renderY) * dragFactor;
+        } else {
+            renderY = targetY;
+        }
+        velX = 0;
+        velY = 0;
+
+        float deltaX = renderX - lastRenderX;
         float rotTargetDeg;
         if (deltaX > 0) {
-            rotTargetDeg = Math.min(18f, 5f + deltaX * 3.3f);
+            rotTargetDeg = Math.min(18f, 5f + deltaX * 6.0f);
         } else if (deltaX < 0) {
-            rotTargetDeg = Math.max(-18f, -5f - (-deltaX) * 3.3f);
+            rotTargetDeg = Math.max(-18f, -5f - (-deltaX) * 6.0f);
         } else {
             rotTargetDeg = 0;
         }
@@ -128,14 +132,17 @@ public class HudPanel {
         if (!panelDragging && Math.abs(rotation) < 0.0002f) {
             rotation = 0;
         }
-        lastPanelX = panelX;
+        lastRenderX = renderX;
         int px = Math.round(renderX);
         int py = Math.round(renderY);
         int centerX = px + pw / 2;
         int centerY = py + ph / 2;
         float animAlpha = alpha / 255f;
-        int baseAlpha = ModuleManager.get(Hud.class).editorOpacity.getValue().intValue();
-        int pAlpha = (int)(baseAlpha * animAlpha);
+
+        // ClickGui-style background opacity and corner radius
+        int pAlpha = (int)(ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity.getValue().intValue() * animAlpha);
+        int cornerRadius = Math.min(ModuleManager.get(ravex.modules.client.ClickGui.class).cornerRadius.getValue().intValue(), ph / 2);
+
         float stretch = Math.abs(rotation) * 0.3f;
         boolean hasTransform = Math.abs(rotation) > 0.0001f || stretch > 0.0001f;
         if (hasTransform) {
@@ -146,17 +153,20 @@ public class HudPanel {
             g.pose().rotate(rotation);
             g.pose().translate(-centerX, -centerY);
         }
-        int panelColor = ModuleManager.get(Hud.class).panelColor.getValue();
-        int pcA = (panelColor >> 24) & 0xFF;
-        int bodyColor = pcA > 0
-            ? ColorUtility.withAlpha(panelColor, (int)(pcA * animAlpha))
-            : ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, pAlpha);
-        Render2DEngine.drawRound(g, px, py, pw, ph, PANEL_RADIUS, bodyColor);
-        Render2DEngine.drawRoundBorder(g, px, py, pw, ph, PANEL_RADIUS, 1,
-            ColorUtility.withAlpha(accentColor, (int)(40 * animAlpha)));
+
+        // Draw translucent body in ClickGui style
+        int bodyColor = ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, pAlpha);
+        Render2DEngine.drawRound(g, px, py, pw, ph, cornerRadius, bodyColor);
+
+        // ClickGui-style outline border if outlines is enabled
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).outlines.getValue()) {
+            int borderColor = ColorUtility.withAlpha(ModuleManager.get(ravex.modules.client.ClickGui.class).outlineColor.getValue(), (int)(255 * animAlpha));
+            Render2DEngine.drawRoundBorder(g, px, py, pw, ph, cornerRadius, 1, borderColor);
+        }
+
         boolean headerHov = mx >= px && mx <= px + pw && my >= py && my <= py + headerH;
         if (headerHov) {
-            Render2DEngine.drawRound(g, px, py, pw, headerH, PANEL_RADIUS,
+            Render2DEngine.drawRound(g, px, py, pw, headerH, cornerRadius,
                 ColorUtility.withAlpha(accentColor, (int)(15 * animAlpha)));
         }
         g.fill(px, py + headerH - 1, px + pw, py + headerH,
@@ -169,16 +179,21 @@ public class HudPanel {
         }
         FontRenderUtility.drawString(g, "HUD", px + 22, py + 3,
             ColorUtility.withAlpha(0xFFD0D0E0, alpha), true);
-        List<Module> huds = ModuleManager.INSTANCE.getHudModules();
-        int enabledCount = 0;
-        for (Module m : huds) { if (m.getEnabled()) enabledCount++; }
-        String countText = enabledCount + "/" + huds.size();
-        int cw = FontRenderUtility.getStringWidth(countText);
-        int badgeX = px + pw - cw - 12;
-        Render2DEngine.drawRound(g, badgeX, py + 3, cw + 8, 14, 4,
-            ColorUtility.withAlpha(accentColor, (int)(50 * animAlpha)));
-        FontRenderUtility.drawString(g, countText, badgeX + 4, py + 5,
-            enabledCount == huds.size() ? 0xFFA0E0A0 : 0xFFE0E0E0, true);
+
+        // Optional modules counter
+        if (ModuleManager.get(Hud.class).showCounter.getValue()) {
+            List<Module> huds = ModuleManager.INSTANCE.getHudModules();
+            int enabledCount = 0;
+            for (Module m : huds) { if (m.getEnabled()) enabledCount++; }
+            String countText = enabledCount + "/" + huds.size();
+            int cw = FontRenderUtility.getStringWidth(countText);
+            int badgeX = px + pw - cw - 12;
+            Render2DEngine.drawRound(g, badgeX, py + 3, cw + 8, 14, 4,
+                ColorUtility.withAlpha(accentColor, (int)(50 * animAlpha)));
+            FontRenderUtility.drawString(g, countText, badgeX + 4, py + 5,
+                enabledCount == huds.size() ? 0xFFA0E0A0 : 0xFFE0E0E0, true);
+        }
+
         int cy = py + headerH + 2;
         int drawn = 0;
         for (int i = modulePanelScroll; i < entries.size() && drawn < 30; i++) {
@@ -294,11 +309,9 @@ public class HudPanel {
                         int ph = pe.getHeight();
                         if (ph <= 0) continue;
                         if (my >= cy && my <= cy + ph) {
-                            if (btn == 0) {
-                                pe.toggle();
+                            if (pe.mouseClicked(mx, my, px + 4, cy, pw - 8, btn)) {
                                 return true;
                             }
-                            return true;
                         }
                         cy += ph;
                     }

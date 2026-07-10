@@ -23,6 +23,7 @@ public class HudDescriptions {
         DESCRIPTIONS.put("Cooldowns", "Displays item cooldowns (Ender Pearl, Chorus, etc.) with remaining percentage.");
         DESCRIPTIONS.put("Currency", "Renders custom live/simulated currency exchange rates for CIS & NATO countries + BTC.");
         DESCRIPTIONS.put("ServerBrand", "Displays the server implementation brand using C++ JNI formatting.");
+        DESCRIPTIONS.put("TargetHud", "Displays target player statistics, health, armor, and hand items.");
     }
 
     public static String getDescription(String moduleName) {

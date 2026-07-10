@@ -20,10 +20,12 @@ import java.util.Map;
 
 public class Render2DEngine {
 
-    private static final int RRT_SIZE = 64;
-    private static final Map<Integer, Identifier> RRT_CACHE = new HashMap<>();
+    private static final int RRT_SIZE = 128;
+    private static Identifier rrtHdTex = null;
+    private static final Map<String, Identifier> ROUND_RECT_OUTLINE_CACHE = new HashMap<>();
     private static final Map<Integer, int[]> CORNER_EDGES = new HashMap<>();
     private static final Map<Integer, Identifier> SMOOTH_CIRCLE_CACHE = new HashMap<>();
+    private static final Map<String, Identifier> SMOOTH_RING_CACHE = new HashMap<>();
 
     private static final int SHADOW_SIZE = 32;
     private static final Map<String, Identifier> SHADOW_CACHE = new HashMap<>();
@@ -70,31 +72,69 @@ public class Render2DEngine {
     }
 
     private static Identifier getCornerTexture(int r) {
-        return RRT_CACHE.computeIfAbsent(r, radius -> {
-            NativeImage img = new NativeImage(RRT_SIZE, RRT_SIZE, false);
+        if (rrtHdTex == null) {
+            int size = 128;
+            NativeImage img = new NativeImage(size, size, false);
             int ss = 4;
-            float r2 = (radius - 0.5f) * (radius - 0.5f);
-            for (int y = 0; y < RRT_SIZE; y++) {
-                for (int x = 0; x < RRT_SIZE; x++) {
-                    int a = 255;
-                    if (x < radius && y < radius) {
-                        a = calcCornerAA(x, y, radius, radius, ss, r2);
-                    } else if (x >= RRT_SIZE - radius && y < radius) {
-                        a = calcCornerAA(x, y, RRT_SIZE - radius, radius, ss, r2);
-                    } else if (x < radius && y >= RRT_SIZE - radius) {
-                        a = calcCornerAA(x, y, radius, RRT_SIZE - radius, ss, r2);
-                    } else if (x >= RRT_SIZE - radius && y >= RRT_SIZE - radius) {
-                        a = calcCornerAA(x, y, RRT_SIZE - radius, RRT_SIZE - radius, ss, r2);
-                    }
+            float cx = size / 2f;
+            float cy = size / 2f;
+            float rVal = size / 2f - 0.5f;
+            float r2 = rVal * rVal;
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    int a = calcCornerAA(x, y, cx, cy, ss, r2);
                     img.setPixel(x, y, (a << 24) | 0x00FFFFFF);
                 }
             }
-            DynamicTexture tex = new DynamicTexture(() -> "rrt_" + radius, img);
+            DynamicTexture tex = new DynamicTexture(() -> "rrt_hd", img);
             setLinearSampler(tex);
-            Identifier id = Identifier.fromNamespaceAndPath("ravex", "rrt_" + radius);
+            rrtHdTex = Identifier.fromNamespaceAndPath("ravex", "rrt_hd");
+            Minecraft.getInstance().getTextureManager().register(rrtHdTex, tex);
+        }
+        return rrtHdTex;
+    }
+
+    private static Identifier getCornerOutlineTexture(int radius, int thickness) {
+        String key = radius + "_" + thickness;
+        return ROUND_RECT_OUTLINE_CACHE.computeIfAbsent(key, k -> {
+            int size = 128;
+            NativeImage img = new NativeImage(size, size, false);
+            int ss = 4;
+            float cx = size / 2f;
+            float cy = size / 2f;
+            float outerR = size / 2f - 0.5f;
+            float texThickness = (size / 2f) * thickness / (float) radius;
+            float innerR = Math.max(0f, outerR - texThickness);
+            float outerR2 = outerR * outerR;
+            float innerR2 = innerR * innerR;
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    int a = calcCornerOutlineAA(x, y, cx, cy, ss, outerR2, innerR2);
+                    img.setPixel(x, y, (a << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture tex = new DynamicTexture(() -> "rro_" + key, img);
+            setLinearSampler(tex);
+            Identifier id = Identifier.fromNamespaceAndPath("ravex", "rro_" + key);
             Minecraft.getInstance().getTextureManager().register(id, tex);
             return id;
         });
+    }
+
+    private static int calcCornerOutlineAA(int x, int y, float cx, float cy, int ss, float outerR2, float innerR2) {
+        int total = 0;
+        for (int sy = 0; sy < ss; sy++) {
+            float py = y + (sy + 0.5f) / ss - cy;
+            float py2 = py * py;
+            for (int sx = 0; sx < ss; sx++) {
+                float px = x + (sx + 0.5f) / ss - cx;
+                float dist2 = px * px + py2;
+                if (dist2 <= outerR2 && dist2 >= innerR2) {
+                    total++;
+                }
+            }
+        }
+        return Math.min(255, total * 255 / (ss * ss));
     }
 
     private static int calcCornerAA(int x, int y, float cx, float cy, int ss, float r2) {
@@ -112,36 +152,74 @@ public class Render2DEngine {
 
     public static Identifier getSmoothCircle(int diameter) {
         return SMOOTH_CIRCLE_CACHE.computeIfAbsent(diameter, d -> {
-            int ss = 8;
-            int ssSize = d * ss;
-            NativeImage ssImg = new NativeImage(ssSize, ssSize, false);
-            int cx = ssSize / 2, cy = ssSize / 2;
-            float rad2 = (d / 2f - 0.5f) * (d / 2f - 0.5f) * ss * ss;
-            for (int y = 0; y < ssSize; y++) {
-                for (int x = 0; x < ssSize; x++) {
-                    float dx = x - cx + 0.5f;
-                    float dy = y - cy + 0.5f;
-                    boolean inside = dx * dx + dy * dy <= rad2;
-                    ssImg.setPixel(x, y, inside ? 0xFFFFFFFF : 0x00000000);
-                }
-            }
             NativeImage out = new NativeImage(d, d, false);
+            float cx = d / 2f;
+            float cy = d / 2f;
+            float radius = d / 2f - 0.5f;
             for (int y = 0; y < d; y++) {
                 for (int x = 0; x < d; x++) {
-                    int totalA = 0;
-                    for (int sy = 0; sy < ss; sy++) {
-                        for (int sx = 0; sx < ss; sx++) {
-                            int px = ssImg.getPixel(x * ss + sx, y * ss + sy);
-                            totalA += (px >> 24) & 0xFF;
-                        }
-                    }
-                    int avgA = totalA / (ss * ss);
-                    out.setPixel(x, y, (avgA << 24) | 0x00FFFFFF);
+                    float dx = x + 0.5f - cx;
+                    float dy = y + 0.5f - cy;
+                    float dist = (float) Math.sqrt(dx * dx + dy * dy);
+                    float coverage = radius + 0.5f - dist;
+                    int a = (int) (Math.max(0, Math.min(1, coverage)) * 255);
+                    out.setPixel(x, y, (a << 24) | 0x00FFFFFF);
                 }
             }
             DynamicTexture tex = new DynamicTexture(() -> "smooth_circle_" + d, out);
             setLinearSampler(tex);
             Identifier id = Identifier.fromNamespaceAndPath("ravex", "smooth_circle_" + d);
+            Minecraft.getInstance().getTextureManager().register(id, tex);
+            return id;
+        });
+    }
+
+    private static Identifier smoothCircleTex = null;
+
+    public static Identifier getSmoothCircle() {
+        if (smoothCircleTex == null) {
+            int size = 128;
+            NativeImage img = new NativeImage(size, size, false);
+            int ss = 8;
+            float cx = size / 2f;
+            float cy = size / 2f;
+            float rVal = size / 2f - 0.5f;
+            float r2 = rVal * rVal;
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    int a = calcCornerAA(x, y, cx, cy, ss, r2);
+                    img.setPixel(x, y, (a << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture tex = new DynamicTexture(() -> "smooth_circle_hd", img);
+            setLinearSampler(tex);
+            smoothCircleTex = Identifier.fromNamespaceAndPath("ravex", "smooth_circle_hd");
+            Minecraft.getInstance().getTextureManager().register(smoothCircleTex, tex);
+        }
+        return smoothCircleTex;
+    }
+
+    public static Identifier getSmoothRing(float thicknessRatio) {
+        String key = String.format("%.2f", thicknessRatio);
+        return SMOOTH_RING_CACHE.computeIfAbsent(key, k -> {
+            int size = 128;
+            NativeImage img = new NativeImage(size, size, false);
+            int ss = 8;
+            float cx = size / 2f;
+            float cy = size / 2f;
+            float outerR = size / 2f - 0.5f;
+            float innerR = Math.max(0f, outerR - (size / 2f) * thicknessRatio);
+            float outerR2 = outerR * outerR;
+            float innerR2 = innerR * innerR;
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    int a = calcCornerOutlineAA(x, y, cx, cy, ss, outerR2, innerR2);
+                    img.setPixel(x, y, (a << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture tex = new DynamicTexture(() -> "smooth_ring_" + key, img);
+            setLinearSampler(tex);
+            Identifier id = Identifier.fromNamespaceAndPath("ravex", "smooth_ring_" + key);
             Minecraft.getInstance().getTextureManager().register(id, tex);
             return id;
         });
@@ -178,7 +256,7 @@ public class Render2DEngine {
         if (width <= 0 || height <= 0) return;
         graphics.pose().pushMatrix();
         graphics.pose().translate(x + width / 2f, y + height / 2f);
-        graphics.pose().rotate(90f * 0.017453292f);
+        graphics.pose().rotate(-90f * 0.017453292f);
         graphics.fillGradient(-height / 2, -width / 2, height / 2, width / 2, startColor, endColor);
         graphics.pose().popMatrix();
     }
@@ -204,10 +282,10 @@ public class Render2DEngine {
         Identifier tex = getCornerTexture(radius);
 
         if (tex != null) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, radius, radius, RRT_SIZE, RRT_SIZE, color);
-            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y, RRT_SIZE - radius, 0f, radius, radius, RRT_SIZE, RRT_SIZE, color);
-            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y + height - radius, 0f, RRT_SIZE - radius, radius, radius, RRT_SIZE, RRT_SIZE, color);
-            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y + height - radius, RRT_SIZE - radius, RRT_SIZE - radius, radius, radius, RRT_SIZE, RRT_SIZE, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, radius, radius, 64, 64, 128, 128, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y, 64f, 0f, radius, radius, 64, 64, 128, 128, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y + height - radius, 0f, 64f, radius, radius, 64, 64, 128, 128, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y + height - radius, 64f, 64f, radius, radius, 64, 64, 128, 128, color);
             drawRect(graphics, x + radius, y, width - radius * 2, radius, color);
             drawRect(graphics, x + radius, y + height - radius, width - radius * 2, radius, color);
             drawRect(graphics, x, y + radius, width, height - radius * 2, color);
@@ -257,10 +335,10 @@ public class Render2DEngine {
 
         Identifier tex = getCornerTexture(radius);
         if (tex != null) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, radius, radius, RRT_SIZE, RRT_SIZE, cTL);
-            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y, RRT_SIZE - radius, 0f, radius, radius, RRT_SIZE, RRT_SIZE, cTR);
-            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y + height - radius, 0f, RRT_SIZE - radius, radius, radius, RRT_SIZE, RRT_SIZE, cBL);
-            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y + height - radius, RRT_SIZE - radius, RRT_SIZE - radius, radius, radius, RRT_SIZE, RRT_SIZE, cBR);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, radius, radius, 64, 64, 128, 128, cTL);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y, 64f, 0f, radius, radius, 64, 64, 128, 128, cTR);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y + height - radius, 0f, 64f, radius, radius, 64, 64, 128, 128, cBL);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y + height - radius, 64f, 64f, radius, radius, 64, 64, 128, 128, cBR);
         }
     }
 
@@ -272,13 +350,73 @@ public class Render2DEngine {
         if (thickness <= 0) return;
         int outerAlpha = (color >> 24) & 0xFF;
         if (outerAlpha == 0) return;
-        drawRound(graphics, x - thickness, y - thickness, width + thickness * 2, height + thickness * 2, radius + thickness, color);
-        int innerColor = color & 0x00FFFFFF;
-        drawRound(graphics, x, y, width, height, radius, innerColor);
+
+        int maxR = Math.min(width, height) / 2;
+        if (radius > maxR) radius = maxR;
+        if (radius <= 0) {
+            drawBorder(graphics, x, y, width, height, thickness, color);
+            return;
+        }
+
+        Identifier tex = getCornerOutlineTexture(radius, thickness);
+        if (tex != null) {
+            // Draw 4 corners
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, radius, radius, 64, 64, 128, 128, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y, 64f, 0f, radius, radius, 64, 64, 128, 128, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y + height - radius, 0f, 64f, radius, radius, 64, 64, 128, 128, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y + height - radius, 64f, 64f, radius, radius, 64, 64, 128, 128, color);
+
+            // Draw 4 edges
+            drawRect(graphics, x + radius, y, width - radius * 2, thickness, color); // Top
+            drawRect(graphics, x + radius, y + height - thickness, width - radius * 2, thickness, color); // Bottom
+            drawRect(graphics, x, y + radius, thickness, height - radius * 2, color); // Left
+            drawRect(graphics, x + width - thickness, y + radius, thickness, height - radius * 2, color); // Right
+        }
     }
 
     public static void drawRoundBorder(GuiGraphics graphics, float x, float y, float w, float h, float r, float thickness, int color) {
         drawRoundBorder(graphics, (int) x, (int) y, (int) Math.ceil(w), (int) Math.ceil(h), Math.round(r), Math.round(thickness), color);
+    }
+
+    private static final Map<String, Identifier> SMOOTH_BORDER_CACHE = new HashMap<>();
+
+    public static void drawSmoothRoundOutline(GuiGraphics graphics, int x, int y, int width, int height, int radius, int thickness, int color) {
+        if (width <= 1 || height <= 1 || thickness <= 0) return;
+        int a = (color >> 24) & 0xFF;
+        if (a == 0) return;
+        int maxR = Math.min(width, height) / 2;
+        if (radius > maxR) radius = maxR;
+        if (radius <= 0) {
+            drawBorder(graphics, x, y, width, height, thickness, color);
+            return;
+        }
+        String key = width + "_" + height + "_" + radius + "_" + thickness;
+        Identifier tex = SMOOTH_BORDER_CACHE.get(key);
+        if (tex == null) {
+            NativeImage img = new NativeImage(width, height, true);
+            float r = radius;
+            float half = thickness / 2f;
+            for (int py = 0; py < height; py++) {
+                for (int px = 0; px < width; px++) {
+                    float fx = px + 0.5f;
+                    float fy = py + 0.5f;
+                    float cx = Math.max(r, Math.min(width - r, fx));
+                    float cy = Math.max(r, Math.min(height - r, fy));
+                    float dx = fx - cx;
+                    float dy = fy - cy;
+                    float dist = (float) Math.sqrt(dx * dx + dy * dy) - r;
+                    float alpha = Math.max(0, Math.min(1, 1.0f - Math.abs(dist) / half));
+                    int aa = Math.round(alpha * 255);
+                    img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture dt = new DynamicTexture(() -> "smooth_border_" + key, img);
+            setLinearSampler(dt);
+            tex = Identifier.fromNamespaceAndPath("ravex", "smooth_border_" + key);
+            Minecraft.getInstance().getTextureManager().register(tex, dt);
+            SMOOTH_BORDER_CACHE.put(key, tex);
+        }
+        graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, width, height, width, height, color);
     }
 
     public static void fillCircle(GuiGraphics graphics, int x, int y, int radius, int color) {
@@ -450,6 +588,51 @@ public class Render2DEngine {
 <<<<<<< HEAD
     private static final Map<String, Identifier> PERFECT_RR_CACHE = new HashMap<>();
 
+    private static boolean isInsideRoundedRect(float fx, float fy, float width, float height, float r) {
+        if (fx < 0f || fx > width || fy < 0f || fy > height) return false;
+        
+        float left = r;
+        float right = width - r;
+        float top = r;
+        float bottom = height - r;
+        
+        if (fx < left && fy < top) {
+            float dx = fx - left;
+            float dy = fy - top;
+            return dx * dx + dy * dy <= r * r;
+        }
+        if (fx > right && fy < top) {
+            float dx = fx - right;
+            float dy = fy - top;
+            return dx * dx + dy * dy <= r * r;
+        }
+        if (fx < left && fy > bottom) {
+            float dx = fx - left;
+            float dy = fy - bottom;
+            return dx * dx + dy * dy <= r * r;
+        }
+        if (fx > right && fy > bottom) {
+            float dx = fx - right;
+            float dy = fy - bottom;
+            return dx * dx + dy * dy <= r * r;
+        }
+        return true;
+    }
+
+    private static int calcRoundedRectPixelAA(int px, int py, float width, float height, float r, int ss) {
+        int total = 0;
+        for (int sy = 0; sy < ss; sy++) {
+            float fy = py + (sy + 0.5f) / ss;
+            for (int sx = 0; sx < ss; sx++) {
+                float fx = px + (sx + 0.5f) / ss;
+                if (isInsideRoundedRect(fx, fy, width, height, r)) {
+                    total++;
+                }
+            }
+        }
+        return Math.min(255, total * 255 / (ss * ss));
+    }
+
     public static void drawPixelPerfectRound(GuiGraphics graphics, int x, int y, int width, int height, int radius, int color) {
         if (width <= 1 || height <= 1) { drawRect(graphics, x, y, width, height, color); return; }
         if (radius <= 0) { drawRect(graphics, x, y, width, height, color); return; }
@@ -462,24 +645,13 @@ public class Render2DEngine {
         String key = width + "_" + height + "_" + radius;
         Identifier tex = PERFECT_RR_CACHE.get(key);
         if (tex == null) {
-            NativeImage img = new NativeImage(width, height, false);
+            NativeImage img = new NativeImage(width, height, true);
             float r = radius;
-            float rx = width / 2f;
-            float ry = height / 2f;
+            int ss = 4;
             for (int py = 0; py < height; py++) {
                 for (int px = 0; px < width; px++) {
-                    float fx = px + 0.5f;
-                    float fy = py + 0.5f;
-                    float cx = Math.max(r, Math.min(width - r, fx));
-                    float cy = Math.max(r, Math.min(height - r, fy));
-                    float dx = fx - cx;
-                    float dy = fy - cy;
-                    float dist = (float) Math.sqrt(dx * dx + dy * dy) - r;
-                    float alpha = Math.max(0, Math.min(1, 0.5f - dist));
-                    int aa = Math.round(alpha * 255);
-                    if (aa > 0) {
-                        img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
-                    }
+                    int aa = calcRoundedRectPixelAA(px, py, width, height, r, ss);
+                    img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
                 }
             }
             DynamicTexture dt = new DynamicTexture(() -> "perfect_rr_" + key, img);

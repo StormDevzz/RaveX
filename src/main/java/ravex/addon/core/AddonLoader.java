@@ -1,15 +1,18 @@
 package ravex.addon.core;
 
 import ravex.addon.Addon;
+import ravex.addon.security.AddonSignature;
+import ravex.addon.security.SecureAddonClassLoader;
 import ravex.addon.util.AddonException;
 import java.io.File;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.jar.JarFile;
 import java.util.jar.Attributes;
 
 public class AddonLoader {
     public static Addon loadAddon(File jarFile) throws AddonException {
+        AddonSignature.requireSignature(jarFile.toPath());
+
         try (JarFile jar = new JarFile(jarFile)) {
             Attributes attrs = jar.getManifest().getMainAttributes();
             if (attrs == null) {
@@ -26,8 +29,9 @@ public class AddonLoader {
 
             AddonInfo info = new AddonInfo(name, "External Addon", version, author != null ? author : "Unknown", mainClass);
             URL[] urls = { jarFile.toURI().toURL() };
-            URLClassLoader classLoader = new URLClassLoader(urls, AddonLoader.class.getClassLoader());
-            
+            SecureAddonClassLoader classLoader = new SecureAddonClassLoader(
+                name, urls, AddonLoader.class.getClassLoader(), jarFile.getParentFile());
+
             Class<?> clazz = Class.forName(mainClass, true, classLoader);
             if (!Addon.class.isAssignableFrom(clazz)) {
                 throw new AddonException("Main class does not implement Addon interface: " + mainClass);
@@ -35,6 +39,8 @@ public class AddonLoader {
 
             Addon addon = (Addon) clazz.getDeclaredConstructor().newInstance();
             return addon;
+        } catch (AddonException e) {
+            throw e;
         } catch (Exception e) {
             throw new AddonException("Failed to load JAR " + jarFile.getName(), e);
         }

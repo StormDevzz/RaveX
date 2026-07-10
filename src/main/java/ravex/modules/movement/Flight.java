@@ -16,7 +16,7 @@ public class Flight extends Module {
     public static final Flight INSTANCE = new Flight();
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
-        List.of("Vanilla", "Creative", "NCP", "Grim", "Minemen", "Jetpack"));
+        List.of("Vanilla", "Creative", "NCP", "Minemen", "Jetpack"));
     public final NumberParameter speed = new NumberParameter("Speed", 2.0, 0.5, 10.0, 0.1);
     public final NumberParameter verticalSpeed = new NumberParameter("VerticalSpeed", 1.0, 0.1, 5.0, 0.1);
     public final NumberParameter glide = new NumberParameter("Glide", 0.0, 0.0, 1.0, 0.05);
@@ -65,9 +65,7 @@ public class Flight extends Module {
             case "Minemen":
                 velY = jump ? vSpeed : (sneak ? -vSpeed : -glide);
                 break;
-            case "Grim":
-                velY = jump ? vSpeed * 0.8 : (sneak ? -vSpeed * 0.8 : -glide * 0.5);
-                break;
+
             case "Jetpack":
                 velY = jump ? vSpeed : -glide * 0.3;
                 break;
@@ -84,7 +82,7 @@ public class Flight extends Module {
 =======
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static double javaHandleAirFriction(String mode, double currentSpeed, double acceleration, double friction) {
-        if (mode.equals("NCP") || mode.equals("Grim")) {
+        if (mode.equals("NCP")) {
             return currentSpeed * (1.0 - friction * 0.05);
         }
         return Math.min(currentSpeed + acceleration, currentSpeed * (1.0 + acceleration * 0.1));

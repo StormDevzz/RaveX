@@ -1,14 +1,30 @@
 package ravex.utility.player.rotation;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Camera;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import com.mojang.math.Axis;
+import org.joml.Matrix4f;
 
 public class RotationUtility {
+    public static void rotateY(Matrix4f matrix, float angle) {
+        matrix.rotate(Axis.YP.rotationDegrees(angle));
+    }
+
+    public static void alignBillboard(Matrix4f matrix, Camera camera) {
+        matrix.rotate(Axis.YP.rotationDegrees(-camera.yRot()));
+        matrix.rotate(Axis.XP.rotationDegrees(camera.xRot()));
+    }
+
     public static float yawTo(Vec3 from, Vec3 to) {
         double dx = to.x - from.x;
         double dz = to.z - from.z;
-        return (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0);
+        // atan2 returns [-180,180], subtracting 90 gives [-270, 90].
+        // Normalize to [-180, 180] so GrimAC AimModulo360 check passes.
+        float raw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0);
+        return normalizeYaw(raw);
     }
 
     public static float yawTo(Entity from, Vec3 to) {
@@ -75,6 +91,28 @@ public class RotationUtility {
         float yaw = (float) Math.toDegrees(Math.atan2(-n.x, n.z));
         float pitch = (float) Math.toDegrees(-Math.asin(n.y));
         return new float[]{yaw, pitch};
+    }
+
+    /**
+     * Returns the mouse sensitivity GCD step size.
+     * GrimAC's AimModulo360 check verifies that yaw/pitch changes are multiples
+     * of this step (i.e. they could have come from real mouse movement).
+     * Formula: (sensitivity * 0.6 + 0.2)^3 * 8
+     */
+    public static float getGCD() {
+        double sensitivity = Minecraft.getInstance().options.sensitivity().get();
+        double value = sensitivity * 0.6 + 0.2;
+        return (float) (Math.pow(value, 3) * 8.0);
+    }
+
+    /**
+     * Rounds an angle to the nearest valid mouse-movement increment.
+     * Use this on every yaw/pitch before sending it to the server.
+     */
+    public static float fixAngle(float angle) {
+        float step = getGCD() * 0.15f;
+        if (step == 0) return angle;
+        return Math.round(angle / step) * step;
     }
 
     public static float normalizeYaw(float yaw) {

@@ -22,9 +22,13 @@ import ravex.modules.misc.AntiAttack;
 import ravex.modules.misc.BlockMixer;
 import ravex.modules.player.ItemSaver;
 import ravex.modules.player.PacketMine;
+<<<<<<< HEAD
 =======
 import ravex.modules.misc.BlockSelector;
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
+=======
+import ravex.modules.render.FreeCam;
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
 
 @Mixin(MultiPlayerGameMode.class)
 public class MixinMultiPlayerGameMode {
@@ -64,6 +68,7 @@ public class MixinMultiPlayerGameMode {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ci.cancel();
         }
+<<<<<<< HEAD
         if (ravex.modules.misc.AntiAttack.INSTANCE.shouldCancel(target)) {
             ci.cancel();
         }
@@ -71,6 +76,11 @@ public class MixinMultiPlayerGameMode {
         ravex.modules.render.Crosshair.INSTANCE.onHit();
         ravex.modules.render.Particles.attackedThisTick = true;
         ravex.modules.render.Particles.lastAttackPos = target.position();
+=======
+        if (FreeCam.maybeEnabled() && !FreeCam.itz().entityInteract.getValue()) {
+            ci.cancel();
+        }
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
     }
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
@@ -81,6 +91,9 @@ public class MixinMultiPlayerGameMode {
 =======
         if (mc.player != null && ravex.modules.player.ItemSaver.INSTANCE.shouldSave(mc.player.getMainHandItem())) {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
+            cir.setReturnValue(false);
+        }
+        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract.getValue()) {
             cir.setReturnValue(false);
         }
         ravex.modules.render.Particles.minedThisTick = true;
@@ -104,6 +117,9 @@ public class MixinMultiPlayerGameMode {
 =======
         if (mc.player != null && ravex.modules.player.ItemSaver.INSTANCE.shouldSave(mc.player.getMainHandItem())) {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
+            cir.setReturnValue(false);
+        }
+        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract.getValue()) {
             cir.setReturnValue(false);
         }
     }

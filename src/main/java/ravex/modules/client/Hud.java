@@ -13,6 +13,7 @@ public class Hud extends Module {
     public final BooleanParameter editorBlur = new BooleanParameter("EditorBlur", true);
     public final BooleanParameter dragEnabled = new BooleanParameter("Drag", false);
     public final ColorParameter panelColor = new ColorParameter("PanelColor", 0x00000000);
+    public final BooleanParameter showCounter = new BooleanParameter("ShowCounter", true);
 
     public static Module draggingHud = null;
     public static int dragOffX = 0;

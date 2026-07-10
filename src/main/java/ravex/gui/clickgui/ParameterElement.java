@@ -11,6 +11,7 @@ import ravex.parameter.ColorParameter;
 import ravex.parameter.KeybindParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
+import ravex.parameter.MultiSelectParameter;
 import ravex.manager.ModuleManager;
 
 public class ParameterElement {
@@ -82,6 +83,20 @@ public class ParameterElement {
         } else {
             dropdownAnimProgress = targetDropdown;
         }
+
+        if (parameter instanceof BooleanParameter bp) {
+            float targetToggle = bp.getValue() ? 1.0f : 0.0f;
+            if (smoothOption) {
+                float speed = (optionSmoothness / 100f) * (delta / 16f);
+                if (toggleAnimProgress < targetToggle) {
+                    toggleAnimProgress = Math.min(targetToggle, toggleAnimProgress + speed);
+                } else if (toggleAnimProgress > targetToggle) {
+                    toggleAnimProgress = Math.max(targetToggle, toggleAnimProgress - speed);
+                }
+            } else {
+                toggleAnimProgress = targetToggle;
+            }
+        }
     }
 
     public int getHeight() {
@@ -94,6 +109,8 @@ public class ParameterElement {
         int extraH = 0;
         if (parameter instanceof ModeParameter mp) {
             extraH = 18 * mp.getModes().size();
+        } else if (parameter instanceof MultiSelectParameter msp) {
+            extraH = 18 * msp.getOptions().size();
         }
         int totalH = baseH + (int) (extraH * dropdownAnimProgress);
         return (int) (totalH * expandAnimProgress);
@@ -118,8 +135,6 @@ public class ParameterElement {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
         if (parameter instanceof BooleanParameter bp) {
-            toggleAnimProgress = bp.getValue() ? 1.0f : 0.0f;
-
             if (switchless) {
                 if (toggleAnimProgress > 0.01f) {
                     int glowAlpha = (int) (toggleAnimProgress * 0x18);
@@ -129,24 +144,30 @@ public class ParameterElement {
                 int textCol = hovered ? lerpColor(0xFFD0D0E0, 0xFFFFFFFF, toggleAnimProgress) : baseCol;
                 FontRenderUtility.drawString(graphics, bp.getName(), x + 8, y + 7, textCol, true);
             } else {
-                int textCol = bp.getValue() ? 0xFFD0D0E0 : 0xFF9090A0;
+                int textCol = lerpColor(0xFF9090A0, 0xFFD0D0E0, toggleAnimProgress);
                 FontRenderUtility.drawString(graphics, bp.getName(), x + 8, y + 7, textCol, true);
 
-                int swW = 28;
-                int swH = 14;
+                int swW = 22;
+                int swH = 11;
                 int swX = x + width - swW - 8;
                 int swY = y + (height - swH) / 2;
 
                 int trackColor = lerpColor(0xFF2A2A3A, activeColor, toggleAnimProgress);
-                Render2DEngine.drawRound(graphics, swX, swY, swW, swH, swH / 2, trackColor);
+                graphics.pose().pushMatrix();
+                graphics.pose().translate((float) swX, (float) swY);
+                Render2DEngine.drawRound(graphics, 0, 0, swW, swH, swH / 2, trackColor);
+                graphics.pose().popMatrix();
 
-                int knobSize = 12;
-                int knobRange = swW - knobSize - 2;
-                int knobX = Math.round(swX + 1 + toggleAnimProgress * knobRange);
-                int knobY = swY + 1;
+                float knobSize = 9f;
+                float knobRange = swW - knobSize - 2;
+                float knobDrawX = swX + 1f + toggleAnimProgress * knobRange;
+                float knobDrawY = swY + 1f;
 
-                Identifier knobTex = Render2DEngine.getSmoothCircle(knobSize);
-                graphics.blit(RenderPipelines.GUI_TEXTURED, knobTex, knobX, knobY, 0f, 0f, knobSize, knobSize, knobSize, knobSize, 0xFFFFFFFF);
+                Identifier knobTex = Render2DEngine.getSmoothCircle();
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(knobDrawX, knobDrawY);
+                graphics.blit(RenderPipelines.GUI_TEXTURED, knobTex, 0, 0, 0f, 0f, (int) knobSize, (int) knobSize, (int) knobSize, (int) knobSize, 0xFFFFFFFF);
+                graphics.pose().popMatrix();
             }
 
         } else if (parameter instanceof ModeParameter mp) {
@@ -182,6 +203,31 @@ public class ParameterElement {
                 FontRenderUtility.drawString(graphics, ">", x + width - 8, y + 7, ColorUtility.withAlpha(activeColor, 100), true);
             }
 
+        } else if (parameter instanceof MultiSelectParameter msp) {
+            FontRenderUtility.drawString(graphics, msp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+
+            if (dropdownAnimProgress > 0.01f) {
+                int modeY = y + 22;
+                for (String opt : msp.getOptions()) {
+                    boolean isSel = msp.isSelected(opt);
+                    boolean mHovered = mouseX >= x && mouseX <= x + width && mouseY >= modeY && mouseY <= modeY + 18;
+
+                    int mBg = mHovered ? 0x18FFFFFF : 0;
+                    if (mBg != 0) {
+                        graphics.fill(x + 2, modeY, x + width - 2, modeY + 18, mBg);
+                    }
+                    if (isSel) {
+                        graphics.fill(x + 2, modeY, x + 4, modeY + 18, activeColor);
+                    }
+
+                    int mCol = isSel ? activeColor : 0xFF808090;
+                    if (mHovered) mCol = 0xFFFFFFFF;
+
+                    FontRenderUtility.drawString(graphics, opt, x + 14, modeY + 5, mCol, true);
+                    modeY += 18;
+                }
+            }
+
         } else if (parameter instanceof NumberParameter np) {
             double min = np.getMin();
             double max = np.getMax();
@@ -214,7 +260,7 @@ public class ParameterElement {
             int slX = x + 8;
             int slY = y + 16;
             int slW = width - 16;
-            int slH = 3;
+            int slH = 4;
 
             if (isDragging) {
                 if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(net.minecraft.client.Minecraft.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
@@ -232,19 +278,33 @@ public class ParameterElement {
                 }
             }
 
-            Render2DEngine.drawRound(graphics, slX, slY, slW, slH, slH / 2, 0xFF1D1D2A);
-
-            int knobX = slX + (int)(slW * progress);
-            if (knobX > slX) {
-                Render2DEngine.drawRound(graphics, slX, slY, knobX - slX, slH, slH / 2, activeColor);
+            float targetKnobX = slX + (float)(slW * progress);
+            if (sliderKnobAnim < slX - 1 || sliderKnobAnim > slX + slW + 1) {
+                sliderKnobAnim = targetKnobX;
             }
+            sliderKnobAnim += (targetKnobX - sliderKnobAnim) * Math.min(1, 0.2f);
+            float animKnobX = sliderKnobAnim;
+            if (animKnobX < slX) animKnobX = slX;
+            if (animKnobX > slX + slW) animKnobX = slX + slW;
 
-            int knobSize = 7;
-            int knobDrawX = knobX - knobSize / 2;
-            int knobDrawY = (slY + slH / 2) - knobSize / 2;
+            graphics.pose().pushMatrix();
+            graphics.pose().translate((float) slX, (float) slY);
+            Render2DEngine.drawRound(graphics, 0, 0, slW, slH, slH / 2, 0xFF1A1A2A);
+            float fillW = animKnobX - slX;
+            if (fillW > 0) {
+                Render2DEngine.drawRound(graphics, 0, 0, (int) Math.ceil(fillW), slH, slH / 2, activeColor);
+            }
+            graphics.pose().popMatrix();
 
-            Identifier sliderTex = Render2DEngine.getSmoothCircle(knobSize);
-            graphics.blit(RenderPipelines.GUI_TEXTURED, sliderTex, knobDrawX, knobDrawY, 0f, 0f, knobSize, knobSize, knobSize, knobSize, 0xFFFFFFFF);
+            float knobSize = 8f;
+            float knobDrawX = animKnobX - knobSize / 2f;
+            float knobDrawY = slY + (slH - knobSize) / 2f;
+
+            Identifier sliderTex = Render2DEngine.getSmoothCircle();
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(knobDrawX, knobDrawY);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, sliderTex, 0, 0, 0f, 0f, (int) knobSize, (int) knobSize, (int) knobSize, (int) knobSize, 0xFFFFFFFF);
+            graphics.pose().popMatrix();
 
         } else if (parameter instanceof ColorParameter cp) {
             FontRenderUtility.drawString(graphics, cp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
@@ -334,6 +394,18 @@ public class ParameterElement {
                 }
             }
 
+            if (parameter instanceof MultiSelectParameter msp && msp.isExpanded()) {
+                int modeY = y + 22;
+                for (String opt : msp.getOptions()) {
+                    if (mouseX >= x && mouseX <= x + width && mouseY >= modeY && mouseY <= modeY + 18) {
+                        msp.toggle(opt);
+                        playSound();
+                        return true;
+                    }
+                    modeY += 18;
+                }
+            }
+
             if (parameter instanceof NumberParameter np) {
                 if (button == 1 || button == 2) {
                     if (isEditingNumber) {
@@ -368,6 +440,10 @@ public class ParameterElement {
                 int idx = modes.indexOf(mp.getValue());
                 int next = (idx + 1) % modes.size();
                 mp.setValue(modes.get(next));
+                playSound();
+                return true;
+            } else if (parameter instanceof MultiSelectParameter msp) {
+                msp.setExpanded(!msp.isExpanded());
                 playSound();
                 return true;
             } else if (parameter instanceof NumberParameter np) {

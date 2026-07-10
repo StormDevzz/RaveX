@@ -22,11 +22,14 @@ public class MixinModelPart {
     private VertexConsumer wrapHandConsumer(VertexConsumer consumer) {
 <<<<<<< HEAD
         boolean active = Shaders.maybeEnabled() && Shaders.RENDERING_HAND.get();
+<<<<<<< HEAD
         System.out.println("[RaveX-DEBUG] ModelPart.render(5) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.maybeEnabled() + " wrapping=" + active);
 =======
         boolean active = Shaders.INSTANCE.getEnabled() && Shaders.RENDERING_HAND.get();
         System.out.println("[RaveX-DEBUG] ModelPart.render(5) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.INSTANCE.getEnabled() + " wrapping=" + active);
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
+=======
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
         if (!active) {
             return consumer;
         }
@@ -49,11 +52,14 @@ public class MixinModelPart {
     private VertexConsumer wrapHandConsumer4(VertexConsumer consumer) {
 <<<<<<< HEAD
         boolean active = Shaders.maybeEnabled() && Shaders.RENDERING_HAND.get();
+<<<<<<< HEAD
         System.out.println("[RaveX-DEBUG] ModelPart.render(4) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.maybeEnabled() + " wrapping=" + active);
 =======
         boolean active = Shaders.INSTANCE.getEnabled() && Shaders.RENDERING_HAND.get();
         System.out.println("[RaveX-DEBUG] ModelPart.render(4) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.INSTANCE.getEnabled() + " wrapping=" + active);
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
+=======
+>>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
         if (!active) {
             return consumer;
         }
