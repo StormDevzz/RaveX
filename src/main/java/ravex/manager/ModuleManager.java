@@ -50,7 +50,8 @@ public class ModuleManager {
             "SkyColor", "CloudColor", "Trails",
             "Waypoint", "KillEffects", "Particles",
             "AspectRatio", "Borders", "Zoom",
-            "ToolTips", "DeathText"
+            "ToolTips", "DeathText",
+            "Search"
         );
 
         register(Category.PLAYER,
@@ -113,7 +114,8 @@ public class ModuleManager {
             "WatermarkHud", "ArrayListHud", "CoordsHud",
             "FpsHud", "NowPlayingHud", "ChatHud",
             "TpsHud", "CooldownsHud", "InvPreviewHud",
-            "IndicatorsHud", "CurrencyHud", "ServerBrandHud"
+            "IndicatorsHud", "CurrencyHud", "ServerBrandHud",
+            "TargetHud"
         );
     }
 

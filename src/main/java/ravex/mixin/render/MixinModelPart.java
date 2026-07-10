@@ -21,7 +21,6 @@ public class MixinModelPart {
     )
     private VertexConsumer wrapHandConsumer(VertexConsumer consumer) {
         boolean active = Shaders.maybeEnabled() && Shaders.RENDERING_HAND.get();
-        System.out.println("[RaveX-DEBUG] ModelPart.render(5) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.maybeEnabled() + " wrapping=" + active);
         if (!active) {
             return consumer;
         }
@@ -39,7 +38,6 @@ public class MixinModelPart {
     )
     private VertexConsumer wrapHandConsumer4(VertexConsumer consumer) {
         boolean active = Shaders.maybeEnabled() && Shaders.RENDERING_HAND.get();
-        System.out.println("[RaveX-DEBUG] ModelPart.render(4) called, RENDERING_HAND=" + Shaders.RENDERING_HAND.get() + " enabled=" + Shaders.maybeEnabled() + " wrapping=" + active);
         if (!active) {
             return consumer;
         }

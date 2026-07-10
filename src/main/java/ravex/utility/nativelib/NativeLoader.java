@@ -92,7 +92,7 @@ public class NativeLoader {
             "libravex_jni.so", "libravex_optimize.so", "libravex_manager.so",
             "libravex_github_tools.so", "libravex_loader.so", "libravex_addon.so",
             "libravex_fileprot.so", "libravex_fastexp.so",
-            "libravex_nativesc.so",
+            "libravex_nativesc.so", "libravex_c_addon_loader.so",
             "libravex_autocrystal.so", "libravex_phase.so", "libravex_tntaura.so",
             "libravex_anchoraura.so", "libravex_breaker.so", "libravex_holefill.so",
             "libravex_trap.so", "libravex_selftrap.so", "libravex_baseplace.so",

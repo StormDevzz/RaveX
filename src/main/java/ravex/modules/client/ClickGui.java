@@ -27,14 +27,15 @@ public class ClickGui extends Module {
             0x30FFFFFF);
     public final BooleanParameter moduleOutlines = new BooleanParameter("ButtonOutlines", true);
     public final ravex.parameter.ColorParameter moduleOutlineColor = new ravex.parameter.ColorParameter("ButtonBorder",
-            0xFF2A2A35);
+            0xFFFFFFFF);
     public final NumberParameter buttonHeight = new NumberParameter("ButtonHeight", 18, 8, 30, 1);
     public final NumberParameter panelWidth = new NumberParameter("PanelWidth", 130, 70, 300, 5);
     public final NumberParameter cornerRadius = new NumberParameter("CornerRadius", 12, 4, 24, 1);
     public final BooleanParameter moduleCounter = new BooleanParameter("ModuleCounter", true);
     public final BooleanParameter companionImage = new BooleanParameter("ShowImage", false);
     public final ModeParameter companionType = new ModeParameter("ImageType", "Femboy",
-            List.of("Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow"));
+            List.of("Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow",
+                    "Cutieeee", "Cutiemonster", "Furik", "Godofcoding", "Terrydavis"));
     public final NumberParameter guiScale = new NumberParameter("GuiScale", 0.85, 0.5, 1.0, 0.05);
     public final NumberParameter gearRotationSpeed = new NumberParameter("GearSpeed", 30, 0, 180, 5);
     public final BooleanParameter smoothScroll = new BooleanParameter("SmoothScroll", true);
@@ -58,6 +59,12 @@ public class ClickGui extends Module {
         color1.setVisible(() -> "Positive".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue())
                 || "DoubleColor".equals(colorMode.getValue()));
         color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()));
+        outlineColor.setVisible(() -> outlines.getValue());
+        moduleOutlineColor.setVisible(() -> moduleOutlines.getValue());
+        companionType.setVisible(() -> companionImage.getValue());
+        gearRotationSpeed.setVisible(() -> showGear.getValue());
+        scrollSmoothness.setVisible(() -> smoothScroll.getValue());
+        headerGlowIntensity.setVisible(() -> headerGlow.getValue());
         setEnabled(true);
     }
 

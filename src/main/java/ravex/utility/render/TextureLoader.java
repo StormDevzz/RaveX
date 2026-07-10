@@ -52,7 +52,18 @@ public class TextureLoader {
     public static final Identifier LAYING = Identifier.fromNamespaceAndPath(NS, "img/laying");
     public static final Identifier LICKING = Identifier.fromNamespaceAndPath(NS, "img/licking");
     public static final Identifier PILLOW = Identifier.fromNamespaceAndPath(NS, "img/pillow");
+    public static final Identifier CUTIEEEE = Identifier.fromNamespaceAndPath(NS, "img/cutieeee");
+    public static final Identifier CUTIEMONSTER = Identifier.fromNamespaceAndPath(NS, "img/cutiemonster");
+    public static final Identifier FURIK = Identifier.fromNamespaceAndPath(NS, "img/furik");
+    public static final Identifier GODOFCODING = Identifier.fromNamespaceAndPath(NS, "img/godofcoding");
+
+    public static final Identifier TERRYDAVIS = Identifier.fromNamespaceAndPath(NS, "img/terrydavis");
     public static final Identifier MARKER = Identifier.fromNamespaceAndPath(NS, "wp_marker");
+    public static final Identifier CAPTURE = Identifier.fromNamespaceAndPath(NS, "capture");
+    public static final Identifier FIREFLY = Identifier.fromNamespaceAndPath(NS, "firefly");
+    public static final Identifier SOLID_CIRCLE = Identifier.fromNamespaceAndPath(NS, "solid_circle");
+    public static final Identifier ENABLE = Identifier.fromNamespaceAndPath(NS, "enable");
+    public static final Identifier DISABLE = Identifier.fromNamespaceAndPath(NS, "disable");
 
     public static final Identifier HUD_COORDS = hudId("coords");
     public static final Identifier HUD_TPS = hudId("tps");
@@ -412,6 +423,34 @@ public class TextureLoader {
         return TRACK;
     }
 
+    public static Identifier getSolidCircleTexture() {
+        if (!loaded.containsKey(SOLID_CIRCLE)) {
+            int size = 64;
+            NativeImage image = new NativeImage(size, size, false);
+            float cx = size / 2.0f;
+            float cy = size / 2.0f;
+            float r = size / 2.0f - 1.0f;
+            float r2 = r * r;
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    float dx = x + 0.5f - cx;
+                    float dy = y + 0.5f - cy;
+                    float d2 = dx * dx + dy * dy;
+                    if (d2 <= r2) {
+                        float dist = (float) Math.sqrt(d2);
+                        float delta = r - dist;
+                        int alpha = Math.max(0, Math.min(255, Math.round(Math.clamp(delta * 2.0f, 0.0f, 1.0f) * 255)));
+                        image.setPixel(x, y, (alpha << 24) | 0xFFFFFF);
+                    }
+                }
+            }
+            AbstractTexture tex = createLinearTexture(image);
+            Minecraft.getInstance().getTextureManager().register(SOLID_CIRCLE, tex);
+            loaded.put(SOLID_CIRCLE, tex);
+        }
+        return SOLID_CIRCLE;
+    }
+
     public static Identifier getSwitcherTexture() {
         if (!loaded.containsKey(SWITCHER)) {
             try (InputStream stream = TextureLoader.class.getResourceAsStream(CLASSPATH_PREFIX + "switcher.png")) {
@@ -512,6 +551,16 @@ public class TextureLoader {
         ensureLoaded(LAYING, "laying");
         ensureLoaded(LICKING, "licking");
         ensureLoaded(PILLOW, "pillow");
+        ensureLoaded(CUTIEEEE, "cutieeee");
+        ensureLoaded(CUTIEMONSTER, "cutiemonster");
+        ensureLoaded(FURIK, "furik");
+        ensureLoaded(GODOFCODING, "godofcoding");
+        ensureLoaded(TERRYDAVIS, "terrydavis");
+        ensureLoaded3D(CAPTURE, "capture");
+        ensureLoaded3D(FIREFLY, "firefly");
+        ensureLoaded3D(ENABLE, "enable");
+        ensureLoaded3D(DISABLE, "disable");
+        getSolidCircleTexture();
         try (InputStream stream = TextureLoader.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
             if (stream != null) {
                 NativeImage image = NativeImage.read(stream);
@@ -670,6 +719,25 @@ public class TextureLoader {
             return true;
         } catch (Exception e) {
             RaveX.LOGGER.warn("[TextureLoader] Failed to load {}: {}", guiId, e.getMessage());
+            return false;
+        }
+    }
+
+    private static boolean ensureLoaded3D(Identifier guiId, String name) {
+        if (loaded.containsKey(guiId)) return true;
+        String resourcePath = CLASSPATH_PREFIX + name + ".png";
+        try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
+            if (stream == null) {
+                RaveX.LOGGER.warn("[TextureLoader] 3D Resource not found: {}", resourcePath);
+                return false;
+            }
+            NativeImage image = NativeImage.read(stream);
+            AbstractTexture tex = createLinearTexture(image);
+            Minecraft.getInstance().getTextureManager().register(guiId, tex);
+            loaded.put(guiId, tex);
+            return true;
+        } catch (Exception e) {
+            RaveX.LOGGER.warn("[TextureLoader] Failed to load 3D {}: {}", guiId, e.getMessage());
             return false;
         }
     }

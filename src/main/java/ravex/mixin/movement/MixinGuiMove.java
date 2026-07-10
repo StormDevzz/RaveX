@@ -29,6 +29,7 @@ public abstract class MixinGuiMove {
             case "Grim" -> handleGrim(mc, gw);
             case "NCPStrict" -> handleNCPStrict(mc, gw);
             case "NoClick" -> handleNoClick(mc, gw);
+            case "Matrix" -> handleMatrix(mc, gw);
             default -> handleVanilla(mc, gw);
         }
     }
@@ -52,6 +53,13 @@ public abstract class MixinGuiMove {
             int id = mc.player.containerMenu.containerId;
             mc.getConnection().send(new ServerboundContainerClosePacket(id));
         }
+        forceMoveKeys(mc);
+        if (!gw.noJump.getValue()) forceBinding(mc, mc.options.keyJump);
+        if (!gw.noSprint.getValue()) forceBinding(mc, mc.options.keySprint);
+        if (gw.sneak.getValue()) forceBinding(mc, mc.options.keyShift);
+    }
+
+    private void handleMatrix(Minecraft mc, GuiMove gw) {
         forceMoveKeys(mc);
         if (!gw.noJump.getValue()) forceBinding(mc, mc.options.keyJump);
         if (!gw.noSprint.getValue()) forceBinding(mc, mc.options.keySprint);

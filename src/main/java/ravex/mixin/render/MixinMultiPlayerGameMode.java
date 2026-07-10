@@ -21,6 +21,7 @@ import ravex.modules.misc.AntiAttack;
 import ravex.modules.misc.BlockMixer;
 import ravex.modules.player.ItemSaver;
 import ravex.modules.player.PacketMine;
+import ravex.modules.render.FreeCam;
 
 @Mixin(MultiPlayerGameMode.class)
 public class MixinMultiPlayerGameMode {
@@ -56,12 +57,18 @@ public class MixinMultiPlayerGameMode {
         if (AntiAttack.itz().shouldCancel(target)) {
             ci.cancel();
         }
+        if (FreeCam.maybeEnabled() && !FreeCam.itz().entityInteract.getValue()) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onStartDestroyBlock(net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face, CallbackInfoReturnable<Boolean> cir) {
         var mc = Minecraft.getInstance();
         if (mc.player != null && ItemSaver.itz().shouldSave(mc.player.getMainHandItem())) {
+            cir.setReturnValue(false);
+        }
+        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract.getValue()) {
             cir.setReturnValue(false);
         }
         ravex.modules.render.Particles.minedThisTick = true;
@@ -78,6 +85,9 @@ public class MixinMultiPlayerGameMode {
     private void onContinueDestroyBlock(net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face, CallbackInfoReturnable<Boolean> cir) {
         var mc = Minecraft.getInstance();
         if (mc.player != null && ItemSaver.itz().shouldSave(mc.player.getMainHandItem())) {
+            cir.setReturnValue(false);
+        }
+        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract.getValue()) {
             cir.setReturnValue(false);
         }
     }

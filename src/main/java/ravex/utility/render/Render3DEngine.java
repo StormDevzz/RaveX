@@ -12,7 +12,9 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -20,6 +22,7 @@ import org.joml.Vector3f;
 import org.joml.Quaternionf;
 import org.joml.Vector4f;
 import ravex.mixin.render.AccessorRenderType;
+import ravex.utility.player.rotation.RotationUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -515,5 +518,137 @@ public class Render3DEngine {
         buf.addVertex(matrix, fx + ax, fy + ay, fz + az).setColor(ir, ig, ib, ia);
         buf.addVertex(matrix, tx + ax, ty + ay, tz + az).setColor(ir, ig, ib, ia);
         buf.addVertex(matrix, tx - ax, ty - ay, tz - az).setColor(ir, ig, ib, ia);
+    }
+
+    private static final ByteBufferBuilder ESP_ALLOCATOR = new ByteBufferBuilder(256 * 1024);
+
+    public static void renderRaveXESP(Matrix4f modelViewMatrix, Camera camera, Entity target, int color, float scanProgress, float rotation, float tickDelta) {
+        double tPosX = target.xo + (target.getX() - target.xo) * tickDelta - camera.position().x;
+        double tPosY = target.yo + (target.getY() - target.yo) * tickDelta - camera.position().y;
+        double tPosZ = target.zo + (target.getZ() - target.zo) * tickDelta - camera.position().z;
+
+        float height = target.getBbHeight();
+        float width = target.getBbWidth();
+
+        RenderType renderType = RenderTypes.entityTranslucent(TextureLoader.getCircleWhiteTexture());
+        RenderType lineType = RenderTypes.lines();
+
+        int overlay = OverlayTexture.NO_OVERLAY;
+        int light = 0xF000F0;
+
+        // Draw exactly one scanning ring (as requested: "нужно чтобы было лишь одно")
+        double progress = scanProgress % 2.0;
+        if (progress > 1.0) {
+            progress = 2.0 - progress;
+        }
+
+        double ringY = tPosY + progress * height;
+        float alphaFade = 0.3f + 0.7f * (float) Math.sin(progress * Math.PI);
+        if (alphaFade > 0.01f) {
+            Matrix4f matrix = new Matrix4f(modelViewMatrix);
+            matrix.translate((float) tPosX, (float) ringY, (float) tPosZ);
+            
+            RotationUtility.rotateY(matrix, rotation);
+
+            float radius = width * (1.1f + 0.12f * (float) Math.sin(rotation * 0.05));
+
+            // 1. Translucent scan disk
+            ESP_ALLOCATOR.clear();
+            BufferBuilder builder = new BufferBuilder(ESP_ALLOCATOR, renderType.mode(), renderType.format());
+            int colDisk = ColorUtility.applyAlpha(color, alphaFade * 0.22f);
+            builder.addVertex(matrix, -radius, 0.0f, -radius).setColor(colDisk).setUv(0.0f, 0.0f).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+            builder.addVertex(matrix, -radius, 0.0f, radius).setColor(colDisk).setUv(0.0f, 1.0f).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+            builder.addVertex(matrix, radius, 0.0f, radius).setColor(colDisk).setUv(1.0f, 1.0f).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+            builder.addVertex(matrix, radius, 0.0f, -radius).setColor(colDisk).setUv(1.0f, 0.0f).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+            renderType.draw(builder.buildOrThrow());
+
+            // 2. Translucent outer line outline ring (lineWidth set to 3.5f for a thicker line)
+            ESP_ALLOCATOR.clear();
+            BufferBuilder lineBuilder = new BufferBuilder(ESP_ALLOCATOR, lineType.mode(), lineType.format());
+            int colLine = ColorUtility.applyAlpha(color, alphaFade * 0.85f);
+            int ir = ColorUtility.getRed(colLine);
+            int ig = ColorUtility.getGreen(colLine);
+            int ib = ColorUtility.getBlue(colLine);
+            int ia = ColorUtility.getAlpha(colLine);
+
+            int segments = 24;
+            float step = (float) (2 * Math.PI / segments);
+            for (int s = 0; s < segments; s++) {
+                float theta1 = s * step;
+                float theta2 = (s + 1) * step;
+
+                float x1 = (float) Math.cos(theta1) * radius;
+                float z1 = (float) Math.sin(theta1) * radius;
+                float x2 = (float) Math.cos(theta2) * radius;
+                float z2 = (float) Math.sin(theta2) * radius;
+
+                lineBuilder.addVertex(matrix, x1, 0.0f, z1).setColor(ir, ig, ib, ia).setNormal(x2 - x1, 0, z2 - z1).setLineWidth(3.5f);
+                lineBuilder.addVertex(matrix, x2, 0.0f, z2).setColor(ir, ig, ib, ia).setNormal(x2 - x1, 0, z2 - z1).setLineWidth(3.5f);
+            }
+            lineType.draw(lineBuilder.buildOrThrow());
+        }
+    }
+
+    public static void renderSoulsESP(Matrix4f modelViewMatrix, Camera camera, Entity target, int color, int length, int factor, float shaking, float amplitude, float tickDelta) {
+        double tPosX = target.xo + (target.getX() - target.xo) * tickDelta - camera.position().x;
+        double tPosY = target.yo + (target.getY() - target.yo) * tickDelta - camera.position().y;
+        double tPosZ = target.zo + (target.getZ() - target.zo) * tickDelta - camera.position().z;
+
+        float iAge = target.tickCount + tickDelta;
+
+        // debugFilledBox has POSITION_COLOR format and expects groups of 4 vertices (QUADS emulation)
+        RenderType renderType = RenderTypes.debugFilledBox();
+
+        ESP_ALLOCATOR.clear();
+        BufferBuilder builder = new BufferBuilder(ESP_ALLOCATOR, renderType.mode(), renderType.format());
+
+        int irBase = ColorUtility.getRed(color);
+        int igBase = ColorUtility.getGreen(color);
+        int ibBase = ColorUtility.getBlue(color);
+
+        for (int j = 0; j < 3; j++) {
+            for (int i = 0; i <= length; i++) {
+                double radians = Math.toRadians((((float) i / 1.5f + iAge) * factor + (j * 120)) % (factor * 360));
+                double sinQuad = Math.sin(Math.toRadians(iAge * 2.5f + i * (j + 1)) * amplitude) / shaking;
+
+                float offset = ((float) i / length);
+
+                Matrix4f matrix = new Matrix4f(modelViewMatrix);
+
+                double ox = Math.cos(radians) * target.getBbWidth();
+                double oy = 1.0 + sinQuad;
+                double oz = Math.sin(radians) * target.getBbWidth();
+                matrix.translate((float)(tPosX + ox), (float)(tPosY + oy), (float)(tPosZ + oz));
+
+                // Perfect screen-aligned billboard: reset rotation columns to identity scaled by scale factor
+                float sizePulse = 0.8f + 0.35f * (float) Math.sin(iAge * 0.15f + i * 0.5f);
+                float scale = Math.max(0.18f * offset, 0.12f) * sizePulse * 0.85f;
+                matrix.m00(scale);
+                matrix.m01(0.0f);
+                matrix.m02(0.0f);
+                matrix.m10(0.0f);
+                matrix.m11(scale);
+                matrix.m12(0.0f);
+                matrix.m20(0.0f);
+                matrix.m21(0.0f);
+                matrix.m22(scale);
+
+                int ia = Math.round(offset * 0.95f * 255.0f);
+
+                // Draw a 100% solid, perfectly sharp 12-sided dodecagon circle using 3 overlapping quads
+                for (int stepIdx = 0; stepIdx < 3; stepIdx++) {
+                    float angle = (float) (stepIdx * Math.PI / 6.0); // 0, 30, 60 degrees
+                    float cos = (float) Math.cos(angle);
+                    float sin = (float) Math.sin(angle);
+                    
+                    builder.addVertex(matrix, -cos - sin, -sin + cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
+                    builder.addVertex(matrix, cos - sin, sin + cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
+                    builder.addVertex(matrix, cos + sin, sin - cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
+                    builder.addVertex(matrix, -cos + sin, -sin - cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
+                }
+            }
+        }
+
+        renderType.draw(builder.buildOrThrow());
     }
 }

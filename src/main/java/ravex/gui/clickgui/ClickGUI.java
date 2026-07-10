@@ -175,6 +175,12 @@ public class ClickGUI extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        int originalMouseX = mouseX;
+        int originalMouseY = mouseY;
+        if (activeColorPalette != null) {
+            mouseX = -9999;
+            mouseY = -9999;
+        }
         ModuleButton.tickAllGears();
         int targetMaxH = getMaxPanelHeight();
         smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.35;
@@ -210,6 +216,16 @@ public class ClickGUI extends Screen {
                 imgId = ravex.utility.render.TextureLoader.LICKING;
             } else if ("Pillow".equals(type)) {
                 imgId = ravex.utility.render.TextureLoader.PILLOW;
+            } else if ("Cutieeee".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.CUTIEEEE;
+            } else if ("Cutiemonster".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.CUTIEMONSTER;
+            } else if ("Furik".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.FURIK;
+            } else if ("Godofcoding".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.GODOFCODING;
+            } else if ("Terrydavis".equals(type)) {
+                imgId = ravex.utility.render.TextureLoader.TERRYDAVIS;
             }
 
             if (imgId != null) {
@@ -379,7 +395,7 @@ public class ClickGUI extends Screen {
         }
 
         if (activeColorPalette != null) {
-            activeColorPalette.render(graphics, mouseX, mouseY, this.width, this.height);
+            activeColorPalette.render(graphics, originalMouseX, originalMouseY, this.width, this.height);
         }
 
         super.render(graphics, mouseX, mouseY, partialTicks);

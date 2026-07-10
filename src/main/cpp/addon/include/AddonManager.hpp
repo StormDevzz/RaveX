@@ -17,6 +17,7 @@ public:
     AddonManager();
     ~AddonManager();
     void scanAndLoad(const std::string& dir);
+    void loadPaths(const std::vector<std::string>& paths);
     void unloadAll();
 };
 

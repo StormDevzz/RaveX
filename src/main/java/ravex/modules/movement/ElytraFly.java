@@ -14,11 +14,10 @@ import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
 public class ElytraFly extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
-        List.of("Vanilla", "Control", "Grim", "NCP", "Minemen", "Packet", "Boost", "TickShift"));
+        List.of("Vanilla", "Control", "NCP", "Fireworks"));
     public final NumberParameter hSpeed = new NumberParameter("H-Speed", 1.5, 0.1, 5.0, 0.1);
     public final NumberParameter vSpeed = new NumberParameter("V-Speed", 1.0, 0.1, 5.0, 0.1);
     public final NumberParameter glide = new NumberParameter("Glide", 0.005, 0.001, 0.1, 0.001);
-    public final BooleanParameter autoFirework = new BooleanParameter("AutoFirework", false);
     public final NumberParameter fireworkDelay = new NumberParameter("FireworkDelay", 10.0, 1.0, 30.0, 1.0);
     public final NumberParameter fireworkBoost = new NumberParameter("FireworkBoost", 1.0, 0.5, 5.0, 0.1);
     public final BooleanParameter autoTakeoff = new BooleanParameter("AutoTakeoff", true);
@@ -70,8 +69,8 @@ public class ElytraFly extends Module {
     }
     private ElytraFly() {
         super("Elytra++");
-        fireworkDelay.setVisible(() -> autoFirework.getValue());
-        fireworkBoost.setVisible(() -> autoFirework.getValue());
+        fireworkDelay.setVisible(() -> "Fireworks".equals(mode.getValue()));
+        fireworkBoost.setVisible(() -> "Fireworks".equals(mode.getValue()));
         acceleration.setVisible(() -> accelerate.getValue());
     }
     public static double[] calculateVelocity(
@@ -122,7 +121,7 @@ public class ElytraFly extends Module {
                 velY = jump ? vSpeed : (sneak ? -vSpeed : -glide);
                 velZ = (Math.cos(rad) * fwd + Math.sin(rad) * str) * hSpeed;
             }
-            case "Vanilla", "Grim", "NCP", "Minemen" -> {
+            case "Vanilla" -> {
                 velX = -Math.sin(rad) * Math.cos(pitchRad) * hSpeed;
                 velY = Math.sin(pitchRad) * hSpeed;
                 velZ = Math.cos(rad) * Math.cos(pitchRad) * hSpeed;
@@ -134,23 +133,16 @@ public class ElytraFly extends Module {
                     velY = Math.sin(pitchRad) * vSpeed;
                 }
             }
-            case "Packet" -> {
-                velX = -Math.sin(rad) * hSpeed * forward;
+            case "NCP" -> {
+                double forwardFactor = jump || sneak || mc.options.keyUp.isDown() ? 1.0 : 0.0;
+                velX = -Math.sin(rad) * Math.cos(pitchRad) * hSpeed * forwardFactor;
                 velY = jump ? vSpeed : (sneak ? -vSpeed : -glide);
-                velZ = Math.cos(rad) * hSpeed * forward;
+                velZ = Math.cos(rad) * Math.cos(pitchRad) * hSpeed * forwardFactor;
             }
-            case "Boost" -> {
-                velX = -Math.sin(rad) * Math.cos(pitchRad) * hSpeed;
-                velY = -Math.sin(pitchRad) * hSpeed;
-                velZ = Math.cos(rad) * Math.cos(pitchRad) * hSpeed;
-                if (forward == 0) {
-                    velY = -glide;
-                }
-            }
-            case "TickShift" -> {
-                velX = -Math.sin(rad) * Math.cos(pitchRad) * hSpeed * 0.5;
-                velY = -Math.sin(pitchRad) * hSpeed * 0.3;
-                velZ = Math.cos(rad) * Math.cos(pitchRad) * hSpeed * 0.5;
+            case "Fireworks" -> {
+                velX = (-Math.sin(rad) * fwd + Math.cos(rad) * str) * hSpeed;
+                velY = jump ? vSpeed : (sneak ? -vSpeed : -glide);
+                velZ = (Math.cos(rad) * fwd + Math.sin(rad) * str) * hSpeed;
             }
             default -> {
                 velX = 0; velY = 0; velZ = 0;
@@ -190,26 +182,12 @@ public class ElytraFly extends Module {
             case "Vanilla" -> {
                 return new double[]{mx * 0.99, my * 0.99, mz * 0.99};
             }
-            case "Grim" -> {
-                double factor = 0.98;
-                return new double[]{mx * factor, Math.max(my, -0.1) * factor, mz * factor};
-            }
             case "NCP" -> {
-                double factor = 0.95;
+                double factor = 0.99;
                 return new double[]{mx * factor, my * factor, mz * factor};
             }
-            case "Minemen" -> {
-                double factor = 0.97;
-                return new double[]{mx * factor, Math.min(my, 0.0) * factor, mz * factor};
-            }
-            case "Packet" -> {
-                return new double[]{mx, my, mz};
-            }
-            case "Boost" -> {
-                return new double[]{mx * 0.95, Math.max(my, -0.2), mz * 0.95};
-            }
-            case "TickShift" -> {
-                return new double[]{mx * 0.92, my * 0.96, mz * 0.92};
+            case "Fireworks" -> {
+                return new double[]{mx * 0.99, my * 0.99, mz * 0.99};
             }
         }
         return new double[]{mx, my, mz};
@@ -246,7 +224,7 @@ public class ElytraFly extends Module {
         if (mc.options.keyRight.isDown()) strafe--;
         if (speedControl.getValue()) {
             String curMode = mode.getValue();
-            if (curMode.equals("Control")) {
+            if (curMode.equals("Control") || curMode.equals("Fireworks")) {
                 double rad = Math.toRadians(yaw);
                 double targetX = (-Math.sin(rad) * forward + Math.cos(rad) * strafe) * hSpeed.getValue();
                 double targetZ = (Math.cos(rad) * forward + Math.sin(rad) * strafe) * hSpeed.getValue();
@@ -261,6 +239,13 @@ public class ElytraFly extends Module {
                 vel = applyTimerAndAccel(vel);
                 mc.player.setDeltaMovement(vel);
                 mc.player.move(MoverType.SELF, vel);
+                if ("Fireworks".equals(curMode)) {
+                    fwTimer++;
+                    if (fwTimer >= fireworkDelay.getValue().intValue()) {
+                        useFirework(mc);
+                        fwTimer = 0;
+                    }
+                }
             } else {
                 double[] vel = calculateVelocity(
                     curMode, hSpeed.getValue(), vSpeed.getValue(), glide.getValue(),
@@ -270,13 +255,6 @@ public class ElytraFly extends Module {
                 v = applyTimerAndAccel(v);
                 mc.player.setDeltaMovement(v);
                 mc.player.move(MoverType.SELF, v);
-            }
-        }
-        if (autoFirework.getValue()) {
-            fwTimer++;
-            if (fwTimer >= fireworkDelay.getValue().intValue()) {
-                useFirework(mc);
-                fwTimer = 0;
             }
         }
     }

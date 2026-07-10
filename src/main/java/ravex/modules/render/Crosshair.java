@@ -9,6 +9,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
+import ravex.gui.clickgui.ColorUtility;
 public class Crosshair extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         java.util.List.of("Normal", "Circle", "Triangle"));
@@ -23,11 +24,17 @@ public class Crosshair extends Module {
     public final NumberParameter hitDuration = new NumberParameter("HitDuration", 250.0, 50.0, 500.0, 25.0);
     public final NumberParameter moveEffect = new NumberParameter("MoveEffect", 3.0, 0.0, 10.0, 0.5);
     private long lastHitTime = 0;
+    private long lastFrameTime = 0;
     private float hitSpread = 0;
+    private float targetProgress = 0f;
+    private float continuousRotation = 0f;
+    private float moveSpreadAnim = 0f;
+
     private Crosshair() {
         super("Crosshair");
         dotColor.setVisible(dot::getValue);
     }
+
     @Subscribe
     public void onAttack(AttackEvent event) {
         onHit();
@@ -36,59 +43,90 @@ public class Crosshair extends Module {
     public void onHit() {
         lastHitTime = System.currentTimeMillis();
     }
+
     @Override
     public void onTick() {
+    }
+
+    public void render(GuiGraphics graphics) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
-        if (!dynamic.getValue()) {
-            hitSpread = 0;
-            return;
-        }
+        if (mc.getWindow() == null || mc.player == null) return;
+
         long now = System.currentTimeMillis();
+        if (lastFrameTime == 0) lastFrameTime = now;
+        float delta = (now - lastFrameTime) / 1000f;
+        lastFrameTime = now;
+        if (delta > 0.1f) delta = 0.016f;
+
+        float currentMoveSpread = dynamic.getValue() ? calcMoveSpread(mc) : 0f;
+        moveSpreadAnim += (currentMoveSpread - moveSpreadAnim) * Math.min(1.0f, delta * 12f);
+
         long elapsed = now - lastHitTime;
         float dur = hitDuration.getValue().floatValue();
+        float hitSpin = 0f;
+        float hitScale = 1.0f;
+        float hitFlashProgress = 0f;
         if (elapsed < dur) {
             float progress = elapsed / dur;
             float overshoot = 1.0f + 0.3f * (float) Math.sin(progress * Math.PI * 2) * (1.0f - progress);
             hitSpread = hitEffect.getValue().floatValue() * (1.0f - progress) * overshoot;
+            hitSpin = (float) Math.PI * 0.5f * (1.0f - progress) * (1.0f - progress);
+            hitScale = 1.0f + 0.15f * (1.0f - progress);
+            hitFlashProgress = 1.0f - progress;
         } else {
             hitSpread = 0;
         }
-    }
-    public void render(GuiGraphics graphics) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.getWindow() == null || mc.player == null) return;
+
+        boolean hasTarget = mc.crosshairPickEntity != null && mc.crosshairPickEntity.isAlive();
+        if (hasTarget) {
+            targetProgress = Math.min(1.0f, targetProgress + delta * 6.0f);
+        } else {
+            targetProgress = Math.max(0.0f, targetProgress - delta * 6.0f);
+        }
+
+        if (targetProgress > 0.01f) {
+            continuousRotation += delta * 2.0f;
+        } else {
+            continuousRotation = 0f;
+        }
+
         int w = mc.getWindow().getGuiScaledWidth();
         int h = mc.getWindow().getGuiScaledHeight();
         int cx = w / 2;
         int cy = h / 2;
+
         int col = color.getValue();
-        int r = (col >> 16) & 0xFF;
-        int g = (col >> 8) & 0xFF;
-        int b = col & 0xFF;
-        int a = (col >> 24) & 0xFF;
-        if (a == 0) a = 255;
-        int argb = (a << 24) | (r << 16) | (g << 8) | b;
-        float baseSize = size.getValue().floatValue();
+        int lockColor = 0xFFFF3333;
+        int currentColor = lerpColor(col, lockColor, targetProgress);
+
+        if (hitFlashProgress > 0.01f) {
+            currentColor = blendSrcOver(currentColor, ColorUtility.withAlpha(0xFFFFFFFF, (int)(180 * hitFlashProgress)));
+        }
+
+        float baseSize = size.getValue().floatValue() * hitScale;
         float baseGap = gap.getValue().floatValue();
         float thick = thickness.getValue().floatValue();
-        float moveSpread = dynamic.getValue() ? calcMoveSpread(mc) : 0;
-        float totalSpread = baseGap + hitSpread + moveSpread;
+        float totalSpread = baseGap + hitSpread + moveSpreadAnim + targetProgress * 1.5f;
+
+        float totalSpin = hitSpin + targetProgress * continuousRotation;
+
         switch (mode.getValue()) {
-            case "Normal" -> renderNormal(graphics, cx, cy, baseSize, totalSpread, thick, argb);
-            case "Circle" -> renderCircle(graphics, cx, cy, baseSize, totalSpread, thick, argb);
-            case "Triangle" -> renderTriangle(graphics, cx, cy, baseSize, totalSpread, thick, argb);
+            case "Normal" -> renderNormal(graphics, cx, cy, baseSize, totalSpread, thick, totalSpin, currentColor);
+            case "Circle" -> renderCircle(graphics, cx, cy, baseSize, totalSpread, thick, totalSpin, currentColor);
+            case "Triangle" -> renderTriangle(graphics, cx, cy, baseSize, totalSpread, thick, totalSpin, currentColor);
         }
+
         if (dot.getValue()) {
             int dc = dotColor.getValue();
-            int dr = (dc >> 16) & 0xFF;
-            int dg = (dc >> 8) & 0xFF;
-            int db = dc & 0xFF;
-            int da = (dc >> 24) & 0xFF;
-            if (da == 0) da = 255;
-            graphics.fill(cx - 1, cy - 1, cx + 1, cy + 1, (da << 24) | (dr << 16) | (dg << 8) | db);
+            float dotSize = 2.5f;
+            net.minecraft.resources.Identifier dotTex = ravex.utility.render.Render2DEngine.getSmoothCircle();
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(cx - dotSize / 2f, cy - dotSize / 2f);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, dotTex, 0, 0, 0f, 0f, (int) Math.ceil(dotSize), (int) Math.ceil(dotSize), (int) Math.ceil(dotSize), (int) Math.ceil(dotSize), dc);
+            graphics.pose().popMatrix();
         }
     }
+
     private float calcMoveSpread(Minecraft mc) {
         float moveEff = moveEffect.getValue().floatValue();
         if (moveEff <= 0) return 0;
@@ -102,38 +140,54 @@ public class Crosshair extends Module {
         if (!player.onGround()) spread += moveEff * 0.6f;
         return Math.min(spread, moveEff * 2);
     }
-    private void renderNormal(GuiGraphics g, int cx, int cy, float size, float gap, float thick, int color) {
+
+    private void renderNormal(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
         float end = gap + size;
         float half = thick / 2.0f;
-        int ih = Math.max(1, (int) Math.ceil(half));
-        g.fill((int) (cx - end), cy - ih, (int) (cx - gap), cy + ih, color);
-        g.fill((int) (cx + gap), cy - ih, (int) (cx + end), cy + ih, color);
-        g.fill(cx - ih, (int) (cy - end), cx + ih, (int) (cy - gap), color);
-        g.fill(cx - ih, (int) (cy + gap), cx + ih, (int) (cy + end), color);
-    }
-    private void renderCircle(GuiGraphics g, int cx, int cy, float size, float gap, float thick, int color) {
-        float radius = gap + size;
-        int segments = 32;
-        for (int i = 0; i < segments; i++) {
-            double a1 = Math.PI * 2 * i / segments;
-            double a2 = Math.PI * 2 * (i + 1) / segments;
-            float x1 = cx + (float) (Math.cos(a1) * radius);
-            float y1 = cy + (float) (Math.sin(a1) * radius);
-            float x2 = cx + (float) (Math.cos(a2) * radius);
-            float y2 = cy + (float) (Math.sin(a2) * radius);
-            drawThickLine(g, x1, y1, x2, y2, thick, color);
+        g.pose().pushMatrix();
+        g.pose().translate(cx, cy);
+        if (spin != 0) {
+            g.pose().rotate(spin);
         }
+        g.fill((int) -end, (int) -half, (int) -gap, (int) Math.ceil(half), color);
+        g.fill((int) gap, (int) -half, (int) end, (int) Math.ceil(half), color);
+        g.fill((int) -half, (int) -end, (int) Math.ceil(half), (int) -gap, color);
+        g.fill((int) -half, (int) gap, (int) Math.ceil(half), (int) end, color);
+        g.pose().popMatrix();
     }
-    private void renderTriangle(GuiGraphics g, int cx, int cy, float size, float gap, float thick, int color) {
-        float end = gap + size;
-        float tipY = cy - end;
-        float botY = cy + end * 0.6f;
-        float leftX = cx - end * 0.8f;
-        float rightX = cx + end * 0.8f;
-        drawThickLine(g, cx, tipY, leftX, botY, thick, color);
+
+    private void renderCircle(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
+        float radius = gap + size;
+        float thicknessRatio = thick / radius;
+        net.minecraft.resources.Identifier ringTex = ravex.utility.render.Render2DEngine.getSmoothRing(thicknessRatio);
+
+        g.pose().pushMatrix();
+        g.pose().translate(cx, cy);
+        if (spin != 0) {
+            g.pose().rotate(spin);
+        }
+        g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, ringTex, (int) -radius, (int) -radius, 0f, 0f, (int) (radius * 2), (int) (radius * 2), (int) (radius * 2), (int) (radius * 2), color);
+        g.pose().popMatrix();
+    }
+
+    private void renderTriangle(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
+        float radius = gap + size;
+        float tipY = -radius;
+        float botY = radius * 0.6f;
+        float leftX = -radius * 0.8f;
+        float rightX = radius * 0.8f;
+
+        g.pose().pushMatrix();
+        g.pose().translate(cx, cy);
+        if (spin != 0) {
+            g.pose().rotate(spin);
+        }
+        drawThickLine(g, 0, tipY, leftX, botY, thick, color);
         drawThickLine(g, leftX, botY, rightX, botY, thick, color);
-        drawThickLine(g, rightX, botY, cx, tipY, thick, color);
+        drawThickLine(g, rightX, botY, 0, tipY, thick, color);
+        g.pose().popMatrix();
     }
+
     private void drawThickLine(GuiGraphics g, float x1, float y1, float x2, float y2, float thickness, int color) {
         float dx = x2 - x1;
         float dy = y2 - y1;
@@ -145,9 +199,52 @@ public class Crosshair extends Module {
         g.pose().rotate(angle);
         g.pose().scale(1.0f, thickness);
         g.pose().translate(0.0f, -0.5f);
-        g.fill(0, 0, (int) len, 1, color);
+        g.fill(0, 0, (int) Math.ceil(len), 1, color);
         g.pose().popMatrix();
     }
+
+    private static int lerpColor(int from, int to, float ratio) {
+        if (ratio <= 0f) return from;
+        if (ratio >= 1f) return to;
+        int a1 = (from >> 24) & 0xFF;
+        int r1 = (from >> 16) & 0xFF;
+        int g1 = (from >> 8) & 0xFF;
+        int b1 = from & 0xFF;
+
+        int a2 = (to >> 24) & 0xFF;
+        int r2 = (to >> 16) & 0xFF;
+        int g2 = (to >> 8) & 0xFF;
+        int b2 = to & 0xFF;
+
+        int a = (int)(a1 + (a2 - a1) * ratio);
+        int r = (int)(r1 + (r2 - r1) * ratio);
+        int g = (int)(g1 + (g2 - g1) * ratio);
+        int b = (int)(b1 + (b2 - b1) * ratio);
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    private static int blendSrcOver(int dst, int src) {
+        int sa = (src >> 24) & 0xFF;
+        if (sa == 255) return src;
+        if (sa == 0) return dst;
+        int da = (dst >> 24) & 0xFF;
+        int dr = (dst >> 16) & 0xFF;
+        int dg = (dst >> 8) & 0xFF;
+        int db = dst & 0xFF;
+
+        int sr = (src >> 16) & 0xFF;
+        int sg = (src >> 8) & 0xFF;
+        int sb = src & 0xFF;
+
+        int a = sa + da * (255 - sa) / 255;
+        int r = (sr * sa + dr * da * (255 - sa) / 255) / (a == 0 ? 1 : a);
+        int g = (sg * sa + dg * da * (255 - sa) / 255) / (a == 0 ? 1 : a);
+        int b = (sb * sa + db * da * (255 - sa) / 255) / (a == 0 ? 1 : a);
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
     public static boolean maybeEnabled() {
         return maybeEnabled(Crosshair.class);
     }

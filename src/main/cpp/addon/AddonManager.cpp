@@ -29,7 +29,11 @@ void AddonManager::scanAndLoad(const std::string& dir) {
     std::string ext = ".so";
 #endif
     auto files = SystemUtils::listFiles(dir, ext);
-    for (const auto& f : files) {
+    loadPaths(files);
+}
+
+void AddonManager::loadPaths(const std::vector<std::string>& paths) {
+    for (const auto& f : paths) {
         void* handle = loader->loadLibrary(f);
         if (!handle) {
             std::cerr << "[AddonManager] Failed to load " << f << ": " << loader->getLastError() << std::endl;

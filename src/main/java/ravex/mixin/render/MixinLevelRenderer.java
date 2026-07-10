@@ -6,6 +6,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,6 +20,7 @@ import ravex.modules.combat.AutoCrystal;
 import ravex.modules.combat.BasePlace;
 import ravex.modules.combat.Breaker;
 import ravex.modules.combat.HoleFill;
+import ravex.modules.combat.KillAura;
 import ravex.modules.combat.SelfTrap;
 import ravex.modules.combat.Surround;
 import ravex.modules.combat.Trap;
@@ -30,8 +33,10 @@ import ravex.modules.player.PacketMine;
 import ravex.modules.render.BlockOutline;
 import ravex.modules.render.Borders;
 import ravex.modules.render.BreadCrumbs;
+
 import ravex.modules.render.ESP;
 import ravex.modules.render.Particles;
+import ravex.modules.render.Search;
 import ravex.modules.render.Trails;
 import ravex.modules.render.Waypoint;
 import ravex.modules.combat.PearlTarget;
@@ -958,6 +963,54 @@ public class MixinLevelRenderer {
         if (PearlTarget.maybeEnabled()) {
             try {
                 PearlTarget.itz().render(modelViewMatrix, camera);
+            } catch (Exception ignored) {}
+        }
+
+        Search search = Search.itz();
+        if (search.getEnabled() && search.esp.getValue()) {
+            Vec3 sp = camera.position();
+            int sbc = search.blockColor.getValue();
+            float sbr = ((sbc >> 16) & 0xFF) / 255.0f;
+            float sbg = ((sbc >> 8) & 0xFF) / 255.0f;
+            float sbb = (sbc & 0xFF) / 255.0f;
+            float sba = ((sbc >> 24) & 0xFF) / 255.0f;
+            for (BlockPos p : search.getFoundBlocks()) {
+                try {
+                    modelViewMatrix.translate((float)(p.getX() - sp.x), (float)(p.getY() - sp.y), (float)(p.getZ() - sp.z), REUSABLE_MATRIX);
+                    Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, sbr, sbg, sbb, sba * 0.25f);
+                    Render3DUtils.batchWireframe(REUSABLE_MATRIX, 1.002, sbr, sbg, sbb, sba * 0.85f);
+                } catch (Exception ignored) {}
+            }
+            int sec = search.entityColor.getValue();
+            float ser = ((sec >> 16) & 0xFF) / 255.0f;
+            float seg = ((sec >> 8) & 0xFF) / 255.0f;
+            float seb = (sec & 0xFF) / 255.0f;
+            float sea = ((sec >> 24) & 0xFF) / 255.0f;
+            if (mc.level != null) {
+                for (Entity entity : mc.level.entitiesForRendering()) {
+                    if (entity == null || entity.isRemoved()) continue;
+                    Identifier id = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+                    if (!search.isEntitySelected(id)) continue;
+                    try {
+                        modelViewMatrix.translate((float)(entity.getX() - sp.x), (float)(entity.getY() - sp.y), (float)(entity.getZ() - sp.z), REUSABLE_MATRIX);
+                        double s = entity.getBbWidth() + 0.1;
+                        double sh = entity.getBbHeight();
+                        float anim = (float)(System.currentTimeMillis() * 0.003 + entity.getId() * 1.7);
+                        float pulse = 0.7f + 0.3f * (float)Math.sin(anim);
+                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, s, ser, seg, seb, sea * 0.15f * pulse);
+                        Render3DUtils.batchWireframe(REUSABLE_MATRIX, s, ser, seg, seb, sea * 0.6f * pulse);
+                        Render3DUtils.batchWireframe(REUSABLE_MATRIX, s * 1.1, ser, seg, seb, sea * 0.15f * pulse);
+                        modelViewMatrix.translate(0, (float)sh, 0, REUSABLE_MATRIX);
+                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, s, ser, seg, seb, sea * 0.1f * pulse);
+                        Render3DUtils.batchWireframe(REUSABLE_MATRIX, s, ser, seg, seb, sea * 0.4f * pulse);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        if (KillAura.maybeEnabled() && KillAura.itz().targetEsp.getValue()) {
+            try {
+                KillAura.itz().render(modelViewMatrix, camera, mc.getDeltaTracker().getGameTimeDeltaTicks());
             } catch (Exception ignored) {}
         }
 

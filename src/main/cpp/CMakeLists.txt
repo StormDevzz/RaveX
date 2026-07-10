@@ -38,7 +38,7 @@ add_subdirectory(hooks/breaker)
 add_subdirectory(hooks/bowaim)
 add_subdirectory(hooks/quiver)
 add_subdirectory(hooks/mediaquery)
-add_subdirectory(hooks/safewalk)
+# add_subdirectory(hooks/safewalk)  # теперь на джаве
 # add_subdirectory(hooks/antivoid)  # теперь на джаве
 # add_subdirectory(hooks/replenish)  # теперь на джаве
 add_subdirectory(hooks/antiquit)

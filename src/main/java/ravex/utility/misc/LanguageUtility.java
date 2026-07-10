@@ -240,6 +240,8 @@ public class LanguageUtility {
         en.put("hud_desc_Cooldowns", "Displays item cooldowns (Ender Pearl, Chorus, etc.) with remaining percentage.");
         en.put("hud_desc_Currency", "Renders custom live/simulated currency exchange rates for CIS & NATO countries + BTC.");
         en.put("hud_desc_ServerBrand", "Displays the server implementation brand using C++ JNI formatting.");
+        en.put("desc_TargetHud", "Target info");
+        en.put("hud_desc_TargetHud", "Displays target player statistics, health, armor, and hand items.");
         en.put("cmd_help", "Help");
         en.put("cmd_config", "Config");
         en.put("cmd_calc", "Calc");
@@ -490,6 +492,8 @@ public class LanguageUtility {
         ru.put("hud_desc_Cooldowns", "Кулдауны предметов с процентами");
         ru.put("hud_desc_Currency", "Курсы валют CIS, NATO и BTC");
         ru.put("hud_desc_ServerBrand", "Бренд сервера через JNI");
+        ru.put("desc_TargetHud", "Информация о цели");
+        ru.put("hud_desc_TargetHud", "Отображает параметры цели, её здоровье, броню и предмет в руке.");
         ru.put("cmd_help", "Помощь");
         ru.put("cmd_config", "Конфиг");
         ru.put("cmd_calc", "Кальк");

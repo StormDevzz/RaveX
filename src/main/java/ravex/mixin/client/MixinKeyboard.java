@@ -11,5 +11,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinKeyboard {
     @Inject(method = "keyPress", at = @At("HEAD"))
     private void onKeyPress(long window, int key, KeyEvent event, CallbackInfo ci) {
+        ravex.addon.core.CAddonManager.onKeyEvent(key, event.input());
     }
 }
