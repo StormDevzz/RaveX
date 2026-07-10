@@ -25,7 +25,7 @@ public class MixinBlock {
         if (NoSlowDown.INSTANCE.getEnabled() && NoSlowDown.INSTANCE.blocks.getValue()) {
             Block self = (Block) (Object) this;
             if (self == Blocks.ICE || self == Blocks.PACKED_ICE || self == Blocks.BLUE_ICE || self == Blocks.FROSTED_ICE) {
-                cir.setReturnValue(0.6F); 
+                cir.setReturnValue(0.6F);
             } else {
                 String blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(self).toString();
                 float customFriction = NoSlowDown.getBlockFriction(blockId, cir.getReturnValue());

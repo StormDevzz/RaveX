@@ -98,4 +98,4 @@ TextureData resize(const TextureData& input, const ResizeOptions& opts) {
     return result;
 }
 
-} 
+}

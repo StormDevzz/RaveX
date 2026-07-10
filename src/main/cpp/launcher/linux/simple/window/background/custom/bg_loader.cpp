@@ -58,7 +58,7 @@ void change_background(LauncherState *state) {
         if (filename) {
             std::string src(filename);
             std::string dest = state->kickx_dir + "/background.jpg";
-            
+
             if (file::copy_file(src, dest)) {
                 apply_background(state);
             }
@@ -68,7 +68,7 @@ void change_background(LauncherState *state) {
     gtk_widget_destroy(dialog);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

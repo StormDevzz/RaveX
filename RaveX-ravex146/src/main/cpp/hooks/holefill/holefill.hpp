@@ -34,6 +34,6 @@ std::vector<HoleCandidate> findHoles(
     int maxResults
 );
 
-} 
+}
 
 #endif

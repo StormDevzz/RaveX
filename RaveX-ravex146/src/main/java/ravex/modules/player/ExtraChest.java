@@ -122,12 +122,12 @@ public class ExtraChest extends Module {
         }
     }
 
-    
+
     private void doFill(Minecraft mc, LocalPlayer player, AbstractContainerMenu menu) {
         List<Slot> chestSlots = getContainerSlots(menu);
         List<Slot> playerSlots = getAllPlayerSlots(menu);
 
-        
+
         java.util.Map<Item, Integer> needed = new java.util.HashMap<>();
         for (Slot ps : playerSlots) {
             if (!ps.hasItem()) continue;
@@ -142,7 +142,7 @@ public class ExtraChest extends Module {
 
         if (needed.isEmpty()) return;
 
-        
+
         for (Slot cs : chestSlots) {
             if (!cs.hasItem()) continue;
             ItemStack chestStack = cs.getItem();
@@ -152,8 +152,8 @@ public class ExtraChest extends Module {
 
             mc.gameMode.handleInventoryMouseClick(menu.containerId, cs.index, 0, ClickType.QUICK_MOVE, player);
 
-            
-            
+
+
             int remaining = want - chestStack.getCount();
             if (remaining <= 0) {
                 needed.remove(item);
@@ -163,7 +163,7 @@ public class ExtraChest extends Module {
         }
     }
 
-    
+
     private void doDropAll(Minecraft mc, LocalPlayer player, AbstractContainerMenu menu) {
         for (Slot slot : getContainerSlots(menu)) {
             if (slot.hasItem()) {

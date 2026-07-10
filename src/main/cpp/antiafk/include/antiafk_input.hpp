@@ -25,4 +25,4 @@ public:
     static InputBackend* create();
 };
 
-} 
+}

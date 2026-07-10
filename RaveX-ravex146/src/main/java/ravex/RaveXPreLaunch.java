@@ -13,7 +13,7 @@ public class RaveXPreLaunch implements PreLaunchEntrypoint {
     public void onPreLaunch() {
         LOGGER.info("[RaveX-PreLaunch] Early startup detected! Initializing loader process...");
 
-        
+
         try {
             java.io.File signal = new java.io.File(System.getProperty("java.io.tmpdir"), ".ravex_ready");
             if (signal.exists()) {
@@ -21,7 +21,7 @@ public class RaveXPreLaunch implements PreLaunchEntrypoint {
             }
         } catch (Exception ignored) {}
 
-        
+
         if (!"true".equals(System.getenv("RAVEX_LOADER_ACTIVE"))) {
             try {
                 String jarPath = RaveX.getModJarPath();
@@ -29,9 +29,9 @@ public class RaveXPreLaunch implements PreLaunchEntrypoint {
                     String javaExe = System.getProperty("java.home") + "/bin/java";
                     java.io.File exeFile = new java.io.File(javaExe);
                     if (!exeFile.exists()) {
-                        javaExe = "java"; 
+                        javaExe = "java";
                     }
-                    
+
                     List<String> cmd = new ArrayList<>();
                     cmd.add(javaExe);
                     cmd.add("-Djava.awt.headless=false");
@@ -39,14 +39,14 @@ public class RaveXPreLaunch implements PreLaunchEntrypoint {
                     cmd.add(jarPath);
                     cmd.add("ravex.loader.RaveXLoader");
                     cmd.add("--integrated-gui");
-                    
+
                     LOGGER.info("[RaveX-PreLaunch] Spawning safe loader process: " + cmd);
                     ProcessBuilder pb = new ProcessBuilder(cmd);
                     pb.redirectErrorStream(true);
                     Process p = pb.start();
                     RaveX.setLoaderProcess(p);
-                    
-                    
+
+
                     new Thread(() -> {
                         try (java.io.BufferedReader r = new java.io.BufferedReader(
                                 new java.io.InputStreamReader(p.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {

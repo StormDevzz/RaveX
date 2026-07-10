@@ -14,7 +14,7 @@ public class GithubUtility {
                 .uri(URI.create("https://api.github.com/repos/StormDevzz/RaveX"))
                 .header("User-Agent", "RaveX-Client")
                 .build();
-            
+
             client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenAccept(response -> {
                     if (response.statusCode() == 200) {

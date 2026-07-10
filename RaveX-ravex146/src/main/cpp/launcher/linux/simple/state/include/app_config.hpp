@@ -12,7 +12,7 @@ struct AppConfig {
     bool check_updates_on_start = true;
 };
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

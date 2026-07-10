@@ -21,8 +21,8 @@ public class RotationUtility {
     public static float yawTo(Vec3 from, Vec3 to) {
         double dx = to.x - from.x;
         double dz = to.z - from.z;
-        // atan2 returns [-180,180], subtracting 90 gives [-270, 90].
-        // Normalize to [-180, 180] so GrimAC AimModulo360 check passes.
+
+
         float raw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0);
         return normalizeYaw(raw);
     }

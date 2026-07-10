@@ -28,7 +28,7 @@ import java.util.UUID;
 public class PearlTarget extends Module {
     public static final PearlTarget INSTANCE = new PearlTarget();
 
-    
+
     public final ModeParameter mode = new ModeParameter("Mode", "Combat",
         List.of("Combat", "Pearl", "Follow"));
     public final NumberParameter range = new NumberParameter("Range", 16.0, 1.0, 32.0, 0.5);
@@ -36,7 +36,7 @@ public class PearlTarget extends Module {
         List.of("Nearest", "Health", "Crosshair", "Distance"));
     public final NumberParameter switchDelay = new NumberParameter("Switch Delay", 500.0, 0.0, 2000.0, 50.0);
 
-    
+
     public final NumberParameter speed = new NumberParameter("Speed", 1.8, 0.5, 5.0, 0.1);
     public final NumberParameter speedSneak = new NumberParameter("Speed Sneak", 0.6, 0.1, 2.0, 0.1);
     public final BooleanParameter strafe = new BooleanParameter("Strafe", true);
@@ -47,7 +47,7 @@ public class PearlTarget extends Module {
     public final NumberParameter stopDistance = new NumberParameter("Stop Distance", 3.5, 1.0, 6.0, 0.5);
     public final BooleanParameter sprint = new BooleanParameter("Sprint", true);
 
-    
+
     public final BooleanParameter autoWeapon = new BooleanParameter("Auto Weapon", true);
     public final ModeParameter weaponMode = new ModeParameter("Weapon Mode", "Sword",
         List.of("Sword", "Axe", "Both"));
@@ -65,7 +65,7 @@ public class PearlTarget extends Module {
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
     public final BooleanParameter keepRotate = new BooleanParameter("Keep Rotate", false);
 
-    
+
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter lineColor = new ColorParameter("Line Color", 0xFFFF5500);
     public final ColorParameter landingColor = new ColorParameter("Landing Color", 0xFFFF3333);
@@ -78,7 +78,7 @@ public class PearlTarget extends Module {
     public final BooleanParameter renderThroughWalls = new BooleanParameter("Through Walls", false);
     public final BooleanParameter renderPredictionLine = new BooleanParameter("Prediction Line", true);
 
-    
+
     private static boolean nativeAvailable = false;
     private final Map<Integer, PearlData> trackedPearls = new HashMap<>();
     private Player target = null;
@@ -93,7 +93,7 @@ public class PearlTarget extends Module {
     private int currentTargetIndex = 0;
     private boolean wasSprinting = false;
 
-    
+
     public Vec3 renderPearlPos = null;
     public Vec3 renderLandingPos = null;
     public Vec3 renderTargetPos = null;
@@ -185,7 +185,7 @@ public class PearlTarget extends Module {
             }
         }
 
-        
+
         for (ThrownEnderpearl pearl : pearls) {
             Entity owner = pearl.getOwner();
             if (owner == mc.player) continue;
@@ -218,7 +218,7 @@ public class PearlTarget extends Module {
             }
         }
 
-        
+
         Iterator<Map.Entry<Integer, PearlData>> it = trackedPearls.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Integer, PearlData> entry = it.next();
@@ -229,13 +229,13 @@ public class PearlTarget extends Module {
             }
         }
 
-        
+
         if (target == null && !players.isEmpty() && !"Pearl".equals(mode.getValue())) {
             target = findBestTarget(mc, players);
             if (target != null) targetPos = target.position();
         }
 
-        
+
         if (target != null && (target.isRemoved() || target.isDeadOrDying()
             || mc.player.distanceTo(target) > r * 2)) {
             target = null;
@@ -253,7 +253,7 @@ public class PearlTarget extends Module {
         double attackDist = attackRange.getValue();
         boolean inRange = dist <= attackDist;
 
-        
+
         updateRenderData(moveTarget);
 
         if (!inRange) {
@@ -264,17 +264,17 @@ public class PearlTarget extends Module {
             doAttack(mc, target);
         }
 
-        
+
         if (autoTotem.getValue()) {
             doAutoTotem(mc);
         }
 
-        
+
         if (autoGap.getValue()) {
             doAutoGap(mc);
         }
 
-        
+
         if (autoPearl.getValue() && target != null && dist > pearlRange.getValue() * 0.8 && dist < pearlRange.getValue()) {
             doAutoPearl(mc);
         }
@@ -289,13 +289,13 @@ public class PearlTarget extends Module {
         Vec3 dir = new Vec3(diff.x, 0, diff.z).normalize();
         double speedVal = mc.player.onGround() ? speed.getValue() : speed.getValue() * 0.8;
 
-        
+
         if (sprint.getValue()) {
             mc.player.setSprinting(true);
             wasSprinting = true;
         }
 
-        
+
         Vec3 motion = mc.player.getDeltaMovement();
         double targetVx = dir.x * speedVal;
         double targetVz = dir.z * speedVal;
@@ -308,12 +308,12 @@ public class PearlTarget extends Module {
 
         mc.player.setDeltaMovement(motion);
 
-        
+
         if (jump.getValue() && mc.player.onGround() && dist > 1.5) {
             mc.player.jumpFromGround();
         }
 
-        
+
         if (rotate.getValue() && target != null) {
             Vec3 lookTarget = target.position().add(0, target.getEyeHeight() * 0.8, 0);
             Vec3 lookDiff = lookTarget.subtract(mc.player.getEyePosition());
@@ -330,7 +330,7 @@ public class PearlTarget extends Module {
 
         if (now - lastAttackTime < attackDelay) return;
 
-        
+
         if (autoWeapon.getValue()) {
             int bestSlot = findBestWeaponSlot(mc);
             if (bestSlot != -1) {
@@ -338,7 +338,7 @@ public class PearlTarget extends Module {
             }
         }
 
-        
+
         if (rotate.getValue()) {
             Vec3 lookTarget = target.position().add(0, target.getEyeHeight() * 0.8, 0);
             Vec3 lookDiff = lookTarget.subtract(mc.player.getEyePosition());
@@ -504,7 +504,7 @@ public class PearlTarget extends Module {
             case "Distance" -> players.stream()
                 .min(java.util.Comparator.comparingDouble(p -> mc.player.distanceTo(p)))
                 .orElse(null);
-            default -> 
+            default ->
                 players.stream()
                     .min(java.util.Comparator.comparingDouble(p -> mc.player.distanceTo(p)))
                     .orElse(null);
@@ -519,7 +519,7 @@ public class PearlTarget extends Module {
                 nativePredictPearl(pos.x, pos.y, pos.z, vel.x, vel.y, vel.z, ticks, out);
                 return new Vec3(out[0], out[1], out[2]);
             } catch (Exception e) {
-                
+
             }
         }
         return javaPredictLanding(pos, vel, ticks);
@@ -579,7 +579,7 @@ public class PearlTarget extends Module {
         float ldg = ((ldc >> 8) & 0xFF) / 255.0f;
         float ldb = (ldc & 0xFF) / 255.0f;
 
-        
+
         if (renderPearlPos != null && renderLine.getValue()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
@@ -591,7 +591,7 @@ public class PearlTarget extends Module {
             }
         }
 
-        
+
         if (renderPearlPos != null && renderLandingPos != null && renderPredictionLine.getValue()) {
             Render3DUtils.batchAxisLine(modelViewMatrix,
                 (float) (renderPearlPos.x - camPos.x), (float) (renderPearlPos.y - camPos.y), (float) (renderPearlPos.z - camPos.z),
@@ -599,7 +599,7 @@ public class PearlTarget extends Module {
                 lw, lr, lg, lb, 0.6f, throughWalls);
         }
 
-        
+
         if (renderLandingPos != null && renderLanding.getValue()) {
             org.joml.Matrix4f landingMat = new org.joml.Matrix4f(modelViewMatrix);
             landingMat.translate(
@@ -612,7 +612,7 @@ public class PearlTarget extends Module {
                 ldr, ldg, ldb, 0.9f, lw, throughWalls);
         }
 
-        
+
         if (renderTargetPos != null && renderLine.getValue()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {

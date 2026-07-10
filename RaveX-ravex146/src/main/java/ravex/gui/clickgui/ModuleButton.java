@@ -194,7 +194,7 @@ public class ModuleButton {
 
         currentY += btnH;
 
-        
+
         if (hasParams) {
             float targetExpand = expanded ? 1.0f : 0.0f;
             if (expandAnim < targetExpand) {
@@ -240,14 +240,14 @@ public class ModuleButton {
                 }
 
                 int maxScroll = Math.max(0, paramAreaH - MAX_INLINE_HEIGHT);
-                
+
                 if (inlineScrollAnim > 0.5f) {
                     graphics.fillGradient(x + 1, currentY, x + width - 1, currentY + 12, bgCol, 0x00000000);
                 }
                 if (inlineScrollAnim < maxScroll - 0.5f) {
                     graphics.fillGradient(x + 1, currentY + actualH - 12, x + width - 1, currentY + actualH, 0x00000000, bgCol);
                 }
-                
+
                 if (maxScroll > 0) {
                     int sbX = x + width - 4;
                     int sbY = currentY + 2;
@@ -336,18 +336,18 @@ public class ModuleButton {
                         if (expanded) {
                             expandedModules.add(module);
                             inlineScrollTarget = 0;
-                            //ravex.utility.sound.SoundUtility.playSettingsOpen();
+
                         } else {
                             expandedModules.remove(module);
                             module.setGearAngle(0f, System.currentTimeMillis());
-                            //ravex.utility.sound.SoundUtility.playSettingsClose();
+
                         }
                     }
                 } else if (button == 2) {
                     ClickGUI.bindingModuleButton = this;
-                    //if (mc.player != null) {
-                    //    mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 1.5f);
-                    //}
+
+
+
                 }
             } else if (!sepMode && expanded) {
                 int scrollOffset = Math.round(inlineScrollAnim);

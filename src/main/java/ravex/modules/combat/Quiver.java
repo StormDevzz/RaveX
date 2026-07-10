@@ -39,7 +39,7 @@ public class Quiver extends Module {
     public static float silentPitch = 0;
     public static boolean hasSilentRotations = false;
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
-    private int state = 0; 
+    private int state = 0;
     private int ticksHolding = 0;
     private int cooldownTicks = 0;
     private int arrowInvSlot = -1;

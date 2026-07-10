@@ -11,7 +11,7 @@ public class Glint extends Module {
 
     public final BooleanParameter items = new BooleanParameter("Items", true);
     public final BooleanParameter armor = new BooleanParameter("Armor", true);
-    public final ColorParameter color = new ColorParameter("Color", 0xFFFF00FF); 
+    public final ColorParameter color = new ColorParameter("Color", 0xFFFF00FF);
 
     private Glint() {
         super("Glint", Category.RENDER);

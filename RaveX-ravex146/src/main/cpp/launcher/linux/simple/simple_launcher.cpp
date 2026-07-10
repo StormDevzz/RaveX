@@ -39,6 +39,6 @@ void SimpleLauncher::run(const std::string& modsDir, const std::string& ravexDir
     delete state;
 }
 
-} 
-} 
-} 
+}
+}
+}

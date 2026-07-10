@@ -6,9 +6,9 @@ namespace ravex {
 
 struct BasePlaceResult {
     bool   valid;
-    Vec3   blockPos;       
-    Vec3   neighborPos;    
-    int    face;           
+    Vec3   blockPos;
+    Vec3   neighborPos;
+    int    face;
     double score;
     double targetDamage;
     double selfDamage;
@@ -38,4 +38,4 @@ public:
     );
 };
 
-} 
+}

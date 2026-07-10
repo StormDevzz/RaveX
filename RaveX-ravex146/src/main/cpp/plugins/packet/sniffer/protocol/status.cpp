@@ -23,5 +23,5 @@ void parseStatus(const Packet& pkt) {
     }
 }
 
-} 
-} 
+}
+}

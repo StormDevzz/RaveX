@@ -22,7 +22,7 @@ public class ItemScroller extends Module {
         addParameter(delay);
     }
 
-    
+
     public boolean isPauseListening() {
         return pauseListening;
     }

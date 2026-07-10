@@ -19,7 +19,7 @@ public interface ModuleCondition {
         return () -> !this.canEnable();
     }
 
-    
+
     static ModuleCondition requireModule(String moduleName) {
         return () -> {
             Module m = ModuleManager.INSTANCE.getByName(moduleName);

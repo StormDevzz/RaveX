@@ -14,7 +14,7 @@ struct mem_info_t {
 
 mem_info_t get_mem_info();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

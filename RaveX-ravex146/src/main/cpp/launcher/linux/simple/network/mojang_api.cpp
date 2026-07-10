@@ -50,20 +50,20 @@ static void writeCachedVersion(const std::string& kickxDir, const std::string& v
 
 static void parallelDownload(const std::vector<std::string>& urls,
                              const std::vector<std::string>& dests) {
-    
+
     for (const auto& d : dests) {
         size_t slash = d.find_last_of('/');
         if (slash != std::string::npos)
             ensureDirectory(d.substr(0, slash));
     }
 
-    
+
     for (size_t i = 0; i < urls.size(); i += 16) {
         std::string batch;
         size_t end = std::min(i + 16, urls.size());
         for (size_t j = i; j < end; j++) {
             struct stat st;
-            if (stat(dests[j].c_str(), &st) == 0) continue; 
+            if (stat(dests[j].c_str(), &st) == 0) continue;
             batch += "curl -sL -o \"" + dests[j] + "\" \"" + urls[j] + "\" 2>/dev/null &\n";
         }
         if (!batch.empty()) {
@@ -83,14 +83,14 @@ static bool downloadFabricLibraries(LauncherState *state,
 
     bool ok = integr::installFabric(state->kickx_dir, mcVersion);
 
-    
+
     {
         std::string installerMeta = http_get("https://meta.fabricmc.net/v2/versions/installer"
         if (!installerMeta.empty() && installerMeta != "[]" && installerMeta != "[\n]") {
-            
+
             size_t verKey = installerMeta.find("\"version\":");
             if (verKey != std::string::npos) {
-                verKey += 10; 
+                verKey += 10;
                 while (verKey < installerMeta.length() &&
                        (installerMeta[verKey] == ' ' || installerMeta[verKey] == '\t' ||
                         installerMeta[verKey] == '\n' || installerMeta[verKey] == '\r'))
@@ -157,7 +157,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
         out_json.close();
     }
 
-    
+
     std::string cached_ver = readCachedVersion(state->kickx_dir);
     if (cached_ver != version) {
         queue_progress(state, "Version changed — cleaning old libraries...", 0.07);
@@ -189,7 +189,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
         return false;
     }
 
-    
+
     size_t offset = 0;
     std::vector<std::string> lib_urls, lib_dests;
     while (true) {
@@ -206,13 +206,13 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
         lib_dests.push_back(lib_dest);
     }
 
-    
+
     int total_libs = (int)lib_urls.size();
     queue_progress(state, ("Libraries [0/" + std::to_string(total_libs) + "]").c_str(), 0.12);
     parallelDownload(lib_urls, lib_dests);
     queue_progress(state, ("Libraries [" + std::to_string(total_libs) + "/" + std::to_string(total_libs) + "]").c_str(), 0.5);
 
-    
+
     queue_progress(state, "Downloading asset index...", 0.52);
 
     size_t asset_index_pos = version_json.find("\"assetIndex\":");
@@ -231,7 +231,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
             std::string asset_index_path = state->kickx_dir + "/assets/indexes/" + asset_id + ".json";
             http_download(asset_url, asset_index_path);
 
-            
+
             queue_progress(state, "Scanning assets...", 0.55);
 
             std::ifstream in_asset_index(asset_index_path);
@@ -240,7 +240,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
                                                   std::istreambuf_iterator<char>());
                 in_asset_index.close();
 
-                
+
                 std::vector<std::string> asset_urls, asset_dests;
                 size_t search_offset = 0;
                 while (true) {
@@ -264,7 +264,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
 
                 size_t missing = asset_urls.size();
                 if (missing > 0) {
-                    
+
                     std::string list_path = state->kickx_dir + "/.asset_list.txt";
                     {
                         std::ofstream list_out(list_path);
@@ -273,8 +273,8 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
                         }
                     }
 
-                    
-                    
+
+
                     std::string cmd =
                         "xargs -P 32 -n 2 sh -c '"
                         "mkdir -p \"${2%

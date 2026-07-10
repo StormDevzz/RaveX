@@ -42,7 +42,7 @@ public class MixinBlock {
                 }
             }
             if (self == Blocks.ICE || self == Blocks.PACKED_ICE || self == Blocks.BLUE_ICE || self == Blocks.FROSTED_ICE) {
-                cir.setReturnValue(0.6F); 
+                cir.setReturnValue(0.6F);
             } else {
                 String blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(self).toString();
 <<<<<<< HEAD

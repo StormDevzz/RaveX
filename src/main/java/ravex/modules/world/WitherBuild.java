@@ -27,13 +27,13 @@ public class WitherBuild extends Module {
     private long lastActionTime = 0;
     private int buildsCompleted = 0;
     private static final int[][] BLOCK_OFFSETS = {
-        {1, 0, 0},     
-        {0, 1, 0},     
-        {1, 1, 0},     
-        {2, 1, 0},     
-        {0, 2, 0},     
-        {2, 2, 0},     
-        {1, 2, 0},     
+        {1, 0, 0},
+        {0, 1, 0},
+        {1, 1, 0},
+        {2, 1, 0},
+        {0, 2, 0},
+        {2, 2, 0},
+        {1, 2, 0},
     };
     private static final int SOUL_SAND_COUNT = 4;
 
@@ -274,7 +274,7 @@ public class WitherBuild extends Module {
                         net.minecraft.world.inventory.ClickType.SWAP, mc.player);
                     return free;
                 }
-                return i; 
+                return i;
             }
             if (!needSand && stack.is(Items.WITHER_SKELETON_SKULL)) {
                 if (i < 9) return i;

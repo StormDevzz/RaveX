@@ -32,6 +32,6 @@ struct HandTransform {
     Vec3 worldifyPoint(const Vec3& localPoint) const;
 };
 
-} // namespace ravex::shaders
+}
 
 #endif

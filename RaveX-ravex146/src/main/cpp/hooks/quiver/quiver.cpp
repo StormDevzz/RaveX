@@ -40,13 +40,13 @@ int selectBestArrow(
 
         if (!match) continue;
 
-        
+
         double score = typeScore + arrow.amplifier * 10.0;
 
-        
+
         for (const auto& eff : activeEffects) {
-            bool effMatch = (eff.id == eName) || 
-                          (eff.id.find(eName) != std::string::npos) || 
+            bool effMatch = (eff.id == eName) ||
+                          (eff.id.find(eName) != std::string::npos) ||
                           (eName.find(eff.id) != std::string::npos);
             if (effMatch && eff.amplifier >= arrow.amplifier && eff.duration > 3.0) {
                 score -= 200.0;
@@ -62,4 +62,4 @@ int selectBestArrow(
     return bestIndex;
 }
 
-} 
+}

@@ -35,11 +35,11 @@ public class Reach extends Module {
         if (mc.player == null) return;
         var entityAttr = mc.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
         if (entityAttr != null) {
-            entityAttr.setBaseValue(3.0); 
+            entityAttr.setBaseValue(3.0);
         }
         var blockAttr = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
         if (blockAttr != null) {
-            blockAttr.setBaseValue(4.5); 
+            blockAttr.setBaseValue(4.5);
         }
     }
     public static boolean maybeEnabled() {

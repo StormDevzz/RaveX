@@ -120,7 +120,7 @@ std::string JsonValue::Parser::parseRawString() {
                 case 'r': result += '\r'; break;
                 case 't': result += '\t'; break;
                 case 'u': {
-                    
+
                     char hex[5] = { next(), next(), next(), next(), '\0' };
                     unsigned long cp = strtoul(hex, nullptr, 16);
                     if (cp <= 0x7F) {
@@ -160,7 +160,7 @@ JsonValue JsonValue::Parser::parseNumber() {
 }
 
 JsonValue JsonValue::Parser::parseObject() {
-    next(); 
+    next();
     JsonObject obj;
     skipWS();
     if (peek() == '}') { next(); return JsonValue(obj); }
@@ -182,7 +182,7 @@ JsonValue JsonValue::Parser::parseObject() {
 }
 
 JsonValue JsonValue::Parser::parseArray() {
-    next(); 
+    next();
     JsonArray arr;
     skipWS();
     if (peek() == ']') { next(); JsonValue v; v.m_type = Array; v.m_arr = std::move(arr); return v; }
@@ -218,7 +218,7 @@ JsonValue JsonValue::parse(const char* data, size_t len) {
     auto val = parser.parseValue();
     parser.skipWS();
     if (!parser.eof()) {
-        
+
     }
     return val;
 }
@@ -303,5 +303,5 @@ std::string JsonValue::serialize(bool pretty, int indent) const {
     return "null";
 }
 
-} 
-} 
+}
+}

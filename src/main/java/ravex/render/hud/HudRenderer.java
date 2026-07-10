@@ -195,7 +195,7 @@ public final class HudRenderer {
     }
 
     private void renderNameTagsAndESP(GuiGraphics context, Minecraft mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled, Vec3 playerViewVec) {
-        // Native path (optimized)
+
         boolean nativeSuccess = false;
         int count = candidates.size();
         double[] outLayouts = null;
@@ -527,19 +527,19 @@ public final class HudRenderer {
     }
 
     private void renderDamageLabels(GuiGraphics context, Minecraft mc, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
-        // BasePlace damage
+
         BasePlace bp = ModuleManager.get(BasePlace.class);
         if (bp.getEnabled() && BasePlace.getSimulatedPlacementBlock() != null) {
             renderDamageLabel(context, mc, BasePlace.getSimulatedPlacementBlock(), "Dmg: %.1f | Self: %.1f", BasePlace.currentTargetDamage, BasePlace.currentSelfDamage, 0xFF00FF00, pt, cameraPos, cameraLook, guiWidth, guiHeight);
         }
 
-        // AnchorAura damage
+
         AnchorAura aa = ModuleManager.get(AnchorAura.class);
         if (aa.getEnabled() && AnchorAura.simulatedPlacementBlock != null) {
             renderDamageLabel(context, mc, AnchorAura.simulatedPlacementBlock, "Dmg: %.1f | Self: %.1f", AnchorAura.currentTargetDamage, AnchorAura.currentSelfDamage, 0xFF00FFFF, pt, cameraPos, cameraLook, guiWidth, guiHeight);
         }
 
-        // AutoCrystal damage
+
         AutoCrystal ac = ModuleManager.get(AutoCrystal.class);
         if (ac.getEnabled() && ac.renderDamage.getValue() && AutoCrystal.currentPlacementBlock != null) {
             BlockPos p = AutoCrystal.currentPlacementBlock;
@@ -559,7 +559,7 @@ public final class HudRenderer {
             }
         }
 
-        // PVE AutoSmelt
+
         PVEUtils asm = ModuleManager.get(PVEUtils.class);
         if (asm.getEnabled() && asm.mode.getValue().equals("AutoSmelt") && asm.smeltRender.getValue() && PVEUtils.smeltTarget != null) {
             BlockPos p = PVEUtils.smeltTarget;
@@ -585,7 +585,7 @@ public final class HudRenderer {
             }
         }
 
-        // PVE AutoBrew
+
         if (asm.getEnabled() && asm.mode.getValue().equals("AutoBrew") && asm.brewRender.getValue()) {
             BlockPos p = PVEUtils.getBrewTarget();
             if (p != null) {

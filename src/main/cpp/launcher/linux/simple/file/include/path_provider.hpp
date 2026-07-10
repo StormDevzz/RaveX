@@ -12,7 +12,7 @@ std::string get_kickx_dir();
 
 std::string get_mods_dir();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -360,17 +360,17 @@ public class Render2DEngine {
 
         Identifier tex = getCornerOutlineTexture(radius, thickness);
         if (tex != null) {
-            // Draw 4 corners
+
             graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, radius, radius, 64, 64, 128, 128, color);
             graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y, 64f, 0f, radius, radius, 64, 64, 128, 128, color);
             graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y + height - radius, 0f, 64f, radius, radius, 64, 64, 128, 128, color);
             graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y + height - radius, 64f, 64f, radius, radius, 64, 64, 128, 128, color);
 
-            // Draw 4 edges
-            drawRect(graphics, x + radius, y, width - radius * 2, thickness, color); // Top
-            drawRect(graphics, x + radius, y + height - thickness, width - radius * 2, thickness, color); // Bottom
-            drawRect(graphics, x, y + radius, thickness, height - radius * 2, color); // Left
-            drawRect(graphics, x + width - thickness, y + radius, thickness, height - radius * 2, color); // Right
+
+            drawRect(graphics, x + radius, y, width - radius * 2, thickness, color);
+            drawRect(graphics, x + radius, y + height - thickness, width - radius * 2, thickness, color);
+            drawRect(graphics, x, y + radius, thickness, height - radius * 2, color);
+            drawRect(graphics, x + width - thickness, y + radius, thickness, height - radius * 2, color);
         }
     }
 
@@ -590,12 +590,12 @@ public class Render2DEngine {
 
     private static boolean isInsideRoundedRect(float fx, float fy, float width, float height, float r) {
         if (fx < 0f || fx > width || fy < 0f || fy > height) return false;
-        
+
         float left = r;
         float right = width - r;
         float top = r;
         float bottom = height - r;
-        
+
         if (fx < left && fy < top) {
             float dx = fx - left;
             float dy = fy - top;

@@ -31,6 +31,6 @@ public:
     virtual void reset() = 0;
 };
 
-} // namespace ravex::shaders
+}
 
 #endif

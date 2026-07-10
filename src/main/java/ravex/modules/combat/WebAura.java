@@ -91,7 +91,7 @@ public class WebAura extends Module {
             if (webSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(prevSlot));
             }
-            delay = 4; 
+            delay = 4;
         }
     }
     public static boolean maybeEnabled() {

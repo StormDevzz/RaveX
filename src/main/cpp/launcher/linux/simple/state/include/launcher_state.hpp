@@ -35,34 +35,34 @@ struct LauncherState {
     GtkWidget *progress_bar = nullptr;
     GtkWidget *btn_launch = nullptr;
     GtkWidget *btn_update = nullptr;
-    GtkWidget *combo_accounts = nullptr; 
-    GtkWidget *combo_instances = nullptr; 
-    GtkWidget *instances_box = nullptr;  
-    GtkWidget *instance_list = nullptr;  
+    GtkWidget *combo_accounts = nullptr;
+    GtkWidget *combo_instances = nullptr;
+    GtkWidget *instances_box = nullptr;
+    GtkWidget *instance_list = nullptr;
 
     std::string mods_dir;
     std::string ravex_dir;
     std::string kickx_dir;
 
-    
+
     std::vector<Account> accounts;
     int active_account_index = -1;
 
-    
+
     std::vector<InstanceInfo> instances;
     int active_instance_index = 0;
 
-    
+
     std::atomic<pid_t> game_pid{-1};
     std::atomic<bool> game_running{false};
     std::atomic<bool> update_active{false};
 
-    
+
     GtkWidget *console_window = nullptr;
     GtkWidget *console_text = nullptr;
     int console_pipe = -1;
 };
 
-} 
-} 
-} 
+}
+}
+}

@@ -15,7 +15,7 @@ std::string getLatestForgeVersion(const std::string& mcVersion) {
     return "";
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

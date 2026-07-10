@@ -10,8 +10,8 @@ public class DependencyParameter<T, P extends Parameter<T>> extends Parameter<T>
         this.delegate = delegate;
         this.parent = parent;
         this.requiredValue = requiredValue;
-        
-        
+
+
         this.setVisible(() -> parent.getValue().equals(requiredValue));
     }
 

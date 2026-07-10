@@ -47,7 +47,7 @@ public class MixinConnection {
                 AccessorClientIntentionPacket accessor = (AccessorClientIntentionPacket) (Object) handshakePacket;
                 String originalHost = handshakePacket.hostName();
                 int originalProtocol = handshakePacket.protocolVersion();
-                
+
                 String spoofedHost = HandshakeSpoof.INSTANCE.getSpoofedHost(originalHost);
                 int spoofedProtocol = HandshakeSpoof.INSTANCE.getSpoofedProtocol(originalProtocol);
 
@@ -140,16 +140,16 @@ public class MixinConnection {
 
         if (AntiHunger.INSTANCE.getEnabled()) {
             String currentMode = AntiHunger.INSTANCE.mode.getValue();
-            
+
             if (packet instanceof ServerboundMovePlayerPacket) {
                 if ("Full".equals(currentMode) || "OnGround".equals(currentMode)) {
                     ((AccessorServerboundMovePlayerPacket) packet).setOnGround(false);
                 }
             }
-            
+
             if (packet instanceof ServerboundPlayerCommandPacket commandPacket) {
                 var action = commandPacket.getAction();
-                if (action == ServerboundPlayerCommandPacket.Action.START_SPRINTING || 
+                if (action == ServerboundPlayerCommandPacket.Action.START_SPRINTING ||
                     action == ServerboundPlayerCommandPacket.Action.STOP_SPRINTING) {
                     if ("Full".equals(currentMode) || "Sprint".equals(currentMode)) {
                         ci.cancel();

@@ -38,5 +38,5 @@ inline bool isRoot() {
     return geteuid() == 0;
 }
 
-} 
-} 
+}
+}

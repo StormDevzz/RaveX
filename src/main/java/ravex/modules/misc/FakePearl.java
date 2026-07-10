@@ -44,7 +44,7 @@ public class FakePearl extends Module {
         NATIVE.load();
 ========
 
-    
+
     private static boolean nativeLibLoaded = false;
     static {
         try {
@@ -119,10 +119,10 @@ public class FakePearl extends Module {
         mc.level.addEntity(pearl);
 ========
 
-        
+
         mc.level.addEntity(pearl);
 
-        
+
 >>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3:RaveX-ravex146/src/main/java/ravex/modules/exploit/FakePearl.java
 =======
         mc.level.addEntity(pearl);
@@ -145,7 +145,7 @@ public class FakePearl extends Module {
 <<<<<<<< HEAD:src/main/java/ravex/modules/misc/FakePearl.java
 ========
 
-    
+
 >>>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3:RaveX-ravex146/src/main/java/ravex/modules/exploit/FakePearl.java
     private static native void nativeCalculateVelocity(double yaw, double pitch, double speed, double[] outVel);
 

@@ -38,7 +38,7 @@ static std::string read_asset_index_id(const std::string& kickx_dir, const std::
 static std::string build_classpath(LauncherState *state, const std::string& version, bool &has_fabric) {
     std::string classpath = "";
     std::string libs_dir = state->kickx_dir + "/libraries";
-    
+
     has_fabric = false;
     if (fs::exists(libs_dir)) {
         for (const auto& entry : fs::recursive_directory_iterator(libs_dir)) {
@@ -51,9 +51,9 @@ static std::string build_classpath(LauncherState *state, const std::string& vers
             }
         }
     }
-    
+
     classpath += state->kickx_dir + "/versions/" + version + "/" + version + ".jar";
-    
+
     std::string mods_dir = state->mods_dir;
     if (fs::exists(mods_dir)) {
         for (const auto& entry : fs::directory_iterator(mods_dir)) {
@@ -62,7 +62,7 @@ static std::string build_classpath(LauncherState *state, const std::string& vers
             }
         }
     }
-    
+
     return classpath;
 }
 
@@ -155,7 +155,7 @@ void monitor_game_process(LauncherState *state, pid_t pid) {
     }, state);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

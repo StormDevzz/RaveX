@@ -109,6 +109,6 @@ struct ShaderConfig {
     EffectType effect = EffectType::None;
 };
 
-} // namespace ravex::shaders
+}
 
 #endif

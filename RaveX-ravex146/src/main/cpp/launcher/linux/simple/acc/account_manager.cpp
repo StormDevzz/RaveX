@@ -25,8 +25,8 @@ void save_accounts(LauncherState *state) {
 
 void add_offline_account(LauncherState *state, const std::string& username) {
     if (username.empty()) return;
-    
-    
+
+
     for (size_t i = 0; i < state->accounts.size(); ++i) {
         if (state->accounts[i].username == username) {
             state->active_account_index = i;
@@ -48,7 +48,7 @@ void add_offline_account(LauncherState *state, const std::string& username) {
 
 void remove_account(LauncherState *state, int index) {
     if (index < 0 || index >= static_cast<int>(state->accounts.size())) return;
-    
+
     state->accounts.erase(state->accounts.begin() + index);
     if (state->accounts.empty()) {
         state->active_account_index = -1;
@@ -58,7 +58,7 @@ void remove_account(LauncherState *state, int index) {
     save_accounts(state);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

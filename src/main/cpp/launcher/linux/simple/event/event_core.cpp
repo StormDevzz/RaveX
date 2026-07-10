@@ -14,7 +14,7 @@ void shutdown_events() {
     hide_progress(nullptr);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

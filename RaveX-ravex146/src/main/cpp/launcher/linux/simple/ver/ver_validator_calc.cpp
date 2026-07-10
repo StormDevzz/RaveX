@@ -10,7 +10,7 @@ double ver_validator_calculate(const std::string& input) {
     return 1.0;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

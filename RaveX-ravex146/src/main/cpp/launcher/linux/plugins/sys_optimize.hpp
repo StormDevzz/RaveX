@@ -6,13 +6,13 @@ namespace plugins {
 
 class SysOptimize {
 public:
-    
+
     static void tunePriority();
 
-    
+
     static void trimMemory();
 };
 
-} 
-} 
-} 
+}
+}
+}

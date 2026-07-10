@@ -13,7 +13,7 @@ disk_info_t get_disk_info() {
     return result;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

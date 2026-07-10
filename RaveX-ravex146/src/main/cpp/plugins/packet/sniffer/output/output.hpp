@@ -44,5 +44,5 @@ private:
     bool first_ = true;
 };
 
-} 
-} 
+}
+}

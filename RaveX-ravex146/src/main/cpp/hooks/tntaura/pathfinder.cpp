@@ -43,18 +43,18 @@ std::vector<PlacementPriority> computePlacementOrder(
     std::vector<PlacementPriority> result;
 
     for (const auto& c : cageCandidates) {
-        if (solids.count(c)) continue; 
+        if (solids.count(c)) continue;
 
         double dist = pfDistSqr(playerX, playerY, playerZ, c);
         int neighbors = countSolidNeighbors(c, solids);
 
-        
-        
+
+
         double score = 0.0;
-        if (neighbors == 0) score += 1000.0; 
-        score += dist * 0.1;                 
-        score -= neighbors * 50.0;           
-        score -= c.y * 10.0;                 
+        if (neighbors == 0) score += 1000.0;
+        score += dist * 0.1;
+        score -= neighbors * 50.0;
+        score -= c.y * 10.0;
 
         result.push_back({c, score, neighbors == 0});
     }
@@ -77,7 +77,7 @@ std::vector<TntBlockPos> computeSupportChain(
     std::vector<TntBlockPos> chain;
     double rSqr = range * range;
 
-    
+
     TntBlockPos current = target;
     for (int depth = 0; depth < maxDepth; depth++) {
         bool hasNeighbor = false;
@@ -91,11 +91,11 @@ std::vector<TntBlockPos> computeSupportChain(
 
         if (hasNeighbor) break;
 
-        
+
         TntBlockPos below = {current.x, current.y - 1, current.z};
         if (pfDistSqr(playerX, playerY, playerZ, below) > rSqr) break;
 
-        chain.insert(chain.begin(), below); 
+        chain.insert(chain.begin(), below);
         current = below;
     }
 

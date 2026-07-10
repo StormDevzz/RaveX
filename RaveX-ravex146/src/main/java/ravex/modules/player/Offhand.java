@@ -29,7 +29,7 @@ public class Offhand extends Module {
         var p = mc.player;
         if (p == null || mc.gameMode == null) return;
 
-        
+
         Item targetItem = Items.TOTEM_OF_UNDYING;
         boolean forceTotem = p.getHealth() <= minHealth.getValue();
 
@@ -41,12 +41,12 @@ public class Offhand extends Module {
             else if (choice.equals("Shield")) targetItem = Items.SHIELD;
         }
 
-        
+
         if (p.getOffhandItem().is(targetItem)) return;
 
-        
+
         int foundSlot = -1;
-        
+
         for (int i = 0; i < 36; i++) {
             ItemStack stack = p.getInventory().getItem(i);
             if (stack.is(targetItem) || (targetItem == Items.GOLDEN_APPLE && stack.is(Items.ENCHANTED_GOLDEN_APPLE))) {
@@ -55,7 +55,7 @@ public class Offhand extends Module {
             }
         }
 
-        
+
         if (foundSlot == -1 && !targetItem.equals(Items.TOTEM_OF_UNDYING)) {
             for (int i = 0; i < 36; i++) {
                 if (p.getInventory().getItem(i).is(Items.TOTEM_OF_UNDYING)) {

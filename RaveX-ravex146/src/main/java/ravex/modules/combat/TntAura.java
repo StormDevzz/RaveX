@@ -29,7 +29,7 @@ import java.util.Set;
 public class TntAura extends Module {
     public static final TntAura INSTANCE = new TntAura();
 
-    
+
     public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay   = new NumberParameter("Place Delay", 50.0, 0.0, 500.0, 10.0);
     public final NumberParameter  tntDelay     = new NumberParameter("TNT Delay", 200.0, 0.0, 1000.0, 10.0);
@@ -48,34 +48,34 @@ public class TntAura extends Module {
     public final BooleanParameter render       = new BooleanParameter("Render", true);
     public final ColorParameter   color        = new ColorParameter("Color", 0xFFFF4400);
 
-    
+
     private enum State { TRAPPING, PLACING_TNT, IGNITING, WAITING }
     private State currentState = State.TRAPPING;
 
     private long lastActionTime = 0;
-    private int[] gapPos = null;      
+    private int[] gapPos = null;
     private net.minecraft.world.entity.LivingEntity currentTarget = null;
     private int failedTntPlacements = 0;
 
     public static final List<BlockPos> renderBlocks = new ArrayList<>();
 
-    
+
     public static float silentYaw = 0;
     public static float silentPitch = 0;
     private static boolean hasSilentRotations = false;
 
-    
+
     private static boolean nativeAvailable = false;
 
     static {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_tntaura");
         } catch (UnsatisfiedLinkError e) {
-            
+
         }
     }
 
-    
+
     private static native double[] nativeCalculateCage(
         double playerX, double playerY, double playerZ,
         double targetX, double targetY, double targetZ,
@@ -144,14 +144,14 @@ public class TntAura extends Module {
 
         hasSilentRotations = false;
 
-        
+
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             if (autoDisable.getValue()) setEnabled(false);
             return;
         }
 
-        
+
         if (currentTarget != target) {
             currentTarget = target;
             currentState = State.TRAPPING;
@@ -176,7 +176,7 @@ public class TntAura extends Module {
         }
     }
 
-    
+
     private void tickTrapping(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
         if (now - lastActionTime < placeDelay.getValue()) return;
 
@@ -197,18 +197,18 @@ public class TntAura extends Module {
         }
 
         if (result == null || result[0] < 0.5) {
-            
+
             currentState = State.PLACING_TNT;
             lastActionTime = now;
             return;
         }
 
-        
+
         if (gapPos == null && result.length >= 11) {
             gapPos = new int[]{(int) result[8], (int) result[9], (int) result[10]};
         }
 
-        
+
         int blockSlot = findObsidianSlot(mc);
         if (blockSlot == -1) return;
 
@@ -232,7 +232,7 @@ public class TntAura extends Module {
         lastActionTime = now;
     }
 
-    
+
     private void tickPlacingTnt(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
         if (now - lastActionTime < tntDelay.getValue()) return;
 
@@ -259,7 +259,7 @@ public class TntAura extends Module {
         double[] solidData = collectSolidBlocks(mc);
         double[] result = null;
 
-        
+
         double placeRange = range.getValue() + 1.5;
 
         if (nativeAvailable) {
@@ -274,7 +274,7 @@ public class TntAura extends Module {
 
         if (result == null || result[0] < 0.5) {
             failedTntPlacements++;
-            
+
             if (failedTntPlacements >= 5) {
                 if (autoDisable.getValue()) {
                     setEnabled(false);
@@ -308,7 +308,7 @@ public class TntAura extends Module {
         lastActionTime = now;
     }
 
-    
+
     private void tickIgniting(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
         if (now - lastActionTime < igniteDelay.getValue()) return;
 
@@ -318,14 +318,14 @@ public class TntAura extends Module {
             return;
         }
 
-        
+
         BlockPos tntPos = new BlockPos(gapPos[0], gapPos[1], gapPos[2]);
         Vec3 hitVec = Vec3.atCenterOf(tntPos);
 
         rotateTo(mc, hitVec);
         swapTo(mc, flintSlot);
 
-        
+
         BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, tntPos, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
         mc.player.swing(InteractionHand.MAIN_HAND);
@@ -336,14 +336,14 @@ public class TntAura extends Module {
         lastActionTime = now;
     }
 
-    
+
     private void tickWaiting(Minecraft mc, long now) {
-        
+
         if (now - lastActionTime > 5000) {
             if (autoDisable.getValue()) {
                 setEnabled(false);
             } else {
-                
+
                 currentState = State.TRAPPING;
                 gapPos = null;
                 synchronized (renderBlocks) { renderBlocks.clear(); }
@@ -351,7 +351,7 @@ public class TntAura extends Module {
         }
     }
 
-    
+
     private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
@@ -380,7 +380,7 @@ public class TntAura extends Module {
         return closest;
     }
 
-    
+
     private int findObsidianSlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
@@ -388,7 +388,7 @@ public class TntAura extends Module {
                 if (bi.getBlock() == Blocks.OBSIDIAN) return i;
             }
         }
-        
+
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
@@ -418,7 +418,7 @@ public class TntAura extends Module {
         return -1;
     }
 
-    
+
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
         double r = range.getValue() + 3.0;
@@ -448,7 +448,7 @@ public class TntAura extends Module {
         return arr;
     }
 
-    
+
     private void rotateTo(Minecraft mc, Vec3 target) {
         String mode = rotateMode.getValue();
         if (mode.equals("None")) return;
@@ -477,7 +477,7 @@ public class TntAura extends Module {
         }
     }
 
-    
+
     private int savedSlot = -1;
 
     private void swapTo(Minecraft mc, int slot) {
@@ -502,11 +502,11 @@ public class TntAura extends Module {
         }
     }
 
-    
+
     private double[] javaFallbackCage(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidData) {
         BlockPos feet = target.blockPosition();
 
-        
+
         double dx = mc.player.getX() - (feet.getX() + 0.5);
         double dz = mc.player.getZ() - (feet.getZ() + 0.5);
         int headY = feet.getY() + 1;
@@ -523,12 +523,12 @@ public class TntAura extends Module {
             gapPos = new int[]{gapBlock.getX(), gapBlock.getY(), gapBlock.getZ()};
         }
 
-        
+
         List<BlockPos> candidates = new ArrayList<>();
-        
+
         candidates.add(feet.north()); candidates.add(feet.south());
         candidates.add(feet.east());  candidates.add(feet.west());
-        
+
         BlockPos[] headSides = {feet.above().north(), feet.above().south(),
                                 feet.above().east(), feet.above().west()};
         for (BlockPos h : headSides) {

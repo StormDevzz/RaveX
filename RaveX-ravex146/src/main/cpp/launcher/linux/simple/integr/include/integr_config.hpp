@@ -13,7 +13,7 @@ void setIntegrEnabled(bool v);
 void setFabricEnabled(bool v);
 void setForgeEnabled(bool v);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

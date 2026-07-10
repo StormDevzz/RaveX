@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     ensureDirectory(ravexDir + "/font");
     ensureDirectory(ravexDir + "/natives");
 
-    
+
     ravex::launcher::simple::SimpleLauncher::run(modsDir, ravexDir);
     return 0;
 }

@@ -34,5 +34,5 @@ private:
     std::vector<Rule> rules_;
 };
 
-} 
-} 
+}
+}

@@ -100,5 +100,5 @@ void registerLuaModuleAPI(lua_State* L) {
     LuaBridge::registerFunction(L, "isModuleEnabled", lua_isModuleEnabled);
 }
 
-} 
-} 
+}
+}

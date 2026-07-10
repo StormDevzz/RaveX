@@ -14,7 +14,7 @@ public class Sounds extends Module {
     public final NumberParameter volume = new NumberParameter("Volume", 1.0, 0.0, 1.0, 0.1);
     private Sounds() {
         super("Sounds");
-        setEnabled(true); 
+        setEnabled(true);
 <<<<<<< HEAD
     }
     public static boolean maybeEnabled() {

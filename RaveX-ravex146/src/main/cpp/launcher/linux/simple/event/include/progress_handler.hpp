@@ -10,7 +10,7 @@ void show_progress(LauncherState *state, const char *text);
 void update_progress(LauncherState *state, const char *text, double fraction);
 void hide_progress(LauncherState *state);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -159,7 +159,7 @@ public class LanguageUtility {
         en.put("desc_KeepSprint", "Keep sprint");
         en.put("desc_AutoAuth", "Login helper");
         en.put("desc_SafeWalk", "Safe walk");
-        
+
 
         en.put("desc_ShieldFucker", "Break shields");
         en.put("desc_KillEffects", "Death effects");
@@ -174,7 +174,7 @@ public class LanguageUtility {
         en.put("desc_ElytraPlusPlus", "Elytra fly");
         en.put("desc_Flight", "Creative fly");
         en.put("desc_Replenish", "Refill items");
-        
+
 
         en.put("desc_AutoReplant", "Replant crops");
         en.put("desc_Nuker", "Mass break");
@@ -412,7 +412,7 @@ public class LanguageUtility {
         ru.put("desc_KeepSprint", "Сохранять спринт");
         ru.put("desc_AutoAuth", "Автовход");
         ru.put("desc_SafeWalk", "Безопасная ходьба");
-        
+
 
         ru.put("desc_ShieldFucker", "Ломать щиты");
         ru.put("desc_KillEffects", "Эффекты смерти");
@@ -427,7 +427,7 @@ public class LanguageUtility {
         ru.put("desc_ElytraPlusPlus", "Элитра полёт");
         ru.put("desc_Flight", "Креативный полёт");
         ru.put("desc_Replenish", "Пополнять предметы");
-        
+
 
         ru.put("desc_AutoReplant", "Сажать заново");
         ru.put("desc_Nuker", "Массовое разрушение");

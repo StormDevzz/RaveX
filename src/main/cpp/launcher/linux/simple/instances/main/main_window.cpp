@@ -23,7 +23,7 @@ void create_window(LauncherState *state) {
     apply_background(state);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

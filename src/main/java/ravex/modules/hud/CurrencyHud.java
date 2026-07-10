@@ -71,7 +71,7 @@ public class CurrencyHud extends Module {
     private double usdToHuf = 368.50;
     private double usdToCzk = 23.20;
     private double usdToRon = 4.63;
-    private double usdToBtc = 0.0000148; 
+    private double usdToBtc = 0.0000148;
     private long lastFetchMs = 0;
     private long lastTickMs = 0;
     private CurrencyHud() {
@@ -166,11 +166,11 @@ public class CurrencyHud extends Module {
         }
     }
     private void simulateTicks() {
-        double jitter = 1.0 + (Math.random() - 0.5) * 0.0005; 
+        double jitter = 1.0 + (Math.random() - 0.5) * 0.0005;
         usdToRub = Math.max(50.0, Math.min(150.0, usdToRub * jitter));
         usdToByn = Math.max(1.5, Math.min(5.0, usdToByn * jitter));
         usdToKzt = Math.max(300.0, Math.min(600.0, usdToKzt * jitter));
-        usdToBtc = Math.max(0.000005, Math.min(0.00005, usdToBtc * (1.0 + (Math.random() - 0.5) * 0.001))); 
+        usdToBtc = Math.max(0.000005, Math.min(0.00005, usdToBtc * (1.0 + (Math.random() - 0.5) * 0.001)));
     }
     private void fetchRatesAsync() {
         new Thread(() -> {

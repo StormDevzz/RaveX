@@ -13,7 +13,7 @@ ver_compare_result ver_compare_execute(const std::string& input) {
     return r;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

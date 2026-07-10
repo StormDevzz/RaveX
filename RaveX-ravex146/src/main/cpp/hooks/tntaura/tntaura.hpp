@@ -17,25 +17,25 @@ struct TntBlockPos {
 struct TntAuraConfig {
     double range;
     bool   roof;
-    bool   includeBottom;    
-    int    gapDirection;     
+    bool   includeBottom;
+    int    gapDirection;
 };
 
 
 struct TntPlacement {
     bool       valid;
-    TntBlockPos neighbor;     
-    int        face;          
-    TntBlockPos targetBlock;  
+    TntBlockPos neighbor;
+    int        face;
+    TntBlockPos targetBlock;
 };
 
 
 struct TntAuraResult {
-    std::vector<TntPlacement> cagePlacements;   
-    TntPlacement              tntPlacement;      
-    TntBlockPos               tntPos;            
-    TntBlockPos               gapPos;            
-    bool                      cageComplete;      
+    std::vector<TntPlacement> cagePlacements;
+    TntPlacement              tntPlacement;
+    TntBlockPos               tntPos;
+    TntBlockPos               gapPos;
+    bool                      cageComplete;
     int                       totalCageSlots;
     int                       filledCageSlots;
 };

@@ -23,7 +23,7 @@ public class Velocity extends Module {
         addParameter(horizontal);
         addParameter(vertical);
         addParameter(explosion);
-        
+
         horizontal.setVisible(() -> !mode.getValue().equals("Cancel"));
         vertical.setVisible(() -> !mode.getValue().equals("Cancel"));
     }

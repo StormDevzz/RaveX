@@ -14,7 +14,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
 
 std::string detect_java_path();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

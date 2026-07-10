@@ -12,7 +12,7 @@ struct DownloadProgressListener {
     virtual void on_progress_step(const std::string& status_text) = 0;
 };
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

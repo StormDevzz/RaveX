@@ -167,9 +167,9 @@ static void handle_calc(wchar_t ch) {
 static std::string btn_action(HWND hBtn) {
     wchar_t buf[64] = {0};
     GetWindowTextW(hBtn, buf, 64);
-    
+
     std::wstring w(buf);
-    if (w == L"\u00b1")    return "\xc2\xb1";     
+    if (w == L"\u00b1")    return "\xc2\xb1";
     if (w == L"\u2190" || w == L"\u232b") return "BS";
     if (w == L"\u00d7")    return "*";
     if (w == L"\u00f7")    return "/";
@@ -194,19 +194,19 @@ static LRESULT CALLBACK CalcWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
     switch (msg) {
     case WM_CREATE: {
         int y = 8;
-        
+
         CreateWindowExW(0, L"STATIC", L"\u26a1 RaveX Calculator",
             WS_CHILD | WS_VISIBLE | SS_LEFT, 10, y, 300, 22,
             hWnd, nullptr, g_hinst, nullptr);
         y += 28;
 
-        
+
         g_hDisplay = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"",
             WS_CHILD | WS_VISIBLE | ES_READONLY | ES_RIGHT | ES_AUTOHSCROLL,
             8, y, WIN_CX - 16, 28, hWnd, nullptr, g_hinst, nullptr);
         y += 34;
 
-        
+
         g_hResult = CreateWindowExW(0, L"STATIC", L"",
             WS_CHILD | WS_VISIBLE | SS_RIGHT,
             8, y, WIN_CX - 16, 18, hWnd, nullptr, g_hinst, nullptr);
@@ -214,7 +214,7 @@ static LRESULT CALLBACK CalcWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
         y += 4;
 
-        
+
         const wchar_t* fns[FN_ROWS][FN_COLS] = {
             {L"sin(", L"cos(", L"tan(", L"sqrt(", L"log("},
             {L"asin(",L"acos(",L"atan(",L"^",     L"fact("}
@@ -227,53 +227,53 @@ static LRESULT CALLBACK CalcWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
         y += FN_ROWS * (FN_BTN_H + BTN_GAP) + 4;
 
-        
+
         int grid_w = 4 * BTN_W + 3 * BTN_GAP;
         int gx = (WIN_CX - grid_w) / 2;
 
-        
+
         add_btn(hWnd, L"C",     gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"\u00b1", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"%",     gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"\u2190", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        
+
         add_btn(hWnd, L"7", gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"8", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"9", gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"/", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        
+
         add_btn(hWnd, L"4", gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"5", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"6", gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"*", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        
+
         add_btn(hWnd, L"1", gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"2", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"3", gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"-", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        
+
         add_btn(hWnd, L"0", gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L".", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"(", gx + (BTN_W+BTN_GAP)*2, y, BTN_W, BTN_H);
         add_btn(hWnd, L"+", gx + (BTN_W+BTN_GAP)*3, y, BTN_W, BTN_H);
         y += BTN_H + BTN_GAP;
 
-        
+
         add_btn(hWnd, L")",      gx, y, BTN_W, BTN_H);
         add_btn(hWnd, L"\u03c0", gx + (BTN_W+BTN_GAP)*1, y, BTN_W, BTN_H);
         add_btn(hWnd, L"=",      gx + (BTN_W+BTN_GAP)*2, y, BTN_W * 2 + BTN_GAP, BTN_H);
-        
+
         y += BTN_H + BTN_GAP + 4;
 
-        
+
         CreateWindowExW(0, L"STATIC", L"History",
             WS_CHILD | WS_VISIBLE | SS_LEFT, 10, y, 100, 16,
             hWnd, nullptr, g_hinst, nullptr);
@@ -284,7 +284,7 @@ static LRESULT CALLBACK CalcWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
             8, y, WIN_CX - 16, WIN_CY - y - 8,
             hWnd, nullptr, g_hinst, nullptr);
 
-        
+
         if (g_hDisplay && g_disp_font) SendMessageW(g_hDisplay, WM_SETFONT, (WPARAM)g_disp_font, TRUE);
         if (g_hResult  && g_res_font)  SendMessageW(g_hResult,  WM_SETFONT, (WPARAM)g_res_font,  TRUE);
         if (g_hHistory && g_fn_font)   SendMessageW(g_hHistory, WM_SETFONT, (WPARAM)g_fn_font,   TRUE);

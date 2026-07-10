@@ -19,7 +19,7 @@ import java.util.List;
 public class CurrencyHud extends HudModule {
     public static final CurrencyHud INSTANCE = new CurrencyHud();
 
-    
+
     public final BooleanParameter btc = new BooleanParameter("BTC/USD", true);
     public final BooleanParameter usd_rub = new BooleanParameter("USD/RUB", true);
     public final BooleanParameter eur_rub = new BooleanParameter("EUR/RUB", true);
@@ -42,7 +42,7 @@ public class CurrencyHud extends HudModule {
     public final BooleanParameter usd_czk = new BooleanParameter("USD/CZK", false);
     public final BooleanParameter usd_ron = new BooleanParameter("USD/RON", false);
 
-    
+
     private double usdToRub = 89.50;
     private double usdToByn = 3.25;
     private double usdToKzt = 465.20;
@@ -62,7 +62,7 @@ public class CurrencyHud extends HudModule {
     private double usdToHuf = 368.50;
     private double usdToCzk = 23.20;
     private double usdToRon = 4.63;
-    private double usdToBtc = 0.0000148; 
+    private double usdToBtc = 0.0000148;
 
     private long lastFetchMs = 0;
     private long lastTickMs = 0;
@@ -108,13 +108,13 @@ public class CurrencyHud extends HudModule {
         if (mc.player == null || mc.level == null) return;
 
         long now = System.currentTimeMillis();
-        
+
         if (now - lastFetchMs > 600000) {
             lastFetchMs = now;
             fetchRatesAsync();
         }
 
-        
+
         if (now - lastTickMs > 2000) {
             lastTickMs = now;
             simulateTicks();
@@ -176,12 +176,12 @@ public class CurrencyHud extends HudModule {
     }
 
     private void simulateTicks() {
-        
-        double jitter = 1.0 + (Math.random() - 0.5) * 0.0005; 
+
+        double jitter = 1.0 + (Math.random() - 0.5) * 0.0005;
         usdToRub = Math.max(50.0, Math.min(150.0, usdToRub * jitter));
         usdToByn = Math.max(1.5, Math.min(5.0, usdToByn * jitter));
         usdToKzt = Math.max(300.0, Math.min(600.0, usdToKzt * jitter));
-        usdToBtc = Math.max(0.000005, Math.min(0.00005, usdToBtc * (1.0 + (Math.random() - 0.5) * 0.001))); 
+        usdToBtc = Math.max(0.000005, Math.min(0.00005, usdToBtc * (1.0 + (Math.random() - 0.5) * 0.001)));
     }
 
     private void fetchRatesAsync() {
@@ -226,7 +226,7 @@ public class CurrencyHud extends HudModule {
                     }
                 }
             } catch (Throwable ignored) {
-                
+
             }
         }).start();
     }

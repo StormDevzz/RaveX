@@ -69,6 +69,6 @@ inline RuntimeConfig getDefaultRuntimeConfig() {
     return rc;
 }
 
-} // namespace ravex::shaders
+}
 
 #endif

@@ -9,7 +9,7 @@ import org.luaj.vm2.LuaFunction;
 public class HandshakeSpoof extends Module {
     public static final HandshakeSpoof INSTANCE = new HandshakeSpoof();
     public final StringParameter hostSuffix = new StringParameter("Suffix", "\u0000LUNAR\u0000");
-    public final NumberParameter protocol = new NumberParameter("Protocol", 767.0, 47.0, 1000.0, 1.0); 
+    public final NumberParameter protocol = new NumberParameter("Protocol", 767.0, 47.0, 1000.0, 1.0);
 
     public String getSpoofedHost(String originalHost) {
         if (!getEnabled()) return originalHost;

@@ -13,7 +13,7 @@ ver_api_result ver_api_execute(const std::string& input) {
     return r;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -12,6 +12,6 @@ bool set_app_icon(void* gtk_window) {
     return true;
 }
 
-} 
-} 
-} 
+}
+}
+}

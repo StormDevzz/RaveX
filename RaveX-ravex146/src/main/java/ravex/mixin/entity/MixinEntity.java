@@ -57,12 +57,12 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer player)) return;
 
-        
+
         if (ravex.modules.exploit.PortalGui.INSTANCE.getEnabled()) {
             self.portalProcess = null;
         }
 
-        
+
         if (ravex.modules.movement.Avoid.INSTANCE.getEnabled()) {
             net.minecraft.world.level.Level level = player.level();
             net.minecraft.world.phys.AABB box = player.getBoundingBox().inflate(0.15);
@@ -72,7 +72,7 @@ public abstract class MixinEntity {
             ).forEach(blockPos -> {
                 net.minecraft.world.level.block.state.BlockState state = level.getBlockState(blockPos);
                 if (ravex.modules.movement.Avoid.INSTANCE.shouldAvoid(state.getBlock())) {
-                    
+
                     double bx = blockPos.getX() + 0.5;
                     double bz = blockPos.getZ() + 0.5;
                     double px = player.getX();
@@ -258,7 +258,7 @@ public abstract class MixinEntity {
                 boolean bypassWater = ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue();
                 boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
                 boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
-                
+
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
                 } else if (tag.equals(net.minecraft.tags.FluidTags.LAVA) && bypassLava) {
@@ -280,7 +280,7 @@ public abstract class MixinEntity {
                 boolean bypassWater = ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue();
                 boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
                 boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
-                
+
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
                 } else if (tag.equals(net.minecraft.tags.FluidTags.LAVA) && bypassLava) {

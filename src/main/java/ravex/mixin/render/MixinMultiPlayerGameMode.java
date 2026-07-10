@@ -33,11 +33,11 @@ import ravex.modules.render.FreeCam;
 @Mixin(MultiPlayerGameMode.class)
 public class MixinMultiPlayerGameMode {
 
-    
-    
-    
-    
-    
+
+
+
+
+
     @Inject(method = "useItemOn",
             at = @At("RETURN"))
     private void onUseItemOn(LocalPlayer player,
@@ -49,9 +49,9 @@ public class MixinMultiPlayerGameMode {
         BlockMixer.itz().shuffle();
     }
 
-    
-    
-    
+
+
+
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void onAttack(Player player, net.minecraft.world.entity.Entity target, CallbackInfo ci) {
 <<<<<<< HEAD

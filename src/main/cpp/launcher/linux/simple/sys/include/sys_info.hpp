@@ -14,7 +14,7 @@ struct sys_info_t {
 
 sys_info_t get_sys_info();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -112,15 +112,15 @@ public class HoleFill extends Module {
             return;
         }
 
-        
+
         BlockPos playerPos = mc.player.blockPosition();
         holes.sort(Comparator.comparingDouble(p -> p.distSqr(playerPos)));
 
-        
+
         int max = maxBlocks.getValue().intValue();
         if (holes.size() > max) holes = holes.subList(0, max);
 
-        
+
         holePositions.clear();
         holePositions.addAll(holes);
 
@@ -148,14 +148,14 @@ public class HoleFill extends Module {
 
         for (int dx = -r; dx <= r; dx++) {
             for (int dz = -r; dz <= r; dz++) {
-                
+
                 if (dx * dx + dz * dz > range * range) continue;
 
                 for (int dy = -2; dy <= 1; dy++) {
                     BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (!isValidHole(mc, pos)) continue;
 
-                    
+
                     boolean dup = false;
                     for (BlockPos existing : holes) {
                         if (existing.distSqr(pos) < 2.0) {
@@ -173,19 +173,19 @@ public class HoleFill extends Module {
         BlockPos below = pos.below();
         if (below.getY() < mc.level.getMinY()) return false;
 
-        
+
         if (!mc.level.getBlockState(pos).isAir()) return false;
 
-        
+
         BlockState floorState = mc.level.getBlockState(below);
         if (!floorState.isCollisionShapeFullBlock(mc.level, below)) return false;
 
-        
+
         BlockPos above = pos.above();
         if (above.getY() >= mc.level.getMaxY()) return false;
         if (!mc.level.getBlockState(above).isAir()) return false;
 
-        
+
         int solidSides = 0;
         Direction[] horizontals = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
         for (Direction dir : horizontals) {
@@ -195,12 +195,12 @@ public class HoleFill extends Module {
             if (neighborState.isCollisionShapeFullBlock(mc.level, neighbor)) {
                 solidSides++;
             } else {
-                
-                
+
+
             }
         }
 
-        
+
         if (fillAll.getValue()) {
             return solidSides >= 2;
         }
@@ -287,7 +287,7 @@ public class HoleFill extends Module {
             if (stack.isEmpty()) continue;
             if (stack.is(Items.OBSIDIAN) || stack.is(Items.CRYING_OBSIDIAN)) return i;
         }
-        
+
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (stack.isEmpty()) continue;

@@ -20,7 +20,7 @@ public class ReverseStep extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        
+
         if (mc.player.onGround() || mc.player.isPassenger() || mc.player.getAbilities().flying || mc.player.isFallFlying()) {
             return;
         }
@@ -29,7 +29,7 @@ public class ReverseStep extends Module {
             return;
         }
 
-        
+
         double currentX = mc.player.getX();
         double currentY = mc.player.getY();
         double currentZ = mc.player.getZ();

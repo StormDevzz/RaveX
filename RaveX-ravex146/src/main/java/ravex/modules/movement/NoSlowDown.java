@@ -30,11 +30,11 @@ public class NoSlowDown extends Module {
             try {
                 return nativeGetBlockFriction(blockId, defaultFriction);
             } catch (UnsatisfiedLinkError | Exception e) {
-                
+
             }
         }
-        if ("minecraft:slime_block".equals(blockId) || 
-            "minecraft:honey_block".equals(blockId) || 
+        if ("minecraft:slime_block".equals(blockId) ||
+            "minecraft:honey_block".equals(blockId) ||
             "minecraft:soul_sand".equals(blockId)) {
             return 0.6f;
         }

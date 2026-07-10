@@ -67,7 +67,7 @@ public class TntAura extends Module {
     private enum State { TRAPPING, PLACING_TNT, IGNITING, WAITING }
     private State currentState = State.TRAPPING;
     private long lastActionTime = 0;
-    private int[] gapPos = null;      
+    private int[] gapPos = null;
     private net.minecraft.world.entity.LivingEntity currentTarget = null;
     private int failedTntPlacements = 0;
     public static final List<BlockPos> renderBlocks = new ArrayList<>();

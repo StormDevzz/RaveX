@@ -13,7 +13,7 @@ proc_info_t get_proc_info() {
     return result;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

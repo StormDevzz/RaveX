@@ -13,7 +13,7 @@ public class BlockOutline extends Module {
     public final NumberParameter width = new NumberParameter("Width", 2.0, 1.0, 5.0, 0.5);
     public final BooleanParameter filled = new BooleanParameter("Filled", false);
 
-    
+
     public static boolean vanillaOutlineEnabled = true;
 
     private BlockOutline() {

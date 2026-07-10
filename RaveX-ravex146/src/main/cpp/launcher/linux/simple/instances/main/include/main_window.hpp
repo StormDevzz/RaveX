@@ -9,7 +9,7 @@ namespace window {
 
 void create_window(LauncherState *state);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

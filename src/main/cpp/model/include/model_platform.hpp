@@ -44,5 +44,5 @@ inline std::string dirName(const std::string& path) {
     return (p == std::string::npos) ? "." : path.substr(0, p);
 }
 
-} 
-} 
+}
+}

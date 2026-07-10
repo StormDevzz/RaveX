@@ -25,7 +25,7 @@ public class AddonLoader {
             AddonInfo info = new AddonInfo(name, "External Addon", version, author != null ? author : "Unknown", mainClass);
             URL[] urls = { jarFile.toURI().toURL() };
             URLClassLoader classLoader = new URLClassLoader(urls, AddonLoader.class.getClassLoader());
-            
+
             Class<?> clazz = Class.forName(mainClass, true, classLoader);
             if (!Addon.class.isAssignableFrom(clazz)) {
                 throw new AddonException("Main class does not implement Addon interface: " + mainClass);

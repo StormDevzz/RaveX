@@ -57,7 +57,7 @@ public class AutoSoup extends Module {
         int end = hotbarOnly.getValue() ? 9 : 36;
         int start = hotbarOnly.getValue() ? 0 : 9;
 
-        
+
         for (int i = 0; i < 9; i++) {
             ItemStack stack = player.getInventory().getItem(i);
             if (isHealingPotion(stack)) return i;

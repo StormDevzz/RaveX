@@ -45,7 +45,7 @@ public class NativeBridge {
         try {
             String libName = getLibName();
 
-            
+
             java.io.File localDev = new java.io.File("src/main/resources/assets/ravex/natives/" + libName);
             if (localDev.exists() && localDev.length() > 0) {
                 System.load(localDev.getAbsolutePath());
@@ -54,7 +54,7 @@ public class NativeBridge {
                 return true;
             }
 
-            
+
             java.io.File cacheDir = new java.io.File(System.getProperty("user.home"), ".ravex/natives");
             if (!cacheDir.exists()) {
                 cacheDir.mkdirs();
@@ -63,7 +63,7 @@ public class NativeBridge {
             boolean exists = cachedFile.exists() && cachedFile.length() > 0;
 
             if (!exists) {
-                
+
                 java.io.File buildNative = new java.io.File("build/native/loader/" + libName);
                 if (!buildNative.exists()) {
                     buildNative = new java.io.File("build/native/launcher/windows/" + libName);
@@ -77,7 +77,7 @@ public class NativeBridge {
             }
 
             if (!exists) {
-                
+
                 try {
                     java.io.InputStream is = NativeBridge.class.getResourceAsStream("/assets/ravex/natives/" + libName);
                     if (is != null) {
@@ -89,7 +89,7 @@ public class NativeBridge {
             }
 
             if (!exists) {
-                
+
                 String remoteUrl = "https://github.com/StormDevzz/RaveX/releases/latest/download/" + libName;
                 System.out.println("[RaveX-Loader] Downloading " + libName + " from " + remoteUrl);
                 RaveXLoader.updateWindowStatus("Downloading " + libName + "...", 10);
@@ -131,7 +131,7 @@ public class NativeBridge {
             loadError = e3.getMessage();
             System.err.println("[RaveX-Loader] Failed to download/load remote native loader: " + e3.getMessage());
 
-            
+
             try {
                 String libName = getLibName();
                 String remoteUrl = "https://github.com/StormDevzz/RaveX/releases/latest/download/" + libName;

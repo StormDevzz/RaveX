@@ -17,7 +17,7 @@ public class Commands extends Module {
     public final BooleanParameter showFeedback = new BooleanParameter("Feedback", true);
     private Commands() {
         super("Commands");
-        setEnabled(true); 
+        setEnabled(true);
 <<<<<<< HEAD:src/main/java/ravex/modules/client/Commands.java
     }
 

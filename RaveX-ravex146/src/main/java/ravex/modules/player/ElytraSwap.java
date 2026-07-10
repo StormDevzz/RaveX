@@ -59,13 +59,13 @@ public class ElytraSwap extends Module {
 
         String currentMode = mode.getValue();
         if (currentMode.equals("Positive1")) {
-            
+
             click(mc, targetContainerSlot, 0, ClickType.PICKUP);
             click(mc, 6, 0, ClickType.PICKUP);
             click(mc, targetContainerSlot, 0, ClickType.PICKUP);
             setEnabled(false);
         } else if (currentMode.equals("Positive3")) {
-            
+
             mc.setScreen(new InventoryScreen(p));
         }
     }
@@ -80,10 +80,10 @@ public class ElytraSwap extends Module {
         }
 
         String currentMode = mode.getValue();
-        if (currentMode.equals("Positive1")) return; 
+        if (currentMode.equals("Positive1")) return;
 
         long now = System.currentTimeMillis();
-        if (now - lastActionTime < 100) return; 
+        if (now - lastActionTime < 100) return;
 
         if (state == 0) {
             click(mc, targetContainerSlot, 0, ClickType.PICKUP);

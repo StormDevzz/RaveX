@@ -21,7 +21,7 @@ public class AddonManager {
             addonsDir.mkdirs();
         }
 
-        
+
         File nativeAddonsDir = new File(addonsDir, "native");
         if (!nativeAddonsDir.exists()) {
             nativeAddonsDir.mkdirs();

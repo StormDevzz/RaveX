@@ -27,7 +27,7 @@ bool copy_file(const std::string& src, const std::string& dst);
 
 bool remove_file(const std::string& path);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

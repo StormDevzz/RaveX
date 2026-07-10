@@ -22,11 +22,11 @@ public class ConfigsScreen extends Screen {
     private int selectedIndex = -1;
     private int scrollOffset = 0;
 
-    
+
     private boolean creatingNew = false;
     private String newName = "";
 
-    
+
     private String status = "";
     private int statusTimer = 0;
 
@@ -50,16 +50,16 @@ public class ConfigsScreen extends Screen {
         configs.sort(String::compareToIgnoreCase);
     }
 
-    
+
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        
+
         graphics.fillGradient(0, 0, this.width, this.height, 0xEA06060E, 0xEA0C0C1A);
 
         int activeColor = ColorUtility.getActiveColor();
 
-        
+
         graphics.fill(0, 0, this.width, 38, 0xCC08081A);
         graphics.fill(0, 37, this.width, 38, activeColor);
         FontRenderUtility.drawString(graphics, "Configurations", 18, 8, 0xFFFFFFFF, true);
@@ -67,7 +67,7 @@ public class ConfigsScreen extends Screen {
 
         int centerX = this.width / 2;
 
-        
+
         int listX = 16;
         int listY = 48;
         int listW = centerX - 24;
@@ -79,12 +79,12 @@ public class ConfigsScreen extends Screen {
 
         FontRenderUtility.drawString(graphics, "§7Saved Presets  §8[" + configs.size() + "]", listX + 6, listY + 5, 0xFF9090B0, false);
 
-        
+
         int visibleItemsStart = 12;
         int maxVisible = (listH - visibleItemsStart) / itemH;
         int clampedScroll = Math.max(0, Math.min(scrollOffset, Math.max(0, configs.size() - maxVisible)));
 
-        
+
         int ly = listY + visibleItemsStart;
         for (int i = clampedScroll; i < configs.size() && i < clampedScroll + maxVisible; i++) {
             String cfg = configs.get(i);
@@ -99,11 +99,11 @@ public class ConfigsScreen extends Screen {
                 graphics.fill(listX, ly, listX + 2, ly + itemH - 1, activeColor);
             }
 
-            
+
             int textColor = selected ? 0xFFFFFFFF : (hovered ? 0xFFD0D0E8 : 0xFF909090);
             FontRenderUtility.drawString(graphics, cfg, listX + 10, ly + 7, textColor, false);
 
-            
+
             if (cfg.equalsIgnoreCase("default")) {
                 String badge = "AUTO";
                 int bw = FontRenderUtility.getStringWidth(badge) + 6;
@@ -120,7 +120,7 @@ public class ConfigsScreen extends Screen {
             FontRenderUtility.drawString(graphics, "Click \"Save New\" below.", listX + 10, listY + 36, 0xFF404060, false);
         }
 
-        
+
         int rightX = centerX + 8;
         int rightW = this.width - rightX - 16;
         int rightY = 48;
@@ -129,7 +129,7 @@ public class ConfigsScreen extends Screen {
         graphics.fill(rightX, rightY, rightX + rightW, rightY + rightH, 0xBB08081A);
         graphics.fill(rightX, rightY, rightX + rightW, rightY + 1, ColorUtility.withAlpha(activeColor, 80));
 
-        
+
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             int modelX = rightX + rightW / 2;
@@ -140,7 +140,7 @@ public class ConfigsScreen extends Screen {
                 graphics, modelX - scale, modelY1, modelX + scale, modelY2,
                 scale, 0.0625f, mouseX, mouseY, mc.player);
 
-            
+
             String playerName = mc.player.getName().getString();
             int nameW = FontRenderUtility.getStringWidth(playerName);
             graphics.fill(rightX + (rightW - nameW - 12) / 2, rightY + 100,
@@ -149,7 +149,7 @@ public class ConfigsScreen extends Screen {
             FontRenderUtility.drawString(graphics, playerName,
                 rightX + (rightW - nameW) / 2, rightY + 102, activeColor, true);
 
-            
+
             var skinType = mc.player.getSkin().model();
             String modelName = skinType.name().equals("slim") ? "Alex model" : "Steve model";
             int mnW = FontRenderUtility.getStringWidth(modelName);
@@ -159,10 +159,10 @@ public class ConfigsScreen extends Screen {
             FontRenderUtility.drawString(graphics, "Not in a world", rightX + 8, rightY + 20, 0xFF505070, false);
         }
 
-        
+
         graphics.fill(rightX + 8, rightY + 122, rightX + rightW - 8, rightY + 123, ColorUtility.withAlpha(activeColor, 40));
 
-        
+
         if (selectedIndex >= 0 && selectedIndex < configs.size()) {
             String selCfg = configs.get(selectedIndex);
             FontRenderUtility.drawString(graphics, "Selected:", rightX + 8, rightY + 130, 0xFF707090, false);
@@ -171,20 +171,20 @@ public class ConfigsScreen extends Screen {
             FontRenderUtility.drawString(graphics, "No preset selected", rightX + 8, rightY + 130, 0xFF404060, false);
         }
 
-        
+
         if (statusTimer > 0 && !status.isEmpty()) {
             graphics.fill(rightX + 6, rightY + 155, rightX + rightW - 6, rightY + 167, 0x44001100);
             FontRenderUtility.drawString(graphics, status, rightX + 8, rightY + 157, 0xFFAAFFAA, false);
         }
 
-        
+
         int toolbarY = this.height - 40;
         graphics.fill(0, toolbarY, this.width, toolbarY + 1, ColorUtility.withAlpha(activeColor, 60));
         graphics.fill(0, toolbarY + 1, this.width, this.height, 0xBB06060F);
 
         renderToolbar(graphics, mouseX, mouseY, activeColor, toolbarY);
 
-        
+
         if (creatingNew) {
             renderNewDialog(graphics, mouseX, mouseY, activeColor);
         }
@@ -198,7 +198,7 @@ public class ConfigsScreen extends Screen {
         int btnW = 80;
         int gap = 6;
 
-        
+
         String[] labels = {"Load", "Save New", "Delete", "Back"};
         int[] xPositions = new int[labels.length];
         int totalBtns = labels.length;
@@ -222,7 +222,7 @@ public class ConfigsScreen extends Screen {
     }
 
     private void renderNewDialog(GuiGraphics graphics, int mouseX, int mouseY, int activeColor) {
-        
+
         graphics.fill(0, 0, this.width, this.height, 0x99000000);
 
         int dlgW = 240;
@@ -230,7 +230,7 @@ public class ConfigsScreen extends Screen {
         int dlgX = (this.width - dlgW) / 2;
         int dlgY = (this.height - dlgH) / 2;
 
-        
+
         graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + dlgH, 0xF50C0C1C);
         graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + 1, activeColor);
         graphics.fill(dlgX, dlgY, dlgX + 1, dlgY + dlgH, ColorUtility.withAlpha(activeColor, 80));
@@ -238,7 +238,7 @@ public class ConfigsScreen extends Screen {
 
         FontRenderUtility.drawString(graphics, "Save Preset As:", dlgX + 12, dlgY + 12, 0xFFFFFFFF, true);
 
-        
+
         int inputX = dlgX + 12;
         int inputY = dlgY + 32;
         int inputW = dlgW - 24;
@@ -250,7 +250,7 @@ public class ConfigsScreen extends Screen {
         int textCol = newName.isEmpty() ? 0xFF404060 : 0xFFD0D0F0;
         FontRenderUtility.drawString(graphics, display, inputX + 5, inputY + 4, textCol, false);
 
-        
+
         int btnY = dlgY + 64;
         int btnW = 90;
         int btnH = 18;
@@ -267,7 +267,7 @@ public class ConfigsScreen extends Screen {
             dlgX + dlgW - 10 - btnW + (btnW - FontRenderUtility.getStringWidth("Cancel")) / 2, btnY + 5, 0xFFD0D0D0, false);
     }
 
-    
+
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
@@ -276,7 +276,7 @@ public class ConfigsScreen extends Screen {
 
         if (creatingNew) return handleDialogClick(mx, my);
 
-        
+
         int toolbarY = this.height - 40;
         int btnH = 20;
         int btnY = toolbarY + 10;
@@ -285,7 +285,7 @@ public class ConfigsScreen extends Screen {
         int totalW = 4 * btnW + 3 * gap;
         int startX = (this.width - totalW) / 2;
 
-        
+
         if (mx >= startX && mx <= startX + btnW && my >= btnY && my <= btnY + btnH) {
             if (selectedIndex >= 0 && selectedIndex < configs.size()) {
                 String name = configs.get(selectedIndex);
@@ -298,14 +298,14 @@ public class ConfigsScreen extends Screen {
             }
             return true;
         }
-        
+
         int x1 = startX + btnW + gap;
         if (mx >= x1 && mx <= x1 + btnW && my >= btnY && my <= btnY + btnH) {
             creatingNew = true;
             newName = "";
             return true;
         }
-        
+
         int x2 = startX + (btnW + gap) * 2;
         if (mx >= x2 && mx <= x2 + btnW && my >= btnY && my <= btnY + btnH) {
             if (selectedIndex >= 0 && selectedIndex < configs.size()) {
@@ -318,14 +318,14 @@ public class ConfigsScreen extends Screen {
             }
             return true;
         }
-        
+
         int x3 = startX + (btnW + gap) * 3;
         if (mx >= x3 && mx <= x3 + btnW && my >= btnY && my <= btnY + btnH) {
             this.minecraft.setScreen(parent);
             return true;
         }
 
-        
+
         int centerX = this.width / 2;
         int listX = 16;
         int listY = 48;
@@ -340,7 +340,7 @@ public class ConfigsScreen extends Screen {
             for (int i = scrollOffset; i < configs.size() && i < scrollOffset + maxVisible; i++) {
                 if (my >= ly && my <= ly + itemH) {
                     if (selectedIndex == i) {
-                        
+
                         if (ConfigManager.INSTANCE.load(configs.get(i))) {
                             status = "§aLoaded: " + configs.get(i);
                             statusTimer = 80;
@@ -364,12 +364,12 @@ public class ConfigsScreen extends Screen {
         int btnW = 90;
         int btnH = 18;
 
-        
+
         if (mx >= dlgX + 10 && mx <= dlgX + 10 + btnW && my >= btnY && my <= btnY + btnH) {
             saveNewConfig();
             return true;
         }
-        
+
         if (mx >= dlgX + dlgW - 10 - btnW && mx <= dlgX + dlgW - 10 && my >= btnY && my <= btnY + btnH) {
             creatingNew = false;
             return true;

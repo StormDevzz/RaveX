@@ -17,7 +17,7 @@ public class ParameterElement {
     private float toggleAnimProgress = 0f;
     private long toggleLastUpdate = 0;
     private long modeExpandedAt = 0;
-    
+
     private float expandAnimProgress = 0f;
     private float dropdownAnimProgress = 0f;
     private float sliderKnobAnim = 0f;
@@ -53,7 +53,7 @@ public class ParameterElement {
         boolean smoothOption = ravex.modules.render.ClickGui.INSTANCE.smoothOption.getValue();
         float optionSmoothness = ravex.modules.render.ClickGui.INSTANCE.optionSmoothness.getValue().floatValue();
 
-        
+
         float targetExpand = parameter.isVisible() ? 1.0f : 0.0f;
         if (smoothOption) {
             float speed = (optionSmoothness / 100f) * (delta / 16f);
@@ -66,7 +66,7 @@ public class ParameterElement {
             expandAnimProgress = targetExpand;
         }
 
-        
+
         float targetDropdown = parameter.isExpanded() ? 1.0f : 0.0f;
         if (smoothOption) {
             float speed = (optionSmoothness / 100f) * (delta / 16f);
@@ -141,7 +141,7 @@ public class ParameterElement {
 
                 int trackColor = lerpColor(0xFF232330, activeColor, toggleAnimProgress);
                 int trackBorderColor = lerpColor(0xFF35354A, ColorUtility.withAlpha(activeColor, 120), toggleAnimProgress);
-                
+
                 Render2DEngine.drawSmoothRound(graphics, swX - 0.5f, swY - 0.5f, swW + 1.0f, swH + 1.0f, swH / 2.0f + 0.5f, trackBorderColor);
                 Render2DEngine.drawSmoothRound(graphics, swX, swY, swW, swH, swH / 2.0f, trackColor);
 
@@ -248,7 +248,7 @@ public class ParameterElement {
             int knobX = slX + baseKnobSize / 2 + (int)(knobRange * progress);
 
             Render2DEngine.drawSmoothRound(graphics, slX, slY, slW, slH, slH / 2.0f, 0xFF1D1D2A);
-            
+
             if (knobX > slX) {
                 Render2DEngine.drawSmoothRound(graphics, slX, slY, (float)(knobX - slX), slH, slH / 2.0f, activeColor);
             }
@@ -258,10 +258,10 @@ public class ParameterElement {
             float knobDrawY = (slY + slH / 2.0f) - currentKnobSize / 2.0f;
 
             int outerColor = lerpColor(0xFF808090, activeColor, sliderKnobAnim);
-            
+
             Render2DEngine.drawSmoothRound(graphics, knobDrawX - 0.5f, knobDrawY + 0.5f, currentKnobSize + 1.0f, currentKnobSize + 1.0f, currentKnobSize / 2.0f, 0x1B000000);
             Render2DEngine.drawSmoothRound(graphics, knobDrawX, knobDrawY, currentKnobSize, currentKnobSize, currentKnobSize / 2.0f, outerColor);
-            
+
             float innerSize = currentKnobSize * 0.5f;
             float innerDrawX = knobX - innerSize / 2.0f;
             float innerDrawY = (slY + slH / 2.0f) - innerSize / 2.0f;
@@ -338,7 +338,7 @@ public class ParameterElement {
                 }
             }
         }
-        
+
         if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
             if (parameter instanceof ModeParameter mp && mp.isExpanded()) {
                 int modeY = y + 22;

@@ -35,5 +35,5 @@ private:
     uint64_t readRSS();
 };
 
-} 
-} 
+}
+}

@@ -30,11 +30,11 @@ std::vector<HoleCandidate> findHoles(
     int px_i = static_cast<int>(std::round(px));
     int pz_i = static_cast<int>(std::round(pz));
 
-    
+
     int feetY = static_cast<int>(std::floor(py));
     int range_i = static_cast<int>(std::ceil(range));
 
-    
+
     auto isDuplicate = [&](int x, int y, int z) -> bool {
         for (const auto& h : results) {
             if (h.x == x && h.y == y && h.z == z) return true;
@@ -42,21 +42,21 @@ std::vector<HoleCandidate> findHoles(
         return false;
     };
 
-    
+
     for (int ring = 0; ring <= range_i; ring++) {
         int ringStart = (ring == 0) ? 0 : ring;
 
-        
+
         for (int dx = -ringStart; dx <= ringStart; dx++) {
             for (int dz = -ringStart; dz <= ringStart; dz++) {
-                
+
                 if (ring > 0 && std::abs(dx) < ring && std::abs(dz) < ring) continue;
 
-                
+
                 double dist = std::sqrt(double(dx*dx + dz*dz));
                 if (dist > range) continue;
 
-                
+
                 for (int dy = -1; dy <= 1; dy++) {
                     int x = px_i + dx;
                     int y = feetY + dy;
@@ -64,7 +64,7 @@ std::vector<HoleCandidate> findHoles(
 
                     if (isDuplicate(x, y, z)) continue;
 
-                    
+
                     double d3 = std::sqrt(
                         (x - px) * (x - px) +
                         (y - py) * (y - py) +
@@ -72,13 +72,13 @@ std::vector<HoleCandidate> findHoles(
                     );
                     if (d3 > range) continue;
 
-                    
-                    
+
+
                     HoleCandidate cand;
                     cand.x = x;
                     cand.y = y;
                     cand.z = z;
-                    cand.solidSides = 0; 
+                    cand.solidSides = 0;
                     cand.distToPlayer = d3;
                     results.push_back(cand);
 
@@ -91,7 +91,7 @@ std::vector<HoleCandidate> findHoles(
     }
 
 done:
-    
+
     std::sort(results.begin(), results.end(),
         [](const HoleCandidate& a, const HoleCandidate& b) {
             return a.distToPlayer < b.distToPlayer;
@@ -100,4 +100,4 @@ done:
     return results;
 }
 
-} 
+}

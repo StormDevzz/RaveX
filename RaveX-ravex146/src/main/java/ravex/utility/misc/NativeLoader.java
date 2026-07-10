@@ -67,7 +67,7 @@ public class NativeLoader {
         File cacheDir = getCacheDir();
         if (!cacheDir.exists()) cacheDir.mkdirs();
 
-        
+
         extractAllFromJar(cacheDir);
 
         File cachedFile = new File(cacheDir, libName);
@@ -135,7 +135,7 @@ public class NativeLoader {
     }
 
     private static void loadDependencies(File dir) {
-        
+
         String[] deps = {"libravex_optimize.so", "libravex_manager.so", "libravex_github_tools.so"};
         for (String dep : deps) {
             File f = new File(dir, dep);

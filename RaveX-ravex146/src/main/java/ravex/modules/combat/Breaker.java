@@ -145,11 +145,11 @@ public class Breaker extends Module {
 
                 boolean isTargetCover = false;
 
-                
+
                 if (px == tx && py == ty - 1 && pz == tz) {
                     isTargetCover = true;
                 }
-                
+
                 else if (py == ty) {
                     int dx = Math.abs(px - tx);
                     int dz = Math.abs(pz - tz);
@@ -157,7 +157,7 @@ public class Breaker extends Module {
                         isTargetCover = true;
                     }
                 }
-                
+
                 else if (py == ty + 1) {
                     int dx = Math.abs(px - tx);
                     int dz = Math.abs(pz - tz);
@@ -165,7 +165,7 @@ public class Breaker extends Module {
                         isTargetCover = true;
                     }
                 }
-                
+
                 else if (px == tx && py == ty + 2 && pz == tz) {
                     isTargetCover = true;
                 }
@@ -240,9 +240,9 @@ public class Breaker extends Module {
 
         if (syncPacketMine.getValue()) {
             if (!ravex.modules.exploit.PacketMine.INSTANCE.isTargetBlock(targetPos)) {
-                
+
                 ravex.modules.exploit.PacketMine.miningBlocks.removeIf(m -> !m.done);
-                
+
                 String name = mc.level.getBlockState(targetPos).getBlock().getName().getString();
                 long breakMs = ravex.modules.exploit.PacketMine.INSTANCE.calcBreakTime(mc, targetPos);
                 ravex.modules.exploit.PacketMine.miningBlocks.add(
@@ -373,20 +373,20 @@ public class Breaker extends Module {
                 totems++;
             }
         }
-        
+
         double[] stats = new double[15];
         stats[0] = player.getArmorValue();
         var attrToughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS);
         stats[1] = attrToughness != null ? attrToughness.getValue() : 0.0;
         stats[2] = blastProtectionEpf;
         stats[3] = protectionEpf;
-        
+
         var resEffect = player.getEffect(MobEffects.RESISTANCE);
         stats[4] = resEffect != null ? resEffect.getAmplifier() + 1 : 0;
-        
+
         var weakEffect = player.getEffect(MobEffects.WEAKNESS);
         stats[5] = weakEffect != null ? weakEffect.getAmplifier() + 1 : 0;
-        
+
         var strEffect = player.getEffect(MobEffects.STRENGTH);
         stats[6] = strEffect != null ? strEffect.getAmplifier() + 1 : 0;
 
@@ -402,7 +402,7 @@ public class Breaker extends Module {
                 stats[idx++] = dur;
             }
         }
-        
+
         Vec3 motion = player.getDeltaMovement();
         if (motion != null) {
             stats[11] = motion.x;
@@ -414,7 +414,7 @@ public class Breaker extends Module {
             stats[13] = 0.0;
         }
         stats[14] = totems;
-        
+
         return stats;
     }
 

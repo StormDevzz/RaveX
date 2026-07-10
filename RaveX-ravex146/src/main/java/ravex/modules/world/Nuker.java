@@ -202,7 +202,7 @@ public class Nuker extends Module {
             try {
                 NoGhostBlocks.markMined(target);
             } catch (Exception e) {
-                // Ignore errors from NoGhostBlocks
+
             }
             lastBreakTime = now;
         }

@@ -86,4 +86,4 @@ void ProxySniffer::stop() {
     if (clientFd_ >= 0) { ::close(clientFd_); clientFd_ = -1; }
 }
 
-} 
+}

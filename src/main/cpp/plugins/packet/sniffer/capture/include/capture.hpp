@@ -13,4 +13,4 @@ public:
     virtual const char* name() const = 0;
 };
 
-} 
+}

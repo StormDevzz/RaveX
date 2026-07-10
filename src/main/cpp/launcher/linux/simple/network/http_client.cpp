@@ -21,7 +21,7 @@ std::string http_get(const std::string& url) {
 }
 
 bool http_download(const std::string& url, const std::string& dest_path) {
-    
+
     size_t last_slash = dest_path.find_last_of('/');
     if (last_slash != std::string::npos) {
         std::string dir = dest_path.substr(0, last_slash);
@@ -32,7 +32,7 @@ bool http_download(const std::string& url, const std::string& dest_path) {
     return (system(cmd.c_str()) == 0);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

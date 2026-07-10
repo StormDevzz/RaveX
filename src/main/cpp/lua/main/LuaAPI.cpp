@@ -64,13 +64,13 @@ int initLuaAddons(ravex::addon::AddonContext* ctx) {
         ctx->logInfo("[LuaAPI] Initializing Lua addon subsystem...");
     }
 
-    
-    
+
+
     s_loader = std::make_unique<LuaLoader>("addons/lua");
 
-    
-    
-    
+
+
+
 
     int count = s_loader->loadAll(ctx);
 
@@ -160,5 +160,5 @@ std::vector<std::string> listLuaAddons() {
     return names;
 }
 
-} 
-} 
+}
+}

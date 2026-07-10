@@ -43,7 +43,7 @@ Java_ravex_modules_render_NameTags_nativeCalculateLayout(
         layout.textYOffset,
         layout.mainRowWidth,
         layout.armorRowWidth,
-        0.0 
+        0.0
     };
 
     env->SetDoubleArrayRegion(out, 0, 10, buf);

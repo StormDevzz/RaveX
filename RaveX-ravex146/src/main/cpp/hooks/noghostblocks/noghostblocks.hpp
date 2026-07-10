@@ -28,17 +28,17 @@ class NoGhostBlocksEngine {
 public:
     static NoGhostBlocksEngine& instance();
 
-    
+
     void onServerBlockUpdate(int x, int y, int z, const std::string& blockId);
 
-    
+
     bool isGhostBlock(int x, int y, int z, const std::string& clientBlockId) const;
 
-    
+
     void markMiningStart(int x, int y, int z);
     void markMiningEnd(int x, int y, int z);
 
-    
+
     void reset();
 
 private:
@@ -47,4 +47,4 @@ private:
     std::unordered_set<BlockKey, BlockKeyHash> miningSet;
 };
 
-} 
+}

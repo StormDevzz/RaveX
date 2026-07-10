@@ -14,13 +14,13 @@ struct ReleaseInfo {
 
 class GithubUtility {
 public:
-    
+
     static ReleaseInfo getLatestRelease();
 
-    
+
     static bool downloadFile(const std::string& url, const std::string& destPath);
 };
 
-} 
-} 
-} 
+}
+}
+}

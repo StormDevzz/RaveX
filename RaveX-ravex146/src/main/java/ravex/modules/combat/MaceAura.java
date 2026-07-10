@@ -28,7 +28,7 @@ public class MaceAura extends Module {
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
 
-        
+
         if (p.getMainHandItem().is(Items.MACE) && mc.options.keyAttack.isDown()) {
             if (mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof LivingEntity target) {
                 if (!target.isAlive() || target == p) return;
@@ -38,28 +38,28 @@ public class MaceAura extends Module {
                 double y = p.getY();
                 double z = p.getZ();
 
-                
-                
+
+
                 double step = 0.25;
                 int loops = (int) Math.ceil(h / step);
 
                 for (int i = 0; i < loops; i++) {
-                    
+
                     p.connection.send(new ServerboundMovePlayerPacket.Pos(x, y + 0.001, z, false, p.horizontalCollision));
-                    
+
                     p.connection.send(new ServerboundMovePlayerPacket.Pos(x, y - step, z, false, p.horizontalCollision));
-                    
+
                     p.connection.send(new ServerboundMovePlayerPacket.Pos(x, y, z, false, p.horizontalCollision));
                 }
 
-                
+
                 p.connection.send(ServerboundInteractPacket.createAttackPacket(target, p.isShiftKeyDown()));
                 p.swing(InteractionHand.MAIN_HAND);
 
-                
+
                 p.connection.send(new ServerboundMovePlayerPacket.Pos(x, y, z, true, p.horizontalCollision));
 
-                
+
                 p.fallDistance = (float) h;
             }
         }

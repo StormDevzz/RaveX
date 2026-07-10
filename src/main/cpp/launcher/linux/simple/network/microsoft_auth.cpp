@@ -9,7 +9,7 @@ namespace simple {
 namespace network {
 
 bool login_microsoft_account(LauncherState *state) {
-    
+
     system("xdg-open \"https://login.live.com/oauth20_desktop.srf"
         "?client_id=00000000402b5328"
         "&redirect_uri=https://login.live.com/oauth20_desktop.srf"
@@ -45,7 +45,7 @@ bool login_microsoft_account(LauncherState *state) {
         const char *text = gtk_entry_get_text(GTK_ENTRY(entry));
         std::string username(text);
         if (!username.empty()) {
-            
+
             Account acc;
             acc.username = username;
             acc.uuid = "ms-" + username + "-uuid-demo";
@@ -63,7 +63,7 @@ bool login_microsoft_account(LauncherState *state) {
     return success;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

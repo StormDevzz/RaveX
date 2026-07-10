@@ -21,4 +21,4 @@ ImageFormat detectFormat(const uint8_t* data, size_t size);
 
 bool isFormatSupported(ImageFormat fmt);
 
-} 
+}

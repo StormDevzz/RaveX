@@ -73,7 +73,7 @@ public class AutoTunnel extends Module {
 
         if (blocks.isEmpty()) return;
 
-        
+
         if (fillLava.getValue()) {
             for (BlockPos pos : blocks) {
                 BlockState state = mc.level.getBlockState(pos);
@@ -85,7 +85,7 @@ public class AutoTunnel extends Module {
             }
         }
 
-        
+
         for (BlockPos pos : blocks) {
             BlockState state = mc.level.getBlockState(pos);
             if (state.isAir() || state.liquid()) continue;
@@ -102,7 +102,7 @@ public class AutoTunnel extends Module {
             return;
         }
 
-        
+
         if (currentMiningTarget != null) {
             mc.gameMode.stopDestroyBlock();
         }
@@ -148,7 +148,7 @@ public class AutoTunnel extends Module {
         double r = range.getValue();
         BlockPos startPos = mc.player.blockPosition();
 
-        
+
         for (int f = 0; f < 3; f++) {
             int step = f + 1;
             for (int dy = 0; dy < h; dy++) {

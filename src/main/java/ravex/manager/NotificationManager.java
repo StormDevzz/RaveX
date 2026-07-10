@@ -113,7 +113,7 @@ public class NotificationManager {
                 if (count == 0) {
                     dst.setPixel(dx, dy, 0);
                 } else if (opaqueCount > 0 && opaqueCount == count) {
-                    // fully opaque block — average RGB with equal weight
+
                     int r = 0, g = 0, b = 0, n = 0;
                     for (int sy = sy0; sy < sy1; sy++) {
                         for (int sx = sx0; sx < sx1; sx++) {
@@ -129,7 +129,7 @@ public class NotificationManager {
                     r = r / n; g = g / n; b = b / n;
                     dst.setPixel(dx, dy, (0xFF << 24) | (r << 16) | (g << 8) | b);
                 } else {
-                    // alpha-weighted average with max-alpha fallback
+
                     int r = 0, g = 0, b = 0, totalA = 0;
                     for (int sy = sy0; sy < sy1; sy++) {
                         for (int sx = sx0; sx < sx1; sx++) {

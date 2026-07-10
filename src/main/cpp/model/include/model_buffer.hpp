@@ -82,4 +82,4 @@ private:
     size_t pos_ = 0;
 };
 
-} 
+}

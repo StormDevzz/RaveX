@@ -22,5 +22,5 @@ struct Vec3 {
 double calcBedDamage(double dist, double explosionPower);
 Vec3 findBestBedPlace(Vec3 playerPos, Vec3 enemyPos, double range);
 
-} 
+}
 #endif

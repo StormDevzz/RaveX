@@ -43,7 +43,7 @@ public class MobOwner extends Module {
 
     public static String getOwnerName(LivingEntity entity) {
         if (!(entity instanceof OwnableEntity owned)) return null;
-        
+
         java.util.UUID uuid = null;
         try {
             for (java.lang.reflect.Method m : owned.getClass().getMethods()) {

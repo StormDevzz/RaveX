@@ -119,7 +119,7 @@ public class Tracers extends Module {
         double cy = guiHeight / 2.0;
         float playerYawRad = (float) Math.toRadians(mc.player.getYRot());
 
-        // --- First pass: compute angles ---
+
         float[] targetAngles = new float[count];
         int[] ids = new int[count];
         int[] colorArr = new int[count];
@@ -164,7 +164,7 @@ public class Tracers extends Module {
         if (validCount == 0)
             return;
 
-        // --- Sort by angle and apply minimum spacing ---
+
         float[] adjustedAngles = targetAngles.clone();
         if (validCount > 1) {
             Integer[] order = new Integer[validCount];
@@ -193,7 +193,7 @@ public class Tracers extends Module {
             }
         }
 
-        // --- Render ---
+
         for (int i = 0; i < count; i++) {
             if (!valid[i])
                 continue;

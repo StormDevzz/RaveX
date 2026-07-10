@@ -128,7 +128,7 @@ public class HudParameterEntry {
         } else if (param instanceof ModeParameter mp) {
             String valStr = mp.getValue();
             if (expanded) {
-                // Expanded dropdown modes list
+
                 FontRenderUtility.drawString(g, valStr, x + width - 6 - FontRenderUtility.getStringWidth(valStr),
                     y + 4, ColorUtility.withAlpha(0xFF808090, alpha), true);
 
@@ -152,7 +152,7 @@ public class HudParameterEntry {
                     modeY += 14;
                 }
             } else {
-                // Standard single display
+
                 int mw = FontRenderUtility.getStringWidth(valStr);
                 int valX = x + width - mw - 6;
                 FontRenderUtility.drawString(g, valStr, valX, y + 4, ColorUtility.withAlpha(accentColor, alpha), true);
@@ -168,12 +168,12 @@ public class HudParameterEntry {
         int h = getHeight();
         if (h <= 0 || mouseX < x || mouseX > x + width || mouseY < y || mouseY > y + h) return false;
 
-        if (btn == 1) { // Right click toggles expansion/dropdown
+        if (btn == 1) {
             expanded = !expanded;
             return true;
         }
 
-        if (btn == 0) { // Left click toggles values
+        if (btn == 0) {
             if (param instanceof BooleanParameter bp) {
                 bp.setValue(!bp.getValue());
                 return true;

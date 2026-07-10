@@ -14,6 +14,6 @@ namespace manager {
 void NativeManager::checkNatives() {
 }
 
-} 
-} 
-} 
+}
+}
+}

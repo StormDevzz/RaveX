@@ -26,7 +26,7 @@ import java.util.*;
 public class Trails extends Module {
     public static final Trails INSTANCE = new Trails();
 
-    
+
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     public final NumberParameter width = new NumberParameter("Width", 2.0, 1.0, 6.0, 0.5);
     public final NumberParameter time = new NumberParameter("Time", 3.0, 0.5, 10.0, 0.5);
@@ -39,21 +39,21 @@ public class Trails extends Module {
     public final BooleanParameter windCharges = new BooleanParameter("Wind Charges", true);
     public final BooleanParameter other = new BooleanParameter("Other Projectiles", false);
 
-    
+
     public final BooleanParameter self = new BooleanParameter("Self", true);
 
-    
+
     public final BooleanParameter playerEnabled = new BooleanParameter("Players", false);
     public final ColorParameter playerColor = new ColorParameter("Player Color", 0xFFFF4444);
     public final NumberParameter playerWidth = new NumberParameter("Player Width", 2.0, 1.0, 6.0, 0.5);
     public final NumberParameter playerTime = new NumberParameter("Player Time", 3.0, 0.5, 10.0, 0.5);
 
-    
+
     public final BooleanParameter glow = new BooleanParameter("Glow", true);
     public final NumberParameter glowLayers = new NumberParameter("Glow Layers", 4, 1, 8, 1);
     public final NumberParameter glowSpread = new NumberParameter("Glow Spread", 1.5, 0.5, 5.0, 0.5);
 
-    
+
     public final BooleanParameter mobs = new BooleanParameter("Mobs", false);
 
     private static final Map<Integer, List<TrailPoint>> entityTrails = new HashMap<>();

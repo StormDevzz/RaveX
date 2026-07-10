@@ -50,7 +50,7 @@ public class ArrayListHud extends Module {
             if (p instanceof NumberParameter np && np.getName().equals("AnimationSpeed")) animSpeed = np.getValue();
         }
         List<Module> allModules = ModuleManager.INSTANCE.getClickGuiModules();
-        
+
         long now = System.currentTimeMillis();
         java.util.Map<Module, String> casedNames = new java.util.LinkedHashMap<>();
         for (Module m : allModules) {
@@ -72,7 +72,7 @@ public class ArrayListHud extends Module {
         for (var entry : modList) {
             String name = entry.getValue();
             boolean enabled = entry.getKey().getEnabled();
-            
+
             if (enabled) {
                 if (!entryStartTime.containsKey(name)) {
                     entryStartTime.put(name, now - (long)(idx * 30));
@@ -109,18 +109,18 @@ public class ArrayListHud extends Module {
             if (nw > maxTextW) maxTextW = nw;
         }
         int pw = 3 + maxTextW + 5;
-        
+
         float totalH = 4f;
         for (String n : activeNames) {
             totalH += lh;
         }
         int ph = Math.round(totalH);
-        
+
         setWidth(pw);
         setHeight(ph);
-        
+
         HudRenderer.drawBackground(graphics, bx, by, pw, ph);
-        
+
         int tx = bx + 3;
         int cy = by + 3;
         idx = 0;
@@ -130,7 +130,7 @@ public class ArrayListHud extends Module {
             float prog = animProgress.get(n);
             int offsetY = Math.round((1.0f - prog) * 30);
             int itemAlpha = Math.round(255 * Math.min(1.0f, prog * 1.5f));
-            
+
             int charX = tx;
             for (int ci = 0; ci < n.length(); ci++) {
                 String ch = String.valueOf(n.charAt(ci));
@@ -140,7 +140,7 @@ public class ArrayListHud extends Module {
                 HudRenderer.drawText(graphics, ch, charX, cy + offsetY, (chColor & 0xFFFFFF) | (itemAlpha << 24), shadow);
                 charX += FontRenderUtility.getStringWidth(ch);
             }
-            
+
             cy += lh;
             idx++;
         }

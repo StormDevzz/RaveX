@@ -20,14 +20,14 @@ public class MixinPlayerRenderer {
     )
     private void onExtractPlayerRenderState(net.minecraft.world.entity.Avatar entity, AvatarRenderState state, float partialTicks, CallbackInfo ci) {
         if (entity instanceof net.minecraft.world.entity.player.Player player) {
-            
+
             if (ravex.modules.render.ShiftInterp.INSTANCE.getEnabled()) {
                 if (ravex.modules.render.ShiftInterp.INSTANCE.shouldCrouch(player)) {
                     state.isCrouching = true;
                 }
             }
 
-            
+
             if (ravex.modules.render.BabyDude.INSTANCE.getEnabled()) {
                 if (ravex.modules.render.BabyDude.INSTANCE.shouldScale(player)) {
                     state.isBaby = true;
@@ -88,12 +88,12 @@ public class MixinPlayerRenderer {
             float x2 = (float) Math.cos(angle2);
             float z2 = (float) Math.sin(angle2);
 
-            // Side triangles
+
             consumer.vertex(poseStack.last().pose(), x1, 1.0f, z1).color(r, g, b, (int)(alpha * 255)).uv(0, 0).uv2(packedLight).endVertex();
             consumer.vertex(poseStack.last().pose(), x2, 1.0f, z2).color(r, g, b, (int)(alpha * 255)).uv(0, 0).uv2(packedLight).endVertex();
             consumer.vertex(poseStack.last().pose(), 0.0f, 0.0f, 0.0f).color(r, g, b, (int)(alpha * 255)).uv(0, 0).uv2(packedLight).endVertex();
 
-            // Bottom circle
+
             consumer.vertex(poseStack.last().pose(), x1, 0.0f, z1).color(r, g, b, (int)(alpha * 255)).uv(0, 0).uv2(packedLight).endVertex();
             consumer.vertex(poseStack.last().pose(), x2, 0.0f, z2).color(r, g, b, (int)(alpha * 255)).uv(0, 0).uv2(packedLight).endVertex();
             consumer.vertex(poseStack.last().pose(), 0.0f, 0.0f, 0.0f).color(r, g, b, (int)(alpha * 255)).uv(0, 0).uv2(packedLight).endVertex();

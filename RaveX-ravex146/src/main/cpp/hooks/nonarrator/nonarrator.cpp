@@ -7,7 +7,7 @@ static std::atomic<bool> g_narratorForced{false};
 #include <windows.h>
 static void sendNarratorToggle() {
     INPUT inputs[4] = {};
-    
+
     inputs[0].type = INPUT_KEYBOARD;
     inputs[0].ki.wVk = VK_CONTROL;
 
@@ -27,8 +27,8 @@ static void sendNarratorToggle() {
 #else
 #include <cstdlib>
 static void sendNarratorToggle() {
-    
-    
+
+
 }
 #endif
 

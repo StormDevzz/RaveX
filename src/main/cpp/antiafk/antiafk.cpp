@@ -189,4 +189,4 @@ void AntiAfk::logEvent(const std::string& type, const std::string& desc) {
               << " @ " << timeStr << std::endl;
 }
 
-} 
+}

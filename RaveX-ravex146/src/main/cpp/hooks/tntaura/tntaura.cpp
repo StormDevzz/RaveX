@@ -22,12 +22,12 @@ static int getFace(const TntBlockPos& from, const TntBlockPos& to) {
     int dx = to.x - from.x;
     int dy = to.y - from.y;
     int dz = to.z - from.z;
-    if (dy ==  1) return 1; 
-    if (dy == -1) return 0; 
-    if (dz == -1) return 2; 
-    if (dz ==  1) return 3; 
-    if (dx == -1) return 4; 
-    if (dx ==  1) return 5; 
+    if (dy ==  1) return 1;
+    if (dy == -1) return 0;
+    if (dz == -1) return 2;
+    if (dz ==  1) return 3;
+    if (dx == -1) return 4;
+    if (dx ==  1) return 5;
     return 1;
 }
 
@@ -58,7 +58,7 @@ static TntPlacement findPlacementFor(
         }
     }
 
-    
+
     TntBlockPos below = {target.x, target.y - 1, target.z};
     if (!solids.count(below) && distSqr(px, py, pz, below) <= rSqr) {
         for (const auto& off : OFFSETS) {
@@ -79,17 +79,17 @@ static TntPlacement findPlacementChain(
     BlockSet& extendedSolids,
     double range
 ) {
-    
+
     TntPlacement direct = findPlacementFor(target, px, py, pz, extendedSolids, range);
     if (direct.valid) return direct;
 
-    
+
     TntBlockPos below = {target.x, target.y - 1, target.z};
     if (!extendedSolids.count(below) && distSqr(px, py, pz, below) <= range * range) {
         TntPlacement support = findPlacementFor(below, px, py, pz, extendedSolids, range);
         if (support.valid) {
             extendedSolids.insert(below);
-            
+
             TntPlacement retry = findPlacementFor(target, px, py, pz, extendedSolids, range);
             if (retry.valid) return retry;
         }
@@ -104,14 +104,14 @@ static TntBlockPos selectGap(
     double playerX, double playerZ,
     int gapDir
 ) {
-    
-    int headY = feet.y + 1;
-    if (gapDir == 1) return {feet.x, headY, feet.z - 1}; 
-    if (gapDir == 2) return {feet.x, headY, feet.z + 1}; 
-    if (gapDir == 3) return {feet.x + 1, headY, feet.z}; 
-    if (gapDir == 4) return {feet.x - 1, headY, feet.z}; 
 
-    
+    int headY = feet.y + 1;
+    if (gapDir == 1) return {feet.x, headY, feet.z - 1};
+    if (gapDir == 2) return {feet.x, headY, feet.z + 1};
+    if (gapDir == 3) return {feet.x + 1, headY, feet.z};
+    if (gapDir == 4) return {feet.x - 1, headY, feet.z};
+
+
     double dx = playerX - (feet.x + 0.5);
     double dz = playerZ - (feet.z + 0.5);
 
@@ -129,7 +129,7 @@ static std::vector<TntBlockPos> buildCageCandidates(
     const TntBlockPos& feet, bool roof, bool bottom, const TntBlockPos& gap
 ) {
     std::vector<TntBlockPos> cands;
-    
+
     TntBlockPos feetSides[4] = {
         {feet.x, feet.y, feet.z - 1},
         {feet.x, feet.y, feet.z + 1},
@@ -138,7 +138,7 @@ static std::vector<TntBlockPos> buildCageCandidates(
     };
     for (auto& c : feetSides) cands.push_back(c);
 
-    
+
     TntBlockPos headSides[4] = {
         {feet.x, feet.y + 1, feet.z - 1},
         {feet.x, feet.y + 1, feet.z + 1},
@@ -149,12 +149,12 @@ static std::vector<TntBlockPos> buildCageCandidates(
         if (c != gap) cands.push_back(c);
     }
 
-    
+
     if (roof) {
         cands.push_back({feet.x, feet.y + 2, feet.z});
     }
 
-    
+
     if (bottom) {
         cands.push_back({feet.x, feet.y - 1, feet.z});
     }
@@ -187,7 +187,7 @@ TntAuraResult calculateTntAuraCage(
     result.filledCageSlots = 0;
     result.cageComplete = false;
 
-    
+
     BlockSet extendedSolids = solids;
     for (const auto& c : candidates) {
         if (solids.count(c)) {
@@ -203,7 +203,7 @@ TntAuraResult calculateTntAuraCage(
 
     result.cageComplete = (result.filledCageSlots + (int)result.cagePlacements.size() == result.totalCageSlots);
 
-    
+
     TntBlockPos tntTarget = gap;
     result.tntPos = tntTarget;
     result.tntPlacement = findPlacementChain(tntTarget, playerX, playerY, playerZ, extendedSolids, config.range);

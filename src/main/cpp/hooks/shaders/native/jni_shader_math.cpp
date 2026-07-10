@@ -110,4 +110,4 @@ Java_ravex_shaders_nativec_ShaderNative_nBlendColors(JNIEnv*, jclass, jint c1, j
     return (jint)ravex::shaders::rgbaToInt(r);
 }
 
-} // extern "C"
+}

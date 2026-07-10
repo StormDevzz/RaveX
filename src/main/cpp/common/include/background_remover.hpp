@@ -19,7 +19,7 @@ void removeBackground(
     bool isABGR = true
 );
 
-} 
-} 
+}
+}
 
-#endif 
+#endif

@@ -37,7 +37,7 @@ public abstract class MixinCamera {
             float yaw = FreeLook.INSTANCE.getLookYaw();
             float pitch = FreeLook.INSTANCE.getLookPitch();
 
-            
+
             double renderX = focusedEntity.xo + (focusedEntity.getX() - focusedEntity.xo) * tickDelta;
             double renderY = focusedEntity.yo + (focusedEntity.getY() - focusedEntity.yo) * tickDelta;
             double renderZ = focusedEntity.zo + (focusedEntity.getZ() - focusedEntity.zo) * tickDelta;
@@ -57,7 +57,7 @@ public abstract class MixinCamera {
                 cosYaw * cosPitch
             );
 
-            
+
             float startingDist = ViewClip.INSTANCE.getEnabled() ? ViewClip.INSTANCE.cameraDistance.getValue().floatValue() : 4.0f;
             float zoom = getMaxZoom(startingDist);
             net.minecraft.world.phys.Vec3 targetPos = eyePos.subtract(dirVec.scale(zoom));
@@ -69,7 +69,7 @@ public abstract class MixinCamera {
 
     @Inject(method = "isDetached", at = @At("HEAD"), cancellable = true)
     private void onIsDetached(CallbackInfoReturnable<Boolean> cir) {
-        
+
         if (FreeCam.INSTANCE.getEnabled()) {
             cir.setReturnValue(true);
         }

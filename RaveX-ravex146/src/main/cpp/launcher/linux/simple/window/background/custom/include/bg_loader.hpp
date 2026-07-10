@@ -12,7 +12,7 @@ void apply_background(LauncherState *state);
 
 void change_background(LauncherState *state);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

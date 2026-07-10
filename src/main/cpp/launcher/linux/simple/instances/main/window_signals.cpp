@@ -21,7 +21,7 @@ static void on_account_changed(GtkComboBox *combo, gpointer user_data) {
 
 static void on_add_offline_clicked(GtkWidget *widget, gpointer user_data) {
     LauncherState *state = static_cast<LauncherState*>(user_data);
-    
+
     GtkWidget *dialog = gtk_dialog_new_with_buttons("Add Offline Account",
         GTK_WINDOW(state->window),
         GTK_DIALOG_MODAL,
@@ -78,7 +78,7 @@ void bind_signals(LauncherState *state, GtkWidget *btn_offline, GtkWidget *btn_m
     g_signal_connect(state->btn_launch, "clicked", G_CALLBACK(button::on_launch_clicked), state);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -51,7 +51,7 @@ public class NameTags extends Module {
             return scaleParam;
         }
         double scale = distance * (scaleParam / 10.0);
-        return Math.max(scale, scaleParam); 
+        return Math.max(scale, scaleParam);
     }
     public static native double[] nativeCalculateLayout(
         double distance,

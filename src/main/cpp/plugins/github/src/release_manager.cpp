@@ -182,7 +182,7 @@ public:
     ReleaseManagerImpl(const GithubConfig& cfg)
         : config(cfg), checker(cfg.owner, cfg.repo, cfg.token) {}
 
-    
+
     UpdateInfo check() {
         UpdateInfo info;
         downloading = false;
@@ -214,7 +214,7 @@ public:
         return info;
     }
 
-    
+
     DownloadResult download(const UpdateInfo& update) {
         DownloadResult result;
         downloading = true;
@@ -228,7 +228,7 @@ public:
             return result;
         }
 
-        
+
         const GithubAsset& asset = update.matchingAssets[0];
 
         std::string dlDir = config.downloadDir;
@@ -260,7 +260,7 @@ public:
         result.success = true;
         result.bytesDownloaded = result.totalBytes;
 
-        
+
         if (config.verifyChecksums) {
             std::string fileData = readFile(result.filePath);
             result.checksumSha256 = computeSha256(fileData);
@@ -271,7 +271,7 @@ public:
         return result;
     }
 
-    
+
     bool install(const DownloadResult& dl) {
         installing = true;
         if (!dl.success) {
@@ -283,7 +283,7 @@ public:
 
         std::string appDir = config.installDir.empty() ? getExecutableDir() : config.installDir;
 
-        
+
         std::string fileName = dl.filePath.substr(dl.filePath.find_last_of("/\\") + 1);
         std::string targetFile = appDir + "/" + fileName;
         std::string backupFile = appDir + "/" + fileName + ".bak";
@@ -296,7 +296,7 @@ public:
         }
 
         if (!renameFile(dl.filePath, targetFile)) {
-            
+
             std::string data = readFile(dl.filePath);
             if (data.empty() || !writeFile(targetFile, data)) {
                 errMsg = "Install failed: could not copy file to " + targetFile;
@@ -312,7 +312,7 @@ public:
         return true;
     }
 
-    
+
     UpdateInfo checkAndUpdate() {
         UpdateInfo info = check();
         if (info.available && !info.error) {
@@ -330,7 +330,7 @@ public:
         return info;
     }
 
-    
+
     bool rollback() {
         std::string appDir = config.installDir.empty() ? getExecutableDir() : config.installDir;
 #ifdef _WIN32
@@ -390,7 +390,7 @@ public:
 
     void setConfig(const GithubConfig& cfg) {
         config = cfg;
-        
+
         checker = ReleaseChecker(cfg.owner, cfg.repo, cfg.token);
     }
 
@@ -424,5 +424,5 @@ void ReleaseManager::setConfig(const GithubConfig& cfg)       { m_impl->setConfi
 const GithubConfig& ReleaseManager::config() const            { return m_impl->getConfig(); }
 std::string ReleaseManager::lastError() const                 { return m_impl->lastError(); }
 
-} 
-} 
+}
+}

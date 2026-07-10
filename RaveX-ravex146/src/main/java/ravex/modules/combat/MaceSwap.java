@@ -17,7 +17,7 @@ public class MaceSwap extends Module {
             List.of("Basic", "Smart"));
     public final NumberParameter fallSpeed = new NumberParameter("Fall Speed", 0.5, 0.1, 3.0, 0.05);
 
-    
+
     private int previousSlot = -1;
 
     private MaceSwap() {
@@ -35,17 +35,17 @@ public class MaceSwap extends Module {
         boolean falling = velY < -fallSpeed.getValue() && !mc.player.onGround();
 
         if ("Smart".equals(mode.getValue())) {
-            
+
             boolean targetingEntity = mc.crosshairPickEntity != null;
             if (falling && targetingEntity) {
                 swapToMace(mc);
             } else if (!falling && previousSlot != -1 && mc.player.onGround()) {
-                
+
                 mc.player.getInventory().setSelectedSlot(previousSlot);
                 previousSlot = -1;
             }
         } else {
-            
+
             if (falling) {
                 swapToMace(mc);
             } else if (!falling && previousSlot != -1 && mc.player.onGround()) {

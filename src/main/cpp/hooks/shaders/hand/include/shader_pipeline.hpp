@@ -48,6 +48,6 @@ private:
     float elapsed;
 };
 
-} // namespace ravex::shaders
+}
 
 #endif

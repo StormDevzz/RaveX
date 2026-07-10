@@ -13,7 +13,7 @@ manifest_verify_result manifest_verify_execute(const std::string& input) {
     return r;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

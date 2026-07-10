@@ -19,7 +19,7 @@ std::vector<TargetBlock> findMineTargets(
         return false;
     };
 
-    
+
     for (int ring = 0; ring <= range_i; ring++) {
         int rs = (ring == 0) ? 0 : ring;
 
@@ -66,8 +66,8 @@ long estimateBreakTime(int bx, int by, int bz, double px, double py, double pz) 
         (by - py) * (by - py) +
         (bz - pz) * (bz - pz)
     );
-    
+
     return static_cast<long>(50.0 + dist * 10.0);
 }
 
-} 
+}

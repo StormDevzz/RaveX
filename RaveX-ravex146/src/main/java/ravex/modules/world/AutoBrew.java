@@ -69,7 +69,7 @@ public class AutoBrew extends Module {
         int playerInvStart = 5;
         int hotbarStart = playerInvStart + 27;
 
-        
+
         if (autoFuel.getValue() && brew.getFuel() <= 0) {
             if (!brew.getSlot(4).hasItem()) {
                 for (int i = playerInvStart; i < brew.slots.size(); i++) {
@@ -84,10 +84,10 @@ public class AutoBrew extends Module {
             }
         }
 
-        
+
         if (brew.getBrewingTicks() > 0) return;
 
-        
+
         for (int slot = 0; slot <= 2; slot++) {
             var stack = brew.getSlot(slot).getItem();
             if (!stack.isEmpty() && !stack.is(Items.GLASS_BOTTLE)) {
@@ -98,7 +98,7 @@ public class AutoBrew extends Module {
             }
         }
 
-        
+
         if (!brew.getSlot(3).hasItem()) {
             for (int i = playerInvStart; i < brew.slots.size(); i++) {
                 var stack = brew.slots.get(i).getItem();
@@ -122,7 +122,7 @@ public class AutoBrew extends Module {
             }
         }
 
-        
+
         for (int slot = 0; slot <= 2; slot++) {
             if (!brew.getSlot(slot).hasItem()) {
                 for (int i = playerInvStart; i < brew.slots.size(); i++) {

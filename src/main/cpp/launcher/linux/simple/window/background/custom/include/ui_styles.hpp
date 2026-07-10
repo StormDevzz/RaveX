@@ -8,7 +8,7 @@ namespace window {
 
 void apply_css();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

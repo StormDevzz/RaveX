@@ -31,15 +31,15 @@ public class WitherBuild extends Module {
     private long lastActionTime = 0;
     private int buildsCompleted = 0;
 
-    
+
     private static final int[][] BLOCK_OFFSETS = {
-        {1, 0, 0},     
-        {0, 1, 0},     
-        {1, 1, 0},     
-        {2, 1, 0},     
-        {0, 2, 0},     
-        {2, 2, 0},     
-        {1, 2, 0},     
+        {1, 0, 0},
+        {0, 1, 0},
+        {1, 1, 0},
+        {2, 1, 0},
+        {0, 2, 0},
+        {2, 2, 0},
+        {1, 2, 0},
     };
 
     private static final int SOUL_SAND_COUNT = 4;
@@ -86,7 +86,7 @@ public class WitherBuild extends Module {
         Vec3 look = mc.player.getViewVector(1.0F).normalize();
         BlockPos playerPos = mc.player.blockPosition();
 
-        
+
         for (double d = 3.0; d <= 6.0; d += 0.5) {
             BlockPos candidate = BlockPos.containing(
                 mc.player.getX() + look.x * d,
@@ -94,7 +94,7 @@ public class WitherBuild extends Module {
                 mc.player.getZ() + look.z * d
             );
 
-            
+
             BlockPos ground = null;
             for (int y = playerPos.getY() + 3; y >= playerPos.getY() - 10; y--) {
                 if (y < mc.level.getMinY()) break;
@@ -109,7 +109,7 @@ public class WitherBuild extends Module {
             }
             if (ground == null) continue;
 
-            
+
             boolean clear = true;
             for (int[] off : BLOCK_OFFSETS) {
                 BlockPos p = ground.offset(off[0], off[1], off[2]);
@@ -129,7 +129,7 @@ public class WitherBuild extends Module {
             return;
         }
 
-        
+
         if (mc.player.onGround()) {
             BlockPos feet = playerPos;
             BlockPos inFront = feet.offset((int)Math.round(look.x), 0, (int)Math.round(look.z)).above();
@@ -204,7 +204,7 @@ public class WitherBuild extends Module {
 
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
         mc.player.swing(InteractionHand.MAIN_HAND);
-        
+
 
         lastActionTime = now;
         retries = 0;
@@ -314,7 +314,7 @@ public class WitherBuild extends Module {
 
     private int findItemSlot(Minecraft mc) {
         boolean needSand = buildIndex < SOUL_SAND_COUNT;
-        
+
         for (int i = 0; i < 36; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (stack.isEmpty()) continue;
@@ -331,7 +331,7 @@ public class WitherBuild extends Module {
                         net.minecraft.world.inventory.ClickType.SWAP, mc.player);
                     return free;
                 }
-                return i; 
+                return i;
             }
             if (!needSand && stack.is(Items.WITHER_SKELETON_SKULL)) {
                 if (i < 9) return i;

@@ -52,6 +52,6 @@ private:
     ShaderConfig config;
 };
 
-} // namespace ravex::shaders::hand
+}
 
 #endif

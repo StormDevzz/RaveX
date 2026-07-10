@@ -16,7 +16,7 @@ import ravex.modules.player.Xray;
 @Mixin(BlockBehaviour.BlockStateBase.class)
 public class MixinBlockXRay {
 
-    
+
 
     @Inject(method = "getRenderShape", at = @At("HEAD"), cancellable = true)
     private void onGetRenderShape(CallbackInfoReturnable<RenderShape> cir) {
@@ -27,28 +27,28 @@ public class MixinBlockXRay {
         }
     }
 
-    
+
 
     @Inject(method = "skipRendering", at = @At("HEAD"), cancellable = true)
     private void onSkipRendering(BlockState adjacent, Direction dir, CallbackInfoReturnable<Boolean> cir) {
         if (!Xray.INSTANCE.getEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
         if (Xray.INSTANCE.isBlockSelected(self.getBlock())) {
-            
+
             cir.setReturnValue(false);
         } else {
-            
+
             cir.setReturnValue(true);
         }
     }
 
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
 
     @Inject(method = "getOcclusionShape", at = @At("HEAD"), cancellable = true)
     private void onGetOcclusionShape(CallbackInfoReturnable<VoxelShape> cir) {
@@ -68,7 +68,7 @@ public class MixinBlockXRay {
         }
     }
 
-    
+
 
     @Inject(method = "isSolidRender", at = @At("HEAD"), cancellable = true)
     private void onIsSolidRender(CallbackInfoReturnable<Boolean> cir) {
@@ -79,7 +79,7 @@ public class MixinBlockXRay {
         }
     }
 
-    
+
 
     @Inject(method = "getLightBlock", at = @At("HEAD"), cancellable = true)
     private void onGetLightBlock(CallbackInfoReturnable<Integer> cir) {
@@ -93,7 +93,7 @@ public class MixinBlockXRay {
         if (!Xray.INSTANCE.getEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
         if (Xray.INSTANCE.isBlockSelected(self.getBlock())) {
-            
+
             cir.setReturnValue(15);
         }
     }

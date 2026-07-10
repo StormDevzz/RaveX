@@ -57,12 +57,12 @@ public:
     size_t size() const;
     bool empty() const;
 
-    
+
     static JsonValue parse(const std::string& json);
     static JsonValue parse(const char* data, size_t len);
     static JsonValue parseFile(const std::string& path);
 
-    
+
     std::string serialize(bool pretty = false, int indent = 0) const;
 
 private:
@@ -91,5 +91,5 @@ private:
     };
 };
 
-} 
-} 
+}
+}

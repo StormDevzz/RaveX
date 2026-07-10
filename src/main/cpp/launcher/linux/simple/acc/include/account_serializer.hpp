@@ -12,7 +12,7 @@ void serialize_accounts(LauncherState *state);
 
 void deserialize_accounts(LauncherState *state);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

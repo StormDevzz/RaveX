@@ -30,7 +30,7 @@ public class SoundUtility {
         return Identifier.fromNamespaceAndPath("ravex", name);
     }
 
-    
+
     public static void register() {
         boolean wasUnfrozen = false;
         try {
@@ -52,7 +52,7 @@ public class SoundUtility {
         }
     }
 
-    
+
     @SuppressWarnings("unchecked")
     private static boolean unfreezeIfNeeded(Registry<?> registry) {
         try {
@@ -79,9 +79,9 @@ public class SoundUtility {
         return false;
     }
 
-    
-    
-    
+
+
+
 
     public static void playEnable()        { play(ENABLE,         1.0f); }
     public static void playDisable()       { play(DISABLE,        1.0f); }
@@ -91,7 +91,7 @@ public class SoundUtility {
     public static void playGuiClose()      { play(GUI_CLOSE,      1.0f); }
     public static void playFailure()       { play(FAILURE,        1.0f); }
 
-    
+
     private static void play(SoundEvent soundEvent, float volume) {
         if (soundEvent == null) {
             ravex.RaveX.LOGGER.warn("[Sound] Skipped: SoundEvent is null (not registered yet?)");
@@ -107,16 +107,16 @@ public class SoundUtility {
             return;
         }
 
-        
+
         float multiplier = (sounds != null) ? sounds.volume.getValue().floatValue() : 1.0f;
         float finalVolume = volume * multiplier;
         if (finalVolume <= 0.0f) return;
 
-        
+
         Minecraft mc = Minecraft.getInstance();
         if (mc == null) return;
 
-        
+
         try {
             if (mc.options != null) {
                 var masterOpt = mc.options.getSoundSourceOptionInstance(net.minecraft.sounds.SoundSource.MASTER);
@@ -134,10 +134,10 @@ public class SoundUtility {
         final SoundEvent se = soundEvent;
 
         if (mc.isSameThread()) {
-            
+
             dispatchSound(mc, se, fv);
         } else {
-            
+
             mc.execute(() -> dispatchSound(mc, se, fv));
         }
     }

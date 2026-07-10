@@ -35,7 +35,7 @@ import ravex.manager.ModuleManager;
 =======
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 public class SelfTrap extends Module {
-    public static final SelfTrap INSTANCE = new SelfTrap(); //Xiaomii
+    public static final SelfTrap INSTANCE = new SelfTrap();
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.browser.BlockBrowserScreen(
             Minecraft.getInstance().screen,
@@ -159,7 +159,7 @@ public class SelfTrap extends Module {
                 result = nativeCalculateSelfTrap(
                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                     currentSolidData,
-                    4.0, 
+                    4.0,
                     modeVal
                 );
             } else {
@@ -346,7 +346,7 @@ public class SelfTrap extends Module {
 =======
                     int hotbarSlot = mc.player.getInventory().getSelectedSlot();
                     mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId, i, hotbarSlot, 
+                        mc.player.containerMenu.containerId, i, hotbarSlot,
                         net.minecraft.world.inventory.ClickType.SWAP, mc.player
                     );
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

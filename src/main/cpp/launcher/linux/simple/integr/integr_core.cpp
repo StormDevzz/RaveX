@@ -10,7 +10,7 @@ namespace simple {
 namespace integr {
 
 bool setupIntegrations(const std::string& kickxDir, const std::string& mcVersion) {
-    
+
     if (needsFabricSetup(kickxDir)) {
         if (!installFabric(kickxDir, mcVersion))
             return false;
@@ -27,7 +27,7 @@ bool needsForgeSetup(const std::string& kickxDir) {
     return false;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

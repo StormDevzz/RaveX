@@ -55,5 +55,5 @@ enum class LuaValueType {
     Function
 };
 
-} 
-} 
+}
+}

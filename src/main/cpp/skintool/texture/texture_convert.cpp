@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <vector>
 
-// Generate a simple checkerboard fallback texture
+
 static unsigned char* makeCheckerboard(int& w, int& h) {
     w = 64; h = 64;
     auto* data = new unsigned char[w * h * 4];
@@ -20,7 +20,7 @@ static unsigned char* makeCheckerboard(int& w, int& h) {
     return data;
 }
 
-// Attempt to create a fallback texture if the file can't be loaded
+
 bool createFallbackTexture(SkinTexture& tex) {
     if (tex.id) return true;
     int w, h;

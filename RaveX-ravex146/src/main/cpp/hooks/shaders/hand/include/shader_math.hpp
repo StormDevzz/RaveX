@@ -40,6 +40,6 @@ inline float pingPong(float t, float length) { return length - std::abs(t - leng
 inline float frac(float v) { return v - std::floor(v); }
 inline float sign(float v) { return (v > 0) - (v < 0); }
 
-} // namespace ravex::shaders
+}
 
 #endif

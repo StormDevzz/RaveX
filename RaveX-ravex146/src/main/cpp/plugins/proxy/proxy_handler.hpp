@@ -45,7 +45,7 @@ private:
     void acceptLoop();
     void relayThread(int clientFd, int remoteFd);
 
-    
+
     bool connectToUpstream(int& remoteFd);
     bool socks5Handshake(int fd);
     bool socks4Handshake(int fd);
@@ -59,4 +59,4 @@ private:
     static std::string recvLine(int fd);
 };
 
-} 
+}

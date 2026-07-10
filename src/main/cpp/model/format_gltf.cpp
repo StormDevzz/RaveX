@@ -10,4 +10,4 @@ ExportResult saveGltf(const ModelData&, const ExportSettings&) {
     throw Error(ErrorCode::NotImplemented, "GLTF not implemented");
 }
 
-} 
+}

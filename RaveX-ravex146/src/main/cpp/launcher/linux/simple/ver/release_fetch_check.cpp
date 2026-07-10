@@ -13,7 +13,7 @@ release_fetch_result release_fetch_execute(const std::string& input) {
     return r;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -26,13 +26,13 @@ public class AutoLog extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        
+
         if (onLowHealth.getValue() && mc.player.getHealth() <= healthLimit.getValue()) {
             disconnect("Low Health Triggered (" + mc.player.getHealth() + " HP)");
             return;
         }
 
-        
+
         for (Player other : mc.level.players()) {
             if (other == mc.player) continue;
 

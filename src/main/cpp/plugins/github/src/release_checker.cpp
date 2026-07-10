@@ -20,24 +20,24 @@ std::string Version::toString() const {
 Version Version::fromString(const std::string& str) {
     Version v;
     std::string s = str;
-    
+
     if (!s.empty() && (s[0] == 'v' || s[0] == 'V')) s = s.substr(1);
 
-    
+
     size_t plus = s.find('+');
     if (plus != std::string::npos) {
         v.buildMeta = s.substr(plus + 1);
         s = s.substr(0, plus);
     }
 
-    
+
     size_t dash = s.find('-');
     if (dash != std::string::npos) {
         v.prerelease = s.substr(dash + 1);
         s = s.substr(0, dash);
     }
 
-    
+
     std::istringstream ss(s);
     std::string part;
     int idx = 0;
@@ -58,7 +58,7 @@ int Version::compare(const Version& a, const Version& b) {
     if (a.minor != b.minor) return a.minor < b.minor ? -1 : 1;
     if (a.patch != b.patch) return a.patch < b.patch ? -1 : 1;
 
-    
+
     if (a.prerelease.empty() && !b.prerelease.empty()) return 1;
     if (!a.prerelease.empty() && b.prerelease.empty()) return -1;
     if (a.prerelease != b.prerelease) return a.prerelease < b.prerelease ? -1 : 1;
@@ -94,7 +94,7 @@ public:
         rel.tarballUrl = j["tarball_url"].asString();
         rel.zipballUrl = j["zipball_url"].asString();
 
-        
+
         if (j.has("assets") && j["assets"].isArray()) {
             for (const auto& a : j["assets"].asArray()) {
                 GithubAsset asset;
@@ -129,7 +129,7 @@ UpdateInfo ReleaseChecker::checkForUpdates(const std::string& currentVersion,
                                             ReleaseChannel channel) {
     UpdateInfo info;
 
-    
+
     GithubRelease latest = getLatestRelease();
     if (latest.tagName.empty()) {
         info.error = true;
@@ -141,9 +141,9 @@ UpdateInfo ReleaseChecker::checkForUpdates(const std::string& currentVersion,
     info.remoteVersion = Version::fromString(latest.tagName);
     info.release = latest;
 
-    
+
     if (channel == ReleaseChannel::Stable && latest.prerelease) {
-        
+
         auto allReleases = listReleases(20, ReleaseChannel::All);
         for (const auto& rel : allReleases) {
             if (!rel.prerelease && !rel.draft) {
@@ -157,7 +157,7 @@ UpdateInfo ReleaseChecker::checkForUpdates(const std::string& currentVersion,
     int cmp = Version::compare(info.remoteVersion, info.localVersion);
     info.available = (cmp > 0);
 
-    
+
     std::string platformSuffix;
 #ifdef _WIN32
     platformSuffix = "win";
@@ -251,5 +251,5 @@ HttpClient& ReleaseChecker::http() const { return m_impl->http; }
 std::string ReleaseChecker::lastError() const { return ""; }
 bool ReleaseChecker::hasError() const { return false; }
 
-} 
-} 
+}
+}

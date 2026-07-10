@@ -25,5 +25,5 @@ std::vector<uint8_t> decrypt(const uint8_t* data, size_t len, const Key& key);
 std::vector<uint8_t> hash(const uint8_t* data, size_t len);
 std::vector<uint8_t> hash(const std::vector<uint8_t>& a, const std::vector<uint8_t>& b);
 
-} 
-} 
+}
+}

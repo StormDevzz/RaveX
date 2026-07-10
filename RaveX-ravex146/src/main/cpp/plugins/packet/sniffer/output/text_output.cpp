@@ -79,5 +79,5 @@ void JsonOutput::end() {
 
 void JsonOutput::flush() { if (useFile_) file_.flush(); }
 
-} 
-} 
+}
+}

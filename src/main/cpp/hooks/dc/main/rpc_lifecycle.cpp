@@ -38,7 +38,7 @@ namespace {
     bool sendFrame(uint32_t opcode, const std::string& json) {
         if (!activeConnection || !activeConnection->isOpen()) return false;
         PacketHeader header = { opcode, static_cast<uint32_t>(json.length()) };
-        
+
         if (!activeConnection->write(&header, sizeof(header))) return false;
         if (!activeConnection->write(json.c_str(), json.length())) return false;
         return true;

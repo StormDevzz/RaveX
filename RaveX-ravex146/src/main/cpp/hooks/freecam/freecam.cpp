@@ -19,16 +19,16 @@ namespace ravex::hooks::freecam {
     }
 
     void turn(double yRot, double xRot) {
-        
+
         g_state.yaw += static_cast<float>(yRot * 0.15);
         g_state.pitch += static_cast<float>(xRot * 0.15);
-        
-        
+
+
         g_state.pitch = std::max(-90.0f, std::min(90.0f, g_state.pitch));
     }
 
     void updatePosition(bool keyUp, bool keyDown, bool keyLeft, bool keyRight, bool keyJump, bool keyShift, double speed, double smoothness) {
-        
+
         g_state.prevX = g_state.x;
         g_state.prevY = g_state.y;
         g_state.prevZ = g_state.z;
@@ -76,4 +76,4 @@ namespace ravex::hooks::freecam {
         g_state.z += (g_state.targetZ - g_state.z) * factor;
     }
 
-} 
+}

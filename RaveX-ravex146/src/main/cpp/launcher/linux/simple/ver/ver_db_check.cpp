@@ -13,7 +13,7 @@ ver_db_result ver_db_execute(const std::string& input) {
     return r;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

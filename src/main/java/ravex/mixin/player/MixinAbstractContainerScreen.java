@@ -40,9 +40,9 @@ public class MixinAbstractContainerScreen {
     @Invoker("getHoveredSlot")
     public abstract Slot invokeGetHoveredSlot(double mouseX, double mouseY);
 
-    
-    
-    
+
+
+
     @Inject(method = "mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z",
             at = @At("HEAD"), cancellable = true)
     private void onMouseClicked(MouseButtonEvent event, boolean z, CallbackInfoReturnable<Boolean> cir) {
@@ -53,12 +53,12 @@ public class MixinAbstractContainerScreen {
         }
     }
 
-    
-    
-    
+
+
+
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderTail(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
-        
+
         {
             Minecraft mc = Minecraft.getInstance();
             if (mc != null && mc.player != null && mc.getWindow() != null && FastItem.INSTANCE.getEnabled()) {
@@ -78,11 +78,11 @@ public class MixinAbstractContainerScreen {
             }
         }
 
-        
+
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
         ChestUtils.INSTANCE.onRenderButtons(screen, graphics, mouseX, mouseY);
 
-        
+
         if (StashFinder.INSTANCE.getEnabled()) {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             var menu = screen.getMenu();
@@ -132,9 +132,9 @@ public class MixinAbstractContainerScreen {
             fastItemLastMove = now;
             InventoryUtility.quickMoveSlot(mc, screen.getMenu().containerId, slot.index);
 =======
-    
-    
-    
+
+
+
     @Inject(method = "mouseScrolled(DDDD)Z", at = @At("HEAD"), cancellable = true)
     private void onMouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY,
                                   CallbackInfoReturnable<Boolean> cir) {

@@ -16,7 +16,7 @@ public class ServerBrandHud extends HudModule {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_jni");
         } catch (UnsatisfiedLinkError e) {
-            
+
         }
     }
 

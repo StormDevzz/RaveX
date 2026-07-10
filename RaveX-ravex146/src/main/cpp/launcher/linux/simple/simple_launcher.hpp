@@ -7,10 +7,10 @@ namespace simple {
 
 class SimpleLauncher {
 public:
-    
+
     static void run(const std::string& modsDir, const std::string& ravexDir);
 };
 
-} 
-} 
-} 
+}
+}
+}

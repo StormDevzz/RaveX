@@ -88,7 +88,7 @@ public class Announcer extends Module {
 
             if (foodEaten == 10 || foodEaten == 25 || foodEaten == 50 || foodEaten == 100) {
                 p.connection.sendChat("I just ate " + foodEaten + " times, damn I'm hungry af");
-                foodEaten = 0; 
+                foodEaten = 0;
             }
             if (hitsDealt == 100 || hitsDealt == 500 || hitsDealt == 1000 || hitsDealt == 5000) {
                 p.connection.sendChat("I dealt " + hitsDealt + " hits, stop moving!");
@@ -102,7 +102,7 @@ public class Announcer extends Module {
         if (mc.player == null || mc.player.connection == null) return;
         if (blocksWalked >= target && blocksWalked - 50 < target) {
             mc.player.connection.sendChat("I walked " + target + " blocks already");
-            blocksWalked = 0; 
+            blocksWalked = 0;
         }
     }
 

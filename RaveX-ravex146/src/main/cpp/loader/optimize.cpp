@@ -109,7 +109,7 @@ OptimizationReport SystemOptimizer::setHighPriority() {
         r.failed.push_back({false, "SetThreadPriority() failed"});
     }
 
-    
+
     r.applied.push_back({true, "I/O priority not adjustable on Windows (best-effort by default)"});
 #else
     if (setpriority(PRIO_PROCESS, 0, -10) == 0) {
@@ -255,5 +255,5 @@ OptimizationReport SystemOptimizer::suggestFreeMemory(uint64_t targetMB) {
     return r;
 }
 
-} 
-} 
+}
+}

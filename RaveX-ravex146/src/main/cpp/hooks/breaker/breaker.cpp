@@ -23,18 +23,18 @@ BreakResult findBestBreakBlock(
     config.maxSelfDamage = maxSelfDamage;
     config.selfDamageWeight = selfDamageWeight;
     config.antiSuicide = antiSuicide;
-    
+
     for (const auto& cand : candidates) {
         if (AutoCrystalMath::distanceToCenter(playerPos, cand) > breakRange) continue;
 
-        
+
         std::vector<Vec3> tempBlocks;
         for (const auto& sb : solidBlocks) {
             if ((int)sb.x == (int)cand.x && (int)sb.y == (int)cand.y && (int)sb.z == (int)cand.z) continue;
             tempBlocks.push_back(sb);
         }
 
-        
+
         CrystalPlacement placement = AutoCrystalMath::findBestPlacement(
             playerPos, playerHp, playerAbs, playerStats,
             targetPos, targetHp, targetAbs, targetStats,
@@ -43,15 +43,15 @@ BreakResult findBestBreakBlock(
 
         if (placement.valid) {
             double score = placement.targetDamage - placement.selfDamage * selfDamageWeight;
-            
-            
+
+
             int cx = (int)std::floor(cand.x);
             int cy = (int)std::floor(cand.y);
             int cz = (int)std::floor(cand.z);
             int tx = (int)std::floor(targetPos.x);
             int ty = (int)std::floor(targetPos.y);
             int tz = (int)std::floor(targetPos.z);
-            
+
             bool isSurroundOrSupport = false;
             if (cx == tx && cy == ty - 1 && cz == tz) {
                 isSurroundOrSupport = true;
@@ -64,11 +64,11 @@ BreakResult findBestBreakBlock(
             } else if (cx == tx && cy == ty + 2 && cz == tz) {
                 isSurroundOrSupport = true;
             }
-            
+
             if (isSurroundOrSupport) {
                 score += 50.0;
             }
-            
+
             if (antiSuicide) {
                 if (playerHp + playerAbs - placement.selfDamage < antiSuicideMinHp) continue;
             }
@@ -88,4 +88,4 @@ BreakResult findBestBreakBlock(
     return best;
 }
 
-} 
+}

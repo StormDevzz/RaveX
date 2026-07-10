@@ -34,7 +34,7 @@ public class StashFinder extends Module {
             totalItems++;
             if (isValuable(stack)) valuableCount++;
         }
-        if (totalItems < 9) return; 
+        if (totalItems < 9) return;
         StashEntry entry = new StashEntry(pos, totalItems, valuableCount, System.currentTimeMillis());
         stashes.add(entry);
         if (logToChat.getValue()) {

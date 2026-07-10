@@ -39,6 +39,6 @@ public:
     static std::string getSystemInfo();
 };
 
-} 
-} 
-} 
+}
+}
+}

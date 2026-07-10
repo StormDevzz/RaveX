@@ -11,9 +11,9 @@ namespace ravex::hooks::freecam {
         float renderPitch = 0.0f;
     };
 
-    
+
     CameraCoordinates getCorrectedCoordinates(double partialTicks);
 
-} 
+}
 
-#endif 
+#endif

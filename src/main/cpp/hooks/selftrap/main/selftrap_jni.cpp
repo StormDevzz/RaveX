@@ -12,7 +12,7 @@ Java_ravex_modules_combat_SelfTrap_nativeCalculateSelfTrap(
 ) {
     jsize len = env->GetArrayLength(solidBlockData);
     jdouble* data = env->GetDoubleArrayElements(solidBlockData, nullptr);
-    
+
     std::vector<BlockPos> solidBlocks;
     if (data != nullptr) {
         for (jsize i = 0; i + 2 < len; i += 3) {

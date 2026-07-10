@@ -18,7 +18,7 @@ public class MixinEntityRenderer {
 =======
         if (NameTags.INSTANCE.getEnabled() && entity instanceof LivingEntity) {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
-            cir.setReturnValue(false); 
+            cir.setReturnValue(false);
         }
     }
 }

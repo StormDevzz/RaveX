@@ -141,8 +141,8 @@ public class BowAim extends Module {
         double best_yaw = 0;
         double best_pitch = 0;
         int best_ticks = 0;
-        double d = 0.99; 
-        double g = 0.05; 
+        double d = 0.99;
+        double g = 0.05;
         double targetCenterY = targetY + targetHeight * 0.5;
         for (int t = 1; t <= 40; t++) {
             double predX = targetX + targetVelX * t;
@@ -186,7 +186,7 @@ public class BowAim extends Module {
             }
         }
         double[] result = new double[4];
-        result[0] = 1.0; 
+        result[0] = 1.0;
         result[1] = best_yaw;
         result[2] = best_pitch;
         result[3] = best_ticks;

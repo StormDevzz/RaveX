@@ -12,7 +12,7 @@ struct MicrosoftSession {
     long long expires_in = 0;
 };
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

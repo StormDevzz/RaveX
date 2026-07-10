@@ -14,7 +14,7 @@ pid_t launch_minecraft_direct(LauncherState *state, const std::string& version, 
 
 void monitor_game_process(LauncherState *state, pid_t pid);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

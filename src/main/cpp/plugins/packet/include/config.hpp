@@ -37,4 +37,4 @@ struct Config {
     static Config defaults() { return Config(); }
 };
 
-} 
+}

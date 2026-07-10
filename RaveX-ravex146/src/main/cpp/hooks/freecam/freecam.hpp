@@ -21,13 +21,13 @@ namespace ravex::hooks::freecam {
         double targetZ = 0.0;
     };
 
-    
+
     extern FreeCamState g_state;
 
     void reset(double startX, double startY, double startZ, float startYaw, float startPitch);
     void turn(double yRot, double xRot);
     void updatePosition(bool keyUp, bool keyDown, bool keyLeft, bool keyRight, bool keyJump, bool keyShift, double speed, double smoothness);
 
-} 
+}
 
-#endif 
+#endif

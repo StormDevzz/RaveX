@@ -14,7 +14,7 @@ struct proc_info_t {
 
 proc_info_t get_proc_info();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

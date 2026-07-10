@@ -14,7 +14,7 @@ bool is_log_enabled();
 void init_analyze(const std::string &kickx_dir);
 void shutdown_analyze();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

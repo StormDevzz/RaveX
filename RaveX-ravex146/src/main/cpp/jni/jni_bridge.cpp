@@ -150,7 +150,7 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
     jdoubleArray outLayouts,
     jintArray outIndices
 ) {
-    
+
     jdouble* pCameraPos = env->GetDoubleArrayElements(cameraPos, nullptr);
     jfloat* pModelView = env->GetFloatArrayElements(modelView, nullptr);
     jfloat* pProjection = env->GetFloatArrayElements(projection, nullptr);
@@ -165,8 +165,8 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
     int result = 0;
     if (pCameraPos && pModelView && pProjection && pPlayerViewVec && pPositions &&
         pTextWidths && pBooleans && pArmorCounts && pOutLayouts && pOutIndices) {
-        
-        
+
+
         result = ravex::plugins::optimize::NameTagsOptimizer::optimizeNameTags(
             pCameraPos,
             pModelView,
@@ -187,7 +187,7 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
         );
     }
 
-    
+
     if (pCameraPos) env->ReleaseDoubleArrayElements(cameraPos, pCameraPos, JNI_ABORT);
     if (pModelView) env->ReleaseFloatArrayElements(modelView, pModelView, JNI_ABORT);
     if (pProjection) env->ReleaseFloatArrayElements(projection, pProjection, JNI_ABORT);
@@ -196,8 +196,8 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
     if (pTextWidths) env->ReleaseDoubleArrayElements(textWidths, pTextWidths, JNI_ABORT);
     if (pBooleans) env->ReleaseIntArrayElements(booleans, pBooleans, JNI_ABORT);
     if (pArmorCounts) env->ReleaseIntArrayElements(armorCounts, pArmorCounts, JNI_ABORT);
-    
-    
+
+
     if (pOutLayouts) env->ReleaseDoubleArrayElements(outLayouts, pOutLayouts, 0);
     if (pOutIndices) env->ReleaseIntArrayElements(outIndices, pOutIndices, 0);
 
@@ -211,7 +211,7 @@ Java_ravex_manager_NativeManager_nativeCheckNatives(JNIEnv*, jclass) {
 
 JNIEXPORT jdouble JNICALL
 Java_ravex_modules_render_NameTags_nativeGetDistance(JNIEnv*, jclass, jdouble x1, jdouble y1, jdouble z1, jdouble x2, jdouble y2, jdouble z2) {
-    
+
     double dx = x1 - x2;
     double dy = y1 - y2;
     double dz = z1 - z2;
@@ -220,13 +220,13 @@ Java_ravex_modules_render_NameTags_nativeGetDistance(JNIEnv*, jclass, jdouble x1
 
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_render_NameTags_nativeIsWithinRange(JNIEnv*, jclass, jdouble distance, jdouble range) {
-    
+
     return distance <= range ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT jdouble JNICALL
 Java_ravex_modules_render_NameTags_nativeCalculateScale(JNIEnv*, jclass, jdouble distance, jdouble scaleParam, jboolean distanceScaling) {
-    
+
     double scale = scaleParam;
     if (distanceScaling == JNI_TRUE) {
         scale = scaleParam * (distance * 0.15);

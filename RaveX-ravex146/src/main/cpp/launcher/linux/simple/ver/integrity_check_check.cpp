@@ -13,7 +13,7 @@ integrity_check_result integrity_check_execute(const std::string& input) {
     return r;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

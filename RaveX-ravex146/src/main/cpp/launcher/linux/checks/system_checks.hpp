@@ -11,6 +11,6 @@ std::string getKernelVersion();
 
 bool isClientDownloaded(const std::string& modsDir, const std::string& version);
 
-} 
-} 
-} 
+}
+}
+}

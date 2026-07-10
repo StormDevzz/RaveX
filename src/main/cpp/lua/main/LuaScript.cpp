@@ -123,5 +123,5 @@ void setupSandbox(lua_State* L, bool enable) {
     lua_setglobal(L, "io");
 }
 
-} 
-} 
+}
+}

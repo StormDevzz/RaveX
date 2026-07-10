@@ -36,7 +36,7 @@ public class LuaManager {
     private final Map<String, LuaTimer> luaTimers = new ConcurrentHashMap<>();
     private final AtomicInteger tickCounter = new AtomicInteger(0);
 
-    
+
     private static final String SCRIPT_KEY = "RaveX_ScriptKey_2025";
     private static boolean nativeAvailable = false;
 
@@ -581,7 +581,7 @@ public class LuaManager {
         }
     }
 
-    
+
     public void loadEncryptedScripts() {
         String[] scriptNames = {
             "init",
@@ -651,7 +651,7 @@ public class LuaManager {
         }
     }
 
-    
+
     private static native String nativeDecryptScript(byte[] encryptedData, String key);
 
     private static class LuaTimer {

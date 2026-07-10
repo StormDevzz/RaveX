@@ -15,7 +15,7 @@ struct ver_api_result {
 ver_api_result ver_api_execute(const std::string& input);
 double ver_api_calculate(const std::string& input);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -19,7 +19,7 @@ InstanceConfig load_instance_config(const std::string& path);
 
 void save_instance_config(const std::string& path, const InstanceConfig& config);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -35,7 +35,7 @@ public class MixinBlockState {
                     boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
                     boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
-                    
+
                     net.minecraft.world.level.material.FluidState fluid = self.getFluidState();
                     if (!fluid.isEmpty()) {
                         if (fluid.is(net.minecraft.tags.FluidTags.WATER) && bypassWater) {

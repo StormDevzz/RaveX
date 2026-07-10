@@ -19,7 +19,7 @@ import ravex.parameter.NumberParameter;
 public class Igniter extends Module {
     public static final Igniter INSTANCE = new Igniter();
 
-    
+
     public final NumberParameter  range        = new NumberParameter("Range",        4.0, 1.0, 6.0, 0.1);
     public final ModeParameter    swapMode     = new ModeParameter("Swap Mode", "Silent",
             java.util.List.of("Silent", "Normal", "None"));
@@ -45,13 +45,13 @@ public class Igniter extends Module {
         int itemSlot = findIgnitionItem(mc);
         if (itemSlot == -1) return;
 
-        
+
         Vec3 hitVec = Vec3.atCenterOf(tntPos);
         if (rotate.getValue()) {
             rotateTo(mc, hitVec);
         }
 
-        
+
         int originalSlot = mc.player.getInventory().getSelectedSlot();
         String swap = swapMode.getValue();
         if (swap.equals("Normal")) {
@@ -66,12 +66,12 @@ public class Igniter extends Module {
             }
         }
 
-        
+
         BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, tntPos, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
         mc.player.swing(InteractionHand.MAIN_HAND);
 
-        
+
         if (swap.equals("Silent") && originalSlot != -1) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
@@ -114,7 +114,7 @@ public class Igniter extends Module {
     }
 
     private int findIgnitionItem(Minecraft mc) {
-        
+
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (!stack.isEmpty()) {

@@ -50,7 +50,7 @@ public class WaxAura extends Module {
                 break;
             }
         }
-        if (honeycombSlot == -1) return; 
+        if (honeycombSlot == -1) return;
         double r = range.getValue();
         BlockPos playerPos = p.blockPosition();
         BlockPos targetPos = null;

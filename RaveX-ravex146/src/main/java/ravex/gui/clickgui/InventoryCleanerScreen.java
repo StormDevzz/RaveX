@@ -24,49 +24,49 @@ import java.util.List;
 
 public class InventoryCleanerScreen extends Screen {
 
-    private static final int ITEM_SIZE   = 20;  
-    private static final int COLS        = 8;   
-    private static final int ROWS        = 6;   
+    private static final int ITEM_SIZE   = 20;
+    private static final int COLS        = 8;
+    private static final int ROWS        = 6;
     private static final int PAGE_SIZE   = COLS * ROWS;
 
     private final Screen parent;
 
-    
+
     private final List<Item> allItems = new ArrayList<>();
-    
+
     private final List<Item> filteredItems = new ArrayList<>();
 
-    
+
     private String searchQuery  = "";
     private boolean searchFocus = false;
 
-    
+
     private int currentPage = 0;
 
-    
+
     private float selectedScroll = 0;
 
-    
+
     private String hoveredTooltip = null;
     private int tooltipX, tooltipY;
 
-    
+
     private long openTime = -1;
 
-    
+
     private boolean cleanHovered = false;
     private boolean quitHovered  = false;
     private boolean prevHovered  = false;
     private boolean nextHovered  = false;
 
-    
+
     private long cleanClickTime = -1;
 
     public InventoryCleanerScreen(Screen parent) {
         super(Component.literal("Inventory Cleaner"));
         this.parent = parent;
 
-        
+
         for (Item item : BuiltInRegistries.ITEM) {
             if (item == Items.AIR) continue;
             allItems.add(item);
@@ -90,7 +90,7 @@ public class InventoryCleanerScreen extends Screen {
                 }
             }
         }
-        
+
         int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
         if (currentPage > maxPage) currentPage = maxPage;
     }
@@ -103,7 +103,7 @@ public class InventoryCleanerScreen extends Screen {
         long now = System.currentTimeMillis();
         if (openTime < 0) openTime = now;
 
-        
+
         float elapsed = (now - openTime);
         float progress = Math.min(1.0f, elapsed / 200f);
         float scale = progress * (2f - progress);
@@ -111,11 +111,11 @@ public class InventoryCleanerScreen extends Screen {
         int W = this.width;
         int H = this.height;
 
-        
+
         int bgA = (int)(progress * 0x99);
         g.fill(0, 0, W, H, (bgA << 24) | 0x05050E);
 
-        
+
         int panelW = 680;
         int panelH = 420;
         if (W < panelW + 40) panelW = W - 40;
@@ -136,35 +136,35 @@ public class InventoryCleanerScreen extends Screen {
 
         hoveredTooltip = null;
 
-        
+
         g.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xF0101020);
         Render2DEngine.drawBorder(g, panelX, panelY, panelW, panelH, 1, 0xFF2A1A4A);
 
-        
+
         int headerH = 28;
         g.fill(panelX, panelY, panelX + panelW, panelY + headerH, 0xFF160E30);
         g.fill(panelX, panelY + headerH - 1, panelX + panelW, panelY + headerH, ColorUtility.getActiveColor());
         FontRenderUtility.drawString(g, "✦ Inventory Cleaner", panelX + 10, panelY + 6, ColorUtility.getActiveColor(), true);
         FontRenderUtility.drawString(g, "ESC / Quit", panelX + panelW - 72, panelY + 8, 0xFF606080, false);
 
-        
+
         int leftW  = (panelW / 2) - 6;
         int rightW = panelW - leftW - 18;
         int leftX  = panelX + 6;
         int rightX = panelX + leftW + 12;
         int contentY = panelY + headerH + 6;
-        int contentH = panelH - headerH - 50; 
+        int contentH = panelH - headerH - 50;
 
-        
+
         g.fill(leftX, contentY, leftX + leftW, contentY + contentH, 0xFF0C0920);
         Render2DEngine.drawBorder(g, leftX, contentY, leftW, contentH, 1, 0xFF281844);
 
-        
+
         int colHeaderH = 18;
         g.fill(leftX, contentY, leftX + leftW, contentY + colHeaderH, 0xFF180E38);
         FontRenderUtility.drawString(g, "§7All Items §8(" + filteredItems.size() + ")", leftX + 5, contentY + 3, 0xFFAAAAAA, false);
 
-        
+
         int searchY = contentY + colHeaderH + 2;
         int searchH = 14;
         int searchW = leftW - 8;
@@ -175,12 +175,12 @@ public class InventoryCleanerScreen extends Screen {
         String searchDisplay = searchQuery.isEmpty() && !searchFocus ? "§8Search..." : searchQuery + (searchFocus ? "§8|" : "");
         FontRenderUtility.drawString(g, searchDisplay, leftX + 7, searchY + 2, 0xFFCCCCCC, false);
 
-        
+
         int gridY = searchY + searchH + 3;
         int gridH = contentH - colHeaderH - searchH - 8;
         int gridX = leftX + 4;
 
-        
+
         int startIdx = currentPage * PAGE_SIZE;
         int endIdx   = Math.min(startIdx + PAGE_SIZE, filteredItems.size());
 
@@ -201,7 +201,7 @@ public class InventoryCleanerScreen extends Screen {
             boolean sel = InventoryCleanerData.INSTANCE.isSelected(itemId);
             boolean hov = mx >= ix && mx <= ix + ITEM_SIZE - 1 && my >= iy && my <= iy + ITEM_SIZE - 1;
 
-            
+
             if (hov) {
                 g.fill(ix, iy, ix + ITEM_SIZE, iy + ITEM_SIZE, 0xFF2A2040);
                 hoveredTooltip = new ItemStack(item).getHoverName().getString() + "\n§8" + itemId;
@@ -210,10 +210,10 @@ public class InventoryCleanerScreen extends Screen {
                 g.fill(ix, iy, ix + ITEM_SIZE, iy + ITEM_SIZE, 0x44DA70D6);
             }
 
-            
+
             g.renderItem(stack, ix + 2, iy + 2);
 
-            
+
             if (sel) {
                 FontRenderUtility.drawString(g, "§a✔", ix + ITEM_SIZE - 7, iy, 0xFF44FF88, false);
             }
@@ -221,7 +221,7 @@ public class InventoryCleanerScreen extends Screen {
 
         g.disableScissor();
 
-        
+
         int pageY = gridY + gridH + 2;
         int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
         String pageStr = "Page " + (currentPage + 1) + " / " + (maxPage + 1);
@@ -229,29 +229,29 @@ public class InventoryCleanerScreen extends Screen {
         prevHovered = mx >= leftX + 4 && mx <= leftX + 26 && my >= pageY && my <= pageY + 12;
         nextHovered = mx >= leftX + leftW - 26 && mx <= leftX + leftW - 4 && my >= pageY && my <= pageY + 12;
 
-        
+
         g.fill(leftX + 4, pageY, leftX + 26, pageY + 12, prevHovered ? 0xFF2A2050 : 0xFF180E38);
         FontRenderUtility.drawString(g, "◀", leftX + 10, pageY + 1, currentPage > 0 ? 0xFFCCCCCC : 0xFF444466, false);
 
-        
+
         int ptw = FontRenderUtility.getStringWidth(pageStr);
         FontRenderUtility.drawString(g, pageStr, leftX + leftW / 2 - ptw / 2, pageY + 1, 0xFF9090B0, false);
 
-        
+
         g.fill(leftX + leftW - 26, pageY, leftX + leftW - 4, pageY + 12, nextHovered ? 0xFF2A2050 : 0xFF180E38);
         FontRenderUtility.drawString(g, "▶", leftX + leftW - 22, pageY + 1, currentPage < maxPage ? 0xFFCCCCCC : 0xFF444466, false);
 
-        
+
         g.fill(rightX, contentY, rightX + rightW, contentY + contentH, 0xFF0C0920);
         Render2DEngine.drawBorder(g, rightX, contentY, rightW, contentH, 1, 0xFF281844);
 
-        
+
         g.fill(rightX, contentY, rightX + rightW, contentY + colHeaderH, 0xFF180E38);
         int selCount = InventoryCleanerData.INSTANCE.getSelectedItems().size();
         FontRenderUtility.drawString(g, "§dSelected §7(" + selCount + ")", rightX + 5, contentY + 3,
             selCount > 0 ? ColorUtility.getActiveColor() : 0xFF777777, false);
 
-        
+
         int selContentY = contentY + colHeaderH + 3;
         int selContentH = contentH - colHeaderH - 6;
         g.enableScissor(rightX, selContentY, rightX + rightW, selContentY + selContentH);
@@ -283,7 +283,7 @@ public class InventoryCleanerScreen extends Screen {
             g.renderItem(stack, rightX + 4, sy);
             FontRenderUtility.drawString(g, new ItemStack(item).getHoverName().getString(), rightX + 22, sy + 3, 0xFFDDDDDD, false);
 
-            
+
             FontRenderUtility.drawString(g, "§c✕", rightX + rightW - 12, sy + 3, 0xFFFF4455, false);
 
             sy += 18;
@@ -291,7 +291,7 @@ public class InventoryCleanerScreen extends Screen {
 
         g.disableScissor();
 
-        
+
         int btnY   = panelY + panelH - 36;
         int btnH   = 18;
         int cleanW = 100;
@@ -299,7 +299,7 @@ public class InventoryCleanerScreen extends Screen {
         int cleanX = panelX + (panelW / 2) - cleanW - 6;
         int quitX  = panelX + (panelW / 2) + 6;
 
-        
+
         cleanHovered = mx >= cleanX && mx <= cleanX + cleanW && my >= btnY && my <= btnY + btnH;
         boolean cleanFlash = (cleanClickTime > 0 && now - cleanClickTime < 300);
         int cleanBg = cleanFlash ? 0xFF44AA55 : cleanHovered ? 0xFF2A1850 : 0xFF1A0E38;
@@ -309,7 +309,7 @@ public class InventoryCleanerScreen extends Screen {
         int ctw = FontRenderUtility.getStringWidth("🗑 Clean Now");
         FontRenderUtility.drawString(g, "🗑 Clean Now", cleanX + cleanW / 2 - ctw / 2, btnY + 4, 0xFFFFFFFF, true);
 
-        
+
         quitHovered = mx >= quitX && mx <= quitX + quitW && my >= btnY && my <= btnY + btnH;
         g.fill(quitX, btnY, quitX + quitW, btnY + btnH, quitHovered ? 0xFF3A1010 : 0xFF1A0E38);
         Render2DEngine.drawBorder(g, quitX, btnY, quitW, btnH, 1, quitHovered ? 0xFFFF4455 : 0xFF3A2060);
@@ -318,7 +318,7 @@ public class InventoryCleanerScreen extends Screen {
 
         pose.popMatrix();
 
-        
+
         if (hoveredTooltip != null && scale > 0.8f) {
             renderTooltip(g, hoveredTooltip, mouseX, mouseY);
         }
@@ -372,7 +372,7 @@ public class InventoryCleanerScreen extends Screen {
         int rightX   = panelX + leftW + 12;
         int colHeaderH = 18;
 
-        
+
         int btnY  = panelY + panelH - 36;
         int btnH  = 18;
         int quitW = 60;
@@ -382,7 +382,7 @@ public class InventoryCleanerScreen extends Screen {
             return true;
         }
 
-        
+
         int cleanW = 100;
         int cleanX = panelX + (panelW / 2) - cleanW - 6;
         if (mx >= cleanX && mx <= cleanX + cleanW && my >= btnY && my <= btnY + btnH && btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
@@ -391,7 +391,7 @@ public class InventoryCleanerScreen extends Screen {
             return true;
         }
 
-        
+
         int searchY = contentY + colHeaderH + 2;
         int searchH = 14;
         if (mx >= leftX + 4 && mx <= leftX + leftW - 4 && my >= searchY && my <= searchY + searchH) {
@@ -401,7 +401,7 @@ public class InventoryCleanerScreen extends Screen {
             searchFocus = false;
         }
 
-        
+
         int gridY = searchY + searchH + 3;
         int gridH = contentH - colHeaderH - searchH - 8;
         int pageY = gridY + gridH + 2;
@@ -417,7 +417,7 @@ public class InventoryCleanerScreen extends Screen {
             }
         }
 
-        
+
         int gridX = leftX + 4;
         if (mx >= leftX && mx <= leftX + leftW && my >= gridY && my <= gridY + gridH) {
             int col = (mx - gridX) / ITEM_SIZE;
@@ -431,7 +431,7 @@ public class InventoryCleanerScreen extends Screen {
             }
         }
 
-        
+
         int selContentY = contentY + colHeaderH + 3;
         int selContentH = contentH - colHeaderH - 6;
         if (mx >= rightX && mx <= rightX + rightW && my >= selContentY && my <= selContentY + selContentH) {
@@ -466,7 +466,7 @@ public class InventoryCleanerScreen extends Screen {
         int selContentY = contentY + colHeaderH + 3;
         int selContentH = contentH - colHeaderH - 6;
 
-        
+
         if (mouseX >= rightX && mouseX <= rightX + rightW && mouseY >= selContentY && mouseY <= selContentY + selContentH) {
             int selCount = InventoryCleanerData.INSTANCE.getSelectedItems().size();
             int maxSelScroll = Math.max(0, selCount * 18 - selContentH);
@@ -515,7 +515,7 @@ public class InventoryCleanerScreen extends Screen {
 
     @Override
     public void onClose() {
-        
+
         if (ravex.modules.player.InventoryCleaner.INSTANCE.getEnabled()) {
             ravex.modules.player.InventoryCleaner.INSTANCE.setEnabled(false);
         }

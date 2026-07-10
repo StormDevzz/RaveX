@@ -9,7 +9,7 @@
 namespace ravex {
 
 struct BotAnalysis {
-    double confidence; 
+    double confidence;
 };
 
 inline bool isSuspiciousName(const std::string& name) {
@@ -60,6 +60,6 @@ inline double analyze(const std::string& name, int ticks,
     return confidence / static_cast<double>(factors);
 }
 
-} 
+}
 
 #endif

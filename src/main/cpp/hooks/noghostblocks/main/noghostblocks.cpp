@@ -24,18 +24,18 @@ bool NoGhostBlocksEngine::isGhostBlock(int x, int y, int z, const std::string& c
     std::lock_guard<std::mutex> lock(ngb_mutex);
     BlockKey key{x, y, z};
 
-    
+
     if (miningSet.count(key)) return false;
 
     auto it = serverState.find(key);
     if (it == serverState.end()) {
-        
-        
+
+
         return !clientBlockId.empty() && clientBlockId != "minecraft:air";
     }
 
-    
-    
+
+
     return it->second != clientBlockId;
 }
 
@@ -55,4 +55,4 @@ void NoGhostBlocksEngine::reset() {
     miningSet.clear();
 }
 
-} 
+}

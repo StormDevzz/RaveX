@@ -18,7 +18,7 @@ void shutdown_analyze() {
     log_system_state("shutdown");
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

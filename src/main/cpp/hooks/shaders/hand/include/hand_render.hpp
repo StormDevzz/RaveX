@@ -29,6 +29,6 @@ void resetHandSystem();
 
 ShaderPipeline& getPipeline();
 
-} // namespace ravex::shaders::hand
+}
 
 #endif

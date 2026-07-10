@@ -40,7 +40,7 @@ public class HudModuleEntry {
             ? ColorUtility.withAlpha(0xFFFFFFFF, alpha)
             : ColorUtility.withAlpha(0xFF707080, alpha);
         FontRenderUtility.drawString(g, module.getName(), x + 6, y + 4, textColor, true);
-        // No circle indicator
+
     }
     public int getExpandedParamCount() {
         int count = 0;

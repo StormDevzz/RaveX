@@ -10,7 +10,7 @@ struct MediaInfo {
     std::string artist;
     std::string album;
     std::string artUrl;
-    std::string status; 
+    std::string status;
     bool valid;
 };
 

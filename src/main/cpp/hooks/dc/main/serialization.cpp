@@ -14,7 +14,7 @@ static std::string escapeJson(const std::string& str) {
             case '\t': ss << "\\t"; break;
             default:
                 if (c >= 0 && c < 32) {
-                    
+
                 } else {
                     ss << c;
                 }

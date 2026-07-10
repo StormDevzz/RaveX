@@ -14,7 +14,7 @@ struct disk_info_t {
 
 disk_info_t get_disk_info();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

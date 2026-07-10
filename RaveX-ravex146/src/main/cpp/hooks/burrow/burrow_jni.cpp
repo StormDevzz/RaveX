@@ -21,4 +21,4 @@ Java_ravex_modules_combat_Burrow_nativeCalculate(
     return arr;
 }
 
-} 
+}

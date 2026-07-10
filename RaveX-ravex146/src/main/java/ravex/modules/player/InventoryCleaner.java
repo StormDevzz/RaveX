@@ -53,12 +53,12 @@ public class InventoryCleaner extends Module {
         cleanInventory(mc);
     }
 
-    
+
     public static void cleanInventory(Minecraft mc) {
         if (mc.player == null || mc.getConnection() == null) return;
 
         Inventory inv = mc.player.getInventory();
-        
+
         for (int i = 0; i < 36; i++) {
             ItemStack stack = inv.getItem(i);
             if (stack.isEmpty()) continue;
@@ -68,15 +68,15 @@ public class InventoryCleaner extends Module {
 
             String itemId = rl.toString();
             if (InventoryCleanerData.INSTANCE.isSelected(itemId)) {
-                
-                
-                
+
+
+
                 int slot = i;
                 final int finalI = i;
                 mc.execute(() -> {
                     ItemStack s = mc.player.getInventory().getItem(finalI);
                     if (!s.isEmpty()) {
-                        
+
                         mc.player.drop(true);
                         if (finalI < 9) {
                             int prevSelected = ravex.manager.HotbarManager.INSTANCE.getSelectedSlot();

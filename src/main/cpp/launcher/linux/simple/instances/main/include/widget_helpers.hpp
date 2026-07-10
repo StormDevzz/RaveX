@@ -11,7 +11,7 @@ inline GtkWidget* create_styled_button(const char* label) {
     return gtk_button_new_with_label(label);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

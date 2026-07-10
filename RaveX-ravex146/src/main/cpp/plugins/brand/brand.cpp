@@ -9,7 +9,7 @@ std::string BrandFormatter::formatBrand(const std::string& rawBrand) {
     if (rawBrand.empty()) {
         return "Unknown";
     }
-    
+
     std::string brand = rawBrand;
     std::string lowerBrand = brand;
     std::transform(lowerBrand.begin(), lowerBrand.end(), lowerBrand.begin(), ::tolower);
@@ -38,6 +38,6 @@ std::string BrandFormatter::formatBrand(const std::string& rawBrand) {
     return "\u00A77" + brand;
 }
 
-} 
-} 
-} 
+}
+}
+}

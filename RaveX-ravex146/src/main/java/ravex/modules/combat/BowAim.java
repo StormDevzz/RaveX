@@ -52,7 +52,7 @@ public class BowAim extends Module {
 
         hasSilentRotations = false;
 
-        
+
         boolean usingBow = mc.player.isUsingItem() && mc.player.getUseItem().is(Items.BOW);
         if (!usingBow) return;
 
@@ -67,7 +67,7 @@ public class BowAim extends Module {
         double targetVelY = targetVel != null ? targetVel.y : 0.0;
         double targetVelZ = targetVel != null ? targetVel.z : 0.0;
 
-        
+
         Vec3 eyePos = mc.player.getEyePosition();
 
         double[] result;
@@ -148,8 +148,8 @@ public class BowAim extends Module {
         double best_pitch = 0;
         int best_ticks = 0;
 
-        double d = 0.99; 
-        double g = 0.05; 
+        double d = 0.99;
+        double g = 0.05;
 
         double targetCenterY = targetY + targetHeight * 0.5;
 
@@ -206,7 +206,7 @@ public class BowAim extends Module {
         }
 
         double[] result = new double[4];
-        result[0] = 1.0; 
+        result[0] = 1.0;
         result[1] = best_yaw;
         result[2] = best_pitch;
         result[3] = best_ticks;

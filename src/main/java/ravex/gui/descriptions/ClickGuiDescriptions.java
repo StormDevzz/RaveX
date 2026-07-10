@@ -204,7 +204,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("AutoAuth", "Login helper");
         DESCRIPTIONS.put("SafeWalk", "Safe walk");
 <<<<<<< HEAD
-        
+
 
         DESCRIPTIONS.put("ShieldFucker", "Break shields");
         DESCRIPTIONS.put("KillEffects", "Death effects");
@@ -235,7 +235,7 @@ public class ClickGuiDescriptions {
 <<<<<<< HEAD
         DESCRIPTIONS.put("InvClean", "Clean inventory");
         DESCRIPTIONS.put("Replenish", "Refill items");
-        
+
 
 =======
         DESCRIPTIONS.put("InventoryCleaner", "Clean inventory");
@@ -248,7 +248,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("AutoFish", "Catch fish");
         DESCRIPTIONS.put("AutoTunnel", "Dig tunnel");
 <<<<<<< HEAD
-        
+
 
         DESCRIPTIONS.put("ECFarmer", "Farm chests");
         DESCRIPTIONS.put("GhostBlocks", "No fake blocks");

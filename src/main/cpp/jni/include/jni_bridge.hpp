@@ -88,7 +88,7 @@ Java_ravex_modules_misc_AntiAfk_nativePerformAction(JNIEnv* env, jclass clazz);
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_combat_Surround_nativeGetCenter(JNIEnv* env, jclass clazz, jdouble px, jdouble py, jdouble pz, jboolean autoCenter);
 
-// ===== Shader Native Math =====
+
 JNIEXPORT jfloat JNICALL
 Java_ravex_shaders_nativec_ShaderNative_nVec3Length(JNIEnv* env, jclass clazz, jfloat x, jfloat y, jfloat z);
 

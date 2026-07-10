@@ -19,7 +19,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     jdoubleArray tStats,
     jdoubleArray blockData,
     jdoubleArray crystalData,
-    
+
     jdouble placeRange, jdouble placeWallRange,
     jdouble breakRange, jdouble breakWallRange,
     jdouble minTargetDmg, jdouble maxSelfDmg,

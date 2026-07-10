@@ -11,7 +11,7 @@ public class NativeManager {
     public static native void nativeCheckNatives();
 
     private NativeManager() {
-        
+
     }
 
     public synchronized void check() {

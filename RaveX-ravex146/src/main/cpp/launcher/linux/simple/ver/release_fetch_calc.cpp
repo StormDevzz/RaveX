@@ -10,7 +10,7 @@ double release_fetch_calculate(const std::string& input) {
     return 1.0;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

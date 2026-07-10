@@ -16,7 +16,7 @@ JNIEXPORT void JNICALL Java_ravex_modules_combat_AntiPearl_nativePredictLanding(
     elements[0] = landing.x;
     elements[1] = landing.y;
     elements[2] = landing.z;
-    elements[3] = 0.0; 
+    elements[3] = 0.0;
     elements[4] = 0.0;
     elements[5] = 0.0;
     env->ReleaseDoubleArrayElements(out, elements, 0);

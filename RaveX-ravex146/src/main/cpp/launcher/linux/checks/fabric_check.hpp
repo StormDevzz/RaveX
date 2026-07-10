@@ -9,6 +9,6 @@ bool isFabricInstalled(const std::string& kickxDir);
 std::string getFabricLoaderVersion(const std::string& kickxDir);
 bool hasFabricLibraries(const std::string& kickxDir);
 
-} 
-} 
-} 
+}
+}
+}

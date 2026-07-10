@@ -33,7 +33,7 @@ public class TreeCutter extends Module {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_treecutter");
         } catch (UnsatisfiedLinkError e) {
-            
+
         }
     }
 
@@ -58,7 +58,7 @@ public class TreeCutter extends Module {
             return;
         }
 
-        
+
         List<BlockPos> logs = scanForLogs(mc);
         if (logs.isEmpty()) {
             if (currentMiningBlock != null) {
@@ -68,7 +68,7 @@ public class TreeCutter extends Module {
             return;
         }
 
-        
+
         double[] logsData = new double[logs.size() * 3];
         for (int i = 0; i < logs.size(); i++) {
             BlockPos pos = logs.get(i);
@@ -77,7 +77,7 @@ public class TreeCutter extends Module {
             logsData[i * 3 + 2] = pos.getZ();
         }
 
-        
+
         double[] result;
         if (nativeAvailable) {
             result = nativeFindBestLog(mc.player.getX(), mc.player.getY(), mc.player.getZ(), logsData);
@@ -95,12 +95,12 @@ public class TreeCutter extends Module {
 
         BlockPos targetPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
 
-        
+
         if (rotate.getValue()) {
             rotateTo(mc, Vec3.atCenterOf(targetPos));
         }
 
-        
+
         if (currentMiningBlock == null || !currentMiningBlock.equals(targetPos)) {
             if (currentMiningBlock != null) {
                 mc.gameMode.stopDestroyBlock();

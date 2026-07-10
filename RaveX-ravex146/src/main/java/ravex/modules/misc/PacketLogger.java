@@ -24,7 +24,7 @@ public class PacketLogger extends Module {
         if (!getEnabled()) return;
         String name = packet.getClass().getSimpleName();
         String message = "§7[§6Packet§7] §d" + direction + " §e" + name;
-        
+
         Minecraft mc = Minecraft.getInstance();
         if (chat.getValue() && mc.player != null) {
             mc.player.displayClientMessage(Component.literal(message), false);

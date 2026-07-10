@@ -84,7 +84,7 @@ public class Welcomer extends Module {
             String msg = String.format(messages[idx], name);
 
             if (!onlyFirstJoin.getValue() || knownPlayers.size() <= 1) {
-                
+
             }
             me.connection.sendCommand(msg);
         }

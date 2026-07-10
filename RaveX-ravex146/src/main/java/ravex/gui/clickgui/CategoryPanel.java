@@ -106,7 +106,7 @@ public class CategoryPanel {
         int viewportH = getBaseHeight(searchQuery);
         int panelBot = iy + totalH;
 
-        
+
         scrollVelocity *= 0.92;
         if (Math.abs(scrollVelocity) < 0.5) scrollVelocity = 0;
         scrollOffset += scrollVelocity;
@@ -115,7 +115,7 @@ public class CategoryPanel {
 
         int activeColor = ColorUtility.getActiveColor();
 
-        
+
         Render2DEngine.drawSmoothRound(graphics, ix + 3, iy + 3, width, panelBot - iy, 8, 0x40000000);
         if (ClickGui.INSTANCE.outlines.getValue()) {
             int borderColor = ClickGui.INSTANCE.outlineColor.getValue();
@@ -129,10 +129,10 @@ public class CategoryPanel {
             graphics.fill(ix, iy + 17, ix + width, iy + 18, 0x15FFFFFF);
         }
 
-        
 
 
-        
+
+
         Identifier catTexWhite = ravex.utility.render.TextureLoader.getCategoryTextureWhite(category);
         if (catTexWhite != null) {
             int iconSize = 18;
@@ -141,13 +141,13 @@ public class CategoryPanel {
             graphics.blit(catTexWhite, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
         }
 
-        
+
         String header = category.getDisplayName();
         int headerY = iy + (18 - FontRenderUtility.getFontHeight()) / 2 + 1;
         FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.VANILLA, header,
             ix + ravex.modules.client.Settings.INSTANCE.headerTextX.getValue().intValue(), headerY, 0xFFFFFFFF, true);
 
-        
+
         if (ClickGui.INSTANCE.moduleCounter.getValue()) {
             List<ModuleButton> visibleModules = filterButtons(searchQuery);
             int enabled = (int) visibleModules.stream().filter(b -> b.getModule().getEnabled()).count();
@@ -166,7 +166,7 @@ public class CategoryPanel {
                 0xFFFFFFFF, true);
         }
 
-        
+
         if (totalH > viewportH || scrollOffset != 0) {
             graphics.enableScissor(ix, listTop, ix + width, panelBot);
         }
@@ -233,9 +233,9 @@ public class CategoryPanel {
         int totalH = getCurrentHeight(searchQuery);
         int panelBot = iy + totalH;
 
-        
+
         if (mouseX >= ix && mouseX <= ix + width && mouseY >= iy && mouseY <= panelBot) {
-            
+
             if (!ClickGui.INSTANCE.separateSettings.getValue()) {
                 List<ModuleButton> visible = filterButtons(searchQuery);
                 int btnH = ClickGui.INSTANCE.buttonHeight.getValue().intValue();
@@ -255,7 +255,7 @@ public class CategoryPanel {
                 }
             }
 
-            
+
             int screenH = net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight();
             double minY = -totalH + 40;
             double maxY = screenH - 20;
@@ -265,7 +265,7 @@ public class CategoryPanel {
         return false;
     }
 
-    
+
     public int getCurrentHeight(String searchQuery) {
         List<ModuleButton> visible = filterButtons(searchQuery);
         if (visible.isEmpty() && !searchQuery.isEmpty()) return 0;
@@ -286,7 +286,7 @@ public class CategoryPanel {
         return h;
     }
 
-    
+
     public int getBaseHeight(String searchQuery) {
         return getCurrentHeight(searchQuery);
     }

@@ -31,7 +31,7 @@ BreakAction tick(
     int currentSlot
 );
 
-} 
+}
 
 
 namespace shieldfucker {
@@ -40,4 +40,4 @@ void trackerSetTarget(int entityId);
 bool trackerCanBreak(uint64_t delayMs);
 bool trackerCanSwitch(uint64_t delayMs);
 int trackerGetBreakCount();
-} 
+}

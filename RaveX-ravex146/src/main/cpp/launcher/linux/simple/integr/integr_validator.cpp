@@ -19,7 +19,7 @@ bool checkLoaderJar(const std::string& path) {
     return (stat(path.c_str(), &st) == 0 && st.st_size > 0);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

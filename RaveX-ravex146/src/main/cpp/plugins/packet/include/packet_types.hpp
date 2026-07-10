@@ -64,4 +64,4 @@ enum class LogLevel : uint8_t {
     Debug, Info, Warn, Error
 };
 
-} 
+}

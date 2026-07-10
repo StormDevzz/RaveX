@@ -31,7 +31,7 @@ public class Shaders extends Module {
     }
     @Override
     protected void onEnable() {
-        ShaderNative.isAvailable(); // trigger native load attempt
+        ShaderNative.isAvailable();
         HandShaderManager.init();
         PlayerShaderManager.init();
         System.out.println("[RaveX-Shaders] Enabled. Native: " + ShaderNative.isAvailable());

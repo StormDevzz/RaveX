@@ -90,6 +90,6 @@ struct NoiseConfig {
     float timeSpeed = 0.0f;
 };
 
-} // namespace ravex::shaders
+}
 
 #endif

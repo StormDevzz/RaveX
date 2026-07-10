@@ -10,7 +10,7 @@ double update_check_calculate(const std::string& input) {
     return 1.0;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

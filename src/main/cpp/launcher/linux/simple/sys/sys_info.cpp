@@ -13,7 +13,7 @@ sys_info_t get_sys_info() {
     return result;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

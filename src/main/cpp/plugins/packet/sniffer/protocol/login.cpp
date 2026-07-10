@@ -61,5 +61,5 @@ CompressionRequest CompressionRequest::decode(const uint8_t* data, size_t size) 
     return {r.readVar()};
 }
 
-} 
-} 
+}
+}

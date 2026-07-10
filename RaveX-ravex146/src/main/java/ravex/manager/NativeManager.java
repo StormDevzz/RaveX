@@ -11,7 +11,7 @@ public class NativeManager {
     public static native void nativeCheckNatives();
 
     private NativeManager() {
-        
+
     }
 
     public synchronized void check() {
@@ -21,14 +21,14 @@ public class NativeManager {
         System.out.println("[RaveX] [NativeManager] firing up native checks, let's roll!");
 
         try {
-            
+
             NativeLoader.load();
             if (NativeLoader.isNativeAvailable()) {
                 System.out.println("[RaveX] [NativeManager] main ravex_jni library loaded successfully, let's go!");
-                
-                
+
+
                 nativeCheckNatives();
-                
+
                 nativeAvailable = true;
             } else {
                 System.err.println("[RaveX] [NativeManager] WARNING: native ravex_jni library is MIA!");

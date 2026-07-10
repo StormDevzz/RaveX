@@ -222,7 +222,7 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 
         SetWindowLongPtrW(hDlg, GWLP_USERDATA, (LONG_PTR)d);
 
-        
+
         std::string remaining = spec;
         std::vector<std::string> specs;
         size_t pos;
@@ -254,7 +254,7 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
             std::string type = parts[0];
             std::string pname = parts[1];
 
-            
+
             std::string label_text = pname;
             std::wstring wlabel = to_wide(label_text);
             CreateWindowExW(0, L"STATIC", wlabel.c_str(),
@@ -297,8 +297,8 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
                 pc.name = pname; pc.type = type; pc.hwnd = hTb; pc.ctrl_id = d->next_id++;
                 pc.num_val = val; pc.num_min = mn; pc.num_max = mx; pc.num_step = stp;
                 SetWindowLongPtrW(hTb, GWLP_USERDATA, (LONG_PTR)d);
-                
-                
+
+
                 d->ctrls.push_back(pc);
                 y += 30;
             } else if (type == "mode" && parts.size() >= 4) {
@@ -364,7 +364,7 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
             }
         }
 
-        
+
         CreateWindowExW(0, L"BUTTON", L"Close",
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             (cw - 80) / 2, y + 8, 80, 28, hDlg, (HMENU)1, g_hinst, nullptr);
@@ -377,12 +377,12 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
         int id = LOWORD(wParam);
         int code = HIWORD(wParam);
 
-        if (id == 1) { 
+        if (id == 1) {
             DestroyWindow(hDlg);
             return 0;
         }
 
-        
+
         for (auto& pc : data->ctrls) {
             if (pc.ctrl_id != id) continue;
 
@@ -390,7 +390,7 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
                 bool on = Button_GetCheck(pc.hwnd) == BST_CHECKED;
                 notify_java_set_param(data->mod_name, pc.name, on ? "true" : "false");
             } else if (pc.type == "num" && (code == EN_CHANGE || code == 0)) {
-                
+
             } else if (pc.type == "mode" && code == CBN_SELCHANGE) {
                 int idx = (int)SendMessageW(pc.hwnd, CB_GETCURSEL, 0, 0);
                 if (idx >= 0 && idx < (int)pc.modes.size()) {
@@ -477,7 +477,7 @@ static void open_param_dialog(const std::string& mod_name) {
         g_main_wnd, nullptr, g_hinst, (LPVOID)wspec.c_str());
 
     if (hDlg) {
-        
+
         RECT pr, dr;
         GetWindowRect(g_main_wnd, &pr);
         GetWindowRect(hDlg, &dr);
@@ -499,14 +499,14 @@ static void paint_main(HWND hWnd) {
     HBITMAP bmp = CreateCompatibleBitmap(dc, g_cx, g_cy);
     HGDIOBJ old_bmp = SelectObject(memDC, bmp);
 
-    
+
     fill_rect(memDC, 0, 0, g_cx, g_cy, CLR_BG);
 
-    
+
     fill_rect(memDC, 0, 0, g_cx, TITLE_H, CLR_BG);
     draw_text(memDC, 0, 0, g_cx, TITLE_H, "RaveX Desktop Dashboard", CLR_TITLE, g_font_bold, DT_CENTER);
 
-    
+
     HPEN sep_pen = CreatePen(PS_SOLID, 1, CLR_BORDER);
     HGDIOBJ old_pen = SelectObject(memDC, sep_pen);
     MoveToEx(memDC, 8, TITLE_H, nullptr);
@@ -514,7 +514,7 @@ static void paint_main(HWND hWnd) {
     SelectObject(memDC, old_pen);
     DeleteObject(sep_pen);
 
-    
+
     int list_top = TITLE_H + 4;
     int list_h  = g_cy - list_top;
     int vis_rows = list_h / ROW_H;
@@ -535,7 +535,7 @@ static void paint_main(HWND hWnd) {
         COLORREF bg = hovered ? CLR_ROW_HOVER : CLR_ROW;
         fill_rect(memDC, 4, ry, g_cx - 8, ROW_H - 2, bg);
 
-        
+
         HPEN rp = CreatePen(PS_SOLID, 1, CLR_BORDER);
         HGDIOBJ old_rp = SelectObject(memDC, rp);
         HBRUSH old_rb = (HBRUSH)SelectObject(memDC, GetStockObject(NULL_BRUSH));
@@ -544,7 +544,7 @@ static void paint_main(HWND hWnd) {
         SelectObject(memDC, old_rb);
         DeleteObject(rp);
 
-        
+
         std::string mod_name;
         bool mod_enabled = false;
         {
@@ -560,12 +560,12 @@ static void paint_main(HWND hWnd) {
         int name_w = g_cx - 8 - PAD - GEAR_W - 4 - TOG_W - PAD;
         draw_text(memDC, 4 + PAD, ry, name_w, ROW_H - 2, mod_name, CLR_TEXT, g_font, DT_LEFT);
 
-        
+
         int gx = 4 + PAD + name_w + 4;
         bool gear_hit = hovered && g_hover_gear && row_idx == g_hover_row;
         draw_text_w(memDC, gx, ry, GEAR_W, ROW_H - 2, L"\u2699", gear_hit ? CLR_GEAR_HVR : CLR_GEAR, g_font, DT_CENTER);
 
-        
+
         int tx = gx + GEAR_W + 4;
         bool tog_state = mod_enabled;
         int tog_w = TOG_W;
@@ -703,7 +703,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         if (col_x >= gx && col_x < gx + GEAR_W) {
             open_param_dialog(mod_name);
         } else if (col_x >= tx && col_x < tx + TOG_W) {
-            
+
             {
                 std::lock_guard<std::mutex> lock(g_mutex);
                 g_enabled[mod_name] = !g_enabled[mod_name];
@@ -767,7 +767,7 @@ static void window_thread() {
 
     g_hinst = GetModuleHandleW(nullptr);
 
-    
+
     LOGFONTW lf = {0};
     lf.lfHeight = 15;
     lf.lfWeight = FW_NORMAL;
@@ -779,7 +779,7 @@ static void window_thread() {
     lf.lfWeight = FW_BOLD;
     g_font_bold = CreateFontIndirectW(&lf);
 
-    
+
     WNDCLASSEXW wc = {sizeof(wc)};
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
     wc.lpfnWndProc = MainWndProc;
@@ -789,7 +789,7 @@ static void window_thread() {
     wc.lpszClassName = L"RavexDesktopGuiMain";
     RegisterClassExW(&wc);
 
-    
+
     WNDCLASSEXW dc = {sizeof(dc)};
     dc.style = CS_HREDRAW | CS_VREDRAW;
     dc.lpfnWndProc = ParamDlgProc;
@@ -799,7 +799,7 @@ static void window_thread() {
     dc.lpszClassName = L"RavexParamDialog";
     RegisterClassExW(&dc);
 
-    
+
     HWND hWnd = CreateWindowExW(WS_EX_WINDOWEDGE, L"RavexDesktopGuiMain", L"RaveX Desktop Dashboard",
         WS_OVERLAPPEDWINDOW | WS_VSCROLL,
         CW_USEDEFAULT, CW_USEDEFAULT, WIN_CX, WIN_CY,

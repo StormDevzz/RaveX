@@ -22,7 +22,7 @@ public class TargetHud extends Module {
     public final BooleanParameter showArmor = new BooleanParameter("Armor", true);
     public final BooleanParameter showOnHover = new BooleanParameter("ShowOnHover", true);
 
-    // Pre-allocated static final arrays and identifiers to eliminate garbage collection stutters
+
     private static final net.minecraft.world.entity.EquipmentSlot[] SLOTS = {
         net.minecraft.world.entity.EquipmentSlot.MAINHAND,
         net.minecraft.world.entity.EquipmentSlot.OFFHAND,
@@ -51,7 +51,7 @@ public class TargetHud extends Module {
     private float animatedHpPercent = -1f;
     private float animatedAbsorbPercent = -1f;
 
-    // Cache formatting and damage animations to prevent lag
+
     private float lastFormattedHp = -1f;
     private String cachedHpText = "";
     private float targetHurtAnim = 0f;
@@ -158,7 +158,7 @@ public class TargetHud extends Module {
         Render2DEngine.drawPixelPerfectRound(graphics, bx, by, w, h, 6, bgColor);
         Render2DEngine.drawRoundBorder(graphics, bx, by, w, h, 6, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), (int)(120 * hudAlpha)));
 
-        // Robust target health validation and damage trigger
+
         if (targetEntity != null) {
             if (targetEntity.getId() != lastEntityId) {
                 lastEntityId = targetEntity.getId();
@@ -215,7 +215,7 @@ public class TargetHud extends Module {
         }
 
         String displayName = targetEntity.getName().getString();
-        
+
         int nx = bx + 44;
         int ny = by + 7;
         FontRenderUtility.drawString(graphics, displayName, nx, ny, ColorUtility.withAlpha(0xFFFFFFFF, (int)(255 * hudAlpha)), true);
@@ -240,9 +240,9 @@ public class TargetHud extends Module {
         int barX = bx + 44;
         int barW = gridX - 4 - barX;
         int barY = by + 32;
-        
+
         Render2DEngine.drawRound(graphics, barX, barY, barW, 3, 1, ColorUtility.withAlpha(0xFF1A1A2A, (int)(255 * hudAlpha)));
-        
+
         int fillHpW = (int) (barW * animatedHpPercent);
         if (fillHpW > 0) {
             int hpColor = lerpColor(0xFFFF3333, 0xFF33FF33, hp / maxHp);

@@ -7,8 +7,8 @@ namespace output {
 
 
 void jsonOutputHelper() {
-    
+
 }
 
-} 
-} 
+}
+}

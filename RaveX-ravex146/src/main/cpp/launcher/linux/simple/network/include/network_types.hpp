@@ -12,7 +12,7 @@ struct NetworkResponse {
     bool success = false;
 };
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

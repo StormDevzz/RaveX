@@ -41,7 +41,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
 ) {
     auto solidBlocks = parseBlockData(env, solidBlockData);
 
-    
+
     TntBlockPos gapPos = {0, 0, 0};
     bool hasGap = false;
     if (gapPosData) {
@@ -80,7 +80,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
         } else {
             placement = {false, {0,0,0}, 0, {0,0,0}};
         }
-        
+
         jdoubleArray out = env->NewDoubleArray(11);
         if (!out) return nullptr;
         jdouble buf[11] = {

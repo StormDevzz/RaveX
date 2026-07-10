@@ -36,7 +36,7 @@ public class FakePlayer extends Module {
         remotePlayer.setYRot(mc.player.getYRot());
         remotePlayer.setXRot(mc.player.getXRot());
         remotePlayer.yHeadRot = mc.player.yHeadRot;
-        remotePlayer.setId(-9999); 
+        remotePlayer.setId(-9999);
 
         if (copyInventory.getValue()) {
             for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {

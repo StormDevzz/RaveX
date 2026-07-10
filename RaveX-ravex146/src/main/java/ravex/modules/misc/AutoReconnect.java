@@ -24,7 +24,7 @@ public class AutoReconnect extends Module {
         addParameter(delay);
     }
 
-    
+
     public static void recordServer(ServerData server) {
         if (server != null) lastServer = server;
     }
@@ -37,7 +37,7 @@ public class AutoReconnect extends Module {
         return lastServer != null;
     }
 
-    
+
     public void scheduleAutoReconnect() {
         if (!getEnabled() || !hasLastServer()) return;
         pendingAutoReconnect = true;
@@ -51,12 +51,12 @@ public class AutoReconnect extends Module {
         pendingAutoReconnect = false;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null) return; 
+        if (mc.level != null) return;
 
         reconnect(mc);
     }
 
-    
+
     public static void reconnect(Minecraft mc) {
         if (!hasLastServer()) return;
         ServerAddress addr = ServerAddress.parseString(lastServer.ip);

@@ -100,13 +100,13 @@ public class Surround extends Module {
             return;
         }
 
-        
+
         if (autoDisable.getValue() && (!mc.player.onGround() || mc.options.keyJump.isDown())) {
             setEnabled(false);
             return;
         }
 
-        
+
         if (autoCenter.getValue()) {
             double[] center;
             if (nativeAvailable) {
@@ -180,12 +180,12 @@ public class Surround extends Module {
         List<BlockPos> toPlace = new ArrayList<>();
         for (BlockPos target : targets) {
             if (isReplaceable(target)) {
-                
+
                 if (handleBlockingEntities(target)) {
                     continue;
                 }
 
-                
+
                 if (findNeighbor(target) == null) {
                     BlockPos below = target.below();
                     if (isReplaceable(below) && !toPlace.contains(below)) {
@@ -202,7 +202,7 @@ public class Surround extends Module {
         surroundBlocks.clear();
         surroundBlocks.addAll(toPlace);
 
-        
+
         if (render.getValue()) {
             int c = color.getValue();
             renderR = ((c >> 16) & 0xFF) / 255.0f;
@@ -226,7 +226,7 @@ public class Surround extends Module {
             animatedCenter = null;
         }
 
-        
+
         if (toPlace.isEmpty()) {
             if (autoDisable.getValue() && placed) {
                 setEnabled(false);

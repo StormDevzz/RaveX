@@ -42,17 +42,17 @@ struct EntityStats {
     double motionX;
     double motionY;
     double motionZ;
-    double totemCount; 
+    double totemCount;
 };
 
 
 struct CrystalPlacement {
-    Vec3    blockPos;       
-    Vec3    crystalPos;     
-    double  targetDamage;   
-    double  selfDamage;     
-    double  score;          
-    bool    valid;          
+    Vec3    blockPos;
+    Vec3    crystalPos;
+    double  targetDamage;
+    double  selfDamage;
+    double  score;
+    bool    valid;
 };
 
 
@@ -71,8 +71,8 @@ struct AutoCrystalConfig {
     bool   antiSuicideIgnoreWithTotem = false;
     bool   requireExposed   = false;
     double targetHealthBonus= 2.0;
-    
-    
+
+
     bool   armorBreaker     = true;
     double armorPercent     = 15.0;
     double predictTicks     = 1.0;
@@ -97,15 +97,15 @@ struct CrystalEntity {
 
 
 struct AutoCrystalResult {
-    bool             shouldPlace;    
-    CrystalPlacement bestPlacement;  
-    bool             shouldPlace2;   
+    bool             shouldPlace;
+    CrystalPlacement bestPlacement;
+    bool             shouldPlace2;
     CrystalPlacement secondPlacement;
-    bool             shouldBreak;    
-    int              breakEntityId;  
-    Vec3             breakPos;       
-    double           breakDamage;    
-    std::string      debugInfo;      
+    bool             shouldBreak;
+    int              breakEntityId;
+    Vec3             breakPos;
+    double           breakDamage;
+    std::string      debugInfo;
 };
 
 
@@ -171,4 +171,4 @@ public:
     static double distanceToCenter(const Vec3& playerPos, const Vec3& blockPos);
 };
 
-} 
+}

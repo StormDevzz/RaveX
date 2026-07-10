@@ -11,7 +11,7 @@ inline bool verify_account_token(const Account& acc) {
     return !acc.token.empty();
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -23,4 +23,4 @@ bool willHitPlayer(Vec3 landing, Vec3 playerPos, double hitRadius) {
     return (dx * dx + dy * dy + dz * dz) <= (hitRadius * hitRadius);
 }
 
-} 
+}

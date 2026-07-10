@@ -51,7 +51,7 @@ bool remove_file(const std::string& path) {
     return (unlink(path.c_str()) == 0);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

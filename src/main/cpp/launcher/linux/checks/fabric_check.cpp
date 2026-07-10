@@ -14,7 +14,7 @@ bool isFabricInstalled(const std::string& kickxDir) {
     if (stat(libsDir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
         return false;
 
-    
+
     std::string findCmd = "find \"" + libsDir + "\" -name \"fabric-loader-*.jar\" 2>/dev/null | head -1";
     FILE* pipe = popen(findCmd.c_str(), "r");
     if (!pipe) return false;
@@ -36,15 +36,15 @@ std::string getFabricLoaderVersion(const std::string& kickxDir) {
     std::string result;
     if (fgets(buf, sizeof(buf), pipe)) {
         result = buf;
-        
+
         if (!result.empty() && result.back() == '\n')
             result.pop_back();
-        
+
         size_t slash = result.find_last_of('/');
         if (slash != std::string::npos) {
             result = result.substr(slash + 1);
         }
-        
+
         size_t dash = result.find("fabric-loader-");
         if (dash != std::string::npos) {
             result = result.substr(dash + 14);
@@ -60,7 +60,7 @@ std::string getFabricLoaderVersion(const std::string& kickxDir) {
 bool hasFabricLibraries(const std::string& kickxDir) {
     if (!isFabricInstalled(kickxDir)) return false;
 
-    
+
     std::vector<std::string> requiredPaths = {
         kickxDir + "/libraries/net/fabricmc/fabric-loader",
         kickxDir + "/libraries/org/ow2/asm",
@@ -74,6 +74,6 @@ bool hasFabricLibraries(const std::string& kickxDir) {
     return true;
 }
 
-} 
-} 
-} 
+}
+}
+}

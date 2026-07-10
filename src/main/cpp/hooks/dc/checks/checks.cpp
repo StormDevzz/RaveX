@@ -27,7 +27,7 @@ namespace checks {
     }
 
     bool validateHandshakeResponse(const std::string& responseJson, uint32_t opcode) {
-        
+
         if (opcode != 2) {
             std::printf("[Checks] Handshake validation failed: expected opcode 2, got %u\n", opcode);
             return false;

@@ -11,26 +11,26 @@ public final class ShaderNative {
 
     public static boolean isAvailable() { return available; }
 
-    // Math
+
     public static native float nVec3Length(float x, float y, float z);
     public static native float nVec3Dot(float x1, float y1, float z1, float x2, float y2, float z2);
     public static native void nVec3Normalize(float[] v);
     public static native void nMatrixMul(float[] a, float[] b, float[] out);
     public static native void nMatrixTransform(float[] m, float x, float y, float z, float w, float[] out);
 
-    // Noise
+
     public static native float nPerlinNoise(float x, float y, float z);
     public static native float nFbmNoise(float x, float y, float z, int octaves, float lacunarity, float gain);
     public static native float nSimplexNoise(float x, float y, float z);
     public static native float nValueNoise2D(float x, float y);
     public static native float nCellularNoise(float x, float y, float z);
 
-    // Color
+
     public static native void nHsbToRgb(float h, float s, float v, float[] out);
     public static native void nRgbToHsb(float r, float g, float b, float[] out);
     public static native int nBlendColors(int c1, int c2, float t);
 
-    // Fallback implementations in Java
+
     public static float vec3Length(float x, float y, float z) {
         if (available) { try { return nVec3Length(x, y, z); } catch (UnsatisfiedLinkError e) { available = false; } }
         return (float) Math.sqrt(x * x + y * y + z * z);
@@ -73,7 +73,7 @@ public final class ShaderNative {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
-    // Pure Java fallback noise implementations
+
     private static float hash(int a, int b) {
         int n = a * 157 + b * 113 + 137;
         return ((n << 13) ^ n) & 0xff;

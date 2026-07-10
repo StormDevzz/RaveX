@@ -15,6 +15,6 @@ public class Commands extends Module {
         super("Commands", Category.CLIENT);
         addParameter(prefix);
         addParameter(showFeedback);
-        setEnabled(true); 
+        setEnabled(true);
     }
 }

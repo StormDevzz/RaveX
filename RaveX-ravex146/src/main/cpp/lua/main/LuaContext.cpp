@@ -107,13 +107,13 @@ void LuaContext::registerInState(lua_State* L) {
     if (!L || m_registered) return;
     m_L = L;
 
-    
-    
+
+
     lua_pushlightuserdata(L, this);
     lua_setglobal(L, "__ravex_lua_ctx");
 
-    
-    
+
+
     LuaBridge::registerFunction(L, "logInfo",      lua_logInfo);
     LuaBridge::registerFunction(L, "logWarn",      lua_logWarn);
     LuaBridge::registerFunction(L, "logError",     lua_logError);
@@ -129,8 +129,8 @@ void LuaContext::registerInState(lua_State* L) {
 void LuaContext::unregisterFromState(lua_State* L) {
     if (!L || !m_registered) return;
 
-    
-    
+
+
     static const char* funcs[] = {
         "logInfo", "logWarn", "logError",
         "configGet", "configSet",
@@ -146,5 +146,5 @@ void LuaContext::unregisterFromState(lua_State* L) {
     m_L = nullptr;
 }
 
-} 
-} 
+}
+}

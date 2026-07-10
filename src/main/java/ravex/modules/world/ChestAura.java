@@ -79,7 +79,7 @@ public class ChestAura extends Module {
 <<<<<<< HEAD
         if (chestSlot == -1) return;
 =======
-        if (chestSlot == -1) return; 
+        if (chestSlot == -1) return;
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         double r = range.getValue();
         var playerPos = p.blockPosition();
@@ -166,7 +166,7 @@ public class ChestAura extends Module {
             ravex.utility.player.SwingUtility.swingMainHand(p);
 =======
             BlockPos below = targetPos.below();
-            Vec3 hitVec = Vec3.atCenterOf(below).add(0, 0.5, 0); 
+            Vec3 hitVec = Vec3.atCenterOf(below).add(0, 0.5, 0);
             BlockHitResult blockHit = new BlockHitResult(hitVec, Direction.UP, below, false);
             mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
             p.swing(InteractionHand.MAIN_HAND);

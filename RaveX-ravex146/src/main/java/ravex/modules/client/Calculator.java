@@ -50,7 +50,7 @@ public class Calculator extends Module {
         });
     }
 
-    
+
     private static native void openCalculator();
     private static native void closeCalculator();
     public static native String nativeEvaluate(String expr);

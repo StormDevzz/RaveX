@@ -34,14 +34,14 @@ public class FastLatency extends Module {
         if (now - lastPingTime >= intervalMs) {
             lastPingTime = now;
             lastPingSentAt = now;
-            
+
             try {
                 mc.getConnection().send(new net.minecraft.network.protocol.common.ServerboundPongPacket((int)(lastPingSentAt & 0x7FFFFFFF)));
             } catch (Exception ignored) {}
         }
     }
 
-    
+
     public void handlePong(int id) {
         int sentId = (int)(lastPingSentAt & 0x7FFFFFFF);
         if (id == sentId) {
@@ -53,7 +53,7 @@ public class FastLatency extends Module {
         return measuredPing;
     }
 
-    
+
     public static int getDisplayPing() {
         Minecraft mc = Minecraft.getInstance();
         if (INSTANCE.getEnabled() && INSTANCE.measuredPing >= 0) {

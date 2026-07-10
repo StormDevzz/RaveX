@@ -83,7 +83,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
     public static String getModJarPath() {
 <<<<<<< HEAD
 =======
-        
+
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         try {
             var container = FabricLoader.getInstance().getModContainer("ravex");
@@ -100,7 +100,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
 <<<<<<< HEAD
 =======
-        
+
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         try {
             java.io.File file = new java.io.File(
@@ -114,7 +114,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
 <<<<<<< HEAD
 =======
-        
+
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         try {
             java.io.File modsDir = new java.io.File(
@@ -298,7 +298,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         ServiceLocator.register(NotificationManager.class, new NotificationManager());
         ServiceLocator.register(CrystalManager.class, CrystalManager.INSTANCE);
 
-        // Register pending objects for @Inject
+
         Injector.injectAll();
 
         LOGGER.info("[RaveX] Services registered");
@@ -333,7 +333,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 =======
         ModuleManager.INSTANCE.onTick();
         ravex.manager.MacroManager.INSTANCE.onTick();
-        ravex.manager.LuaManager.INSTANCE.onTick(); 
+        ravex.manager.LuaManager.INSTANCE.onTick();
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 =======
         ravex.addon.core.CAddonManager.onTick();
@@ -347,7 +347,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
 <<<<<<< HEAD
 =======
-        
+
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
         if (isDown && !rightShiftWasDown) {
@@ -362,7 +362,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 <<<<<<< HEAD
         for (Module m : ServiceLocator.resolve(ModuleManager.class).getModules()) {
 =======
-        
+
         for (ravex.modules.Module m : ModuleManager.INSTANCE.getModules()) {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             int bind = m.getKeyBind();

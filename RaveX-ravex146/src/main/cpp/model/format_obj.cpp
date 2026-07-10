@@ -10,4 +10,4 @@ ExportResult saveObj(const ModelData&, const ExportSettings&) {
     throw Error(ErrorCode::NotImplemented, "OBJ not implemented");
 }
 
-} 
+}

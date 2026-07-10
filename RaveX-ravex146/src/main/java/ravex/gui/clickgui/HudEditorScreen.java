@@ -213,20 +213,20 @@ public class HudEditorScreen extends Screen {
         int px = this.width - pw - 4;
         int py = 48;
 
-        
+
         g.fill(px, py, px + pw, py + ph, 0xCC06060F);
         g.fill(px, py + ph - 1, px + pw, py + ph, accentColor);
         g.fill(px, py, px + 1, py + ph, ColorUtility.withAlpha(accentColor, 60));
         g.fill(px + pw - 1, py, px + pw, py + ph, ColorUtility.withAlpha(accentColor, 60));
 
-        
+
         g.fill(px, py, px + pw, py + headerH, 0xCC0E0E22);
         g.fill(px, py + headerH - 1, px + pw, py + headerH, accentColor);
 
         String title = "HUD Modules (" + huds.size() + ")";
         FontRenderUtility.drawString(g, FontRenderUtility.FontType.VANILLA, title, px + 8, py + 4, 0xFFFFFFFF, true);
 
-        
+
         int startIdx = Math.min(modulePanelScroll, Math.max(0, huds.size() - maxVisible));
         int cy = py + headerH + 2;
         for (int i = startIdx; i < huds.size() && i < startIdx + maxVisible; i++) {
@@ -326,7 +326,7 @@ public class HudEditorScreen extends Screen {
                     yOff + i * itemH + 7, ColorUtility.getActiveColor(), false);
         }
 
-        
+
         FontRenderUtility.drawString(g, "\u00A77Click to toggle  |  Right-click to close",
                 px + 10, py + ph - 14, 0xFF606070, false);
     }
@@ -425,7 +425,7 @@ public class HudEditorScreen extends Screen {
             return true;
         }
 
-        
+
         int pw = 130, headerH = 18, rowH = 14;
         int px = this.width - pw - 4, py = 48;
         int maxVisible = Math.min(ModuleManager.INSTANCE.getHudModules().size(), 18);
@@ -524,7 +524,7 @@ public class HudEditorScreen extends Screen {
 
     @Override
     public void removed() {
-        
+
         BlurUtility.disable();
         super.removed();
     }

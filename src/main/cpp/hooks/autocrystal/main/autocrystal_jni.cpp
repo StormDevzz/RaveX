@@ -52,7 +52,7 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     EntityStats s{};
     if (!arr) return s;
     jsize len = env->GetArrayLength(arr);
-    if (len < 15) return s; 
+    if (len < 15) return s;
 
     jdouble* data = env->GetDoubleArrayElements(arr, nullptr);
     if (!data) return s;
@@ -71,7 +71,7 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     s.motionX              = data[11];
     s.motionY              = data[12];
     s.motionZ              = data[13];
-    s.totemCount           = data[14]; 
+    s.totemCount           = data[14];
 
     env->ReleaseDoubleArrayElements(arr, data, JNI_ABORT);
     return s;
@@ -124,7 +124,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     config.antiSuicide      = (antiSuicide == JNI_TRUE);
     config.antiSuicideCheckBreaking = (antiSuicideCheckBreaking == JNI_TRUE);
     config.antiSuicideIgnoreWithTotem = (antiSuicideIgnoreWithTotem == JNI_TRUE);
-    
+
     config.armorBreaker     = (armorBreaker == JNI_TRUE);
     config.armorPercent     = armorPercent;
     config.predictTicks     = predictTicks;

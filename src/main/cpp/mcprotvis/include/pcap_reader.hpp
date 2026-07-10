@@ -28,5 +28,5 @@ struct PcapReader {
     ~PcapReader() { close(); }
 };
 
-// Filter function declared separately to avoid ODR issues
+
 bool filterMcPacket(PacketRecord& rec, uint32_t linkType);

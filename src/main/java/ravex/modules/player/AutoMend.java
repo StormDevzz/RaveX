@@ -52,7 +52,7 @@ public class AutoMend extends Module {
                 break;
             }
         }
-        if (expSlot == -1) return; 
+        if (expSlot == -1) return;
 <<<<<<< HEAD
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         boolean silent = "Silent".equals(swapMode.getValue());

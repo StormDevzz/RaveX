@@ -38,7 +38,7 @@ public class AutoReconnect extends Module {
         if (System.currentTimeMillis() < reconnectAt) return;
         pendingAutoReconnect = false;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null) return; 
+        if (mc.level != null) return;
         reconnect(mc);
     }
     public static void reconnect(Minecraft mc) {

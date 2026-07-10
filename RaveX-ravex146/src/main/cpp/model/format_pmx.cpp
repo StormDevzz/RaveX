@@ -10,4 +10,4 @@ ExportResult savePmx(const ModelData&, const ExportSettings&) {
     throw Error(ErrorCode::NotImplemented, "PMX not implemented");
 }
 
-} 
+}

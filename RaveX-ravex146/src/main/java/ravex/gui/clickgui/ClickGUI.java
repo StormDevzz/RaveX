@@ -62,7 +62,7 @@ public class ClickGUI extends Screen {
     private boolean configsHovered;
     private boolean resetLayoutHovered;
 
-    
+
     private final float[] starX   = new float[150];
     private final float[] starY   = new float[150];
     private final float[] starVx  = new float[150];
@@ -80,7 +80,7 @@ public class ClickGUI extends Screen {
         super(Component.literal("RaveX ClickGUI"));
         this.initTime = System.currentTimeMillis();
 
-        
+
         ravex.utility.misc.GuiOptimizer.optimize();
 
         if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {
@@ -100,7 +100,7 @@ public class ClickGUI extends Screen {
             panels.add(p);
             panelMap.put(cat, p);
         }
-        //ravex.utility.sound.SoundUtility.playGuiOpen();
+
     }
 
     @Override
@@ -161,9 +161,9 @@ public class ClickGUI extends Screen {
             currentScale = target;
         }
         if (isDraggingSlider) {
-            
+
         } else {
-            
+
             currentScale += (target - currentScale) * 0.15f;
             if (Math.abs(currentScale - target) < 0.001f) {
                 currentScale = target;
@@ -195,11 +195,11 @@ public class ClickGUI extends Screen {
         int targetMaxH = getMaxPanelHeight();
         smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.35;
 
-        
+
         boolean drawBg = ravex.modules.render.ClickGui.INSTANCE.drawBackground.getValue();
         if (drawBg) {
             graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.BACKGROUND_START, ColorUtility.BACKGROUND_END);
-            
+
             int edgeColor = ColorUtility.withAlpha(ColorUtility.getActiveColor(), 6);
             graphics.fillGradient(0, 0, this.width, 1, edgeColor, 0x00000000);
         }
@@ -240,8 +240,8 @@ public class ClickGUI extends Screen {
 
         String tips = "";
 
-        
-        
+
+
         float btnScale = Math.max(0.65f, getResponsiveScale());
         int mgW = (int)(44 * btnScale);
         int mgH = (int)(20 * btnScale);
@@ -287,7 +287,7 @@ public class ClickGUI extends Screen {
         int mx = (int) ((mouseX - cx) / finalScale + cx);
         int my = (int) ((mouseY - cy) / finalScale + cy);
 
-        
+
         renderSearchBar(graphics, mouseX, mouseY);
 
         var pose = graphics.pose();
@@ -420,7 +420,7 @@ public class ClickGUI extends Screen {
             return super.mouseClicked(event, handled);
         }
 
-        
+
         float btnScale = Math.max(0.65f, getResponsiveScale());
         int mgW   = (int)(44 * btnScale);
         int mgH   = (int)(20 * btnScale);
@@ -478,12 +478,12 @@ public class ClickGUI extends Screen {
                 bindingModuleButton.getModule().setKeyBind(key);
             }
             bindingModuleButton = null;
-            //if (this.minecraft.player != null) {
-            //    this.minecraft.player.playSound(
-            //        net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(),
-            //        0.5f, 1.5f
-            //    );
-            //}
+
+
+
+
+
+
             return true;
         }
 
@@ -496,12 +496,12 @@ public class ClickGUI extends Screen {
                 kp.setValue(key);
                 activeKeybindElement = null;
             }
-            //if (this.minecraft.player != null) {
-            //    this.minecraft.player.playSound(
-            //        net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(),
-            //        0.5f, 1.5f
-            //    );
-            //}
+
+
+
+
+
+
             return true;
         }
 
@@ -635,9 +635,9 @@ public class ClickGUI extends Screen {
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
-            
+
             ravex.manager.LayoutManager.INSTANCE.save(panelMap, this.width, this.height, 1.0f);
-            //ravex.utility.sound.SoundUtility.playGuiClose();
+
             ravex.manager.ConfigManager.INSTANCE.save("default");
             if (ravex.modules.render.ClickGui.INSTANCE.blur.getValue()) {
                 BlurUtility.disable();
@@ -658,7 +658,7 @@ public class ClickGUI extends Screen {
         super.removed();
     }
 
-    
+
 
     private void renderStars(GuiGraphics graphics) {
         if (this.width <= 0 || this.height <= 0) return;

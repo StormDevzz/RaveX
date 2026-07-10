@@ -35,7 +35,7 @@ public class MixinLivingEntityTravel {
     private void onTravelHead(Vec3 movementInput, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        // Only apply to the local player entity
+
         if ((Object) this != mc.player) return;
         if (!KillAura.maybeEnabled() || !KillAura.hasSilentRotations()) return;
 

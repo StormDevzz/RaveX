@@ -318,7 +318,7 @@ void on_launch_clicked(GtkWidget *widget, gpointer user_data) {
     }).detach();
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

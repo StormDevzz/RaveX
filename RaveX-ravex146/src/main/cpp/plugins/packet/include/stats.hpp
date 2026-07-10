@@ -44,5 +44,5 @@ inline void updateRate(SnifferStats& s, int64_t now) {
     }
 }
 
-} 
-} 
+}
+}

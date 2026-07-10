@@ -454,13 +454,13 @@ public class PearlTarget extends Module {
 <<<<<<< HEAD
                 .min(java.util.Comparator.comparingDouble(p -> MobUtility.distanceToPlayer(p)))
                 .orElse(null);
-            default -> 
+            default ->
                 players.stream()
                     .min(java.util.Comparator.comparingDouble(p -> MobUtility.distanceToPlayer(p)))
 =======
                 .min(java.util.Comparator.comparingDouble(p -> mc.player.distanceTo(p)))
                 .orElse(null);
-            default -> 
+            default ->
                 players.stream()
                     .min(java.util.Comparator.comparingDouble(p -> mc.player.distanceTo(p)))
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

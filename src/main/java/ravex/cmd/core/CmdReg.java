@@ -57,7 +57,7 @@ public class CmdReg {
     }
 
     static {
-        //register cmds
+
         INSTANCE.register(new ravex.cmd.cmds.HelpCmd());
         INSTANCE.register(new ravex.cmd.cmds.ConfigCmd());
         INSTANCE.register(new ravex.cmd.cmds.CalcCmd());

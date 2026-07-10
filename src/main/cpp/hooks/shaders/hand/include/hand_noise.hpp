@@ -18,6 +18,6 @@ float turbulence(const Vec3& pos, float tiling, float time);
 
 void resetNoiseSystem();
 
-} // namespace ravex::shaders::hand
+}
 
 #endif

@@ -64,7 +64,7 @@ void dispatchLuaEvent(const std::string& eventName) {
 
 void dispatchLuaEventWithData(const std::string& eventName,
                               const std::map<std::string, std::string>& data) {
-    
+
 
     LuaRegistry::getInstance().eventAll(eventName);
 }
@@ -77,5 +77,5 @@ void registerLuaEventAPI(lua_State* L) {
     LuaBridge::registerFunction(L, "registerEvent", lua_registerEvent);
 }
 
-} 
-} 
+}
+}

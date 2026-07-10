@@ -6,7 +6,7 @@
 
 struct PlacementPriority {
     TntBlockPos pos;
-    double      score;   
+    double      score;
     bool        isSupport;
 };
 

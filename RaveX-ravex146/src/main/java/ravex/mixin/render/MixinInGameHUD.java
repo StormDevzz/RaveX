@@ -63,7 +63,7 @@ public abstract class MixinInGameHUD {
             if (target == mc.player) continue;
             if (target instanceof LivingEntity living && !living.isAlive()) continue;
 
-            
+
             double dist;
             if (NameTags.isNativeAvailable()) {
                 Vec3 pPos = mc.player.position();
@@ -82,12 +82,12 @@ public abstract class MixinInGameHUD {
             }
             if (dist > maxDist) continue;
 
-            
+
             if (firstPerson && dist < 1.2 && !nameTagsEnabled) continue;
 
             boolean isPlayer = target instanceof Player;
             boolean isMonster = target instanceof Monster;
-            boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
+            boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal ||
                                target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
             boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
             boolean isFrame = target instanceof net.minecraft.world.entity.decoration.ItemFrame;
@@ -103,19 +103,19 @@ public abstract class MixinInGameHUD {
             candidates.add(target);
         }
 
-        
+
         if (tracersEnabled) {
             ravex.modules.render.Tracers tracers = ravex.modules.render.Tracers.INSTANCE;
             float width = tracers.lineWidth.getValue().floatValue();
 
-            
+
             java.util.List<Entity> tracerEntities = new java.util.ArrayList<>();
             java.util.List<Integer> tracerColors = new java.util.ArrayList<>();
 
             for (Entity target : candidates) {
                 boolean isPlayer = target instanceof Player;
                 boolean isMonster = target instanceof Monster;
-                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
+                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal ||
                                    target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
                 boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
 
@@ -145,7 +145,7 @@ public abstract class MixinInGameHUD {
             boolean tracersNativeDone = false;
 
             if (!tracersNativeDone) {
-                
+
                 for (int i = 0; i < tracerCount; i++) {
                     Entity target = tracerEntities.get(i);
                     int color = tracerColors.get(i);
@@ -208,7 +208,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        
+
         int count = candidates.size();
         boolean nativeSuccess = false;
         int renderedCount = 0;
@@ -275,8 +275,8 @@ public abstract class MixinInGameHUD {
                             int health = (int) Math.ceil(livingTarget.getHealth());
                             int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
                             String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-                            tw = NameTags.INSTANCE.customFont.getValue() ? 
-                                 ravex.utility.render.FontRenderUtility.getStringWidth(tagText) : 
+                            tw = NameTags.INSTANCE.customFont.getValue() ?
+                                 ravex.utility.render.FontRenderUtility.getStringWidth(tagText) :
                                  mc.font.width(tagText);
                             showArmor = NameTags.INSTANCE.armor.getValue();
                             showHands = NameTags.INSTANCE.handItems.getValue();
@@ -292,8 +292,8 @@ public abstract class MixinInGameHUD {
                         }
                         if (hasOwner) {
                             String ownerText = "Owner: " + ownerName;
-                            ow = NameTags.INSTANCE.customFont.getValue() ? 
-                                 ravex.utility.render.FontRenderUtility.getStringWidth(ownerText) : 
+                            ow = NameTags.INSTANCE.customFont.getValue() ?
+                                 ravex.utility.render.FontRenderUtility.getStringWidth(ownerText) :
                                  mc.font.width(ownerText);
                         }
                     }
@@ -371,7 +371,7 @@ public abstract class MixinInGameHUD {
 
                 boolean isPlayer = target instanceof Player;
                 boolean isMonster = target instanceof Monster;
-                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
+                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal ||
                                    target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
                 boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
 
@@ -399,8 +399,8 @@ public abstract class MixinInGameHUD {
                     }
                 }
 
-                boolean withinRange = NameTags.isNativeAvailable() ? 
-                    NameTags.nativeIsWithinRange(dist, NameTags.INSTANCE.range.getValue()) : 
+                boolean withinRange = NameTags.isNativeAvailable() ?
+                    NameTags.nativeIsWithinRange(dist, NameTags.INSTANCE.range.getValue()) :
                     (dist <= NameTags.INSTANCE.range.getValue());
                 boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange;
                 if (drawNametags || hasOwner) {
@@ -502,11 +502,11 @@ public abstract class MixinInGameHUD {
                 }
             }
         } else {
-            
+
             for (Entity target : candidates) {
                 boolean isPlayer = target instanceof Player;
                 boolean isMonster = target instanceof Monster;
-                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || 
+                boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal ||
                                    target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
                 boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
 
@@ -574,8 +574,8 @@ public abstract class MixinInGameHUD {
                     }
                 }
 
-                boolean withinRange = NameTags.isNativeAvailable() ? 
-                    NameTags.nativeIsWithinRange(dist, NameTags.INSTANCE.range.getValue()) : 
+                boolean withinRange = NameTags.isNativeAvailable() ?
+                    NameTags.nativeIsWithinRange(dist, NameTags.INSTANCE.range.getValue()) :
                     (dist <= NameTags.INSTANCE.range.getValue());
                 boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange;
                 if (drawNametags || hasOwner) {
@@ -722,7 +722,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        
+
         ravex.modules.combat.BasePlace bp = ravex.modules.combat.BasePlace.INSTANCE;
         if (bp.getEnabled() && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
             BlockPos p = ravex.modules.combat.BasePlace.getSimulatedPlacementBlock();
@@ -739,7 +739,7 @@ public abstract class MixinInGameHUD {
                     int x = (int) sx;
                     int y = (int) sy;
 
-                    String dmgText = String.format("Dmg: %.1f | Self: %.1f", 
+                    String dmgText = String.format("Dmg: %.1f | Self: %.1f",
                             ravex.modules.combat.BasePlace.currentTargetDamage,
                             ravex.modules.combat.BasePlace.currentSelfDamage);
 
@@ -750,14 +750,14 @@ public abstract class MixinInGameHUD {
                     int bottom = y + 5;
 
                     context.fill(left, top, right, bottom, 0xAA000000);
-                    context.fill(left, top, right, top + 1, 0xFF00FF00); 
+                    context.fill(left, top, right, top + 1, 0xFF00FF00);
 
                     context.drawString(mc.font, dmgText, x - w / 2, y - 4, 0xFFFFFFFF, false);
                 }
             }
         }
 
-        
+
         ravex.modules.combat.AnchorAura aa = ravex.modules.combat.AnchorAura.INSTANCE;
         if (aa.getEnabled() && ravex.modules.combat.AnchorAura.simulatedPlacementBlock != null) {
             BlockPos p = ravex.modules.combat.AnchorAura.simulatedPlacementBlock;
@@ -774,7 +774,7 @@ public abstract class MixinInGameHUD {
                     int x = (int) sx;
                     int y = (int) sy;
 
-                    String dmgText = String.format("Dmg: %.1f | Self: %.1f", 
+                    String dmgText = String.format("Dmg: %.1f | Self: %.1f",
                             ravex.modules.combat.AnchorAura.currentTargetDamage,
                             ravex.modules.combat.AnchorAura.currentSelfDamage);
 
@@ -785,14 +785,14 @@ public abstract class MixinInGameHUD {
                     int bottom = y + 5;
 
                     context.fill(left, top, right, bottom, 0xAA000000);
-                    context.fill(left, top, right, top + 1, 0xFF00FFFF); 
+                    context.fill(left, top, right, top + 1, 0xFF00FFFF);
 
                     context.drawString(mc.font, dmgText, x - w / 2, y - 4, 0xFFFFFFFF, false);
                 }
             }
         }
 
-        
+
         ravex.modules.combat.AutoCrystal ac = ravex.modules.combat.AutoCrystal.INSTANCE;
         if (ac.getEnabled() && ac.renderDamage.getValue() && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
 
@@ -810,7 +810,7 @@ public abstract class MixinInGameHUD {
                     int x = (int) sx;
                     int y = (int) sy;
 
-                    String dmgText = String.format("Target: %.1f | Self: %.1f", 
+                    String dmgText = String.format("Target: %.1f | Self: %.1f",
                             ravex.modules.combat.AutoCrystal.currentTargetDamage,
                             ravex.modules.combat.AutoCrystal.currentSelfDamage);
                     String totemsText = String.format("Totems: %d", ravex.modules.combat.AutoCrystal.currentTargetTotems);
@@ -833,7 +833,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        
+
         ravex.modules.world.AutoSmelt asm = ravex.modules.world.AutoSmelt.INSTANCE;
         if (asm.getEnabled() && asm.render.getValue() && ravex.modules.world.AutoSmelt.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoSmelt.currentTarget;
@@ -870,7 +870,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        
+
         ravex.modules.world.AutoBrew ab = ravex.modules.world.AutoBrew.INSTANCE;
         if (ab.getEnabled() && ab.render.getValue() && ravex.modules.world.AutoBrew.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoBrew.currentTarget;
@@ -909,7 +909,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        
+
         ravex.modules.exploit.PacketMine pm = ravex.modules.exploit.PacketMine.INSTANCE;
         if (pm.getEnabled() && pm.render.getValue()) {
             for (var mb : ravex.modules.exploit.PacketMine.miningBlocks) {
@@ -938,7 +938,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        
+
         if (ravex.modules.render.Waypoint.INSTANCE.getEnabled()) {
             int wpColor = ravex.modules.render.Waypoint.INSTANCE.color.getValue();
             String currentDim = mc.level != null ? mc.level.dimension().identifier().toString() : null;
@@ -1005,7 +1005,7 @@ public abstract class MixinInGameHUD {
             }
         }
 
-        
+
         ravex.utility.misc.GuiOptimizer.optimizeHudAnimations(enabledModules);
 
         for (HudModule hud : enabledModules) {

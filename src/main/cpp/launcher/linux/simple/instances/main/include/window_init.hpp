@@ -8,7 +8,7 @@ namespace window {
 
 void init_and_run(LauncherState* state);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

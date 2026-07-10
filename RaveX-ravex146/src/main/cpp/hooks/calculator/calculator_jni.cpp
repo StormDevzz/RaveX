@@ -12,11 +12,11 @@ static JavaVM* g_jvm = nullptr;
 static jclass  g_calc_class = nullptr;
 
 static GtkWidget* g_window      = nullptr;
-static GtkWidget* g_display     = nullptr;  
-static GtkWidget* g_result      = nullptr;  
-static GtkWidget* g_history_box = nullptr;  
+static GtkWidget* g_display     = nullptr;
+static GtkWidget* g_result      = nullptr;
+static GtkWidget* g_history_box = nullptr;
 static std::string g_current_expr;
-static std::deque<std::string> g_history;   
+static std::deque<std::string> g_history;
 static std::mutex g_gui_mutex;
 
 static JNIEnv* get_env() {
@@ -45,7 +45,7 @@ static void push_history(const std::string& expr, const std::string& result) {
 
 static void refresh_history() {
     if (!g_history_box) return;
-    
+
     GList* children = gtk_container_get_children(GTK_CONTAINER(g_history_box));
     for (GList* l = children; l; l = l->next)
         gtk_widget_destroy(GTK_WIDGET(l->data));
@@ -109,7 +109,7 @@ static void on_btn_clicked(GtkWidget* btn, gpointer data) {
         update_display();
     } else if (lstr == "⌫") {
         if (!g_current_expr.empty()) {
-            
+
             size_t pos = g_current_expr.size() - 1;
             while (pos > 0 && (g_current_expr[pos] & 0xC0) == 0x80) pos--;
             g_current_expr = g_current_expr.substr(0, pos);
@@ -142,7 +142,7 @@ static gboolean on_key_press(GtkWidget* widget, GdkEventKey* event, gpointer) {
         if (!g_current_expr.empty()) g_current_expr.pop_back();
         update_display(); return TRUE;
     }
-    
+
     if (event->string && event->string[0]) {
         char c = event->string[0];
         if ((c >= '0' && c <= '9') || c == '.' || c == '+' || c == '-' ||
@@ -192,13 +192,13 @@ static void apply_calc_css() {
 
 
 
-static const char* btn_labels_persist[64]; 
+static const char* btn_labels_persist[64];
 static int btn_label_count = 0;
 
 static GtkWidget* make_btn(const char* label_str, const char* css_class, const char* data_str) {
     GtkWidget* btn = gtk_button_new_with_label(label_str);
     gtk_style_context_add_class(gtk_widget_get_style_context(btn), css_class);
-    
+
     btn_labels_persist[btn_label_count] = data_str;
     g_signal_connect(btn, "clicked", G_CALLBACK(on_btn_clicked), (gpointer)data_str);
     btn_label_count++;
@@ -221,13 +221,13 @@ static void gtk_calc_thread() {
     GtkWidget* main_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_add(GTK_CONTAINER(g_window), main_vbox);
 
-    
+
     GtkWidget* title = gtk_label_new("⚡ RaveX Calculator");
     gtk_style_context_add_class(gtk_widget_get_style_context(title), "title-lbl");
     gtk_widget_set_halign(title, GTK_ALIGN_START);
     gtk_box_pack_start(GTK_BOX(main_vbox), title, FALSE, FALSE, 0);
 
-    
+
     GtkWidget* disp_frame = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
     gtk_container_set_border_width(GTK_CONTAINER(disp_frame), 8);
     gtk_box_pack_start(GTK_BOX(main_vbox), disp_frame, FALSE, FALSE, 0);
@@ -244,17 +244,17 @@ static void gtk_calc_thread() {
     gtk_widget_set_halign(g_result, GTK_ALIGN_END);
     gtk_box_pack_start(GTK_BOX(disp_frame), g_result, FALSE, FALSE, 0);
 
-    
+
     gtk_box_pack_start(GTK_BOX(main_vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 0);
 
-    
+
     GtkWidget* fn_grid = gtk_grid_new();
     gtk_grid_set_column_spacing(GTK_GRID(fn_grid), 4);
     gtk_grid_set_row_spacing(GTK_GRID(fn_grid), 4);
     gtk_container_set_border_width(GTK_CONTAINER(fn_grid), 6);
     gtk_box_pack_start(GTK_BOX(main_vbox), fn_grid, FALSE, FALSE, 0);
 
-    
+
     const char* fns[2][5] = {
         {"sin(", "cos(", "tan(", "sqrt(", "log("},
         {"asin(", "acos(", "atan(", "^",   "fact("}
@@ -266,49 +266,49 @@ static void gtk_calc_thread() {
         }
     }
 
-    
+
     GtkWidget* grid = gtk_grid_new();
     gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
     gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
     gtk_container_set_border_width(GTK_CONTAINER(grid), 8);
     gtk_box_pack_start(GTK_BOX(main_vbox), grid, FALSE, FALSE, 0);
 
-    
+
     gtk_grid_attach(GTK_GRID(grid), make_btn("C",  "clear-btn", "C"),  0, 0, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("±",  "op-btn",    "±"),  1, 0, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("%",  "op-btn",    "%"),  2, 0, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("⌫",  "op-btn",    "⌫"),  3, 0, 1, 1);
 
-    
+
     gtk_grid_attach(GTK_GRID(grid), make_btn("7",  "num-btn",  "7"),  0, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("8",  "num-btn",  "8"),  1, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("9",  "num-btn",  "9"),  2, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("÷",  "op-btn",   "/"),  3, 1, 1, 1);
 
-    
+
     gtk_grid_attach(GTK_GRID(grid), make_btn("4",  "num-btn",  "4"),  0, 2, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("5",  "num-btn",  "5"),  1, 2, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("6",  "num-btn",  "6"),  2, 2, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("×",  "op-btn",   "*"),  3, 2, 1, 1);
 
-    
+
     gtk_grid_attach(GTK_GRID(grid), make_btn("1",  "num-btn",  "1"),  0, 3, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("2",  "num-btn",  "2"),  1, 3, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("3",  "num-btn",  "3"),  2, 3, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("−",  "op-btn",   "-"),  3, 3, 1, 1);
 
-    
+
     gtk_grid_attach(GTK_GRID(grid), make_btn("0",  "num-btn",  "0"),  0, 4, 2, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn(".",  "num-btn",  "."),  2, 4, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("+",  "op-btn",   "+"),  3, 4, 1, 1);
 
-    
+
     gtk_grid_attach(GTK_GRID(grid), make_btn("(",  "op-btn",  "("),  0, 5, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn(")",  "op-btn",  ")"),  1, 5, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("π",  "op-btn",  "pi"),  2, 5, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), make_btn("=",  "eq-btn",  "="),  3, 5, 1, 1);
 
-    
+
     gtk_box_pack_start(GTK_BOX(main_vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 4);
 
     GtkWidget* hist_label = gtk_label_new("History");
@@ -364,4 +364,4 @@ Java_ravex_modules_client_Calculator_nativeEvaluate(JNIEnv* env, jclass cls, jst
     return env->NewStringUTF(result.c_str());
 }
 
-} 
+}

@@ -32,4 +32,4 @@ Java_ravex_modules_combat_AntiBot_nativeAnalyze(
     return result;
 }
 
-} 
+}

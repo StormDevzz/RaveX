@@ -83,7 +83,7 @@ public class NoFall extends Module {
             }
         }
         if (fallDistance > 2.0) {
-            outData[0] = 1.0; 
+            outData[0] = 1.0;
             if ("Grim".equals(mode)) {
                 outData[1] = currentY + 0.0001;
             } else {

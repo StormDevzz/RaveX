@@ -43,7 +43,7 @@ public class Render3DUtils {
             la = buildAdditiveType(RenderPipelines.LINES, "ravex_line_additive");
             lan = buildAdditiveNoDepthType(RenderPipelines.LINES, "ravex_line_additive_nodepth");
         } catch (Exception e) {
-            
+
         }
         FILL_NO_DEPTH = f;
         LINE_NO_DEPTH = l;
@@ -107,10 +107,10 @@ public class Render3DUtils {
         return AccessorRenderType.invokeCreate(name, setup);
     }
 
-    
-    
-    
-    
+
+
+
+
     private static BufferBuilder fillBuilder;
     private static BufferBuilder fillNoDepthBuilder;
     private static BufferBuilder lineBuilder;
@@ -182,9 +182,9 @@ public class Render3DUtils {
         lineAdditiveNoDepthBuilder = null;
     }
 
-    
-    
-    
+
+
+
     public static void batchFilledBox(Matrix4f matrix, double size, float r, float g, float b, float a) {
         batchFilledBox(matrix, size, r, g, b, a, false);
     }
@@ -330,9 +330,9 @@ public class Render3DUtils {
         }
     }
 
-    
-    
-    
+
+
+
     public static void renderFilledBox(Matrix4f matrix, double size, float r, float g, float b, float a) {
         renderFilledBox(matrix, size, r, g, b, a, false);
     }

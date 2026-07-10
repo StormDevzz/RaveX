@@ -47,7 +47,7 @@ public class ModuleSettingsScreen extends Screen {
         for (Parameter<?> p : module.getParameters()) {
             paramElements.add(new ParameterElement(p));
         }
-        //ravex.utility.sound.SoundUtility.playSettingsOpen();
+
     }
 
     @Override
@@ -171,7 +171,7 @@ public class ModuleSettingsScreen extends Screen {
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
-            //ravex.utility.sound.SoundUtility.playSettingsClose();
+
         }
     }
 
@@ -258,12 +258,12 @@ public class ModuleSettingsScreen extends Screen {
                 kp.setValue(key);
                 ClickGUI.activeKeybindElement = null;
             }
-            //if (this.minecraft.player != null) {
-            //    this.minecraft.player.playSound(
-            //        net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(),
-            //        0.5f, 1.5f
-            //    );
-            //}
+
+
+
+
+
+
             return true;
         }
 

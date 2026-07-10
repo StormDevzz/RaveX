@@ -36,4 +36,4 @@ private:
     static std::unique_ptr<InputBackend> backend_;
 };
 
-} 
+}

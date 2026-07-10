@@ -42,8 +42,8 @@ LuaLoadResult LuaAddon::loadFromFile(const std::string& filePath,
     LuaLoadResult result;
     result.filePath = filePath;
 
-    
-    
+
+
     std::ifstream testFile(filePath);
     if (!testFile) {
         result.errorMsg = "File not found: " + filePath;
@@ -51,26 +51,26 @@ LuaLoadResult LuaAddon::loadFromFile(const std::string& filePath,
     }
     testFile.close();
 
-    
-    
+
+
     m_L = createLuaState();
     if (!m_L) {
         result.errorMsg = "Failed to create Lua state";
         return result;
     }
 
-    
-    
+
+
     setupSandbox(m_L, true);
 
-    
-    
+
+
     m_luaCtx.setContext(ctx);
     m_luaCtx.setConfig(cfg);
     m_luaCtx.registerInState(m_L);
 
-    
-    
+
+
     std::string loadError;
     if (!loadLuaFile(m_L, filePath, loadError)) {
         result.errorMsg = "Failed to load script: " + loadError;
@@ -80,15 +80,15 @@ LuaLoadResult LuaAddon::loadFromFile(const std::string& filePath,
         return result;
     }
 
-    
-    
+
+
     m_meta.name        = readGlobalString("getName", "UnnamedLuaAddon");
     m_meta.version     = readGlobalString("getVersion", "0.0.0");
     m_meta.author      = readGlobalString("getAuthor", "Unknown");
     m_meta.description = readGlobalString("getDescription", "");
 
-    
-    
+
+
     m_hasTick  = hasLuaFunction(m_L, "onTick");
     m_hasEvent = hasLuaFunction(m_L, "onEvent");
 
@@ -153,8 +153,8 @@ std::string LuaAddon::readGlobalString(const std::string& name,
     if (!m_L) return defaultValue;
     lua_getglobal(m_L, name.c_str());
     if (lua_isfunction(m_L, -1)) {
-        
-        
+
+
         if (lua_pcall(m_L, 0, 1, 0) == LUA_OK) {
             std::string val = LuaBridge::popString(m_L, -1);
             lua_pop(m_L, 1);
@@ -172,5 +172,5 @@ bool LuaAddon::hasGlobalFunction(const std::string& name) {
     return hasLuaFunction(m_L, name);
 }
 
-} 
-} 
+}
+}

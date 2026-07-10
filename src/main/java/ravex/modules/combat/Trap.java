@@ -129,7 +129,7 @@ public class Trap extends Module {
         for (double d : solidBlockData) {
             activeSolidBlocks.add(d);
         }
-        int simLimit = 9; 
+        int simLimit = 9;
         int simCount = 0;
         List<BlockPos> simulatedBlocks = new ArrayList<>();
         while (simCount < simLimit) {
@@ -211,7 +211,7 @@ public class Trap extends Module {
             rotateTo(mc, hitVec);
             boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
             if (isStrict && !isRotationAligned(mc, hitVec)) {
-                break; 
+                break;
             }
             String swap = swapMode.getValue();
             if (swap.equals("Normal")) {
@@ -396,7 +396,7 @@ public class Trap extends Module {
                         if (simulatedSolids.contains(side)) {
                             neighbor = side;
                             face = d.getOpposite();
-                            cand = below; 
+                            cand = below;
                             break;
                         }
                     }

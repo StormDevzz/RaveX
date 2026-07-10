@@ -14,7 +14,7 @@ public class Glint extends Module {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter items = new BooleanParameter("Items", true);
     public final BooleanParameter armor = new BooleanParameter("Armor", true);
-    public final ColorParameter color = new ColorParameter("Color", 0xFFFF00FF); 
+    public final ColorParameter color = new ColorParameter("Color", 0xFFFF00FF);
 
 <<<<<<< HEAD
     public static boolean maybeEnabled() {

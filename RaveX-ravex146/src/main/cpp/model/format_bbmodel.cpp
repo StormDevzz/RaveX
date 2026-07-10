@@ -94,7 +94,7 @@ ModelData loadBbmodel(const uint8_t* data, size_t size) {
 ExportResult saveBbmodel(const ModelData& m, const ExportSettings&) {
     std::string json = "{\"meta\":{\"format_version\":\"4.9\"},\"elements\":[";
     bool first = true;
-    
+
     (void)m;
     json += "],\"textures\":[]}\n";
     ExportResult r;
@@ -103,4 +103,4 @@ ExportResult saveBbmodel(const ModelData& m, const ExportSettings&) {
     return r;
 }
 
-} 
+}

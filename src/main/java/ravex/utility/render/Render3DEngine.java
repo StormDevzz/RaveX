@@ -536,7 +536,7 @@ public class Render3DEngine {
         int overlay = OverlayTexture.NO_OVERLAY;
         int light = 0xF000F0;
 
-        // Draw exactly one scanning ring (as requested: "нужно чтобы было лишь одно")
+
         double progress = scanProgress % 2.0;
         if (progress > 1.0) {
             progress = 2.0 - progress;
@@ -547,12 +547,12 @@ public class Render3DEngine {
         if (alphaFade > 0.01f) {
             Matrix4f matrix = new Matrix4f(modelViewMatrix);
             matrix.translate((float) tPosX, (float) ringY, (float) tPosZ);
-            
+
             RotationUtility.rotateY(matrix, rotation);
 
             float radius = width * (1.1f + 0.12f * (float) Math.sin(rotation * 0.05));
 
-            // 1. Translucent scan disk
+
             ESP_ALLOCATOR.clear();
             BufferBuilder builder = new BufferBuilder(ESP_ALLOCATOR, renderType.mode(), renderType.format());
             int colDisk = ColorUtility.applyAlpha(color, alphaFade * 0.22f);
@@ -562,7 +562,7 @@ public class Render3DEngine {
             builder.addVertex(matrix, radius, 0.0f, -radius).setColor(colDisk).setUv(1.0f, 0.0f).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
             renderType.draw(builder.buildOrThrow());
 
-            // 2. Translucent outer line outline ring (lineWidth set to 3.5f for a thicker line)
+
             ESP_ALLOCATOR.clear();
             BufferBuilder lineBuilder = new BufferBuilder(ESP_ALLOCATOR, lineType.mode(), lineType.format());
             int colLine = ColorUtility.applyAlpha(color, alphaFade * 0.85f);
@@ -596,7 +596,7 @@ public class Render3DEngine {
 
         float iAge = target.tickCount + tickDelta;
 
-        // debugFilledBox has POSITION_COLOR format and expects groups of 4 vertices (QUADS emulation)
+
         RenderType renderType = RenderTypes.debugFilledBox();
 
         ESP_ALLOCATOR.clear();
@@ -620,7 +620,7 @@ public class Render3DEngine {
                 double oz = Math.sin(radians) * target.getBbWidth();
                 matrix.translate((float)(tPosX + ox), (float)(tPosY + oy), (float)(tPosZ + oz));
 
-                // Perfect screen-aligned billboard: reset rotation columns to identity scaled by scale factor
+
                 float sizePulse = 0.8f + 0.35f * (float) Math.sin(iAge * 0.15f + i * 0.5f);
                 float scale = Math.max(0.18f * offset, 0.12f) * sizePulse * 0.85f;
                 matrix.m00(scale);
@@ -635,12 +635,12 @@ public class Render3DEngine {
 
                 int ia = Math.round(offset * 0.95f * 255.0f);
 
-                // Draw a 100% solid, perfectly sharp 12-sided dodecagon circle using 3 overlapping quads
+
                 for (int stepIdx = 0; stepIdx < 3; stepIdx++) {
-                    float angle = (float) (stepIdx * Math.PI / 6.0); // 0, 30, 60 degrees
+                    float angle = (float) (stepIdx * Math.PI / 6.0);
                     float cos = (float) Math.cos(angle);
                     float sin = (float) Math.sin(angle);
-                    
+
                     builder.addVertex(matrix, -cos - sin, -sin + cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
                     builder.addVertex(matrix, cos - sin, sin + cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
                     builder.addVertex(matrix, cos + sin, sin - cos, 0.0f).setColor(irBase, igBase, ibBase, ia);

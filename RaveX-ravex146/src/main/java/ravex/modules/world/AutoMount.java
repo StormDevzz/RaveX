@@ -40,7 +40,7 @@ public class AutoMount extends Module {
             return;
         }
 
-        
+
         Entity target = null;
         double closestDist = 4.5;
         for (var entity : mc.level.entitiesForRendering()) {

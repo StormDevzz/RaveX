@@ -27,19 +27,19 @@ public class MixinLevelRenderer {
     private static final Matrix4f REUSABLE_MATRIX = new Matrix4f();
     private static long lastAnimTime = 0;
 
-    
+
     private static double apX = 0, apY = 0, apZ = 0;
     private static float apAlpha = 0.0f;
     private static double apSize = 0.0;
     private static boolean apInitialized = false;
 
-    
+
     private static double scX = 0, scY = 0, scZ = 0;
     private static float scAlpha = 0.0f;
     private static double scSize = 0.0;
     private static boolean scInitialized = false;
 
-    
+
     private static double boX = 0, boY = 0, boZ = 0;
     private static float boAlpha = 0.0f;
     private static boolean boInitialized = false;
@@ -51,7 +51,7 @@ public class MixinLevelRenderer {
         ordinal = 0
     )
     private boolean disableVanillaBlockOutline(boolean original) {
-        
+
         if (BlockOutline.INSTANCE.getEnabled()) {
             return false;
         }
@@ -93,7 +93,7 @@ public class MixinLevelRenderer {
         float factor = Math.min(1.0f, (deltaMs / 50.0f) * 0.25f);
         double slideFactor = Math.min(1.0, (deltaMs / 50.0) * 0.35);
 
-        
+
         if (BlockOutline.INSTANCE.getEnabled()) {
             HitResult hit = mc.hitResult;
             if (hit != null && hit.getType() == HitResult.Type.BLOCK) {
@@ -164,7 +164,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         ravex.modules.player.AirPlace ap = ravex.modules.player.AirPlace.INSTANCE;
         if (ap.getEnabled() && ap.render.getValue() && ap.currentTarget != null) {
             double tx = ap.currentTarget.getX();
@@ -216,7 +216,7 @@ public class MixinLevelRenderer {
             );
         }
 
-        
+
         ravex.modules.world.Scaffold sc = ravex.modules.world.Scaffold.INSTANCE;
         if (sc.getEnabled() && sc.render.getValue() && sc.currentTarget != null) {
             double tx = sc.currentTarget.getX();
@@ -268,7 +268,7 @@ public class MixinLevelRenderer {
             );
         }
 
-        
+
         if (ravex.modules.world.ChestAura.INSTANCE.getEnabled() && ravex.modules.world.ChestAura.INSTANCE.render.getValue() && !ravex.modules.world.ChestAura.placedChests.isEmpty()) {
             long chestNow = System.currentTimeMillis();
             double durationMs = ravex.modules.world.ChestAura.INSTANCE.fadeSpeed.getValue() * 1000.0;
@@ -304,7 +304,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         if (Surround.INSTANCE.getEnabled()) {
             synchronized (Surround.surroundBlocks) {
                 for (BlockPos pos : Surround.surroundBlocks) {
@@ -331,7 +331,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         ravex.modules.combat.Trap trap = ravex.modules.combat.Trap.INSTANCE;
         if (trap.getEnabled() && trap.render.getValue()) {
             synchronized (ravex.modules.combat.Trap.trapBlocks) {
@@ -359,7 +359,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         ravex.modules.combat.SelfTrap selfTrap = ravex.modules.combat.SelfTrap.INSTANCE;
         if (selfTrap.getEnabled() && selfTrap.render.getValue()) {
             for (BlockPos pos : ravex.modules.combat.SelfTrap.getSelfTrapBlocks()) {
@@ -384,7 +384,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         ravex.modules.combat.BasePlace basePlace = ravex.modules.combat.BasePlace.INSTANCE;
         if (basePlace.getEnabled() && basePlace.render.getValue() && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
             BlockPos pos = ravex.modules.combat.BasePlace.getSimulatedPlacementBlock();
@@ -409,7 +409,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.combat.AnchorAura anchorAura = ravex.modules.combat.AnchorAura.INSTANCE;
         if (anchorAura.getEnabled() && anchorAura.render.getValue() && ravex.modules.combat.AnchorAura.simulatedPlacementBlock != null) {
             BlockPos pos = ravex.modules.combat.AnchorAura.simulatedPlacementBlock;
@@ -456,7 +456,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         if (ravex.modules.misc.StashFinder.INSTANCE.getEnabled()) {
             double maxDist = ravex.modules.misc.StashFinder.INSTANCE.range.getValue();
             for (ravex.modules.misc.StashFinder.StashEntry stash : ravex.modules.misc.StashFinder.INSTANCE.getStashes()) {
@@ -481,22 +481,22 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         if (ravex.modules.render.BreadCrumbs.INSTANCE.getEnabled()) {
             ravex.modules.render.BreadCrumbs.renderTrails(modelViewMatrix, camPos);
         }
 
-        
+
         if (ravex.modules.render.Trails.INSTANCE.getEnabled()) {
             ravex.modules.render.Trails.renderTrails(modelViewMatrix, camPos);
         }
 
-        
+
         if (ravex.modules.render.Particles.INSTANCE.getEnabled()) {
             ravex.modules.render.Particles.renderParticles(modelViewMatrix, camPos);
         }
 
-        
+
         ravex.modules.world.TreeCutter tc = ravex.modules.world.TreeCutter.INSTANCE;
         if (tc.getEnabled() && tc.render.getValue() && ravex.modules.world.TreeCutter.currentMiningBlock != null) {
             BlockPos p = ravex.modules.world.TreeCutter.currentMiningBlock;
@@ -521,7 +521,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.combat.WebSelf ws = ravex.modules.combat.WebSelf.INSTANCE;
         if (ws.getEnabled() && ws.render.getValue() && ravex.modules.combat.WebSelf.targetPos != null) {
             BlockPos p = ravex.modules.combat.WebSelf.targetPos;
@@ -542,7 +542,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.combat.Breaker br = ravex.modules.combat.Breaker.INSTANCE;
         if (br.getEnabled() && br.render.getValue() && ravex.modules.combat.Breaker.currentMiningBlock != null) {
             BlockPos p = ravex.modules.combat.Breaker.currentMiningBlock;
@@ -566,7 +566,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.world.AutoTunnel at = ravex.modules.world.AutoTunnel.INSTANCE;
         if (at.getEnabled() && at.render.getValue() && ravex.modules.world.AutoTunnel.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoTunnel.currentTarget;
@@ -591,7 +591,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.world.Nuker nk = ravex.modules.world.Nuker.INSTANCE;
         if (nk.getEnabled() && nk.render.getValue() && ravex.modules.world.Nuker.currentTarget != null) {
             BlockPos p = ravex.modules.world.Nuker.currentTarget;
@@ -616,7 +616,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.world.AutoSmelt sm = ravex.modules.world.AutoSmelt.INSTANCE;
         if (sm.getEnabled() && sm.render.getValue() && ravex.modules.world.AutoSmelt.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoSmelt.currentTarget;
@@ -634,7 +634,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.world.AutoBrew bw = ravex.modules.world.AutoBrew.INSTANCE;
         if (bw.getEnabled() && bw.render.getValue() && ravex.modules.world.AutoBrew.currentTarget != null) {
             BlockPos p = ravex.modules.world.AutoBrew.currentTarget;
@@ -652,7 +652,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.player.ECFarmer ec = ravex.modules.player.ECFarmer.INSTANCE;
         if (ec.getEnabled() && ec.render.getValue() && ravex.modules.player.ECFarmer.currentTarget != null) {
             BlockPos p = ravex.modules.player.ECFarmer.currentTarget;
@@ -670,7 +670,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.misc.PortalBuild pb = ravex.modules.misc.PortalBuild.INSTANCE;
         if (pb.getEnabled() && pb.render.getValue() && ravex.modules.misc.PortalBuild.currentTarget != null) {
             BlockPos p = ravex.modules.misc.PortalBuild.currentTarget;
@@ -688,7 +688,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
         ravex.modules.combat.HoleFill hf = ravex.modules.combat.HoleFill.INSTANCE;
         if (hf.getEnabled() && hf.render.getValue()) {
             for (var hole : ravex.modules.combat.HoleFill.holePositions) {
@@ -707,7 +707,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         if (Borders.INSTANCE.getEnabled()) {
             int rd = Borders.INSTANCE.renderDistance.getValue().intValue();
             boolean showCurrent = Borders.INSTANCE.showCurrentChunk.getValue();
@@ -752,7 +752,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         if (Tunnels.INSTANCE.getEnabled()) {
             int tunnelColorVal = Tunnels.INSTANCE.tunnelColor.getValue();
             float tr = ((tunnelColorVal >> 16) & 0xFF) / 255.0f;
@@ -770,7 +770,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         if (HoleESP.INSTANCE.getEnabled()) {
             int c = HoleESP.INSTANCE.safeColor.getValue();
             float hr = ((c >> 16) & 0xFF) / 255.0f;
@@ -788,7 +788,7 @@ public class MixinLevelRenderer {
                         Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, hr, hg, hb, ha * 0.3f, true);
                     }
                     if (HoleESP.INSTANCE.wireframe.getValue()) {
-                        
+
                         Render3DUtils.batchAxisLine(modelViewMatrix, px, py, pz, px + 1, py, pz, hw, hr, hg, hb, ha, true);
                         Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py, pz + 1, hw, hr, hg, hb, ha, true);
                         Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz + 1, px, py, pz + 1, hw, hr, hg, hb, ha, true);
@@ -808,7 +808,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         if (VoidESP.INSTANCE.getEnabled()) {
             int vc = VoidESP.INSTANCE.voidColor.getValue();
             float vr = ((vc >> 16) & 0xFF) / 255.0f;
@@ -826,7 +826,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         ravex.modules.exploit.PacketMine pm = ravex.modules.exploit.PacketMine.INSTANCE;
         if (pm.getEnabled() && pm.render.getValue()) {
             long globalTime = System.currentTimeMillis();
@@ -876,7 +876,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         if (ravex.modules.render.Waypoint.INSTANCE.getEnabled()) {
             int wpColor = ravex.modules.render.Waypoint.getColor();
             float wr = ((wpColor >> 16) & 0xFF) / 255.0f;
@@ -923,7 +923,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
         if (ravex.modules.combat.PearlTarget.INSTANCE.getEnabled()) {
             try {
                 ravex.modules.combat.PearlTarget.INSTANCE.render(modelViewMatrix, camera);
@@ -959,14 +959,14 @@ public class MixinLevelRenderer {
         float cz = (float)camPos.z;
         float th = 0.06f;
 
-        
-        
+
+
         Render3DUtils.batchAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz - cz, bx - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
         Render3DUtils.batchAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz - cz, bx + 16 - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
         Render3DUtils.batchAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz + 16 - cz, bx - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
         Render3DUtils.batchAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz + 16 - cz, bx + 16 - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
 
-        
+
         int baseY = Math.round(cy / 32.0f) * 32;
         for (int dy = -32; dy <= 32; dy += 32) {
             int y = baseY + dy;

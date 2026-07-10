@@ -85,7 +85,7 @@ public class ColorPaletteModal {
         int mx = (screenWidth - modalWidth) / 2;
         int my = (screenHeight - modalHeight) / 2;
 
-        // Dark translucent overlay on screen
+
         graphics.fill(0, 0, screenWidth, screenHeight, 0x9007070B);
 
         long win = Minecraft.getInstance().getWindow().handle();
@@ -125,18 +125,18 @@ public class ColorPaletteModal {
             parameter.setValue(getArgb());
         }
 
-        // Translucent glass container (8px rounded corners, 75% opacity)
+
         Render2DEngine.drawRound(graphics, mx, my, modalWidth, modalHeight, 8, 0xCC0D0D14);
         Render2DEngine.drawSmoothRoundOutline(graphics, mx, my, modalWidth, modalHeight, 8, 1, 0xFF1C1C2A);
 
         int activeColor = getArgb() | 0xFF000000;
 
-        // Static header "Color Palette" as requested
+
         FontRenderUtility.drawString(graphics, "Color Palette", mx + 12, my + 10, 0xFFE5E5F0, false);
 
         graphics.fill(mx + 10, my + 23, mx + modalWidth - 10, my + 24, 0xFF252535);
 
-        // 1. Highly optimized SV Gradient Area (uses exactly 2 draw calls instead of 900!)
+
         int hColor = hsbToRgb(hue, 1.0f, 1.0f);
         Render2DEngine.drawGradientRectHorizontal(graphics, svX, svY, svSize, svSize, 0xFFFFFFFF, hColor);
         Render2DEngine.drawGradientRect(graphics, svX, svY, svSize, svSize, 0x00000000, 0xFF000000);
@@ -149,11 +149,11 @@ public class ColorPaletteModal {
         int curX = svX + (int)(saturation * svSize);
         int curY = svY + (int)((1.0f - value) * svSize);
 
-        // Draw a premium fully filled and smoothed white circle for the SV picker cursor
+
         Render2DEngine.fillCircle(graphics, curX, curY, 4, 0xFF000000);
         Render2DEngine.fillCircle(graphics, curX, curY, 3, 0xFFFFFFFF);
 
-        // 2. Highly optimized Hue slider (uses exactly 6 draw calls instead of 30!)
+
         int hueSegments = 6;
         int segW = hueW / hueSegments;
         int[] hueColors = { 0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000 };
@@ -171,7 +171,7 @@ public class ColorPaletteModal {
         graphics.fill(hkX - 2, hueY - 2, hkX - 1, hueY + sliderHeight + 2, 0xFF000000);
         graphics.fill(hkX + 2, hueY - 2, hkX + 3, hueY + sliderHeight + 2, 0xFF000000);
 
-        // 3. Highly optimized Alpha background grid (uses exactly 12 draw calls instead of 60!)
+
         int cellW = 10;
         for (int px = 0; px < alphaW; px += cellW) {
             boolean light = (px / cellW) % 2 == 0;
@@ -192,16 +192,16 @@ public class ColorPaletteModal {
         graphics.fill(akX - 2, alphaY - 2, akX - 1, alphaY + sliderHeight + 2, 0xFF000000);
         graphics.fill(akX + 2, alphaY - 2, akX + 3, alphaY + sliderHeight + 2, 0xFF000000);
 
-        // Right side section alignment (preview circle, hex and switcher)
+
         int previewRadius = 20;
         int previewCX = mx + 175;
         int previewCY = my + 55;
 
-        // Draw preview circle using drawRound with corner radius = 20 (forming a perfect, accurately colored vector circle!)
+
         Render2DEngine.drawRound(graphics, previewCX - previewRadius, previewCY - previewRadius, previewRadius * 2, previewRadius * 2, previewRadius, getArgb());
         Render2DEngine.drawSmoothRoundOutline(graphics, previewCX - previewRadius, previewCY - previewRadius, previewRadius * 2, previewRadius * 2, previewRadius, 1, 0xFF4A4A5A);
 
-        // Format hex WITHOUT the '#' symbol (e.g. FFC5D3DD)
+
         String hex = editingHex ? hexInput : String.format("%08X", getArgb() & 0xFFFFFFFF);
         int hw = FontRenderUtility.getStringWidth(hex);
         int hexX = previewCX - hw / 2;
@@ -213,7 +213,7 @@ public class ColorPaletteModal {
                           hexX + hw + 1, hexY + FontRenderUtility.getFontHeight() + 3, 0xFF5599FF);
         }
 
-        // Recent colors title & presets drawing
+
         int sectionX = mx + 15;
         int recentY = my + 200;
         FontRenderUtility.drawString(graphics, "Recent", sectionX, recentY, 0xFF75758A, false);
@@ -257,7 +257,7 @@ public class ColorPaletteModal {
             graphics.fill(px + swatchSize, py - 1, px + swatchSize + 1, py + swatchSize + 1, borderColor);
         }
 
-        // Apply/Cancel image buttons (disable.png and enable.png)
+
         int iconSize = 16;
         int btnY = my + modalHeight - 24;
         int cancelX = mx + 15;
@@ -266,21 +266,21 @@ public class ColorPaletteModal {
         boolean cancelHovered = mouseX >= cancelX - 2 && mouseX <= cancelX + iconSize + 2 && mouseY >= btnY - 2 && mouseY <= btnY + iconSize + 2;
         boolean applyHovered = mouseX >= applyX - 2 && mouseX <= applyX + iconSize + 2 && mouseY >= btnY - 2 && mouseY <= btnY + iconSize + 2;
 
-        // Cancel/Disable texture button (soft white highlight)
+
         int cancelCol = cancelHovered ? 0xDDFFFFFF : 0x77FFFFFF;
         graphics.pose().pushMatrix();
         graphics.pose().translate(cancelX, btnY);
         graphics.blit(RenderPipelines.GUI_TEXTURED, TextureLoader.DISABLE, 0, 0, 0f, 0f, iconSize, iconSize, iconSize, iconSize, cancelCol);
         graphics.pose().popMatrix();
 
-        // Apply/Enable texture button (soft white highlight)
+
         int applyCol = applyHovered ? 0xDDFFFFFF : 0x77FFFFFF;
         graphics.pose().pushMatrix();
         graphics.pose().translate(applyX, btnY);
         graphics.blit(RenderPipelines.GUI_TEXTURED, TextureLoader.ENABLE, 0, 0, 0f, 0f, iconSize, iconSize, iconSize, iconSize, applyCol);
         graphics.pose().popMatrix();
 
-        // ClickGUI Style Switcher for ThemeSync
+
         int labelW = FontRenderUtility.getStringWidth("ThemeSync");
         int syncLabelX = mx + 185 - labelW / 2;
         int syncLabelY = my + 105;
@@ -302,7 +302,7 @@ public class ColorPaletteModal {
         float knobDrawX = swX + 1f + (parameter.isThemeSync() ? 1f : 0f) * knobRange;
         float knobDrawY = swY + 1f;
 
-        // Use high-quality smooth circle with dynamic anti-aliasing for the switcher knob
+
         int cx = Math.round(knobDrawX + knobSize / 2f);
         int cy = Math.round(knobDrawY + knobSize / 2f);
         Render2DEngine.fillCircle(graphics, cx, cy, (int)(knobSize / 2), 0xFFFFFFFF);
@@ -430,7 +430,7 @@ public class ColorPaletteModal {
         int cancelX = mxLeft + 15;
         int applyX = mxLeft + modalWidth - iconSize - 15;
 
-        // Cancel / Disable icon click
+
         if (mx >= cancelX - 2 && mx <= cancelX + iconSize + 2 && my >= btnY - 2 && my <= btnY + iconSize + 2) {
             parameter.setValue(parameter.getValue());
             editingHex = false;
@@ -439,7 +439,7 @@ public class ColorPaletteModal {
             return true;
         }
 
-        // Apply / Enable icon click
+
         if (mx >= applyX - 2 && mx <= applyX + iconSize + 2 && my >= btnY - 2 && my <= btnY + iconSize + 2) {
             editingHex = false;
             addRecentColor(getArgb());

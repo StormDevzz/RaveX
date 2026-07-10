@@ -20,5 +20,5 @@ inline void info(const std::string& msg) { log(LogLevel::Info, msg); }
 inline void warn(const std::string& msg) { log(LogLevel::Warn, msg); }
 inline void error(const std::string& msg) { log(LogLevel::Error, msg); }
 
-} 
-} 
+}
+}

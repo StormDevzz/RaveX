@@ -38,7 +38,7 @@ import java.util.Set;
 public class AnchorAura extends Module {
     public static final AnchorAura INSTANCE = new AnchorAura();
 
-    
+
     public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "Lowest HP"));
     public final ModeParameter   targetType      = new ModeParameter("Target Type", "Players", List.of("Players", "Monsters", "Passives", "All"));
     public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
@@ -58,9 +58,9 @@ public class AnchorAura extends Module {
     public final BooleanParameter swapSwitchBack  = new BooleanParameter("Switch Back", true);
     public final BooleanParameter swapInventory   = new BooleanParameter("Swap Inv", true);
     public final BooleanParameter render          = new BooleanParameter("Render", true);
-    public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FFFF); 
+    public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FFFF);
 
-    
+
     public static BlockPos simulatedPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
@@ -148,11 +148,11 @@ public class AnchorAura extends Module {
             return;
         }
 
-        
+
         long now = System.currentTimeMillis();
         boolean canAct = (now - lastActionTime >= placeDelay.getValue().longValue());
 
-        
+
         BlockPos existingAnchor = findExistingAnchor(mc, target);
 
         if (existingAnchor != null) {
@@ -160,14 +160,14 @@ public class AnchorAura extends Module {
             BlockState state = mc.level.getBlockState(existingAnchor);
             int charges = getAnchorCharges(state);
 
-            
+
             calculateExpectedDamages(mc, target, existingAnchor);
 
             if (!canAct) return;
 
             if (charges == 0) {
 
-                
+
                 int glowstoneSlot = findItemSlot(mc, Items.GLOWSTONE);
                 if (glowstoneSlot == -1) return;
 
@@ -177,7 +177,7 @@ public class AnchorAura extends Module {
 
                 performUse(mc, glowstoneSlot, existingAnchor, Direction.UP, hitVec);
             } else {
-                
+
                 int triggerSlot = findNonGlowstoneSlot(mc);
                 if (triggerSlot == -1) return;
 
@@ -190,7 +190,7 @@ public class AnchorAura extends Module {
             return;
         }
 
-        
+
         double[] solidBlockData = collectSolidBlocks(mc);
 
         double[] result;
@@ -234,7 +234,7 @@ public class AnchorAura extends Module {
 
         if (!canAct) return;
 
-        
+
         int anchorSlot = findItemSlot(mc, Items.RESPAWN_ANCHOR);
         if (anchorSlot == -1) return;
 
@@ -277,7 +277,7 @@ public class AnchorAura extends Module {
     }
 
     private void calculateExpectedDamages(Minecraft mc, LivingEntity target, BlockPos anchorPos) {
-        
+
         if (nativeAvailable) {
             double[] solidBlockData = collectSolidBlocks(mc);
             double[] result = nativeCalculateAnchorAura(
@@ -302,7 +302,7 @@ public class AnchorAura extends Module {
                 currentSelfDamage = result[9];
             }
         } else {
-            
+
             currentTargetDamage = 8.5;
             currentSelfDamage = 2.1;
         }
@@ -351,7 +351,7 @@ public class AnchorAura extends Module {
                 if (!stack.isEmpty() && stack.getItem() == item) {
                     int hotbarSlot = mc.player.getInventory().getSelectedSlot();
                     mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId, i, hotbarSlot, 
+                        mc.player.containerMenu.containerId, i, hotbarSlot,
                         net.minecraft.world.inventory.ClickType.SWAP, mc.player
                     );
                     return hotbarSlot;
@@ -379,15 +379,15 @@ public class AnchorAura extends Module {
 
     private void rotateTo(Minecraft mc, Vec3 target) {
         if (rotate.getValue().equals("None")) return;
-        
+
         double dx = target.x - mc.player.getX();
         double dy = target.y - mc.player.getEyeY();
         double dz = target.z - mc.player.getZ();
         double dXZ = Math.sqrt(dx * dx + dz * dz);
-        
+
         float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
         float pitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
-        
+
         if (rotate.getValue().equals("Normal")) {
             mc.player.setYRot(yaw);
             mc.player.setXRot(pitch);
@@ -403,13 +403,13 @@ public class AnchorAura extends Module {
         double dy = target.y - mc.player.getEyeY();
         double dz = target.z - mc.player.getZ();
         double dXZ = Math.sqrt(dx * dx + dz * dz);
-        
+
         float targetYaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
         float targetPitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
-        
+
         float diffYaw = Math.abs(normalizeAngle(mc.player.getYRot() - targetYaw));
         float diffPitch = Math.abs(normalizeAngle(mc.player.getXRot() - targetPitch));
-        
+
         return diffYaw < 12.0F && diffPitch < 12.0F;
     }
 
@@ -522,20 +522,20 @@ public class AnchorAura extends Module {
                 }
             }
         }
-        
+
         double[] stats = new double[15];
         stats[0] = player.getArmorValue();
         var attrToughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS);
         stats[1] = attrToughness != null ? attrToughness.getValue() : 0.0;
         stats[2] = blastProtectionEpf;
         stats[3] = protectionEpf;
-        
+
         var resEffect = player.getEffect(MobEffects.RESISTANCE);
         stats[4] = resEffect != null ? resEffect.getAmplifier() + 1 : 0;
-        
+
         var weakEffect = player.getEffect(MobEffects.WEAKNESS);
         stats[5] = weakEffect != null ? weakEffect.getAmplifier() + 1 : 0;
-        
+
         var strEffect = player.getEffect(MobEffects.STRENGTH);
         stats[6] = strEffect != null ? strEffect.getAmplifier() + 1 : 0;
 
@@ -551,7 +551,7 @@ public class AnchorAura extends Module {
                 stats[idx++] = dur;
             }
         }
-        
+
         net.minecraft.world.phys.Vec3 motion = player.getDeltaMovement();
         if (motion != null) {
             stats[11] = motion.x;
@@ -563,13 +563,13 @@ public class AnchorAura extends Module {
             stats[13] = 0.0;
         }
         stats[14] = totems;
-        
+
         return stats;
     }
 
     private double[] javaFallbackCalculate(Minecraft mc, LivingEntity target, double[] solidBlocksData) {
         BlockPos tPos = target.blockPosition();
-        
+
         Set<BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
             solids.add(new BlockPos((int) solidBlocksData[i], (int) solidBlocksData[i+1], (int) solidBlocksData[i+2]));

@@ -30,7 +30,7 @@ public class WitherRoseAura extends Module {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_witherroseaura");
         } catch (UnsatisfiedLinkError e) {
-            
+
         }
     }
 
@@ -61,7 +61,7 @@ public class WitherRoseAura extends Module {
 
         double scanRange = range.getValue();
 
-        
+
         LivingEntity target = null;
         double closest = scanRange;
         for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
@@ -76,7 +76,7 @@ public class WitherRoseAura extends Module {
 
         if (target == null) return;
 
-        
+
         int roseSlot = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = p.getInventory().getItem(i);
@@ -118,7 +118,7 @@ public class WitherRoseAura extends Module {
         }
 
         if (!nativeAvailable) {
-            
+
             if (targetFeetIsReplaceable && supportBlockIsSolid && p.distanceTo(target) <= scanRange) {
                 found = true;
                 neighbor = supportPos;
@@ -129,7 +129,7 @@ public class WitherRoseAura extends Module {
         if (found && neighbor != null) {
             int prevSlot = p.getInventory().getSelectedSlot();
 
-            
+
             if (roseSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(roseSlot));
             }
@@ -142,7 +142,7 @@ public class WitherRoseAura extends Module {
                 false
             );
 
-            
+
             p.connection.send(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, hit, 0));
             p.connection.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
 

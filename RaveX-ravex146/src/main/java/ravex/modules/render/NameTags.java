@@ -26,7 +26,7 @@ public class NameTags extends Module {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_nametags");
         } catch (UnsatisfiedLinkError e) {
-            
+
         }
     }
 
@@ -43,7 +43,7 @@ public class NameTags extends Module {
         addParameter(topLineColor);
         addParameter(customFont);
 
-        
+
         backgroundColor.setVisible(background::getValue);
         topLine.setVisible(background::getValue);
         topLineColor.setVisible(() -> background.getValue() && topLine.getValue());
@@ -68,10 +68,10 @@ public class NameTags extends Module {
         if (!distanceScaling) {
             return scaleParam;
         }
-        
-        
+
+
         double scale = distance * (scaleParam / 10.0);
-        return Math.max(scale, scaleParam); 
+        return Math.max(scale, scaleParam);
     }
 
 
@@ -89,7 +89,7 @@ public class NameTags extends Module {
         int armorCount
     );
 
-    
+
     public static double[] javaFallbackCalculate(
         double distance,
         double scaleParam,

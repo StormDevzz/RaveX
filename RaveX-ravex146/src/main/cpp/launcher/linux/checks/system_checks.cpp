@@ -22,6 +22,6 @@ bool isClientDownloaded(const std::string& modsDir, const std::string& version) 
     return (stat(path.c_str(), &buffer) == 0);
 }
 
-} 
-} 
-} 
+}
+}
+}

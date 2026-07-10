@@ -40,7 +40,7 @@ public class ElytraReplace extends Module {
             int replacementSlot = findReplacementElytraSlot(p);
             if (replacementSlot != -1) {
                 int containerSlot = replacementSlot < 9 ? replacementSlot + 36 : replacementSlot;
-                
+
                 mc.gameMode.handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, p);
                 mc.gameMode.handleInventoryMouseClick(p.containerMenu.containerId, 6, 0, ClickType.PICKUP, p);
                 mc.gameMode.handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, p);

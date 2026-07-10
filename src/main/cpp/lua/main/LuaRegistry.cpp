@@ -24,8 +24,8 @@ void LuaRegistry::registerAddon(LuaAddon* addon) {
     if (!addon) return;
     const std::string& name = addon->getMeta().name;
 
-    
-    
+
+
     auto it = m_addonMap.find(name);
     if (it != m_addonMap.end()) {
         it->second = addon;
@@ -40,8 +40,8 @@ void LuaRegistry::unregisterAddon(const std::string& name) {
     auto it = m_addonMap.find(name);
     if (it == m_addonMap.end()) return;
 
-    
-    
+
+
     auto vecIt = std::find(m_addonList.begin(), m_addonList.end(), it->second);
     if (vecIt != m_addonList.end()) {
         m_addonList.erase(vecIt);
@@ -83,5 +83,5 @@ void LuaRegistry::eventAll(const std::string& eventName) {
     }
 }
 
-} 
-} 
+}
+}

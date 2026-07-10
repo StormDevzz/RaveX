@@ -24,14 +24,14 @@ Java_ravex_modules_player_RichPresence_nativeUpdatePresence(
     jboolean jShowButton, jstring jLargeImageKey
 ) {
     DiscordRichPresence presence;
-    
+
     std::string baseState = "";
     if (jState) {
         const char* state = env->GetStringUTFChars(jState, nullptr);
         baseState = state;
         env->ReleaseStringUTFChars(jState, state);
     }
-    
+
     if (jShowOS == JNI_TRUE) {
         std::string osInfo = ravex::checks::getOSInfo();
         if (!baseState.empty()) {
@@ -42,15 +42,15 @@ Java_ravex_modules_player_RichPresence_nativeUpdatePresence(
     } else {
         presence.state = baseState;
     }
-    
+
     if (jDetails) {
         const char* details = env->GetStringUTFChars(jDetails, nullptr);
         presence.details = details;
         env->ReleaseStringUTFChars(jDetails, details);
     }
-    
+
     presence.startTimestamp = static_cast<int64_t>(startTimestamp);
-    
+
     std::string largeImgKey = "icon";
     if (jLargeImageKey) {
         const char* imgKey = env->GetStringUTFChars(jLargeImageKey, nullptr);
@@ -59,14 +59,14 @@ Java_ravex_modules_player_RichPresence_nativeUpdatePresence(
     }
     presence.largeImageKey = largeImgKey;
     presence.largeImageText = "RaveX";
-    
+
     if (jShowButton == JNI_TRUE) {
         DiscordButton btn;
         btn.label = "Download RaveX";
         btn.url = "https://github.com/StormDevzz/RaveX";
         presence.buttons.push_back(btn);
     }
-    
+
     DiscordRPC::updatePresence(presence);
 }
 

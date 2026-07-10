@@ -15,7 +15,7 @@ struct release_fetch_result {
 release_fetch_result release_fetch_execute(const std::string& input);
 double release_fetch_calculate(const std::string& input);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

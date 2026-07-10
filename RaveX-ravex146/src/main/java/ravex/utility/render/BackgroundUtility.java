@@ -6,7 +6,7 @@ import java.util.Queue;
 
 public class BackgroundUtility {
 
-    
+
     public static void removeBackground(NativeImage image, int keyRed, int keyGreen, int keyBlue, int threshold) {
         if (image == null) return;
         int width = image.getWidth();
@@ -15,7 +15,7 @@ public class BackgroundUtility {
         boolean[][] visited = new boolean[width][height];
         Queue<int[]> queue = new ArrayDeque<>();
 
-        
+
         int[][] corners = {
             {0, 0},
             {width - 1, 0},
@@ -40,7 +40,7 @@ public class BackgroundUtility {
             int cx = curr[0];
             int cy = curr[1];
 
-            
+
             int pixel = image.getPixel(cx, cy);
             int transparentPixel = pixel & 0x00FFFFFF;
             image.setPixel(cx, cy, transparentPixel);
@@ -50,8 +50,8 @@ public class BackgroundUtility {
                 int ny = cy + dy[i];
 
                 if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                    
-                    
+
+
                     if (ny == height - 1 && nx >= 15 && nx < width - 15) {
                         continue;
                     }
@@ -67,7 +67,7 @@ public class BackgroundUtility {
     }
 
     private static boolean isMatchingColor(int pixel, int keyRed, int keyGreen, int keyBlue, int threshold) {
-        
+
         int r = pixel & 0xFF;
         int g = (pixel >> 8) & 0xFF;
         int b = (pixel >> 16) & 0xFF;

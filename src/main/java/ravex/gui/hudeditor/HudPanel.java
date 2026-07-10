@@ -139,7 +139,7 @@ public class HudPanel {
         int centerY = py + ph / 2;
         float animAlpha = alpha / 255f;
 
-        // ClickGui-style background opacity and corner radius
+
         int pAlpha = (int)(ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity.getValue().intValue() * animAlpha);
         int cornerRadius = Math.min(ModuleManager.get(ravex.modules.client.ClickGui.class).cornerRadius.getValue().intValue(), ph / 2);
 
@@ -154,11 +154,11 @@ public class HudPanel {
             g.pose().translate(-centerX, -centerY);
         }
 
-        // Draw translucent body in ClickGui style
+
         int bodyColor = ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, pAlpha);
         Render2DEngine.drawRound(g, px, py, pw, ph, cornerRadius, bodyColor);
 
-        // ClickGui-style outline border if outlines is enabled
+
         if (ModuleManager.get(ravex.modules.client.ClickGui.class).outlines.getValue()) {
             int borderColor = ColorUtility.withAlpha(ModuleManager.get(ravex.modules.client.ClickGui.class).outlineColor.getValue(), (int)(255 * animAlpha));
             Render2DEngine.drawRoundBorder(g, px, py, pw, ph, cornerRadius, 1, borderColor);
@@ -180,7 +180,7 @@ public class HudPanel {
         FontRenderUtility.drawString(g, "HUD", px + 22, py + 3,
             ColorUtility.withAlpha(0xFFD0D0E0, alpha), true);
 
-        // Optional modules counter
+
         if (ModuleManager.get(Hud.class).showCounter.getValue()) {
             List<Module> huds = ModuleManager.INSTANCE.getHudModules();
             int enabledCount = 0;

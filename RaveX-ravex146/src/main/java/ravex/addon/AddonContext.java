@@ -11,7 +11,7 @@ public class AddonContext {
 
     public AddonInfo getInfo() { return info; }
     public AddonLogger getLogger() { return logger; }
-    
+
     public void registerModule(ravex.modules.Module module) {
         ravex.modules.ModuleManager.INSTANCE.getModules().add(module);
         ravex.RaveX.LOGGER.info("[Addon System] Registered module: " + module.getName() + " from addon " + info.getName());

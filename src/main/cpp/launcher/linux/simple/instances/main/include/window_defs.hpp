@@ -10,7 +10,7 @@ constexpr int WINDOW_HEIGHT = 420;
 constexpr const char* WINDOW_TITLE = "KickX Launcher";
 constexpr const char* WINDOW_SUBTITLE = "premium client & game booster";
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

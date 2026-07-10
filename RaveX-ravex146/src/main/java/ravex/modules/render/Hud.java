@@ -21,7 +21,7 @@ public class Hud extends Module {
             hudEditor.setValue(false);
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null) {
-                
+
                 mc.execute(() -> mc.setScreen(new ravex.gui.clickgui.HudEditorScreen(null)));
             }
         }

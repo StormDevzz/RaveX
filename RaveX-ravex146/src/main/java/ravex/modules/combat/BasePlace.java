@@ -37,7 +37,7 @@ import java.util.Set;
 public class BasePlace extends Module {
     public static final BasePlace INSTANCE = new BasePlace();
 
-    
+
     public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "Lowest HP"));
     public final ModeParameter   targetType      = new ModeParameter("Target Type", "Players", List.of("Players", "Monsters", "Passives", "All"));
     public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
@@ -60,20 +60,20 @@ public class BasePlace extends Module {
     public final BooleanParameter render          = new BooleanParameter("Render", true);
     public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FF00);
 
-    
+
     public static BlockPos lastPlacedBase = null;
     public static long lastPlacedTime = 0;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
     private final java.util.Map<BlockPos, Long> placedPositions = new java.util.concurrent.ConcurrentHashMap<>();
 
-    
+
     private static float silentYaw = 0;
     private static float silentPitch = 0;
     private static boolean hasSilentRotations = false;
     private long lastPlaceTime = 0;
 
-    
+
     private static BlockPos simulatedPlacementBlock = null;
 
     private static boolean nativeAvailable = false;
@@ -155,8 +155,8 @@ public class BasePlace extends Module {
 
         hasSilentRotations = false;
 
-        
-        
+
+
         if (autoCrystalSync.getValue()) {
             if (!AutoCrystal.INSTANCE.getEnabled()) {
                 simulatedPlacementBlock = null;
@@ -178,10 +178,10 @@ public class BasePlace extends Module {
             return;
         }
 
-        
+
         double[] solidBlockData = collectSolidBlocks(mc);
 
-        
+
         double[] result;
         if (nativeAvailable) {
             result = nativeCalculateBasePlace(
@@ -221,13 +221,13 @@ public class BasePlace extends Module {
         }
 
 
-        
+
         long now = System.currentTimeMillis();
         if (now - lastPlaceTime < placeDelay.getValue().longValue()) {
             return;
         }
 
-        
+
         int blockSlot = findBlockSlot(mc);
         if (blockSlot == -1) return;
 
@@ -235,25 +235,25 @@ public class BasePlace extends Module {
         Direction face = Direction.values()[(int) result[4]];
         BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
 
-        
+
         placedPositions.entrySet().removeIf(entry -> now - entry.getValue() > 1000);
 
-        
+
         if (placedPositions.containsKey(targetBlock) || mc.level.getBlockState(targetBlock).getBlock() == Blocks.OBSIDIAN) {
             return;
         }
 
         Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
 
-        
+
         rotateTo(mc, hitVec);
 
-        
+
         if (strictRotation.getValue() && !isRotationAligned(mc, hitVec)) {
             return;
         }
 
-        
+
         int originalSlot = mc.player.getInventory().getSelectedSlot();
         String swap = swapMode.getValue();
         if (swap.equals("Normal")) {
@@ -268,17 +268,17 @@ public class BasePlace extends Module {
             }
         }
 
-        
+
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
         mc.player.swing(InteractionHand.MAIN_HAND);
-        
+
         placedPositions.put(targetBlock, now);
         lastPlaceTime = now;
         lastPlacedBase = targetBlock;
         lastPlacedTime = now;
 
-        
+
         if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
@@ -297,15 +297,15 @@ public class BasePlace extends Module {
 
     private void rotateTo(Minecraft mc, Vec3 target) {
         if (rotate.getValue().equals("None")) return;
-        
+
         double dx = target.x - mc.player.getX();
         double dy = target.y - mc.player.getEyeY();
         double dz = target.z - mc.player.getZ();
         double dXZ = Math.sqrt(dx * dx + dz * dz);
-        
+
         float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
         float pitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
-        
+
         if (rotate.getValue().equals("Normal")) {
             mc.player.setYRot(yaw);
             mc.player.setXRot(pitch);
@@ -321,13 +321,13 @@ public class BasePlace extends Module {
         double dy = target.y - mc.player.getEyeY();
         double dz = target.z - mc.player.getZ();
         double dXZ = Math.sqrt(dx * dx + dz * dz);
-        
+
         float targetYaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
         float targetPitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
-        
+
         float diffYaw = Math.abs(normalizeAngle(mc.player.getYRot() - targetYaw));
         float diffPitch = Math.abs(normalizeAngle(mc.player.getXRot() - targetPitch));
-        
+
         return diffYaw < 12.0F && diffPitch < 12.0F;
     }
 
@@ -374,7 +374,7 @@ public class BasePlace extends Module {
                 return i;
             }
         }
-        
+
         if (swapInventory.getValue()) {
             for (int i = 9; i < 36; i++) {
                 ItemStack stack = mc.player.getInventory().getItem(i);
@@ -382,7 +382,7 @@ public class BasePlace extends Module {
                 if (blockItem.getBlock() == Blocks.OBSIDIAN) {
                     int hotbarSlot = mc.player.getInventory().getSelectedSlot();
                     mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId, i, hotbarSlot, 
+                        mc.player.containerMenu.containerId, i, hotbarSlot,
                         net.minecraft.world.inventory.ClickType.SWAP, mc.player
                     );
                     return hotbarSlot;
@@ -466,20 +466,20 @@ public class BasePlace extends Module {
                 }
             }
         }
-        
+
         double[] stats = new double[15];
         stats[0] = player.getArmorValue();
         var attrToughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS);
         stats[1] = attrToughness != null ? attrToughness.getValue() : 0.0;
         stats[2] = blastProtectionEpf;
         stats[3] = protectionEpf;
-        
+
         var resEffect = player.getEffect(MobEffects.RESISTANCE);
         stats[4] = resEffect != null ? resEffect.getAmplifier() + 1 : 0;
-        
+
         var weakEffect = player.getEffect(MobEffects.WEAKNESS);
         stats[5] = weakEffect != null ? weakEffect.getAmplifier() + 1 : 0;
-        
+
         var strEffect = player.getEffect(MobEffects.STRENGTH);
         stats[6] = strEffect != null ? strEffect.getAmplifier() + 1 : 0;
 
@@ -495,7 +495,7 @@ public class BasePlace extends Module {
                 stats[idx++] = dur;
             }
         }
-        
+
         net.minecraft.world.phys.Vec3 motion = player.getDeltaMovement();
         if (motion != null) {
             stats[11] = motion.x;
@@ -507,13 +507,13 @@ public class BasePlace extends Module {
             stats[13] = 0.0;
         }
         stats[14] = totems;
-        
+
         return stats;
     }
 
     private double[] javaFallbackCalculate(Minecraft mc, LivingEntity target, double[] solidBlocksData) {
         BlockPos tPos = target.blockPosition();
-        
+
         Set<BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
             solids.add(new BlockPos((int) solidBlocksData[i], (int) solidBlocksData[i+1], (int) solidBlocksData[i+2]));

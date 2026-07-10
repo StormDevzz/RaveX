@@ -13,7 +13,7 @@ ver_cache_result ver_cache_execute(const std::string& input) {
     return r;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -25,7 +25,7 @@ public class NativeAnimateVertexConsumer implements VertexConsumer {
 
     @Override
     public VertexConsumer addVertex(float x, float y, float z) {
-        
+
         delegate.addVertex(x, y, z);
         return this;
     }

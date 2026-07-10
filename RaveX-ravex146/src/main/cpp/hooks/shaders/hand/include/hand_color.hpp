@@ -24,6 +24,6 @@ void applyColorToVertex(Vertex& vertex, const ColorRGBA& color, float intensity)
 void applyChromaToVertex(Vertex& vertex, float time, float speed, float saturation);
 void applyHeatmapToVertex(Vertex& vertex, float value);
 
-} // namespace ravex::shaders::hand
+}
 
 #endif

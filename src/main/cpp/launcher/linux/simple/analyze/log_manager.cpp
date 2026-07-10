@@ -70,7 +70,7 @@ void rotate_logs(const std::string &section, size_t max_size) {
     }
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

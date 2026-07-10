@@ -18,7 +18,7 @@ void deserialize_accounts(LauncherState *state) {
     std::string line;
     Account current_acc;
     bool in_accounts = false;
-    
+
     auto trim = [](const std::string& str) {
         size_t first = str.find_first_not_of(" \t\r\n\",");
         if (std::string::npos == first) return std::string("");
@@ -83,7 +83,7 @@ void serialize_accounts(LauncherState *state) {
     std::string path = state->kickx_dir + "/accounts.json";
     std::ofstream file(path);
     if (!file.is_open()) return;
-    
+
     file << "{\n  \"active_index\": " << state->active_account_index << ",\n  \"accounts\": [\n";
     for (size_t i = 0; i < state->accounts.size(); ++i) {
         const auto& acc = state->accounts[i];
@@ -98,7 +98,7 @@ void serialize_accounts(LauncherState *state) {
     file.close();
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

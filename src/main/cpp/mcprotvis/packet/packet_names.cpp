@@ -62,7 +62,7 @@ static const PacketNameEntry PACKET_NAMES[] = {
     {0x6A, "Game Event",              "play"},
     {0x6D, "Difficulty",              "play"},
     {0x6E, "Set Experience",          "play"},
-    // Login
+
     {0x00, "Login Start",             "login"},
     {0x02, "Login Plugin Response",   "login"},
     {0x03, "Login Acknowledged",      "login"},
@@ -70,12 +70,12 @@ static const PacketNameEntry PACKET_NAMES[] = {
     {0x01, "Encryption Request",      "login"},
     {0x02, "Login Success",           "login"},
     {0x03, "Login Plugin Request",    "login"},
-    // Status
+
     {0x00, "Status Request",          "status"},
     {0x01, "Ping Request",            "status"},
     {0x00, "Status Response",         "status"},
     {0x01, "Pong Response",           "status"},
-    // Handshake
+
     {0x00, "Handshake",               "handshake"},
 };
 

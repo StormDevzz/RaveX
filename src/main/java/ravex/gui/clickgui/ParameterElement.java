@@ -19,7 +19,7 @@ public class ParameterElement {
     private boolean isDragging = false;
     private float toggleAnimProgress = 0f;
     private long toggleLastUpdate = 0;
-    
+
     private float expandAnimProgress = 0f;
     private float dropdownAnimProgress = 0f;
     private float sliderKnobAnim = 0f;
@@ -380,7 +380,7 @@ public class ParameterElement {
                 }
             }
         }
-        
+
         if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
             if (parameter instanceof ModeParameter mp && mp.isExpanded()) {
                 int modeY = y + 22;

@@ -79,4 +79,4 @@ struct ImageInfo {
     bool hasAlpha = false;
 };
 
-} 
+}

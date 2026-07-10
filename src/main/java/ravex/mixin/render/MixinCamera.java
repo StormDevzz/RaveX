@@ -49,7 +49,7 @@ public abstract class MixinCamera {
             float yaw = FreeLook.itz().getLookYaw();
             float pitch = FreeLook.itz().getLookPitch();
 
-            
+
             double renderX = focusedEntity.xo + (focusedEntity.getX() - focusedEntity.xo) * tickDelta;
             double renderY = focusedEntity.yo + (focusedEntity.getY() - focusedEntity.yo) * tickDelta;
             double renderZ = focusedEntity.zo + (focusedEntity.getZ() - focusedEntity.zo) * tickDelta;
@@ -69,7 +69,7 @@ public abstract class MixinCamera {
                 cosYaw * cosPitch
             );
 
-            
+
 <<<<<<< HEAD
             float startingDist = ViewClip.maybeEnabled() ? ViewClip.itz().cameraDistance.getValue().floatValue() : 4.0f;
 =======
@@ -85,7 +85,7 @@ public abstract class MixinCamera {
 
     @Inject(method = "isDetached", at = @At("HEAD"), cancellable = true)
     private void onIsDetached(CallbackInfoReturnable<Boolean> cir) {
-        
+
 <<<<<<< HEAD
         if (FreeCam.maybeEnabled()) {
 =======

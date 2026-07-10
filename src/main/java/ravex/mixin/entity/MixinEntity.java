@@ -74,7 +74,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer player)) return;
 
-        
+
 <<<<<<< HEAD
         if (PortalGui.maybeEnabled()) {
 =======
@@ -83,7 +83,7 @@ public abstract class MixinEntity {
             self.portalProcess = null;
         }
 
-        
+
 <<<<<<< HEAD
         if (Avoid.maybeEnabled()) {
 =======
@@ -101,7 +101,7 @@ public abstract class MixinEntity {
 =======
                 if (ravex.modules.movement.Avoid.INSTANCE.shouldAvoid(state.getBlock())) {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
-                    
+
                     double bx = blockPos.getX() + 0.5;
                     double bz = blockPos.getZ() + 0.5;
                     double px = player.getX();
@@ -297,7 +297,7 @@ public abstract class MixinEntity {
                 boolean bypassWater = ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue();
                 boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
                 boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
-                
+
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
                 } else if (tag.equals(net.minecraft.tags.FluidTags.LAVA) && bypassLava) {
@@ -319,7 +319,7 @@ public abstract class MixinEntity {
                 boolean bypassWater = ravex.modules.movement.LiquidCollision.INSTANCE.water.getValue();
                 boolean bypassLava = ravex.modules.movement.LiquidCollision.INSTANCE.lava.getValue();
                 boolean bypassOthers = ravex.modules.movement.LiquidCollision.INSTANCE.others.getValue();
-                
+
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
                 } else if (tag.equals(net.minecraft.tags.FluidTags.LAVA) && bypassLava) {
@@ -371,7 +371,7 @@ public abstract class MixinEntity {
                 boolean bypassWater = LiquidControl.itz().water.getValue();
                 boolean bypassLava = LiquidControl.itz().lava.getValue();
                 boolean bypassOthers = LiquidControl.itz().others.getValue();
-                
+
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
                 } else if (tag.equals(net.minecraft.tags.FluidTags.LAVA) && bypassLava) {
@@ -393,7 +393,7 @@ public abstract class MixinEntity {
                 boolean bypassWater = LiquidControl.itz().water.getValue();
                 boolean bypassLava = LiquidControl.itz().lava.getValue();
                 boolean bypassOthers = LiquidControl.itz().others.getValue();
-                
+
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
                 } else if (tag.equals(net.minecraft.tags.FluidTags.LAVA) && bypassLava) {

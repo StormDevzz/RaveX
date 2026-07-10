@@ -10,7 +10,7 @@ namespace network {
 
 bool login_microsoft_account(LauncherState *state);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

@@ -24,4 +24,4 @@ BreakResult findBestBreakBlock(
     bool antiSuicide, double antiSuicideMinHp
 );
 
-} 
+}

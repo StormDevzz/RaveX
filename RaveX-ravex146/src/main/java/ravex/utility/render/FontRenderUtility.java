@@ -43,10 +43,10 @@ public class FontRenderUtility {
 
     private static Component getFontComponent(FontType fontType, String text) {
         if (text == null) return Component.empty();
-        
+
         FontType actualType = fontType;
         boolean customFontActive = ravex.modules.client.Fonts.INSTANCE.enabled.getValue();
-        
+
         if (actualType == FontType.VANILLA && customFontActive) {
             actualType = getCurrentFontType();
         }

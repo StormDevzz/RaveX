@@ -22,7 +22,7 @@ public class NoWeb extends Module {
         addParameter(horizontalSpeed);
         addParameter(verticalSpeed);
 
-        
+
         horizontalSpeed.setVisible(() -> mode.getValue().equals("Custom"));
         verticalSpeed.setVisible(() -> mode.getValue().equals("Custom"));
     }

@@ -14,7 +14,7 @@ struct net_info_t {
 
 net_info_t get_net_info();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

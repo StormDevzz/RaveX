@@ -11,7 +11,7 @@ public:
 
 class NameTagsOptimizer {
 public:
-    
+
     static int optimizeNameTags(
         const double* cameraPos,
         const float* modelView,
@@ -34,7 +34,7 @@ public:
 
 class HudOptimizer {
 public:
-    
+
     static void updateAnimations(
         float* displayXs,
         float* displayYs,
@@ -48,7 +48,7 @@ public:
 
 class TracersOptimizer {
 public:
-    
+
     static void optimizeTracers(
         const double* cameraPos,
         const float* modelView,
@@ -61,6 +61,6 @@ public:
     );
 };
 
-} 
-} 
-} 
+}
+}
+}

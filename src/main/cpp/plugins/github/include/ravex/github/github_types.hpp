@@ -114,8 +114,8 @@ struct Version {
     int major = 0;
     int minor = 0;
     int patch = 0;
-    std::string prerelease; 
-    std::string buildMeta;  
+    std::string prerelease;
+    std::string buildMeta;
 
     std::string toString() const;
     static Version fromString(const std::string& str);
@@ -156,5 +156,5 @@ struct GithubConfig {
     LogLevel logLevel          = LogLevel::Info;
 };
 
-} 
-} 
+}
+}

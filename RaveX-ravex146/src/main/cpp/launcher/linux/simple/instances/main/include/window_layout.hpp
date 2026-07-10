@@ -9,7 +9,7 @@ namespace window {
 
 void build_layout(LauncherState *state);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

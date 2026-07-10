@@ -13,7 +13,7 @@ update_check_result update_check_execute(const std::string& input) {
     return r;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

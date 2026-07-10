@@ -95,7 +95,7 @@ public class ClickGUI extends Screen {
 <<<<<<< HEAD
         int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
 =======
-        
+
         ravex.utility.render.TextureLoader.preloadAll();
 
         int panelW = ravex.modules.client.ClickGui.INSTANCE.panelWidth.getValue().intValue();
@@ -160,9 +160,9 @@ public class ClickGUI extends Screen {
             currentScale = target;
         }
         if (isDraggingSlider) {
-            
+
         } else {
-            
+
             currentScale += (target - currentScale) * 0.15f;
             if (Math.abs(currentScale - target) < 0.001f) {
                 currentScale = target;
@@ -444,8 +444,8 @@ public class ClickGUI extends Screen {
                 int ba = (int)(tooltipAlpha * to);
                 int ta = (int)(tooltipAlpha * 255);
 
-                //Render2DEngine.drawRound(graphics, tx, ty, tw, th, 6, (ba << 24) | 0x0A0A10);
-                //Render2DEngine.drawRound(graphics, tx + 1, ty + 1, tw - 2, th - 2, 5, (ba << 24) | 0x151520);
+
+
 
                 int ly = ty + padY;
                 for (String line : lines) {

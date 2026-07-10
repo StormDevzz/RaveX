@@ -9,7 +9,7 @@ namespace window {
 void setup_resize_handling(GtkWidget *window);
 void constrain_window_size(GtkWidget *window, int w, int h);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

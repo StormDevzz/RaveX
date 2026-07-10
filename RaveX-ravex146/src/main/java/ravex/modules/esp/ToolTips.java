@@ -50,8 +50,8 @@ public class ToolTips extends Module {
             count++;
         }
 
-        
-        
+
+
 
         if (showFood.getValue()) {
             FoodProperties food = stack.get(DataComponents.FOOD);

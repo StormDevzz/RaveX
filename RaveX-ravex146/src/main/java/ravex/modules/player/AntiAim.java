@@ -56,7 +56,7 @@ public class AntiAim extends Module {
         } else if (yawModeStr.equals("Jitter")) {
             targetYaw = mc.player.getYRot() + (ticks % 2 == 0 ? 90f : -90f);
         } else if (yawModeStr.equals("Static")) {
-            targetYaw = mc.player.getYRot() + 180f; 
+            targetYaw = mc.player.getYRot() + 180f;
         }
 
         String pitchModeStr = pitchMode.getValue();

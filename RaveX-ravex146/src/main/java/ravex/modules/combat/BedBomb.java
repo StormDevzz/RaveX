@@ -98,13 +98,13 @@ public class BedBomb extends Module {
     }
 
     private void findTarget(Minecraft mc) {
-        
+
         var target = findNearestEnemy(mc);
         if (target == null) return;
 
         BlockPos enemyPos = target.blockPosition();
 
-        
+
         BlockPos bestPos = null;
         if (nativeAvailable) {
             double[] result = new double[4];
@@ -166,7 +166,7 @@ public class BedBomb extends Module {
 
         BlockState st = mc.level.getBlockState(bedPos);
         if (!st.is(Blocks.RED_BED) && !st.is(Blocks.WHITE_BED)) {
-            
+
             boolean isBed = st.getBlock() instanceof BedBlock;
             if (!isBed) { state = State.IDLE; return; }
         }

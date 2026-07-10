@@ -26,7 +26,7 @@ void show_progress(LauncherState *state, const char *text) {
     gtk_window_set_modal(GTK_WINDOW(progress_window), TRUE);
     gtk_window_set_destroy_with_parent(GTK_WINDOW(progress_window), TRUE);
 
-    
+
     gtk_style_context_add_class(gtk_widget_get_style_context(progress_window), "progress-window");
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
@@ -68,7 +68,7 @@ void hide_progress(LauncherState *) {
     }
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

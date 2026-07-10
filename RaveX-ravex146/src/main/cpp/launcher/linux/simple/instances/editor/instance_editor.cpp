@@ -130,7 +130,7 @@ bool show_instance_editor(GtkWindow* parent, InstanceInfo& info, bool createMode
     return saved;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

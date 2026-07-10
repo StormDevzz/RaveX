@@ -50,7 +50,7 @@ public class AutoNameTag extends Module {
                     closestDist = dist;
                     target = (net.minecraft.world.entity.LivingEntity) entity;
 =======
-        if (tagSlot == -1 || tagStack == null) return; 
+        if (tagSlot == -1 || tagStack == null) return;
         String tagName = tagStack.getHoverName().getString();
         LivingEntity target = null;
         double closestDist = 4.5;

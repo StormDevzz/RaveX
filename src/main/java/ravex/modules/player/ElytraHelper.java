@@ -13,14 +13,14 @@ public class ElytraHelper extends Module {
     public final ModeParameter swapMode = new ModeParameter("SwapMode", "Positive1", List.of("Positive1", "Positive2", "Positive3"));
     public final NumberParameter minDurability = new NumberParameter("MinDurability", 10.0, 1.0, 50.0, 1.0);
     public final BooleanParameter preferBetter = new BooleanParameter("PreferBetter", true);
-    // Rocket
+
     public final ModeParameter rocketMode = new ModeParameter("RocketMode", "Off", List.of("Off", "Auto", "Boost"));
     public final NumberParameter rocketSpeed = new NumberParameter("RocketSpeed", 0.3, 0.05, 2.0, 0.05);
     public final NumberParameter rocketDelay = new NumberParameter("RocketDelay", 1500.0, 500.0, 5000.0, 100.0);
-    // AutoPitch
+
     public final BooleanParameter autoPitch = new BooleanParameter("AutoPitch", false);
     public final NumberParameter pitchAngle = new NumberParameter("PitchAngle", -45.0, -90.0, 90.0, 5.0);
-    // ChestSwapOnLand
+
     public final BooleanParameter chestSwapOnLand = new BooleanParameter("ChestSwapOnLand", false);
     private int state = 0, targetInvSlot = -1;
     private long lastActionTime = 0;
@@ -91,7 +91,7 @@ public class ElytraHelper extends Module {
             ElytraUtility.setPitch(p, pitchAngle.getValue().floatValue());
         }
         if (chestSwapOnLand.getValue() && !p.onGround() && ElytraUtility.isElytraEquipped(p)) {
-            // was flying, check next tick
+
         }
         if (chestSwapOnLand.getValue() && p.onGround() && !p.isFallFlying() && ElytraUtility.isElytraEquipped(p)) {
             ElytraUtility.swapToChestplate(p);

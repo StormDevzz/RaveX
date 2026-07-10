@@ -25,14 +25,14 @@ public abstract class MixinAbstractSignEditScreen {
                 String l2 = AutoSign.INSTANCE.line2.getValue();
                 String l3 = AutoSign.INSTANCE.line3.getValue();
                 String l4 = AutoSign.INSTANCE.line4.getValue();
-                
+
                 mc.getConnection().send(new ServerboundSignUpdatePacket(
                     sign.getBlockPos(),
                     isFrontText,
                     l1, l2, l3, l4
                 ));
-                
-                
+
+
                 mc.execute(() -> mc.setScreen(null));
             }
         }

@@ -24,7 +24,7 @@ public class ConfigManager {
         try {
             baseDir = net.minecraft.client.Minecraft.getInstance().gameDirectory;
         } catch (Throwable ignored) {}
-        
+
         if (baseDir == null) {
             baseDir = new File(".");
         }

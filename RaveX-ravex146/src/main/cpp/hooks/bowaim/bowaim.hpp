@@ -17,4 +17,4 @@ BowAimResult solveBowAim(
     double arrowSpeed
 );
 
-} 
+}

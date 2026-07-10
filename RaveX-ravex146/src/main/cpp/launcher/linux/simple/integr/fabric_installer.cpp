@@ -28,7 +28,7 @@ bool installFabricLoader(const std::string& kickxDir, const std::string& mcVersi
         return false;
     }
 
-    
+
     std::string jarName = "fabric-loader-" + loaderVersion + ".jar";
     std::string dest = kickxDir + "/libraries/net/fabricmc/fabric-loader/" + loaderVersion + "/" + jarName;
     struct stat st;
@@ -61,7 +61,7 @@ bool downloadFabricDependencies(const std::string& kickxDir, const std::string& 
         if (network::http_download(url, dest)) dlCount++;
     }
 
-    
+
     {
         std::string interJar = "intermediary-" + mcVersion + "-v2.jar";
         std::string interDest = kickxDir + "/libraries/net/fabricmc/intermediary/"
@@ -79,7 +79,7 @@ bool downloadFabricDependencies(const std::string& kickxDir, const std::string& 
     return true;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

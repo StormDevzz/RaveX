@@ -10,7 +10,7 @@ InstanceConfig load_instance_config(const std::string& path) {
     InstanceConfig config;
     std::ifstream file(path);
     if (!file.is_open()) return config;
-    
+
     std::string key, val;
     while (file >> key >> val) {
         if (key == "name:") config.name = val;
@@ -30,7 +30,7 @@ void save_instance_config(const std::string& path, const InstanceConfig& config)
     file.close();
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

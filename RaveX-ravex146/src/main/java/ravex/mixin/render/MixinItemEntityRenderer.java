@@ -24,7 +24,7 @@ public class MixinItemEntityRenderer {
         RaveXStateAccessor accessor = (RaveXStateAccessor) state;
         accessor.setRavexOnGround(entity.onGround() || entity.isInWater() || entity.isInLava());
         accessor.setRavexMotionY(entity.getDeltaMovement().y);
-        
+
         ItemStack stack = entity.getItem();
         boolean isBlock = !stack.isEmpty() && stack.getItem() instanceof BlockItem;
         accessor.setRavexBlock(isBlock);
@@ -41,7 +41,7 @@ public class MixinItemEntityRenderer {
             return;
         }
 
-        
+
         ci.cancel();
 
         if (state.item.isEmpty()) return;
@@ -56,54 +56,54 @@ public class MixinItemEntityRenderer {
 
         poseStack.pushPose();
 
-        
+
         double age = state.ageInTicks;
-        
+
         float rotation = 0;
         if (!onGround) {
-            
+
             rotation = (float) (age * (12.0 + Math.abs(motionY) * 24.0));
         } else {
-            
+
             random.setSeed(seed);
             rotation = random.nextFloat() * 360.0F;
         }
 
-        
+
         float floatOffset = 0.0F;
         if (!onGround) {
             floatOffset = (float) (Math.sin(age / 8.0) * 0.04 + 0.04);
         } else {
-            
+
             floatOffset = -0.06F;
         }
 
         poseStack.translate(0, floatOffset + 0.1875F, 0);
 
-        
+
         float baseScale = 0.5F * ItemPhysics.INSTANCE.scale.getValue().floatValue();
         poseStack.scale(baseScale, baseScale, baseScale);
 
-        
+
         if (isBlock) {
-            
+
             poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
             if (!onGround) {
-                
+
                 poseStack.mulPose(Axis.XP.rotationDegrees(rotation * 0.4F));
             }
         } else {
-            
-            poseStack.mulPose(Axis.XP.rotationDegrees(90.0F)); 
-            poseStack.mulPose(Axis.ZP.rotationDegrees(rotation)); 
+
+            poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+            poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
         }
 
-        
+
         int count = getRenderAmount(state.count);
         for (int i = 0; i < count; ++i) {
             poseStack.pushPose();
             if (i > 0) {
-                
+
                 float ox = (random.nextFloat() * 2.0F - 1.0F) * 0.1F;
                 float oy = (random.nextFloat() * 2.0F - 1.0F) * 0.1F;
                 float oz = (random.nextFloat() * 2.0F - 1.0F) * 0.1F;
@@ -112,9 +112,9 @@ public class MixinItemEntityRenderer {
 
             int light = state.lightCoords;
             int overlay = net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY;
-            
-            
-            
+
+
+
             int tint = state.outlineColor;
 
             state.item.submit(poseStack, collector, light, overlay, tint);

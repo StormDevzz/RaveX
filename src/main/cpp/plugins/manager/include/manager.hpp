@@ -6,10 +6,10 @@ namespace manager {
 
 class NativeManager {
 public:
-    
+
     static void checkNatives();
 };
 
-} 
-} 
-} 
+}
+}
+}

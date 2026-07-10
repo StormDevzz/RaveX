@@ -25,5 +25,5 @@ const char* logLevelToString(LuaLogLevel level) {
     }
 }
 
-} 
-} 
+}
+}

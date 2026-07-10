@@ -25,6 +25,6 @@ long estimateBreakTime(
     double px, double py, double pz
 );
 
-} 
+}
 
 #endif

@@ -49,7 +49,7 @@ public class Skeleton extends Module {
         double worldY = ty + camY;
         double worldZ = tz + camZ;
         net.minecraft.world.entity.LivingEntity closest = null;
-        double bestDist = 9.0; 
+        double bestDist = 9.0;
         for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             if (entity instanceof net.minecraft.world.entity.LivingEntity) {
                 net.minecraft.world.entity.LivingEntity le = (net.minecraft.world.entity.LivingEntity) entity;
@@ -83,7 +83,7 @@ public class Skeleton extends Module {
         int ig = (int)(g * 255);
         int ib = (int)(b * 255);
         int ia = (int)(a * 255);
-        float scale = 0.0625f; 
+        float scale = 0.0625f;
         float headX = model.head.x * scale;
         float headY = model.head.y * scale;
         float headZ = model.head.z * scale;

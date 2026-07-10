@@ -52,10 +52,10 @@ bool LuaBridge::popBoolean(lua_State* L, int index) {
 
 bool LuaBridge::getTableField(lua_State* L, int tableIndex,
                                const std::string& key) {
-    
-    
-    
-    
+
+
+
+
     if (tableIndex < 0) {
         tableIndex = lua_gettop(L) + tableIndex + 1;
     }
@@ -94,8 +94,8 @@ bool LuaBridge::callFunction(lua_State* L, const std::string& name,
         lua_pop(L, args + 1);
         return false;
     }
-    
-    
+
+
     if (args > 0) {
         lua_insert(L, -args - 1);
     }
@@ -135,5 +135,5 @@ std::string LuaBridge::checkError(lua_State* L, int result) {
     return {};
 }
 
-} 
-} 
+}
+}

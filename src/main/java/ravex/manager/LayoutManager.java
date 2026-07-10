@@ -56,7 +56,7 @@ public class LayoutManager {
     }
 
     public void save(Map<Category, CategoryPanel> panels) {
-        
+
         int sw = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int sh = Minecraft.getInstance().getWindow().getGuiScaledHeight();
         if (sw <= 0) sw = 960;
@@ -82,7 +82,7 @@ public class LayoutManager {
                         rx = pos.get("rx").getAsDouble();
                         ry = pos.get("ry").getAsDouble();
                     } else if (pos.has("x") && pos.has("y")) {
-                        
+
                         rx = pos.get("x").getAsDouble();
                         ry = pos.get("y").getAsDouble();
                     }

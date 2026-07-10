@@ -14,7 +14,7 @@ struct perf_info_t {
 
 perf_info_t get_perf_info();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

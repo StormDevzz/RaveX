@@ -7,7 +7,7 @@
 namespace ravex {
 
 static bool intersectsEntity(double ex, double ey, double ez, int bx, int by, int bz) {
-    
+
     double minX = ex - 0.3;
     double maxX = ex + 0.3;
     double minY = ey;
@@ -31,13 +31,13 @@ static int getFaceIndex(const Vec3& neighbor, const Vec3& candidate) {
     int dx = (int)std::floor(candidate.x) - (int)std::floor(neighbor.x);
     int dy = (int)std::floor(candidate.y) - (int)std::floor(neighbor.y);
     int dz = (int)std::floor(candidate.z) - (int)std::floor(neighbor.z);
-    if (dy == 1) return 1;  
-    if (dy == -1) return 0; 
-    if (dz == -1) return 2; 
-    if (dz == 1) return 3;  
-    if (dx == -1) return 4; 
-    if (dx == 1) return 5;  
-    return 1; 
+    if (dy == 1) return 1;
+    if (dy == -1) return 0;
+    if (dz == -1) return 2;
+    if (dz == 1) return 3;
+    if (dx == -1) return 4;
+    if (dx == 1) return 5;
+    return 1;
 }
 
 BasePlaceResult BasePlaceMath::findBestBasePlace(
@@ -87,12 +87,12 @@ BasePlaceResult BasePlaceMath::findBestBasePlace(
     };
 
     const Vec3 offsets[6] = {
-        {0, -1, 0}, 
-        {0, 1, 0},  
-        {0, 0, -1}, 
-        {0, 0, 1},  
-        {-1, 0, 0}, 
-        {1, 0, 0}   
+        {0, -1, 0},
+        {0, 1, 0},
+        {0, 0, -1},
+        {0, 0, 1},
+        {-1, 0, 0},
+        {1, 0, 0}
     };
 
     for (int x = startX; x <= endX; x++) {
@@ -100,19 +100,19 @@ BasePlaceResult BasePlaceMath::findBestBasePlace(
             for (int z = startZ; z <= endZ; z++) {
                 Vec3 c((double)x, (double)y, (double)z);
 
-                
+
                 if (isSolid(c)) continue;
 
-                
+
                 if (AutoCrystalMath::distanceToCenter(playerPos, c) > placeRange) continue;
 
-                
+
                 if (intersectsEntity(playerPos.x, playerPos.y, playerPos.z, x, y, z) ||
                     intersectsEntity(targetPos.x, targetPos.y, targetPos.z, x, y, z)) {
                     continue;
                 }
 
-                
+
                 Vec3 above1(c.x, c.y + 1.0, c.z);
                 if (isSolid(above1)) continue;
 
@@ -121,10 +121,10 @@ BasePlaceResult BasePlaceMath::findBestBasePlace(
                     if (isSolid(above2)) continue;
                 }
 
-                
+
                 bool foundNeighbor = false;
                 Vec3 bestNeighbor;
-                int bestFace = 1; 
+                int bestFace = 1;
 
                 for (const auto& off : offsets) {
                     Vec3 n = c + off;
@@ -139,19 +139,19 @@ BasePlaceResult BasePlaceMath::findBestBasePlace(
                 if (!foundNeighbor) {
                     if (airPlace) {
                         bestNeighbor = c;
-                        bestFace = 1; 
+                        bestFace = 1;
                     } else {
-                        continue; 
+                        continue;
                     }
                 }
 
-                
+
                 Vec3 crystalPos(c.x + 0.5, c.y + 1.0, c.z + 0.5);
 
-                
+
                 if (predictedTargetPos.distanceTo(crystalPos) > targetRange) continue;
 
-                
+
                 std::vector<Vec3> tempBlocks = solidBlocks;
                 tempBlocks.push_back(c);
 
@@ -163,7 +163,7 @@ BasePlaceResult BasePlaceMath::findBestBasePlace(
                     crystalPos, playerPos, playerHealth, playerAbsorption, playerStats, tempBlocks
                 );
 
-                
+
                 if (targetDmg < minTargetDamage) continue;
                 if (selfDmg > maxSelfDamage) continue;
 
@@ -189,4 +189,4 @@ BasePlaceResult BasePlaceMath::findBestBasePlace(
     return bestResult;
 }
 
-} 
+}

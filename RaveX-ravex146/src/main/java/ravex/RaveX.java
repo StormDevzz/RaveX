@@ -48,9 +48,9 @@ public class RaveX implements ClientModInitializer {
     }
 
     public static String getModJarPath() {
-        
+
         try {
-            java.util.Optional<net.fabricmc.loader.api.ModContainer> container = 
+            java.util.Optional<net.fabricmc.loader.api.ModContainer> container =
                 net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("ravex");
             if (container.isPresent()) {
                 java.util.List<java.nio.file.Path> paths = container.get().getOrigin().getPaths();
@@ -63,7 +63,7 @@ public class RaveX implements ClientModInitializer {
             }
         } catch (Exception ignored) {}
 
-        
+
         try {
             java.io.File file = new java.io.File(
                 ravex.loader.RaveXLoader.class.getProtectionDomain()
@@ -74,7 +74,7 @@ public class RaveX implements ClientModInitializer {
             }
         } catch (Exception ignored) {}
 
-        
+
         try {
             java.io.File modsDir = new java.io.File(
                 net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir().toFile(),
@@ -104,8 +104,8 @@ public class RaveX implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LOGGER.info("===== Initializing RaveX client v" + version + " =====");
-        
-        
+
+
         String osName = ravex.loader.RaveXLoader.getDetailedOSName();
         System.out.println("\u001B[35m┌────────────────────────────────────────────────────────┐\u001B[0m");
         System.out.println("\u001B[35m│\u001B[36m   RaveX Client loaded on Operating System:              \u001B[35m│\u001B[0m");
@@ -114,18 +114,18 @@ public class RaveX implements ClientModInitializer {
 
         LOGGER.info("[RaveX] Operating System: " + osName);
 
-        
+
         ravex.manager.NativeManager.INSTANCE.check();
 
-        
+
         ravex.utility.misc.GuiOptimizer.optimize();
 
-        
+
         LOGGER.info("Initializing ModuleManager...");
         ModuleManager.INSTANCE.init();
         LOGGER.info("Successfully registered " + ModuleManager.INSTANCE.getModules().size() + " modules!");
 
-        
+
         try {
             ravex.utility.misc.NativeLoader.loadLibrary("ravex_addon");
         } catch (UnsatisfiedLinkError e) {
@@ -138,17 +138,17 @@ public class RaveX implements ClientModInitializer {
             LOGGER.error("[Addon System] Failed to initialize AddonManager", e);
         }
 
-        
+
         LOGGER.info("Loading macros...");
         ravex.macro.MacroManager.INSTANCE.load();
         LOGGER.info("Loaded " + ravex.macro.MacroManager.INSTANCE.getMacros().size() + " macros!");
 
-        
+
         LOGGER.info("Loading profiles...");
         ravex.profile.ProfileManager.INSTANCE.load();
         LOGGER.info("Loaded " + ravex.profile.ProfileManager.INSTANCE.getProfiles().size() + " profiles!");
 
-        
+
         try {
             LOGGER.info("[RaveX] Loading default configuration...");
             ravex.manager.ConfigManager.INSTANCE.load("default");
@@ -156,7 +156,7 @@ public class RaveX implements ClientModInitializer {
             LOGGER.error("Failed to load default config", e);
         }
 
-        
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("[RaveX] Game shutting down! Automatically saving default configuration...");
             try {
@@ -181,14 +181,14 @@ public class RaveX implements ClientModInitializer {
 
         ModuleManager.INSTANCE.onTick();
         ravex.macro.MacroManager.INSTANCE.onTick();
-        ravex.utility.lua.LuaManager.INSTANCE.onTick(); 
+        ravex.utility.lua.LuaManager.INSTANCE.onTick();
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.getWindow() == null) return;
 
         com.mojang.blaze3d.platform.Window window = mc.getWindow();
 
-        
+
         boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
         if (isDown && !rightShiftWasDown) {
             if (mc.screen instanceof ravex.gui.clickgui.ClickGUI) {
@@ -199,7 +199,7 @@ public class RaveX implements ClientModInitializer {
         }
         rightShiftWasDown = isDown;
 
-        
+
         for (ravex.modules.Module m : ModuleManager.INSTANCE.getModules()) {
             int bind = m.getKeyBind();
             if (bind > 0 && bind < keysState.length) {

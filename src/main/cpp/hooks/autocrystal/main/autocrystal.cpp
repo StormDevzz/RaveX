@@ -99,15 +99,15 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
     best.valid = false;
     best.score = -std::numeric_limits<double>::infinity();
 
-    
+
     Vec3 predictedTargetPos = EntityTracker::predictPosition(
         targetPos, targetStats.motionX, targetStats.motionY, targetStats.motionZ, config.predictTicks
     );
 
-    
+
     bool playerInHole = ConditionValidator::isInHole(playerPos, blocks);
 
-    
+
     if (ConditionValidator::isTargetInvulnerable(targetStats)) {
         return best;
     }
@@ -260,7 +260,7 @@ bool AutoCrystalMath::findBestBreak(
         double targetDmg = calcExplosionDamage(crystal.pos, predictedTargetPos, targetHealth, targetAbsorption, targetStats, blocks);
         double selfDmg   = calcExplosionDamage(crystal.pos, playerPos, playerHealth, playerAbsorption, playerStats, blocks);
 
-        
+
         if (!ConditionValidator::isPlacementSafe(playerHealth, playerAbsorption, selfDmg, playerStats, config, playerInHole, true)) {
             continue;
         }
@@ -273,7 +273,7 @@ bool AutoCrystalMath::findBestBreak(
         if (targetDmg < requiredMinDmg) continue;
 
         double deathBonus = (targetEffHp - targetDmg <= 0.0) ? 20.0 : 0.0;
-        
+
         double totemPopBonus = 0.0;
         if (ConditionValidator::shouldForcePopTotem(targetEffHp, targetDmg, targetStats.totemCount, config.totemDetection)) {
             totemPopBonus = 30.0;
@@ -318,7 +318,7 @@ AutoCrystalResult AutoCrystalMath::tick(
 
     std::ostringstream dbg;
 
-    
+
     CrystalPlacement placement = findBestPlacement(
         playerPos, playerHealth, playerAbsorption, playerStats,
         targetPos, targetHealth, targetAbsorption, targetStats,
@@ -336,7 +336,7 @@ AutoCrystalResult AutoCrystalMath::tick(
                 << " sDmg=" << placement.selfDamage
                 << " score=" << placement.score << "; ";
 
-            
+
             if (config.placeMultiPlace) {
                 CrystalPlacement placement2 = findBestPlacement(
                     playerPos, playerHealth, playerAbsorption, playerStats,
@@ -361,7 +361,7 @@ AutoCrystalResult AutoCrystalMath::tick(
         dbg << "NO placement; ";
     }
 
-    
+
     int    breakId  = -1;
     Vec3   breakPos;
     double breakDmg = 0.0;
@@ -388,4 +388,4 @@ AutoCrystalResult AutoCrystalMath::tick(
     return result;
 }
 
-} 
+}

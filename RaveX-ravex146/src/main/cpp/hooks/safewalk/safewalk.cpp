@@ -16,7 +16,7 @@ bool isNearEdge(double playerX, double playerY, double playerZ,
     int by = (int)std::floor(playerY);
     int bz = (int)std::floor(playerZ);
 
-    
+
     struct Check {
         int x, z;
     } checks[4] = {
@@ -25,16 +25,16 @@ bool isNearEdge(double playerX, double playerY, double playerZ,
     };
 
     for (auto& c : checks) {
-        
-        
+
+
         if (isSolid(c.x, by, c.z, solidBlocks, count)) {
             if (!isSolid(c.x, by - 1, c.z, solidBlocks, count)) {
-                return true; 
+                return true;
             }
         }
     }
 
-    
+
     struct Diag {
         int x, z;
     } diags[4] = {

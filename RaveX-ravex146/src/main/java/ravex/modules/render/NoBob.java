@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft;
 
 public class NoBob extends Module {
     public static final NoBob INSTANCE = new NoBob();
-    
+
     private boolean originalBob = true;
 
     private NoBob() {

@@ -50,7 +50,7 @@ public class WaxAura extends Module {
             return;
         }
 
-        
+
         int honeycombSlot = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = p.getInventory().getItem(i);
@@ -60,7 +60,7 @@ public class WaxAura extends Module {
             }
         }
 
-        if (honeycombSlot == -1) return; 
+        if (honeycombSlot == -1) return;
 
         double r = range.getValue();
         BlockPos playerPos = p.blockPosition();

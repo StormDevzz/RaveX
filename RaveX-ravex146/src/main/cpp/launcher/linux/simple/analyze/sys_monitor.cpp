@@ -57,7 +57,7 @@ void log_system_state(const std::string &label) {
     write_log("SYS", label + " -> " + snapshot_to_string(snap));
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

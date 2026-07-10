@@ -29,7 +29,7 @@ JNIEXPORT void JNICALL Java_ravex_addon_AddonManager_nativeUnloadAddons(JNIEnv* 
 namespace ravex {
 namespace addon {
 void AddonJni::registerNatives(JNIEnv* env) {
-    
+
 }
 }
 }

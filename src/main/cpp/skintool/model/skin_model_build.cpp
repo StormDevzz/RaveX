@@ -8,35 +8,35 @@ static void quad(Vert*& dst, float x0, float y0, float z0, float x1, float y1, f
                  float u0, float v0, float u1, float v1,
                  float nx, float ny, float nz)
 {
-    // tri 1
+
     dst->x = x0; dst->y = y0; dst->z = z1; dst->nx = nx; dst->ny = ny; dst->nz = nz; dst->u = u0; dst->v = v1; dst++;
     dst->x = x1; dst->y = y0; dst->z = z1; dst->nx = nx; dst->ny = ny; dst->nz = nz; dst->u = u1; dst->v = v1; dst++;
     dst->x = x0; dst->y = y1; dst->z = z0; dst->nx = nx; dst->ny = ny; dst->nz = nz; dst->u = u0; dst->v = v0; dst++;
-    // tri 2
+
     dst->x = x1; dst->y = y0; dst->z = z1; dst->nx = nx; dst->ny = ny; dst->nz = nz; dst->u = u1; dst->v = v1; dst++;
     dst->x = x1; dst->y = y1; dst->z = z0; dst->nx = nx; dst->ny = ny; dst->nz = nz; dst->u = u1; dst->v = v0; dst++;
     dst->x = x0; dst->y = y1; dst->z = z0; dst->nx = nx; dst->ny = ny; dst->nz = nz; dst->u = u0; dst->v = v0; dst++;
 }
 
-// Head: 8x8x8 at y=24..32
+
 static int buildHead(Vert* buf) {
     Vert* v = buf;
-    // right
+
     quad(v, -4,24,-4, -4,32,4,  8.f/64,24.f/64, 16.f/64,32.f/64,  1,0,0);
-    // left
+
     quad(v,  4,24,-4,  4,32,4,  0.f/64,24.f/64,  8.f/64,32.f/64, -1,0,0);
-    // top
+
     quad(v, -4,32,-4,  4,32,4,  8.f/64, 8.f/64, 16.f/64,16.f/64,  0,1,0);
-    // bottom
+
     quad(v, -4,24,-4,  4,24,4, 16.f/64, 8.f/64, 24.f/64,16.f/64,  0,-1,0);
-    // front
+
     quad(v, -4,24, 4,  4,32,4,  8.f/64, 8.f/64, 16.f/64,16.f/64,  0,0,1);
-    // back
+
     quad(v, -4,24,-4,  4,32,-4, 24.f/64, 8.f/64, 32.f/64,16.f/64,  0,0,-1);
     return int(v - buf);
 }
 
-// Body: 8x12x4 at y=12..24
+
 static int buildBody(Vert* buf) {
     Vert* v = buf;
     quad(v, -4,12,-2, -4,24,2, 16.f/64,28.f/64, 20.f/64,40.f/64, 1,0,0);
@@ -48,7 +48,7 @@ static int buildBody(Vert* buf) {
     return int(v - buf);
 }
 
-// Right Arm: 4x12x4 at x=-8..-4, y=12..24
+
 static int buildRightArm(Vert* buf) {
     Vert* v = buf;
     quad(v, -8,12,-2, -8,24,2, 40.f/64,28.f/64, 44.f/64,40.f/64, 1,0,0);
@@ -60,7 +60,7 @@ static int buildRightArm(Vert* buf) {
     return int(v - buf);
 }
 
-// Left Arm: 4x12x4 at x=4..8, y=12..24
+
 static int buildLeftArm(Vert* buf) {
     Vert* v = buf;
     quad(v, 4,12,-2, 4,24,2, 32.f/64,28.f/64, 36.f/64,40.f/64, -1,0,0);
@@ -72,7 +72,7 @@ static int buildLeftArm(Vert* buf) {
     return int(v - buf);
 }
 
-// Right Leg: 4x12x4 at x=-4..0, y=0..12
+
 static int buildRightLeg(Vert* buf) {
     Vert* v = buf;
     quad(v, -4,0,-2, -4,12,2, 0.f/64,28.f/64, 4.f/64,40.f/64, 1,0,0);
@@ -84,7 +84,7 @@ static int buildRightLeg(Vert* buf) {
     return int(v - buf);
 }
 
-// Left Leg: 4x12x4 at x=0..4, y=0..12
+
 static int buildLeftLeg(Vert* buf) {
     Vert* v = buf;
     quad(v, 0,0,-2, 0,12,2, 16.f/64,28.f/64, 20.f/64,40.f/64, -1,0,0);

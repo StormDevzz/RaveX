@@ -19,7 +19,7 @@ SysSnapshot take_snapshot();
 std::string snapshot_to_string(const SysSnapshot &s);
 void log_system_state(const std::string &label);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

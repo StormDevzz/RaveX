@@ -350,7 +350,7 @@ public class ColorPaletteModal {
         boolean syncHovered = mouseX >= syncX && mouseX <= syncX + syncW && mouseY >= syncY + 10 && mouseY <= syncY + 10 + syncH;
         int syncBg = parameter.isThemeSync() ? activeColor : (syncHovered ? 0x44222233 : 0xFF14141E);
         int syncBorder = syncHovered ? (parameter.isThemeSync() ? 0xFFFFFFFF : 0xFF555555) : 0xFF3E3E4E;
-        
+
         graphics.fill(syncX, syncY + 10, syncX + syncW, syncY + 10 + syncH, syncBg);
         graphics.fill(syncX - 1, syncY + 9, syncX + syncW + 1, syncY + 10, syncBorder);
         graphics.fill(syncX - 1, syncY + 10 + syncH, syncX + syncW + 1, syncY + 10 + syncH + 1, syncBorder);

@@ -344,4 +344,4 @@ std::string LocalProxy::recvLine(int fd) {
     return line;
 }
 
-} 
+}

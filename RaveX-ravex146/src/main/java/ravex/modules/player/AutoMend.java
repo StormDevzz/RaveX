@@ -30,7 +30,7 @@ public class AutoMend extends Module {
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
 
-        
+
         boolean needsMend = false;
         EquipmentSlot[] armorSlots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
         for (EquipmentSlot slot : armorSlots) {
@@ -48,7 +48,7 @@ public class AutoMend extends Module {
 
         if (!needsMend) return;
 
-        
+
         int expSlot = -1;
         for (int i = 0; i < 9; i++) {
             if (p.getInventory().getItem(i).is(Items.EXPERIENCE_BOTTLE)) {
@@ -57,26 +57,26 @@ public class AutoMend extends Module {
             }
         }
 
-        if (expSlot == -1) return; 
+        if (expSlot == -1) return;
 
-        
+
         int prevSlot = p.getInventory().getSelectedSlot();
 
         if (silent.getValue()) {
-            
+
             p.getInventory().setSelectedSlot(expSlot);
 
-            
+
             p.connection.send(new ServerboundMovePlayerPacket.Rot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision));
 
-            
+
             mc.gameMode.useItem(p, InteractionHand.MAIN_HAND);
             p.swing(InteractionHand.MAIN_HAND);
 
-            
+
             p.getInventory().setSelectedSlot(prevSlot);
         } else {
-            
+
             p.getInventory().setSelectedSlot(expSlot);
             p.connection.send(new ServerboundMovePlayerPacket.Rot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision));
             mc.gameMode.useItem(p, InteractionHand.MAIN_HAND);

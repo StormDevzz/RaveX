@@ -230,7 +230,7 @@ int main(int argc, char** argv) {
 
     auto* nb = gtk_notebook_new();
 
-    
+
     auto* tab1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_set_border_width(GTK_CONTAINER(tab1), 12);
 
@@ -273,7 +273,7 @@ int main(int argc, char** argv) {
 
     gtk_notebook_append_page(GTK_NOTEBOOK(nb), tab1, gtk_label_new("Single"));
 
-    
+
     auto* tab2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_container_set_border_width(GTK_CONTAINER(tab2), 12);
 

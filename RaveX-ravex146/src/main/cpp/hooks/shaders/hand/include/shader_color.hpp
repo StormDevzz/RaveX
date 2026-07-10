@@ -141,6 +141,6 @@ struct ColorPalette {
     }
 };
 
-} // namespace ravex::shaders
+}
 
 #endif

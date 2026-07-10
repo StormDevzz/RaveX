@@ -19,7 +19,7 @@ bool download_library_file(const std::string& url, const std::string& dest_path)
     return http_download(url, dest_path);
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

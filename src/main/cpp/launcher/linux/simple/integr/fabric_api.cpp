@@ -10,19 +10,19 @@ namespace integr {
 
 
 static std::string findJsonStringValue(const std::string& json, const std::string& key) {
-    
+
     std::string searchKey = "\"" + key + "\":";
     size_t pos = json.find(searchKey);
     if (pos == std::string::npos) return "";
 
     pos += searchKey.length();
-    
+
     while (pos < json.length() && (json[pos] == ' ' || json[pos] == '\t' || json[pos] == '\n' || json[pos] == '\r'))
         pos++;
-    
+
     if (pos >= json.length() || json[pos] != '"') return "";
     pos++;
-    
+
     size_t end = json.find('"', pos);
     if (end == std::string::npos) return "";
     return json.substr(pos, end - pos);
@@ -54,7 +54,7 @@ std::string getLatestFabricLoader(const std::string& mcVersion) {
         if (!ver.empty()) return ver;
     }
 
-    
+
     return fallbackLoaderVersion(mcVersion);
 }
 
@@ -75,19 +75,19 @@ FabricProfile getFabricProfile(const std::string& mcVersion, const std::string& 
 
     profile.mainClass = findJsonStringValue(json, "mainClass");
 
-    
+
     std::string libKey = "\"libraries\":";
     size_t libStart = json.find(libKey);
     if (libStart == std::string::npos) return profile;
     libStart += libKey.length();
-    
+
     while (libStart < json.length() && (json[libStart] == ' ' || json[libStart] == '\t' || json[libStart] == '\n' || json[libStart] == '\r'))
         libStart++;
     if (libStart >= json.length() || json[libStart] != '[') return profile;
 
     size_t cursor = libStart;
     while (true) {
-        
+
         size_t namePos = json.find("\"name\":", cursor);
         if (namePos == std::string::npos || namePos > json.find(']', cursor))
             break;
@@ -96,12 +96,12 @@ FabricProfile getFabricProfile(const std::string& mcVersion, const std::string& 
         if (mavenCoord.empty()) { cursor = namePos + 7; continue; }
         cursor = namePos + 7 + mavenCoord.length();
 
-        
+
         std::string remnant = json.substr(cursor);
         std::string urlVal = findJsonStringValue(remnant, "url");
         if (urlVal.empty()) continue;
 
-        
+
         size_t objEnd = json.find('}', cursor);
         size_t urlInObj = json.find("\"url\":", cursor);
         if (urlInObj == std::string::npos || urlInObj > objEnd)
@@ -116,7 +116,7 @@ FabricProfile getFabricProfile(const std::string& mcVersion, const std::string& 
     return profile;
 }
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

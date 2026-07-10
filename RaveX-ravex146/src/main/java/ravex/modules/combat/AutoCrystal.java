@@ -30,7 +30,7 @@ import java.util.List;
 public class AutoCrystal extends Module {
     public static final AutoCrystal INSTANCE = new AutoCrystal();
 
-    
+
     public final NumberParameter  placeRange     = new NumberParameter("Place Range",    4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  breakRange     = new NumberParameter("Break Range",    4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay     = new NumberParameter("Place Delay",   100, 0, 500, 10);
@@ -60,32 +60,32 @@ public class AutoCrystal extends Module {
     public final ModeParameter    placeMode      = new ModeParameter("Place Mode", "Normal",
             java.util.List.of("Normal", "Aggressive", "Smart"));
 
-    
+
     public final NumberParameter  rotateSpeed     = new NumberParameter("Rotate Speed", 180.0, 10.0, 180.0, 5.0);
     public final NumberParameter  rotateRandomize = new NumberParameter("Rotate Randomize", 0.0, 0.0, 3.0, 0.1);
 
-    
+
     public final BooleanParameter antiSuicideCheckBreaking = new BooleanParameter("AntiSuicide Break", true);
     public final BooleanParameter antiSuicideIgnoreWithTotem = new BooleanParameter("AntiSuicide Ignore Totem", false);
 
-    
+
     public final BooleanParameter totemCheckTarget = new BooleanParameter("Totem Check Target", true);
     public final BooleanParameter totemPopSwap     = new BooleanParameter("Totem Pop Swap", false);
     public final NumberParameter  totemPopHp       = new NumberParameter("Totem Pop HP", 6.0, 1.0, 20.0, 0.5);
 
-    
+
     public final NumberParameter  placeWallRange  = new NumberParameter("Place Wall Range", 3.5, 1.0, 6.0, 0.1);
     public final NumberParameter  breakWallRange  = new NumberParameter("Break Wall Range", 3.5, 1.0, 6.0, 0.1);
     public final BooleanParameter placeAirPlace   = new BooleanParameter("Air Place", false);
     public final NumberParameter  placeUnderHp     = new NumberParameter("Place Under HP", 10.0, 0.0, 36.0, 0.5);
     public final BooleanParameter placeMultiPlace  = new BooleanParameter("Multi Place", false);
 
-    
+
     public final BooleanParameter swapSwitchBack   = new BooleanParameter("Swap Switch Back", true);
     public final BooleanParameter swapNoGap        = new BooleanParameter("Swap No Gap", true);
     public final BooleanParameter swapInventory   = new BooleanParameter("Swap Inventory", false);
 
-    
+
     public final ModeParameter    speedMode      = new ModeParameter("Speed Mode", "Normal",
             java.util.List.of("Legit", "Normal", "Aggressive"));
     public final NumberParameter  jitterDelay    = new NumberParameter("Jitter Delay", 0.0, 0.0, 100.0, 5.0);
@@ -99,30 +99,30 @@ public class AutoCrystal extends Module {
     public final BooleanParameter kbPrediction   = new BooleanParameter("KB Prediction", true);
     public final BooleanParameter collateralPop  = new BooleanParameter("Collateral Pop List", true);
 
-    
+
     public static BlockPos currentPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
     public static int currentTargetTotems = 0;
 
-    
+
     private long lastPlaceTime = 0;
     private long lastBreakTime = 0;
     private int  lastBreakId   = -1;
 
-    
+
     private static boolean nativeAvailable = false;
 
     static {
         try {
             nativeAvailable = ravex.utility.misc.NativeLoader.loadLibrary("ravex_autocrystal");
         } catch (UnsatisfiedLinkError e) {
-            
+
         }
     }
 
-    
-    
+
+
     private static native double[] nativeTick(
             double pX, double pY, double pZ,
             double pHp, double pAbs,
@@ -146,7 +146,7 @@ public class AutoCrystal extends Module {
             boolean collateralPop
     );
 
-    
+
     public static native double[] nativeCalcDamage(
             double expX, double expY, double expZ,
             double entityX, double entityY, double entityZ,
@@ -207,7 +207,7 @@ public class AutoCrystal extends Module {
         addParameter(kbPrediction);
         addParameter(collateralPop);
 
-        
+
         armorPercent.setVisible(() -> armorBreaker.getValue());
         renderDamage.setVisible(() -> renderPlacement.getValue());
         antiSuicideMinHp.setVisible(() -> antiSuicide.getValue());
@@ -253,7 +253,7 @@ public class AutoCrystal extends Module {
 
         hasSilentRotations = false;
 
-        
+
         if (totemPopSwap.getValue()) {
             double selfHp = mc.player.getHealth() + mc.player.getAbsorptionAmount();
             if (selfHp <= totemPopHp.getValue()) {
@@ -297,14 +297,14 @@ public class AutoCrystal extends Module {
             }
         }
 
-        
+
         LivingEntity target = findTarget(mc);
         if (target == null) {
             currentPlacementBlock = null;
             return;
         }
 
-        
+
         Vec3 playerPos = mc.player.position();
         double pHp  = mc.player.getHealth();
         double pAbs = mc.player.getAbsorptionAmount();
@@ -312,15 +312,15 @@ public class AutoCrystal extends Module {
         double tHp  = target.getHealth();
         double tAbs = target.getAbsorptionAmount();
 
-        
+
         double[] blockData  = collectValidBlocks(mc, playerPos);
-        
+
         double[] crystalData = collectCrystals(mc, playerPos);
 
         double[] pStats = getEntityStats(mc.player);
         double[] tStats = getEntityStats(target);
 
-        
+
         double[] result;
         if (nativeAvailable) {
             result = nativeTick(
@@ -358,7 +358,7 @@ public class AutoCrystal extends Module {
         boolean shouldPlace = result[0] > 0.5;
         boolean shouldBreak = result[6] > 0.5;
 
-        
+
         if (shouldPlace && antiSuicide.getValue()) {
             boolean ignoreSuicide = antiSuicideIgnoreWithTotem.getValue() && pStats[14] > 0.0;
             if (!ignoreSuicide) {
@@ -380,7 +380,7 @@ public class AutoCrystal extends Module {
 
         long now = System.currentTimeMillis();
 
-        
+
         Vec3 rotationTarget = null;
         if (shouldBreak) {
             int entityId = (int) result[7];
@@ -397,21 +397,21 @@ public class AutoCrystal extends Module {
             rotateTo(mc, rotationTarget);
         }
 
-        
+
         boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
         boolean aligned = true;
         if (isStrict && rotationTarget != null) {
             aligned = isRotationAligned(mc, rotationTarget);
         }
 
-        
+
         int limit = maxRate.getValue().intValue();
         if (speedMode.getValue().equals("Legit")) {
             limit = 1;
         }
         int actionsThisTick = 0;
 
-        
+
         boolean checkBreakDelay = true;
         if (speedMode.getValue().equals("Aggressive")) {
             checkBreakDelay = false;
@@ -420,7 +420,7 @@ public class AutoCrystal extends Module {
         if (shouldBreak && aligned && actionsThisTick < limit) {
             if (!checkBreakDelay || now - lastBreakTime >= currentBreakDelay) {
                 int entityId = (int) result[7];
-                if (entityId != lastBreakId) { 
+                if (entityId != lastBreakId) {
                     Entity crystal = mc.level.getEntity(entityId);
                     if (crystal instanceof EndCrystal) {
                         mc.gameMode.attack(mc.player, crystal);
@@ -429,7 +429,7 @@ public class AutoCrystal extends Module {
                         lastBreakId   = entityId;
                         actionsThisTick++;
 
-                        
+
                         double base = breakDelay.getValue();
                         double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
                         currentBreakDelay = Math.max(0, (long)(base + jitter));
@@ -438,7 +438,7 @@ public class AutoCrystal extends Module {
             }
         }
 
-        
+
         boolean checkPlaceDelay = true;
         if (speedMode.getValue().equals("Aggressive")) {
             checkPlaceDelay = false;
@@ -460,10 +460,10 @@ public class AutoCrystal extends Module {
                 BlockPos placePos = new BlockPos(
                         (int) result[1], (int) result[2], (int) result[3]);
 
-                
+
                 boolean hasItem = switchToCrystal(mc);
                 if (hasItem) {
-                    
+
                     net.minecraft.world.phys.Vec3 hitVec = new net.minecraft.world.phys.Vec3(
                             result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
@@ -472,7 +472,7 @@ public class AutoCrystal extends Module {
                     mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
                     mc.player.swing(mc.player.getUsedItemHand());
 
-                    
+
                     if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
                         if (mc.player.connection != null) {
                             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
@@ -483,7 +483,7 @@ public class AutoCrystal extends Module {
                     lastPlaceTime = now;
                     actionsThisTick++;
 
-                    
+
                     double base = placeDelay.getValue();
                     double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
                     currentPlaceDelay = Math.max(0, (long)(base + jitter));
@@ -491,7 +491,7 @@ public class AutoCrystal extends Module {
             }
         }
 
-        
+
         boolean shouldPlace2 = placeMultiPlace.getValue() && result.length >= 16 && result[12] > 0.5;
         if (shouldPlace2 && antiSuicide.getValue()) {
             boolean ignoreSuicide2 = antiSuicideIgnoreWithTotem.getValue() && pStats[14] > 0.0;
@@ -534,13 +534,13 @@ public class AutoCrystal extends Module {
             }
         }
 
-        
+
         if (!hasSilentRotations) {
             lastSilentInit = false;
         }
     }
 
-    
+
     private LivingEntity findTarget(Minecraft mc) {
         LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
@@ -554,7 +554,7 @@ public class AutoCrystal extends Module {
             if (le == mc.player) continue;
             if (le.isDeadOrDying()) continue;
 
-            
+
             if (typeFilter.equals("Players")) {
                 if (!(le instanceof Player)) continue;
             } else if (typeFilter.equals("Monsters")) {
@@ -581,7 +581,7 @@ public class AutoCrystal extends Module {
         return closest;
     }
 
-    
+
     private double[] collectValidBlocks(Minecraft mc, Vec3 playerPos) {
         long now = System.currentTimeMillis();
         if (bgBlockScanner.getValue() && cachedBlockData != null && now - lastBlockScanTime < 150) {
@@ -647,7 +647,7 @@ public class AutoCrystal extends Module {
         return arr;
     }
 
-    
+
     private double[] collectCrystals(Minecraft mc, Vec3 playerPos) {
         List<Double> data = new ArrayList<>();
         for (Entity e : mc.level.entitiesForRendering()) {
@@ -663,7 +663,7 @@ public class AutoCrystal extends Module {
         return arr;
     }
 
-    
+
     private boolean switchToCrystal(Minecraft mc) {
         ItemStack mainHand = mc.player.getMainHandItem();
         if (mainHand.getItem() == Items.END_CRYSTAL) return true;
@@ -671,7 +671,7 @@ public class AutoCrystal extends Module {
         String mode = swapMode.getValue();
         if (mode.equals("None")) return false;
 
-        
+
         if (swapNoGap.getValue() && mc.player.isUsingItem()) {
             ItemStack usingItem = mc.player.getUseItem();
             if (usingItem.getItem() == Items.GOLDEN_APPLE || usingItem.getItem() == Items.ENCHANTED_GOLDEN_APPLE) {
@@ -679,7 +679,7 @@ public class AutoCrystal extends Module {
             }
         }
 
-        
+
         for (int slot = 0; slot < 9; slot++) {
             if (mc.player.getInventory().getItem(slot).getItem() == Items.END_CRYSTAL) {
                 if (mode.equals("Normal")) {
@@ -694,11 +694,11 @@ public class AutoCrystal extends Module {
             }
         }
 
-        
+
         if (swapInventory.getValue()) {
             for (int slot = 9; slot < 36; slot++) {
                 if (mc.player.getInventory().getItem(slot).getItem() == Items.END_CRYSTAL) {
-                    
+
                     int targetHotbarSlot = 0;
                     mc.gameMode.handleInventoryMouseClick(
                         mc.player.containerMenu.containerId,
@@ -724,7 +724,7 @@ public class AutoCrystal extends Module {
         return false;
     }
 
-    
+
     private void rotateTo(Minecraft mc, Vec3 target) {
         String mode = rotate.getValue();
         if (mode.equals("None")) return;
@@ -816,27 +816,27 @@ public class AutoCrystal extends Module {
         return diffYaw <= 10.0f && diffPitch <= 10.0f;
     }
 
-    
+
     private double calcQuickDamage(Minecraft mc, LivingEntity target) {
         Vec3 playerPos = mc.player.position();
         Vec3 targetPos = target.position();
-        
+
         Vec3 crystalPos = targetPos.add(0, 1, 0);
         double dist = playerPos.distanceTo(crystalPos);
         if (dist > 12.0) return 0;
-        
+
         double impact = Math.max(0, (1.0 - dist / 12.0));
         return (impact * impact + impact) / 2.0 * 84.0 + 1.0;
     }
 
-    
+
     private double[] javaFallbackTick(
             Vec3 playerPos, double pHp, double pAbs,
             Vec3 targetPos, double tHp, double tAbs,
             double[] blockData, double[] crystalData) {
         double[] result = new double[12];
 
-        
+
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return result;
 
@@ -849,7 +849,7 @@ public class AutoCrystal extends Module {
             double dist = mc.player.distanceTo(e);
             if (dist > breakRange.getValue()) continue;
 
-            
+
             Vec3 cp = e.position();
             double tdist = cp.distanceTo(targetPos);
             double sdist = cp.distanceTo(playerPos);
@@ -916,7 +916,7 @@ public class AutoCrystal extends Module {
             }
         }
 
-        
+
         int totems = 0;
         if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;
         if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING) totems++;
@@ -927,20 +927,20 @@ public class AutoCrystal extends Module {
                 }
             }
         }
-        
+
         double[] stats = new double[15];
         stats[0] = player.getArmorValue();
         var attrToughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS);
         stats[1] = attrToughness != null ? attrToughness.getValue() : 0.0;
         stats[2] = blastProtectionEpf;
         stats[3] = protectionEpf;
-        
+
         var resEffect = player.getEffect(MobEffects.RESISTANCE);
         stats[4] = resEffect != null ? resEffect.getAmplifier() + 1 : 0;
-        
+
         var weakEffect = player.getEffect(MobEffects.WEAKNESS);
         stats[5] = weakEffect != null ? weakEffect.getAmplifier() + 1 : 0;
-        
+
         var strEffect = player.getEffect(MobEffects.STRENGTH);
         stats[6] = strEffect != null ? strEffect.getAmplifier() + 1 : 0;
 
@@ -956,7 +956,7 @@ public class AutoCrystal extends Module {
                 stats[idx++] = dur;
             }
         }
-        
+
         net.minecraft.world.phys.Vec3 motion = player.getDeltaMovement();
         if (motion != null) {
             stats[11] = motion.x;
@@ -968,7 +968,7 @@ public class AutoCrystal extends Module {
             stats[13] = 0.0;
         }
         stats[14] = totems;
-        
+
         return stats;
     }
 }

@@ -19,7 +19,7 @@ struct ProgressPulseData {
     bool *active;
 };
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

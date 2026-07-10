@@ -32,9 +32,9 @@ public class Step extends Module {
         }
 
         if (mode.getValue().equalsIgnoreCase("Packet")) {
-            
+
             if (mc.player.horizontalCollision && mc.player.onGround()) {
-                
+
                 var connection = mc.player.connection;
                 if (connection != null) {
                     double x = mc.player.getX();
@@ -57,7 +57,7 @@ public class Step extends Module {
         if (mc.player != null) {
             var attr = mc.player.getAttribute(Attributes.STEP_HEIGHT);
             if (attr != null) {
-                attr.setBaseValue(0.6); 
+                attr.setBaseValue(0.6);
             }
         }
     }

@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(ClientBrandRetriever.class)
 public class MixinClientBrandRetriever {
-    
+
     /**
      * @reason always report as fabric to avoid brand detection by servers
      * @author RaveX

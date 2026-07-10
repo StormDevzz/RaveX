@@ -18,7 +18,7 @@ void add_offline_account(LauncherState *state, const std::string& username);
 
 void remove_account(LauncherState *state, int index);
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

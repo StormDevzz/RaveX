@@ -14,7 +14,7 @@ struct os_info_t {
 
 os_info_t get_os_info();
 
-} 
-} 
-} 
-} 
+}
+}
+}
+}

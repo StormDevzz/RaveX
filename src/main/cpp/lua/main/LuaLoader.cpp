@@ -54,8 +54,8 @@ bool LuaLoader::loadFile(const std::string& filePath,
                           ravex::addon::AddonContext* ctx) {
     auto addon = std::make_unique<LuaAddon>();
 
-    
-    
+
+
     auto* cfg = new ravex::addon::AddonConfig();
 
     auto result = addon->loadFromFile(filePath, ctx, cfg);
@@ -69,12 +69,12 @@ bool LuaLoader::loadFile(const std::string& filePath,
         return false;
     }
 
-    
-    
+
+
     addon->callOnLoad();
 
-    
-    
+
+
     LuaRegistry::getInstance().registerAddon(addon.get());
 
     if (ctx) {
@@ -126,17 +126,17 @@ LuaAddon* LuaLoader::findAddon(const std::string& name) const {
 std::vector<std::string> LuaLoader::scanDirectory() {
     std::vector<std::string> files;
 
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
 #ifdef _WIN32
-    
-    
+
+
     std::string pattern = m_addonDir + "\\*.lua";
     WIN32_FIND_DATAA ffd;
     HANDLE hFind = FindFirstFileA(pattern.c_str(), &ffd);
@@ -149,8 +149,8 @@ std::vector<std::string> LuaLoader::scanDirectory() {
         FindClose(hFind);
     }
 #else
-    
-    
+
+
     DIR* dir = opendir(m_addonDir.c_str());
     if (dir) {
         struct dirent* entry;
@@ -165,11 +165,11 @@ std::vector<std::string> LuaLoader::scanDirectory() {
     }
 #endif
 
-    
-    
+
+
     std::sort(files.begin(), files.end());
     return files;
 }
 
-} 
-} 
+}
+}

@@ -40,4 +40,4 @@ Java_ravex_modules_combat_PacketMine_nativeEstimateBreakTime(
     return static_cast<jlong>(ravex::estimateBreakTime(bx, by, bz, px, py, pz));
 }
 
-} 
+}

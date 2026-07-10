@@ -67,19 +67,19 @@ public class MixinLevelRenderer {
     private static final Matrix4f REUSABLE_MATRIX = new Matrix4f();
     private static long lastAnimTime = 0;
 
-    
+
     private static double apX = 0, apY = 0, apZ = 0;
     private static float apAlpha = 0.0f;
     private static double apSize = 0.0;
     private static boolean apInitialized = false;
 
-    
+
     private static double scX = 0, scY = 0, scZ = 0;
     private static float scAlpha = 0.0f;
     private static double scSize = 0.0;
     private static boolean scInitialized = false;
 
-    
+
     private static double boX = 0, boY = 0, boZ = 0;
     private static float boAlpha = 0.0f;
     private static boolean boInitialized = false;
@@ -91,7 +91,7 @@ public class MixinLevelRenderer {
         ordinal = 0
     )
     private boolean disableVanillaBlockOutline(boolean original) {
-        
+
 <<<<<<< HEAD
         if (BlockOutline.maybeEnabled()) {
 =======
@@ -137,7 +137,7 @@ public class MixinLevelRenderer {
         float factor = Math.min(1.0f, (deltaMs / 50.0f) * 0.25f);
         double slideFactor = Math.min(1.0, (deltaMs / 50.0) * 0.35);
 
-        
+
 <<<<<<< HEAD
         if (BlockOutline.maybeEnabled()) {
 =======
@@ -221,7 +221,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         AirPlace ap = AirPlace.itz();
 =======
@@ -277,7 +277,7 @@ public class MixinLevelRenderer {
             );
         }
 
-        
+
 <<<<<<< HEAD
         Scaffold sc = Scaffold.itz();
         if (sc.getEnabled() && sc.render.getValue()) {
@@ -339,7 +339,7 @@ public class MixinLevelRenderer {
             );
         }
 
-        
+
 <<<<<<< HEAD
         if (ChestAura.maybeEnabled() && ChestAura.itz().render.getValue() && !ChestAura.placedChests.isEmpty()) {
 =======
@@ -385,7 +385,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         if (Surround.maybeEnabled()) {
 =======
@@ -416,7 +416,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         Trap trap = Trap.itz();
 =======
@@ -448,7 +448,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         SelfTrap selfTrap = SelfTrap.itz();
 =======
@@ -477,7 +477,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         BasePlace basePlace = BasePlace.itz();
 =======
@@ -506,7 +506,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         AnchorAura anchorAura = AnchorAura.itz();
 =======
@@ -565,7 +565,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         if (StashFinder.maybeEnabled()) {
             double maxDist = StashFinder.itz().range.getValue();
@@ -596,7 +596,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         if (BreadCrumbs.maybeEnabled()) {
 =======
@@ -605,7 +605,7 @@ public class MixinLevelRenderer {
             ravex.modules.render.BreadCrumbs.renderTrails(modelViewMatrix, camPos);
         }
 
-        
+
 <<<<<<< HEAD
         if (Trails.maybeEnabled()) {
 =======
@@ -614,7 +614,7 @@ public class MixinLevelRenderer {
             ravex.modules.render.Trails.renderTrails(modelViewMatrix, camPos);
         }
 
-        
+
 <<<<<<< HEAD
         if (Particles.maybeEnabled()) {
 =======
@@ -623,7 +623,7 @@ public class MixinLevelRenderer {
             ravex.modules.render.Particles.renderParticles(modelViewMatrix, camPos);
         }
 
-        
+
 <<<<<<< HEAD
         TreeCutter tc = TreeCutter.itz();
         BlockPos mp = ravex.modules.world.TreeCutter.getMiningPos();
@@ -655,7 +655,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         WebSelf ws = WebSelf.itz();
 =======
@@ -680,7 +680,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         Breaker br = Breaker.itz();
 =======
@@ -708,7 +708,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         AutoTunnel at = AutoTunnel.itz();
         if (at.getEnabled() && at.render.getValue()) {
@@ -740,7 +740,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         Nuker nk = Nuker.itz();
 =======
@@ -769,7 +769,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         PVEUtils sm = PVEUtils.itz();
         if (sm.getEnabled() && sm.mode.getValue().equals("AutoSmelt") && sm.smeltRender.getValue() && ravex.modules.world.PVEUtils.smeltTarget != null) {
@@ -796,7 +796,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         PVEUtils bw = PVEUtils.itz();
         if (bw.getEnabled() && bw.mode.getValue().equals("AutoBrew") && bw.brewRender.getValue()) {
@@ -823,7 +823,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         ECFarmer ec = ECFarmer.itz();
         if (ec.getEnabled() && ec.render.getValue()) {
@@ -848,7 +848,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         AutoPortal pb = AutoPortal.itz();
         if (pb.getEnabled() && pb.render.getValue()) {
@@ -873,7 +873,7 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        
+
 <<<<<<< HEAD
         HoleFill hf = HoleFill.itz();
 =======
@@ -904,7 +904,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         if (Borders.maybeEnabled()) {
             int rd = Borders.itz().renderDistance.getValue().intValue();
@@ -965,7 +965,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         if (ESP.maybeEnabled() && ESP.itz().mode.getValue().equals("Tunnels")) {
             int tunnelColorVal = ESP.itz().tunnelColor.getValue();
@@ -994,7 +994,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         if (ESP.maybeEnabled() && ESP.itz().mode.getValue().equals("Holes")) {
             int c = ESP.itz().safeColor.getValue();
@@ -1029,7 +1029,7 @@ public class MixinLevelRenderer {
                     }
                     if (HoleESP.INSTANCE.wireframe.getValue()) {
 >>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
-                        
+
                         Render3DUtils.batchAxisLine(modelViewMatrix, px, py, pz, px + 1, py, pz, hw, hr, hg, hb, ha, true);
                         Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py, pz + 1, hw, hr, hg, hb, ha, true);
                         Render3DUtils.batchAxisLine(modelViewMatrix, px + 1, py, pz + 1, px, py, pz + 1, hw, hr, hg, hb, ha, true);
@@ -1049,7 +1049,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         if (ESP.maybeEnabled() && ESP.itz().mode.getValue().equals("Void")) {
             int vc = ESP.itz().voidColor.getValue();
@@ -1078,7 +1078,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         PacketMine pm = PacketMine.itz();
 =======
@@ -1132,7 +1132,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         if (Waypoint.maybeEnabled()) {
 =======
@@ -1183,7 +1183,7 @@ public class MixinLevelRenderer {
             }
         }
 
-        
+
 <<<<<<< HEAD
         if (PearlTarget.maybeEnabled()) {
             try {
@@ -1273,14 +1273,14 @@ public class MixinLevelRenderer {
         float cz = (float)camPos.z;
         float th = 0.06f;
 
-        
-        
+
+
         Render3DUtils.batchAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz - cz, bx - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
         Render3DUtils.batchAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz - cz, bx + 16 - cx, 320 - cy, bz - cz, th, r, g, b, a, true);
         Render3DUtils.batchAxisLine(modelViewMatrix, bx - cx, -64 - cy, bz + 16 - cz, bx - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
         Render3DUtils.batchAxisLine(modelViewMatrix, bx + 16 - cx, -64 - cy, bz + 16 - cz, bx + 16 - cx, 320 - cy, bz + 16 - cz, th, r, g, b, a, true);
 
-        
+
         int baseY = Math.round(cy / 32.0f) * 32;
         for (int dy = -32; dy <= 32; dy += 32) {
             int y = baseY + dy;

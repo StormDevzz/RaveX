@@ -48,4 +48,4 @@ Java_ravex_modules_player_NoGhostBlocks_nativeReset(
     ravex::NoGhostBlocksEngine::instance().reset();
 }
 
-} 
+}

@@ -10,8 +10,8 @@ namespace custom {
 void apply_theme(LauncherState* state);
 void reload_theme(LauncherState* state);
 
-} 
-} 
-} 
-} 
-} 
+}
+}
+}
+}
+}

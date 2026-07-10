@@ -98,7 +98,7 @@ public class CalcCmd extends Cmd {
         skipWS(expr, pos);
         if (pos[0] >= expr.length() || expr.charAt(pos[0]) != '(')
             throw new RuntimeException("Expected '(' after function");
-        pos[0]++; // skip '('
+        pos[0]++;
         double result;
         switch (name) {
             case "sqrt": result = Math.sqrt(evalExpr(expr, pos)); break;

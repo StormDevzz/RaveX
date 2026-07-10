@@ -18,4 +18,4 @@ ModelData optimize(const ModelData& input);
 bool isFormatSupported(const std::string& ext);
 ModelFormat detectFormat(const uint8_t* data, size_t size);
 
-} 
+}

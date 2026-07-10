@@ -15,7 +15,7 @@ public class CommandProcessor {
 
     private CommandProcessor() {}
 
-    
+
     public boolean processCommand(String message) {
         if (!Commands.INSTANCE.getEnabled()) return false;
 
@@ -81,7 +81,7 @@ public class CommandProcessor {
         return true;
     }
 
-    
+
 
     private void handleConfigCommand(String[] args) {
         if (args.length < 2) { printHelp(); return; }
@@ -124,7 +124,7 @@ public class CommandProcessor {
         printMessage("§5[RaveX] Config commands: §e" + p + "config save/load/list/delete <name>");
     }
 
-    
+
 
     private void handleHelp() {
         String p = Commands.INSTANCE.prefix.getValue();
@@ -144,7 +144,7 @@ public class CommandProcessor {
         printMessage(" §e" + p + "benchmark      §7- Run system benchmarks");
     }
 
-    
+
 
     private void handleCalc(String[] args) {
         if (args.length < 2) {
@@ -155,7 +155,7 @@ public class CommandProcessor {
                            .replace(",", ".");
         try {
             double result = evalExpr(expr, new int[]{0});
-            
+
             String resultStr = (result == Math.floor(result) && !Double.isInfinite(result))
                 ? String.valueOf((long) result)
                 : String.format("%.6f", result).replaceAll("0+$", "").replaceAll("\\.$", "");
@@ -165,7 +165,7 @@ public class CommandProcessor {
         }
     }
 
-    
+
     private double evalExpr(String expr, int[] pos) {
         double left = evalTerm(expr, pos);
         while (pos[0] < expr.length()) {
@@ -219,17 +219,17 @@ public class CommandProcessor {
         return Double.parseDouble(expr.substring(start, pos[0]));
     }
 
-    
+
 
     private void handlePlugins() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        
+
         mc.player.connection.sendChat("/plugins");
         printMessage("§7[RaveX] Sent §e/plugins §7to server — check server response in chat.");
     }
 
-    
+
 
     private void handleToggle(String[] args) {
         if (args.length < 2) {
@@ -246,7 +246,7 @@ public class CommandProcessor {
         printMessage("§a[RaveX] §e" + m.getName() + " §7→ " + (m.getEnabled() ? "§aON" : "§cOFF"));
     }
 
-    
+
 
     private void handleBind(String[] args) {
         if (args.length < 3) {
@@ -267,7 +267,7 @@ public class CommandProcessor {
 
     private int glfwKeyFromName(String key) {
         switch (key) {
-            
+
             case "A": return GLFW.GLFW_KEY_A; case "B": return GLFW.GLFW_KEY_B;
             case "C": return GLFW.GLFW_KEY_C; case "D": return GLFW.GLFW_KEY_D;
             case "E": return GLFW.GLFW_KEY_E; case "F": return GLFW.GLFW_KEY_F;
@@ -281,14 +281,14 @@ public class CommandProcessor {
             case "U": return GLFW.GLFW_KEY_U; case "V": return GLFW.GLFW_KEY_V;
             case "W": return GLFW.GLFW_KEY_W; case "X": return GLFW.GLFW_KEY_X;
             case "Y": return GLFW.GLFW_KEY_Y; case "Z": return GLFW.GLFW_KEY_Z;
-            
+
             case "F1": return GLFW.GLFW_KEY_F1; case "F2": return GLFW.GLFW_KEY_F2;
             case "F3": return GLFW.GLFW_KEY_F3; case "F4": return GLFW.GLFW_KEY_F4;
             case "F5": return GLFW.GLFW_KEY_F5; case "F6": return GLFW.GLFW_KEY_F6;
             case "F7": return GLFW.GLFW_KEY_F7; case "F8": return GLFW.GLFW_KEY_F8;
             case "F9": return GLFW.GLFW_KEY_F9; case "F10": return GLFW.GLFW_KEY_F10;
             case "F11": return GLFW.GLFW_KEY_F11; case "F12": return GLFW.GLFW_KEY_F12;
-            
+
             case "HOME": return GLFW.GLFW_KEY_HOME; case "END": return GLFW.GLFW_KEY_END;
             case "INSERT": return GLFW.GLFW_KEY_INSERT; case "DELETE": return GLFW.GLFW_KEY_DELETE;
             case "PAGEUP": return GLFW.GLFW_KEY_PAGE_UP; case "PAGEDOWN": return GLFW.GLFW_KEY_PAGE_DOWN;
@@ -296,7 +296,7 @@ public class CommandProcessor {
         }
     }
 
-    
+
 
     private void handlePanic() {
         int count = 0;
@@ -306,7 +306,7 @@ public class CommandProcessor {
         printMessage("§c[RaveX] §ePanic! §cDisabled §e" + count + " §cmodules.");
     }
 
-    
+
 
     private void handleSay(String[] args) {
         if (args.length < 2) { printMessage("§c[RaveX] Usage: .say <message>"); return; }
@@ -315,7 +315,7 @@ public class CommandProcessor {
         if (mc.player != null) mc.player.connection.sendChat(msg);
     }
 
-    
+
 
     private void handleTime() {
         java.time.LocalTime time = java.time.LocalTime.now();
@@ -323,7 +323,7 @@ public class CommandProcessor {
         printMessage("§5[RaveX] §7Local time: §e" + timeStr);
     }
 
-    
+
 
     private void handleModules() {
         StringBuilder sb = new StringBuilder();
@@ -342,7 +342,7 @@ public class CommandProcessor {
         }
     }
 
-    
+
 
     private void handleCoords() {
         Minecraft mc = Minecraft.getInstance();
@@ -351,7 +351,7 @@ public class CommandProcessor {
         printMessage(String.format("§5[RaveX] §7XYZ: §e%.1f §7/ §e%.1f §7/ §e%.1f", p.getX(), p.getY(), p.getZ()));
         if (mc.level != null) {
             var dim = mc.level.dimensionType();
-            
+
             if (mc.level.dimension().equals(net.minecraft.world.level.Level.NETHER)) {
                 printMessage(String.format("§7→ Overworld: §e%.1f §7/ §7- §7/ §e%.1f", p.getX() * 8, p.getZ() * 8));
             } else if (mc.level.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
@@ -360,7 +360,7 @@ public class CommandProcessor {
         }
     }
 
-    
+
 
     private void handleWaypointCommand(String[] args) {
         String pref = Commands.INSTANCE.prefix.getValue();
@@ -538,7 +538,7 @@ public class CommandProcessor {
         }
     }
 
-    
+
 
     private void printMessage(String text) {
         if (!Commands.INSTANCE.showFeedback.getValue()) {

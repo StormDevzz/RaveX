@@ -34,13 +34,13 @@ static int getFaceIndex(const Vec3& neighbor, const Vec3& candidate) {
     int dx = (int)std::floor(candidate.x) - (int)std::floor(neighbor.x);
     int dy = (int)std::floor(candidate.y) - (int)std::floor(neighbor.y);
     int dz = (int)std::floor(candidate.z) - (int)std::floor(neighbor.z);
-    if (dy == 1) return 1;  
-    if (dy == -1) return 0; 
-    if (dz == -1) return 2; 
-    if (dz == 1) return 3;  
-    if (dx == -1) return 4; 
-    if (dx == 1) return 5;  
-    return 1; 
+    if (dy == 1) return 1;
+    if (dy == -1) return 0;
+    if (dz == -1) return 2;
+    if (dz == 1) return 3;
+    if (dx == -1) return 4;
+    if (dx == 1) return 5;
+    return 1;
 }
 
 
@@ -119,15 +119,15 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
     };
 
     const Vec3 offsets[6] = {
-        {0, -1, 0}, 
-        {0, 1, 0},  
-        {0, 0, -1}, 
-        {0, 0, 1},  
-        {-1, 0, 0}, 
-        {1, 0, 0}   
+        {0, -1, 0},
+        {0, 1, 0},
+        {0, 0, -1},
+        {0, 0, 1},
+        {-1, 0, 0},
+        {1, 0, 0}
     };
 
-    
+
     bool armorWeak = false;
     if (alwaysConsiderDurability) {
         if (targetStats.helmetDurability > 0 && targetStats.helmetDurability < armorDurabilityThreshold) armorWeak = true;
@@ -150,11 +150,11 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
                     continue;
                 }
 
-                
+
                 Vec3 above(c.x, c.y + 1.0, c.z);
                 if (isSolid(above)) continue;
 
-                
+
                 bool foundNeighbor = false;
                 Vec3 bestNeighbor;
                 int bestFace = 1;
@@ -171,12 +171,12 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
 
                 if (!foundNeighbor) continue;
 
-                
+
                 Vec3 anchorExplosionPos(c.x + 0.5, c.y + 0.5, c.z + 0.5);
 
                 if (predictedTargetPos.distanceTo(anchorExplosionPos) > targetRange) continue;
 
-                
+
                 std::vector<Vec3> tempBlocks = solidBlocks;
                 tempBlocks.push_back(c);
 
@@ -197,7 +197,7 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
 
                 double score = targetDmg - selfDmg * selfDamageWeight;
 
-                
+
                 if (armorWeak) {
                     score += 10.0;
                 }
@@ -218,4 +218,4 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
     return bestResult;
 }
 
-} 
+}

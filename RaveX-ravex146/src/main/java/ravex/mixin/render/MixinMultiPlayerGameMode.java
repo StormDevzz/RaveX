@@ -22,9 +22,9 @@ import ravex.modules.exploit.PacketPlace;
 @Mixin(MultiPlayerGameMode.class)
 public class MixinMultiPlayerGameMode {
 
-    
-    
-    
+
+
+
     @Inject(method = "handleInventoryMouseClick",
             at = @At("HEAD"), cancellable = true)
     private void onHandleInventoryMouseClick(int syncId, int slotId, int button, ClickType type,
@@ -44,9 +44,9 @@ public class MixinMultiPlayerGameMode {
         ItemScroller.INSTANCE.handleClick(slotId);
     }
 
-    
-    
-    
+
+
+
     @Inject(method = "useItemOn",
             at = @At("RETURN"))
     private void onUseItemOn(LocalPlayer player,
@@ -59,9 +59,9 @@ public class MixinMultiPlayerGameMode {
         BlockSelector.INSTANCE.selectRandomBlock();
     }
 
-    
-    
-    
+
+
+
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void onAttack(Player player, net.minecraft.world.entity.Entity target, CallbackInfo ci) {
         if (ravex.modules.player.ToolSaver.INSTANCE.shouldSave(player.getMainHandItem())) {

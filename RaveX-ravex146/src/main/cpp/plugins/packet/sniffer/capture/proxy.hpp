@@ -26,4 +26,4 @@ private:
     Callback callback_;
 };
 
-} 
+}

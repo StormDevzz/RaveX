@@ -26,6 +26,6 @@ private:
     jmethodID mid;
 };
 
-} 
+}
 
 #endif

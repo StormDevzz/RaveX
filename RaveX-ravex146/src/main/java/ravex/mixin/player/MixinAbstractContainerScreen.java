@@ -31,9 +31,9 @@ public abstract class MixinAbstractContainerScreen {
     private long scrollerLastTransfer = 0;
     private boolean scrollerWasHolding = false;
 
-    
-    
-    
+
+
+
     @Inject(method = "mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z",
             at = @At("HEAD"), cancellable = true)
     private void onMouseClicked(MouseButtonEvent event, boolean z, CallbackInfoReturnable<Boolean> cir) {
@@ -44,12 +44,12 @@ public abstract class MixinAbstractContainerScreen {
         }
     }
 
-    
-    
-    
+
+
+
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderTail(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
-        
+
         if (ItemScroller.INSTANCE.getEnabled()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc != null && mc.player != null && mc.getWindow() != null) {
@@ -79,11 +79,11 @@ public abstract class MixinAbstractContainerScreen {
             }
         }
 
-        
+
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
         ExtraChest.INSTANCE.onRenderButtons(screen, graphics, mouseX, mouseY);
 
-        
+
         if (StashFinder.INSTANCE.getEnabled()) {
             var menu = screen.getMenu();
             Minecraft mc = Minecraft.getInstance();
@@ -99,9 +99,9 @@ public abstract class MixinAbstractContainerScreen {
         }
     }
 
-    
-    
-    
+
+
+
     @Inject(method = "mouseScrolled(DDDD)Z", at = @At("HEAD"), cancellable = true)
     private void onMouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY,
                                   CallbackInfoReturnable<Boolean> cir) {

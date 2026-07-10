@@ -39,6 +39,6 @@ void resetPhysics();
 
 float smoothDamp(float current, float target, float& velocity, float smoothTime, float deltaTime);
 
-} // namespace ravex::shaders::hand
+}
 
 #endif

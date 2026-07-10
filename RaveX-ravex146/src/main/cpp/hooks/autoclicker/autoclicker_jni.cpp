@@ -15,4 +15,4 @@ Java_ravex_modules_combat_AutoClicker_nativeCalculateDelay(
     return static_cast<jlong>(ravex::calculateClickDelay(minCps, maxCps, randomize == JNI_TRUE));
 }
 
-} 
+}

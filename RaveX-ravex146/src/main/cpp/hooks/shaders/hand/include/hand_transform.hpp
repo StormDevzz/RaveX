@@ -18,6 +18,6 @@ Vec3 worldifyPoint(const Vec3& localPoint);
 const HandTransform& getHandTransform();
 Vec3 getSmoothedPosition();
 
-} // namespace ravex::shaders::hand
+}
 
 #endif

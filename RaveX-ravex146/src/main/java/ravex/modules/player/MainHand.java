@@ -36,7 +36,7 @@ public class MainHand extends Module {
         } else {
             String choice = item.getValue();
             if (choice.equals("Sword")) {
-                
+
                 int swordSlot = findSwordSlot();
                 if (swordSlot != -1) {
                     p.getInventory().setSelectedSlot(swordSlot);
@@ -50,12 +50,12 @@ public class MainHand extends Module {
 
         if (targetItem == Items.AIR) return;
 
-        
+
         if (p.getMainHandItem().is(targetItem) || (targetItem == Items.GOLDEN_APPLE && p.getMainHandItem().is(Items.ENCHANTED_GOLDEN_APPLE))) {
             return;
         }
 
-        
+
         int slot = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = p.getInventory().getItem(i);
