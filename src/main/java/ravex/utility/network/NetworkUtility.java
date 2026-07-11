@@ -155,6 +155,27 @@ public class NetworkUtility {
         }
     }
 
+    public static boolean isAdMessage(String msg) {
+        String lower = msg.toLowerCase();
+        if (lower.contains("discord.gg/") || lower.contains("discord.com/invite/")) return true;
+        if (lower.contains("discordapp.com/invite/")) return true;
+        if (lower.matches(".*\\b(?:buy|sell|cheap|op|dupe|hack|exploit|bypass|donate|raid|free|wins|rank|vouch|trusted)\\b.*")) return true;
+        if (lower.contains(".ru/") || lower.endsWith(".ru") || lower.contains(".рф") || lower.contains(".su") || lower.contains(".cfd") || lower.contains(".gdn") || lower.contains(".click") || lower.contains(".top") || lower.contains(".xyz") || lower.contains(".best")) return true;
+        if (lower.contains("тг:") || lower.contains("телеграм") || lower.contains("t.me/") || lower.contains("t.me")) return true;
+        if (lower.contains("вк.") || lower.contains(".vk.") || lower.contains("vk.com") || lower.contains("vkontakte")) return true;
+        if (lower.contains("купить") || lower.contains("продать") || lower.contains("дюп") || lower.contains("дуп") || lower.contains("чита") || lower.contains("хак") || lower.contains("читер") || lower.contains("раздача") || lower.contains("бесплатно") || lower.contains("подарок") || lower.contains("халява")) return true;
+        if (lower.contains("заходи") || lower.contains("зайди") || lower.contains("играй")) {
+            if (lower.contains("сервер") || lower.contains("сервак") || lower.contains("проект") || lower.contains("топ")) return true;
+        }
+        if (lower.contains("топ ") && (lower.contains("проект") || lower.contains("сервер") || lower.contains("игра"))) return true;
+        if (lower.contains("набор") && (lower.contains("staff") || lower.contains("админ") || lower.contains("модер") || lower.contains("хелп") || lower.contains("helper"))) return true;
+        if (lower.contains("донат") || lower.contains("привилеги") || lower.contains("кейс") || lower.contains("case") || lower.contains("бан") || lower.contains("разбан")) return true;
+        if (lower.contains("ип:") || lower.contains("ip:") || lower.contains("ip ")) {
+            if (lower.contains(".") && (lower.contains("mc") || lower.contains("play") || lower.contains("game") || lower.contains("server"))) return true;
+        }
+        return false;
+    }
+
     public static String formatComponents(ItemStack stack) {
         StringBuilder sb = new StringBuilder();
         if (stack.isEmpty()) return sb.toString();

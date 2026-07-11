@@ -1,11 +1,7 @@
 package ravex.modules.client;
-<<<<<<< HEAD
 import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;
 import ravex.event.combat.ModuleToggleEvent;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.parameter.*;
@@ -13,10 +9,6 @@ import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
 public class DesktopGui extends Module {
-<<<<<<< HEAD
-=======
-    public static final DesktopGui INSTANCE = new DesktopGui();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_desktopgui");
     static {
         NATIVE.load();
@@ -33,10 +25,7 @@ public class DesktopGui extends Module {
             setEnabled(false);
             return;
         }
-<<<<<<< HEAD
         EventBusHolder.get().subscribe(this);
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         List<Module> modules = ModuleManager.INSTANCE.getModules();
         String[] names = new String[modules.size()];
         boolean[] states = new boolean[modules.size()];
@@ -48,25 +37,16 @@ public class DesktopGui extends Module {
     }
     @Override
     protected void onDisable() {
-<<<<<<< HEAD
         EventBusHolder.get().unsubscribe(this);
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (NATIVE.isLoaded()) {
             closeDesktopGui();
         }
     }
-<<<<<<< HEAD
 
     @Subscribe
     public void onModuleToggle(ModuleToggleEvent event) {
         if (NATIVE.isLoaded()) {
             updateModuleState(event.getModule().getName(), event.isEnabled());
-=======
-    public static void onModuleToggle(String name, boolean enabled) {
-        if (INSTANCE.getEnabled() && NATIVE.isLoaded()) {
-            updateModuleState(name, enabled);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
     }
     public static void toggleModuleFromNative(String name) {

@@ -21,15 +21,8 @@ public class AddonManager {
     private native void nativeUnloadAddons();
 
     public void init() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
         ravex.addon.core.CAddonManager.init();
->>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
         File addonsDir = new File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "RaveX/addons");
-=======
-        File addonsDir = new File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "ravex/addons");
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (!addonsDir.exists()) addonsDir.mkdirs();
 
         File nativeAddonsDir = new File(addonsDir, "native");

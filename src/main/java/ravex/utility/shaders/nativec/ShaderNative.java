@@ -3,12 +3,7 @@ package ravex.utility.shaders.nativec;
 import ravex.utility.nativelib.NativeLibrary;
 
 public final class ShaderNative {
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_shaders_native");
-    private static boolean available;
-
-    static {
-        available = NATIVE.load();
-    }
+    private static boolean available = false;
 
     public static boolean isAvailable() { return available; }
 

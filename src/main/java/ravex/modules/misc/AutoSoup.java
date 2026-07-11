@@ -9,13 +9,8 @@ import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
-<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 public class AutoSoup extends Module {
-=======
-public class AutoSoup extends Module {
-    public static final AutoSoup INSTANCE = new AutoSoup();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter health = new NumberParameter("Health", 10.0, 1.0, 20.0, 1.0);
     public final BooleanParameter hotbarOnly = new BooleanParameter("HotbarOnly", true);
     private long lastUse = 0;
@@ -31,13 +26,8 @@ public class AutoSoup extends Module {
         if (!player.getMainHandItem().isEmpty() && !isHealingPotion(player.getMainHandItem())) return;
         int potionSlot = findHealingPotion(player);
         if (potionSlot == -1) return;
-<<<<<<< HEAD
         int prevSlot = InventoryUtility.getSelectedSlot(player);
         InventoryUtility.selectSlot(player, potionSlot);
-=======
-        int prevSlot = player.getInventory().getSelectedSlot();
-        player.getInventory().setSelectedSlot(potionSlot);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         ((AccessorMinecraft) mc).invokeStartUseItem();
         lastUse = now;
         if (prevSlot != potionSlot) {
@@ -58,15 +48,9 @@ public class AutoSoup extends Module {
         }
         return -1;
     }
-<<<<<<< HEAD
     private boolean isHealingPotion(net.minecraft.world.item.ItemStack stack) {
         if (stack.isEmpty()) return false;
         if (!InventoryUtility.isPotion(stack) && !InventoryUtility.isItem(stack, "splash_potion")) return false;
-=======
-    private boolean isHealingPotion(ItemStack stack) {
-        if (stack.isEmpty()) return false;
-        if (stack.getItem() != Items.POTION && stack.getItem() != Items.SPLASH_POTION) return false;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         PotionContents contents = stack.getOrDefault(net.minecraft.core.component.DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
         return contents != null
             && contents.potion().isPresent()

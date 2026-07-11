@@ -32,11 +32,7 @@ public abstract class MixinMinecraftClient {
 
     @Inject(method = "disconnectFromWorld", at = @At("HEAD"), cancellable = true)
     private void onDisconnectFromWorld(net.minecraft.network.chat.Component component, CallbackInfo ci) {
-<<<<<<< HEAD
         if (AntiQuit.shouldBlockDisconnect()) {
-=======
-        if (ravex.modules.misc.AntiQuit.INSTANCE.shouldBlockDisconnect()) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ci.cancel();
         }
     }

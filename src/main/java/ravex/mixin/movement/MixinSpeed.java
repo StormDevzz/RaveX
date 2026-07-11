@@ -2,6 +2,7 @@ package ravex.mixin.movement;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,6 +12,11 @@ import ravex.modules.movement.Speed;
 
 @Mixin(LocalPlayer.class)
 public abstract class MixinSpeed {
+
+    private static int ssStage = 1;
+    private static double ssBaseSpeed = 0.2873;
+    private static int ssTicks = 0;
+    private static boolean ssWasMoving = false;
 
     private static float getForward() {
         Minecraft mc = Minecraft.getInstance();
@@ -39,6 +45,17 @@ public abstract class MixinSpeed {
             double scale = limit / horiz;
             player.setDeltaMovement(m.x * scale, m.y, m.z * scale);
         }
+    }
+
+    @Inject(method = "applyInput", at = @At("TAIL"))
+    private void onApplyInput(CallbackInfo ci) {
+        if (!Speed.maybeEnabled()) return;
+        if (!"Matrix".equals(Speed.itz().mode.getValue())) return;
+
+        LocalPlayer player = (LocalPlayer)(Object)this;
+        float mul = (float)(double)Speed.itz().matrixInputMul.getValue();
+        player.zza *= mul;
+        player.xxa *= mul;
     }
 
     @Inject(method = "aiStep", at = @At("TAIL"))
@@ -178,37 +195,69 @@ public abstract class MixinSpeed {
                 }
                 applySpeedLimit(player, Math.min(globalLimit, 0.22));
             }
-            case "Matrix" -> {
-                if (player.onGround()) {
-                    float forward = getForward();
-                    float strafe = getStrafe();
-                    if (forward == 0 && strafe == 0) return;
-
-                    double speedVal = baseSpeed * 0.08;
-                    double yaw = Math.toRadians(player.getYRot());
-                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
-                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
-
-                    player.setDeltaMovement(velX, motion.y, velZ);
-
-                    if (isJumping() && player.tickCount % 2 == 0) {
-                        player.setDeltaMovement(player.getDeltaMovement().x, 0.38, player.getDeltaMovement().z);
+            case "StrafeStrict" -> {
+                float forward = getForward();
+                float strafe = getStrafe();
+                if (forward == 0 && strafe == 0) {
+                    if (ssWasMoving) {
+                        ssStage = 1;
+                        ssBaseSpeed = 0.2873;
+                        ssWasMoving = false;
                     }
-                } else if (motion.y < -0.1) {
-                    double speedVal = baseSpeed * 0.04;
-                    float forward = getForward();
-                    float strafe = getStrafe();
-                    double yaw = Math.toRadians(player.getYRot());
-                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
-                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
-
-                    player.setDeltaMovement(
-                        motion.x + velX * 0.3,
-                        motion.y,
-                        motion.z + velZ * 0.3
-                    );
+                    Speed.matrixTimer = 1.0f;
+                    return;
                 }
-                applySpeedLimit(player, globalLimit);
+                ssWasMoving = true;
+
+                if (Speed.itz().strafeStrictTimer.getValue()) {
+                    Speed.matrixTimer = 1.088f;
+                } else {
+                    Speed.matrixTimer = 1.0f;
+                }
+
+                double baseMoveSpeed = 0.2873;
+                if (player.hasEffect(MobEffects.SPEED)) {
+                    int amp = player.getEffect(MobEffects.SPEED).getAmplifier();
+                    baseMoveSpeed *= 1.0 + 0.2 * (amp + 1);
+                }
+                if (player.hasEffect(MobEffects.SLOWNESS)) {
+                    int amp = player.getEffect(MobEffects.SLOWNESS).getAmplifier();
+                    baseMoveSpeed /= 1.0 + 0.2 * (amp + 1);
+                }
+
+                if (ssStage == 1 && player.onGround() && !player.horizontalCollision) {
+                    player.setDeltaMovement(player.getDeltaMovement().x, 0.42, player.getDeltaMovement().z);
+                    ssBaseSpeed *= 2.149;
+                    ssStage = 2;
+                } else if (ssStage == 2) {
+                    double currentSpeed = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
+                    ssBaseSpeed = currentSpeed - (0.66 * (currentSpeed - baseMoveSpeed));
+                    ssStage = 3;
+                } else {
+                    if (player.verticalCollision) {
+                        ssStage = 1;
+                    }
+                    ssBaseSpeed = ssBaseSpeed - ssBaseSpeed / 159.0;
+                }
+
+                ssBaseSpeed = Math.max(ssBaseSpeed, baseMoveSpeed);
+
+                double cap = Speed.itz().strafeStrictCap.getValue();
+                ssBaseSpeed = Math.min(ssBaseSpeed, cap);
+
+                float f = forward;
+                float s = strafe;
+                if (f != 0 && s != 0) {
+                    f *= (float)Math.sin(Math.PI / 4);
+                    s *= (float)Math.cos(Math.PI / 4);
+                }
+                double yawRad = Math.toRadians(player.getYRot());
+                double velX = f * ssBaseSpeed * -Math.sin(yawRad) + s * ssBaseSpeed * Math.cos(yawRad);
+                double velZ = f * ssBaseSpeed * Math.cos(yawRad) - s * ssBaseSpeed * -Math.sin(yawRad);
+
+                player.setDeltaMovement(velX, player.getDeltaMovement().y, velZ);
+            }
+            case "Matrix" -> {
             }
             case "Grim" -> {
                 if (!player.onGround()) return;

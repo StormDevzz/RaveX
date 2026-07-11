@@ -31,15 +31,9 @@ public abstract class MixinNoWeb {
 
             self.fallDistance = 0.0F;
 
-<<<<<<< HEAD
             if (mode.equals("GrimStrict")) {
                 stuckSpeedMultiplier = new Vec3(0.5, 1.0, 0.5);
             } else if (horizontal >= 1.0 && vertical >= 1.0) {
-=======
-
-
-            if (horizontal >= 1.0 && vertical >= 1.0) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 stuckSpeedMultiplier = Vec3.ZERO;
             } else {
                 stuckSpeedMultiplier = new Vec3(horizontal, vertical, horizontal);

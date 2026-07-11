@@ -11,6 +11,11 @@ public final class PlayerShaderManager {
     public static void init() {
         if (initialized) return;
         pipeline.init();
+        pipeline.addEffect(new FireAuraEffect());
+        pipeline.addEffect(new EnergyGlowEffect());
+        pipeline.addEffect(new ChromaEffect());
+        pipeline.addEffect(new RippleEffect());
+        pipeline.addEffect(new PulseEffect());
         initialized = true;
     }
 
@@ -26,6 +31,11 @@ public final class PlayerShaderManager {
 
     public static void reset() {
         pipeline.clearEffects();
+        pipeline.addEffect(new FireAuraEffect());
+        pipeline.addEffect(new EnergyGlowEffect());
+        pipeline.addEffect(new ChromaEffect());
+        pipeline.addEffect(new RippleEffect());
+        pipeline.addEffect(new PulseEffect());
     }
 
     public static boolean isInitialized() { return initialized; }

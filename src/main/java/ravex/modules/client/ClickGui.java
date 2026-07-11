@@ -1,10 +1,6 @@
 package ravex.modules.client;
 
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -12,10 +8,6 @@ import ravex.parameter.NumberParameter;
 import java.util.List;
 
 public class ClickGui extends Module {
-<<<<<<< HEAD
-=======
-    public static final ClickGui INSTANCE = new ClickGui();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter drawBackground = new BooleanParameter("Background", true);
     public final ModeParameter colorMode = new ModeParameter("ColorMode", "Positive",
             List.of("Positive", "Fade", "Rainbow", "DoubleColor"));
@@ -58,10 +50,7 @@ public class ClickGui extends Module {
     public final NumberParameter tooltipOffsetX = new NumberParameter("TooltipOffsetX", 8, 0, 30, 1);
     public final NumberParameter tooltipOffsetY = new NumberParameter("TooltipOffsetY", 8, 0, 30, 1);
     public final BooleanParameter showToolbar = new BooleanParameter("ShowToolbar", false);
-<<<<<<< HEAD
     public final BooleanParameter descriptionPanel = new BooleanParameter("DescriptionPanel", false);
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter showGear = new BooleanParameter("ShowGear", false);
 
     private ClickGui() {
@@ -78,11 +67,8 @@ public class ClickGui extends Module {
         headerGlowIntensity.setVisible(() -> headerGlow.getValue());
         setEnabled(true);
     }
-<<<<<<< HEAD
 
     public static ClickGui itz() {
         return ModuleManager.get(ClickGui.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

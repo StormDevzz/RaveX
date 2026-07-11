@@ -26,6 +26,8 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector4f;
 
+import ravex.utility.render.Render2DEngine;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,14 +92,7 @@ public final class HudRenderer {
             if (target == mc.player) continue;
             if (target instanceof LivingEntity living && !living.isAlive()) continue;
 
-            double dist;
-            if (NameTags.isNativeAvailable()) {
-                Vec3 pPos = mc.player.position();
-                Vec3 tPos = target.position();
-                dist = NameTags.nativeGetDistance(pPos.x, pPos.y, pPos.z, tPos.x, tPos.y, tPos.z);
-            } else {
-                dist = mc.player.distanceTo(target);
-            }
+            double dist = mc.player.distanceTo(target);
 
             double maxDist = ModuleManager.get(ESP.class).maxDistance.getValue();
             if (nameTagsEnabled) maxDist = Math.max(maxDist, ModuleManager.get(NameTags.class).range.getValue());
@@ -112,13 +107,23 @@ public final class HudRenderer {
             boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
             boolean isFrame = target instanceof net.minecraft.world.entity.decoration.ItemFrame;
 
-            if (isPlayer && !ModuleManager.get(ESP.class).players.getValue() && !(tracersEnabled && ModuleManager.get(Tracers.class).players.getValue())) continue;
-            if (isMonster && !ModuleManager.get(ESP.class).monsters.getValue() && !(tracersEnabled && ModuleManager.get(Tracers.class).monsters.getValue())) continue;
-            if (isAnimal && !ModuleManager.get(ESP.class).animals.getValue() && !(tracersEnabled && ModuleManager.get(Tracers.class).animals.getValue())) continue;
-            if (isItem && !ModuleManager.get(ESP.class).items.getValue() && !(tracersEnabled && ModuleManager.get(Tracers.class).items.getValue())) continue;
-            if (isFrame && !ModuleManager.get(ESP.class).frames.getValue()) continue;
+            boolean showESP = espEnabled && (
+                (isPlayer && ModuleManager.get(ESP.class).players.getValue()) ||
+                (isMonster && ModuleManager.get(ESP.class).monsters.getValue()) ||
+                (isAnimal && ModuleManager.get(ESP.class).animals.getValue()) ||
+                (isItem && ModuleManager.get(ESP.class).items.getValue()) ||
+                (isFrame && ModuleManager.get(ESP.class).frames.getValue())
+            );
+            boolean showTracers = tracersEnabled && (
+                (isPlayer && ModuleManager.get(Tracers.class).players.getValue()) ||
+                (isMonster && ModuleManager.get(Tracers.class).monsters.getValue()) ||
+                (isAnimal && ModuleManager.get(Tracers.class).animals.getValue()) ||
+                (isItem && ModuleManager.get(Tracers.class).items.getValue())
+            );
+            boolean showNameTags = nameTagsEnabled && NameTags.itz().shouldDraw(target);
+            boolean showOwner = mobOwnerEnabled && (target instanceof LivingEntity living) && MobOwner.getOwnerName(living) != null;
 
-            if (!isPlayer && !isMonster && !isAnimal && !isItem && !isFrame) continue;
+            if (!showESP && !showTracers && !showNameTags && !showOwner) continue;
             candidates.add(target);
         }
         return candidates;
@@ -202,7 +207,7 @@ public final class HudRenderer {
         int[] outIndices = null;
         int renderedCount = 0;
 
-        if (count > 0 && ravex.utility.nativelib.NativeLoader.isNativeAvailable()) {
+        if (count > 0 && ravex.utility.nativelib.NativeLoader.isNativeAvailable() && !nameTagsEnabled) {
             try {
                 double[] cameraPosArr = new double[]{cameraPos.x, cameraPos.y, cameraPos.z};
                 Matrix4f projMatrix = ShaderManager.INSTANCE.getProjectionMatrix();
@@ -230,7 +235,7 @@ public final class HudRenderer {
                     positions[i * 9 + 3] = headPos.x; positions[i * 9 + 4] = headPos.y; positions[i * 9 + 5] = headPos.z;
                     positions[i * 9 + 6] = sidePos.x; positions[i * 9 + 7] = sidePos.y; positions[i * 9 + 8] = sidePos.z;
 
-                    boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity);
+                    boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && NameTags.itz().shouldDraw(target);
                     String ownerName = (mobOwnerEnabled && target instanceof LivingEntity living) ? MobOwner.getOwnerName(living) : null;
                     boolean hasOwner = ownerName != null;
 
@@ -276,7 +281,7 @@ public final class HudRenderer {
                 renderedCount = GuiOptimizer.nativeOptimizeNameTags(
                     cameraPosArr, modelViewArr, projectionArr, playerViewVecArr,
                     positions, textWidths, booleans, armorCounts, count,
-                    ModuleManager.get(NameTags.class).scale.getValue(), ModuleManager.get(NameTags.class).distanceScaling.getValue(),
+                    ModuleManager.get(NameTags.class).size.getValue(), true,
                     Math.max(ModuleManager.get(ESP.class).maxDistance.getValue(), nameTagsEnabled ? ModuleManager.get(NameTags.class).range.getValue() : 0.0),
                     guiWidth, guiHeight, outLayouts, outIndices
                 );
@@ -330,8 +335,8 @@ public final class HudRenderer {
                 renderESPBox(context, mc, target, boxX, y, boxW, boxH, isPlayer, isMonster, isAnimal, isItem);
             }
 
-            boolean withinRange = NameTags.isNativeAvailable() ? NameTags.nativeIsWithinRange(dist, ModuleManager.get(NameTags.class).range.getValue()) : (dist <= ModuleManager.get(NameTags.class).range.getValue());
-            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange;
+            boolean withinRange = dist <= ModuleManager.get(NameTags.class).range.getValue();
+            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange && NameTags.itz().shouldDraw(target);
             if (drawNametags || hasOwner) {
                 renderNametag(context, mc, target, bx, y, scale, totalW, totalH, armorRowY, mainRowY, ownerRowY, textYOff, mainRowW, armorRowW, drawNametags, hasOwner, ownerName);
             }
@@ -383,8 +388,8 @@ public final class HudRenderer {
                 renderESPBox(context, mc, target, boxX, y, boxW, boxH, isPlayer, isMonster, isAnimal, isItem);
             }
 
-            boolean withinRange = NameTags.isNativeAvailable() ? NameTags.nativeIsWithinRange(dist, ModuleManager.get(NameTags.class).range.getValue()) : (dist <= ModuleManager.get(NameTags.class).range.getValue());
-            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange;
+            boolean withinRange = dist <= ModuleManager.get(NameTags.class).range.getValue();
+            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange && NameTags.itz().shouldDraw(target);
             if (drawNametags || hasOwner) {
                 LivingEntity livingTarget = (LivingEntity) target;
                 String displayName = livingTarget.getDisplayName().getString();
@@ -407,12 +412,12 @@ public final class HudRenderer {
                     if (!livingTarget.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) armorCount++;
                 }
 
-                double[] layout;
-                if (NameTags.isNativeAvailable()) {
-                    layout = NameTags.nativeCalculateLayout(dist, ModuleManager.get(NameTags.class).scale.getValue(), ModuleManager.get(NameTags.class).distanceScaling.getValue(), showArmor, showHands, hasOwner, tw, ow, hasMainHand, hasOffHand, armorCount);
-                } else {
-                    layout = NameTags.javaFallbackCalculate(dist, ModuleManager.get(NameTags.class).scale.getValue(), ModuleManager.get(NameTags.class).distanceScaling.getValue(), showArmor, showHands, hasOwner, tw, ow, hasMainHand, hasOffHand, armorCount);
-                }
+                boolean alwaysShowSlots = (livingTarget instanceof net.minecraft.world.entity.player.Player)
+                    || (livingTarget instanceof net.minecraft.world.entity.monster.zombie.Zombie)
+                    || (livingTarget instanceof net.minecraft.world.entity.monster.skeleton.AbstractSkeleton)
+                    || (livingTarget instanceof net.minecraft.world.entity.monster.piglin.AbstractPiglin);
+
+                double[] layout = NameTags.calculateLayout(dist, ModuleManager.get(NameTags.class).size.getValue(), NameTags.itz().distScale.getValue(), showArmor, showHands, hasOwner, tw, ow, hasMainHand, hasOffHand, armorCount, alwaysShowSlots);
 
                 double scale = layout[0], totalW = layout[1], totalH = layout[2];
                 double armorRowY = layout[3], mainRowY = layout[4], ownerRowY = layout[5];
@@ -473,44 +478,117 @@ public final class HudRenderer {
 
         boolean bgEnabled = drawNametags ? ModuleManager.get(NameTags.class).background.getValue() : (hasOwner && ModuleManager.get(MobOwner.class).background.getValue());
         if (bgEnabled) {
-            int bgColor = drawNametags ? ModuleManager.get(NameTags.class).backgroundColor.getValue() : 0xBB000000;
-            int bgLeft = (int)(-totalW / 2.0 - 3.0);
-            int bgRight = (int)(totalW / 2.0 + 3.0);
-            int bgBottom = -2;
+            int bgColor = drawNametags ? ModuleManager.get(NameTags.class).backgroundColor.getValue() : 0x7005050A;
+            int bgLeft = (int)(-totalW / 2.0 - 4.0);
+            int bgRight = (int)(totalW / 2.0 + 4.0);
+            int bgBottom = -1;
             int bgTop = (int)(-2.0 - totalH);
-            context.fill(bgLeft, bgTop, bgRight, bgBottom, bgColor);
-            boolean drawTopLine = false;
-            int lineCol = 0;
-            if (drawNametags) { drawTopLine = ModuleManager.get(NameTags.class).topLine.getValue(); lineCol = ModuleManager.get(NameTags.class).topLineColor.getValue(); }
-            else if (hasOwner) { drawTopLine = ModuleManager.get(MobOwner.class).background.getValue(); lineCol = 0x44FFAA00; }
-            if (drawTopLine) context.fill(bgLeft, bgTop, bgRight, bgTop + 1, lineCol);
+            int bgW = bgRight - bgLeft;
+            int bgH = bgBottom - bgTop;
+
+            Render2DEngine.drawRound(context, bgLeft, bgTop, bgW, bgH, 4, bgColor);
+
+            boolean drawBorder = false;
+            int borderCol = 0;
+            if (drawNametags) {
+                drawBorder = true;
+                int activeColor = ravex.gui.clickgui.ColorUtility.getActiveColor();
+                borderCol = ravex.utility.render.ColorUtility.withAlpha(activeColor, 120);
+            } else if (hasOwner) {
+                drawBorder = ModuleManager.get(MobOwner.class).background.getValue();
+                borderCol = 0x44FFAA00;
+            }
+            if (drawBorder) {
+                Render2DEngine.drawRoundBorder(context, bgLeft, bgTop, bgW, bgH, 4, 1, borderCol);
+            }
         }
 
-        if (showArmor && armorCount > 0) {
+        boolean alwaysShowSlots = (livingTarget instanceof net.minecraft.world.entity.player.Player)
+            || (livingTarget instanceof net.minecraft.world.entity.monster.zombie.Zombie)
+            || (livingTarget instanceof net.minecraft.world.entity.monster.skeleton.AbstractSkeleton)
+            || (livingTarget instanceof net.minecraft.world.entity.monster.piglin.AbstractPiglin);
+
+        int topItemsCount = 0;
+        if (alwaysShowSlots) {
+            if (showHands) topItemsCount += 2;
+            if (showArmor) topItemsCount += 4;
+        } else {
+            if (showHands && hasMainHand) topItemsCount++;
+            if (showArmor) {
+                if (!livingTarget.getItemBySlot(EquipmentSlot.FEET).isEmpty()) topItemsCount++;
+                if (!livingTarget.getItemBySlot(EquipmentSlot.LEGS).isEmpty()) topItemsCount++;
+                if (!livingTarget.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) topItemsCount++;
+                if (!livingTarget.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) topItemsCount++;
+            }
+            if (showHands && hasOffHand) topItemsCount++;
+        }
+
+        if (topItemsCount > 0) {
             int ax = (int)(-armorRowW / 2.0);
             int ay = (int) armorRowY;
-            ItemStack[] armorItems = new ItemStack[]{
-                livingTarget.getItemBySlot(EquipmentSlot.FEET),
-                livingTarget.getItemBySlot(EquipmentSlot.LEGS),
-                livingTarget.getItemBySlot(EquipmentSlot.CHEST),
-                livingTarget.getItemBySlot(EquipmentSlot.HEAD)
-            };
-            for (ItemStack stack : armorItems) {
-                if (!stack.isEmpty()) { context.renderItem(stack, ax, ay); ax += 16 + 2; }
+
+            if (showHands) {
+                ItemStack stack = livingTarget.getMainHandItem();
+                if (alwaysShowSlots || !stack.isEmpty()) {
+                    Render2DEngine.drawRound(context, ax, ay, 18, 18, 3, 0x15FFFFFF);
+                    Render2DEngine.drawRoundBorder(context, ax, ay, 18, 18, 3, 0.5f, 0x20FFFFFF);
+                    if (!stack.isEmpty()) {
+                        context.pose().pushMatrix();
+                        context.pose().translate((float)(ax + 1), (float)(ay + 1));
+                        context.renderItem(stack, 0, 0);
+                        context.renderItemDecorations(mc.font, stack, 0, 0);
+                        context.pose().popMatrix();
+                    }
+                    ax += 18 + 3;
+                }
+            }
+            if (showArmor) {
+                EquipmentSlot[] armorItems = new EquipmentSlot[]{
+                    EquipmentSlot.FEET,
+                    EquipmentSlot.LEGS,
+                    EquipmentSlot.CHEST,
+                    EquipmentSlot.HEAD
+                };
+                for (EquipmentSlot slot : armorItems) {
+                    ItemStack stack = livingTarget.getItemBySlot(slot);
+                    if (alwaysShowSlots || !stack.isEmpty()) {
+                        Render2DEngine.drawRound(context, ax, ay, 18, 18, 3, 0x15FFFFFF);
+                        Render2DEngine.drawRoundBorder(context, ax, ay, 18, 18, 3, 0.5f, 0x20FFFFFF);
+                        if (!stack.isEmpty()) {
+                            context.pose().pushMatrix();
+                            context.pose().translate((float)(ax + 1), (float)(ay + 1));
+                            context.renderItem(stack, 0, 0);
+                            context.renderItemDecorations(mc.font, stack, 0, 0);
+                            context.pose().popMatrix();
+                        }
+                        ax += 18 + 3;
+                    }
+                }
+            }
+            if (showHands) {
+                ItemStack stack = livingTarget.getOffhandItem();
+                if (alwaysShowSlots || !stack.isEmpty()) {
+                    Render2DEngine.drawRound(context, ax, ay, 18, 18, 3, 0x15FFFFFF);
+                    Render2DEngine.drawRoundBorder(context, ax, ay, 18, 18, 3, 0.5f, 0x20FFFFFF);
+                    if (!stack.isEmpty()) {
+                        context.pose().pushMatrix();
+                        context.pose().translate((float)(ax + 1), (float)(ay + 1));
+                        context.renderItem(stack, 0, 0);
+                        context.renderItemDecorations(mc.font, stack, 0, 0);
+                        context.pose().popMatrix();
+                    }
+                }
             }
         }
 
         if (drawNametags) {
-            int rx = (int)(-mainRowW / 2.0);
+            int rx = (int)(-tw / 2.0);
             int mY = (int) mainRowY;
-            if (showHands && hasMainHand) { context.renderItem(livingTarget.getMainHandItem(), rx, mY); rx += 16 + 2; }
             if (ModuleManager.get(NameTags.class).customFont.getValue()) {
-                FontRenderUtility.drawString(context, tagText, rx, (int)(mY + textYOff), 0xFFFFFFFF, false);
+                FontRenderUtility.drawString(context, tagText, rx, mY, 0xFFFFFFFF, false);
             } else {
-                context.drawString(mc.font, tagText, rx, (int)(mY + textYOff), 0xFFFFFFFF, false);
+                context.drawString(mc.font, tagText, rx, mY, 0xFFFFFFFF, false);
             }
-            rx += (int) tw;
-            if (showHands && hasOffHand) { rx += 2; context.renderItem(livingTarget.getOffhandItem(), rx, mY); }
         }
 
         if (hasOwner) {

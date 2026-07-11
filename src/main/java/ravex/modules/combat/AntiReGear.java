@@ -1,8 +1,5 @@
 package ravex.modules.combat;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,30 +11,16 @@ import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-<<<<<<< HEAD
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
-<<<<<<< HEAD
 import ravex.modules.world.GhostBlocks;
 import java.util.ArrayList;
 import java.util.List;
 public class AntiReGear extends Module {
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter delay = new NumberParameter("Delay", 100, 0, 1000, 50);
-=======
-import ravex.modules.world.NoGhostBlocks;
-import java.util.ArrayList;
-import java.util.List;
-public class AntiReGear extends Module {
-    public static final AntiReGear INSTANCE = new AntiReGear();
-    public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter delay = new NumberParameter("Delay(ms)", 100, 0, 1000, 50);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter shulkersParam = new BooleanParameter("Shulkers", true);
     public final BooleanParameter chestsParam = new BooleanParameter("Chests", true);
     public final BooleanParameter enderChestsParam = new BooleanParameter("EnderChests", true);
@@ -135,11 +118,7 @@ public class AntiReGear extends Module {
             Direction dir = getDirection(mc.player.getEyePosition(), target);
             mc.gameMode.startDestroyBlock(target, dir);
             mc.player.swing(InteractionHand.MAIN_HAND);
-<<<<<<< HEAD
             GhostBlocks.markMined(target);
-=======
-            NoGhostBlocks.markMined(target);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             lastBreakTime = now;
         }
     }
@@ -192,7 +171,6 @@ public class AntiReGear extends Module {
             }
         }
     }
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(AntiReGear.class);
     }
@@ -201,6 +179,3 @@ public class AntiReGear extends Module {
     }
 
 }
-=======
-}
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

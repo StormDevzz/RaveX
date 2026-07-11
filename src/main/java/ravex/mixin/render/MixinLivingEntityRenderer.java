@@ -19,11 +19,7 @@ public class MixinLivingEntityRenderer {
     @Inject(method = "shouldShowName", at = @At("HEAD"), cancellable = true)
     private void onShouldShowName(net.minecraft.world.entity.LivingEntity entity, double distance, CallbackInfoReturnable<Boolean> cir) {
 
-<<<<<<< HEAD
         if (NameTags.maybeEnabled()) {
-=======
-        if (NameTags.INSTANCE.getEnabled()) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             cir.setReturnValue(false);
         }
     }

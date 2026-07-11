@@ -1,15 +1,8 @@
 package ravex.modules.render;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-=======
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.state.BlockState;
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -18,12 +11,7 @@ import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 public class ESP extends Module {
-<<<<<<< HEAD
     public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util.List.of("Outline", "Box2D", "Tunnels", "Holes", "Void"));
-=======
-    public static final ESP INSTANCE = new ESP();
-    public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util.List.of("Outline", "Box2D", "Tunnels"));
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", true);
     public final BooleanParameter animals = new BooleanParameter("Animals", false);
@@ -42,7 +30,6 @@ public class ESP extends Module {
     public final BooleanParameter tunnelFilled = new BooleanParameter("TunnelFilled", false);
     public final BooleanParameter tunnelWireframe = new BooleanParameter("TunnelWireframe", true);
     public final NumberParameter tunnelUpdateInterval = new NumberParameter("TunnelUpdate", 20, 5, 100, 5);
-<<<<<<< HEAD
     public final NumberParameter holeRange = new NumberParameter("HoleRange", 8, 4, 24, 2);
     public final ColorParameter safeColor = new ColorParameter("SafeColor", 0xAA00FF00);
     public final BooleanParameter holeFilled = new BooleanParameter("HoleFilled", true);
@@ -60,10 +47,6 @@ public class ESP extends Module {
     private int holeTick = 0;
     private List<BlockPos> voidBlocks = new ArrayList<>();
     private long lastVoidScan = 0;
-=======
-    private List<BlockPos> tunnelBlocks = new ArrayList<>();
-    private long lastTunnelScan = 0;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private ESP() {
         super("ESP");
         playerColor.setVisible(players::getValue);
@@ -78,7 +61,6 @@ public class ESP extends Module {
         tunnelFilled.setVisible(() -> mode.getValue().equals("Tunnels"));
         tunnelWireframe.setVisible(() -> mode.getValue().equals("Tunnels"));
         tunnelUpdateInterval.setVisible(() -> mode.getValue().equals("Tunnels"));
-<<<<<<< HEAD
         holeRange.setVisible(() -> mode.getValue().equals("Holes"));
         safeColor.setVisible(() -> mode.getValue().equals("Holes"));
         holeFilled.setVisible(() -> mode.getValue().equals("Holes"));
@@ -99,23 +81,11 @@ public class ESP extends Module {
         else if (m.equals("Void")) scanVoid();
     }
     private void scanTunnels() {
-=======
-    }
-    @Override
-    public void onTick() {
-        if (!mode.getValue().equals("Tunnels")) return;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
         if (now - lastTunnelScan < tunnelUpdateInterval.getValue().intValue() * 50) return;
         lastTunnelScan = now;
-<<<<<<< HEAD
-=======
-        scanTunnels(mc);
-    }
-    private void scanTunnels(Minecraft mc) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         List<BlockPos> result = new ArrayList<>();
         BlockPos center = mc.player.blockPosition();
         int r = tunnelRange.getValue().intValue();
@@ -144,7 +114,6 @@ public class ESP extends Module {
         }
         tunnelBlocks = result;
     }
-<<<<<<< HEAD
     private void scanHoles() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -228,9 +197,5 @@ public class ESP extends Module {
 
     public static ESP itz() {
         return ModuleManager.get(ESP.class);
-=======
-    public List<BlockPos> getTunnelBlocks() {
-        return tunnelBlocks;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 }

@@ -1,26 +1,14 @@
 package ravex.modules.player;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import com.google.gson.Gson;
-=======
-import com.google.gson.Gson;
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-<<<<<<< HEAD
 
 import java.lang.reflect.Field;
 import java.util.List;
 public class Swing extends Module {
-=======
-import java.lang.reflect.Field;
-import java.util.List;
-public class Swing extends Module {
-    public static final Swing INSTANCE = new Swing();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "1.8", List.of("1.8", "1.12.2", "Custom"));
     public final NumberParameter duration = new NumberParameter("Duration", 6, 1, 20, 1);
     public final ModeParameter swingPath = new ModeParameter("SwingPath", "Normal", List.of("Normal", "Smooth", "Bounce", "Reverse"));
@@ -86,13 +74,10 @@ public class Swing extends Module {
         super.onDisable();
         setLocomotionEnabled(false);
     }
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(Swing.class);
     }
     public static Swing itz() {
         return ModuleManager.get(Swing.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

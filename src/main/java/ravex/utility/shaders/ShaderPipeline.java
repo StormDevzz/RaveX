@@ -46,20 +46,12 @@ public final class ShaderPipeline {
     public ShaderUniforms getUniforms() { return uniforms; }
 
     public EffectOutput processVertex(EffectInput input) {
-        EffectOutput result = new EffectOutput();
         for (ShaderEffect e : effects) {
-            EffectOutput out = e.process(input);
-            result.color.r *= out.color.r;
-            result.color.g *= out.color.g;
-            result.color.b *= out.color.b;
-            result.color.a *= out.color.a;
-            result.alpha *= out.alpha;
-            result.glow = Math.max(result.glow, out.glow);
-            result.offset.x += out.offset.x;
-            result.offset.y += out.offset.y;
-            result.offset.z += out.offset.z;
+            if (e.type() == config.effect) {
+                return e.process(input);
+            }
         }
-        return result;
+        return new EffectOutput();
     }
 
     public void processVertices(EffectInput[] inputs, EffectOutput[] outputs) {

@@ -34,7 +34,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 public class ChatHelper extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of("Announcer", "Welcomer", "AutoEZ", "ZoV", "Spammer", "CoordLogger", "DurabAlert"));
+    public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of("Announcer", "Welcomer", "AutoEZ", "ZoV", "Spammer", "CoordLogger", "DurabAlert", "ChatFilter"));
     public final BooleanParameter announcerEnabled = new BooleanParameter("Announcer", false);
     public final BooleanParameter welcomerEnabled = new BooleanParameter("Welcomer", false);
     public final BooleanParameter autoEZEnabled = new BooleanParameter("AutoEZ", false);
@@ -42,9 +42,8 @@ public class ChatHelper extends Module {
     public final BooleanParameter coordLoggerEnabled = new BooleanParameter("CoordLogger", false);
     public final BooleanParameter durabAlertEnabled = new BooleanParameter("DurabAlert", false);
     public final BooleanParameter chatFilter = new BooleanParameter("ChatFilter", false);
-    public final StringParameter filterDomains = new StringParameter("FilterDomains", ".ru,.xyz,.top,.click,.gdn,.cfd");
-    public final BooleanParameter filterAds = new BooleanParameter("FilterAds", true);
     public final BooleanParameter filterDuplicate = new BooleanParameter("FilterDuplicate", false);
+    public final BooleanParameter onlyName = new BooleanParameter("OnlyName", true);
     public final BooleanParameter timestamp = new BooleanParameter("Timestamp", false);
     public final ModeParameter timestampFormat = new ModeParameter("TSFormat", "HH:mm", List.of("HH:mm", "HH:mm:ss", "[HH:mm]", "[HH:mm:ss]"));
     public final BooleanParameter announceWalk = new BooleanParameter("Walk", true);
@@ -115,14 +114,13 @@ public class ChatHelper extends Module {
 
     private ChatHelper() {
         super("ChatHelper");
-        chatFilter.setVisible(() -> false);
-        filterDomains.setVisible(() -> false);
-        filterAds.setVisible(() -> false);
-        filterDuplicate.setVisible(() -> false);
+        chatFilter.setVisible(() -> "ChatFilter".equals(mode.getValue()));
+        onlyName.setVisible(() -> "ChatFilter".equals(mode.getValue()));
         timestamp.setVisible(() -> false);
         timestampFormat.setVisible(() -> false);
         chatHistorySize.setVisible(() -> false);
         copyOnClick.setVisible(() -> false);
+        filterDuplicate.setVisible(() -> false);
         announcerEnabled.setVisible(() -> "Announcer".equals(mode.getValue()));
         announceWalk.setVisible(() -> "Announcer".equals(mode.getValue()));
         announceEat.setVisible(() -> "Announcer".equals(mode.getValue()));
@@ -152,7 +150,15 @@ public class ChatHelper extends Module {
     }
 
     public boolean shouldFilterMessage(String msg) {
-        if (!getEnabled() || !chatFilter.getValue()) return false;
+        if (!getEnabled()) return false;
+        if ("ChatFilter".equals(mode.getValue())) {
+            if (onlyName.getValue() && Minecraft.getInstance().player != null) {
+                String playerName = Minecraft.getInstance().player.getGameProfile().name().toLowerCase();
+                if (!msg.toLowerCase().contains(playerName)) return true;
+            }
+            return ravex.utility.network.NetworkUtility.isAdMessage(msg);
+        }
+        if (!chatFilter.getValue()) return false;
         if (filterDuplicate.getValue()) {
             if (msg.equals(lastMessage)) {
                 duplicateCount++;
@@ -162,21 +168,7 @@ public class ChatHelper extends Module {
                 duplicateCount = 0;
             }
         }
-        if (filterAds.getValue()) {
-            String lower = msg.toLowerCase();
-            if (lower.contains("discord.gg/") || lower.contains("discord.com/invite/")) return true;
-            if (lower.matches(".*\\b(?:buy|sell|cheap|op|dupe|hack|exploit|bypass|donate|raid)\\b.*")) return true;
-        }
-        String domains = filterDomains.getValue();
-        if (domains != null && !domains.isEmpty()) {
-            String lower = msg.toLowerCase();
-            for (String d : domains.split(",")) {
-                d = d.trim();
-                if (d.isEmpty()) continue;
-                if (lower.contains(d) || lower.matches(".*\\w+" + d.replace(".", "\\.") + "\\b.*")) return true;
-            }
-        }
-        return false;
+        return ravex.utility.network.NetworkUtility.isAdMessage(msg);
     }
 
     public String applyTimestamp(String message) {

@@ -65,7 +65,6 @@ public class TextureLoader {
     public static final Identifier ENABLE = Identifier.fromNamespaceAndPath(NS, "enable");
     public static final Identifier DISABLE = Identifier.fromNamespaceAndPath(NS, "disable");
 
-<<<<<<< HEAD
     public static final Identifier HUD_COORDS = hudId("coords");
     public static final Identifier HUD_TPS = hudId("tps");
     public static final Identifier HUD_INDICATORS = hudId("indicators");
@@ -92,8 +91,6 @@ public class TextureLoader {
     public static final Identifier HUD_FPS_WHITE = hudWhiteId("fps");
     public static final Identifier HUD_ARRAYLIST_WHITE = hudWhiteId("arraylist");
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     static {
         for (Category cat : Category.values()) {
             String name = cat.name().toLowerCase();
@@ -106,7 +103,6 @@ public class TextureLoader {
         return Identifier.fromNamespaceAndPath(NS, GUI_PREFIX + name);
     }
 
-<<<<<<< HEAD
     private static Identifier hudId(String name) {
         return Identifier.fromNamespaceAndPath(NS, "hud/" + name);
     }
@@ -115,8 +111,6 @@ public class TextureLoader {
         return Identifier.fromNamespaceAndPath(NS, "hud_white/" + name);
     }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static NativeImage downscaleTo(NativeImage image, int maxDim) {
         int sw = image.getWidth();
         int sh = image.getHeight();
@@ -288,7 +282,6 @@ public class TextureLoader {
         return ensureLoaded(SETTINGS, "settings") ? SETTINGS : null;
     }
 
-<<<<<<< HEAD
     public static final Identifier PALETTE = Identifier.fromNamespaceAndPath(NS, "hud/palette");
 
     public static Identifier getPaletteTexture() {
@@ -311,8 +304,6 @@ public class TextureLoader {
         }
     }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static Identifier getSettingsWhiteTexture() {
         if (!loaded.containsKey(SETTINGS_WHITE)) {
             if (!ensureLoaded(SETTINGS, "settings")) return null;
@@ -580,13 +571,10 @@ public class TextureLoader {
         } catch (Exception e) {
             RaveX.LOGGER.warn("[TextureLoader] Failed to load marker: {}", e.getMessage());
         }
-<<<<<<< HEAD
 
         for (String hudName : new String[]{"coords", "tps", "indicators", "currency", "media", "cooldown", "inventory", "chat", "serverbrand", "waypoint", "fps", "arraylist"}) {
             getHudIconWhite(hudName);
         }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     public static Identifier getMarkerTexture(int color) {
@@ -650,7 +638,6 @@ public class TextureLoader {
         return null;
     }
 
-<<<<<<< HEAD
     public static Identifier getHudIcon(String name) {
         Identifier id = hudId(name);
         if (loaded.containsKey(id)) return id;
@@ -687,8 +674,6 @@ public class TextureLoader {
         }
     }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static boolean ensureModuleIcon(Identifier guiId, String fileName) {
         if (loaded.containsKey(guiId)) return true;
         String resourcePath = CLASSPATH_PREFIX + MODULES_SUBDIR + fileName + ".png";
@@ -746,7 +731,34 @@ public class TextureLoader {
                 RaveX.LOGGER.warn("[TextureLoader] 3D Resource not found: {}", resourcePath);
                 return false;
             }
-            NativeImage image = NativeImage.read(stream);
+            NativeImage image;
+            if (name.equals("firefly")) {
+                int width = 64;
+                int height = 64;
+                image = new NativeImage(width, height, true);
+                float centerX = width / 2.0f;
+                float centerY = height / 2.0f;
+                float maxRadius = width / 2.0f;
+
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        float dx = x - centerX + 0.5f;
+                        float dy = y - centerY + 0.5f;
+                        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+
+                        float factor = dist / maxRadius;
+                        int alpha = 0;
+                        if (factor < 1.0f) {
+                            alpha = (int) (255.0f * Math.exp(-3.5f * factor * factor));
+                            if (alpha < 0) alpha = 0;
+                            if (alpha > 255) alpha = 255;
+                        }
+                        image.setPixel(x, y, (alpha << 24) | 0xFFFFFF);
+                    }
+                }
+            } else {
+                image = NativeImage.read(stream);
+            }
             AbstractTexture tex = createLinearTexture(image);
             Minecraft.getInstance().getTextureManager().register(guiId, tex);
             loaded.put(guiId, tex);

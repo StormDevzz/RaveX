@@ -1,8 +1,5 @@
 package ravex.modules.render;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -58,11 +55,7 @@ public class BreadCrumbs extends Module {
         float cr = ((color >> 16) & 0xFF) / 255.0f;
         float cg = ((color >> 8) & 0xFF) / 255.0f;
         float cb = (color & 0xFF) / 255.0f;
-<<<<<<< HEAD
         float lineWidth = ModuleManager.get(BreadCrumbs.class).width.getValue().floatValue();
-=======
-        float lineWidth = INSTANCE.width.getValue().floatValue();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         for (Map.Entry<Integer, List<Vec3>> entry : trails.entrySet()) {
             List<Vec3> trail = entry.getValue();
             if (trail.size() < 2) continue;

@@ -1,8 +1,5 @@
 package ravex.modules.player;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -27,10 +24,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.function.Predicate;
 public class GridBuilder extends Module {
-<<<<<<< HEAD
-=======
-    public static final GridBuilder INSTANCE = new GridBuilder();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("Range", 3.0, 1.0, 5.0, 1.0);
     public final NumberParameter placementLoops = new NumberParameter("Loops", 3.0, 1.0, 10.0, 1.0);
     public final NumberParameter tickDelay = new NumberParameter("TickDelay", 1.0, 0.0, 10.0, 1.0);
@@ -147,7 +140,6 @@ public class GridBuilder extends Module {
         if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) return false;
         return true;
     };
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(GridBuilder.class);
     }
@@ -156,6 +148,3 @@ public class GridBuilder extends Module {
     }
 
 }
-=======
-}
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

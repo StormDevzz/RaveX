@@ -1,20 +1,15 @@
 package ravex.modules;
 import com.google.gson.JsonObject;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.event.EventBusHolder;
 import ravex.event.combat.ModuleToggleEvent;
 
 import ravex.event.client.SoundEvent;
-=======
-import net.minecraft.client.gui.GuiGraphics;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.parameter.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 public abstract class Module {
-<<<<<<< HEAD
     protected static <T extends Module> T self(Class<T> type) {
         return ModuleManager.get(type);
     }
@@ -22,8 +17,6 @@ public abstract class Module {
         Module m = ModuleManager.get(type);
         return m != null && m.getEnabled();
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private String name;
     private Category category;
     private boolean enabled;
@@ -80,11 +73,8 @@ public abstract class Module {
         return category;
     }
     public String getDescription() {
-<<<<<<< HEAD
         String translated = ravex.utility.misc.LanguageUtility.getDescription(getName());
         if (translated != null && !translated.startsWith("desc_")) return translated;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (hud) return ravex.gui.descriptions.HudDescriptions.getDescription(getName());
         return ravex.gui.descriptions.ClickGuiDescriptions.getDescription(getName());
     }
@@ -124,23 +114,10 @@ public abstract class Module {
             var bus = EventBusHolder.get();
             if (enabled) {
                 onEnable();
-<<<<<<< HEAD
                 if (hasToggleSound()) bus.post(new SoundEvent(SoundEvent.Type.ENABLE));
             } else {
                 onDisable();
                 if (hasToggleSound()) bus.post(new SoundEvent(SoundEvent.Type.DISABLE));
-=======
-                if (hasToggleSound()) SoundUtility.playEnable();
-                if (ravex.modules.client.Notifications.INSTANCE != null) {
-                    ravex.modules.client.Notifications.notifyToggle(this, true);
-                }
-            } else {
-                onDisable();
-                if (hasToggleSound()) SoundUtility.playDisable();
-                if (ravex.modules.client.Notifications.INSTANCE != null) {
-                    ravex.modules.client.Notifications.notifyToggle(this, false);
-                }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             }
             bus.post(new ModuleToggleEvent(this, enabled));
         }

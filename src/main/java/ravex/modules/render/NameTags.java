@@ -1,62 +1,66 @@
 package ravex.modules.render;
-<<<<<<< HEAD
+
 import ravex.manager.ModuleManager;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.parameter.MultiSelectParameter;
+
 public class NameTags extends Module {
-<<<<<<< HEAD
-=======
-    public static final NameTags INSTANCE = new NameTags();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter armor = new BooleanParameter("Armor", true);
     public final BooleanParameter handItems = new BooleanParameter("HandItems", true);
-    public final BooleanParameter distanceScaling = new BooleanParameter("DistanceScaling", true);
-    public final NumberParameter scale = new NumberParameter("ScaleMultiplier", 1.0, 0.5, 3.0, 0.1);
+    public final NumberParameter size = new NumberParameter("Size", 1.0, 0.5, 2.5, 0.1);
+    public final BooleanParameter distScale = new BooleanParameter("DistScale", true);
     public final NumberParameter range = new NumberParameter("Range", 64.0, 5.0, 256.0, 1.0);
     public final BooleanParameter background = new BooleanParameter("Background", true);
-    public final ColorParameter backgroundColor = new ColorParameter("BackgroundColor", 0xBB000000);
-    public final BooleanParameter topLine = new BooleanParameter("TopLine", false);
-    public final ColorParameter topLineColor = new ColorParameter("TopLineColor", 0xFFFF5555);
+    public final ColorParameter backgroundColor = new ColorParameter("BackgroundColor", 0x20000000);
     public final BooleanParameter customFont = new BooleanParameter("CustomFont", false);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_nametags");
-    static {
-        NATIVE.load();
-    }
+
+    public final MultiSelectParameter entities = new MultiSelectParameter(
+        "Entities",
+        java.util.List.of("Players", "Monsters"),
+        java.util.List.of("Players", "Monsters", "Passives")
+    );
+
     private NameTags() {
         super("NameTags");
         backgroundColor.setVisible(background::getValue);
-        topLine.setVisible(background::getValue);
-        topLineColor.setVisible(() -> background.getValue() && topLine.getValue());
     }
-    public static boolean isNativeAvailable() {
-        return NATIVE.isLoaded();
+
+    public boolean shouldDraw(net.minecraft.world.entity.Entity target) {
+        if (!getEnabled()) return false;
+        if (!(target instanceof net.minecraft.world.entity.LivingEntity le)) return false;
+        if (target instanceof net.minecraft.world.entity.player.Player) {
+            return entities.isSelected("Players");
+        }
+        if (ravex.utility.misc.MobUtility.isHostile(le)) {
+            return entities.isSelected("Monsters");
+        }
+        return entities.isSelected("Passives");
     }
-        public static double nativeGetDistance(double x1, double y1, double z1, double x2, double y2, double z2) {
-        double dX = x1 - x2;
-        double dY = y1 - y2;
-        double dZ = z1 - z2;
-        return Math.sqrt(dX * dX + dY * dY + dZ * dZ);
-    }
-    public static boolean nativeIsWithinRange(double distance, double range) {
-        return distance <= range;
-    }
-    public static double nativeCalculateScale(double distance, double scaleParam, boolean distanceScaling) {
-        if (!distanceScaling) {
+
+    public static double calculateScale(double distance, double scaleParam, boolean distScale) {
+        if (!distScale) {
             return scaleParam;
         }
-        double scale = distance * (scaleParam / 10.0);
-        return Math.max(scale, scaleParam);
+
+
+        double distFactor = 1.0;
+        if (distance > 15.0) {
+            distFactor = 1.0 + (distance - 15.0) * 0.015;
+        } else if (distance < 15.0) {
+            distFactor = 1.0 - (15.0 - distance) * 0.02;
+        }
+        if (distFactor < 0.5) distFactor = 0.5;
+        if (distFactor > 1.5) distFactor = 1.5;
+        return scaleParam * distFactor;
     }
-    public static native double[] nativeCalculateLayout(
+
+    public static double[] calculateLayout(
         double distance,
         double scaleParam,
-        boolean distanceScaling,
+        boolean distScale,
         boolean showArmor,
         boolean showHands,
         boolean hasOwner,
@@ -64,101 +68,77 @@ public class NameTags extends Module {
         double ow,
         boolean hasMainHand,
         boolean hasOffHand,
-        int armorCount
-    );
-    public static double[] javaFallbackCalculate(
-        double distance,
-        double scaleParam,
-        boolean distanceScaling,
-        boolean showArmor,
-        boolean showHands,
-        boolean hasOwner,
-        double tw,
-        double ow,
-        boolean hasMainHand,
-        boolean hasOffHand,
-        int armorCount
+        int armorCount,
+        boolean alwaysShowSlots
     ) {
-        double currentScale;
-        if (isNativeAvailable()) {
-            currentScale = nativeCalculateScale(distance, scaleParam, distanceScaling);
-        } else {
-            currentScale = scaleParam;
-            if (distanceScaling) {
-                currentScale = scaleParam * (distance * 0.15);
-                if (currentScale < 0.5) currentScale = 0.5;
-                if (currentScale > 3.0) currentScale = 3.0;
-            }
-        }
-        double is = 16.0;
-        double gap = 2.0;
+        double currentScale = calculateScale(distance, scaleParam, distScale);
+        double is = 18.0;
+        double gap = 3.0;
         double padding = 3.0;
-        double armorW = 0.0;
-        boolean hasArmor = showArmor && (armorCount > 0);
-        if (hasArmor) {
-            armorW = armorCount * is + (armorCount - 1) * gap;
+
+        int topItemsCount = 0;
+        if (alwaysShowSlots) {
+            if (showHands) topItemsCount += 2;
+            if (showArmor) topItemsCount += 4;
+        } else {
+            if (showHands && hasMainHand) topItemsCount++;
+            if (showArmor) topItemsCount += armorCount;
+            if (showHands && hasOffHand) topItemsCount++;
         }
-        double mainRowW = tw;
-        if (showHands && hasMainHand) mainRowW += is + gap;
-        if (showHands && hasOffHand) mainRowW += gap + is;
+
+        double topRowW = 0.0;
+        if (topItemsCount > 0) {
+            topRowW = topItemsCount * is + (topItemsCount - 1) * gap;
+        }
+
+        double bottomRowW = tw;
         double ownerW = hasOwner ? ow : 0.0;
-        double totalW = Math.max(mainRowW, Math.max(armorW, ownerW));
-        double mainRowH = 9.0;
-        double textYOff = 0.0;
-        if ((showHands && hasMainHand) || (showHands && hasOffHand)) {
-            mainRowH = is;
-            textYOff = (is - 9.0) / 2.0;
-        }
+        double totalW = Math.max(bottomRowW, Math.max(topRowW, ownerW));
+
         double totalH = 0.0;
-        if (hasArmor) {
+        if (topItemsCount > 0) {
             totalH += is + gap;
         }
-        boolean hasMainRow = (tw > 0);
-        if (hasMainRow) {
-            totalH += mainRowH;
+        if (tw > 0) {
+            totalH += 9.0;
         }
         if (hasOwner) {
-            if (hasMainRow || hasArmor) {
-                totalH += gap + 9.0;
-            } else {
-                totalH += 9.0;
-            }
+            totalH += gap + 9.0;
         }
         totalH += 2 * padding;
-        double bgBottom = -2.0;
+
+        double bgBottom = -1.5;
         double bgTop = bgBottom - totalH;
         double contentTop = bgTop + padding;
-        double armorRowY = 0.0;
-        if (hasArmor) {
-            armorRowY = contentTop;
+
+        double topRowY = 0.0;
+        if (topItemsCount > 0) {
+            topRowY = contentTop;
             contentTop += is + gap;
         }
-        double mainRowY = 0.0;
-        if (hasMainRow) {
-            mainRowY = contentTop;
-            contentTop += mainRowH;
+        double mainRowY = contentTop;
+        if (tw > 0) {
+            contentTop += 9.0;
         }
         double ownerRowY = 0.0;
         if (hasOwner) {
-            if (hasMainRow || hasArmor) {
-                ownerRowY = contentTop + gap;
-            } else {
-                ownerRowY = contentTop;
-            }
+            ownerRowY = contentTop + gap;
         }
+
         return new double[]{
             currentScale,
             totalW,
             totalH,
-            armorRowY,
+            topRowY,
             mainRowY,
             ownerRowY,
-            textYOff,
-            mainRowW,
-            armorW,
+            0.0,
+            tw,
+            topRowW,
             0.0
         };
     }
+
     public static boolean maybeEnabled() {
         return maybeEnabled(NameTags.class);
     }

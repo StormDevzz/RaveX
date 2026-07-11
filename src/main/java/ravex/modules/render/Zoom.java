@@ -1,19 +1,10 @@
 package ravex.modules.render;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
-=======
-import net.minecraft.client.Minecraft;
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 public class Zoom extends Module {
-<<<<<<< HEAD
-=======
-    public static final Zoom INSTANCE = new Zoom();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter smooth = new BooleanParameter("Smooth", true);
     public final NumberParameter smoothSpeed = new NumberParameter("SmoothSpeed", 0.15, 0.05, 0.5, 0.05);
     public final NumberParameter defaultZoom = new NumberParameter("DefaultZoom", 30, 5, 90, 5);
@@ -68,7 +59,6 @@ public class Zoom extends Module {
     public double getCurrentFov() {
         return currentFov;
     }
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(Zoom.class);
     }
@@ -76,6 +66,4 @@ public class Zoom extends Module {
     public static Zoom itz() {
         return ModuleManager.get(Zoom.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

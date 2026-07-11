@@ -1,9 +1,5 @@
 package ravex.modules.misc;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
@@ -16,13 +12,8 @@ import net.minecraft.world.item.HoneycombItem;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 public class WaxAura extends Module {
-=======
-public class WaxAura extends Module {
-    public static final WaxAura INSTANCE = new WaxAura();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
     public final NumberParameter delay = new NumberParameter("Delay", 2.0, 0.0, 20.0, 1.0);
     public final BooleanParameter autoSwap = new BooleanParameter("AutoSwap", true);

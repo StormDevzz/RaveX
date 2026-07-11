@@ -1,16 +1,9 @@
 package ravex.modules.combat;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-<<<<<<< HEAD
-=======
-import net.minecraft.world.item.Items;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -22,10 +15,6 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
 public class WebSelf extends Module {
-<<<<<<< HEAD
-=======
-    public static final WebSelf INSTANCE = new WebSelf();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x88FFFFFF);
@@ -33,15 +22,12 @@ public class WebSelf extends Module {
     public static BlockPos targetPos = null;
     public static float renderR = 1.0f, renderG = 1.0f, renderB = 1.0f;
     private int delay = 0;
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(WebSelf.class);
     }
     public static WebSelf itz() {
         return ModuleManager.get(WebSelf.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
     @Override
     protected void onEnable() { targetPos = null; delay = 0; }
@@ -56,11 +42,7 @@ public class WebSelf extends Module {
         if (!mc.level.getBlockState(below).isAir() && !mc.level.getBlockState(below).is(Blocks.COBWEB)) {
             targetPos = null; return;
         }
-<<<<<<< HEAD
         int webSlot = InventoryUtility.findHotbarSlot(mc.player, "cobweb");
-=======
-        int webSlot = InventoryUtility.findHotbarSlot(mc.player, Items.COBWEB);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (webSlot == -1) { targetPos = null; return; }
         targetPos = below;
         if (render.getValue()) {

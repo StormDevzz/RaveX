@@ -1,18 +1,10 @@
 package ravex.modules.combat;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.world.InteractionHand;
-<<<<<<< HEAD
-=======
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RailBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,10 +21,6 @@ import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
 import java.util.List;
 public class AutoCart extends Module {
-<<<<<<< HEAD
-=======
-    public static final AutoCart INSTANCE = new AutoCart();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
     public final NumberParameter targetRange = new NumberParameter("TargetRange", 20, 5, 50, 1);
     public final ModeParameter cartType = new ModeParameter("CartType", "TNT",
@@ -83,11 +71,7 @@ public class AutoCart extends Module {
                 }
             }
         }
-<<<<<<< HEAD
         boolean isUsingBow = mc.player.isUsingItem() && InventoryUtility.isBow(mc.player.getUseItem());
-=======
-        boolean isUsingBow = mc.player.isUsingItem() && mc.player.getUseItem().is(Items.BOW);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (isUsingBow) {
             lastBowCharge = mc.player.getTicksUsingItem();
         }
@@ -106,11 +90,7 @@ public class AutoCart extends Module {
         if (landingPos == null) return;
         double dist = mc.player.getEyePosition().distanceTo(Vec3.atCenterOf(landingPos));
         if (dist > targetRange.getValue()) return;
-<<<<<<< HEAD
         int railSlot = findItemSlot(mc, net.minecraft.world.item.Items.RAIL);
-=======
-        int railSlot = findItemSlot(mc, Items.RAIL);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (railSlot == -1) return;
         int cartSlot = findCartSlot(mc);
         if (cartSlot == -1) return;
@@ -120,21 +100,13 @@ public class AutoCart extends Module {
         placeCart(mc, landingPos);
     }
     private void placeCart(Minecraft mc, BlockPos pos) {
-<<<<<<< HEAD
         int railSlot = findItemSlot(mc, net.minecraft.world.item.Items.RAIL);
-=======
-        int railSlot = findItemSlot(mc, Items.RAIL);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         int cartSlot = findCartSlot(mc);
         if (railSlot == -1 || cartSlot == -1) return;
         long now = System.currentTimeMillis();
         if (now - lastPlaceTime < 100) return;
         lastPlaceTime = now;
-<<<<<<< HEAD
             originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-=======
-        originalSlot = mc.player.getInventory().getSelectedSlot();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         RaveX.LOGGER.info("[AutoCart] Placing at {}", pos);
         if (rotate.getValue()) {
             faceBlock(mc, pos);
@@ -180,19 +152,11 @@ public class AutoCart extends Module {
     }
     private int findItemSlot(Minecraft mc, net.minecraft.world.item.Item item) {
         for (int i = 0; i < 9; i++) {
-<<<<<<< HEAD
             var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.is(item)) return i;
         }
         for (int i = 9; i < 36; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
-=======
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (stack.is(item)) return i;
-        }
-        for (int i = 9; i < 36; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (stack.is(item)) {
                 int freeSlot = findEmptySlot(mc);
                 if (freeSlot != -1) {
@@ -211,27 +175,16 @@ public class AutoCart extends Module {
     }
     private int findCartSlot(Minecraft mc) {
         net.minecraft.world.item.Item targetItem = switch (cartType.getValue()) {
-<<<<<<< HEAD
             case "Chest" -> net.minecraft.world.item.Items.CHEST_MINECART;
             case "Furnace" -> net.minecraft.world.item.Items.FURNACE_MINECART;
             case "Hopper" -> net.minecraft.world.item.Items.HOPPER_MINECART;
             default -> net.minecraft.world.item.Items.TNT_MINECART;
-=======
-            case "Chest" -> Items.CHEST_MINECART;
-            case "Furnace" -> Items.FURNACE_MINECART;
-            case "Hopper" -> Items.HOPPER_MINECART;
-            default -> Items.TNT_MINECART;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         };
         return findItemSlot(mc, targetItem);
     }
     private int findEmptySlot(Minecraft mc) {
         for (int i = 0; i < 9; i++) {
-<<<<<<< HEAD
             if (InventoryUtility.getItem(mc.player, i).isEmpty()) return i;
-=======
-            if (mc.player.getInventory().getItem(i).isEmpty()) return i;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
         return -1;
     }
@@ -263,7 +216,6 @@ public class AutoCart extends Module {
         Vec3 targetPos = Vec3.atCenterOf(pos);
         return playerPos.distanceTo(targetPos) <= range.getValue();
     }
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(AutoCart.class);
     }
@@ -272,6 +224,3 @@ public class AutoCart extends Module {
     }
 
 }
-=======
-}
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

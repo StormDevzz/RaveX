@@ -2,29 +2,20 @@ package ravex.mixin.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
-<<<<<<< HEAD
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.world.inventory.Slot;
-=======
-import net.minecraft.client.input.MouseButtonInfo;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-<<<<<<< HEAD
 import ravex.modules.client.Hud;
 import ravex.modules.movement.GuiMove;
-=======
-import ravex.modules.movement.GuiWalk;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
 @Mixin(MouseHandler.class)
 public class MixinMouse {
     @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
     private void onMouseButton(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
-<<<<<<< HEAD
         GuiMove gw = GuiMove.itz();
         if (!gw.getEnabled() || !"NoClick".equals(gw.mode.getValue())) return;
         Minecraft mc = Minecraft.getInstance();
@@ -64,12 +55,5 @@ public class MixinMouse {
                 Hud.draggingHud = null;
             }
         }
-=======
-        GuiWalk gw = GuiWalk.INSTANCE;
-        if (!gw.getEnabled() || !"NoClick".equals(gw.mode.getValue())) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.screen == null) return;
-        ci.cancel();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 }

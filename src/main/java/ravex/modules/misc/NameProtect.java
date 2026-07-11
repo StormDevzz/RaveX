@@ -5,10 +5,6 @@ import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.parameter.StringParameter;
 public class NameProtect extends Module {
-<<<<<<< HEAD
-=======
-    public static final NameProtect INSTANCE = new NameProtect();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final StringParameter replaceText = new StringParameter("ReplaceWith", "RaveX");
 
     public Component protectComponent(Component component) {

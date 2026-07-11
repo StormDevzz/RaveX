@@ -1,9 +1,5 @@
 #include "jni_bridge.hpp"
 #include "../hooks/norender/include/norender.hpp"
-<<<<<<< HEAD
-=======
-#include "../antiafk/include/antiafk.hpp"
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 #include "../common/include/memory.hpp"
 #include "../hooks/shaders/hand/include/shader_color.hpp"
 #include "../math/include/wave_math.hpp"
@@ -14,10 +10,6 @@
 #include <cstring>
 #include <vector>
 #include <cmath>
-<<<<<<< HEAD
-=======
-
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
 
 
@@ -28,27 +20,6 @@
 
 
 
-<<<<<<< HEAD
-=======
-JNIEXPORT void JNICALL
-Java_ravex_modules_misc_AntiAfk_nativeStop(JNIEnv*, jclass) {
-    ravex::AntiAfk::stop();
-}
-
-JNIEXPORT jboolean JNICALL
-Java_ravex_modules_misc_AntiAfk_nativeIsRunning(JNIEnv*, jclass) {
-    return ravex::AntiAfk::isRunning() ? JNI_TRUE : JNI_FALSE;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_ravex_modules_misc_AntiAfk_nativePerformAction(JNIEnv*, jclass) {
-    return ravex::AntiAfk::performRandomAction() ? JNI_TRUE : JNI_FALSE;
-}
-
-
-
-
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
 extern "C" {
 

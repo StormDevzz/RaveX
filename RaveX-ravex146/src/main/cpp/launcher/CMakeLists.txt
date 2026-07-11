@@ -1,5 +1,0 @@
-if(UNIX AND NOT APPLE)
-    add_subdirectory(linux)
-elseif(WIN32)
-    add_subdirectory(windows)
-endif()

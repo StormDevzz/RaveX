@@ -23,6 +23,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector4f;
 import ravex.mixin.render.AccessorRenderType;
 import ravex.utility.player.rotation.RotationUtility;
+import com.mojang.blaze3d.systems.RenderSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,7 @@ public class Render3DEngine {
     private static RenderType LINE_NO_DEPTH;
     private static RenderType LINE_ADDITIVE;
     private static RenderType LINE_ADDITIVE_NO_DEPTH;
+    private static RenderType SOULS_ADDITIVE;
 
     private static BufferBuilder fillBuilder;
     private static BufferBuilder fillNoDepthBuilder;
@@ -68,9 +70,40 @@ public class Render3DEngine {
                 b -> b.withBlend(BlendFunction.ADDITIVE));
             LINE_ADDITIVE_NO_DEPTH = cloneRenderType(RenderPipelines.LINES, "ravex3d_line_add_nd",
                 b -> b.withBlend(BlendFunction.ADDITIVE).withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false));
+            SOULS_ADDITIVE = cloneTexturedRenderType(RenderPipelines.ENTITY_TRANSLUCENT, "ravex3d_souls_add", TextureLoader.FIREFLY,
+                b -> b.withBlend(BlendFunction.ADDITIVE).withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false));
         } catch (Exception e) {
             ravex.RaveX.LOGGER.warn("[R3D] Failed to create custom render types: {}", e.getMessage());
         }
+    }
+
+    private static RenderType cloneTexturedRenderType(RenderPipeline source, String name, Identifier textureId, Consumer<RenderPipeline.Builder> overrider) {
+        Identifier id = Identifier.withDefaultNamespace(name);
+        RenderPipeline.Builder rb = RenderPipeline.builder()
+            .withLocation(id)
+            .withVertexShader(source.getVertexShader())
+            .withFragmentShader(source.getFragmentShader())
+            .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
+            .withDepthTestFunction(source.getDepthTestFunction())
+            .withDepthWrite(source.isWriteDepth())
+            .withCull(source.isCull())
+            .withDepthBias(source.getDepthBiasScaleFactor(), source.getDepthBiasConstant())
+            .withPolygonMode(source.getPolygonMode())
+            .withColorLogic(source.getColorLogic())
+            .withColorWrite(source.isWriteColor(), source.isWriteAlpha());
+
+        source.getBlendFunction().ifPresentOrElse(b -> rb.withBlend(b), () -> rb.withoutBlend());
+        for (String s : source.getSamplers()) rb.withSampler(s);
+        for (RenderPipeline.UniformDescription u : source.getUniforms()) rb.withUniform(u.name(), u.type());
+        overrider.accept(rb);
+
+        RenderSetup.RenderSetupBuilder rsb = RenderSetup.builder(rb.build());
+        List<String> samplers = source.getSamplers();
+        if (!samplers.isEmpty()) {
+            rsb.withTexture(samplers.get(0), textureId);
+        }
+        RenderSetup setup = rsb.createRenderSetup();
+        return AccessorRenderType.invokeCreate(name, setup);
     }
 
     private static RenderType cloneRenderType(RenderPipeline source, String name, Consumer<RenderPipeline.Builder> overrider) {
@@ -536,7 +569,6 @@ public class Render3DEngine {
         int overlay = OverlayTexture.NO_OVERLAY;
         int light = 0xF000F0;
 
-
         double progress = scanProgress % 2.0;
         if (progress > 1.0) {
             progress = 2.0 - progress;
@@ -552,7 +584,6 @@ public class Render3DEngine {
 
             float radius = width * (1.1f + 0.12f * (float) Math.sin(rotation * 0.05));
 
-
             ESP_ALLOCATOR.clear();
             BufferBuilder builder = new BufferBuilder(ESP_ALLOCATOR, renderType.mode(), renderType.format());
             int colDisk = ColorUtility.applyAlpha(color, alphaFade * 0.22f);
@@ -561,7 +592,6 @@ public class Render3DEngine {
             builder.addVertex(matrix, radius, 0.0f, radius).setColor(colDisk).setUv(1.0f, 1.0f).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
             builder.addVertex(matrix, radius, 0.0f, -radius).setColor(colDisk).setUv(1.0f, 0.0f).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
             renderType.draw(builder.buildOrThrow());
-
 
             ESP_ALLOCATOR.clear();
             BufferBuilder lineBuilder = new BufferBuilder(ESP_ALLOCATOR, lineType.mode(), lineType.format());
@@ -596,8 +626,8 @@ public class Render3DEngine {
 
         float iAge = target.tickCount + tickDelta;
 
-
-        RenderType renderType = RenderTypes.debugFilledBox();
+        RenderType renderType = SOULS_ADDITIVE;
+        if (renderType == null) return;
 
         ESP_ALLOCATOR.clear();
         BufferBuilder builder = new BufferBuilder(ESP_ALLOCATOR, renderType.mode(), renderType.format());
@@ -620,9 +650,7 @@ public class Render3DEngine {
                 double oz = Math.sin(radians) * target.getBbWidth();
                 matrix.translate((float)(tPosX + ox), (float)(tPosY + oy), (float)(tPosZ + oz));
 
-
-                float sizePulse = 0.8f + 0.35f * (float) Math.sin(iAge * 0.15f + i * 0.5f);
-                float scale = Math.max(0.18f * offset, 0.12f) * sizePulse * 0.85f;
+                float scale = Math.max(0.35f * offset, 0.28f);
                 matrix.m00(scale);
                 matrix.m01(0.0f);
                 matrix.m02(0.0f);
@@ -633,22 +661,79 @@ public class Render3DEngine {
                 matrix.m21(0.0f);
                 matrix.m22(scale);
 
-                int ia = Math.round(offset * 0.95f * 255.0f);
+                int ia = Math.round(offset * 220.0f);
 
-
-                for (int stepIdx = 0; stepIdx < 3; stepIdx++) {
-                    float angle = (float) (stepIdx * Math.PI / 6.0);
-                    float cos = (float) Math.cos(angle);
-                    float sin = (float) Math.sin(angle);
-
-                    builder.addVertex(matrix, -cos - sin, -sin + cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
-                    builder.addVertex(matrix, cos - sin, sin + cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
-                    builder.addVertex(matrix, cos + sin, sin - cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
-                    builder.addVertex(matrix, -cos + sin, -sin - cos, 0.0f).setColor(irBase, igBase, ibBase, ia);
-                }
+                builder.addVertex(matrix, -1.0f, 1.0f, 0.0f).setColor(irBase, igBase, ibBase, ia).setUv(0.0f, 1.0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0, 1, 0);
+                builder.addVertex(matrix, 1.0f, 1.0f, 0.0f).setColor(irBase, igBase, ibBase, ia).setUv(1.0f, 1.0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0, 1, 0);
+                builder.addVertex(matrix, 1.0f, -1.0f, 0.0f).setColor(irBase, igBase, ibBase, ia).setUv(1.0f, 0.0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0, 1, 0);
+                builder.addVertex(matrix, -1.0f, -1.0f, 0.0f).setColor(irBase, igBase, ibBase, ia).setUv(0.0f, 0.0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0, 1, 0);
             }
         }
 
         renderType.draw(builder.buildOrThrow());
+    }
+
+    public static void renderCircleESP(Matrix4f modelViewMatrix, Camera camera, Entity target, int color, float circleStep, float prevCircleStep, float tickDelta) {
+        double cs = prevCircleStep + (circleStep - prevCircleStep) * tickDelta;
+        double prevSinAnim = Math.abs(1.0 + Math.sin(cs - 0.45)) / 2.0;
+        double sinAnim = Math.abs(1.0 + Math.sin(cs)) / 2.0;
+
+        double tPosX = target.xo + (target.getX() - target.xo) * tickDelta - camera.position().x;
+        double tPosY = target.yo + (target.getY() - target.yo) * tickDelta - camera.position().y;
+        double tPosZ = target.zo + (target.getZ() - target.zo) * tickDelta - camera.position().z;
+
+        double height = target.getBbHeight();
+        double rWidth = target.getBbWidth() * 0.8;
+
+        double yBottom = tPosY + prevSinAnim * height;
+        double yTop = tPosY + sinAnim * height;
+
+        int ir = ColorUtility.getRed(color);
+        int ig = ColorUtility.getGreen(color);
+        int ib = ColorUtility.getBlue(color);
+
+        Matrix4f matrix = new Matrix4f(modelViewMatrix);
+
+        RenderType renderType = RenderTypes.debugFilledBox();
+        ESP_ALLOCATOR.clear();
+        BufferBuilder builder = new BufferBuilder(ESP_ALLOCATOR, renderType.mode(), renderType.format());
+
+        int segments = 30;
+        for (int i = 0; i < segments; i++) {
+            double angle1 = (i * 2.0 * Math.PI) / segments;
+            double angle2 = ((i + 1) * 2.0 * Math.PI) / segments;
+
+            float cos1 = (float) (Math.cos(angle1) * rWidth);
+            float sin1 = (float) (Math.sin(angle1) * rWidth);
+            float cos2 = (float) (Math.cos(angle2) * rWidth);
+            float sin2 = (float) (Math.sin(angle2) * rWidth);
+
+            builder.addVertex(matrix, (float)(tPosX + cos1), (float)yBottom, (float)(tPosZ + sin1)).setColor(ir, ig, ib, 0);
+            builder.addVertex(matrix, (float)(tPosX + cos2), (float)yBottom, (float)(tPosZ + sin2)).setColor(ir, ig, ib, 0);
+            builder.addVertex(matrix, (float)(tPosX + cos2), (float)yTop, (float)(tPosZ + sin2)).setColor(ir, ig, ib, 170);
+            builder.addVertex(matrix, (float)(tPosX + cos1), (float)yTop, (float)(tPosZ + sin1)).setColor(ir, ig, ib, 170);
+        }
+        renderType.draw(builder.buildOrThrow());
+
+        RenderType lineType = RenderTypes.lines();
+        ESP_ALLOCATOR.clear();
+        BufferBuilder lineBuilder = new BufferBuilder(ESP_ALLOCATOR, lineType.mode(), lineType.format());
+
+        for (int i = 0; i < segments; i++) {
+            double angle1 = (i * 2.0 * Math.PI) / segments;
+            double angle2 = ((i + 1) * 2.0 * Math.PI) / segments;
+
+            float cos1 = (float) (Math.cos(angle1) * rWidth);
+            float sin1 = (float) (Math.sin(angle1) * rWidth);
+            float cos2 = (float) (Math.cos(angle2) * rWidth);
+            float sin2 = (float) (Math.sin(angle2) * rWidth);
+
+            float nx = cos2 - cos1;
+            float nz = sin2 - sin1;
+
+            lineBuilder.addVertex(matrix, (float)(tPosX + cos1), (float)yTop, (float)(tPosZ + sin1)).setColor(ir, ig, ib, 230).setNormal(nx, 0, nz).setLineWidth(4.0f);
+            lineBuilder.addVertex(matrix, (float)(tPosX + cos2), (float)yTop, (float)(tPosZ + sin2)).setColor(ir, ig, ib, 230).setNormal(nx, 0, nz).setLineWidth(4.0f);
+        }
+        lineType.draw(lineBuilder.buildOrThrow());
     }
 }

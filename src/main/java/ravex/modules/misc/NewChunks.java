@@ -1,10 +1,7 @@
 package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
-<<<<<<< HEAD
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.utility.nativelib.NativeLibrary;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -15,10 +12,6 @@ import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
-<<<<<<< HEAD
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -28,13 +21,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 public class NewChunks extends Module {
-=======
-public class NewChunks extends Module {
-    public static final NewChunks INSTANCE = new NewChunks();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter notify = new BooleanParameter("Notify", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter renderLoaded = new BooleanParameter("RenderLoaded", true);
@@ -118,11 +106,7 @@ public class NewChunks extends Module {
                 Minecraft.getInstance().execute(() -> {
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
-<<<<<<< HEAD
                         int color = ModuleManager.get(ravex.modules.client.Notifications.class).messageColor.getValue();
-=======
-                        int color = ravex.modules.client.Notifications.INSTANCE.messageColor.getValue();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                         Component message = Component.literal("[")
                             .withStyle(style -> style.withColor(0x7F7F7F))
                             .append(Component.literal("NewChunks").withStyle(style -> style.withColor(color)))
@@ -137,15 +121,12 @@ public class NewChunks extends Module {
             loadedChunks.add(pos);
         }
     }
-<<<<<<< HEAD
     @Subscribe
     public void onPacketEvent(PacketEvent event) {
         if (!getEnabled() || !event.isReceive()) return;
         onPacketReceive(event.getPacket());
     }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public void onPacketReceive(Object packet) {
         if (!getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
@@ -226,7 +207,6 @@ public class NewChunks extends Module {
         old112Chunks.clear();
         analyzedChunks.clear();
     }
-<<<<<<< HEAD
 
     public static boolean maybeEnabled() {
         return maybeEnabled(NewChunks.class);
@@ -235,6 +215,4 @@ public class NewChunks extends Module {
     public static NewChunks itz() {
         return ModuleManager.get(NewChunks.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

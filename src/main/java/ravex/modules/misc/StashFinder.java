@@ -9,10 +9,6 @@ import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 public class StashFinder extends Module {
-<<<<<<< HEAD
-=======
-    public static final StashFinder INSTANCE = new StashFinder();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("Range", 64.0, 16.0, 256.0, 8.0);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter logToChat = new BooleanParameter("ChatLog", true);
@@ -20,11 +16,7 @@ public class StashFinder extends Module {
     private double lastCheckX, lastCheckY, lastCheckZ;
     private boolean hasChecked = false;
 
-<<<<<<< HEAD
     public void onContainerOpened(BlockPos pos, List<net.minecraft.world.item.ItemStack> contents) {
-=======
-    public void onContainerOpened(BlockPos pos, List<ItemStack> contents) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (!getEnabled()) return;
         if (stashes.stream().anyMatch(s -> s.pos.equals(pos))) return;
         int valuableCount = 0;
@@ -54,11 +46,7 @@ public class StashFinder extends Module {
     public void clearStashes() {
         stashes.clear();
     }
-<<<<<<< HEAD
     private boolean isValuable(net.minecraft.world.item.ItemStack stack) {
-=======
-    private boolean isValuable(ItemStack stack) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         String name = stack.getItem().getName(stack.getItem().getDefaultInstance()).getString().toLowerCase();
         if (name.contains("diamond") || name.contains("emerald") || name.contains("gold")
             || name.contains("iron") || name.contains("netherite") || name.contains("enchanted")

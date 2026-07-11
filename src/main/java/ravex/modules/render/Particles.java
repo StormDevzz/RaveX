@@ -1,19 +1,12 @@
 package ravex.modules.render;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-<<<<<<< HEAD
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -23,10 +16,6 @@ import ravex.utility.render.Render3DUtils;
 import java.util.ArrayList;
 import java.util.List;
 public class Particles extends Module {
-<<<<<<< HEAD
-=======
-    public static final Particles INSTANCE = new Particles();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static String lastTrigger = "";
     public final ModeParameter shape = new ModeParameter("Shape", "All",
         List.of("Square", "Circle", "Triangle", "All"));
@@ -54,7 +43,6 @@ public class Particles extends Module {
     public static boolean minedThisTick = false;
     public static Vec3 lastAttackPos = null;
     public static Vec3 lastMinePos = null;
-<<<<<<< HEAD
 
     @Subscribe
     public void onAttack(AttackEvent event) {
@@ -62,8 +50,6 @@ public class Particles extends Module {
         lastAttackPos = event.getTarget().position();
     }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private final List<Particle> particles = new ArrayList<>();
     private int spawnTimer = 0;
     private static final String[] SHAPES = {"Square", "Circle", "Triangle"};
@@ -283,7 +269,6 @@ public class Particles extends Module {
         p.pos = newPos;
     }
     public static void renderParticles(Matrix4f matrix, Vec3 camPos) {
-<<<<<<< HEAD
         if (!ModuleManager.get(Particles.class).getEnabled() || ModuleManager.get(Particles.class).particles.isEmpty()) return;
         long now = System.currentTimeMillis();
         long maxAge = (long) (ModuleManager.get(Particles.class).lifetime.getValue() * 1000);
@@ -295,19 +280,6 @@ public class Particles extends Module {
         boolean rainbowMode = ModuleManager.get(Particles.class).rainbow.getValue();
         int mainColor = ModuleManager.get(Particles.class).color.getValue();
         for (Particle p : ModuleManager.get(Particles.class).particles) {
-=======
-        if (!INSTANCE.getEnabled() || INSTANCE.particles.isEmpty()) return;
-        long now = System.currentTimeMillis();
-        long maxAge = (long) (INSTANCE.lifetime.getValue() * 1000);
-        float baseAlpha = INSTANCE.alpha.getValue().floatValue();
-        float baseSize = INSTANCE.size.getValue().floatValue();
-        boolean glowEnabled = INSTANCE.glow.getValue();
-        float lineW = INSTANCE.lineWidth.getValue().floatValue();
-        int seg = INSTANCE.segments.getValue().intValue();
-        boolean rainbowMode = INSTANCE.rainbow.getValue();
-        int mainColor = INSTANCE.color.getValue();
-        for (Particle p : INSTANCE.particles) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             long age = now - p.spawnTime;
             float lifeProgress = (float) age / (float) maxAge;
             if (lifeProgress >= 1.0f) continue;
@@ -368,11 +340,7 @@ public class Particles extends Module {
             ));
         }
         pts.add(pts.get(0));
-<<<<<<< HEAD
         boolean tw = ModuleManager.get(Particles.class).throughWalls.getValue();
-=======
-        boolean tw = INSTANCE.throughWalls.getValue();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (glow) {
             Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -399,11 +367,7 @@ public class Particles extends Module {
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-<<<<<<< HEAD
         boolean tw = ModuleManager.get(Particles.class).throughWalls.getValue();
-=======
-        boolean tw = INSTANCE.throughWalls.getValue();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (glow) {
             Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -430,11 +394,7 @@ public class Particles extends Module {
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-<<<<<<< HEAD
         boolean tw = ModuleManager.get(Particles.class).throughWalls.getValue();
-=======
-        boolean tw = INSTANCE.throughWalls.getValue();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (glow) {
             Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -444,7 +404,6 @@ public class Particles extends Module {
     protected void onDisable() {
         particles.clear();
     }
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(Particles.class);
     }
@@ -452,6 +411,4 @@ public class Particles extends Module {
     public static Particles itz() {
         return ModuleManager.get(Particles.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

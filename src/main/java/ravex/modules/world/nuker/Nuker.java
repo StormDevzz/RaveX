@@ -1,8 +1,5 @@
 package ravex.modules.world.nuker;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
@@ -13,45 +10,26 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-<<<<<<< HEAD
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ActionParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-<<<<<<< HEAD
 import ravex.modules.world.GhostBlocks;
-=======
-import ravex.modules.world.NoGhostBlocks;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
 public class Nuker extends Module {
-<<<<<<< HEAD
     public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Sphere", List.of("Sphere", "Cube"));
     public final NumberParameter delay = new NumberParameter("Delay", 200, 50, 1000, 50);
-=======
-    public static final Nuker INSTANCE = new Nuker();
-    public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
-    public final ModeParameter mode = new ModeParameter("Mode", "Sphere", List.of("Sphere", "Cube"));
-    public final NumberParameter delay = new NumberParameter("Delay(ms)", 200, 50, 1000, 50);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         Minecraft.getInstance().setScreen(
-<<<<<<< HEAD
             ravex.gui.browser.BlockBrowserScreen.forNuker(Minecraft.getInstance().screen)
-=======
-            new ravex.gui.blockbrowser.NukerBlockBrowserScreen(Minecraft.getInstance().screen)
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         );
     });
     public static BlockPos currentTarget = null;
@@ -182,11 +160,7 @@ public class Nuker extends Module {
             Direction dir = getDirection(mc.player.getEyePosition(), target);
             mc.gameMode.startDestroyBlock(target, dir);
             mc.player.swing(InteractionHand.MAIN_HAND);
-<<<<<<< HEAD
             GhostBlocks.markMined(target);
-=======
-            NoGhostBlocks.markMined(target);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             lastBreakTime = now;
         }
     }
@@ -243,10 +217,7 @@ public class Nuker extends Module {
             }
         }
     }
-<<<<<<< HEAD
     public static Nuker itz() {
         return ModuleManager.get(Nuker.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

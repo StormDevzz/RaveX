@@ -16,21 +16,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
-<<<<<<< HEAD
 import ravex.RaveX;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
-=======
-import net.minecraft.world.item.enchantment.ItemEnchantments;
-import net.minecraft.core.component.DataComponents;
-import ravex.RaveX;
-import ravex.modules.Module;
-import ravex.parameter.BooleanParameter;
-import ravex.utility.player.rotation.RotationUtility;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -39,13 +30,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 public class BasePlace extends Module {
-=======
-public class BasePlace extends Module {
-    public static final BasePlace INSTANCE = new BasePlace();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
     public final ModeParameter   targetType      = new ModeParameter("TargetType", "Players", List.of("Players", "Monsters", "Passives", "All"));
     public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
@@ -72,13 +58,7 @@ public class BasePlace extends Module {
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
     private final java.util.Map<BlockPos, Long> placedPositions = new java.util.concurrent.ConcurrentHashMap<>();
-<<<<<<< HEAD
     private static final SilentRotation silentRotation = new SilentRotation();
-=======
-    private static float silentYaw = 0;
-    private static float silentPitch = 0;
-    private static boolean hasSilentRotations = false;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private long lastPlaceTime = 0;
     private static BlockPos simulatedPlacementBlock = null;
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_baseplace");
@@ -92,15 +72,12 @@ public class BasePlace extends Module {
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
         syncPredictTicks.setVisible(autoCrystalSync::getValue);
     }
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(BasePlace.class);
     }
     public static BasePlace itz() {
         return ModuleManager.get(BasePlace.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
@@ -132,11 +109,7 @@ public class BasePlace extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-<<<<<<< HEAD
         silentRotation.hasRotation = false;
-=======
-        hasSilentRotations = false;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (autoCrystalSync.getValue()) {
             if (!ModuleManager.get(ravex.modules.combat.AutoCrystal.class).getEnabled()) {
                 simulatedPlacementBlock = null;
@@ -210,11 +183,7 @@ public class BasePlace extends Module {
         if (strictRotation.getValue() && !isRotationAligned(mc, hitVec)) {
             return;
         }
-<<<<<<< HEAD
         int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-=======
-        int originalSlot = mc.player.getInventory().getSelectedSlot();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         String swap = swapMode.getValue();
         if (swap.equals("Normal")) {
             InventoryUtility.selectSlot(mc.player, blockSlot);
@@ -249,24 +218,11 @@ public class BasePlace extends Module {
             mc.player.setYRot(angles[0]);
             mc.player.setXRot(angles[1]);
         } else if (mode.equals("Silent")) {
-<<<<<<< HEAD
             silentRotation.set(angles[0], angles[1]);
         }
     }
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
         return silentRotation.isRotationAligned(mc, target, 12.0F);
-=======
-            silentYaw = angles[0];
-            silentPitch = angles[1];
-            hasSilentRotations = true;
-        }
-    }
-    private boolean isRotationAligned(Minecraft mc, Vec3 target) {
-        float[] targetAngles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        float yawDiff = Math.abs(RotationUtility.diffYaw(mc.player.getYRot(), targetAngles[0]));
-        float pitchDiff = Math.abs(RotationUtility.diffPitch(mc.player.getXRot(), targetAngles[1]));
-        return yawDiff < 12.0F && pitchDiff < 12.0F;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
@@ -306,16 +262,8 @@ public class BasePlace extends Module {
                 var stack = InventoryUtility.getItem(mc.player, i);
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
                 if (blockItem.getBlock() == Blocks.OBSIDIAN) {
-<<<<<<< HEAD
                     int hotbarSlot = InventoryUtility.getSelectedSlot(mc.player);
                     InventoryUtility.handleInventoryClick(mc, mc.player, i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
-=======
-                    int hotbarSlot = mc.player.getInventory().getSelectedSlot();
-                    mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId, i, hotbarSlot,
-                        net.minecraft.world.inventory.ClickType.SWAP, mc.player
-                    );
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                     return hotbarSlot;
                 }
             }
@@ -330,13 +278,8 @@ public class BasePlace extends Module {
         String typeFilter = targetType.getValue();
         for (Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof LivingEntity le)) continue;
-<<<<<<< HEAD
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
-=======
-            if (le == mc.player) continue;
-            if (le.isDeadOrDying()) continue;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (typeFilter.equals("Players")) {
                 if (!MobUtility.isPlayer(le)) continue;
             } else if (typeFilter.equals("Monsters")) {
@@ -344,19 +287,11 @@ public class BasePlace extends Module {
             } else if (typeFilter.equals("Passives")) {
                 if (MobUtility.isPlayer(le) || MobUtility.isHostile(le)) continue;
             }
-<<<<<<< HEAD
             double dist = MobUtility.distanceToPlayer(le);
             if (dist > maxDist) continue;
             double metric = switch (mode) {
                 case "Closest"   -> dist;
                 case "LowestHP" -> MobUtility.getHealth(le);
-=======
-            double dist = mc.player.distanceTo(le);
-            if (dist > maxDist) continue;
-            double metric = switch (mode) {
-                case "Closest"   -> dist;
-                case "LowestHP" -> le.getHealth();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 default          -> dist;
             };
             if (metric < bestMetric) {

@@ -1,23 +1,12 @@
 package ravex.modules.render;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
->>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
 import ravex.manager.ModuleManager;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 public class FreeCam extends Module {
-<<<<<<< HEAD
-=======
-    public static final FreeCam INSTANCE = new FreeCam();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public double x, y, z;
     public float yaw, pitch;
     public double prevX, prevY, prevZ;

@@ -1,43 +1,15 @@
 package ravex.modules.render;
-<<<<<<< HEAD
-
 import ravex.manager.ModuleManager;
-import ravex.modules.Module;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-
-import java.util.List;
-
-public class Animations extends Module {
-
-    public final ModeParameter mode = new ModeParameter("Mode", "Dortware", List.of("Dortware"));
-    public final NumberParameter swingSpeed = new NumberParameter("Speed", 1.0, 1.0, 15.0, 0.5);
-
-    public Animations() {
-        super("Animations");
-    }
-
-    public static boolean maybeEnabled() {
-        return maybeEnabled(Animations.class);
-    }
-
-    public static Animations itz() {
-        return ModuleManager.get(Animations.class);
-    }
-}
-=======
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 public class Animations extends Module {
-    public static final Animations INSTANCE = new Animations();
     public final ModeParameter walkingAnimation = new ModeParameter("WalkAnimation", "Smooth",
             List.of("Smooth", "Bouncy", "Robotic", "Off"));
     public final ModeParameter sprintAnimation = new ModeParameter("SprintAnimation", "Smooth",
@@ -165,27 +137,27 @@ public class Animations extends Module {
         }
     }
     public static float getLimbSwing(float partialTicks) {
-        if (!INSTANCE.getEnabled()) return 0f;
-        if (INSTANCE.smoothTransitions.getValue()) {
-            return INSTANCE.prevSwingProgress + (INSTANCE.swingProgress - INSTANCE.prevSwingProgress) * partialTicks;
+        if (!ModuleManager.get(Animations.class).getEnabled()) return 0f;
+        if (ModuleManager.get(Animations.class).smoothTransitions.getValue()) {
+            return ModuleManager.get(Animations.class).prevSwingProgress + (ModuleManager.get(Animations.class).swingProgress - ModuleManager.get(Animations.class).prevSwingProgress) * partialTicks;
         }
-        return INSTANCE.swingProgress;
+        return ModuleManager.get(Animations.class).swingProgress;
     }
     public static float getBodyBob(float partialTicks) {
-        if (!INSTANCE.getEnabled()) return 0f;
-        return INSTANCE.bodyBob;
+        if (!ModuleManager.get(Animations.class).getEnabled()) return 0f;
+        return ModuleManager.get(Animations.class).bodyBob;
     }
     public static float getHeadTilt() {
-        if (!INSTANCE.getEnabled()) return 0f;
-        return INSTANCE.headTilt;
+        if (!ModuleManager.get(Animations.class).getEnabled()) return 0f;
+        return ModuleManager.get(Animations.class).headTilt;
     }
     public static float getSwingProgress(float partialTicks) {
-        if (!INSTANCE.getEnabled()) return 0f;
-        if (INSTANCE.disableVanillaSwing.getValue()) return 0f;
-        if (INSTANCE.smoothTransitions.getValue()) {
-            return INSTANCE.prevSwingProgress + (INSTANCE.swingProgress - INSTANCE.prevSwingProgress) * partialTicks;
+        if (!ModuleManager.get(Animations.class).getEnabled()) return 0f;
+        if (ModuleManager.get(Animations.class).disableVanillaSwing.getValue()) return 0f;
+        if (ModuleManager.get(Animations.class).smoothTransitions.getValue()) {
+            return ModuleManager.get(Animations.class).prevSwingProgress + (ModuleManager.get(Animations.class).swingProgress - ModuleManager.get(Animations.class).prevSwingProgress) * partialTicks;
         }
-        return INSTANCE.swingProgress;
+        return ModuleManager.get(Animations.class).swingProgress;
     }
     @Override
     protected void onDisable() {
@@ -202,5 +174,11 @@ public class Animations extends Module {
         headTilt = 0f;
         walkCycle = 0f;
     }
+    public static boolean maybeEnabled() {
+        return maybeEnabled(Animations.class);
+    }
+
+    public static Animations itz() {
+        return ModuleManager.get(Animations.class);
+    }
 }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

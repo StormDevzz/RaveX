@@ -1,5 +1,4 @@
 package ravex.modules.client;
-<<<<<<< HEAD
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.manager.ModuleManager;
@@ -19,14 +18,6 @@ public class Hud extends Module {
     public static int dragOffX = 0;
     public static int dragOffY = 0;
 
-=======
-import ravex.modules.Category;
-import ravex.modules.Module;
-import ravex.parameter.BooleanParameter;
-public class Hud extends Module {
-    public static final Hud INSTANCE = new Hud();
-    public final BooleanParameter hudEditor = new BooleanParameter("HudEditor", false);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private Hud() {
         super("Hud");
         setEnabled(true);
@@ -37,7 +28,6 @@ public class Hud extends Module {
             hudEditor.setValue(false);
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null) {
-<<<<<<< HEAD
                 mc.execute(() -> mc.setScreen(new ravex.gui.hudeditor.HudEditorScreen(null)));
             }
         }
@@ -50,10 +40,4 @@ public class Hud extends Module {
     public static Hud itz() {
         return ModuleManager.get(Hud.class);
     }
-=======
-                mc.execute(() -> mc.setScreen(new ravex.gui.clickgui.HudEditorScreen(null)));
-            }
-        }
-    }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

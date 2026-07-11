@@ -1,32 +1,20 @@
 package ravex.modules.movement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Input;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import net.minecraft.world.phys.Vec3;
-=======
-import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
-<<<<<<< HEAD
 import java.util.Random;
 
 public class TickShift extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("Motion", "Strafe", "Timer", "GrimStrict"));
-=======
-public class TickShift extends Module {
-    public static final TickShift INSTANCE = new TickShift();
-    public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("Motion", "Strafe", "Timer"));
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter delay = new NumberParameter("Delay", 20.0, 1.0, 200.0, 1.0);
     public final NumberParameter duration = new NumberParameter("Duration", 10.0, 1.0, 100.0, 1.0);
     public final NumberParameter speed = new NumberParameter("Speed", 1.8, 1.0, 5.0, 0.1);
     public final NumberParameter timerSpeed = new NumberParameter("TimerSpeed", 1.5, 1.0, 5.0, 0.1);
-<<<<<<< HEAD
     public final NumberParameter grimMaxTicks = new NumberParameter("GrimMaxTicks", 10.0, 2.0, 30.0, 1.0);
     public final NumberParameter grimAccumulation = new NumberParameter("GrimAccumulation", 0.3, 0.05, 1.0, 0.05);
     public final NumberParameter grimSpeed = new NumberParameter("GrimSpeed", 1.15, 1.0, 2.0, 0.01);
@@ -43,29 +31,20 @@ public class TickShift extends Module {
         grimSpeed.setVisible(() -> "GrimStrict".equals(mode.getValue()));
         grimDelay.setVisible(() -> "GrimStrict".equals(mode.getValue()));
     }
-=======
-    private int idleTicks = 0;
-    private int boostTicks = 0;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
     @Override
     protected void onEnable() {
         idleTicks = 0;
         boostTicks = 0;
-<<<<<<< HEAD
         releaseCounter = 0;
     }
 
-=======
-    }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         Input input = mc.player.input.keyPresses;
         boolean moving = input.forward() || input.backward() || input.left() || input.right();
-<<<<<<< HEAD
 
         if ("GrimStrict".equals(mode.getValue())) {
             if (!moving) {
@@ -94,8 +73,6 @@ public class TickShift extends Module {
             return;
         }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (!moving) {
             idleTicks++;
             boostTicks = 0;
@@ -137,10 +114,7 @@ public class TickShift extends Module {
             mc.player.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
         }
     }
-<<<<<<< HEAD
     public static TickShift itz() {
         return ModuleManager.get(TickShift.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

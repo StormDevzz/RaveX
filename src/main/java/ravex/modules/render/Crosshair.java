@@ -1,15 +1,9 @@
 package ravex.modules.render;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
-=======
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -17,10 +11,6 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.gui.clickgui.ColorUtility;
 public class Crosshair extends Module {
-<<<<<<< HEAD
-=======
-    public static final Crosshair INSTANCE = new Crosshair();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         java.util.List.of("Normal", "Circle", "Triangle"));
     public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
@@ -44,18 +34,12 @@ public class Crosshair extends Module {
         super("Crosshair");
         dotColor.setVisible(dot::getValue);
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 
->>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
     @Subscribe
     public void onAttack(AttackEvent event) {
         onHit();
     }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public void onHit() {
         lastHitTime = System.currentTimeMillis();
     }
@@ -218,9 +202,6 @@ public class Crosshair extends Module {
         g.fill(0, 0, (int) Math.ceil(len), 1, color);
         g.pose().popMatrix();
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 
     private static int lerpColor(int from, int to, float ratio) {
         if (ratio <= 0f) return from;
@@ -264,7 +245,6 @@ public class Crosshair extends Module {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
->>>>>>> 0ab37177398daa0e9880b2ec0d3ee76a2dbed416
     public static boolean maybeEnabled() {
         return maybeEnabled(Crosshair.class);
     }
@@ -272,6 +252,4 @@ public class Crosshair extends Module {
     public static Crosshair itz() {
         return ModuleManager.get(Crosshair.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

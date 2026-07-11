@@ -27,11 +27,7 @@ public class MixinItemStack {
     @Inject(method = "getTooltipLines(Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/TooltipFlag;)Ljava/util/List;",
             at = @At("RETURN"), cancellable = true)
     private void onGetTooltipLines(Item.TooltipContext context, Player player, TooltipFlag flag, CallbackInfoReturnable<List<Component>> cir) {
-<<<<<<< HEAD
         if (!ToolTips.maybeEnabled()) return;
-=======
-        if (!ToolTips.INSTANCE.getEnabled()) return;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         ItemStack self = (ItemStack) (Object) this;
         if (self.isEmpty()) return;
         if (IN_RECURSION.get()) return;
@@ -39,11 +35,7 @@ public class MixinItemStack {
         List<Component> original = cir.getReturnValue();
         List<Component> modified = new ArrayList<>(original);
 
-<<<<<<< HEAD
         if (ToolTips.itz().showShulker.getValue() && ToolTips.itz().isShulker(self)) {
-=======
-        if (ToolTips.INSTANCE.showShulker.getValue() && ToolTips.INSTANCE.isShulker(self)) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             IN_RECURSION.set(true);
             try {
                 ItemStack copy = self.copy();
@@ -55,25 +47,15 @@ public class MixinItemStack {
             }
         }
 
-<<<<<<< HEAD
         modified.addAll(ToolTips.itz().getTooltip(self));
-=======
-        modified.addAll(ToolTips.INSTANCE.getTooltip(self));
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         cir.setReturnValue(modified);
     }
 
     @Inject(method = "getTooltipImage()Ljava/util/Optional;", at = @At("HEAD"), cancellable = true)
     private void onGetTooltipImage(CallbackInfoReturnable<Optional<TooltipComponent>> cir) {
-<<<<<<< HEAD
         if (!ToolTips.maybeEnabled() || !ToolTips.itz().showShulker.getValue()) return;
         ItemStack self = (ItemStack) (Object) this;
         if (ToolTips.itz().isShulker(self)) {
-=======
-        if (!ToolTips.INSTANCE.getEnabled() || !ToolTips.INSTANCE.showShulker.getValue()) return;
-        ItemStack self = (ItemStack) (Object) this;
-        if (ToolTips.INSTANCE.isShulker(self)) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ItemContainerContents contents = self.get(DataComponents.CONTAINER);
             if (contents != null) {
                 cir.setReturnValue(Optional.of(new ShulkerDataTooltipComponent(contents.stream().toList())));

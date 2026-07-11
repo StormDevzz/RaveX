@@ -35,12 +35,12 @@ public class ShulkerTooltipComponent implements ClientTooltipComponent {
         int w = getWidth(font);
         int h = getHeight(font);
 
-
-        guiGraphics.fill(x - 2, y - 2, x + w + 2, y + h + 2, 0xF00C0C14);
-
-
+        int bgColor = 0xAA0B0B12;
         int accentColor = ColorUtility.getActiveColor();
-        Render2DEngine.drawBorder(guiGraphics, x - 2, y - 2, w + 4, h + 4, 1, accentColor);
+        int borderColor = ColorUtility.withAlpha(accentColor, 100);
+
+        Render2DEngine.drawRound(guiGraphics, x - 4, y - 4, w + 8, h + 8, 4, bgColor);
+        Render2DEngine.drawRoundBorder(guiGraphics, x - 4, y - 4, w + 8, h + 8, 4, 1, borderColor);
 
 
         for (int row = 0; row < 3; row++) {
@@ -49,8 +49,7 @@ public class ShulkerTooltipComponent implements ClientTooltipComponent {
                 int slotX = x + col * 18;
                 int slotY = y + row * 18;
 
-
-                guiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0x15FFFFFF);
+                Render2DEngine.drawRound(guiGraphics, slotX, slotY, 16, 16, 2, 0x10FFFFFF);
 
                 if (index < items.size()) {
                     ItemStack stack = items.get(index);

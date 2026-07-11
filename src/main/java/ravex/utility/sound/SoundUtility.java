@@ -32,51 +32,15 @@ public class SoundUtility {
 
 
     public static void register() {
-        boolean wasUnfrozen = false;
-        try {
-            wasUnfrozen = unfreezeIfNeeded(BuiltInRegistries.SOUND_EVENT);
+        if (ENABLE != null) return;
 
-            ENABLE        = Registry.register(BuiltInRegistries.SOUND_EVENT, ENABLE_ID,        SoundEvent.createVariableRangeEvent(ENABLE_ID));
-            DISABLE       = Registry.register(BuiltInRegistries.SOUND_EVENT, DISABLE_ID,       SoundEvent.createVariableRangeEvent(DISABLE_ID));
-            SETTINGS_OPEN = Registry.register(BuiltInRegistries.SOUND_EVENT, SETTINGS_OPEN_ID, SoundEvent.createVariableRangeEvent(SETTINGS_OPEN_ID));
-            SETTINGS_CLOSE= Registry.register(BuiltInRegistries.SOUND_EVENT, SETTINGS_CLOSE_ID,SoundEvent.createVariableRangeEvent(SETTINGS_CLOSE_ID));
-            GUI_OPEN      = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_OPEN_ID,      SoundEvent.createVariableRangeEvent(GUI_OPEN_ID));
-            GUI_CLOSE     = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_CLOSE_ID,     SoundEvent.createVariableRangeEvent(GUI_CLOSE_ID));
-            FAILURE       = Registry.register(BuiltInRegistries.SOUND_EVENT, FAILURE_ID,       SoundEvent.createVariableRangeEvent(FAILURE_ID));
-        } catch (Exception e) {
-            ravex.RaveX.LOGGER.error("[RaveX] SoundUtility: Failed to register sound events: " + e.getMessage());
-        } finally {
-            if (wasUnfrozen) {
-                try { BuiltInRegistries.SOUND_EVENT.freeze(); } catch (Exception ignored) {}
-            }
-        }
-    }
-
-
-    @SuppressWarnings("unchecked")
-    private static boolean unfreezeIfNeeded(Registry<?> registry) {
-        try {
-            java.lang.reflect.Field frozenField = null;
-            for (Class<?> c = registry.getClass(); c != null; c = c.getSuperclass()) {
-                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
-                    if (f.getName().equals("frozen") && f.getType() == boolean.class) {
-                        frozenField = f;
-                        break;
-                    }
-                }
-                if (frozenField != null) break;
-            }
-            if (frozenField != null) {
-                frozenField.setAccessible(true);
-                if ((boolean) frozenField.get(registry)) {
-                    frozenField.set(registry, false);
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            ravex.RaveX.LOGGER.warn("[RaveX] SoundUtility: Could not unfreeze registry: " + e.getMessage());
-        }
-        return false;
+        ENABLE        = Registry.register(BuiltInRegistries.SOUND_EVENT, ENABLE_ID,        SoundEvent.createVariableRangeEvent(ENABLE_ID));
+        DISABLE       = Registry.register(BuiltInRegistries.SOUND_EVENT, DISABLE_ID,       SoundEvent.createVariableRangeEvent(DISABLE_ID));
+        SETTINGS_OPEN = Registry.register(BuiltInRegistries.SOUND_EVENT, SETTINGS_OPEN_ID, SoundEvent.createVariableRangeEvent(SETTINGS_OPEN_ID));
+        SETTINGS_CLOSE= Registry.register(BuiltInRegistries.SOUND_EVENT, SETTINGS_CLOSE_ID,SoundEvent.createVariableRangeEvent(SETTINGS_CLOSE_ID));
+        GUI_OPEN      = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_OPEN_ID,      SoundEvent.createVariableRangeEvent(GUI_OPEN_ID));
+        GUI_CLOSE     = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_CLOSE_ID,     SoundEvent.createVariableRangeEvent(GUI_CLOSE_ID));
+        FAILURE       = Registry.register(BuiltInRegistries.SOUND_EVENT, FAILURE_ID,       SoundEvent.createVariableRangeEvent(FAILURE_ID));
     }
 
 
@@ -98,11 +62,7 @@ public class SoundUtility {
             return;
         }
 
-<<<<<<< HEAD
         ravex.modules.render.Sounds sounds = ModuleManager.get(ravex.modules.render.Sounds.class);
-=======
-        ravex.modules.render.Sounds sounds = ravex.modules.render.Sounds.INSTANCE;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (sounds != null && !sounds.getEnabled()) {
             return;
         }

@@ -10,15 +10,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-<<<<<<< HEAD
 import ravex.event.EventBusHolder;
 import ravex.event.network.PacketEvent;
 import ravex.modules.movement.GuiMove;
-=======
-import ravex.modules.player.AntiHunger;
-import ravex.modules.misc.PacketUtils;
-import ravex.modules.player.HandshakeSpoof;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import io.netty.channel.ChannelHandlerContext;
 
 @Mixin(Connection.class)
@@ -33,7 +27,6 @@ public class MixinConnection {
             }
         }
 
-<<<<<<< HEAD
         if (packet instanceof ServerboundContainerClickPacket) {
             GuiMove gw = GuiMove.itz();
             if (gw.getEnabled() && "Grim".equals(gw.mode.getValue())) {
@@ -41,150 +34,19 @@ public class MixinConnection {
                 if (mc.screen instanceof AbstractContainerScreen) {
                     ci.cancel();
                     return;
-=======
-        if (packet instanceof ClientIntentionPacket handshakePacket) {
-            if (HandshakeSpoof.INSTANCE.getEnabled()) {
-                AccessorClientIntentionPacket accessor = (AccessorClientIntentionPacket) (Object) handshakePacket;
-                String originalHost = handshakePacket.hostName();
-                int originalProtocol = handshakePacket.protocolVersion();
-
-                String spoofedHost = HandshakeSpoof.INSTANCE.getSpoofedHost(originalHost);
-                int spoofedProtocol = HandshakeSpoof.INSTANCE.getSpoofedProtocol(originalProtocol);
-
-                accessor.setHostName(spoofedHost);
-                accessor.setProtocolVersion(spoofedProtocol);
-            }
-        }
-
-        if (PacketUtils.INSTANCE.getEnabled() && !PacketUtils.INSTANCE.shouldAllow(packet)) {
-            ci.cancel();
-            return;
-        }
-
-        if (PacketUtils.INSTANCE.getEnabled() && PacketUtils.INSTANCE.logOutgoing.getValue()) {
-            PacketUtils.INSTANCE.logPacket("C2S ->", packet);
-        }
-
-        if (packet instanceof ServerboundUseItemPacket usePacket) {
-            if (ravex.modules.misc.FakePearl.INSTANCE.getEnabled()) {
-                String trg = ravex.modules.misc.FakePearl.INSTANCE.trigger.getValue();
-                if ("Right Click".equals(trg) || "Both".equals(trg)) {
-                    net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-                    if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(net.minecraft.world.item.Items.ENDER_PEARL)) {
-                        ci.cancel();
-                        ravex.modules.misc.FakePearl.INSTANCE.throwFakePearl();
-                        mc.player.swing(usePacket.getHand());
-                        return;
-                    }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 }
             }
         }
 
-<<<<<<< HEAD
         PacketEvent event = new PacketEvent(PacketEvent.PacketAction.SEND, packet);
         EventBusHolder.get().post(event);
         if (event.isCancelled()) { ci.cancel(); return; }
-=======
-        if (packet instanceof ServerboundUseItemPacket usePacket) {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(net.minecraft.world.item.Items.ENDER_PEARL)) {
-                if (ravex.modules.movement.Phase.INSTANCE.getEnabled()) {
-                    ravex.modules.movement.Phase.INSTANCE.clip();
-                }
-            }
-        }
-
-        if (packet instanceof ServerboundSwingPacket) {
-            if (ravex.modules.player.NoMineAnimation.INSTANCE.getEnabled() && ravex.modules.player.NoMineAnimation.INSTANCE.hideSwing.getValue()) {
-                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-                if (mc.gameMode != null && mc.gameMode.isDestroying()) {
-                    ci.cancel();
-                    return;
-                }
-            }
-        }
-
-        if (ravex.modules.misc.PortalGodMode.INSTANCE.getEnabled()) {
-            if (packet instanceof ServerboundAcceptTeleportationPacket) {
-                ci.cancel();
-                return;
-            }
-        }
-
-        if (PacketUtils.INSTANCE.getEnabled() && PacketUtils.INSTANCE.shouldCancel(packet)) {
-            ci.cancel();
-            return;
-        }
-
-        if (ravex.modules.movement.NoFall.INSTANCE.getEnabled() && packet instanceof ServerboundMovePlayerPacket movePacket) {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            if (mc.player != null) {
-                double[] outData = new double[2];
-                boolean changed = ravex.modules.movement.NoFall.handleNoFall(
-                    ravex.modules.movement.NoFall.INSTANCE.mode.getValue(),
-                    mc.player.fallDistance,
-                    movePacket.getY(mc.player.getY()),
-                    movePacket.isOnGround(),
-                    outData
-                );
-                if (changed) {
-                    AccessorServerboundMovePlayerPacket accessor = (AccessorServerboundMovePlayerPacket) movePacket;
-                    accessor.setOnGround(outData[0] > 0.5);
-                    if (movePacket.hasPosition()) {
-                        accessor.setY(outData[1]);
-                    }
-                }
-            }
-        }
-
-        if (AntiHunger.INSTANCE.getEnabled()) {
-            String currentMode = AntiHunger.INSTANCE.mode.getValue();
-
-            if (packet instanceof ServerboundMovePlayerPacket) {
-                if ("Full".equals(currentMode) || "OnGround".equals(currentMode)) {
-                    ((AccessorServerboundMovePlayerPacket) packet).setOnGround(false);
-                }
-            }
-
-            if (packet instanceof ServerboundPlayerCommandPacket commandPacket) {
-                var action = commandPacket.getAction();
-                if (action == ServerboundPlayerCommandPacket.Action.START_SPRINTING ||
-                    action == ServerboundPlayerCommandPacket.Action.STOP_SPRINTING) {
-                    if ("Full".equals(currentMode) || "Sprint".equals(currentMode)) {
-                        ci.cancel();
-                    }
-                }
-            }
-        }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"))
     private void onChannelRead(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
-<<<<<<< HEAD
         PacketEvent event = new PacketEvent(PacketEvent.PacketAction.RECEIVE, packet);
         EventBusHolder.get().post(event);
         if (event.isCancelled()) { ci.cancel(); return; }
-=======
-        ravex.modules.misc.NewChunks.INSTANCE.onPacketReceive(packet);
-
-        if (PacketUtils.INSTANCE.getEnabled() && PacketUtils.INSTANCE.logIncoming.getValue()) {
-            PacketUtils.INSTANCE.logPacket("S2C <-", packet);
-        }
-
-        if (ravex.modules.world.NoGhostBlocks.INSTANCE.getEnabled()) {
-            if (packet instanceof ClientboundBlockUpdatePacket blockUpdate) {
-                net.minecraft.core.BlockPos pos = blockUpdate.getPos();
-                String blockId = ravex.modules.world.NoGhostBlocks.getBlockId(blockUpdate.getBlockState());
-                ravex.modules.world.NoGhostBlocks.onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), blockId);
-            } else if (packet instanceof ClientboundSectionBlocksUpdatePacket sectionUpdate) {
-                sectionUpdate.runUpdates((pos, state) -> {
-                    String blockId = ravex.modules.world.NoGhostBlocks.getBlockId(state);
-                    ravex.modules.world.NoGhostBlocks.onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), blockId);
-                });
-            }
-        }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 }

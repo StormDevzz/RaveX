@@ -8,11 +8,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.nio.file.*;
 import java.util.List;
 
-<<<<<<< HEAD
 public class LoaderWindow extends JFrame implements LoaderCallback {
-=======
-public class LoaderWindow extends JFrame {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static final Color BG_DARK = new Color(0x11, 0x11, 0x15);
     private static final Color ACCENT_BLUE = new Color(0x40, 0xA9, 0xF8);
     private static final Color TEXT_COLOR = new Color(0xe2, 0xe2, 0xe8);

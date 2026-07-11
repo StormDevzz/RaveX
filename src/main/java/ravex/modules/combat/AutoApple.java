@@ -1,8 +1,5 @@
 package ravex.modules.combat;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
@@ -11,15 +8,9 @@ import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-<<<<<<< HEAD
 import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.player.InventoryUtility;
 public class AutoApple extends Module {
-=======
-import ravex.utility.nativelib.NativeLibrary;
-public class AutoApple extends Module {
-    public static final AutoApple INSTANCE = new AutoApple();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter appleType = new ModeParameter("AppleType", "Both",
             java.util.List.of("Golden", "Enchanted", "Both"));
     public final ModeParameter swapMode = new ModeParameter("SwapMode", "Silent",
@@ -29,13 +20,6 @@ public class AutoApple extends Module {
     private boolean isEating = false;
     private int eatingSlot = -1;
     private int eatTicks = 0;
-<<<<<<< HEAD
-=======
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_autoapple");
-    static {
-        NATIVE.load();
-    }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
     @Override
     protected void onDisable() {
@@ -78,28 +62,11 @@ public class AutoApple extends Module {
             }
             return;
         }
-<<<<<<< HEAD
         boolean shouldEat = javaFallbackShouldEat(
             mc.player.getHealth(),
             mc.player.getAbsorptionAmount(),
             healthThreshold.getValue()
         );
-=======
-        boolean shouldEat = false;
-        if (NATIVE.isLoaded()) {
-            shouldEat = nativeShouldEat(
-                mc.player.getHealth(),
-                mc.player.getAbsorptionAmount(),
-                healthThreshold.getValue()
-            );
-        } else {
-            shouldEat = javaFallbackShouldEat(
-                mc.player.getHealth(),
-                mc.player.getAbsorptionAmount(),
-                healthThreshold.getValue()
-            );
-        }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (shouldEat) {
             int appleSlot = findAppleSlot(mc);
             if (appleSlot != -1) {
@@ -140,7 +107,6 @@ public class AutoApple extends Module {
         originalSlot = -1;
         eatTicks = 0;
     }
-<<<<<<< HEAD
     private int findAppleSlot(Minecraft mc) {
         boolean highDanger = (mc.player.getHealth() + mc.player.getAbsorptionAmount()) <= 6.0;
         if (highDanger && !appleType.getValue().equals("Golden")) {
@@ -150,45 +116,6 @@ public class AutoApple extends Module {
         FoodUtility.Data best = FoodUtility.findApple(appleType.getValue());
         return best != null ? best.getSlot() : -1;
     }
-=======
-    private boolean isApple(ItemStack stack) {
-        if (stack.isEmpty()) return false;
-        String mode = appleType.getValue();
-        if (mode.equals("Golden")) {
-            return stack.is(Items.GOLDEN_APPLE);
-        } else if (mode.equals("Enchanted")) {
-            return stack.is(Items.ENCHANTED_GOLDEN_APPLE);
-        } else {
-            return stack.is(Items.GOLDEN_APPLE) || stack.is(Items.ENCHANTED_GOLDEN_APPLE);
-        }
-    }
-    private int findAppleSlot(Minecraft mc) {
-        boolean highDanger = (mc.player.getHealth() + mc.player.getAbsorptionAmount()) <= 6.0;
-        if (highDanger && (appleType.getValue().equals("Both") || appleType.getValue().equals("Enchanted"))) {
-            for (int i = 0; i < 9; i++) {
-                ItemStack stack = mc.player.getInventory().getItem(i);
-                if (stack.is(Items.ENCHANTED_GOLDEN_APPLE)) {
-                    return i;
-                }
-            }
-        }
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (isApple(stack)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-    public static boolean isNativeAvailable() {
-        return NATIVE.isLoaded();
-    }
-    public static native boolean nativeShouldEat(
-        double health,
-        double absorption,
-        double healthThreshold
-    );
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static boolean javaFallbackShouldEat(
         double health,
         double absorption,

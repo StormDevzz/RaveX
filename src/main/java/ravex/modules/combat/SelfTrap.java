@@ -12,10 +12,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.RaveX;
-<<<<<<< HEAD
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ActionParameter;
 import ravex.parameter.BooleanParameter;
@@ -27,13 +23,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
-<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 public class SelfTrap extends Module {
     public static final SelfTrap INSTANCE = new SelfTrap();
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
@@ -58,13 +51,7 @@ public class SelfTrap extends Module {
     private final Set<Identifier> selectedBlocks = new HashSet<>();
     private static final List<BlockPos> selfTrapBlocks = new ArrayList<>();
     private long lastPlaceTime = 0;
-<<<<<<< HEAD
     private static final SilentRotation silentRotation = new SilentRotation();
-=======
-    private static float silentYaw = 0;
-    private static float silentPitch = 0;
-    private static boolean hasSilentRotations = false;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_selftrap");
     static {
         NATIVE.load();
@@ -76,15 +63,12 @@ public class SelfTrap extends Module {
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
     }
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(SelfTrap.class);
     }
     public static SelfTrap itz() {
         return ModuleManager.get(SelfTrap.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
@@ -132,11 +116,7 @@ public class SelfTrap extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-<<<<<<< HEAD
         silentRotation.hasRotation = false;
-=======
-        hasSilentRotations = false;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         double[] solidBlockData = collectSolidBlocks(mc);
         List<Double> activeSolidBlocks = new ArrayList<>();
         for (double d : solidBlockData) {
@@ -257,16 +237,7 @@ public class SelfTrap extends Module {
     }
     private void rotateTo(Minecraft mc, Vec3 target) {
         if (rotate.getValue().equals("None")) return;
-<<<<<<< HEAD
         float[] angles = RotationUtility.anglesTo(mc.player, target);
-=======
-        double dx = target.x - mc.player.getX();
-        double dy = target.y - mc.player.getEyeY();
-        double dz = target.z - mc.player.getZ();
-        double dXZ = Math.sqrt(dx * dx + dz * dz);
-        float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
-        float pitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (rotate.getValue().equals("Normal")) {
             mc.player.setYRot(angles[0]);
             mc.player.setXRot(angles[1]);
@@ -275,28 +246,9 @@ public class SelfTrap extends Module {
         }
     }
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
-<<<<<<< HEAD
         if (rotate.getValue().equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 12.0F);
     }
-=======
-        double dx = target.x - mc.player.getX();
-        double dy = target.y - mc.player.getEyeY();
-        double dz = target.z - mc.player.getZ();
-        double dXZ = Math.sqrt(dx * dx + dz * dz);
-        float targetYaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
-        float targetPitch = (float) -Math.toDegrees(Math.atan2(dy, dXZ));
-        float diffYaw = Math.abs(normalizeAngle(mc.player.getYRot() - targetYaw));
-        float diffPitch = Math.abs(normalizeAngle(mc.player.getXRot() - targetPitch));
-        return diffYaw < 12.0F && diffPitch < 12.0F;
-    }
-    private float normalizeAngle(float angle) {
-        float normal = angle % 360.0F;
-        if (normal >= 180.0F) normal -= 360.0F;
-        if (normal < -180.0F) normal += 360.0F;
-        return normal;
-    }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
         BlockPos playerPos = mc.player.blockPosition();
@@ -340,16 +292,8 @@ public class SelfTrap extends Module {
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
                 Identifier id = BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
                 if (selectedBlocks.contains(id)) {
-<<<<<<< HEAD
                     int hotbarSlot = InventoryUtility.getSelectedSlot(mc.player);
                     InventoryUtility.handleInventoryClick(mc, mc.player, i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
-=======
-                    int hotbarSlot = mc.player.getInventory().getSelectedSlot();
-                    mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId, i, hotbarSlot,
-                        net.minecraft.world.inventory.ClickType.SWAP, mc.player
-                    );
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                     return hotbarSlot;
                 }
             }

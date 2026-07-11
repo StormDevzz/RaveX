@@ -1,9 +1,5 @@
 package ravex.modules.movement;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -11,40 +7,36 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
 public class LongJump extends Module {
-<<<<<<< HEAD
-=======
-    public static final LongJump INSTANCE = new LongJump();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
-    public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Good", "Custom"));
-    public final NumberParameter customBoost = new NumberParameter("Boost", 2.0, 1.0, 5.0, 0.1);
-    private boolean boosted = false;
+    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla"));
+    public final NumberParameter boost = new NumberParameter("Boost", 1.5, 1.0, 10.0, 0.1);
+    public static boolean jumped = false;
+
+    private LongJump() {
+        super("LongJump");
+    }
 
     @Override
     protected void onEnable() {
-        boosted = false;
+        jumped = false;
     }
+
     @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
+
         if (mc.player.onGround()) {
-            boosted = false;
-        } else {
-            if (!boosted) {
-                double speed = 1.0;
-                String m = mode.getValue();
-                if (m.equals("Normal")) {
-                    speed = 1.4;
-                } else if (m.equals("Good")) {
-                    speed = 1.8;
-                } else if (m.equals("Custom")) {
-                    speed = customBoost.getValue();
-                }
-                Vec3 motion = mc.player.getDeltaMovement();
-                mc.player.setDeltaMovement(motion.x * speed, motion.y + 0.05, motion.z * speed);
-                boosted = true;
-            }
+            jumped = false;
+        } else if (!jumped) {
+            double speed = boost.getValue();
+            Vec3 motion = mc.player.getDeltaMovement();
+            mc.player.setDeltaMovement(motion.x * speed, motion.y + 0.05, motion.z * speed);
+            jumped = true;
         }
+    }
+
+    public static boolean maybeEnabled() {
+        return maybeEnabled(LongJump.class);
     }
     public static LongJump itz() {
         return ModuleManager.get(LongJump.class);

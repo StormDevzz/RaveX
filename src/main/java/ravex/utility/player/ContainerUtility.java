@@ -1,10 +1,7 @@
 package ravex.utility.player;
 
 import net.minecraft.client.Minecraft;
-<<<<<<< HEAD
 import net.minecraft.client.gui.GuiGraphics;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.Item;
@@ -55,7 +52,6 @@ public class ContainerUtility {
         }
     }
 
-<<<<<<< HEAD
     public static int getButtonStartX(AbstractContainerScreen<?> screen) {
         var acc = (ravex.mixin.player.AccessorContainerScreen) screen;
         return acc.getLeftPos() + acc.getImageWidth() + 5;
@@ -84,8 +80,6 @@ public class ContainerUtility {
         return mouseX >= x && mouseX <= x + CHEST_BTN_W && mouseY >= y && mouseY <= y + CHEST_BTN_H;
     }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public static void fillFromContainer(Minecraft mc, LocalPlayer player, AbstractContainerMenu menu) {
         List<Slot> containerSlots = getContainerSlots(menu);
         List<Slot> playerSlots = getPlayerSlots(menu);

@@ -33,13 +33,8 @@ public class MixinWeatherEffectRenderer {
 
     @Inject(method = "getPrecipitationAt", at = @At("HEAD"), cancellable = true)
     private void onGetPrecipitationAt(net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos, CallbackInfoReturnable<net.minecraft.world.level.biome.Biome.Precipitation> cir) {
-<<<<<<< HEAD
         if (Weather.maybeEnabled()) {
             String modeValue = Weather.itz().mode.getValue();
-=======
-        if (Weather.INSTANCE.getEnabled()) {
-            String modeValue = Weather.INSTANCE.mode.getValue();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if ("Rain".equals(modeValue)) {
                 cir.setReturnValue(net.minecraft.world.level.biome.Biome.Precipitation.RAIN);
             } else if ("Snow".equals(modeValue)) {

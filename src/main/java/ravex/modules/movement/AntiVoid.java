@@ -1,9 +1,5 @@
 package ravex.modules.movement;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.ModeParameter;
@@ -13,10 +9,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
 public class AntiVoid extends Module {
-<<<<<<< HEAD
-=======
-    public static final AntiVoid INSTANCE = new AntiVoid();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter fallDistance = new NumberParameter("Distance", 5.0, 1.0, 10.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Teleport", List.of("Teleport", "Bounce"));
     private Vec3 lastOnGroundPos = null;

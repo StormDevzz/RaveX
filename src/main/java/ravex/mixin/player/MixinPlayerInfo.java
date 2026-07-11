@@ -12,11 +12,7 @@ public class MixinPlayerInfo {
 
     @Inject(method = "getLatency", at = @At("RETURN"), cancellable = true)
     private void onGetLatency(CallbackInfoReturnable<Integer> cir) {
-<<<<<<< HEAD
         int spoofed = PingSpoof.itz().getSpoofedPing();
-=======
-        int spoofed = PingSpoof.INSTANCE.getSpoofedPing();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (spoofed >= 0) {
             cir.setReturnValue(spoofed);
         }

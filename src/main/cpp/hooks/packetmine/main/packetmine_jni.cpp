@@ -1,7 +1,6 @@
 #include <jni.h>
 #include "packetmine.hpp"
 
-<<<<<<< HEAD
 static jintArray vec3iArrayToJIntArray(JNIEnv* env, const std::vector<ravex::Vec3i>& vecs) {
     if (vecs.empty()) return nullptr;
     jsize len = static_cast<jsize>(vecs.size()) * 3;
@@ -17,8 +16,6 @@ static jintArray vec3iArrayToJIntArray(JNIEnv* env, const std::vector<ravex::Vec
     return result;
 }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 extern "C" {
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
@@ -26,17 +23,12 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
 }
 
 JNIEXPORT jintArray JNICALL
-<<<<<<< HEAD
 Java_ravex_modules_player_PacketMine_nativeFindTargets(
-=======
-Java_ravex_modules_combat_PacketMine_nativeFindTargets(
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     JNIEnv* env, jclass cls,
     jdouble px, jdouble py, jdouble pz,
     jdouble range, jint maxResults, jint targetBlockId)
 {
     auto targets = ravex::findMineTargets(px, py, pz, range, maxResults);
-<<<<<<< HEAD
     std::vector<ravex::Vec3i> out(targets.size());
     for (size_t i = 0; i < targets.size(); i++) {
         out[i].x = targets[i].x;
@@ -48,27 +40,6 @@ Java_ravex_modules_combat_PacketMine_nativeFindTargets(
 
 JNIEXPORT jlong JNICALL
 Java_ravex_modules_player_PacketMine_nativeEstimateBreakTime(
-=======
-    if (targets.empty()) return nullptr;
-
-    jsize len = static_cast<jsize>(targets.size()) * 3;
-    jintArray result = env->NewIntArray(len);
-    if (!result) return nullptr;
-
-    std::vector<jint> buffer(targets.size() * 3);
-    for (size_t i = 0; i < targets.size(); i++) {
-        buffer[i * 3 + 0] = targets[i].x;
-        buffer[i * 3 + 1] = targets[i].y;
-        buffer[i * 3 + 2] = targets[i].z;
-    }
-
-    env->SetIntArrayRegion(result, 0, len, buffer.data());
-    return result;
-}
-
-JNIEXPORT jlong JNICALL
-Java_ravex_modules_combat_PacketMine_nativeEstimateBreakTime(
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     JNIEnv* env, jclass cls,
     jint bx, jint by, jint bz,
     jdouble px, jdouble py, jdouble pz)
@@ -76,7 +47,6 @@ Java_ravex_modules_combat_PacketMine_nativeEstimateBreakTime(
     return static_cast<jlong>(ravex::estimateBreakTime(bx, by, bz, px, py, pz));
 }
 
-<<<<<<< HEAD
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_player_PacketMine_nativeCanSee(
     JNIEnv* env, jclass cls,
@@ -128,6 +98,4 @@ Java_ravex_modules_player_PacketMine_nativeFilterVisible(
     return vec3iArrayToJIntArray(env, visible);
 }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

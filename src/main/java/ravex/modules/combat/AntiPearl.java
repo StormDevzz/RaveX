@@ -1,20 +1,11 @@
 package ravex.modules.combat;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-<<<<<<< HEAD
 import net.minecraft.world.phys.Vec3;
-=======
-import net.minecraft.world.item.Items;
-import net.minecraft.world.phys.Vec3;
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
@@ -22,10 +13,6 @@ import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
 public class AntiPearl extends Module {
-<<<<<<< HEAD
-=======
-    public static final AntiPearl INSTANCE = new AntiPearl();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0, 0.5);
     public final BooleanParameter autoAttack = new BooleanParameter("AutoAttack", true);
     public final BooleanParameter autoWarn = new BooleanParameter("Warn", true);
@@ -97,7 +84,6 @@ public class AntiPearl extends Module {
         return new Vec3(x, y, z);
     }
     private static native void nativePredictLanding(double x, double y, double z, double mx, double my, double mz, double[] out);
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(AntiPearl.class);
     }
@@ -106,6 +92,3 @@ public class AntiPearl extends Module {
     }
 
 }
-=======
-}
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3

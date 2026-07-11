@@ -1,9 +1,5 @@
 package ravex.modules.player;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -12,18 +8,11 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.EquipmentSlot;
-<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 public class AutoMend extends Module {
     public final NumberParameter threshold = new NumberParameter("Threshold", 50.0, 10.0, 95.0, 5.0);
     public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Normal", "Silent"));
-=======
-public class AutoMend extends Module {
-    public static final AutoMend INSTANCE = new AutoMend();
-    public final NumberParameter threshold = new NumberParameter("Threshold%", 50.0, 10.0, 95.0, 5.0);
-    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
     @Override
     public void onTick() {
@@ -53,7 +42,6 @@ public class AutoMend extends Module {
             }
         }
         if (expSlot == -1) return;
-<<<<<<< HEAD
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         boolean silent = "Silent".equals(swapMode.getValue());
         InventoryUtility.selectSlot(p, expSlot);
@@ -62,20 +50,6 @@ public class AutoMend extends Module {
         p.swing(InteractionHand.MAIN_HAND);
         if (silent) {
             InventoryUtility.selectSlot(p, prevSlot);
-=======
-        int prevSlot = p.getInventory().getSelectedSlot();
-        if (silent.getValue()) {
-            p.getInventory().setSelectedSlot(expSlot);
-            p.connection.send(new ServerboundMovePlayerPacket.Rot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision));
-            mc.gameMode.useItem(p, InteractionHand.MAIN_HAND);
-            p.swing(InteractionHand.MAIN_HAND);
-            p.getInventory().setSelectedSlot(prevSlot);
-        } else {
-            p.getInventory().setSelectedSlot(expSlot);
-            p.connection.send(new ServerboundMovePlayerPacket.Rot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision));
-            mc.gameMode.useItem(p, InteractionHand.MAIN_HAND);
-            p.swing(InteractionHand.MAIN_HAND);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
     }
     public static boolean maybeEnabled() {

@@ -1,5 +1,4 @@
 package ravex.modules.player;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
@@ -28,15 +27,4 @@ public class NoInteract extends Module {
     public static NoInteract itz() {
         return ModuleManager.get(NoInteract.class);
     }
-=======
-import ravex.modules.Category;
-import ravex.modules.Module;
-import ravex.parameter.BooleanParameter;
-public class NoInteract extends Module {
-    public static final NoInteract INSTANCE = new NoInteract();
-    public final BooleanParameter containers = new BooleanParameter("Containers", true);
-    public final BooleanParameter craftingTables = new BooleanParameter("CraftingTables", false);
-    public final BooleanParameter buttons = new BooleanParameter("Buttons/Levers", false);
-
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

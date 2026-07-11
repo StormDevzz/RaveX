@@ -3,34 +3,23 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-<<<<<<< HEAD
 import net.minecraft.resources.Identifier;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
-<<<<<<< HEAD
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 public class CurrencyHud extends Module {
     private static final Identifier ICON = TextureLoader.HUD_CURRENCY_WHITE;
     private static final int IS = HudRenderer.getIconSize();
-=======
-public class CurrencyHud extends Module {
-    public static final CurrencyHud INSTANCE = new CurrencyHud();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter btc = new BooleanParameter("BTC/USD", true);
     public final BooleanParameter usd_rub = new BooleanParameter("USD/RUB", true);
     public final BooleanParameter eur_rub = new BooleanParameter("EUR/RUB", true);
@@ -87,11 +76,7 @@ public class CurrencyHud extends Module {
     }
     @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-<<<<<<< HEAD
         if (!ModuleManager.get(Hud.class).getEnabled()) return;
-=======
-        if (!Hud.INSTANCE.getEnabled()) return;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
@@ -136,7 +121,6 @@ public class CurrencyHud extends Module {
             setHeight(14);
             return;
         }
-<<<<<<< HEAD
         int pw = 130;
         int rowH = 11;
         int ph = 18 + active.size() * rowH + 4;
@@ -147,17 +131,6 @@ public class CurrencyHud extends Module {
         ravex.utility.render.FontRenderUtility.drawString(graphics, "CurrencyRates", bx + 4, by + 4, ColorUtility.getActiveColor(), false);
         HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + 4, ColorUtility.getActiveColor());
         int cy = by + 18;
-=======
-        int pw = 120;
-        int rowH = 11;
-        int ph = 16 + active.size() * rowH + 4;
-        setWidth(pw);
-        setHeight(ph);
-        int bx = getX(), by = getY();
-        ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, pw, ph, ColorUtility.getActiveColor());
-        ravex.utility.render.FontRenderUtility.drawString(graphics, "CurrencyRates", bx + 8, by + 4, ColorUtility.getActiveColor(), false);
-        int cy = by + 16;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         for (DisplayPair dp : active) {
             ravex.utility.render.FontRenderUtility.drawString(graphics, dp.label, bx + 8, cy, 0xFF8080A0, false);
             int valW = ravex.utility.render.FontRenderUtility.getStringWidth(dp.valStr);
@@ -217,7 +190,6 @@ public class CurrencyHud extends Module {
             }
         }).start();
     }
-<<<<<<< HEAD
 
     public static boolean maybeEnabled() {
         return maybeEnabled(CurrencyHud.class);
@@ -226,6 +198,4 @@ public class CurrencyHud extends Module {
     public static CurrencyHud itz() {
         return ModuleManager.get(CurrencyHud.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

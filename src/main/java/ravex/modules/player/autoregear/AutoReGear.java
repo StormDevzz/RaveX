@@ -1,41 +1,20 @@
 package ravex.modules.player.autoregear;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
 
 import net.minecraft.world.inventory.ClickType;
-=======
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ActionParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
-<<<<<<< HEAD
 import ravex.utility.player.InventoryUtility;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.gui.clickgui.AutoReGearScreen;
 import java.util.HashMap;
 import java.util.Map;
 public class AutoReGear extends Module {
-<<<<<<< HEAD
     public final NumberParameter delayParam = new NumberParameter("Delay", 200, 50, 1000, 50);
-=======
-    public static final AutoReGear INSTANCE = new AutoReGear();
-    public final NumberParameter delayParam = new NumberParameter("Delay(ms)", 200, 50, 1000, 50);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ActionParameter items = new ActionParameter("Items", () -> {
         Minecraft.getInstance().setScreen(
             new AutoReGearScreen(Minecraft.getInstance().screen)
@@ -84,11 +63,7 @@ public class AutoReGear extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gameMode == null) return;
-<<<<<<< HEAD
         if (!(mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen)) return;
-=======
-        if (!(mc.screen instanceof AbstractContainerScreen<?> containerScreen)) return;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         String title = containerScreen.getTitle().getString().toLowerCase();
         if (!title.contains("shulker") && !title.contains("chest") && !title.contains("box") && !title.contains("barrel")) return;
         long now = System.currentTimeMillis();
@@ -98,17 +73,10 @@ public class AutoReGear extends Module {
         String[] containerItemIds = new String[27];
         int[] containerCounts = new int[27];
         for (int i = 0; i < 27; i++) {
-<<<<<<< HEAD
             var slot = menu.getSlot(i);
             var stack = slot.getItem();
             if (!stack.isEmpty()) {
                 var id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-=======
-            Slot slot = menu.getSlot(i);
-            ItemStack stack = slot.getItem();
-            if (!stack.isEmpty()) {
-                Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 containerItemIds[i] = id != null ? id.toString() : "";
                 containerCounts[i] = stack.getCount();
             } else {
@@ -127,17 +95,10 @@ public class AutoReGear extends Module {
             currentInventoryCounts.put(targetItemIds[i], 0);
         }
         for (int i = 27; i < 63; i++) {
-<<<<<<< HEAD
             var slot = menu.getSlot(i);
             var stack = slot.getItem();
             if (!stack.isEmpty()) {
                 var id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-=======
-            Slot slot = menu.getSlot(i);
-            ItemStack stack = slot.getItem();
-            if (!stack.isEmpty()) {
-                Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 if (id != null) {
                     String idStr = id.toString();
                     if (idStr.equals("minecraft:golden_apple") && currentInventoryCounts.containsKey("minecraft:enchanted_golden_apple")) {
@@ -176,17 +137,7 @@ public class AutoReGear extends Module {
             );
         }
         if (containerSlotToClick >= 0 && containerSlotToClick < 27) {
-<<<<<<< HEAD
             InventoryUtility.handleInventoryClick(mc, (net.minecraft.client.player.LocalPlayer) mc.player, containerSlotToClick, 0, ClickType.QUICK_MOVE);
-=======
-            mc.gameMode.handleInventoryMouseClick(
-                menu.containerId,
-                containerSlotToClick,
-                0,
-                ClickType.QUICK_MOVE,
-                mc.player
-            );
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             lastActionTime = now;
         }
     }

@@ -14,15 +14,12 @@ import ravex.modules.combat.BasePlace;
 import ravex.modules.combat.AnchorAura;
 import ravex.modules.combat.KillAura;
 import ravex.modules.combat.ShieldFucker;
-<<<<<<< HEAD
 import ravex.modules.combat.Breaker;
 import ravex.modules.player.PacketMine;
 import ravex.modules.player.AntiAim;
 import ravex.modules.combat.BowAim;
 import ravex.modules.combat.Quiver;
 import ravex.modules.world.Scaffold;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
 @Mixin(LocalPlayer.class)
 public class MixinLocalPlayer {
@@ -43,21 +40,7 @@ public class MixinLocalPlayer {
     @Inject(method = "sendPosition", at = @At("HEAD"))
     private void onSendPositionHead(CallbackInfo ci) {
         LocalPlayer player = (LocalPlayer) (Object) this;
-<<<<<<< HEAD
         if (Breaker.maybeEnabled() && Breaker.itz().rotate.getValue().equals("Silent") && Breaker.silentRotation.hasRotation) {
-=======
-        if (ravex.modules.combat.Breaker.INSTANCE.getEnabled() && ravex.modules.combat.Breaker.INSTANCE.rotate.getValue().equals("Silent") && ravex.modules.combat.Breaker.hasSilentRotations) {
-            ravexSavedYaw = player.getYRot();
-            ravexSavedPitch = player.getXRot();
-            player.setYRot(ravex.modules.combat.Breaker.silentYaw);
-            player.setXRot(ravex.modules.combat.Breaker.silentPitch);
-        } else if (ravex.modules.player.PacketMine.INSTANCE.getEnabled() && ravex.modules.player.PacketMine.INSTANCE.rotate.getValue().equals("Silent") && ravex.modules.player.PacketMine.hasSilentRotations) {
-            ravexSavedYaw = player.getYRot();
-            ravexSavedPitch = player.getXRot();
-            player.setYRot(ravex.modules.player.PacketMine.silentYaw);
-            player.setXRot(ravex.modules.player.PacketMine.silentPitch);
-        } else if (AutoCrystal.INSTANCE.getEnabled() && AutoCrystal.INSTANCE.rotate.getValue().equals("Silent") && AutoCrystal.hasSilentRotations()) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             ravexSavedYaw = player.getYRot();
             ravexSavedPitch = player.getXRot();
             player.setYRot(Breaker.silentRotation.yaw);
@@ -105,7 +88,6 @@ public class MixinLocalPlayer {
         } else if (Quiver.maybeEnabled() && Quiver.hasSilentRotations()) {
             ravexSavedYaw = player.getYRot();
             ravexSavedPitch = player.getXRot();
-<<<<<<< HEAD
             player.setYRot(Quiver.silentRotation.yaw);
             player.setXRot(Quiver.silentRotation.pitch);
         } else if (Scaffold.maybeEnabled() && Scaffold.silentRotation.hasRotation) {
@@ -123,32 +105,12 @@ public class MixinLocalPlayer {
             ravexSavedPitch = player.getXRot();
             player.setYRot(ShieldFucker.silentRotation.yaw);
             player.setXRot(ShieldFucker.silentRotation.pitch);
-=======
-            player.setYRot(ravex.modules.combat.Quiver.silentYaw);
-            player.setXRot(ravex.modules.combat.Quiver.silentPitch);
-        } else if (ravex.modules.world.Scaffold.INSTANCE.getEnabled() && ravex.modules.world.Scaffold.hasSilentRotation) {
-            ravexSavedYaw = player.getYRot();
-            ravexSavedPitch = player.getXRot();
-            player.setYRot(ravex.modules.world.Scaffold.silentYaw);
-            player.setXRot(ravex.modules.world.Scaffold.silentPitch);
-        } else if (KillAura.INSTANCE.getEnabled() && KillAura.INSTANCE.rotate.getValue().equals("Silent") && KillAura.hasSilentRotations()) {
-            ravexSavedYaw = player.getYRot();
-            ravexSavedPitch = player.getXRot();
-            player.setYRot(KillAura.silentYaw);
-            player.setXRot(KillAura.silentPitch);
-        } else if (ShieldFucker.INSTANCE.getEnabled() && ShieldFucker.INSTANCE.rotate.getValue().equals("Silent") && ShieldFucker.hasSilentRotations()) {
-            ravexSavedYaw = player.getYRot();
-            ravexSavedPitch = player.getXRot();
-            player.setYRot(ShieldFucker.silentYaw);
-            player.setXRot(ShieldFucker.silentPitch);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
     }
 
     @Inject(method = "sendPosition", at = @At("TAIL"))
     private void onSendPositionTail(CallbackInfo ci) {
         LocalPlayer player = (LocalPlayer) (Object) this;
-<<<<<<< HEAD
         boolean acActive = AutoCrystal.maybeEnabled() && AutoCrystal.itz().rotate.getValue().equals("Silent") && AutoCrystal.hasSilentRotations();
         boolean trapActive = Trap.maybeEnabled() && Trap.itz().rotate.getValue().equals("Silent") && Trap.hasSilentRotations();
         boolean selfTrapActive = SelfTrap.maybeEnabled() && SelfTrap.itz().rotate.getValue().equals("Silent") && SelfTrap.hasSilentRotations();
@@ -162,21 +124,6 @@ public class MixinLocalPlayer {
         boolean kaActive = KillAura.maybeEnabled() && KillAura.hasSilentRotations();
         boolean sfActive = ShieldFucker.maybeEnabled() && ShieldFucker.itz().rotate.getValue().equals("Silent") && ShieldFucker.hasSilentRotations();
         boolean scaffoldSilent = Scaffold.maybeEnabled() && Scaffold.silentRotation.hasRotation;
-=======
-        boolean acActive = AutoCrystal.INSTANCE.getEnabled() && AutoCrystal.INSTANCE.rotate.getValue().equals("Silent") && AutoCrystal.hasSilentRotations();
-        boolean trapActive = Trap.INSTANCE.getEnabled() && Trap.INSTANCE.rotate.getValue().equals("Silent") && Trap.hasSilentRotations();
-        boolean selfTrapActive = SelfTrap.INSTANCE.getEnabled() && SelfTrap.INSTANCE.rotate.getValue().equals("Silent") && SelfTrap.hasSilentRotations();
-        boolean basePlaceActive = BasePlace.INSTANCE.getEnabled() && BasePlace.INSTANCE.rotate.getValue().equals("Silent") && BasePlace.hasSilentRotations();
-        boolean anchorAuraActive = AnchorAura.INSTANCE.getEnabled() && AnchorAura.INSTANCE.rotate.getValue().equals("Silent") && AnchorAura.hasSilentRotations();
-        boolean antiAimActive = ravex.modules.player.AntiAim.INSTANCE.getEnabled() && ravex.modules.player.AntiAim.INSTANCE.silent.getValue();
-        boolean bowAimActive = ravex.modules.combat.BowAim.INSTANCE.getEnabled() && ravex.modules.combat.BowAim.INSTANCE.rotate.getValue().equals("Silent") && ravex.modules.combat.BowAim.hasSilentRotations();
-        boolean quiverActive = ravex.modules.combat.Quiver.INSTANCE.getEnabled() && ravex.modules.combat.Quiver.hasSilentRotations();
-        boolean breakerActive = ravex.modules.combat.Breaker.INSTANCE.getEnabled() && ravex.modules.combat.Breaker.INSTANCE.rotate.getValue().equals("Silent") && ravex.modules.combat.Breaker.hasSilentRotations;
-        boolean pmActive = ravex.modules.player.PacketMine.INSTANCE.getEnabled() && ravex.modules.player.PacketMine.INSTANCE.rotate.getValue().equals("Silent") && ravex.modules.player.PacketMine.hasSilentRotations;
-        boolean kaActive = KillAura.INSTANCE.getEnabled() && KillAura.INSTANCE.rotate.getValue().equals("Silent") && KillAura.hasSilentRotations();
-        boolean sfActive = ShieldFucker.INSTANCE.getEnabled() && ShieldFucker.INSTANCE.rotate.getValue().equals("Silent") && ShieldFucker.hasSilentRotations();
-        boolean scaffoldSilent = ravex.modules.world.Scaffold.INSTANCE.getEnabled() && ravex.modules.world.Scaffold.hasSilentRotation;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (acActive || trapActive || selfTrapActive || basePlaceActive || anchorAuraActive || antiAimActive || bowAimActive || quiverActive || breakerActive || pmActive || kaActive || sfActive || scaffoldSilent) {
             player.setYRot(ravexSavedYaw);
             player.setXRot(ravexSavedPitch);

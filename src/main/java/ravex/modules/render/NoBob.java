@@ -1,16 +1,8 @@
 package ravex.modules.render;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import net.minecraft.client.Minecraft;
 public class NoBob extends Module {
-=======
-import ravex.modules.Category;
-import ravex.modules.Module;
-import net.minecraft.client.Minecraft;
-public class NoBob extends Module {
-    public static final NoBob INSTANCE = new NoBob();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private boolean originalBob = true;
 
     @Override

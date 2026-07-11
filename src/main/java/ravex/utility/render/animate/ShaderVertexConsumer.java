@@ -32,12 +32,25 @@ public class ShaderVertexConsumer implements VertexConsumer {
     @Override
     public VertexConsumer setColor(int r, int g, int b, int a) {
         if (renderInput != null && renderInput.config.enabled) {
+            ShaderUniforms uniforms = HandShaderManager.getPipeline().getUniforms();
             EffectInput ein = new EffectInput();
             ein.vertex.position = new Vec3(curX, curY, curZ);
             ein.vertex.normal = new Vec3(curNormX, curNormY, curNormZ);
             ein.vertex.uv = new Vec2(curU, curV);
             ein.localPos = ein.vertex.position;
-            ein.worldPos = ein.vertex.position;
+
+            if (uniforms != null && uniforms.modelMatrix != null) {
+                ein.uniforms = uniforms;
+                Vec4 transformed = uniforms.modelMatrix.transform(new Vec4(curX, curY, curZ, 1f));
+                ein.worldPos = new Vec3(
+                    transformed.x + uniforms.cameraPos.x,
+                    transformed.y + uniforms.cameraPos.y,
+                    transformed.z + uniforms.cameraPos.z
+                );
+            } else {
+                ein.worldPos = ein.vertex.position;
+            }
+
             ein.intensity = renderInput.config.intensity;
             ein.normalizedTime = renderInput.time;
             ein.deltaTime = renderInput.deltaTime;
@@ -109,12 +122,25 @@ public class ShaderVertexConsumer implements VertexConsumer {
             int rg = (color >> 8) & 0xFF;
             int rb = color & 0xFF;
 
+            ShaderUniforms uniforms = HandShaderManager.getPipeline().getUniforms();
             EffectInput ein = new EffectInput();
             ein.vertex.position = new Vec3(x, y, z);
             ein.vertex.normal = new Vec3(normalX, normalY, normalZ);
             ein.vertex.uv = new Vec2(u, v);
             ein.localPos = ein.vertex.position;
-            ein.worldPos = ein.vertex.position;
+
+            if (uniforms != null && uniforms.modelMatrix != null) {
+                ein.uniforms = uniforms;
+                Vec4 transformed = uniforms.modelMatrix.transform(new Vec4(x, y, z, 1f));
+                ein.worldPos = new Vec3(
+                    transformed.x + uniforms.cameraPos.x,
+                    transformed.y + uniforms.cameraPos.y,
+                    transformed.z + uniforms.cameraPos.z
+                );
+            } else {
+                ein.worldPos = ein.vertex.position;
+            }
+
             ein.intensity = renderInput.config.intensity;
             ein.normalizedTime = renderInput.time;
             ein.deltaTime = renderInput.deltaTime;
@@ -122,11 +148,11 @@ public class ShaderVertexConsumer implements VertexConsumer {
             EffectOutput eout = HandShaderManager.getPipeline().processVertex(ein);
 
             float blend = Math.min(eout.alpha, 1f);
-            float nr = (rr / 255f) * (1f - blend) + eout.color.r * blend;
-            float ng = (rg / 255f) * (1f - blend) + eout.color.g * blend;
-            float nb = (rb / 255f) * (1f - blend) + eout.color.b * blend;
+            float rr_new = (rr / 255f) * (1f - blend) + eout.color.r * blend;
+            float rg_new = (rg / 255f) * (1f - blend) + eout.color.g * blend;
+            float rb_new = (rb / 255f) * (1f - blend) + eout.color.b * blend;
 
-            int modifiedColor = (ra << 24) | ((int)(nr * 255) << 16) | ((int)(ng * 255) << 8) | (int)(nb * 255);
+            int modifiedColor = (ra << 24) | ((int)(rr_new * 255) << 16) | ((int)(rg_new * 255) << 8) | (int)(rb_new * 255);
             delegate.addVertex(x, y, z, modifiedColor, u, v, overlay, light, normalX, normalY, normalZ);
         } else {
             delegate.addVertex(x, y, z, color, u, v, overlay, light, normalX, normalY, normalZ);

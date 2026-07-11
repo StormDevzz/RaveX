@@ -1,6 +1,7 @@
 package ravex.mixin.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.player.NoSwing;
 import ravex.modules.player.Swing;
 import ravex.modules.render.Shaders;
+import ravex.modules.render.SwingAnimation;
 import ravex.modules.render.ViewModel;
 
 @Mixin(ItemInHandRenderer.class)
@@ -44,9 +46,40 @@ public abstract class MixinItemInHandRenderer {
 
     @Inject(
         method = "applyItemArmTransform(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/entity/HumanoidArm;F)V",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void onApplyItemArmTransform(PoseStack poseStack, HumanoidArm arm, float equipProgress, CallbackInfo ci) {
+        if (capturedHand == InteractionHand.MAIN_HAND
+            && SwingAnimation.maybeEnabled()
+            && !NoSwing.maybeEnabled()) {
+
+            String mode = SwingAnimation.itz().mode.getValue();
+            if ("Akrien".equals(mode) && (capturedOriginalSwingProgress > 0 || SwingAnimation.itz().akrienBlend > 0)) {
+                ci.cancel();
+                SwingAnimation.itz().applyFourteen(poseStack, capturedOriginalSwingProgress, equipProgress);
+                applyViewModel(poseStack, arm);
+            } else if ("Swipe".equals(mode)) {
+                ci.cancel();
+                SwingAnimation.itz().applySwipe(poseStack, capturedOriginalSwingProgress, equipProgress);
+                applyViewModel(poseStack, arm);
+            } else if ("Default".equals(mode) && capturedOriginalSwingProgress > 0) {
+                ci.cancel();
+                SwingAnimation.itz().applyDefault(poseStack, capturedOriginalSwingProgress, equipProgress);
+                applyViewModel(poseStack, arm);
+            }
+        }
+    }
+
+    @Inject(
+        method = "applyItemArmTransform(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/entity/HumanoidArm;F)V",
         at = @At("RETURN")
     )
-    private void onApplyItemArmTransform(PoseStack poseStack, HumanoidArm arm, float f, CallbackInfo ci) {
+    private void onApplyItemArmTransformReturn(PoseStack poseStack, HumanoidArm arm, float f, CallbackInfo ci) {
+        applyViewModel(poseStack, arm);
+    }
+
+    private void applyViewModel(PoseStack poseStack, HumanoidArm arm) {
         ViewModel vm = ViewModel.itz();
         if (!vm.getEnabled()) return;
 
@@ -74,9 +107,9 @@ public abstract class MixinItemInHandRenderer {
 
         poseStack.translate(tx, ty, tz);
 
-        if (rx != 0f) poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(rx));
-        if (ry != 0f) poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(ry));
-        if (rz != 0f) poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(rz));
+        if (rx != 0f) poseStack.mulPose(Axis.XP.rotationDegrees(rx));
+        if (ry != 0f) poseStack.mulPose(Axis.YP.rotationDegrees(ry));
+        if (rz != 0f) poseStack.mulPose(Axis.ZP.rotationDegrees(rz));
 
         if (scale != 1f) poseStack.scale(scale, scale, scale);
     }
@@ -110,6 +143,8 @@ public abstract class MixinItemInHandRenderer {
 
 
     private static AbstractClientPlayer capturedPlayer;
+    private static float capturedOriginalSwingProgress = 0f;
+    private static InteractionHand capturedHand;
 
     @Inject(
         method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
@@ -120,6 +155,7 @@ public abstract class MixinItemInHandRenderer {
                                 float equipProgress, PoseStack poseStack,
                                 SubmitNodeCollector collector, int light, CallbackInfo ci) {
         capturedPlayer = player;
+        capturedHand = hand;
     }
 
     @ModifyVariable(
@@ -129,11 +165,19 @@ public abstract class MixinItemInHandRenderer {
         argsOnly = true
     )
     private float modifySwingProgress(float swingProgress) {
+        capturedOriginalSwingProgress = swingProgress;
+
+        if (SwingAnimation.maybeEnabled()
+            && ("Akrien".equals(SwingAnimation.itz().mode.getValue())
+                || "Swipe".equals(SwingAnimation.itz().mode.getValue())
+                || "Default".equals(SwingAnimation.itz().mode.getValue()))) {
+            return 0.0f;
+        }
+
         if (capturedPlayer == null) return swingProgress;
 
         boolean isSelf = Minecraft.getInstance().player == capturedPlayer;
 
-<<<<<<< HEAD
         if (NoSwing.maybeEnabled()) {
             if (NoSwing.itz().self.getValue() && isSelf) return 1.0f;
             if (NoSwing.itz().others.getValue() && !isSelf) return 1.0f;
@@ -142,16 +186,6 @@ public abstract class MixinItemInHandRenderer {
         if (Swing.maybeEnabled() && "Custom".equals(Swing.itz().mode.getValue())) {
             float p = swingProgress;
             String path = Swing.itz().swingPath.getValue();
-=======
-        if (NoSwing.INSTANCE.getEnabled()) {
-            if (NoSwing.INSTANCE.self.getValue() && isSelf) return 1.0f;
-            if (NoSwing.INSTANCE.others.getValue() && !isSelf) return 1.0f;
-        }
-
-        if (Swing.INSTANCE.getEnabled() && "Custom".equals(Swing.INSTANCE.mode.getValue())) {
-            float p = swingProgress;
-            String path = Swing.INSTANCE.swingPath.getValue();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if ("Smooth".equals(path)) {
                 float t = 1 - p;
                 t = t * t * (3 - 2 * t);
@@ -164,15 +198,9 @@ public abstract class MixinItemInHandRenderer {
             } else if ("Reverse".equals(path)) {
                 p = 1 - p;
             }
-<<<<<<< HEAD
             p = (float) Math.pow(p, Swing.itz().swingCurve.getValue().floatValue());
             p = Math.min(p, Swing.itz().progressCap.getValue().floatValue());
             p = Math.max(p, Swing.itz().progressFloor.getValue().floatValue());
-=======
-            p = (float) Math.pow(p, Swing.INSTANCE.swingCurve.getValue().floatValue());
-            p = Math.min(p, Swing.INSTANCE.progressCap.getValue().floatValue());
-            p = Math.max(p, Swing.INSTANCE.progressFloor.getValue().floatValue());
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             return p;
         }
 
@@ -186,15 +214,13 @@ public abstract class MixinItemInHandRenderer {
         argsOnly = true
     )
     private float modifyEquipProgress(float equipProgress) {
-<<<<<<< HEAD
+        if (SwingAnimation.maybeEnabled()) {
+            return 0.0f;
+        }
+
         if (Swing.maybeEnabled()
             && ("1.8".equals(Swing.itz().mode.getValue())
                 || ("Custom".equals(Swing.itz().mode.getValue()) && Swing.itz().noEquip.getValue()))) {
-=======
-        if (Swing.INSTANCE.getEnabled()
-            && ("1.8".equals(Swing.INSTANCE.mode.getValue())
-                || ("Custom".equals(Swing.INSTANCE.mode.getValue()) && Swing.INSTANCE.noEquip.getValue()))) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             return 0.0f;
         }
         return equipProgress;

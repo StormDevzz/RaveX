@@ -1,14 +1,10 @@
 package ravex.modules.movement;
-<<<<<<< HEAD
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.item.Items;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.manager.ModuleManager;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -16,10 +12,6 @@ import ravex.utility.nativelib.NativeLibrary;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 public class Phase extends Module {
-<<<<<<< HEAD
-=======
-    public static final Phase INSTANCE = new Phase();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter mode = new ModeParameter("Mode", "Positive1", List.of("Positive1", "Positive2"));
     public final NumberParameter distance = new NumberParameter("Distance", 2.0, 0.5, 4.0, 0.1);
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_phase");
@@ -27,7 +19,6 @@ public class Phase extends Module {
         NATIVE.load();
     }
 
-<<<<<<< HEAD
     @Subscribe
     public void onPacket(PacketEvent event) {
         if (!getEnabled() || !event.isSend()) return;
@@ -40,8 +31,6 @@ public class Phase extends Module {
         }
     }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public void clip() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
@@ -81,13 +70,10 @@ public class Phase extends Module {
         outOffset[2] = Math.cos(yawRad) * Math.cos(pitchRad) * distance;
     }
     private static native void nativeCalculateOffset(double yaw, double pitch, double distance, double[] outOffset);
-<<<<<<< HEAD
     public static boolean maybeEnabled() {
         return maybeEnabled(Phase.class);
     }
     public static Phase itz() {
         return ModuleManager.get(Phase.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

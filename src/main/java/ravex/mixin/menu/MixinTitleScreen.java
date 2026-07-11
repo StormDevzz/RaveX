@@ -130,22 +130,13 @@ public abstract class MixinTitleScreen extends Screen {
             pose.rotate((float) Math.toRadians(rotationAngle));
             pose.scale(scale, scale);
 
-<<<<<<< HEAD
             graphics.drawCenteredString(font, splashComponent, 1, -7, shadowColor);
             graphics.drawCenteredString(font, splashComponent, 0, -8, activeBlueColor);
-=======
-            graphics.drawCenteredString(font, ravexSplashText, 1, -7, shadowColor);
-            graphics.drawCenteredString(font, ravexSplashText, 0, -8, activeBlueColor);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
             pose.popMatrix();
         }
 
-<<<<<<< HEAD
         graphics.drawString(font, "RaveX Client", 8, 8, Settings.itz().menuColor.getValue(), true);
-=======
-        graphics.drawString(font, "RaveX Client", 8, 8, ravex.modules.client.Settings.INSTANCE.menuColor.getValue(), true);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         graphics.drawString(font, "Logged in as: §f" + mc.getUser().getName(), 8, 20, 0xFF888888, true);
         graphics.drawString(font, "Build: §7" + ravex.RaveX.version, 8, 32, 0xFF888888, true);
 

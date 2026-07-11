@@ -1,19 +1,13 @@
 package ravex.modules.hud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-<<<<<<< HEAD
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemCooldowns;
-=======
-import net.minecraft.world.item.ItemCooldowns;
-import net.minecraft.world.item.ItemStack;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
-<<<<<<< HEAD
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
 import java.util.*;
@@ -21,11 +15,6 @@ import ravex.manager.ModuleManager;
 public class CooldownsHud extends Module {
     private static final Identifier ICON = TextureLoader.HUD_COOLDOWN_WHITE;
     private static final int IS = HudRenderer.getIconSize();
-=======
-import java.util.*;
-public class CooldownsHud extends Module {
-    public static final CooldownsHud INSTANCE = new CooldownsHud();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private CooldownsHud() {
         super("Cooldowns", 10, 260, 90, 14);
         addParameter(new ColorParameter("Color", 0xFFFFCC33));
@@ -33,11 +22,7 @@ public class CooldownsHud extends Module {
     }
     @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-<<<<<<< HEAD
         if (!ModuleManager.get(Hud.class).getEnabled()) return;
-=======
-        if (!Hud.INSTANCE.getEnabled()) return;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         int col = 0xFFFFCC33;
@@ -51,11 +36,7 @@ public class CooldownsHud extends Module {
         List<String> lines = new ArrayList<>();
         var inv = mc.player.getInventory();
         for (int slot = 0; slot < inv.getContainerSize(); slot++) {
-<<<<<<< HEAD
             var stack = inv.getItem(slot);
-=======
-            ItemStack stack = inv.getItem(slot);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (stack.isEmpty()) continue;
             String id = stack.getItem().getDescriptionId();
             if (seen.add(id) && cd.isOnCooldown(stack)) {
@@ -69,7 +50,6 @@ public class CooldownsHud extends Module {
         int lh = 10;
         int pw = 10;
         for (var line : lines) {
-<<<<<<< HEAD
             int nw = HudRenderer.textWidth(line) + 10;
             if (nw > pw) pw = nw;
         }
@@ -92,19 +72,5 @@ public class CooldownsHud extends Module {
 
     public static CooldownsHud itz() {
         return ModuleManager.get(CooldownsHud.class);
-=======
-            int nw = ravex.utility.render.HudRenderer.textWidth(line) + 10;
-            if (nw > pw) pw = nw;
-        }
-        int ph = lines.size() * lh + 6;
-        setWidth(pw);
-        setHeight(ph);
-        ravex.utility.render.HudRenderer.drawPanel(graphics, bx, by, pw, ph, ColorUtility.getActiveColor());
-        int cy = by + 4;
-        for (var line : lines) {
-            ravex.utility.render.HudRenderer.drawText(graphics, line, bx + 5, cy, col, shadow);
-            cy += lh;
-        }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 }

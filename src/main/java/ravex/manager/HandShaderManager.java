@@ -14,6 +14,8 @@ public final class HandShaderManager {
         pipeline.addEffect(new FireAuraEffect());
         pipeline.addEffect(new EnergyGlowEffect());
         pipeline.addEffect(new ChromaEffect());
+        pipeline.addEffect(new RippleEffect());
+        pipeline.addEffect(new PulseEffect());
         initialized = true;
     }
 
@@ -32,6 +34,8 @@ public final class HandShaderManager {
         pipeline.addEffect(new FireAuraEffect());
         pipeline.addEffect(new EnergyGlowEffect());
         pipeline.addEffect(new ChromaEffect());
+        pipeline.addEffect(new RippleEffect());
+        pipeline.addEffect(new PulseEffect());
     }
 
     public static boolean isInitialized() { return initialized; }

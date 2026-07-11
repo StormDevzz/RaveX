@@ -1,22 +1,21 @@
 package ravex.mixin.realms;
 
-import com.mojang.realmsclient.client.RealmsClient;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(RealmsClient.class)
+@Mixin(targets = "net.minecraft.class_4341")
 public class MixinRealmsClient {
     @Redirect(
-        method = "fetchFeatureFlags",
+        method = "method_68466",
         at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V"),
         remap = false
     )
     private void suppressRealmsError(Logger logger, String message, Throwable t) {}
 
     @Redirect(
-        method = "execute(Lcom/mojang/realmsclient/client/Request;)Ljava/lang/String;",
+        method = "method_20998",
         at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;)V"),
         remap = false
     )

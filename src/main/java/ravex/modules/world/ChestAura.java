@@ -1,8 +1,4 @@
 package ravex.modules.world;
-<<<<<<< HEAD
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -14,10 +10,6 @@ import net.minecraft.client.Minecraft;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 public class ChestAura extends Module {
-<<<<<<< HEAD
-=======
-    public static final ChestAura INSTANCE = new ChestAura();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
     public final NumberParameter delay = new NumberParameter("Delay", 2.0, 0.0, 20.0, 1.0);
     public final BooleanParameter render = new BooleanParameter("Render", true);
@@ -29,13 +21,8 @@ public class ChestAura extends Module {
     public static class PlacedChest {
         public final long packedPos;
         public final long placeTime;
-<<<<<<< HEAD
         public PlacedChest(long packedPos, long placeTime) {
             this.packedPos = packedPos;
-=======
-        public PlacedChest(BlockPos pos, long placeTime) {
-            this.pos = pos;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             this.placeTime = placeTime;
         }
     }
@@ -76,17 +63,12 @@ public class ChestAura extends Module {
                 break;
             }
         }
-<<<<<<< HEAD
         if (chestSlot == -1) return;
-=======
-        if (chestSlot == -1) return;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         double r = range.getValue();
         var playerPos = p.blockPosition();
         long targetPacked = 0;
         boolean hasTarget = false;
         double closestDistSq = r * r;
-<<<<<<< HEAD
         for (var entity : mc.level.entitiesForRendering()) {
             if (entity == p || !entity.isAlive() || !(entity instanceof net.minecraft.world.entity.LivingEntity)) continue;
             if (p.distanceTo(entity) > r) continue;
@@ -99,19 +81,6 @@ public class ChestAura extends Module {
                     int by = BlockUtility.belowY(ay);
                     if (BlockUtility.isSolid(mc.level, ax, by, az)) {
                         double distSq = p.distanceToSqr(ax + 0.5, ay + 0.5, az + 0.5);
-=======
-        for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity == p || !entity.isAlive() || !(entity instanceof LivingEntity)) continue;
-            if (p.distanceTo(entity) > r) continue;
-            BlockPos entityPos = entity.blockPosition();
-            for (Direction dir : Direction.values()) {
-                if (dir == Direction.DOWN || dir == Direction.UP) continue;
-                BlockPos adjacentPos = entityPos.relative(dir);
-                if (mc.level.getBlockState(adjacentPos).isAir()) {
-                    BlockPos below = adjacentPos.below();
-                    if (!mc.level.getBlockState(below).isAir() && mc.level.getBlockState(below).isCollisionShapeFullBlock(mc.level, below)) {
-                        double distSq = p.distanceToSqr(adjacentPos.getX() + 0.5, adjacentPos.getY() + 0.5, adjacentPos.getZ() + 0.5);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                         if (distSq < closestDistSq) {
                             closestDistSq = distSq;
                             targetPacked = BlockUtility.packPos(ax, ay, az);
@@ -121,11 +90,7 @@ public class ChestAura extends Module {
                 }
             }
         }
-<<<<<<< HEAD
         if (!hasTarget) {
-=======
-        if (targetPos == null) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             int rangeInt = (int) Math.ceil(r);
             int px = playerPos.getX(), py = playerPos.getY(), pz = playerPos.getZ();
             for (int x = -rangeInt; x <= rangeInt; x++) {
@@ -147,38 +112,21 @@ public class ChestAura extends Module {
                 }
             }
         }
-<<<<<<< HEAD
         if (hasTarget) {
             int tx = BlockUtility.unpackX(targetPacked), ty = BlockUtility.unpackY(targetPacked), tz = BlockUtility.unpackZ(targetPacked);
             int prevSlot = InventoryUtility.getSelectedSlot(p);
-=======
-        if (targetPos != null) {
-            int prevSlot = p.getInventory().getSelectedSlot();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (autoSwap.getValue() && chestSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, chestSlot);
             }
-<<<<<<< HEAD
             var below = BlockUtility.pos(tx, BlockUtility.belowY(ty), tz);
             BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
                 net.minecraft.world.phys.Vec3.atCenterOf(below).add(0, 0.5, 0),
                 net.minecraft.core.Direction.UP, below, false));
             ravex.utility.player.SwingUtility.swingMainHand(p);
-=======
-            BlockPos below = targetPos.below();
-            Vec3 hitVec = Vec3.atCenterOf(below).add(0, 0.5, 0);
-            BlockHitResult blockHit = new BlockHitResult(hitVec, Direction.UP, below, false);
-            mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
-            p.swing(InteractionHand.MAIN_HAND);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (autoSwap.getValue() && silent.getValue() && chestSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, prevSlot);
             }
-<<<<<<< HEAD
             placedChests.add(new PlacedChest(targetPacked, now));
-=======
-            placedChests.add(new PlacedChest(targetPos, now));
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             delayTimer = delay.getValue().intValue();
         }
     }

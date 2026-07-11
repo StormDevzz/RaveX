@@ -19,21 +19,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
-<<<<<<< HEAD
 import ravex.RaveX;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
-=======
-import net.minecraft.world.item.enchantment.ItemEnchantments;
-import net.minecraft.core.component.DataComponents;
-import ravex.RaveX;
-import ravex.modules.Module;
-import ravex.parameter.BooleanParameter;
-import ravex.utility.player.rotation.RotationUtility;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -44,10 +35,6 @@ import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
 
 public class AnchorAura extends Module {
-<<<<<<< HEAD
-=======
-    public static final AnchorAura INSTANCE = new AnchorAura();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final ModeParameter targetMode = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
     public final ModeParameter targetType = new ModeParameter("TargetType", "Players",
             List.of("Players", "Monsters", "Passives", "All"));
@@ -73,13 +60,7 @@ public class AnchorAura extends Module {
     public static BlockPos simulatedPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
-<<<<<<< HEAD
     private static final SilentRotation silentRotation = new SilentRotation();
-=======
-    private static float silentYaw = 0;
-    private static float silentPitch = 0;
-    private static boolean hasSilentRotations = false;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private long lastActionTime = 0;
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_anchoraura");
     static {
@@ -132,11 +113,7 @@ public class AnchorAura extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null)
             return;
-<<<<<<< HEAD
         silentRotation.hasRotation = false;
-=======
-        hasSilentRotations = false;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         LivingEntity target = findTarget(mc);
         if (target == null) {
             simulatedPlacementBlock = null;
@@ -153,11 +130,7 @@ public class AnchorAura extends Module {
             if (!canAct)
                 return;
             if (charges == 0) {
-<<<<<<< HEAD
                 int glowstoneSlot = findItemSlot(mc, "glowstone");
-=======
-                int glowstoneSlot = findItemSlot(mc, Items.GLOWSTONE);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 if (glowstoneSlot == -1)
                     return;
                 Vec3 hitVec = Vec3.atCenterOf(existingAnchor);
@@ -215,11 +188,7 @@ public class AnchorAura extends Module {
         }
         if (!canAct)
             return;
-<<<<<<< HEAD
         int anchorSlot = findItemSlot(mc, "respawn_anchor");
-=======
-        int anchorSlot = findItemSlot(mc, Items.RESPAWN_ANCHOR);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (anchorSlot == -1)
             return;
         BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
@@ -239,18 +208,9 @@ public class AnchorAura extends Module {
         if (swap.equals("Normal")) {
             InventoryUtility.selectSlot(mc.player, slot);
         } else if (swap.equals("Silent")) {
-<<<<<<< HEAD
             InventoryUtility.silentSelectSlot(mc.player, slot);
         } else if (swap.equals("None")) {
             if (InventoryUtility.getSelectedSlot(mc.player) != slot)
-=======
-            if (mc.player.connection != null) {
-                mc.player.connection
-                        .send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
-            }
-        } else if (swap.equals("None")) {
-            if (mc.player.getInventory().getSelectedSlot() != slot)
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 return;
         }
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, targetBlock, false);
@@ -258,14 +218,7 @@ public class AnchorAura extends Module {
         mc.player.swing(InteractionHand.MAIN_HAND);
         lastActionTime = System.currentTimeMillis();
         if (swap.equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
-<<<<<<< HEAD
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
-=======
-            if (mc.player.connection != null) {
-                mc.player.connection
-                        .send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
-            }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
     }
 
@@ -332,23 +285,11 @@ public class AnchorAura extends Module {
         int slot = InventoryUtility.findHotbarSlot(mc.player, itemName);
         if (slot != -1) return slot;
         if (swapInventory.getValue()) {
-<<<<<<< HEAD
             slot = InventoryUtility.findSlot(mc.player, itemName, 9, 36);
             if (slot != -1) {
                 int hotbarSlot = InventoryUtility.getSelectedSlot(mc.player);
                 InventoryUtility.handleInventoryClick(mc, mc.player, slot, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
                 return hotbarSlot;
-=======
-            for (int i = 9; i < 36; i++) {
-                ItemStack stack = mc.player.getInventory().getItem(i);
-                if (!stack.isEmpty() && stack.getItem() == item) {
-                    int hotbarSlot = mc.player.getInventory().getSelectedSlot();
-                    mc.gameMode.handleInventoryMouseClick(
-                            mc.player.containerMenu.containerId, i, hotbarSlot,
-                            net.minecraft.world.inventory.ClickType.SWAP, mc.player);
-                    return hotbarSlot;
-                }
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             }
         }
         return -1;
@@ -380,26 +321,12 @@ public class AnchorAura extends Module {
             mc.player.setYRot(angles[0]);
             mc.player.setXRot(angles[1]);
         } else if (mode.equals("Silent")) {
-<<<<<<< HEAD
             silentRotation.set(angles[0], angles[1]);
-=======
-            silentYaw = angles[0];
-            silentPitch = angles[1];
-            hasSilentRotations = true;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         }
     }
 
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
-<<<<<<< HEAD
         return silentRotation.isRotationAligned(mc, target, 12.0F);
-=======
-        float[] targetAngles = RotationUtility.anglesTo(
-                mc.player.getEyePosition(), target);
-        float yawDiff = Math.abs(RotationUtility.diffYaw(mc.player.getYRot(), targetAngles[0]));
-        float pitchDiff = Math.abs(RotationUtility.diffPitch(mc.player.getXRot(), targetAngles[1]));
-        return yawDiff < 12.0F && pitchDiff < 12.0F;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     private double[] collectSolidBlocks(Minecraft mc) {
@@ -437,7 +364,6 @@ public class AnchorAura extends Module {
         for (Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof LivingEntity le))
                 continue;
-<<<<<<< HEAD
             if (MobUtility.isSelf(le))
                 continue;
             if (MobUtility.isDead(le))
@@ -453,36 +379,11 @@ public class AnchorAura extends Module {
                     continue;
             }
             double dist = MobUtility.distanceToPlayer(le);
-=======
-            if (le == mc.player)
-                continue;
-            if (le.isDeadOrDying())
-                continue;
-            if (typeFilter.equals("Players")) {
-                if (!(le instanceof Player))
-                    continue;
-            } else if (typeFilter.equals("Monsters")) {
-                if (!(le instanceof net.minecraft.world.entity.monster.Monster
-                        || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
-                        || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss))
-                    continue;
-            } else if (typeFilter.equals("Passives")) {
-                if (le instanceof Player || le instanceof net.minecraft.world.entity.monster.Monster
-                        || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
-                        || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss)
-                    continue;
-            }
-            double dist = mc.player.distanceTo(le);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (dist > maxDist)
                 continue;
             double metric = switch (mode) {
                 case "Closest" -> dist;
-<<<<<<< HEAD
                 case "LowestHP" -> MobUtility.getHealth(le);
-=======
-                case "LowestHP" -> le.getHealth();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
                 default -> dist;
             };
             if (metric < bestMetric) {
@@ -503,17 +404,10 @@ public class AnchorAura extends Module {
                 net.minecraft.world.entity.EquipmentSlot.HEAD
         };
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-<<<<<<< HEAD
             var armor = player.getItemBySlot(slot);
             if (armor.isEmpty())
                 continue;
             var enchants = InventoryUtility.getEnchantments(armor);
-=======
-            ItemStack armor = player.getItemBySlot(slot);
-            if (armor.isEmpty())
-                continue;
-            ItemEnchantments enchants = armor.get(DataComponents.ENCHANTMENTS);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (enchants != null) {
                 for (var enchantment : enchants.keySet()) {
                     String id = enchantment.getRegisteredName().toLowerCase();
@@ -527,15 +421,9 @@ public class AnchorAura extends Module {
             }
         }
         int totems = 0;
-<<<<<<< HEAD
         if (InventoryUtility.isTotem(player.getMainHandItem()))
             totems++;
         if (InventoryUtility.isTotem(player.getOffhandItem()))
-=======
-        if (player.getMainHandItem().getItem() == Items.TOTEM_OF_UNDYING)
-            totems++;
-        if (player.getOffhandItem().getItem() == Items.TOTEM_OF_UNDYING)
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             totems++;
         if (player instanceof Player p) {
             totems += InventoryUtility.countItem(p, "totem_of_undying");

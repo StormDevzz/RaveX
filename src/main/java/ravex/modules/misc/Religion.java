@@ -1,18 +1,10 @@
 package ravex.modules.misc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 public class Religion extends Module {
-=======
-import ravex.modules.Category;
-import ravex.modules.Module;
-import ravex.parameter.BooleanParameter;
-public class Religion extends Module {
-    public static final Religion INSTANCE = new Religion();
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     public final BooleanParameter christianity = new BooleanParameter("Christianity", false);
     public final BooleanParameter atheism = new BooleanParameter("Atheism", false);
     public final BooleanParameter islam = new BooleanParameter("Islam", false);
@@ -37,11 +29,8 @@ public class Religion extends Module {
             player.connection.sendChat("Hare Krishna!");
         }
     }
-<<<<<<< HEAD
 
     public static Religion itz() {
         return ModuleManager.get(Religion.class);
     }
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

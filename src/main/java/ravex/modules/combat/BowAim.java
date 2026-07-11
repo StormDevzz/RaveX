@@ -1,39 +1,21 @@
 package ravex.modules.combat;
-<<<<<<< HEAD
 import ravex.manager.ModuleManager;
 import ravex.utility.player.InventoryUtility;
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-<<<<<<< HEAD
 import ravex.utility.misc.MobUtility;
-=======
-import ravex.modules.Category;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
-<<<<<<< HEAD
 import ravex.utility.player.rotation.SilentRotation;
 public class BowAim extends Module {
     public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.0, 1.0);
     public final ModeParameter targetType = new ModeParameter("Targets", "Players", List.of("Players", "Mobs", "Both"));
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
     public static final SilentRotation silentRotation = new SilentRotation();
-=======
-public class BowAim extends Module {
-    public static final BowAim INSTANCE = new BowAim();
-    public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.0, 1.0);
-    public final ModeParameter targetType = new ModeParameter("Targets", "Players", List.of("Players", "Mobs", "Both"));
-    public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
-    public static float silentYaw = 0;
-    public static float silentPitch = 0;
-    public static boolean hasSilentRotations = false;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_bowaim");
     static {
         NATIVE.load();
@@ -50,13 +32,8 @@ public class BowAim extends Module {
             silentRotation.hasRotation = false;
             return;
         }
-<<<<<<< HEAD
         silentRotation.hasRotation = false;
         boolean usingBow = mc.player.isUsingItem() && InventoryUtility.isBow(mc.player.getUseItem());
-=======
-        hasSilentRotations = false;
-        boolean usingBow = mc.player.isUsingItem() && mc.player.getUseItem().is(Items.BOW);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         if (!usingBow) return;
         int ticksUsed = mc.player.getTicksUsingItem();
         double arrowSpeed = getArrowSpeed(ticksUsed);
@@ -108,21 +85,13 @@ public class BowAim extends Module {
         double maxDist = range.getValue();
         String filter = targetType.getValue();
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
-<<<<<<< HEAD
             if (!(e instanceof LivingEntity le) || MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
-=======
-            if (!(e instanceof LivingEntity le) || le == mc.player || le.isDeadOrDying()) continue;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (filter.equals("Players")) {
                 if (!MobUtility.isPlayer(le)) continue;
             } else if (filter.equals("Mobs")) {
                 if (!MobUtility.isMob(le)) continue;
             }
-<<<<<<< HEAD
             double dist = MobUtility.distanceToPlayer(le);
-=======
-            double dist = mc.player.distanceTo(le);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
             if (dist <= maxDist && dist < bestDist) {
                 bestDist = dist;
                 closest = le;

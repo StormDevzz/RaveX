@@ -26,13 +26,8 @@ public class NotificationManager {
 
     private static final int TOAST_MARGIN = 4;
     private static final int TOAST_ICON_SIZE = 24;
-<<<<<<< HEAD
     private static final int TOAST_PADDING_X = 4;
     private static final int TOAST_PADDING_Y = 3;
-=======
-    private static final int TOAST_PADDING_X = 6;
-    private static final int TOAST_PADDING_Y = 4;
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     private static final int TOAST_GAP = 4;
     private static final int TOAST_DURATION = 3000;
     private static final int TOAST_SLIDE_IN = 300;
@@ -178,11 +173,7 @@ public class NotificationManager {
     }
 
     public static void addToast(String text, int color, boolean enabled) {
-<<<<<<< HEAD
         addToast(text, color, enabled, 0.85, 14);
-=======
-        addToast(text, color, enabled, 0.85, 16);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     public static void render(GuiGraphics graphics) {
@@ -190,11 +181,7 @@ public class NotificationManager {
         if (mc == null || mc.font == null) return;
 
         renderCenterNotifications(graphics, mc);
-<<<<<<< HEAD
         renderToasts(graphics);
-=======
-        renderToasts(graphics, mc);
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     }
 
     private static void renderCenterNotifications(GuiGraphics graphics, Minecraft mc) {
@@ -236,11 +223,7 @@ public class NotificationManager {
         }
     }
 
-<<<<<<< HEAD
     public static void renderToasts(GuiGraphics graphics) {
-=======
-    private static void renderToasts(GuiGraphics graphics, Minecraft mc) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
         ensureTextures();
         if (enableIcon == null || disableIcon == null) return;
 

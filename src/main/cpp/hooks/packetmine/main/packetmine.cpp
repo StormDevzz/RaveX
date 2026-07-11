@@ -70,7 +70,6 @@ long estimateBreakTime(int bx, int by, int bz, double px, double py, double pz) 
     return static_cast<long>(50.0 + dist * 10.0);
 }
 
-<<<<<<< HEAD
 bool canSee(
     double ex, double ey, double ez,
     double tx, double ty, double tz,
@@ -120,6 +119,4 @@ void filterVisibleBlocks(
     }
 }
 
-=======
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 }

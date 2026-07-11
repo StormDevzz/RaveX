@@ -27,11 +27,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     if(MSVC)
         target_compile_options(ravex_bedbomb PRIVATE /O2 /fp:fast)
     else()
-<<<<<<< HEAD
         target_compile_options(ravex_bedbomb PRIVATE -O2)
-=======
-        target_compile_options(ravex_bedbomb PRIVATE -O3 -march=native -ffast-math)
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
     endif()
 endif()
 

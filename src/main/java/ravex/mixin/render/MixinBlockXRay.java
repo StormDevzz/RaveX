@@ -33,11 +33,7 @@ public class MixinBlockXRay {
     private void onSkipRendering(BlockState adjacent, Direction dir, CallbackInfoReturnable<Boolean> cir) {
         if (!Xray.maybeEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-<<<<<<< HEAD
         if (Xray.itz().isBlockSelected(self.getBlock())) {
-=======
-        if (Xray.INSTANCE.isBlockSelected(self.getBlock())) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
             cir.setReturnValue(false);
         } else {
@@ -96,11 +92,7 @@ public class MixinBlockXRay {
     private void onGetLightEmission(CallbackInfoReturnable<Integer> cir) {
         if (!Xray.maybeEnabled()) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-<<<<<<< HEAD
         if (Xray.itz().isBlockSelected(self.getBlock())) {
-=======
-        if (Xray.INSTANCE.isBlockSelected(self.getBlock())) {
->>>>>>> 1dd8ed59b0271ae3f636e53f56ee6c1c0c052ff3
 
             cir.setReturnValue(15);
         }
