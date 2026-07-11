@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import ravex.modules.render.SkyColor;
+import ravex.modules.render.WorldColor;
 
 @Mixin(SkyRenderer.class)
 public class MixinSkyColor {
@@ -16,8 +16,8 @@ public class MixinSkyColor {
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void onExtractRenderState(ClientLevel level, float partialTick, Camera camera,
                                       SkyRenderState state, CallbackInfo ci) {
-        if (!SkyColor.maybeEnabled()) return;
-        state.skyColor = SkyColor.itz().skyColor.getValue();
+        if (!WorldColor.maybeEnabled()) return;
+        state.skyColor = WorldColor.itz().skyColor.getValue();
         state.sunriseAndSunsetColor = 0;
         state.starBrightness = 0.0f;
         state.rainBrightness = 0.0f;

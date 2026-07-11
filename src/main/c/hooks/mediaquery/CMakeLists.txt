@@ -1,0 +1,15 @@
+add_ravex_c_module(mediaquery
+    SOURCES
+        main/mediaquery.c
+        main/mediaquery_jni.c
+        main/dbus_util.c
+        main/fs_util.c
+    INCLUDES
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/../cpp/skintool/include
+        ${DBUS_INCLUDE_DIRS}
+        ${CURL_INCLUDE_DIRS}
+    LIBS
+        ${DBUS_LIBRARIES}
+        ${CURL_LIBRARIES}
+)

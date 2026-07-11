@@ -27,5 +27,15 @@ public class MixinClientPacketListener {
             }
         }
     }
+
+    @Inject(method = "handleAnimate", at = @At("HEAD"), cancellable = true)
+    private void onHandleAnimate(net.minecraft.network.protocol.game.ClientboundAnimatePacket packet, CallbackInfo ci) {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player != null && packet.getId() == mc.player.getId()) {
+            if (packet.getAction() == 0 || packet.getAction() == 3) {
+                ci.cancel();
+            }
+        }
+    }
 }
 

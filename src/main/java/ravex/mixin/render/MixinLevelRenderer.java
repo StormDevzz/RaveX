@@ -132,18 +132,29 @@ public class MixinLevelRenderer {
                 double ty = pos.getY();
                 double tz = pos.getZ();
 
-                if (!boInitialized) {
-                    boX = tx; boY = ty; boZ = tz;
-                    boInitialized = true;
+                if (BlockOutline.itz().smooth.getValue()) {
+                    if (!boInitialized) {
+                        boX = tx; boY = ty; boZ = tz;
+                        boInitialized = true;
+                    } else {
+                        boX += (tx - boX) * slideFactor;
+                        boY += (ty - boY) * slideFactor;
+                        boZ += (tz - boZ) * slideFactor;
+                    }
+                    boAlpha += (1.0f - boAlpha) * factor;
                 } else {
-                    boX += (tx - boX) * slideFactor;
-                    boY += (ty - boY) * slideFactor;
-                    boZ += (tz - boZ) * slideFactor;
+                    boX = tx; boY = ty; boZ = tz;
+                    boAlpha = 1.0f;
+                    boInitialized = true;
                 }
-                boAlpha += (1.0f - boAlpha) * factor;
             } else {
-                boAlpha += (0.0f - boAlpha) * factor;
-                if (boAlpha < 0.01f) {
+                if (BlockOutline.itz().smooth.getValue()) {
+                    boAlpha += (0.0f - boAlpha) * factor;
+                    if (boAlpha < 0.01f) {
+                        boAlpha = 0.0f;
+                        boInitialized = false;
+                    }
+                } else {
                     boAlpha = 0.0f;
                     boInitialized = false;
                 }
@@ -157,7 +168,8 @@ public class MixinLevelRenderer {
                 float baseAlpha = ((color >> 24) & 0xFF) / 255.0f;
                 float a = baseAlpha * boAlpha;
                 boolean filled = BlockOutline.itz().filled.getValue();
-                float lineWidth = BlockOutline.itz().width.getValue().floatValue();
+                float lineWidth = 2.0f;
+                String outlineMode = BlockOutline.itz().mode.getValue();
 
                 try {
                     float bx = (float)(boX - camPos.x);
@@ -166,28 +178,43 @@ public class MixinLevelRenderer {
                     float sx = bx + 1.0f;
                     float sy = by + 1.0f;
                     float sz = bz + 1.0f;
-                    float edgeWidth = lineWidth * 0.02f;
-                    if (filled) {
+
+                    if (outlineMode.equals("Thin")) {
                         modelViewMatrix.translate(bx, by, bz, REUSABLE_MATRIX);
-                        Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, r, g, b, a * 0.25f, true);
+                        if (filled) {
+                            Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, r, g, b, a * 0.25f, true);
+                        }
+                        Render3DUtils.batchWireframe(REUSABLE_MATRIX, 1.002, r, g, b, a, 1.0f, true);
+                    } else {
+                        // Thick mode using solid boxes
+                        if (filled) {
+                            modelViewMatrix.translate(bx, by, bz, REUSABLE_MATRIX);
+                            Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, r, g, b, a * 0.25f, true);
+                        }
+                        float edgeWidth = lineWidth * 0.02f;
+                        Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, bz, sx, by, bz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, bz, sx, by, sz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, sz, bx, by, sz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, sz, bx, by, bz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, bx, sy, bz, sx, sy, bz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, sx, sy, bz, sx, sy, sz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, sx, sy, sz, bx, sy, sz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, bx, sy, sz, bx, sy, bz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, bz, bx, sy, bz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, bz, sx, sy, bz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, sz, sx, sy, sz, edgeWidth, r, g, b, a, true);
+                        Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, sz, bx, sy, sz, edgeWidth, r, g, b, a, true);
                     }
-                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, bz, sx, by, bz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, bz, sx, by, sz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, sz, bx, by, sz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, sz, bx, by, bz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, sy, bz, sx, sy, bz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, sy, bz, sx, sy, sz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, sy, sz, bx, sy, sz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, sy, sz, bx, sy, bz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, bz, bx, sy, bz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, bz, sx, sy, bz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, sx, by, sz, sx, sy, sz, edgeWidth, r, g, b, a, true);
-                    Render3DUtils.batchAxisLine(modelViewMatrix, bx, by, sz, bx, sy, sz, edgeWidth, r, g, b, a, true);
                 } catch (Exception ignored) {}
             }
         } else {
-            boAlpha += (0.0f - boAlpha) * factor;
-            if (boAlpha < 0.01f) {
+            if (BlockOutline.itz() != null && BlockOutline.itz().smooth.getValue()) {
+                boAlpha += (0.0f - boAlpha) * factor;
+                if (boAlpha < 0.01f) {
+                    boAlpha = 0.0f;
+                    boInitialized = false;
+                }
+            } else {
                 boAlpha = 0.0f;
                 boInitialized = false;
             }
@@ -518,7 +545,7 @@ public class MixinLevelRenderer {
         }
 
 
-        if (Trails.maybeEnabled()) {
+        if (ravex.modules.render.Trails.shouldRender()) {
             ravex.modules.render.Trails.renderTrails(modelViewMatrix, camPos);
         }
 

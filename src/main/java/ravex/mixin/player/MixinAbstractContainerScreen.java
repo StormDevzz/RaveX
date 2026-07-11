@@ -44,6 +44,7 @@ public class MixinAbstractContainerScreen {
         if (FastItem.maybeEnabled()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || mc.gameMode == null) return;
+            if (screen instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen) return;
             long handle = GLFW.glfwGetCurrentContext();
             if (handle == 0) return;
             boolean shift = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS

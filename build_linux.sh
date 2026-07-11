@@ -46,33 +46,45 @@ fi
 echo "[INFO] JAVA_HOME: $JAVA_HOME"
 echo "[INFO] Java: $("$JAVA_HOME/bin/java" -version 2>&1 | head -1)"
 
-# [4/6] ��������� � ������ CMake
+# [4/6] ��������� C++ ������
+C_BUILD_DIR="$SCRIPT_DIR/build/native-c"
 echo ""
-echo "[1/5] �������� ��������� ������..."
-mkdir -p "$BUILD_DIR"
+echo "[1/6] �������� C++ ������..."
+mkdir -p "$BUILD_DIR" "$C_BUILD_DIR"
 
-echo "[2/5] ������������ CMake..."
+C_COMPILER="gcc"
+[ "$CXX_COMPILER" = "clang++" ] && C_COMPILER="clang"
+
+echo "[2/6] ������������ C++ CMake..."
 cmake -S "$SCRIPT_DIR/src/main/cpp" -B "$BUILD_DIR" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX="$NATIVES_DIR" \
-    -DCMAKE_C_COMPILER="${CC:-}" \
-    -DCMAKE_CXX_COMPILER="${CXX:-}"
+    -DCMAKE_C_COMPILER="${CC:-$C_COMPILER}" \
+    -DCMAKE_CXX_COMPILER="${CXX:-$CXX_COMPILER}"
 
-echo "[3/5] ������ ��������� ���������..."
-cmake --build "$BUILD_DIR" --config Release -j"$(nproc)"
+echo "[3/6] ������ C++ ���������..."
+cmake --build "$BUILD_DIR" --config Release -j"$(nproc)" || echo "[WARN] C++ build failed (optional)"
 
-# [5/6] ����������� .so � ��������� ������
-echo "[4/5] ����������� .so � $NATIVES_DIR ..."
+# [4/6] ��������� C ������
+echo "[4/6] ������������ C CMake..."
+cmake -S "$SCRIPT_DIR/src/main/c" -B "$C_BUILD_DIR" \
+    -DCMAKE_BUILD_TYPE=Release
+
+echo "[5/6] ������ C ���������..."
+cmake --build "$C_BUILD_DIR" --config Release -j"$(nproc)"
+
+# ����������� .so C++ � ��������� ������
+echo "[INFO] ����������� .so � $NATIVES_DIR ..."
 mkdir -p "$NATIVES_DIR"
-find "$BUILD_DIR" -name "*.so" -exec cp -v {} "$NATIVES_DIR/" \;
+find "$BUILD_DIR" -name "*.so" -exec cp -v {} "$NATIVES_DIR/" \; 2>/dev/null || true
 
 echo ""
 echo "�������� .so � $NATIVES_DIR:"
-ls -1 "$NATIVES_DIR"/*.so 2>/dev/null | wc -l
+ls -1 "$NATIVES_DIR"/*.so 2>/dev/null | wc -l || true
 echo ""
 
 # [6/6] ������ Java-�����
-echo "[5/5] ������ Java-����..."
+echo "[6/6] ������ Java-����..."
 cd "$SCRIPT_DIR"
 ./gradlew build
 

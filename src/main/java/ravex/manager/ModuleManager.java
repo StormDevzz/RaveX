@@ -25,7 +25,7 @@ public class ModuleManager {
         register(Category.COMBAT,
             "KillAura", "AutoCrystal", "AimAssist",
             "Trigger", "MaceSwap", "WebAura",
-            "AutoWeapon", "MaceAura", "Hitboxes",
+            "MaceAura", "Hitboxes",
             "Reach", "Surround", "SelfTrap",
             "BasePlace", "AnchorAura", "BowAim",
             "Breaker", "Quiver", "WindAura",
@@ -34,20 +34,20 @@ public class ModuleManager {
             "BedBomb", "Criticals", "AutoBow",
             "HoleFill", "AutoClicker", "AntiBot",
             "AutoDrop", "Burrow", "AntiReGear",
-            "TntAura", "KeepSprint", "ShieldFucker",
+            "TntAura", "ShieldFucker",
             "AutoCart", "AutoTotem"
         );
 
         register(Category.RENDER,
             "Crosshair", "ESP", "Skeleton",
             "NameTags", "Tracers", "NoBob",
-            "Ambient", "Weather", "Fog",
+            "Ambient", "Weather",
             "Shaders", "FreeLook", "FreeCam",
             "ViewClip", "Glint", "Sounds",
             "ItemPhysics", "Fullbright", "BlockOutline",
             "BreadCrumbs", "ViewModel", "Animations",
             "NoRender", "ShiftInterp", "SmallUser",
-            "SkyColor", "CloudColor", "Trails",
+            "WorldColor", "Trails",
             "Waypoint", "KillEffects", "Particles",
             "AspectRatio", "Borders", "Zoom",
             "ToolTips", "DeathText",
@@ -61,7 +61,7 @@ public class ModuleManager {
             "TabHelper", "ChestHelper", "MiddleClick",
             "ElytraHelper", "ViewLock", "ItemSaver",
             "AntiAim", "invclean.InvClean", "Replenish",
-            "MobOwner", "NoSwing", "Swing",
+            "MobOwner", "NoSwing",
             "GridBuilder", "AntiHunger", "ChorusExploit",
             "GhostHand", "Handshake", "MultiTask",
             "MineAnimation", "PacketMine", "autoregear.AutoReGear"
@@ -112,7 +112,7 @@ public class ModuleManager {
 
         register(Category.HUD,
             "WatermarkHud", "ArrayListHud", "CoordsHud",
-            "FpsHud", "NowPlayingHud", "ChatHud",
+            "FpsHud", "MediaHud", "ChatHud",
             "TpsHud", "CooldownsHud", "InvPreviewHud",
             "IndicatorsHud", "CurrencyHud", "ServerBrandHud",
             "TargetHud", "SpeedometerHud", "ArmorHud"

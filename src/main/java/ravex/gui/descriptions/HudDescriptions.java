@@ -11,7 +11,7 @@ public class HudDescriptions {
         DESCRIPTIONS.put("ArrayList", "Renders the active (enabled) modules array list.");
         DESCRIPTIONS.put("Coords", "Renders player's current X, Y, Z coordinates.");
         DESCRIPTIONS.put("Fps", "Renders the current game frames per second (FPS) count.");
-        DESCRIPTIONS.put("NowPlaying", "Shows currently playing music from your system.");
+        DESCRIPTIONS.put("Media", "Shows currently playing music from your system.");
         DESCRIPTIONS.put("Indicators", "Arc gauges for Health, Armor, TPS, Speed, and Knockback.");
         DESCRIPTIONS.put("InvPreview", "Preview of your full inventory and selected hotbar slot.");
         DESCRIPTIONS.put("Chat", "Repositions and scales the in-game chat box.");

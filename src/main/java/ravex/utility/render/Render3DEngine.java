@@ -694,7 +694,7 @@ public class Render3DEngine {
 
         Matrix4f matrix = new Matrix4f(modelViewMatrix);
 
-        RenderType renderType = RenderTypes.debugFilledBox();
+        RenderType renderType = FILL_NO_DEPTH != null ? FILL_NO_DEPTH : RenderTypes.debugFilledBox();
         ESP_ALLOCATOR.clear();
         BufferBuilder builder = new BufferBuilder(ESP_ALLOCATOR, renderType.mode(), renderType.format());
 
@@ -715,7 +715,7 @@ public class Render3DEngine {
         }
         renderType.draw(builder.buildOrThrow());
 
-        RenderType lineType = RenderTypes.lines();
+        RenderType lineType = LINE_NO_DEPTH != null ? LINE_NO_DEPTH : RenderTypes.lines();
         ESP_ALLOCATOR.clear();
         BufferBuilder lineBuilder = new BufferBuilder(ESP_ALLOCATOR, lineType.mode(), lineType.format());
 

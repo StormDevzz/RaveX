@@ -33,9 +33,7 @@ public class LanguageUtility {
         en.put("desc_NoBob", "No head bob");
         en.put("desc_Ambient", "Change light");
         en.put("desc_Weather", "Change weather");
-        en.put("desc_Fog", "Change fog");
-        en.put("desc_SkyColor", "Change sky");
-        en.put("desc_CloudColor", "Change clouds");
+        en.put("desc_WorldColor", "World colors");
         en.put("desc_Trails", "Show paths");
         en.put("desc_AspectRatio", "Stretch screen");
         en.put("desc_Waypoint", "Save locations");
@@ -81,7 +79,6 @@ public class LanguageUtility {
         en.put("desc_LongJump", "Jump far");
         en.put("desc_AutoLog", "Leave fight");
         en.put("desc_WebAura", "Place webs");
-        en.put("desc_AutoWeapon", "Best weapon");
         en.put("desc_MaceAura", "Mace smash");
         en.put("desc_AutoTotem", "Swap totems");
         en.put("desc_Hitboxes", "Bigger targets");
@@ -144,7 +141,7 @@ public class LanguageUtility {
         en.put("desc_AntiAim", "Spin head");
         en.put("desc_NoSwing", "No swing");
         en.put("desc_Animations", "Smooth moves");
-        en.put("desc_Swing", "Change swing");
+        en.put("desc_SwingAnimation", "Swing animation");
         en.put("desc_DesktopGui", "Desktop control");
         en.put("desc_Breaker", "Break nearby");
         en.put("desc_BowAim", "Aim bow");
@@ -156,7 +153,6 @@ public class LanguageUtility {
         en.put("desc_BookHelper", "Edit books");
         en.put("desc_WebSelf", "Web yourself");
         en.put("desc_KeyPearl", "Throw pearl");
-        en.put("desc_KeepSprint", "Keep sprint");
         en.put("desc_AutoAuth", "Login helper");
         en.put("desc_SafeWalk", "Safe walk");
 
@@ -209,7 +205,7 @@ public class LanguageUtility {
         en.put("desc_CooldownsHud", "Show cooldowns");
         en.put("desc_IndicatorsHud", "Target info");
         en.put("desc_InvPreviewHud", "Preview items");
-        en.put("desc_NowPlayingHud", "Music info");
+        en.put("desc_MediaHud", "Music info");
         en.put("desc_Settings", "Client settings");
         en.put("desc_TpsHud", "Server speed");
         en.put("desc_Calculator", "Do math");
@@ -232,7 +228,7 @@ public class LanguageUtility {
         en.put("hud_desc_ArrayList", "Renders the active (enabled) modules array list.");
         en.put("hud_desc_Coords", "Renders player's current X, Y, Z coordinates.");
         en.put("hud_desc_Fps", "Renders the current game frames per second (FPS) count.");
-        en.put("hud_desc_NowPlaying", "Shows currently playing music from your system.");
+        en.put("hud_desc_Media", "Shows currently playing music from your system.");
         en.put("hud_desc_Indicators", "Arc gauges for Health, Armor, TPS, Speed, and Knockback.");
         en.put("hud_desc_InvPreview", "Preview of your full inventory and selected hotbar slot.");
         en.put("hud_desc_Chat", "Repositions and scales the in-game chat box.");
@@ -286,9 +282,7 @@ public class LanguageUtility {
         ru.put("desc_NoBob", "Убрать качание головы");
         ru.put("desc_Ambient", "Изменить освещение");
         ru.put("desc_Weather", "Изменить погоду");
-        ru.put("desc_Fog", "Изменить туман");
-        ru.put("desc_SkyColor", "Изменить цвет неба");
-        ru.put("desc_CloudColor", "Изменить цвет облаков");
+        ru.put("desc_WorldColor", "Цвета мира");
         ru.put("desc_Trails", "Показать путь");
         ru.put("desc_AspectRatio", "Растянуть экран");
         ru.put("desc_Waypoint", "Сохранение точек");
@@ -334,7 +328,6 @@ public class LanguageUtility {
         ru.put("desc_LongJump", "Длинный прыжок");
         ru.put("desc_AutoLog", "Уходить из боя");
         ru.put("desc_WebAura", "Ставить паутину");
-        ru.put("desc_AutoWeapon", "Лучшее оружие");
         ru.put("desc_MaceAura", "Атака булавой");
         ru.put("desc_AutoTotem", "Автототем");
         ru.put("desc_Hitboxes", "Большие хитбоксы");
@@ -397,7 +390,7 @@ public class LanguageUtility {
         ru.put("desc_AntiAim", "Вращать голову");
         ru.put("desc_NoSwing", "Убрать взмах");
         ru.put("desc_Animations", "Плавные движения");
-        ru.put("desc_Swing", "Изменить взмах");
+        ru.put("desc_SwingAnimation", "Анимация взмаха");
         ru.put("desc_DesktopGui", "Управление с ПК");
         ru.put("desc_Breaker", "Ломать рядом");
         ru.put("desc_BowAim", "Наводка лука");
@@ -409,7 +402,6 @@ public class LanguageUtility {
         ru.put("desc_BookHelper", "Редактор книг");
         ru.put("desc_WebSelf", "Паутина на себя");
         ru.put("desc_KeyPearl", "Бросок жемчуга");
-        ru.put("desc_KeepSprint", "Сохранять спринт");
         ru.put("desc_AutoAuth", "Автовход");
         ru.put("desc_SafeWalk", "Безопасная ходьба");
 
@@ -461,7 +453,7 @@ public class LanguageUtility {
         ru.put("desc_CooldownsHud", "Кулдауны предметов");
         ru.put("desc_IndicatorsHud", "Информация о цели");
         ru.put("desc_InvPreviewHud", "Превью инвентаря");
-        ru.put("desc_NowPlayingHud", "Информация о музыке");
+        ru.put("desc_MediaHud", "Информация о музыке");
         ru.put("desc_Settings", "Настройки клиента");
         ru.put("desc_TpsHud", "Скорость сервера");
         ru.put("desc_Calculator", "Калькулятор");
@@ -484,7 +476,7 @@ public class LanguageUtility {
         ru.put("hud_desc_ArrayList", "Список активных модулей");
         ru.put("hud_desc_Coords", "Текущие координаты X Y Z");
         ru.put("hud_desc_Fps", "Счётчик FPS");
-        ru.put("hud_desc_NowPlaying", "Сейчас играет из системы");
+        ru.put("hud_desc_Media", "Сейчас играет из системы");
         ru.put("hud_desc_Indicators", "Дуговые индикаторы здоровья, брони, TPS, скорости и отдачи");
         ru.put("hud_desc_InvPreview", "Превью инвентаря и хотбара");
         ru.put("hud_desc_Chat", "Изменение позиции чата");

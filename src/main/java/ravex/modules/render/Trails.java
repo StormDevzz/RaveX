@@ -120,9 +120,32 @@ public class Trails extends Module {
         }
     }
 
+    private static float toggleAlpha = 0.0f;
+
+    public static boolean shouldRender() {
+        return maybeEnabled(Trails.class) || toggleAlpha > 0.001f;
+    }
+
     public static void renderTrails(Matrix4f modelViewMatrix, Vec3 camPos) {
         try {
             long now = System.currentTimeMillis();
+            boolean enabled = maybeEnabled(Trails.class);
+            
+            // Smoothly animate the global module toggle fade-in and fade-out
+            float targetToggle = enabled ? 1.0f : 0.0f;
+            if (Math.abs(toggleAlpha - targetToggle) > 0.001f) {
+                toggleAlpha += (targetToggle - toggleAlpha) * 0.12f;
+            } else {
+                toggleAlpha = targetToggle;
+            }
+
+            // Clean up and skip render if module is disabled and fully faded out
+            if (!enabled && toggleAlpha <= 0.001f) {
+                entityTrails.clear();
+                playerTrails.clear();
+                return;
+            }
+
             boolean glowEnabled = ModuleManager.get(Trails.class).glow.getValue();
             int glowLayersVal = ModuleManager.get(Trails.class).glowLayers.getValue().intValue();
             float glowSpreadVal = ModuleManager.get(Trails.class).glowSpread.getValue().floatValue();
@@ -158,14 +181,23 @@ public class Trails extends Module {
                 float alpha = Math.max(0.0f, 1.0f - age);
                 if (alpha <= 0.001f)
                     continue;
+
+                // Unique Animation: Tapered width at the tail + active sine pulse wave along the trail
+                float renderAlpha = alpha * toggleAlpha;
+                float wave = 1.0f + 0.15f * (float) Math.sin((System.currentTimeMillis() / 150.0) + (p1.time / 400.0));
+                float renderWidth = lineWidth * (float) Math.pow(alpha, 0.75) * wave;
+
+                if (renderAlpha <= 0.001f)
+                    continue;
+
                 segList.add((float) (p0.pos.x - camPos.x));
                 segList.add((float) (p0.pos.y - camPos.y));
                 segList.add((float) (p0.pos.z - camPos.z));
                 segList.add((float) (p1.pos.x - camPos.x));
                 segList.add((float) (p1.pos.y - camPos.y));
                 segList.add((float) (p1.pos.z - camPos.z));
-                segList.add(alpha);
-                segList.add(lineWidth);
+                segList.add(renderAlpha);
+                segList.add(renderWidth);
                 segCount++;
             }
         }
@@ -223,9 +255,9 @@ public class Trails extends Module {
 
     @Override
     protected void onDisable() {
-        entityTrails.clear();
-        playerTrails.clear();
+        // Do nothing to let existing trails smoothly fade out
     }
+
     public static boolean maybeEnabled() {
         return maybeEnabled(Trails.class);
     }

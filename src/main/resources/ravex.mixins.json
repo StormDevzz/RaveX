@@ -92,6 +92,7 @@
         "player.MixinAbstractContainerScreen",
         "player.MixinPlayerTabOverlay",
         "player.MixinPlayerInfo",
+        "player.MixinPlayerAttackStrength",
         "player.AccessorContainerScreen",
         "player.MixinCommandHistory",
         "player.MixinClientPacketListener",

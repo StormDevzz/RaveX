@@ -18,9 +18,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("NoBob", "No head bob");
         DESCRIPTIONS.put("Ambient", "Change light");
         DESCRIPTIONS.put("Weather", "Change weather");
-        DESCRIPTIONS.put("Fog", "Change fog");
-        DESCRIPTIONS.put("SkyColor", "Change sky");
-        DESCRIPTIONS.put("CloudColor", "Change clouds");
+        DESCRIPTIONS.put("WorldColor", "World colors");
         DESCRIPTIONS.put("Trails", "Show paths");
         DESCRIPTIONS.put("AspectRatio", "Stretch screen");
         DESCRIPTIONS.put("Waypoint", "Save locations");
@@ -68,7 +66,6 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("LongJump", "Jump far");
         DESCRIPTIONS.put("AutoLog", "Leave fight");
         DESCRIPTIONS.put("WebAura", "Place webs");
-        DESCRIPTIONS.put("AutoWeapon", "Best weapon");
         DESCRIPTIONS.put("MaceAura", "Mace smash");
         DESCRIPTIONS.put("AutoTotem", "Swap totems");
         DESCRIPTIONS.put("Hitboxes", "Bigger targets");
@@ -130,8 +127,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("AntiAim", "Spin head");
         DESCRIPTIONS.put("NoSwing", "No swing");
         DESCRIPTIONS.put("Animations", "Smooth moves");
-        DESCRIPTIONS.put("Swing", "Change swing");
-        DESCRIPTIONS.put("SwingAnimation", "Custom first-person swing animations");
+        DESCRIPTIONS.put("SwingAnimation", "Swing animation");
         DESCRIPTIONS.put("DesktopGui", "Desktop control");
         DESCRIPTIONS.put("Breaker", "Break nearby");
         DESCRIPTIONS.put("BowAim", "Aim bow");
@@ -143,7 +139,6 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("BookHelper", "Edit books");
         DESCRIPTIONS.put("WebSelf", "Web yourself");
         DESCRIPTIONS.put("KeyPearl", "Throw pearl");
-        DESCRIPTIONS.put("KeepSprint", "Keep sprint");
         DESCRIPTIONS.put("AutoAuth", "Login helper");
         DESCRIPTIONS.put("SafeWalk", "Safe walk");
 
@@ -200,7 +195,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("CooldownsHud", "Show cooldowns");
         DESCRIPTIONS.put("IndicatorsHud", "Target info");
         DESCRIPTIONS.put("InvPreviewHud", "Preview items");
-        DESCRIPTIONS.put("NowPlayingHud", "Music info");
+        DESCRIPTIONS.put("MediaHud", "Music info");
         DESCRIPTIONS.put("Settings", "Client settings");
         DESCRIPTIONS.put("TpsHud", "Server speed");
         DESCRIPTIONS.put("Calculator", "Do math");

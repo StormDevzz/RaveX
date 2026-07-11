@@ -9,9 +9,10 @@ if(WIN32)
     return()
 endif()
 
-add_link_options(-static -static-libgcc)
-
 find_package(JNI REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(DBUS REQUIRED dbus-1)
+pkg_check_modules(CURL REQUIRED libcurl)
 
 add_subdirectory(common)
 
@@ -37,3 +38,5 @@ function(add_ravex_c_module name)
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
     )
 endfunction()
+
+add_subdirectory(hooks/mediaquery)

@@ -14,16 +14,15 @@ import ravex.event.EventBusHolder;
 import ravex.event.render.FogEvent;
 import ravex.modules.player.Xray;
 import ravex.modules.render.NoRender;
-import ravex.modules.render.Fog;
-import ravex.modules.render.SkyColor;
+import ravex.modules.render.WorldColor;
 
 @Mixin(FogRenderer.class)
 public class MixinFogRenderer {
 
     @Inject(method = "computeFogColor", at = @At("HEAD"), cancellable = true)
     private void onComputeFogColorHead(Camera camera, float partialTick, ClientLevel level,
-                                       int renderDistance, float bossColorModifier,
-                                       CallbackInfoReturnable<Vector4f> cir) {
+                                        int renderDistance, float bossColorModifier,
+                                        CallbackInfoReturnable<Vector4f> cir) {
         FogEvent event = new FogEvent(FogEvent.FogType.DEFAULT, 0.0f, 0.0f);
         EventBusHolder.get().post(event);
         if (event.isCancelled()) { cir.setReturnValue(new Vector4f(0, 0, 0, 0)); return; }
@@ -31,12 +30,12 @@ public class MixinFogRenderer {
 
     @Inject(method = "computeFogColor", at = @At("RETURN"), cancellable = true)
     private void onComputeFogColor(Camera camera, float partialTick, ClientLevel level,
-                                   int renderDistance, float bossColorModifier,
-                                   CallbackInfoReturnable<Vector4f> cir) {
+                                    int renderDistance, float bossColorModifier,
+                                    CallbackInfoReturnable<Vector4f> cir) {
         if (Xray.maybeEnabled()) {
             cir.setReturnValue(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
-        } else if (SkyColor.maybeEnabled()) {
-            int col = SkyColor.itz().skyColor.getValue();
+        } else if (WorldColor.maybeEnabled() && WorldColor.itz().sky.getValue()) {
+            int col = WorldColor.itz().skyColor.getValue();
             float r = ((col >> 16) & 0xFF) / 255.0f;
             float g = ((col >> 8) & 0xFF) / 255.0f;
             float b = (col & 0xFF) / 255.0f;
@@ -49,8 +48,8 @@ public class MixinFogRenderer {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V")
     )
     private void onUpdateBufferArgs(Args args) {
-        if (Fog.maybeEnabled()) {
-            int argb = Fog.itz().color.getValue();
+        if (WorldColor.maybeEnabled() && WorldColor.itz().fog.getValue()) {
+            int argb = WorldColor.itz().fogColor.getValue();
             float r = ((argb >> 16) & 0xFF) / 255.0f;
             float g = ((argb >>  8) & 0xFF) / 255.0f;
             float b = ( argb        & 0xFF) / 255.0f;

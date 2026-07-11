@@ -1,10 +1,12 @@
 package ravex.modules.movement;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.Vec3;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 import ravex.manager.ModuleManager;
@@ -12,7 +14,7 @@ import ravex.modules.Module;
 import ravex.parameter.ModeParameter;
 import java.util.List;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+
 public class NoSlow extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Grim",
             List.of("Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3"));
@@ -28,7 +30,12 @@ public class NoSlow extends Module {
     public final NumberParameter v3Strafe = new NumberParameter("V3Strafe", 0.24, 0.05, 1.0, 0.05);
     public final NumberParameter v3Interval = new NumberParameter("V3Interval", 4, 1, 20, 1);
 
-    private long matrixNextSwap = 0;
+    // Matrix mode parameters
+    public final NumberParameter matrixSwapInterval = new NumberParameter("SwapInterval", 3.0, 1.0, 8.0, 1.0);
+    public final NumberParameter matrixVelocityScale = new NumberParameter("VelocityScale", 1.15, 0.5, 2.0, 0.01);
+    public final NumberParameter matrixInputScale = new NumberParameter("InputScale", 1.0, 0.5, 2.0, 0.05);
+
+    private int matrixSwapTicks = 0;
     private int altTicks = 0;
     private boolean altSlowPhase = false;
     private int v3Ticks = 0;
@@ -41,6 +48,9 @@ public class NoSlow extends Module {
         v3Forward.setVisible(() -> "GrimV3".equals(mode.getValue()));
         v3Strafe.setVisible(() -> "GrimV3".equals(mode.getValue()));
         v3Interval.setVisible(() -> "GrimV3".equals(mode.getValue()));
+        matrixSwapInterval.setVisible(() -> "Matrix".equals(mode.getValue()));
+        matrixVelocityScale.setVisible(() -> "Matrix".equals(mode.getValue()));
+        matrixInputScale.setVisible(() -> "Matrix".equals(mode.getValue()));
     }
 
     @Subscribe
@@ -51,14 +61,35 @@ public class NoSlow extends Module {
         if (mc.player == null || mc.getConnection() == null) return;
 
         if ("Matrix".equals(modeVal)) {
-            if (!mc.player.isUsingItem()) return;
-            long now = System.currentTimeMillis();
-            if (now < matrixNextSwap) return;
-            matrixNextSwap = now + 250;
-            mc.player.connection.send(new ServerboundPlayerActionPacket(
-                ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND,
-                BlockPos.ZERO, Direction.DOWN
-            ));
+            if (!mc.player.isUsingItem()) {
+                matrixSwapTicks = 0;
+                return;
+            }
+
+            int interval = matrixSwapInterval.getValue().intValue();
+            boolean isMoving = mc.player.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
+
+            matrixSwapTicks++;
+            if (matrixSwapTicks >= interval) {
+                matrixSwapTicks = 0;
+                // Swap on this tick: resets server's "using item" state
+                mc.player.connection.send(new ServerboundPlayerActionPacket(
+                    ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND,
+                    BlockPos.ZERO, Direction.DOWN
+                ));
+                return;
+            }
+
+            // On non-swap ticks, boost velocity to compensate for slowdown
+            if (isMoving) {
+                double scale = matrixVelocityScale.getValue();
+                Vec3 motion = mc.player.getDeltaMovement();
+                mc.player.setDeltaMovement(
+                    motion.x * scale,
+                    motion.y,
+                    motion.z * scale
+                );
+            }
             return;
         }
 
@@ -113,12 +144,15 @@ public class NoSlow extends Module {
         }
         return defaultFriction;
     }
+
     public static boolean maybeEnabled() {
         return maybeEnabled(NoSlow.class);
     }
+
     public static NoSlow itz() {
         return ModuleManager.get(NoSlow.class);
     }
+
     public boolean isSlowPhase() {
         return altSlowPhase;
     }
@@ -138,5 +172,13 @@ public class NoSlow extends Module {
 
     public boolean isV3Active() {
         return getEnabled() && "GrimV3".equals(mode.getValue());
+    }
+
+    public boolean isMatrixActive() {
+        return getEnabled() && "Matrix".equals(mode.getValue());
+    }
+
+    public float getMatrixInputScale() {
+        return matrixInputScale.getValue().floatValue();
     }
 }

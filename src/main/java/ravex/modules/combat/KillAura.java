@@ -14,6 +14,7 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.MultiSelectParameter;
 import ravex.parameter.ColorParameter;
+import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 import java.util.List;
@@ -41,6 +42,13 @@ public class KillAura extends Module {
     public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
     public final BooleanParameter smartCrits = new BooleanParameter("SmartCrits", true);
     public final ModeParameter sprintMode = new ModeParameter("Sprint", "Normal", List.of("Normal", "Legit", "HvH"));
+
+    public final BooleanParameter autoWeapon = new BooleanParameter("AutoWeapon", false);
+    public final ModeParameter swapMode = ((ModeParameter) new ModeParameter("SwapMode", "Normal", List.of("Normal", "Silent", "None")).setVisible(() -> autoWeapon.getValue()));
+    public final BooleanParameter swordsOnly = ((BooleanParameter) new BooleanParameter("SwordsOnly", false).setVisible(() -> autoWeapon.getValue()));
+
+    public final BooleanParameter keepSprint = new BooleanParameter("KeepSprint", false);
+    public final NumberParameter keepSprintSpeed = ((NumberParameter) new NumberParameter("KeepSprintSpeed", 100, 0, 100, 5).setVisible(() -> keepSprint.getValue()));
 
     public static final SilentRotation silentRotation = new SilentRotation();
     private LivingEntity currentTarget = null;
@@ -96,13 +104,10 @@ public class KillAura extends Module {
 
         switch (ka.sprintMode.getValue()) {
             case "Legit" -> {
-
                 if (ka.sprintResetTicks > 0) {
                     ka.sprintResetTicks--;
                     mc.player.setSprinting(false);
                 } else {
-
-
                     float cooldown = mc.player.getAttackStrengthScale(0.5f);
                     if (mc.player.input.hasForwardImpulse()
                             && !mc.player.isUsingItem()
@@ -127,8 +132,20 @@ public class KillAura extends Module {
         float[] freshAngles = RotationUtility.anglesTo(eyePos, aimPos);
 
 
-        float freshYaw   = RotationUtility.fixAngle(freshAngles[0]);
-        float freshPitch = RotationUtility.fixAngle(RotationUtility.clampPitch(freshAngles[1]));
+        // гцд коррекция к дельте
+        float rawFreshYaw   = freshAngles[0];
+        float rawFreshPitch = RotationUtility.clampPitch(freshAngles[1]);
+        float gcdPre = RotationUtility.getGCD();
+        float ppYaw   = mc.player.getYRot();
+        float ppPitch = mc.player.getXRot();
+        float dYaw   = RotationUtility.normalizeYaw(rawFreshYaw - ppYaw);
+        float dPitch = rawFreshPitch - ppPitch;
+        if (gcdPre > 0) {
+            dYaw   = Math.round(dYaw   / gcdPre) * gcdPre;
+            dPitch = Math.round(dPitch / gcdPre) * gcdPre;
+        }
+        float freshYaw   = ppYaw   + dYaw;
+        float freshPitch = ppPitch + dPitch;
         silentRotation.set(freshYaw, freshPitch);
 
 
@@ -168,12 +185,32 @@ public class KillAura extends Module {
             if (yawDiff > 18.0f || pitchDiff > 20.0f) return;
         }
 
+        // легит/ сброс спринта перед ударом
+        if (ka.sprintMode.getValue().equals("Legit") && mc.player.isSprinting()) {
+            mc.player.setSprinting(false);
+            ka.sprintResetTicks = 3;
+            return; // пропуск тика
+        }
+
         ka.attack(mc, target);
         ka.lastAttackTime = now;
 
         if (ka.sprintMode.getValue().equals("Legit")) {
-            mc.player.setSprinting(false);
             ka.sprintResetTicks = 2;
+        }
+
+        if (ka.keepSprint.getValue()) {
+            if (mc.player.hurtTime > 0) {
+                mc.player.setSprinting(true);
+                double multiplier = ka.keepSprintSpeed.getValue() / 100.0;
+                if (multiplier < 1.0) {
+                    Vec3 vel = mc.player.getDeltaMovement();
+                    mc.player.setDeltaMovement(vel.x * multiplier, vel.y, vel.z * multiplier);
+                }
+            }
+            if (mc.player.hasEffect(net.minecraft.world.effect.MobEffects.BLINDNESS) && mc.player.isSprinting()) {
+                mc.player.setSprinting(false);
+            }
         }
     }
 
@@ -200,18 +237,26 @@ public class KillAura extends Module {
 
         float[] angles = calculateAngles(mc, target);
 
-        float yaw   = RotationUtility.fixAngle(angles[0]);
-        float pitch = RotationUtility.fixAngle(RotationUtility.clampPitch(angles[1]));
-
-
+        // гцд коррекция
+        float rawYaw = angles[0];
+        float rawPitch = RotationUtility.clampPitch(angles[1]);
+        float gcd = RotationUtility.getGCD();
+        float prevPlayerYaw   = mc.player.getYRot();
+        float prevPlayerPitch = mc.player.getXRot();
+        float deltaYaw   = RotationUtility.normalizeYaw(rawYaw - prevPlayerYaw);
+        float deltaPitch = rawPitch - prevPlayerPitch;
+        if (gcd > 0) {
+            deltaYaw   = Math.round(deltaYaw   / gcd) * gcd;
+            deltaPitch = Math.round(deltaPitch / gcd) * gcd;
+        }
+        float yaw   = prevPlayerYaw   + deltaYaw;
+        float pitch = prevPlayerPitch + deltaPitch;
 
         silentRotation.set(yaw, pitch);
 
-
+        // обновляем голову/тело, не трогаем O поля
         mc.player.yHeadRot = yaw;
         mc.player.yBodyRot = yaw;
-        mc.player.yHeadRotO = yaw;
-        mc.player.yBodyRotO = yaw;
 
 
         prevScanProgress = scanProgress;
@@ -277,8 +322,54 @@ public class KillAura extends Module {
     }
 
     private void attack(Minecraft mc, LivingEntity target) {
+        if (autoWeapon.getValue() && !swapMode.getValue().equals("None")) {
+            int bestSlot = -1;
+            double bestDmg = -1.0;
+            for (int i = 0; i < 9; i++) {
+                var stack = InventoryUtility.getItem(mc.player, i);
+                if (swordsOnly.getValue() && !isSword(stack.getItem())) continue;
+                double dmg = getWeaponDamage(stack);
+                if (dmg > bestDmg) {
+                    bestDmg = dmg;
+                    bestSlot = i;
+                }
+            }
+            if (bestSlot != -1 && bestSlot != InventoryUtility.getSelectedSlot(mc.player) && bestDmg > 1.0) {
+                if (swapMode.getValue().equals("Silent")) {
+                    mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(bestSlot));
+                } else {
+                    InventoryUtility.selectSlot(mc.player, bestSlot);
+                }
+            }
+        }
         MobUtility.attack(mc, target);
         MobUtility.swingHand(mc);
+    }
+
+    private boolean isSword(net.minecraft.world.item.Item item) {
+        return item == net.minecraft.world.item.Items.WOODEN_SWORD ||
+               item == net.minecraft.world.item.Items.STONE_SWORD ||
+               item == net.minecraft.world.item.Items.IRON_SWORD ||
+               item == net.minecraft.world.item.Items.GOLDEN_SWORD ||
+               item == net.minecraft.world.item.Items.DIAMOND_SWORD ||
+               item == net.minecraft.world.item.Items.NETHERITE_SWORD;
+    }
+
+    private double getWeaponDamage(net.minecraft.world.item.ItemStack stack) {
+        if (stack.isEmpty()) return 0.0;
+        String name = stack.getItem().toString().toLowerCase();
+        double dmg = 0.0;
+        if (name.contains("netherite_sword")) dmg = 8.0;
+        else if (name.contains("diamond_sword")) dmg = 7.0;
+        else if (name.contains("netherite_axe")) dmg = 7.0;
+        else if (name.contains("mace")) dmg = 6.5;
+        else if (name.contains("diamond_axe")) dmg = 6.0;
+        else if (name.contains("iron_sword")) dmg = 6.0;
+        else if (name.contains("iron_axe")) dmg = 5.0;
+        else if (name.contains("stone_sword")) dmg = 5.0;
+        else if (name.contains("stone_axe")) dmg = 4.0;
+        else if (name.contains("golden_sword") || name.contains("wooden_sword")) dmg = 4.0;
+        return dmg;
     }
 
     private float[] calculateAngles(Minecraft mc, LivingEntity target) {
