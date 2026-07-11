@@ -16,7 +16,7 @@
         "client": ["ravex.RaveX"],
         "preLaunch": ["ravex.RaveX"]
     },
-    "mixins": ["ravex.mixins.json"],
+    "mixins": ["ravex.mixins.json", "ravex-sodium.mixins.json"],
     "accessWidener": "ravex.accesswidener",
     "depends": {
         "fabricloader": ">=${loader_version}",

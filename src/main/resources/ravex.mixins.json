@@ -4,6 +4,7 @@
     "minVersion": "0.8",
     "package": "ravex.mixin",
     "compatibilityLevel": "JAVA_21",
+    "plugin": "ravex.MixinPlugin",
     "mixins": [
         "client.MixinMinecraftClient",
         "client.MixinKeyMapping",

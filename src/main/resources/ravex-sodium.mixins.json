@@ -1,0 +1,12 @@
+{
+    "required": false,
+    "package": "ravex.integrations.sodium",
+    "compatibilityLevel": "JAVA_21",
+    "plugin": "ravex.MixinPlugin",
+    "client": [
+        "SodiumWorldRendererMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
