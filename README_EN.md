@@ -37,6 +37,10 @@ You can create your own Java, C++ and Lua addons for RaveX. Detailed compilation
 * [C++ Addons Guide](templates/cpp/GUIDE.md) (Russian version: [Руководство по C++ нативным аддонам](templates/cpp/GUIDE_RU.md))
 * [Lua Addons Guide](templates/lua/GUIDE.md) (Russian version: [Руководство по Lua-аддонам](templates/lua/GUIDE_RU.md))
 
+### Friends
+
+See [FRIENDS.md](FRIENDS.md).
+
 ### License
 
 GNU General Public License v3.0 — see LICENSE file.
