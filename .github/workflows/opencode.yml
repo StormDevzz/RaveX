@@ -29,6 +29,12 @@ jobs:
           git config --global user.name "Danil-Furry"
           git config --global user.email "kirilovickirilovic@gmail.com"
 
+      - name: Set up git auth
+        run: |
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        env:
+          TOKEN: ${{ secrets.BOT_TOKEN }}
+
       - name: Run OpenCode
         uses: anomalyco/opencode/github@latest
         env:
