@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -25,5 +28,7 @@ jobs:
         uses: anomalyco/opencode/github@latest
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
         with:
           model: groq/meta-llama/llama-4-scout-17b-16e-instruct
+          token: ${{ secrets.BOT_TOKEN }}
