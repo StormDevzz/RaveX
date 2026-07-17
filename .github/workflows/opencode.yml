@@ -24,6 +24,11 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Configure git
+        run: |
+          git config --global user.name "Danil-Furry"
+          git config --global user.email "kirilovickirilovic@gmail.com"
+
       - name: Run OpenCode
         uses: anomalyco/opencode/github@latest
         env:
