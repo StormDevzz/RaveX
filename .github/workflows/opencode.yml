@@ -22,24 +22,16 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 1
-          persist-credentials: false
 
       - name: Configure git
         run: |
           git config --global user.name "Danil-Furry"
           git config --global user.email "kirilovickirilovic@gmail.com"
 
-      - name: Set up git auth
-        run: |
-          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-        env:
-          TOKEN: ${{ secrets.BOT_TOKEN }}
-
       - name: Run OpenCode
         uses: anomalyco/opencode/github@latest
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-          TOKEN: ${{ secrets.BOT_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: opencode/deepseek-v4-flash-free
