@@ -31,7 +31,7 @@ jobs:
 
       - name: Set up git auth
         run: |
-          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
         env:
           TOKEN: ${{ secrets.BOT_TOKEN }}
 
