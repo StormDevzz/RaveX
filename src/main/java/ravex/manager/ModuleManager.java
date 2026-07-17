@@ -91,7 +91,8 @@ public class ModuleManager {
             "BookHelper", "Religion", "PauseBaritone",
             "AutoPortal", "FakePearl", "NewChunks",
             "PortalGod", "PortalGui", "PingSpoof",
-            "RideExploit", "Xray"
+            "RideExploit", "Xray",
+            "MessageAura"
         );
 
         register(Category.WORLD,
