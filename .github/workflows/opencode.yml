@@ -31,4 +31,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
         with:
           model: groq/meta-llama/llama-4-scout-17b-16e-instruct
-          token: ${{ secrets.BOT_TOKEN }}
+          use_github_token: true
