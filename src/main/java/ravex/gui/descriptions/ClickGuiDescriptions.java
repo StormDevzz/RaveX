@@ -216,6 +216,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Baritone", "Find path");
         DESCRIPTIONS.put("PauseBaritone", "Pause path");
         DESCRIPTIONS.put("NewChunks", "New chunks");
+        DESCRIPTIONS.put("ChunkAnalyzer", "Analyzes chunk generation anomalies to find player activity");
         DESCRIPTIONS.put("AutoCart", "Send carts");
         DESCRIPTIONS.put("MessageAura", "Message nearby players");
     }
