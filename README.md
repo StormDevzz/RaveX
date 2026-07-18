@@ -21,11 +21,9 @@ RaveX - клиентский мод для Minecraft от организации
 
 ### Скриншоты
 
-| Загрузка | GUI | Физика |
-|---|---|---|
-| ![](screenshots/loading.png) | ![](screenshots/gui.png) | ![](screenshots/physics.png) |
-| ![](screenshots/newgui.png) | ![](screenshots/russian.png) | |
-| Новое Гуи | Поддержка русского языка | |
+| Загрузка | Гуи | Физика | Новое Гуи | Поддержка русского языка |
+|---|---|---|---|---|
+| ![](screenshots/loading.png) | ![](screenshots/gui.png) | ![](screenshots/physics.png) | ![](screenshots/newgui.png) | ![](screenshots/russian.png) |
 
 ### Сборка
 

@@ -19,11 +19,9 @@ RaveX is an open-source Minecraft client modification by StormDevzz organization
 
 ### Screenshots
 
-| Loading | GUI | Physics |
-|---|---|---|
-| ![](screenshots/loading.png) | ![](screenshots/gui.png) | ![](screenshots/physics.png) |
-| ![](screenshots/newgui.png) | ![](screenshots/russian.png) | |
-| New GUI | Russian language support | |
+| Loading | Gui | Physics | New Gui | Russian language support |
+|---|---|---|---|---|
+| ![](screenshots/loading.png) | ![](screenshots/gui.png) | ![](screenshots/physics.png) | ![](screenshots/newgui.png) | ![](screenshots/russian.png) |
 
 ### Building
 
