@@ -224,6 +224,7 @@ public class LanguageUtility {
         en.put("desc_PauseBaritone", "Pause path");
         en.put("desc_NewChunks", "New chunks");
         en.put("desc_AutoCart", "Send carts");
+        en.put("desc_MessageAura", "Message nearby players");
         en.put("hud_desc_Watermark", "Renders the premium RaveX Client watermark on screen.");
         en.put("hud_desc_ArrayList", "Renders the active (enabled) modules array list.");
         en.put("hud_desc_Coords", "Renders player's current X, Y, Z coordinates.");
@@ -472,6 +473,7 @@ public class LanguageUtility {
         ru.put("desc_PauseBaritone", "Пауза пути");
         ru.put("desc_NewChunks", "Новые чанки");
         ru.put("desc_AutoCart", "Отправлять вагонетки");
+        ru.put("desc_MessageAura", "Сообщать игрокам рядом");
         ru.put("hud_desc_Watermark", "Ватермарка RaveX на экране");
         ru.put("hud_desc_ArrayList", "Список активных модулей");
         ru.put("hud_desc_Coords", "Текущие координаты X Y Z");
