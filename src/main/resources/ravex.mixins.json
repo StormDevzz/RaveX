@@ -82,6 +82,7 @@
         "movement.MixinFreeCamPlayer",
         "movement.MixinFreeCamNoSwing",
         "movement.MixinLivingEntityTravel",
+        "movement.MixinNoHungerSprint",
         "player.MixinNoInteract",
         "player.MixinFastBreak",
         "player.MixinGhostHand",

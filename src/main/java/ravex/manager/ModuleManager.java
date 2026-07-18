@@ -72,7 +72,7 @@ public class ModuleManager {
             "Step", "ReverseStep", "NoWeb",
             "AutoWalk", "AntiVoid", "LongJump",
             "Sleepy", "NoPush", "AutoSprint",
-            "Spider", "Speed", "NoRotate",
+            "Spider", "Speed", "NoRotate", "NoHungerSprint",
             "Avoid", "RidingHelper", "SafeWalk",
             "HighJump", "FastStairs", "NoFall",
             "ElytraFly", "Flight", "LiquidControl",

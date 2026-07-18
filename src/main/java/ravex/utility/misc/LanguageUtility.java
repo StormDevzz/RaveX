@@ -88,6 +88,7 @@ public class LanguageUtility {
         en.put("desc_FastBreak", "Break fast");
         en.put("desc_InstaBreak", "Instant break");
         en.put("desc_GhostHand", "Open through walls");
+        en.put("desc_NoHungerSprint", "Sprint while hungry");
         en.put("desc_AutoSprint", "Always sprint");
         en.put("desc_Spider", "Climb walls");
         en.put("desc_Timer", "Speed up");
@@ -338,6 +339,7 @@ public class LanguageUtility {
         ru.put("desc_FastBreak", "Быстрое разрушение");
         ru.put("desc_InstaBreak", "Мгновенное разрушение");
         ru.put("desc_GhostHand", "Открывать сквозь стены");
+        ru.put("desc_NoHungerSprint", "Спринт без еды");
         ru.put("desc_AutoSprint", "Автоспринт");
         ru.put("desc_Spider", "Лазать по стенам");
         ru.put("desc_Timer", "Ускорение");
