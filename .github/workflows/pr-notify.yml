@@ -1,0 +1,82 @@
+name: PR Discord Notifier
+
+on:
+  pull_request:
+    types: [opened, reopened, closed, ready_for_review]
+
+jobs:
+  pr-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send PR Notification to Discord
+        env:
+          WEBHOOK_URL: ${{ secrets.MAYBE_TOKEN }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_ACTION: ${{ github.event.action }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "MAYBE_TOKEN secret not set. Skipping."
+            exit 0
+          fi
+
+          AUTHOR_URL="https://github.com/$PR_AUTHOR"
+          AUTHOR_ICON="https://github.com/${PR_AUTHOR}.png"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          case "$PR_ACTION" in
+            opened)        COLOR=3796756;  STATUS="OPENED" ;;
+            reopened)      COLOR=65535;    STATUS="REOPENED" ;;
+            closed)        COLOR=16724787; STATUS="CLOSED" ;;
+            ready_for_review) COLOR=16776960; STATUS="READY FOR REVIEW" ;;
+            *)             COLOR=16776960; STATUS=$(echo "$PR_ACTION" | tr '[:lower:]' '[:upper:]') ;;
+          esac
+
+          TRUNCATED_BODY=$(echo "$PR_BODY" | head -c 500)
+          if [ "${#PR_BODY}" -gt 500 ]; then
+            TRUNCATED_BODY="${TRUNCATED_BODY}..."
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg title "PR #$PR_NUMBER: $PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg desc "$TRUNCATED_BODY" \
+            --arg repo "$REPO" \
+            --arg author "$PR_AUTHOR" \
+            --arg author_url "$AUTHOR_URL" \
+            --arg author_icon "$AUTHOR_ICON" \
+            --arg status "$STATUS" \
+            --arg branch "$PR_BRANCH" \
+            --arg base "$PR_BASE" \
+            --arg timestamp "$TIMESTAMP" \
+            --argjson color "$COLOR" \
+            '{
+              embeds: [{
+                title: $title,
+                url: $url,
+                description: $desc,
+                color: $color,
+                fields: [
+                  { name: "Repository", value: $repo, inline: true },
+                  { name: "Author", value: ("[" + $author + "](" + $author_url + ")"), inline: true },
+                  { name: "Status", value: $status, inline: true },
+                  { name: "Branch", value: ("`" + $branch + "` → `" + $base + "`"), inline: false }
+                ],
+                author: {
+                  name: $author,
+                  url: $author_url,
+                  icon_url: $author_icon
+                },
+                footer: { text: "RaveX Pull Requests" },
+                timestamp: $timestamp
+              }]
+            }')
+
+          echo "Sending to Discord..."
+          curl -s -w "\nHTTP_STATUS:%{http_code}" -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
