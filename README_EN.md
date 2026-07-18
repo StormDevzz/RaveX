@@ -75,3 +75,4 @@ GNU General Public License v3.0 - see LICENSE file.
 ---
 
 [Russian version →](README.md)
+- Use Java 21+ for building
