@@ -10,6 +10,9 @@ RaveX - клиентский мод для Minecraft от организации
 
 **Сайт:** https://ravex.serveousercontent.com/
 
+[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/ravex_free)
+[![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/n9HPbgN7S)
+
 ### Языки в проекте
 
 | Язык | Назначение |
