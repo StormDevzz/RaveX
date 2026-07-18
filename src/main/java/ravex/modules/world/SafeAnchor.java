@@ -25,6 +25,7 @@ public class SafeAnchor extends Module {
     public final BooleanParameter autoCharge = new BooleanParameter("AutoCharge", true);
     public final BooleanParameter placeGlowstone = new BooleanParameter("PlaceGlowstone", true);
     public final BooleanParameter autoTrigger = new BooleanParameter("AutoTrigger", true);
+    public final NumberParameter delay = new NumberParameter("Delay", 150, 0, 1000, 50);
 
     public static final SilentRotation silentRotation = new SilentRotation();
     private long lastActionTime = 0;
@@ -65,7 +66,7 @@ public class SafeAnchor extends Module {
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
 
         long now = System.currentTimeMillis();
-        if (now - lastActionTime < 150) return;
+        if (now - lastActionTime < delay.getValue().intValue()) return;
 
         if (anchorPos == null || stage == 0) {
             anchorPos = findNearbyAnchor(mc);
@@ -228,6 +229,7 @@ public class SafeAnchor extends Module {
         InventoryUtility.selectSlot(mc.player, slot);
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, targetBlock, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
+        silentRotation.reset();
         mc.player.swing(InteractionHand.MAIN_HAND);
         lastActionTime = System.currentTimeMillis();
 
