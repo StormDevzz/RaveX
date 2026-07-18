@@ -84,7 +84,7 @@ public class ModuleManager {
         register(Category.MISC,
             "AntiAfk", "AutoEat", "PacketHelper",
             "AutoLog", "AntiAttack", "LagNotify",
-            "PopCounter", "WaxAura", "AutoReconnect",
+            "MessageAura", "PopCounter", "WaxAura", "AutoReconnect",
             "FastItem", "BlockMixer", "AutoSoup",
             "NameProtect", "StashFinder", "AutoAuth",
             "AntiQuit", "SoundBlock", "ChatHelper",
