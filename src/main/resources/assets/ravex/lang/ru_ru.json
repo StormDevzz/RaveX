@@ -111,7 +111,9 @@
     "module.BowAim": "BowAim",
     "module.BowAim.description": "Автоматически прицеливается из лука в игроков или сущностей, рассчитывая траекторию и движение цели.",
     "module.Quiver": "Quiver",
-    "module.Quiver.description": "Автоматически стреляет в себя стрелами с положительными эффектами."
+    "module.Quiver.description": "Автоматически стреляет в себя стрелами с положительными эффектами.",
+    "module.SafeAnchor": "Safe Anchor",
+    "module.SafeAnchor.description": "Автоматически заряжает якорь до 1 уровня светокамнем, ставит блок светокамня и активирует якорь мечом."
 }
 
 

@@ -121,6 +121,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("FakePearl", "Fake pearl");
         DESCRIPTIONS.put("BasePlace", "Place obsidian");
         DESCRIPTIONS.put("AnchorAura", "Explode anchors");
+        DESCRIPTIONS.put("SafeAnchor", "Safe anchor charge and trigger");
         DESCRIPTIONS.put("ElytraHelper", "Elytra swap");
         DESCRIPTIONS.put("ViewLock", "Lock view");
         DESCRIPTIONS.put("ItemSaver", "Save items");
