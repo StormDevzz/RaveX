@@ -20,6 +20,7 @@ import ravex.modules.player.AntiAim;
 import ravex.modules.combat.BowAim;
 import ravex.modules.combat.Quiver;
 import ravex.modules.world.Scaffold;
+import ravex.modules.world.SafeAnchor;
 
 @Mixin(LocalPlayer.class)
 public class MixinLocalPlayer {
@@ -105,6 +106,11 @@ public class MixinLocalPlayer {
             ravexSavedPitch = player.getXRot();
             player.setYRot(ShieldFucker.silentRotation.yaw);
             player.setXRot(ShieldFucker.silentRotation.pitch);
+        } else if (SafeAnchor.maybeEnabled() && SafeAnchor.itz().rotate.getValue().equals("Silent") && SafeAnchor.hasSilentRotations()) {
+            ravexSavedYaw = player.getYRot();
+            ravexSavedPitch = player.getXRot();
+            player.setYRot(SafeAnchor.silentRotation.yaw);
+            player.setXRot(SafeAnchor.silentRotation.pitch);
         }
     }
 
@@ -124,7 +130,8 @@ public class MixinLocalPlayer {
         boolean kaActive = KillAura.maybeEnabled() && KillAura.hasSilentRotations();
         boolean sfActive = ShieldFucker.maybeEnabled() && ShieldFucker.itz().rotate.getValue().equals("Silent") && ShieldFucker.hasSilentRotations();
         boolean scaffoldSilent = Scaffold.maybeEnabled() && Scaffold.silentRotation.hasRotation;
-        if (acActive || trapActive || selfTrapActive || basePlaceActive || anchorAuraActive || antiAimActive || bowAimActive || quiverActive || breakerActive || pmActive || kaActive || sfActive || scaffoldSilent) {
+        boolean safeAnchorSilent = SafeAnchor.maybeEnabled() && SafeAnchor.itz().rotate.getValue().equals("Silent") && SafeAnchor.hasSilentRotations();
+        if (acActive || trapActive || selfTrapActive || basePlaceActive || anchorAuraActive || antiAimActive || bowAimActive || quiverActive || breakerActive || pmActive || kaActive || sfActive || scaffoldSilent || safeAnchorSilent) {
             player.setYRot(ravexSavedYaw);
             player.setXRot(ravexSavedPitch);
         }
