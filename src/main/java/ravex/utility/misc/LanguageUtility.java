@@ -129,7 +129,7 @@ public class LanguageUtility {
         en.put("desc_Igniter", "Light TNT");
         en.put("desc_RidingHelper", "Faster riding");
         en.put("desc_Blink", "Delay moves");
-        en.put("desc_PacketFly", "Fly freely");
+        en.put("desc_PacketFly", "Packet flight with GrimAC & NCP bypass");
         en.put("desc_AutoApple", "Eat apples");
         en.put("desc_TreeCutter", "Cut trees");
         en.put("desc_FakePearl", "Fake pearl");
@@ -379,7 +379,7 @@ public class LanguageUtility {
         ru.put("desc_Igniter", "Поджигать TNT");
         ru.put("desc_RidingHelper", "Быстрая езда");
         ru.put("desc_Blink", "Задержка движений");
-        ru.put("desc_PacketFly", "Пакетный полёт");
+        ru.put("desc_PacketFly", "Пакетный полёт с обходом GrimAC и NCP");
         ru.put("desc_AutoApple", "Автояблоко");
         ru.put("desc_TreeCutter", "Рубить деревья");
         ru.put("desc_FakePearl", "Фейковый жемчуг");

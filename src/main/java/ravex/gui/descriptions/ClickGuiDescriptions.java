@@ -115,7 +115,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Igniter", "Light TNT");
         DESCRIPTIONS.put("RidingHelper", "Faster riding");
         DESCRIPTIONS.put("Blink", "Delay moves");
-        DESCRIPTIONS.put("PacketFly", "Fly freely");
+        DESCRIPTIONS.put("PacketFly", "Fly using packets with anti-cheat bypasses");
         DESCRIPTIONS.put("AutoApple", "Eat apples");
         DESCRIPTIONS.put("TreeCutter", "Cut trees");
         DESCRIPTIONS.put("FakePearl", "Fake pearl");
