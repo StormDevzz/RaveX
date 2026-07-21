@@ -217,7 +217,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("PauseBaritone", "Pause path");
         DESCRIPTIONS.put("NewChunks", "New chunks");
         DESCRIPTIONS.put("AutoCart", "Send carts");
-        DESCRIPTIONS.put("MessageAura", "Message nearby players");
+        DESCRIPTIONS.put("MessageAura", "Spam nearby players with cool messages");
     }
 
     public static String getDescription(String moduleName) {
