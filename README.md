@@ -75,3 +75,4 @@ GNU General Public License v3.0 - см. файл LICENSE.
 [English version →](README_EN.md)
 
 
+- RaveX supports only Minecraft 1.21.x
