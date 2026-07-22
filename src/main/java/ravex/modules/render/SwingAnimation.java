@@ -12,7 +12,7 @@ import java.util.List;
 
 public class SwingAnimation extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Akrien",
-            List.of("Default", "Swipe", "Akrien"));
+            List.of("Default", "Swipe", "Akrien", "Rich"));
     public final NumberParameter speed = new NumberParameter("Speed", 1.0, 0.1, 5.0, 0.1);
 
     private SwingAnimation() {
@@ -43,6 +43,17 @@ public class SwingAnimation extends Module {
         poseStack.mulPose(Axis.XP.rotationDegrees(50f));
         poseStack.mulPose(Axis.YP.rotationDegrees(-30f * (1f - g) - 30f));
         poseStack.mulPose(Axis.ZP.rotationDegrees(110f));
+    }
+
+    public void applyRich(PoseStack poseStack, float swingProgress, float equipProgress, boolean rightHand) {
+        float g = Mth.sin(Mth.sqrt(swingProgress) * (float) Math.PI);
+        int i = rightHand ? 1 : -1;
+        poseStack.translate(i * 0.56F, -0.52F, -0.72F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(30f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(-70f));
+        poseStack.mulPose(Axis.YP.rotationDegrees(30f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(g * -20f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(g * -75f));
     }
 
     public void applyDefault(PoseStack poseStack, float swingProgress, float equipProgress, boolean rightHand) {

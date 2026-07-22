@@ -169,7 +169,7 @@ public abstract class MixinItemInHandRenderer {
     private void onApplyItemArmTransformReturn(PoseStack poseStack, HumanoidArm arm, float f, CallbackInfo ci) {
         if (SwingAnimation.maybeEnabled() && !NoSwing.maybeEnabled()) {
             String mode = SwingAnimation.itz().mode.getValue();
-            if ("Default".equals(mode) || "Akrien".equals(mode) || "Swipe".equals(mode)) return;
+            if ("Default".equals(mode) || "Akrien".equals(mode) || "Swipe".equals(mode) || "Rich".equals(mode)) return;
         }
         applyViewModel(poseStack, arm);
     }
@@ -215,6 +215,7 @@ public abstract class MixinItemInHandRenderer {
             case "Default" -> SwingAnimation.itz().applyDefault(poseStack, capturedSwingProgress, ep, rightHand);
             case "Akrien"  -> SwingAnimation.itz().applyFourteen(poseStack, capturedSwingProgress, ep);
             case "Swipe"   -> SwingAnimation.itz().applySwipe(poseStack, capturedSwingProgress, ep);
+            case "Rich"    -> SwingAnimation.itz().applyRich(poseStack, capturedSwingProgress, ep, rightHand);
         }
 
         applyViewModel(poseStack, arm);
