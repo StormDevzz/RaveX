@@ -13,9 +13,11 @@ import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
 import ravex.manager.ModuleManager;
+import net.minecraft.client.renderer.texture.AbstractTexture;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.file.Files;
@@ -207,7 +209,13 @@ public class MediaHud extends Module {
             try {
                 com.mojang.blaze3d.textures.GpuSampler linearSampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
                     .getClampToEdge(com.mojang.blaze3d.textures.FilterMode.LINEAR);
-                ((ravex.mixin.render.AccessorAbstractTexture) coverTexture).setSampler(linearSampler);
+                for (Field f : AbstractTexture.class.getDeclaredFields()) {
+                    if (com.mojang.blaze3d.textures.GpuSampler.class.isAssignableFrom(f.getType())) {
+                        f.setAccessible(true);
+                        f.set(coverTexture, linearSampler);
+                        break;
+                    }
+                }
             } catch (Throwable t) {
                 RaveX.LOGGER.warn("[MediaHud] Failed to set bilinear filter: {}", t.getMessage());
             }

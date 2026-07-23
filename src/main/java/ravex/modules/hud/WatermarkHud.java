@@ -11,8 +11,8 @@ import ravex.RaveX;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.parameter.ColorParameter;
-import ravex.mixin.render.AccessorAbstractTexture;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import net.minecraft.resources.Identifier;
 import ravex.manager.ModuleManager;
 
@@ -34,7 +34,13 @@ public class WatermarkHud extends Module {
             DynamicTexture tex = new DynamicTexture(() -> "ravexx", image);
             try {
                 GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-                ((AccessorAbstractTexture) tex).setSampler(sampler);
+                for (Field f : AbstractTexture.class.getDeclaredFields()) {
+                    if (GpuSampler.class.isAssignableFrom(f.getType())) {
+                        f.setAccessible(true);
+                        f.set(tex, sampler);
+                        break;
+                    }
+                }
             } catch (Exception ignored) {}
             Minecraft.getInstance().getTextureManager().register(LOGO, tex);
             logoLoaded = true;

@@ -13,7 +13,6 @@ import net.minecraft.resources.Identifier;
 
 import java.awt.Color;
 import java.lang.reflect.Field;
-import ravex.mixin.render.AccessorAbstractTexture;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -229,7 +228,14 @@ public class Render2DEngine {
     private static void setLinearSampler(AbstractTexture tex) {
         try {
             GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-            ((AccessorAbstractTexture) tex).setSampler(sampler);
+            for (Field f : AbstractTexture.class.getDeclaredFields()) {
+                if (GpuSampler.class.isAssignableFrom(f.getType())) {
+                    f.setAccessible(true);
+                    f.set(tex, sampler);
+                    return;
+                }
+            }
+            ravex.RaveX.LOGGER.warn("[R2D] No GpuSampler field found on AbstractTexture");
         } catch (Exception e) {
             ravex.RaveX.LOGGER.warn("[R2D] Failed to set sampler: {}", e.getMessage());
         }

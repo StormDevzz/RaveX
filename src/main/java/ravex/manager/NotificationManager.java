@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.utility.notification.Notification;
 import ravex.utility.render.FontRenderUtility;
-import ravex.mixin.render.AccessorAbstractTexture;
+import java.lang.reflect.Field;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NotificationManager {
@@ -58,7 +58,13 @@ public class NotificationManager {
                 DynamicTexture tex = new DynamicTexture(() -> "toast_" + name, scaled);
                 try {
                     GpuSampler sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-                    ((AccessorAbstractTexture) tex).setSampler(sampler);
+                    for (Field f : AbstractTexture.class.getDeclaredFields()) {
+                        if (GpuSampler.class.isAssignableFrom(f.getType())) {
+                            f.setAccessible(true);
+                            f.set(tex, sampler);
+                            break;
+                        }
+                    }
                 } catch (Exception ignored) {}
                 Identifier id = Identifier.fromNamespaceAndPath("ravex", "toast_" + name);
                 Minecraft.getInstance().getTextureManager().register(id, tex);

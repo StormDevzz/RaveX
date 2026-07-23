@@ -17,8 +17,8 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.mixin.render.AccessorAbstractTexture;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
@@ -60,7 +60,13 @@ public class Tracers extends Module {
                     try {
                         GpuSampler sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
                                 .getClampToEdge(FilterMode.LINEAR);
-                        ((AccessorAbstractTexture) tex).setSampler(sampler);
+                        for (Field f : AbstractTexture.class.getDeclaredFields()) {
+                            if (GpuSampler.class.isAssignableFrom(f.getType())) {
+                                f.setAccessible(true);
+                                f.set(tex, sampler);
+                                break;
+                            }
+                        }
                     } catch (Exception ignored) {
                     }
                     arrowTexture = Identifier.fromNamespaceAndPath("ravex", "tracers_arrow");
