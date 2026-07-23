@@ -201,6 +201,7 @@ public abstract class MixinItemInHandRenderer {
 
         if (!SwingAnimation.maybeEnabled() || NoSwing.maybeEnabled() || stack.isEmpty()) return;
         if (hand != InteractionHand.MAIN_HAND) return;
+        if (player.isUsingItem()) return;
 
         ci.cancel();
 

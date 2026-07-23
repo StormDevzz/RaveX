@@ -13,6 +13,7 @@ import ravex.modules.client.Hud;
 import ravex.modules.combat.KillAura;
 import ravex.modules.combat.Trigger;
 import ravex.parameter.BooleanParameter;
+import ravex.parameter.ModeParameter;
 import ravex.utility.render.Render2DEngine;
 import ravex.utility.render.FontRenderUtility;
 import ravex.manager.ModuleManager;
@@ -21,6 +22,8 @@ public class TargetHud extends Module {
     public final BooleanParameter showMainHand = new BooleanParameter("MainHand", true);
     public final BooleanParameter showArmor = new BooleanParameter("Armor", true);
     public final BooleanParameter showOnHover = new BooleanParameter("ShowOnHover", true);
+    public final ModeParameter healthDisplay = new ModeParameter("Health", "HP", java.util.List.of("HP", "%"));
+    public final BooleanParameter healthColor = new BooleanParameter("HealthColor", false);
 
 
     private static final net.minecraft.world.entity.EquipmentSlot[] SLOTS = {
@@ -235,6 +238,13 @@ public class TargetHud extends Module {
             animatedHpPercent += (targetHpFraction - animatedHpPercent) * Math.min(1.0f, delta * 8.0f);
             animatedAbsorbPercent += (targetAbsorbFraction - animatedAbsorbPercent) * Math.min(1.0f, delta * 8.0f);
         }
+
+        String hpText = switch (healthDisplay.getValue()) {
+            case "HP" -> String.format("%.0f / %.0f", hp, maxHp);
+            default -> maxHp > 0 ? String.format("%d%%", (int)(hp / maxHp * 100)) : "0%";
+        };
+        int hpTextColor = healthColor.getValue() ? lerpColor(0xFFFF3333, 0xFF33FF33, maxHp > 0 ? hp / maxHp : 1f) : 0xFFFFFFFF;
+        FontRenderUtility.drawString(graphics, hpText, nx, by + 21, ColorUtility.withAlpha(hpTextColor, (int)(255 * hudAlpha)), true);
 
         int gridX = bx + w - 55;
         int barX = bx + 44;

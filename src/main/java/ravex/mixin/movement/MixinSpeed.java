@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import ravex.modules.combat.KillAura;
 import ravex.modules.movement.Speed;
 
 @Mixin(LocalPlayer.class)
@@ -36,6 +37,13 @@ public abstract class MixinSpeed {
 
     private static boolean isJumping() {
         return Minecraft.getInstance().options.keyJump.isDown();
+    }
+
+    private static double getMoveYaw(LocalPlayer player) {
+        if (KillAura.hasSilentRotations()) {
+            return Math.toRadians(KillAura.silentRotation.yaw);
+        }
+        return Math.toRadians(player.getYRot());
     }
 
     private static void applySpeedLimit(LocalPlayer player, double limit) {
@@ -78,7 +86,7 @@ public abstract class MixinSpeed {
                 if (forward == 0 && strafe == 0) return;
 
                 double speedVal = baseSpeed * 0.15;
-                double yaw = Math.toRadians(player.getYRot());
+                double yaw = getMoveYaw(player);
                 double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
                 double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
 
@@ -103,7 +111,7 @@ public abstract class MixinSpeed {
 
                 if (player.onGround()) {
                     double speedVal = baseSpeed * 0.12;
-                    double yaw = Math.toRadians(player.getYRot());
+                    double yaw = getMoveYaw(player);
                     double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
                     double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
 
@@ -115,7 +123,7 @@ public abstract class MixinSpeed {
                     }
                 } else {
                     double speedVal = baseSpeed * 0.08;
-                    double yaw = Math.toRadians(player.getYRot());
+                    double yaw = getMoveYaw(player);
                     double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
                     double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
 
@@ -140,7 +148,7 @@ public abstract class MixinSpeed {
                     if (forward == 0 && strafe == 0) return;
 
                     double speedVal = baseSpeed * 0.10;
-                    double yaw = Math.toRadians(player.getYRot());
+                    double yaw = getMoveYaw(player);
                     double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
                     double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
 
@@ -152,7 +160,7 @@ public abstract class MixinSpeed {
                     double speedVal = baseSpeed * 0.06;
                     float forward = getForward();
                     float strafe = getStrafe();
-                    double yaw = Math.toRadians(player.getYRot());
+                    double yaw = getMoveYaw(player);
                     double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
                     double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
 
@@ -171,7 +179,7 @@ public abstract class MixinSpeed {
                     if (forward == 0 && strafe == 0) return;
 
                     double speedVal = baseSpeed * 0.08;
-                    double yaw = Math.toRadians(player.getYRot());
+                    double yaw = getMoveYaw(player);
                     double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
                     double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
 
@@ -183,7 +191,7 @@ public abstract class MixinSpeed {
                     double speedVal = baseSpeed * 0.04;
                     float forward = getForward();
                     float strafe = getStrafe();
-                    double yaw = Math.toRadians(player.getYRot());
+                    double yaw = getMoveYaw(player);
                     double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
                     double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
 
@@ -251,7 +259,7 @@ public abstract class MixinSpeed {
                     f *= (float)Math.sin(Math.PI / 4);
                     s *= (float)Math.cos(Math.PI / 4);
                 }
-                double yawRad = Math.toRadians(player.getYRot());
+                double yawRad = getMoveYaw(player);
                 double velX = f * ssBaseSpeed * -Math.sin(yawRad) + s * ssBaseSpeed * Math.cos(yawRad);
                 double velZ = f * ssBaseSpeed * Math.cos(yawRad) - s * ssBaseSpeed * -Math.sin(yawRad);
 
@@ -268,7 +276,7 @@ public abstract class MixinSpeed {
                 double boost = Speed.itz().grimBoost.getValue();
                 double currentHoriz = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
                 double speedVal = baseSpeed * 0.04 * boost;
-                double yaw = Math.toRadians(player.getYRot());
+                double yaw = getMoveYaw(player);
                 double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
                 double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
                 double newHoriz = Math.sqrt(velX * velX + velZ * velZ);

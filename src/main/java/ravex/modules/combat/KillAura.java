@@ -22,7 +22,7 @@ import ravex.manager.ModuleManager;
 
 public class KillAura extends Module {
 
-    public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("Tracker", "Snap"));
+    public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("Tracker", "Snap", "HvH"));
 
     public final NumberParameter range = new NumberParameter("Range", 3.0, 2.0, 6.0, 0.1);
     public final NumberParameter cooldownThreshold = new NumberParameter("Attack Cooldown", 1.0, 0.0, 1.0, 0.05);
@@ -414,9 +414,14 @@ public class KillAura extends Module {
 
             yaw = prevYaw + stepYaw;
             pitch = prevPitch + stepPitch;
-        } else {
+        } else if (mode.getValue().equals("Snap")) {
             Vec3 chestPos = target.position().add(0, target.getBbHeight() * 0.65, 0);
             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), chestPos);
+            yaw = angles[0];
+            pitch = angles[1];
+        } else {
+            Vec3 headPos = target.position().add(0, target.getBbHeight() * 0.9, 0);
+            float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), headPos);
             yaw = angles[0];
             pitch = angles[1];
         }
