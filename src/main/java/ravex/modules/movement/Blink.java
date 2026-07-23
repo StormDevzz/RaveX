@@ -5,6 +5,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.common.ServerboundPongPacket;
 import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.world.phys.Vec3;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
@@ -19,7 +20,7 @@ import java.util.List;
 
 public class Blink extends Module {
     public final ModeParameter mode = new ModeParameter("Mode", "Normal",
-            List.of("Normal", "Packet", "Grim"));
+            List.of("Normal", "Packet", "Grim", "NCP"));
     public final NumberParameter limit = new NumberParameter("Limit", 30.0, 5.0, 200.0, 5.0);
     public final NumberParameter maxTicks = new NumberParameter("MaxTicks", 4.0, 1.0, 20.0, 1.0);
     public final NumberParameter autoDisableTicks = new NumberParameter("AutoDisable", 60.0, 10.0, 400.0, 5.0);
@@ -31,12 +32,21 @@ public class Blink extends Module {
     private int bufferTicks = 0;
     private Vec3 startPos = null;
     private boolean flushing = false;
+    private int flushIndex = 0;
+    private Vec3 flushStartPos = null;
+    private double flushTotalHPos = 0.0;
+    private int idleTicker = 0;
+    private long flushStartTime = 0L;
+
+    private static final int MAX_PACKETS_PER_TICK = 4;
+    private static final int IDLE_INTERVAL = 3;
+    private static final double MAX_MOVE_PER_PACKET = 0.35;
 
     private Blink() {
         super("Blink");
         maxTicks.setVisible(() -> "Grim".equals(mode.getValue()));
-        autoDisableTicks.setVisible(() -> "Grim".equals(mode.getValue()));
-        cancelOnShift.setVisible(() -> "Grim".equals(mode.getValue()));
+        autoDisableTicks.setVisible(() -> "Grim".equals(mode.getValue()) || "NCP".equals(mode.getValue()));
+        cancelOnShift.setVisible(() -> "Grim".equals(mode.getValue()) || "NCP".equals(mode.getValue()));
         onSpot.setVisible(() -> "Grim".equals(mode.getValue()));
     }
 
@@ -54,7 +64,10 @@ public class Blink extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
 
-        if ("Grim".equals(mode.getValue())) {
+        boolean isGrim = "Grim".equals(mode.getValue());
+        boolean isNcp = "NCP".equals(mode.getValue());
+
+        if (isGrim || isNcp) {
             if (cancelOnShift.getValue() && mc.options.keyShift.isDown()) {
                 setEnabled(false);
                 return;
@@ -67,12 +80,23 @@ public class Blink extends Module {
                 return;
             }
 
-            if (flushing) return;
+            if (flushing) {
+                continueFlush();
+                return;
+            }
 
             bufferTicks++;
 
+            if (isNcp) {
+                idleTicker++;
+                if (idleTicker >= IDLE_INTERVAL) {
+                    sendIdleMove();
+                    idleTicker = 0;
+                }
+            }
+
             if (bufferTicks >= maxTicks.getValue() || packetBuffer.size() >= limit.getValue().intValue()) {
-                flush();
+                startFlush();
             }
         }
     }
@@ -82,10 +106,15 @@ public class Blink extends Module {
 
         String modeVal = mode.getValue();
 
-        if ("Grim".equals(modeVal)) {
+        if ("Grim".equals(modeVal) || "NCP".equals(modeVal)) {
             if (flushing) return false;
             if (packet instanceof ServerboundPongPacket) return false;
             if (packet instanceof ServerboundAcceptTeleportationPacket) return false;
+
+            if ("NCP".equals(modeVal) && packet instanceof ServerboundPlayerInputPacket) {
+                return false;
+            }
+
             if (packetBuffer.size() >= limit.getValue().intValue()) return true;
 
             if (startPos == null && packet instanceof ServerboundMovePlayerPacket move && move.hasPosition()) {
@@ -108,11 +137,35 @@ public class Blink extends Module {
         return false;
     }
 
-    private void flush() {
+    private void sendIdleMove() {
+        if (packetBuffer.isEmpty()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
+        mc.player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(mc.player.onGround()));
+    }
 
+    private void startFlush() {
         flushing = true;
+        flushIndex = 0;
+        flushStartTime = System.currentTimeMillis();
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            flushStartPos = mc.player.position();
+        } else {
+            flushStartPos = startPos != null ? startPos : Vec3.ZERO;
+        }
+
+        if ("NCP".equals(mode.getValue())) {
+            flushTotalHPos = 0.0;
+            for (Packet<?> p : packetBuffer) {
+                if (p instanceof ServerboundMovePlayerPacket move && move.hasPosition()) {
+                    Vec3 pktPos = new Vec3(move.x, move.y, move.z);
+                    if (flushTotalHPos == 0.0) {
+                        flushTotalHPos = flushStartPos.distanceTo(pktPos);
+                    }
+                }
+            }
+        }
 
         if (startPos != null && onSpot.getValue()) {
             for (int i = 0; i < packetBuffer.size(); i++) {
@@ -125,14 +178,84 @@ public class Blink extends Module {
                 }
             }
         }
+    }
 
-        for (Packet<?> p : packetBuffer) {
-            mc.player.connection.send(p);
+    private void continueFlush() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.player.connection == null) {
+            finishFlush();
+            return;
         }
+
+        String modeVal = mode.getValue();
+        boolean isNcp = "NCP".equals(modeVal);
+
+        int sentThisTick = 0;
+
+        while (flushIndex < packetBuffer.size() && sentThisTick < MAX_PACKETS_PER_TICK) {
+            Packet<?> p = packetBuffer.get(flushIndex);
+
+            if (isNcp && p instanceof ServerboundMovePlayerPacket move && move.hasPosition() && flushStartPos != null) {
+                double t = (double) flushIndex / Math.max(1, packetBuffer.size());
+                Vec3 currentPlayerPos = mc.player.position();
+                double dx = currentPlayerPos.x - flushStartPos.x;
+                double dy = currentPlayerPos.y - flushStartPos.y;
+                double dz = currentPlayerPos.z - flushStartPos.z;
+
+                double px = flushStartPos.x + dx * t;
+                double py = flushStartPos.y + dy * t;
+                double pz = flushStartPos.z + dz * t;
+
+                if (flushIndex > 0) {
+                    Packet<?> prev = packetBuffer.get(flushIndex - 1);
+                    if (prev instanceof ServerboundMovePlayerPacket.Pos prevPos) {
+                        double stepDist = Math.sqrt(
+                                Math.pow(px - prevPos.x, 2) +
+                                Math.pow(py - prevPos.y, 2) +
+                                Math.pow(pz - prevPos.z, 2)
+                        );
+                        if (stepDist > MAX_MOVE_PER_PACKET) {
+                            int extraSteps = (int) Math.ceil(stepDist / MAX_MOVE_PER_PACKET);
+                            Packet<?> prevPkt = packetBuffer.get(flushIndex - 1);
+                            if (prevPkt instanceof ServerboundMovePlayerPacket prevMove) {
+                                for (int s = 1; s < extraSteps; s++) {
+                                    double st = (double) s / extraSteps;
+                                    double sx = prevPos.x + (px - prevPos.x) * st;
+                                    double sy = prevPos.y + (py - prevPos.y) * st;
+                                    double sz = prevPos.z + (pz - prevPos.z) * st;
+                                    mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                                            sx, sy, sz, move.isOnGround(), move.horizontalCollision()
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                        px, py, pz, move.isOnGround(), move.horizontalCollision()
+                ));
+            } else {
+                mc.player.connection.send(p);
+            }
+
+            flushIndex++;
+            sentThisTick++;
+        }
+
+        if (flushIndex >= packetBuffer.size()) {
+            finishFlush();
+        }
+    }
+
+    private void finishFlush() {
         packetBuffer.clear();
         startPos = null;
         bufferTicks = 0;
         flushing = false;
+        flushIndex = 0;
+        flushStartPos = null;
+        flushTotalHPos = 0.0;
     }
 
     public int getBufferedCount() {
@@ -154,12 +277,27 @@ public class Blink extends Module {
         bufferTicks = 0;
         startPos = null;
         flushing = false;
+        flushIndex = 0;
+        flushStartPos = null;
+        flushTotalHPos = 0.0;
+        idleTicker = 0;
+        flushStartTime = 0L;
     }
 
     @Override
     protected void onDisable() {
         if (!packetBuffer.isEmpty()) {
-            flush();
+            startFlush();
+            flushing = true;
+            flushIndex = 0;
+            flushStartTime = System.currentTimeMillis();
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                flushStartPos = mc.player.position();
+            }
+            for (int i = 0; i < packetBuffer.size(); i++) {
+                continueFlush();
+            }
         }
     }
 }
