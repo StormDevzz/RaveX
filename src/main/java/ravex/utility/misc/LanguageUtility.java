@@ -130,6 +130,7 @@ public class LanguageUtility {
         en.put("desc_RidingHelper", "Faster riding");
         en.put("desc_Blink", "Delay moves");
         en.put("desc_PacketFly", "Fly freely");
+        en.put("desc_BoatFly", "Fly with boats");
         en.put("desc_AutoApple", "Eat apples");
         en.put("desc_TreeCutter", "Cut trees");
         en.put("desc_FakePearl", "Fake pearl");
@@ -214,7 +215,6 @@ public class LanguageUtility {
         en.put("desc_ShiftInterp", "Force crouch");
         en.put("desc_SmallUser", "Small players");
         en.put("desc_TntAura", "Bomb targets");
-        en.put("desc_GridBuilder", "Build grids");
         en.put("desc_Particles", "Pretty particles");
         en.put("desc_Crosshair", "Custom crosshair");
         en.put("desc_PearlTarget", "Track pearls");
@@ -380,6 +380,7 @@ public class LanguageUtility {
         ru.put("desc_RidingHelper", "Быстрая езда");
         ru.put("desc_Blink", "Задержка движений");
         ru.put("desc_PacketFly", "Пакетный полёт");
+        ru.put("desc_BoatFly", "Полёт на лодке");
         ru.put("desc_AutoApple", "Автояблоко");
         ru.put("desc_TreeCutter", "Рубить деревья");
         ru.put("desc_FakePearl", "Фейковый жемчуг");
@@ -463,7 +464,6 @@ public class LanguageUtility {
         ru.put("desc_ShiftInterp", "Принудительный шифт");
         ru.put("desc_SmallUser", "Маленькие игроки");
         ru.put("desc_TntAura", "Бомбить врагов");
-        ru.put("desc_GridBuilder", "Строить сетки");
         ru.put("desc_Particles", "Красивые частицы");
         ru.put("desc_Crosshair", "Свой прицел");
         ru.put("desc_PearlTarget", "Отслеживать жемчуг");

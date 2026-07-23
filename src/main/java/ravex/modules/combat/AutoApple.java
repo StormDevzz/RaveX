@@ -11,15 +11,26 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.player.InventoryUtility;
 public class AutoApple extends Module {
+    public final ModeParameter mode = new ModeParameter("Mode", "Default",
+            java.util.List.of("Default", "Grim"));
     public final ModeParameter appleType = new ModeParameter("AppleType", "Both",
             java.util.List.of("Golden", "Enchanted", "Both"));
     public final ModeParameter swapMode = new ModeParameter("SwapMode", "Silent",
             java.util.List.of("Silent", "Normal"));
     public final NumberParameter healthThreshold = new NumberParameter("HealthThreshold", 10.0, 1.0, 20.0, 0.5);
+    public final NumberParameter grimDelay = new NumberParameter("GrimDelay", 5.0, 1.0, 20.0, 0.5);
+    public final BooleanParameter grimRandom = new BooleanParameter("GrimRandom", true);
     private int originalSlot = -1;
     private boolean isEating = false;
     private int eatingSlot = -1;
     private int eatTicks = 0;
+    private int grimDelayTicks = 0;
+
+    private AutoApple() {
+        super("AutoApple");
+        grimDelay.setVisible(() -> "Grim".equals(mode.getValue()));
+        grimRandom.setVisible(() -> "Grim".equals(mode.getValue()));
+    }
 
     @Override
     protected void onDisable() {
@@ -32,6 +43,20 @@ public class AutoApple extends Module {
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        
+        // Grim mode: add delay before eating
+        if ("Grim".equals(mode.getValue()) && !isEating) {
+            grimDelayTicks++;
+            int delayTicks = (int)(grimDelay.getValue() * 20);
+            if (grimRandom.getValue()) {
+                delayTicks += (int)(Math.random() * 10 - 5);
+            }
+            if (grimDelayTicks < delayTicks) {
+                return;
+            }
+            grimDelayTicks = 0;
+        }
+        
         if (isEating) {
             eatTicks++;
             var currentStack = InventoryUtility.getItem(mc.player, eatingSlot);

@@ -116,6 +116,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("RidingHelper", "Faster riding");
         DESCRIPTIONS.put("Blink", "Delay moves");
         DESCRIPTIONS.put("PacketFly", "Fly freely");
+        DESCRIPTIONS.put("BoatFly", "Fly with boats");
         DESCRIPTIONS.put("AutoApple", "Eat apples");
         DESCRIPTIONS.put("TreeCutter", "Cut trees");
         DESCRIPTIONS.put("FakePearl", "Fake pearl");
@@ -206,7 +207,6 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("LiquidControl", "Swim freely");
         DESCRIPTIONS.put("TntAura", "Bomb targets");
 
-        DESCRIPTIONS.put("GridBuilder", "Build grids");
         DESCRIPTIONS.put("Particles", "Pretty particles");
         DESCRIPTIONS.put("Crosshair", "Custom crosshair");
         DESCRIPTIONS.put("PearlTarget", "Track pearls");

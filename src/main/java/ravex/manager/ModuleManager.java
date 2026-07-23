@@ -62,7 +62,7 @@ public class ModuleManager {
             "ElytraHelper", "ViewLock", "ItemSaver",
             "AntiAim", "invclean.InvClean", "Replenish",
             "MobOwner", "NoSwing",
-            "GridBuilder", "AntiHunger", "ChorusExploit",
+            "AntiHunger", "ChorusExploit",
             "GhostHand", "Handshake", "MultiTask",
             "MineAnimation", "PacketMine", "autoregear.AutoReGear"
         );
@@ -78,7 +78,7 @@ public class ModuleManager {
             "ElytraFly", "Flight", "LiquidControl",
             "Blink", "ClickFly", "ClickTP",
             "PacketFly", "Phase", "TickShift",
-            "Timer", "TridentBoost"
+            "Timer", "TridentBoost", "BoatFly"
         );
 
         register(Category.MISC,

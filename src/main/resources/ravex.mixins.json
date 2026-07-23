@@ -82,6 +82,8 @@
         "movement.MixinFreeCamPlayer",
         "movement.MixinFreeCamNoSwing",
         "movement.MixinLivingEntityTravel",
+        "movement.MixinBoatFly",
+        "render.MixinBoatRenderer",
         "player.MixinNoInteract",
         "player.MixinFastBreak",
         "player.MixinGhostHand",

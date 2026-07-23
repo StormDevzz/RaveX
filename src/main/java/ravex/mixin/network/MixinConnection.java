@@ -43,7 +43,7 @@ public class MixinConnection {
         if (event.isCancelled()) { ci.cancel(); return; }
     }
 
-    @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"))
+    @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void onChannelRead(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
         PacketEvent event = new PacketEvent(PacketEvent.PacketAction.RECEIVE, packet);
         EventBusHolder.get().post(event);

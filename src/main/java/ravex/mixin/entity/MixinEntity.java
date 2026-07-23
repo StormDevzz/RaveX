@@ -33,15 +33,36 @@ public abstract class MixinEntity {
         if (ViewLock.maybeEnabled()) {
             boolean lockYaw = ViewLock.itz().shouldLockYaw(yRot, xRot);
             boolean lockPitch = ViewLock.itz().shouldLockPitch(yRot, xRot);
+
+            if (ViewLock.itz().isSmoothMode()) {
+                if (lockYaw) {
+                    float current = self.getYRot();
+                    float target = ViewLock.itz().getTargetYaw();
+                    float speed = ViewLock.itz().getSmoothSpeed();
+                    float diff = ((target - current + 540) % 360) - 180;
+                    self.setYRot(current + diff * speed);
+                }
+                if (lockPitch) {
+                    float current = self.getXRot();
+                    float target = ViewLock.itz().getTargetPitch();
+                    float speed = ViewLock.itz().getSmoothSpeed();
+                    float diff = target - current;
+                    self.setXRot(current + diff * speed);
+                }
+                ci.cancel();
+                return;
+            }
+
             if (lockYaw && lockPitch) {
                 ci.cancel();
             } else {
+                float sens = ViewLock.itz().getSensitivity();
                 float currentYaw = self.getYRot();
                 float currentPitch = self.getXRot();
                 if (!lockYaw)
-                    self.setYRot(RotationUtility.normalizeYaw(currentYaw + (float)yRot * 0.15F));
+                    self.setYRot(RotationUtility.normalizeYaw(currentYaw + (float)yRot * 0.15F * sens));
                 if (!lockPitch)
-                    self.setXRot(RotationUtility.clampPitch(currentPitch + (float)xRot * 0.15F));
+                    self.setXRot(RotationUtility.clampPitch(currentPitch + (float)xRot * 0.15F * sens));
                 ci.cancel();
             }
             return;
