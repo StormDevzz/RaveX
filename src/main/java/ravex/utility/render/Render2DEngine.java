@@ -13,6 +13,7 @@ import net.minecraft.resources.Identifier;
 
 import java.awt.Color;
 import java.lang.reflect.Field;
+import ravex.mixin.render.AccessorAbstractTexture;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -227,10 +228,8 @@ public class Render2DEngine {
 
     private static void setLinearSampler(AbstractTexture tex) {
         try {
-            Field f = AbstractTexture.class.getDeclaredField("sampler");
-            f.setAccessible(true);
             GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-            f.set(tex, sampler);
+            ((AccessorAbstractTexture) tex).setSampler(sampler);
         } catch (Exception e) {
             ravex.RaveX.LOGGER.warn("[R2D] Failed to set sampler: {}", e.getMessage());
         }

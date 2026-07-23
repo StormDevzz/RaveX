@@ -10,6 +10,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.texture.AbstractTexture;
+import ravex.mixin.render.AccessorAbstractTexture;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -22,7 +23,6 @@ import ravex.RaveX;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DEngine;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -355,18 +355,12 @@ public class SearchBrowserScreen extends Screen {
         }
     }
 
-    private static Field samplerField = null;
-
     public static void setAtlasFilter(FilterMode mode) {
         try {
             Identifier atlasId = Identifier.fromNamespaceAndPath("minecraft", "textures/atlas/blocks.png");
             AbstractTexture atlas = Minecraft.getInstance().getTextureManager().getTexture(atlasId);
-            if (samplerField == null) {
-                samplerField = AbstractTexture.class.getDeclaredField("sampler");
-                samplerField.setAccessible(true);
-            }
             GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(mode);
-            samplerField.set(atlas, sampler);
+            ((AccessorAbstractTexture) atlas).setSampler(sampler);
         } catch (Exception e) {
             RaveX.LOGGER.warn("[SearchBrowser] Failed to set atlas sampler: {}", e.getMessage());
         }

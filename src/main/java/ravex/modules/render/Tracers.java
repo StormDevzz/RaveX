@@ -17,8 +17,8 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
+import ravex.mixin.render.AccessorAbstractTexture;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
@@ -58,11 +58,9 @@ public class Tracers extends Module {
                     NativeImage image = NativeImage.read(stream);
                     DynamicTexture tex = new DynamicTexture(() -> "tracers_arrow", image);
                     try {
-                        Field f = AbstractTexture.class.getDeclaredField("sampler");
-                        f.setAccessible(true);
                         GpuSampler sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
                                 .getClampToEdge(FilterMode.LINEAR);
-                        f.set(tex, sampler);
+                        ((AccessorAbstractTexture) tex).setSampler(sampler);
                     } catch (Exception ignored) {
                     }
                     arrowTexture = Identifier.fromNamespaceAndPath("ravex", "tracers_arrow");

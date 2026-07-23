@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.RaveX;
 import ravex.modules.Category;
+import ravex.mixin.render.AccessorAbstractTexture;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -773,9 +774,7 @@ public class TextureLoader {
         DynamicTexture tex = new DynamicTexture(() -> "nearest_icon", image);
         try {
             GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
-            Field f = AbstractTexture.class.getDeclaredField("sampler");
-            f.setAccessible(true);
-            f.set(tex, sampler);
+            ((AccessorAbstractTexture) tex).setSampler(sampler);
         } catch (Exception e) {
             RaveX.LOGGER.warn("[TextureLoader] Failed to set nearest sampler: {}", e.getMessage());
         }
@@ -786,9 +785,7 @@ public class TextureLoader {
         DynamicTexture tex = new DynamicTexture(() -> "linear_icon", image);
         try {
             GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-            Field f = AbstractTexture.class.getDeclaredField("sampler");
-            f.setAccessible(true);
-            f.set(tex, sampler);
+            ((AccessorAbstractTexture) tex).setSampler(sampler);
         } catch (Exception e) {
             RaveX.LOGGER.warn("[TextureLoader] Failed to set linear sampler: {}", e.getMessage());
         }
