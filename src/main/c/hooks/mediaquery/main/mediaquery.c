@@ -35,30 +35,89 @@ MediaInfo* mediaquery_query(void) {
         return NULL;
     }
 
+    static const char* priority[] = {
+        "spotify", "spotifyd", "vlc", "mpv", "strawberry", "audacious",
+        "rhythmbox", "clementine", "amarok", "deadbeef", "pragha",
+        "qmmp", "cantata", "nuvola", "yarock", "sayonara",
+        "kodi", "plex", "emby", "jellyfin",
+        "firefox", "chromium", "chrome", "opera", "brave", "webkit",
+        "plasma-browser-integration",
+        NULL
+    };
+    static const char* blocked[] = {
+        "tdesktop", "discord", "slack", "teams", "signal",
+        "whatsapp", "zoom", "skype", "pidgin", "hexchat",
+        NULL
+    };
+
+    MediaInfo* fallback = NULL;
     MediaInfo* info = NULL;
+
     for (int i = 0; i < nnames; i++) {
         if (strstr(names[i], "org.mpris.MediaPlayer2.") != names[i]) continue;
         char* status = get_prop(conn, names[i], "org.mpris.MediaPlayer2.Player", "PlaybackStatus");
         if (!status || strcmp(status, "Stopped") == 0) { free(status); continue; }
 
-        info = (MediaInfo*)calloc(1, sizeof(MediaInfo));
-        if (!info) { free(status); break; }
-        info->title = get_metadata_str(conn, names[i], "xesam:title");
-        info->artist = get_metadata_str(conn, names[i], "xesam:artist");
-        info->album = get_metadata_str(conn, names[i], "xesam:album");
-        info->artUrl = get_metadata_str(conn, names[i], "mpris:artUrl");
-        info->playerName = get_prop(conn, names[i], "org.mpris.MediaPlayer2", "DesktopEntry");
-        if (!info->playerName) {
-            const char* prefix = "org.mpris.MediaPlayer2.";
-            info->playerName = strdup(names[i] + strlen(prefix));
+        const char* prefix = "org.mpris.MediaPlayer2.";
+        const char* shortName = names[i] + strlen(prefix);
+
+        char* desktopEntry = get_prop(conn, names[i], "org.mpris.MediaPlayer2", "DesktopEntry");
+        const char* playerName = desktopEntry ? desktopEntry : shortName;
+
+        int blockedIdx = 0;
+        int isBlocked = 0;
+        while (blocked[blockedIdx]) {
+            if (strstr(playerName, blocked[blockedIdx]) != NULL) {
+                isBlocked = 1;
+                break;
+            }
+            blockedIdx++;
         }
-        info->status = status;
-        info->position = get_prop_int64(conn, names[i], "org.mpris.MediaPlayer2.Player", "Position");
-        info->length = get_metadata_int64(conn, names[i], "mpris:length");
-        if (info->position < 0) info->position = 0;
-        if (info->length < 0) info->length = 0;
-        info->valid = (info->title != NULL);
-        break;
+        if (isBlocked) {
+            free(desktopEntry);
+            free(status);
+            continue;
+        }
+
+        MediaInfo* candidate = (MediaInfo*)calloc(1, sizeof(MediaInfo));
+        if (!candidate) { free(desktopEntry); free(status); break; }
+        candidate->title = get_metadata_str(conn, names[i], "xesam:title");
+        candidate->artist = get_metadata_str(conn, names[i], "xesam:artist");
+        candidate->album = get_metadata_str(conn, names[i], "xesam:album");
+        candidate->artUrl = get_metadata_str(conn, names[i], "mpris:artUrl");
+        candidate->playerName = desktopEntry ? desktopEntry : strdup(shortName);
+        if (!candidate->playerName && shortName) candidate->playerName = strdup(shortName);
+        candidate->status = status;
+        candidate->position = get_prop_int64(conn, names[i], "org.mpris.MediaPlayer2.Player", "Position");
+        candidate->length = get_metadata_int64(conn, names[i], "mpris:length");
+        if (candidate->position < 0) candidate->position = 0;
+        if (candidate->length < 0) candidate->length = 0;
+        candidate->valid = (candidate->title != NULL);
+
+        int priorityIdx = 0;
+        int matchedPriority = 0;
+        while (priority[priorityIdx]) {
+            if (strstr(playerName, priority[priorityIdx]) != NULL) {
+                matchedPriority = 1;
+                break;
+            }
+            priorityIdx++;
+        }
+        if (matchedPriority) {
+            if (info) mediaquery_free(info);
+            info = candidate;
+            break;
+        }
+
+        if (!fallback) {
+            fallback = candidate;
+        } else {
+            mediaquery_free(candidate);
+        }
+    }
+
+    if (!info && fallback) {
+        info = fallback;
     }
 
     dbus_message_unref(reply);

@@ -275,17 +275,62 @@ MediaInfo queryNowPlaying() {
     }
     dbus_message_unref(reply);
 
-    for (const auto& player : players) {
+    static const std::vector<std::string> blocked = {
+        "tdesktop", "discord", "slack", "teams", "signal",
+        "whatsapp", "zoom", "skype", "pidgin", "hexchat"
+    };
+    static const std::vector<std::string> priority = {
+        "spotify", "spotifyd", "vlc", "mpv", "strawberry", "audacious",
+        "rhythmbox", "clementine", "amarok", "deadbeef", "pragha",
+        "firefox", "chromium", "chrome", "opera", "brave", "webkit",
+    };
+
+    int fallbackIdx = -1;
+    int selectedIdx = -1;
+
+    for (int i = 0; i < (int)players.size(); i++) {
+        const auto& player = players[i];
         std::string status = getPlayerStatus(conn, player.c_str());
         if (status.empty() || status == "Stopped") continue;
 
+        std::string playerName = player.substr(strlen("org.mpris.MediaPlayer2."));
+
+        int blockedFlag = 0;
+        for (const auto& b : blocked) {
+            if (playerName.find(b) != std::string::npos) {
+                blockedFlag = 1;
+                break;
+            }
+        }
+        if (blockedFlag) continue;
+
+        int isPriority = 0;
+        for (const auto& p : priority) {
+            if (playerName.find(p) != std::string::npos) {
+                isPriority = 1;
+                break;
+            }
+        }
+        if (isPriority) {
+            selectedIdx = i;
+            break;
+        }
+
+        if (fallbackIdx < 0) {
+            fallbackIdx = i;
+        }
+    }
+
+    int useIdx = selectedIdx >= 0 ? selectedIdx : fallbackIdx;
+    if (useIdx >= 0) {
+        const auto& player = players[useIdx];
+        std::string status = getPlayerStatus(conn, player.c_str());
         info.title = getMetadataStr(conn, player.c_str(), "xesam:title");
         info.artist = getMetadataStr(conn, player.c_str(), "xesam:artist");
         info.album = getMetadataStr(conn, player.c_str(), "xesam:album");
         info.artUrl = getMetadataStr(conn, player.c_str(), "mpris:artUrl");
         info.status = status;
         info.valid = true;
-        break;
     }
 
     dbus_connection_unref(conn);
