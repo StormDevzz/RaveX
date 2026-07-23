@@ -12,6 +12,7 @@ import ravex.event.client.TickEvent;
 import ravex.event.network.PacketEvent;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
+import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -141,7 +142,7 @@ public class Blink extends Module {
         if (packetBuffer.isEmpty()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
-        mc.player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(mc.player.onGround()));
+        mc.player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(mc.player.onGround(), mc.player.horizontalCollision));
     }
 
     private void startFlush() {
@@ -159,7 +160,8 @@ public class Blink extends Module {
             flushTotalHPos = 0.0;
             for (Packet<?> p : packetBuffer) {
                 if (p instanceof ServerboundMovePlayerPacket move && move.hasPosition()) {
-                    Vec3 pktPos = new Vec3(move.x, move.y, move.z);
+                    AccessorServerboundMovePlayerPacket accessor = (AccessorServerboundMovePlayerPacket) move;
+                    Vec3 pktPos = new Vec3(accessor.getX(), accessor.getY(), accessor.getZ());
                     if (flushTotalHPos == 0.0) {
                         flushTotalHPos = flushStartPos.distanceTo(pktPos);
                     }
@@ -187,8 +189,7 @@ public class Blink extends Module {
             return;
         }
 
-        String modeVal = mode.getValue();
-        boolean isNcp = "NCP".equals(modeVal);
+        boolean isNcp = "NCP".equals(mode.getValue());
 
         int sentThisTick = 0;
 
@@ -208,25 +209,26 @@ public class Blink extends Module {
 
                 if (flushIndex > 0) {
                     Packet<?> prev = packetBuffer.get(flushIndex - 1);
-                    if (prev instanceof ServerboundMovePlayerPacket.Pos prevPos) {
+                    if (prev instanceof ServerboundMovePlayerPacket prevMove) {
+                        AccessorServerboundMovePlayerPacket prevAccessor = (AccessorServerboundMovePlayerPacket) prevMove;
+                        double prevX = prevAccessor.getX();
+                        double prevY = prevAccessor.getY();
+                        double prevZ = prevAccessor.getZ();
                         double stepDist = Math.sqrt(
-                                Math.pow(px - prevPos.x, 2) +
-                                Math.pow(py - prevPos.y, 2) +
-                                Math.pow(pz - prevPos.z, 2)
+                                Math.pow(px - prevX, 2) +
+                                Math.pow(py - prevY, 2) +
+                                Math.pow(pz - prevZ, 2)
                         );
                         if (stepDist > MAX_MOVE_PER_PACKET) {
                             int extraSteps = (int) Math.ceil(stepDist / MAX_MOVE_PER_PACKET);
-                            Packet<?> prevPkt = packetBuffer.get(flushIndex - 1);
-                            if (prevPkt instanceof ServerboundMovePlayerPacket prevMove) {
-                                for (int s = 1; s < extraSteps; s++) {
-                                    double st = (double) s / extraSteps;
-                                    double sx = prevPos.x + (px - prevPos.x) * st;
-                                    double sy = prevPos.y + (py - prevPos.y) * st;
-                                    double sz = prevPos.z + (pz - prevPos.z) * st;
-                                    mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
-                                            sx, sy, sz, move.isOnGround(), move.horizontalCollision()
-                                    ));
-                                }
+                            for (int s = 1; s < extraSteps; s++) {
+                                double st = (double) s / extraSteps;
+                                double sx = prevX + (px - prevX) * st;
+                                double sy = prevY + (py - prevY) * st;
+                                double sz = prevZ + (pz - prevZ) * st;
+                                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                                        sx, sy, sz, move.isOnGround(), move.horizontalCollision()
+                                ));
                             }
                         }
                     }
