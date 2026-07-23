@@ -25,7 +25,13 @@ public class Skeleton extends Module {
     public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter mobs = new BooleanParameter("Mobs", true);
-    private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
+    private static ByteBufferBuilder ALLOCATOR;
+    private static ByteBufferBuilder getAllocator() {
+        if (ALLOCATOR == null) {
+            ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
+        }
+        return ALLOCATOR;
+    }
 
     public static net.minecraft.world.entity.LivingEntity getEntityBeingRendered(PoseStack poseStack) {
         Minecraft mc = Minecraft.getInstance();
@@ -70,7 +76,7 @@ public class Skeleton extends Module {
             GlStateManager._disableDepthTest();
         }
         RenderType lineType = net.minecraft.client.renderer.rendertype.RenderTypes.lines();
-        BufferBuilder builder = new BufferBuilder(ALLOCATOR, lineType.mode(), lineType.format());
+        BufferBuilder builder = new BufferBuilder(getAllocator(), lineType.mode(), lineType.format());
         int ir = (int)(r * 255);
         int ig = (int)(g * 255);
         int ib = (int)(b * 255);

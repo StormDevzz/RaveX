@@ -3,6 +3,16 @@ package ravex.utility.nativelib;
 import ravex.utility.nativelib.NativeLoader;
 
 public class NativeLibrary {
+    private static volatile boolean loadingEnabled = false;
+
+    public static void deferLoading() {
+        loadingEnabled = false;
+    }
+
+    public static void enableLoading() {
+        loadingEnabled = true;
+    }
+
     private final String name;
     private boolean loaded;
 
@@ -41,6 +51,7 @@ public class NativeLibrary {
 
     public boolean load() {
         if (loaded) return true;
+        if (!loadingEnabled) return false;
         loaded = NativeLoader.loadLibrary(name);
         return loaded;
     }
@@ -54,6 +65,9 @@ public class NativeLibrary {
     }
 
     public void require() {
+        if (!loaded) {
+            loaded = NativeLoader.loadLibrary(name);
+        }
         if (!loaded) throw new NativeException("Native library '" + name + "' is not loaded. Call load() first.");
     }
 

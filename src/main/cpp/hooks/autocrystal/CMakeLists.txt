@@ -79,9 +79,13 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     endif()
 endif()
 
+get_filename_component(JAVA_LIB_DIR1 "${JAVA_AWT_LIBRARY}" DIRECTORY)
+get_filename_component(JAVA_LIB_DIR2 "${JAVA_JVM_LIBRARY}" DIRECTORY)
 set_target_properties(ravex_autocrystal PROPERTIES
     OUTPUT_NAME "ravex_autocrystal"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
+    INSTALL_RPATH "${JAVA_LIB_DIR1}:${JAVA_LIB_DIR2}"
+    BUILD_RPATH "${JAVA_LIB_DIR1}:${JAVA_LIB_DIR2}"
 )
 
 if(WIN32)

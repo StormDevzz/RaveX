@@ -96,6 +96,7 @@ public abstract class Module {
         return !hud;
     }
     public void setEnabled(boolean enabled) {
+        if (enabled) ensureNativeLoaded();
         if (hud) {
             if (this.enabled != enabled) {
                 this.enabled = enabled;
@@ -169,6 +170,18 @@ public abstract class Module {
     }
     protected void onEnable() {}
     protected void onDisable() {}
+
+    private void ensureNativeLoaded() {
+        if (hud) return;
+        try {
+            java.lang.reflect.Field f = getClass().getDeclaredField("NATIVE");
+            f.setAccessible(true);
+            Object lib = f.get(null);
+            if (lib instanceof ravex.utility.nativelib.NativeLibrary) {
+                ((ravex.utility.nativelib.NativeLibrary) lib).load();
+            }
+        } catch (Exception ignored) {}
+    }
     public void onTick() {}
     public void render(GuiGraphics graphics, float partialTicks) {}
     public void saveExtra(JsonObject obj) {}

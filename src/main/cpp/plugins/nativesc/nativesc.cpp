@@ -17,9 +17,9 @@ namespace nativesc {
 #ifdef _WIN32
 static bool initialized = false;
 #else
-static Display* display = nullptr;
-static int screen = 0;
-static bool hasShm = false;
+Display* display = nullptr;
+int screen = 0;
+bool hasShm = false;
 #endif
 
 bool initialize() {

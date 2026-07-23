@@ -7,14 +7,13 @@ import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
-import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
 import ravex.manager.ModuleManager;
+import ravex.utility.system.SystemUtility;
 public class NowPlayingHud extends Module {
     private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
     private static final int IS = HudRenderer.getIconSize();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_mediaquery");
     private String title = "";
     private String artist = "";
     private String artUrl = "";
@@ -25,9 +24,6 @@ public class NowPlayingHud extends Module {
     private String lastLoadedUrl = "";
     private int coverSize = 28;
     private String displayText = "";
-    static {
-        NATIVE.load();
-    }
     private NowPlayingHud() {
         super("NowPlaying", 10, 310, 180, 20);
     }
@@ -72,39 +68,36 @@ public class NowPlayingHud extends Module {
         }
     }
     private void triggerQuery() {
-        if (!NATIVE.isLoaded()) return;
-        Minecraft.getInstance().execute(() -> {
-            try {
-                String raw = nativeGetNowPlaying();
-                if (raw.isEmpty()) {
-                    clearTrack();
-                    return;
-                }
-                String[] parts = raw.split("\\|", 4);
-                if (parts.length >= 2) {
-                    playing = parts[0].equals("Playing");
-                    title = parts[1];
-                    artist = parts.length >= 3 ? parts[2] : "";
-                    String newUrl = parts.length >= 4 ? parts[3] : "";
-                    displayText = title;
-                    if (!artist.isEmpty()) {
-                        displayText = title + " - " + artist;
-                    }
-                    if (!newUrl.equals(lastLoadedUrl) && !newUrl.isEmpty()) {
-                        lastLoadedUrl = newUrl;
-                        artUrl = newUrl;
-                        downloadCoverAsync(newUrl);
-                    }
-                }
-            } catch (Throwable t) {
+        try {
+            String raw = SystemUtility.getNowPlaying();
+            if (raw.isEmpty()) {
                 clearTrack();
+                return;
             }
-        });
+            String[] parts = raw.split("\\|", 4);
+            if (parts.length >= 2) {
+                playing = parts[0].equals("Playing");
+                title = parts[1];
+                artist = parts.length >= 3 ? parts[2] : "";
+                String newUrl = parts.length >= 4 ? parts[3] : "";
+                displayText = title;
+                if (!artist.isEmpty()) {
+                    displayText = title + " - " + artist;
+                }
+                if (!newUrl.equals(lastLoadedUrl) && !newUrl.isEmpty()) {
+                    lastLoadedUrl = newUrl;
+                    artUrl = newUrl;
+                    downloadCoverAsync(newUrl);
+                }
+            }
+        } catch (Throwable t) {
+            clearTrack();
+        }
     }
     private void downloadCoverAsync(String url) {
         new Thread(() -> {
             try {
-                byte[] data = nativeDownloadArt(url);
+                byte[] data = SystemUtility.downloadArt(url);
                 if (data == null || data.length == 0) return;
                 NativeImage img = NativeImage.read(new java.io.ByteArrayInputStream(data));
                 int crop = Math.min(img.getWidth(), img.getHeight());
@@ -147,9 +140,6 @@ public class NowPlayingHud extends Module {
         coverId = null;
         clearTrack();
     }
-    private static native String nativeGetNowPlaying();
-    private static native boolean nativeIsAvailable();
-    private static native byte[] nativeDownloadArt(String url);
 
     public static boolean maybeEnabled() {
         return maybeEnabled(NowPlayingHud.class);

@@ -30,6 +30,7 @@ import ravex.utility.misc.GuiOptimizer;
 import ravex.utility.misc.GithubUtility;
 import ravex.utility.render.TextureLoader;
 import ravex.utility.sound.SoundEventDispatcher;
+import ravex.utility.nativelib.NativeLibrary;
 import net.minecraft.client.Minecraft;
 
 public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEntrypoint {
@@ -184,6 +185,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
         ModuleManager moduleManager = ServiceLocator.resolve(ModuleManager.class);
         moduleManager.init();
+        NativeLibrary.enableLoading();
         LOGGER.info("Registered {} modules", moduleManager.getModules().size());
 
         try {
