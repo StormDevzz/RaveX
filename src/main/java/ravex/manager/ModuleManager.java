@@ -51,7 +51,7 @@ public class ModuleManager {
             "Waypoint", "KillEffects", "Particles",
             "AspectRatio", "Borders", "Zoom",
             "ToolTips", "DeathText",
-            "Search", "SwingAnimation"
+            "Search", "SwingAnimation", "CityESP"
         );
 
         register(Category.PLAYER,

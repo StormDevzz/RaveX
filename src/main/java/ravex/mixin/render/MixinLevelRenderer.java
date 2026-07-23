@@ -34,6 +34,7 @@ import ravex.modules.render.BlockOutline;
 import ravex.modules.render.Borders;
 import ravex.modules.render.BreadCrumbs;
 
+import ravex.modules.render.CityESP;
 import ravex.modules.render.ESP;
 import ravex.modules.render.Particles;
 import ravex.modules.render.Search;
@@ -886,6 +887,31 @@ public class MixinLevelRenderer {
                     if (vf) Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 16.0, vr, vg, vb, va * 0.15f);
                     if (vw) Render3DUtils.batchWireframe(REUSABLE_MATRIX, 16.0, vr, vg, vb, va * 0.4f);
                 } catch (Exception ignored) {}
+            }
+        }
+
+
+        if (CityESP.maybeEnabled()) {
+            BlockPos cp = CityESP.itz().getCityBlock();
+            if (cp != null) {
+                double dist = Math.sqrt(mc.player.distanceToSqr(cp.getX() + 0.5, cp.getY() + 0.5, cp.getZ() + 0.5));
+                if (dist <= CityESP.itz().renderRange.getValue()) {
+                    try {
+                        modelViewMatrix.translate((float)(cp.getX() - camPos.x), (float)(cp.getY() - camPos.y), (float)(cp.getZ() - camPos.z), REUSABLE_MATRIX);
+                        int fc = CityESP.itz().fillColor.getValue();
+                        float fr = ((fc >> 16) & 0xFF) / 255.0f;
+                        float fg = ((fc >> 8) & 0xFF) / 255.0f;
+                        float fb = (fc & 0xFF) / 255.0f;
+                        float fa = ((fc >> 24) & 0xFF) / 255.0f;
+                        int lc = CityESP.itz().lineColor.getValue();
+                        float lr = ((lc >> 16) & 0xFF) / 255.0f;
+                        float lg = ((lc >> 8) & 0xFF) / 255.0f;
+                        float lb = (lc & 0xFF) / 255.0f;
+                        float la = ((lc >> 24) & 0xFF) / 255.0f;
+                        if (CityESP.itz().filled.getValue()) Render3DUtils.batchFilledBox(REUSABLE_MATRIX, 1.002, fr, fg, fb, fa);
+                        if (CityESP.itz().wireframe.getValue()) Render3DUtils.batchWireframe(REUSABLE_MATRIX, 1.002, lr, lg, lb, la);
+                    } catch (Exception ignored) {}
+                }
             }
         }
 
