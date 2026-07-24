@@ -1,8 +1,7 @@
 .gradle/
 build/
-build-native/
-run/
 bin/
+run/
 .vscode/
 .idea/
 .classpath
@@ -20,12 +19,5 @@ Thumbs.db
 *.tmp
 *.disabled
 libs/*.jar
-com/
-net/
-RaveX-main/
-src/main/native/encoded.h
 src/main/java/ravex/telemetry/BuildConfig.java
-build-release.sh
-src/main/src/
 src/main/resources/assets/ravex/security/private.der
-src/main/cpp/launcher/linux/logs/
