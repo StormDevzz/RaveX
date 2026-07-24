@@ -25,7 +25,7 @@ public class AirPlace extends Module {
     public static float renderR = 0.3f;
     public static float renderG = 0.7f;
     public static float renderB = 1.0f;
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", java.util.List.of("Vanilla", "Grim"));
+    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", java.util.List.of("Vanilla", "NCP"));
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter animate = new BooleanParameter("Animate", true);
     public final ColorParameter highlightColor = new ColorParameter("HighlightColor", 0xFF55AAFF);
@@ -105,7 +105,7 @@ public class AirPlace extends Module {
         if (mc.options.keyUse.isDown()) {
             long now = System.currentTimeMillis();
             if (now - lastPlaceTime > 200) {
-                if (mode.getValue().equals("Grim")) {
+                if (mode.getValue().equals("NCP")) {
                     neighbor = targetPos;
                     placeFace = Direction.UP;
                     for (Direction face : Direction.values()) {
@@ -130,8 +130,7 @@ public class AirPlace extends Module {
                                     angles[0], angles[1], mc.player.onGround(), mc.player.horizontalCollision
                                 ));
                             }
-                            BlockHitResult blockHit = new BlockHitResult(hitVec, placeFace, neighbor, false);
-                            BlockUtility.useItemOn(mc, blockHit, hand);
+                            BlockUtility.ncpAirPlace(mc, neighbor, placeFace, hand);
                             if (conn != null) {
                                 conn.send(new ServerboundMovePlayerPacket.PosRot(
                                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
