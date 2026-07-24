@@ -105,7 +105,8 @@ jobs:
           path: src/main/resources/assets/ravex/natives/*.so
 
   build-freebsd:
-    if: false # self-hosted FreeBSD runner required — see README
+    if: false # self-hosted FreeBSD runner required
+    runs-on: [self-hosted, freebsd]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
