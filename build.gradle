@@ -1,5 +1,6 @@
 plugins {
     id 'fabric-loom' version '1.10.5'
+    id 'maven-publish'
 }
 
 base {
@@ -121,4 +122,29 @@ tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
     it.options.release.set(21)
 
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact(remapJar) {
+                builtBy remapJar
+            }
+            artifact(remapSourcesJar) {
+                builtBy remapSourcesJar
+            }
+            pom {
+                name = "RaveX-Free"
+                description = "RaveX Free utility client"
+                url = "https://github.com/StormDevzz/RaveX"
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "jitpack"
+            url = "https://jitpack.io"
+        }
+    }
 }
