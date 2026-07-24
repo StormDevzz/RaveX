@@ -98,22 +98,22 @@ jobs:
       - name: Build Java Mod
         run: ./gradlew build
 
-       - name: Upload .so artifacts
-         uses: actions/upload-artifact@v4
-         with:
-           name: ravex-natives-linux
-           path: src/main/resources/assets/ravex/natives/*.so
+      - name: Upload .so artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ravex-natives-linux
+          path: src/main/resources/assets/ravex/natives/*.so
 
   build-freebsd:
     if: github.event_name == 'push'
-    runs-on: freebsd-latest
+    runs-on: [self-hosted, freebsd]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Install FreeBSD Build Dependencies
         run: |
-          sudo pkg install -y cmake g++ openssl libpcap dbus curl libpng libjpeg pkgconf
+          pkg install -y cmake g++ openssl libpcap dbus curl libpng libjpeg pkgconf
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -127,12 +127,12 @@ jobs:
       - name: Build C++ Natives (CMake + GCC)
         run: |
           cmake -S src/main/cpp -B build/native -DCMAKE_BUILD_TYPE=Release
-          cmake --build build/native --config Release -j$(sysctl -n hw.ncpu)
+          cmake --build build/native -j$(sysctl -n hw.ncpu)
 
       - name: Build C Natives (CMake + GCC)
         run: |
           cmake -S src/main/c -B build/c-native -DCMAKE_BUILD_TYPE=Release
-          cmake --build build/c-native --config Release -j$(sysctl -n hw.ncpu)
+          cmake --build build/c-native -j$(sysctl -n hw.ncpu)
 
       - name: Copy .so files to natives folder
         run: |
