@@ -23,6 +23,7 @@ import ravex.RaveX;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 import ravex.parameter.ColorParameter;
@@ -50,9 +51,10 @@ public class AnchorAura extends Module {
     public final NumberParameter armorDurabilityThreshold = new NumberParameter("DurabilityThreshold", 20.0, 1.0, 100.0,
             5.0);
     public final NumberParameter placeDelay = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
-    public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
-    public final BooleanParameter strictRotation = new BooleanParameter("StrictRotation", false);
-    public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal", "None"));
+    public final BooleanParameter airPlace = new BooleanParameter("AirPlace", false);
+    public final ModeParameter   airPlaceBypass = new ModeParameter("AirPlaceBypass", "None", List.of("NCP", "Grim", "None"));
+    public final ModeParameter rotate = new ModeParameter("Rotate", "Grim", List.of("Grim", "NCP", "NCPStrict", "None"));
+    public final ModeParameter swapMode = new ModeParameter("Swap", "Grim", List.of("Grim", "NCP", "NCPStrict", "None"));
     public final BooleanParameter swapSwitchBack = new BooleanParameter("SwitchBack", true);
     public final BooleanParameter swapInventory = new BooleanParameter("SwapInv", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
@@ -69,10 +71,10 @@ public class AnchorAura extends Module {
 
     private AnchorAura() {
         super("AnchorAura");
-        strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
         armorDurabilityThreshold.setVisible(alwaysConsiderDurability::getValue);
+        airPlaceBypass.setVisible(airPlace::getValue);
     }
 
     public static boolean maybeEnabled() {
@@ -135,8 +137,6 @@ public class AnchorAura extends Module {
                     return;
                 Vec3 hitVec = Vec3.atCenterOf(existingAnchor);
                 rotateTo(mc, hitVec);
-                if (strictRotation.getValue() && !isRotationAligned(mc, hitVec))
-                    return;
                 performUse(mc, glowstoneSlot, existingAnchor, Direction.UP, hitVec);
             } else {
                 int triggerSlot = findNonGlowstoneSlot(mc);
@@ -144,8 +144,6 @@ public class AnchorAura extends Module {
                     return;
                 Vec3 hitVec = Vec3.atCenterOf(existingAnchor);
                 rotateTo(mc, hitVec);
-                if (strictRotation.getValue() && !isRotationAligned(mc, hitVec))
-                    return;
                 performUse(mc, triggerSlot, existingAnchor, Direction.UP, hitVec);
             }
             return;
@@ -197,27 +195,24 @@ public class AnchorAura extends Module {
         Vec3 hitVec = Vec3.atCenterOf(neighborPos)
                 .add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
-        if (strictRotation.getValue() && !isRotationAligned(mc, hitVec))
-            return;
         performUse(mc, anchorSlot, neighborPos, face, hitVec);
     }
 
     private void performUse(Minecraft mc, int slot, BlockPos targetBlock, Direction face, Vec3 hitVec) {
         int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
         String swap = swapMode.getValue();
-        if (swap.equals("Normal")) {
-            InventoryUtility.selectSlot(mc.player, slot);
-        } else if (swap.equals("Silent")) {
-            InventoryUtility.silentSelectSlot(mc.player, slot);
-        } else if (swap.equals("None")) {
+        if (swap.equals("None")) {
             if (InventoryUtility.getSelectedSlot(mc.player) != slot)
                 return;
+        } else {
+            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+            InventoryUtility.silentSelectSlot(mc.player, slot);
         }
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, targetBlock, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
         mc.player.swing(InteractionHand.MAIN_HAND);
         lastActionTime = System.currentTimeMillis();
-        if (swap.equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+        if (swapSwitchBack.getValue() && originalSlot != -1 && !swap.equals("None")) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
     }
@@ -315,14 +310,18 @@ public class AnchorAura extends Module {
         String mode = rotate.getValue();
         if (mode.equals("None"))
             return;
-        float[] angles = RotationUtility.anglesTo(
-                mc.player.getEyePosition(), target);
-        if (mode.equals("Normal")) {
-            mc.player.setYRot(angles[0]);
-            mc.player.setXRot(angles[1]);
-        } else if (mode.equals("Silent")) {
-            silentRotation.set(angles[0], angles[1]);
-        }
+        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
+        float currentYaw = mc.player.getYRot();
+        float currentPitch = mc.player.getXRot();
+        if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
+        currentYaw = silentRotation.lastYaw;
+        currentPitch = silentRotation.lastPitch;
+        float maxSpeed = 180.0f;
+        float[] limited = AimUtility.limitAngles(currentYaw, angles[0], currentPitch, angles[1], maxSpeed);
+        float finalYaw = limited[0], finalPitch = limited[1];
+        silentRotation.set(finalYaw, finalPitch);
+        silentRotation.lastYaw = finalYaw;
+        silentRotation.lastPitch = finalPitch;
     }
 
     private boolean isRotationAligned(Minecraft mc, Vec3 target) {
@@ -509,8 +508,14 @@ public class AnchorAura extends Module {
                             break;
                         }
                     }
-                    if (!hasNeighbor)
-                        continue;
+                    if (!hasNeighbor) {
+                        if (airPlace.getValue()) {
+                            neighbor = c;
+                            faceIndex = 1;
+                        } else {
+                            continue;
+                        }
+                    }
                     double priorityDist = c.distSqr(tPos.below());
                     if (priorityDist < bestDist) {
                         bestDist = priorityDist;

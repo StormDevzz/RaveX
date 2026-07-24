@@ -20,6 +20,7 @@ import ravex.RaveX;
 import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 import ravex.parameter.ColorParameter;
@@ -43,10 +44,10 @@ public class BasePlace extends Module {
     public final NumberParameter antiSuicideMinHp = new NumberParameter("AntiSuicideMinHP", 6.0, 1.0, 20.0, 0.5);
     public final NumberParameter predictTicks    = new NumberParameter("PredictTicks", 1.0, 0.0, 4.0, 0.1);
     public final BooleanParameter airPlace       = new BooleanParameter("AirPlace", false);
+    public final ModeParameter   airPlaceBypass  = new ModeParameter("AirPlaceBypass", "None", List.of("NCP", "Grim", "None"));
     public final NumberParameter placeDelay      = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
-    public final ModeParameter   rotate          = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
-    public final BooleanParameter strictRotation = new BooleanParameter("StrictRotation", false);
-    public final ModeParameter   swapMode        = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal", "None"));
+    public final ModeParameter   rotate          = new ModeParameter("Rotate", "Grim", List.of("Grim", "NCP", "NCPStrict", "None"));
+    public final ModeParameter   swapMode        = new ModeParameter("Swap", "Grim", List.of("Grim", "NCP", "NCPStrict", "None"));
     public final BooleanParameter swapSwitchBack  = new BooleanParameter("SwitchBack", true);
     public final BooleanParameter swapInventory   = new BooleanParameter("SwapInv", true);
     public final BooleanParameter autoCrystalSync = new BooleanParameter("AutoCrystalSync", true);
@@ -67,10 +68,10 @@ public class BasePlace extends Module {
     }
     private BasePlace() {
         super("BasePlace");
-        strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
         syncPredictTicks.setVisible(autoCrystalSync::getValue);
+        airPlaceBypass.setVisible(airPlace::getValue);
     }
     public static boolean maybeEnabled() {
         return maybeEnabled(BasePlace.class);
@@ -111,7 +112,8 @@ public class BasePlace extends Module {
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         silentRotation.hasRotation = false;
         if (autoCrystalSync.getValue()) {
-            if (!ModuleManager.get(ravex.modules.combat.AutoCrystal.class).getEnabled()) {
+            AutoCrystal ac = ModuleManager.get(ravex.modules.combat.AutoCrystal.class);
+            if (!ac.getEnabled()) {
                 simulatedPlacementBlock = null;
                 return;
             }
@@ -123,6 +125,12 @@ public class BasePlace extends Module {
                 simulatedPlacementBlock = null;
                 return;
             }
+            String acPlaceMode = ac.placeMode.getValue();
+            if (acPlaceMode.equals("Grim")) {
+                airPlaceBypass.setValue("Grim");
+            } else if (acPlaceMode.equals("NCPStrict")) {
+                airPlaceBypass.setValue("NCP");
+            }
         }
         LivingEntity target = findTarget(mc);
         if (target == null) {
@@ -130,6 +138,11 @@ public class BasePlace extends Module {
             return;
         }
         double[] solidBlockData = collectSolidBlocks(mc);
+        boolean airPlaceMode = airPlace.getValue();
+        String bypassMode = airPlaceBypass.getValue();
+        if (airPlaceMode && !bypassMode.equals("None")) {
+            airPlaceMode = true;
+        }
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeCalculateBasePlace(
@@ -146,7 +159,7 @@ public class BasePlace extends Module {
                 antiSuicide.getValue(),
                 antiSuicideMinHp.getValue(),
                 predictTicks.getValue(),
-                airPlace.getValue()
+                airPlaceMode
             );
         } else {
             result = javaFallbackCalculate(mc, target, solidBlockData);
@@ -180,19 +193,16 @@ public class BasePlace extends Module {
         }
         Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
-        if (strictRotation.getValue() && !isRotationAligned(mc, hitVec)) {
-            return;
-        }
         int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
         String swap = swapMode.getValue();
-        if (swap.equals("Normal")) {
-            InventoryUtility.selectSlot(mc.player, blockSlot);
-        } else if (swap.equals("Silent")) {
-            InventoryUtility.silentSelectSlot(mc.player, blockSlot);
-        } else if (swap.equals("None")) {
+        if (swap.equals("None")) {
             if (InventoryUtility.getSelectedSlot(mc.player) != blockSlot) {
                 return;
             }
+            originalSlot = -1;
+        } else {
+            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+            InventoryUtility.silentSelectSlot(mc.player, blockSlot);
         }
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
@@ -201,7 +211,7 @@ public class BasePlace extends Module {
         lastPlaceTime = now;
         lastPlacedBase = targetBlock;
         lastPlacedTime = now;
-        if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+        if (swapSwitchBack.getValue() && originalSlot != -1 && !swap.equals("None")) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
     }
@@ -214,15 +224,15 @@ public class BasePlace extends Module {
         String mode = rotate.getValue();
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        if (mode.equals("Normal")) {
-            mc.player.setYRot(angles[0]);
-            mc.player.setXRot(angles[1]);
-        } else if (mode.equals("Silent")) {
-            silentRotation.set(angles[0], angles[1]);
-        }
-    }
-    private boolean isRotationAligned(Minecraft mc, Vec3 target) {
-        return silentRotation.isRotationAligned(mc, target, 12.0F);
+        if (!silentRotation.initialized) { silentRotation.init(mc.player.getYRot(), mc.player.getXRot()); }
+        float currentYaw = silentRotation.lastYaw;
+        float currentPitch = silentRotation.lastPitch;
+        float maxSpeed = 180.0f;
+        float[] limited = AimUtility.limitAngles(currentYaw, angles[0], currentPitch, angles[1], maxSpeed);
+        float finalYaw = limited[0], finalPitch = limited[1];
+        silentRotation.set(finalYaw, finalPitch);
+        silentRotation.lastYaw = finalYaw;
+        silentRotation.lastPitch = finalPitch;
     }
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
@@ -244,9 +254,7 @@ public class BasePlace extends Module {
             }
         }
         double[] arr = new double[data.size()];
-        for (int i = 0; i < arr.length; i++) {
-            arr[i] = data.get(i);
-        }
+        for (int i = 0; i < arr.length; i++) arr[i] = data.get(i);
         return arr;
     }
     private int findBlockSlot(Minecraft mc) {
@@ -382,6 +390,8 @@ public class BasePlace extends Module {
         int r = 2;
         double maxPlaceRange = range.getValue();
         double maxTargetRange = targetRange.getValue();
+        boolean allowAirPlace = airPlace.getValue();
+        String bypassMode = airPlaceBypass.getValue();
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
@@ -392,7 +402,7 @@ public class BasePlace extends Module {
                     double tDist = Math.sqrt(c.distToCenterSqr(target.getX(), target.getY(), target.getZ()));
                     if (tDist > maxTargetRange) continue;
                     if (solids.contains(c.above())) continue;
-                    if (!airPlace.getValue() && solids.contains(c.above(2))) continue;
+                    if (!allowAirPlace && solids.contains(c.above(2))) continue;
                     if (intersectsEntity(mc.player, c) || intersectsEntity(target, c)) continue;
                     boolean hasNeighbor = false;
                     BlockPos neighbor = null;
@@ -407,7 +417,7 @@ public class BasePlace extends Module {
                         }
                     }
                     if (!hasNeighbor) {
-                        if (airPlace.getValue()) {
+                        if (allowAirPlace) {
                             neighbor = c;
                             faceIndex = 1;
                         } else {

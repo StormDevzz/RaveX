@@ -34,10 +34,10 @@ public class AutoCrystal extends Module {
     public final NumberParameter  maxSelfDmg     = new NumberParameter("MaxSelfDmg",   8.0, 1.0, 20.0, 0.5);
     public final BooleanParameter antiSuicide    = new BooleanParameter("AntiSuicide",  true);
     public final NumberParameter  antiSuicideMinHp = new NumberParameter("AntiSuicideMinHP", 6.0, 1.0, 20.0, 0.5);
-    public final ModeParameter    rotate         = new ModeParameter("RotateMode", "Silent",
-            java.util.List.of("Silent", "Normal", "Packet", "None"));
-    public final ModeParameter    swapMode       = new ModeParameter("SwapMode", "Silent",
-            java.util.List.of("Silent", "Normal", "None"));
+    public final ModeParameter    rotate         = new ModeParameter("RotateMode", "Grim",
+            java.util.List.of("Grim", "NCP", "NCPStrict", "None"));
+    public final ModeParameter    swapMode       = new ModeParameter("SwapMode", "Grim",
+            java.util.List.of("Grim", "NCP", "NCPStrict", "None"));
     public final NumberParameter  swapDelay      = new NumberParameter("SwapDelay", 0.0, 0.0, 500.0, 10.0);
     public final BooleanParameter onlyInRender   = new BooleanParameter("OnlyRender",   false);
     public final ModeParameter    targetMode     = new ModeParameter("Target", "Closest",
@@ -52,8 +52,8 @@ public class AutoCrystal extends Module {
     public final BooleanParameter totemDetection  = new BooleanParameter("TotemDetection", true);
     public final NumberParameter  totemMinDamage  = new NumberParameter("TotemMinDamage", 1.5, 0.5, 10.0, 0.5);
     public final NumberParameter  totemSelfMinHp  = new NumberParameter("TotemSelfMinHP", 8.0, 2.0, 20.0, 0.5);
-    public final ModeParameter    placeMode      = new ModeParameter("PlaceMode", "Normal",
-            java.util.List.of("Normal", "Aggressive", "Smart"));
+    public final ModeParameter    placeMode      = new ModeParameter("PlaceMode", "Grim",
+            java.util.List.of("Strict", "NCPStrict", "Grim"));
     public final NumberParameter  rotateSpeed     = new NumberParameter("RotateSpeed", 180.0, 10.0, 180.0, 5.0);
     public final NumberParameter  rotateRandomize = new NumberParameter("RotateRandomize", 0.0, 0.0, 3.0, 0.1);
     public final BooleanParameter antiSuicideCheckBreaking = new BooleanParameter("AntiSuicideBreak", true);
@@ -68,16 +68,9 @@ public class AutoCrystal extends Module {
     public final BooleanParameter placeMultiPlace  = new BooleanParameter("MultiPlace", false);
     public final BooleanParameter swapSwitchBack   = new BooleanParameter("SwapSwitchBack", true);
     public final BooleanParameter swapNoGap        = new BooleanParameter("SwapNoGap", true);
-    public final BooleanParameter swapInventory   = new BooleanParameter("SwapInventory", false);
-    public final ModeParameter    speedMode      = new ModeParameter("SpeedMode", "Normal",
-            java.util.List.of("Legit", "Normal", "Aggressive"));
-    public final NumberParameter  jitterDelay    = new NumberParameter("JitterDelay", 0.0, 0.0, 100.0, 5.0);
-    public final BooleanParameter strictRotation = new BooleanParameter("StrictRotation", false);
-    public final NumberParameter  maxRate        = new NumberParameter("MaxRate", 2.0, 1.0, 5.0, 1.0);
-    public final BooleanParameter suicide        = new BooleanParameter("Suicide", false);
-    public final BooleanParameter grimAC         = new BooleanParameter("GrimACBypass", false);
-    public final BooleanParameter ncpBypass      = new BooleanParameter("NCPBypass", false);
+    public final BooleanParameter swapInventory    = new BooleanParameter("SwapInventory", false);
     public final BooleanParameter bgBlockScanner = new BooleanParameter("BGBlockScanner", true);
+    public final BooleanParameter suicide        = new BooleanParameter("Suicide", false);
     public final BooleanParameter kbPrediction   = new BooleanParameter("KBPrediction", true);
     public final BooleanParameter collateralPop  = new BooleanParameter("CollateralPopList", true);
     public static BlockPos currentPlacementBlock = null;
@@ -134,13 +127,10 @@ public class AutoCrystal extends Module {
         antiSuicideIgnoreWithTotem.setVisible(() -> antiSuicide.getValue());
         totemCheckTarget.setVisible(() -> totemDetection.getValue());
         totemPopHp.setVisible(() -> totemPopSwap.getValue());
-        placeUnderHp.setVisible(() -> !placeMode.getValue().equals("Smart"));
+        placeUnderHp.setVisible(() -> !placeMode.getValue().equals("Strict"));
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapNoGap.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
-        jitterDelay.setVisible(() -> !speedMode.getValue().equals("Aggressive"));
-        strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
-        maxRate.setVisible(() -> !speedMode.getValue().equals("Legit"));
     }
     public static final SilentRotation silentRotation = new SilentRotation();
     private int originalSlot = -1;
@@ -180,6 +170,8 @@ public class AutoCrystal extends Module {
         double[] crystalData = collectCrystals(mc, playerPos);
         double[] pStats = getEntityStats(mc.player);
         double[] tStats = getEntityStats(target);
+        boolean grimAC = rotate.getValue().equals("Grim") || placeMode.getValue().equals("Grim");
+        boolean ncpBypass = rotate.getValue().equals("NCP") || rotate.getValue().equals("NCPStrict") || placeMode.getValue().equals("NCPStrict");
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeTick(
@@ -197,7 +189,7 @@ public class AutoCrystal extends Module {
                     predictTicks.getValue(), totemDetection.getValue(),
                     totemCheckTarget.getValue(), placeAirPlace.getValue(),
                     placeMultiPlace.getValue(), suicide.getValue(),
-                    grimAC.getValue(), ncpBypass.getValue(),
+                    grimAC, ncpBypass,
                     bgBlockScanner.getValue(), kbPrediction.getValue(),
                     collateralPop.getValue()
             );
@@ -246,22 +238,14 @@ public class AutoCrystal extends Module {
         if (rotationTarget != null) {
             rotateTo(mc, rotationTarget);
         }
-        boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
+        boolean isStrict = rotate.getValue().equals("Grim") || rotate.getValue().equals("NCPStrict");
         boolean aligned = true;
         if (isStrict && rotationTarget != null) {
             aligned = isRotationAligned(mc, rotationTarget);
         }
-        int limit = maxRate.getValue().intValue();
-        if (speedMode.getValue().equals("Legit")) {
-            limit = 1;
-        }
         int actionsThisTick = 0;
-        boolean checkBreakDelay = true;
-        if (speedMode.getValue().equals("Aggressive")) {
-            checkBreakDelay = false;
-        }
-        if (shouldBreak && aligned && actionsThisTick < limit) {
-            if (!checkBreakDelay || now - lastBreakTime >= currentBreakDelay) {
+        if (shouldBreak && aligned) {
+            if (now - lastBreakTime >= currentBreakDelay) {
                 int entityId = (int) result[7];
                 if (entityId != lastBreakId) {
                     Entity crystal = mc.level.getEntity(entityId);
@@ -271,28 +255,19 @@ public class AutoCrystal extends Module {
                         lastBreakTime = now;
                         lastBreakId   = entityId;
                         actionsThisTick++;
-                        double base = breakDelay.getValue();
-                        double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
-                        currentBreakDelay = Math.max(0, (long)(base + jitter));
+                        currentBreakDelay = breakDelay.getValue().longValue();
                     }
                 }
             }
         }
         boolean checkPlaceDelay = true;
-        if (speedMode.getValue().equals("Aggressive")) {
-            checkPlaceDelay = false;
-        } else if (placeMode.getValue().equals("Smart")) {
-                if (currentTargetDamage < minDamage.getValue() && currentTargetDamage < MobUtility.getHealthWithAbsorption(target)) {
-                shouldPlace = false;
-            }
-        }
         if (target != null) {
             double targetEffHp = MobUtility.getHealthWithAbsorption(target);
             if (targetEffHp <= placeUnderHp.getValue()) {
                 checkPlaceDelay = false;
             }
         }
-        if (shouldPlace && aligned && actionsThisTick < limit) {
+        if (shouldPlace && aligned && actionsThisTick < 2) {
             if (!checkPlaceDelay || now - lastPlaceTime >= currentPlaceDelay) {
                 BlockPos placePos = new BlockPos(
                         (int) result[1], (int) result[2], (int) result[3]);
@@ -304,7 +279,7 @@ public class AutoCrystal extends Module {
                     BlockHitResult hitResult = new BlockHitResult(hitVec, face, placePos, false);
                     mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
                     mc.player.swing(mc.player.getUsedItemHand());
-                    if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+                    if (swapSwitchBack.getValue() && originalSlot != -1) {
                         if (mc.player.connection != null) {
                             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
                         }
@@ -312,9 +287,7 @@ public class AutoCrystal extends Module {
                     }
                     lastPlaceTime = now;
                     actionsThisTick++;
-                    double base = placeDelay.getValue();
-                    double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
-                    currentPlaceDelay = Math.max(0, (long)(base + jitter));
+                    currentPlaceDelay = placeDelay.getValue().longValue();
                 }
             }
         }
@@ -328,7 +301,7 @@ public class AutoCrystal extends Module {
                 }
             }
         }
-        if (shouldPlace2 && aligned && actionsThisTick < limit) {
+        if (shouldPlace2 && aligned && actionsThisTick < 2) {
             if (!checkPlaceDelay || now - lastPlaceTime >= currentPlaceDelay) {
                 BlockPos placePos2 = new BlockPos((int) result[13], (int) result[14], (int) result[15]);
                 boolean hasItem = switchToCrystal(mc);
@@ -339,7 +312,7 @@ public class AutoCrystal extends Module {
                     BlockHitResult hitResult2 = new BlockHitResult(hitVec2, face, placePos2, false);
                     mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult2);
                     mc.player.swing(mc.player.getUsedItemHand());
-                    if (swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+                    if (swapSwitchBack.getValue() && originalSlot != -1) {
                         if (mc.player.connection != null) {
                             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
                         }
@@ -347,9 +320,7 @@ public class AutoCrystal extends Module {
                     }
                     lastPlaceTime = now;
                     actionsThisTick++;
-                    double base = placeDelay.getValue();
-                    double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
-                    currentPlaceDelay = Math.max(0, (long)(base + jitter));
+                    currentPlaceDelay = placeDelay.getValue().longValue();
                 }
             }
         }
@@ -470,12 +441,8 @@ public class AutoCrystal extends Module {
         }
         int slot = InventoryUtility.findHotbarSlot(mc.player, "end_crystal");
         if (slot != -1) {
-            if (mode.equals("Normal")) {
-                InventoryUtility.selectSlot(mc.player, slot);
-            } else if (mode.equals("Silent")) {
-                originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-                InventoryUtility.silentSelectSlot(mc.player, slot);
-            }
+            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+            InventoryUtility.silentSelectSlot(mc.player, slot);
             return true;
         }
         if (swapInventory.getValue()) {
@@ -483,12 +450,8 @@ public class AutoCrystal extends Module {
             if (slot != -1) {
                 int targetHotbarSlot = 0;
                 InventoryUtility.handleInventoryClick(mc, mc.player, slot, targetHotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
-                if (mode.equals("Normal")) {
-                    InventoryUtility.selectSlot(mc.player, targetHotbarSlot);
-                } else if (mode.equals("Silent")) {
-                    originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-                    InventoryUtility.silentSelectSlot(mc.player, targetHotbarSlot);
-                }
+                originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+                InventoryUtility.silentSelectSlot(mc.player, targetHotbarSlot);
                 return true;
             }
         }
@@ -500,11 +463,9 @@ public class AutoCrystal extends Module {
         float[] targetAngles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
         float currentYaw = mc.player.getYRot();
         float currentPitch = mc.player.getXRot();
-        if (mode.equals("Silent")) {
-            if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
-            currentYaw = silentRotation.lastYaw;
-            currentPitch = silentRotation.lastPitch;
-        }
+        if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
+        currentYaw = silentRotation.lastYaw;
+        currentPitch = silentRotation.lastPitch;
         float maxSpeed = rotateSpeed.getValue().floatValue();
         float[] limited = AimUtility.limitAngles(currentYaw, targetAngles[0], currentPitch, targetAngles[1], maxSpeed);
         float finalYaw = limited[0], finalPitch = limited[1];
@@ -512,17 +473,9 @@ public class AutoCrystal extends Module {
             float[] rnd = AimUtility.randomize(finalYaw, finalPitch, rotateRandomize.getValue().floatValue());
             finalYaw = rnd[0]; finalPitch = rnd[1];
         }
-        if (mode.equals("Normal")) {
-            mc.player.setYRot(finalYaw);
-            mc.player.setXRot(finalPitch);
-        } else if (mode.equals("Silent")) {
-            silentRotation.set(finalYaw, finalPitch);
-            silentRotation.lastYaw = finalYaw; silentRotation.lastPitch = finalPitch;
-        } else if (mode.equals("Packet")) {
-            if (mc.player.connection != null) {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(finalYaw, finalPitch, mc.player.onGround(), mc.player.horizontalCollision));
-            }
-        }
+        silentRotation.set(finalYaw, finalPitch);
+        silentRotation.lastYaw = finalYaw;
+        silentRotation.lastPitch = finalPitch;
     }
     private long currentPlaceDelay = 0;
     private long currentBreakDelay = 0;

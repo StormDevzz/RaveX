@@ -18,7 +18,9 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotation;
 import ravex.utility.player.SwingUtility;
 public class AutoDrop extends Module {
     public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
@@ -28,13 +30,19 @@ public class AutoDrop extends Module {
     public final NumberParameter range = new NumberParameter("Range", 4.0, 1.0, 6.0, 0.5);
     public final NumberParameter dropHeight = new NumberParameter("DropHeight", 3, 2, 6, 1);
     public final BooleanParameter airPlace = new BooleanParameter("AirPlace", true);
-    public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
+    public final ModeParameter rotate = new ModeParameter("Rotate", "NCP",
+            java.util.List.of("NCP", "NCPStrict", "Strict", "None"));
+    public final ModeParameter swapMode = new ModeParameter("Swap", "NCP",
+            java.util.List.of("NCP", "NCPStrict", "Strict", "None"));
+    public final BooleanParameter swapSwitchBack = new BooleanParameter("SwitchBack", true);
     public final NumberParameter placeDelay = new NumberParameter("Delay", 2, 1, 10, 1);
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_autodrop");
     static {
         NATIVE.load();
     }
+    private static final SilentRotation silentRotation = new SilentRotation();
     private int tickCounter = 0;
+    private int originalSlot = -1;
 
     @Override
     public void onTick() {
@@ -49,13 +57,18 @@ public class AutoDrop extends Module {
         if (!mc.level.getBlockState(placePos).isAir() && !mc.level.getBlockState(placePos).canBeReplaced()) return;
         int slot = findDropBlock(mc);
         if (slot == -1) return;
-        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, slot);
-        if (rotate.getValue()) {
-            Vec3 center = Vec3.atCenterOf(placePos);
-            mc.player.setYRot(RotationUtility.yawTo(mc.player, center));
-            mc.player.setXRot(RotationUtility.pitchTo(mc.player, center));
+        String swap = swapMode.getValue();
+        if (swap.equals("None")) {
+            if (InventoryUtility.getSelectedSlot(mc.player) != slot) return;
+            originalSlot = -1;
+        } else {
+            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+            InventoryUtility.silentSelectSlot(mc.player, slot);
         }
+        Vec3 center = Vec3.atCenterOf(placePos);
+        rotateTo(mc, center);
+        String rot = rotate.getValue();
+        if ((rot.equals("Strict") || rot.equals("NCPStrict")) && !isRotationAligned(mc, center)) return;
         BlockPos neighbor;
         Direction face = Direction.UP;
         if (airPlace.getValue() || mc.level.getBlockState(placePos.below()).isAir()) {
@@ -66,7 +79,6 @@ public class AutoDrop extends Module {
             }
             if (neighbor == null) { neighbor = placePos.above(); face = Direction.DOWN; }
         } else { neighbor = placePos.below(); }
-
         Vec3 hitVec = new Vec3(
             neighbor.getX() + 0.5 + face.getStepX() * 0.5,
             neighbor.getY() + 0.5 + face.getStepY() * 0.5,
@@ -75,7 +87,9 @@ public class AutoDrop extends Module {
         if (mc.gameMode != null)
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, new BlockHitResult(hitVec, face, neighbor, false));
         SwingUtility.swing(mc.player, InteractionHand.MAIN_HAND);
-        InventoryUtility.selectSlot(mc.player, prevSlot);
+        if (swapSwitchBack.getValue() && originalSlot != -1 && !swap.equals("None")) {
+            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
+        }
     }
     private Entity findTarget(Minecraft mc) {
         String t = target.getValue();
@@ -104,11 +118,29 @@ public class AutoDrop extends Module {
         }
         return -1;
     }
+    private void rotateTo(Minecraft mc, Vec3 target) {
+        String mode = rotate.getValue();
+        if (mode.equals("None")) return;
+        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
+        float currentYaw = mc.player.getYRot();
+        float currentPitch = mc.player.getXRot();
+        if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
+        currentYaw = silentRotation.lastYaw;
+        currentPitch = silentRotation.lastPitch;
+        float maxSpeed = 180.0f;
+        float[] limited = AimUtility.limitAngles(currentYaw, angles[0], currentPitch, angles[1], maxSpeed);
+        float finalYaw = limited[0], finalPitch = limited[1];
+        silentRotation.set(finalYaw, finalPitch);
+        silentRotation.lastYaw = finalYaw;
+        silentRotation.lastPitch = finalPitch;
+    }
+    private boolean isRotationAligned(Minecraft mc, Vec3 target) {
+        return silentRotation.isRotationAligned(mc, target, 10.0f);
+    }
     public static boolean maybeEnabled() {
         return maybeEnabled(AutoDrop.class);
     }
     public static AutoDrop itz() {
         return ModuleManager.get(AutoDrop.class);
     }
-
 }
