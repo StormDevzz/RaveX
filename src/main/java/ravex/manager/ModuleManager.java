@@ -100,7 +100,8 @@ public class ModuleManager {
             "FakePlayer", "ChestAura", "Igniter",
             "TreeCutter", "AutoReplant", "nuker.Nuker",
             "AutoTrade", "AutoFish", "AutoTunnel",
-            "ECFarmer", "GhostBlocks", "AutoWither"
+            "ECFarmer", "GhostBlocks", "AutoWither",
+            "SafeAnchor"
         );
 
         register(Category.CLIENT,

@@ -111,7 +111,9 @@
     "module.BowAim": "BowAim",
     "module.BowAim.description": "Automatically aims bows at target players or entities, predicting target movement and arrow trajectory.",
     "module.Quiver": "Quiver",
-    "module.Quiver.description": "Automatically shoots beneficial tipped arrows at the player to apply positive potion buffs."
+    "module.Quiver.description": "Automatically shoots beneficial tipped arrows at the player to apply positive potion buffs.",
+    "module.SafeAnchor": "Safe Anchor",
+    "module.SafeAnchor.description": "Automatically charges placed anchors to level 1, places glowstone, and triggers it with a sword."
 }
 
 
