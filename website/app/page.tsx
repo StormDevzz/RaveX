@@ -6,7 +6,8 @@ const telegramUrl = 'https://t.me/ravex_free'
 const discordUrl = 'https://discord.gg/n9HPbgN7S'
 const githubUrl = 'https://github.com/StormDevzz/RaveX'
 const officialSite = 'https://ravex.serveousercontent.com/'
-const releasesUrl = 'https://github.com/StormDevzz/RaveX/releases'
+const jarVersion = process.env.RAVEX_JAR_VERSION || 'unknown'
+const jarUrl = 'https://github.com/StormDevzz/RaveX/releases/latest/download/ravex-' + jarVersion + '.jar'
 
 const version = process.env.RAVEX_VERSION || 'unknown'
 
@@ -56,8 +57,7 @@ export default function Home() {
               About
             </a>
             <a
-              href={releasesUrl}
-              target="_blank"
+              href={jarUrl}
               className="px-4 py-1.5 bg-[#38bdf8] text-[#06060e] text-xs font-semibold hover:bg-[#7dd3fc] transition-colors"
             >
               Download
@@ -87,8 +87,7 @@ export default function Home() {
             </p>
             <div className="flex flex-wrap gap-3">
               <a
-                href={releasesUrl}
-                target="_blank"
+                href={jarUrl}
                 className="px-6 py-2.5 bg-[#38bdf8] text-[#06060e] text-sm font-semibold hover:bg-[#7dd3fc] transition-colors"
               >
                 Download Latest
