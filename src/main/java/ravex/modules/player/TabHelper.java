@@ -4,7 +4,7 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-@ModuleInfo(name = "TabHelper", category = "Player")
+@ModuleInfo(name = "TabHelper", category = "net.minecraft.world.entity.player.Player")
 public class TabHelper extends ravex.modules.Module {
 public final BooleanParameter showPing = new BooleanParameter("ShowPing", true);
     public final NumberParameter limit = new NumberParameter("MaxPlayers", 250.0, 80.0, 1000.0, 10.0);

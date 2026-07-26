@@ -16,7 +16,7 @@ import org.lwjgl.glfw.GLFW;
 import ravex.modules.player.invclean.InvCleanData;
 import ravex.modules.player.invclean.InvClean;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -139,7 +139,7 @@ public class InvCleanScreen extends Screen {
 
 
         g.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xF0101020);
-        Render2DEngine.drawBorder(g, panelX, panelY, panelW, panelH, 1, 0xFF2A1A4A);
+        Render2DUtility.drawBorder(g, panelX, panelY, panelW, panelH, 1, 0xFF2A1A4A);
 
 
         int headerH = 28;
@@ -158,7 +158,7 @@ public class InvCleanScreen extends Screen {
 
 
         g.fill(leftX, contentY, leftX + leftW, contentY + contentH, 0xFF0C0920);
-        Render2DEngine.drawBorder(g, leftX, contentY, leftW, contentH, 1, 0xFF281844);
+        Render2DUtility.drawBorder(g, leftX, contentY, leftW, contentH, 1, 0xFF281844);
 
 
         int colHeaderH = 18;
@@ -171,7 +171,7 @@ public class InvCleanScreen extends Screen {
         int searchW = leftW - 8;
         boolean searchHov = mx >= leftX + 4 && mx <= leftX + 4 + searchW && my >= searchY && my <= searchY + searchH;
         g.fill(leftX + 4, searchY, leftX + 4 + searchW, searchY + searchH, searchFocus ? 0xFF1A1040 : 0xFF120B30);
-        Render2DEngine.drawBorder(g, leftX + 4, searchY, searchW, searchH, 1,
+        Render2DUtility.drawBorder(g, leftX + 4, searchY, searchW, searchH, 1,
             searchFocus ? ColorUtility.getActiveColor() : 0xFF2A1850);
         String searchDisplay = searchQuery.isEmpty() && !searchFocus ? "§8Search..." : searchQuery + (searchFocus ? "§8|" : "");
         FontRenderUtility.drawString(g, searchDisplay, leftX + 7, searchY + 2, 0xFFCCCCCC, false);
@@ -244,7 +244,7 @@ public class InvCleanScreen extends Screen {
 
 
         g.fill(rightX, contentY, rightX + rightW, contentY + contentH, 0xFF0C0920);
-        Render2DEngine.drawBorder(g, rightX, contentY, rightW, contentH, 1, 0xFF281844);
+        Render2DUtility.drawBorder(g, rightX, contentY, rightW, contentH, 1, 0xFF281844);
 
 
         g.fill(rightX, contentY, rightX + rightW, contentY + colHeaderH, 0xFF180E38);
@@ -305,7 +305,7 @@ public class InvCleanScreen extends Screen {
         boolean cleanFlash = (cleanClickTime > 0 && now - cleanClickTime < 300);
         int cleanBg = cleanFlash ? 0xFF44AA55 : cleanHovered ? 0xFF2A1850 : 0xFF1A0E38;
         g.fill(cleanX, btnY, cleanX + cleanW, btnY + btnH, cleanBg);
-        Render2DEngine.drawBorder(g, cleanX, btnY, cleanW, btnH, 1,
+        Render2DUtility.drawBorder(g, cleanX, btnY, cleanW, btnH, 1,
             cleanHovered ? ColorUtility.getActiveColor() : 0xFF3A2060);
         int ctw = FontRenderUtility.getStringWidth("🗑 Clean Now");
         FontRenderUtility.drawString(g, "🗑 Clean Now", cleanX + cleanW / 2 - ctw / 2, btnY + 4, 0xFFFFFFFF, true);
@@ -313,7 +313,7 @@ public class InvCleanScreen extends Screen {
 
         quitHovered = mx >= quitX && mx <= quitX + quitW && my >= btnY && my <= btnY + btnH;
         g.fill(quitX, btnY, quitX + quitW, btnY + btnH, quitHovered ? 0xFF3A1010 : 0xFF1A0E38);
-        Render2DEngine.drawBorder(g, quitX, btnY, quitW, btnH, 1, quitHovered ? 0xFFFF4455 : 0xFF3A2060);
+        Render2DUtility.drawBorder(g, quitX, btnY, quitW, btnH, 1, quitHovered ? 0xFFFF4455 : 0xFF3A2060);
         int qtw = FontRenderUtility.getStringWidth("Quit");
         FontRenderUtility.drawString(g, "Quit", quitX + quitW / 2 - qtw / 2, btnY + 4, quitHovered ? 0xFFFF8888 : 0xFFCCCCCC, false);
 
@@ -343,7 +343,7 @@ public class InvCleanScreen extends Screen {
 
         g.fill(tx - 1, ty - 1, tx + tw + 1, ty + th + 1, 0xCC1A0E30);
         g.fill(tx, ty, tx + tw, ty + th, 0xEE0E0920);
-        Render2DEngine.drawBorder(g, tx, ty, tw, th, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), 160));
+        Render2DUtility.drawBorder(g, tx, ty, tw, th, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), 160));
 
         int ly = ty + 3;
         for (String line : lines) {

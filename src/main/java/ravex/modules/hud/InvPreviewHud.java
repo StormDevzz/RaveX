@@ -10,8 +10,8 @@ import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "InvPreviewHud", category = "HUD")
 public class InvPreviewHud extends ravex.modules.Module {
@@ -22,8 +22,8 @@ public class InvPreviewHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_INVENTORY_WHITE;
-    private static final int IS = HudRenderer.getIconSize();
+private static final Identifier ICON = TextureLoaderUtility.HUD_INVENTORY_WHITE;
+    private static final int IS = HudRendererUtility.getIconSize();
     private static final int CELL = 16;
     private static final int PAD  = 2;
     private static final int COLS = 9;
@@ -49,10 +49,10 @@ private static final Identifier ICON = TextureLoader.HUD_INVENTORY_WHITE;
         int by = y;
         int w  = width;
         int h  = height;
-        HudRenderer.drawBackground(graphics, bx, by, w, h);
+        HudRendererUtility.drawBackground(graphics, bx, by, w, h);
         if (showLabel()) {
-            HudRenderer.drawLabel(graphics, "Inventory", bx + 4, by, accent);
-            HudRenderer.drawIcon(graphics, ICON, bx + w - 4 - IS, by + 4, accent);
+            HudRendererUtility.drawLabel(graphics, "Inventory", bx + 4, by, accent);
+            HudRendererUtility.drawIcon(graphics, ICON, bx + w - 4 - IS, by + 4, accent);
         }
         int startY = by + (showLabel() ? 14 : 5);
         for (int row = 0; row < 3; row++) {

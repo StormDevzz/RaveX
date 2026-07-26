@@ -8,7 +8,7 @@ import ravex.utility.player.ElytraUtility;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 import java.util.List;
-@ModuleInfo(name = "ElytraHelper", category = "Player")
+@ModuleInfo(name = "ElytraHelper", category = "net.minecraft.world.entity.player.Player")
 public class ElytraHelper extends ravex.modules.Module {
 public final ModeParameter mode = new ModeParameter("Mode", "Swap", List.of("Swap", "Replace", "Auto"));
     public final ModeParameter swapMode = new ModeParameter("SwapMode", "Positive1", List.of("Positive1", "Positive2", "Positive3"));

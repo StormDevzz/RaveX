@@ -2,7 +2,7 @@ package ravex.modules.player;
 
 import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
-@ModuleInfo(name = "NoSwing", category = "Player")
+@ModuleInfo(name = "NoSwing", category = "net.minecraft.world.entity.player.Player")
 public class NoSwing extends ravex.modules.Module {
 public final BooleanParameter self = new BooleanParameter("Self", true);
     public final BooleanParameter others = new BooleanParameter("Others", false);

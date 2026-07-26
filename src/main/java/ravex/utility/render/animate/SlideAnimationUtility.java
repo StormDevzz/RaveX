@@ -2,7 +2,7 @@ package ravex.utility.render.animate;
 
 import net.minecraft.world.phys.Vec3;
 
-public class SlideAnimation {
+public class SlideAnimationUtility {
     private double currentX, currentY, currentZ;
     private boolean initialized = false;
 

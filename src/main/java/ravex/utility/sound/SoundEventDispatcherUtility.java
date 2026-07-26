@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import ravex.manager.ModuleManager;
 
-public class SoundEventDispatcher {
+public class SoundEventDispatcherUtility {
     @Subscribe
     public void onSoundEvent(SoundEvent event) {
         net.minecraft.sounds.SoundEvent mcSound = resolveSound(event.getType());

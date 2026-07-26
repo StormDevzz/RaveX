@@ -2,15 +2,15 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.inventory.ClickType;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "Quiver", category = "Combat")
@@ -19,7 +19,7 @@ public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", L
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal"));
     public final NumberParameter chargeDuration = new NumberParameter("ChargeTicks", 3.0, 2.0, 10.0, 1.0);
     public final BooleanParameter autoSwapBow = new BooleanParameter("AutoSwapBow", true);
-    public static final SilentRotation silentRotation = new SilentRotation();
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private int state = 0;
     private int ticksHolding = 0;
     private int cooldownTicks = 0;
@@ -28,7 +28,7 @@ public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", L
     private int previousSelectedSlot = -1;
     private float savedClientYaw = 0.0f;
     private float savedClientPitch = 0.0f;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_quiver");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_quiver");
     static {
         NATIVE.load();
     }
@@ -116,7 +116,7 @@ public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", L
             silentRotation.set(mc.player.getYRot(), -90.0f);
         }
         mc.options.keyUse.setDown(true);
-        mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+        mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         state = 1;
         ticksHolding = 0;
     }

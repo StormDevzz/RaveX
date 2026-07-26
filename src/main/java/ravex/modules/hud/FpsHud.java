@@ -9,8 +9,8 @@ import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "FpsHud", category = "HUD")
 public class FpsHud extends ravex.modules.Module {
@@ -23,7 +23,7 @@ public class FpsHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_FPS_WHITE;
+private static final Identifier ICON = TextureLoaderUtility.HUD_FPS_WHITE;
 
     public static FpsHud itz() {
         return ravex.manager.ModuleManager.delegate(FpsHud.class);
@@ -55,18 +55,18 @@ private static final Identifier ICON = TextureLoader.HUD_FPS_WHITE;
         else fpsColor = lowColor;
         String fpsStr = String.valueOf(fps);
         String suffix = " FPS";
-        int tw = HudRenderer.textWidth(fpsStr) + HudRenderer.textWidth(suffix);
-        int IS = HudRenderer.getIconSize();
+        int tw = HudRendererUtility.textWidth(fpsStr) + HudRendererUtility.textWidth(suffix);
+        int IS = HudRendererUtility.getIconSize();
         int pw = 4 + tw + 4 + IS + 4;
         int ph = 14;
         width = pw;
         height = ph;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         int ix = bx + 4;
-        HudRenderer.drawText(graphics, fpsStr, ix, by + 2, fpsColor, shadow);
-        ix += HudRenderer.textWidth(fpsStr);
-        HudRenderer.drawText(graphics, suffix, ix, by + 2, 0xFF8080A0, false);
-        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ac);
+        HudRendererUtility.drawText(graphics, fpsStr, ix, by + 2, fpsColor, shadow);
+        ix += HudRendererUtility.textWidth(fpsStr);
+        HudRendererUtility.drawText(graphics, suffix, ix, by + 2, 0xFF8080A0, false);
+        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ac);
     }
 
     public java.util.List<ravex.parameter.Parameter<?>> getParameters() {

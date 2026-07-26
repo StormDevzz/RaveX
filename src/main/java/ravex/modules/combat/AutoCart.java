@@ -2,15 +2,14 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RailBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import ravex.RaveX;
 
 import ravex.parameter.BooleanParameter;
@@ -19,7 +18,6 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.SwingUtility;
 import java.util.List;
 @ModuleInfo(name = "AutoCart", category = "Combat")
 public class AutoCart extends ravex.modules.Module {
@@ -34,12 +32,12 @@ public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
     public final NumberParameter repeatDelay = new NumberParameter("RepeatDelay", 20, 5, 100, 5);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
-    public static BlockPos targetRenderPos = null;
+    public static net.minecraft.core.BlockPos targetRenderPos = null;
     private boolean wasUsingBow = false;
     private int lastBowCharge = 0;
     private int repeatTimer = 0;
     private int originalSlot = -1;
-    private BlockPos lastPlacedPos = null;
+    private net.minecraft.core.BlockPos lastPlacedPos = null;
     private long lastPlaceTime = 0;
     protected void onEnable() {
         wasUsingBow = false;
@@ -79,14 +77,14 @@ public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
         wasUsingBow = isUsingBow;
     }
     private void handleBowRelease(Minecraft mc) {
-        Vec3 eyePos = mc.player.getEyePosition();
-        Vec3 look = mc.player.getLookAngle();
+        net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 look = mc.player.getLookAngle();
         float f = Math.min(lastBowCharge / 20.0F, 1.0F);
         f = (f * f + f * 2.0F) / 3.0F;
         if (f < 0.1F) f = 0.1F;
-        BlockPos landingPos = simulateTrajectory(mc, eyePos.add(look.scale(0.1)), look.scale(f * 3.0));
+        net.minecraft.core.BlockPos landingPos = simulateTrajectory(mc, eyePos.add(look.scale(0.1)), look.scale(f * 3.0));
         if (landingPos == null) return;
-        double dist = mc.player.getEyePosition().distanceTo(Vec3.atCenterOf(landingPos));
+        double dist = mc.player.getEyePosition().distanceTo(net.minecraft.world.phys.Vec3.atCenterOf(landingPos));
         if (dist > targetRange.getValue()) return;
         int railSlot = findItemSlot(mc, net.minecraft.world.item.Items.RAIL);
         if (railSlot == -1) return;
@@ -97,7 +95,7 @@ public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
         targetRenderPos = landingPos;
         placeCart(mc, landingPos);
     }
-    private void placeCart(Minecraft mc, BlockPos pos) {
+    private void placeCart(Minecraft mc, net.minecraft.core.BlockPos pos) {
         int railSlot = findItemSlot(mc, net.minecraft.world.item.Items.RAIL);
         int cartSlot = findCartSlot(mc);
         if (railSlot == -1 || cartSlot == -1) return;
@@ -110,27 +108,27 @@ public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
             faceBlock(mc, pos);
         }
         selectSlot(railSlot, mc);
-        useItemOn(mc, pos, Direction.UP);
-        BlockPos above = pos.above();
+        useItemOn(mc, pos, net.minecraft.core.Direction.UP);
+        net.minecraft.core.BlockPos above = pos.above();
         if (rotate.getValue()) {
             faceBlock(mc, above);
         }
         selectSlot(cartSlot, mc);
-        useItemOn(mc, above, Direction.UP);
+        useItemOn(mc, above, net.minecraft.core.Direction.UP);
             if (originalSlot != -1) selectSlot(originalSlot, mc);
         lastPlacedPos = pos;
         repeatTimer = 0;
     }
-    private boolean shouldPlaceAgain(Minecraft mc, BlockPos pos) {
+    private boolean shouldPlaceAgain(Minecraft mc, net.minecraft.core.BlockPos pos) {
         BlockState state = mc.level.getBlockState(pos);
         if (state.isAir()) return true;
-        BlockPos above = pos.above();
+        net.minecraft.core.BlockPos above = pos.above();
         BlockState aboveState = mc.level.getBlockState(above);
         return !aboveState.isAir();
     }
-    private BlockPos simulateTrajectory(Minecraft mc, Vec3 startPos, Vec3 startVel) {
-        Vec3 pos = startPos;
-        Vec3 vel = startVel;
+    private net.minecraft.core.BlockPos simulateTrajectory(Minecraft mc, net.minecraft.world.phys.Vec3 startPos, net.minecraft.world.phys.Vec3 startVel) {
+        net.minecraft.world.phys.Vec3 pos = startPos;
+        net.minecraft.world.phys.Vec3 vel = startVel;
         Level level = mc.level;
         double gravity = 0.05;
         double drag = 0.99;
@@ -138,7 +136,7 @@ public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
             vel = vel.scale(drag);
             vel = vel.add(0, -gravity, 0);
             pos = pos.add(vel);
-            BlockPos bp = BlockPos.containing(pos);
+            net.minecraft.core.BlockPos bp = net.minecraft.core.BlockPos.containing(pos);
             if (!level.isLoaded(bp)) return null;
             BlockState state = level.getBlockState(bp);
             if (!state.isAir() && !state.canBeReplaced()) {
@@ -186,8 +184,8 @@ public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
         }
         return -1;
     }
-    private void faceBlock(Minecraft mc, BlockPos pos) {
-        float[] angles = RotationUtility.anglesTo(mc.player, Vec3.atCenterOf(pos));
+    private void faceBlock(Minecraft mc, net.minecraft.core.BlockPos pos) {
+        float[] angles = RotationUtility.anglesTo(mc.player, net.minecraft.world.phys.Vec3.atCenterOf(pos));
         mc.player.setYRot(angles[0]);
         mc.player.setXRot(angles[1]);
     }
@@ -198,20 +196,20 @@ public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
             InventoryUtility.selectSlot(mc.player, slot);
         }
     }
-    private void useItemOn(Minecraft mc, BlockPos pos, Direction face) {
+    private void useItemOn(Minecraft mc, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face) {
         if (mc.gameMode == null) return;
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND,
-            new BlockHitResult(Vec3.atCenterOf(pos), face, pos, false));
-        SwingUtility.swing(mc.player, InteractionHand.MAIN_HAND);
+        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND,
+            new BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), face, pos, false));
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
     }
-    private boolean canPlaceBlock(BlockPos pos, Minecraft mc) {
+    private boolean canPlaceBlock(net.minecraft.core.BlockPos pos, Minecraft mc) {
         Level level = mc.level;
         BlockState state = level.getBlockState(pos);
         return state.isAir() || state.canBeReplaced();
     }
-    private boolean isWithinRange(BlockPos pos, Minecraft mc) {
-        Vec3 playerPos = mc.player.getEyePosition();
-        Vec3 targetPos = Vec3.atCenterOf(pos);
+    private boolean isWithinRange(net.minecraft.core.BlockPos pos, Minecraft mc) {
+        net.minecraft.world.phys.Vec3 playerPos = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 targetPos = net.minecraft.world.phys.Vec3.atCenterOf(pos);
         return playerPos.distanceTo(targetPos) <= range.getValue();
     }
     public static boolean maybeEnabled() {

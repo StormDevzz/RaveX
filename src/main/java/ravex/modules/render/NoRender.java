@@ -3,7 +3,7 @@ package ravex.modules.render;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.nativelib.NativeLoader;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 @ModuleInfo(name = "NoRender", category = "Render")
 public class NoRender extends ravex.modules.Module {
 public final BooleanParameter blockParticles = new BooleanParameter("BlockParticles", true);
@@ -18,7 +18,7 @@ public final BooleanParameter blockParticles = new BooleanParameter("BlockPartic
     public final BooleanParameter fog = new BooleanParameter("Fog", true);
     public final BooleanParameter fire = new BooleanParameter("Fire", true);
     public final BooleanParameter inventoryBackground = new BooleanParameter("InventoryBackground", false);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_norender");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_norender");
     static {
         try {
             NativeLoader.load();

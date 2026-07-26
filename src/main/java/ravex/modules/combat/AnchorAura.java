@@ -2,21 +2,18 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.EntityUtility;
+
 import net.minecraft.world.item.BlockItem;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RespawnAnchorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 import ravex.RaveX;
@@ -25,7 +22,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -33,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 
 @ModuleInfo(name = "AnchorAura", category = "Combat")
 public class AnchorAura extends ravex.modules.Module {
@@ -60,12 +57,12 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
     public final BooleanParameter swapInventory = new BooleanParameter("SwapInv", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00FFFF);
-    public static BlockPos simulatedPlacementBlock = null;
+    public static net.minecraft.core.BlockPos simulatedPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
-    private static final SilentRotation silentRotation = new SilentRotation();
+    private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private long lastActionTime = 0;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_anchoraura");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_anchoraura");
     static {
         NATIVE.load();
     }
@@ -111,14 +108,14 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         if (mc.player == null || mc.level == null || mc.gameMode == null)
             return;
         silentRotation.hasRotation = false;
-        LivingEntity target = findTarget(mc);
+        net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             simulatedPlacementBlock = null;
             return;
         }
         long now = System.currentTimeMillis();
         boolean canAct = (now - lastActionTime >= placeDelay.getValue().longValue());
-        BlockPos existingAnchor = findExistingAnchor(mc, target);
+        net.minecraft.core.BlockPos existingAnchor = findExistingAnchor(mc, target);
         if (existingAnchor != null) {
             simulatedPlacementBlock = existingAnchor;
             BlockState state = mc.level.getBlockState(existingAnchor);
@@ -130,16 +127,16 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
                 int glowstoneSlot = findItemSlot(mc, "glowstone");
                 if (glowstoneSlot == -1)
                     return;
-                Vec3 hitVec = Vec3.atCenterOf(existingAnchor);
+                net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(existingAnchor);
                 rotateTo(mc, hitVec);
-                performUse(mc, glowstoneSlot, existingAnchor, Direction.UP, hitVec);
+                performUse(mc, glowstoneSlot, existingAnchor, net.minecraft.core.Direction.UP, hitVec);
             } else {
                 int triggerSlot = findNonGlowstoneSlot(mc);
                 if (triggerSlot == -1)
                     return;
-                Vec3 hitVec = Vec3.atCenterOf(existingAnchor);
+                net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(existingAnchor);
                 rotateTo(mc, hitVec);
-                performUse(mc, triggerSlot, existingAnchor, Direction.UP, hitVec);
+                performUse(mc, triggerSlot, existingAnchor, net.minecraft.core.Direction.UP, hitVec);
             }
             return;
         }
@@ -171,7 +168,7 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
             currentSelfDamage = 0.0;
             return;
         }
-        simulatedPlacementBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
+        simulatedPlacementBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
         if (result.length >= 10) {
             currentTargetDamage = result[8];
             currentSelfDamage = result[9];
@@ -184,16 +181,16 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         int anchorSlot = findItemSlot(mc, "respawn_anchor");
         if (anchorSlot == -1)
             return;
-        BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
-        Direction face = Direction.values()[(int) result[4]];
-        BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
-        Vec3 hitVec = Vec3.atCenterOf(neighborPos)
-                .add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
+        net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
+        net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
+        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos)
+                .add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         performUse(mc, anchorSlot, neighborPos, face, hitVec);
     }
 
-    private void performUse(Minecraft mc, int slot, BlockPos targetBlock, Direction face, Vec3 hitVec) {
+    private void performUse(Minecraft mc, int slot, net.minecraft.core.BlockPos targetBlock, net.minecraft.core.Direction face, net.minecraft.world.phys.Vec3 hitVec) {
         int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
         String swap = swapMode.getValue();
         if (swap.equals("None")) {
@@ -204,15 +201,15 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
             InventoryUtility.silentSelectSlot(mc.player, slot);
         }
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, targetBlock, false);
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         lastActionTime = System.currentTimeMillis();
         if (swapSwitchBack.getValue() && originalSlot != -1 && !swap.equals("None")) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
     }
 
-    private void calculateExpectedDamages(Minecraft mc, LivingEntity target, BlockPos anchorPos) {
+    private void calculateExpectedDamages(Minecraft mc, net.minecraft.world.entity.LivingEntity target, net.minecraft.core.BlockPos anchorPos) {
         if (NATIVE.isLoaded()) {
             double[] solidBlockData = collectSolidBlocks(mc);
             double[] result = nativeCalculateAnchorAura(
@@ -241,18 +238,18 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         }
     }
 
-    private BlockPos findExistingAnchor(Minecraft mc, LivingEntity target) {
-        BlockPos tPos = target.blockPosition();
+    private net.minecraft.core.BlockPos findExistingAnchor(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
+        net.minecraft.core.BlockPos tPos = target.blockPosition();
         double maxDist = targetRange.getValue();
         double maxPlaceDist = range.getValue();
-        BlockPos bestAnchor = null;
+        net.minecraft.core.BlockPos bestAnchor = null;
         double bestDist = Double.MAX_VALUE;
         int r = 3;
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -2; dy <= 2; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
-                    BlockPos p = tPos.offset(dx, dy, dz);
-                    if (mc.level.getBlockState(p).is(Blocks.RESPAWN_ANCHOR)) {
+                    net.minecraft.core.BlockPos p = tPos.offset(dx, dy, dz);
+                    if (mc.level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR)) {
                         double pDist = Math
                                 .sqrt(p.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
                         if (pDist <= maxPlaceDist) {
@@ -301,7 +298,7 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         return -1;
     }
 
-    private void rotateTo(Minecraft mc, Vec3 target) {
+    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate.getValue();
         if (mode.equals("None"))
             return;
@@ -319,18 +316,18 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         silentRotation.lastPitch = finalPitch;
     }
 
-    private boolean isRotationAligned(Minecraft mc, Vec3 target) {
+    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         return silentRotation.isRotationAligned(mc, target, 12.0F);
     }
 
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
-        BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int r = (int) Math.ceil(range.getValue()) + 2;
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -4; dy <= 4; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
-                    BlockPos pos = playerPos.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
                         BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
@@ -349,14 +346,14 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         return arr;
     }
 
-    private LivingEntity findTarget(Minecraft mc) {
-        LivingEntity closest = null;
+    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+        net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
         double maxDist = targetRange.getValue();
         String mode = targetMode.getValue();
         String typeFilter = targetType.getValue();
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le))
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le))
                 continue;
             if (MobUtility.isSelf(le))
                 continue;
@@ -388,7 +385,7 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         return closest;
     }
 
-    private double[] getEntityStats(LivingEntity player) {
+    private double[] getEntityStats(net.minecraft.world.entity.LivingEntity player) {
         int protectionEpf = 0;
         int blastProtectionEpf = 0;
         net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
@@ -419,7 +416,7 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
             totems++;
         if (InventoryUtility.isTotem(player.getOffhandItem()))
             totems++;
-        if (player instanceof Player p) {
+        if (player instanceof net.minecraft.world.entity.player.Player p) {
             totems += InventoryUtility.countItem(p, "totem_of_undying");
         }
         double[] stats = new double[15];
@@ -460,16 +457,16 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         return stats;
     }
 
-    private double[] javaFallbackCalculate(Minecraft mc, LivingEntity target, double[] solidBlocksData) {
-        BlockPos tPos = target.blockPosition();
-        Set<BlockPos> solids = new HashSet<>();
+    private double[] javaFallbackCalculate(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlocksData) {
+        net.minecraft.core.BlockPos tPos = target.blockPosition();
+        Set<net.minecraft.core.BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
             solids.add(
-                    new BlockPos((int) solidBlocksData[i], (int) solidBlocksData[i + 1], (int) solidBlocksData[i + 2]));
+                    new net.minecraft.core.BlockPos((int) solidBlocksData[i], (int) solidBlocksData[i + 1], (int) solidBlocksData[i + 2]));
         }
-        BlockPos bestBlock = null;
+        net.minecraft.core.BlockPos bestBlock = null;
         double bestDist = Double.MAX_VALUE;
-        BlockPos bestNeighbor = null;
+        net.minecraft.core.BlockPos bestNeighbor = null;
         int bestFace = 1;
         int r = 2;
         double maxPlaceRange = range.getValue();
@@ -477,7 +474,7 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
-                    BlockPos c = tPos.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos c = tPos.offset(dx, dy, dz);
                     if (solids.contains(c))
                         continue;
                     double pDist = Math
@@ -492,10 +489,10 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
                     if (intersectsEntity(mc.player, c) || intersectsEntity(target, c))
                         continue;
                     boolean hasNeighbor = false;
-                    BlockPos neighbor = null;
+                    net.minecraft.core.BlockPos neighbor = null;
                     int faceIndex = 1;
-                    for (Direction dir : Direction.values()) {
-                        BlockPos n = c.relative(dir);
+                    for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                        net.minecraft.core.BlockPos n = c.relative(dir);
                         if (solids.contains(n)) {
                             hasNeighbor = true;
                             neighbor = n;
@@ -528,7 +525,7 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         return new double[] { 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     }
 
-    private boolean intersectsEntity(Entity entity, BlockPos pos) {
+    private boolean intersectsEntity(net.minecraft.world.entity.Entity entity, net.minecraft.core.BlockPos pos) {
         double minX = entity.getX() - 0.3;
         double maxX = entity.getX() + 0.3;
         double minY = entity.getY();

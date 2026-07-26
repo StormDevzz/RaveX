@@ -9,12 +9,12 @@ import net.minecraft.world.inventory.ClickType;
 
 import ravex.parameter.ActionParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.gui.clickgui.AutoReGearScreen;
 import java.util.HashMap;
 import java.util.Map;
-@ModuleInfo(name = "AutoReGear", category = "Player")
+@ModuleInfo(name = "AutoReGear", category = "net.minecraft.world.entity.player.Player")
 public class AutoReGear extends ravex.modules.Module {
 public final NumberParameter delayParam = new NumberParameter("Delay", 200, 50, 1000, 50);
     public final ActionParameter items = new ActionParameter("Items", () -> {
@@ -22,7 +22,7 @@ public final NumberParameter delayParam = new NumberParameter("Delay", 200, 50, 
             new AutoReGearScreen(Minecraft.getInstance().screen)
         );
     });
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_autoregear");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autoregear");
     static {
         NATIVE.load();
     }

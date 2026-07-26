@@ -7,11 +7,10 @@ import net.minecraft.client.gui.screens.inventory.FurnaceScreen;
 import net.minecraft.client.gui.screens.inventory.BlastFurnaceScreen;
 import net.minecraft.client.gui.screens.inventory.SmokerScreen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.animal.equine.Llama;
 import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.animal.wolf.Wolf;
@@ -23,14 +22,13 @@ import net.minecraft.world.level.block.BrewingStandBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.misc.MobUtility;
-import ravex.utility.misc.block.BlockUtility;
 
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
@@ -50,7 +48,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
     public final NumberParameter lightLevel = new NumberParameter("LightLevel", 8, 0, 15, 1);
     public final NumberParameter lightDelay = new NumberParameter("Delay", 500, 100, 2000, 50);
     public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
-    public static BlockPos smeltTarget = null;
+    public static net.minecraft.core.BlockPos smeltTarget = null;
     private static int brewTargetX, brewTargetY, brewTargetZ;
     private static boolean hasBrewTarget;
     private long lastLightPlace = 0;
@@ -87,7 +85,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
         }
         if (smeltTarget == null) {
             if (mc.hitResult != null && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
-                BlockPos pos = ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos();
+                net.minecraft.core.BlockPos pos = ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos();
                 BlockState st = mc.level.getBlockState(pos);
                 if (st.getBlock() instanceof AbstractFurnaceBlock) {
                     smeltTarget = pos;
@@ -141,23 +139,23 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
         if (p == null || mc.level == null) return;
         double r = range.getValue();
         AABB box = p.getBoundingBox().inflate(r);
-        List<Entity> entities = mc.level.getEntities(p, box, e -> isTameTarget(e) && e.isAlive());
-        for (Entity e : entities) {
+        List<net.minecraft.world.entity.Entity> entities = mc.level.getEntities(p, box, e -> isTameTarget(e) && e.isAlive());
+        for (net.minecraft.world.entity.Entity e : entities) {
             var target = MobUtility.asLivingEntity(e);
-            if (!p.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
-                mc.gameMode.interact(p, target, InteractionHand.MAIN_HAND);
+            if (!p.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND).isEmpty()) {
+                mc.gameMode.interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
                 break;
             } else if (autoSwitch.getValue()) {
                 int slot = findTameItem();
                 if (slot != -1) {
                     InventoryUtility.selectSlot(p, slot);
-                    mc.gameMode.interact(p, target, InteractionHand.MAIN_HAND);
+                    mc.gameMode.interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
                     break;
                 }
             }
         }
     }
-    private boolean isTameTarget(Entity e) {
+    private boolean isTameTarget(net.minecraft.world.entity.Entity e) {
         return switch (tameAnimal.getValue()) {
             case "Wolf" -> e instanceof Wolf;
             case "Cat" -> e instanceof Cat;
@@ -264,7 +262,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
             || name.equals("spider_eye") || name.equals("pufferfish") || name.equals("phantom_membrane")
             || name.equals("dragon_breath") || name.equals("turtle_helmet");
     }
-    public static BlockPos getBrewTarget() {
+    public static net.minecraft.core.BlockPos getBrewTarget() {
         if (!hasBrewTarget) return null;
         return BlockUtility.pos(brewTargetX, brewTargetY, brewTargetZ);
     }
@@ -302,11 +300,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
                     var placeOn = BlockUtility.pos(x, aboveY, z);
                     if (!mc.level.getBlockState(placeOn).isAir()) continue;
                     if (state.getShape(mc.level, pos).isEmpty()) continue;
-                    var center = Vec3.atCenterOf(placeOn);
+                    var center = net.minecraft.world.phys.Vec3.atCenterOf(placeOn);
                     if (center.distanceToSqr(mc.player.getEyePosition()) > r * r) continue;
                     int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
                     InventoryUtility.selectSlot(mc.player, torchSlot);
-                    BlockUtility.useItemOn(mc, new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
+                    BlockUtility.useItemOn(mc, new BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false));
                     if (silent.getValue()) {
                         InventoryUtility.selectSlot(mc.player, prevSlot);
                     }

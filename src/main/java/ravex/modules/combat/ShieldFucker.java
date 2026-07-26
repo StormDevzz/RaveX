@@ -2,16 +2,16 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "ShieldFucker", category = "Combat")
@@ -28,8 +28,8 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent",
             List.of("Silent", "Normal", "None"));
-    public static final SilentRotation silentRotation = new SilentRotation();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_shieldfucker");
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_shieldfucker");
     static {
         NATIVE.load();
     }
@@ -125,7 +125,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         handleAction(mc, target);
     }
     private boolean hasShield(net.minecraft.world.entity.LivingEntity entity) {
-        if (entity instanceof Player player) {
+        if (entity instanceof net.minecraft.world.entity.player.Player player) {
             return InventoryUtility.isItem(player.getOffhandItem(), "shield")
                 || InventoryUtility.isItem(player.getMainHandItem(), "shield");
         }
@@ -205,7 +205,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             if (!targetPlayers.getValue() && MobUtility.isPlayer(le)) continue;
             if (!targetMonsters.getValue() && MobUtility.isHostile(le)) continue;
             if (MobUtility.distanceToPlayer(le) > maxDist) continue;
-            if (!(le instanceof Player player)) continue;
+            if (!(le instanceof net.minecraft.world.entity.player.Player player)) continue;
             boolean shield = InventoryUtility.isItem(player.getOffhandItem(), "shield")
                 || InventoryUtility.isItem(player.getMainHandItem(), "shield");
             boolean blocking = player.isBlocking();

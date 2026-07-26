@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.Shaders;
 import ravex.manager.HandShaderManager;
-import ravex.utility.render.animate.NativeAnimateVertexConsumer;
-import ravex.utility.render.animate.ShaderVertexConsumer;
+import ravex.utility.render.animate.NativeAnimateVertexConsumerUtility;
+import ravex.utility.render.animate.ShaderVertexConsumerUtility;
 
 @Mixin(Model.class)
 public class MixinModel {
@@ -37,7 +37,7 @@ public class MixinModel {
         boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
 
         if (isPlayerModel && Shaders.itz().players.getValue()) {
-            return new NativeAnimateVertexConsumer(consumer, Shaders.itz().fillColor.getValue(), false);
+            return new NativeAnimateVertexConsumerUtility(consumer, Shaders.itz().fillColor.getValue(), false);
         }
 
         return consumer;

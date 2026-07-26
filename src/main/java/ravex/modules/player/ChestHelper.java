@@ -8,7 +8,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.utility.player.ContainerUtility;
 import java.util.ArrayList;
 import java.util.List;
-@ModuleInfo(name = "ChestHelper", category = "Player")
+@ModuleInfo(name = "ChestHelper", category = "net.minecraft.world.entity.player.Player")
 public class ChestHelper extends ravex.modules.Module {
 public final BooleanParameter steal   = new BooleanParameter("Steal", true);
     public final BooleanParameter dump    = new BooleanParameter("Dump",  true);

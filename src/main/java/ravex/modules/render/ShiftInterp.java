@@ -2,17 +2,16 @@ package ravex.modules.render;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
 
 import ravex.parameter.ModeParameter;
 @ModuleInfo(name = "ShiftInterp", category = "Render")
 public class ShiftInterp extends ravex.modules.Module {
 public final ModeParameter target = new ModeParameter("Target", "All", java.util.List.of("All", "Others", "Self"));
 
-    public boolean shouldCrouch(Entity entity) {
+    public boolean shouldCrouch(net.minecraft.world.entity.Entity entity) {
         if (!getEnabled()) return false;
-        if (!(entity instanceof Player)) return false;
+        if (!(entity instanceof net.minecraft.world.entity.player.Player)) return false;
         Minecraft mc = Minecraft.getInstance();
         boolean isSelf = (entity == mc.player);
         String t = target.getValue();

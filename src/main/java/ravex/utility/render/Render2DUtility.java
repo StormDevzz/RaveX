@@ -18,7 +18,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Render2DEngine {
+public class Render2DUtility {
 
     private static final int RRT_SIZE = 128;
     private static Identifier rrtHdTex = null;

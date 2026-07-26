@@ -6,7 +6,7 @@ import ravex.gui.clickgui.ClickGUI;
 import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.manager.ModuleManager;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.animate.AnimationUtility;
 import ravex.modules.client.ClickGui;
 import ravex.utility.render.FontRenderUtility;
@@ -132,14 +132,14 @@ public class CategoryPanel {
         int r = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), panelH / 2);
 
         int pAlpha = ModuleManager.get(ClickGui.class).panelOpacity.getValue().intValue();
-        Render2DEngine.drawRound(graphics, ix, iy, width, panelH, r, ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, pAlpha));
+        Render2DUtility.drawRound(graphics, ix, iy, width, panelH, r, ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, pAlpha));
 
         if (ModuleManager.get(ClickGui.class).outlines.getValue()) {
             int borderColor = ModuleManager.get(ClickGui.class).outlineColor.getValue();
-            Render2DEngine.drawRound(graphics, ix - 1, iy - 1, width + 2, panelH + 2, r, borderColor);
+            Render2DUtility.drawRound(graphics, ix - 1, iy - 1, width + 2, panelH + 2, r, borderColor);
         }
 
-        Identifier catTexWhite = ravex.utility.render.TextureLoader.getCategoryTextureWhite(category);
+        Identifier catTexWhite = ravex.utility.render.TextureLoaderUtility.getCategoryTextureWhite(category);
         if (catTexWhite != null) {
             int iconSize = 14;
             int iconX = ix + 5;
@@ -164,7 +164,7 @@ public class CategoryPanel {
             int badgeX = ix + width - cw - pad - 8;
             int badgeY = iy + 4;
             int badgeH = 14;
-            Render2DEngine.drawRound(graphics, badgeX, badgeY, cw + pad * 2, badgeH, 4, 0x22000000);
+            Render2DUtility.drawRound(graphics, badgeX, badgeY, cw + pad * 2, badgeH, 4, 0x22000000);
             FontRenderUtility.drawString(graphics, countText,
                 badgeX + pad, badgeY + (badgeH - FontRenderUtility.getFontHeight()) / 2 + 1,
                 enabled == total ? 0xFFA0E0A0 : 0xFFE0E0E0, true);

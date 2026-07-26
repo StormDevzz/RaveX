@@ -66,6 +66,7 @@ public abstract class Module {
         this.gearLastTick = System.currentTimeMillis();
     }
     public boolean isHud() { return hud; }
+    public void setHud(boolean hud) { this.hud = hud; }
     public String getName() {
         return name != null ? name : getClass().getSimpleName();
     }
@@ -177,8 +178,8 @@ public abstract class Module {
             java.lang.reflect.Field f = getClass().getDeclaredField("NATIVE");
             f.setAccessible(true);
             Object lib = f.get(null);
-            if (lib instanceof ravex.utility.nativelib.NativeLibrary) {
-                ((ravex.utility.nativelib.NativeLibrary) lib).load();
+            if (lib instanceof ravex.utility.nativelib.NativeLibraryUtility) {
+                ((ravex.utility.nativelib.NativeLibraryUtility) lib).load();
             }
         } catch (Exception ignored) {}
     }

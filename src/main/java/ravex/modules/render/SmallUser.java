@@ -2,7 +2,7 @@ package ravex.modules.render;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
 
 import ravex.utility.misc.MobUtility;
 import ravex.parameter.ModeParameter;
@@ -15,7 +15,7 @@ public final ModeParameter target = new ModeParameter("Target", "All", java.util
     public final NumberParameter scale = new NumberParameter("Scale", 0.5, 0.2, 1.0, 0.05);
     public final Map<Object, Float> stateScaleMap = new ConcurrentHashMap<>();
 
-    public boolean shouldScale(Player player) {
+    public boolean shouldScale(net.minecraft.world.entity.player.Player player) {
         if (!getEnabled()) return false;
         Minecraft mc = Minecraft.getInstance();
         boolean isSelf = MobUtility.isSelf(player);

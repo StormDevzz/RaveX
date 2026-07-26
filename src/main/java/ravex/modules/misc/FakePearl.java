@@ -7,21 +7,21 @@ import net.minecraft.world.item.Items;
 import ravex.RaveX;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 @ModuleInfo(name = "FakePearl", category = "Misc")
 public class FakePearl extends ravex.modules.Module {
 public final ModeParameter trigger = new ModeParameter("Trigger", "OnEnable", java.util.List.of("OnEnable", "RightClick", "Both"));
     public final NumberParameter velocity = new NumberParameter("Velocity", 1.5, 0.5, 3.0, 0.1);
     public final NumberParameter gravity = new NumberParameter("Gravity", 0.03, 0.01, 0.1, 0.01);
     public final BooleanParameter sound = new BooleanParameter("Sound", true);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_fakepearl");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_fakepearl");
     static {
         NATIVE.load();
     }
@@ -76,7 +76,7 @@ public final ModeParameter trigger = new ModeParameter("Trigger", "OnEnable", ja
             }
         };
         pearl.setPos(mc.player.getX(), mc.player.getEyeY() - 0.1, mc.player.getZ());
-        pearl.setDeltaMovement(new Vec3(vel[0], vel[1], vel[2]));
+        pearl.setDeltaMovement(new net.minecraft.world.phys.Vec3(vel[0], vel[1], vel[2]));
         mc.level.addEntity(pearl);
         if (sound.getValue()) {
             mc.level.playLocalSound(mc.player.getX(), mc.player.getY(), mc.player.getZ(),

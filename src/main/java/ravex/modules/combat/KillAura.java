@@ -1,15 +1,14 @@
 package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
+import ravex.utility.misc.PhysicUtility;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.CameraUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -17,7 +16,7 @@ import ravex.parameter.MultiSelectParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.List;
 
 @ModuleInfo(name = "KillAura", category = "Combat")
@@ -48,8 +47,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
     public final BooleanParameter keepSprint = new BooleanParameter("KeepSprint", false);
     public final NumberParameter keepSprintSpeed = ((NumberParameter) new NumberParameter("KeepSprintSpeed", 100, 0, 100, 5).setVisible(() -> keepSprint.getValue()));
 
-    public static final SilentRotation silentRotation = new SilentRotation();
-    private LivingEntity currentTarget = null;
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    private net.minecraft.world.entity.LivingEntity currentTarget = null;
     private long lastAttackTime = 0;
     private float prevYaw = 0;
     private float prevPitch = 0;
@@ -63,7 +62,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
     private static float circleStep = 0f;
     private static float prevCircleStep = 0f;
 
-    public LivingEntity getCurrentTarget() {
+    public net.minecraft.world.entity.LivingEntity getCurrentTarget() {
         return currentTarget;
     }
 
@@ -113,11 +112,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
             }
         }
 
-        LivingEntity target = ka.currentTarget;
+        var target = ka.currentTarget;
         if (target == null || MobUtility.isDead(target)) return;
 
-        Vec3 eyePos = mc.player.getEyePosition();
-        Vec3 aimPos = target.position().add(0, target.getBbHeight() * 0.5, 0);
+        var eyePos = mc.player.getEyePosition();
+        var aimPos = target.position().add(0, target.getBbHeight() * 0.5, 0);
         float[] freshAngles = RotationUtility.anglesTo(eyePos, aimPos);
 
         // гцд коррекция к дельте
@@ -143,7 +142,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
             double dy = Math.max(0, Math.max(pa.minY - ea.maxY, ea.minY - pa.maxY));
             double dz = Math.max(0, Math.max(pa.minZ - ea.maxZ, ea.minZ - pa.maxZ));
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            Vec3 mobVel = target.getDeltaMovement();
+            var mobVel = target.getDeltaMovement();
             double mobSpeed = Math.sqrt(mobVel.x * mobVel.x + mobVel.z * mobVel.z);
             double buffer = 0.15 + Math.min(mobSpeed * 1.5, 0.1);
             if (dist > ka.range.getValue() - buffer) return;
@@ -161,7 +160,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         if (now - ka.lastAttackTime < 50) return;
 
         if (ka.mode.getValue().equals("Tracker")) {
-            Vec3 targetAimPos = target.position().add(0, target.getBbHeight() * 0.45, 0);
+            var targetAimPos = target.position().add(0, target.getBbHeight() * 0.45, 0);
             float[] desired = RotationUtility.anglesTo(eyePos, targetAimPos);
             float yawDiff   = Math.abs(RotationUtility.normalizeYaw(freshYaw - desired[0]));
             float pitchDiff = Math.abs(freshPitch - desired[1]);
@@ -187,7 +186,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
                 mc.player.setSprinting(true);
                 double multiplier = ka.keepSprintSpeed.getValue() / 100.0;
                 if (multiplier < 1.0) {
-                    Vec3 vel = mc.player.getDeltaMovement();
+                    var vel = mc.player.getDeltaMovement();
                     mc.player.setDeltaMovement(vel.x * multiplier, vel.y, vel.z * multiplier);
                 }
             }
@@ -204,7 +203,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         }
         silentRotation.hasRotation = false;
 
-        LivingEntity target = findTarget(mc);
+        var target = findTarget(mc);
         if (target == null) {
             currentTarget = null;
             prevYaw = 0;
@@ -254,14 +253,14 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         circleStep += 0.15f;
     }
 
-    private LivingEntity findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
 
         final double BASE_BUFFER = 0.15;
-        LivingEntity closest = null;
+        net.minecraft.world.entity.LivingEntity closest = null;
         double closestDist = Double.MAX_VALUE;
 
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le)) continue;
+        for (var e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
             if (!targets.isSelected("Invisibles") && le.isInvisible()) continue;
@@ -277,7 +276,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
             double dz = Math.max(0, Math.max(pa.minZ - ea.maxZ, ea.minZ - pa.maxZ));
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-            Vec3 mobVel = le.getDeltaMovement();
+            var mobVel = le.getDeltaMovement();
             double mobSpeed = Math.sqrt(mobVel.x * mobVel.x + mobVel.z * mobVel.z);
             double buffer = BASE_BUFFER + Math.min(mobSpeed * 1.5, 0.1);
 
@@ -295,7 +294,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         return closest;
     }
 
-    private void attack(Minecraft mc, LivingEntity target) {
+    private void attack(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
         if (autoWeapon.getValue() && !swapMode.getValue().equals("None")) {
             int bestSlot = -1;
             double bestDmg = -1.0;
@@ -346,7 +345,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         return dmg;
     }
 
-    private float[] calculateAngles(Minecraft mc, LivingEntity target) {
+    private float[] calculateAngles(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
         if (prevYaw == 0f && prevPitch == 0f) {
             prevYaw = mc.player.getYRot();
             prevPitch = mc.player.getXRot();
@@ -354,7 +353,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
 
         float yaw, pitch;
         if (mode.getValue().equals("Tracker")) {
-            Vec3 stomachPos = target.position().add(0, target.getBbHeight() * 0.45, 0);
+            var stomachPos = target.position().add(0, target.getBbHeight() * 0.45, 0);
             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), stomachPos);
             float targetYaw = angles[0];
             float targetPitch = angles[1];
@@ -383,12 +382,12 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
             yaw = prevYaw + stepYaw;
             pitch = prevPitch + stepPitch;
         } else if (mode.getValue().equals("Snap")) {
-            Vec3 chestPos = target.position().add(0, target.getBbHeight() * 0.65, 0);
+            var chestPos = target.position().add(0, target.getBbHeight() * 0.65, 0);
             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), chestPos);
             yaw = angles[0];
             pitch = angles[1];
         } else {
-            Vec3 headPos = target.position().add(0, target.getBbHeight() * 0.9, 0);
+            var headPos = target.position().add(0, target.getBbHeight() * 0.9, 0);
             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), headPos);
             yaw = angles[0];
             pitch = angles[1];
@@ -399,17 +398,17 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         return new float[]{yaw, pitch};
     }
 
-    public void render(Matrix4f modelViewMatrix, Camera camera, float tickDelta) {
+    public void render(Matrix4f modelViewMatrix, net.minecraft.client.Camera camera, float tickDelta) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        LivingEntity target = currentTarget;
+        var target = currentTarget;
         if (target == null || target.isDeadOrDying()) return;
 
         if (targetEspMode.getValue().equals("RaveXV1")) {
             float progressVal = prevScanProgress + (scanProgress - prevScanProgress) * tickDelta;
             float rotation = prevSlowRotation + (slowRotation - prevSlowRotation) * tickDelta;
-            ravex.utility.render.Render3DEngine.renderRaveXESP(
+            ravex.utility.render.Render3DUtility.renderRaveXESP(
                 modelViewMatrix,
                 camera,
                 target,
@@ -419,7 +418,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
                 tickDelta
             );
         } else if (targetEspMode.getValue().equals("Circle")) {
-            ravex.utility.render.Render3DEngine.renderCircleESP(
+            ravex.utility.render.Render3DUtility.renderCircleESP(
                 modelViewMatrix,
                 camera,
                 target,

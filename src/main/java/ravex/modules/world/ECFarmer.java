@@ -2,17 +2,16 @@ package ravex.modules.world;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.Direction;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.misc.block.BlockUtility;
 import java.util.List;
 @ModuleInfo(name = "ECFarmer", category = "World")
 public class ECFarmer extends ravex.modules.Module {
@@ -29,7 +28,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     private int prevSlot = -1;
     private static int targetX, targetY, targetZ;
     private static boolean hasRenderTarget;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_ecfarmer");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_ecfarmer");
     static {
         NATIVE.load();
     }
@@ -111,7 +110,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         }
         var below = BlockUtility.pos(ecX, ecY - 1, ecZ);
         BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
-            Vec3.atCenterOf(below), Direction.UP, below, false));
+            net.minecraft.world.phys.Vec3.atCenterOf(below), net.minecraft.core.Direction.UP, below, false));
         BlockUtility.swing(mc);
         swapBack(mc, original);
         state = State.IDLE;
@@ -250,8 +249,8 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         }
         return null;
     }
-    private static Direction getDirection(Vec3 eye, int x, int y, int z) {
-        var center = Vec3.atCenterOf(BlockUtility.pos(x, y, z));
+    private static net.minecraft.core.Direction getDirection(net.minecraft.world.phys.Vec3 eye, int x, int y, int z) {
+        var center = net.minecraft.world.phys.Vec3.atCenterOf(BlockUtility.pos(x, y, z));
         double dx = eye.x - center.x;
         double dy = eye.y - y - 0.5;
         double dz = eye.z - center.z;
@@ -259,14 +258,14 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         double absY = Math.abs(dy);
         double absZ = Math.abs(dz);
         if (absY <= absX && absY <= absZ) {
-            if (absX >= absZ) return dx > 0 ? Direction.EAST : Direction.WEST;
-            else return dz > 0 ? Direction.SOUTH : Direction.NORTH;
+            if (absX >= absZ) return dx > 0 ? net.minecraft.core.Direction.EAST : net.minecraft.core.Direction.WEST;
+            else return dz > 0 ? net.minecraft.core.Direction.SOUTH : net.minecraft.core.Direction.NORTH;
         } else if (absX <= absY && absX <= absZ) {
-            if (absY >= absZ) return dy > 0 ? Direction.DOWN : Direction.UP;
-            else return dz > 0 ? Direction.SOUTH : Direction.NORTH;
+            if (absY >= absZ) return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
+            else return dz > 0 ? net.minecraft.core.Direction.SOUTH : net.minecraft.core.Direction.NORTH;
         } else {
-            if (absY >= absX) return dy > 0 ? Direction.DOWN : Direction.UP;
-            else return dx > 0 ? Direction.EAST : Direction.WEST;
+            if (absY >= absX) return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
+            else return dx > 0 ? net.minecraft.core.Direction.EAST : net.minecraft.core.Direction.WEST;
         }
     }
     private static native double nativeCalcBreakTime(String toolId, int efficiency, int haste, int durability, int maxDura);

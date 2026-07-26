@@ -2,19 +2,17 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BlockItem;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -22,7 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "TntAura", category = "Combat")
 public class TntAura extends ravex.modules.Module {
@@ -49,9 +47,9 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
     private int[] gapPos = null;
     private net.minecraft.world.entity.LivingEntity currentTarget = null;
     private int failedTntPlacements = 0;
-    public static final List<BlockPos> renderBlocks = new ArrayList<>();
-    public static final SilentRotation silentRotation = new SilentRotation();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_tntaura");
+    public static final List<net.minecraft.core.BlockPos> renderBlocks = new ArrayList<>();
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_tntaura");
     static {
         NATIVE.load();
     }
@@ -147,16 +145,16 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         }
         int blockSlot = findObsidianSlot(mc);
         if (blockSlot == -1) return;
-        BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
-        Direction face = Direction.values()[(int) result[4]];
-        BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
-        Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(
-            new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
+        net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
+        net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
+        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(
+            new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         swapTo(mc, blockSlot);
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         restoreSlot(mc, blockSlot);
         synchronized (renderBlocks) { renderBlocks.add(targetBlock); }
         lastActionTime = now;
@@ -164,7 +162,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
     private void tickPlacingTnt(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
         if (now - lastActionTime < tntDelay.getValue()) return;
         if (gapPos == null) {
-            BlockPos feet = target.blockPosition();
+            net.minecraft.core.BlockPos feet = target.blockPosition();
             double dx = mc.player.getX() - (feet.getX() + 0.5);
             double dz = mc.player.getZ() - (feet.getZ() + 0.5);
             int headY = feet.getY() + 1;
@@ -207,15 +205,15 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
             return;
         }
         failedTntPlacements = 0;
-        BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
-        Direction face = Direction.values()[(int) result[4]];
-        Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(
-            new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
+        net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
+        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(
+            new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         swapTo(mc, tntSlot);
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         restoreSlot(mc, tntSlot);
         currentState = State.IGNITING;
         lastActionTime = now;
@@ -227,13 +225,13 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
             if (autoDisable.getValue()) enabled = false;
             return;
         }
-        BlockPos tntPos = new BlockPos(gapPos[0], gapPos[1], gapPos[2]);
-        Vec3 hitVec = Vec3.atCenterOf(tntPos);
+        net.minecraft.core.BlockPos tntPos = new net.minecraft.core.BlockPos(gapPos[0], gapPos[1], gapPos[2]);
+        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(tntPos);
         rotateTo(mc, hitVec);
         swapTo(mc, flintSlot);
-        BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, tntPos, false);
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        BlockHitResult hitResult = new BlockHitResult(hitVec, net.minecraft.core.Direction.UP, tntPos, false);
+        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         restoreSlot(mc, flintSlot);
         currentState = State.WAITING;
         lastActionTime = now;
@@ -275,13 +273,13 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
-                if (bi.getBlock() == Blocks.OBSIDIAN) return i;
+                if (bi.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) return i;
             }
         }
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
-                if (bi.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, BlockPos.ZERO)) {
+                if (bi.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, net.minecraft.core.BlockPos.ZERO)) {
                     return i;
                 }
             }
@@ -292,7 +290,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem bi) {
-                if (bi.getBlock() == Blocks.TNT) return i;
+                if (bi.getBlock() == net.minecraft.world.level.block.Blocks.TNT) return i;
             }
         }
         return -1;
@@ -307,14 +305,14 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
         double r = range.getValue() + 3.0;
-        BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int rx = (int) Math.ceil(r);
         int ry = 3;
         int rz = (int) Math.ceil(r);
         for (int dx = -rx; dx <= rx; dx++) {
             for (int dy = -ry; dy <= ry; dy++) {
                 for (int dz = -rz; dz <= rz; dz++) {
-                    BlockPos pos = playerPos.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
                         BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
@@ -330,7 +328,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         for (int i = 0; i < arr.length; i++) arr[i] = data.get(i);
         return arr;
     }
-    private void rotateTo(Minecraft mc, Vec3 target) {
+    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotateMode.getValue();
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
@@ -368,41 +366,41 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         }
     }
     private double[] javaFallbackCage(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidData) {
-        BlockPos feet = target.blockPosition();
+        net.minecraft.core.BlockPos feet = target.blockPosition();
         double dx = mc.player.getX() - (feet.getX() + 0.5);
         double dz = mc.player.getZ() - (feet.getZ() + 0.5);
         int headY = feet.getY() + 1;
-        BlockPos gapBlock;
+        net.minecraft.core.BlockPos gapBlock;
         if (Math.abs(dx) >= Math.abs(dz)) {
-            gapBlock = dx > 0 ? new BlockPos(feet.getX() + 1, headY, feet.getZ())
-                              : new BlockPos(feet.getX() - 1, headY, feet.getZ());
+            gapBlock = dx > 0 ? new net.minecraft.core.BlockPos(feet.getX() + 1, headY, feet.getZ())
+                              : new net.minecraft.core.BlockPos(feet.getX() - 1, headY, feet.getZ());
         } else {
-            gapBlock = dz > 0 ? new BlockPos(feet.getX(), headY, feet.getZ() + 1)
-                              : new BlockPos(feet.getX(), headY, feet.getZ() - 1);
+            gapBlock = dz > 0 ? new net.minecraft.core.BlockPos(feet.getX(), headY, feet.getZ() + 1)
+                              : new net.minecraft.core.BlockPos(feet.getX(), headY, feet.getZ() - 1);
         }
         if (gapPos == null) {
             gapPos = new int[]{gapBlock.getX(), gapBlock.getY(), gapBlock.getZ()};
         }
-        List<BlockPos> candidates = new ArrayList<>();
+        List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
         candidates.add(feet.north()); candidates.add(feet.south());
         candidates.add(feet.east());  candidates.add(feet.west());
-        BlockPos[] headSides = {feet.above().north(), feet.above().south(),
+        net.minecraft.core.BlockPos[] headSides = {feet.above().north(), feet.above().south(),
                                 feet.above().east(), feet.above().west()};
-        for (BlockPos h : headSides) {
+        for (net.minecraft.core.BlockPos h : headSides) {
             if (!h.equals(gapBlock)) candidates.add(h);
         }
         if (roof.getValue()) candidates.add(feet.above(2));
-        Set<BlockPos> solids = new HashSet<>();
+        Set<net.minecraft.core.BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidData.length; i += 3) {
-            solids.add(new BlockPos((int) solidData[i], (int) solidData[i + 1], (int) solidData[i + 2]));
+            solids.add(new net.minecraft.core.BlockPos((int) solidData[i], (int) solidData[i + 1], (int) solidData[i + 2]));
         }
-        Vec3 eyePos = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
         double r = range.getValue();
-        for (BlockPos cand : candidates) {
+        for (net.minecraft.core.BlockPos cand : candidates) {
             if (solids.contains(cand)) continue;
-            if (eyePos.distanceToSqr(Vec3.atCenterOf(cand)) > r * r) continue;
-            for (Direction d : Direction.values()) {
-                BlockPos side = cand.relative(d);
+            if (eyePos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(cand)) > r * r) continue;
+            for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                net.minecraft.core.BlockPos side = cand.relative(d);
                 if (solids.contains(side)) {
                     return new double[]{
                         1.0,
@@ -418,12 +416,12 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
     }
     private double[] javaFallbackTntPlacement(Minecraft mc) {
         if (gapPos == null) return new double[]{0.0};
-        BlockPos gap = new BlockPos(gapPos[0], gapPos[1], gapPos[2]);
-        Vec3 eyePos = mc.player.getEyePosition();
+        net.minecraft.core.BlockPos gap = new net.minecraft.core.BlockPos(gapPos[0], gapPos[1], gapPos[2]);
+        net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
         double r = range.getValue();
-        if (eyePos.distanceToSqr(Vec3.atCenterOf(gap)) > r * r) return new double[]{0.0};
-        for (Direction d : Direction.values()) {
-            BlockPos side = gap.relative(d);
+        if (eyePos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(gap)) > r * r) return new double[]{0.0};
+        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+            net.minecraft.core.BlockPos side = gap.relative(d);
             BlockState state = mc.level.getBlockState(side);
             if (!state.isAir() && !state.liquid()) {
                 return new double[]{

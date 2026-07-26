@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft;
 import java.util.List;
 @ModuleInfo(name = "FreeLook", category = "Render")
 public class FreeLook extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Player", List.of("Player", "Camera"));
+public final ModeParameter mode = new ModeParameter("Mode", "net.minecraft.world.entity.player.Player", List.of("net.minecraft.world.entity.player.Player", "net.minecraft.client.Camera"));
     private float lookYaw = 0.0f;
     private float lookPitch = 0.0f;
     private int originalPerspective = 0;

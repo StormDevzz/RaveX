@@ -9,10 +9,10 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
-import ravex.utility.render.animate.EasingAnimation;
+import ravex.utility.player.rotation.SilentRotationUtility;
+import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.utility.render.animate.SlideAnimation;
+import ravex.utility.render.animate.SlideAnimationUtility;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 @ModuleInfo(name = "Scaffold", category = "World")
@@ -33,10 +33,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
     public static float renderR = 1.0f;
     public static float renderG = 0.2f;
     public static float renderB = 0.8f;
-    public static final SilentRotation silentRotation = new SilentRotation();
-    private final EasingAnimation fadeAnim = new EasingAnimation();
-    private final EasingAnimation sizeAnim = new EasingAnimation();
-    private final SlideAnimation slideAnim = new SlideAnimation();
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    private final EasingAnimationUtility fadeAnim = new EasingAnimationUtility();
+    private final EasingAnimationUtility sizeAnim = new EasingAnimationUtility();
+    private final SlideAnimationUtility slideAnim = new SlideAnimationUtility();
     private int currX, currY, currZ;
     private boolean hasCurr;
 

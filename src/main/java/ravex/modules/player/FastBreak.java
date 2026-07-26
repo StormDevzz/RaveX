@@ -2,7 +2,7 @@ package ravex.modules.player;
 
 import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.NumberParameter;
-@ModuleInfo(name = "FastBreak", category = "Player")
+@ModuleInfo(name = "FastBreak", category = "net.minecraft.world.entity.player.Player")
 public class FastBreak extends ravex.modules.Module {
 public final NumberParameter delay = new NumberParameter("Delay", 0, 0, 4, 1);
     public static boolean maybeEnabled() {

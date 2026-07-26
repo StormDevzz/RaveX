@@ -2,8 +2,7 @@ package ravex.modules.render;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
@@ -12,14 +11,14 @@ import net.minecraft.world.entity.projectile.hurtingprojectile.AbstractHurtingPr
 import net.minecraft.world.entity.projectile.hurtingprojectile.windcharge.AbstractWindCharge;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThrownPotion;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.render.Render3DUtils;
+import ravex.utility.render.Render3DUtility;
 import java.util.*;
 
 @ModuleInfo(name = "Trails", category = "Render")
@@ -47,7 +46,7 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     private static final Map<Integer, List<TrailPoint>> entityTrails = new HashMap<>();
     private static final Map<Integer, List<TrailPoint>> playerTrails = new HashMap<>();
 
-    private record TrailPoint(Vec3 pos, long time) {
+    private record TrailPoint(net.minecraft.world.phys.Vec3 pos, long time) {
     }
 
     private Trails() {
@@ -68,10 +67,10 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
         if (self.getValue()) {
             addPoint(entityTrails, mc.player.getId(), mc.player.position(), now);
         }
-        for (Entity entity : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             if (entity == mc.player)
                 continue;
-            if (entity instanceof Player && playerEnabled.getValue()) {
+            if (entity instanceof net.minecraft.world.entity.player.Player && playerEnabled.getValue()) {
                 addPoint(playerTrails, entity.getId(), entity.position(), now);
             } else if (shouldTrack(entity)) {
                 addPoint(entityTrails, entity.getId(), entity.position(), now);
@@ -79,7 +78,7 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
         }
     }
 
-    private boolean shouldTrack(Entity entity) {
+    private boolean shouldTrack(net.minecraft.world.entity.Entity entity) {
         if (arrows.getValue() && entity instanceof Arrow)
             return true;
         if (pearls.getValue() && entity instanceof ThrownEnderpearl)
@@ -101,7 +100,7 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
         return false;
     }
 
-    private static void addPoint(Map<Integer, List<TrailPoint>> map, int id, Vec3 pos, long now) {
+    private static void addPoint(Map<Integer, List<TrailPoint>> map, int id, net.minecraft.world.phys.Vec3 pos, long now) {
         List<TrailPoint> trail = map.computeIfAbsent(id, k -> new ArrayList<>());
         TrailPoint last = trail.isEmpty() ? null : trail.get(trail.size() - 1);
         if (last != null && last.pos.distanceToSqr(pos) < 0.01)
@@ -125,7 +124,7 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
         return ravex.manager.ModuleManager.delegate(Trails.class).getEnabled() || toggleAlpha > 0.001f;
     }
 
-    public static void renderTrails(Matrix4f modelViewMatrix, Vec3 camPos) {
+    public static void renderTrails(Matrix4f modelViewMatrix, net.minecraft.world.phys.Vec3 camPos) {
         try {
             long now = System.currentTimeMillis();
             boolean enabled = ravex.manager.ModuleManager.delegate(Trails.class).getEnabled();
@@ -162,7 +161,7 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     }
 
     private static void renderFadingTrail(Map<Integer, List<TrailPoint>> map,
-            Matrix4f matrix, Vec3 camPos, long now,
+            Matrix4f matrix, net.minecraft.world.phys.Vec3 camPos, long now,
             int colorARGB, float lineWidth, long maxAge,
             boolean glowEnabled, int glowLayersVal, float glowSpreadVal) {
         float cr = ((colorARGB >> 16) & 0xFF) / 255.0f;
@@ -242,13 +241,13 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
 
     private static void renderGlowSeg(Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2,
             float cr, float cg, float cb, float alpha, float width) {
-        Render3DUtils.batchLineAdditive(matrix, List.of(new Vector3f(x1, y1, z1), new Vector3f(x2, y2, z2)), cr, cg, cb,
+        Render3DUtility.batchLineAdditive(matrix, List.of(new Vector3f(x1, y1, z1), new Vector3f(x2, y2, z2)), cr, cg, cb,
                 alpha, width);
     }
 
     private static void renderCoreSeg(Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2,
             float cr, float cg, float cb, float alpha, float width) {
-        Render3DUtils.batchLineStrip(matrix, List.of(new Vector3f(x1, y1, z1), new Vector3f(x2, y2, z2)), cr, cg, cb,
+        Render3DUtility.batchLineStrip(matrix, List.of(new Vector3f(x1, y1, z1), new Vector3f(x2, y2, z2)), cr, cg, cb,
                 alpha, width);
     }
     protected void onDisable() {

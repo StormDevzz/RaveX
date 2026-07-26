@@ -1,13 +1,12 @@
 package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Camera;
+import ravex.utility.misc.CameraUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
 
 import ravex.parameter.BooleanParameter;
@@ -15,10 +14,10 @@ import ravex.utility.player.rotation.RotationUtility;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.food.FoodUtility;
-import ravex.utility.render.Render3DUtils;
+import ravex.utility.render.Render3DUtility;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -69,22 +68,22 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
     public final BooleanParameter renderInfo = new BooleanParameter("RenderInfo", true);
     public final BooleanParameter renderThroughWalls = new BooleanParameter("ThroughWalls", false);
     public final BooleanParameter renderPredictionLine = new BooleanParameter("PredictionLine", true);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_pearltarget");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_pearltarget");
     private final Map<Integer, PearlData> trackedPearls = new HashMap<>();
-    private Player target = null;
-    private Vec3 targetPos = null;
-    private Player lastPearlThrower = null;
-    private Vec3 lastPearlLanding = null;
-    private Vec3 lastPearlPos = null;
-    private Vec3 lastPearlVel = null;
+    private net.minecraft.world.entity.player.Player target = null;
+    private net.minecraft.world.phys.Vec3 targetPos = null;
+    private net.minecraft.world.entity.player.Player lastPearlThrower = null;
+    private net.minecraft.world.phys.Vec3 lastPearlLanding = null;
+    private net.minecraft.world.phys.Vec3 lastPearlPos = null;
+    private net.minecraft.world.phys.Vec3 lastPearlVel = null;
     private long lastPearlTime = 0;
     private long lastAttackTime = 0;
     private long lastTargetSwitchTime = 0;
     private int currentTargetIndex = 0;
     private boolean wasSprinting = false;
-    public Vec3 renderPearlPos = null;
-    public Vec3 renderLandingPos = null;
-    public Vec3 renderTargetPos = null;
+    public net.minecraft.world.phys.Vec3 renderPearlPos = null;
+    public net.minecraft.world.phys.Vec3 renderLandingPos = null;
+    public net.minecraft.world.phys.Vec3 renderTargetPos = null;
     static {
         NATIVE.load();
     }
@@ -110,26 +109,26 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
         if (mc.player == null || mc.level == null) return;
         double r = range.getValue();
         List<ThrownEnderpearl> pearls = new ArrayList<>();
-        List<Player> players = new ArrayList<>();
-        for (Entity e : mc.level.entitiesForRendering()) {
+        List<net.minecraft.world.entity.player.Player> players = new ArrayList<>();
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (e instanceof ThrownEnderpearl pearl) {
                 if (MobUtility.distanceToPlayer(pearl) <= r) {
                     pearls.add(pearl);
                 }
             }
-            if (e instanceof Player p && !MobUtility.isSelf(p) && !p.isSpectator()) {
+            if (e instanceof net.minecraft.world.entity.player.Player p && !MobUtility.isSelf(p) && !p.isSpectator()) {
                 if (MobUtility.distanceToPlayer(p) <= r * 1.5) {
                     players.add(p);
                 }
             }
         }
         for (ThrownEnderpearl pearl : pearls) {
-            Entity owner = pearl.getOwner();
+            net.minecraft.world.entity.Entity owner = pearl.getOwner();
             if (owner == mc.player) continue;
             int id = pearl.getId();
-            Vec3 pos = pearl.position();
-            Vec3 vel = pearl.getDeltaMovement();
-            Vec3 landing = predictLanding(pos, vel);
+            net.minecraft.world.phys.Vec3 pos = pearl.position();
+            net.minecraft.world.phys.Vec3 vel = pearl.getDeltaMovement();
+            net.minecraft.world.phys.Vec3 landing = predictLanding(pos, vel);
             trackedPearls.put(id, new PearlData(
                 id, owner != null ? owner.getUUID() : null,
                 pos, vel, landing,
@@ -139,7 +138,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
             lastPearlPos = pos;
             lastPearlVel = vel;
             lastPearlLanding = landing;
-            if (owner instanceof Player playerOwner && playerOwner != target) {
+            if (owner instanceof net.minecraft.world.entity.player.Player playerOwner && playerOwner != target) {
                 lastPearlThrower = playerOwner;
                 if (System.currentTimeMillis() - lastTargetSwitchTime > switchDelay.getValue()) {
                     target = playerOwner;
@@ -169,8 +168,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
             targetPos = null;
         }
         if (target == null && targetPos == null) return;
-        Vec3 myPos = mc.player.position();
-        Vec3 moveTarget = "Follow".equals(mode.getValue()) && target != null
+        net.minecraft.world.phys.Vec3 myPos = mc.player.position();
+        net.minecraft.world.phys.Vec3 moveTarget = "Follow".equals(mode.getValue()) && target != null
             ? target.position() : targetPos;
         if (moveTarget == null) return;
         double dist = myPos.distanceTo(moveTarget);
@@ -193,24 +192,24 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
             doAutoPearl(mc);
         }
     }
-    private void doChaseMovement(Minecraft mc, Vec3 moveTarget) {
-        Vec3 myPos = mc.player.position();
-        Vec3 diff = moveTarget.subtract(myPos);
+    private void doChaseMovement(Minecraft mc, net.minecraft.world.phys.Vec3 moveTarget) {
+        net.minecraft.world.phys.Vec3 myPos = mc.player.position();
+        net.minecraft.world.phys.Vec3 diff = moveTarget.subtract(myPos);
         double dist = diff.length();
         if (dist < 0.1) return;
-        Vec3 dir = new Vec3(diff.x, 0, diff.z).normalize();
+        net.minecraft.world.phys.Vec3 dir = new net.minecraft.world.phys.Vec3(diff.x, 0, diff.z).normalize();
         double speedVal = mc.player.onGround() ? speed.getValue() : speed.getValue() * 0.8;
         if (sprint.getValue()) {
             mc.player.setSprinting(true);
             wasSprinting = true;
         }
-        Vec3 motion = mc.player.getDeltaMovement();
+        net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
         double targetVx = dir.x * speedVal;
         double targetVz = dir.z * speedVal;
         if (strafe.getValue() && mc.player.onGround()) {
-            motion = new Vec3(targetVx, motion.y, targetVz);
+            motion = new net.minecraft.world.phys.Vec3(targetVx, motion.y, targetVz);
         } else {
-            motion = new Vec3(targetVx, motion.y, targetVz);
+            motion = new net.minecraft.world.phys.Vec3(targetVx, motion.y, targetVz);
         }
         mc.player.setDeltaMovement(motion);
         if (jump.getValue() && mc.player.onGround() && dist > 1.5) {
@@ -222,7 +221,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
             mc.player.setXRot(RotationUtility.clampPitch(angles[1]));
         }
     }
-    private void doAttack(Minecraft mc, Player target) {
+    private void doAttack(Minecraft mc, net.minecraft.world.entity.player.Player target) {
         long now = System.currentTimeMillis();
         long attackDelay = (long) (1000.0 / attackCps.getValue());
         if (now - lastAttackTime < attackDelay) return;
@@ -335,7 +334,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
         if (name.contains("golden_axe") || name.contains("wooden_axe")) return 4.0;
         return 0.0;
     }
-    private Player findBestTarget(Minecraft mc, List<Player> players) {
+    private net.minecraft.world.entity.player.Player findBestTarget(Minecraft mc, List<net.minecraft.world.entity.player.Player> players) {
         if (players.isEmpty()) return null;
         String mode = targetMode.getValue();
         return switch (mode) {
@@ -343,11 +342,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
                 .min(java.util.Comparator.comparingDouble(p -> MobUtility.getHealthWithAbsorption(p)))
                 .orElse(null);
             case "Crosshair" -> {
-                Player closest = null;
+                net.minecraft.world.entity.player.Player closest = null;
                 double bestAngle = 180;
-                Vec3 lookVec = mc.player.getLookAngle();
-                for (Player p : players) {
-                    Vec3 toTarget = p.position().add(0, p.getEyeHeight() * 0.5, 0)
+                net.minecraft.world.phys.Vec3 lookVec = mc.player.getLookAngle();
+                for (net.minecraft.world.entity.player.Player p : players) {
+                    net.minecraft.world.phys.Vec3 toTarget = p.position().add(0, p.getEyeHeight() * 0.5, 0)
                         .subtract(mc.player.getEyePosition()).normalize();
                     double angle = Math.acos(lookVec.dot(toTarget));
                     if (angle < bestAngle) {
@@ -366,19 +365,19 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
                     .orElse(null);
         };
     }
-    private Vec3 predictLanding(Vec3 pos, Vec3 vel) {
+    private net.minecraft.world.phys.Vec3 predictLanding(net.minecraft.world.phys.Vec3 pos, net.minecraft.world.phys.Vec3 vel) {
         int ticks = predictTicks.getValue().intValue();
         if (NATIVE.isLoaded()) {
             try {
                 double[] out = new double[7];
                 nativePredictPearl(pos.x, pos.y, pos.z, vel.x, vel.y, vel.z, ticks, out);
-                return new Vec3(out[0], out[1], out[2]);
+                return new net.minecraft.world.phys.Vec3(out[0], out[1], out[2]);
             } catch (Exception e) {
             }
         }
         return javaPredictLanding(pos, vel, ticks);
     }
-    private Vec3 javaPredictLanding(Vec3 pos, Vec3 vel, int ticks) {
+    private net.minecraft.world.phys.Vec3 javaPredictLanding(net.minecraft.world.phys.Vec3 pos, net.minecraft.world.phys.Vec3 vel, int ticks) {
         double x = pos.x, y = pos.y, z = pos.z;
         double mx = vel.x, my = vel.y, mz = vel.z;
         for (int t = 0; t < ticks; t++) {
@@ -387,9 +386,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
             mx *= 0.99; my *= 0.99; mz *= 0.99;
             if (y < -64) break;
         }
-        return new Vec3(x, y, z);
+        return new net.minecraft.world.phys.Vec3(x, y, z);
     }
-    private void updateRenderData(Vec3 moveTarget) {
+    private void updateRenderData(net.minecraft.world.phys.Vec3 moveTarget) {
         renderPearlPos = lastPearlPos;
         renderLandingPos = lastPearlLanding;
         renderTargetPos = moveTarget;
@@ -405,10 +404,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
         renderLandingPos = null;
         renderTargetPos = null;
     }
-    public void render(Matrix4f modelViewMatrix, Camera camera) {
+    public void render(Matrix4f modelViewMatrix, net.minecraft.client.Camera camera) {
         if (!getEnabled() || !render.getValue()) return;
         if (renderPearlPos == null && renderLandingPos == null && renderTargetPos == null) return;
-        Vec3 camPos = camera.position();
+        net.minecraft.world.phys.Vec3 camPos = camera.position();
         boolean throughWalls = renderThroughWalls.getValue();
         float lw = lineWidth.getValue().floatValue();
         int lc = lineColor.getValue();
@@ -426,15 +425,15 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
         if (renderPearlPos != null && renderLine.getValue()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                Vec3 playerPos = mc.player.position();
-                Render3DUtils.batchAxisLine(modelViewMatrix,
+                net.minecraft.world.phys.Vec3 playerPos = mc.player.position();
+                Render3DUtility.batchAxisLine(modelViewMatrix,
                     (float) (playerPos.x - camPos.x), (float) (playerPos.y - camPos.y), (float) (playerPos.z - camPos.z),
                     (float) (renderPearlPos.x - camPos.x), (float) (renderPearlPos.y - camPos.y), (float) (renderPearlPos.z - camPos.z),
                     lw, pr, pg, pb, 0.8f, throughWalls);
             }
         }
         if (renderPearlPos != null && renderLandingPos != null && renderPredictionLine.getValue()) {
-            Render3DUtils.batchAxisLine(modelViewMatrix,
+            Render3DUtility.batchAxisLine(modelViewMatrix,
                 (float) (renderPearlPos.x - camPos.x), (float) (renderPearlPos.y - camPos.y), (float) (renderPearlPos.z - camPos.z),
                 (float) (renderLandingPos.x - camPos.x), (float) (renderLandingPos.y - camPos.y), (float) (renderLandingPos.z - camPos.z),
                 lw, lr, lg, lb, 0.6f, throughWalls);
@@ -445,16 +444,16 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
                 (float)(renderLandingPos.x - camPos.x),
                 (float)(renderLandingPos.y - camPos.y),
                 (float)(renderLandingPos.z - camPos.z));
-            Render3DUtils.batchFilledBox(landingMat, 0.3,
+            Render3DUtility.batchFilledBox(landingMat, 0.3,
                 ldr, ldg, ldb, 0.3f, throughWalls);
-            Render3DUtils.batchWireframe(landingMat, 0.3,
+            Render3DUtility.batchWireframe(landingMat, 0.3,
                 ldr, ldg, ldb, 0.9f, lw, throughWalls);
         }
         if (renderTargetPos != null && renderLine.getValue()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                Vec3 playerPos = mc.player.position();
-                Render3DUtils.batchAxisLine(modelViewMatrix,
+                net.minecraft.world.phys.Vec3 playerPos = mc.player.position();
+                Render3DUtility.batchAxisLine(modelViewMatrix,
                     (float) (playerPos.x - camPos.x), (float) (playerPos.y - camPos.y), (float) (playerPos.z - camPos.z),
                     (float) (renderTargetPos.x - camPos.x), (float) (renderTargetPos.y - camPos.y), (float) (renderTargetPos.z - camPos.z),
                     lw * 0.5f, lr, lg, lb, 0.4f, throughWalls);
@@ -471,10 +470,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
     private static class PearlData {
         int entityId;
         UUID ownerUUID;
-        Vec3 position, velocity, landing;
+        net.minecraft.world.phys.Vec3 position, velocity, landing;
         long time;
         ThrownEnderpearl pearl;
-        PearlData(int id, UUID owner, Vec3 pos, Vec3 vel, Vec3 land, long t, ThrownEnderpearl p) {
+        PearlData(int id, UUID owner, net.minecraft.world.phys.Vec3 pos, net.minecraft.world.phys.Vec3 vel, net.minecraft.world.phys.Vec3 land, long t, ThrownEnderpearl p) {
             this.entityId = id;
             this.ownerUUID = owner;
             this.position = pos;

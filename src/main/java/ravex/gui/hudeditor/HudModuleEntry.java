@@ -4,7 +4,7 @@ import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Module;
 import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 import java.util.ArrayList;
 import java.util.List;
 public class HudModuleEntry {
@@ -31,9 +31,9 @@ public class HudModuleEntry {
         } else {
             bgColor = ColorUtility.withAlpha(0xFFFFFF, (int)(8 * (alpha / 255f)));
         }
-        Render2DEngine.drawRound(g, x, y, width, 18, 4, bgColor);
+        Render2DUtility.drawRound(g, x, y, width, 18, 4, bgColor);
         if (hovered && enabled) {
-            Render2DEngine.drawRound(g, x, y, width, 18, 4,
+            Render2DUtility.drawRound(g, x, y, width, 18, 4,
                 ColorUtility.withAlpha(accentColor, (int)(20 * (alpha / 255f))));
         }
         int textColor = enabled

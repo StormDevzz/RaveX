@@ -19,14 +19,15 @@ import ravex.modules.combat.*;
 import ravex.modules.player.*;
 import ravex.modules.world.*;
 import ravex.modules.client.Hud;
-import ravex.utility.misc.GuiOptimizer;
+import ravex.utility.misc.GuiOptimizerUtility;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.HudRendererUtility;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector4f;
 
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -278,7 +279,7 @@ public final class HudRenderer {
 
                 outLayouts = new double[count * 16];
                 outIndices = new int[count];
-                renderedCount = GuiOptimizer.nativeOptimizeNameTags(
+                renderedCount = GuiOptimizerUtility.nativeOptimizeNameTags(
                     cameraPosArr, modelViewArr, projectionArr, playerViewVecArr,
                     positions, textWidths, booleans, armorCounts, count,
                     ModuleManager.get(NameTags.class).size.getValue(), true,
@@ -486,7 +487,7 @@ public final class HudRenderer {
             int bgW = bgRight - bgLeft;
             int bgH = bgBottom - bgTop;
 
-            Render2DEngine.drawRound(context, bgLeft, bgTop, bgW, bgH, 4, bgColor);
+            Render2DUtility.drawRound(context, bgLeft, bgTop, bgW, bgH, 4, bgColor);
 
             boolean drawBorder = false;
             int borderCol = 0;
@@ -499,7 +500,7 @@ public final class HudRenderer {
                 borderCol = 0x44FFAA00;
             }
             if (drawBorder) {
-                Render2DEngine.drawRoundBorder(context, bgLeft, bgTop, bgW, bgH, 4, 1, borderCol);
+                Render2DUtility.drawRoundBorder(context, bgLeft, bgTop, bgW, bgH, 4, 1, borderCol);
             }
         }
 
@@ -530,8 +531,8 @@ public final class HudRenderer {
             if (showHands) {
                 ItemStack stack = livingTarget.getMainHandItem();
                 if (alwaysShowSlots || !stack.isEmpty()) {
-                    Render2DEngine.drawRound(context, ax, ay, 18, 18, 3, 0x15FFFFFF);
-                    Render2DEngine.drawRoundBorder(context, ax, ay, 18, 18, 3, 0.5f, 0x20FFFFFF);
+                    Render2DUtility.drawRound(context, ax, ay, 18, 18, 3, 0x15FFFFFF);
+                    Render2DUtility.drawRoundBorder(context, ax, ay, 18, 18, 3, 0.5f, 0x20FFFFFF);
                     if (!stack.isEmpty()) {
                         context.pose().pushMatrix();
                         context.pose().translate((float)(ax + 1), (float)(ay + 1));
@@ -552,8 +553,8 @@ public final class HudRenderer {
                 for (EquipmentSlot slot : armorItems) {
                     ItemStack stack = livingTarget.getItemBySlot(slot);
                     if (alwaysShowSlots || !stack.isEmpty()) {
-                        Render2DEngine.drawRound(context, ax, ay, 18, 18, 3, 0x15FFFFFF);
-                        Render2DEngine.drawRoundBorder(context, ax, ay, 18, 18, 3, 0.5f, 0x20FFFFFF);
+                        Render2DUtility.drawRound(context, ax, ay, 18, 18, 3, 0x15FFFFFF);
+                        Render2DUtility.drawRoundBorder(context, ax, ay, 18, 18, 3, 0.5f, 0x20FFFFFF);
                         if (!stack.isEmpty()) {
                             context.pose().pushMatrix();
                             context.pose().translate((float)(ax + 1), (float)(ay + 1));
@@ -568,8 +569,8 @@ public final class HudRenderer {
             if (showHands) {
                 ItemStack stack = livingTarget.getOffhandItem();
                 if (alwaysShowSlots || !stack.isEmpty()) {
-                    Render2DEngine.drawRound(context, ax, ay, 18, 18, 3, 0x15FFFFFF);
-                    Render2DEngine.drawRoundBorder(context, ax, ay, 18, 18, 3, 0.5f, 0x20FFFFFF);
+                    Render2DUtility.drawRound(context, ax, ay, 18, 18, 3, 0x15FFFFFF);
+                    Render2DUtility.drawRoundBorder(context, ax, ay, 18, 18, 3, 0.5f, 0x20FFFFFF);
                     if (!stack.isEmpty()) {
                         context.pose().pushMatrix();
                         context.pose().translate((float)(ax + 1), (float)(ay + 1));
@@ -783,7 +784,7 @@ public final class HudRenderer {
         for (Module hud : ModuleManager.INSTANCE.getHudModules()) {
             if (hud.getEnabled()) enabledModules.add(hud);
         }
-        GuiOptimizer.optimizeHudAnimations(enabledModules);
+        GuiOptimizerUtility.optimizeHudAnimations(enabledModules);
 
         Module dragHud = Hud.draggingHud;
         if (dragHud != null) {

@@ -1,6 +1,6 @@
 package ravex.utility.render;
 
-public interface RaveXStateAccessor {
+public interface RaveXStateAccessorUtility {
     boolean isRavexOnGround();
     void setRavexOnGround(boolean onGround);
     double getRavexMotionY();

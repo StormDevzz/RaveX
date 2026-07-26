@@ -8,9 +8,9 @@ import net.minecraft.client.Minecraft;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 
-@ModuleInfo(name = "AntiAim", category = "Player")
+@ModuleInfo(name = "AntiAim", category = "net.minecraft.world.entity.player.Player")
 public class AntiAim extends ravex.modules.Module {
 public final ModeParameter yawMode = new ModeParameter("YawMode", "Spin",
             List.of("Spin", "Jitter", "Static", "Random"));
@@ -24,7 +24,7 @@ public final ModeParameter yawMode = new ModeParameter("YawMode", "Spin",
     public final NumberParameter pitchJitterAmount = new NumberParameter("PitchJitter", 90.0, 5.0, 90.0, 5.0);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
 
-    public static final SilentRotation silentRotation = new SilentRotation();
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private float spinYaw = 0;
     private long ticks = 0;
 

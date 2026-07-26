@@ -9,7 +9,7 @@ import net.minecraft.world.inventory.ClickType;
 
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
-@ModuleInfo(name = "Replenish", category = "Player")
+@ModuleInfo(name = "Replenish", category = "net.minecraft.world.entity.player.Player")
 public class Replenish extends ravex.modules.Module {
 public final NumberParameter threshold = new NumberParameter("Threshold", 32, 1, 64, 1);
     private long lastActionTime = 0;

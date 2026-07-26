@@ -2,13 +2,13 @@ package ravex.modules.render;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.EntityUtility;
+import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
 
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.render.Render3DUtils;
+import ravex.utility.render.Render3DUtility;
 
 @ModuleInfo(name = "ChinaHat", category = "Render")
 public class ChinaHat extends ravex.modules.Module {
@@ -23,7 +23,7 @@ public static final ChinaHat INSTANCE = new ChinaHat();
         
     }
 
-    public static void render(Matrix4f modelViewMatrix, Vec3 camPos) {
+    public static void render(Matrix4f modelViewMatrix, net.minecraft.world.phys.Vec3 camPos) {
         ChinaHat ch = ravex.manager.ModuleManager.delegate(ChinaHat.class);
         if (ch == null || !ch.getEnabled()) return;
 
@@ -44,11 +44,11 @@ public static final ChinaHat INSTANCE = new ChinaHat();
         double dotSize = 0.09;
         Matrix4f mat = new Matrix4f();
 
-        for (Player player : mc.level.players()) {
+        for (net.minecraft.world.entity.player.Player player : mc.level.players()) {
             if (player == mc.player) continue;
             if (player.isRemoved() || !player.isAlive()) continue;
 
-            Vec3 pos = player.position();
+            net.minecraft.world.phys.Vec3 pos = player.position();
             float headY = (float)(pos.y + player.getBbHeight() + 0.05);
 
             float px = (float)(pos.x - camPos.x);
@@ -66,7 +66,7 @@ public static final ChinaHat INSTANCE = new ChinaHat();
 
                     mat.identity();
                     modelViewMatrix.translate(px + bx, py + ly, pz + bz, mat);
-                    Render3DUtils.batchFilledBox(mat, dotSize, r, g, b, a, false);
+                    Render3DUtility.batchFilledBox(mat, dotSize, r, g, b, a, false);
                 }
             }
         }

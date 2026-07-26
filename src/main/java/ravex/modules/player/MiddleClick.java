@@ -8,8 +8,8 @@ import ravex.utility.player.SwingUtility;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
-import ravex.utility.nativelib.NativeLibrary;
-@ModuleInfo(name = "MiddleClick", category = "Player")
+import ravex.utility.nativelib.NativeLibraryUtility;
+@ModuleInfo(name = "MiddleClick", category = "net.minecraft.world.entity.player.Player")
 public class MiddleClick extends ravex.modules.Module {
 public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Firework", List.of("Firework", "None"));
     public final ModeParameter blockAction = new ModeParameter("BlockAction", "XPBottle", List.of("XPBottle", "XPBottleFast", "None"));
@@ -17,7 +17,7 @@ public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Fir
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
     private boolean pressed, heldBlockAction;
     private int holdTicks;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_fastexp");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_fastexp");
     static {
         NATIVE.load();
     }

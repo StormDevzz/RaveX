@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
-public class SilentRotation {
+public class SilentRotationUtility {
     public float yaw;
     public float pitch;
     public boolean hasRotation;

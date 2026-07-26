@@ -8,9 +8,9 @@ import ravex.gui.clickgui.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.utility.interfaces.IClientPacketListener;
-import ravex.utility.nativelib.NativeLibrary;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "ServerBrandHud", category = "HUD")
 public class ServerBrandHud extends ravex.modules.Module {
@@ -18,9 +18,9 @@ public class ServerBrandHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_SERVERBRAND_WHITE;
-    private static final int IS = HudRenderer.getIconSize();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_jni");
+private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHITE;
+    private static final int IS = HudRendererUtility.getIconSize();
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_jni");
     static {
         NATIVE.load();
     }
@@ -56,9 +56,9 @@ private static final Identifier ICON = TextureLoader.HUD_SERVERBRAND_WHITE;
         width = pw;
         height = ph;
         int bx = x, by = y;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         ravex.utility.render.FontRenderUtility.drawString(graphics, labelText, bx + 4, by + 8, 0xFFFFFFFF, false);
-        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
+        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
     }
 
     public static ServerBrandHud itz() {

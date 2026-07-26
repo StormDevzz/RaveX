@@ -10,8 +10,8 @@ import ravex.RaveX;
 import ravex.gui.clickgui.ColorUtility;
 
 import ravex.modules.client.Hud;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import ravex.utility.system.SystemUtility;
@@ -28,8 +28,8 @@ public class MediaHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
-    private static final int IS = HudRenderer.getIconSize();
+private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
+    private static final int IS = HudRendererUtility.getIconSize();
 
     private volatile String cachedTitle = "";
     private volatile String cachedArtist = "";
@@ -209,27 +209,27 @@ private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
     }
 
     private static void drawScrollingText(GuiGraphics graphics, String text, int x, int y, int maxWidth, int color, boolean shadow) {
-        int textW = HudRenderer.textWidth(text);
+        int textW = HudRendererUtility.textWidth(text);
         if (textW <= maxWidth) {
-            HudRenderer.drawText(graphics, text, x, y, color, shadow);
+            HudRendererUtility.drawText(graphics, text, x, y, color, shadow);
             return;
         }
 
         String extended = text + "      ";
-        int extW = HudRenderer.textWidth(extended);
+        int extW = HudRendererUtility.textWidth(extended);
 
         double speed = 20.0;
         double timeSecs = System.currentTimeMillis() / 1000.0;
         int scrollX = (int) ((timeSecs * speed) % extW);
 
-        ravex.utility.render.Render2DEngine.pushScissor(graphics, x, y - 1, maxWidth, HudRenderer.fontHeight() + 3);
+        ravex.utility.render.Render2DUtility.pushScissor(graphics, x, y - 1, maxWidth, HudRendererUtility.fontHeight() + 3);
 
-        HudRenderer.drawText(graphics, extended, x - scrollX, y, color, shadow);
+        HudRendererUtility.drawText(graphics, extended, x - scrollX, y, color, shadow);
         if (x - scrollX + extW < x + maxWidth) {
-            HudRenderer.drawText(graphics, extended, x - scrollX + extW, y, color, shadow);
+            HudRendererUtility.drawText(graphics, extended, x - scrollX + extW, y, color, shadow);
         }
 
-        ravex.utility.render.Render2DEngine.popScissor(graphics);
+        ravex.utility.render.Render2DUtility.popScissor(graphics);
     }
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
@@ -257,15 +257,15 @@ private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
 
         int bgColor = 0x800C0C0C;
         int borderColor = ravex.gui.clickgui.ColorUtility.withAlpha(activeColor, 75);
-        ravex.utility.render.Render2DEngine.drawRoundedRectWithBorder(graphics, bx, by, pw, ph, 5, bgColor, borderColor, 1);
+        ravex.utility.render.Render2DUtility.drawRoundedRectWithBorder(graphics, bx, by, pw, ph, 5, bgColor, borderColor, 1);
 
         if (hasArt) {
             graphics.blit(coverId, bx + 5, by + 5, bx + 37, by + 37, 0.0F, 1.0F, 0.0F, 1.0F);
-            ravex.utility.render.Render2DEngine.drawRoundBorder(graphics, bx + 5, by + 5, 32, 32, 1, 1, 0x30FFFFFF);
+            ravex.utility.render.Render2DUtility.drawRoundBorder(graphics, bx + 5, by + 5, 32, 32, 1, 1, 0x30FFFFFF);
         } else {
             int placeholderBg = 0x15FFFFFF;
-            ravex.utility.render.Render2DEngine.drawRound(graphics, bx + 5, by + 5, 32, 32, 4, placeholderBg);
-            HudRenderer.drawIcon(graphics, ICON, bx + 5 + (32 - IS) / 2, by + 5 + (32 - IS) / 2, activeColor);
+            ravex.utility.render.Render2DUtility.drawRound(graphics, bx + 5, by + 5, 32, 32, 4, placeholderBg);
+            HudRendererUtility.drawIcon(graphics, ICON, bx + 5 + (32 - IS) / 2, by + 5 + (32 - IS) / 2, activeColor);
         }
 
         int textX = bx + 42;
@@ -284,9 +284,9 @@ private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
 
         if (!artistStr.isEmpty()) {
             drawScrollingText(graphics, artistStr, textX, by + 13, maxTextWidth, 0xFF80809A, false);
-            HudRenderer.drawText(graphics, timeStr, textX, by + 22, 0xFF606080, false);
+            HudRendererUtility.drawText(graphics, timeStr, textX, by + 22, 0xFF606080, false);
         } else {
-            HudRenderer.drawText(graphics, timeStr, textX, by + 16, 0xFF606080, false);
+            HudRendererUtility.drawText(graphics, timeStr, textX, by + 16, 0xFF606080, false);
         }
 
         if (cachedLength > 0) {

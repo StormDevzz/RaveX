@@ -2,11 +2,8 @@ package ravex.modules.render;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockBehaviour;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.EntityUtility;
 
 import ravex.modules.combat.KillAura;
 import ravex.parameter.BooleanParameter;
@@ -25,7 +22,7 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 10.0
     public final ColorParameter fillColor = new ColorParameter("FillColor", 0x33FF0000);
     public final ColorParameter lineColor = new ColorParameter("LineColor", 0xFFFF0000);
 
-    private BlockPos cityBlock;
+    private net.minecraft.core.BlockPos cityBlock;
 
     private CityESP() {
         
@@ -34,17 +31,17 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 10.0
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        Player target = null;
+        net.minecraft.world.entity.player.Player target = null;
         if (ravex.manager.ModuleManager.delegate(KillAura.class).getEnabled()) {
             var kaTarget = ravex.manager.ModuleManager.delegate(KillAura.class).getCurrentTarget();
-            if (kaTarget instanceof Player p && p.isAlive() && mc.player.distanceTo(p) <= range.getValue()) {
+            if (kaTarget instanceof net.minecraft.world.entity.player.Player p && p.isAlive() && mc.player.distanceTo(p) <= range.getValue()) {
                 target = p;
             }
         }
         if (target == null) {
             double best = range.getValue() * range.getValue();
             for (var e : mc.level.entitiesForRendering()) {
-                if (e instanceof Player p && p != mc.player && p.isAlive()) {
+                if (e instanceof net.minecraft.world.entity.player.Player p && p != mc.player && p.isAlive()) {
                     double dist = mc.player.distanceToSqr(p);
                     if (dist < best) {
                         best = dist;
@@ -62,16 +59,16 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 10.0
         cityBlock = getCityBlock(target);
     }
 
-    private BlockPos getCityBlock(Player player) {
+    private net.minecraft.core.BlockPos getCityBlock(net.minecraft.world.entity.player.Player player) {
         double bestDistSq = 6 * 6;
-        BlockPos bestPos = null;
+        net.minecraft.core.BlockPos bestPos = null;
 
-        for (Direction dir : Direction.Plane.HORIZONTAL) {
-            BlockPos pos = player.blockPosition().relative(dir);
-            BlockBehaviour block = Minecraft.getInstance().level.getBlockState(pos).getBlock();
-            if (block != Blocks.OBSIDIAN && block != Blocks.NETHERITE_BLOCK
-                && block != Blocks.CRYING_OBSIDIAN && block != Blocks.RESPAWN_ANCHOR
-                && block != Blocks.ANCIENT_DEBRIS) continue;
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            net.minecraft.core.BlockPos pos = player.blockPosition().relative(dir);
+            net.minecraft.world.level.block.state.BlockBehaviour block = Minecraft.getInstance().level.getBlockState(pos).getBlock();
+            if (block != net.minecraft.world.level.block.Blocks.OBSIDIAN && block != net.minecraft.world.level.block.Blocks.NETHERITE_BLOCK
+                && block != net.minecraft.world.level.block.Blocks.CRYING_OBSIDIAN && block != net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR
+                && block != net.minecraft.world.level.block.Blocks.ANCIENT_DEBRIS) continue;
 
             double distSq = Minecraft.getInstance().player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
             if (distSq < bestDistSq) {
@@ -83,7 +80,7 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 10.0
         return bestPos;
     }
 
-    public BlockPos getCityBlock() {
+    public net.minecraft.core.BlockPos getCityBlock() {
         return cityBlock;
     }
 

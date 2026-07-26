@@ -9,8 +9,8 @@ import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
 
 import ravex.modules.client.Hud;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 import ravex.utility.system.SystemUtility;
 @ModuleInfo(name = "NowPlayingHud", category = "HUD")
@@ -19,8 +19,8 @@ public class NowPlayingHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
-    private static final int IS = HudRenderer.getIconSize();
+private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
+    private static final int IS = HudRendererUtility.getIconSize();
     private String title = "";
     private String artist = "";
     private String artUrl = "";
@@ -48,14 +48,14 @@ private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
         int pad = 4;
         String titleStr = (playing ? "\u25B6 " : "\u23F8 ") + displayText;
         String subStr = playing && !artist.isEmpty() ? artist : "";
-        int tw = HudRenderer.textWidth(titleStr);
-        int sw = HudRenderer.textWidth(subStr);
+        int tw = HudRendererUtility.textWidth(titleStr);
+        int sw = HudRendererUtility.textWidth(subStr);
         int contentW = Math.max(tw, sw);
         int pw = 4 + contentW + pad + coverSize + pad + IS + pad;
-        int ph = Math.max(HudRenderer.fontHeight() + (subStr.isEmpty() ? 0 : HudRenderer.fontHeight() + 2), coverSize) + pad * 2;
+        int ph = Math.max(HudRendererUtility.fontHeight() + (subStr.isEmpty() ? 0 : HudRendererUtility.fontHeight() + 2), coverSize) + pad * 2;
         width = pw;
         height = ph;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         int textX = bx + 4;
         int textY = by + pad;
         int covY = by + pad + (ph - coverSize - pad * 2) / 2;
@@ -67,10 +67,10 @@ private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
             graphics.fill(coverX + coverSize / 2 - 4, covY + coverSize / 2 - 4,
                     coverX + coverSize / 2 + 4, covY + coverSize / 2 + 4, activeColor);
         }
-        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, activeColor);
-        HudRenderer.drawText(graphics, titleStr, textX, textY, playing ? 0xFFD0D0E0 : 0xFF8080A0, true);
+        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, activeColor);
+        HudRendererUtility.drawText(graphics, titleStr, textX, textY, playing ? 0xFFD0D0E0 : 0xFF8080A0, true);
         if (!subStr.isEmpty()) {
-            HudRenderer.drawText(graphics, subStr, textX, textY + HudRenderer.fontHeight() + 2, 0xFF707090, false);
+            HudRendererUtility.drawText(graphics, subStr, textX, textY + HudRendererUtility.fontHeight() + 2, 0xFF707090, false);
         }
     }
     private void triggerQuery() {

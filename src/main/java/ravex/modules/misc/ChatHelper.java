@@ -4,10 +4,9 @@ import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+
 import net.minecraft.network.chat.Component;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
@@ -248,7 +247,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
         if (welcomerEnabled.getValue()) {
             knownPlayers.clear();
             if (mc.level != null) {
-                for (Player p : mc.level.players()) {
+                for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
                     knownPlayers.add(p.getUUID());
                 }
             }
@@ -291,9 +290,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
     public void onDeath(DeathEvent event) {
         if (!getEnabled() || !autoEZEnabled.getValue()) return;
         if (event.isSelf()) return;
-        Player victim = event.getPlayer();
-        if (ezOnlyPlayers.getValue() && !(victim instanceof Player)) return;
-        Entity killer = event.getSource().getEntity();
+        net.minecraft.world.entity.player.Player victim = event.getPlayer();
+        if (ezOnlyPlayers.getValue() && !(victim instanceof net.minecraft.world.entity.player.Player)) return;
+        net.minecraft.world.entity.Entity killer = event.getSource().getEntity();
         if (killer != Minecraft.getInstance().player) return;
         long now = System.currentTimeMillis();
         if (now - lastKillTime < ezDelay.getValue().longValue()) return;
@@ -371,7 +370,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
     }
 
     private void tickWelcomer(Minecraft mc, LocalPlayer me) {
-        for (Player player : mc.level.players()) {
+        for (net.minecraft.world.entity.player.Player player : mc.level.players()) {
             if (player == me) continue;
             if (knownPlayers.contains(player.getUUID())) continue;
             knownPlayers.add(player.getUUID());
@@ -418,7 +417,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
             }
         }
         if (am.equals("Enemy") || am.equals("Both")) {
-            LivingEntity living = MobUtility.asLivingEntity(mc.crosshairPickEntity);
+            net.minecraft.world.entity.LivingEntity living = MobUtility.asLivingEntity(mc.crosshairPickEntity);
             if (living != null && !living.equals(mc.player)) {
                 EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
                 String[] names = {"Boots", "Leggings", "Chestplate", "Helmet"};

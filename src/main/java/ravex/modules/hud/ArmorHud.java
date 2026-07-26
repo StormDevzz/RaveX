@@ -10,8 +10,8 @@ import ravex.modules.client.Hud;
 import ravex.parameter.DependencyParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.Render2DUtility;
 
 @ModuleInfo(name = "ArmorHud", category = "HUD")
 public class ArmorHud extends ravex.modules.Module {
@@ -56,15 +56,15 @@ private static final EquipmentSlot[] SLOTS = {
         height = ph;
 
         int bx = x, by = y;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
 
         for (int i = 0; i < 4; i++) {
             EquipmentSlot slot = SLOTS[i];
             int cellX = bx + 4 + i * (cellSize + cellGap);
             int cellY = by + 4;
 
-            Render2DEngine.drawRound(graphics, cellX, cellY, cellSize, cellSize, 3, 0x15FFFFFF);
-            Render2DEngine.drawRoundBorder(graphics, cellX, cellY, cellSize, cellSize, 3, 1, 0x10FFFFFF);
+            Render2DUtility.drawRound(graphics, cellX, cellY, cellSize, cellSize, 3, 0x15FFFFFF);
+            Render2DUtility.drawRoundBorder(graphics, cellX, cellY, cellSize, cellSize, 3, 1, 0x10FFFFFF);
 
             ItemStack stack = mc.player.getItemBySlot(slot);
             if (!stack.isEmpty()) {
@@ -78,8 +78,8 @@ private static final EquipmentSlot[] SLOTS = {
                         : ravex.utility.render.ColorUtility.interpolate(0xFFFF3333, 0xFF33FF33, pct);
 
                     int barY = cellY + 20;
-                    Render2DEngine.drawRound(graphics, cellX, barY, cellSize, 2, 1, 0x30000000);
-                    Render2DEngine.drawRound(graphics, cellX, barY, Math.round(cellSize * pct), 2, 1, barColor);
+                    Render2DUtility.drawRound(graphics, cellX, barY, cellSize, 2, 1, 0x30000000);
+                    Render2DUtility.drawRound(graphics, cellX, barY, Math.round(cellSize * pct), 2, 1, barColor);
                 }
             }
         }

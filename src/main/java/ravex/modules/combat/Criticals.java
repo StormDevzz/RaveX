@@ -4,9 +4,9 @@ import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.EntityUtility;
+
 import net.minecraft.world.phys.EntityHitResult;
 import ravex.utility.misc.MobUtility;
 
@@ -42,13 +42,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         }
         if (seq == Sequence.LANDING) {
             if (autoAttack.getValue() && mc.hitResult instanceof EntityHitResult ehr) {
-                Entity target = ehr.getEntity();
-                LivingEntity lt = MobUtility.asLivingEntity(target);
+                net.minecraft.world.entity.Entity target = ehr.getEntity();
+                net.minecraft.world.entity.LivingEntity lt = MobUtility.asLivingEntity(target);
                 if (lt != null && MobUtility.isAlive(lt) && target != mc.player
                     && mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
                     mc.player.connection.send(
                         ServerboundInteractPacket.createAttackPacket(target, mc.player.isShiftKeyDown()));
-                    mc.player.swing(InteractionHand.MAIN_HAND);
+                    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
             seq = Sequence.NONE;

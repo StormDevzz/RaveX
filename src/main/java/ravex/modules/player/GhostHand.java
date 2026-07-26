@@ -3,7 +3,7 @@ package ravex.modules.player;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
-@ModuleInfo(name = "GhostHand", category = "Player")
+@ModuleInfo(name = "GhostHand", category = "net.minecraft.world.entity.player.Player")
 public class GhostHand extends ravex.modules.Module {
 public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 12.0, 0.5);
     public final BooleanParameter chests = new BooleanParameter("Chests", true);

@@ -2,7 +2,7 @@ package ravex.modules.render;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.world.level.block.state.BlockState;
 
 import ravex.parameter.BooleanParameter;
@@ -43,11 +43,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util
     public final BooleanParameter voidWireframe = new BooleanParameter("VoidWireframe", true);
     public final BooleanParameter voidFloorOnly = new BooleanParameter("VoidFloorOnly", true);
     public final NumberParameter voidUpdateInterval = new NumberParameter("VoidUpdate", 20, 5, 100, 5);
-    private List<BlockPos> tunnelBlocks = new ArrayList<>();
+    private List<net.minecraft.core.BlockPos> tunnelBlocks = new ArrayList<>();
     private long lastTunnelScan = 0;
-    private final List<BlockPos> holes = new ArrayList<>();
+    private final List<net.minecraft.core.BlockPos> holes = new ArrayList<>();
     private int holeTick = 0;
-    private List<BlockPos> voidBlocks = new ArrayList<>();
+    private List<net.minecraft.core.BlockPos> voidBlocks = new ArrayList<>();
     private long lastVoidScan = 0;
     private ESP() {
         
@@ -87,15 +87,15 @@ public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util
         long now = System.currentTimeMillis();
         if (now - lastTunnelScan < tunnelUpdateInterval.getValue().intValue() * 50) return;
         lastTunnelScan = now;
-        List<BlockPos> result = new ArrayList<>();
-        BlockPos center = mc.player.blockPosition();
+        List<net.minecraft.core.BlockPos> result = new ArrayList<>();
+        net.minecraft.core.BlockPos center = mc.player.blockPosition();
         int r = tunnelRange.getValue().intValue();
         int my = tunnelMaxY.getValue().intValue();
         int ny = tunnelMinY.getValue().intValue();
         for (int x = -r; x <= r; x++) {
             for (int z = -r; z <= r; z++) {
                 for (int y = ny; y <= my; y++) {
-                    BlockPos pos = center.offset(x, y, z);
+                    net.minecraft.core.BlockPos pos = center.offset(x, y, z);
                     if (!mc.level.getBlockState(pos).isAir()) continue;
                     if (!mc.level.getBlockState(pos.above()).isAir()) continue;
                     if (mc.level.getBlockState(pos.below()).isAir()) continue;
@@ -121,24 +121,24 @@ public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util
         if (++holeTick % 5 != 0) return;
         holeTick = 0;
         holes.clear();
-        BlockPos center = mc.player.blockPosition();
+        net.minecraft.core.BlockPos center = mc.player.blockPosition();
         int r = holeRange.getValue().intValue();
         for (int x = -r; x <= r; x++) {
             for (int z = -r; z <= r; z++) {
                 for (int y = -4; y <= 2; y++) {
-                    BlockPos pos = center.offset(x, y, z);
+                    net.minecraft.core.BlockPos pos = center.offset(x, y, z);
                     if (!mc.level.getBlockState(pos).isAir()) continue;
                     if (isSafeHole(mc, pos)) holes.add(pos);
                 }
             }
         }
     }
-    private boolean isSafeHole(Minecraft mc, BlockPos pos) {
+    private boolean isSafeHole(Minecraft mc, net.minecraft.core.BlockPos pos) {
         if (!mc.level.getBlockState(pos.below()).isSolid()) return false;
-        BlockPos[] sides = {
+        net.minecraft.core.BlockPos[] sides = {
             pos.east(), pos.west(), pos.south(), pos.north()
         };
-        for (BlockPos side : sides) {
+        for (net.minecraft.core.BlockPos side : sides) {
             BlockState state = mc.level.getBlockState(side);
             if (state.isAir() || !state.isSolid()) return false;
         }
@@ -150,8 +150,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util
         long now = System.currentTimeMillis();
         if (now - lastVoidScan < voidUpdateInterval.getValue().intValue() * 50) return;
         lastVoidScan = now;
-        List<BlockPos> result = new ArrayList<>();
-        BlockPos center = mc.player.blockPosition();
+        List<net.minecraft.core.BlockPos> result = new ArrayList<>();
+        net.minecraft.core.BlockPos center = mc.player.blockPosition();
         int r = voidRange.getValue().intValue();
         int h = voidHeight.getValue().intValue();
         int floorH = voidFloorOnly.getValue() ? 1 : h;
@@ -159,11 +159,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util
             for (int z = -r; z <= r; z++) {
                 for (int y = 1; y <= floorH; y++) {
                     if (center.getY() - y <= mc.level.getMinY()) continue;
-                    BlockPos pos = center.offset(x, -y, z);
+                    net.minecraft.core.BlockPos pos = center.offset(x, -y, z);
                     if (mc.level.getBlockState(pos).isAir()) {
                         boolean hasFloor = false;
                         for (int checkY = pos.getY() + 1; checkY <= mc.level.getMaxY(); checkY++) {
-                            if (!mc.level.getBlockState(new BlockPos(pos.getX(), checkY, pos.getZ())).isAir()) {
+                            if (!mc.level.getBlockState(new net.minecraft.core.BlockPos(pos.getX(), checkY, pos.getZ())).isAir()) {
                                 hasFloor = true;
                                 break;
                             }
@@ -189,9 +189,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util
         return false;
     }
 
-    public List<BlockPos> getTunnelBlocks() { return tunnelBlocks; }
-    public List<BlockPos> getHoles() { return holes; }
-    public List<BlockPos> getVoidBlocks() { return voidBlocks; }
+    public List<net.minecraft.core.BlockPos> getTunnelBlocks() { return tunnelBlocks; }
+    public List<net.minecraft.core.BlockPos> getHoles() { return holes; }
+    public List<net.minecraft.core.BlockPos> getVoidBlocks() { return voidBlocks; }
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("ESP").getEnabled();
     }

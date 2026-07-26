@@ -1,9 +1,9 @@
 package ravex.nativesc;
 
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 
 public class NativeScBridge {
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_nativesc");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_nativesc");
 
     static {
         NATIVE.load();

@@ -8,10 +8,10 @@ import ravex.mixin.client.AccessorMinecraft;
 import ravex.mixin.client.AccessorLivingEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-@ModuleInfo(name = "NoDelay", category = "Player")
+@ModuleInfo(name = "NoDelay", category = "net.minecraft.world.entity.player.Player")
 public class NoDelay extends ravex.modules.Module {
 public final NumberParameter delay = new NumberParameter("Delay", 0.0, 0.0, 4.0, 1.0);
-    public final BooleanParameter blocks = new BooleanParameter("Blocks", true);
+    public final BooleanParameter blocks = new BooleanParameter("net.minecraft.world.level.block.Blocks", true);
     public final BooleanParameter items = new BooleanParameter("Items", true);
     public final BooleanParameter noJumpDelay = new BooleanParameter("NoJumpDelay", false);
 

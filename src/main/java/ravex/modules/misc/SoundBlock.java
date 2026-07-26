@@ -11,7 +11,7 @@ import java.util.List;
 @ModuleInfo(name = "SoundBlock", category = "Misc")
 public class SoundBlock extends ravex.modules.Module {
 public final BooleanParameter blockAmbient   = new BooleanParameter("Ambient", false);
-    public final BooleanParameter blockBlocks    = new BooleanParameter("Blocks", false);
+    public final BooleanParameter blockBlocks    = new BooleanParameter("net.minecraft.world.level.block.Blocks", false);
     public final BooleanParameter blockWeather   = new BooleanParameter("Weather", false);
     public final BooleanParameter blockHostile   = new BooleanParameter("Hostile", false);
     public final BooleanParameter blockNeutral   = new BooleanParameter("Neutral", false);

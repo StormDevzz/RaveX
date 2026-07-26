@@ -2,27 +2,25 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BlockItem;
 import ravex.utility.misc.MobUtility;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 @ModuleInfo(name = "Trap", category = "Combat")
 public class Trap extends ravex.modules.Module {
 public final NumberParameter  range          = new NumberParameter("Range",          4.5, 1.0, 6.0, 0.1);
@@ -48,9 +46,9 @@ public final NumberParameter  range          = new NumberParameter("Range",     
     public final ColorParameter   color          = new ColorParameter("Color",           0xFFFFAA00);
     private long lastPlaceTime = 0;
     private long currentPlaceDelay = 0;
-    public static final SilentRotation silentRotation = new SilentRotation();
-    public static final List<BlockPos> trapBlocks = new ArrayList<>();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_trap");
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    public static final List<net.minecraft.core.BlockPos> trapBlocks = new ArrayList<>();
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_trap");
     static {
         NATIVE.load();
     }
@@ -106,7 +104,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         }
         int simLimit = 9;
         int simCount = 0;
-        List<BlockPos> simulatedBlocks = new ArrayList<>();
+        List<net.minecraft.core.BlockPos> simulatedBlocks = new ArrayList<>();
         while (simCount < simLimit) {
             double[] currentSolidData = new double[activeSolidBlocks.size()];
             for (int i = 0; i < currentSolidData.length; i++) {
@@ -127,7 +125,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             if (result == null || result[0] < 0.5) {
                 break;
             }
-            BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
+            net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
             simulatedBlocks.add(targetBlock);
             simCount++;
             activeSolidBlocks.add((double) targetBlock.getX());
@@ -175,10 +173,10 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             if (result == null || result[0] < 0.5) {
                 break;
             }
-            BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
-            Direction face = Direction.values()[(int) result[4]];
-            BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
-            Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+            net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
+            net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
+            net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
+            net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             rotateTo(mc, hitVec);
             boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
             if (isStrict && !isRotationAligned(mc, hitVec)) {
@@ -195,8 +193,8 @@ public final NumberParameter  range          = new NumberParameter("Range",     
                 }
             }
             BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
-            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
-            mc.player.swing(InteractionHand.MAIN_HAND);
+            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             placedAny = true;
             actionsThisTick++;
             activeSolidBlocks.add((double) targetBlock.getX());
@@ -255,7 +253,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem) {
-                if (blockItem.getBlock() == Blocks.OBSIDIAN) {
+                if (blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
                     return i;
                 }
             }
@@ -263,7 +261,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         if (swapInventory.getValue()) {
             for (int i = 9; i < 36; i++) {
                 var stack = InventoryUtility.getItem(mc.player, i);
-                if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() == Blocks.OBSIDIAN) {
+                if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
                     InventoryUtility.handleInventoryClick(mc, mc.player, i, 0, net.minecraft.world.inventory.ClickType.SWAP);
                     return 0;
                 }
@@ -273,7 +271,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             var stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem) {
                 var block = blockItem.getBlock();
-                if (block.defaultBlockState().isCollisionShapeFullBlock(mc.level, BlockPos.ZERO)) {
+                if (block.defaultBlockState().isCollisionShapeFullBlock(mc.level, net.minecraft.core.BlockPos.ZERO)) {
                     return i;
                 }
             }
@@ -283,14 +281,14 @@ public final NumberParameter  range          = new NumberParameter("Range",     
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
         double r = range.getValue() + 3.0;
-        BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int rx = (int) Math.ceil(r);
         int ry = 3;
         int rz = (int) Math.ceil(r);
         for (int dx = -rx; dx <= rx; dx++) {
             for (int dy = -ry; dy <= ry; dy++) {
                 for (int dz = -rz; dz <= rz; dz++) {
-                    BlockPos pos = playerPos.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
                         BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
@@ -309,8 +307,8 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         return arr;
     }
     private double[] javaFallbackCalculate(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlockData) {
-        BlockPos targetPos = target.blockPosition();
-        List<BlockPos> candidates = new ArrayList<>();
+        net.minecraft.core.BlockPos targetPos = target.blockPosition();
+        List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
         candidates.add(targetPos.north());
         candidates.add(targetPos.south());
         candidates.add(targetPos.east());
@@ -322,19 +320,19 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         if (roof.getValue()) {
             candidates.add(targetPos.above(2));
         }
-        java.util.Set<BlockPos> simulatedSolids = new java.util.HashSet<>();
+        java.util.Set<net.minecraft.core.BlockPos> simulatedSolids = new java.util.HashSet<>();
         for (int i = 0; i + 2 < solidBlockData.length; i += 3) {
-            simulatedSolids.add(new BlockPos((int) solidBlockData[i], (int) solidBlockData[i+1], (int) solidBlockData[i+2]));
+            simulatedSolids.add(new net.minecraft.core.BlockPos((int) solidBlockData[i], (int) solidBlockData[i+1], (int) solidBlockData[i+2]));
         }
-        Vec3 eyePos = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
         double r = range.getValue();
-        for (BlockPos cand : candidates) {
+        for (net.minecraft.core.BlockPos cand : candidates) {
             if (simulatedSolids.contains(cand)) continue;
-            if (eyePos.distanceToSqr(Vec3.atCenterOf(cand)) > r * r) continue;
-            BlockPos neighbor = null;
-            Direction face = null;
-            for (Direction d : Direction.values()) {
-                BlockPos side = cand.relative(d);
+            if (eyePos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(cand)) > r * r) continue;
+            net.minecraft.core.BlockPos neighbor = null;
+            net.minecraft.core.Direction face = null;
+            for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                net.minecraft.core.BlockPos side = cand.relative(d);
                 if (simulatedSolids.contains(side)) {
                     neighbor = side;
                     face = d.getOpposite();
@@ -342,10 +340,10 @@ public final NumberParameter  range          = new NumberParameter("Range",     
                 }
             }
             if (neighbor == null) {
-                BlockPos below = cand.below();
+                net.minecraft.core.BlockPos below = cand.below();
                 if (!simulatedSolids.contains(below)) {
-                    for (Direction d : Direction.values()) {
-                        BlockPos side = below.relative(d);
+                    for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                        net.minecraft.core.BlockPos side = below.relative(d);
                         if (simulatedSolids.contains(side)) {
                             neighbor = side;
                             face = d.getOpposite();
@@ -370,7 +368,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         }
         return new double[]{0.0};
     }
-    private void rotateTo(Minecraft mc, Vec3 target) {
+    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate.getValue();
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
@@ -390,7 +388,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(angles[0], angles[1], mc.player.onGround(), mc.player.horizontalCollision));
         }
     }
-    private boolean isRotationAligned(Minecraft mc, Vec3 target) {
+    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         if (rotate.getValue().equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }

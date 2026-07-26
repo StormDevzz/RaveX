@@ -2,8 +2,8 @@ package ravex.modules.movement;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.EntityUtility;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -15,10 +15,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        Entity vehicle = mc.player.getVehicle();
+        net.minecraft.world.entity.Entity vehicle = mc.player.getVehicle();
         if (vehicle == null) return;
         double mult = mode.getValue().equals("Custom") ? speed.getValue() : 2.0;
-        Vec3 motion = vehicle.getDeltaMovement();
+        net.minecraft.world.phys.Vec3 motion = vehicle.getDeltaMovement();
         vehicle.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
     }
     public static RidingHelper itz() {

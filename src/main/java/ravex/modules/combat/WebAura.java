@@ -5,15 +5,14 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.misc.EntityUtility;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.PhysicUtility;
+import ravex.utility.misc.block.BlockUtility;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "WebAura", category = "Combat")
@@ -34,9 +33,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
         if (m.equals("Custom")) {
             range = customRange.getValue();
         }
-        Player target = null;
+        net.minecraft.world.entity.player.Player target = null;
         double closest = range;
-        for (Player player : mc.level.players()) {
+        for (net.minecraft.world.entity.player.Player player : mc.level.players()) {
             if (player == p || !player.isAlive()) continue;
             double dist = p.distanceTo(player);
             if (dist < closest) {
@@ -60,20 +59,20 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
             }
         }
         if (webSlot == -1) return;
-        BlockPos targetPos = BlockPos.containing(target.getX(), target.getY(), target.getZ());
+        net.minecraft.core.BlockPos targetPos = net.minecraft.core.BlockPos.containing(target.getX(), target.getY(), target.getZ());
         if (mc.level.getBlockState(targetPos).isAir()) {
             int prevSlot = InventoryUtility.getSelectedSlot(p);
             if (webSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(webSlot));
             }
             BlockHitResult hit = new BlockHitResult(
-                new Vec3(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5),
-                Direction.UP,
+                new net.minecraft.world.phys.Vec3(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5),
+                net.minecraft.core.Direction.UP,
                 targetPos,
                 false
             );
-            p.connection.send(new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, hit, 0));
-            p.connection.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+            p.connection.send(new ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, hit, 0));
+            p.connection.send(new ServerboundSwingPacket(net.minecraft.world.InteractionHand.MAIN_HAND));
             if (webSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(prevSlot));
             }

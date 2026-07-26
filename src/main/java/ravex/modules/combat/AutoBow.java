@@ -2,12 +2,11 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BowItem;
 
 import ravex.parameter.BooleanParameter;
@@ -34,7 +33,7 @@ public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 
             if (bowSlot == -1) return;
         }
         if (!mc.player.isUsingItem()) return;
-        if (!mc.player.getUsedItemHand().equals(InteractionHand.MAIN_HAND)) return;
+        if (!mc.player.getUsedItemHand().equals(net.minecraft.world.InteractionHand.MAIN_HAND)) return;
         if (onlyWhenTarget.getValue() && !(mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult)) return;
         float chargeProgress = mc.player.getTicksUsingItem() / 20.0f;
         chargeProgress = Math.min(chargeProgress, 1.0f);
@@ -47,7 +46,7 @@ public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 
         }
         mc.player.connection.send(new ServerboundPlayerActionPacket(
             ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM,
-            BlockPos.ZERO, Direction.DOWN, 0
+            net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN, 0
         ));
         lastAction = now;
     }

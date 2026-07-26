@@ -4,7 +4,7 @@ import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Input;
 
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -66,7 +66,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("M
                 releaseCounter = 0;
             }
             if (boostTicks == 0) return;
-            Vec3 motion = mc.player.getDeltaMovement();
+            net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
             double mult = grimSpeed.getValue();
             mc.player.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
             return;
@@ -86,7 +86,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("M
             idleTicks = 0;
         }
         if (boostTicks == 0) return;
-        Vec3 motion = mc.player.getDeltaMovement();
+        net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
         String m = mode.getValue();
         if (m.equals("Motion")) {
             double mult = speed.getValue();

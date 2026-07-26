@@ -11,6 +11,19 @@ RaveX is an open-source Minecraft client modification by StormDevzz organization
 [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/ravex_free)
 [![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/n9HPbgN7S)
 
+---
+
+> [!CAUTION]
+> # WANT TO CONTRIBUTE? **READ CONTRIBUTING FIRST!**
+>
+> Before writing code, forking the repo, or opening a pull request - **you must** read [`CONTRIBUTING.md`](CONTRIBUTING.md).
+>
+> It covers all the rules: naming conventions, using utilities over raw Minecraft imports, module placement, build process, and what NOT to contribute. **PRs that don't follow these guidelines will be rejected.**
+>
+> Don't waste your time or ours - read it first.
+
+---
+
 ### Languages in this project
 
 | Language | Purpose |

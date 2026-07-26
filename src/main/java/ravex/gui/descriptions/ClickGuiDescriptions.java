@@ -127,7 +127,6 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("ItemSaver", "Save items");
         DESCRIPTIONS.put("AntiAim", "Spin head");
         DESCRIPTIONS.put("NoSwing", "No swing");
-        DESCRIPTIONS.put("Animations", "Smooth moves");
         DESCRIPTIONS.put("SwingAnimation", "Swing animation");
         DESCRIPTIONS.put("DesktopGui", "Desktop control");
         DESCRIPTIONS.put("Breaker", "Break nearby");

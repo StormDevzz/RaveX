@@ -5,14 +5,14 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
 
-public class HudRenderer {
+public class HudRendererUtility {
 
     private static final int ICON_SIZE = 10;
     private static final int RADIUS = 4;
     private static final int BG_COLOR = 0x800C0C0C;
 
     public static void drawBackground(GuiGraphics g, int x, int y, int w, int h) {
-        Render2DEngine.drawRound(g, x, y, w, h, RADIUS, BG_COLOR);
+        Render2DUtility.drawRound(g, x, y, w, h, RADIUS, BG_COLOR);
     }
 
     public static void drawIcon(GuiGraphics g, Identifier icon, int x, int y, int tintColor) {

@@ -2,7 +2,7 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 
@@ -81,7 +81,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
                 mc.options.keyUse.setDown(true);
             } else {
                 if (mc.player.connection != null) {
-                    mc.player.connection.send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 0, mc.player.getYRot(), mc.player.getXRot()));
+                    mc.player.connection.send(new ServerboundUseItemPacket(net.minecraft.world.InteractionHand.MAIN_HAND, 0, mc.player.getYRot(), mc.player.getXRot()));
                 }
             }
             return;
@@ -105,12 +105,12 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
         eatTicks = 0;
         if (swapMode.getValue().equals("Normal")) {
             InventoryUtility.selectSlot(mc.player, slot);
-            mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+            mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             mc.options.keyUse.setDown(true);
         } else {
             if (mc.player.connection != null) {
                 mc.player.connection.send(new ServerboundSetCarriedItemPacket(slot));
-                mc.player.connection.send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 0, mc.player.getYRot(), mc.player.getXRot()));
+                mc.player.connection.send(new ServerboundUseItemPacket(net.minecraft.world.InteractionHand.MAIN_HAND, 0, mc.player.getYRot(), mc.player.getXRot()));
             }
         }
     }

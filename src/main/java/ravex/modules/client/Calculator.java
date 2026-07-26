@@ -4,10 +4,10 @@ import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 @ModuleInfo(name = "Calculator", category = "Client")
 public class Calculator extends ravex.modules.Module {
-private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_calculator");
+private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_calculator");
     static {
         NATIVE.load();
     }

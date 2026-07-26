@@ -2,15 +2,15 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.world.entity.Entity;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "AntiPearl", category = "Combat")
@@ -19,7 +19,7 @@ public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0
     public final BooleanParameter autoAttack = new BooleanParameter("AutoAttack", true);
     public final BooleanParameter autoWarn = new BooleanParameter("Warn", true);
     public final BooleanParameter predict = new BooleanParameter("Predict", true);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_antipearl");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_antipearl");
     static {
         NATIVE.load();
     }
@@ -28,7 +28,7 @@ public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0
         if (mc.player == null || mc.level == null) return;
         double r = range.getValue();
         List<ThrownEnderpearl> pearls = new ArrayList<>();
-        for (Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (e instanceof ThrownEnderpearl pearl) {
                 double dist = mc.player.distanceTo(pearl);
                 if (dist <= r) pearls.add(pearl);
@@ -36,12 +36,12 @@ public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0
         }
         if (pearls.isEmpty()) return;
         for (ThrownEnderpearl pearl : pearls) {
-            Vec3 pos = pearl.position();
-            Vec3 vel = pearl.getDeltaMovement();
+            net.minecraft.world.phys.Vec3 pos = pearl.position();
+            net.minecraft.world.phys.Vec3 vel = pearl.getDeltaMovement();
             if (predict.getValue() && NATIVE.isLoaded()) {
                 double[] result = new double[6];
                 nativePredictLanding(pos.x, pos.y, pos.z, vel.x, vel.y, vel.z, result);
-                Vec3 landing = new Vec3(result[0], result[1], result[2]);
+                net.minecraft.world.phys.Vec3 landing = new net.minecraft.world.phys.Vec3(result[0], result[1], result[2]);
                 double distToMe = landing.distanceTo(mc.player.position());
                 double impactTicks = result[3];
                 if (autoWarn.getValue() && distToMe < 3.0) {
@@ -52,7 +52,7 @@ public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0
                     );
                 }
             } else if (predict.getValue()) {
-                Vec3 landing = pearlPosAtTicks(pos, vel, 30);
+                net.minecraft.world.phys.Vec3 landing = pearlPosAtTicks(pos, vel, 30);
                 double distToMe = landing.distanceTo(mc.player.position());
                 if (autoWarn.getValue() && distToMe < 3.0) {
                     mc.player.displayClientMessage(
@@ -64,7 +64,7 @@ public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0
             }
         }
     }
-    private Vec3 pearlPosAtTicks(Vec3 pos, Vec3 vel, int ticks) {
+    private net.minecraft.world.phys.Vec3 pearlPosAtTicks(net.minecraft.world.phys.Vec3 pos, net.minecraft.world.phys.Vec3 vel, int ticks) {
         double x = pos.x;
         double y = pos.y;
         double z = pos.z;
@@ -81,7 +81,7 @@ public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0
             mz *= 0.99;
             if (y < -64) break;
         }
-        return new Vec3(x, y, z);
+        return new net.minecraft.world.phys.Vec3(x, y, z);
     }
     private static native void nativePredictLanding(double x, double y, double z, double mx, double my, double mz, double[] out);
     public static boolean maybeEnabled() {

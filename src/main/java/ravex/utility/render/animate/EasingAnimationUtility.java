@@ -1,6 +1,6 @@
 package ravex.utility.render.animate;
 
-public class EasingAnimation {
+public class EasingAnimationUtility {
     private double value;
 
     public double update(boolean active, double speed) {

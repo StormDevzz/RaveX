@@ -10,8 +10,8 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.EntityUtility;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -84,8 +84,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default", List.of("
 
     private static final java.util.HashMap<Integer, Float> arrowAngles = new java.util.HashMap<>();
 
-    public static void renderArrows(GuiGraphics context, List<Entity> entities, List<Integer> colors,
-            float pt, Vec3 cameraPos, Vec3 cameraLook,
+    public static void renderArrows(GuiGraphics context, List<net.minecraft.world.entity.Entity> entities, List<Integer> colors,
+            float pt, net.minecraft.world.phys.Vec3 cameraPos, net.minecraft.world.phys.Vec3 cameraLook,
             double guiWidth, double guiHeight) {
         Identifier tex = getArrowTexture();
         if (tex == null)
@@ -119,13 +119,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default", List.of("
         int validCount = 0;
 
         for (int i = 0; i < count; i++) {
-            Entity target = entities.get(i);
+            net.minecraft.world.entity.Entity target = entities.get(i);
             int color = colors.get(i);
             colorArr[i] = color;
             if ((color >> 24 & 0xFF) == 0)
                 continue;
 
-            Vec3 basePos = target.getPosition(pt);
+            net.minecraft.world.phys.Vec3 basePos = target.getPosition(pt);
             double dx = basePos.x - cameraPos.x;
             double dz = basePos.z - cameraPos.z;
             double len = Math.sqrt(dx * dx + dz * dz);

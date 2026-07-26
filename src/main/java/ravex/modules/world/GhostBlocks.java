@@ -2,7 +2,7 @@ package ravex.modules.world;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
@@ -12,7 +12,6 @@ import ravex.event.network.PacketEvent;
 
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.network.NetworkUtility;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,7 +66,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Strict", java.util.
         if (!getEnabled() || !event.isReceive()) return;
         Object packet = event.getPacket();
         if (packet instanceof ClientboundBlockUpdatePacket blockUpdate) {
-            BlockPos pos = blockUpdate.getPos();
+            net.minecraft.core.BlockPos pos = blockUpdate.getPos();
             onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), getBlockId(blockUpdate.getBlockState()));
         } else if (packet instanceof ClientboundSectionBlocksUpdatePacket sectionUpdate) {
             sectionUpdate.runUpdates((pos, state) -> {

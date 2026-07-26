@@ -8,9 +8,9 @@ import ravex.parameter.ActionParameter;
 import ravex.utility.misc.OreUtility;
 import java.util.HashSet;
 import java.util.Set;
-@ModuleInfo(name = "Xray", category = "Player")
+@ModuleInfo(name = "Xray", category = "net.minecraft.world.entity.player.Player")
 public class Xray extends ravex.modules.Module {
-public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
+public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
         Minecraft.getInstance().setScreen(ravex.gui.browser.BlockBrowserScreen.forXray(Minecraft.getInstance().screen));
     });
     private final Set<net.minecraft.resources.Identifier> selectedBlocks = new HashSet<>();

@@ -9,13 +9,13 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
-import ravex.utility.notification.Notification;
+import ravex.utility.notification.NotificationUtility;
 import ravex.utility.render.FontRenderUtility;
 import java.lang.reflect.Field;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NotificationManager {
-    private static final CopyOnWriteArrayList<Notification> notifications = new CopyOnWriteArrayList<>();
+    private static final CopyOnWriteArrayList<NotificationUtility> notifications = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<ToastEntry> toasts = new CopyOnWriteArrayList<>();
 
     private static final int PANEL_PADDING_X = 6;
@@ -163,7 +163,7 @@ public class NotificationManager {
     }
 
     public static void add(String text, int color, int duration) {
-        notifications.add(new Notification(text, color, duration));
+        notifications.add(new NotificationUtility(text, color, duration));
         if (notifications.size() > 20) {
             notifications.remove(0);
         }
@@ -194,7 +194,7 @@ public class NotificationManager {
         int startY = screenH / 3;
         int currentY = startY;
 
-        for (Notification n : notifications) {
+        for (NotificationUtility n : notifications) {
             if (n.isExpired()) {
                 notifications.remove(n);
                 continue;

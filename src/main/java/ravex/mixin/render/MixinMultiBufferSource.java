@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.Glint;
-import ravex.utility.render.GlintVertexConsumer;
+import ravex.utility.render.GlintVertexConsumerUtility;
 
 @Mixin(MultiBufferSource.BufferSource.class)
 public class MixinMultiBufferSource {
@@ -21,11 +21,11 @@ public class MixinMultiBufferSource {
             boolean isArmor = name.contains("armor");
             if (isArmor) {
                 if (Glint.maybeEnabled() && Glint.itz().armor.getValue()) {
-                    cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.itz().color.getValue()));
+                    cir.setReturnValue(new GlintVertexConsumerUtility(cir.getReturnValue(), Glint.itz().color.getValue()));
                 }
             } else {
                 if (Glint.maybeEnabled() && Glint.itz().items.getValue()) {
-                    cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.itz().color.getValue()));
+                    cir.setReturnValue(new GlintVertexConsumerUtility(cir.getReturnValue(), Glint.itz().color.getValue()));
                 }
             }
         }

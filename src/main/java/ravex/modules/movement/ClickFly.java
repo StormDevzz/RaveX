@@ -2,12 +2,12 @@ package ravex.modules.movement;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -20,7 +20,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
     public final NumberParameter range = new NumberParameter("Range", 100.0, 10.0, 300.0, 10.0);
     public final NumberParameter height = new NumberParameter("Height", 0.0, -5.0, 10.0, 0.5);
     public final BooleanParameter autoLand = new BooleanParameter("AutoLand", true);
-    private Vec3 target = null;
+    private net.minecraft.world.phys.Vec3 target = null;
     private boolean flying = false;
     private long lastClick = 0;
     protected void onEnable() {
@@ -38,7 +38,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
             long now = System.currentTimeMillis();
             if (now - lastClick > 300) {
                 lastClick = now;
-                Vec3 newTarget = getTarget(mc);
+                net.minecraft.world.phys.Vec3 newTarget = getTarget(mc);
                 if (newTarget != null) {
                     target = newTarget;
                     flying = true;
@@ -52,13 +52,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
             flyStep(mc);
         }
     }
-    private Vec3 getTarget(Minecraft mc) {
+    private net.minecraft.world.phys.Vec3 getTarget(Minecraft mc) {
         HitResult hit = mc.hitResult;
         if (hit != null) {
             if (hit.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockHit = (BlockHitResult) hit;
-                BlockPos pos = blockHit.getBlockPos();
-                return Vec3.atCenterOf(pos).add(0, 0.5 + height.getValue(), 0);
+                net.minecraft.core.BlockPos pos = blockHit.getBlockPos();
+                return net.minecraft.world.phys.Vec3.atCenterOf(pos).add(0, 0.5 + height.getValue(), 0);
             }
             if (hit.getType() == HitResult.Type.ENTITY) {
                 EntityHitResult entityHit = (EntityHitResult) hit;
@@ -66,14 +66,14 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
             }
         }
         double dist = range.getValue();
-        Vec3 eye = mc.player.getEyePosition(1.0F);
-        Vec3 look = mc.player.getViewVector(1.0F);
+        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition(1.0F);
+        net.minecraft.world.phys.Vec3 look = mc.player.getViewVector(1.0F);
         return eye.add(look.x * dist, look.y * dist + height.getValue(), look.z * dist);
     }
     private void flyStep(Minecraft mc) {
         var p = mc.player;
-        Vec3 pos = p.position();
-        Vec3 diff = target.subtract(pos);
+        net.minecraft.world.phys.Vec3 pos = p.position();
+        net.minecraft.world.phys.Vec3 diff = target.subtract(pos);
         double dist = diff.length();
         if (dist < 1.5) {
             if (autoLand.getValue()) {
@@ -83,7 +83,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
             }
             return;
         }
-        Vec3 dir = diff.normalize();
+        net.minecraft.world.phys.Vec3 dir = diff.normalize();
         double spd = speed.getValue();
         p.setDeltaMovement(dir.x * spd, dir.y * spd, dir.z * spd);
         p.connection.send(new ServerboundMovePlayerPacket.Pos(
@@ -94,18 +94,18 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
     }
     private void tpStep(Minecraft mc) {
         var p = mc.player;
-        Vec3 pos = p.position();
-        Vec3 diff = target.subtract(pos);
+        net.minecraft.world.phys.Vec3 pos = p.position();
+        net.minecraft.world.phys.Vec3 diff = target.subtract(pos);
         double dist = diff.length();
         if (dist < 1.5) {
             flying = false;
             target = null;
             return;
         }
-        Vec3 dir = diff.normalize();
+        net.minecraft.world.phys.Vec3 dir = diff.normalize();
         double spd = speed.getValue();
         double step = Math.min(spd, dist);
-        Vec3 next = pos.add(dir.x * step, dir.y * step, dir.z * step);
+        net.minecraft.world.phys.Vec3 next = pos.add(dir.x * step, dir.y * step, dir.z * step);
         p.connection.send(new ServerboundMovePlayerPacket.Pos(
                 next.x, next.y, next.z, true, p.horizontalCollision));
         p.setPos(next.x, next.y, next.z);

@@ -141,7 +141,6 @@ public class LanguageUtility {
         en.put("desc_ItemSaver", "Save items");
         en.put("desc_AntiAim", "Spin head");
         en.put("desc_NoSwing", "No swing");
-        en.put("desc_Animations", "Smooth moves");
         en.put("desc_SwingAnimation", "Swing animation");
         en.put("desc_CityESP", "City ESP");
         en.put("desc_DesktopGui", "Desktop control");
@@ -392,7 +391,6 @@ public class LanguageUtility {
         ru.put("desc_ItemSaver", "Сохранить предметы");
         ru.put("desc_AntiAim", "Вращать голову");
         ru.put("desc_NoSwing", "Убрать взмах");
-        ru.put("desc_Animations", "Плавные движения");
         ru.put("desc_SwingAnimation", "Анимация взмаха");
         ru.put("desc_CityESP", "Подсветка блоков для таргета");
         ru.put("desc_DesktopGui", "Управление с ПК");

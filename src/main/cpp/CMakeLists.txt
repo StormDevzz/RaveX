@@ -57,7 +57,6 @@ add_subdirectory(hooks/antibot)
 add_subdirectory(hooks/autodrop)
 # add_subdirectory(hooks/selffill)  # теперь НЕТУ
 add_subdirectory(hooks/burrow)
-add_subdirectory(hooks/animations)
 add_subdirectory(hooks/autoregear)
 add_subdirectory(hooks/antiregear)
 # add_subdirectory(hooks/holeesp)  # теперь нету (обьединен в модуль ESP)

@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.Glint;
-import ravex.utility.render.GlintVertexConsumer;
+import ravex.utility.render.GlintVertexConsumerUtility;
 
 @Mixin(ItemRenderer.class)
 public class MixinItemRenderer {
@@ -18,9 +18,9 @@ public class MixinItemRenderer {
     private static void onGetFoilBuffer(MultiBufferSource bufferSource, RenderType renderType, boolean isItem, boolean glint, CallbackInfoReturnable<VertexConsumer> cir) {
         if (Glint.maybeEnabled() && glint) {
             if (isItem && Glint.itz().items.getValue()) {
-                cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.itz().color.getValue()));
+                cir.setReturnValue(new GlintVertexConsumerUtility(cir.getReturnValue(), Glint.itz().color.getValue()));
             } else if (!isItem && Glint.itz().armor.getValue()) {
-                cir.setReturnValue(new GlintVertexConsumer(cir.getReturnValue(), Glint.itz().color.getValue()));
+                cir.setReturnValue(new GlintVertexConsumerUtility(cir.getReturnValue(), Glint.itz().color.getValue()));
             }
         }
     }

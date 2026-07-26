@@ -7,8 +7,8 @@ import ravex.parameter.ModeParameter;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import ravex.utility.misc.EntityUtility;
+
 import net.minecraft.world.item.BowItem;
 import ravex.utility.misc.MobUtility;
 @ModuleInfo(name = "AimAssist", category = "Combat")
@@ -23,10 +23,10 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Players", j
         if (bowOnly.getValue() && !(mc.player.getMainHandItem().getItem() instanceof BowItem)) {
             return;
         }
-        LivingEntity target = null;
+        net.minecraft.world.entity.LivingEntity target = null;
         double bestDist = Double.MAX_VALUE;
-        for (Entity entity : mc.level.entitiesForRendering()) {
-            if (!(entity instanceof LivingEntity p)) continue;
+        for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
+            if (!(entity instanceof net.minecraft.world.entity.LivingEntity p)) continue;
             if (MobUtility.isSelf(p) || !MobUtility.isAlive(p)) continue;
             String mode = targetMode.getValue();
             if (mode.equals("Players") && !MobUtility.isPlayer(p)) continue;

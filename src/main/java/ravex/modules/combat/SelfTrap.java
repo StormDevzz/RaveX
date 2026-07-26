@@ -2,17 +2,15 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import ravex.RaveX;
 
 import ravex.parameter.ActionParameter;
@@ -24,15 +22,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 
 @ModuleInfo(name = "SelfTrap", category = "Combat")
 public class SelfTrap extends ravex.modules.Module {
 public static final SelfTrap INSTANCE = new SelfTrap();
-    public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
+    public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.browser.BlockBrowserScreen(
             Minecraft.getInstance().screen,
             ravex.manager.ModuleManager.delegate(ravex.modules.combat.SelfTrap.class)::isBlockSelected,
@@ -52,10 +50,10 @@ public static final SelfTrap INSTANCE = new SelfTrap();
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00DDFF);
     private final Set<Identifier> selectedBlocks = new HashSet<>();
-    private static final List<BlockPos> selfTrapBlocks = new ArrayList<>();
+    private static final List<net.minecraft.core.BlockPos> selfTrapBlocks = new ArrayList<>();
     private long lastPlaceTime = 0;
-    private static final SilentRotation silentRotation = new SilentRotation();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_selftrap");
+    private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_selftrap");
     static {
         NATIVE.load();
     }
@@ -81,7 +79,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
     public static float getSilentPitch() {
         return silentRotation.pitch;
     }
-    public static List<BlockPos> getSelfTrapBlocks() {
+    public static List<net.minecraft.core.BlockPos> getSelfTrapBlocks() {
         synchronized (selfTrapBlocks) {
             return new ArrayList<>(selfTrapBlocks);
         }
@@ -104,7 +102,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             selfTrapBlocks.clear();
         }
         if (selectedBlocks.isEmpty()) {
-            selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.OBSIDIAN));
+            selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.OBSIDIAN));
         }
     }
     protected void onDisable() {
@@ -128,7 +126,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
         else if ("Roof".equals(mStr)) modeVal = 2;
         int simLimit = 9;
         int simCount = 0;
-        List<BlockPos> simulatedBlocks = new ArrayList<>();
+        List<net.minecraft.core.BlockPos> simulatedBlocks = new ArrayList<>();
         while (simCount < simLimit) {
             double[] currentSolidData = new double[activeSolidBlocks.size()];
             for (int i = 0; i < currentSolidData.length; i++) {
@@ -148,7 +146,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             if (result == null || result[0] < 0.5) {
                 break;
             }
-            BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
+            net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
             simulatedBlocks.add(targetBlock);
             simCount++;
             activeSolidBlocks.add((double) targetBlock.getX());
@@ -196,10 +194,10 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             if (result == null || result[0] < 0.5) {
                 break;
             }
-            BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
-            Direction face = Direction.values()[(int) result[4]];
-            BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
-            Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+            net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
+            net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
+            net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
+            net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             rotateTo(mc, hitVec);
             boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
             if (isStrict && !isRotationAligned(mc, hitVec)) {
@@ -216,8 +214,8 @@ public static final SelfTrap INSTANCE = new SelfTrap();
                 }
             }
             BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
-            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
-            mc.player.swing(InteractionHand.MAIN_HAND);
+            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             placedAny = true;
             actionsThisTick++;
             activeSolidBlocks.add((double) targetBlock.getX());
@@ -235,7 +233,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             }
         }
     }
-    private void rotateTo(Minecraft mc, Vec3 target) {
+    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         if (rotate.getValue().equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player, target);
         if (rotate.getValue().equals("Normal")) {
@@ -245,20 +243,20 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             silentRotation.set(angles[0], angles[1]);
         }
     }
-    private boolean isRotationAligned(Minecraft mc, Vec3 target) {
+    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         if (rotate.getValue().equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 12.0F);
     }
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
-        BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int rx = 3;
         int ry = 3;
         int rz = 3;
         for (int dx = -rx; dx <= rx; dx++) {
             for (int dy = -ry; dy <= ry; dy++) {
                 for (int dz = -rz; dz <= rz; dz++) {
-                    BlockPos pos = playerPos.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
                         BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
@@ -301,8 +299,8 @@ public static final SelfTrap INSTANCE = new SelfTrap();
         return -1;
     }
     private double[] javaFallbackCalculate(Minecraft mc, double[] solidBlocksData, int modeVal) {
-        BlockPos pf = mc.player.blockPosition();
-        List<BlockPos> candidates = new ArrayList<>();
+        net.minecraft.core.BlockPos pf = mc.player.blockPosition();
+        List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
         if (modeVal == 0 || modeVal == 1) {
             candidates.add(pf.north());
             candidates.add(pf.south());
@@ -316,27 +314,27 @@ public static final SelfTrap INSTANCE = new SelfTrap();
         if (modeVal == 0 || modeVal == 2) {
             candidates.add(pf.above(2));
         }
-        Set<BlockPos> solids = new HashSet<>();
+        Set<net.minecraft.core.BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
-            solids.add(new BlockPos((int)solidBlocksData[i], (int)solidBlocksData[i+1], (int)solidBlocksData[i+2]));
+            solids.add(new net.minecraft.core.BlockPos((int)solidBlocksData[i], (int)solidBlocksData[i+1], (int)solidBlocksData[i+2]));
         }
         solids.remove(pf);
         solids.remove(pf.above());
-        for (BlockPos c : candidates) {
+        for (net.minecraft.core.BlockPos c : candidates) {
             if (solids.contains(c)) continue;
-            for (Direction face : Direction.values()) {
-                BlockPos n = c.relative(face);
+            for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
+                net.minecraft.core.BlockPos n = c.relative(face);
                 if (solids.contains(n)) {
                     return new double[]{1.0, n.getX(), n.getY(), n.getZ(), face.ordinal(), c.getX(), c.getY(), c.getZ()};
                 }
             }
         }
-        for (BlockPos c : candidates) {
+        for (net.minecraft.core.BlockPos c : candidates) {
             if (solids.contains(c)) continue;
-            BlockPos support = c.below();
+            net.minecraft.core.BlockPos support = c.below();
             if (solids.contains(support)) continue;
-            for (Direction face : Direction.values()) {
-                BlockPos n = support.relative(face);
+            for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
+                net.minecraft.core.BlockPos n = support.relative(face);
                 if (solids.contains(n)) {
                     return new double[]{1.0, n.getX(), n.getY(), n.getZ(), face.ordinal(), support.getX(), support.getY(), support.getZ()};
                 }

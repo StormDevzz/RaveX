@@ -2,10 +2,10 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.EntityUtility;
+
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.misc.MobUtility;
 
 import ravex.parameter.BooleanParameter;
@@ -39,9 +39,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.
         if (tickCounter < delay.getValue().intValue()) return;
         tickCounter = 0;
         double r = range.getValue();
-        Entity target = null;
+        net.minecraft.world.entity.Entity target = null;
         double nearest = r + 1;
-        for (Entity entity : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             var living = MobUtility.asLivingEntity(entity);
             if (living == null || MobUtility.isSelf(living)) continue;
             if (!players.getValue() && MobUtility.isPlayer(living)) continue;
@@ -66,11 +66,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.
             float oldYaw = mc.player.getYRot();
             float oldPitch = mc.player.getXRot();
             mc.player.setYRot(yaw); mc.player.setXRot(pitch);
-            mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+            mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             mc.player.setYRot(oldYaw); mc.player.setXRot(oldPitch);
         } else {
             mc.player.setYRot(yaw); mc.player.setXRot(pitch);
-            mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+            mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         }
     }
     public static boolean maybeEnabled() {

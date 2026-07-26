@@ -6,12 +6,12 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 
-@ModuleInfo(name = "ViewLock", category = "Player")
+@ModuleInfo(name = "ViewLock", category = "net.minecraft.world.entity.player.Player")
 public class ViewLock extends ravex.modules.Module {
 public final BooleanParameter lockYaw = new BooleanParameter("LockYaw", true);
     public final BooleanParameter lockPitch = new BooleanParameter("LockPitch", true);
     public final ModeParameter mode = new ModeParameter("Mode", "Freeze",
-            java.util.List.of("Freeze", "Smooth", "Direction"));
+            java.util.List.of("Freeze", "Smooth", "net.minecraft.core.Direction"));
     public final NumberParameter smoothSpeed = new NumberParameter("SmoothSpeed", 0.3, 0.05, 1.0, 0.05);
     public final NumberParameter sensitivity = new NumberParameter("Sensitivity", 1.0, 0.1, 3.0, 0.1);
     public final NumberParameter savedYaw = new NumberParameter("SavedYaw", 0.0, -180.0, 180.0, 1.0);
@@ -69,7 +69,7 @@ public final BooleanParameter lockYaw = new BooleanParameter("LockYaw", true);
     }
 
     public boolean isDirectionMode() {
-        return getEnabled() && "Direction".equals(mode.getValue());
+        return getEnabled() && "net.minecraft.core.Direction".equals(mode.getValue());
     }
 
     public static boolean maybeEnabled() {

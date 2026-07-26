@@ -2,21 +2,19 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 @ModuleInfo(name = "BedBomb", category = "Combat")
@@ -27,13 +25,13 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
     public final BooleanParameter render = new BooleanParameter("Render", true);
-    public static BlockPos currentTarget = null;
+    public static net.minecraft.core.BlockPos currentTarget = null;
     private enum State { IDLE, FIND_TARGET, PLACING, WAITING, DETONATE }
     private State state = State.IDLE;
-    private BlockPos bedPos = null;
-    private BlockPos placePos = null;
+    private net.minecraft.core.BlockPos bedPos = null;
+    private net.minecraft.core.BlockPos placePos = null;
     private long lastActionTime = 0;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_bedbomb");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_bedbomb");
     static {
         NATIVE.load();
     }
@@ -69,14 +67,14 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     private void findTarget(Minecraft mc) {
         var target = findNearestEnemy(mc);
         if (target == null) return;
-        BlockPos enemyPos = target.blockPosition();
-        BlockPos bestPos = null;
+        net.minecraft.core.BlockPos enemyPos = target.blockPosition();
+        net.minecraft.core.BlockPos bestPos = null;
         if (NATIVE.isLoaded()) {
             double[] result = new double[4];
             nativeFindBestPlace(mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                 enemyPos.getX(), enemyPos.getY(), enemyPos.getZ(), range.getValue(), result);
             if (result[0] != Double.MAX_VALUE) {
-                bestPos = BlockPos.containing(result[0], result[1], result[2]);
+                bestPos = net.minecraft.core.BlockPos.containing(result[0], result[1], result[2]);
             }
         } else {
             bestPos = findPlacePos(mc, enemyPos);
@@ -101,10 +99,10 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         int prev = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, slot);
         BlockHitResult hit = new BlockHitResult(
-            Vec3.atCenterOf(placePos), Direction.UP, placePos, false
+            net.minecraft.world.phys.Vec3.atCenterOf(placePos), net.minecraft.core.Direction.UP, placePos, false
         );
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         InventoryUtility.selectSlot(mc.player, prev);
         state = State.WAITING;
     }
@@ -117,15 +115,15 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         lastActionTime = now;
         if (bedPos == null) { state = State.IDLE; return; }
         BlockState st = mc.level.getBlockState(bedPos);
-        if (!st.is(Blocks.RED_BED) && !st.is(Blocks.WHITE_BED)) {
+        if (!st.is(net.minecraft.world.level.block.Blocks.RED_BED) && !st.is(net.minecraft.world.level.block.Blocks.WHITE_BED)) {
             boolean isBed = st.getBlock() instanceof BedBlock;
             if (!isBed) { state = State.IDLE; return; }
         }
         BlockHitResult hit = new BlockHitResult(
-            Vec3.atCenterOf(bedPos), Direction.UP, bedPos, false
+            net.minecraft.world.phys.Vec3.atCenterOf(bedPos), net.minecraft.core.Direction.UP, bedPos, false
         );
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         state = State.IDLE;
     }
     private net.minecraft.world.entity.LivingEntity findNearestEnemy(Minecraft mc) {
@@ -145,13 +143,13 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         }
         return closest;
     }
-    private BlockPos findPlacePos(Minecraft mc, BlockPos near) {
+    private net.minecraft.core.BlockPos findPlacePos(Minecraft mc, net.minecraft.core.BlockPos near) {
         double r = range.getValue();
-        Vec3 eye = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 for (int dy = -1; dy <= 2; dy++) {
-                    BlockPos pos = near.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos pos = near.offset(dx, dy, dz);
                     if (pos.distToCenterSqr(eye) > r * r) continue;
                     BlockState below = mc.level.getBlockState(pos.below());
                     BlockState target = mc.level.getBlockState(pos);

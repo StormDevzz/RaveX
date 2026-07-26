@@ -2,27 +2,24 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.EntityUtility;
+
 import net.minecraft.world.item.BlockItem;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
-import ravex.utility.player.SwingUtility;
+import ravex.utility.player.rotation.SilentRotationUtility;
 @ModuleInfo(name = "AutoDrop", category = "Combat")
 public class AutoDrop extends ravex.modules.Module {
 public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
@@ -38,11 +35,11 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
             java.util.List.of("NCP", "NCPStrict", "Strict", "None"));
     public final BooleanParameter swapSwitchBack = new BooleanParameter("SwitchBack", true);
     public final NumberParameter placeDelay = new NumberParameter("Delay", 2, 1, 10, 1);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_autodrop");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autodrop");
     static {
         NATIVE.load();
     }
-    private static final SilentRotation silentRotation = new SilentRotation();
+    private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private int tickCounter = 0;
     private int originalSlot = -1;
     public void onTick() {
@@ -51,9 +48,9 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
         tickCounter++;
         if (tickCounter < placeDelay.getValue().intValue()) return;
         tickCounter = 0;
-        Entity targetEntity = findTarget(mc);
+        net.minecraft.world.entity.Entity targetEntity = findTarget(mc);
         if (targetEntity == null) return;
-        BlockPos placePos = targetEntity.blockPosition().above(dropHeight.getValue().intValue());
+        net.minecraft.core.BlockPos placePos = targetEntity.blockPosition().above(dropHeight.getValue().intValue());
         if (!mc.level.getBlockState(placePos).isAir() && !mc.level.getBlockState(placePos).canBeReplaced()) return;
         int slot = findDropBlock(mc);
         if (slot == -1) return;
@@ -65,39 +62,39 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
             originalSlot = InventoryUtility.getSelectedSlot(mc.player);
             InventoryUtility.silentSelectSlot(mc.player, slot);
         }
-        Vec3 center = Vec3.atCenterOf(placePos);
+        net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(placePos);
         rotateTo(mc, center);
         String rot = rotate.getValue();
         if ((rot.equals("Strict") || rot.equals("NCPStrict")) && !isRotationAligned(mc, center)) return;
-        BlockPos neighbor;
-        Direction face = Direction.UP;
+        net.minecraft.core.BlockPos neighbor;
+        net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
         if (airPlace.getValue() || mc.level.getBlockState(placePos.below()).isAir()) {
             neighbor = null;
-            for (Direction dir : Direction.values()) {
-                BlockPos side = placePos.relative(dir);
+            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                net.minecraft.core.BlockPos side = placePos.relative(dir);
                 if (!mc.level.getBlockState(side).isAir()) { neighbor = side; face = dir.getOpposite(); break; }
             }
-            if (neighbor == null) { neighbor = placePos.above(); face = Direction.DOWN; }
+            if (neighbor == null) { neighbor = placePos.above(); face = net.minecraft.core.Direction.DOWN; }
         } else { neighbor = placePos.below(); }
-        Vec3 hitVec = new Vec3(
+        net.minecraft.world.phys.Vec3 hitVec = new net.minecraft.world.phys.Vec3(
             neighbor.getX() + 0.5 + face.getStepX() * 0.5,
             neighbor.getY() + 0.5 + face.getStepY() * 0.5,
             neighbor.getZ() + 0.5 + face.getStepZ() * 0.5
         );
         if (mc.gameMode != null)
-            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, new BlockHitResult(hitVec, face, neighbor, false));
-        SwingUtility.swing(mc.player, InteractionHand.MAIN_HAND);
+            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, new BlockHitResult(hitVec, face, neighbor, false));
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         if (swapSwitchBack.getValue() && originalSlot != -1 && !swap.equals("None")) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
     }
-    private Entity findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.Entity findTarget(Minecraft mc) {
         String t = target.getValue();
         if (t.equals("Self")) return mc.player;
-        Entity best = null;
+        net.minecraft.world.entity.Entity best = null;
         double bestDist = range.getValue();
-        for (Entity e : mc.level.entitiesForRendering()) {
-            LivingEntity le = MobUtility.asLivingEntity(e);
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+            net.minecraft.world.entity.LivingEntity le = MobUtility.asLivingEntity(e);
             if (le == null || MobUtility.isSelf(le) || !e.isAlive()) continue;
             double dist = MobUtility.distanceToPlayer(e);
             if (dist < bestDist) { bestDist = dist; best = e; }
@@ -111,14 +108,14 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
             var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) continue;
             var block = ((BlockItem) stack.getItem()).getBlock();
-            if (type.equals("Gravel") && block == Blocks.GRAVEL) return i;
-            if (type.equals("Sand") && block == Blocks.SAND) return i;
+            if (type.equals("Gravel") && block == net.minecraft.world.level.block.Blocks.GRAVEL) return i;
+            if (type.equals("Sand") && block == net.minecraft.world.level.block.Blocks.SAND) return i;
             if (type.equals("Anvil") && block instanceof net.minecraft.world.level.block.AnvilBlock) return i;
             if (type.equals("Both") && (block instanceof FallingBlock || block instanceof net.minecraft.world.level.block.AnvilBlock)) return i;
         }
         return -1;
     }
-    private void rotateTo(Minecraft mc, Vec3 target) {
+    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate.getValue();
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
@@ -134,7 +131,7 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
         silentRotation.lastYaw = finalYaw;
         silentRotation.lastPitch = finalPitch;
     }
-    private boolean isRotationAligned(Minecraft mc, Vec3 target) {
+    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
     public static boolean maybeEnabled() {

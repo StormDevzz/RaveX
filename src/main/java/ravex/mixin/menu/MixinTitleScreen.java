@@ -72,7 +72,7 @@ public abstract class MixinTitleScreen extends Screen {
             ravexSplashText = "RaveX Client!";
         }
 
-        ravex.utility.network.Github.fetchRawContent("StormDevzz", "RaveX", "main", "splashes.txt")
+        ravex.utility.network.GithubUtility.fetchRawContent("StormDevzz", "RaveX", "main", "splashes.txt")
                 .thenAccept(content -> {
                     if (content != null && !content.isBlank()) {
                         String[] onlineSplashes = content.split("\\r?\\n");

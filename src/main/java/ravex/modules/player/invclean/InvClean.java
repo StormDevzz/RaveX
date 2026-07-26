@@ -9,7 +9,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
-@ModuleInfo(name = "InvClean", category = "Player")
+@ModuleInfo(name = "InvClean", category = "net.minecraft.world.entity.player.Player")
 public class InvClean extends ravex.modules.Module {
 public final BooleanParameter autoClean = new BooleanParameter("AutoClean", false);
     public final NumberParameter interval   = new NumberParameter("Interval", 10, 2, 60, 1);

@@ -2,31 +2,30 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.render.animate.EasingAnimation;
-import ravex.utility.render.animate.SlideAnimation;
+import ravex.utility.render.animate.EasingAnimationUtility;
+import ravex.utility.render.animate.SlideAnimationUtility;
 import ravex.utility.player.InventoryUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "Surround", category = "Combat")
 public class Surround extends ravex.modules.Module {
-public static final List<BlockPos> surroundBlocks = new ArrayList<>();
+public static final List<net.minecraft.core.BlockPos> surroundBlocks = new ArrayList<>();
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
     public static float renderR = 0.3f;
     public static float renderG = 0.8f;
     public static float renderB = 1.0f;
-    public static Vec3 animatedCenter = null;
+    public static net.minecraft.world.phys.Vec3 animatedCenter = null;
     public final ModeParameter mode = new ModeParameter("Mode", "Full",
         java.util.List.of("Full", "AntiFace", "Extra"));
     public final BooleanParameter autoCenter = new BooleanParameter("AutoCenter", true);
@@ -45,9 +44,9 @@ public static final List<BlockPos> surroundBlocks = new ArrayList<>();
         }
     }
     private static native double[] nativeGetCenter(double px, double py, double pz, boolean autoCenter);
-    private final EasingAnimation fadeAnim = new EasingAnimation();
-    private final EasingAnimation sizeAnim = new EasingAnimation();
-    private final SlideAnimation slideAnim = new SlideAnimation();
+    private final EasingAnimationUtility fadeAnim = new EasingAnimationUtility();
+    private final EasingAnimationUtility sizeAnim = new EasingAnimationUtility();
+    private final SlideAnimationUtility slideAnim = new SlideAnimationUtility();
     private long lastPlaceTime = 0;
     private boolean placed = false;
     protected void onEnable() {
@@ -105,14 +104,14 @@ public static final List<BlockPos> surroundBlocks = new ArrayList<>();
                 ));
             }
         }
-        BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int blockSlot = findBlockSlot(mc.player);
         if (blockSlot == -1) {
             surroundBlocks.clear();
             renderAlpha = fadeAnim.updateFloat(false, 0.2f);
             return;
         }
-        List<BlockPos> targets = new ArrayList<>();
+        List<net.minecraft.core.BlockPos> targets = new ArrayList<>();
         String m = mode.getValue();
         switch (m) {
             case "Full" -> {
@@ -126,7 +125,7 @@ public static final List<BlockPos> surroundBlocks = new ArrayList<>();
                 targets.add(playerPos.south().west());
             }
             case "AntiFace" -> {
-                Direction facing = mc.player.getDirection();
+                net.minecraft.core.Direction facing = mc.player.getDirection();
                 targets.add(playerPos.relative(facing.getClockWise()));
                 targets.add(playerPos.relative(facing.getCounterClockWise()));
                 targets.add(playerPos.relative(facing.getOpposite()));
@@ -145,14 +144,14 @@ public static final List<BlockPos> surroundBlocks = new ArrayList<>();
                 targets.add(playerPos.above());
             }
         }
-        List<BlockPos> toPlace = new ArrayList<>();
-        for (BlockPos target : targets) {
+        List<net.minecraft.core.BlockPos> toPlace = new ArrayList<>();
+        for (net.minecraft.core.BlockPos target : targets) {
             if (isReplaceable(target)) {
                 if (handleBlockingEntities(target)) {
                     continue;
                 }
                 if (findNeighbor(target) == null) {
-                    BlockPos below = target.below();
+                    net.minecraft.core.BlockPos below = target.below();
                     if (isReplaceable(below) && !toPlace.contains(below)) {
                         toPlace.add(below);
                     }
@@ -196,35 +195,35 @@ public static final List<BlockPos> surroundBlocks = new ArrayList<>();
         lastPlaceTime = now;
         int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, blockSlot);
-        for (BlockPos target : toPlace) {
-            BlockPos neighbor = findNeighbor(target);
+        for (net.minecraft.core.BlockPos target : toPlace) {
+            net.minecraft.core.BlockPos neighbor = findNeighbor(target);
             if (neighbor == null) continue;
-            Direction face = null;
-            for (Direction d : Direction.values()) {
+            net.minecraft.core.Direction face = null;
+            for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
                 if (target.equals(neighbor.relative(d))) {
                     face = d;
                     break;
                 }
             }
-            if (face == null) face = Direction.UP;
-            Vec3 hitVec = Vec3.atCenterOf(neighbor)
-                .add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+            if (face == null) face = net.minecraft.core.Direction.UP;
+            net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighbor)
+                .add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             BlockHitResult blockHit = new BlockHitResult(hitVec, face, neighbor, false);
-            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, blockHit);
-            mc.player.swing(InteractionHand.MAIN_HAND);
+            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             placed = true;
         }
         if (prevSlot != blockSlot) {
             InventoryUtility.selectSlot(mc.player, prevSlot);
         }
     }
-    private boolean isReplaceable(BlockPos pos) {
+    private boolean isReplaceable(net.minecraft.core.BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return false;
         net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
         return state.isAir() || state.canBeReplaced();
     }
-    private boolean handleBlockingEntities(BlockPos pos) {
+    private boolean handleBlockingEntities(net.minecraft.core.BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return false;
         net.minecraft.world.phys.AABB aabb = new net.minecraft.world.phys.AABB(pos);
@@ -237,18 +236,18 @@ public static final List<BlockPos> surroundBlocks = new ArrayList<>();
             for (net.minecraft.world.entity.Entity crystal : entities) {
                 if (mc.gameMode != null) {
                     mc.gameMode.attack(mc.player, crystal);
-                    mc.player.swing(InteractionHand.MAIN_HAND);
+                    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
             return true;
         }
         return false;
     }
-    private BlockPos findNeighbor(BlockPos pos) {
+    private net.minecraft.core.BlockPos findNeighbor(net.minecraft.core.BlockPos pos) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return null;
-        for (Direction face : Direction.values()) {
-            BlockPos side = pos.relative(face);
+        for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
+            net.minecraft.core.BlockPos side = pos.relative(face);
             if (!isReplaceable(side)) {
                 return side;
             }

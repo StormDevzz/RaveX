@@ -10,14 +10,14 @@ import org.joml.Vector3fc;
 import ravex.utility.shaders.*;
 import ravex.manager.HandShaderManager;
 
-public class ShaderVertexConsumer implements VertexConsumer {
+public class ShaderVertexConsumerUtility implements VertexConsumer {
     private final VertexConsumer delegate;
     private final HandShaderManager.RenderInput renderInput;
     private float curX, curY, curZ;
     private float curU, curV;
     private float curNormX, curNormY, curNormZ;
 
-    public ShaderVertexConsumer(VertexConsumer delegate, HandShaderManager.RenderInput renderInput) {
+    public ShaderVertexConsumerUtility(VertexConsumer delegate, HandShaderManager.RenderInput renderInput) {
         this.delegate = delegate;
         this.renderInput = renderInput;
     }

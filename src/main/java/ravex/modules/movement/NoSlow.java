@@ -2,12 +2,11 @@ package ravex.modules.movement;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 
@@ -20,7 +19,7 @@ public class NoSlow extends ravex.modules.Module {
 public final ModeParameter mode = new ModeParameter("Mode", "Grim",
             List.of("Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3"));
     public final ravex.parameter.BooleanParameter items = new ravex.parameter.BooleanParameter("Items", true);
-    public final ravex.parameter.BooleanParameter blocks = new ravex.parameter.BooleanParameter("Blocks", true);
+    public final ravex.parameter.BooleanParameter blocks = new ravex.parameter.BooleanParameter("net.minecraft.world.level.block.Blocks", true);
     public final ravex.parameter.BooleanParameter sneaking = new ravex.parameter.BooleanParameter("Sneaking", true);
     public final ravex.parameter.BooleanParameter ice = new ravex.parameter.BooleanParameter("Ice", false);
     public final NumberParameter altInterval = new NumberParameter("AltInterval", 4.0, 2.0, 20.0, 1.0);
@@ -76,7 +75,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Grim",
                 // Swap on this tick: resets server's "using item" state
                 mc.player.connection.send(new ServerboundPlayerActionPacket(
                     ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND,
-                    BlockPos.ZERO, Direction.DOWN
+                    net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN
                 ));
                 return;
             }
@@ -84,7 +83,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Grim",
             // On non-swap ticks, boost velocity to compensate for slowdown
             if (isMoving) {
                 double scale = matrixVelocityScale.getValue();
-                Vec3 motion = mc.player.getDeltaMovement();
+                net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
                 mc.player.setDeltaMovement(
                     motion.x * scale,
                     motion.y,
@@ -106,10 +105,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Grim",
             if ("Packet".equals(action)) {
                 if (altTicks < interval) return;
                 altTicks = 0;
-                InteractionHand hand = mc.player.getUsedItemHand();
+                net.minecraft.world.InteractionHand hand = mc.player.getUsedItemHand();
                 mc.player.connection.send(new ServerboundPlayerActionPacket(
                     ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM,
-                    BlockPos.ZERO, Direction.DOWN, 0
+                    net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN, 0
                 ));
                 mc.player.connection.send(new ServerboundUseItemPacket(
                     hand, 0, mc.player.getYRot(), mc.player.getXRot()

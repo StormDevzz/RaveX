@@ -3,10 +3,10 @@ package ravex.mixin.render;
 import net.minecraft.client.renderer.entity.state.ItemEntityRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import ravex.utility.render.RaveXStateAccessor;
+import ravex.utility.render.RaveXStateAccessorUtility;
 
 @Mixin(ItemEntityRenderState.class)
-public class MixinItemEntityRenderState implements RaveXStateAccessor {
+public class MixinItemEntityRenderState implements RaveXStateAccessorUtility {
     @Unique
     private boolean ravexOnGround;
     @Unique

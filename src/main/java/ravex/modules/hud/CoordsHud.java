@@ -8,8 +8,8 @@ import ravex.gui.clickgui.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "CoordsHud", category = "HUD")
 public class CoordsHud extends ravex.modules.Module {
@@ -20,8 +20,8 @@ public class CoordsHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_COORDS_WHITE;
-    private static final int IS = HudRenderer.getIconSize();
+private static final Identifier ICON = TextureLoaderUtility.HUD_COORDS_WHITE;
+    private static final int IS = HudRendererUtility.getIconSize();
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
@@ -39,27 +39,27 @@ private static final Identifier ICON = TextureLoader.HUD_COORDS_WHITE;
         String yStr = String.format("%.1f", player.getY());
         String zStr = String.format("%.1f", player.getZ());
         String full = (colored ? "X " : "") + xStr + (colored ? " Y " : " / ") + yStr + (colored ? " Z " : " / ") + zStr;
-        int pw = 4 + HudRenderer.textWidth(full) + 4 + IS + 4;
+        int pw = 4 + HudRendererUtility.textWidth(full) + 4 + IS + 4;
         int ph = 14;
         width = pw;
         height = ph;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         int cx = bx + 4;
-        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ac);
+        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ac);
         if (colored) {
-            HudRenderer.drawText(graphics, "X ", cx, by + 2, 0xFFFF4455, shadow);
-            cx += HudRenderer.textWidth("X ");
-            HudRenderer.drawText(graphics, xStr, cx, by + 2, 0xFFD0D0E0, shadow);
-            cx += HudRenderer.textWidth(xStr);
-            HudRenderer.drawText(graphics, " Y ", cx, by + 2, 0xFF44FF88, shadow);
-            cx += HudRenderer.textWidth(" Y ");
-            HudRenderer.drawText(graphics, yStr, cx, by + 2, 0xFFD0D0E0, shadow);
-            cx += HudRenderer.textWidth(yStr);
-            HudRenderer.drawText(graphics, " Z ", cx, by + 2, 0xFF44AAFF, shadow);
-            cx += HudRenderer.textWidth(" Z ");
-            HudRenderer.drawText(graphics, zStr, cx, by + 2, 0xFFD0D0E0, shadow);
+            HudRendererUtility.drawText(graphics, "X ", cx, by + 2, 0xFFFF4455, shadow);
+            cx += HudRendererUtility.textWidth("X ");
+            HudRendererUtility.drawText(graphics, xStr, cx, by + 2, 0xFFD0D0E0, shadow);
+            cx += HudRendererUtility.textWidth(xStr);
+            HudRendererUtility.drawText(graphics, " Y ", cx, by + 2, 0xFF44FF88, shadow);
+            cx += HudRendererUtility.textWidth(" Y ");
+            HudRendererUtility.drawText(graphics, yStr, cx, by + 2, 0xFFD0D0E0, shadow);
+            cx += HudRendererUtility.textWidth(yStr);
+            HudRendererUtility.drawText(graphics, " Z ", cx, by + 2, 0xFF44AAFF, shadow);
+            cx += HudRendererUtility.textWidth(" Z ");
+            HudRendererUtility.drawText(graphics, zStr, cx, by + 2, 0xFFD0D0E0, shadow);
         } else {
-            HudRenderer.drawText(graphics, full, cx, by + 2, 0xFFD0D0E0, shadow);
+            HudRendererUtility.drawText(graphics, full, cx, by + 2, 0xFFD0D0E0, shadow);
         }
     }
 

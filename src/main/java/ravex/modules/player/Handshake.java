@@ -14,7 +14,7 @@ import ravex.manager.LuaManager;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.LuaFunction;
 import java.util.List;
-@ModuleInfo(name = "Handshake", category = "Player")
+@ModuleInfo(name = "Handshake", category = "net.minecraft.world.entity.player.Player")
 public class Handshake extends ravex.modules.Module {
 public final ModeParameter mode = new ModeParameter("Mode", "Basic",
             List.of("Basic", "Forge", "Lunar", "Custom"));

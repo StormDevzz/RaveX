@@ -9,7 +9,7 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.HudRenderer;
+import ravex.utility.render.HudRendererUtility;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -119,7 +119,7 @@ private final Map<String, Float> animProgress = new LinkedHashMap<>();
         width = pw;
         height = ph;
 
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
 
         int tx = bx + 3;
         int cy = by + 3;
@@ -137,7 +137,7 @@ private final Map<String, Float> animProgress = new LinkedHashMap<>();
                 float angle = angleBase + (idx * 8f + ci) * 0.35f;
                 float blend = (float) Math.sin(angle) * 0.5f + 0.5f;
                 int chColor = ColorUtility.interpolate(0xFFFFFFFF, 0xFF0055EE, blend);
-                HudRenderer.drawText(graphics, ch, charX, cy + offsetY, (chColor & 0xFFFFFF) | (itemAlpha << 24), shadow);
+                HudRendererUtility.drawText(graphics, ch, charX, cy + offsetY, (chColor & 0xFFFFFF) | (itemAlpha << 24), shadow);
                 charX += FontRenderUtility.getStringWidth(ch);
             }
 

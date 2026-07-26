@@ -12,7 +12,7 @@ import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.Category;
 import ravex.manager.ModuleManager;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.animate.AnimationUtility;
 
 import java.util.ArrayList;
@@ -32,11 +32,11 @@ public class ClickGUI extends Screen {
     public static boolean isDraggingSlider = false;
 
     public static Identifier getCategoryTexture(Category cat) {
-        return ravex.utility.render.TextureLoader.getCategoryTexture(cat);
+        return ravex.utility.render.TextureLoaderUtility.getCategoryTexture(cat);
     }
 
     public static Identifier getSearchTexture() {
-        return ravex.utility.render.TextureLoader.getSearchTexture();
+        return ravex.utility.render.TextureLoaderUtility.getSearchTexture();
     }
 
 
@@ -84,7 +84,7 @@ public class ClickGUI extends Screen {
         super(Component.literal("RaveX ClickGUI"));
         this.initTime = System.currentTimeMillis();
 
-        ravex.utility.misc.GuiOptimizer.optimize();
+        ravex.utility.misc.GuiOptimizerUtility.optimize();
 
         int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
         int spacing = 10;
@@ -201,31 +201,31 @@ public class ClickGUI extends Screen {
             String type = ModuleManager.get(ravex.modules.client.ClickGui.class).companionType.getValue();
             Identifier imgId = null;
             if ("Femboy".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.FEMBOY;
+                imgId = ravex.utility.render.TextureLoaderUtility.FEMBOY;
             } else if ("Wypher1".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.WYPHER1;
+                imgId = ravex.utility.render.TextureLoaderUtility.WYPHER1;
             } else if ("Boykgun".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.BOYKGUN;
+                imgId = ravex.utility.render.TextureLoaderUtility.BOYKGUN;
             } else if ("Cutie".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.CUTIE;
+                imgId = ravex.utility.render.TextureLoaderUtility.CUTIE;
             } else if ("Kiss".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.KISS;
+                imgId = ravex.utility.render.TextureLoaderUtility.KISS;
             } else if ("Laying".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.LAYING;
+                imgId = ravex.utility.render.TextureLoaderUtility.LAYING;
             } else if ("Licking".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.LICKING;
+                imgId = ravex.utility.render.TextureLoaderUtility.LICKING;
             } else if ("Pillow".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.PILLOW;
+                imgId = ravex.utility.render.TextureLoaderUtility.PILLOW;
             } else if ("Cutieeee".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.CUTIEEEE;
+                imgId = ravex.utility.render.TextureLoaderUtility.CUTIEEEE;
             } else if ("Cutiemonster".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.CUTIEMONSTER;
+                imgId = ravex.utility.render.TextureLoaderUtility.CUTIEMONSTER;
             } else if ("Furik".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.FURIK;
+                imgId = ravex.utility.render.TextureLoaderUtility.FURIK;
             } else if ("Godofcoding".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.GODOFCODING;
+                imgId = ravex.utility.render.TextureLoaderUtility.GODOFCODING;
             } else if ("Terrydavis".equals(type)) {
-                imgId = ravex.utility.render.TextureLoader.TERRYDAVIS;
+                imgId = ravex.utility.render.TextureLoaderUtility.TERRYDAVIS;
             }
 
             if (imgId != null) {
@@ -262,9 +262,9 @@ public class ClickGUI extends Screen {
                 int bx  = bxArr[i];
                 boolean h = hovArr[i];
 
-                Render2DEngine.drawRound(graphics, bx, mgY, mgW, mgH, btnR, h ? ColorUtility.withAlpha(cachedActiveColor, 40) : 0x18000000);
+                Render2DUtility.drawRound(graphics, bx, mgY, mgW, mgH, btnR, h ? ColorUtility.withAlpha(cachedActiveColor, 40) : 0x18000000);
                 if (h) {
-                    Render2DEngine.drawRound(graphics, bx, mgY, mgW, mgH, btnR, ColorUtility.withAlpha(cachedActiveColor, 20));
+                    Render2DUtility.drawRound(graphics, bx, mgY, mgW, mgH, btnR, ColorUtility.withAlpha(cachedActiveColor, 20));
                 }
 
                 int textW = FontRenderUtility.getStringWidth(labArr[i]);
@@ -417,10 +417,10 @@ public class ClickGUI extends Screen {
 
         int pAlpha = ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity.getValue().intValue();
         int barBg = ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, (int)((searchFocused ? Math.min(pAlpha + 15, 255) : pAlpha) * openAnim));
-        Render2DEngine.drawRound(graphics, barX, barY, barW, barH, 10, barBg);
+        Render2DUtility.drawRound(graphics, barX, barY, barW, barH, 10, barBg);
 
         int iconSize = 14;
-        Identifier searchTex = ravex.utility.render.TextureLoader.getSearchWhiteTexture();
+        Identifier searchTex = ravex.utility.render.TextureLoaderUtility.getSearchWhiteTexture();
         if (searchTex != null) {
             int iconX = barX + 8;
             int iconY = barY + (barH - iconSize) / 2;
@@ -795,7 +795,7 @@ public class ClickGUI extends Screen {
         if (lastStarTick == 0) dt = 16f;
         lastStarTick = now;
 
-        Identifier particleTex = ravex.utility.render.TextureLoader.getParticleTexture(pType, pColor);
+        Identifier particleTex = ravex.utility.render.TextureLoaderUtility.getParticleTexture(pType, pColor);
 
         int pR = (pColor >> 16) & 0xFF;
         int pG = (pColor >> 8) & 0xFF;

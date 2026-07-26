@@ -1,12 +1,12 @@
 package ravex.utility.notification;
 
-public class Notification {
+public class NotificationUtility {
     public final String text;
     public final int color;
     public final int duration;
     public final long startTime;
 
-    public Notification(String text, int color, int duration) {
+    public NotificationUtility(String text, int color, int duration) {
         this.text = text;
         this.color = color;
         this.duration = duration;

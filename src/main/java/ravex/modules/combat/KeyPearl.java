@@ -2,7 +2,7 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 
 import ravex.parameter.ModeParameter;
 import ravex.utility.player.InventoryUtility;
@@ -21,7 +21,7 @@ public final ModeParameter swap = new ModeParameter("Swap", "Silent", List.of("S
         if (pearlSlot == -1) return;
         int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, pearlSlot);
-        mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+        mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         if ("Silent".equals(swap.getValue())) {
             InventoryUtility.selectSlot(mc.player, prevSlot);
         }

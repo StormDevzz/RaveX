@@ -6,8 +6,8 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.Render2DEngine;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.Render2DUtility;
+import ravex.utility.render.TextureLoaderUtility;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -126,8 +126,8 @@ public class ColorPaletteModal {
         }
 
 
-        Render2DEngine.drawRound(graphics, mx, my, modalWidth, modalHeight, 8, 0xCC0D0D14);
-        Render2DEngine.drawSmoothRoundOutline(graphics, mx, my, modalWidth, modalHeight, 8, 1, 0xFF1C1C2A);
+        Render2DUtility.drawRound(graphics, mx, my, modalWidth, modalHeight, 8, 0xCC0D0D14);
+        Render2DUtility.drawSmoothRoundOutline(graphics, mx, my, modalWidth, modalHeight, 8, 1, 0xFF1C1C2A);
 
         int activeColor = getArgb() | 0xFF000000;
 
@@ -138,8 +138,8 @@ public class ColorPaletteModal {
 
 
         int hColor = hsbToRgb(hue, 1.0f, 1.0f);
-        Render2DEngine.drawGradientRectHorizontal(graphics, svX, svY, svSize, svSize, 0xFFFFFFFF, hColor);
-        Render2DEngine.drawGradientRect(graphics, svX, svY, svSize, svSize, 0x00000000, 0xFF000000);
+        Render2DUtility.drawGradientRectHorizontal(graphics, svX, svY, svSize, svSize, 0xFFFFFFFF, hColor);
+        Render2DUtility.drawGradientRect(graphics, svX, svY, svSize, svSize, 0x00000000, 0xFF000000);
 
         graphics.fill(svX - 1, svY - 1, svX + svSize + 1, svY, 0xFF353545);
         graphics.fill(svX - 1, svY + svSize, svX + svSize + 1, svY + svSize + 1, 0xFF353545);
@@ -150,15 +150,15 @@ public class ColorPaletteModal {
         int curY = svY + (int)((1.0f - value) * svSize);
 
 
-        Render2DEngine.fillCircle(graphics, curX, curY, 4, 0xFF000000);
-        Render2DEngine.fillCircle(graphics, curX, curY, 3, 0xFFFFFFFF);
+        Render2DUtility.fillCircle(graphics, curX, curY, 4, 0xFF000000);
+        Render2DUtility.fillCircle(graphics, curX, curY, 3, 0xFFFFFFFF);
 
 
         int hueSegments = 6;
         int segW = hueW / hueSegments;
         int[] hueColors = { 0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000 };
         for (int s = 0; s < hueSegments; s++) {
-            Render2DEngine.drawGradientRectHorizontal(graphics, hueX + s * segW, hueY, segW, sliderHeight, hueColors[s], hueColors[s + 1]);
+            Render2DUtility.drawGradientRectHorizontal(graphics, hueX + s * segW, hueY, segW, sliderHeight, hueColors[s], hueColors[s + 1]);
         }
 
         graphics.fill(hueX - 1, hueY - 1, hueX + hueW + 1, hueY, 0xFF353545);
@@ -180,7 +180,7 @@ public class ColorPaletteModal {
         }
 
         int currentRgb = hsbToRgb(hue, saturation, value) & 0x00FFFFFF;
-        Render2DEngine.drawGradientRectHorizontal(graphics, alphaX, alphaY, alphaW, sliderHeight, currentRgb, (0xFF << 24) | currentRgb);
+        Render2DUtility.drawGradientRectHorizontal(graphics, alphaX, alphaY, alphaW, sliderHeight, currentRgb, (0xFF << 24) | currentRgb);
 
         graphics.fill(alphaX - 1, alphaY - 1, alphaX + alphaW + 1, alphaY, 0xFF353545);
         graphics.fill(alphaX - 1, alphaY + sliderHeight, alphaX + alphaW + 1, alphaY + sliderHeight + 1, 0xFF353545);
@@ -198,8 +198,8 @@ public class ColorPaletteModal {
         int previewCY = my + 55;
 
 
-        Render2DEngine.drawRound(graphics, previewCX - previewRadius, previewCY - previewRadius, previewRadius * 2, previewRadius * 2, previewRadius, getArgb());
-        Render2DEngine.drawSmoothRoundOutline(graphics, previewCX - previewRadius, previewCY - previewRadius, previewRadius * 2, previewRadius * 2, previewRadius, 1, 0xFF4A4A5A);
+        Render2DUtility.drawRound(graphics, previewCX - previewRadius, previewCY - previewRadius, previewRadius * 2, previewRadius * 2, previewRadius, getArgb());
+        Render2DUtility.drawSmoothRoundOutline(graphics, previewCX - previewRadius, previewCY - previewRadius, previewRadius * 2, previewRadius * 2, previewRadius, 1, 0xFF4A4A5A);
 
 
         String hex = editingHex ? hexInput : String.format("%08X", getArgb() & 0xFFFFFFFF);
@@ -270,14 +270,14 @@ public class ColorPaletteModal {
         int cancelCol = cancelHovered ? 0xDDFFFFFF : 0x77FFFFFF;
         graphics.pose().pushMatrix();
         graphics.pose().translate(cancelX, btnY);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, TextureLoader.DISABLE, 0, 0, 0f, 0f, iconSize, iconSize, iconSize, iconSize, cancelCol);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TextureLoaderUtility.DISABLE, 0, 0, 0f, 0f, iconSize, iconSize, iconSize, iconSize, cancelCol);
         graphics.pose().popMatrix();
 
 
         int applyCol = applyHovered ? 0xDDFFFFFF : 0x77FFFFFF;
         graphics.pose().pushMatrix();
         graphics.pose().translate(applyX, btnY);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, TextureLoader.ENABLE, 0, 0, 0f, 0f, iconSize, iconSize, iconSize, iconSize, applyCol);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TextureLoaderUtility.ENABLE, 0, 0, 0f, 0f, iconSize, iconSize, iconSize, iconSize, applyCol);
         graphics.pose().popMatrix();
 
 
@@ -294,7 +294,7 @@ public class ColorPaletteModal {
         int trackColor = parameter.isThemeSync() ? activeColor : 0xFF2A2A3A;
         graphics.pose().pushMatrix();
         graphics.pose().translate(swX, swY);
-        Render2DEngine.drawRound(graphics, 0, 0, swW, swH, swH / 2, trackColor);
+        Render2DUtility.drawRound(graphics, 0, 0, swW, swH, swH / 2, trackColor);
         graphics.pose().popMatrix();
 
         float knobSize = 12f;
@@ -305,7 +305,7 @@ public class ColorPaletteModal {
 
         int cx = Math.round(knobDrawX + knobSize / 2f);
         int cy = Math.round(knobDrawY + knobSize / 2f);
-        Render2DEngine.fillCircle(graphics, cx, cy, (int)(knobSize / 2), 0xFFFFFFFF);
+        Render2DUtility.fillCircle(graphics, cx, cy, (int)(knobSize / 2), 0xFFFFFFFF);
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {

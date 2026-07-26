@@ -4,16 +4,16 @@ import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
 import ravex.gui.clickgui.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.Render2DEngine;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.Render2DUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "IndicatorsHud", category = "HUD")
 public class IndicatorsHud extends ravex.modules.Module {
@@ -28,8 +28,8 @@ public class IndicatorsHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_INDICATORS_WHITE;
-    private static final int IS = HudRenderer.getIconSize();
+private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE;
+    private static final int IS = HudRendererUtility.getIconSize();
     private long lastRealTime  = 0;
     private long lastGameTick  = -1;
     private float smoothedTPS  = 20.0f;
@@ -55,7 +55,7 @@ private static final Identifier ICON = TextureLoader.HUD_INDICATORS_WHITE;
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-        Player player = mc.player;
+        net.minecraft.world.entity.player.Player player = mc.player;
         updateTPS(mc);
         updateKnockback(player);
         boolean shadow = getShadow();
@@ -94,15 +94,15 @@ private static final Identifier ICON = TextureLoader.HUD_INDICATORS_WHITE;
         width = pw;
         height = ph;
         int bx = x, by = y;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
-        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
         int cx = bx + 4;
         int cy = by + 4;
         for (int i = 0; i < 5; i++) {
             int col = getGaugeColor(i);
             int dotX = cx + dotR;
             int dotY = cy + lineH / 2;
-            Render2DEngine.fillCircle(graphics, dotX, dotY, dotR, col);
+            Render2DUtility.fillCircle(graphics, dotX, dotY, dotR, col);
             FontRenderUtility.drawString(graphics, data[i][0], cx + dotR * 2 + 3, cy, 0xFF8080A0, false);
             int vx = cx + dotR * 2 + 3 + labelMax + 4;
             FontRenderUtility.drawString(graphics, data[i][1], vx, cy, col, shadow);
@@ -130,7 +130,7 @@ private static final Identifier ICON = TextureLoader.HUD_INDICATORS_WHITE;
             lastGameTick = gameTick; lastRealTime = now;
         }
     }
-    private void updateKnockback(Player player) {
+    private void updateKnockback(net.minecraft.world.entity.player.Player player) {
         float vx = (float) player.getDeltaMovement().x;
         float vz = (float) player.getDeltaMovement().z;
         float deltaV = (float) Math.sqrt((vx - prevVelX) * (vx - prevVelX) + (vz - prevVelZ) * (vz - prevVelZ));

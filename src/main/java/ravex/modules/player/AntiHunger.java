@@ -13,7 +13,7 @@ import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import ravex.parameter.ModeParameter;
 import java.util.List;
 
-@ModuleInfo(name = "AntiHunger", category = "Player")
+@ModuleInfo(name = "AntiHunger", category = "net.minecraft.world.entity.player.Player")
 public class AntiHunger extends ravex.modules.Module {
 public final ModeParameter mode = new ModeParameter("Mode", "NCP", List.of("NCP", "NCPStrict"));
 

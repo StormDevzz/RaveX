@@ -9,8 +9,8 @@ import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "SpeedometerHud", category = "HUD")
 public class SpeedometerHud extends ravex.modules.Module {
@@ -51,25 +51,25 @@ private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", 
         String valStr = String.format("%.1f", displaySpeed);
         String labelStr = " " + unitMode.toLowerCase();
 
-        int tw = HudRenderer.textWidth(valStr) + HudRenderer.textWidth(labelStr);
-        int IS = HudRenderer.getIconSize();
+        int tw = HudRendererUtility.textWidth(valStr) + HudRendererUtility.textWidth(labelStr);
+        int IS = HudRendererUtility.getIconSize();
         int pw = 4 + tw + 4 + IS + 4;
         int ph = 14;
 
         width = pw;
         height = ph;
 
-        TextureLoader.getHudIconWhite("speedometer");
+        TextureLoaderUtility.getHudIconWhite("speedometer");
 
         int bx = x, by = y;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
 
         int ix = bx + 4;
-        HudRenderer.drawText(graphics, valStr, ix, by + 2, activeColor, shadow);
-        ix += HudRenderer.textWidth(valStr);
-        HudRenderer.drawText(graphics, labelStr, ix, by + 2, 0xFF8080A0, false);
+        HudRendererUtility.drawText(graphics, valStr, ix, by + 2, activeColor, shadow);
+        ix += HudRendererUtility.textWidth(valStr);
+        HudRendererUtility.drawText(graphics, labelStr, ix, by + 2, 0xFF8080A0, false);
 
-        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, activeColor);
+        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, activeColor);
     }
 
     public java.util.List<ravex.parameter.Parameter<?>> getParameters() {

@@ -2,16 +2,15 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.parameter.ColorParameter;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -25,7 +24,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00FF00);
     public static List<Long> holePositions = new ArrayList<>();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_holefill");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_holefill");
     static {
         NATIVE.load();
     }
@@ -137,8 +136,8 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
         if (ay >= mc.level.getMaxY()) return false;
         if (!BlockUtility.isAir(mc.level, x, ay, z)) return false;
         int solidSides = 0;
-        Direction[] horizontals = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
-        for (Direction dir : horizontals) {
+        net.minecraft.core.Direction[] horizontals = {net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.WEST};
+        for (net.minecraft.core.Direction dir : horizontals) {
             int nx = x + dir.getStepX(), ny = y + dir.getStepY(), nz = z + dir.getStepZ();
             if (!mc.level.getWorldBorder().isWithinBounds(BlockUtility.pos(nx, ny, nz))) return false;
             if (BlockUtility.isSolid(mc.level, nx, ny, nz)) {

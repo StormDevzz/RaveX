@@ -1,7 +1,7 @@
 package ravex.modules.misc;
 
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.world.entity.Entity;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.entity.animal.equine.Horse;
@@ -28,7 +28,7 @@ public final BooleanParameter villagers = new BooleanParameter("Villager", true)
         }
     }
 
-    public boolean shouldCancel(Entity target) {
+    public boolean shouldCancel(net.minecraft.world.entity.Entity target) {
         if (!getEnabled() || target == null) return false;
         if (target instanceof Villager && villagers.getValue()) return true;
         if (target instanceof Horse && horses.getValue()) return true;

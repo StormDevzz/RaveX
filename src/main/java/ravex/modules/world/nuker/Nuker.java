@@ -4,13 +4,12 @@ import ravex.modules.annotations.ModuleInfo;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.ActionParameter;
 import ravex.parameter.BooleanParameter;
@@ -18,7 +17,7 @@ import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.modules.world.GhostBlocks;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "Nuker", category = "World")
@@ -29,15 +28,15 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
     public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", false);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
-    public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
+    public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
         Minecraft.getInstance().setScreen(
             ravex.gui.browser.BlockBrowserScreen.forNuker(Minecraft.getInstance().screen)
         );
     });
-    public static BlockPos currentTarget = null;
+    public static net.minecraft.core.BlockPos currentTarget = null;
     private long lastBreakTime = 0;
-    private BlockPos currentMiningTarget = null;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_nuker");
+    private net.minecraft.core.BlockPos currentMiningTarget = null;
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_nuker");
     static {
         NATIVE.load();
     }
@@ -82,27 +81,27 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
                 currentMiningTarget = null;
                 currentTarget = null;
             } else {
-                Direction dir = getDirection(mc.player.getEyePosition(), currentMiningTarget);
+                net.minecraft.core.Direction dir = getDirection(mc.player.getEyePosition(), currentMiningTarget);
                 mc.gameMode.continueDestroyBlock(currentMiningTarget, dir);
-                mc.player.swing(InteractionHand.MAIN_HAND);
+                mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
                 lastBreakTime = now;
                 return;
             }
         }
         if (now - lastBreakTime < delay.getValue()) return;
         double r = range.getValue();
-        BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int minX = (int) Math.floor(playerPos.getX() - r);
         int maxX = (int) Math.ceil(playerPos.getX() + r);
         int minY = (int) Math.max(mc.level.getMinY(), Math.floor(playerPos.getY() - r));
         int maxY = (int) Math.min(mc.level.getMaxY(), Math.ceil(playerPos.getY() + r));
         int minZ = (int) Math.floor(playerPos.getZ() - r);
         int maxZ = (int) Math.ceil(playerPos.getZ() + r);
-        List<BlockPos> candidates = new ArrayList<>();
+        List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
-                    BlockPos pos = new BlockPos(x, y, z);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
                     BlockState state = mc.level.getBlockState(pos);
                     if (state.isAir() || state.getDestroySpeed(mc.level, pos) < 0) continue;
                     Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
@@ -117,7 +116,7 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
             if (autoDisable.getValue()) enabled = false;
             return;
         }
-        BlockPos target = null;
+        net.minecraft.core.BlockPos target = null;
         if (NATIVE.isLoaded()) {
             try {
                 int cnt = candidates.size();
@@ -130,14 +129,14 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
                     bz[i] = candidates.get(i).getZ();
                 }
                 int modeVal = "Sphere".equals(mode.getValue()) ? 0 : 1;
-                Vec3 eye = mc.player.getEyePosition();
+                net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
                 int[] result = nativeFindBlocks(
                     eye.x, eye.y, eye.z,
                     r, modeVal,
                     bx, by, bz, cnt
                 );
                 if (result.length >= 3) {
-                    target = new BlockPos(result[0], result[1], result[2]);
+                    target = new net.minecraft.core.BlockPos(result[0], result[1], result[2]);
                 }
             } catch (Exception e) {
                 target = null;
@@ -154,22 +153,22 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
             }
             currentMiningTarget = target;
             currentTarget = target;
-            Direction dir = getDirection(mc.player.getEyePosition(), target);
+            net.minecraft.core.Direction dir = getDirection(mc.player.getEyePosition(), target);
             mc.gameMode.startDestroyBlock(target, dir);
-            mc.player.swing(InteractionHand.MAIN_HAND);
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             GhostBlocks.markMined(target);
             lastBreakTime = now;
         }
     }
-    private BlockPos fallbackFindTarget(List<BlockPos> candidates, Minecraft mc) {
+    private net.minecraft.core.BlockPos fallbackFindTarget(List<net.minecraft.core.BlockPos> candidates, Minecraft mc) {
         boolean sphere = "Sphere".equals(mode.getValue());
-        Vec3 eye = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
         double rSq = range.getValue() * range.getValue();
-        BlockPos closest = null;
+        net.minecraft.core.BlockPos closest = null;
         double closestDist = Double.MAX_VALUE;
-        for (BlockPos pos : candidates) {
+        for (net.minecraft.core.BlockPos pos : candidates) {
             if (sphere) {
-                Vec3 center = Vec3.atCenterOf(pos);
+                net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(pos);
                 double distSq = eye.distanceToSqr(center);
                 if (distSq > rSq) continue;
                 if (distSq < closestDist) {
@@ -177,7 +176,7 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
                     closest = pos;
                 }
             } else {
-                double dist = eye.distanceTo(Vec3.atCenterOf(pos));
+                double dist = eye.distanceTo(net.minecraft.world.phys.Vec3.atCenterOf(pos));
                 if (dist < closestDist) {
                     closestDist = dist;
                     closest = pos;
@@ -186,8 +185,8 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         }
         return closest;
     }
-    public static Direction getDirection(Vec3 eye, BlockPos pos) {
-        Vec3 center = Vec3.atCenterOf(pos);
+    public static net.minecraft.core.Direction getDirection(net.minecraft.world.phys.Vec3 eye, net.minecraft.core.BlockPos pos) {
+        net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(pos);
         double dx = eye.x - center.x;
         double dy = eye.y - pos.getY() - 0.5;
         double dz = eye.z - center.z;
@@ -196,21 +195,21 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         double absZ = Math.abs(dz);
         if (absY <= absX && absY <= absZ) {
             if (absX >= absZ) {
-                return dx > 0 ? Direction.EAST : Direction.WEST;
+                return dx > 0 ? net.minecraft.core.Direction.EAST : net.minecraft.core.Direction.WEST;
             } else {
-                return dz > 0 ? Direction.SOUTH : Direction.NORTH;
+                return dz > 0 ? net.minecraft.core.Direction.SOUTH : net.minecraft.core.Direction.NORTH;
             }
         } else if (absX <= absY && absX <= absZ) {
             if (absY >= absZ) {
-                return dy > 0 ? Direction.DOWN : Direction.UP;
+                return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
             } else {
-                return dz > 0 ? Direction.SOUTH : Direction.NORTH;
+                return dz > 0 ? net.minecraft.core.Direction.SOUTH : net.minecraft.core.Direction.NORTH;
             }
         } else {
             if (absY >= absX) {
-                return dy > 0 ? Direction.DOWN : Direction.UP;
+                return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
             } else {
-                return dx > 0 ? Direction.EAST : Direction.WEST;
+                return dx > 0 ? net.minecraft.core.Direction.EAST : net.minecraft.core.Direction.WEST;
             }
         }
     }

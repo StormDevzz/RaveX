@@ -9,14 +9,14 @@ import ravex.event.network.PacketEvent;
 
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 @ModuleInfo(name = "Phase", category = "Movement")
 public class Phase extends ravex.modules.Module {
 public final ModeParameter mode = new ModeParameter("Mode", "Positive1", List.of("Positive1", "Positive2"));
     public final NumberParameter distance = new NumberParameter("Distance", 2.0, 0.5, 4.0, 0.1);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_phase");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_phase");
     static {
         NATIVE.load();
     }

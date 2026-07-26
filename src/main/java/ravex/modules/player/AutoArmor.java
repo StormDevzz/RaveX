@@ -9,12 +9,12 @@ import ravex.utility.player.ArmorUtility;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import java.util.List;
 
-@ModuleInfo(name = "AutoArmor", category = "Player")
+@ModuleInfo(name = "AutoArmor", category = "net.minecraft.world.entity.player.Player")
 public class AutoArmor extends ravex.modules.Module {
 public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             List.of("Normal", "Legit", "Custom"));
@@ -73,7 +73,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
                 InventoryUtility.quickMoveStack(mc, p, bestSlot);
                 int prevSlot = InventoryUtility.getSelectedSlot(p);
                 InventoryUtility.selectSlot(p, hotbarSlot);
-                mc.gameMode.useItem(p, InteractionHand.MAIN_HAND);
+                mc.gameMode.useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
                 if (prevSlot != hotbarSlot) InventoryUtility.selectSlot(p, prevSlot);
             } else {
                 InventoryUtility.quickMoveStack(mc, p, bestSlot);

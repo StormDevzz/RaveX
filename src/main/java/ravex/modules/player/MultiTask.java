@@ -1,7 +1,7 @@
 package ravex.modules.player;
 
 import ravex.modules.annotations.ModuleInfo;
-@ModuleInfo(name = "MultiTask", category = "Player")
+@ModuleInfo(name = "MultiTask", category = "net.minecraft.world.entity.player.Player")
 public class MultiTask extends ravex.modules.Module {
 public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("MultiTask").getEnabled();

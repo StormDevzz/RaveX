@@ -6,7 +6,7 @@ import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
-@ModuleInfo(name = "ItemSaver", category = "Player")
+@ModuleInfo(name = "ItemSaver", category = "net.minecraft.world.entity.player.Player")
 public class ItemSaver extends ravex.modules.Module {
 public final NumberParameter threshold = new NumberParameter("MinDurability", 10.0, 1.0, 50.0, 1.0);
     public void onTick() {

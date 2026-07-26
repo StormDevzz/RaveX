@@ -15,7 +15,7 @@ import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import com.mojang.blaze3d.opengl.GlStateManager;
-import ravex.utility.render.BlockRenderer;
+import ravex.utility.render.BlockRendererUtility;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -156,7 +156,7 @@ public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
     private static void drawLine(BufferBuilder builder, Matrix4f matrix,
                                  float x1, float y1, float z1, float x2, float y2, float z2,
                                  int r, int g, int b, int a, float lineWidth) {
-        BlockRenderer.renderLine3D(builder, matrix, x1, y1, z1, x2, y2, z2, r, g, b, a, lineWidth);
+        BlockRendererUtility.renderLine3D(builder, matrix, x1, y1, z1, x2, y2, z2, r, g, b, a, lineWidth);
     }
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("Skeleton").getEnabled();

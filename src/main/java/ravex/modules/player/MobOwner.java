@@ -4,7 +4,7 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.misc.MobUtility;
-@ModuleInfo(name = "MobOwner", category = "Player")
+@ModuleInfo(name = "MobOwner", category = "net.minecraft.world.entity.player.Player")
 public class MobOwner extends ravex.modules.Module {
 public final BooleanParameter animals = new BooleanParameter("Animals", true);
     public final BooleanParameter displayUUID = new BooleanParameter("ShowUUID", false);

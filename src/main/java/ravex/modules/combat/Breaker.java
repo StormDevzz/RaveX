@@ -2,26 +2,25 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.level.block.state.BlockState;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 
 @ModuleInfo(name = "Breaker", category = "Combat")
 public class Breaker extends ravex.modules.Module {
@@ -36,9 +35,9 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
     public final BooleanParameter syncPacketMine=new BooleanParameter("SyncPacketMine",false){@Override public void setValue(Boolean val){if(val){net.minecraft.client.Minecraft mc=net.minecraft.client.Minecraft.getInstance();boolean packetMineEnabled=ravex.manager.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();if(!packetMineEnabled){if(mc.player!=null){mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal("§7[§cBreaker§7] §cPlease enable PacketMine module first!"),false);}super.setValue(false);return;}}super.setValue(val);}};
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F00FFFF);
-    public static final SilentRotation silentRotation = new SilentRotation();
-    public static BlockPos currentMiningBlock = null;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_breaker");
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    public static net.minecraft.core.BlockPos currentMiningBlock = null;
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_breaker");
     static {
         NATIVE.load();
     }
@@ -70,7 +69,7 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
         }
         if (!NATIVE.isLoaded())
             return;
-        Player target = findTarget(mc);
+        net.minecraft.world.entity.player.Player target = findTarget(mc);
         if (target == null) {
             if (currentMiningBlock != null) {
                 if (!syncPacketMine.getValue()) {
@@ -80,13 +79,13 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
             }
             return;
         }
-        List<BlockPos> solid = collectSolidBlocks(mc, target);
-        List<BlockPos> candidates = new ArrayList<>();
-        BlockPos tPos = target.blockPosition();
+        List<net.minecraft.core.BlockPos> solid = collectSolidBlocks(mc, target);
+        List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
+        net.minecraft.core.BlockPos tPos = target.blockPosition();
         int tx = tPos.getX();
         int ty = tPos.getY();
         int tz = tPos.getZ();
-        for (BlockPos pos : solid) {
+        for (net.minecraft.core.BlockPos pos : solid) {
             BlockState state = mc.level.getBlockState(pos);
             if (state.getDestroySpeed(mc.level, pos) > 0.0f) {
                 int px = pos.getX();
@@ -124,9 +123,9 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
             }
             return;
         }
-        BlockPos targetPos = null;
+        net.minecraft.core.BlockPos targetPos = null;
         if (currentMiningBlock != null) {
-            double dist = Vec3.atCenterOf(currentMiningBlock).distanceTo(mc.player.getEyePosition());
+            double dist = net.minecraft.world.phys.Vec3.atCenterOf(currentMiningBlock).distanceTo(mc.player.getEyePosition());
             if (dist <= range.getValue() && candidates.contains(currentMiningBlock)) {
                 targetPos = currentMiningBlock;
             }
@@ -157,14 +156,14 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
                 }
                 return;
             }
-            targetPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
+            targetPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
         }
         if (!syncPacketMine.getValue()) {
             String rotMode = rotate.getValue();
             if (rotMode.equals("Normal")) {
-                rotateTo(mc, Vec3.atCenterOf(targetPos));
+                rotateTo(mc, net.minecraft.world.phys.Vec3.atCenterOf(targetPos));
             } else if (rotMode.equals("Silent")) {
-                silentRotation.setAnglesTo(mc, Vec3.atCenterOf(targetPos));
+                silentRotation.setAnglesTo(mc, net.minecraft.world.phys.Vec3.atCenterOf(targetPos));
             }
         }
         if (syncPacketMine.getValue()) {
@@ -182,19 +181,19 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
                     mc.gameMode.stopDestroyBlock();
                 }
                 currentMiningBlock = targetPos;
-                mc.gameMode.startDestroyBlock(targetPos, Direction.UP);
+                mc.gameMode.startDestroyBlock(targetPos, net.minecraft.core.Direction.UP);
             } else {
-                mc.gameMode.continueDestroyBlock(targetPos, Direction.UP);
+                mc.gameMode.continueDestroyBlock(targetPos, net.minecraft.core.Direction.UP);
             }
-            mc.player.swing(InteractionHand.MAIN_HAND);
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         }
     }
 
-    private Player findTarget(Minecraft mc) {
-        Player closest = null;
+    private net.minecraft.world.entity.player.Player findTarget(Minecraft mc) {
+        net.minecraft.world.entity.player.Player closest = null;
         double bestDist = Double.MAX_VALUE;
         double maxDist = range.getValue() + 3.0;
-        for (Player p : mc.level.players()) {
+        for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
             if (MobUtility.isSelf(p) || MobUtility.isDead(p))
                 continue;
             double dist = MobUtility.distanceToPlayer(p);
@@ -206,14 +205,14 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
         return closest;
     }
 
-    private List<BlockPos> collectSolidBlocks(Minecraft mc, Player target) {
-        List<BlockPos> found = new ArrayList<>();
-        BlockPos tPos = target.blockPosition();
+    private List<net.minecraft.core.BlockPos> collectSolidBlocks(Minecraft mc, net.minecraft.world.entity.player.Player target) {
+        List<net.minecraft.core.BlockPos> found = new ArrayList<>();
+        net.minecraft.core.BlockPos tPos = target.blockPosition();
         int r = 2;
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -1; dy <= 2; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
-                    BlockPos pos = tPos.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos pos = tPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
                         BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
@@ -226,10 +225,10 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
         return found;
     }
 
-    private double[] flatten(List<BlockPos> list) {
+    private double[] flatten(List<net.minecraft.core.BlockPos> list) {
         double[] arr = new double[list.size() * 3];
         for (int i = 0; i < list.size(); i++) {
-            BlockPos p = list.get(i);
+            net.minecraft.core.BlockPos p = list.get(i);
             arr[i * 3] = p.getX();
             arr[i * 3 + 1] = p.getY();
             arr[i * 3 + 2] = p.getZ();
@@ -237,13 +236,13 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
         return arr;
     }
 
-    private void rotateTo(Minecraft mc, Vec3 target) {
+    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
         mc.player.setYRot(angles[0]);
         mc.player.setXRot(angles[1]);
     }
 
-    private double[] getEntityStats(Player player) {
+    private double[] getEntityStats(net.minecraft.world.entity.player.Player player) {
         int protectionEpf = 0;
         int blastProtectionEpf = 0;
         net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
@@ -299,7 +298,7 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
                 stats[idx++] = dur;
             }
         }
-        Vec3 motion = player.getDeltaMovement();
+        net.minecraft.world.phys.Vec3 motion = player.getDeltaMovement();
         if (motion != null) {
             stats[11] = motion.x;
             stats[12] = motion.y;

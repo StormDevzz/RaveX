@@ -10,9 +10,9 @@ import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PotionUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.LivingEntity;
+
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
@@ -84,7 +84,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
         String vr = visualRange.getValue();
         if ("Off".equals(vr)) return;
         List<String> currentPlayers = new ArrayList<>();
-        for (Player p : mc.level.players()) {
+        for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
             if (p == mc.player) continue;
             String name = p.getName().getString();
             currentPlayers.add(name);
@@ -117,14 +117,14 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
                 removed.add(e.getKey());
                 ItemEntry entry = e.getValue();
                 String itemName = entry.stack.getHoverName().getString();
-                LivingEntity nearest = null;
+                net.minecraft.world.entity.LivingEntity nearest = null;
                 double nearestDist = Double.MAX_VALUE;
                 AABB pickRange = new AABB(entry.x - 2, entry.y - 2, entry.z - 2, entry.x + 2, entry.y + 2, entry.z + 2);
-                for (LivingEntity le : mc.level.getEntitiesOfClass(LivingEntity.class, pickRange)) {
+                for (net.minecraft.world.entity.LivingEntity le : mc.level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, pickRange)) {
                     if (!canPickUpItems(le)) continue;
                     double d = le.distanceToSqr(entry.x, entry.y, entry.z);
                     boolean self = le == mc.player;
-                    boolean player = le instanceof Player && !self;
+                    boolean player = le instanceof net.minecraft.world.entity.player.Player && !self;
                     boolean monster = MobUtility.isHostile(le);
                     boolean animal = MobUtility.isPassive(le);
                     if (!itemSelf.getValue() && self) continue;
@@ -137,7 +137,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
                     }
                 }
                 if (nearest != null && nearestDist < 2.25) {
-                    String name = nearest instanceof Player p ? p.getName().getString() : nearest.getType().getDescription().getString();
+                    String name = nearest instanceof net.minecraft.world.entity.player.Player p ? p.getName().getString() : nearest.getType().getDescription().getString();
                     notifyOpt(ic, ravex.utility.misc.LanguageUtility.t("pickup", name, itemName), 0xFFDAA520);
                 }
             }
@@ -148,7 +148,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
     private void tickTracker(Minecraft mc) {
         String tr = tracker.getValue();
         if ("Off".equals(tr)) return;
-        for (Player p : mc.level.players()) {
+        for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
             String name = p.getName().getString();
             PlayerState state = playerStates.computeIfAbsent(name, k -> new PlayerState());
 
@@ -180,8 +180,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
         }
     }
 
-    private boolean canPickUpItems(LivingEntity entity) {
-        if (entity instanceof Player) return true;
+    private boolean canPickUpItems(net.minecraft.world.entity.LivingEntity entity) {
+        if (entity instanceof net.minecraft.world.entity.player.Player) return true;
         if (MobUtility.isHostile(entity)) return true;
         if (entity instanceof net.minecraft.world.entity.npc.villager.Villager) return true;
         if (entity instanceof net.minecraft.world.entity.animal.equine.Llama) return true;
@@ -190,7 +190,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
         return false;
     }
 
-    private boolean hasItemInHands(Player p, net.minecraft.world.item.Item item) {
+    private boolean hasItemInHands(net.minecraft.world.entity.player.Player p, net.minecraft.world.item.Item item) {
         return p.getMainHandItem().is(item) || p.getOffhandItem().is(item);
     }
 

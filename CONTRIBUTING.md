@@ -45,6 +45,7 @@ src/
 - **No comments in code.** Code must be self-documenting. No `//`, `/* */`, `#`, or docstrings. This rule is absolute.
 - Follow existing patterns - look at neighboring files before writing new ones
 - Keybindings are set only via **middle-click** on the module button in the ClickGUI
+- **Prefer utility/wrapper classes over direct Minecraft imports.** The project provides extensive ready-to-use utilities in `ravex.utility.*` and wrappers in `ravex.mcwrapper.*`. These handle null safety, consistency, and reduce boilerplate. Use `PlayerUtility.getPlayer()` instead of `Minecraft.getInstance().player`, `NetworkUtility.sendPacket()` instead of `Minecraft.getInstance().getConnection().send()`, `MinecraftWrapper` instead of `Minecraft.getInstance()`, and so on. Before writing raw Minecraft API calls, check if a utility already exists — common operations (movement, rotation, rendering, inventory, sound, chat, entities) are already wrapped. This keeps the codebase maintainable, avoids repeated null checks, and centralizes version-specific changes.
 
 ### C++ (Native Code)
 
@@ -91,7 +92,6 @@ src/
 
 ### What NOT to Contribute
 
-- Malicious code, backdoors, or credential harvesting
 - Server-side exploits or destructive plugins
 - Code that violates the GPL license
 
@@ -119,12 +119,23 @@ For changes to native code:
 1. Ensure compatibility across supported platforms (Linux x86_64 primary)
 2. JNI functions must follow the `Java_ravex_*` naming convention
 3. Test native builds separately before integrating
+4. **Always verify native compilation** — run the CMake build in `src/main/cpp/` before merging. Native compilation errors are not caught by `./gradlew build` alone.
 
 ## Reporting Issues
 
 - Use [GitHub Issues](https://github.com/StormDevzz/RaveX/issues)
 - Include: steps to reproduce, expected behavior, actual behavior
 - Include your OS, Java version, and Minecraft version
+
+## AI-Assisted Development
+
+When using AI coding assistants (such as ChatGPT, Claude, Copilot, etc.) to contribute to RaveX:
+
+- **Feed the rules first.** Provide the AI with the relevant sections of this CONTRIBUTING.md — especially the Java Code Style rules about using utility/wrapper classes over direct Minecraft imports.
+- **Verify utility usage.** AI models often default to `Minecraft.getInstance().player` and other raw API calls. Remind the AI to use `PlayerUtility.getPlayer()`, `NetworkUtility.sendPacket()`, `MinecraftWrapper` etc. Check the finished code for unnecessary direct Minecraft imports.
+- **Stick to existing patterns.** Tell the AI to look at neighboring files for reference before generating new code — modules, managers, mixins all follow specific templates.
+- **No comments rule applies.** AI models love adding `//` comments. Strip them out. Code must be self-documenting.
+- **Review everything.** AI-generated code still needs human review. Build the project (`./gradlew build`) before committing.
 
 ## Community
 

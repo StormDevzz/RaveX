@@ -1,7 +1,7 @@
 package ravex.gui.clickgui;
 
 import ravex.modules.client.ClickGui;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 import ravex.manager.ModuleManager;
 
 public class ColorUtility {
@@ -44,9 +44,9 @@ public class ColorUtility {
         int c2 = cfg.color2.getValue();
 
         return switch (mode) {
-            case "Rainbow" -> Render2DEngine.rainbowInt(speed, index, 1f, 1f, 1f);
-            case "Fade" -> Render2DEngine.fadeInt(speed, index, c1, 1f);
-            case "DoubleColor" -> Render2DEngine.twoColorEffectInt(c1, c2, speed, index);
+            case "Rainbow" -> Render2DUtility.rainbowInt(speed, index, 1f, 1f, 1f);
+            case "Fade" -> Render2DUtility.fadeInt(speed, index, c1, 1f);
+            case "DoubleColor" -> Render2DUtility.twoColorEffectInt(c1, c2, speed, index);
             default -> 0xFF000000 | c1;
         };
     }

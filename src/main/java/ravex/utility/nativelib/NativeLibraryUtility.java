@@ -2,7 +2,7 @@ package ravex.utility.nativelib;
 
 import ravex.utility.nativelib.NativeLoader;
 
-public class NativeLibrary {
+public class NativeLibraryUtility {
     private static volatile boolean loadingEnabled = false;
 
     public static void deferLoading() {
@@ -16,16 +16,16 @@ public class NativeLibrary {
     private final String name;
     private boolean loaded;
 
-    public NativeLibrary(String libName) {
+    public NativeLibraryUtility(String libName) {
         this.name = normalizeName(libName);
     }
 
-    public NativeLibrary() {
+    public NativeLibraryUtility() {
         this.name = inferLibName();
     }
 
-    public static NativeLibrary of(String libName) {
-        return new NativeLibrary(libName);
+    public static NativeLibraryUtility of(String libName) {
+        return new NativeLibraryUtility(libName);
     }
 
     private static String normalizeName(String name) {

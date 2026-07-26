@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import ravex.modules.render.Shaders;
 import ravex.manager.HandShaderManager;
-import ravex.utility.render.animate.ShaderVertexConsumer;
+import ravex.utility.render.animate.ShaderVertexConsumerUtility;
 
 @Mixin(ModelPart.class)
 public class MixinModelPart {

@@ -3,7 +3,7 @@ package ravex.modules.misc;
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
 import ravex.event.Subscribe;
 import ravex.event.combat.TotemPopEvent;
 
@@ -20,7 +20,7 @@ public final BooleanParameter onlyOwn = new BooleanParameter("OnlyOwn", false);
         onPop(event.getPlayer());
     }
 
-    public void onPop(Player player) {
+    public void onPop(net.minecraft.world.entity.player.Player player) {
         if (!getEnabled()) return;
         if (player == Minecraft.getInstance().player && !onlyOwn.getValue()) return;
         if (player == Minecraft.getInstance().player) return;

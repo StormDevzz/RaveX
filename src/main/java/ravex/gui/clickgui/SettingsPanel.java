@@ -5,8 +5,8 @@ import net.minecraft.resources.Identifier;
 import ravex.modules.client.Hud;
 import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.Render2DEngine;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.Render2DUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,21 +60,21 @@ public class SettingsPanel {
         int accentColor = ColorUtility.getActiveColor();
         int radius = 6;
 
-        Render2DEngine.drawRound(g, ix, iy, pw, ph, radius,
+        Render2DUtility.drawRound(g, ix, iy, pw, ph, radius,
             ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, baseAlpha));
 
         if (ModuleManager.get(ravex.modules.client.ClickGui.class).outlines.getValue()) {
             int borderColor = ModuleManager.get(ravex.modules.client.ClickGui.class).outlineColor.getValue();
-            Render2DEngine.drawRound(g, ix - 1, iy - 1, pw + 2, ph + 2, radius, borderColor);
+            Render2DUtility.drawRound(g, ix - 1, iy - 1, pw + 2, ph + 2, radius, borderColor);
         }
 
         boolean headerHov = mx >= ix && mx <= ix + pw && my >= iy && my <= iy + headerH;
         if (headerHov) {
-            Render2DEngine.drawRound(g, ix, iy, pw, headerH, radius, ColorUtility.withAlpha(accentColor, 15));
+            Render2DUtility.drawRound(g, ix, iy, pw, headerH, radius, ColorUtility.withAlpha(accentColor, 15));
         }
         g.fill(ix, iy + headerH - 1, ix + pw, iy + headerH, ColorUtility.withAlpha(accentColor, 40));
 
-        Identifier palTex = TextureLoader.getPaletteTexture();
+        Identifier palTex = TextureLoaderUtility.getPaletteTexture();
         if (palTex != null) {
             int iconSize = 14;
             g.blit(palTex, ix + 4, iy + 2, ix + 4 + iconSize, iy + 2 + iconSize,

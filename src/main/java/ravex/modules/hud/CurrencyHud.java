@@ -10,8 +10,8 @@ import ravex.gui.clickgui.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -25,8 +25,8 @@ public class CurrencyHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_CURRENCY_WHITE;
-    private static final int IS = HudRenderer.getIconSize();
+private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
+    private static final int IS = HudRendererUtility.getIconSize();
     public final BooleanParameter btc = new BooleanParameter("BTC/USD", true);
     public final BooleanParameter usd_rub = new BooleanParameter("USD/RUB", true);
     public final BooleanParameter eur_rub = new BooleanParameter("EUR/RUB", true);
@@ -133,9 +133,9 @@ private static final Identifier ICON = TextureLoader.HUD_CURRENCY_WHITE;
         width = pw;
         height = ph;
         int bx = x, by = y;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         ravex.utility.render.FontRenderUtility.drawString(graphics, "CurrencyRates", bx + 4, by + 4, ColorUtility.getActiveColor(), false);
-        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + 4, ColorUtility.getActiveColor());
+        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + 4, ColorUtility.getActiveColor());
         int cy = by + 18;
         for (DisplayPair dp : active) {
             ravex.utility.render.FontRenderUtility.drawString(graphics, dp.label, bx + 8, cy, 0xFF8080A0, false);

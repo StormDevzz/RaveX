@@ -4,7 +4,7 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
 @ModuleInfo(name = "AutoLog", category = "Misc")
 public class AutoLog extends ravex.modules.Module {
@@ -19,11 +19,11 @@ public final BooleanParameter onLowHealth = new BooleanParameter("LowHealth", tr
             disconnect("LowHealthTriggered(" + mc.player.getHealth() + " HP)");
             return;
         }
-        for (Player other : mc.level.players()) {
+        for (net.minecraft.world.entity.player.Player other : mc.level.players()) {
             if (other == mc.player) continue;
             double dist = MobUtility.distanceToPlayer(other);
             if (onPlayerNearby.getValue() && dist <= playerRange.getValue()) {
-                disconnect("Player " + other.getGameProfile().name() + " is too close (" + String.format("%.1f", dist) + "m)");
+                disconnect("net.minecraft.world.entity.player.Player " + other.getGameProfile().name() + " is too close (" + String.format("%.1f", dist) + "m)");
                 return;
             }
         }

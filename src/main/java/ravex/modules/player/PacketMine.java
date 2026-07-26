@@ -2,25 +2,23 @@ package ravex.modules.player;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.network.NetworkUtility;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-@ModuleInfo(name = "PacketMine", category = "Player")
+@ModuleInfo(name = "PacketMine", category = "net.minecraft.world.entity.player.Player")
 public class PacketMine extends ravex.modules.Module {
 public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         java.util.List.of("Normal", "Grim", "NCP"));
@@ -40,13 +38,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
     public final NumberParameter grimRange = new NumberParameter("GrimRange", 4.5, 0.0, 6.0, 0.1);
     public final ModeParameter grimMode = new ModeParameter("GrimMode", "Strict",
         java.util.List.of("Strict", "Normal", "Dev"));
-    public static final SilentRotation silentRotation = new SilentRotation();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_packetmine");
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_packetmine");
     static {
         NATIVE.load();
     }
     public static class MiningBlock {
-        public BlockPos pos;
+        public net.minecraft.core.BlockPos pos;
         public long startTime;
         public long breakAt;
         public boolean done;
@@ -54,7 +52,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         public boolean started;
         public long visibleUntil;
         public String blockName;
-        public MiningBlock(BlockPos pos, long breakAt, String blockName) {
+        public MiningBlock(net.minecraft.core.BlockPos pos, long breakAt, String blockName) {
             this.pos = pos;
             this.startTime = System.currentTimeMillis();
             this.breakAt = breakAt;
@@ -103,7 +101,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         restoreSlotNow();
         attackWasDown = false;
     }
-    public long calcBreakTime(Minecraft mc, BlockPos pos) {
+    public long calcBreakTime(Minecraft mc, net.minecraft.core.BlockPos pos) {
         var state = BlockUtility.getState(mc.level, pos.getX(), pos.getY(), pos.getZ());
         float destroyProgress = state.getDestroyProgress(mc.player, mc.level, pos);
         if (destroyProgress <= 0) return 2000;
@@ -122,7 +120,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         boolean clicked = leftClick && !attackWasDown;
         attackWasDown = leftClick;
         if (clicked && mc.hitResult != null && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
-            BlockPos target = ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos();
+            net.minecraft.core.BlockPos target = ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos();
             if (isBreakable(mc, target) && !isTargetBlock(target)) {
                 int max = doubleMine.getValue() ? maxBlocks.getValue().intValue() : 1;
                 long activeCount = miningBlocks.stream().filter(m -> !m.done).count();
@@ -141,7 +139,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         miningBlocks.removeIf(m -> m.done && now > m.visibleUntil);
         var server = mc.getSingleplayerServer();
         var serverLevel = (server != null) ? server.getLevel(mc.level.dimension()) : null;
-        BlockPos firstPos = null;
+        net.minecraft.core.BlockPos firstPos = null;
         for (MiningBlock mb : miningBlocks) {
             if (!mb.done) { firstPos = mb.pos; break; }
         }
@@ -155,12 +153,12 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             if (mb != null) {
                 if (!mb.started) {
                     mc.gameMode.stopDestroyBlock();
-                    Direction dir = getDirection(mc, mb.pos);
+                    net.minecraft.core.Direction dir = getDirection(mc, mb.pos);
                     mc.gameMode.startDestroyBlock(mb.pos, dir);
                     mb.started = true;
                     mb.startTime = now;
                 }
-                Direction dir = getDirection(mc, mb.pos);
+                net.minecraft.core.Direction dir = getDirection(mc, mb.pos);
                 mc.gameMode.continueDestroyBlock(mb.pos, dir);
                 long predTime = now - mb.startTime;
                 if (serverLevel != null && mc.player != null) {
@@ -197,41 +195,41 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             restoreSlotNow();
         }
     }
-    public boolean isTargetBlock(BlockPos pos) {
+    public boolean isTargetBlock(net.minecraft.core.BlockPos pos) {
         for (MiningBlock mb : miningBlocks) {
             if (mb.pos.equals(pos) && !mb.done) return true;
         }
         return false;
     }
-    private boolean isBreakable(Minecraft mc, BlockPos pos) {
+    private boolean isBreakable(Minecraft mc, net.minecraft.core.BlockPos pos) {
         var state = BlockUtility.getState(mc.level, pos.getX(), pos.getY(), pos.getZ());
         if (state.isAir()) return false;
         if (BlockUtility.isBlock(state, "bedrock")) return false;
         if (BlockUtility.destroySpeed(mc.level, pos) < 0) return false;
         if (!mc.level.getWorldBorder().isWithinBounds(pos)) return false;
-        double dist = Vec3.atCenterOf(pos).distanceTo(mc.player.getEyePosition());
+        double dist = net.minecraft.world.phys.Vec3.atCenterOf(pos).distanceTo(mc.player.getEyePosition());
         double maxDist = mode.getValue().equals("Grim") ? grimRange.getValue()
             : mode.getValue().equals("NCP") ? 4.5 : range.getValue();
         if (dist > maxDist) return false;
         if (!checkVisibility(mc, pos)) return false;
         return true;
     }
-    private void sendStart(Minecraft mc, BlockPos pos, int seq) {
+    private void sendStart(Minecraft mc, net.minecraft.core.BlockPos pos, int seq) {
         NetworkUtility.sendStartDestroy(pos, getDirection(mc, pos), seq);
     }
-    private void sendStop(Minecraft mc, BlockPos pos) {
+    private void sendStop(Minecraft mc, net.minecraft.core.BlockPos pos) {
         NetworkUtility.sendStopDestroy(pos, getDirection(mc, pos), 0);
     }
-    private Direction getDirection(Minecraft mc, BlockPos pos) {
-        Vec3 eye = mc.player.getEyePosition();
-        Vec3 blockCenter = Vec3.atCenterOf(pos);
-        Vec3 diff = blockCenter.subtract(eye);
+    private net.minecraft.core.Direction getDirection(Minecraft mc, net.minecraft.core.BlockPos pos) {
+        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 blockCenter = net.minecraft.world.phys.Vec3.atCenterOf(pos);
+        net.minecraft.world.phys.Vec3 diff = blockCenter.subtract(eye);
         double ax = Math.abs(diff.x), ay = Math.abs(diff.y), az = Math.abs(diff.z);
-        if (ay >= ax && ay >= az) return diff.y > 0 ? Direction.UP : Direction.DOWN;
-        if (ax >= az) return diff.x > 0 ? Direction.EAST : Direction.WEST;
-        return diff.z > 0 ? Direction.SOUTH : Direction.NORTH;
+        if (ay >= ax && ay >= az) return diff.y > 0 ? net.minecraft.core.Direction.UP : net.minecraft.core.Direction.DOWN;
+        if (ax >= az) return diff.x > 0 ? net.minecraft.core.Direction.EAST : net.minecraft.core.Direction.WEST;
+        return diff.z > 0 ? net.minecraft.core.Direction.SOUTH : net.minecraft.core.Direction.NORTH;
     }
-    private int findBestToolSlot(Minecraft mc, BlockPos pos) {
+    private int findBestToolSlot(Minecraft mc, net.minecraft.core.BlockPos pos) {
         var state = BlockUtility.getState(mc.level, pos.getX(), pos.getY(), pos.getZ());
         int bestSlot = InventoryUtility.getSelectedSlot(mc.player);
         float bestSpeed = InventoryUtility.getItem(mc.player, bestSlot).getDestroySpeed(state);
@@ -270,10 +268,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         }
         needRestore = false;
     }
-    private void rotateTo(Minecraft mc, BlockPos pos) {
+    private void rotateTo(Minecraft mc, net.minecraft.core.BlockPos pos) {
         String modeVal = rotate.getValue();
         if (modeVal.equals("None")) return;
-        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), Vec3.atCenterOf(pos));
+        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), net.minecraft.world.phys.Vec3.atCenterOf(pos));
         if (modeVal.equals("Normal")) {
             mc.player.setYRot(angles[0]);
             mc.player.setXRot(angles[1]);
@@ -291,13 +289,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         int[] candidates, int[] solidBlocks,
         double ex, double ey, double ez);
 
-    private int[] collectSolidBlocks(Minecraft mc, BlockPos center, double range) {
-        Set<BlockPos> blocks = new HashSet<>();
+    private int[] collectSolidBlocks(Minecraft mc, net.minecraft.core.BlockPos center, double range) {
+        Set<net.minecraft.core.BlockPos> blocks = new HashSet<>();
         int r = (int) Math.ceil(range);
         for (int x = -r; x <= r; x++) {
             for (int y = -r; y <= r; y++) {
                 for (int z = -r; z <= r; z++) {
-                    BlockPos p = center.offset(x, y, z);
+                    net.minecraft.core.BlockPos p = center.offset(x, y, z);
                     var state = mc.level.getBlockState(p);
                     if (!state.isAir() && state.canOcclude()) {
                         blocks.add(p.immutable());
@@ -307,7 +305,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         }
         int[] arr = new int[blocks.size() * 3];
         int i = 0;
-        for (BlockPos p : blocks) {
+        for (net.minecraft.core.BlockPos p : blocks) {
             arr[i++] = p.getX();
             arr[i++] = p.getY();
             arr[i++] = p.getZ();
@@ -315,9 +313,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         return arr;
     }
 
-    private boolean checkVisibility(Minecraft mc, BlockPos pos) {
+    private boolean checkVisibility(Minecraft mc, net.minecraft.core.BlockPos pos) {
         if (!raycast.getValue() || !NATIVE.isLoaded()) return true;
-        Vec3 eye = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
         double maxDist = mode.getValue().equals("Grim") ? grimRange.getValue()
             : mode.getValue().equals("NCP") ? 4.5 : range.getValue();
         int[] solids = collectSolidBlocks(mc, mc.player.blockPosition(), maxDist + 2);

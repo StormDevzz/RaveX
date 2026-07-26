@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.common.ServerboundPongPacket;
 import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 import ravex.event.network.PacketEvent;
@@ -32,10 +32,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
     private final List<Packet<?>> packetBuffer = new ArrayList<>();
     private int tickCounter = 0;
     private int bufferTicks = 0;
-    private Vec3 startPos = null;
+    private net.minecraft.world.phys.Vec3 startPos = null;
     private boolean flushing = false;
     private int flushIndex = 0;
-    private Vec3 flushStartPos = null;
+    private net.minecraft.world.phys.Vec3 flushStartPos = null;
     private double flushTotalHPos = 0.0;
     private int idleTicker = 0;
     private long flushStartTime = 0L;
@@ -154,7 +154,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         if (mc.player != null) {
             flushStartPos = mc.player.position();
         } else {
-            flushStartPos = startPos != null ? startPos : Vec3.ZERO;
+            flushStartPos = startPos != null ? startPos : net.minecraft.world.phys.Vec3.ZERO;
         }
 
         if ("NCP".equals(mode.getValue())) {
@@ -162,7 +162,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             for (Packet<?> p : packetBuffer) {
                 if (p instanceof ServerboundMovePlayerPacket move && move.hasPosition()) {
                     AccessorServerboundMovePlayerPacket accessor = (AccessorServerboundMovePlayerPacket) move;
-                    Vec3 pktPos = new Vec3(accessor.getX(), accessor.getY(), accessor.getZ());
+                    net.minecraft.world.phys.Vec3 pktPos = new net.minecraft.world.phys.Vec3(accessor.getX(), accessor.getY(), accessor.getZ());
                     if (flushTotalHPos == 0.0) {
                         flushTotalHPos = flushStartPos.distanceTo(pktPos);
                     }
@@ -199,7 +199,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
 
             if (isNcp && p instanceof ServerboundMovePlayerPacket move && move.hasPosition() && flushStartPos != null) {
                 double t = (double) flushIndex / Math.max(1, packetBuffer.size());
-                Vec3 currentPlayerPos = mc.player.position();
+                net.minecraft.world.phys.Vec3 currentPlayerPos = mc.player.position();
                 double dx = currentPlayerPos.x - flushStartPos.x;
                 double dy = currentPlayerPos.y - flushStartPos.y;
                 double dz = currentPlayerPos.z - flushStartPos.z;

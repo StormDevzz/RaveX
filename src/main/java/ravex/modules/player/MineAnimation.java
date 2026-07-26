@@ -8,7 +8,7 @@ import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 
 import ravex.parameter.BooleanParameter;
-@ModuleInfo(name = "MineAnimation", category = "Player")
+@ModuleInfo(name = "MineAnimation", category = "net.minecraft.world.entity.player.Player")
 public class MineAnimation extends ravex.modules.Module {
 public final BooleanParameter hideSwing = new BooleanParameter("HideHandSwing", true);
     public final BooleanParameter hideCracks = new BooleanParameter("HideBlockCracks", true);

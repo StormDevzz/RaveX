@@ -9,16 +9,16 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 
-public class NativeAnimateVertexConsumer implements VertexConsumer {
+public class NativeAnimateVertexConsumerUtility implements VertexConsumer {
     private final VertexConsumer delegate;
     private final int fillColor;
 
-    public NativeAnimateVertexConsumer(VertexConsumer delegate, int fillColor) {
+    public NativeAnimateVertexConsumerUtility(VertexConsumer delegate, int fillColor) {
         this.delegate = delegate;
         this.fillColor = fillColor;
     }
 
-    public NativeAnimateVertexConsumer(VertexConsumer delegate, int fillColor, boolean isHand) {
+    public NativeAnimateVertexConsumerUtility(VertexConsumer delegate, int fillColor, boolean isHand) {
         this.delegate = delegate;
         this.fillColor = fillColor;
     }

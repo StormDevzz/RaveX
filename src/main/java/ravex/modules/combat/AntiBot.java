@@ -2,13 +2,12 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.misc.EntityUtility;
+
 
 import ravex.utility.misc.MobUtility;
 import ravex.parameter.BooleanParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,14 +19,14 @@ public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKil
     public final BooleanParameter checkPing = new BooleanParameter("PingCheck", true);
     public final BooleanParameter checkName = new BooleanParameter("NameCheck", true);
     public final BooleanParameter checkMovement = new BooleanParameter("MovementCheck", true);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_antibot");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_antibot");
     static {
         NATIVE.load();
     }
-    private final List<Entity> botList = new ArrayList<>();
+    private final List<net.minecraft.world.entity.Entity> botList = new ArrayList<>();
     private long lastCleanup = 0;
 
-    public boolean isBot(Entity entity) {
+    public boolean isBot(net.minecraft.world.entity.Entity entity) {
         return botList.contains(entity);
     }
     public boolean shouldProtectTarget() {
@@ -42,11 +41,11 @@ public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKil
         long now = System.currentTimeMillis();
         if (now - lastCleanup < 500) return;
         lastCleanup = now;
-        List<Entity> newBots = new ArrayList<>();
-        for (Entity e : mc.level.entitiesForRendering()) {
+        List<net.minecraft.world.entity.Entity> newBots = new ArrayList<>();
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (e == mc.player) continue;
             if (!MobUtility.isPlayer(MobUtility.asLivingEntity(e)) || !e.isAlive()) continue;
-            Player p = (Player) e;
+            net.minecraft.world.entity.player.Player p = (net.minecraft.world.entity.player.Player) e;
             boolean suspect = false;
             if (removeInvisible.getValue() && p.isInvisible()) {
                 suspect = true;

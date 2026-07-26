@@ -2,13 +2,12 @@ package ravex.modules.world;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.rotation.RotationUtility;
 @ModuleInfo(name = "Igniter", category = "World")
 public class Igniter extends ravex.modules.Module {
@@ -43,7 +42,7 @@ public final NumberParameter  range        = new NumberParameter("Range",       
         }
         var targetPos = BlockUtility.pos(tntPos[0], tntPos[1], tntPos[2]);
         BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
-            hitVec, Direction.UP, targetPos, false));
+            hitVec, net.minecraft.core.Direction.UP, targetPos, false));
         BlockUtility.swing(mc);
         if (swap.equals("Silent") && originalSlot != -1) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);

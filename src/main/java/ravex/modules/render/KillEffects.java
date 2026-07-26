@@ -6,8 +6,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+
+import ravex.utility.misc.EntityUtility;
 import ravex.event.Subscribe;
 import ravex.event.player.DeathEvent;
 import ravex.utility.misc.MobUtility;
@@ -27,9 +27,9 @@ public final ModeParameter effect = new ModeParameter("Effect", "Lightning",
     @Subscribe
     public void onDeath(DeathEvent event) {
         if (!getEnabled()) return;
-        Player victim = event.getPlayer();
+        net.minecraft.world.entity.player.Player victim = event.getPlayer();
         if (victim == Minecraft.getInstance().player) return;
-        LivingEntity living = victim;
+        net.minecraft.world.entity.LivingEntity living = victim;
         if (!shouldAffect(living)) return;
         ClientLevel level = (ClientLevel) living.level();
         if (level == null) return;
@@ -42,7 +42,7 @@ public final ModeParameter effect = new ModeParameter("Effect", "Lightning",
         }
     }
 
-    private boolean shouldAffect(LivingEntity e) {
+    private boolean shouldAffect(net.minecraft.world.entity.LivingEntity e) {
         if (MobUtility.isPlayer(e) && players.getValue()) return true;
         if (MobUtility.isHostile(e) && monsters.getValue()) return true;
         if (MobUtility.isPassive(e) && animals.getValue()) return true;

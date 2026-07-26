@@ -2,9 +2,9 @@ package ravex.modules.render;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.Entity;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,7 +24,7 @@ import java.util.Set;
 public class Search extends ravex.modules.Module {
 private final Set<Identifier> selectedBlocks = new HashSet<>();
     private final Set<Identifier> selectedEntities = new HashSet<>();
-    private final List<BlockPos> foundBlocks = new ArrayList<>();
+    private final List<net.minecraft.core.BlockPos> foundBlocks = new ArrayList<>();
 
     public final ActionParameter openBrowser = new ActionParameter("Open Browser", () -> {
         Minecraft mc = Minecraft.getInstance();
@@ -39,7 +39,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
     });
     public final NumberParameter range = new NumberParameter("Range", 64.0, 16.0, 256.0, 8.0);
     public final ColorParameter blockColor = new ColorParameter("Block Color", 0xCC00FF00);
-    public final ColorParameter entityColor = new ColorParameter("Entity Color", 0xCC00FFFF);
+    public final ColorParameter entityColor = new ColorParameter("net.minecraft.world.entity.Entity Color", 0xCC00FFFF);
     public final BooleanParameter esp = new BooleanParameter("ESP", true);
 
     private Search() {
@@ -62,7 +62,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
         return selectedEntities;
     }
 
-    public List<BlockPos> getFoundBlocks() {
+    public List<net.minecraft.core.BlockPos> getFoundBlocks() {
         return foundBlocks;
     }
 
@@ -72,7 +72,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
         if (mc.player == null || mc.level == null) return;
 
         int r = range.getValue().intValue();
-        BlockPos c = mc.player.blockPosition();
+        net.minecraft.core.BlockPos c = mc.player.blockPosition();
         int minX = c.getX() - r, minZ = c.getZ() - r;
         int maxX = c.getX() + r, maxZ = c.getZ() + r;
 
@@ -85,7 +85,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
                     for (int bz = Math.max(minZ, czStart); bz <= Math.min(maxZ, czStart + 15); bz++) {
                         int maxY = mc.level.getHeight();
                         for (int by = mc.level.getMinY(); by < maxY; by++) {
-                            BlockPos p = new BlockPos(bx, by, bz);
+                            net.minecraft.core.BlockPos p = new net.minecraft.core.BlockPos(bx, by, bz);
                             BlockState state = chunk.getBlockState(p);
                             if (state.isAir()) continue;
                             Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());

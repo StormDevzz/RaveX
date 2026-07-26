@@ -5,8 +5,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.item.ItemStack;
 import ravex.gui.clickgui.ColorUtility;
 
@@ -15,7 +15,7 @@ import ravex.modules.combat.KillAura;
 import ravex.modules.combat.Trigger;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.FontRenderUtility;
 
 @ModuleInfo(name = "TargetHud", category = "HUD")
@@ -54,7 +54,7 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
 
     private float hudAlpha = 0f;
     private long lastFrameTime = 0;
-    private LivingEntity lastTarget = null;
+    private net.minecraft.world.entity.LivingEntity lastTarget = null;
     private float animatedHpPercent = -1f;
     private float animatedAbsorbPercent = -1f;
 
@@ -68,19 +68,19 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
         this.x = 10; this.y = 400; this.width = 175; this.height = 46;
     }
 
-    private LivingEntity getTarget(Minecraft mc) {
+    private net.minecraft.world.entity.LivingEntity getTarget(Minecraft mc) {
         if (ravex.manager.ModuleManager.delegate(KillAura.class).getEnabled()) {
-            LivingEntity target = ravex.manager.ModuleManager.delegate(KillAura.class).getCurrentTarget();
+            net.minecraft.world.entity.LivingEntity target = ravex.manager.ModuleManager.delegate(KillAura.class).getCurrentTarget();
             if (target != null && target.isAlive()) return target;
         }
         if (ravex.manager.ModuleManager.delegate(Trigger.class).getEnabled()) {
-            LivingEntity target = ravex.manager.ModuleManager.delegate(Trigger.class).getCurrentTarget();
+            net.minecraft.world.entity.LivingEntity target = ravex.manager.ModuleManager.delegate(Trigger.class).getCurrentTarget();
             if (target != null && target.isAlive()) return target;
         }
         return null;
     }
 
-    private Identifier getMobTexture(LivingEntity entity) {
+    private Identifier getMobTexture(net.minecraft.world.entity.LivingEntity entity) {
         if (entity instanceof net.minecraft.world.entity.monster.Creeper) return CREEPER_TEX;
         if (entity instanceof net.minecraft.world.entity.monster.zombie.Zombie) return ZOMBIE_TEX;
         if (entity instanceof net.minecraft.world.entity.monster.skeleton.Skeleton) return SKELETON_TEX;
@@ -89,7 +89,7 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
         return SKELETON_TEX;
     }
 
-    private ItemStack getMobHeadItem(LivingEntity entity) {
+    private ItemStack getMobHeadItem(net.minecraft.world.entity.LivingEntity entity) {
         if (entity instanceof net.minecraft.world.entity.monster.Creeper) return CREEPER_HEAD;
         if (entity instanceof net.minecraft.world.entity.monster.zombie.Zombie) return ZOMBIE_HEAD;
         if (entity instanceof net.minecraft.world.entity.monster.skeleton.Skeleton) return SKELETON_SKULL;
@@ -109,14 +109,14 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
         lastFrameTime = now;
         if (delta > 0.1f) delta = 0.016f;
 
-        LivingEntity targetEntity = null;
-        LivingEntity target = getTarget(mc);
+        net.minecraft.world.entity.LivingEntity targetEntity = null;
+        net.minecraft.world.entity.LivingEntity target = getTarget(mc);
         boolean hasActiveTarget = false;
         if (target != null) {
             targetEntity = target;
             lastTarget = target;
             hasActiveTarget = true;
-        } else if (showOnHover.getValue() && mc.crosshairPickEntity instanceof LivingEntity living && living.isAlive()) {
+        } else if (showOnHover.getValue() && mc.crosshairPickEntity instanceof net.minecraft.world.entity.LivingEntity living && living.isAlive()) {
             targetEntity = living;
             lastTarget = living;
             hasActiveTarget = true;
@@ -159,8 +159,8 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
 
         int bgAlpha = (int)(170 * hudAlpha);
         int bgColor = (bgAlpha << 24) | 0x0A0A0E;
-        Render2DEngine.drawPixelPerfectRound(graphics, bx, by, w, h, 6, bgColor);
-        Render2DEngine.drawRoundBorder(graphics, bx, by, w, h, 6, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), (int)(120 * hudAlpha)));
+        Render2DUtility.drawPixelPerfectRound(graphics, bx, by, w, h, 6, bgColor);
+        Render2DUtility.drawRoundBorder(graphics, bx, by, w, h, 6, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), (int)(120 * hudAlpha)));
 
         if (targetEntity != null) {
             if (targetEntity.getId() != lastEntityId) {
@@ -251,18 +251,18 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
         int barW = gridX - 4 - barX;
         int barY = by + 32;
 
-        Render2DEngine.drawRound(graphics, barX, barY, barW, 3, 1, ColorUtility.withAlpha(0xFF1A1A2A, (int)(255 * hudAlpha)));
+        Render2DUtility.drawRound(graphics, barX, barY, barW, 3, 1, ColorUtility.withAlpha(0xFF1A1A2A, (int)(255 * hudAlpha)));
 
         int fillHpW = (int) (barW * animatedHpPercent);
         if (fillHpW > 0) {
             int hpColor = lerpColor(0xFFFF3333, 0xFF33FF33, hp / maxHp);
-            Render2DEngine.drawRound(graphics, barX, barY, fillHpW, 3, 1, ColorUtility.withAlpha(hpColor, (int)(255 * hudAlpha)));
+            Render2DUtility.drawRound(graphics, barX, barY, fillHpW, 3, 1, ColorUtility.withAlpha(hpColor, (int)(255 * hudAlpha)));
         }
 
         int fillAbsorbW = (int) (barW * animatedAbsorbPercent);
         if (fillAbsorbW > 0) {
             int absorbX = barX + fillHpW;
-            Render2DEngine.drawRound(graphics, absorbX, barY, fillAbsorbW, 3, 1, ColorUtility.withAlpha(0xFFFFD54F, (int)(255 * hudAlpha)));
+            Render2DUtility.drawRound(graphics, absorbX, barY, fillAbsorbW, 3, 1, ColorUtility.withAlpha(0xFFFFD54F, (int)(255 * hudAlpha)));
         }
 
         int cellSize = 15;
@@ -278,8 +278,8 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
                 int cellX = gridX + cIndex * (cellSize + cellGap);
                 int cellY = by + 7 + rIndex * (cellSize + cellGap);
 
-                Render2DEngine.drawPixelPerfectRound(graphics, cellX, cellY, cellSize, cellSize, 3, ColorUtility.withAlpha(0x000000, (int)(120 * hudAlpha)));
-                Render2DEngine.drawRoundBorder(graphics, cellX, cellY, cellSize, cellSize, 3, 1, ColorUtility.withAlpha(0x000000, (int)(60 * hudAlpha)));
+                Render2DUtility.drawPixelPerfectRound(graphics, cellX, cellY, cellSize, cellSize, 3, ColorUtility.withAlpha(0x000000, (int)(120 * hudAlpha)));
+                Render2DUtility.drawRoundBorder(graphics, cellX, cellY, cellSize, cellSize, 3, 1, ColorUtility.withAlpha(0x000000, (int)(60 * hudAlpha)));
 
                 boolean shouldShow = (slot == net.minecraft.world.entity.EquipmentSlot.MAINHAND && showMainHand.getValue())
                         || (slot == net.minecraft.world.entity.EquipmentSlot.OFFHAND && showMainHand.getValue())

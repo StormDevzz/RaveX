@@ -2,7 +2,7 @@ package ravex.modules.movement;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -29,7 +29,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
         double dx = -Math.sin(yaw) * Math.cos(pitch) * mult;
         double dy = -Math.sin(pitch) * vert;
         double dz = Math.cos(yaw) * Math.cos(pitch) * mult;
-        mc.player.setDeltaMovement(new Vec3(dx, dy, dz));
+        mc.player.setDeltaMovement(new net.minecraft.world.phys.Vec3(dx, dy, dz));
         mc.player.hurtMarked = true;
     }
     public static boolean maybeEnabled() {

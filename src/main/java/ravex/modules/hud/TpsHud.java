@@ -9,8 +9,8 @@ import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "TpsHud", category = "HUD")
 public class TpsHud extends ravex.modules.Module {
@@ -21,8 +21,8 @@ public class TpsHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_TPS_WHITE;
-    private static final int IS = HudRenderer.getIconSize();
+private static final Identifier ICON = TextureLoaderUtility.HUD_TPS_WHITE;
+    private static final int IS = HudRendererUtility.getIconSize();
     private long lastRealTime = 0;
     private long lastGameTick = -1;
     private float smoothedTPS = 20.0f;
@@ -49,11 +49,11 @@ private static final Identifier ICON = TextureLoader.HUD_TPS_WHITE;
         int ph = 26;
         width = pw;
         height = ph;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         int cx = bx + 4;
         ravex.utility.render.FontRenderUtility.drawString(graphics, text, cx, by + 4, col, shadow);
         ravex.utility.render.FontRenderUtility.drawString(graphics, label, cx, by + 16, 0xFF8080A0, false);
-        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
+        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
     }
     private void updateTPS(Minecraft mc) {
         long now = System.currentTimeMillis();

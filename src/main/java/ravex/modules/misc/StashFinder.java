@@ -3,7 +3,7 @@ package ravex.modules.misc;
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
+import ravex.utility.misc.block.BlockUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
@@ -18,7 +18,7 @@ public final NumberParameter range = new NumberParameter("Range", 64.0, 16.0, 25
     private double lastCheckX, lastCheckY, lastCheckZ;
     private boolean hasChecked = false;
 
-    public void onContainerOpened(BlockPos pos, List<net.minecraft.world.item.ItemStack> contents) {
+    public void onContainerOpened(net.minecraft.core.BlockPos pos, List<net.minecraft.world.item.ItemStack> contents) {
         if (!getEnabled()) return;
         if (stashes.stream().anyMatch(s -> s.pos.equals(pos))) return;
         int valuableCount = 0;
@@ -60,11 +60,11 @@ public final NumberParameter range = new NumberParameter("Range", 64.0, 16.0, 25
         return false;
     }
     public static class StashEntry {
-        public final BlockPos pos;
+        public final net.minecraft.core.BlockPos pos;
         public final int totalItems;
         public final int valuableItems;
         public final long discoveredAt;
-        public StashEntry(BlockPos pos, int totalItems, int valuableItems, long discoveredAt) {
+        public StashEntry(net.minecraft.core.BlockPos pos, int totalItems, int valuableItems, long discoveredAt) {
             this.pos = pos;
             this.totalItems = totalItems;
             this.valuableItems = valuableItems;

@@ -8,10 +8,10 @@ import ravex.event.combat.ModuleToggleEvent;
 import ravex.parameter.*;
 import net.minecraft.client.Minecraft;
 import java.util.List;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 @ModuleInfo(name = "DesktopGui", category = "Client")
 public class DesktopGui extends ravex.modules.Module {
-private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_desktopgui");
+private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_desktopgui");
     static {
         NATIVE.load();
     }

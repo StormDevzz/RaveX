@@ -5,7 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 
 import java.util.List;
 
@@ -39,8 +39,8 @@ public class ShulkerTooltipComponent implements ClientTooltipComponent {
         int accentColor = ColorUtility.getActiveColor();
         int borderColor = ColorUtility.withAlpha(accentColor, 100);
 
-        Render2DEngine.drawRound(guiGraphics, x - 4, y - 4, w + 8, h + 8, 4, bgColor);
-        Render2DEngine.drawRoundBorder(guiGraphics, x - 4, y - 4, w + 8, h + 8, 4, 1, borderColor);
+        Render2DUtility.drawRound(guiGraphics, x - 4, y - 4, w + 8, h + 8, 4, bgColor);
+        Render2DUtility.drawRoundBorder(guiGraphics, x - 4, y - 4, w + 8, h + 8, 4, 1, borderColor);
 
 
         for (int row = 0; row < 3; row++) {
@@ -49,7 +49,7 @@ public class ShulkerTooltipComponent implements ClientTooltipComponent {
                 int slotX = x + col * 18;
                 int slotY = y + row * 18;
 
-                Render2DEngine.drawRound(guiGraphics, slotX, slotY, 16, 16, 2, 0x10FFFFFF);
+                Render2DUtility.drawRound(guiGraphics, slotX, slotY, 16, 16, 2, 0x10FFFFFF);
 
                 if (index < items.size()) {
                     ItemStack stack = items.get(index);

@@ -2,13 +2,13 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.MobUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "AutoClicker", category = "Combat")
 public class AutoClicker extends ravex.modules.Module {
@@ -20,7 +20,7 @@ public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40
     public final BooleanParameter randomize = new BooleanParameter("Randomize", true);
     public final BooleanParameter breakBlocks = new BooleanParameter("BreakBlocks", false);
     public final NumberParameter jitterStrength = new NumberParameter("Jitter", 0.0, 0.0, 2.0, 0.1);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_autoclicker");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autoclicker");
     static {
         NATIVE.load();
     }
@@ -79,7 +79,7 @@ public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40
         if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit && MobUtility.asLivingEntity(hit.getEntity()) != null) {
             mc.gameMode.attack(mc.player, hit.getEntity());
         }
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         mc.options.keyAttack.setDown(false);
         if (jitterStrength.getValue() > 0 && mc.player != null) {
             double str = jitterStrength.getValue();
@@ -90,7 +90,7 @@ public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40
     private void clickRight(Minecraft mc) {
         mc.options.keyUse.setDown(true);
         if (mc.gameMode != null) {
-            mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+            mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         }
         mc.options.keyUse.setDown(false);
     }

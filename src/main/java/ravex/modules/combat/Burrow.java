@@ -2,19 +2,17 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "Burrow", category = "Combat")
 public class Burrow extends ravex.modules.Module {
@@ -25,7 +23,7 @@ public final ModeParameter block = new ModeParameter("Block", "Obsidian",
     public final BooleanParameter instant = new BooleanParameter("Instant", true);
     public final NumberParameter height = new NumberParameter("Height", 0.42, 0.2, 1.0, 0.01);
     public final NumberParameter delay = new NumberParameter("Delay", 0, 0, 5, 1);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_burrow");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_burrow");
     static {
         NATIVE.load();
     }
@@ -37,7 +35,7 @@ public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         if (hasPlaced) return;
         tickCounter++;
         if (tickCounter < delay.getValue().intValue()) return;
-        BlockPos headPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos headPos = mc.player.blockPosition();
         if (!mc.level.getBlockState(headPos).isAir() && !mc.level.getBlockState(headPos).canBeReplaced()) return;
         int slot = findBlockSlot(mc);
         if (slot == -1) return;
@@ -51,7 +49,7 @@ public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         }
         if (instant.getValue()) {
             double h = height.getValue();
-            Vec3 orig = mc.player.position();
+            net.minecraft.world.phys.Vec3 orig = mc.player.position();
             mc.player.setPos(orig.x, orig.y + h, orig.z);
             if (mc.player.connection != null) {
                 mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(orig.x, orig.y + h, orig.z, false, false));
@@ -61,13 +59,13 @@ public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         if (slot < 0 || slot > 8) return;
         InventoryUtility.selectSlot(mc.player, slot);
         BlockHitResult hit = new BlockHitResult(
-            new Vec3(headPos.getX() + 0.5, headPos.getY() + 2, headPos.getZ() + 0.5),
-            Direction.DOWN, headPos, false
+            new net.minecraft.world.phys.Vec3(headPos.getX() + 0.5, headPos.getY() + 2, headPos.getZ() + 0.5),
+            net.minecraft.core.Direction.DOWN, headPos, false
         );
         if (mc.gameMode != null) {
-            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
+            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
         }
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         InventoryUtility.selectSlot(mc.player, prevSlot);
         hasPlaced = true;
     }
@@ -81,9 +79,9 @@ public final ModeParameter block = new ModeParameter("Block", "Obsidian",
             var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) continue;
             var blk = ((BlockItem) stack.getItem()).getBlock();
-            if (b.equals("Obsidian") && blk == Blocks.OBSIDIAN) return i;
-            if (b.equals("Cobblestone") && blk == Blocks.COBBLESTONE) return i;
-            if (b.equals("Web") && blk == Blocks.COBWEB) return i;
+            if (b.equals("Obsidian") && blk == net.minecraft.world.level.block.Blocks.OBSIDIAN) return i;
+            if (b.equals("Cobblestone") && blk == net.minecraft.world.level.block.Blocks.COBBLESTONE) return i;
+            if (b.equals("Web") && blk == net.minecraft.world.level.block.Blocks.COBWEB) return i;
             if (b.equals("Anvil") && blk instanceof net.minecraft.world.level.block.AnvilBlock) return i;
         }
         return -1;

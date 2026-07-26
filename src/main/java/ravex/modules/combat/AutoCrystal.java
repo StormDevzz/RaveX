@@ -2,26 +2,24 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.EntityUtility;
+
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
-import net.minecraft.world.entity.player.Player;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 import java.util.ArrayList;
@@ -76,14 +74,14 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
     public final BooleanParameter suicide        = new BooleanParameter("Suicide", false);
     public final BooleanParameter kbPrediction   = new BooleanParameter("KBPrediction", true);
     public final BooleanParameter collateralPop  = new BooleanParameter("CollateralPopList", true);
-    public static BlockPos currentPlacementBlock = null;
+    public static net.minecraft.core.BlockPos currentPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
     public static int currentTargetTotems = 0;
     private long lastPlaceTime = 0;
     private long lastBreakTime = 0;
     private int  lastBreakId   = -1;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_autocrystal");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autocrystal");
     static {
         NATIVE.load();
     }
@@ -135,7 +133,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         swapNoGap.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
     }
-    public static final SilentRotation silentRotation = new SilentRotation();
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private int originalSlot = -1;
     private double[] cachedBlockData = null;
     private long lastBlockScanTime = 0;
@@ -157,15 +155,15 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                 }
             }
         }
-        LivingEntity target = findTarget(mc);
+        net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             currentPlacementBlock = null;
             return;
         }
-        Vec3 playerPos = mc.player.position();
+        net.minecraft.world.phys.Vec3 playerPos = mc.player.position();
         double pHp  = MobUtility.getHealth(mc.player);
         double pAbs = MobUtility.getAbsorption(mc.player);
-        Vec3 targetPos = target.position();
+        net.minecraft.world.phys.Vec3 targetPos = target.position();
         double tHp  = MobUtility.getHealth(target);
         double tAbs = MobUtility.getAbsorption(target);
         double[] blockData  = collectValidBlocks(mc, playerPos);
@@ -218,7 +216,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
             }
         }
         if (shouldPlace) {
-            currentPlacementBlock = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
+            currentPlacementBlock = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
             currentTargetDamage = result[4];
             currentSelfDamage = result[5];
             currentTargetTotems = (int) tStats[14];
@@ -226,16 +224,16 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
             currentPlacementBlock = null;
         }
         long now = System.currentTimeMillis();
-        Vec3 rotationTarget = null;
+        net.minecraft.world.phys.Vec3 rotationTarget = null;
         if (shouldBreak) {
             int entityId = (int) result[7];
-            Entity crystal = mc.level.getEntity(entityId);
+            net.minecraft.world.entity.Entity crystal = mc.level.getEntity(entityId);
             if (crystal instanceof EndCrystal) {
                 rotationTarget = crystal.position();
             }
         }
         if (rotationTarget == null && shouldPlace) {
-            rotationTarget = new Vec3(result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
+            rotationTarget = new net.minecraft.world.phys.Vec3(result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
         }
         if (rotationTarget != null) {
             rotateTo(mc, rotationTarget);
@@ -250,7 +248,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
             if (now - lastBreakTime >= currentBreakDelay) {
                 int entityId = (int) result[7];
                 if (entityId != lastBreakId) {
-                    Entity crystal = mc.level.getEntity(entityId);
+                    net.minecraft.world.entity.Entity crystal = mc.level.getEntity(entityId);
                     if (crystal instanceof EndCrystal) {
                         MobUtility.attack(mc, crystal);
                         MobUtility.swingHand(mc);
@@ -271,7 +269,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         }
         if (shouldPlace && aligned && actionsThisTick < 2) {
             if (!checkPlaceDelay || now - lastPlaceTime >= currentPlaceDelay) {
-                BlockPos placePos = new BlockPos(
+                net.minecraft.core.BlockPos placePos = new net.minecraft.core.BlockPos(
                         (int) result[1], (int) result[2], (int) result[3]);
                 boolean hasItem = switchToCrystal(mc);
                 if (hasItem) {
@@ -305,7 +303,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         }
         if (shouldPlace2 && aligned && actionsThisTick < 2) {
             if (!checkPlaceDelay || now - lastPlaceTime >= currentPlaceDelay) {
-                BlockPos placePos2 = new BlockPos((int) result[13], (int) result[14], (int) result[15]);
+                net.minecraft.core.BlockPos placePos2 = new net.minecraft.core.BlockPos((int) result[13], (int) result[14], (int) result[15]);
                 boolean hasItem = switchToCrystal(mc);
                 if (hasItem) {
                     net.minecraft.world.phys.Vec3 hitVec2 = new net.minecraft.world.phys.Vec3(
@@ -327,14 +325,14 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
             }
         }
     }
-    private LivingEntity findTarget(Minecraft mc) {
-        LivingEntity closest = null;
+    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+        net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
         double maxDist = Math.max(placeRange.getValue(), breakRange.getValue()) + 2.0;
         String mode = targetMode.getValue();
         String typeFilter = targetType.getValue();
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le)) continue;
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
             if (typeFilter.equals("Players")) {
@@ -359,20 +357,20 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         }
         return closest;
     }
-    private double[] collectValidBlocks(Minecraft mc, Vec3 playerPos) {
+    private double[] collectValidBlocks(Minecraft mc, net.minecraft.world.phys.Vec3 playerPos) {
         long now = System.currentTimeMillis();
         if (bgBlockScanner.getValue() && cachedBlockData != null && now - lastBlockScanTime < 150) {
             return cachedBlockData;
         }
         List<Double> data = new ArrayList<>();
         int r = (int) Math.ceil(placeRange.getValue()) + 1;
-        BlockPos origin = BlockPos.containing(playerPos);
+        net.minecraft.core.BlockPos origin = net.minecraft.core.BlockPos.containing(playerPos);
         for (int dx = -r; dx <= r; dx++) {
             for (int dz = -r; dz <= r; dz++) {
                 for (int dy = -2; dy <= 2; dy++) {
-                    BlockPos pos = origin.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos pos = origin.offset(dx, dy, dz);
                     BlockState state = mc.level.getBlockState(pos);
-                    if (state.is(Blocks.OBSIDIAN) || state.is(Blocks.BEDROCK)) {
+                    if (state.is(net.minecraft.world.level.block.Blocks.OBSIDIAN) || state.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
                         BlockState above = mc.level.getBlockState(pos.above());
                         BlockState above2 = mc.level.getBlockState(pos.above(2));
                         if (above.isAir() && above2.isAir()) {
@@ -387,7 +385,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         if (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).getEnabled() && ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).autoCrystalSync.getValue() && BasePlace.lastPlacedBase != null) {
             long msLimit = (long) (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).syncPredictTicks.getValue() * 50);
             if (System.currentTimeMillis() - BasePlace.lastPlacedTime <= msLimit) {
-                BlockPos predictedPos = BasePlace.lastPlacedBase;
+                net.minecraft.core.BlockPos predictedPos = BasePlace.lastPlacedBase;
                 double dist = Math.sqrt(predictedPos.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
                 if (dist <= placeRange.getValue()) {
                     boolean alreadyAdded = false;
@@ -417,9 +415,9 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         }
         return arr;
     }
-    private double[] collectCrystals(Minecraft mc, Vec3 playerPos) {
+    private double[] collectCrystals(Minecraft mc, net.minecraft.world.phys.Vec3 playerPos) {
         List<Double> data = new ArrayList<>();
-        for (Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof EndCrystal)) continue;
             if (mc.player.distanceTo(e) > breakRange.getValue() + 2.0) continue;
             data.add((double) e.getId());
@@ -459,7 +457,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         }
         return false;
     }
-    private void rotateTo(Minecraft mc, Vec3 target) {
+    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate.getValue();
         if (mode.equals("None")) return;
         float[] targetAngles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
@@ -481,34 +479,34 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
     }
     private long currentPlaceDelay = 0;
     private long currentBreakDelay = 0;
-    private boolean isRotationAligned(Minecraft mc, Vec3 target) {
+    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         if (rotate.getValue().equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
-    private double calcQuickDamage(Minecraft mc, LivingEntity target) {
-        Vec3 playerPos = mc.player.position();
-        Vec3 targetPos = target.position();
-        Vec3 crystalPos = targetPos.add(0, 1, 0);
+    private double calcQuickDamage(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
+        net.minecraft.world.phys.Vec3 playerPos = mc.player.position();
+        net.minecraft.world.phys.Vec3 targetPos = target.position();
+        net.minecraft.world.phys.Vec3 crystalPos = targetPos.add(0, 1, 0);
         double dist = playerPos.distanceTo(crystalPos);
         if (dist > 12.0) return 0;
         double impact = Math.max(0, (1.0 - dist / 12.0));
         return (impact * impact + impact) / 2.0 * 84.0 + 1.0;
     }
     private double[] javaFallbackTick(
-            Vec3 playerPos, double pHp, double pAbs,
-            Vec3 targetPos, double tHp, double tAbs,
+            net.minecraft.world.phys.Vec3 playerPos, double pHp, double pAbs,
+            net.minecraft.world.phys.Vec3 targetPos, double tHp, double tAbs,
             double[] blockData, double[] crystalData) {
         double[] result = new double[12];
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return result;
         double bestBreakDmg = 0;
         int bestId = -1;
-        Vec3 bestPos = Vec3.ZERO;
-        for (Entity e : mc.level.entitiesForRendering()) {
+        net.minecraft.world.phys.Vec3 bestPos = net.minecraft.world.phys.Vec3.ZERO;
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof EndCrystal)) continue;
             double dist = mc.player.distanceTo(e);
             if (dist > breakRange.getValue()) continue;
-            Vec3 cp = e.position();
+            net.minecraft.world.phys.Vec3 cp = e.position();
             double tdist = cp.distanceTo(targetPos);
             double sdist = cp.distanceTo(playerPos);
             if (tdist > 12 || sdist > 12) continue;
@@ -547,7 +545,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
     public static AutoCrystal itz() {
         return ravex.manager.ModuleManager.delegate(AutoCrystal.class);
     }
-    private double[] getEntityStats(LivingEntity player) {
+    private double[] getEntityStats(net.minecraft.world.entity.LivingEntity player) {
         int protectionEpf = 0;
         int blastProtectionEpf = 0;
         net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
@@ -575,7 +573,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         int totems = 0;
         if (InventoryUtility.isTotem(player.getMainHandItem())) totems++;
         if (InventoryUtility.isTotem(player.getOffhandItem())) totems++;
-        if (player instanceof Player p) {
+        if (player instanceof net.minecraft.world.entity.player.Player p) {
             totems += InventoryUtility.countItem(p, "totem_of_undying");
         }
         double[] stats = new double[15];

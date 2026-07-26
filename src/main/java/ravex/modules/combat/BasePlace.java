@@ -2,20 +2,17 @@ package ravex.modules.combat;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.EntityUtility;
+
 import net.minecraft.world.item.BlockItem;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 import ravex.RaveX;
@@ -24,7 +21,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -32,7 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 
 @ModuleInfo(name = "BasePlace", category = "Combat")
 public class BasePlace extends ravex.modules.Module {
@@ -57,15 +54,15 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
     public final NumberParameter  syncPredictTicks = new NumberParameter("SyncPredictTicks", 5.0, 1.0, 10.0, 1.0);
     public final BooleanParameter render          = new BooleanParameter("Render", true);
     public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FF00);
-    public static BlockPos lastPlacedBase = null;
+    public static net.minecraft.core.BlockPos lastPlacedBase = null;
     public static long lastPlacedTime = 0;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
-    private final java.util.Map<BlockPos, Long> placedPositions = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final SilentRotation silentRotation = new SilentRotation();
+    private final java.util.Map<net.minecraft.core.BlockPos, Long> placedPositions = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private long lastPlaceTime = 0;
-    private static BlockPos simulatedPlacementBlock = null;
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_baseplace");
+    private static net.minecraft.core.BlockPos simulatedPlacementBlock = null;
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_baseplace");
     static {
         NATIVE.load();
     }
@@ -91,7 +88,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
     public static float getSilentPitch() {
         return silentRotation.pitch;
     }
-    public static BlockPos getSimulatedPlacementBlock() {
+    public static net.minecraft.core.BlockPos getSimulatedPlacementBlock() {
         return simulatedPlacementBlock;
     }
     protected void onEnable() {
@@ -132,7 +129,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
                 airPlaceBypass.setValue("NCP");
             }
         }
-        LivingEntity target = findTarget(mc);
+        net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             simulatedPlacementBlock = null;
             return;
@@ -170,7 +167,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
             currentSelfDamage = 0.0;
             return;
         }
-        simulatedPlacementBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
+        simulatedPlacementBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
         if (result.length >= 10) {
             currentTargetDamage = result[8];
             currentSelfDamage = result[9];
@@ -184,14 +181,14 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         }
         int blockSlot = findBlockSlot(mc);
         if (blockSlot == -1) return;
-        BlockPos neighborPos = new BlockPos((int) result[1], (int) result[2], (int) result[3]);
-        Direction face = Direction.values()[(int) result[4]];
-        BlockPos targetBlock = new BlockPos((int) result[5], (int) result[6], (int) result[7]);
+        net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
+        net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
+        net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
         placedPositions.entrySet().removeIf(entry -> now - entry.getValue() > 1000);
-        if (placedPositions.containsKey(targetBlock) || mc.level.getBlockState(targetBlock).getBlock() == Blocks.OBSIDIAN) {
+        if (placedPositions.containsKey(targetBlock) || mc.level.getBlockState(targetBlock).getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
             return;
         }
-        Vec3 hitVec = Vec3.atCenterOf(neighborPos).add(new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
         String swap = swapMode.getValue();
@@ -205,8 +202,8 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
             InventoryUtility.silentSelectSlot(mc.player, blockSlot);
         }
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
-        mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
-        mc.player.swing(InteractionHand.MAIN_HAND);
+        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         placedPositions.put(targetBlock, now);
         lastPlaceTime = now;
         lastPlacedBase = targetBlock;
@@ -220,7 +217,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         if (InventoryUtility.isOffhand(mc.player, "end_crystal")) return true;
         return InventoryUtility.findSlot(mc.player, "end_crystal") != -1;
     }
-    private void rotateTo(Minecraft mc, Vec3 target) {
+    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate.getValue();
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
@@ -236,12 +233,12 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
     }
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
-        BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int r = (int) Math.ceil(range.getValue()) + 2;
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -4; dy <= 4; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
-                    BlockPos pos = playerPos.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
                         BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
@@ -261,7 +258,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
-            if (blockItem.getBlock() == Blocks.OBSIDIAN) {
+            if (blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
                 return i;
             }
         }
@@ -269,7 +266,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
             for (int i = 9; i < 36; i++) {
                 var stack = InventoryUtility.getItem(mc.player, i);
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
-                if (blockItem.getBlock() == Blocks.OBSIDIAN) {
+                if (blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
                     int hotbarSlot = InventoryUtility.getSelectedSlot(mc.player);
                     InventoryUtility.handleInventoryClick(mc, mc.player, i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
                     return hotbarSlot;
@@ -278,14 +275,14 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         }
         return -1;
     }
-    private LivingEntity findTarget(Minecraft mc) {
-        LivingEntity closest = null;
+    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+        net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
         double maxDist = targetRange.getValue();
         String mode = targetMode.getValue();
         String typeFilter = targetType.getValue();
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le)) continue;
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
             if (typeFilter.equals("Players")) {
@@ -309,7 +306,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         }
         return closest;
     }
-    private double[] getEntityStats(LivingEntity player) {
+    private double[] getEntityStats(net.minecraft.world.entity.LivingEntity player) {
         int protectionEpf = 0;
         int blastProtectionEpf = 0;
         net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
@@ -337,7 +334,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         int totems = 0;
         if (InventoryUtility.isTotem(player.getMainHandItem())) totems++;
         if (InventoryUtility.isTotem(player.getOffhandItem())) totems++;
-        if (player instanceof Player p) {
+        if (player instanceof net.minecraft.world.entity.player.Player p) {
             totems += InventoryUtility.countItem(p, "totem_of_undying");
         }
         double[] stats = new double[15];
@@ -377,15 +374,15 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         stats[14] = totems;
         return stats;
     }
-    private double[] javaFallbackCalculate(Minecraft mc, LivingEntity target, double[] solidBlocksData) {
-        BlockPos tPos = target.blockPosition();
-        Set<BlockPos> solids = new HashSet<>();
+    private double[] javaFallbackCalculate(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlocksData) {
+        net.minecraft.core.BlockPos tPos = target.blockPosition();
+        Set<net.minecraft.core.BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
-            solids.add(new BlockPos((int) solidBlocksData[i], (int) solidBlocksData[i+1], (int) solidBlocksData[i+2]));
+            solids.add(new net.minecraft.core.BlockPos((int) solidBlocksData[i], (int) solidBlocksData[i+1], (int) solidBlocksData[i+2]));
         }
-        BlockPos bestBlock = null;
+        net.minecraft.core.BlockPos bestBlock = null;
         double bestDist = Double.MAX_VALUE;
-        BlockPos bestNeighbor = null;
+        net.minecraft.core.BlockPos bestNeighbor = null;
         int bestFace = 1;
         int r = 2;
         double maxPlaceRange = range.getValue();
@@ -395,7 +392,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
-                    BlockPos c = tPos.offset(dx, dy, dz);
+                    net.minecraft.core.BlockPos c = tPos.offset(dx, dy, dz);
                     if (solids.contains(c)) continue;
                     double pDist = Math.sqrt(c.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
                     if (pDist > maxPlaceRange) continue;
@@ -405,10 +402,10 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
                     if (!allowAirPlace && solids.contains(c.above(2))) continue;
                     if (intersectsEntity(mc.player, c) || intersectsEntity(target, c)) continue;
                     boolean hasNeighbor = false;
-                    BlockPos neighbor = null;
+                    net.minecraft.core.BlockPos neighbor = null;
                     int faceIndex = 1;
-                    for (Direction dir : Direction.values()) {
-                        BlockPos n = c.relative(dir);
+                    for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                        net.minecraft.core.BlockPos n = c.relative(dir);
                         if (solids.contains(n)) {
                             hasNeighbor = true;
                             neighbor = n;
@@ -439,7 +436,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         }
         return new double[]{0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     }
-    private boolean intersectsEntity(Entity entity, BlockPos pos) {
+    private boolean intersectsEntity(net.minecraft.world.entity.Entity entity, net.minecraft.core.BlockPos pos) {
         double minX = entity.getX() - 0.3;
         double maxX = entity.getX() + 0.3;
         double minY = entity.getY();

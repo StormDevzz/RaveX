@@ -1,6 +1,6 @@
 package ravex.utility.shaders.nativec;
 
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 
 public final class ShaderNative {
     private static boolean available = false;

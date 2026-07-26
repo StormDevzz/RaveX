@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.ItemPhysics;
 import ravex.modules.render.NoRender;
-import ravex.utility.render.RaveXStateAccessor;
+import ravex.utility.render.RaveXStateAccessorUtility;
 
 import java.util.Random;
 
@@ -22,7 +22,7 @@ public class MixinItemEntityRenderer {
 
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/item/ItemEntity;Lnet/minecraft/client/renderer/entity/state/ItemEntityRenderState;F)V", at = @At("RETURN"))
     private void onExtract(ItemEntity entity, ItemEntityRenderState state, float tickDelta, CallbackInfo ci) {
-        RaveXStateAccessor accessor = (RaveXStateAccessor) state;
+        RaveXStateAccessorUtility accessor = (RaveXStateAccessorUtility) state;
         accessor.setRavexOnGround(entity.onGround() || entity.isInWater() || entity.isInLava());
         accessor.setRavexMotionY(entity.getDeltaMovement().y);
 
@@ -47,7 +47,7 @@ public class MixinItemEntityRenderer {
 
         if (state.item.isEmpty()) return;
 
-        RaveXStateAccessor accessor = (RaveXStateAccessor) state;
+        RaveXStateAccessorUtility accessor = (RaveXStateAccessorUtility) state;
         boolean onGround = accessor.isRavexOnGround();
         double motionY = accessor.getRavexMotionY();
         boolean isBlock = accessor.isRavexBlock();

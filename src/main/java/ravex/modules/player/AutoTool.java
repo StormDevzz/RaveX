@@ -5,10 +5,10 @@ import ravex.parameter.ModeParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.ToolUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.world.phys.BlockHitResult;
 import java.util.List;
-@ModuleInfo(name = "AutoTool", category = "Player")
+@ModuleInfo(name = "AutoTool", category = "net.minecraft.world.entity.player.Player")
 public class AutoTool extends ravex.modules.Module {
 public final ModeParameter swap = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal"));
     public void onTick() {
@@ -16,7 +16,7 @@ public final ModeParameter swap = new ModeParameter("Swap", "Silent", List.of("S
         if (mc.player == null || mc.level == null) return;
         if (!mc.options.keyAttack.isDown()) return;
         if (!(mc.hitResult instanceof BlockHitResult blockHit)) return;
-        BlockPos pos = blockHit.getBlockPos();
+        net.minecraft.core.BlockPos pos = blockHit.getBlockPos();
         int slot = ToolUtility.findBestToolSlot(mc.player, mc.level.getBlockState(pos));
         if (slot < 0) return;
         if ("Silent".equals(swap.getValue()))

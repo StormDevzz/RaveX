@@ -119,7 +119,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         if (dot.getValue()) {
             int dc = dotColor.getValue();
             float dotSize = 2.5f;
-            net.minecraft.resources.Identifier dotTex = ravex.utility.render.Render2DEngine.getSmoothCircle();
+            net.minecraft.resources.Identifier dotTex = ravex.utility.render.Render2DUtility.getSmoothCircle();
             graphics.pose().pushMatrix();
             graphics.pose().translate(cx - dotSize / 2f, cy - dotSize / 2f);
             graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, dotTex, 0, 0, 0f, 0f, (int) Math.ceil(dotSize), (int) Math.ceil(dotSize), (int) Math.ceil(dotSize), (int) Math.ceil(dotSize), dc);
@@ -159,7 +159,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
     private void renderCircle(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
         float radius = gap + size;
         float thicknessRatio = thick / radius;
-        net.minecraft.resources.Identifier ringTex = ravex.utility.render.Render2DEngine.getSmoothRing(thicknessRatio);
+        net.minecraft.resources.Identifier ringTex = ravex.utility.render.Render2DUtility.getSmoothRing(thicknessRatio);
 
         g.pose().pushMatrix();
         g.pose().translate(cx, cy);

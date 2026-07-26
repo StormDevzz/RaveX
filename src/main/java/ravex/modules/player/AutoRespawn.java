@@ -6,7 +6,7 @@ import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import ravex.event.Subscribe;
 import ravex.event.player.DeathEvent;
 
-@ModuleInfo(name = "AutoRespawn", category = "Player")
+@ModuleInfo(name = "AutoRespawn", category = "net.minecraft.world.entity.player.Player")
 public class AutoRespawn extends ravex.modules.Module {
 public final ravex.parameter.BooleanParameter showDeathScreen = new ravex.parameter.BooleanParameter("ShowDeathScreen", false);
     private long deathTime = 0;

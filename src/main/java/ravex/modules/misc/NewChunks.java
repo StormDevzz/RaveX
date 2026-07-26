@@ -4,8 +4,8 @@ import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.utility.nativelib.NativeLibrary;
-import net.minecraft.core.BlockPos;
+import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -13,11 +13,11 @@ import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
-import ravex.utility.render.Render3DUtils;
+import ravex.utility.render.Render3DUtility;
 import org.joml.Matrix4f;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,7 +38,7 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
     private final Set<ChunkPos> visitedChunks = new HashSet<>();
     private final Set<ChunkPos> old112Chunks = new HashSet<>();
     private final Set<ChunkPos> analyzedChunks = new HashSet<>();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_chunkexploit");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_chunkexploit");
     static {
         NATIVE.load();
     }
@@ -78,7 +78,7 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
             if (y < chunk.getMinY() || y >= chunk.getMaxY()) continue;
             for (int x : sampleXZs) {
                 for (int z : sampleXZs) {
-                    BlockPos bp = new BlockPos(pos.getMinBlockX() + x, y, pos.getMinBlockZ() + z);
+                    net.minecraft.core.BlockPos bp = new net.minecraft.core.BlockPos(pos.getMinBlockX() + x, y, pos.getMinBlockZ() + z);
                     var state = chunk.getBlockState(bp);
                     if (state != null && !state.isAir()) {
                         String path = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
@@ -134,7 +134,7 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
         if (mc.player == null || mc.level == null) return;
         if (packet instanceof ClientboundLevelChunkWithLightPacket chunkPacket) {
         } else if (packet instanceof ClientboundBlockUpdatePacket blockPacket) {
-            BlockPos bp = blockPacket.getPos();
+            net.minecraft.core.BlockPos bp = blockPacket.getPos();
             ChunkPos cp = new ChunkPos(bp);
             if (mc.player.chunkPosition().x != cp.x || mc.player.chunkPosition().z != cp.z) {
                 visitedChunks.add(cp);
@@ -152,7 +152,7 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
         if (!render.getValue()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-        Vec3 camPos = camera.position();
+        net.minecraft.world.phys.Vec3 camPos = camera.position();
         float y = (float) (mc.level.getMinY() - camPos.y + 0.01f);
         Matrix4f reusable = new Matrix4f();
         if (renderLoaded.getValue()) {
@@ -186,19 +186,19 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
             }
         }
     }
-    private void drawChunkOutline(Matrix4f modelViewMatrix, Matrix4f reusable, ChunkPos pos, Vec3 camPos, float y, float r, float g, float b, float a) {
+    private void drawChunkOutline(Matrix4f modelViewMatrix, Matrix4f reusable, ChunkPos pos, net.minecraft.world.phys.Vec3 camPos, float y, float r, float g, float b, float a) {
         float x1 = (float) (pos.getMinBlockX() - camPos.x);
         float z1 = (float) (pos.getMinBlockZ() - camPos.z);
         float x2 = x1 + 16.0f;
         float z2 = z1 + 16.0f;
-        Render3DUtils.batchAxisLine(modelViewMatrix, x1, y, z1, x2, y, z1, 0.03f, r, g, b, a, true);
-        Render3DUtils.batchAxisLine(modelViewMatrix, x2, y, z1, x2, y, z2, 0.03f, r, g, b, a, true);
-        Render3DUtils.batchAxisLine(modelViewMatrix, x2, y, z2, x1, y, z2, 0.03f, r, g, b, a, true);
-        Render3DUtils.batchAxisLine(modelViewMatrix, x1, y, z2, x1, y, z1, 0.03f, r, g, b, a, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x1, y, z1, x2, y, z1, 0.03f, r, g, b, a, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x2, y, z1, x2, y, z2, 0.03f, r, g, b, a, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x2, y, z2, x1, y, z2, 0.03f, r, g, b, a, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x1, y, z2, x1, y, z1, 0.03f, r, g, b, a, true);
         try {
             modelViewMatrix.translate(x1, y, z1, reusable);
             reusable.scale(16.0f, 0.01f, 16.0f);
-            Render3DUtils.batchFilledBox(reusable, 1.0, r, g, b, a * 0.15f, true);
+            Render3DUtility.batchFilledBox(reusable, 1.0, r, g, b, a * 0.15f, true);
         } catch (Exception ignored) {}
     }
     protected void onDisable() {

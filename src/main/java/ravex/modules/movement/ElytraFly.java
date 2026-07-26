@@ -2,16 +2,16 @@ package ravex.modules.movement;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import ravex.RaveX;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "ElytraFly", category = "Movement")
 public class ElytraFly extends ravex.modules.Module {
@@ -28,7 +28,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
     public final NumberParameter acceleration = new NumberParameter("Acceleration", 0.15, 0.01, 1.0, 0.01);
     public final NumberParameter timer = new NumberParameter("Timer", 1.0, 0.5, 3.0, 0.1);
     public final BooleanParameter fallBypass = new BooleanParameter("FallBypass", true);
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_elytraplusplus");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_elytraplusplus");
     static {
         NATIVE.load();
     }
@@ -43,13 +43,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
     );
     private int fwTimer = 0;
     private double accelMul = 0.0;
-    public Vec3 applyTimerAndAccel(Vec3 vel) {
+    public net.minecraft.world.phys.Vec3 applyTimerAndAccel(net.minecraft.world.phys.Vec3 vel) {
         double t = timer.getValue();
         if (t != 1.0) {
-            vel = new Vec3(vel.x * t, vel.y, vel.z * t);
+            vel = new net.minecraft.world.phys.Vec3(vel.x * t, vel.y, vel.z * t);
         }
         if (accelerate.getValue()) {
-            vel = new Vec3(vel.x * accelMul, vel.y * accelMul, vel.z * accelMul);
+            vel = new net.minecraft.world.phys.Vec3(vel.x * accelMul, vel.y * accelMul, vel.z * accelMul);
         }
         return vel;
     }
@@ -228,12 +228,12 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
                 double targetX = (-Math.sin(rad) * forward + Math.cos(rad) * strafe) * hSpeed.getValue();
                 double targetZ = (Math.cos(rad) * forward + Math.sin(rad) * strafe) * hSpeed.getValue();
                 double targetY = space ? vSpeed.getValue() : (shift ? -vSpeed.getValue() : -glide.getValue());
-                Vec3 vel;
+                net.minecraft.world.phys.Vec3 vel;
                 if (forward == 0 && strafe == 0 && !space && !shift) {
-                    Vec3 m = mc.player.getDeltaMovement();
-                    vel = new Vec3(m.x * 0.2, -glide.getValue(), m.z * 0.2);
+                    net.minecraft.world.phys.Vec3 m = mc.player.getDeltaMovement();
+                    vel = new net.minecraft.world.phys.Vec3(m.x * 0.2, -glide.getValue(), m.z * 0.2);
                 } else {
-                    vel = new Vec3(targetX, targetY, targetZ);
+                    vel = new net.minecraft.world.phys.Vec3(targetX, targetY, targetZ);
                 }
                 vel = applyTimerAndAccel(vel);
                 mc.player.setDeltaMovement(vel);
@@ -250,7 +250,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
                     curMode, hSpeed.getValue(), vSpeed.getValue(), glide.getValue(),
                     yaw, pitch, space, shift
                 );
-                Vec3 v = new Vec3(vel[0], vel[1], vel[2]);
+                net.minecraft.world.phys.Vec3 v = new net.minecraft.world.phys.Vec3(vel[0], vel[1], vel[2]);
                 v = applyTimerAndAccel(v);
                 mc.player.setDeltaMovement(v);
                 mc.player.move(MoverType.SELF, v);
@@ -274,7 +274,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         if (slot < 0) return;
         int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, slot);
-        mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+        mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         InventoryUtility.selectSlot(mc.player, prevSlot);
     }
 

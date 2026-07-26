@@ -2,7 +2,7 @@ package ravex.modules.movement;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
 import ravex.event.movement.VelocityEvent;
 
@@ -25,7 +25,7 @@ public final ModeParameter mode       = new ModeParameter("Mode", "Cancel",
     public int grimTickCounter = 0;
     public boolean grimVelocityActive = false;
     public int grimDelayTicks = 0;
-    public Vec3 grimSavedVelocity = Vec3.ZERO;
+    public net.minecraft.world.phys.Vec3 grimSavedVelocity = net.minecraft.world.phys.Vec3.ZERO;
 
     private Velocity() {
         
@@ -39,19 +39,19 @@ public final ModeParameter mode       = new ModeParameter("Mode", "Cancel",
     public void onVelocity(VelocityEvent event) {
         if (!getEnabled()) return;
         String modeVal = mode.getValue();
-        Vec3 cur = event.getVelocity();
+        net.minecraft.world.phys.Vec3 cur = event.getVelocity();
         double h = horizontal.getValue();
         double v = vertical.getValue();
 
         switch (modeVal) {
-            case "Cancel" -> event.setVelocity(Vec3.ZERO);
+            case "Cancel" -> event.setVelocity(net.minecraft.world.phys.Vec3.ZERO);
             case "Matrix" -> {
                 double noise = (Math.random() - 0.5) * 0.015;
-                event.setVelocity(new Vec3(cur.x * h + noise, cur.y * v, cur.z * h + noise));
+                event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * h + noise, cur.y * v, cur.z * h + noise));
             }
-            case "NCP" -> event.setVelocity(new Vec3(cur.x * h, cur.y, cur.z * h));
+            case "NCP" -> event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * h, cur.y, cur.z * h));
             case "Grim" -> {
-                event.setVelocity(new Vec3(cur.x * 0.1, 0.0, cur.z * 0.1));
+                event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * 0.1, 0.0, cur.z * 0.1));
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.player != null) {
                     mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(

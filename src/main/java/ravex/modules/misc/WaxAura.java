@@ -5,13 +5,12 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.HoneycombItem;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "WaxAura", category = "Misc")
 public class WaxAura extends ravex.modules.Module {
@@ -41,14 +40,14 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
         }
         if (honeycombSlot == -1) return;
         double r = range.getValue();
-        BlockPos playerPos = p.blockPosition();
-        BlockPos targetPos = null;
+        net.minecraft.core.BlockPos playerPos = p.blockPosition();
+        net.minecraft.core.BlockPos targetPos = null;
         double closestDistSq = r * r;
         int rangeInt = (int) Math.ceil(r);
         for (int x = -rangeInt; x <= rangeInt; x++) {
             for (int y = -rangeInt; y <= rangeInt; y++) {
                 for (int z = -rangeInt; z <= rangeInt; z++) {
-                    BlockPos pos = playerPos.offset(x, y, z);
+                    net.minecraft.core.BlockPos pos = playerPos.offset(x, y, z);
                     double distSq = p.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
                     if (distSq < closestDistSq) {
                         BlockState state = mc.level.getBlockState(pos);
@@ -65,10 +64,10 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
             if (autoSwap.getValue() && honeycombSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, honeycombSlot);
             }
-            Vec3 hitVec = Vec3.atCenterOf(targetPos);
-            BlockHitResult blockHit = new BlockHitResult(hitVec, Direction.UP, targetPos, false);
-            mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, blockHit);
-            p.swing(InteractionHand.MAIN_HAND);
+            net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(targetPos);
+            BlockHitResult blockHit = new BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
+            mc.gameMode.useItemOn(p, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
+            p.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             if (autoSwap.getValue() && silent.getValue() && honeycombSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, prevSlot);
             }

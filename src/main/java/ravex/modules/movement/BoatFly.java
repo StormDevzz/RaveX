@@ -5,10 +5,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
-import net.minecraft.world.entity.Entity;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.vehicle.boat.Boat;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.misc.PhysicUtility;
 import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
@@ -66,7 +66,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             mc.player.setNoGravity(false);
-            Entity vehicle = mc.player.getVehicle();
+            net.minecraft.world.entity.Entity vehicle = mc.player.getVehicle();
             if (vehicle != null) {
                 vehicle.setNoGravity(false);
             }
@@ -109,7 +109,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
 
         updateScale();
 
-        Entity vehicle = mc.player.getVehicle();
+        net.minecraft.world.entity.Entity vehicle = mc.player.getVehicle();
         if (vehicle == null || !(vehicle instanceof Boat)) {
             if (autoMount.getValue()) mountToNearestBoat();
             return;
@@ -139,7 +139,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         String currentMode = mode.getValue();
 
         if (currentMode.equals("Motion")) {
-            Vec3 vel = vehicle.getDeltaMovement();
+            net.minecraft.world.phys.Vec3 vel = vehicle.getDeltaMovement();
             double vy = vel.y + (mc.options.keyJump.isDown() ? ySpeed.getValue() : (mc.options.keyShift.isDown() ? -ySpeed.getValue() : 0));
             vehicle.setDeltaMovement(motion[0], vy, motion[1]);
         } else {
@@ -157,9 +157,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
     private void mountToNearestBoat() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-        for (Entity entity : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             if (entity instanceof Boat && mc.player.distanceTo(entity) < 5.0) {
-                mc.gameMode.interact(mc.player, entity, InteractionHand.MAIN_HAND);
+                mc.gameMode.interact(mc.player, entity, net.minecraft.world.InteractionHand.MAIN_HAND);
                 break;
             }
         }

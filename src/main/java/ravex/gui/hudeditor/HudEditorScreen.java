@@ -12,7 +12,7 @@ import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.parameter.ColorParameter;
-import ravex.utility.misc.GuiOptimizer;
+import ravex.utility.misc.GuiOptimizerUtility;
 import ravex.utility.render.FontRenderUtility;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +53,7 @@ public class HudEditorScreen extends Screen {
     }
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        GuiOptimizer.optimizeHudAnimations(ModuleManager.INSTANCE.getHudModules());
+        GuiOptimizerUtility.optimizeHudAnimations(ModuleManager.INSTANCE.getHudModules());
         if (closing && System.currentTimeMillis() - closingStartTime >= 150) {
             this.minecraft.setScreen(parentScreen);
             return;

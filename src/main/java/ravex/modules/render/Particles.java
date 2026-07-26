@@ -2,8 +2,8 @@ package ravex.modules.render;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import ravex.event.Subscribe;
@@ -13,7 +13,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.render.Render3DUtils;
+import ravex.utility.render.Render3DUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "Particles", category = "Render")
@@ -43,8 +43,8 @@ private static String lastTrigger = "";
     public final BooleanParameter collide = new BooleanParameter("Collision", true);
     public static boolean attackedThisTick = false;
     public static boolean minedThisTick = false;
-    public static Vec3 lastAttackPos = null;
-    public static Vec3 lastMinePos = null;
+    public static net.minecraft.world.phys.Vec3 lastAttackPos = null;
+    public static net.minecraft.world.phys.Vec3 lastMinePos = null;
 
     @Subscribe
     public void onAttack(AttackEvent event) {
@@ -56,15 +56,15 @@ private static String lastTrigger = "";
     private int spawnTimer = 0;
     private static final String[] SHAPES = {"Square", "Circle", "Triangle"};
     private static class Particle {
-        Vec3 pos;
-        Vec3 velocity;
+        net.minecraft.world.phys.Vec3 pos;
+        net.minecraft.world.phys.Vec3 velocity;
         long spawnTime;
         float sizeMod;
         float rotation;
         float rotSpeed;
         String shapeType;
         int colorSeed;
-        Particle(Vec3 pos, Vec3 velocity, long spawnTime, float sizeMod, float rotation, float rotSpeed, String shapeType, int colorSeed) {
+        Particle(net.minecraft.world.phys.Vec3 pos, net.minecraft.world.phys.Vec3 velocity, long spawnTime, float sizeMod, float rotation, float rotSpeed, String shapeType, int colorSeed) {
             this.pos = pos;
             this.velocity = velocity;
             this.spawnTime = spawnTime;
@@ -141,7 +141,7 @@ private static String lastTrigger = "";
         }
     }
     private void spawnParticles(Minecraft mc, long now, boolean usePlayerPos) {
-        Vec3 center;
+        net.minecraft.world.phys.Vec3 center;
         if (usePlayerPos) {
             center = mc.player.position().add(0, 1.2, 0);
         } else if (lastAttackPos != null && lastMinePos != null) {
@@ -165,8 +165,8 @@ private static String lastTrigger = "";
             String s = shapeType.equals("All")
                 ? SHAPES[rnd.nextInt(SHAPES.length)]
                 : shapeType;
-            Vec3 pos;
-            Vec3 vel;
+            net.minecraft.world.phys.Vec3 pos;
+            net.minecraft.world.phys.Vec3 vel;
             switch (spawnMode) {
                 case "AroundPlayer" -> {
                     double theta = rnd.nextDouble() * Math.PI * 2;
@@ -185,7 +185,7 @@ private static String lastTrigger = "";
                         0,
                         (rnd.nextDouble() - 0.5) * spreadVal * 0.5
                     );
-                    vel = new Vec3(
+                    vel = new net.minecraft.world.phys.Vec3(
                         (rnd.nextDouble() - 0.5) * 0.1 * spd,
                         0.15 + rnd.nextDouble() * 0.2 * spd,
                         (rnd.nextDouble() - 0.5) * 0.1 * spd
@@ -197,7 +197,7 @@ private static String lastTrigger = "";
                         (rnd.nextDouble() - 0.5) * spreadVal * 0.3,
                         (rnd.nextDouble() - 0.5) * spreadVal
                     );
-                    vel = new Vec3(
+                    vel = new net.minecraft.world.phys.Vec3(
                         (rnd.nextDouble() - 0.5) * 0.02 * spd,
                         0.03 + rnd.nextDouble() * 0.05 * spd,
                         (rnd.nextDouble() - 0.5) * 0.02 * spd
@@ -211,7 +211,7 @@ private static String lastTrigger = "";
                         (rnd.nextDouble() - 0.5) * spreadVal * 0.3,
                         rad * Math.sin(angle)
                     );
-                    vel = new Vec3(
+                    vel = new net.minecraft.world.phys.Vec3(
                         -Math.sin(angle) * 0.05 * spd,
                         (rnd.nextDouble() - 0.5) * 0.01 * spd,
                         Math.cos(angle) * 0.05 * spd
@@ -222,7 +222,7 @@ private static String lastTrigger = "";
                     double theta = rnd.nextDouble() * Math.PI * 2;
                     double phi = rnd.nextDouble() * Math.PI;
                     double force = 0.1 + rnd.nextDouble() * 0.25 * spd;
-                    vel = new Vec3(
+                    vel = new net.minecraft.world.phys.Vec3(
                         Math.sin(phi) * Math.cos(theta) * force,
                         Math.cos(phi) * force,
                         Math.sin(phi) * Math.sin(theta) * force
@@ -234,7 +234,7 @@ private static String lastTrigger = "";
                         (rnd.nextDouble() - 0.5) * spreadVal,
                         (rnd.nextDouble() - 0.5) * spreadVal
                     );
-                    vel = Vec3.ZERO;
+                    vel = net.minecraft.world.phys.Vec3.ZERO;
                 }
             }
             particles.add(new Particle(
@@ -253,22 +253,22 @@ private static String lastTrigger = "";
         p.rotation += p.rotSpeed;
         if (p.rotation > 360) p.rotation -= 360;
         if (p.rotation < 0) p.rotation += 360;
-        Vec3 vel = p.velocity;
+        net.minecraft.world.phys.Vec3 vel = p.velocity;
         double ax = vel.x, ay = vel.y, az = vel.z;
         if (gravity.getValue()) {
             ay -= 0.004;
         }
-        Vec3 newPos = p.pos.add(ax, ay, az);
+        net.minecraft.world.phys.Vec3 newPos = p.pos.add(ax, ay, az);
         if (collide.getValue() && mc.level != null) {
-            BlockPos blockPos = BlockPos.containing(newPos);
+            net.minecraft.core.BlockPos blockPos = net.minecraft.core.BlockPos.containing(newPos);
             if (!mc.level.getBlockState(blockPos).isAir()) {
                 return;
             }
         }
-        p.velocity = new Vec3(ax * 0.98, ay * 0.98, az * 0.98);
+        p.velocity = new net.minecraft.world.phys.Vec3(ax * 0.98, ay * 0.98, az * 0.98);
         p.pos = newPos;
     }
-    public static void renderParticles(Matrix4f matrix, Vec3 camPos) {
+    public static void renderParticles(Matrix4f matrix, net.minecraft.world.phys.Vec3 camPos) {
         if (!ravex.manager.ModuleManager.delegate(Particles.class).getEnabled() || ravex.manager.ModuleManager.delegate(Particles.class).particles.isEmpty()) return;
         long now = System.currentTimeMillis();
         long maxAge = (long) (ravex.manager.ModuleManager.delegate(Particles.class).lifetime.getValue() * 1000);
@@ -296,7 +296,7 @@ private static String lastTrigger = "";
             float r = ((color >> 16) & 0xFF) / 255.0f;
             float g = ((color >> 8) & 0xFF) / 255.0f;
             float b = (color & 0xFF) / 255.0f;
-            Vec3 toCamera = new Vec3(
+            net.minecraft.world.phys.Vec3 toCamera = new net.minecraft.world.phys.Vec3(
                 camPos.x - p.pos.x,
                 camPos.y - p.pos.y,
                 camPos.z - p.pos.z
@@ -304,11 +304,11 @@ private static String lastTrigger = "";
             double dist = toCamera.length();
             if (dist < 0.01) continue;
             toCamera = toCamera.scale(1.0 / dist);
-            Vec3 up = new Vec3(0, 1, 0);
+            net.minecraft.world.phys.Vec3 up = new net.minecraft.world.phys.Vec3(0, 1, 0);
             if (Math.abs(toCamera.dot(up)) > 0.99) {
-                up = new Vec3(1, 0, 0);
+                up = new net.minecraft.world.phys.Vec3(1, 0, 0);
             }
-            Vec3 right = toCamera.cross(up).normalize();
+            net.minecraft.world.phys.Vec3 right = toCamera.cross(up).normalize();
             up = right.cross(toCamera).normalize();
             float rad = particleSize * 0.5f;
             switch (p.shapeType) {
@@ -318,7 +318,7 @@ private static String lastTrigger = "";
             }
         }
     }
-    private static void renderSquare(Matrix4f matrix, Vec3 camPos, Particle p, Vec3 right, Vec3 up, float rad, float r, float g, float b, float alpha, float lineWidth, boolean glow) {
+    private static void renderSquare(Matrix4f matrix, net.minecraft.world.phys.Vec3 camPos, Particle p, net.minecraft.world.phys.Vec3 right, net.minecraft.world.phys.Vec3 up, float rad, float r, float g, float b, float alpha, float lineWidth, boolean glow) {
         double angle = Math.toRadians(p.rotation);
         float cos = (float) Math.cos(angle);
         float sin = (float) Math.sin(angle);
@@ -342,11 +342,11 @@ private static String lastTrigger = "";
         pts.add(pts.get(0));
         boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls.getValue();
         if (glow) {
-            Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
+            Render3DUtility.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
-        Render3DUtils.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
+        Render3DUtility.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
     }
-    private static void renderCircle(Matrix4f matrix, Vec3 camPos, Particle p, Vec3 right, Vec3 up, float rad, float r, float g, float b, float alpha, float lineWidth, boolean glow, int segments) {
+    private static void renderCircle(Matrix4f matrix, net.minecraft.world.phys.Vec3 camPos, Particle p, net.minecraft.world.phys.Vec3 right, net.minecraft.world.phys.Vec3 up, float rad, float r, float g, float b, float alpha, float lineWidth, boolean glow, int segments) {
         double angle = Math.toRadians(p.rotation);
         float cos = (float) Math.cos(angle);
         float sin = (float) Math.sin(angle);
@@ -369,11 +369,11 @@ private static String lastTrigger = "";
         }
         boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls.getValue();
         if (glow) {
-            Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
+            Render3DUtility.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
-        Render3DUtils.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
+        Render3DUtility.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
     }
-    private static void renderTriangle(Matrix4f matrix, Vec3 camPos, Particle p, Vec3 right, Vec3 up, float rad, float r, float g, float b, float alpha, float lineWidth, boolean glow) {
+    private static void renderTriangle(Matrix4f matrix, net.minecraft.world.phys.Vec3 camPos, Particle p, net.minecraft.world.phys.Vec3 right, net.minecraft.world.phys.Vec3 up, float rad, float r, float g, float b, float alpha, float lineWidth, boolean glow) {
         double angle = Math.toRadians(p.rotation);
         float cos = (float) Math.cos(angle);
         float sin = (float) Math.sin(angle);
@@ -396,9 +396,9 @@ private static String lastTrigger = "";
         }
         boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls.getValue();
         if (glow) {
-            Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
+            Render3DUtility.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
-        Render3DUtils.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
+        Render3DUtility.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
     }
     protected void onDisable() {
         particles.clear();

@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.KeybindParameter;
@@ -146,7 +146,7 @@ public class ParameterElement {
                 int trackColor = lerpColor(0xFF2A2A3A, activeColor, toggleAnimProgress);
                 graphics.pose().pushMatrix();
                 graphics.pose().translate((float) swX, (float) swY);
-                Render2DEngine.drawRound(graphics, 0, 0, swW, swH, swH / 2, trackColor);
+                Render2DUtility.drawRound(graphics, 0, 0, swW, swH, swH / 2, trackColor);
                 graphics.pose().popMatrix();
 
                 float knobSize = 9f;
@@ -154,7 +154,7 @@ public class ParameterElement {
                 float knobDrawX = swX + 1f + toggleAnimProgress * knobRange;
                 float knobDrawY = swY + 1f;
 
-                Identifier knobTex = Render2DEngine.getSmoothCircle();
+                Identifier knobTex = Render2DUtility.getSmoothCircle();
                 graphics.pose().pushMatrix();
                 graphics.pose().translate(knobDrawX, knobDrawY);
                 graphics.blit(RenderPipelines.GUI_TEXTURED, knobTex, 0, 0, 0f, 0f, (int) knobSize, (int) knobSize, (int) knobSize, (int) knobSize, 0xFFFFFFFF);
@@ -280,10 +280,10 @@ public class ParameterElement {
 
             graphics.pose().pushMatrix();
             graphics.pose().translate((float) slX, (float) slY);
-            Render2DEngine.drawRound(graphics, 0, 0, slW, slH, slH / 2, 0xFF1A1A2A);
+            Render2DUtility.drawRound(graphics, 0, 0, slW, slH, slH / 2, 0xFF1A1A2A);
             float fillW = animKnobX - slX;
             if (fillW > 0) {
-                Render2DEngine.drawRound(graphics, 0, 0, (int) Math.ceil(fillW), slH, slH / 2, activeColor);
+                Render2DUtility.drawRound(graphics, 0, 0, (int) Math.ceil(fillW), slH, slH / 2, activeColor);
             }
             graphics.pose().popMatrix();
 
@@ -291,7 +291,7 @@ public class ParameterElement {
             float knobDrawX = animKnobX - knobSize / 2f;
             float knobDrawY = slY + (slH - knobSize) / 2f;
 
-            Identifier sliderTex = Render2DEngine.getSmoothCircle();
+            Identifier sliderTex = Render2DUtility.getSmoothCircle();
             graphics.pose().pushMatrix();
             graphics.pose().translate(knobDrawX, knobDrawY);
             graphics.blit(RenderPipelines.GUI_TEXTURED, sliderTex, 0, 0, 0f, 0f, (int) knobSize, (int) knobSize, (int) knobSize, (int) knobSize, 0xFFFFFFFF);

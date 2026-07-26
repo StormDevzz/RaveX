@@ -2,11 +2,11 @@ package ravex.utility.render;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
-public class GlintVertexConsumer implements VertexConsumer {
+public class GlintVertexConsumerUtility implements VertexConsumer {
     private final VertexConsumer delegate;
     private final int color;
 
-    public GlintVertexConsumer(VertexConsumer delegate, int color) {
+    public GlintVertexConsumerUtility(VertexConsumer delegate, int color) {
         this.delegate = delegate;
         this.color = color;
     }

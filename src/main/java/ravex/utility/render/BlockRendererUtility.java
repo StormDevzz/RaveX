@@ -3,7 +3,7 @@ package ravex.utility.render;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import org.joml.Matrix4f;
 
-public class BlockRenderer {
+public class BlockRendererUtility {
     public static void renderWireframe(VertexConsumer consumer, Matrix4f matrix, double size, float r, float g, float b, float a) {
         renderWireframe(consumer, matrix, size, r, g, b, a, 1.0f);
     }

@@ -3,22 +3,22 @@ package ravex.modules.combat;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.Vec3;
+
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.misc.MobUtility;
 
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
-import ravex.utility.nativelib.NativeLibrary;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.utility.player.rotation.SilentRotationUtility;
 @ModuleInfo(name = "BowAim", category = "Combat")
 public class BowAim extends ravex.modules.Module {
 public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.0, 1.0);
     public final ModeParameter targetType = new ModeParameter("Targets", "Players", List.of("Players", "Mobs", "Both"));
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
-    public static final SilentRotation silentRotation = new SilentRotation();
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_bowaim");
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_bowaim");
     static {
         NATIVE.load();
     }
@@ -36,13 +36,13 @@ public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.
         if (!usingBow) return;
         int ticksUsed = mc.player.getTicksUsingItem();
         double arrowSpeed = getArrowSpeed(ticksUsed);
-        LivingEntity target = findTarget(mc);
+        net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) return;
-        Vec3 targetVel = target.getDeltaMovement();
+        net.minecraft.world.phys.Vec3 targetVel = target.getDeltaMovement();
         double targetVelX = targetVel != null ? targetVel.x : 0.0;
         double targetVelY = targetVel != null ? targetVel.y : 0.0;
         double targetVelZ = targetVel != null ? targetVel.z : 0.0;
-        Vec3 eyePos = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeCalculateBowAim(
@@ -78,13 +78,13 @@ public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.
         if (speed > 1.0) speed = 1.0;
         return speed * 3.0;
     }
-    private LivingEntity findTarget(Minecraft mc) {
-        LivingEntity closest = null;
+    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+        net.minecraft.world.entity.LivingEntity closest = null;
         double bestDist = Double.MAX_VALUE;
         double maxDist = range.getValue();
         String filter = targetType.getValue();
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le) || MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le) || MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
             if (filter.equals("Players")) {
                 if (!MobUtility.isPlayer(le)) continue;
             } else if (filter.equals("Mobs")) {

@@ -4,7 +4,7 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import java.util.List;
 @ModuleInfo(name = "LongJump", category = "Movement")
 public class LongJump extends ravex.modules.Module {
@@ -26,7 +26,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
             jumped = false;
         } else if (!jumped) {
             double speed = boost.getValue();
-            Vec3 motion = mc.player.getDeltaMovement();
+            net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
             mc.player.setDeltaMovement(motion.x * speed, motion.y + 0.05, motion.z * speed);
             jumped = true;
         }

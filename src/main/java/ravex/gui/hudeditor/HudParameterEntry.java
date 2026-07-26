@@ -6,7 +6,7 @@ import ravex.gui.clickgui.ColorPaletteModal;
 import ravex.gui.clickgui.ColorUtility;
 import ravex.parameter.*;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.Render2DEngine;
+import ravex.utility.render.Render2DUtility;
 
 public class HudParameterEntry {
     private final Parameter<?> param;
@@ -45,7 +45,7 @@ public class HudParameterEntry {
         if (h <= 0) return;
         boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + 16;
         if (hovered && alpha > 10) {
-            Render2DEngine.drawRound(g, x, y, width, 16, 3,
+            Render2DUtility.drawRound(g, x, y, width, 16, 3,
                 ColorUtility.withAlpha(accentColor, (int)(15 * (alpha / 255f))));
         }
         String label = param.getName();
@@ -57,7 +57,7 @@ public class HudParameterEntry {
             int chipY = y + 3;
             int chipSize = 10;
             int argb = cp.getValue();
-            Render2DEngine.drawRound(g, chipX - 1, chipY - 1, chipSize + 2, chipSize + 2, 2, ColorUtility.withAlpha(0xFF2A2A3A, alpha));
+            Render2DUtility.drawRound(g, chipX - 1, chipY - 1, chipSize + 2, chipSize + 2, 2, ColorUtility.withAlpha(0xFF2A2A3A, alpha));
             g.fill(chipX, chipY, chipX + chipSize / 2, chipY + chipSize / 2, 0xFF444444);
             g.fill(chipX + chipSize / 2, chipY, chipX + chipSize, chipY + chipSize / 2, 0xFF888888);
             g.fill(chipX, chipY + chipSize / 2, chipX + chipSize / 2, chipY + chipSize, 0xFF888888);
@@ -70,12 +70,12 @@ public class HudParameterEntry {
             int swY = y + (16 - swH) / 2;
 
             int trackColor = bp.getValue() ? ColorUtility.withAlpha(accentColor, alpha) : ColorUtility.withAlpha(0xFF2A2A3A, alpha);
-            Render2DEngine.drawRound(g, swX, swY, swW, swH, swH / 2, trackColor);
+            Render2DUtility.drawRound(g, swX, swY, swW, swH, swH / 2, trackColor);
 
             int knobSize = 7;
             int knobDrawX = bp.getValue() ? (swX + swW - knobSize - 1) : (swX + 1);
             int knobDrawY = swY + 1;
-            Render2DEngine.drawRound(g, knobDrawX, knobDrawY, knobSize, knobSize, knobSize / 2, ColorUtility.withAlpha(0xFFFFFFFF, alpha));
+            Render2DUtility.drawRound(g, knobDrawX, knobDrawY, knobSize, knobSize, knobSize / 2, ColorUtility.withAlpha(0xFFFFFFFF, alpha));
         } else if (param instanceof NumberParameter np) {
             double min = np.getMin();
             double max = np.getMax();
@@ -111,16 +111,16 @@ public class HudParameterEntry {
             sliderKnobAnim += (targetKnobX - sliderKnobAnim) * 0.2f;
             float animKnobX = Math.max(slX, Math.min(slX + slW, sliderKnobAnim));
 
-            Render2DEngine.drawRound(g, slX, slY, slW, slH, slH / 2, ColorUtility.withAlpha(0xFF1A1A2A, alpha));
+            Render2DUtility.drawRound(g, slX, slY, slW, slH, slH / 2, ColorUtility.withAlpha(0xFF1A1A2A, alpha));
             float fillW = animKnobX - slX;
             if (fillW > 0) {
-                Render2DEngine.drawRound(g, slX, slY, (int)Math.ceil(fillW), slH, slH / 2, ColorUtility.withAlpha(accentColor, alpha));
+                Render2DUtility.drawRound(g, slX, slY, (int)Math.ceil(fillW), slH, slH / 2, ColorUtility.withAlpha(accentColor, alpha));
             }
 
             float knobSize = 8f;
             float knobDrawX = animKnobX - knobSize / 2f;
             float knobDrawY = slY + (slH - knobSize) / 2f;
-            Identifier knobTex = Render2DEngine.getSmoothCircle();
+            Identifier knobTex = Render2DUtility.getSmoothCircle();
             g.pose().pushMatrix();
             g.pose().translate(knobDrawX, knobDrawY);
             g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, knobTex, 0, 0, 0f, 0f, (int) knobSize, (int) knobSize, (int) knobSize, (int) knobSize, 0xFFFFFFFF);

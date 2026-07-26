@@ -3,7 +3,7 @@ package ravex.modules.movement;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import ravex.utility.misc.block.BlockUtility;
 @ModuleInfo(name = "Avoid", category = "Movement")
 public class Avoid extends ravex.modules.Module {
 public final BooleanParameter cactus = new BooleanParameter("Cactus", true);
@@ -14,11 +14,11 @@ public final BooleanParameter cactus = new BooleanParameter("Cactus", true);
 
     public boolean shouldAvoid(Block block) {
         if (!getEnabled()) return false;
-        if (block == Blocks.CACTUS) return cactus.getValue();
-        if (block == Blocks.SWEET_BERRY_BUSH) return berryBush.getValue();
-        if (block == Blocks.WITHER_ROSE) return witherRose.getValue();
-        if (block == Blocks.FIRE || block == Blocks.SOUL_FIRE) return fire.getValue();
-        if (block == Blocks.MAGMA_BLOCK) return magma.getValue();
+        if (block == net.minecraft.world.level.block.Blocks.CACTUS) return cactus.getValue();
+        if (block == net.minecraft.world.level.block.Blocks.SWEET_BERRY_BUSH) return berryBush.getValue();
+        if (block == net.minecraft.world.level.block.Blocks.WITHER_ROSE) return witherRose.getValue();
+        if (block == net.minecraft.world.level.block.Blocks.FIRE || block == net.minecraft.world.level.block.Blocks.SOUL_FIRE) return fire.getValue();
+        if (block == net.minecraft.world.level.block.Blocks.MAGMA_BLOCK) return magma.getValue();
         return false;
     }
     public static boolean maybeEnabled() {

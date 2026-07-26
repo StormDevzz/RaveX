@@ -26,11 +26,11 @@ import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.nativelayer.NativeLayer;
 import ravex.nativelayer.NativeLayerImpl;
-import ravex.utility.misc.GuiOptimizer;
+import ravex.utility.misc.GuiOptimizerUtility;
 import ravex.utility.misc.GithubUtility;
-import ravex.utility.render.TextureLoader;
-import ravex.utility.sound.SoundEventDispatcher;
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.render.TextureLoaderUtility;
+import ravex.utility.sound.SoundEventDispatcherUtility;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import net.minecraft.client.Minecraft;
 
 public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEntrypoint {
@@ -181,11 +181,11 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         NativeLayer nativeLayer = ServiceLocator.resolve(NativeLayer.class);
         nativeLayer.load();
         nativeLayer.checkNatives();
-        GuiOptimizer.optimize();
+        GuiOptimizerUtility.optimize();
 
         ModuleManager moduleManager = ServiceLocator.resolve(ModuleManager.class);
         moduleManager.init();
-        NativeLibrary.enableLoading();
+        NativeLibraryUtility.enableLoading();
         LOGGER.info("Registered {} modules", moduleManager.getModules().size());
 
         try {
@@ -223,7 +223,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         new Thread(GithubUtility::checkUpdates).start();
 
         var bus = EventBusHolder.get();
-        bus.subscribe(new SoundEventDispatcher());
+        bus.subscribe(new SoundEventDispatcherUtility());
         bus.subscribe(new NotificationHandler());
     }
 
@@ -255,7 +255,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         if (!texturesPreloaded) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.getWindow() != null) {
-                TextureLoader.preloadAll();
+                TextureLoaderUtility.preloadAll();
                 texturesPreloaded = true;
             }
         }

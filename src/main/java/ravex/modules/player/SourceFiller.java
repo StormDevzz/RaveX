@@ -9,14 +9,12 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PhysicUtility;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-@ModuleInfo(name = "SourceFiller", category = "Player")
+@ModuleInfo(name = "SourceFiller", category = "net.minecraft.world.entity.player.Player")
 public class SourceFiller extends ravex.modules.Module {
 public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final ModeParameter mode = new ModeParameter("Mode", "Smart", List.of("Normal", "Smart"));
@@ -31,14 +29,14 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         if (System.currentTimeMillis() - lastPlaceTime < delay.getValue()) return;
         int spongeSlot = InventoryUtility.findHotbarSlot(p, "sponge");
         if (spongeSlot == -1) return;
-        BlockPos targetPos = findTargetWater(p, mc);
+        net.minecraft.core.BlockPos targetPos = findTargetWater(p, mc);
         if (targetPos == null) return;
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, spongeSlot);
-        Vec3 hitVec = Vec3.atCenterOf(targetPos);
-        BlockHitResult hit = new BlockHitResult(hitVec, Direction.UP, targetPos, false);
+        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(targetPos);
+        BlockHitResult hit = new BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
         if (rotate.getValue()) {
-            float[] rots = RotationUtility.anglesTo(p.getEyePosition(), Vec3.atCenterOf(targetPos));
+            float[] rots = RotationUtility.anglesTo(p.getEyePosition(), net.minecraft.world.phys.Vec3.atCenterOf(targetPos));
             p.setYRot(rots[0]);
             p.setXRot(rots[1]);
         }
@@ -48,24 +46,24 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             InventoryUtility.selectSlot(p, prevSlot);
         lastPlaceTime = System.currentTimeMillis();
     }
-    private BlockPos findTargetWater(net.minecraft.client.player.LocalPlayer p, Minecraft mc) {
+    private net.minecraft.core.BlockPos findTargetWater(net.minecraft.client.player.LocalPlayer p, Minecraft mc) {
         double r = range.getValue();
-        List<BlockPos> candidates = new ArrayList<>();
+        List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
         for (int x = (int) Math.floor(p.getX() - r); x <= Math.ceil(p.getX() + r); x++)
             for (int y = (int) Math.floor(p.getY() - r); y <= Math.ceil(p.getY() + r); y++)
                 for (int z = (int) Math.floor(p.getZ() - r); z <= Math.ceil(p.getZ() + r); z++) {
-                    BlockPos bp = BlockUtility.pos(x, y, z);
-                    if (p.getEyePosition().distanceToSqr(Vec3.atCenterOf(bp)) > r * r) continue;
+                    net.minecraft.core.BlockPos bp = BlockUtility.pos(x, y, z);
+                    if (p.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(bp)) > r * r) continue;
                     if (mc.level.getFluidState(bp).is(net.minecraft.tags.FluidTags.WATER)) candidates.add(bp);
                 }
         if (candidates.isEmpty()) return null;
         return "Smart".equals(mode.getValue())
             ? candidates.stream().max(Comparator.comparingInt(bp -> countAdjacentWater(bp, mc))).orElse(null)
-            : candidates.stream().min(Comparator.comparingDouble(bp -> p.getEyePosition().distanceToSqr(Vec3.atCenterOf(bp)))).orElse(null);
+            : candidates.stream().min(Comparator.comparingDouble(bp -> p.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(bp)))).orElse(null);
     }
-    private int countAdjacentWater(BlockPos pos, Minecraft mc) {
+    private int countAdjacentWater(net.minecraft.core.BlockPos pos, Minecraft mc) {
         int count = 0;
-        for (Direction dir : Direction.values())
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values())
             if (mc.level.getFluidState(pos.relative(dir)).is(net.minecraft.tags.FluidTags.WATER)) count++;
         return count;
     }

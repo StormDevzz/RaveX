@@ -10,8 +10,8 @@ import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
-import ravex.utility.render.HudRenderer;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.TextureLoaderUtility;
 import java.util.*;
 
 @ModuleInfo(name = "CooldownsHud", category = "HUD")
@@ -23,8 +23,8 @@ public class CooldownsHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-private static final Identifier ICON = TextureLoader.HUD_COOLDOWN_WHITE;
-    private static final int IS = HudRenderer.getIconSize();
+private static final Identifier ICON = TextureLoaderUtility.HUD_COOLDOWN_WHITE;
+    private static final int IS = HudRendererUtility.getIconSize();
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
@@ -55,20 +55,20 @@ private static final Identifier ICON = TextureLoader.HUD_COOLDOWN_WHITE;
         int lh = 10;
         int pw = 10;
         for (var line : lines) {
-            int nw = HudRenderer.textWidth(line) + 10;
+            int nw = HudRendererUtility.textWidth(line) + 10;
             if (nw > pw) pw = nw;
         }
         pw = 4 + pw + 4 + IS + 4;
         int ph = lines.size() * lh + 8;
         width = pw;
         height = ph;
-        HudRenderer.drawBackground(graphics, bx, by, pw, ph);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         int cy = by + 5;
         for (var line : lines) {
-            HudRenderer.drawText(graphics, line, bx + 4, cy, col, shadow);
+            HudRendererUtility.drawText(graphics, line, bx + 4, cy, col, shadow);
             cy += lh;
         }
-        HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
+        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
     }
 
     public static boolean maybeEnabled() {

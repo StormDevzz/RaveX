@@ -13,6 +13,19 @@ RaveX - клиентский мод для Minecraft от организации
 [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/ravex_free)
 [![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/n9HPbgN7S)
 
+---
+
+> [!CAUTION]
+> # ХОЧЕШЬ КОНТРИБЬЮТИТЬ? **СНАЧАЛА ПРОЧТИ CONTRIBUTING!**
+>
+> Прежде чем писать код, форкать репозиторий или открывать пул-реквест - **обязательно** прочитай [`CONTRIBUTING.md`](CONTRIBUTING.md).
+>
+> Там описаны все правила: как называть классы, какие утилиты использовать вместо прямых Minecraft-импортов, куда класть модули, как собирать проект, и что делать нельзя. **Пул-реквесты, не соответствующие этим правилам, не принимаются.**
+>
+> Не трать своё и наше время зря - прочитай сначала.
+
+---
+
 ### Языки в проекте
 
 | Язык | Назначение |

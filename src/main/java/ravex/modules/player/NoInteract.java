@@ -2,7 +2,7 @@ package ravex.modules.player;
 
 import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
-@ModuleInfo(name = "NoInteract", category = "Player")
+@ModuleInfo(name = "NoInteract", category = "net.minecraft.world.entity.player.Player")
 public class NoInteract extends ravex.modules.Module {
 public final BooleanParameter allBlocks = new BooleanParameter("AllBlocks", false);
     public final BooleanParameter chests = new BooleanParameter("Chests", true);

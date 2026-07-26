@@ -16,7 +16,7 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.player.ToolUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import ravex.utility.player.rotation.SilentRotation;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class BlockUtility {
         public boolean swing = true;
         public boolean rotate = false;
         public InteractionHand hand = InteractionHand.MAIN_HAND;
-        public SilentRotation silentRotation = null;
+        public SilentRotationUtility silentRotation = null;
         public Direction face = Direction.UP;
     }
 
@@ -34,7 +34,7 @@ public class BlockUtility {
         public boolean rotate = false;
         public boolean restoreSlot = true;
         public InteractionHand hand = InteractionHand.MAIN_HAND;
-        public SilentRotation silentRotation = null;
+        public SilentRotationUtility silentRotation = null;
     }
 
     public static boolean breakBlock(Minecraft mc, BlockPos pos) {

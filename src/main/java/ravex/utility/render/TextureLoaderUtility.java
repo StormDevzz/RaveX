@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-public class TextureLoader {
+public class TextureLoaderUtility {
     private static final Map<Identifier, AbstractTexture> loaded = new HashMap<>();
     private static boolean markerLoaded = false;
 
@@ -287,9 +287,9 @@ public class TextureLoader {
     public static Identifier getPaletteTexture() {
         if (loaded.containsKey(PALETTE)) return PALETTE;
         String resourcePath = "/assets/ravex/textures/hud/palette.png";
-        try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(resourcePath)) {
             if (stream == null) {
-                RaveX.LOGGER.warn("[TextureLoader] Palette icon not found: {}", resourcePath);
+                RaveX.LOGGER.warn("[TextureLoaderUtility] Palette icon not found: {}", resourcePath);
                 return null;
             }
             NativeImage image = NativeImage.read(stream);
@@ -299,7 +299,7 @@ public class TextureLoader {
             loaded.put(PALETTE, tex);
             return PALETTE;
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to load palette icon: {}", e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load palette icon: {}", e.getMessage());
             return null;
         }
     }
@@ -307,7 +307,7 @@ public class TextureLoader {
     public static Identifier getSettingsWhiteTexture() {
         if (!loaded.containsKey(SETTINGS_WHITE)) {
             if (!ensureLoaded(SETTINGS, "settings")) return null;
-            try (InputStream stream = TextureLoader.class.getResourceAsStream(CLASSPATH_PREFIX + "settings.png")) {
+            try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(CLASSPATH_PREFIX + "settings.png")) {
                 if (stream == null) return null;
                 NativeImage image = NativeImage.read(stream);
                 for (int y = 0; y < image.getHeight(); y++) {
@@ -322,7 +322,7 @@ public class TextureLoader {
                 Minecraft.getInstance().getTextureManager().register(SETTINGS_WHITE, tex);
                 loaded.put(SETTINGS_WHITE, tex);
             } catch (Exception e) {
-                RaveX.LOGGER.warn("[TextureLoader] Failed to load white settings: {}", e.getMessage());
+                RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load white settings: {}", e.getMessage());
                 return null;
             }
         }
@@ -348,7 +348,7 @@ public class TextureLoader {
     }
 
     private static Identifier makeWhiteCopy(Identifier sourceId, Identifier targetId, String name) {
-        try (InputStream stream = TextureLoader.class.getResourceAsStream(CLASSPATH_PREFIX + name + ".png")) {
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(CLASSPATH_PREFIX + name + ".png")) {
             if (stream == null) return null;
             NativeImage image = NativeImage.read(stream);
             for (int y = 0; y < image.getHeight(); y++) {
@@ -364,7 +364,7 @@ public class TextureLoader {
             loaded.put(targetId, tex);
             return targetId;
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to load white {}: {}", name, e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load white {}: {}", name, e.getMessage());
             return null;
         }
     }
@@ -372,7 +372,7 @@ public class TextureLoader {
     public static Identifier getCircleWhiteTexture() {
         if (!loaded.containsKey(CIRCLE_WHITE)) {
             if (!ensureLoaded(CIRCLE, "circle")) return null;
-            try (InputStream stream = TextureLoader.class.getResourceAsStream(CLASSPATH_PREFIX + "circle.png")) {
+            try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(CLASSPATH_PREFIX + "circle.png")) {
                 if (stream == null) return null;
                 NativeImage image = NativeImage.read(stream);
                 for (int y = 0; y < image.getHeight(); y++) {
@@ -387,7 +387,7 @@ public class TextureLoader {
                 Minecraft.getInstance().getTextureManager().register(CIRCLE_WHITE, tex);
                 loaded.put(CIRCLE_WHITE, tex);
             } catch (Exception e) {
-                RaveX.LOGGER.warn("[TextureLoader] Failed to load white circle: {}", e.getMessage());
+                RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load white circle: {}", e.getMessage());
                 return null;
             }
         }
@@ -453,9 +453,9 @@ public class TextureLoader {
 
     public static Identifier getSwitcherTexture() {
         if (!loaded.containsKey(SWITCHER)) {
-            try (InputStream stream = TextureLoader.class.getResourceAsStream(CLASSPATH_PREFIX + "switcher.png")) {
+            try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(CLASSPATH_PREFIX + "switcher.png")) {
                 if (stream == null) {
-                    RaveX.LOGGER.warn("[TextureLoader] Switcher texture not found");
+                    RaveX.LOGGER.warn("[TextureLoaderUtility] Switcher texture not found");
                     return null;
                 }
                 NativeImage image = NativeImage.read(stream);
@@ -478,7 +478,7 @@ public class TextureLoader {
                 Minecraft.getInstance().getTextureManager().register(SWITCHER, tex);
                 loaded.put(SWITCHER, tex);
             } catch (Exception e) {
-                RaveX.LOGGER.warn("[TextureLoader] Failed to load switcher: {}", e.getMessage());
+                RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load switcher: {}", e.getMessage());
                 return null;
             }
         }
@@ -497,9 +497,9 @@ public class TextureLoader {
         }
 
         String resPath = "/assets/ravex/particles/" + name + ".png";
-        try (InputStream stream = TextureLoader.class.getResourceAsStream(resPath)) {
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(resPath)) {
             if (stream == null) {
-                RaveX.LOGGER.warn("[TextureLoader] Particle stream NULL: {}", resPath);
+                RaveX.LOGGER.warn("[TextureLoaderUtility] Particle stream NULL: {}", resPath);
                 Identifier baseId = Identifier.fromNamespaceAndPath(NS, "particles/" + name);
                 if (loaded.containsKey(baseId)) return baseId;
                 return null;
@@ -521,7 +521,7 @@ public class TextureLoader {
             lastTintedColor.put(tintedId, color);
             return tintedId;
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to load particle {}: {}", name, e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load particle {}: {}", name, e.getMessage());
             Identifier baseId = Identifier.fromNamespaceAndPath(NS, "particles/" + name);
             if (loaded.containsKey(baseId)) return baseId;
             return null;
@@ -561,7 +561,7 @@ public class TextureLoader {
         ensureLoaded3D(ENABLE, "enable");
         ensureLoaded3D(DISABLE, "disable");
         getSolidCircleTexture();
-        try (InputStream stream = TextureLoader.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
             if (stream != null) {
                 NativeImage image = NativeImage.read(stream);
                 AbstractTexture tex = createLinearTexture(image);
@@ -569,7 +569,7 @@ public class TextureLoader {
                 loaded.put(MARKER, tex);
             }
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to load marker: {}", e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load marker: {}", e.getMessage());
         }
 
         for (String hudName : new String[]{"coords", "tps", "indicators", "currency", "media", "cooldown", "inventory", "chat", "serverbrand", "waypoint", "fps", "arraylist"}) {
@@ -584,7 +584,7 @@ public class TextureLoader {
         }
 
         if (!loaded.containsKey(MARKER)) {
-            try (InputStream stream = TextureLoader.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
+            try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
                 if (stream != null) {
                     NativeImage image = NativeImage.read(stream);
                     AbstractTexture tex = createLinearTexture(image);
@@ -592,11 +592,11 @@ public class TextureLoader {
                     loaded.put(MARKER, tex);
                 }
             } catch (Exception e) {
-                RaveX.LOGGER.warn("[TextureLoader] Failed to load marker base: {}", e.getMessage());
+                RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load marker base: {}", e.getMessage());
             }
         }
 
-        try (InputStream stream = TextureLoader.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream("/assets/ravex/textures/marker.png")) {
             if (stream == null) return MARKER;
             NativeImage image = NativeImage.read(stream);
             int cR = (color >> 16) & 0xFF;
@@ -615,7 +615,7 @@ public class TextureLoader {
             lastTintedColor.put(tintedId, color);
             return tintedId;
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to tint marker: {}", e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to tint marker: {}", e.getMessage());
             return MARKER;
         }
     }
@@ -657,9 +657,9 @@ public class TextureLoader {
     private static boolean ensureHudIcon(Identifier id, String name) {
         if (loaded.containsKey(id)) return true;
         String resourcePath = "/assets/ravex/textures/hud/" + name + ".png";
-        try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(resourcePath)) {
             if (stream == null) {
-                RaveX.LOGGER.warn("[TextureLoader] HUD icon not found: {}", resourcePath);
+                RaveX.LOGGER.warn("[TextureLoaderUtility] HUD icon not found: {}", resourcePath);
                 return false;
             }
             NativeImage image = NativeImage.read(stream);
@@ -669,7 +669,7 @@ public class TextureLoader {
             loaded.put(id, tex);
             return true;
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to load HUD icon {}: {}", name, e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load HUD icon {}: {}", name, e.getMessage());
             return false;
         }
     }
@@ -677,7 +677,7 @@ public class TextureLoader {
     private static boolean ensureModuleIcon(Identifier guiId, String fileName) {
         if (loaded.containsKey(guiId)) return true;
         String resourcePath = CLASSPATH_PREFIX + MODULES_SUBDIR + fileName + ".png";
-        try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(resourcePath)) {
             if (stream == null) return false;
             NativeImage image = NativeImage.read(stream);
             removeBackground(image);
@@ -701,9 +701,9 @@ public class TextureLoader {
             resourcePath = CLASSPATH_PREFIX + name + ".png";
         }
 
-        try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(resourcePath)) {
             if (stream == null) {
-                RaveX.LOGGER.warn("[TextureLoader] Resource not found on classpath: {}", resourcePath);
+                RaveX.LOGGER.warn("[TextureLoaderUtility] Resource not found on classpath: {}", resourcePath);
                 return false;
             }
             NativeImage image = NativeImage.read(stream);
@@ -718,7 +718,7 @@ public class TextureLoader {
             loaded.put(guiId, tex);
             return true;
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to load {}: {}", guiId, e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load {}: {}", guiId, e.getMessage());
             return false;
         }
     }
@@ -726,9 +726,9 @@ public class TextureLoader {
     private static boolean ensureLoaded3D(Identifier guiId, String name) {
         if (loaded.containsKey(guiId)) return true;
         String resourcePath = CLASSPATH_PREFIX + name + ".png";
-        try (InputStream stream = TextureLoader.class.getResourceAsStream(resourcePath)) {
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(resourcePath)) {
             if (stream == null) {
-                RaveX.LOGGER.warn("[TextureLoader] 3D Resource not found: {}", resourcePath);
+                RaveX.LOGGER.warn("[TextureLoaderUtility] 3D Resource not found: {}", resourcePath);
                 return false;
             }
             NativeImage image;
@@ -764,7 +764,7 @@ public class TextureLoader {
             loaded.put(guiId, tex);
             return true;
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to load 3D {}: {}", guiId, e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load 3D {}: {}", guiId, e.getMessage());
             return false;
         }
     }
@@ -781,7 +781,7 @@ public class TextureLoader {
                 }
             }
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to set nearest sampler: {}", e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to set nearest sampler: {}", e.getMessage());
         }
         return tex;
     }
@@ -798,7 +798,7 @@ public class TextureLoader {
                 }
             }
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoader] Failed to set linear sampler: {}", e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to set linear sampler: {}", e.getMessage());
         }
         return tex;
     }

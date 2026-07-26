@@ -46,7 +46,7 @@ public class ModuleManager {
             "Shaders", "FreeLook", "FreeCam",
             "ViewClip", "Glint", "Sounds",
             "ItemPhysics", "Fullbright", "BlockOutline",
-            "BreadCrumbs", "ViewModel", "Animations",
+            "BreadCrumbs", "ViewModel",
             "NoRender", "ShiftInterp", "SmallUser",
             "WorldColor", "Trails",
             "Waypoint", "KillEffects", "Particles",
@@ -187,6 +187,7 @@ public class ModuleManager {
                 Object instance = ctor.newInstance();
                 Module module = (Module) instance;
                 module.setCategory(category);
+                if (category == Category.HUD) module.setHud(true);
                 modules.add(module);
                 byClass.put(clazz, module);
             } catch (Exception e) {

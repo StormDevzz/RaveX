@@ -3,7 +3,7 @@ package ravex.modules.render;
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.core.BlockPos;
+import ravex.utility.misc.block.BlockUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;

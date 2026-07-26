@@ -2,7 +2,7 @@ package ravex.modules.world.nuker;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import ravex.utility.misc.block.BlockUtility;
 import java.util.LinkedHashSet;
 import java.util.Set;
 public class NukerData {
@@ -12,13 +12,13 @@ public class NukerData {
         selectDefault();
     }
     private void selectDefault() {
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.STONE));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.COBBLESTONE));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.GRAVEL));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.SAND));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.OAK_LOG));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.OAK_LEAVES));
+        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.STONE));
+        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.COBBLESTONE));
+        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.DIRT));
+        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.GRAVEL));
+        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.SAND));
+        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.OAK_LOG));
+        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.OAK_LEAVES));
     }
     public Set<Identifier> getSelectedBlocks() {
         return selectedBlocks;

@@ -1,9 +1,9 @@
 package ravex.gui.fileprot;
 
-import ravex.utility.nativelib.NativeLibrary;
+import ravex.utility.nativelib.NativeLibraryUtility;
 
 public class FileProtBridge {
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_fileprot");
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_fileprot");
 
     static {
         NATIVE.load();

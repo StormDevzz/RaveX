@@ -6,8 +6,8 @@ import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.Render2DEngine;
-import ravex.utility.render.TextureLoader;
+import ravex.utility.render.Render2DUtility;
+import ravex.utility.render.TextureLoaderUtility;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -156,22 +156,22 @@ public class HudPanel {
 
 
         int bodyColor = ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, pAlpha);
-        Render2DEngine.drawRound(g, px, py, pw, ph, cornerRadius, bodyColor);
+        Render2DUtility.drawRound(g, px, py, pw, ph, cornerRadius, bodyColor);
 
 
         if (ModuleManager.get(ravex.modules.client.ClickGui.class).outlines.getValue()) {
             int borderColor = ColorUtility.withAlpha(ModuleManager.get(ravex.modules.client.ClickGui.class).outlineColor.getValue(), (int)(255 * animAlpha));
-            Render2DEngine.drawRoundBorder(g, px, py, pw, ph, cornerRadius, 1, borderColor);
+            Render2DUtility.drawRoundBorder(g, px, py, pw, ph, cornerRadius, 1, borderColor);
         }
 
         boolean headerHov = mx >= px && mx <= px + pw && my >= py && my <= py + headerH;
         if (headerHov) {
-            Render2DEngine.drawRound(g, px, py, pw, headerH, cornerRadius,
+            Render2DUtility.drawRound(g, px, py, pw, headerH, cornerRadius,
                 ColorUtility.withAlpha(accentColor, (int)(15 * animAlpha)));
         }
         g.fill(px, py + headerH - 1, px + pw, py + headerH,
             ColorUtility.withAlpha(accentColor, (int)(40 * animAlpha)));
-        Identifier palTex = TextureLoader.getPaletteTexture();
+        Identifier palTex = TextureLoaderUtility.getPaletteTexture();
         if (palTex != null) {
             int iconSize = 14;
             g.blit(palTex, px + 4, py + 2, px + 4 + iconSize, py + 2 + iconSize,
@@ -188,7 +188,7 @@ public class HudPanel {
             String countText = enabledCount + "/" + huds.size();
             int cw = FontRenderUtility.getStringWidth(countText);
             int badgeX = px + pw - cw - 12;
-            Render2DEngine.drawRound(g, badgeX, py + 3, cw + 8, 14, 4,
+            Render2DUtility.drawRound(g, badgeX, py + 3, cw + 8, 14, 4,
                 ColorUtility.withAlpha(accentColor, (int)(50 * animAlpha)));
             FontRenderUtility.drawString(g, countText, badgeX + 4, py + 5,
                 enabledCount == huds.size() ? 0xFFA0E0A0 : 0xFFE0E0E0, true);
