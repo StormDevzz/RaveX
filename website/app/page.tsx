@@ -80,7 +80,7 @@ export default function Home() {
               built by stormdevzz. community site.
             </p>
             <p className="text-xs text-[#484870] mb-10">
-              unofficial community site —{' '}
+              unofficial community site -{' '}
               <a href={officialSite} target="_blank" className="text-[#38bdf8] underline underline-offset-2 hover:text-[#7dd3fc] transition-colors">
                 official site
               </a>
@@ -144,7 +144,7 @@ export default function Home() {
                   three languages.
                 </p>
                 <p className="text-[#7878a0] text-sm leading-relaxed mb-6">
-                  fully verifiable — build from source and compare sha-256 against
+                  fully verifiable - build from source and compare sha-256 against
                   the official release.
                 </p>
                 <div className="flex flex-wrap gap-2">
