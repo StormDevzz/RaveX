@@ -1,232 +1,204 @@
-const telegramUrl = "https://t.me/ravex_free"
-const discordUrl = "https://discord.gg/n9HPbgN7S"
-const githubUrl = "https://github.com/StormDevzz/RaveX"
-const officialSite = "https://ravex.serveousercontent.com/"
-const releasesUrl = "https://github.com/StormDevzz/RaveX/releases"
+'use client'
+
+import { useRef, type MouseEvent } from 'react'
+
+const telegramUrl = 'https://t.me/ravex_free'
+const discordUrl = 'https://discord.gg/n9HPbgN7S'
+const githubUrl = 'https://github.com/StormDevzz/RaveX'
+const officialSite = 'https://ravex.serveousercontent.com/'
+const releasesUrl = 'https://github.com/StormDevzz/RaveX/releases'
+
+const version = process.env.RAVEX_VERSION || 'unknown'
 
 const screenshots = [
-  { src: "/screenshots/loading.png", label: "Loading Screen" },
-  { src: "/screenshots/gui.png", label: "ClickGUI" },
-  { src: "/screenshots/physics.png", label: "Physics" },
-  { src: "/screenshots/newgui.png", label: "New GUI" },
-  { src: "/screenshots/russian.png", label: "Russian Language" },
+  { src: '/screenshots/loading.png', label: 'loading' },
+  { src: '/screenshots/gui.png', label: 'clickgui' },
+  { src: '/screenshots/physics.png', label: 'physics' },
+  { src: '/screenshots/newgui.png', label: 'new gui' },
+  { src: '/screenshots/russian.png', label: 'russian lang' },
 ]
+
+function HoverCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  function handleMouse(e: MouseEvent<HTMLDivElement>) {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    el.style.setProperty('--mx', String(e.clientX - rect.left))
+    el.style.setProperty('--my', String(e.clientY - rect.top))
+  }
+
+  return (
+    <div
+      ref={ref}
+      onMouseMove={handleMouse}
+      className={'hover-card ' + className}
+    >
+      {children}
+    </div>
+  )
+}
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-50 backdrop-blur-lg bg-ravex-dark/80 border-b border-ravex-border">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <a href="/" className="text-xl font-extrabold gradient-text tracking-tight">
-            RAVEX
-          </a>
-          <nav className="flex items-center gap-6 text-sm">
-            <a href="#screenshots" className="text-gray-400 hover:text-white transition-colors">
-              Screenshots
+      <header className="sticky top-0 z-50 border-b border-[#12121e] bg-[#06060e]/90 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-5 h-12 flex items-center justify-between">
+          <span className="text-sm font-semibold tracking-widest uppercase text-[#38bdf8]">
+            ravex
+          </span>
+          <nav className="flex items-center gap-5 text-xs">
+            <a href="#screenshots" className="text-[#7878a0] hover:text-[#c8c8d0] transition-colors">
+              screenshots
             </a>
-            <a href="#about" className="text-gray-400 hover:text-white transition-colors">
-              About
+            <a href="#about" className="text-[#7878a0] hover:text-[#c8c8d0] transition-colors">
+              about
             </a>
             <a
               href={releasesUrl}
               target="_blank"
-              className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity"
+              className="px-4 py-1.5 bg-[#38bdf8] text-[#06060e] text-xs font-semibold hover:bg-[#7dd3fc] transition-colors"
             >
-              Download
+              download
             </a>
           </nav>
         </div>
       </header>
 
       <main className="flex-1">
-        <section className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-24">
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-transparent to-transparent pointer-events-none" />
-          <div className="max-w-6xl mx-auto px-4 text-center relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-ravex-card border border-ravex-border text-xs text-gray-400 mb-8">
-              Community Project
+        <section className="pt-28 pb-20 md:pt-36 md:pb-28">
+          <div className="max-w-5xl mx-auto px-5">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-[#0d0d1a] border border-[#1a1a2e] text-[#38bdf8] text-xs tracking-wider mb-6">
+              v{version}
             </div>
-            <h1 className="text-4xl md:text-7xl font-black tracking-tight mb-6">
-              <span className="gradient-text">RaveX</span>
-              <br />
-              <span className="text-white">Minecraft Utility Client</span>
+            <h1 className="text-[clamp(2.5rem,10vw,5rem)] font-bold leading-[1.05] tracking-tight text-white mb-4">
+              ravex
             </h1>
-            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-8 leading-relaxed">
-              An open-source Minecraft client modification for Fabric 1.21.x
-              developed by{" "}
-              <a
-                href="https://github.com/StormDevzz"
-                target="_blank"
-                className="text-purple-400 hover:text-purple-300 transition-colors"
-              >
-                StormDevzz
-              </a>
-              .
+            <p className="text-[#7878a0] text-sm md:text-base max-w-lg leading-relaxed mb-8">
+              open-source minecraft utility client for fabric 1.21.x.
+              built by stormdevzz. community site.
             </p>
-            <p className="text-gray-500 text-sm mb-10">
-              This is an unofficial community-maintained website.{" "}
-              <a
-                href={officialSite}
-                target="_blank"
-                className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 transition-colors"
-              >
-                Official site →
+            <p className="text-xs text-[#484870] mb-10">
+              unofficial community site —{' '}
+              <a href={officialSite} target="_blank" className="text-[#38bdf8] underline underline-offset-2 hover:text-[#7dd3fc] transition-colors">
+                official site
               </a>
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap gap-3">
               <a
                 href={releasesUrl}
                 target="_blank"
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20"
+                className="px-6 py-2.5 bg-[#38bdf8] text-[#06060e] text-sm font-semibold hover:bg-[#7dd3fc] transition-colors"
               >
-                Download Latest
+                download latest
               </a>
               <a
                 href={githubUrl}
                 target="_blank"
-                className="px-8 py-3 rounded-xl bg-ravex-card border border-ravex-border text-gray-200 font-bold hover:bg-ravex-border transition-colors"
+                className="px-6 py-2.5 border border-[#1a1a2e] text-[#c8c8d0] text-sm font-semibold hover:bg-[#0d0d1a] transition-colors"
               >
-                Source Code
+                source
               </a>
             </div>
           </div>
         </section>
 
-        <section id="screenshots" className="py-16 md:py-24">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-black gradient-text mb-4">
-                Screenshots
+        <section id="screenshots" className="py-16 md:py-24 border-t border-[#12121e]">
+          <div className="max-w-5xl mx-auto px-5">
+            <div className="mb-10">
+              <h2 className="text-white text-sm font-semibold tracking-widest uppercase mb-2">
+                screenshots
               </h2>
-              <p className="text-gray-500">
-                A glimpse of what RaveX looks like in action.
+              <p className="text-[#484870] text-xs">
+                {screenshots.length} images
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {screenshots.map((s) => (
-                <div
-                  key={s.label}
-                  className="group rounded-xl overflow-hidden bg-ravex-card border border-ravex-border glow"
-                >
+                <HoverCard key={s.label} className="border border-[#12121e] bg-[#0a0a14]">
                   <img
                     src={s.src}
                     alt={s.label}
-                    className="w-full h-48 object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-44 object-cover object-top"
                   />
-                  <div className="p-3 text-center text-sm text-gray-400">
-                    {s.label}
+                  <div className="relative z-10 px-3 py-2.5 border-t border-[#12121e]">
+                    <span className="text-xs text-[#484870]">{s.label}</span>
                   </div>
-                </div>
+                </HoverCard>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="about" className="py-16 md:py-24 border-t border-ravex-border">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+        <section id="about" className="py-16 md:py-24 border-t border-[#12121e]">
+          <div className="max-w-5xl mx-auto px-5">
+            <div className="grid md:grid-cols-2 gap-12">
               <div>
-                <h2 className="text-3xl md:text-4xl font-black gradient-text mb-6">
-                  Built with passion
+                <h2 className="text-white text-sm font-semibold tracking-widest uppercase mb-4">
+                  about
                 </h2>
-                <p className="text-gray-400 leading-relaxed mb-4">
-                  RaveX is an open-source Minecraft utility client built on Fabric
-                  for version 1.21.x. It combines Java, C++, and Lua to deliver a
-                  feature-rich experience.
+                <p className="text-[#7878a0] text-sm leading-relaxed mb-4">
+                  ravex is an open-source minecraft client built on fabric loader.
+                  written in java, c++, and lua. supports custom addons for all
+                  three languages.
                 </p>
-                <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                  The project supports custom addons in Java, C++, and Lua, and is
-                  fully verifiable — build from source and compare the SHA-256 hash
-                  against the official release.
+                <p className="text-[#7878a0] text-sm leading-relaxed mb-6">
+                  fully verifiable — build from source and compare sha-256 against
+                  the official release.
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  <span className="px-3 py-1 rounded-md bg-purple-500/10 text-purple-400 text-xs font-medium border border-purple-500/20">
-                    Java
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-2 py-0.5 text-xs bg-[#0d0d1a] text-[#38bdf8] border border-[#1a1a2e]">
+                    java
                   </span>
-                  <span className="px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-400 text-xs font-medium border border-cyan-500/20">
-                    C++
+                  <span className="px-2 py-0.5 text-xs bg-[#0d0d1a] text-[#38bdf8] border border-[#1a1a2e]">
+                    c++
                   </span>
-                  <span className="px-3 py-1 rounded-md bg-green-500/10 text-green-400 text-xs font-medium border border-green-500/20">
-                    Lua
+                  <span className="px-2 py-0.5 text-xs bg-[#0d0d1a] text-[#38bdf8] border border-[#1a1a2e]">
+                    lua
                   </span>
-                  <span className="px-3 py-1 rounded-md bg-gray-500/10 text-gray-400 text-xs font-medium border border-gray-500/20">
-                    Fabric 1.21.x
+                  <span className="px-2 py-0.5 text-xs bg-[#0d0d1a] text-[#484870] border border-[#1a1a2e]">
+                    fabric 1.21.x
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col gap-4">
-                <a
-                  href={discordUrl}
-                  target="_blank"
-                  className="flex items-center gap-4 p-4 rounded-xl bg-ravex-card border border-ravex-border hover:bg-ravex-border transition-colors group"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xl font-bold">
-                    D
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-200 group-hover:text-white transition-colors">
-                      Discord
+              <div className="flex flex-col gap-3">
+                {[
+                  { href: discordUrl, label: 'discord', desc: 'community chat', color: '#5865f2' },
+                  { href: telegramUrl, label: 'telegram', desc: 'news channel', color: '#229ed9' },
+                  { href: githubUrl, label: 'github', desc: 'source code', color: '#c8c8d0' },
+                ].map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    className="flex items-center gap-3 px-4 py-3 border border-[#12121e] bg-[#0a0a14] hover:bg-[#0d0d1a] transition-colors group"
+                  >
+                    <span
+                      className="w-2 h-2 shrink-0"
+                      style={{ backgroundColor: link.color }}
+                    />
+                    <div>
+                      <div className="text-sm text-[#c8c8d0] group-hover:text-white transition-colors">
+                        {link.label}
+                      </div>
+                      <div className="text-xs text-[#484870]">{link.desc}</div>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      Join the community
-                    </div>
-                  </div>
-                </a>
-                <a
-                  href={telegramUrl}
-                  target="_blank"
-                  className="flex items-center gap-4 p-4 rounded-xl bg-ravex-card border border-ravex-border hover:bg-ravex-border transition-colors group"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400 text-xl font-bold">
-                    T
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-200 group-hover:text-white transition-colors">
-                      Telegram
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      News and updates
-                    </div>
-                  </div>
-                </a>
-                <a
-                  href={githubUrl}
-                  target="_blank"
-                  className="flex items-center gap-4 p-4 rounded-xl bg-ravex-card border border-ravex-border hover:bg-ravex-border transition-colors group"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gray-500/20 flex items-center justify-center text-gray-400 text-xl font-bold">
-                    G
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-200 group-hover:text-white transition-colors">
-                      GitHub
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Source code & releases
-                    </div>
-                  </div>
-                </a>
+                  </a>
+                ))}
               </div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-ravex-border py-8">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">
-            Community website for{" "}
-            <a
-              href={githubUrl}
-              target="_blank"
-              className="text-purple-400 hover:text-purple-300 transition-colors"
-            >
-              RaveX
-            </a>
-            . Not affiliated with StormDevzz.
+      <footer className="border-t border-[#12121e] py-6">
+        <div className="max-w-5xl mx-auto px-5 flex flex-col md:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-[#484870]">
+            community site for ravex. not official.
           </p>
-          <p className="text-sm text-gray-500">
-            Created by{" "}
-            <span className="text-cyan-400 font-medium">sh2-u34r</span>
+          <p className="text-xs text-[#484870]">
+            made by sh2-u34r
           </p>
         </div>
       </footer>

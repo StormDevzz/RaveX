@@ -2,12 +2,9 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "RaveX — Community Website",
+  title: "ravex",
   description:
-    "RaveX is an open-source Minecraft utility client by StormDevzz. This is a community-made website.",
-  icons: {
-    icon: "/favicon.svg",
-  },
+    "ravex — open-source minecraft utility client for fabric 1.21.x",
 }
 
 export default function RootLayout({
@@ -17,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-ravex-dark text-gray-100 antialiased">{children}</body>
+      <body className="bg-[#06060e] text-[#c8c8d0]">{children}</body>
     </html>
   )
 }
