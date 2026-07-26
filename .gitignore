@@ -8,6 +8,13 @@ run/
 .project
 .settings/
 *.iml
+.classpath
+.project
+.settings/
+*.bak
+*.tmp
+*.class
+*.disabled
 *.ipr
 *.iws
 out/
