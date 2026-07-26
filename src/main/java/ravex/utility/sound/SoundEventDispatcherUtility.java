@@ -15,7 +15,7 @@ public class SoundEventDispatcherUtility {
         ravex.modules.render.Sounds sounds = ModuleManager.get(ravex.modules.render.Sounds.class);
         if (sounds != null && !sounds.getEnabled()) return;
 
-        float multiplier = (sounds != null) ? sounds.volume.getValue().floatValue() : 1.0f;
+        float multiplier = (sounds != null) ? (float) sounds.volume : 1.0f;
         float finalVolume = event.getVolume() * multiplier;
         if (finalVolume <= 0.0f) return;
 

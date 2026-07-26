@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
@@ -19,7 +19,8 @@ import net.minecraft.resources.Identifier;
 
 @ModuleInfo(name = "WatermarkHud", category = "HUD")
 public class WatermarkHud extends ravex.modules.Module {
-    public final ColorParameter color = new ColorParameter("Color", 0xFF1E88E5);
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFF1E88E5;
 
     public int x;
     public int y;
@@ -95,18 +96,7 @@ private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", 
         return ravex.manager.ModuleManager.delegate(WatermarkHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

@@ -1,26 +1,30 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 
 @ModuleInfo(name = "ViewLock", category = "net.minecraft.world.entity.player.Player")
-public class ViewLock extends ravex.modules.Module {
-public final BooleanParameter lockYaw = new BooleanParameter("LockYaw", true);
-    public final BooleanParameter lockPitch = new BooleanParameter("LockPitch", true);
-    public final ModeParameter mode = new ModeParameter("Mode", "Freeze",
-            java.util.List.of("Freeze", "Smooth", "net.minecraft.core.Direction"));
-    public final NumberParameter smoothSpeed = new NumberParameter("SmoothSpeed", 0.3, 0.05, 1.0, 0.05);
-    public final NumberParameter sensitivity = new NumberParameter("Sensitivity", 1.0, 0.1, 3.0, 0.1);
-    public final NumberParameter savedYaw = new NumberParameter("SavedYaw", 0.0, -180.0, 180.0, 1.0);
-    public final NumberParameter savedPitch = new NumberParameter("SavedPitch", 0.0, -90.0, 90.0, 1.0);
+public class ViewLock implements ModuleAccess {
+    @Parameter(name = "LockYaw")
+    public boolean lockYaw = true;
+    @Parameter(name = "LockPitch")
+    public boolean lockPitch = true;
+    @Parameter(name = "Mode", modes = {"Freeze", "Smooth", "net.minecraft.core.Direction"})
+    public String mode = "Freeze";
+    @Parameter(name = "SmoothSpeed", min = 0.05, max = 1.0, step = 0.05)
+    public double smoothSpeed = 0.3;
+    @Parameter(name = "Sensitivity", min = 0.1, max = 3.0, step = 0.1)
+    public double sensitivity = 1.0;
+    @Parameter(name = "SavedYaw", min = -180.0, max = 180.0, step = 1.0)
+    public double savedYaw = 0.0;
+    @Parameter(name = "SavedPitch", min = -90.0, max = 90.0, step = 1.0)
+    public double savedPitch = 0.0;
 
     private float targetYaw = 0;
     private float targetPitch = 0;
     private boolean hasTarget = false;
-    protected void onEnable() {
+    public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             targetYaw = mc.player.getYRot();
@@ -32,8 +36,8 @@ public final BooleanParameter lockYaw = new BooleanParameter("LockYaw", true);
     public void saveCurrentAngle() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            savedYaw.setValue((double) mc.player.getYRot());
-            savedPitch.setValue((double) mc.player.getXRot());
+            savedYaw = mc.player.getYRot();
+            savedPitch = mc.player.getXRot();
             targetYaw = mc.player.getYRot();
             targetPitch = mc.player.getXRot();
             hasTarget = true;
@@ -49,27 +53,27 @@ public final BooleanParameter lockYaw = new BooleanParameter("LockYaw", true);
     }
 
     public boolean shouldLockYaw(double yRot, double xRot) {
-        return getEnabled() && lockYaw.getValue();
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled() && lockYaw;
     }
 
     public boolean shouldLockPitch(double yRot, double xRot) {
-        return getEnabled() && lockPitch.getValue();
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled() && lockPitch;
     }
 
     public float getSensitivity() {
-        return sensitivity.getValue().floatValue();
+        return (float) sensitivity;
     }
 
     public float getSmoothSpeed() {
-        return smoothSpeed.getValue().floatValue();
+        return (float) smoothSpeed;
     }
 
     public boolean isSmoothMode() {
-        return getEnabled() && "Smooth".equals(mode.getValue());
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled() && "Smooth".equals(mode);
     }
 
     public boolean isDirectionMode() {
-        return getEnabled() && "net.minecraft.core.Direction".equals(mode.getValue());
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled() && "net.minecraft.core.Direction".equals(mode);
     }
 
     public static boolean maybeEnabled() {
@@ -80,16 +84,5 @@ public final BooleanParameter lockYaw = new BooleanParameter("LockYaw", true);
         return ravex.manager.ModuleManager.delegate(ViewLock.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

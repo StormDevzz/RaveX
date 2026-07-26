@@ -1,6 +1,7 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
@@ -10,30 +11,39 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 
-import ravex.parameter.ModeParameter;
 import java.util.List;
-import ravex.parameter.NumberParameter;
-
 @ModuleInfo(name = "NoSlow", category = "Movement")
-public class NoSlow extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Grim",
-            List.of("Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3"));
-    public final ravex.parameter.BooleanParameter items = new ravex.parameter.BooleanParameter("Items", true);
-    public final ravex.parameter.BooleanParameter blocks = new ravex.parameter.BooleanParameter("net.minecraft.world.level.block.Blocks", true);
-    public final ravex.parameter.BooleanParameter sneaking = new ravex.parameter.BooleanParameter("Sneaking", true);
-    public final ravex.parameter.BooleanParameter ice = new ravex.parameter.BooleanParameter("Ice", false);
-    public final NumberParameter altInterval = new NumberParameter("AltInterval", 4.0, 2.0, 20.0, 1.0);
-    public final ModeParameter altAction = new ModeParameter("AltAction", "Packet",
-            List.of("Packet", "Alternate"));
-    public final NumberParameter v3Grace = new NumberParameter("V3Grace", 2.0, 1.0, 10.0, 1.0);
-    public final NumberParameter v3Forward = new NumberParameter("V3Forward", 0.24, 0.05, 1.0, 0.05);
-    public final NumberParameter v3Strafe = new NumberParameter("V3Strafe", 0.24, 0.05, 1.0, 0.05);
-    public final NumberParameter v3Interval = new NumberParameter("V3Interval", 4, 1, 20, 1);
+public class NoSlow implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3"})
+    public String mode = "Grim";
+    @Parameter(name = "Items")
+    public boolean items = true;
+    @Parameter(name = "Blocks")
+    public boolean blocks = true;
+    @Parameter(name = "Sneaking")
+    public boolean sneaking = true;
+    @Parameter(name = "Ice")
+    public boolean ice = false;
+    @Parameter(name = "AltInterval", min = 2.0, max = 20.0, step = 1.0)
+    public double altInterval = 4.0;
+    @Parameter(name = "AltAction", modes = {"Packet", "Alternate"})
+    public String altAction = "Packet";
+    @Parameter(name = "V3Grace", min = 1.0, max = 10.0, step = 1.0)
+    public double v3Grace = 2.0;
+    @Parameter(name = "V3Forward", min = 0.05, max = 1.0, step = 0.05)
+    public double v3Forward = 0.24;
+    @Parameter(name = "V3Strafe", min = 0.05, max = 1.0, step = 0.05)
+    public double v3Strafe = 0.24;
+    @Parameter(name = "V3Interval", min = 1, max = 20, step = 1)
+    public double v3Interval = 4;
 
     // Matrix mode parameters
-    public final NumberParameter matrixSwapInterval = new NumberParameter("SwapInterval", 3.0, 1.0, 8.0, 1.0);
-    public final NumberParameter matrixVelocityScale = new NumberParameter("VelocityScale", 1.15, 0.5, 2.0, 0.01);
-    public final NumberParameter matrixInputScale = new NumberParameter("InputScale", 1.0, 0.5, 2.0, 0.05);
+    @Parameter(name = "SwapInterval", min = 1.0, max = 8.0, step = 1.0)
+    public double matrixSwapInterval = 3.0;
+    @Parameter(name = "VelocityScale", min = 0.5, max = 2.0, step = 0.01)
+    public double matrixVelocityScale = 1.15;
+    @Parameter(name = "InputScale", min = 0.5, max = 2.0, step = 0.05)
+    public double matrixInputScale = 1.0;
 
     private int matrixSwapTicks = 0;
     private int altTicks = 0;
@@ -42,21 +52,12 @@ public final ModeParameter mode = new ModeParameter("Mode", "Grim",
 
     private NoSlow() {
         
-        altInterval.setVisible(() -> "GrimAlternative".equals(mode.getValue()));
-        altAction.setVisible(() -> "GrimAlternative".equals(mode.getValue()));
-        v3Grace.setVisible(() -> "GrimV3".equals(mode.getValue()));
-        v3Forward.setVisible(() -> "GrimV3".equals(mode.getValue()));
-        v3Strafe.setVisible(() -> "GrimV3".equals(mode.getValue()));
-        v3Interval.setVisible(() -> "GrimV3".equals(mode.getValue()));
-        matrixSwapInterval.setVisible(() -> "Matrix".equals(mode.getValue()));
-        matrixVelocityScale.setVisible(() -> "Matrix".equals(mode.getValue()));
-        matrixInputScale.setVisible(() -> "Matrix".equals(mode.getValue()));
     }
 
     @Subscribe
     public void onTick(TickEvent.Client event) {
-        if (!getEnabled()) return;
-        String modeVal = mode.getValue();
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoSlow").getEnabled()) return;
+        String modeVal = mode;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
 
@@ -66,7 +67,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Grim",
                 return;
             }
 
-            int interval = matrixSwapInterval.getValue().intValue();
+            int interval = (int) matrixSwapInterval;
             boolean isMoving = mc.player.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
 
             matrixSwapTicks++;
@@ -82,7 +83,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Grim",
 
             // On non-swap ticks, boost velocity to compensate for slowdown
             if (isMoving) {
-                double scale = matrixVelocityScale.getValue();
+                double scale = matrixVelocityScale;
                 net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
                 mc.player.setDeltaMovement(
                     motion.x * scale,
@@ -99,8 +100,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Grim",
                 return;
             }
             altTicks++;
-            String action = altAction.getValue();
-            int interval = altInterval.getValue().intValue();
+            String action = altAction;
+            int interval = (int) altInterval;
 
             if ("Packet".equals(action)) {
                 if (altTicks < interval) return;
@@ -127,8 +128,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Grim",
             }
             v3Ticks++;
 
-            int grace = v3Grace.getValue().intValue();
-            int interval = v3Interval.getValue().intValue();
+            int grace = (int) v3Grace;
+            int interval = (int) v3Interval;
 
             if (v3Ticks >= grace + interval) {
                 v3Ticks = grace;
@@ -158,40 +159,29 @@ public final ModeParameter mode = new ModeParameter("Mode", "Grim",
     }
 
     public boolean isInGrace() {
-        if (!"GrimV3".equals(mode.getValue())) return false;
-        return v3Ticks <= v3Grace.getValue().intValue();
+        if (!"GrimV3".equals(mode)) return false;
+        return v3Ticks <= (int) v3Grace;
     }
 
     public float getV3Forward() {
-        return v3Forward.getValue().floatValue();
+        return (float) v3Forward;
     }
 
     public float getV3Strafe() {
-        return v3Strafe.getValue().floatValue();
+        return (float) v3Strafe;
     }
 
     public boolean isV3Active() {
-        return getEnabled() && "GrimV3".equals(mode.getValue());
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NoSlow").getEnabled() && "GrimV3".equals(mode);
     }
 
     public boolean isMatrixActive() {
-        return getEnabled() && "Matrix".equals(mode.getValue());
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NoSlow").getEnabled() && "Matrix".equals(mode);
     }
 
     public float getMatrixInputScale() {
-        return matrixInputScale.getValue().floatValue();
+        return (float) matrixInputScale;
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

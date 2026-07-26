@@ -1,25 +1,30 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
-
+import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 @ModuleInfo(name = "ChestAura", category = "World")
-public class ChestAura extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
-    public final NumberParameter delay = new NumberParameter("Delay", 2.0, 0.0, 20.0, 1.0);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter highlightColor = new ColorParameter("Color", 0xFF00FF88);
-    public final NumberParameter fadeSpeed = new NumberParameter("FadeDuration", 1.0, 0.1, 3.0, 0.1);
-    public final BooleanParameter filled = new BooleanParameter("Filled", true);
-    public final BooleanParameter autoSwap = new BooleanParameter("AutoSwap", true);
-    public final BooleanParameter silent = new BooleanParameter("Silent", true);
+public class ChestAura implements ModuleAccess {
+    @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "Delay", min = 0.0, max = 20.0, step = 1.0)
+    public double delay = 2.0;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int highlightColor = 0xFF00FF88;
+    @Parameter(name = "FadeDuration", min = 0.1, max = 3.0, step = 0.1)
+    public double fadeSpeed = 1.0;
+    @Parameter(name = "Filled")
+    public boolean filled = true;
+    @Parameter(name = "AutoSwap")
+    public boolean autoSwap = true;
+    @Parameter(name = "Silent")
+    public boolean silent = true;
     public static class PlacedChest {
         public final long packedPos;
         public final long placeTime;
@@ -32,15 +37,12 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
     private int delayTimer = 0;
     private ChestAura() {
         
-        highlightColor.setVisible(render::getValue);
-        fadeSpeed.setVisible(render::getValue);
-        filled.setVisible(render::getValue);
     }
-    protected void onEnable() {
+    public void onEnable() {
         delayTimer = 0;
         placedChests.clear();
     }
-    protected void onDisable() {
+    public void onDisable() {
         placedChests.clear();
     }
     public void onTick() {
@@ -48,7 +50,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
         var p = mc.player;
         if (p == null || mc.level == null) return;
         long now = System.currentTimeMillis();
-        double durationMs = fadeSpeed.getValue() * 1000.0;
+        double durationMs = fadeSpeed * 1000.0;
         placedChests.removeIf(chest -> (now - chest.placeTime) > durationMs);
         if (delayTimer > 0) {
             delayTimer--;
@@ -63,7 +65,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
             }
         }
         if (chestSlot == -1) return;
-        double r = range.getValue();
+        double r = range;
         var playerPos = p.blockPosition();
         long targetPacked = 0;
         boolean hasTarget = false;
@@ -114,7 +116,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
         if (hasTarget) {
             int tx = BlockUtility.unpackX(targetPacked), ty = BlockUtility.unpackY(targetPacked), tz = BlockUtility.unpackZ(targetPacked);
             int prevSlot = InventoryUtility.getSelectedSlot(p);
-            if (autoSwap.getValue() && chestSlot != prevSlot) {
+            if (autoSwap && chestSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, chestSlot);
             }
             var below = BlockUtility.pos(tx, BlockUtility.belowY(ty), tz);
@@ -122,11 +124,11 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
                 net.minecraft.world.phys.Vec3.atCenterOf(below).add(0, 0.5, 0),
                 net.minecraft.core.Direction.UP, below, false));
             ravex.utility.player.SwingUtility.swingMainHand(p);
-            if (autoSwap.getValue() && silent.getValue() && chestSlot != prevSlot) {
+            if (autoSwap && silent && chestSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, prevSlot);
             }
             placedChests.add(new PlacedChest(targetPacked, now));
-            delayTimer = delay.getValue().intValue();
+            delayTimer = (int) delay;
         }
     }
 
@@ -137,16 +139,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
         return ravex.manager.ModuleManager.delegate(ChestAura.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

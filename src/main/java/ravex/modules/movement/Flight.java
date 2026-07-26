@@ -1,24 +1,30 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import java.util.List;
 @ModuleInfo(name = "Flight", category = "Movement")
-public class Flight extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
-        List.of("Vanilla", "Creative", "NCP", "Minemen", "Jetpack"));
-    public final NumberParameter speed = new NumberParameter("Speed", 2.0, 0.5, 10.0, 0.1);
-    public final NumberParameter verticalSpeed = new NumberParameter("VerticalSpeed", 1.0, 0.1, 5.0, 0.1);
-    public final NumberParameter glide = new NumberParameter("Glide", 0.0, 0.0, 1.0, 0.05);
-    public final NumberParameter timer = new NumberParameter("Timer", 1.0, 0.5, 3.0, 0.1);
-    public final NumberParameter acceleration = new NumberParameter("Acceleration", 1.0, 0.1, 5.0, 0.1);
-    public final BooleanParameter autoSneak = new BooleanParameter("AutoSneak", false);
-    public final BooleanParameter damageBoost = new BooleanParameter("DamageBoost", false);
-    public final NumberParameter damageMultiplier = new NumberParameter("DamageMultiplier", 1.5, 1.0, 5.0, 0.1);
+public class Flight implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Vanilla", "Creative", "NCP", "Minemen", "Jetpack"})
+    public String mode = "Vanilla";
+    @Parameter(name = "Speed", min = 0.5, max = 10.0, step = 0.1)
+    public double speed = 2.0;
+    @Parameter(name = "VerticalSpeed", min = 0.1, max = 5.0, step = 0.1)
+    public double verticalSpeed = 1.0;
+    @Parameter(name = "Glide", min = 0.0, max = 1.0, step = 0.05)
+    public double glide = 0.0;
+    @Parameter(name = "Timer", min = 0.5, max = 3.0, step = 0.1)
+    public double timer = 1.0;
+    @Parameter(name = "Acceleration", min = 0.1, max = 5.0, step = 0.1)
+    public double acceleration = 1.0;
+    @Parameter(name = "AutoSneak")
+    public boolean autoSneak = false;
+    @Parameter(name = "DamageBoost")
+    public boolean damageBoost = false;
+    @Parameter(name = "DamageMultiplier", min = 1.0, max = 5.0, step = 0.1)
+    public double damageMultiplier = 1.5;
     private static final boolean nativeAvailable = false;
     public static double[] calculateVelocity(String mode, double hSpeed, double vSpeed, double glide, double yaw, double pitch, boolean jump, boolean sneak) {
         return javaCalculateVelocity(mode, hSpeed, vSpeed, glide, yaw, pitch, jump, sneak);
@@ -28,10 +34,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
     }
     private Flight() {
         
-        damageMultiplier.setVisible(() -> damageBoost.getValue());
     }
     public void onEnable() {
-        RaveX.LOGGER.info("[Flight] Enabled with mode: {}", mode.getValue());
+        RaveX.LOGGER.info("[Flight] Enabled with mode: {}", mode);
     }
     public void onDisable() {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
@@ -77,16 +82,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         return Math.min(currentSpeed + acceleration, currentSpeed * (1.0 + acceleration * 0.1));
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

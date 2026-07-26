@@ -1,12 +1,15 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "LiquidControl", category = "Movement")
-public class LiquidControl extends ravex.modules.Module {
-public final BooleanParameter water = new BooleanParameter("Water", true);
-    public final BooleanParameter lava = new BooleanParameter("Lava", true);
-    public final BooleanParameter others = new BooleanParameter("Others", true);
+public class LiquidControl implements ModuleAccess {
+    @Parameter(name = "Water")
+    public boolean water = true;
+    @Parameter(name = "Lava")
+    public boolean lava = true;
+    @Parameter(name = "Others")
+    public boolean others = true;
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("LiquidControl").getEnabled();
     }
@@ -14,16 +17,5 @@ public final BooleanParameter water = new BooleanParameter("Water", true);
         return ravex.manager.ModuleManager.delegate(LiquidControl.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

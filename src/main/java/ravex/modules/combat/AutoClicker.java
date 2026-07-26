@@ -1,25 +1,31 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.MobUtility;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "AutoClicker", category = "Combat")
-public class AutoClicker extends ravex.modules.Module {
-public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40.0, 0.5);
-    public final NumberParameter maxCps = new NumberParameter("MaxCPS", 12.0, 1.0, 40.0, 0.5);
-    public final ModeParameter mode = new ModeParameter("Mode", "Left", java.util.List.of("Left", "Right", "Both"));
-    public final BooleanParameter weaponOnly = new BooleanParameter("WeaponOnly", false);
-    public final BooleanParameter onlyOnTarget = new BooleanParameter("OnlyOnTarget", true);
-    public final BooleanParameter randomize = new BooleanParameter("Randomize", true);
-    public final BooleanParameter breakBlocks = new BooleanParameter("BreakBlocks", false);
-    public final NumberParameter jitterStrength = new NumberParameter("Jitter", 0.0, 0.0, 2.0, 0.1);
+public class AutoClicker implements ModuleAccess {
+    @Parameter(name = "MinCPS", min = 1.0, max = 40.0, step = 0.5)
+    public double minCps = 8.0;
+    @Parameter(name = "MaxCPS", min = 1.0, max = 40.0, step = 0.5)
+    public double maxCps = 12.0;
+    @Parameter(name = "Mode", modes = {"Left", "Right", "Both"})
+    public String mode = "Left";
+    @Parameter(name = "WeaponOnly")
+    public boolean weaponOnly = false;
+    @Parameter(name = "OnlyOnTarget")
+    public boolean onlyOnTarget = true;
+    @Parameter(name = "Randomize")
+    public boolean randomize = true;
+    @Parameter(name = "BreakBlocks")
+    public boolean breakBlocks = false;
+    @Parameter(name = "Jitter", min = 0.0, max = 2.0, step = 0.1)
+    public double jitterStrength = 0.0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autoclicker");
     static {
         NATIVE.load();
@@ -33,12 +39,12 @@ public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40
         if (mc.player == null || mc.level == null) return;
         if (mc.screen != null) return;
         long now = System.currentTimeMillis();
-        if (weaponOnly.getValue()) {
+        if (weaponOnly) {
             var held = mc.player.getMainHandItem();
             if (!InventoryUtility.isSwordItem(held) && !InventoryUtility.isTrident(held)) return;
         }
         boolean targetValid = false;
-        if (onlyOnTarget.getValue()) {
+        if (onlyOnTarget) {
             if (MobUtility.asLivingEntity(mc.crosshairPickEntity) != null) {
                 targetValid = true;
             }
@@ -52,24 +58,24 @@ public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40
             }
             return;
         }
-        double cpsMin = minCps.getValue();
-        double cpsMax = Math.max(cpsMin, maxCps.getValue());
+        double cpsMin = minCps;
+        double cpsMax = Math.max(cpsMin, maxCps);
         long delay;
         if (NATIVE.isLoaded()) {
-            delay = nativeCalculateDelay(cpsMin, cpsMax, randomize.getValue());
+            delay = nativeCalculateDelay(cpsMin, cpsMax, randomize);
         } else {
-            double cps = randomize.getValue() ? cpsMin + rng.nextDouble() * (cpsMax - cpsMin) : (cpsMin + cpsMax) / 2.0;
+            double cps = randomize ? cpsMin + rng.nextDouble() * (cpsMax - cpsMin) : (cpsMin + cpsMax) / 2.0;
             delay = (long)(1000.0 / cps);
         }
         if (now >= nextClick) {
-            String m = mode.getValue();
+            String m = mode;
             if (m.equals("Left") || m.equals("Both")) {
                 clickLeft(mc);
             }
             if (m.equals("Right") || m.equals("Both")) {
                 clickRight(mc);
             }
-            nextClick = now + delay + (randomize.getValue() ? rng.nextInt((int)(delay * 0.15f)) : 0);
+            nextClick = now + delay + (randomize ? rng.nextInt((int)(delay * 0.15f)) : 0);
             lastClickTime = now;
             holding = true;
         }
@@ -81,8 +87,8 @@ public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40
         }
         SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         mc.options.keyAttack.setDown(false);
-        if (jitterStrength.getValue() > 0 && mc.player != null) {
-            double str = jitterStrength.getValue();
+        if (jitterStrength > 0 && mc.player != null) {
+            double str = jitterStrength;
             mc.player.setYRot((float)(mc.player.getYRot() + (rng.nextFloat() - 0.5) * str));
             mc.player.setXRot((float)(mc.player.getXRot() + (rng.nextFloat() - 0.5) * str));
         }
@@ -98,7 +104,7 @@ public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40
         mc.options.keyAttack.setDown(false);
         mc.options.keyUse.setDown(false);
     }
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             releaseClick(mc);
@@ -114,16 +120,5 @@ public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40
         return ravex.manager.ModuleManager.delegate(AutoClicker.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

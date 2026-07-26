@@ -6,7 +6,13 @@ import ravex.event.EventBusHolder;
 import ravex.event.combat.ModuleToggleEvent;
 
 import ravex.event.client.SoundEvent;
+import ravex.parameter.BooleanParameter;
+import ravex.parameter.ColorParameter;
+import ravex.parameter.ModeParameter;
+import ravex.parameter.MultiSelectParameter;
+import ravex.parameter.NumberParameter;
 import ravex.parameter.Parameter;
+import ravex.parameter.StringParameter;
 import java.util.ArrayList;
 import java.util.List;
 public abstract class Module {
@@ -161,10 +167,88 @@ public abstract class Module {
                             parameters.add(param);
                         }
                     } catch (IllegalAccessException ignored) {}
+                } else if (field.isAnnotationPresent(ravex.modules.annotations.Parameter.class)) {
+                    field.setAccessible(true);
+                    ravex.modules.annotations.Parameter ann = field.getAnnotation(ravex.modules.annotations.Parameter.class);
+                    Parameter<?> param = createParameterFromAnnotation(field, ann);
+                    if (param != null && !parameters.contains(param)) {
+                        param.bind(field, this);
+                        parameters.add(param);
+                    }
                 }
             }
             clazz = clazz.getSuperclass();
         }
+    }
+
+    private Parameter<?> createParameterFromAnnotation(java.lang.reflect.Field field, ravex.modules.annotations.Parameter ann) {
+        Class<?> type = field.getType();
+        String name = ann.name();
+        if (type == boolean.class || type == Boolean.class) {
+            try {
+                return new BooleanParameter(name, field.getBoolean(this));
+            } catch (IllegalAccessException e) {
+                return new BooleanParameter(name, false);
+            }
+        }
+        if (ann.color() && (type == int.class || type == Integer.class)) {
+            try {
+                return new ColorParameter(name, field.getInt(this));
+            } catch (IllegalAccessException e) {
+                return new ColorParameter(name, 0xFFFFFFFF);
+            }
+        }
+        if (type == int.class || type == Integer.class) {
+            try {
+                return new NumberParameter(name, field.getInt(this), ann.min(), ann.max(), ann.step());
+            } catch (IllegalAccessException e) {
+                return new NumberParameter(name, 0, ann.min(), ann.max(), ann.step());
+            }
+        }
+        if (type == double.class || type == Double.class) {
+            try {
+                return new NumberParameter(name, field.getDouble(this), ann.min(), ann.max(), ann.step());
+            } catch (IllegalAccessException e) {
+                return new NumberParameter(name, 0.0, ann.min(), ann.max(), ann.step());
+            }
+        }
+        if (type == float.class || type == Float.class) {
+            try {
+                return new NumberParameter(name, field.getFloat(this), ann.min(), ann.max(), ann.step());
+            } catch (IllegalAccessException e) {
+                return new NumberParameter(name, 0.0, ann.min(), ann.max(), ann.step());
+            }
+        }
+        if (type == String.class) {
+            String[] modes = ann.modes();
+            if (modes.length > 0) {
+                String defaultValue;
+                try {
+                    defaultValue = (String) field.get(this);
+                } catch (IllegalAccessException e) {
+                    defaultValue = modes[0];
+                }
+                return new ModeParameter(name, defaultValue, java.util.Arrays.asList(modes));
+            }
+            try {
+                return new StringParameter(name, (String) field.get(this));
+            } catch (IllegalAccessException e) {
+                return new StringParameter(name, "");
+            }
+        }
+        if (java.util.List.class.isAssignableFrom(type)) {
+            String[] options = ann.options().length > 0 ? ann.options() : ann.modes();
+            if (options.length > 0) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    java.util.List<String> val = (java.util.List<String>) field.get(this);
+                    return new MultiSelectParameter(name, val != null ? val : new java.util.ArrayList<>(), java.util.Arrays.asList(options));
+                } catch (IllegalAccessException e) {
+                    return new MultiSelectParameter(name, new java.util.ArrayList<>(), java.util.Arrays.asList(options));
+                }
+            }
+        }
+        return null;
     }
     protected void addParameter(Parameter<?> p) {
         parameters.add(p);

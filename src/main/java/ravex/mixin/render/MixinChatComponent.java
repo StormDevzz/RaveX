@@ -42,7 +42,7 @@ public abstract class MixinChatComponent {
             m = NameProtect.itz().protectComponent(m);
         }
         ChatHelper ch = ChatHelper.itz();
-        if (ch.getEnabled() && ch.timestamp.getValue()) {
+        if (ChatHelper.maybeEnabled() && ch.timestamp) {
             String ts = ch.applyTimestamp("");
             if (!ts.isEmpty()) {
                 m = Component.literal(ts).copy().append(m);

@@ -395,7 +395,7 @@ public class LuaManager {
         try {
             var rp = ModuleManager.get(ravex.modules.client.RichPresence.class);
             if (rp != null && rp.largeImage != null) {
-                String val = rp.largeImage.getValue();
+                String val = rp.largeImage;
                 if ("icon".equals(val)) {
                     return "ravexdc";
                 }

@@ -17,9 +17,9 @@ public class MixinNoInteract {
     @Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
     private void onStartUseItem(CallbackInfo ci) {
         NoInteract ni = NoInteract.itz();
-        if (!ni.getEnabled()) return;
+        if (!NoInteract.maybeEnabled()) return;
 
-        if (ni.allBlocks.getValue()) {
+        if (ni.allBlocks) {
             ci.cancel();
             return;
         }
@@ -33,19 +33,19 @@ public class MixinNoInteract {
             BlockState state = mc.level.getBlockState(pos);
             Block block = state.getBlock();
 
-            if (ni.chests.getValue() && isChestLike(block)) {
+            if (ni.chests && isChestLike(block)) {
                 ci.cancel();
             }
-            if (ni.enderChests.getValue() && block instanceof EnderChestBlock) {
+            if (ni.enderChests && block instanceof EnderChestBlock) {
                 ci.cancel();
             }
-            if (ni.furnaces.getValue() && block instanceof AbstractFurnaceBlock) {
+            if (ni.furnaces && block instanceof AbstractFurnaceBlock) {
                 ci.cancel();
             }
-            if (ni.crafting.getValue() && block instanceof CraftingTableBlock) {
+            if (ni.crafting && block instanceof CraftingTableBlock) {
                 ci.cancel();
             }
-            if (ni.enchanting.getValue() && block instanceof EnchantingTableBlock) {
+            if (ni.enchanting && block instanceof EnchantingTableBlock) {
                 ci.cancel();
             }
         }

@@ -1,26 +1,27 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "NoInteract", category = "net.minecraft.world.entity.player.Player")
-public class NoInteract extends ravex.modules.Module {
-public final BooleanParameter allBlocks = new BooleanParameter("AllBlocks", false);
-    public final BooleanParameter chests = new BooleanParameter("Chests", true);
-    public final BooleanParameter enderChests = new BooleanParameter("EnderChests", true);
-    public final BooleanParameter furnaces = new BooleanParameter("Furnaces", true);
-    public final BooleanParameter crafting = new BooleanParameter("Crafting", false);
-    public final BooleanParameter enchanting = new BooleanParameter("Enchanting", false);
+public class NoInteract implements ModuleAccess {
+    @Parameter(name = "AllBlocks")
+    public boolean allBlocks = false;
+    @Parameter(name = "Chests")
+    public boolean chests = true;
+    @Parameter(name = "EnderChests")
+    public boolean enderChests = true;
+    @Parameter(name = "Furnaces")
+    public boolean furnaces = true;
+    @Parameter(name = "Crafting")
+    public boolean crafting = false;
+    @Parameter(name = "Enchanting")
+    public boolean enchanting = false;
 
     public NoInteract() {
-        chests.setVisible(() -> !allBlocks.getValue());
-        enderChests.setVisible(() -> !allBlocks.getValue());
-        furnaces.setVisible(() -> !allBlocks.getValue());
-        crafting.setVisible(() -> !allBlocks.getValue());
-        enchanting.setVisible(() -> !allBlocks.getValue());
     }
 
     public boolean shouldBlockAll() {
-        return getEnabled() && allBlocks.getValue();
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NoInteract").getEnabled() && allBlocks;
     }
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("NoInteract").getEnabled();
@@ -29,16 +30,5 @@ public final BooleanParameter allBlocks = new BooleanParameter("AllBlocks", fals
         return ravex.manager.ModuleManager.delegate(NoInteract.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -1,24 +1,31 @@
 package ravex.modules.client;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 import ravex.manager.LuaManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
 @ModuleInfo(name = "RichPresence", category = "Client")
-public class RichPresence extends ravex.modules.Module {
-public final StringParameter largeImage = new StringParameter("LargeImage", "ravexdc");
-    public final BooleanParameter showHP     = new BooleanParameter("ShowHP",     true);
-    public final BooleanParameter showCoords = new BooleanParameter("ShowCoords", false);
-    public final BooleanParameter showIP     = new BooleanParameter("ShowIP",     true);
-    public final BooleanParameter showPing   = new BooleanParameter("ShowPing",   true);
-    public final BooleanParameter showButton = new BooleanParameter("ShowButton", true);
-    public final BooleanParameter showOS     = new BooleanParameter("ShowOS",     true);
+public class RichPresence implements ModuleAccess {
+    @Parameter(name = "LargeImage")
+    public String largeImage = "ravexdc";
+    @Parameter(name = "ShowHP")
+    public boolean showHP = true;
+    @Parameter(name = "ShowCoords")
+    public boolean showCoords = false;
+    @Parameter(name = "ShowIP")
+    public boolean showIP = true;
+    @Parameter(name = "ShowPing")
+    public boolean showPing = true;
+    @Parameter(name = "ShowButton")
+    public boolean showButton = true;
+    @Parameter(name = "ShowOS")
+    public boolean showOS = true;
     private Thread updateThread;
     private volatile boolean running = false;
-    protected void onEnable() {
+    public void onEnable() {
         running = true;
         updateThread = new Thread(() -> {
             try {
@@ -45,7 +52,7 @@ public final StringParameter largeImage = new StringParameter("LargeImage", "rav
         updateThread.setDaemon(true);
         updateThread.start();
     }
-    protected void onDisable() {
+    public void onDisable() {
         running = false;
         if (updateThread != null) {
             updateThread.interrupt();
@@ -66,19 +73,19 @@ public final StringParameter largeImage = new StringParameter("LargeImage", "rav
         } else {
             details = "RaveX — " + mc.player.getGameProfile().name();
             StringBuilder stateBuilder = new StringBuilder();
-            if (showHP.getValue()) {
+            if (showHP) {
                 int hp = (int) Math.ceil(mc.player.getHealth());
                 int maxHp = (int) Math.ceil(mc.player.getMaxHealth());
                 stateBuilder.append("HP ").append(hp).append("/").append(maxHp);
             }
-            if (showIP.getValue()) {
+            if (showIP) {
                 if (stateBuilder.length() > 0) stateBuilder.append(" | ");
                 ServerData server = mc.getCurrentServer();
                 if (server != null) {
                     stateBuilder.append(server.ip);
                 }
             }
-            if (showPing.getValue()) {
+            if (showPing) {
                 if (stateBuilder.length() > 0) stateBuilder.append(" | ");
                 if (mc.getConnection() != null) {
                     PlayerInfo info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
@@ -87,7 +94,7 @@ public final StringParameter largeImage = new StringParameter("LargeImage", "rav
                     }
                 }
             }
-            if (showCoords.getValue()) {
+            if (showCoords) {
                 if (stateBuilder.length() > 0) stateBuilder.append(" | ");
                 stateBuilder.append(String.format("XYZ: %.0f, %.0f, %.0f", mc.player.getX(), mc.player.getY(), mc.player.getZ()));
             } else {
@@ -103,7 +110,7 @@ public final StringParameter largeImage = new StringParameter("LargeImage", "rav
             state = stateBuilder.toString();
         }
         try {
-            LuaManager.INSTANCE.discordSetActivity(details, state, startTime, showOS.getValue(), showButton.getValue());
+            LuaManager.INSTANCE.discordSetActivity(details, state, startTime, showOS, showButton);
         } catch (Throwable t) {
             System.err.println("[RichPresence] discordSetActivity failed: " + t.getMessage());
         }
@@ -117,16 +124,5 @@ public final StringParameter largeImage = new StringParameter("LargeImage", "rav
         return ravex.manager.ModuleManager.delegate(RichPresence.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

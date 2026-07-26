@@ -1,24 +1,26 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-
-import ravex.parameter.ModeParameter;
-
+import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
+import net.minecraft.client.Minecraft;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+
+
+
 @ModuleInfo(name = "BlockMixer", category = "Misc")
-public class BlockMixer extends ravex.modules.Module {
-public final ModeParameter swap = new ModeParameter("Swap", "Normal", List.of("Normal", "Silent"));
+public class BlockMixer implements ModuleAccess {
+    @Parameter(name = "Swap", modes = {"Normal", "Silent"})
+    public String swap = "Normal";
     private static final Random RANDOM = new Random();
 
     public void shuffle() {
-        if (!getEnabled()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("BlockMixer").getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
+        net.minecraft.client.player.LocalPlayer player = mc.player;
         if (player == null) return;
         List<Integer> blockSlots = new ArrayList<>();
         for (int i = 0; i < 9; i++) {
@@ -28,7 +30,7 @@ public final ModeParameter swap = new ModeParameter("Swap", "Normal", List.of("N
             }
         }
         if (blockSlots.size() < 2) return;
-        if ("Normal".equals(swap.getValue())) {
+        if ("Normal".equals(swap)) {
             int a = blockSlots.get(RANDOM.nextInt(blockSlots.size()));
             int b = blockSlots.get(RANDOM.nextInt(blockSlots.size()));
             while (b == a && blockSlots.size() > 1) {
@@ -50,16 +52,5 @@ public final ModeParameter swap = new ModeParameter("Swap", "Normal", List.of("N
         return ravex.manager.ModuleManager.delegate(BlockMixer.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

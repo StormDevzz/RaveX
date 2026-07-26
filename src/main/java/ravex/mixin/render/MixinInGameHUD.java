@@ -19,7 +19,7 @@ public abstract class MixinInGameHUD {
 
     @Inject(method = "renderPortalOverlay", at = @At("HEAD"), cancellable = true)
     private void onRenderPortalOverlay(GuiGraphics guiGraphics, float f, CallbackInfo ci) {
-        if (NoRender.maybeEnabled() && NoRender.itz().portal.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().portal) {
             ci.cancel();
         }
     }

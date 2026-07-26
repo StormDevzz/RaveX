@@ -33,7 +33,7 @@ public class MixinItemEntityRenderer {
 
     @Inject(method = "submit(Lnet/minecraft/client/renderer/entity/state/ItemEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V", at = @At("HEAD"), cancellable = true)
     private void onSubmit(ItemEntityRenderState state, PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector collector, net.minecraft.client.renderer.state.CameraRenderState cameraState, CallbackInfo ci) {
-        if (NoRender.maybeEnabled() && NoRender.itz().items.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().items) {
             ci.cancel();
             return;
         }
@@ -82,7 +82,7 @@ public class MixinItemEntityRenderer {
         poseStack.translate(0, floatOffset + 0.1875F, 0);
 
 
-        float baseScale = 0.5F * ItemPhysics.itz().scale.getValue().floatValue();
+        float baseScale = 0.5F * (float) ItemPhysics.itz().scale;
         poseStack.scale(baseScale, baseScale, baseScale);
 
 

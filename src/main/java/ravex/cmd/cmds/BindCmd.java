@@ -12,7 +12,7 @@ public class BindCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        String pref = ModuleManager.get(Commands.class).prefix.getValue();
+        String pref = ModuleManager.get(Commands.class).prefix;
         if (args.length < 2) { CmdReg.print("§c[RaveX] Usage: " + pref + "bind <module/list/clear> [key]"); return; }
         String sub = args[1].toLowerCase(Locale.ROOT);
         switch (sub) {

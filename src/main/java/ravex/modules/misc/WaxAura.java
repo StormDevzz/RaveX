@@ -1,30 +1,33 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.item.HoneycombItem;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.HoneycombItem;
+
+
+
 @ModuleInfo(name = "WaxAura", category = "Misc")
-public class WaxAura extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
-    public final NumberParameter delay = new NumberParameter("Delay", 2.0, 0.0, 20.0, 1.0);
-    public final BooleanParameter autoSwap = new BooleanParameter("AutoSwap", true);
-    public final BooleanParameter silent = new BooleanParameter("Silent", true);
+public class WaxAura implements ModuleAccess {
+    @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "Delay", min = 0.0, max = 20.0, step = 1.0)
+    public double delay = 2.0;
+    @Parameter(name = "AutoSwap")
+    public boolean autoSwap = true;
+    @Parameter(name = "Silent")
+    public boolean silent = true;
     private int delayTimer = 0;
-    protected void onEnable() {
+    public void onEnable() {
         delayTimer = 0;
     }
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
         if (delayTimer > 0) {
             delayTimer--;
@@ -39,7 +42,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
             }
         }
         if (honeycombSlot == -1) return;
-        double r = range.getValue();
+        double r = range;
         net.minecraft.core.BlockPos playerPos = p.blockPosition();
         net.minecraft.core.BlockPos targetPos = null;
         double closestDistSq = r * r;
@@ -50,7 +53,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
                     net.minecraft.core.BlockPos pos = playerPos.offset(x, y, z);
                     double distSq = p.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
                     if (distSq < closestDistSq) {
-                        BlockState state = mc.level.getBlockState(pos);
+                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
                         if (HoneycombItem.getWaxed(state).isPresent()) {
                             closestDistSq = distSq;
                             targetPos = pos;
@@ -61,17 +64,17 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
         }
         if (targetPos != null) {
             int prevSlot = InventoryUtility.getSelectedSlot(p);
-            if (autoSwap.getValue() && honeycombSlot != prevSlot) {
+            if (autoSwap && honeycombSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, honeycombSlot);
             }
             net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(targetPos);
-            BlockHitResult blockHit = new BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
+            net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
             mc.gameMode.useItemOn(p, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
             p.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-            if (autoSwap.getValue() && silent.getValue() && honeycombSlot != prevSlot) {
+            if (autoSwap && silent && honeycombSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, prevSlot);
             }
-            delayTimer = delay.getValue().intValue();
+            delayTimer = (int) delay;
         }
     }
 
@@ -79,16 +82,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0,
         return ravex.manager.ModuleManager.delegate(WaxAura.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

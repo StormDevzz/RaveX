@@ -1,18 +1,20 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
+import ravex.event.network.PacketEvent;
+import ravex.event.Subscribe;
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
-import ravex.event.Subscribe;
-import ravex.event.network.PacketEvent;
+
+
+
 
 @ModuleInfo(name = "PortalGod", category = "Misc")
-public class PortalGod extends ravex.modules.Module {
+public class PortalGod implements ModuleAccess {
 @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!getEnabled() || !event.isSend()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("PortalGod").getEnabled() || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
-        if (packet instanceof ServerboundAcceptTeleportationPacket) {
+        if (packet instanceof net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket) {
             event.setCancelled(true);
         }
     }
@@ -21,16 +23,5 @@ public class PortalGod extends ravex.modules.Module {
         return ravex.manager.ModuleManager.delegate(PortalGod.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

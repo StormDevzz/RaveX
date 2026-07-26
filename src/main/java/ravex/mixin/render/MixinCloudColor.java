@@ -16,7 +16,7 @@ public class MixinCloudColor {
     @Inject(method = "getValue", at = @At("HEAD"), cancellable = true)
     private <Value> void onGetValue(EnvironmentAttribute<Value> attribute, float partialTick,
                                     CallbackInfoReturnable<Value> cir) {
-        if (!WorldColor.maybeEnabled() || !WorldColor.itz().cloud.getValue()) return;
+        if (!WorldColor.maybeEnabled() || !WorldColor.itz().cloud) return;
         if (attribute == EnvironmentAttributes.CLOUD_COLOR) {
             cir.setReturnValue((Value) Integer.valueOf(WorldColor.itz().cloudColor.getValue()));
         }

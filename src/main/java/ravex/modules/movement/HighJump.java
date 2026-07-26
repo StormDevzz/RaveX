@@ -1,22 +1,23 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "HighJump", category = "Movement")
-public class HighJump extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "GrimShulker"));
-    public final NumberParameter height = new NumberParameter("Height", 2.0, 0.5, 10.0, 0.1);
+public class HighJump implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Vanilla", "GrimShulker"})
+    public String mode = "Vanilla";
+    @Parameter(name = "Height", min = 0.5, max = 10.0, step = 0.1)
+    public double height = 2.0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (mc.options.keyJump.isDown() && mc.player.onGround()) {
-            if ("Vanilla".equals(mode.getValue())) {
-                mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, height.getValue(), mc.player.getDeltaMovement().z);
-            } else if ("GrimShulker".equals(mode.getValue())) {
+            if ("Vanilla".equals(mode)) {
+                mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, height, mc.player.getDeltaMovement().z);
+            } else if ("GrimShulker".equals(mode)) {
                 int shulkerSlot = findShulkerBox();
                 if (shulkerSlot != -1) {
                     int oldSlot = InventoryUtility.getSelectedSlot(mc.player);
@@ -37,7 +38,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
                     mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(
                         net.minecraft.world.InteractionHand.MAIN_HAND, openHit, 0
                     ));
-                    mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, height.getValue(), mc.player.getDeltaMovement().z);
+                    mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, height, mc.player.getDeltaMovement().z);
                     InventoryUtility.selectSlot(mc.player, oldSlot);
                 }
             }
@@ -62,16 +63,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
         return ravex.manager.ModuleManager.delegate(HighJump.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

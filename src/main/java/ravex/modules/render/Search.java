@@ -1,27 +1,27 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
+import ravex.gui.browser.SearchBrowserScreen;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
+import ravex.parameter.ActionParameter;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.resources.Identifier;
 import ravex.utility.misc.EntityUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
-import ravex.gui.browser.SearchBrowserScreen;
-
-import ravex.parameter.ActionParameter;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+
+
+
+
 @ModuleInfo(name = "Search", category = "Render")
-public class Search extends ravex.modules.Module {
+public class Search implements ModuleAccess {
 private final Set<Identifier> selectedBlocks = new HashSet<>();
     private final Set<Identifier> selectedEntities = new HashSet<>();
     private final List<net.minecraft.core.BlockPos> foundBlocks = new ArrayList<>();
@@ -37,10 +37,14 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
             () -> { selectedBlocks.clear(); selectedEntities.clear(); }
         ));
     });
-    public final NumberParameter range = new NumberParameter("Range", 64.0, 16.0, 256.0, 8.0);
-    public final ColorParameter blockColor = new ColorParameter("Block Color", 0xCC00FF00);
-    public final ColorParameter entityColor = new ColorParameter("net.minecraft.world.entity.Entity Color", 0xCC00FFFF);
-    public final BooleanParameter esp = new BooleanParameter("ESP", true);
+    @Parameter(name = "Range", min = 16.0, max = 256.0, step = 8.0)
+    public double range = 64.0;
+    @Parameter(name = "Block Color", color = true)
+    public int blockColor = 0xCC00FF00;
+    @Parameter(name = "net.minecraft.world.entity.Entity Color", color = true)
+    public int entityColor = 0xCC00FFFF;
+    @Parameter(name = "ESP")
+    public boolean esp = true;
 
     private Search() {
         
@@ -71,7 +75,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        int r = range.getValue().intValue();
+        int r = (int) range;
         net.minecraft.core.BlockPos c = mc.player.blockPosition();
         int minX = c.getX() - r, minZ = c.getZ() - r;
         int maxX = c.getX() + r, maxZ = c.getZ() + r;
@@ -86,7 +90,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
                         int maxY = mc.level.getHeight();
                         for (int by = mc.level.getMinY(); by < maxY; by++) {
                             net.minecraft.core.BlockPos p = new net.minecraft.core.BlockPos(bx, by, bz);
-                            BlockState state = chunk.getBlockState(p);
+                            net.minecraft.world.level.block.state.BlockState state = chunk.getBlockState(p);
                             if (state.isAir()) continue;
                             Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
                             if (selectedBlocks.contains(id)) {
@@ -99,7 +103,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
         }
     }
     public void onTick() {
-        if (getEnabled()) {
+        if (ravex.manager.ModuleManager.INSTANCE.getByName("Search").getEnabled()) {
             scanBlocks();
         }
     }
@@ -115,16 +119,5 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
         return ravex.manager.ModuleManager.delegate(Search.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

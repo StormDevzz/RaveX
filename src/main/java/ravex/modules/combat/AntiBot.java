@@ -1,24 +1,30 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 
 
 import ravex.utility.misc.MobUtility;
-import ravex.parameter.BooleanParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
 
 @ModuleInfo(name = "AntiBot", category = "Combat")
-public class AntiBot extends ravex.modules.Module {
-public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKillAura", false);
-    public final BooleanParameter onlyOnTrigger = new BooleanParameter("OnlyWithTrigger", false);
-    public final BooleanParameter removeInvisible = new BooleanParameter("RemoveInvisible", true);
-    public final BooleanParameter checkPing = new BooleanParameter("PingCheck", true);
-    public final BooleanParameter checkName = new BooleanParameter("NameCheck", true);
-    public final BooleanParameter checkMovement = new BooleanParameter("MovementCheck", true);
+public class AntiBot implements ModuleAccess {
+    @Parameter(name = "OnlyWithKillAura")
+    public boolean onlyOnKillAura = false;
+    @Parameter(name = "OnlyWithTrigger")
+    public boolean onlyOnTrigger = false;
+    @Parameter(name = "RemoveInvisible")
+    public boolean removeInvisible = true;
+    @Parameter(name = "PingCheck")
+    public boolean checkPing = true;
+    @Parameter(name = "NameCheck")
+    public boolean checkName = true;
+    @Parameter(name = "MovementCheck")
+    public boolean checkMovement = true;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_antibot");
     static {
         NATIVE.load();
@@ -30,8 +36,8 @@ public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKil
         return botList.contains(entity);
     }
     public boolean shouldProtectTarget() {
-        if (onlyOnKillAura.getValue() && !ravex.manager.ModuleManager.delegate(ravex.modules.combat.KillAura.class).getEnabled()) return false;
-        if (onlyOnTrigger.getValue() && !ravex.manager.ModuleManager.delegate(ravex.modules.combat.Trigger.class).getEnabled()) return false;
+        if (onlyOnKillAura && !ravex.manager.ModuleManager.delegate(ravex.modules.combat.KillAura.class).getEnabled()) return false;
+        if (onlyOnTrigger && !ravex.manager.ModuleManager.delegate(ravex.modules.combat.Trigger.class).getEnabled()) return false;
         return true;
     }
     public void onTick() {
@@ -47,7 +53,7 @@ public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKil
             if (!MobUtility.isPlayer(MobUtility.asLivingEntity(e)) || !e.isAlive()) continue;
             net.minecraft.world.entity.player.Player p = (net.minecraft.world.entity.player.Player) e;
             boolean suspect = false;
-            if (removeInvisible.getValue() && p.isInvisible()) {
+            if (removeInvisible && p.isInvisible()) {
                 suspect = true;
             }
             if (NATIVE.isLoaded()) {
@@ -57,18 +63,18 @@ public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKil
                     p.getX(), p.getY(), p.getZ(),
                     p.getDeltaMovement().x, p.getDeltaMovement().y, p.getDeltaMovement().z,
                     mc.player.distanceTo(p),
-                    checkPing.getValue(),
-                    checkName.getValue(),
-                    checkMovement.getValue()
+                    checkPing,
+                    checkName,
+                    checkMovement
                 );
                 if (result != null && result.length > 0 && result[0] > 0.5) {
                     suspect = true;
                 }
             } else {
-                if (checkName.getValue() && isSuspiciousName(p.getName().getString())) {
+                if (checkName && isSuspiciousName(p.getName().getString())) {
                     suspect = true;
                 }
-                if (checkPing.getValue()) {
+                if (checkPing) {
                     try {
                         var conn = mc.getConnection();
                         if (conn != null) {
@@ -77,7 +83,7 @@ public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKil
                         }
                     } catch (Throwable ignored) {}
                 }
-                if (checkMovement.getValue()) {
+                if (checkMovement) {
                     double dx = p.getX() - p.xo;
                     double dz = p.getZ() - p.zo;
                     if (Math.abs(dx) < 0.001 && Math.abs(dz) < 0.001 && p.tickCount > 40) {
@@ -112,16 +118,5 @@ public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKil
         return ravex.manager.ModuleManager.delegate(AntiBot.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

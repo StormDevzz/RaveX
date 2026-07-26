@@ -1,33 +1,38 @@
 package ravex.modules.world.nuker;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
+import ravex.modules.world.GhostBlocks;
+import ravex.parameter.ActionParameter;
 import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.PhysicUtility;
+import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.level.block.state.BlockState;
-import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.ActionParameter;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-import ravex.modules.world.GhostBlocks;
-import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
+
+
+
 @ModuleInfo(name = "Nuker", category = "World")
-public class Nuker extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
-    public final ModeParameter mode = new ModeParameter("Mode", "Sphere", List.of("Sphere", "Cube"));
-    public final NumberParameter delay = new NumberParameter("Delay", 200, 50, 1000, 50);
-    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", false);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
+public class Nuker implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 10.0, step = 0.5)
+    public double range = 5.0;
+    @Parameter(name = "Mode", modes = {"Sphere", "Cube"})
+    public String mode = "Sphere";
+    @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
+    public double delay = 200;
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = false;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0x3FFF4444;
     public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
         Minecraft.getInstance().setScreen(
             ravex.gui.browser.BlockBrowserScreen.forNuker(Minecraft.getInstance().screen)
@@ -63,7 +68,7 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
             NukerData.INSTANCE.select(id);
         }
     }
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (currentMiningTarget != null && mc.gameMode != null) {
             mc.gameMode.stopDestroyBlock();
@@ -76,7 +81,7 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         long now = System.currentTimeMillis();
         if (currentMiningTarget != null) {
-            BlockState state = mc.level.getBlockState(currentMiningTarget);
+            net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(currentMiningTarget);
             if (state.isAir()) {
                 currentMiningTarget = null;
                 currentTarget = null;
@@ -88,8 +93,8 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
                 return;
             }
         }
-        if (now - lastBreakTime < delay.getValue()) return;
-        double r = range.getValue();
+        if (now - lastBreakTime < delay) return;
+        double r = range;
         net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int minX = (int) Math.floor(playerPos.getX() - r);
         int maxX = (int) Math.ceil(playerPos.getX() + r);
@@ -102,7 +107,7 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
-                    BlockState state = mc.level.getBlockState(pos);
+                    net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
                     if (state.isAir() || state.getDestroySpeed(mc.level, pos) < 0) continue;
                     Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
                     if (NukerData.INSTANCE.isSelected(id)) {
@@ -113,7 +118,7 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         }
         if (candidates.isEmpty()) {
             currentTarget = null;
-            if (autoDisable.getValue()) enabled = false;
+            if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("Nuker").setEnabled(false);
             return;
         }
         net.minecraft.core.BlockPos target = null;
@@ -128,7 +133,7 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
                     by[i] = candidates.get(i).getY();
                     bz[i] = candidates.get(i).getZ();
                 }
-                int modeVal = "Sphere".equals(mode.getValue()) ? 0 : 1;
+                int modeVal = "Sphere".equals(mode) ? 0 : 1;
                 net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
                 int[] result = nativeFindBlocks(
                     eye.x, eye.y, eye.z,
@@ -161,9 +166,9 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         }
     }
     private net.minecraft.core.BlockPos fallbackFindTarget(List<net.minecraft.core.BlockPos> candidates, Minecraft mc) {
-        boolean sphere = "Sphere".equals(mode.getValue());
+        boolean sphere = "Sphere".equals(mode);
         net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
-        double rSq = range.getValue() * range.getValue();
+        double rSq = range * range;
         net.minecraft.core.BlockPos closest = null;
         double closestDist = Double.MAX_VALUE;
         for (net.minecraft.core.BlockPos pos : candidates) {
@@ -217,16 +222,5 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         return ravex.manager.ModuleManager.delegate(Nuker.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

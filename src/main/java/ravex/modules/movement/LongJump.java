@@ -1,21 +1,22 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.PhysicUtility;
 import java.util.List;
 @ModuleInfo(name = "LongJump", category = "Movement")
-public class LongJump extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla"));
-    public final NumberParameter boost = new NumberParameter("Boost", 1.5, 1.0, 10.0, 0.1);
+public class LongJump implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Vanilla"})
+    public String mode = "Vanilla";
+    @Parameter(name = "Boost", min = 1.0, max = 10.0, step = 0.1)
+    public double boost = 1.5;
     public static boolean jumped = false;
 
     private LongJump() {
         
     }
-    protected void onEnable() {
+    public void onEnable() {
         jumped = false;
     }
     public void onTick() {
@@ -25,7 +26,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
         if (mc.player.onGround()) {
             jumped = false;
         } else if (!jumped) {
-            double speed = boost.getValue();
+            double speed = boost;
             net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
             mc.player.setDeltaMovement(motion.x * speed, motion.y + 0.05, motion.z * speed);
             jumped = true;
@@ -39,16 +40,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
         return ravex.manager.ModuleManager.delegate(LongJump.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

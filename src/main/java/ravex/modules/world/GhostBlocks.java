@@ -1,6 +1,7 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -10,17 +11,17 @@ import net.minecraft.resources.Identifier;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.network.NetworkUtility;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 @ModuleInfo(name = "GhostBlocks", category = "World")
-public class GhostBlocks extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Strict", java.util.List.of("Strict", "Smooth"));
-    public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0, 0.5);
+public class GhostBlocks implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Strict", "Smooth"})
+    public String mode = "Strict";
+    @Parameter(name = "Range", min = 2.0, max = 12.0, step = 0.5)
+    public double range = 6.0;
     private final Set<Long> recentlyMined = new HashSet<>();
     private final Map<Long, String> serverBlocks = new HashMap<>();
     private long lastCheckTime = 0;
@@ -30,7 +31,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Strict", java.util.
         long now = System.currentTimeMillis();
         if (now - lastCheckTime < 500) return;
         lastCheckTime = now;
-        double r = range.getValue();
+        double r = range;
         var pPos = mc.player.blockPosition();
         int minX = (int) Math.floor(pPos.getX() - r);
         int maxX = (int) Math.ceil(pPos.getX() + r);
@@ -46,7 +47,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Strict", java.util.
                     if (BlockUtility.isAir(mc.level, x, y, z)) continue;
                     if (BlockUtility.destroySpeed(mc.level, pos) < 0) continue;
                     if (!isGhostBlock(x, y, z, getBlockId(BlockUtility.getState(mc.level, x, y, z)))) continue;
-                    if ("Strict".equals(mode.getValue())) {
+                    if ("Strict".equals(mode)) {
                         NetworkUtility.sendStartDestroy(pos, net.minecraft.core.Direction.UP, 0);
                         NetworkUtility.sendStopDestroy(pos, net.minecraft.core.Direction.UP, 0);
                         recentlyMined.remove(packed);
@@ -63,7 +64,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Strict", java.util.
     }
     @Subscribe
     public void onPacketEvent(PacketEvent event) {
-        if (!getEnabled() || !event.isReceive()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("GhostBlocks").getEnabled() || !event.isReceive()) return;
         Object packet = event.getPacket();
         if (packet instanceof ClientboundBlockUpdatePacket blockUpdate) {
             net.minecraft.core.BlockPos pos = blockUpdate.getPos();
@@ -105,16 +106,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Strict", java.util.
         return ravex.manager.ModuleManager.delegate(GhostBlocks.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

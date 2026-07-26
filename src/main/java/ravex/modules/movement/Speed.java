@@ -1,39 +1,37 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-import ravex.parameter.BooleanParameter;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 
 @ModuleInfo(name = "Speed", category = "Movement")
-public class Speed extends ravex.modules.Module {
+public class Speed implements ModuleAccess {
 public static boolean cancelVertical = false;
     public static float matrixTimer = 1.0f;
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
-        java.util.List.of("Vanilla", "Strafe", "StrafeStrict", "NCP", "NCPStrict", "Matrix", "Grim", "GrimStrict"));
-    public final NumberParameter speed = new NumberParameter("Speed", 1.5, 0.5, 5.0, 0.1);
-    public final BooleanParameter strafeJump = new BooleanParameter("StrafeJump", true);
-    public final BooleanParameter autoJump = new BooleanParameter("AutoJump", true);
-    public final NumberParameter speedLimit = new NumberParameter("SpeedLimit", 0.28, 0.1, 1.0, 0.01);
-    public final NumberParameter grimBoost = new NumberParameter("GrimBoost", 1.0, 0.1, 2.0, 0.1);
-    public final NumberParameter matrixInputMul = new NumberParameter("InputMul", 1.3, 1.0, 3.0, 0.1);
-    public final NumberParameter strafeStrictCap = new NumberParameter("SSCap", 0.44, 0.1, 1.0, 0.01);
-    public final BooleanParameter strafeStrictTimer = new BooleanParameter("SSTimer", true);
+    @Parameter(name = "Mode", modes = {"Vanilla", "Strafe", "StrafeStrict", "NCP", "NCPStrict", "Matrix", "Grim", "GrimStrict"})
+    public String mode = "Vanilla";
+    @Parameter(name = "Speed", min = 0.5, max = 5.0, step = 0.1)
+    public double speed = 1.5;
+    @Parameter(name = "StrafeJump")
+    public boolean strafeJump = true;
+    @Parameter(name = "AutoJump")
+    public boolean autoJump = true;
+    @Parameter(name = "SpeedLimit", min = 0.1, max = 1.0, step = 0.01)
+    public double speedLimit = 0.28;
+    @Parameter(name = "GrimBoost", min = 0.1, max = 2.0, step = 0.1)
+    public double grimBoost = 1.0;
+    @Parameter(name = "InputMul", min = 1.0, max = 3.0, step = 0.1)
+    public double matrixInputMul = 1.3;
+    @Parameter(name = "SSCap", min = 0.1, max = 1.0, step = 0.01)
+    public double strafeStrictCap = 0.44;
+    @Parameter(name = "SSTimer")
+    public boolean strafeStrictTimer = true;
 
     private Speed() {
         
-        strafeJump.setVisible(() -> "Strafe".equals(mode.getValue()));
-        grimBoost.setVisible(() -> "Grim".equals(mode.getValue()) || "GrimStrict".equals(mode.getValue()));
-        autoJump.setVisible(() -> !"GrimStrict".equals(mode.getValue()) && !"Grim".equals(mode.getValue()) && !"StrafeStrict".equals(mode.getValue()));
-        speedLimit.setVisible(() -> !"GrimStrict".equals(mode.getValue()) && !"StrafeStrict".equals(mode.getValue()));
-        speed.setVisible(() -> !"GrimStrict".equals(mode.getValue()) && !"StrafeStrict".equals(mode.getValue()));
-        matrixInputMul.setVisible(() -> "Matrix".equals(mode.getValue()));
-        strafeStrictCap.setVisible(() -> "StrafeStrict".equals(mode.getValue()));
-        strafeStrictTimer.setVisible(() -> "StrafeStrict".equals(mode.getValue()));
     }
     public void onTick() {
-        if (!"Matrix".equals(mode.getValue())) {
+        if (!"Matrix".equals(mode)) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -55,16 +53,5 @@ public static boolean cancelVertical = false;
         return ravex.manager.ModuleManager.delegate(Speed.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -11,7 +11,7 @@ public class HelpCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        String p = ModuleManager.get(Commands.class).prefix.getValue();
+        String p = ModuleManager.get(Commands.class).prefix;
         Set<Cmd> printed = new HashSet<>();
         CmdReg.print("§7Commands:");
         for (Cmd cmd : CmdReg.INSTANCE.getCommands().values()) {

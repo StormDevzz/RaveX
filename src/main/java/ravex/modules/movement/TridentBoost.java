@@ -1,18 +1,20 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.PhysicUtility;
 
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 @ModuleInfo(name = "TridentBoost", category = "Movement")
-public class TridentBoost extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Always"));
-    public final NumberParameter speed = new NumberParameter("Speed", 1.0, 0.5, 3.0, 0.1);
-    public final NumberParameter vertical = new NumberParameter("Vertical", 0.5, 0.0, 2.0, 0.1);
+public class TridentBoost implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Normal", "Always"})
+    public String mode = "Normal";
+    @Parameter(name = "Speed", min = 0.5, max = 3.0, step = 0.1)
+    public double speed = 1.0;
+    @Parameter(name = "Vertical", min = 0.0, max = 2.0, step = 0.1)
+    public double vertical = 0.5;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -20,12 +22,12 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
         if (!InventoryUtility.isTrident(main)) return;
         if (!InventoryUtility.hasEnchantment(main, "riptide")) return;
         if (!mc.player.isUsingItem()) return;
-        String m = mode.getValue();
+        String m = mode;
         if (m.equals("Normal") && !mc.player.isInWaterOrRain()) return;
         float yaw = mc.player.getYRot() * ((float)Math.PI / 180F);
         float pitch = mc.player.getXRot() * ((float)Math.PI / 180F);
-        double mult = speed.getValue();
-        double vert = vertical.getValue();
+        double mult = speed;
+        double vert = vertical;
         double dx = -Math.sin(yaw) * Math.cos(pitch) * mult;
         double dy = -Math.sin(pitch) * vert;
         double dz = Math.cos(yaw) * Math.cos(pitch) * mult;
@@ -39,16 +41,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
         return ravex.manager.ModuleManager.delegate(TridentBoost.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

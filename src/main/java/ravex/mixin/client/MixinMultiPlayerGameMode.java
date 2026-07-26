@@ -18,7 +18,7 @@ public class MixinMultiPlayerGameMode {
         Minecraft mc = Minecraft.getInstance();
         PacketMine pm = PacketMine.itz();
 
-        if (pm.getEnabled() && pm.grimMode.getValue().equals("Strict")) {
+        if (PacketMine.maybeEnabled() && pm.grimMode.equals("Strict")) {
             if (pm.isTargetBlock(pos)) {
                 AccessorMultiPlayerGameMode accessor = (AccessorMultiPlayerGameMode) this;
                 accessor.setDestroyBlockPos(pos);

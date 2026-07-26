@@ -1,11 +1,13 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "NoSwing", category = "net.minecraft.world.entity.player.Player")
-public class NoSwing extends ravex.modules.Module {
-public final BooleanParameter self = new BooleanParameter("Self", true);
-    public final BooleanParameter others = new BooleanParameter("Others", false);
+public class NoSwing implements ModuleAccess {
+    @Parameter(name = "Self")
+    public boolean self = true;
+    @Parameter(name = "Others")
+    public boolean others = false;
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("NoSwing").getEnabled();
     }
@@ -13,16 +15,5 @@ public final BooleanParameter self = new BooleanParameter("Self", true);
         return ravex.manager.ModuleManager.delegate(NoSwing.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

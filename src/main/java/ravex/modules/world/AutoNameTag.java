@@ -1,12 +1,12 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.MobUtility;
 import net.minecraft.client.Minecraft;
 @ModuleInfo(name = "AutoNameTag", category = "World")
-public class AutoNameTag extends ravex.modules.Module {
+public class AutoNameTag implements ModuleAccess {
 public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
@@ -47,16 +47,5 @@ public void onTick() {
         return ravex.manager.ModuleManager.delegate(AutoNameTag.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

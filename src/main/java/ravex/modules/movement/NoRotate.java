@@ -1,14 +1,15 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 
-import ravex.parameter.ModeParameter;
 import java.util.List;
 import java.util.Random;
 @ModuleInfo(name = "NoRotate", category = "Movement")
-public class NoRotate extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Strict"));
+public class NoRotate implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Normal", "Strict"})
+    public String mode = "Normal";
     private float savedYaw;
     private float savedPitch;
     private final Random random = new Random();
@@ -21,10 +22,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
         }
     }
     public void restoreRotation() {
-        if (!getEnabled()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoRotate").getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            if ("Strict".equals(mode.getValue())) {
+            if ("Strict".equals(mode)) {
                 float yaw = savedYaw;
                 float pitch = savedPitch;
                 if (yaw % 90 == 0) yaw += (random.nextFloat() - 0.5f) * 0.1f;
@@ -45,16 +46,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
         return ravex.manager.ModuleManager.delegate(NoRotate.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

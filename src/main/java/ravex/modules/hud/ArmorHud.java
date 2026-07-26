@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -26,12 +26,14 @@ private static final EquipmentSlot[] SLOTS = {
         EquipmentSlot.FEET
     };
 
-    public final ModeParameter colorMode = new ModeParameter("ColorMode", "Dynamic", java.util.List.of("Dynamic", "Custom"));
+    @Parameter(name = "ColorMode", modes = {"Dynamic", "Custom"})
+    public String colorMode = "Dynamic";
     public final DependencyParameter<Integer, ColorParameter> customColor = new DependencyParameter<>(
-        new ColorParameter("CustomColor", 0xFF44FF88), colorMode, "Custom"
+        new ColorParameter("CustomColor", 0xFF44FF88), new ModeParameter("ColorMode", "Dynamic", java.util.List.of("Dynamic", "Custom")), "Custom"
     );
 
     private ArmorHud() {
+        super("ArmorHud", 30, 30, 80, 20);
         this.x = 10; this.y = 260; this.width = 92; this.height = 29;
     }
 
@@ -73,7 +75,7 @@ private static final EquipmentSlot[] SLOTS = {
 
                 if (stack.isDamageableItem()) {
                     float pct = (float) (stack.getMaxDamage() - stack.getDamageValue()) / stack.getMaxDamage();
-                    int barColor = colorMode.getValue().equals("Custom")
+                    int barColor = colorMode.equals("Custom")
                         ? customColor.getValue()
                         : ravex.utility.render.ColorUtility.interpolate(0xFFFF3333, 0xFF33FF33, pct);
 
@@ -85,18 +87,7 @@ private static final EquipmentSlot[] SLOTS = {
         }
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

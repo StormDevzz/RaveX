@@ -14,7 +14,7 @@ public abstract class MixinPlayerNoSlow {
     @Inject(method = "aiStep", at = @At("HEAD"))
     private void onPlayerAiStep(CallbackInfo ci) {
         NoSlow ns = NoSlow.itz();
-        if (!ns.items.getValue()) return;
+        if (!ns.items) return;
 
         // GrimV3 input scaling
         if (ns.isV3Active()) {

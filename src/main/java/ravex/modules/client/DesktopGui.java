@@ -1,5 +1,5 @@
 package ravex.modules.client;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;
@@ -10,19 +10,19 @@ import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 @ModuleInfo(name = "DesktopGui", category = "Client")
-public class DesktopGui extends ravex.modules.Module {
+public class DesktopGui implements ModuleAccess {
 private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_desktopgui");
     static {
         NATIVE.load();
     }
-    protected void onEnable() {
+    public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (!NATIVE.isLoaded()) {
             if (mc.player != null) {
                 mc.player.displayClientMessage(
                     net.minecraft.network.chat.Component.literal("§7[§5DesktopGui§7] §cNative library not found!"), false);
             }
-            enabled = false;
+            ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").setEnabled(false);
             return;
         }
         EventBusHolder.get().subscribe(this);
@@ -35,7 +35,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         }
         openDesktopGui(names, states);
     }
-    protected void onDisable() {
+    public void onDisable() {
         EventBusHolder.get().unsubscribe(this);
         if (NATIVE.isLoaded()) {
             closeDesktopGui();
@@ -60,8 +60,8 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
     public static void onNativeClose() {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
-            if (ravex.manager.ModuleManager.delegate(DesktopGui.class).getEnabled()) {
-                ravex.manager.ModuleManager.delegate(DesktopGui.class).setEnabled(false);
+            if (ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").getEnabled()) {
+                ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").setEnabled(false);
             }
         });
     }
@@ -74,22 +74,22 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         for (Parameter<?> p : params) {
             String pname = p.getName();
             if (p instanceof BooleanParameter) {
-                sb.append("bool:").append(pname).append(":").append(p.getValue()).append("|");
+                sb.append("bool:").append(pname).append(":").append(p).append("|");
             } else if (p instanceof NumberParameter np) {
-                sb.append("num:").append(pname).append(":").append(np.getValue())
+                sb.append("num:").append(pname).append(":").append(np)
                   .append(":").append(np.getMin()).append(":").append(np.getMax()).append(":").append(np.getStep()).append("|");
             } else if (p instanceof ModeParameter mp) {
-                sb.append("mode:").append(pname).append(":").append(mp.getValue()).append(":");
+                sb.append("mode:").append(pname).append(":").append(mp).append(":");
                 for (String opt : mp.getModes()) {
                     sb.append(opt).append(",");
                 }
                 sb.append("|");
             } else if (p instanceof StringParameter) {
-                sb.append("str:").append(pname).append(":").append(p.getValue()).append("|");
+                sb.append("str:").append(pname).append(":").append(p).append("|");
             } else if (p instanceof ActionParameter) {
                 sb.append("action:").append(pname).append("|");
             } else if (p instanceof ColorParameter) {
-                sb.append("color:").append(pname).append(":").append(p.getValue()).append("|");
+                sb.append("color:").append(pname).append(":").append(p).append("|");
             }
         }
         if (!sb.isEmpty()) sb.setLength(sb.length() - 1);
@@ -129,16 +129,5 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         return ravex.manager.ModuleManager.delegate(DesktopGui.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

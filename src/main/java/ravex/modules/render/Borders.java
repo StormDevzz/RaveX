@@ -1,21 +1,25 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.ChunkPos;
 import ravex.utility.misc.block.BlockUtility;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
 @ModuleInfo(name = "Borders", category = "Render")
-public class Borders extends ravex.modules.Module {
-public final BooleanParameter showChunkBorders = new BooleanParameter("ChunkBorders", true);
-    public final BooleanParameter showCurrentChunk = new BooleanParameter("CurrentChunk", true);
-    public final ColorParameter chunkColor = new ColorParameter("ChunkColor", 0x55FFFFFF);
-    public final ColorParameter currentColor = new ColorParameter("CurrentColor", 0x55FF5500);
-    public final NumberParameter lineWidth = new NumberParameter("LineWidth", 1.5, 0.5, 5.0, 0.5);
-    public final NumberParameter renderDistance = new NumberParameter("RenderDist", 64, 16, 128, 16);
+public class Borders implements ModuleAccess {
+    @Parameter(name = "ChunkBorders")
+    public boolean showChunkBorders = true;
+    @Parameter(name = "CurrentChunk")
+    public boolean showCurrentChunk = true;
+    @Parameter(name = "ChunkColor", color = true)
+    public int chunkColor = 0x55FFFFFF;
+    @Parameter(name = "CurrentColor", color = true)
+    public int currentColor = 0x55FF5500;
+    @Parameter(name = "LineWidth", min = 0.5, max = 5.0, step = 0.5)
+    public double lineWidth = 1.5;
+    @Parameter(name = "RenderDist", min = 16, max = 128, step = 16)
+    public double renderDistance = 64;
     private ChunkPos lastChunk;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
@@ -33,16 +37,5 @@ public final BooleanParameter showChunkBorders = new BooleanParameter("ChunkBord
         return ravex.manager.ModuleManager.delegate(Borders.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

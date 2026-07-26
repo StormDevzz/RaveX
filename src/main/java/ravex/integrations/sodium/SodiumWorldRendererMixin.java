@@ -15,7 +15,7 @@ public abstract class SodiumWorldRendererMixin {
 
     @ModifyVariable(method = "setupTerrain", at = @At("HEAD"), argsOnly = true, name = "fogParameters")
     private FogParameters ravex$modifyFogParameters(FogParameters fogParameters) {
-        if (NoRender.maybeEnabled() && NoRender.itz().fog.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().fog) {
             return DISABLED_FOG;
         }
         return fogParameters;

@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -17,12 +17,18 @@ import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "IndicatorsHud", category = "HUD")
 public class IndicatorsHud extends ravex.modules.Module {
-    public final ColorParameter healthColor = new ColorParameter("HealthColor", 0xFFFF4455);
-    public final ColorParameter armorColor = new ColorParameter("ArmorColor", 0xFF44AAFF);
-    public final ColorParameter tPSColor = new ColorParameter("TPSColor", 0xFF44FF88);
-    public final ColorParameter speedColor = new ColorParameter("SpeedColor", 0xFFFFCC33);
-    public final ColorParameter kBColor = new ColorParameter("KBColor", 0xFFCC44FF);
-    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+    @Parameter(name = "HealthColor", color = true)
+    public int healthColor = 0xFFFF4455;
+    @Parameter(name = "ArmorColor", color = true)
+    public int armorColor = 0xFF44AAFF;
+    @Parameter(name = "TPSColor", color = true)
+    public int tPSColor = 0xFF44FF88;
+    @Parameter(name = "SpeedColor", color = true)
+    public int speedColor = 0xFFFFCC33;
+    @Parameter(name = "KBColor", color = true)
+    public int kBColor = 0xFFCC44FF;
+    @Parameter(name = "Shadow")
+    public boolean shadow = true;
 
     public int x;
     public int y;
@@ -150,18 +156,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
         return ravex.manager.ModuleManager.delegate(IndicatorsHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

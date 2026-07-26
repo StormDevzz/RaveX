@@ -1,33 +1,36 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
 import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.HitResult;
 import java.util.List;
+
+
+
+
 @ModuleInfo(name = "ClickFly", category = "Movement")
-public class ClickFly extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly", "TP"));
-    public final NumberParameter speed = new NumberParameter("Speed", 1.5, 0.5, 5.0, 0.25);
-    public final NumberParameter range = new NumberParameter("Range", 100.0, 10.0, 300.0, 10.0);
-    public final NumberParameter height = new NumberParameter("Height", 0.0, -5.0, 10.0, 0.5);
-    public final BooleanParameter autoLand = new BooleanParameter("AutoLand", true);
+public class ClickFly implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Fly", "TP"})
+    public String mode = "Fly";
+    @Parameter(name = "Speed", min = 0.5, max = 5.0, step = 0.25)
+    public double speed = 1.5;
+    @Parameter(name = "Range", min = 10.0, max = 300.0, step = 10.0)
+    public double range = 100.0;
+    @Parameter(name = "Height", min = -5.0, max = 10.0, step = 0.5)
+    public double height = 0.0;
+    @Parameter(name = "AutoLand")
+    public boolean autoLand = true;
     private net.minecraft.world.phys.Vec3 target = null;
     private boolean flying = false;
     private long lastClick = 0;
-    protected void onEnable() {
+    public void onEnable() {
         target = null;
         flying = false;
     }
-    protected void onDisable() {
+    public void onDisable() {
         target = null;
         flying = false;
     }
@@ -46,7 +49,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
             }
         }
         if (!flying || target == null) return;
-        if ("TP".equals(mode.getValue())) {
+        if ("TP".equals(mode)) {
             tpStep(mc);
         } else {
             flyStep(mc);
@@ -56,19 +59,19 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
         HitResult hit = mc.hitResult;
         if (hit != null) {
             if (hit.getType() == HitResult.Type.BLOCK) {
-                BlockHitResult blockHit = (BlockHitResult) hit;
+                net.minecraft.world.phys.BlockHitResult blockHit = (net.minecraft.world.phys.BlockHitResult) hit;
                 net.minecraft.core.BlockPos pos = blockHit.getBlockPos();
-                return net.minecraft.world.phys.Vec3.atCenterOf(pos).add(0, 0.5 + height.getValue(), 0);
+                return net.minecraft.world.phys.Vec3.atCenterOf(pos).add(0, 0.5 + height, 0);
             }
             if (hit.getType() == HitResult.Type.ENTITY) {
-                EntityHitResult entityHit = (EntityHitResult) hit;
-                return entityHit.getEntity().position().add(0, height.getValue(), 0);
+                net.minecraft.world.phys.EntityHitResult entityHit = (net.minecraft.world.phys.EntityHitResult) hit;
+                return entityHit.getEntity().position().add(0, height, 0);
             }
         }
-        double dist = range.getValue();
+        double dist = range;
         net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition(1.0F);
         net.minecraft.world.phys.Vec3 look = mc.player.getViewVector(1.0F);
-        return eye.add(look.x * dist, look.y * dist + height.getValue(), look.z * dist);
+        return eye.add(look.x * dist, look.y * dist + height, look.z * dist);
     }
     private void flyStep(Minecraft mc) {
         var p = mc.player;
@@ -76,7 +79,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
         net.minecraft.world.phys.Vec3 diff = target.subtract(pos);
         double dist = diff.length();
         if (dist < 1.5) {
-            if (autoLand.getValue()) {
+            if (autoLand) {
                 p.setDeltaMovement(0, 0, 0);
                 flying = false;
                 target = null;
@@ -84,9 +87,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
             return;
         }
         net.minecraft.world.phys.Vec3 dir = diff.normalize();
-        double spd = speed.getValue();
+        double spd = speed;
         p.setDeltaMovement(dir.x * spd, dir.y * spd, dir.z * spd);
-        p.connection.send(new ServerboundMovePlayerPacket.Pos(
+        p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                 pos.x + dir.x * spd,
                 pos.y + dir.y * spd,
                 pos.z + dir.z * spd,
@@ -103,10 +106,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
             return;
         }
         net.minecraft.world.phys.Vec3 dir = diff.normalize();
-        double spd = speed.getValue();
+        double spd = speed;
         double step = Math.min(spd, dist);
         net.minecraft.world.phys.Vec3 next = pos.add(dir.x * step, dir.y * step, dir.z * step);
-        p.connection.send(new ServerboundMovePlayerPacket.Pos(
+        p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                 next.x, next.y, next.z, true, p.horizontalCollision));
         p.setPos(next.x, next.y, next.z);
     }
@@ -114,16 +117,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly"
         return ravex.manager.ModuleManager.delegate(ClickFly.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

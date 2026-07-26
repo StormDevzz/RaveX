@@ -34,7 +34,7 @@ public class MixinFogRenderer {
                                     CallbackInfoReturnable<Vector4f> cir) {
         if (Xray.maybeEnabled()) {
             cir.setReturnValue(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
-        } else if (WorldColor.maybeEnabled() && WorldColor.itz().sky.getValue()) {
+        } else if (WorldColor.maybeEnabled() && WorldColor.itz().sky) {
             int col = WorldColor.itz().skyColor.getValue();
             float r = ((col >> 16) & 0xFF) / 255.0f;
             float g = ((col >> 8) & 0xFF) / 255.0f;
@@ -48,14 +48,14 @@ public class MixinFogRenderer {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V")
     )
     private void onUpdateBufferArgs(Args args) {
-        if (WorldColor.maybeEnabled() && WorldColor.itz().fog.getValue()) {
+        if (WorldColor.maybeEnabled() && WorldColor.itz().fog) {
             int argb = WorldColor.itz().fogColor.getValue();
             float r = ((argb >> 16) & 0xFF) / 255.0f;
             float g = ((argb >>  8) & 0xFF) / 255.0f;
             float b = ( argb        & 0xFF) / 255.0f;
             args.set(2, new Vector4f(r, g, b, 1.0f));
         }
-        if (NoRender.maybeEnabled() && NoRender.itz().fog.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().fog) {
             float envStart = args.get(3);
             float envEnd = args.get(4);
             float rdStart = args.get(5);

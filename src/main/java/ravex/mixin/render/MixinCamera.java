@@ -67,7 +67,7 @@ public abstract class MixinCamera {
             );
 
 
-            float startingDist = ViewClip.maybeEnabled() ? ViewClip.itz().cameraDistance.getValue().floatValue() : 4.0f;
+            float startingDist = ViewClip.maybeEnabled() ? (float) ViewClip.itz().cameraDistance : 4.0f;
             float zoom = getMaxZoom(startingDist);
             net.minecraft.world.phys.Vec3 targetPos = eyePos.subtract(dirVec.scale(zoom));
             this.setPosition(targetPos);
@@ -90,8 +90,8 @@ public abstract class MixinCamera {
     private void onGetMaxZoom(float startingDistance, CallbackInfoReturnable<Float> cir) {
         if (inGetMaxZoom) return;
         if (ViewClip.maybeEnabled()) {
-            float dist = ViewClip.itz().cameraDistance.getValue().floatValue();
-            if (ViewClip.itz().bypassWalls.getValue()) {
+            float dist = (float) ViewClip.itz().cameraDistance;
+            if (ViewClip.itz().bypassWalls) {
                 cir.setReturnValue(dist);
             } else {
                 inGetMaxZoom = true;

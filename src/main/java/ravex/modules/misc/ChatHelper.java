@@ -1,25 +1,19 @@
 package ravex.modules.misc;
-
-import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.damagesource.DamageSource;
-import ravex.utility.misc.EntityUtility;
-import net.minecraft.world.entity.EquipmentSlot;
-
-import net.minecraft.network.chat.Component;
-import ravex.event.Subscribe;
-import ravex.event.combat.AttackEvent;
-import ravex.event.player.DeathEvent;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.StringParameter;
-import ravex.event.EventBusHolder;
+import ravex.modules.ModuleAccess;
 import ravex.event.client.SoundEvent;
-
+import ravex.event.combat.AttackEvent;
+import ravex.event.EventBusHolder;
+import ravex.event.player.DeathEvent;
+import ravex.event.Subscribe;
+import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
+import ravex.parameter.StringParameter;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EquipmentSlot;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -34,42 +28,82 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+
+
+
+
+
+
 @ModuleInfo(name = "ChatHelper", category = "Misc")
-public class ChatHelper extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of("Announcer", "Welcomer", "AutoEZ", "ZoV", "Spammer", "CoordLogger", "DurabAlert", "ChatFilter"));
-    public final BooleanParameter announcerEnabled = new BooleanParameter("Announcer", false);
-    public final BooleanParameter welcomerEnabled = new BooleanParameter("Welcomer", false);
-    public final BooleanParameter autoEZEnabled = new BooleanParameter("AutoEZ", false);
-    public final BooleanParameter spammerEnabled = new BooleanParameter("Spammer", false);
-    public final BooleanParameter coordLoggerEnabled = new BooleanParameter("CoordLogger", false);
-    public final BooleanParameter durabAlertEnabled = new BooleanParameter("DurabAlert", false);
-    public final BooleanParameter chatFilter = new BooleanParameter("ChatFilter", false);
-    public final BooleanParameter filterDuplicate = new BooleanParameter("FilterDuplicate", false);
-    public final BooleanParameter onlyName = new BooleanParameter("OnlyName", true);
-    public final BooleanParameter timestamp = new BooleanParameter("Timestamp", false);
-    public final ModeParameter timestampFormat = new ModeParameter("TSFormat", "HH:mm", List.of("HH:mm", "HH:mm:ss", "[HH:mm]", "[HH:mm:ss]"));
-    public final BooleanParameter announceWalk = new BooleanParameter("Walk", true);
-    public final BooleanParameter announceEat = new BooleanParameter("Eat", true);
-    public final BooleanParameter announceHit = new BooleanParameter("Hit", true);
-    public final ModeParameter announceMode = new ModeParameter("AnnounceMode", "Periodic", List.of("Periodic", "Milestone"));
-    public final NumberParameter interval = new NumberParameter("Interval", 10, 10, 300, 10);
-    public final BooleanParameter onlyFirstJoin = new BooleanParameter("FirstJoinOnly", true);
-    public final BooleanParameter ezOnlyPlayers = new BooleanParameter("EZOnlyPlayers", true);
-    public final NumberParameter ezDelay = new NumberParameter("EZDelay", 500.0, 0.0, 3000.0, 100.0);
-    public final ModeParameter zovStyle = new ModeParameter("ZoVStyle", "Extended", List.of("Simple", "Extended"));
-    public final BooleanParameter zov = new BooleanParameter("ZoV", false);
-    public final ModeParameter spamMode = new ModeParameter("SpamMode", "Text", List.of("Text", "File"));
-    public final StringParameter spamText = new StringParameter("SpamText", "RaveX on top!");
-    public final StringParameter spamFile = new StringParameter("SpamFile", "spam.txt");
-    public final NumberParameter spamDelay = new NumberParameter("SpamDelay", 1000.0, 100.0, 10000.0, 100.0);
-    public final BooleanParameter logDeath = new BooleanParameter("LogDeath", true);
-    public final BooleanParameter logJoin = new BooleanParameter("LogJoin", false);
-    public final BooleanParameter chatNotify = new BooleanParameter("ChatNotify", true);
-    public final ModeParameter dAlertMode = new ModeParameter("AlertMode", "Own", List.of("Own", "Enemy", "Both"));
-    public final NumberParameter threshold = new NumberParameter("Threshold", 10.0, 1.0, 100.0, 1.0);
-    public final BooleanParameter sound = new BooleanParameter("Sound", true);
-    public final NumberParameter chatHistorySize = new NumberParameter("ChatHistory", 1000.0, 100.0, 10000.0, 100.0);
-    public final BooleanParameter copyOnClick = new BooleanParameter("CopyOnClick", false);
+public class ChatHelper implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Announcer", "Welcomer", "AutoEZ", "ZoV", "Spammer", "CoordLogger", "DurabAlert", "ChatFilter"})
+    public String mode = "Announcer";
+    @Parameter(name = "Announcer")
+    public boolean announcerEnabled = false;
+    @Parameter(name = "Welcomer")
+    public boolean welcomerEnabled = false;
+    @Parameter(name = "AutoEZ")
+    public boolean autoEZEnabled = false;
+    @Parameter(name = "Spammer")
+    public boolean spammerEnabled = false;
+    @Parameter(name = "CoordLogger")
+    public boolean coordLoggerEnabled = false;
+    @Parameter(name = "DurabAlert")
+    public boolean durabAlertEnabled = false;
+    @Parameter(name = "ChatFilter")
+    public boolean chatFilter = false;
+    @Parameter(name = "FilterDuplicate")
+    public boolean filterDuplicate = false;
+    @Parameter(name = "OnlyName")
+    public boolean onlyName = true;
+    @Parameter(name = "Timestamp")
+    public boolean timestamp = false;
+    @Parameter(name = "TSFormat", modes = {"HH:mm", "HH:mm:ss", "[HH:mm]", "[HH:mm:ss]"})
+    public String timestampFormat = "HH:mm";
+    @Parameter(name = "Walk")
+    public boolean announceWalk = true;
+    @Parameter(name = "Eat")
+    public boolean announceEat = true;
+    @Parameter(name = "Hit")
+    public boolean announceHit = true;
+    @Parameter(name = "AnnounceMode", modes = {"Periodic", "Milestone"})
+    public String announceMode = "Periodic";
+    @Parameter(name = "Interval", min = 10, max = 300, step = 10)
+    public double interval = 10;
+    @Parameter(name = "FirstJoinOnly")
+    public boolean onlyFirstJoin = true;
+    @Parameter(name = "EZOnlyPlayers")
+    public boolean ezOnlyPlayers = true;
+    @Parameter(name = "EZDelay", min = 0.0, max = 3000.0, step = 100.0)
+    public double ezDelay = 500.0;
+    @Parameter(name = "ZoVStyle", modes = {"Simple", "Extended"})
+    public String zovStyle = "Extended";
+    @Parameter(name = "ZoV")
+    public boolean zov = false;
+    @Parameter(name = "SpamMode", modes = {"Text", "File"})
+    public String spamMode = "Text";
+    @Parameter(name = "SpamText")
+    public String spamText = "RaveX on top!";
+    @Parameter(name = "SpamFile")
+    public String spamFile = "spam.txt";
+    @Parameter(name = "SpamDelay", min = 100.0, max = 10000.0, step = 100.0)
+    public double spamDelay = 1000.0;
+    @Parameter(name = "LogDeath")
+    public boolean logDeath = true;
+    @Parameter(name = "LogJoin")
+    public boolean logJoin = false;
+    @Parameter(name = "ChatNotify")
+    public boolean chatNotify = true;
+    @Parameter(name = "AlertMode", modes = {"Own", "Enemy", "Both"})
+    public String dAlertMode = "Own";
+    @Parameter(name = "Threshold", min = 1.0, max = 100.0, step = 1.0)
+    public double threshold = 10.0;
+    @Parameter(name = "Sound")
+    public boolean sound = true;
+    @Parameter(name = "ChatHistory", min = 100.0, max = 10000.0, step = 100.0)
+    public double chatHistorySize = 1000.0;
+    @Parameter(name = "CopyOnClick")
+    public boolean copyOnClick = false;
     private static final String LOG_DIR = "RaveX/coordlogs";
     private String currentFile = null;
     private static final long ALERT_COOLDOWN_MS = 30000;
@@ -116,52 +150,19 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
 
     private ChatHelper() {
         
-        chatFilter.setVisible(() -> "ChatFilter".equals(mode.getValue()));
-        onlyName.setVisible(() -> "ChatFilter".equals(mode.getValue()));
-        timestamp.setVisible(() -> false);
-        timestampFormat.setVisible(() -> false);
-        chatHistorySize.setVisible(() -> false);
-        copyOnClick.setVisible(() -> false);
-        filterDuplicate.setVisible(() -> false);
-        announcerEnabled.setVisible(() -> "Announcer".equals(mode.getValue()));
-        announceWalk.setVisible(() -> "Announcer".equals(mode.getValue()));
-        announceEat.setVisible(() -> "Announcer".equals(mode.getValue()));
-        announceHit.setVisible(() -> "Announcer".equals(mode.getValue()));
-        announceMode.setVisible(() -> "Announcer".equals(mode.getValue()));
-        interval.setVisible(() -> "Announcer".equals(mode.getValue()));
-        welcomerEnabled.setVisible(() -> "Welcomer".equals(mode.getValue()));
-        onlyFirstJoin.setVisible(() -> "Welcomer".equals(mode.getValue()));
-        autoEZEnabled.setVisible(() -> "AutoEZ".equals(mode.getValue()));
-        ezOnlyPlayers.setVisible(() -> "AutoEZ".equals(mode.getValue()));
-        ezDelay.setVisible(() -> "AutoEZ".equals(mode.getValue()));
-        zov.setVisible(() -> "ZoV".equals(mode.getValue()));
-        zovStyle.setVisible(() -> "ZoV".equals(mode.getValue()));
-        spammerEnabled.setVisible(() -> "Spammer".equals(mode.getValue()));
-        spamMode.setVisible(() -> "Spammer".equals(mode.getValue()));
-        spamText.setVisible(() -> "Spammer".equals(mode.getValue()));
-        spamFile.setVisible(() -> "Spammer".equals(mode.getValue()));
-        spamDelay.setVisible(() -> "Spammer".equals(mode.getValue()));
-        coordLoggerEnabled.setVisible(() -> "CoordLogger".equals(mode.getValue()));
-        logDeath.setVisible(() -> "CoordLogger".equals(mode.getValue()));
-        logJoin.setVisible(() -> "CoordLogger".equals(mode.getValue()));
-        chatNotify.setVisible(() -> "CoordLogger".equals(mode.getValue()));
-        durabAlertEnabled.setVisible(() -> "DurabAlert".equals(mode.getValue()));
-        dAlertMode.setVisible(() -> "DurabAlert".equals(mode.getValue()));
-        threshold.setVisible(() -> "DurabAlert".equals(mode.getValue()));
-        sound.setVisible(() -> "DurabAlert".equals(mode.getValue()));
     }
 
     public boolean shouldFilterMessage(String msg) {
-        if (!getEnabled()) return false;
-        if ("ChatFilter".equals(mode.getValue())) {
-            if (onlyName.getValue() && Minecraft.getInstance().player != null) {
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled()) return false;
+        if ("ChatFilter".equals(mode)) {
+            if (onlyName && Minecraft.getInstance().player != null) {
                 String playerName = Minecraft.getInstance().player.getGameProfile().name().toLowerCase();
                 if (!msg.toLowerCase().contains(playerName)) return true;
             }
             return ravex.utility.network.NetworkUtility.isAdMessage(msg);
         }
-        if (!chatFilter.getValue()) return false;
-        if (filterDuplicate.getValue()) {
+        if (!chatFilter) return false;
+        if (filterDuplicate) {
             if (msg.equals(lastMessage)) {
                 duplicateCount++;
                 return duplicateCount > 2;
@@ -174,9 +175,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
     }
 
     public String applyTimestamp(String message) {
-        if (!getEnabled() || !timestamp.getValue()) return message;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !timestamp) return message;
         var now = java.time.LocalTime.now();
-        String fmt = timestampFormat.getValue();
+        String fmt = timestampFormat;
         String ts = switch (fmt) {
             case "HH:mm" -> String.format("%02d:%02d", now.getHour(), now.getMinute());
             case "HH:mm:ss" -> String.format("%02d:%02d:%02d", now.getHour(), now.getMinute(), now.getSecond());
@@ -188,8 +189,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
     }
 
     public String applyZov(String message) {
-        if (!getEnabled() || !zov.getValue()) return message;
-        boolean extended = "Extended".equals(zovStyle.getValue());
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !zov) return message;
+        boolean extended = "Extended".equals(zovStyle);
         String r = message
             .replace('з', 'Z').replace('З', 'Z')
             .replace('в', 'V').replace('В', 'V');
@@ -209,8 +210,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
     }
 
     public void onDeath(double x, double y, double z, String dimension) {
-        if (!getEnabled() || !coordLoggerEnabled.getValue()) return;
-        if (!logDeath.getValue()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !coordLoggerEnabled) return;
+        if (!logDeath) return;
         new File(LOG_DIR).mkdirs();
         if (currentFile == null) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
@@ -223,7 +224,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
         try (FileWriter fw = new FileWriter(currentFile, true)) {
             fw.write(line);
         } catch (Exception ignored) {}
-        if (chatNotify.getValue()) {
+        if (chatNotify) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
                 mc.player.displayClientMessage(
@@ -235,16 +236,16 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
             }
         }
     }
-    protected void onEnable() {
+    public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        if (announcerEnabled.getValue()) {
+        if (announcerEnabled) {
             lastX = mc.player.getX();
             lastZ = mc.player.getZ();
             lastFoodLevel = mc.player.getFoodData().getFoodLevel();
             blocksWalked = 0; foodEaten = 0; hitsDealt = 0; tickCounter = 0;
         }
-        if (welcomerEnabled.getValue()) {
+        if (welcomerEnabled) {
             knownPlayers.clear();
             if (mc.level != null) {
                 for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
@@ -252,14 +253,14 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
                 }
             }
         }
-        if (coordLoggerEnabled.getValue()) {
+        if (coordLoggerEnabled) {
             new File(LOG_DIR).mkdirs();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
             currentFile = LOG_DIR + "/session_" + sdf.format(new Date()) + ".log";
             try (FileWriter fw = new FileWriter(currentFile, true)) {
                 fw.write("=== CoordLogger Session Started ===\n");
             } catch (Exception ignored) {}
-            if (logJoin.getValue()) {
+            if (logJoin) {
                 double x = mc.player.getX(), y = mc.player.getY(), z = mc.player.getZ();
                 String dim = mc.player.level().dimension().identifier().toString();
                 SimpleDateFormat tsdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -269,7 +270,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
                 try (FileWriter fw = new FileWriter(currentFile, true)) {
                     fw.write(line);
                 } catch (Exception ignored) {}
-                if (chatNotify.getValue()) {
+                if (chatNotify) {
                     mc.player.displayClientMessage(
                         Component.literal("§7[§cCoordLogger§7] §fJOIN at X=" +
                             String.format("%.1f", x) + " Y=" + String.format("%.1f", y) +
@@ -288,14 +289,14 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
 
     @Subscribe
     public void onDeath(DeathEvent event) {
-        if (!getEnabled() || !autoEZEnabled.getValue()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !autoEZEnabled) return;
         if (event.isSelf()) return;
         net.minecraft.world.entity.player.Player victim = event.getPlayer();
-        if (ezOnlyPlayers.getValue() && !(victim instanceof net.minecraft.world.entity.player.Player)) return;
+        if (ezOnlyPlayers && !(victim instanceof net.minecraft.world.entity.player.Player)) return;
         net.minecraft.world.entity.Entity killer = event.getSource().getEntity();
         if (killer != Minecraft.getInstance().player) return;
         long now = System.currentTimeMillis();
-        if (now - lastKillTime < ezDelay.getValue().longValue()) return;
+        if (now - lastKillTime < (long) ezDelay) return;
         lastKillTime = now;
         String name = victim.getName().getString();
         String phrase = String.format(EZ_PHRASES.get(random.nextInt(EZ_PHRASES.size())), name);
@@ -305,36 +306,36 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
     }
 
     public void onHit() {
-        if (!getEnabled() || !announcerEnabled.getValue()) return;
-        if (announceHit.getValue()) hitsDealt++;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !announcerEnabled) return;
+        if (announceHit) hitsDealt++;
     }
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null || p.connection == null) return;
-        if (announcerEnabled.getValue()) tickAnnouncer(mc, p);
-        if (welcomerEnabled.getValue()) tickWelcomer(mc, p);
-        if (spammerEnabled.getValue()) tickSpammer();
-        if (durabAlertEnabled.getValue()) tickDurabAlert(mc);
+        if (announcerEnabled) tickAnnouncer(mc, p);
+        if (welcomerEnabled) tickWelcomer(mc, p);
+        if (spammerEnabled) tickSpammer();
+        if (durabAlertEnabled) tickDurabAlert(mc);
     }
 
-    private void tickAnnouncer(Minecraft mc, LocalPlayer p) {
+    private void tickAnnouncer(Minecraft mc, net.minecraft.client.player.LocalPlayer p) {
         tickCounter++;
-        if (announceWalk.getValue()) {
+        if (announceWalk) {
             double dx = p.getX() - lastX;
             double dz = p.getZ() - lastZ;
             double dist = Math.sqrt(dx * dx + dz * dz);
             if (dist > 0.1) blocksWalked += dist;
             lastX = p.getX(); lastZ = p.getZ();
         }
-        if (announceEat.getValue()) {
+        if (announceEat) {
             int cur = p.getFoodData().getFoodLevel();
             if (cur > lastFoodLevel) foodEaten++;
             lastFoodLevel = cur;
         }
-        String modeStr = announceMode.getValue();
+        String modeStr = announceMode;
         if (modeStr.equals("Periodic")) {
-            int intervalTicks = interval.getValue().intValue() * 20;
+            int intervalTicks = (int) interval * 20;
             if (tickCounter >= intervalTicks) { doAnnounce(p); tickCounter = 0; }
         } else {
             checkMilestone(100, p); checkMilestone(500, p);
@@ -351,25 +352,25 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
         }
     }
 
-    private void checkMilestone(int target, LocalPlayer p) {
+    private void checkMilestone(int target, net.minecraft.client.player.LocalPlayer p) {
         if (blocksWalked >= target && blocksWalked - 50 < target) {
             p.connection.sendChat("I walked " + target + " blocks already");
             blocksWalked = 0;
         }
     }
 
-    private void doAnnounce(LocalPlayer p) {
+    private void doAnnounce(net.minecraft.client.player.LocalPlayer p) {
         if (blocksWalked < 0.5 && foodEaten == 0 && hitsDealt == 0) return;
         StringBuilder sb = new StringBuilder("[Announcer] ");
         boolean added = false;
-        if (announceWalk.getValue() && blocksWalked >= 1.0) { sb.append("Walked ").append(String.format("%.0f", blocksWalked)).append("b. "); added = true; }
-        if (announceEat.getValue() && foodEaten > 0) { sb.append("Ate ").append(foodEaten).append("x. "); added = true; }
-        if (announceHit.getValue() && hitsDealt > 0) { sb.append("Hit ").append(hitsDealt).append("x. "); added = true; }
+        if (announceWalk && blocksWalked >= 1.0) { sb.append("Walked ").append(String.format("%.0f", blocksWalked)).append("b. "); added = true; }
+        if (announceEat && foodEaten > 0) { sb.append("Ate ").append(foodEaten).append("x. "); added = true; }
+        if (announceHit && hitsDealt > 0) { sb.append("Hit ").append(hitsDealt).append("x. "); added = true; }
         if (added) p.connection.sendChat(sb.toString());
         blocksWalked = 0; foodEaten = 0; hitsDealt = 0;
     }
 
-    private void tickWelcomer(Minecraft mc, LocalPlayer me) {
+    private void tickWelcomer(Minecraft mc, net.minecraft.client.player.LocalPlayer me) {
         for (net.minecraft.world.entity.player.Player player : mc.level.players()) {
             if (player == me) continue;
             if (knownPlayers.contains(player.getUUID())) continue;
@@ -383,25 +384,25 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
 
     private void tickSpammer() {
         long now = System.currentTimeMillis();
-        if (now - lastSpamTime < spamDelay.getValue().longValue()) return;
+        if (now - lastSpamTime < (long) spamDelay) return;
         lastSpamTime = now;
-        LocalPlayer p = Minecraft.getInstance().player;
+        net.minecraft.client.player.LocalPlayer p = Minecraft.getInstance().player;
         if (p == null || p.connection == null) return;
         String msg;
-        if ("File".equals(spamMode.getValue())) {
+        if ("File".equals(spamMode)) {
             List<String> lines = null;
-            try { lines = Files.readAllLines(Path.of(spamFile.getValue())); } catch (IOException ignored) {}
+            try { lines = Files.readAllLines(Path.of(spamFile)); } catch (IOException ignored) {}
             if (lines == null || lines.isEmpty()) return;
             msg = lines.get(random.nextInt(lines.size()));
         } else {
-            msg = spamText.getValue();
+            msg = spamText;
         }
         p.connection.sendChat(msg);
     }
 
     private void tickDurabAlert(Minecraft mc) {
-        double thresh = threshold.getValue();
-        String am = dAlertMode.getValue();
+        double thresh = threshold;
+        String am = dAlertMode;
         if (am.equals("Own") || am.equals("Both")) {
             EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
             String[] names = {"Boots", "Leggings", "Chestplate", "Helmet"};
@@ -443,7 +444,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
         if (lastAlert != null && (now - lastAlert) < ALERT_COOLDOWN_MS) return;
         alertCooldowns.put(cooldownKey, now);
         ravex.manager.NotificationManager.add("§e" + message, 0xFFFFCC33, 3000);
-        if (sound.getValue()) {
+        if (sound) {
             EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.FAILURE));
         }
     }
@@ -456,16 +457,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of
         return ravex.manager.ModuleManager.delegate(ChatHelper.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

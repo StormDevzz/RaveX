@@ -1,35 +1,35 @@
 package ravex.modules.movement;
+import ravex.modules.ModuleAccess;
+import ravex.utility.network.NetworkUtility;
 
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.network.protocol.common.ServerboundPongPacket;
-import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
-import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 import ravex.event.network.PacketEvent;
 
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 
 @ModuleInfo(name = "Blink", category = "Movement")
-public class Blink extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Normal",
-            List.of("Normal", "Packet", "Grim", "NCP"));
-    public final NumberParameter limit = new NumberParameter("Limit", 30.0, 5.0, 200.0, 5.0);
-    public final NumberParameter maxTicks = new NumberParameter("MaxTicks", 4.0, 1.0, 20.0, 1.0);
-    public final NumberParameter autoDisableTicks = new NumberParameter("AutoDisable", 60.0, 10.0, 400.0, 5.0);
-    public final BooleanParameter cancelOnShift = new BooleanParameter("CancelOnShift", true);
-    public final BooleanParameter onSpot = new BooleanParameter("OnSpot", false);
+public class Blink implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Normal", "Packet", "Grim", "NCP"})
+    public String mode = "Normal";
+    @Parameter(name = "Limit", min = 5.0, max = 200.0, step = 5.0)
+    public double limit = 30.0;
+    @Parameter(name = "MaxTicks", min = 1.0, max = 20.0, step = 1.0)
+    public double maxTicks = 4.0;
+    @Parameter(name = "AutoDisable", min = 10.0, max = 400.0, step = 5.0)
+    public double autoDisableTicks = 60.0;
+    @Parameter(name = "CancelOnShift")
+    public boolean cancelOnShift = true;
+    @Parameter(name = "OnSpot")
+    public boolean onSpot = false;
 
-    private final List<Packet<?>> packetBuffer = new ArrayList<>();
+    private final List<net.minecraft.network.protocol.Packet<?>> packetBuffer = new ArrayList<>();
     private int tickCounter = 0;
     private int bufferTicks = 0;
     private net.minecraft.world.phys.Vec3 startPos = null;
@@ -46,10 +46,6 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
 
     private Blink() {
         
-        maxTicks.setVisible(() -> "Grim".equals(mode.getValue()));
-        autoDisableTicks.setVisible(() -> "Grim".equals(mode.getValue()) || "NCP".equals(mode.getValue()));
-        cancelOnShift.setVisible(() -> "Grim".equals(mode.getValue()) || "NCP".equals(mode.getValue()));
-        onSpot.setVisible(() -> "Grim".equals(mode.getValue()));
     }
 
     @Subscribe
@@ -62,23 +58,23 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
 
     @Subscribe
     public void onTick(TickEvent.Client event) {
-        if (!getEnabled()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Blink").getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
 
-        boolean isGrim = "Grim".equals(mode.getValue());
-        boolean isNcp = "NCP".equals(mode.getValue());
+        boolean isGrim = "Grim".equals(mode);
+        boolean isNcp = "NCP".equals(mode);
 
         if (isGrim || isNcp) {
-            if (cancelOnShift.getValue() && mc.options.keyShift.isDown()) {
-                enabled = false;
+            if (cancelOnShift && mc.options.keyShift.isDown()) {
+                ravex.manager.ModuleManager.INSTANCE.getByName("Blink").setEnabled(false);
                 return;
             }
 
             tickCounter++;
 
-            if (tickCounter >= autoDisableTicks.getValue()) {
-                enabled = false;
+            if (tickCounter >= autoDisableTicks) {
+                ravex.manager.ModuleManager.INSTANCE.getByName("Blink").setEnabled(false);
                 return;
             }
 
@@ -97,29 +93,29 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
                 }
             }
 
-            if (bufferTicks >= maxTicks.getValue() || packetBuffer.size() >= limit.getValue().intValue()) {
+            if (bufferTicks >= maxTicks || packetBuffer.size() >= (int) limit) {
                 startFlush();
             }
         }
     }
 
-    public boolean shouldCancel(Packet<?> packet) {
-        if (!getEnabled()) return false;
+    public boolean shouldCancel(net.minecraft.network.protocol.Packet<?> packet) {
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Blink").getEnabled()) return false;
 
-        String modeVal = mode.getValue();
+        String modeVal = mode;
 
         if ("Grim".equals(modeVal) || "NCP".equals(modeVal)) {
             if (flushing) return false;
-            if (packet instanceof ServerboundPongPacket) return false;
-            if (packet instanceof ServerboundAcceptTeleportationPacket) return false;
+            if (packet instanceof net.minecraft.network.protocol.common.ServerboundPongPacket) return false;
+            if (packet instanceof net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket) return false;
 
-            if ("NCP".equals(modeVal) && packet instanceof ServerboundPlayerInputPacket) {
+            if ("NCP".equals(modeVal) && NetworkUtility.isInputPacket(packet)) {
                 return false;
             }
 
-            if (packetBuffer.size() >= limit.getValue().intValue()) return true;
+            if (packetBuffer.size() >= (int) limit) return true;
 
-            if (startPos == null && packet instanceof ServerboundMovePlayerPacket move && move.hasPosition()) {
+            if (startPos == null && packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket move && move.hasPosition()) {
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.player != null) {
                     startPos = mc.player.position();
@@ -130,9 +126,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             return true;
         }
 
-        if ("Packet".equals(modeVal) && !(packet instanceof ServerboundMovePlayerPacket)) return false;
-        if (packetBuffer.size() >= limit.getValue().intValue()) return true;
-        if (packet instanceof ServerboundMovePlayerPacket) {
+        if ("Packet".equals(modeVal) && !(packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket)) return false;
+        if (packetBuffer.size() >= (int) limit) return true;
+        if (packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket) {
             packetBuffer.add(packet);
             return true;
         }
@@ -143,7 +139,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         if (packetBuffer.isEmpty()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
-        mc.player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(mc.player.onGround(), mc.player.horizontalCollision));
+        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.StatusOnly(mc.player.onGround(), mc.player.horizontalCollision));
     }
 
     private void startFlush() {
@@ -157,10 +153,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             flushStartPos = startPos != null ? startPos : net.minecraft.world.phys.Vec3.ZERO;
         }
 
-        if ("NCP".equals(mode.getValue())) {
+        if ("NCP".equals(mode)) {
             flushTotalHPos = 0.0;
-            for (Packet<?> p : packetBuffer) {
-                if (p instanceof ServerboundMovePlayerPacket move && move.hasPosition()) {
+            for (net.minecraft.network.protocol.Packet<?> p : packetBuffer) {
+                if (p instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket move && move.hasPosition()) {
                     AccessorServerboundMovePlayerPacket accessor = (AccessorServerboundMovePlayerPacket) move;
                     net.minecraft.world.phys.Vec3 pktPos = new net.minecraft.world.phys.Vec3(accessor.getX(), accessor.getY(), accessor.getZ());
                     if (flushTotalHPos == 0.0) {
@@ -170,11 +166,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             }
         }
 
-        if (startPos != null && onSpot.getValue()) {
+        if (startPos != null && onSpot) {
             for (int i = 0; i < packetBuffer.size(); i++) {
-                Packet<?> p = packetBuffer.get(i);
-                if (p instanceof ServerboundMovePlayerPacket move && move.hasPosition()) {
-                    packetBuffer.set(i, new ServerboundMovePlayerPacket.Pos(
+                net.minecraft.network.protocol.Packet<?> p = packetBuffer.get(i);
+                if (p instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket move && move.hasPosition()) {
+                    packetBuffer.set(i, new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                             startPos.x, startPos.y, startPos.z,
                             move.isOnGround(), move.horizontalCollision()
                     ));
@@ -190,14 +186,14 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             return;
         }
 
-        boolean isNcp = "NCP".equals(mode.getValue());
+        boolean isNcp = "NCP".equals(mode);
 
         int sentThisTick = 0;
 
         while (flushIndex < packetBuffer.size() && sentThisTick < MAX_PACKETS_PER_TICK) {
-            Packet<?> p = packetBuffer.get(flushIndex);
+            net.minecraft.network.protocol.Packet<?> p = packetBuffer.get(flushIndex);
 
-            if (isNcp && p instanceof ServerboundMovePlayerPacket move && move.hasPosition() && flushStartPos != null) {
+            if (isNcp && p instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket move && move.hasPosition() && flushStartPos != null) {
                 double t = (double) flushIndex / Math.max(1, packetBuffer.size());
                 net.minecraft.world.phys.Vec3 currentPlayerPos = mc.player.position();
                 double dx = currentPlayerPos.x - flushStartPos.x;
@@ -209,8 +205,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
                 double pz = flushStartPos.z + dz * t;
 
                 if (flushIndex > 0) {
-                    Packet<?> prev = packetBuffer.get(flushIndex - 1);
-                    if (prev instanceof ServerboundMovePlayerPacket prevMove) {
+                    net.minecraft.network.protocol.Packet<?> prev = packetBuffer.get(flushIndex - 1);
+                    if (prev instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket prevMove) {
                         AccessorServerboundMovePlayerPacket prevAccessor = (AccessorServerboundMovePlayerPacket) prevMove;
                         double prevX = prevAccessor.getX();
                         double prevY = prevAccessor.getY();
@@ -227,7 +223,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
                                 double sx = prevX + (px - prevX) * st;
                                 double sy = prevY + (py - prevY) * st;
                                 double sz = prevZ + (pz - prevZ) * st;
-                                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                                         sx, sy, sz, move.isOnGround(), move.horizontalCollision()
                                 ));
                             }
@@ -235,7 +231,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
                     }
                 }
 
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                         px, py, pz, move.isOnGround(), move.horizontalCollision()
                 ));
             } else {
@@ -272,7 +268,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
     public static Blink itz() {
         return ravex.manager.ModuleManager.delegate(Blink.class);
     }
-    protected void onEnable() {
+    public void onEnable() {
         packetBuffer.clear();
         tickCounter = 0;
         bufferTicks = 0;
@@ -284,7 +280,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         idleTicker = 0;
         flushStartTime = 0L;
     }
-    protected void onDisable() {
+    public void onDisable() {
         if (!packetBuffer.isEmpty()) {
             startFlush();
             flushing = true;
@@ -300,16 +296,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         }
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -1,35 +1,37 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import ravex.utility.player.SwingUtility;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
-
-import net.minecraft.world.phys.EntityHitResult;
 import ravex.utility.misc.MobUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
+
+
+
+
 @ModuleInfo(name = "Criticals", category = "Combat")
-public class Criticals extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Packet",
-        java.util.List.of("Legit", "Packet", "Grim", "MiniJump", "Watchdog"));
-    public final BooleanParameter autoAttack = new BooleanParameter("AutoAttack", true);
-    public final BooleanParameter stopOnWater = new BooleanParameter("StopOnWater", true);
-    public final BooleanParameter pauseAura = new BooleanParameter("PauseAura", false);
+public class Criticals implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Legit", "Packet", "Grim", "MiniJump", "Watchdog"})
+    public String mode = "Packet";
+    @Parameter(name = "AutoAttack")
+    public boolean autoAttack = true;
+    @Parameter(name = "StopOnWater")
+    public boolean stopOnWater = true;
+    @Parameter(name = "PauseAura")
+    public boolean pauseAura = false;
     private enum Sequence { NONE, JUMPING, LANDING }
     private Sequence seq = Sequence.NONE;
     private int seqTicks = 0;
-    protected void onDisable() {
+    public void onDisable() {
         seq = Sequence.NONE;
         seqTicks = 0;
     }
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-        if (stopOnWater.getValue() && (mc.player.isInWater() || mc.player.isInLava())) {
+        if (stopOnWater && (mc.player.isInWater() || mc.player.isInLava())) {
             seq = Sequence.NONE;
             return;
         }
@@ -41,13 +43,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
             return;
         }
         if (seq == Sequence.LANDING) {
-            if (autoAttack.getValue() && mc.hitResult instanceof EntityHitResult ehr) {
+            if (autoAttack && mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult ehr) {
                 net.minecraft.world.entity.Entity target = ehr.getEntity();
                 net.minecraft.world.entity.LivingEntity lt = MobUtility.asLivingEntity(target);
                 if (lt != null && MobUtility.isAlive(lt) && target != mc.player
                     && mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
                     mc.player.connection.send(
-                        ServerboundInteractPacket.createAttackPacket(target, mc.player.isShiftKeyDown()));
+                        net.minecraft.network.protocol.game.ServerboundInteractPacket.createAttackPacket(target, mc.player.isShiftKeyDown()));
                     SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
@@ -58,13 +60,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         if (!mc.player.onGround()) return;
         if (mc.player.horizontalCollision) return;
         boolean wantAttack = mc.options.keyAttack.isDown()
-            || (mc.hitResult instanceof EntityHitResult && autoAttack.getValue());
+            || (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult && autoAttack);
         if (!wantAttack) return;
         if (mc.player.getAttackStrengthScale(0.0f) < 0.85f) return;
         double x = mc.player.getX();
         double y = mc.player.getY();
         double z = mc.player.getZ();
-        String m = mode.getValue();
+        String m = mode;
         switch (m) {
             case "Legit" -> {
                 mc.player.jumpFromGround();
@@ -72,40 +74,40 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
                 seqTicks = 0;
             }
             case "Packet" -> {
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y + 0.0625, z, false, false));
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y, z, false, false));
                 seq = Sequence.LANDING;
             }
             case "Grim" -> {
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y + 0.001, z, false, false));
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y, z, false, false));
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y - 0.001, z, false, false));
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y - 0.0625, z, false, false));
                 seq = Sequence.LANDING;
             }
             case "MiniJump" -> {
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y + 0.02, z, false, false));
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y - 0.02, z, false, false));
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y + 0.001, z, false, false));
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y - 0.0625, z, false, false));
                 seq = Sequence.LANDING;
             }
             case "Watchdog" -> {
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y + 0.0001, z, false, false));
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y + 0.0001, z, false, false));
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                     x, y - 0.1, z, false, false));
                 seq = Sequence.LANDING;
             }
@@ -118,16 +120,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         return ravex.manager.ModuleManager.delegate(Criticals.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -1,36 +1,27 @@
 package ravex.modules.client;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "GuiParticles", category = "Client")
-public class GuiParticles extends ravex.modules.Module {
-public final ModeParameter type = new ModeParameter("Type", "Star",
-        java.util.List.of("Star", "Bone", "Fire", "Sun", "Thunder", "Wave"));
-    public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
-    public final NumberParameter amount = new NumberParameter("Amount", 55, 10, 150, 5);
-    public final NumberParameter size = new NumberParameter("Size", 3, 1, 15, 0.5);
-    public final NumberParameter speed = new NumberParameter("Speed", 1.0, 0.1, 5.0, 0.1);
+public class GuiParticles implements ModuleAccess {
+    @Parameter(name = "Type", modes = {"Star", "Bone", "Fire", "Sun", "Thunder", "Wave"})
+    public String type = "Star";
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFFFFFFFF;
+    @Parameter(name = "Amount", min = 10, max = 150, step = 5)
+    public double amount = 55;
+    @Parameter(name = "Size", min = 1, max = 15, step = 0.5)
+    public double size = 3;
+    @Parameter(name = "Speed", min = 0.1, max = 5.0, step = 0.1)
+    public double speed = 1.0;
     public GuiParticles() {
         
-        enabled = false;
+        ravex.manager.ModuleManager.INSTANCE.getByName("GuiParticles").setEnabled(false);
     }
 
     public static GuiParticles itz() {
         return ravex.manager.ModuleManager.delegate(GuiParticles.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

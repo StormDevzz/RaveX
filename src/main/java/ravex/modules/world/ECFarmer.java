@@ -1,24 +1,25 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 @ModuleInfo(name = "ECFarmer", category = "World")
-public class ECFarmer extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.5);
-    public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal"));
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter color = new ColorParameter("Color", 0x3F8800FF);
+public class ECFarmer implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.5)
+    public double range = 4.5;
+    @Parameter(name = "Swap", modes = {"Silent", "Normal"})
+    public String swapMode = "Silent";
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0x3F8800FF;
     private enum State { IDLE, FIND_BREAK, BREAKING, FIND_PLACE, PLACING }
     private State state = State.IDLE;
     private int ecX, ecY, ecZ;
@@ -37,13 +38,13 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         if (!hasRenderTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
-    protected void onEnable() {
+    public void onEnable() {
         state = State.IDLE;
         hasEc = false;
         hasRenderTarget = false;
         prevSlot = -1;
     }
-    protected void onDisable() {
+    public void onDisable() {
         if (hasEc) {
             var st = BlockUtility.getState(Minecraft.getInstance().level, ecX, ecY, ecZ);
             if (BlockUtility.isBlock(st, "ender_chest")) {
@@ -160,7 +161,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         }
     }
     private boolean doSwap(Minecraft mc, int targetSlot) {
-        String mode = swapMode.getValue();
+        String mode = swapMode;
         if (mode.equals("Normal")) {
             InventoryUtility.selectSlot(mc.player, targetSlot);
             return true;
@@ -172,7 +173,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     }
     private void swapBack(Minecraft mc, int originalSlot) {
         if (originalSlot == -1) return;
-        String mode = swapMode.getValue();
+        String mode = swapMode;
         if (mode.equals("Normal")) {
             InventoryUtility.selectSlot(mc.player, originalSlot);
         } else if (mode.equals("Silent")) {
@@ -180,7 +181,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         }
     }
     private int[] scanForEC(Minecraft mc) {
-        double r = range.getValue();
+        double r = range;
         var eye = mc.player.getEyePosition();
         var pPos = mc.player.blockPosition();
         int minX = (int) Math.floor(pPos.getX() - r);
@@ -233,7 +234,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     private int[] findPlacePos(Minecraft mc) {
         var eye = mc.player.getEyePosition();
         var facing = mc.player.getDirection();
-        double r = range.getValue();
+        double r = range;
         var start = mc.player.blockPosition();
         int sx = start.getX(), sy = start.getY(), sz = start.getZ();
         for (int f = 1; f <= 3; f++) {
@@ -278,16 +279,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         return ravex.manager.ModuleManager.delegate(ECFarmer.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

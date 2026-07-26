@@ -9,7 +9,7 @@ You are an AI coding assistant contributing to **RaveX** — a Fabric Minecraft 
 3. **Look at neighboring files before writing new ones.** Match existing patterns for modules, mixins, managers, parameters, events.
 4. **No wildcard imports.** Use explicit single-type imports.
 5. **Package root:** `ravex.*`. Modules go in `ravex.modules.*`, utilities in `ravex.utility.*`, mixins in `ravex.mixin.*`.
-6. **Settings use the project's parameter system:** `BooleanParameter`, `ModeParameter`, `SliderParameter`, etc. Declare as `public final` fields.
+6. **Settings use `@Parameter` annotations on primitive fields.** Do NOT instantiate `BooleanParameter`, `ModeParameter`, `NumberParameter`, `ColorParameter` directly. Use `@Parameter(name = "...", ...)` on `boolean`, `String`, `double`, `int` fields. The annotation supports `min`, `max`, `step`, `modes`, `color`, `options`. Example: `@Parameter(name = "Range", min = 1, max = 10) public double range = 5;`. The `Module` base class automatically wraps these in proper `Parameter<?>` objects at runtime via `scanParameterFields()`.
 7. **Keybindings** are set via middle-click in the ClickGUI, not in code.
 9. **Mojang mappings** (official names), not Yarn or intermediary.
 

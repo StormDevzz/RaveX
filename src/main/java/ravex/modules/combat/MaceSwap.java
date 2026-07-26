@@ -1,23 +1,23 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "MaceSwap", category = "Combat")
-public class MaceSwap extends ravex.modules.Module {
-public final ModeParameter mode       = new ModeParameter("Mode", "Smart",
-            List.of("Basic", "Smart"));
-    public final NumberParameter fallSpeed = new NumberParameter("FallSpeed", 0.5, 0.1, 3.0, 0.05);
+public class MaceSwap implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Basic", "Smart"})
+    public String mode = "Smart";
+    @Parameter(name = "FallSpeed", min = 0.1, max = 3.0, step = 0.05)
+    public double fallSpeed = 0.5;
     private int previousSlot = -1;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         double velY = mc.player.getDeltaMovement().y;
-        boolean falling = velY < -fallSpeed.getValue() && !mc.player.onGround();
-        if ("Smart".equals(mode.getValue())) {
+        boolean falling = velY < -fallSpeed && !mc.player.onGround();
+        if ("Smart".equals(mode)) {
             boolean targetingEntity = mc.crosshairPickEntity != null;
             if (falling && targetingEntity) {
                 swapToMace(mc);
@@ -58,16 +58,5 @@ public final ModeParameter mode       = new ModeParameter("Mode", "Smart",
         return ravex.manager.ModuleManager.delegate(MaceSwap.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

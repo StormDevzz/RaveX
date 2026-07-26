@@ -15,7 +15,7 @@ public class MixinTridentBoost {
     private void onIsInWaterOrRain(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self instanceof Player player && TridentBoost.maybeEnabled()
-                && TridentBoost.itz().mode.getValue().equals("Always")) {
+                && TridentBoost.itz().mode.equals("Always")) {
             if (player.getMainHandItem().is(Items.TRIDENT) || player.getOffhandItem().is(Items.TRIDENT)) {
                 cir.setReturnValue(true);
             }

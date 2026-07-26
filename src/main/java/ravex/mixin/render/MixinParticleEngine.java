@@ -38,19 +38,19 @@ public class MixinParticleEngine {
                 }
             }
 
-            if (NoRender.itz().blockParticles.getValue() && (
+            if (NoRender.itz().blockParticles && (
                 options.getType() == ParticleTypes.BLOCK ||
                 options.getType() == ParticleTypes.BLOCK_MARKER ||
                 options.getType() == ParticleTypes.BLOCK_CRUMBLE ||
                 options.getType() == ParticleTypes.FALLING_DUST
             )) {
                 cir.setReturnValue(null);
-            } else if (NoRender.itz().explosions.getValue() && (
+            } else if (NoRender.itz().explosions && (
                 options.getType() == ParticleTypes.EXPLOSION ||
                 options.getType() == ParticleTypes.EXPLOSION_EMITTER
             )) {
                 cir.setReturnValue(null);
-            } else if (NoRender.itz().sprint.getValue() && options.getType() == ParticleTypes.CLOUD) {
+            } else if (NoRender.itz().sprint && options.getType() == ParticleTypes.CLOUD) {
                 cir.setReturnValue(null);
             }
         }
@@ -71,7 +71,7 @@ public class MixinParticleEngine {
     @Inject(method = "add", at = @At("HEAD"), cancellable = true)
     private void onAdd(Particle particle, CallbackInfo ci) {
         if (NoRender.maybeEnabled()) {
-            if (NoRender.itz().blockParticles.getValue() && particle instanceof net.minecraft.client.particle.TerrainParticle) {
+            if (NoRender.itz().blockParticles && particle instanceof net.minecraft.client.particle.TerrainParticle) {
                 ci.cancel();
                 return;
             }

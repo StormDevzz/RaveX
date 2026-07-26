@@ -1,23 +1,26 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
 
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.render.Render3DUtility;
 
 @ModuleInfo(name = "ChinaHat", category = "Render")
-public class ChinaHat extends ravex.modules.Module {
+public class ChinaHat implements ModuleAccess {
 public static final ChinaHat INSTANCE = new ChinaHat();
 
-    public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
-    public final NumberParameter alpha = new NumberParameter("Alpha", 200.0, 0.0, 255.0, 1.0);
-    public final NumberParameter radius = new NumberParameter("Radius", 0.6, 0.3, 1.5, 0.05);
-    public final NumberParameter height = new NumberParameter("Height", 0.4, 0.1, 1.0, 0.05);
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFFFFFFFF;
+    @Parameter(name = "Alpha", min = 0.0, max = 255.0, step = 1.0)
+    public double alpha = 200.0;
+    @Parameter(name = "Radius", min = 0.3, max = 1.5, step = 0.05)
+    public double radius = 0.6;
+    @Parameter(name = "Height", min = 0.1, max = 1.0, step = 0.05)
+    public double height = 0.4;
 
     private ChinaHat() {
         
@@ -30,15 +33,15 @@ public static final ChinaHat INSTANCE = new ChinaHat();
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
 
-        int c = ch.color.getValue();
+        int c = ch.color;
         float r = ((c >> 16) & 0xFF) / 255.0f;
         float g = ((c >> 8) & 0xFF) / 255.0f;
         float b = (c & 0xFF) / 255.0f;
-        float a = ((c >> 24) & 0xFF) / 255.0f * (float)(ch.alpha.getValue() / 255.0);
+        float a = ((c >> 24) & 0xFF) / 255.0f * (float)(ch.alpha / 255.0);
         if (a <= 0.01f) return;
 
-        double R = ch.radius.getValue();
-        double H = ch.height.getValue();
+        double R = ch.radius;
+        double H = ch.height;
         int segments = 16;
         int layers = 5;
         double dotSize = 0.09;
@@ -72,16 +75,5 @@ public static final ChinaHat INSTANCE = new ChinaHat();
         }
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

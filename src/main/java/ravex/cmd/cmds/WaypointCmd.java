@@ -11,7 +11,7 @@ public class WaypointCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        String pref = ModuleManager.get(Commands.class).prefix.getValue();
+        String pref = ModuleManager.get(Commands.class).prefix;
         if (args.length < 2) {
             CmdReg.print(this, "§cUsage: " + pref + "waypoint <add/list/remove/delete/clear>");
             return;

@@ -1,19 +1,21 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.misc.block.BlockUtility;
 
 @ModuleInfo(name = "TreeCutter", category = "World")
-public class TreeCutter extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter color = new ColorParameter("Color", 0xFF8B5A2B);
+public class TreeCutter implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "Rotate")
+    public boolean rotate = true;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFF8B5A2B;
     private int miningX, miningY, miningZ;
     private boolean hasTarget;
     private int currentToolSlot = -1;
@@ -23,7 +25,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         if (!t.hasTarget) return null;
         return BlockUtility.pos(t.miningX, t.miningY, t.miningZ);
     }
-    protected void onDisable() {
+    public void onDisable() {
         if (hasTarget) BlockUtility.stopBreak(Minecraft.getInstance(), currentToolSlot);
         hasTarget = false;
         currentToolSlot = -1;
@@ -34,7 +36,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             hasTarget = false;
             return;
         }
-        double[] logs = BlockUtility.findLogs(mc.level, mc.player.blockPosition(), range.getValue());
+        double[] logs = BlockUtility.findLogs(mc.level, mc.player.blockPosition(), range);
         if (logs.length == 0) {
             if (hasTarget) BlockUtility.stopBreak(mc, currentToolSlot);
             hasTarget = false;
@@ -49,7 +51,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             return;
         }
         int tx = (int) best[1], ty = (int) best[2], tz = (int) best[3];
-        if (rotate.getValue()) BlockUtility.rotateTo(mc.player, tx, ty, tz);
+        if (rotate) BlockUtility.rotateTo(mc.player, tx, ty, tz);
         BlockUtility.BreakConfig cfg = new BlockUtility.BreakConfig();
         if (!hasTarget || miningX != tx || miningY != ty || miningZ != tz) {
             if (hasTarget) BlockUtility.stopBreak(mc, currentToolSlot);
@@ -70,16 +72,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         return ravex.manager.ModuleManager.delegate(TreeCutter.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

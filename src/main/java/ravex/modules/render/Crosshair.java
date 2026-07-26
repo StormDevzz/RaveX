@@ -1,30 +1,37 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.gui.clickgui.ColorUtility;
 @ModuleInfo(name = "Crosshair", category = "Render")
-public class Crosshair extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Normal",
-        java.util.List.of("Normal", "Circle", "Triangle"));
-    public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
-    public final ColorParameter dotColor = new ColorParameter("DotColor", 0xFFFF3333);
-    public final NumberParameter size = new NumberParameter("Size", 4.0, 2.0, 10.0, 0.5);
-    public final NumberParameter gap = new NumberParameter("Gap", 3.0, 1.0, 10.0, 0.5);
-    public final NumberParameter thickness = new NumberParameter("Thickness", 1.5, 1.0, 4.0, 0.5);
-    public final BooleanParameter dot = new BooleanParameter("Dot", true);
-    public final BooleanParameter dynamic = new BooleanParameter("Dynamic", true);
-    public final NumberParameter hitEffect = new NumberParameter("HitEffect", 6.0, 0.0, 16.0, 0.5);
-    public final NumberParameter hitDuration = new NumberParameter("HitDuration", 250.0, 50.0, 500.0, 25.0);
-    public final NumberParameter moveEffect = new NumberParameter("MoveEffect", 3.0, 0.0, 10.0, 0.5);
+public class Crosshair implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Normal", "Circle", "Triangle"})
+    public String mode = "Normal";
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFFFFFFFF;
+    @Parameter(name = "DotColor", color = true)
+    public int dotColor = 0xFFFF3333;
+    @Parameter(name = "Size", min = 2.0, max = 10.0, step = 0.5)
+    public double size = 4.0;
+    @Parameter(name = "Gap", min = 1.0, max = 10.0, step = 0.5)
+    public double gap = 3.0;
+    @Parameter(name = "Thickness", min = 1.0, max = 4.0, step = 0.5)
+    public double thickness = 1.5;
+    @Parameter(name = "Dot")
+    public boolean dot = true;
+    @Parameter(name = "Dynamic")
+    public boolean dynamic = true;
+    @Parameter(name = "HitEffect", min = 0.0, max = 16.0, step = 0.5)
+    public double hitEffect = 6.0;
+    @Parameter(name = "HitDuration", min = 50.0, max = 500.0, step = 25.0)
+    public double hitDuration = 250.0;
+    @Parameter(name = "MoveEffect", min = 0.0, max = 10.0, step = 0.5)
+    public double moveEffect = 3.0;
     private long lastHitTime = 0;
     private long lastFrameTime = 0;
     private float hitSpread = 0;
@@ -34,7 +41,6 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
 
     private Crosshair() {
         
-        dotColor.setVisible(dot::getValue);
     }
 
     @Subscribe
@@ -58,18 +64,18 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         lastFrameTime = now;
         if (delta > 0.1f) delta = 0.016f;
 
-        float currentMoveSpread = dynamic.getValue() ? calcMoveSpread(mc) : 0f;
+        float currentMoveSpread = dynamic ? calcMoveSpread(mc) : 0f;
         moveSpreadAnim += (currentMoveSpread - moveSpreadAnim) * Math.min(1.0f, delta * 12f);
 
         long elapsed = now - lastHitTime;
-        float dur = hitDuration.getValue().floatValue();
+        float dur = (float) hitDuration;
         float hitSpin = 0f;
         float hitScale = 1.0f;
         float hitFlashProgress = 0f;
         if (elapsed < dur) {
             float progress = elapsed / dur;
             float overshoot = 1.0f + 0.3f * (float) Math.sin(progress * Math.PI * 2) * (1.0f - progress);
-            hitSpread = hitEffect.getValue().floatValue() * (1.0f - progress) * overshoot;
+            hitSpread = (float) hitEffect * (1.0f - progress) * overshoot;
             hitSpin = (float) Math.PI * 0.5f * (1.0f - progress) * (1.0f - progress);
             hitScale = 1.0f + 0.15f * (1.0f - progress);
             hitFlashProgress = 1.0f - progress;
@@ -95,7 +101,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         int cx = w / 2;
         int cy = h / 2;
 
-        int col = color.getValue();
+        int col = color;
         int lockColor = 0xFFFF3333;
         int currentColor = lerpColor(col, lockColor, targetProgress);
 
@@ -103,21 +109,21 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             currentColor = blendSrcOver(currentColor, ColorUtility.withAlpha(0xFFFFFFFF, (int)(180 * hitFlashProgress)));
         }
 
-        float baseSize = size.getValue().floatValue() * hitScale;
-        float baseGap = gap.getValue().floatValue();
-        float thick = thickness.getValue().floatValue();
+        float baseSize = (float) size * hitScale;
+        float baseGap = (float) gap;
+        float thick = (float) thickness;
         float totalSpread = baseGap + hitSpread + moveSpreadAnim + targetProgress * 1.5f;
 
         float totalSpin = hitSpin + targetProgress * continuousRotation;
 
-        switch (mode.getValue()) {
+        switch (mode) {
             case "Normal" -> renderNormal(graphics, cx, cy, baseSize, totalSpread, thick, totalSpin, currentColor);
             case "Circle" -> renderCircle(graphics, cx, cy, baseSize, totalSpread, thick, totalSpin, currentColor);
             case "Triangle" -> renderTriangle(graphics, cx, cy, baseSize, totalSpread, thick, totalSpin, currentColor);
         }
 
-        if (dot.getValue()) {
-            int dc = dotColor.getValue();
+        if (dot) {
+            int dc = dotColor;
             float dotSize = 2.5f;
             net.minecraft.resources.Identifier dotTex = ravex.utility.render.Render2DUtility.getSmoothCircle();
             graphics.pose().pushMatrix();
@@ -128,7 +134,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
     }
 
     private float calcMoveSpread(Minecraft mc) {
-        float moveEff = moveEffect.getValue().floatValue();
+        float moveEff = (float) moveEffect;
         if (moveEff <= 0) return 0;
         var player = mc.player;
         double velX = player.getX() - player.xo;
@@ -253,16 +259,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         return ravex.manager.ModuleManager.delegate(Crosshair.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -1,49 +1,57 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.EntityUtility;
-import net.minecraft.world.level.block.state.BlockState;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PhysicUtility;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.effect.MobEffects;
-
-import ravex.parameter.BooleanParameter;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.ArrayList;
 import java.util.List;
-import ravex.utility.nativelib.NativeLibraryUtility;
+
+
+
+
 
 @ModuleInfo(name = "Breaker", category = "Combat")
-public class Breaker extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter crystalRange = new NumberParameter("CrystalRange", 5.0, 1.0, 6.0, 0.1);
-    public final NumberParameter minDamage = new NumberParameter("MinDamage", 4.0, 1.0, 20.0, 0.5);
-    public final NumberParameter maxSelfDmg = new NumberParameter("MaxSelfDmg", 8.0, 1.0, 20.0, 0.5);
-    public final NumberParameter selfDamageWeight = new NumberParameter("SelfDmgWeight", 1.2, 0, 5.0, 0.1);
-    public final BooleanParameter antiSuicide = new BooleanParameter("AntiSuicide", true);
-    public final NumberParameter antiSuicideMinHp = new NumberParameter("AntiSuicideMinHP", 6.0, 1.0, 20.0, 0.5);
-    public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
-    public final BooleanParameter syncPacketMine=new BooleanParameter("SyncPacketMine",false){@Override public void setValue(Boolean val){if(val){net.minecraft.client.Minecraft mc=net.minecraft.client.Minecraft.getInstance();boolean packetMineEnabled=ravex.manager.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();if(!packetMineEnabled){if(mc.player!=null){mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal("§7[§cBreaker§7] §cPlease enable PacketMine module first!"),false);}super.setValue(false);return;}}super.setValue(val);}};
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter color = new ColorParameter("Color", 0x3F00FFFF);
+public class Breaker implements ModuleAccess {
+    @Parameter(name = "BreakRange", min = 1.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "CrystalRange", min = 1.0, max = 6.0, step = 0.1)
+    public double crystalRange = 5.0;
+    @Parameter(name = "MinDamage", min = 1.0, max = 20.0, step = 0.5)
+    public double minDamage = 4.0;
+    @Parameter(name = "MaxSelfDmg", min = 1.0, max = 20.0, step = 0.5)
+    public double maxSelfDmg = 8.0;
+    @Parameter(name = "SelfDmgWeight", min = 0, max = 5.0, step = 0.1)
+    public double selfDamageWeight = 1.2;
+    @Parameter(name = "AntiSuicide")
+    public boolean antiSuicide = true;
+    @Parameter(name = "AntiSuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
+    public double antiSuicideMinHp = 6.0;
+    @Parameter(name = "Rotate", modes = {"Silent", "Normal", "None"})
+    public String rotate = "Silent";
+    @Parameter(name = "SyncPacketMine")
+    public boolean syncPacketMine = false;
+    @Parameter(name = "Color", color = true)
+    public int color = 0x3F00FFFF;
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     public static net.minecraft.core.BlockPos currentMiningBlock = null;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_breaker");
     static {
         NATIVE.load();
     }
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
-        if (currentMiningBlock != null && mc.gameMode != null && !syncPacketMine.getValue()) {
+        if (currentMiningBlock != null && mc.gameMode != null && !syncPacketMine) {
             mc.gameMode.stopDestroyBlock();
         }
         currentMiningBlock = null;
@@ -57,10 +65,10 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
             return;
         }
         silentRotation.hasRotation = false;
-        if (syncPacketMine.getValue()) {
-            boolean packetMineEnabled = ravex.manager.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();
+        if (syncPacketMine) {
+            boolean packetMineEnabled = getModule("PacketMine").getEnabled();
             if (!packetMineEnabled) {
-                syncPacketMine.setValue(false);
+                syncPacketMine = false;
                 mc.player.displayClientMessage(
                         net.minecraft.network.chat.Component
                                 .literal("§7[§cBreaker§7] §cPacketMine was disabled, Sync PacketMine turned off!"),
@@ -72,7 +80,7 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
         net.minecraft.world.entity.player.Player target = findTarget(mc);
         if (target == null) {
             if (currentMiningBlock != null) {
-                if (!syncPacketMine.getValue()) {
+                if (!syncPacketMine) {
                     mc.gameMode.stopDestroyBlock();
                 }
                 currentMiningBlock = null;
@@ -86,7 +94,7 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
         int ty = tPos.getY();
         int tz = tPos.getZ();
         for (net.minecraft.core.BlockPos pos : solid) {
-            BlockState state = mc.level.getBlockState(pos);
+            net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
             if (state.getDestroySpeed(mc.level, pos) > 0.0f) {
                 int px = pos.getX();
                 int py = pos.getY();
@@ -116,7 +124,7 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
         }
         if (candidates.isEmpty()) {
             if (currentMiningBlock != null) {
-                if (!syncPacketMine.getValue()) {
+                if (!syncPacketMine) {
                     mc.gameMode.stopDestroyBlock();
                 }
                 currentMiningBlock = null;
@@ -126,7 +134,7 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
         net.minecraft.core.BlockPos targetPos = null;
         if (currentMiningBlock != null) {
             double dist = net.minecraft.world.phys.Vec3.atCenterOf(currentMiningBlock).distanceTo(mc.player.getEyePosition());
-            if (dist <= range.getValue() && candidates.contains(currentMiningBlock)) {
+            if (dist <= range && candidates.contains(currentMiningBlock)) {
                 targetPos = currentMiningBlock;
             }
         }
@@ -140,16 +148,16 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
                     target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
                     solidData,
                     candData,
-                    range.getValue(),
-                    crystalRange.getValue(),
-                    minDamage.getValue(),
-                    maxSelfDmg.getValue(),
-                    selfDamageWeight.getValue(),
-                    antiSuicide.getValue(),
-                    antiSuicideMinHp.getValue());
+                    range,
+                    crystalRange,
+                    minDamage,
+                    maxSelfDmg,
+                    selfDamageWeight,
+                    antiSuicide,
+                    antiSuicideMinHp);
             if (result == null || result[0] < 0.5) {
                 if (currentMiningBlock != null) {
-                    if (!syncPacketMine.getValue()) {
+                    if (!syncPacketMine) {
                         mc.gameMode.stopDestroyBlock();
                     }
                     currentMiningBlock = null;
@@ -158,15 +166,15 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
             }
             targetPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
         }
-        if (!syncPacketMine.getValue()) {
-            String rotMode = rotate.getValue();
+        if (!syncPacketMine) {
+            String rotMode = rotate;
             if (rotMode.equals("Normal")) {
                 rotateTo(mc, net.minecraft.world.phys.Vec3.atCenterOf(targetPos));
             } else if (rotMode.equals("Silent")) {
                 silentRotation.setAnglesTo(mc, net.minecraft.world.phys.Vec3.atCenterOf(targetPos));
             }
         }
-        if (syncPacketMine.getValue()) {
+        if (syncPacketMine) {
             if (!ravex.manager.ModuleManager.delegate(ravex.modules.player.PacketMine.class).isTargetBlock(targetPos)) {
                 ravex.modules.player.PacketMine.miningBlocks.removeIf(m -> !m.done);
                 String name = mc.level.getBlockState(targetPos).getBlock().getName().getString();
@@ -192,7 +200,7 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
     private net.minecraft.world.entity.player.Player findTarget(Minecraft mc) {
         net.minecraft.world.entity.player.Player closest = null;
         double bestDist = Double.MAX_VALUE;
-        double maxDist = range.getValue() + 3.0;
+        double maxDist = range + 3.0;
         for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
             if (MobUtility.isSelf(p) || MobUtility.isDead(p))
                 continue;
@@ -214,7 +222,7 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
                 for (int dz = -r; dz <= r; dz++) {
                     net.minecraft.core.BlockPos pos = tPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
-                        BlockState state = mc.level.getBlockState(pos);
+                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             found.add(pos);
                         }
@@ -334,16 +342,5 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
         return ravex.manager.ModuleManager.delegate(Breaker.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

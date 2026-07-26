@@ -12,7 +12,7 @@ public class UUIDCmd extends Cmd {
     public void execute(String[] args) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
-        String pref = ModuleManager.get(ravex.modules.client.Commands.class).prefix.getValue();
+        String pref = ModuleManager.get(ravex.modules.client.Commands.class).prefix;
 
         if (args.length < 2) {
             CmdReg.print(this, "§eYour UUID: §7" + mc.player.getUUID().toString());

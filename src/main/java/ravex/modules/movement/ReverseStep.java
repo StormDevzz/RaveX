@@ -1,11 +1,12 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 @ModuleInfo(name = "ReverseStep", category = "Movement")
-public class ReverseStep extends ravex.modules.Module {
-public final NumberParameter force = new NumberParameter("Force", 1.5, 1.0, 4.0, 0.5);
+public class ReverseStep implements ModuleAccess {
+    @Parameter(name = "Force", min = 1.0, max = 4.0, step = 0.5)
+    public double force = 1.5;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -28,23 +29,12 @@ public final NumberParameter force = new NumberParameter("Force", 1.5, 1.0, 4.0,
         }
         if (foundGround) {
             var motion = mc.player.getDeltaMovement();
-            mc.player.setDeltaMovement(motion.x, -force.getValue(), motion.z);
+            mc.player.setDeltaMovement(motion.x, -force, motion.z);
         }
     }
     public static ReverseStep itz() {
         return ravex.manager.ModuleManager.delegate(ReverseStep.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

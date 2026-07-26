@@ -1,11 +1,12 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
+import ravex.modules.annotations.Parameter;
 import java.util.List;
 @ModuleInfo(name = "Weather", category = "Render")
-public class Weather extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Rain", List.of("Clear", "Rain", "Snow", "Thunder"));
+public class Weather implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Clear", "Rain", "Snow", "Thunder"})
+    public String mode = "Rain";
 
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("Weather").getEnabled();
@@ -15,16 +16,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Rain", List.of("Cle
         return ravex.manager.ModuleManager.delegate(Weather.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

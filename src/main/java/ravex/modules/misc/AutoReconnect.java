@@ -1,16 +1,17 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 
-import ravex.parameter.NumberParameter;
 @ModuleInfo(name = "AutoReconnect", category = "Misc")
-public class AutoReconnect extends ravex.modules.Module {
-public final NumberParameter delay = new NumberParameter("Delay", 3.0, 0.0, 30.0, 1.0);
+public class AutoReconnect implements ModuleAccess {
+    @Parameter(name = "Delay", min = 0.0, max = 30.0, step = 1.0)
+    public double delay = 3.0;
     private static ServerData lastServer = null;
     private static boolean pendingAutoReconnect = false;
     private static long reconnectAt = 0;
@@ -25,9 +26,9 @@ public final NumberParameter delay = new NumberParameter("Delay", 3.0, 0.0, 30.0
         return lastServer != null;
     }
     public void scheduleAutoReconnect() {
-        if (!getEnabled() || !hasLastServer()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("AutoReconnect").getEnabled() || !hasLastServer()) return;
         pendingAutoReconnect = true;
-        reconnectAt = System.currentTimeMillis() + (long)(delay.getValue() * 1000);
+        reconnectAt = System.currentTimeMillis() + (long)(delay * 1000);
     }
     public void onTick() {
         if (!pendingAutoReconnect) return;
@@ -51,16 +52,5 @@ public final NumberParameter delay = new NumberParameter("Delay", 3.0, 0.0, 30.0
         return ravex.manager.ModuleManager.delegate(AutoReconnect.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

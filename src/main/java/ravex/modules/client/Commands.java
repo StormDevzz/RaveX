@@ -1,31 +1,22 @@
 package ravex.modules.client;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 @ModuleInfo(name = "Commands", category = "Client")
-public class Commands extends ravex.modules.Module {
-public final StringParameter prefix = new StringParameter("Prefix", ".");
-    public final BooleanParameter showFeedback = new BooleanParameter("Feedback", true);
+public class Commands implements ModuleAccess {
+    @Parameter(name = "Prefix")
+    public String prefix = ".";
+    @Parameter(name = "Feedback")
+    public boolean showFeedback = true;
     private Commands() {
         
-        enabled = true;
+        ravex.manager.ModuleManager.INSTANCE.getByName("Commands").setEnabled(true);
     }
 
     public static Commands itz() {
         return ravex.manager.ModuleManager.delegate(Commands.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

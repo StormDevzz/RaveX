@@ -1,31 +1,38 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
+import ravex.modules.world.GhostBlocks;
 import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.PhysicUtility;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.EnderChestBlock;
-import net.minecraft.world.level.block.BarrelBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibraryUtility;
-import ravex.modules.world.GhostBlocks;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import java.util.ArrayList;
 import java.util.List;
+
+
+
+
 @ModuleInfo(name = "AntiReGear", category = "Combat")
-public class AntiReGear extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter delay = new NumberParameter("Delay", 100, 0, 1000, 50);
-    public final BooleanParameter shulkersParam = new BooleanParameter("Shulkers", true);
-    public final BooleanParameter chestsParam = new BooleanParameter("Chests", true);
-    public final BooleanParameter enderChestsParam = new BooleanParameter("EnderChests", true);
-    public final BooleanParameter barrelsParam = new BooleanParameter("Barrels", false);
+public class AntiReGear implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "Delay", min = 0, max = 1000, step = 50)
+    public double delay = 100;
+    @Parameter(name = "Shulkers")
+    public boolean shulkersParam = true;
+    @Parameter(name = "Chests")
+    public boolean chestsParam = true;
+    @Parameter(name = "EnderChests")
+    public boolean enderChestsParam = true;
+    @Parameter(name = "Barrels")
+    public boolean barrelsParam = false;
     private net.minecraft.core.BlockPos currentMiningTarget = null;
     private long lastBreakTime = 0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_antiregear");
@@ -37,7 +44,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         int[] blockX, int[] blockY, int[] blockZ,
         double range
     );
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (currentMiningTarget != null && mc.gameMode != null) {
             mc.gameMode.stopDestroyBlock();
@@ -49,7 +56,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         long now = System.currentTimeMillis();
         if (currentMiningTarget != null) {
-            BlockState state = mc.level.getBlockState(currentMiningTarget);
+            net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(currentMiningTarget);
             if (state.isAir() || !isTargetBlock(state)) {
                 currentMiningTarget = null;
             } else {
@@ -60,8 +67,8 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
                 return;
             }
         }
-        if (now - lastBreakTime < delay.getValue().longValue()) return;
-        double r = range.getValue();
+        if (now - lastBreakTime < (long) delay) return;
+        double r = range;
         net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int minX = (int) Math.floor(playerPos.getX() - r);
         int maxX = (int) Math.ceil(playerPos.getX() + r);
@@ -75,7 +82,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
                 for (int z = minZ; z <= maxZ; z++) {
                     net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
                     if (pos.closerThan(playerPos, r)) {
-                        BlockState state = mc.level.getBlockState(pos);
+                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
                         if (isTargetBlock(state)) {
                             candidates.add(pos);
                         }
@@ -120,12 +127,12 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             lastBreakTime = now;
         }
     }
-    private boolean isTargetBlock(BlockState state) {
+    private boolean isTargetBlock(net.minecraft.world.level.block.state.BlockState state) {
         Block block = state.getBlock();
-        if (block instanceof ShulkerBoxBlock) return shulkersParam.getValue();
-        if (block instanceof ChestBlock) return chestsParam.getValue();
-        if (block instanceof EnderChestBlock) return enderChestsParam.getValue();
-        if (block instanceof BarrelBlock) return barrelsParam.getValue();
+        if (block instanceof ShulkerBoxBlock) return shulkersParam;
+        if (block instanceof ChestBlock) return chestsParam;
+        if (block instanceof EnderChestBlock) return enderChestsParam;
+        if (block instanceof BarrelBlock) return barrelsParam;
         return false;
     }
     private net.minecraft.core.BlockPos fallbackFindTarget(List<net.minecraft.core.BlockPos> candidates, Minecraft mc) {
@@ -176,16 +183,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         return ravex.manager.ModuleManager.delegate(AntiReGear.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

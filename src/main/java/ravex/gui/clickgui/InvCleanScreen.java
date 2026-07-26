@@ -517,8 +517,8 @@ public class InvCleanScreen extends Screen {
     @Override
     public void onClose() {
 
-        if (ModuleManager.get(InvClean.class).getEnabled()) {
-            ModuleManager.get(InvClean.class).setEnabled(false);
+        if (ModuleManager.INSTANCE.getByName("InvClean").getEnabled()) {
+            ModuleManager.INSTANCE.getByName("InvClean").setEnabled(false);
         }
         Minecraft.getInstance().setScreen(parent);
     }

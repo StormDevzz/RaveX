@@ -1,38 +1,43 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundEditBookPacket;
 import net.minecraft.server.network.Filterable;
 import net.minecraft.world.item.component.WrittenBookContent;
 
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.parameter.StringParameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "BookHelper", category = "Misc")
-public class BookHelper extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Edit", List.of("Edit", "Fill"));
-    public final StringParameter newTitle = new StringParameter("Title", "RaveXBook");
-    public final StringParameter newAuthor = new StringParameter("Author", "RaveX");
-    public final StringParameter fillPattern = new StringParameter("Pattern", "书填装模块占用空间书填装模块占用空间");
-    public final NumberParameter maxPages = new NumberParameter("Pages", 100.0, 1.0, 100.0, 1.0);
-    public final StringParameter bookTitle = new StringParameter("BookTitle", "");
-    protected void onEnable() {
+public class BookHelper implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Edit", "Fill"})
+    public String mode = "Edit";
+    @Parameter(name = "Title")
+    public String newTitle = "RaveXBook";
+    @Parameter(name = "Author")
+    public String newAuthor = "RaveX";
+    @Parameter(name = "Pattern")
+    public String fillPattern = "书填装模块占用空间书填装模块占用空间";
+    @Parameter(name = "Pages", min = 1.0, max = 100.0, step = 1.0)
+    public double maxPages = 100.0;
+    @Parameter(name = "BookTitle")
+    public String bookTitle = "";
+    public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.getConnection() == null) {
-            enabled = false;
+            ravex.manager.ModuleManager.INSTANCE.getByName("BookHelper").setEnabled(false);
             return;
         }
-        switch (mode.getValue()) {
+        switch (mode) {
             case "Edit" -> onEdit(mc);
             case "Fill" -> onFill(mc);
         }
-        enabled = false;
+        ravex.manager.ModuleManager.INSTANCE.getByName("BookHelper").setEnabled(false);
     }
 
     private void onEdit(Minecraft mc) {
@@ -45,8 +50,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Edit", List.of("Edi
             );
             return;
         }
-        String title = newTitle.getValue();
-        String author = newAuthor.getValue();
+        String title = newTitle;
+        String author = newAuthor;
         if (title == null) title = "";
         if (author == null) author = "";
         if (InventoryUtility.isWrittenBook(stack)) {
@@ -114,9 +119,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Edit", List.of("Edi
             );
             return;
         }
-        String pattern = fillPattern.getValue();
+        String pattern = fillPattern;
         if (pattern == null || pattern.isEmpty()) pattern = "书";
-        int count = maxPages.getValue().intValue();
+        int count = (int) maxPages;
         if (count < 1) count = 1;
         if (count > 100) count = 100;
         String fullPage = pattern.repeat(1024 / pattern.length() + 1).substring(0, 1024);
@@ -124,7 +129,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Edit", List.of("Edi
         for (int i = 0; i < count; i++) {
             pages.add(fullPage);
         }
-        String title = bookTitle.getValue();
+        String title = bookTitle;
         if (title == null) title = "";
         if (title.isEmpty()) {
             mc.getConnection().send(new ServerboundEditBookPacket(slot, pages, Optional.empty()));
@@ -142,16 +147,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Edit", List.of("Edi
         return ravex.manager.ModuleManager.delegate(BookHelper.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

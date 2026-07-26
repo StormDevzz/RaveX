@@ -1,6 +1,7 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
@@ -13,43 +14,44 @@ import net.minecraft.resources.Identifier;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
 @ModuleInfo(name = "Tracers", category = "Render")
-public class Tracers extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Default", List.of("Default", "Arrows"));
-    public final BooleanParameter players = new BooleanParameter("Players", true);
-    public final BooleanParameter monsters = new BooleanParameter("Monsters", false);
-    public final BooleanParameter animals = new BooleanParameter("Animals", false);
-    public final BooleanParameter items = new BooleanParameter("Items", false);
-    public final NumberParameter maxDistance = new NumberParameter("Distance", 100.0, 10.0, 300.0, 10.0);
-    public final NumberParameter lineWidth = new NumberParameter("Width", 1.0, 0.1, 5.0, 0.1);
-    public final NumberParameter arrowSize = new NumberParameter("ArrowSize", 20.0, 8.0, 48.0, 2.0);
-    public final NumberParameter arrowMargin = new NumberParameter("ArrowMargin", 4.0, 0.0, 30.0, 1.0);
-    public final ColorParameter playerColor = new ColorParameter("PlayerColor", 0xFFFF3333);
-    public final ColorParameter mobColor = new ColorParameter("MobColor", 0xFFFF3333);
-    public final ColorParameter animalColor = new ColorParameter("AnimalColor", 0xFF33FF33);
-    public final ColorParameter itemColor = new ColorParameter("ItemColor", 0xFFFFFF33);
+public class Tracers implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Default", "Arrows"})
+    public String mode = "Default";
+    @Parameter(name = "Players")
+    public boolean players = true;
+    @Parameter(name = "Monsters")
+    public boolean monsters = false;
+    @Parameter(name = "Animals")
+    public boolean animals = false;
+    @Parameter(name = "Items")
+    public boolean items = false;
+    @Parameter(name = "Distance", min = 10.0, max = 300.0, step = 10.0)
+    public double maxDistance = 100.0;
+    @Parameter(name = "Width", min = 0.1, max = 5.0, step = 0.1)
+    public double lineWidth = 1.0;
+    @Parameter(name = "ArrowSize", min = 8.0, max = 48.0, step = 2.0)
+    public double arrowSize = 20.0;
+    @Parameter(name = "ArrowMargin", min = 0.0, max = 30.0, step = 1.0)
+    public double arrowMargin = 4.0;
+    @Parameter(name = "PlayerColor", color = true)
+    public int playerColor = 0xFFFF3333;
+    @Parameter(name = "MobColor", color = true)
+    public int mobColor = 0xFFFF3333;
+    @Parameter(name = "AnimalColor", color = true)
+    public int animalColor = 0xFF33FF33;
+    @Parameter(name = "ItemColor", color = true)
+    public int itemColor = 0xFFFFFF33;
 
     private static Identifier arrowTexture;
     private static boolean arrowLoaded = false;
 
     private Tracers() {
         
-        lineWidth.setVisible(() -> mode.getValue().equals("Default"));
-        arrowSize.setVisible(() -> mode.getValue().equals("Arrows"));
-        arrowMargin.setVisible(() -> mode.getValue().equals("Arrows"));
-        playerColor.setVisible(players::getValue);
-        mobColor.setVisible(monsters::getValue);
-        animalColor.setVisible(animals::getValue);
-        itemColor.setVisible(items::getValue);
     }
 
     private static Identifier getArrowTexture() {
@@ -92,15 +94,15 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default", List.of("
             return;
 
         Tracers t = ravex.manager.ModuleManager.delegate(Tracers.class);
-        if (!t.getEnabled() || !t.mode.getValue().equals("Arrows"))
+        if (!t.getEnabled() || !t.mode.equals("Arrows"))
             return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null)
             return;
 
-        float size = t.arrowSize.getValue().floatValue();
-        float margin = t.arrowMargin.getValue().floatValue();
+        float size = (float) t.arrowSize;
+        float margin = (float) t.arrowMargin;
         float radius = size * 0.7f + margin;
         float smoothSpeed = 0.12f;
         float minGap = 0.25f;
@@ -230,16 +232,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default", List.of("
         return ravex.manager.ModuleManager.delegate(Tracers.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

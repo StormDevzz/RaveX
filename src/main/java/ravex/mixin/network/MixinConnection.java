@@ -29,7 +29,7 @@ public class MixinConnection {
 
         if (packet instanceof ServerboundContainerClickPacket) {
             GuiMove gw = GuiMove.itz();
-            if (gw.getEnabled() && "Grim".equals(gw.mode.getValue())) {
+            if (GuiMove.maybeEnabled() && "Grim".equals(gw.mode)) {
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.screen instanceof AbstractContainerScreen) {
                     ci.cancel();

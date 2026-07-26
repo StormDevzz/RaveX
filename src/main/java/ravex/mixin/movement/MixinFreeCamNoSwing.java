@@ -13,7 +13,7 @@ public abstract class MixinFreeCamNoSwing {
 
     @Inject(method = "swing(Lnet/minecraft/world/InteractionHand;)V", at = @At("HEAD"), cancellable = true)
     private void onSwing(InteractionHand hand, CallbackInfo ci) {
-        if (FreeCam.maybeEnabled() && FreeCam.itz().noSwing.getValue()) {
+        if (FreeCam.maybeEnabled() && FreeCam.itz().noSwing) {
             ci.cancel();
         }
     }

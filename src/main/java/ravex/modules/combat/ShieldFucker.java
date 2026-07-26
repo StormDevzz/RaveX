@@ -1,33 +1,41 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
 
-import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "ShieldFucker", category = "Combat")
-public class ShieldFucker extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter wallRange = new NumberParameter("WallRange", 3.0, 1.0, 6.0, 0.1);
-    public final NumberParameter switchDelay = new NumberParameter("SwitchDelay", 100, 0, 500, 10);
-    public final NumberParameter attackDelay = new NumberParameter("AttackDelay", 200, 50, 1000, 10);
-    public final NumberParameter rotateSpeed = new NumberParameter("RotateSpeed", 180, 10, 180, 5);
-    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
-    public final BooleanParameter targetPlayers = new BooleanParameter("Players", true);
-    public final BooleanParameter targetMonsters = new BooleanParameter("Monsters", false);
-    public final BooleanParameter onlyAxe = new BooleanParameter("OnlyAxe", true);
-    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
-    public final ModeParameter rotate = new ModeParameter("Rotate", "Silent",
-            List.of("Silent", "Normal", "None"));
+public class ShieldFucker implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "WallRange", min = 1.0, max = 6.0, step = 0.1)
+    public double wallRange = 3.0;
+    @Parameter(name = "SwitchDelay", min = 0, max = 500, step = 10)
+    public double switchDelay = 100;
+    @Parameter(name = "AttackDelay", min = 50, max = 1000, step = 10)
+    public double attackDelay = 200;
+    @Parameter(name = "RotateSpeed", min = 10, max = 180, step = 5)
+    public double rotateSpeed = 180;
+    @Parameter(name = "ThroughWalls")
+    public boolean throughWalls = true;
+    @Parameter(name = "Players")
+    public boolean targetPlayers = true;
+    @Parameter(name = "Monsters")
+    public boolean targetMonsters = false;
+    @Parameter(name = "OnlyAxe")
+    public boolean onlyAxe = true;
+    @Parameter(name = "AutoSwitch")
+    public boolean autoSwitch = true;
+    @Parameter(name = "Rotate", modes = {"Silent", "Normal", "None"})
+    public String rotate = "Silent";
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_shieldfucker");
     static {
@@ -60,7 +68,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
-    protected void onDisable() {
+    public void onDisable() {
         silentRotation.hasRotation = false;
         if (NATIVE.isLoaded()) {
             nativeReset();
@@ -86,12 +94,12 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             pos.x, pos.y, pos.z,
             mc.player.getYRot(), mc.player.getXRot(),
             entityData,
-            range.getValue(), wallRange.getValue(),
-            switchDelay.getValue(), attackDelay.getValue(),
-            rotateSpeed.getValue(),
-            throughWalls.getValue(), autoSwitch.getValue(),
-            targetPlayers.getValue(), targetMonsters.getValue(),
-            onlyAxe.getValue(),
+            range, wallRange,
+            switchDelay, attackDelay,
+            rotateSpeed,
+            throughWalls, autoSwitch,
+            targetPlayers, targetMonsters,
+            onlyAxe,
             mc.player.getMainHandItem().getItem().toString(),
             InventoryUtility.getSelectedSlot(mc.player)
         );
@@ -99,20 +107,20 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         processAction(mc, action);
     }
     private void javaTick(Minecraft mc) {
-        double maxDist = range.getValue();
+        double maxDist = range;
         var target = (net.minecraft.world.entity.LivingEntity) null;
         double bestDist = Double.MAX_VALUE;
         for (var e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
             if (MobUtility.isArmorStand(le)) continue;
-            if (!targetPlayers.getValue() && MobUtility.isPlayer(le)) continue;
-            if (!targetMonsters.getValue() && MobUtility.isHostile(le)) continue;
+            if (!targetPlayers && MobUtility.isPlayer(le)) continue;
+            if (!targetMonsters && MobUtility.isHostile(le)) continue;
             if (!hasShield(le)) continue;
             if (!le.isBlocking()) continue;
             double dist = mc.player.distanceTo(le);
             if (dist > maxDist) continue;
-            if (!throughWalls.getValue() && !mc.player.hasLineOfSight(le)) continue;
+            if (!throughWalls && !mc.player.hasLineOfSight(le)) continue;
             if (dist < bestDist) {
                 bestDist = dist;
                 target = le;
@@ -132,7 +140,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         return false;
     }
     private void handleAction(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
-        String rotMode = rotate.getValue();
+        String rotMode = rotate;
         boolean doRotate = !rotMode.equals("None");
         if (doRotate) {
             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target.position().add(0, 0.25, 0));
@@ -143,8 +151,8 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
                 mc.player.setXRot(angles[1]);
             }
         }
-        if (onlyAxe.getValue() && !InventoryUtility.isAxeItem(mc.player.getMainHandItem())) {
-            if (autoSwitch.getValue()) {
+        if (onlyAxe && !InventoryUtility.isAxeItem(mc.player.getMainHandItem())) {
+            if (autoSwitch) {
                 int axeSlot = findAxeSlot(mc);
                 if (axeSlot != -1 && axeSlot != InventoryUtility.getSelectedSlot(mc.player)) {
                     InventoryUtility.selectSlot(mc.player, axeSlot);
@@ -173,7 +181,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             silentRotation.hasRotation = false;
             return;
         }
-        String rotMode = rotate.getValue();
+        String rotMode = rotate;
         if (!rotMode.equals("None")) {
             if (rotMode.equals("Silent")) {
                 silentRotation.set(action.yaw, action.pitch);
@@ -182,7 +190,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
                 mc.player.setXRot(action.pitch);
             }
         }
-        if (action.shouldSwitch && autoSwitch.getValue()) {
+        if (action.shouldSwitch && autoSwitch) {
             int slot = action.switchSlot >= 0 ? action.switchSlot : findAxeSlot(mc);
             if (slot != -1 && slot != InventoryUtility.getSelectedSlot(mc.player)) {
                 InventoryUtility.selectSlot(mc.player, slot);
@@ -197,13 +205,13 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     }
     private double[] collectEntityData(Minecraft mc) {
         List<Double> data = new ArrayList<>();
-        double maxDist = range.getValue();
+        double maxDist = range;
         for (var e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
             if (MobUtility.isArmorStand(le)) continue;
-            if (!targetPlayers.getValue() && MobUtility.isPlayer(le)) continue;
-            if (!targetMonsters.getValue() && MobUtility.isHostile(le)) continue;
+            if (!targetPlayers && MobUtility.isPlayer(le)) continue;
+            if (!targetMonsters && MobUtility.isHostile(le)) continue;
             if (MobUtility.distanceToPlayer(le) > maxDist) continue;
             if (!(le instanceof net.minecraft.world.entity.player.Player player)) continue;
             boolean shield = InventoryUtility.isItem(player.getOffhandItem(), "shield")
@@ -236,16 +244,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     );
     private static native void nativeReset();
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

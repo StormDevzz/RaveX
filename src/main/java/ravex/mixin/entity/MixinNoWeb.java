@@ -20,13 +20,13 @@ public abstract class MixinNoWeb {
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
         if (NoWeb.maybeEnabled() && state.is(net.minecraft.world.level.block.Blocks.COBWEB)) {
-            String mode = NoWeb.itz().mode.getValue();
+            String mode = NoWeb.itz().mode;
             double horizontal = 1.0;
             double vertical = 1.0;
 
             if (mode.equals("Custom")) {
-                horizontal = NoWeb.itz().horizontalSpeed.getValue();
-                vertical = NoWeb.itz().verticalSpeed.getValue();
+                horizontal = NoWeb.itz().horizontalSpeed;
+                vertical = NoWeb.itz().verticalSpeed;
             }
 
             self.fallDistance = 0.0F;

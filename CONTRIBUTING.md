@@ -46,6 +46,18 @@ src/
 - Follow existing patterns - look at neighboring files before writing new ones
 - Keybindings are set only via **middle-click** on the module button in the ClickGUI
 - **Prefer utility/wrapper classes over direct Minecraft imports.** The project provides extensive ready-to-use utilities in `ravex.utility.*` and wrappers in `ravex.mcwrapper.*`. These handle null safety, consistency, and reduce boilerplate. Use `PlayerUtility.getPlayer()` instead of `Minecraft.getInstance().player`, `NetworkUtility.sendPacket()` instead of `Minecraft.getInstance().getConnection().send()`, `MinecraftWrapper` instead of `Minecraft.getInstance()`, and so on. Before writing raw Minecraft API calls, check if a utility already exists — common operations (movement, rotation, rendering, inventory, sound, chat, entities) are already wrapped. This keeps the codebase maintainable, avoids repeated null checks, and centralizes version-specific changes.
+- **Declare settings with `@Parameter` annotations on primitive fields.** Do NOT create `BooleanParameter`, `ModeParameter`, `NumberParameter`, `ColorParameter` objects directly. Instead, annotate primitive fields with `@Parameter(name = "...", ...)`. Supported field types: `boolean`, `String`, `double`, `int`. The annotation supports `min`, `max`, `step` (for numeric), `modes` (for String → ModeParameter), `color` (for int → ColorParameter), and `options` (for `List<String>` → MultiSelectParameter). The `Module` base class automatically creates the appropriate `Parameter<?>` wrapper objects at runtime. Example:
+  ```java
+  @Parameter(name = "Speed", min = 0.1, max = 10.0, step = 0.5)
+  public double speed = 4.0;
+
+  @Parameter(name = "Targets", modes = {"Players", "Monsters", "Passives"})
+  public String targetMode = "Players";
+
+  @Parameter(name = "Color", color = true)
+  public int color = 0xFF00FF00;
+  ```
+  For classes implementing `ModuleAccess` (which do not extend `Module`), the same `@Parameter` annotation system works — just ensure the annotation is present and the field is accessible. The ClickGUI and settings panels discover parameters via the `getParameters()` method inherited from `Module` or through reflection-based scanning.
 
 ### C++ (Native Code)
 

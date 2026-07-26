@@ -27,7 +27,7 @@ public class MixinGhostHand {
         if (hit != null && hit.getType() == HitResult.Type.BLOCK) return;
 
         net.minecraft.client.player.LocalPlayer player = mc.player;
-        double range = GhostHand.itz().range.getValue();
+        double range = GhostHand.itz().range;
         Vec3 eye = player.getEyePosition(1.0F);
         Vec3 look = player.getViewVector(1.0F);
         Vec3 end = eye.add(look.x * range, look.y * range, look.z * range);
@@ -40,13 +40,13 @@ public class MixinGhostHand {
             BlockState state = mc.level.getBlockState(pos);
             Block block = state.getBlock();
 
-            boolean canInteract = GhostHand.itz().allBlocks.getValue();
+            boolean canInteract = GhostHand.itz().allBlocks;
             if (!canInteract) {
-                if (GhostHand.itz().chests.getValue() && isChest(block)) canInteract = true;
-                else if (GhostHand.itz().enderChests.getValue() && block instanceof EnderChestBlock) canInteract = true;
-                else if (GhostHand.itz().furnaces.getValue() && (block instanceof AbstractFurnaceBlock || block instanceof FurnaceBlock)) canInteract = true;
-                else if (GhostHand.itz().craftingTables.getValue() && block instanceof CraftingTableBlock) canInteract = true;
-                else if (GhostHand.itz().enchantTables.getValue() && block instanceof EnchantingTableBlock) canInteract = true;
+                if (GhostHand.itz().chests && isChest(block)) canInteract = true;
+                else if (GhostHand.itz().enderChests && block instanceof EnderChestBlock) canInteract = true;
+                else if (GhostHand.itz().furnaces && (block instanceof AbstractFurnaceBlock || block instanceof FurnaceBlock)) canInteract = true;
+                else if (GhostHand.itz().craftingTables && block instanceof CraftingTableBlock) canInteract = true;
+                else if (GhostHand.itz().enchantTables && block instanceof EnchantingTableBlock) canInteract = true;
             }
 
             if (canInteract) {

@@ -1,25 +1,28 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
 import ravex.event.movement.VelocityEvent;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import java.util.List;
 import java.util.Random;
 @ModuleInfo(name = "Velocity", category = "Movement")
-public class Velocity extends ravex.modules.Module {
-public final ModeParameter mode       = new ModeParameter("Mode", "Cancel",
-            List.of("Cancel", "Matrix", "NCP", "Grim", "GrimStrict"));
-    public final NumberParameter horizontal = new NumberParameter("Horizontal", 0.0, 0.0, 1.0, 0.05);
-    public final NumberParameter vertical   = new NumberParameter("Vertical",   0.0, 0.0, 1.0, 0.05);
-    public final BooleanParameter explosion = new BooleanParameter("Explosion", true);
-    public final NumberParameter grimHorizontal = new NumberParameter("GrimHorizontal", 70.0, 0.0, 100.0, 1.0);
-    public final NumberParameter grimVertical = new NumberParameter("GrimVertical", 80.0, 0.0, 100.0, 1.0);
+public class Velocity implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Cancel", "Matrix", "NCP", "Grim", "GrimStrict"})
+    public String mode = "Cancel";
+    @Parameter(name = "Horizontal", min = 0.0, max = 1.0, step = 0.05)
+    public double horizontal = 0.0;
+    @Parameter(name = "Vertical", min = 0.0, max = 1.0, step = 0.05)
+    public double vertical = 0.0;
+    @Parameter(name = "Explosion")
+    public boolean explosion = true;
+    @Parameter(name = "GrimHorizontal", min = 0.0, max = 100.0, step = 1.0)
+    public double grimHorizontal = 70.0;
+    @Parameter(name = "GrimVertical", min = 0.0, max = 100.0, step = 1.0)
+    public double grimVertical = 80.0;
 
     private final Random random = new Random();
     public int grimTickCounter = 0;
@@ -29,19 +32,15 @@ public final ModeParameter mode       = new ModeParameter("Mode", "Cancel",
 
     private Velocity() {
         
-        horizontal.setVisible(() -> !mode.getValue().equals("Cancel"));
-        vertical.setVisible(() -> !mode.getValue().equals("Cancel"));
-        grimHorizontal.setVisible(() -> "GrimStrict".equals(mode.getValue()));
-        grimVertical.setVisible(() -> "GrimStrict".equals(mode.getValue()));
     }
 
     @Subscribe
     public void onVelocity(VelocityEvent event) {
-        if (!getEnabled()) return;
-        String modeVal = mode.getValue();
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Velocity").getEnabled()) return;
+        String modeVal = mode;
         net.minecraft.world.phys.Vec3 cur = event.getVelocity();
-        double h = horizontal.getValue();
-        double v = vertical.getValue();
+        double h = horizontal;
+        double v = vertical;
 
         switch (modeVal) {
             case "Cancel" -> event.setVelocity(net.minecraft.world.phys.Vec3.ZERO);
@@ -71,12 +70,12 @@ public final ModeParameter mode       = new ModeParameter("Mode", "Cancel",
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        if ("GrimStrict".equals(mode.getValue()) && grimVelocityActive) {
+        if ("GrimStrict".equals(mode) && grimVelocityActive) {
             if (grimDelayTicks > 0) {
                 grimDelayTicks--;
                 if (grimDelayTicks == 0) {
-                    double grimH = grimHorizontal.getValue() / 100.0;
-                    double grimV = grimVertical.getValue() / 100.0;
+                    double grimH = grimHorizontal / 100.0;
+                    double grimV = grimVertical / 100.0;
                     mc.player.setDeltaMovement(grimSavedVelocity.x * (1.0 - grimH), grimSavedVelocity.y * (1.0 - grimV), grimSavedVelocity.z * (1.0 - grimH));
                 }
             }
@@ -98,16 +97,5 @@ public final ModeParameter mode       = new ModeParameter("Mode", "Cancel",
         return ravex.manager.ModuleManager.delegate(Velocity.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

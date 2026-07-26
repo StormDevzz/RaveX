@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -14,8 +14,10 @@ import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "SpeedometerHud", category = "HUD")
 public class SpeedometerHud extends ravex.modules.Module {
-    public final ModeParameter unit = new ModeParameter("Unit", "BPS", java.util.List.of("BPS", "KMH"));
-    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+    @Parameter(name = "Unit", modes = {"BPS", "KMH"})
+    public String unit = "BPS";
+    @Parameter(name = "Shadow")
+    public boolean shadow = true;
 
     public int x;
     public int y;
@@ -72,18 +74,7 @@ private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", 
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, activeColor);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

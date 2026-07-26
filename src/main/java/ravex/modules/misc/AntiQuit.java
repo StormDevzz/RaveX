@@ -1,7 +1,7 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.nativelib.NativeLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmScreen;
@@ -11,14 +11,14 @@ import com.mojang.blaze3d.platform.Window;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
 @ModuleInfo(name = "AntiQuit", category = "Misc")
-public class AntiQuit extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Server",
-        List.of("Server", "Game", "Both"));
+public class AntiQuit implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Server", "Game", "Both"})
+    public String mode = "Server";
 
     static {
         NativeLoader.load();
     }
-    protected void onEnable() {
+    public void onEnable() {
         try {
             nativeBlockQuit(true);
         } catch (UnsatisfiedLinkError ignored) {}
@@ -26,7 +26,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Server",
         Window window = mc.getWindow();
         if (window == null) return;
         window.setWindowCloseCallback(() -> {
-            String m = mode.getValue();
+            String m = mode;
             if (m.equals("Game") || m.equals("Both")) {
                 long handle = window.handle();
                 GLFW.glfwSetWindowShouldClose(handle, false);
@@ -50,7 +50,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Server",
             }
         });
     }
-    protected void onDisable() {
+    public void onDisable() {
         try {
             nativeBlockQuit(false);
         } catch (UnsatisfiedLinkError ignored) {}
@@ -63,7 +63,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Server",
     public static boolean shouldBlockDisconnect() {
         AntiQuit $ = ravex.manager.ModuleManager.delegate(AntiQuit.class);
         if ($ == null || !$.getEnabled()) return false;
-        String m = $.mode.getValue();
+        String m = $.mode;
         return m.equals("Server") || m.equals("Both");
     }
     private native void nativeBlockQuit(boolean block);
@@ -73,16 +73,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Server",
         return ravex.manager.ModuleManager.delegate(AntiQuit.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

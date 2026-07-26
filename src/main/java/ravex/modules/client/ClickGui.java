@@ -1,87 +1,96 @@
 package ravex.modules.client;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import java.util.List;
 
 @ModuleInfo(name = "ClickGui", category = "Client")
-public class ClickGui extends ravex.modules.Module {
-public final BooleanParameter drawBackground = new BooleanParameter("Background", true);
-    public final ModeParameter colorMode = new ModeParameter("ColorMode", "Positive",
-            List.of("Positive", "Fade", "Rainbow", "DoubleColor"));
-    public final NumberParameter colorSpeed = new NumberParameter("Speed", 18, 2, 54, 1);
-    public final ravex.parameter.ColorParameter color1 = new ravex.parameter.ColorParameter("Color1", 0xFF40A9F8);
-    public final ravex.parameter.ColorParameter color2 = new ravex.parameter.ColorParameter("Color2", 0xFFE63946);
-    public final ModeParameter gradientMode = new ModeParameter("Gradient", "LeftToRight",
-            List.of("LeftToRight", "UpsideDown", "Both"));
-    public final NumberParameter backgroundOpacity = new NumberParameter("BackgroundOpacity", 40, 0, 200, 1);
-    public final NumberParameter panelOpacity = new NumberParameter("PanelOpacity", 70, 0, 255, 1);
-    public final NumberParameter buttonOpacity = new NumberParameter("ButtonOpacity", 35, 0, 255, 1);
-    public final BooleanParameter blur = new BooleanParameter("Blur", true);
-    public final BooleanParameter customFont = new BooleanParameter("CustomFont", true);
-    public final BooleanParameter switchless = new BooleanParameter("SwitchlessOptions", true);
-    public final BooleanParameter outlines = new BooleanParameter("Outlines", false);
-    public final ravex.parameter.ColorParameter outlineColor = new ravex.parameter.ColorParameter("OutlineColor",
-            0x30FFFFFF);
-    public final BooleanParameter moduleOutlines = new BooleanParameter("ButtonOutlines", true);
-    public final ravex.parameter.ColorParameter moduleOutlineColor = new ravex.parameter.ColorParameter("ButtonBorder",
-            0xFFFFFFFF);
-    public final NumberParameter buttonHeight = new NumberParameter("ButtonHeight", 18, 8, 30, 1);
-    public final NumberParameter panelWidth = new NumberParameter("PanelWidth", 130, 70, 300, 5);
-    public final NumberParameter cornerRadius = new NumberParameter("CornerRadius", 12, 4, 24, 1);
-    public final BooleanParameter moduleCounter = new BooleanParameter("ModuleCounter", true);
-    public final BooleanParameter companionImage = new BooleanParameter("ShowImage", false);
-    public final ModeParameter companionType = new ModeParameter("ImageType", "Femboy",
-            List.of("Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow",
-                    "Cutieeee", "Cutiemonster", "Furik", "Godofcoding", "Terrydavis"));
-    public final NumberParameter guiScale = new NumberParameter("GuiScale", 0.85, 0.5, 1.0, 0.05);
-    public final NumberParameter gearRotationSpeed = new NumberParameter("GearSpeed", 30, 0, 180, 5);
-    public final BooleanParameter smoothScroll = new BooleanParameter("SmoothScroll", true);
-    public final NumberParameter scrollSmoothness = new NumberParameter("ScrollSmoothness", 12, 1, 40, 1);
-    public final BooleanParameter smoothOption = new BooleanParameter("OptionAnimation", true);
-    public final NumberParameter optionSmoothness = new NumberParameter("OptionSmoothness", 12, 1, 40, 1);
-    public final BooleanParameter headerGlow = new BooleanParameter("HeaderGlow", true);
-    public final NumberParameter headerGlowIntensity = new NumberParameter("GlowIntensity", 20, 5, 60, 5);
-    public final BooleanParameter wheelControl = new BooleanParameter("WheelControl", false);
-    public final NumberParameter tooltipSpeed = new NumberParameter("TooltipSpeed", 10, 1, 30, 1);
-    public final NumberParameter descriptionOpacity = new NumberParameter("DescriptionOpacity", 180, 0, 255, 1);
-    public final NumberParameter tooltipOffsetX = new NumberParameter("TooltipOffsetX", 8, 0, 30, 1);
-    public final NumberParameter tooltipOffsetY = new NumberParameter("TooltipOffsetY", 8, 0, 30, 1);
-    public final BooleanParameter showToolbar = new BooleanParameter("ShowToolbar", false);
-    public final BooleanParameter descriptionPanel = new BooleanParameter("DescriptionPanel", false);
-    public final BooleanParameter showGear = new BooleanParameter("ShowGear", false);
+public class ClickGui implements ModuleAccess {
+    @Parameter(name = "Background")
+    public boolean drawBackground = true;
+    @Parameter(name = "ColorMode", modes = {"Positive", "Fade", "Rainbow", "DoubleColor"})
+    public String colorMode = "Positive";
+    @Parameter(name = "Speed", min = 2, max = 54, step = 1)
+    public double colorSpeed = 18;
+    @Parameter(name = "Color1", color = true)
+    public int color1 = 0xFF40A9F8;
+    @Parameter(name = "Color2", color = true)
+    public int color2 = 0xFFE63946;
+    @Parameter(name = "Gradient", modes = {"LeftToRight", "UpsideDown", "Both"})
+    public String gradientMode = "LeftToRight";
+    @Parameter(name = "BackgroundOpacity", min = 0, max = 200, step = 1)
+    public double backgroundOpacity = 40;
+    @Parameter(name = "PanelOpacity", min = 0, max = 255, step = 1)
+    public double panelOpacity = 70;
+    @Parameter(name = "ButtonOpacity", min = 0, max = 255, step = 1)
+    public double buttonOpacity = 35;
+    @Parameter(name = "Blur")
+    public boolean blur = true;
+    @Parameter(name = "CustomFont")
+    public boolean customFont = true;
+    @Parameter(name = "SwitchlessOptions")
+    public boolean switchless = true;
+    @Parameter(name = "Outlines")
+    public boolean outlines = false;
+    @Parameter(name = "OutlineColor", color = true)
+    public int outlineColor = 0x30FFFFFF;
+    @Parameter(name = "ButtonOutlines")
+    public boolean moduleOutlines = true;
+    @Parameter(name = "ButtonBorder", color = true)
+    public int moduleOutlineColor = 0xFFFFFFFF;
+    @Parameter(name = "ButtonHeight", min = 8, max = 30, step = 1)
+    public double buttonHeight = 18;
+    @Parameter(name = "PanelWidth", min = 70, max = 300, step = 5)
+    public double panelWidth = 130;
+    @Parameter(name = "CornerRadius", min = 4, max = 24, step = 1)
+    public double cornerRadius = 12;
+    @Parameter(name = "ModuleCounter")
+    public boolean moduleCounter = true;
+    @Parameter(name = "ShowImage")
+    public boolean companionImage = false;
+    @Parameter(name = "ImageType", modes = {"Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow", "Cutieeee", "Cutiemonster", "Furik", "Godofcoding", "Terrydavis"})
+    public String companionType = "Femboy";
+    @Parameter(name = "GuiScale", min = 0.5, max = 1.0, step = 0.05)
+    public double guiScale = 0.85;
+    @Parameter(name = "GearSpeed", min = 0, max = 180, step = 5)
+    public double gearRotationSpeed = 30;
+    @Parameter(name = "SmoothScroll")
+    public boolean smoothScroll = true;
+    @Parameter(name = "ScrollSmoothness", min = 1, max = 40, step = 1)
+    public double scrollSmoothness = 12;
+    @Parameter(name = "OptionAnimation")
+    public boolean smoothOption = true;
+    @Parameter(name = "OptionSmoothness", min = 1, max = 40, step = 1)
+    public double optionSmoothness = 12;
+    @Parameter(name = "HeaderGlow")
+    public boolean headerGlow = true;
+    @Parameter(name = "GlowIntensity", min = 5, max = 60, step = 5)
+    public double headerGlowIntensity = 20;
+    @Parameter(name = "WheelControl")
+    public boolean wheelControl = false;
+    @Parameter(name = "TooltipSpeed", min = 1, max = 30, step = 1)
+    public double tooltipSpeed = 10;
+    @Parameter(name = "DescriptionOpacity", min = 0, max = 255, step = 1)
+    public double descriptionOpacity = 180;
+    @Parameter(name = "TooltipOffsetX", min = 0, max = 30, step = 1)
+    public double tooltipOffsetX = 8;
+    @Parameter(name = "TooltipOffsetY", min = 0, max = 30, step = 1)
+    public double tooltipOffsetY = 8;
+    @Parameter(name = "ShowToolbar")
+    public boolean showToolbar = false;
+    @Parameter(name = "DescriptionPanel")
+    public boolean descriptionPanel = false;
+    @Parameter(name = "ShowGear")
+    public boolean showGear = false;
 
     private ClickGui() {
         
-        optionSmoothness.setVisible(() -> smoothOption.getValue());
-        color1.setVisible(() -> "Positive".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue())
-                || "DoubleColor".equals(colorMode.getValue()));
-        color2.setVisible(() -> "DoubleColor".equals(colorMode.getValue()));
-        outlineColor.setVisible(() -> outlines.getValue());
-        moduleOutlineColor.setVisible(() -> moduleOutlines.getValue());
-        companionType.setVisible(() -> companionImage.getValue());
-        gearRotationSpeed.setVisible(() -> showGear.getValue());
-        scrollSmoothness.setVisible(() -> smoothScroll.getValue());
-        headerGlowIntensity.setVisible(() -> headerGlow.getValue());
-        enabled = true;
+        ravex.manager.ModuleManager.INSTANCE.getByName("ClickGui").setEnabled(true);
     }
 
     public static ClickGui itz() {
         return ravex.manager.ModuleManager.delegate(ClickGui.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

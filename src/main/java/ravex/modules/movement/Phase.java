@@ -1,21 +1,22 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.item.Items;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 @ModuleInfo(name = "Phase", category = "Movement")
-public class Phase extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Positive1", List.of("Positive1", "Positive2"));
-    public final NumberParameter distance = new NumberParameter("Distance", 2.0, 0.5, 4.0, 0.1);
+public class Phase implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Positive1", "Positive2"})
+    public String mode = "Positive1";
+    @Parameter(name = "Distance", min = 0.5, max = 4.0, step = 0.1)
+    public double distance = 2.0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_phase");
     static {
         NATIVE.load();
@@ -23,7 +24,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Positive1", List.of
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!getEnabled() || !event.isSend()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Phase").getEnabled() || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (packet instanceof ServerboundUseItemPacket usePacket) {
             Minecraft mc = Minecraft.getInstance();
@@ -39,17 +40,17 @@ public final ModeParameter mode = new ModeParameter("Mode", "Positive1", List.of
         double[] offset = new double[3];
         if (NATIVE.isLoaded()) {
             try {
-                nativeCalculateOffset(mc.player.getYRot(), mc.player.getXRot(), distance.getValue(), offset);
+                nativeCalculateOffset(mc.player.getYRot(), mc.player.getXRot(), distance, offset);
             } catch (UnsatisfiedLinkError | Exception e) {
-                javaCalculateOffset(mc.player.getYRot(), mc.player.getXRot(), distance.getValue(), offset);
+                javaCalculateOffset(mc.player.getYRot(), mc.player.getXRot(), distance, offset);
             }
         } else {
-            javaCalculateOffset(mc.player.getYRot(), mc.player.getXRot(), distance.getValue(), offset);
+            javaCalculateOffset(mc.player.getYRot(), mc.player.getXRot(), distance, offset);
         }
         double targetX = mc.player.getX() + offset[0];
         double targetY = mc.player.getY() + offset[1];
         double targetZ = mc.player.getZ() + offset[2];
-        if ("Positive1".equals(mode.getValue())) {
+        if ("Positive1".equals(mode)) {
             mc.player.setPos(targetX, targetY, targetZ);
             mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(targetX, targetY, targetZ, false, mc.player.horizontalCollision));
         } else {
@@ -79,16 +80,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Positive1", List.of
         return ravex.manager.ModuleManager.delegate(Phase.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

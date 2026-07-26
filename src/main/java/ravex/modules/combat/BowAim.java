@@ -1,28 +1,30 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.misc.MobUtility;
 
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 @ModuleInfo(name = "BowAim", category = "Combat")
-public class BowAim extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.0, 1.0);
-    public final ModeParameter targetType = new ModeParameter("Targets", "Players", List.of("Players", "Mobs", "Both"));
-    public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
+public class BowAim implements ModuleAccess {
+    @Parameter(name = "Range", min = 5.0, max = 40.0, step = 1.0)
+    public double range = 20.0;
+    @Parameter(name = "Targets", modes = {"Players", "Mobs", "Both"})
+    public String targetType = "Players";
+    @Parameter(name = "Rotate", modes = {"Silent", "Normal", "None"})
+    public String rotate = "Silent";
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_bowaim");
     static {
         NATIVE.load();
     }
-    protected void onDisable() {
+    public void onDisable() {
         silentRotation.hasRotation = false;
     }
     public void onTick() {
@@ -64,7 +66,7 @@ public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.
         if (result == null || result[0] < 0.5) return;
         float yaw = (float) result[1];
         float pitch = (float) result[2];
-        String rMode = rotate.getValue();
+        String rMode = rotate;
         if (rMode.equals("Normal")) {
             mc.player.setYRot(yaw);
             mc.player.setXRot(pitch);
@@ -81,8 +83,8 @@ public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.
     private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestDist = Double.MAX_VALUE;
-        double maxDist = range.getValue();
-        String filter = targetType.getValue();
+        double maxDist = range;
+        String filter = targetType;
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le) || MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
             if (filter.equals("Players")) {
@@ -177,16 +179,5 @@ public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.
         double arrowSpeed
     );
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -47,7 +47,7 @@ public abstract class MixinMinecraftClient {
     @Inject(method = "startAttack", at = @At("HEAD"), cancellable = true)
     private void onStartAttackPre(CallbackInfoReturnable<Boolean> cir) {
         if (!FreeCam.maybeEnabled()) return;
-        if (!FreeCam.itz().blockInteract.getValue() && !FreeCam.itz().entityInteract.getValue()) {
+        if (!FreeCam.itz().blockInteract && !FreeCam.itz().entityInteract) {
             cir.setReturnValue(false);
             return;
         }
@@ -68,7 +68,7 @@ public abstract class MixinMinecraftClient {
     @Inject(method = "startAttack", at = @At("RETURN"))
     private void onStartAttackPost(CallbackInfoReturnable<Boolean> cir) {
         if (!FreeCam.maybeEnabled()) return;
-        if (!FreeCam.itz().blockInteract.getValue() && !FreeCam.itz().entityInteract.getValue()) return;
+        if (!FreeCam.itz().blockInteract && !FreeCam.itz().entityInteract) return;
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return;
 

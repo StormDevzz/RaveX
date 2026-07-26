@@ -2,6 +2,7 @@ package ravex.modules.hud;
 import ravex.utility.misc.ScreenUtility;
 
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -14,8 +15,6 @@ import ravex.gui.clickgui.ColorUtility;
 import ravex.modules.client.Hud;
 import ravex.modules.combat.KillAura;
 import ravex.modules.combat.Trigger;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.FontRenderUtility;
 
@@ -25,11 +24,16 @@ public class TargetHud extends ravex.modules.Module {
     public int y;
     public int width;
     public int height;
-public final BooleanParameter showMainHand = new BooleanParameter("MainHand", true);
-    public final BooleanParameter showArmor = new BooleanParameter("Armor", true);
-    public final BooleanParameter showOnHover = new BooleanParameter("ShowOnHover", true);
-    public final ModeParameter healthDisplay = new ModeParameter("Health", "HP", java.util.List.of("HP", "%"));
-    public final BooleanParameter healthColor = new BooleanParameter("HealthColor", false);
+    @Parameter(name = "MainHand")
+    public boolean showMainHand = true;
+    @Parameter(name = "Armor")
+    public boolean showArmor = true;
+    @Parameter(name = "ShowOnHover")
+    public boolean showOnHover = true;
+    @Parameter(name = "Health", modes = {"HP", "%"})
+    public String healthDisplay = "HP";
+    @Parameter(name = "HealthColor")
+    public boolean healthColor = false;
 
     private static final net.minecraft.world.entity.EquipmentSlot[] SLOTS = {
         net.minecraft.world.entity.EquipmentSlot.MAINHAND,
@@ -66,6 +70,7 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
     private int lastEntityId = -1;
 
     private TargetHud() {
+        super("TargetHud", 350, 50, 180, 50);
         this.x = 10; this.y = 400; this.width = 175; this.height = 46;
     }
 
@@ -117,7 +122,7 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
             targetEntity = target;
             lastTarget = target;
             hasActiveTarget = true;
-        } else if (showOnHover.getValue() && mc.crosshairPickEntity instanceof net.minecraft.world.entity.LivingEntity living && living.isAlive()) {
+        } else if (showOnHover && mc.crosshairPickEntity instanceof net.minecraft.world.entity.LivingEntity living && living.isAlive()) {
             targetEntity = living;
             lastTarget = living;
             hasActiveTarget = true;
@@ -240,11 +245,11 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
             animatedAbsorbPercent += (targetAbsorbFraction - animatedAbsorbPercent) * Math.min(1.0f, delta * 8.0f);
         }
 
-        String hpText = switch (healthDisplay.getValue()) {
+        String hpText = switch (healthDisplay) {
             case "HP" -> String.format("%.0f / %.0f", hp, maxHp);
             default -> maxHp > 0 ? String.format("%d%%", (int)(hp / maxHp * 100)) : "0%";
         };
-        int hpTextColor = healthColor.getValue() ? lerpColor(0xFFFF3333, 0xFF33FF33, maxHp > 0 ? hp / maxHp : 1f) : 0xFFFFFFFF;
+        int hpTextColor = healthColor ? lerpColor(0xFFFF3333, 0xFF33FF33, maxHp > 0 ? hp / maxHp : 1f) : 0xFFFFFFFF;
         FontRenderUtility.drawString(graphics, hpText, nx, by + 21, ColorUtility.withAlpha(hpTextColor, (int)(255 * hudAlpha)), true);
 
         int gridX = bx + w - 55;
@@ -282,9 +287,9 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
                 Render2DUtility.drawPixelPerfectRound(graphics, cellX, cellY, cellSize, cellSize, 3, ColorUtility.withAlpha(0x000000, (int)(120 * hudAlpha)));
                 Render2DUtility.drawRoundBorder(graphics, cellX, cellY, cellSize, cellSize, 3, 1, ColorUtility.withAlpha(0x000000, (int)(60 * hudAlpha)));
 
-                boolean shouldShow = (slot == net.minecraft.world.entity.EquipmentSlot.MAINHAND && showMainHand.getValue())
-                        || (slot == net.minecraft.world.entity.EquipmentSlot.OFFHAND && showMainHand.getValue())
-                        || (slot != net.minecraft.world.entity.EquipmentSlot.MAINHAND && slot != net.minecraft.world.entity.EquipmentSlot.OFFHAND && showArmor.getValue());
+                boolean shouldShow = (slot == net.minecraft.world.entity.EquipmentSlot.MAINHAND && showMainHand)
+                        || (slot == net.minecraft.world.entity.EquipmentSlot.OFFHAND && showMainHand)
+                        || (slot != net.minecraft.world.entity.EquipmentSlot.MAINHAND && slot != net.minecraft.world.entity.EquipmentSlot.OFFHAND && showArmor);
 
                 if (shouldShow && targetEntity != null) {
                     ItemStack item = targetEntity.getItemBySlot(slot);
@@ -334,18 +339,7 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
         return ravex.manager.ModuleManager.INSTANCE.getByName("TargetHud").getEnabled();
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

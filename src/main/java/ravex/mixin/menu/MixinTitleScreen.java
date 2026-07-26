@@ -136,7 +136,7 @@ public abstract class MixinTitleScreen extends Screen {
             pose.popMatrix();
         }
 
-        graphics.drawString(font, "RaveX Client", 8, 8, Settings.itz().menuColor.getValue(), true);
+        graphics.drawString(font, "RaveX Client", 8, 8, Settings.itz().menuColor, true);
         graphics.drawString(font, "Logged in as: §f" + mc.getUser().getName(), 8, 20, 0xFF888888, true);
         graphics.drawString(font, "Build: §7" + ravex.RaveX.version, 8, 32, 0xFF888888, true);
 

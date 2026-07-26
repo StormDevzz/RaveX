@@ -24,7 +24,7 @@ public class SettingsPanel {
         x = -1;
         y = -1;
         Hud hud = ModuleManager.get(Hud.class);
-        for (Parameter<?> p : hud.getParameters()) {
+        for (Parameter<?> p : ModuleManager.INSTANCE.getByName("Hud").getParameters()) {
             paramElements.add(new ParameterElement(p));
         }
     }
@@ -56,15 +56,15 @@ public class SettingsPanel {
 
         int ix = (int) Math.round(x);
         int iy = (int) Math.round(y);
-        int baseAlpha = ModuleManager.get(Hud.class).editorOpacity.getValue().intValue();
+        int baseAlpha = (int) ModuleManager.get(Hud.class).editorOpacity;
         int accentColor = ColorUtility.getActiveColor();
         int radius = 6;
 
         Render2DUtility.drawRound(g, ix, iy, pw, ph, radius,
             ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, baseAlpha));
 
-        if (ModuleManager.get(ravex.modules.client.ClickGui.class).outlines.getValue()) {
-            int borderColor = ModuleManager.get(ravex.modules.client.ClickGui.class).outlineColor.getValue();
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).outlines) {
+            int borderColor = ModuleManager.get(ravex.modules.client.ClickGui.class).outlineColor;
             Render2DUtility.drawRound(g, ix - 1, iy - 1, pw + 2, ph + 2, radius, borderColor);
         }
 

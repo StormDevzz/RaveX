@@ -1,8 +1,7 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.client.Minecraft;
@@ -10,11 +9,15 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 @ModuleInfo(name = "MiddleClick", category = "net.minecraft.world.entity.player.Player")
-public class MiddleClick extends ravex.modules.Module {
-public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Firework", List.of("Firework", "None"));
-    public final ModeParameter blockAction = new ModeParameter("BlockAction", "XPBottle", List.of("XPBottle", "XPBottleFast", "None"));
-    public final ModeParameter airAction = new ModeParameter("AirAction", "EnderPearl", List.of("EnderPearl", "None"));
-    public final BooleanParameter silent = new BooleanParameter("Silent", true);
+public class MiddleClick implements ModuleAccess {
+    @Parameter(name = "ElytraAction", modes = {"Firework", "None"})
+    public String elytraAction = "Firework";
+    @Parameter(name = "BlockAction", modes = {"XPBottle", "XPBottleFast", "None"})
+    public String blockAction = "XPBottle";
+    @Parameter(name = "AirAction", modes = {"EnderPearl", "None"})
+    public String airAction = "EnderPearl";
+    @Parameter(name = "Silent")
+    public boolean silent = true;
     private boolean pressed, heldBlockAction;
     private int holdTicks;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_fastexp");
@@ -29,7 +32,7 @@ public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Fir
             if (!pressed) {
                 pressed = true;
                 if (useFastXp(mc)) { nativeStartFastXp(); }
-                else { click(mc); heldBlockAction = isBlockContext(mc) && "XPBottle".equals(blockAction.getValue()); holdTicks = 0; }
+                else { click(mc); heldBlockAction = isBlockContext(mc) && "XPBottle".equals(blockAction); holdTicks = 0; }
             } else if (heldBlockAction) { holdTicks++; if (holdTicks % 2 == 0) click(mc); }
         } else {
             if (pressed && NATIVE.isLoaded()) nativeStopFastXp();
@@ -37,7 +40,7 @@ public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Fir
         }
     }
     private boolean useFastXp(Minecraft mc) {
-        return !mc.player.isFallFlying() && isBlockContext(mc) && "XPBottleFast".equals(blockAction.getValue()) && NATIVE.isLoaded();
+        return !mc.player.isFallFlying() && isBlockContext(mc) && "XPBottleFast".equals(blockAction) && NATIVE.isLoaded();
     }
     private boolean isBlockContext(Minecraft mc) {
         var p = mc.player;
@@ -46,16 +49,16 @@ public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Fir
     }
     private void click(Minecraft mc) {
         var player = mc.player;
-        var target = player.isFallFlying() ? itemFromMode(elytraAction.getValue())
-            : isBlockContext(mc) ? itemFromMode(blockAction.getValue())
-            : itemFromMode(airAction.getValue());
+        var target = player.isFallFlying() ? itemFromMode(elytraAction)
+            : isBlockContext(mc) ? itemFromMode(blockAction)
+            : itemFromMode(airAction);
         if (target == null) return;
         int slot = InventoryUtility.findHotbarSlot(player, target);
         if (slot == -1) return;
         int prev = InventoryUtility.getSelectedSlot(player);
         InventoryUtility.selectSlot(player, slot);
         mc.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (silent.getValue()) InventoryUtility.selectSlot(player, prev);
+        if (silent) InventoryUtility.selectSlot(player, prev);
     }
     private String itemFromMode(String mode) {
         return switch (mode) {
@@ -74,7 +77,7 @@ public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Fir
         int prev = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, slot);
         mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (ravex.manager.ModuleManager.delegate(MiddleClick.class).silent.getValue()) InventoryUtility.selectSlot(mc.player, prev);
+        if (ravex.manager.ModuleManager.delegate(MiddleClick.class).silent) InventoryUtility.selectSlot(mc.player, prev);
     }
     private static native void nativeStartFastXp();
     private static native void nativeStopFastXp();
@@ -85,16 +88,5 @@ public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Fir
         return ravex.manager.ModuleManager.delegate(MiddleClick.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

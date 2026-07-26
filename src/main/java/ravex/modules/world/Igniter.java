@@ -1,21 +1,22 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 @ModuleInfo(name = "Igniter", category = "World")
-public class Igniter extends ravex.modules.Module {
-public final NumberParameter  range        = new NumberParameter("Range",        4.0, 1.0, 6.0, 0.1);
-    public final ModeParameter    swapMode     = new ModeParameter("SwapMode", "Silent",
-            java.util.List.of("Silent", "Normal", "None"));
-    public final BooleanParameter autoDisable  = new BooleanParameter("AutoDisable",  false);
-    public final BooleanParameter rotate       = new BooleanParameter("Rotate",       true);
+public class Igniter implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
+    public double range = 4.0;
+    @Parameter(name = "SwapMode", modes = {"Silent", "Normal", "None"})
+    public String swapMode = "Silent";
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = false;
+    @Parameter(name = "Rotate")
+    public boolean rotate = true;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -24,13 +25,13 @@ public final NumberParameter  range        = new NumberParameter("Range",       
         int itemSlot = findIgnitionItem(mc);
         if (itemSlot == -1) return;
         var hitVec = net.minecraft.world.phys.Vec3.atCenterOf(BlockUtility.pos(tntPos[0], tntPos[1], tntPos[2]));
-        if (rotate.getValue()) {
+        if (rotate) {
             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), hitVec);
             mc.player.setYRot(angles[0]);
             mc.player.setXRot(angles[1]);
         }
         int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-        String swap = swapMode.getValue();
+        String swap = swapMode;
         if (swap.equals("Normal")) {
             InventoryUtility.selectSlot(mc.player, itemSlot);
         } else if (swap.equals("Silent")) {
@@ -47,13 +48,13 @@ public final NumberParameter  range        = new NumberParameter("Range",       
         if (swap.equals("Silent") && originalSlot != -1) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
-        if (autoDisable.getValue()) {
-            enabled = false;
+        if (autoDisable) {
+            ravex.manager.ModuleManager.INSTANCE.getByName("Igniter").setEnabled(false);
         }
     }
     private int[] findNearestTNT(Minecraft mc) {
         var playerPos = mc.player.blockPosition();
-        double r = range.getValue();
+        double r = range;
         int rx = (int) Math.ceil(r);
         int[] closest = null;
         double bestDistSqr = Double.MAX_VALUE;
@@ -92,16 +93,5 @@ public final NumberParameter  range        = new NumberParameter("Range",       
         return ravex.manager.ModuleManager.delegate(Igniter.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

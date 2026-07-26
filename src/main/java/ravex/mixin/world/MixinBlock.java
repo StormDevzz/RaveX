@@ -16,16 +16,16 @@ public class MixinBlock {
         if (Sleepy.maybeEnabled()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null) {
-                if (!Sleepy.itz().onlyOnGround.getValue() || mc.player.onGround()) {
-                    cir.setReturnValue(Sleepy.itz().friction.getValue().floatValue());
+                if (!Sleepy.itz().onlyOnGround || mc.player.onGround()) {
+                    cir.setReturnValue((float) Sleepy.itz().friction);
                     return;
                 }
             }
         }
 
-        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks.getValue()) {
+        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks) {
             Block self = (Block) (Object) this;
-            if (NoSlow.itz().ice.getValue()) {
+            if (NoSlow.itz().ice) {
                 if (self == Blocks.ICE || self == Blocks.PACKED_ICE || self == Blocks.BLUE_ICE || self == Blocks.FROSTED_ICE
                     || self == Blocks.SLIME_BLOCK || self == Blocks.HONEY_BLOCK
                     || self == Blocks.SWEET_BERRY_BUSH || self == Blocks.COBWEB) {

@@ -25,7 +25,7 @@ public class MixinItemStackRenderState {
         boolean renderHand = Shaders.RENDERING_HAND.get();
 
         if (Shaders.maybeEnabled() && (renderPlayer || renderHand)) {
-            return Shaders.itz().fillColor.getValue();
+            return Shaders.itz().fillColor;
         }
         return tint;
     }
@@ -38,7 +38,7 @@ public class MixinItemStackRenderState {
         boolean renderPlayer = Shaders.RENDERING_PLAYER.get();
         boolean renderHand = Shaders.RENDERING_HAND.get();
 
-        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls.getValue() && (renderPlayer || renderHand)) {
+        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls && (renderPlayer || renderHand)) {
             GlStateManager._disableDepthTest();
         }
     }
@@ -51,7 +51,7 @@ public class MixinItemStackRenderState {
         boolean renderPlayer = Shaders.RENDERING_PLAYER.get();
         boolean renderHand = Shaders.RENDERING_HAND.get();
 
-        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls.getValue() && (renderPlayer || renderHand)) {
+        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls && (renderPlayer || renderHand)) {
             GlStateManager._enableDepthTest();
         }
     }

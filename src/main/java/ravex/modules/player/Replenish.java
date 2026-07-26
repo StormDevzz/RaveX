@@ -1,17 +1,18 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.ClickType;
 
-import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "Replenish", category = "net.minecraft.world.entity.player.Player")
-public class Replenish extends ravex.modules.Module {
-public final NumberParameter threshold = new NumberParameter("Threshold", 32, 1, 64, 1);
+public class Replenish implements ModuleAccess {
+    @Parameter(name = "Threshold", min = 1, max = 64, step = 1)
+    public double threshold = 32;
     private long lastActionTime = 0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
@@ -20,7 +21,7 @@ public final NumberParameter threshold = new NumberParameter("Threshold", 32, 1,
         long now = System.currentTimeMillis();
         if (now - lastActionTime < 200) return;
         Inventory inv = mc.player.getInventory();
-        int thr = threshold.getValue().intValue();
+        int thr = (int) threshold;
         for (int i = 0; i < 9; i++) {
             var stack = inv.getItem(i);
             if (stack.isEmpty()) continue;
@@ -50,16 +51,5 @@ public final NumberParameter threshold = new NumberParameter("Threshold", 32, 1,
         return ravex.manager.ModuleManager.delegate(Replenish.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

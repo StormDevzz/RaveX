@@ -13,9 +13,9 @@ public class MixinLivingEntity {
     @Inject(method = "getCurrentSwingDuration", at = @At("HEAD"), cancellable = true)
     private void onGetCurrentSwingDuration(CallbackInfoReturnable<Integer> cir) {
         if (!SwingAnimation.maybeEnabled()) return;
-        String mode = SwingAnimation.itz().mode.getValue();
+        String mode = SwingAnimation.itz().mode;
         if ("Default".equals(mode) || "Akrien".equals(mode) || "Swipe".equals(mode)) {
-            float speed = SwingAnimation.itz().speed.getValue().floatValue();
+            float speed = (float) SwingAnimation.itz().speed;
             int duration = Math.max(1, (int) (15.0 / speed));
             cir.setReturnValue(duration);
         }

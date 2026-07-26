@@ -38,10 +38,10 @@ public class ColorUtility {
 
     public static int getColorRGB(int index) {
         ClickGui cfg = ModuleManager.get(ClickGui.class);
-        String mode = cfg.colorMode.getValue();
-        int speed = cfg.colorSpeed.getValue().intValue();
-        int c1 = cfg.color1.getValue();
-        int c2 = cfg.color2.getValue();
+        String mode = cfg.colorMode;
+        int speed = (int) cfg.colorSpeed;
+        int c1 = cfg.color1;
+        int c2 = cfg.color2;
 
         return switch (mode) {
             case "Rainbow" -> Render2DUtility.rainbowInt(speed, index, 1f, 1f, 1f);

@@ -20,13 +20,13 @@ public abstract class MixinGuiMove {
     @Inject(method = "tick", at = @At("TAIL"))
     private void onTickGuiMove(CallbackInfo ci) {
         GuiMove gw = GuiMove.itz();
-        if (!gw.getEnabled()) return;
+        if (!GuiMove.maybeEnabled()) return;
 
         Minecraft mc = (Minecraft)(Object)this;
         if (mc.screen == null || mc.player == null || mc.getWindow() == null) return;
         if (ScreenUtility.isChatScreen(mc)) return;
 
-        switch (gw.mode.getValue()) {
+        switch (gw.mode) {
             case "Grim" -> handleGrim(mc, gw);
             case "NCPStrict" -> handleNCPStrict(mc, gw);
             case "NoClick" -> handleNoClick(mc, gw);
@@ -37,14 +37,14 @@ public abstract class MixinGuiMove {
 
     private void handleVanilla(Minecraft mc, GuiMove gw) {
         forceMoveKeys(mc);
-        if (!gw.noJump.getValue()) forceBinding(mc, mc.options.keyJump);
-        if (!gw.noSprint.getValue()) forceBinding(mc, mc.options.keySprint);
-        if (gw.sneak.getValue()) forceBinding(mc, mc.options.keyShift);
+        if (!gw.noJump) forceBinding(mc, mc.options.keyJump);
+        if (!gw.noSprint) forceBinding(mc, mc.options.keySprint);
+        if (gw.sneak) forceBinding(mc, mc.options.keyShift);
     }
 
     private void handleNoClick(Minecraft mc, GuiMove gw) {
         forceMoveKeys(mc);
-        if (gw.sneak.getValue()) forceBinding(mc, mc.options.keyShift);
+        if (gw.sneak) forceBinding(mc, mc.options.keyShift);
     }
 
     private void handleNCPStrict(Minecraft mc, GuiMove gw) {
@@ -55,16 +55,16 @@ public abstract class MixinGuiMove {
             mc.getConnection().send(new ServerboundContainerClosePacket(id));
         }
         forceMoveKeys(mc);
-        if (!gw.noJump.getValue()) forceBinding(mc, mc.options.keyJump);
-        if (!gw.noSprint.getValue()) forceBinding(mc, mc.options.keySprint);
-        if (gw.sneak.getValue()) forceBinding(mc, mc.options.keyShift);
+        if (!gw.noJump) forceBinding(mc, mc.options.keyJump);
+        if (!gw.noSprint) forceBinding(mc, mc.options.keySprint);
+        if (gw.sneak) forceBinding(mc, mc.options.keyShift);
     }
 
     private void handleMatrix(Minecraft mc, GuiMove gw) {
         forceMoveKeys(mc);
-        if (!gw.noJump.getValue()) forceBinding(mc, mc.options.keyJump);
-        if (!gw.noSprint.getValue()) forceBinding(mc, mc.options.keySprint);
-        if (gw.sneak.getValue()) forceBinding(mc, mc.options.keyShift);
+        if (!gw.noJump) forceBinding(mc, mc.options.keyJump);
+        if (!gw.noSprint) forceBinding(mc, mc.options.keySprint);
+        if (gw.sneak) forceBinding(mc, mc.options.keyShift);
     }
 
     private void handleGrim(Minecraft mc, GuiMove gw) {
@@ -82,9 +82,9 @@ public abstract class MixinGuiMove {
         }
 
         forceMoveKeys(mc);
-        if (!gw.noJump.getValue()) forceBinding(mc, mc.options.keyJump);
-        if (!gw.noSprint.getValue()) forceBinding(mc, mc.options.keySprint);
-        if (gw.sneak.getValue()) forceBinding(mc, mc.options.keyShift);
+        if (!gw.noJump) forceBinding(mc, mc.options.keyJump);
+        if (!gw.noSprint) forceBinding(mc, mc.options.keySprint);
+        if (gw.sneak) forceBinding(mc, mc.options.keyShift);
     }
 
     private static void forceMoveKeys(Minecraft mc) {

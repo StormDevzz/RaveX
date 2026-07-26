@@ -1,39 +1,42 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.BlockItem;
+
+
+
+
 @ModuleInfo(name = "AirPlace", category = "net.minecraft.world.entity.player.Player")
-public class AirPlace extends ravex.modules.Module {
+public class AirPlace implements ModuleAccess {
 public static net.minecraft.world.phys.Vec3 highlightPos = null;
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
     public static float renderR = 0.3f;
     public static float renderG = 0.7f;
     public static float renderB = 1.0f;
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", java.util.List.of("Vanilla", "NCP"));
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final BooleanParameter animate = new BooleanParameter("Animate", true);
-    public final ColorParameter highlightColor = new ColorParameter("HighlightColor", 0xFF55AAFF);
+    @Parameter(name = "Mode", modes = {"Vanilla", "NCP"})
+    public String mode = "Vanilla";
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Animate")
+    public boolean animate = true;
+    @Parameter(name = "HighlightColor", color = true)
+    public int highlightColor = 0xFF55AAFF;
     private final EasingAnimationUtility fadeAnim = new EasingAnimationUtility();
     private final EasingAnimationUtility sizeAnim = new EasingAnimationUtility();
     private final SlideAnimationUtility slideAnim = new SlideAnimationUtility();
     public net.minecraft.core.BlockPos currentTarget = null;
     private long lastPlaceTime = 0;
-    protected void onEnable() {
+    public void onEnable() {
         highlightPos = null;
         renderAlpha = 0.0f;
         renderSize = 0.0;
@@ -42,7 +45,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
         sizeAnim.reset();
         slideAnim.reset();
     }
-    protected void onDisable() {
+    public void onDisable() {
         highlightPos = null;
         renderAlpha = 0.0f;
         renderSize = 0.0;
@@ -71,7 +74,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
         net.minecraft.core.BlockPos neighbor;
         net.minecraft.core.Direction placeFace;
         if (hit != null && hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
-            var bhr = (BlockHitResult) hit;
+            var bhr = (net.minecraft.world.phys.BlockHitResult) hit;
             neighbor = bhr.getBlockPos();
             placeFace = bhr.getDirection();
             targetPos = neighbor.relative(placeFace);
@@ -91,8 +94,8 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
             }
         }
         currentTarget = targetPos;
-        if (render.getValue()) {
-            int hc = highlightColor.getValue();
+        if (render) {
+            int hc = highlightColor;
             renderR = ((hc >> 16) & 0xFF) / 255.0f;
             renderG = ((hc >> 8) & 0xFF) / 255.0f;
             renderB = (hc & 0xFF) / 255.0f;
@@ -100,7 +103,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
         if (mc.options.keyUse.isDown()) {
             long now = System.currentTimeMillis();
             if (now - lastPlaceTime > 200) {
-                if (mode.getValue().equals("NCP")) {
+                if (mode.equals("NCP")) {
                     neighbor = targetPos;
                     placeFace = net.minecraft.core.Direction.UP;
                     for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
@@ -120,14 +123,14 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), hitVec);
                             var conn = mc.getConnection();
                             if (conn != null) {
-                                conn.send(new ServerboundMovePlayerPacket.PosRot(
+                                conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
                                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                                     angles[0], angles[1], mc.player.onGround(), mc.player.horizontalCollision
                                 ));
                             }
                             BlockUtility.ncpAirPlace(mc, neighbor, placeFace, hand);
                             if (conn != null) {
-                                conn.send(new ServerboundMovePlayerPacket.PosRot(
+                                conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
                                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                                     mc.player.getYRot(), mc.player.getXRot(), mc.player.onGround(), mc.player.horizontalCollision
                                 ));
@@ -139,7 +142,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                     net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighbor).add(
                         new net.minecraft.world.phys.Vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                     );
-                    BlockHitResult blockHit = new BlockHitResult(hitVec, placeFace, neighbor, false);
+                    net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, placeFace, neighbor, false);
                     BlockUtility.useItemOn(mc, blockHit, hand);
                     SwingUtility.swing(mc.player, hand);
                 }
@@ -154,16 +157,5 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
         return ravex.manager.ModuleManager.delegate(AirPlace.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

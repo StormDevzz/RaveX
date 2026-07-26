@@ -14,15 +14,15 @@ public class MixinFlight {
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
         Flight flight = Flight.itz();
-        if (!flight.getEnabled()) return;
+        if (!Flight.maybeEnabled()) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
         Minecraft mc = Minecraft.getInstance();
 
-        String mode = flight.mode.getValue();
-        double hSpeed = flight.speed.getValue();
-        double vSpeed = flight.verticalSpeed.getValue();
-        double glide = flight.glide.getValue();
+        String mode = flight.mode;
+        double hSpeed = flight.speed;
+        double vSpeed = flight.verticalSpeed;
+        double glide = flight.glide;
 
         double[] vel = Flight.calculateVelocity(
             mode, hSpeed, vSpeed, glide,
@@ -33,7 +33,7 @@ public class MixinFlight {
         double currentFriction = Flight.handleAirFriction(
             mode,
             Math.sqrt(player.getDeltaMovement().x * player.getDeltaMovement().x + player.getDeltaMovement().z * player.getDeltaMovement().z),
-            flight.acceleration.getValue().doubleValue(),
+            flight.acceleration,
             0.5
         );
 
@@ -43,8 +43,8 @@ public class MixinFlight {
             player.getAbilities().flying = true;
         }
 
-        if (flight.timer.getValue() != 1.0) {
-            float t = flight.timer.getValue().floatValue();
+        if (flight.timer != 1.0) {
+            float t = (float) flight.timer;
             player.setDeltaMovement(
                 player.getDeltaMovement().x * t,
                 player.getDeltaMovement().y,

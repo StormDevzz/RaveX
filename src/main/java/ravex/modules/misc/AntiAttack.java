@@ -1,6 +1,7 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.animal.wolf.Wolf;
@@ -11,15 +12,20 @@ import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 import ravex.utility.misc.MobUtility;
 
-import ravex.parameter.BooleanParameter;
 @ModuleInfo(name = "AntiAttack", category = "Misc")
-public class AntiAttack extends ravex.modules.Module {
-public final BooleanParameter villagers = new BooleanParameter("Villager", true);
-    public final BooleanParameter horses    = new BooleanParameter("Horse", true);
-    public final BooleanParameter wolves    = new BooleanParameter("Wolf", false);
-    public final BooleanParameter cats      = new BooleanParameter("Cat", true);
-    public final BooleanParameter llamas    = new BooleanParameter("Llama", true);
-    public final BooleanParameter friends   = new BooleanParameter("Friend", true);
+public class AntiAttack implements ModuleAccess {
+    @Parameter(name = "Villager")
+    public boolean villagers = true;
+    @Parameter(name = "Horse")
+    public boolean horses = true;
+    @Parameter(name = "Wolf")
+    public boolean wolves = false;
+    @Parameter(name = "Cat")
+    public boolean cats = true;
+    @Parameter(name = "Llama")
+    public boolean llamas = true;
+    @Parameter(name = "Friend")
+    public boolean friends = true;
 
     @Subscribe
     public void onAttack(AttackEvent event) {
@@ -29,13 +35,13 @@ public final BooleanParameter villagers = new BooleanParameter("Villager", true)
     }
 
     public boolean shouldCancel(net.minecraft.world.entity.Entity target) {
-        if (!getEnabled() || target == null) return false;
-        if (target instanceof Villager && villagers.getValue()) return true;
-        if (target instanceof Horse && horses.getValue()) return true;
-        if (target instanceof Wolf && wolves.getValue()) return true;
-        if (target instanceof Cat && cats.getValue()) return true;
-        if (target instanceof Llama && llamas.getValue()) return true;
-        if (MobUtility.isPlayer(MobUtility.asLivingEntity(target)) && friends.getValue()) return true;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("AntiAttack").getEnabled() || target == null) return false;
+        if (target instanceof Villager && villagers) return true;
+        if (target instanceof Horse && horses) return true;
+        if (target instanceof Wolf && wolves) return true;
+        if (target instanceof Cat && cats) return true;
+        if (target instanceof Llama && llamas) return true;
+        if (MobUtility.isPlayer(MobUtility.asLivingEntity(target)) && friends) return true;
         return false;
     }
 
@@ -47,16 +53,5 @@ public final BooleanParameter villagers = new BooleanParameter("Villager", true)
         return ravex.manager.ModuleManager.delegate(AntiAttack.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

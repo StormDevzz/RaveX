@@ -24,8 +24,8 @@ public class CmdReg {
     }
 
     public boolean process0(String message) {
-        if (!ModuleManager.get(Commands.class).getEnabled()) return false;
-        String pref = ModuleManager.get(Commands.class).prefix.getValue();
+        if (!ModuleManager.INSTANCE.getByName("Commands").getEnabled()) return false;
+        String pref = ModuleManager.get(Commands.class).prefix;
         if (!message.startsWith(pref)) return false;
         String raw = message.substring(pref.length()).trim();
         if (raw.isEmpty()) return true;
@@ -43,7 +43,7 @@ public class CmdReg {
     public Map<String, Cmd> getCommands() { return commands; }
 
     public static void print(String text) {
-        if (!ModuleManager.get(Commands.class).showFeedback.getValue()) {
+        if (!ModuleManager.get(Commands.class).showFeedback) {
             if (!text.contains("§c") && !text.contains("§5") && !text.contains("Help")) return;
         }
         Minecraft mc = Minecraft.getInstance();

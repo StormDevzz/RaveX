@@ -62,8 +62,8 @@ public class HudEditorScreen extends Screen {
         int alpha = (int)(255 * animAlpha);
         int accentColor = ColorUtility.getActiveColor();
         long now = System.currentTimeMillis();
-        if (ModuleManager.get(Hud.class).editorBackground.getValue()) {
-            int bgOp = ModuleManager.get(Hud.class).editorOpacity.getValue().intValue();
+        if (ModuleManager.get(Hud.class).editorBackground) {
+            int bgOp = (int) ModuleManager.get(Hud.class).editorOpacity;
             graphics.fillGradient(0, 0, this.width, this.height,
                 ColorUtility.withAlpha(ColorUtility.BACKGROUND_START, bgOp),
                 ColorUtility.withAlpha(ColorUtility.BACKGROUND_END, bgOp));

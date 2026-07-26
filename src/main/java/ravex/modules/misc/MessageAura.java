@@ -1,16 +1,18 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
-import ravex.parameter.NumberParameter;
 import ravex.parameter.StringParameter;
 
 @ModuleInfo(name = "MessageAura", category = "Misc")
-public class MessageAura extends ravex.modules.Module {
-public final StringParameter message = new StringParameter("Message", "Hello from RaveX!");
-    public final NumberParameter interval = new NumberParameter("Interval", 5.0, 1.0, 60.0, 0.5);
+public class MessageAura implements ModuleAccess {
+    @Parameter(name = "Message")
+    public String message = "Hello from RaveX!";
+    @Parameter(name = "Interval", min = 1.0, max = 60.0, step = 0.5)
+    public double interval = 5.0;
 
     private long lastMessageTime;
 
@@ -18,12 +20,12 @@ public final StringParameter message = new StringParameter("Message", "Hello fro
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        if (System.currentTimeMillis() - lastMessageTime >= interval.getValue() * 1000) {
-            mc.player.displayClientMessage(Component.literal(message.getValue()), false);
+        if (System.currentTimeMillis() - lastMessageTime >= interval * 1000) {
+            mc.player.displayClientMessage(Component.literal(message), false);
             lastMessageTime = System.currentTimeMillis();
         }
     }
-    protected void onEnable() {
+    public void onEnable() {
         lastMessageTime = System.currentTimeMillis();
     }
 
@@ -31,16 +33,5 @@ public final StringParameter message = new StringParameter("Message", "Hello fro
         return ravex.manager.ModuleManager.delegate(MessageAura.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

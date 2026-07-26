@@ -1,26 +1,28 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.misc.MobUtility;
 import java.util.Comparator;
 import java.util.List;
 @ModuleInfo(name = "AutoTrade", category = "World")
-public class AutoTrade extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0, 0.5);
-    public final ModeParameter mode = new ModeParameter("Mode", "Best", List.of("Best", "Cheapest", "First"));
-    public final NumberParameter maxTrades = new NumberParameter("MaxTrades", 10, 1, 100, 1);
-    public final BooleanParameter autoOpen = new BooleanParameter("AutoOpen", true);
+public class AutoTrade implements ModuleAccess {
+    @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.5)
+    public double range = 4.0;
+    @Parameter(name = "Mode", modes = {"Best", "Cheapest", "First"})
+    public String mode = "Best";
+    @Parameter(name = "MaxTrades", min = 1, max = 100, step = 1)
+    public double maxTrades = 10;
+    @Parameter(name = "AutoOpen")
+    public boolean autoOpen = true;
     private int tradesDone = 0;
     private long lastActionTime = 0;
-    protected void onEnable() {
+    public void onEnable() {
         tradesDone = 0;
     }
     public void onTick() {
@@ -32,7 +34,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0,
         if (player.containerMenu instanceof MerchantMenu menu) {
             MerchantOffers offers = menu.getOffers();
             if (offers == null || offers.isEmpty()) return;
-            int max = maxTrades.getValue().intValue();
+            int max = (int) maxTrades;
             if (tradesDone >= max) return;
             MerchantOffer best = findBestOffer(offers);
             if (best != null && !best.isOutOfStock()) {
@@ -46,8 +48,8 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0,
             }
             return;
         }
-        if (!autoOpen.getValue()) return;
-        double r = range.getValue();
+        if (!autoOpen) return;
+        double r = range;
         for (var entity : mc.level.entitiesForRendering()) {
             if (MobUtility.isVillager(entity)) {
                 player.interactOn(entity, net.minecraft.world.InteractionHand.MAIN_HAND);
@@ -57,7 +59,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0,
         }
     }
     private MerchantOffer findBestOffer(MerchantOffers offers) {
-        String m = mode.getValue();
+        String m = mode;
         return switch (m) {
             case "Cheapest" -> offers.stream()
                 .filter(o -> !o.isOutOfStock())
@@ -85,16 +87,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0,
         return ravex.manager.ModuleManager.delegate(AutoTrade.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

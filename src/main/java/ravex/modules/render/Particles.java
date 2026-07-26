@@ -1,6 +1,7 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -9,38 +10,50 @@ import org.joml.Vector3f;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.render.Render3DUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "Particles", category = "Render")
-public class Particles extends ravex.modules.Module {
+public class Particles implements ModuleAccess {
 private static String lastTrigger = "";
-    public final ModeParameter shape = new ModeParameter("Shape", "All",
-        List.of("Square", "Circle", "Triangle", "All"));
-    public final ModeParameter trigger = new ModeParameter("Trigger", "Always",
-        List.of("Always", "Walking", "Attack", "Mine", "Attack&Mine"));
-    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
-    public final NumberParameter amount = new NumberParameter("Amount", 30, 5, 200, 5);
-    public final NumberParameter size = new NumberParameter("Size", 0.5, 0.05, 2.0, 0.05);
-    public final NumberParameter speed = new NumberParameter("Speed", 1.5, 0.0, 5.0, 0.1);
-    public final ColorParameter color = new ColorParameter("Color", 0xFFFF9BC4);
-    public final NumberParameter lifetime = new NumberParameter("Lifetime", 4.0, 0.5, 10.0, 0.5);
-    public final NumberParameter spawnRate = new NumberParameter("SpawnRate", 2, 1, 20, 1);
-    public final NumberParameter spread = new NumberParameter("Spread", 2.0, 0.5, 10.0, 0.5);
-    public final BooleanParameter gravity = new BooleanParameter("Gravity", false);
-    public final ModeParameter mode = new ModeParameter("Mode", "AroundPlayer",
-        List.of("AroundPlayer", "Fountain", "Rising", "Vortex", "Explosion"));
-    public final NumberParameter alpha = new NumberParameter("Alpha", 1.0, 0.0, 1.0, 0.05);
-    public final NumberParameter rotationSpeed = new NumberParameter("RotationSpeed", 1.0, 0.0, 5.0, 0.1);
-    public final BooleanParameter glow = new BooleanParameter("Glow", true);
-    public final BooleanParameter rainbow = new BooleanParameter("Rainbow", false);
-    public final NumberParameter lineWidth = new NumberParameter("LineWidth", 3.5, 0.5, 10.0, 0.5);
-    public final NumberParameter segments = new NumberParameter("Segments", 16, 6, 32, 2);
-    public final BooleanParameter collide = new BooleanParameter("Collision", true);
+    @Parameter(name = "Shape", modes = {"Square", "Circle", "Triangle", "All"})
+    public String shape = "All";
+    @Parameter(name = "Trigger", modes = {"Always", "Walking", "Attack", "Mine", "Attack&Mine"})
+    public String trigger = "Always";
+    @Parameter(name = "ThroughWalls")
+    public boolean throughWalls = true;
+    @Parameter(name = "Amount", min = 5, max = 200, step = 5)
+    public double amount = 30;
+    @Parameter(name = "Size", min = 0.05, max = 2.0, step = 0.05)
+    public double size = 0.5;
+    @Parameter(name = "Speed", min = 0.0, max = 5.0, step = 0.1)
+    public double speed = 1.5;
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFFFF9BC4;
+    @Parameter(name = "Lifetime", min = 0.5, max = 10.0, step = 0.5)
+    public double lifetime = 4.0;
+    @Parameter(name = "SpawnRate", min = 1, max = 20, step = 1)
+    public double spawnRate = 2;
+    @Parameter(name = "Spread", min = 0.5, max = 10.0, step = 0.5)
+    public double spread = 2.0;
+    @Parameter(name = "Gravity")
+    public boolean gravity = false;
+    @Parameter(name = "Mode", modes = {"AroundPlayer", "Fountain", "Rising", "Vortex", "Explosion"})
+    public String mode = "AroundPlayer";
+    @Parameter(name = "Alpha", min = 0.0, max = 1.0, step = 0.05)
+    public double alpha = 1.0;
+    @Parameter(name = "RotationSpeed", min = 0.0, max = 5.0, step = 0.1)
+    public double rotationSpeed = 1.0;
+    @Parameter(name = "Glow")
+    public boolean glow = true;
+    @Parameter(name = "Rainbow")
+    public boolean rainbow = false;
+    @Parameter(name = "LineWidth", min = 0.5, max = 10.0, step = 0.5)
+    public double lineWidth = 3.5;
+    @Parameter(name = "Segments", min = 6, max = 32, step = 2)
+    public double segments = 16;
+    @Parameter(name = "Collision")
+    public boolean collide = true;
     public static boolean attackedThisTick = false;
     public static boolean minedThisTick = false;
     public static net.minecraft.world.phys.Vec3 lastAttackPos = null;
@@ -79,14 +92,14 @@ private static String lastTrigger = "";
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
         long now = System.currentTimeMillis();
-        long maxAge = (long)(lifetime.getValue() * 1000);
-        String trig = trigger.getValue();
+        long maxAge = (long)(lifetime * 1000);
+        String trig = trigger;
         if (!trig.equals(lastTrigger)) {
             particles.clear();
             lastTrigger = trig;
         }
         particles.removeIf(p -> now - p.spawnTime > maxAge);
-        int maxParticles = amount.getValue().intValue() * 3;
+        int maxParticles = (int) amount * 3;
         while (particles.size() > maxParticles) {
             particles.remove(0);
         }
@@ -134,7 +147,7 @@ private static String lastTrigger = "";
             spawnParticles(mc, now, usePlayerPos);
         } else {
             spawnTimer++;
-            if (spawnTimer >= spawnRate.getValue().intValue()) {
+            if (spawnTimer >= (int) spawnRate) {
                 spawnTimer = 0;
                 spawnParticles(mc, now, true);
             }
@@ -157,10 +170,10 @@ private static String lastTrigger = "";
         lastAttackPos = null;
         lastMinePos = null;
         net.minecraft.util.RandomSource rnd = mc.level.random;
-        String shapeType = shape.getValue();
-        String spawnMode = mode.getValue();
-        double spreadVal = spread.getValue();
-        float spd = speed.getValue().floatValue();
+        String shapeType = shape;
+        String spawnMode = mode;
+        double spreadVal = spread;
+        float spd = (float) speed;
         for (int i = 0; i < 3; i++) {
             String s = shapeType.equals("All")
                 ? SHAPES[rnd.nextInt(SHAPES.length)]
@@ -241,7 +254,7 @@ private static String lastTrigger = "";
                 pos, vel, now,
                 0.5f + rnd.nextFloat() * 0.5f,
                 rnd.nextFloat() * 360,
-                (rnd.nextFloat() - 0.5f) * rotationSpeed.getValue().floatValue(),
+                (rnd.nextFloat() - 0.5f) * (float) rotationSpeed,
                 s,
                 rnd.nextInt()
             ));
@@ -249,17 +262,17 @@ private static String lastTrigger = "";
     }
     private void updateParticle(Particle p, Minecraft mc) {
         long age = System.currentTimeMillis() - p.spawnTime;
-        float lifeProgress = (float) age / (float) (lifetime.getValue() * 1000);
+        float lifeProgress = (float) age / (float) (lifetime * 1000);
         p.rotation += p.rotSpeed;
         if (p.rotation > 360) p.rotation -= 360;
         if (p.rotation < 0) p.rotation += 360;
         net.minecraft.world.phys.Vec3 vel = p.velocity;
         double ax = vel.x, ay = vel.y, az = vel.z;
-        if (gravity.getValue()) {
+        if (gravity) {
             ay -= 0.004;
         }
         net.minecraft.world.phys.Vec3 newPos = p.pos.add(ax, ay, az);
-        if (collide.getValue() && mc.level != null) {
+        if (collide && mc.level != null) {
             net.minecraft.core.BlockPos blockPos = net.minecraft.core.BlockPos.containing(newPos);
             if (!mc.level.getBlockState(blockPos).isAir()) {
                 return;
@@ -271,14 +284,14 @@ private static String lastTrigger = "";
     public static void renderParticles(Matrix4f matrix, net.minecraft.world.phys.Vec3 camPos) {
         if (!ravex.manager.ModuleManager.delegate(Particles.class).getEnabled() || ravex.manager.ModuleManager.delegate(Particles.class).particles.isEmpty()) return;
         long now = System.currentTimeMillis();
-        long maxAge = (long) (ravex.manager.ModuleManager.delegate(Particles.class).lifetime.getValue() * 1000);
-        float baseAlpha = ravex.manager.ModuleManager.delegate(Particles.class).alpha.getValue().floatValue();
-        float baseSize = ravex.manager.ModuleManager.delegate(Particles.class).size.getValue().floatValue();
-        boolean glowEnabled = ravex.manager.ModuleManager.delegate(Particles.class).glow.getValue();
-        float lineW = ravex.manager.ModuleManager.delegate(Particles.class).lineWidth.getValue().floatValue();
-        int seg = ravex.manager.ModuleManager.delegate(Particles.class).segments.getValue().intValue();
-        boolean rainbowMode = ravex.manager.ModuleManager.delegate(Particles.class).rainbow.getValue();
-        int mainColor = ravex.manager.ModuleManager.delegate(Particles.class).color.getValue();
+        long maxAge = (long) (ravex.manager.ModuleManager.delegate(Particles.class).lifetime * 1000);
+        float baseAlpha = (float) ravex.manager.ModuleManager.delegate(Particles.class).alpha;
+        float baseSize = (float) ravex.manager.ModuleManager.delegate(Particles.class).size;
+        boolean glowEnabled = ravex.manager.ModuleManager.delegate(Particles.class).glow;
+        float lineW = (float) ravex.manager.ModuleManager.delegate(Particles.class).lineWidth;
+        int seg = (int) ravex.manager.ModuleManager.delegate(Particles.class).segments;
+        boolean rainbowMode = ravex.manager.ModuleManager.delegate(Particles.class).rainbow;
+        int mainColor = ravex.manager.ModuleManager.delegate(Particles.class).color;
         for (Particle p : ravex.manager.ModuleManager.delegate(Particles.class).particles) {
             long age = now - p.spawnTime;
             float lifeProgress = (float) age / (float) maxAge;
@@ -340,7 +353,7 @@ private static String lastTrigger = "";
             ));
         }
         pts.add(pts.get(0));
-        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls.getValue();
+        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls;
         if (glow) {
             Render3DUtility.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -367,7 +380,7 @@ private static String lastTrigger = "";
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls.getValue();
+        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls;
         if (glow) {
             Render3DUtility.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -394,13 +407,13 @@ private static String lastTrigger = "";
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls.getValue();
+        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls;
         if (glow) {
             Render3DUtility.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
         Render3DUtility.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
     }
-    protected void onDisable() {
+    public void onDisable() {
         particles.clear();
     }
     public static boolean maybeEnabled() {
@@ -411,16 +424,5 @@ private static String lastTrigger = "";
         return ravex.manager.ModuleManager.delegate(Particles.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

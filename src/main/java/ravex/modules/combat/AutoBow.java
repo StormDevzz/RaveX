@@ -1,6 +1,7 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
@@ -9,16 +10,17 @@ import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BowItem;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "AutoBow", category = "Combat")
-public class AutoBow extends ravex.modules.Module {
-public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 100.0, 1.0);
-    public final BooleanParameter silent = new BooleanParameter("Silent", true);
-    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", false);
-    public final BooleanParameter onlyWhenTarget = new BooleanParameter("OnlyWhenTarget", false);
+public class AutoBow implements ModuleAccess {
+    @Parameter(name = "Charge", min = 10.0, max = 100.0, step = 1.0)
+    public double charge = 95.0;
+    @Parameter(name = "Silent")
+    public boolean silent = true;
+    @Parameter(name = "AutoSwitch")
+    public boolean autoSwitch = false;
+    @Parameter(name = "OnlyWhenTarget")
+    public boolean onlyWhenTarget = false;
     private long lastAction = 0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
@@ -26,7 +28,7 @@ public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 
         long now = System.currentTimeMillis();
         if (now - lastAction < 100) return;
         boolean holdingBow = InventoryUtility.isBow(mc.player.getMainHandItem());
-        if (!holdingBow && !autoSwitch.getValue()) return;
+        if (!holdingBow && !autoSwitch) return;
         int bowSlot = -1;
         if (!holdingBow) {
             bowSlot = findBowSlot(mc);
@@ -34,12 +36,12 @@ public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 
         }
         if (!mc.player.isUsingItem()) return;
         if (!mc.player.getUsedItemHand().equals(net.minecraft.world.InteractionHand.MAIN_HAND)) return;
-        if (onlyWhenTarget.getValue() && !(mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult)) return;
+        if (onlyWhenTarget && !(mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult)) return;
         float chargeProgress = mc.player.getTicksUsingItem() / 20.0f;
         chargeProgress = Math.min(chargeProgress, 1.0f);
-        float requiredCharge = charge.getValue().floatValue() / 100.0f;
+        float requiredCharge = (float) charge / 100.0f;
         if (chargeProgress < requiredCharge) return;
-        if (bowSlot != -1 && silent.getValue()) {
+        if (bowSlot != -1 && silent) {
             mc.player.connection.send(new ServerboundSetCarriedItemPacket(bowSlot));
         } else if (bowSlot != -1) {
             InventoryUtility.selectSlot(mc.player, bowSlot);
@@ -63,16 +65,5 @@ public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 
         return ravex.manager.ModuleManager.delegate(AutoBow.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

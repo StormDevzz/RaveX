@@ -57,7 +57,7 @@ public class MixinMultiPlayerGameMode {
         if (AntiAttack.itz().shouldCancel(target)) {
             ci.cancel();
         }
-        if (FreeCam.maybeEnabled() && !FreeCam.itz().entityInteract.getValue()) {
+        if (FreeCam.maybeEnabled() && !FreeCam.itz().entityInteract) {
             ci.cancel();
         }
     }
@@ -68,13 +68,13 @@ public class MixinMultiPlayerGameMode {
         if (mc.player != null && ItemSaver.itz().shouldSave(mc.player.getMainHandItem())) {
             cir.setReturnValue(false);
         }
-        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract.getValue()) {
+        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract) {
             cir.setReturnValue(false);
         }
         ravex.modules.render.Particles.minedThisTick = true;
         ravex.modules.render.Particles.lastMinePos = net.minecraft.world.phys.Vec3.atCenterOf(pos);
 
-        if (PacketMine.maybeEnabled() && "Grim".equals(PacketMine.itz().mode.getValue())) {
+        if (PacketMine.maybeEnabled() && "Grim".equals(PacketMine.itz().mode)) {
             if (PacketMine.itz().isTargetBlock(pos)) {
                 ((AccessorMultiPlayerGameMode) this).setDestroyBlockPos(pos);
             }
@@ -87,7 +87,7 @@ public class MixinMultiPlayerGameMode {
         if (mc.player != null && ItemSaver.itz().shouldSave(mc.player.getMainHandItem())) {
             cir.setReturnValue(false);
         }
-        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract.getValue()) {
+        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract) {
             cir.setReturnValue(false);
         }
     }

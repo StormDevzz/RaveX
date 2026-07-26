@@ -15,13 +15,13 @@ public class MixinClientPacketListener {
     @ModifyVariable(method = "sendChat", at = @At("HEAD"), argsOnly = true)
     private String modifyChatMessage(String message) {
         ChatHelper ch = ChatHelper.itz();
-        if (!ch.getEnabled() || !ch.zov.getValue()) return message;
+        if (!ChatHelper.maybeEnabled() || !ch.zov) return message;
         return ch.applyZov(message);
     }
 
     @Inject(method = "handleOpenScreen", at = @At("HEAD"), cancellable = true)
     private void onHandleOpenScreen(net.minecraft.network.protocol.game.ClientboundOpenScreenPacket packet, CallbackInfo ci) {
-        if (HighJump.maybeEnabled() && "GrimShulker".equals(HighJump.itz().mode.getValue())) {
+        if (HighJump.maybeEnabled() && "GrimShulker".equals(HighJump.itz().mode)) {
             if (packet.getType() == net.minecraft.world.inventory.MenuType.SHULKER_BOX) {
                 ci.cancel();
             }

@@ -74,7 +74,7 @@ public abstract class MixinEntity {
             return;
         }
 
-        if (FreeLook.maybeEnabled() && "Camera".equals(FreeLook.itz().mode.getValue())) {
+        if (FreeLook.maybeEnabled() && "Camera".equals(FreeLook.itz().mode)) {
             FreeLook.itz().turn(yRot * 0.15, xRot * 0.15);
             ci.cancel();
         }
@@ -123,7 +123,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks.getValue()) {
+        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks) {
             cir.setReturnValue(1.0F);
         }
     }
@@ -133,7 +133,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks.getValue()) {
+        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks) {
             cir.setReturnValue(1.0F);
         }
     }
@@ -150,34 +150,34 @@ public abstract class MixinEntity {
 
     @Inject(method = "getTeamColor", at = @At("HEAD"), cancellable = true)
     private void onGetTeamColor(CallbackInfoReturnable<Integer> cir) {
-        if (ESP.maybeEnabled() && ESP.itz().mode.getValue().equals("Outline")) {
+        if (ESP.maybeEnabled() && ESP.itz().mode.equals("Outline")) {
             Entity self = (Entity) (Object) this;
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (self == mc.player) return;
 
-            if (mc.player != null && mc.player.distanceTo(self) > ESP.itz().maxDistance.getValue()) {
+            if (mc.player != null && mc.player.distanceTo(self) > ESP.itz().maxDistance) {
                 return;
             }
 
             if (self instanceof Player) {
-                if (ESP.itz().players.getValue()) {
-                    cir.setReturnValue(ESP.itz().playerColor.getValue());
+                if (ESP.itz().players) {
+                    cir.setReturnValue(ESP.itz().playerColor);
                 }
             } else if (self instanceof Monster) {
-                if (ESP.itz().monsters.getValue()) {
-                    cir.setReturnValue(ESP.itz().mobColor.getValue());
+                if (ESP.itz().monsters) {
+                    cir.setReturnValue(ESP.itz().mobColor);
                 }
             } else if (self instanceof net.minecraft.world.entity.animal.Animal || self instanceof net.minecraft.world.entity.ambient.AmbientCreature) {
-                if (ESP.itz().animals.getValue()) {
-                    cir.setReturnValue(ESP.itz().animalColor.getValue());
+                if (ESP.itz().animals) {
+                    cir.setReturnValue(ESP.itz().animalColor);
                 }
             } else if (self instanceof net.minecraft.world.entity.item.ItemEntity) {
-                if (ESP.itz().items.getValue()) {
-                    cir.setReturnValue(ESP.itz().itemColor.getValue());
+                if (ESP.itz().items) {
+                    cir.setReturnValue(ESP.itz().itemColor);
                 }
             } else if (self instanceof net.minecraft.world.entity.decoration.ItemFrame) {
-                if (ESP.itz().frames.getValue()) {
-                    cir.setReturnValue(ESP.itz().frameColor.getValue());
+                if (ESP.itz().frames) {
+                    cir.setReturnValue(ESP.itz().frameColor);
                 }
             }
         }
@@ -209,7 +209,7 @@ public abstract class MixinEntity {
                     }
                 }
                 if (isRaytracing) {
-                    double size = Hitboxes.itz().size.getValue();
+                    double size = Hitboxes.itz().size;
                     if (cir.getReturnValue() != null) {
                         cir.setReturnValue(cir.getReturnValue().inflate(size));
                     }
@@ -223,7 +223,7 @@ public abstract class MixinEntity {
         if (NoPush.maybeEnabled()) {
             Entity self = (Entity)(Object)this;
             if (self instanceof net.minecraft.client.player.LocalPlayer) {
-                if (NoPush.itz().water.getValue()) {
+                if (NoPush.itz().water) {
                     ci.cancel();
                 }
             }
@@ -252,7 +252,7 @@ public abstract class MixinEntity {
     private void onIsInWater(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (LiquidControl.maybeEnabled() && LiquidControl.itz().water.getValue()) {
+            if (LiquidControl.maybeEnabled() && LiquidControl.itz().water) {
                 cir.setReturnValue(false);
             }
         }
@@ -262,7 +262,7 @@ public abstract class MixinEntity {
     private void onIsInLava(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (LiquidControl.maybeEnabled() && LiquidControl.itz().lava.getValue()) {
+            if (LiquidControl.maybeEnabled() && LiquidControl.itz().lava) {
                 cir.setReturnValue(false);
             }
         }
@@ -272,7 +272,7 @@ public abstract class MixinEntity {
     private void onUpdateInWaterStateAndDoFluidPushing(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (LiquidControl.maybeEnabled() && LiquidControl.itz().water.getValue()) {
+            if (LiquidControl.maybeEnabled() && LiquidControl.itz().water) {
                 cir.setReturnValue(false);
             }
         }
@@ -283,9 +283,9 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
             if (LiquidControl.maybeEnabled()) {
-                boolean bypassWater = LiquidControl.itz().water.getValue();
-                boolean bypassLava = LiquidControl.itz().lava.getValue();
-                boolean bypassOthers = LiquidControl.itz().others.getValue();
+                boolean bypassWater = LiquidControl.itz().water;
+                boolean bypassLava = LiquidControl.itz().lava;
+                boolean bypassOthers = LiquidControl.itz().others;
 
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
@@ -305,9 +305,9 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
             if (LiquidControl.maybeEnabled()) {
-                boolean bypassWater = LiquidControl.itz().water.getValue();
-                boolean bypassLava = LiquidControl.itz().lava.getValue();
-                boolean bypassOthers = LiquidControl.itz().others.getValue();
+                boolean bypassWater = LiquidControl.itz().water;
+                boolean bypassLava = LiquidControl.itz().lava;
+                boolean bypassOthers = LiquidControl.itz().others;
 
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);

@@ -22,9 +22,9 @@ public class MixinBlockState {
             if (context instanceof net.minecraft.world.phys.shapes.EntityCollisionContext ecc) {
                 if (ecc.getEntity() != null && ecc.getEntity() == net.minecraft.client.Minecraft.getInstance().player) {
                     BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-                    boolean bypassWater = LiquidControl.itz().water.getValue();
-                    boolean bypassLava = LiquidControl.itz().lava.getValue();
-                    boolean bypassOthers = LiquidControl.itz().others.getValue();
+                    boolean bypassWater = LiquidControl.itz().water;
+                    boolean bypassLava = LiquidControl.itz().lava;
+                    boolean bypassOthers = LiquidControl.itz().others;
 
                     net.minecraft.world.level.material.FluidState fluid = self.getFluidState();
                     if (!fluid.isEmpty()) {
@@ -64,7 +64,7 @@ public class MixinBlockState {
 
     @Inject(method = "getRenderShape", at = @At("HEAD"), cancellable = true)
     private void onGetRenderShape(CallbackInfoReturnable<net.minecraft.world.level.block.RenderShape> cir) {
-        if (NoRender.maybeEnabled() && NoRender.itz().tripwire.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().tripwire) {
             BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
             if (self.getBlock() instanceof net.minecraft.world.level.block.TripWireBlock) {
                 cir.setReturnValue(net.minecraft.world.level.block.RenderShape.INVISIBLE);

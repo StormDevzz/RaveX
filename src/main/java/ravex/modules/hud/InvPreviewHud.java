@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -15,8 +15,10 @@ import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "InvPreviewHud", category = "HUD")
 public class InvPreviewHud extends ravex.modules.Module {
-    public final ColorParameter accentColor = new ColorParameter("AccentColor", 0xFF1E88E5);
-    public final BooleanParameter showLabel = new BooleanParameter("ShowLabel", true);
+    @Parameter(name = "AccentColor", color = true)
+    public int accentColor = 0xFF1E88E5;
+    @Parameter(name = "ShowLabel")
+    public boolean showLabel = true;
 
     public int x;
     public int y;
@@ -36,7 +38,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INVENTORY_WHITE;
     }
     private boolean showLabel() {
         for (var p : getParameters()) {
-            if (p instanceof BooleanParameter bp && p.getName().equals("ShowLabel")) return bp.getValue();
+            if (p instanceof BooleanParameter bp && bp.getName().equals("ShowLabel")) return bp.getValue();
         }
         return true;
     }
@@ -92,18 +94,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INVENTORY_WHITE;
         return ravex.manager.ModuleManager.delegate(InvPreviewHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

@@ -87,7 +87,7 @@ public class ClickGUI extends Screen {
 
         ravex.utility.misc.GuiOptimizerUtility.optimize();
 
-        int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+        int panelW = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth;
         int spacing = 10;
         int panelIndex = 0;
         for (Category cat : Category.values()) {
@@ -103,7 +103,7 @@ public class ClickGUI extends Screen {
 
     @Override
     protected void init() {
-        int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+        int panelW = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth;
         int spacing = 10;
         int num = panels.size();
 
@@ -135,7 +135,7 @@ public class ClickGUI extends Screen {
     }
 
     private float getResponsiveScale() {
-        float target = ModuleManager.get(ravex.modules.client.ClickGui.class).guiScale.getValue().floatValue();
+        float target = (float) ModuleManager.get(ravex.modules.client.ClickGui.class).guiScale;
         if (currentScale < 0) {
             currentScale = target;
         }
@@ -188,18 +188,18 @@ public class ClickGUI extends Screen {
 
         cachedActiveColor = ColorUtility.getActiveColor();
 
-        boolean drawBg = ModuleManager.get(ravex.modules.client.ClickGui.class).drawBackground.getValue();
+        boolean drawBg = ModuleManager.get(ravex.modules.client.ClickGui.class).drawBackground;
         if (drawBg) {
-            int bgOpacity = ModuleManager.get(ravex.modules.client.ClickGui.class).backgroundOpacity.getValue().intValue();
+            int bgOpacity = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).backgroundOpacity;
             graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.withAlpha(ColorUtility.BACKGROUND_START, bgOpacity), ColorUtility.withAlpha(ColorUtility.BACKGROUND_END, bgOpacity));
         }
 
-        if (ModuleManager.get(ravex.modules.client.GuiParticles.class).getEnabled()) {
+        if (ModuleManager.INSTANCE.getByName("GuiParticles").getEnabled()) {
             renderStars(graphics);
         }
 
-        if (ModuleManager.get(ravex.modules.client.ClickGui.class).companionImage.getValue()) {
-            String type = ModuleManager.get(ravex.modules.client.ClickGui.class).companionType.getValue();
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).companionImage) {
+            String type = ModuleManager.get(ravex.modules.client.ClickGui.class).companionType;
             Identifier imgId = null;
             if ("Femboy".equals(type)) {
                 imgId = ravex.utility.render.TextureLoaderUtility.FEMBOY;
@@ -239,7 +239,7 @@ public class ClickGUI extends Screen {
             }
         }
 
-        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar) {
             float btnScale = Math.max(0.65f, getResponsiveScale());
             int mgW = (int)(44 * btnScale);
             int mgH = (int)(20 * btnScale);
@@ -316,7 +316,7 @@ public class ClickGUI extends Screen {
 
         pose.popMatrix();
 
-        if (ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionPanel.getValue()) {
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionPanel) {
             activeTooltipText = hoveredDescription != null ? hoveredDescription : "";
             if (!activeTooltipText.isEmpty()) {
                 int maxW = 200;
@@ -350,16 +350,16 @@ public class ClickGUI extends Screen {
         } else {
             if (hoveredDescription != null) {
                 activeTooltipText = hoveredDescription;
-                float speed = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                float speed = (float) ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed / 10f;
                 tooltipAlpha = Math.min(1.0f, tooltipAlpha + 0.10f * speed);
             } else {
-                float speed = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                float speed = (float) ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed / 10f;
                 tooltipAlpha = Math.max(0.0f, tooltipAlpha - 0.15f * speed);
             }
 
             if (tooltipAlpha > 0.02f && !activeTooltipText.isEmpty()) {
-                int ox = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetX.getValue().intValue();
-                int oy = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetY.getValue().intValue();
+                int ox = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetX;
+                int oy = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetY;
                 int maxW = 200;
                 List<String> lines = wrapText(activeTooltipText, maxW);
                 int lineH = FontRenderUtility.getFontHeight() + 2;
@@ -380,7 +380,7 @@ public class ClickGUI extends Screen {
                 if (tx < 0) tx = 2;
                 if (ty < 0) ty = 2;
 
-                int to = ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionOpacity.getValue().intValue();
+                int to = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionOpacity;
                 int ba = (int)(tooltipAlpha * to);
                 int ta = (int)(tooltipAlpha * 255);
 
@@ -416,7 +416,7 @@ public class ClickGUI extends Screen {
         searchAnimProgress += (target - searchAnimProgress) * 0.12f;
         searchCursorCounter++;
 
-        int pAlpha = ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity.getValue().intValue();
+        int pAlpha = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity;
         int barBg = ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, (int)((searchFocused ? Math.min(pAlpha + 15, 255) : pAlpha) * openAnim));
         Render2DUtility.drawRound(graphics, barX, barY, barW, barH, 10, barBg);
 
@@ -506,7 +506,7 @@ public class ClickGUI extends Screen {
             return super.mouseClicked(event, handled);
         }
 
-        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar) {
             float btnScale = Math.max(0.65f, getResponsiveScale());
             int mgW   = (int)(44 * btnScale);
             int mgH   = (int)(20 * btnScale);
@@ -762,12 +762,12 @@ public class ClickGUI extends Screen {
         if (this.width <= 0 || this.height <= 0) return;
 
         var gp = ModuleManager.get(ravex.modules.client.GuiParticles.class);
-        int count = gp.amount.getValue().intValue();
+        int count = (int) gp.amount;
         count = Math.min(count, 120);
-        String pType = gp.type.getValue();
-        int pColor = gp.color.getValue();
-        float pSize = gp.size.getValue().floatValue();
-        float pSpeed = gp.speed.getValue().floatValue();
+        String pType = gp.type;
+        int pColor = gp.color;
+        float pSize = (float) gp.size;
+        float pSpeed = (float) gp.speed;
 
         boolean reinit = !starsInit
             || !pType.equals(lastParticleType)

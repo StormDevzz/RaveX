@@ -1,37 +1,39 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import ravex.utility.misc.EntityUtility;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
-import net.minecraft.world.phys.BlockHitResult;
-import ravex.utility.misc.PhysicUtility;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import java.util.List;
+import ravex.utility.misc.EntityUtility;
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
+import java.util.List;
+
+
+
 @ModuleInfo(name = "WebAura", category = "Combat")
-public class WebAura extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Positive", "Custom"));
-    public final NumberParameter customRange = new NumberParameter("CustomRange", 4.0, 2.0, 6.0, 0.1);
+public class WebAura implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Normal", "Positive", "Custom"})
+    public String mode = "Normal";
+    @Parameter(name = "CustomRange", min = 2.0, max = 6.0, step = 0.1)
+    public double customRange = 4.0;
     private int delay = 0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
         if (delay > 0) {
             delay--;
             return;
         }
         double range = 4.5;
-        String m = mode.getValue();
+        String m = mode;
         if (m.equals("Custom")) {
-            range = customRange.getValue();
+            range = customRange;
         }
         net.minecraft.world.entity.player.Player target = null;
         double closest = range;
@@ -65,7 +67,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
             if (webSlot != prevSlot) {
                 p.connection.send(new ServerboundSetCarriedItemPacket(webSlot));
             }
-            BlockHitResult hit = new BlockHitResult(
+            net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
                 new net.minecraft.world.phys.Vec3(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5),
                 net.minecraft.core.Direction.UP,
                 targetPos,
@@ -86,16 +88,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("N
         return ravex.manager.ModuleManager.delegate(WebAura.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

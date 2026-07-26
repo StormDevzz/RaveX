@@ -1,19 +1,22 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.parameter.ColorParameter;
 
 @ModuleInfo(name = "WorldColor", category = "Render")
-public class WorldColor extends ravex.modules.Module {
-public final BooleanParameter fog = new BooleanParameter("Fog", false);
-    public final ColorParameter fogColor = ((ColorParameter) new ColorParameter("FogColor", 0xFFFF5500).setVisible(() -> fog.getValue()));
+public class WorldColor implements ModuleAccess {
+    @Parameter(name = "Fog")
+    public boolean fog = false;
+    public final ColorParameter fogColor = ((ColorParameter) new ColorParameter("FogColor", 0xFFFF5500).setVisible(() -> fog));
 
-    public final BooleanParameter sky = new BooleanParameter("Sky", false);
-    public final ColorParameter skyColor = ((ColorParameter) new ColorParameter("SkyColor", 0xFF4FC3F7).setVisible(() -> sky.getValue()));
+    @Parameter(name = "Sky")
+    public boolean sky = false;
+    public final ColorParameter skyColor = ((ColorParameter) new ColorParameter("SkyColor", 0xFF4FC3F7).setVisible(() -> sky));
 
-    public final BooleanParameter cloud = new BooleanParameter("Cloud", false);
-    public final ColorParameter cloudColor = ((ColorParameter) new ColorParameter("CloudColor", 0xFFFFFFFF).setVisible(() -> cloud.getValue()));
+    @Parameter(name = "Cloud")
+    public boolean cloud = false;
+    public final ColorParameter cloudColor = ((ColorParameter) new ColorParameter("CloudColor", 0xFFFFFFFF).setVisible(() -> cloud));
 
     private WorldColor() {
         
@@ -27,16 +30,5 @@ public final BooleanParameter fog = new BooleanParameter("Fog", false);
         return ravex.manager.ModuleManager.delegate(WorldColor.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

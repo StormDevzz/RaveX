@@ -1,34 +1,35 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import java.util.List;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
 import ravex.utility.shaders.*;
 import ravex.manager.HandShaderManager;
 import ravex.manager.PlayerShaderManager;
 import ravex.utility.shaders.nativec.ShaderNative;
 @ModuleInfo(name = "Shaders", category = "Render")
-public class Shaders extends ravex.modules.Module {
+public class Shaders implements ModuleAccess {
 public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> RENDERING_HAND = ThreadLocal.withInitial(() -> false);
-    public final BooleanParameter players = new BooleanParameter("Players", true);
-    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", false);
-    public final ColorParameter fillColor = new ColorParameter("Color", 0x77FF00A4);
-    public final ModeParameter effectMode = new ModeParameter("Effect", "FireAura",
-        List.of("FireAura", "EnergyGlow", "Chroma", "Ripple", "Pulse"));
+    @Parameter(name = "Players")
+    public boolean players = true;
+    @Parameter(name = "ThroughWalls")
+    public boolean throughWalls = false;
+    @Parameter(name = "Color", color = true)
+    public int fillColor = 0x77FF00A4;
+    @Parameter(name = "Effect", modes = {"FireAura", "EnergyGlow", "Chroma", "Ripple", "Pulse"})
+    public String effectMode = "FireAura";
     public Shaders() {
         
     }
-    protected void onEnable() {
+    public void onEnable() {
         ShaderNative.isAvailable();
         HandShaderManager.init();
         PlayerShaderManager.init();
         System.out.println("[RaveX-Shaders] Enabled. Native: " + ShaderNative.isAvailable());
     }
-    protected void onDisable() {
+    public void onDisable() {
         HandShaderManager.shutdown();
         PlayerShaderManager.shutdown();
     }
@@ -36,8 +37,8 @@ public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInit
         ShaderConfig cfg = new ShaderConfig();
         cfg.enabled = true;
         cfg.intensity = 1f;
-        cfg.throughWalls = throughWalls.getValue();
-        switch (effectMode.getValue()) {
+        cfg.throughWalls = throughWalls;
+        switch (effectMode) {
             case "FireAura":   cfg.effect = EffectType.FIRE_AURA; break;
             case "EnergyGlow": cfg.effect = EffectType.ENERGY_GLOW; break;
             case "Chroma":      cfg.effect = EffectType.CHROMA; break;
@@ -54,16 +55,5 @@ public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInit
         return ravex.manager.ModuleManager.delegate(Shaders.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

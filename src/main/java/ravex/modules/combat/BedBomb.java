@@ -1,30 +1,35 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BedPart;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.Level;
 import java.util.List;
+
+
+
+
 @ModuleInfo(name = "BedBomb", category = "Combat")
-public class BedBomb extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.5);
-    public final NumberParameter targetRange = new NumberParameter("TargetRange", 6.0, 1.0, 12.0, 0.5);
-    public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
-    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
-    public final ColorParameter color = new ColorParameter("Color", 0x3FFF4444);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
+public class BedBomb implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.5)
+    public double range = 4.5;
+    @Parameter(name = "TargetRange", min = 1.0, max = 12.0, step = 0.5)
+    public double targetRange = 6.0;
+    @Parameter(name = "Rotate")
+    public boolean rotate = true;
+    @Parameter(name = "AutoSwitch")
+    public boolean autoSwitch = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0x3FFF4444;
+    @Parameter(name = "Render")
+    public boolean render = true;
     public static net.minecraft.core.BlockPos currentTarget = null;
     private enum State { IDLE, FIND_TARGET, PLACING, WAITING, DETONATE }
     private State state = State.IDLE;
@@ -35,13 +40,13 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
     static {
         NATIVE.load();
     }
-    protected void onEnable() {
+    public void onEnable() {
         state = State.IDLE;
         bedPos = null;
         placePos = null;
         currentTarget = null;
     }
-    protected void onDisable() {
+    public void onDisable() {
         bedPos = null;
         placePos = null;
         currentTarget = null;
@@ -72,7 +77,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         if (NATIVE.isLoaded()) {
             double[] result = new double[4];
             nativeFindBestPlace(mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                enemyPos.getX(), enemyPos.getY(), enemyPos.getZ(), range.getValue(), result);
+                enemyPos.getX(), enemyPos.getY(), enemyPos.getZ(), range, result);
             if (result[0] != Double.MAX_VALUE) {
                 bestPos = net.minecraft.core.BlockPos.containing(result[0], result[1], result[2]);
             }
@@ -98,7 +103,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         if (slot == -1) { state = State.IDLE; return; }
         int prev = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, slot);
-        BlockHitResult hit = new BlockHitResult(
+        net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
             net.minecraft.world.phys.Vec3.atCenterOf(placePos), net.minecraft.core.Direction.UP, placePos, false
         );
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
@@ -114,12 +119,12 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         if (now - lastActionTime < 50) return;
         lastActionTime = now;
         if (bedPos == null) { state = State.IDLE; return; }
-        BlockState st = mc.level.getBlockState(bedPos);
+        net.minecraft.world.level.block.state.BlockState st = mc.level.getBlockState(bedPos);
         if (!st.is(net.minecraft.world.level.block.Blocks.RED_BED) && !st.is(net.minecraft.world.level.block.Blocks.WHITE_BED)) {
             boolean isBed = st.getBlock() instanceof BedBlock;
             if (!isBed) { state = State.IDLE; return; }
         }
-        BlockHitResult hit = new BlockHitResult(
+        net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
             net.minecraft.world.phys.Vec3.atCenterOf(bedPos), net.minecraft.core.Direction.UP, bedPos, false
         );
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
@@ -127,7 +132,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         state = State.IDLE;
     }
     private net.minecraft.world.entity.LivingEntity findNearestEnemy(Minecraft mc) {
-        double maxDist = targetRange.getValue();
+        double maxDist = targetRange;
         net.minecraft.world.entity.LivingEntity closest = null;
         double closestDist = Double.MAX_VALUE;
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
@@ -144,16 +149,16 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         return closest;
     }
     private net.minecraft.core.BlockPos findPlacePos(Minecraft mc, net.minecraft.core.BlockPos near) {
-        double r = range.getValue();
+        double r = range;
         net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 for (int dy = -1; dy <= 2; dy++) {
                     net.minecraft.core.BlockPos pos = near.offset(dx, dy, dz);
                     if (pos.distToCenterSqr(eye) > r * r) continue;
-                    BlockState below = mc.level.getBlockState(pos.below());
-                    BlockState target = mc.level.getBlockState(pos);
-                    BlockState above = mc.level.getBlockState(pos.above());
+                    net.minecraft.world.level.block.state.BlockState below = mc.level.getBlockState(pos.below());
+                    net.minecraft.world.level.block.state.BlockState target = mc.level.getBlockState(pos);
+                    net.minecraft.world.level.block.state.BlockState above = mc.level.getBlockState(pos.above());
                     if (below.isCollisionShapeFullBlock(mc.level, pos.below())
                         && target.isAir() && above.isAir()) {
                         return pos;
@@ -198,16 +203,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         return ravex.manager.ModuleManager.delegate(BedBomb.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

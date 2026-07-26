@@ -1,49 +1,58 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.item.BlockItem;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.Block;
 import java.util.ArrayList;
 import java.util.List;
-import ravex.utility.nativelib.NativeLibraryUtility;
+
+
+
+
 @ModuleInfo(name = "Trap", category = "Combat")
-public class Trap extends ravex.modules.Module {
-public final NumberParameter  range          = new NumberParameter("Range",          4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  placeDelay     = new NumberParameter("PlaceDelay",     50.0, 0.0, 500.0, 10.0);
-    public final ModeParameter    swapMode       = new ModeParameter("SwapMode", "Silent",
-            java.util.List.of("Silent", "Normal", "None"));
-    public final ModeParameter    rotate         = new ModeParameter("RotateMode", "Silent",
-            java.util.List.of("Silent", "Normal", "Packet", "None"));
-    public final BooleanParameter roof           = new BooleanParameter("Roof",           true);
-    public final BooleanParameter autoDisable    = new BooleanParameter("AutoDisable",    true);
-    public final ModeParameter    targetMode     = new ModeParameter("Target", "Closest",
-            java.util.List.of("Closest", "LowestHP"));
-    public final ModeParameter    targetType     = new ModeParameter("TargetType", "Players",
-            java.util.List.of("Players", "Monsters", "Passives", "All"));
-    public final ModeParameter    speedMode      = new ModeParameter("SpeedMode", "Normal",
-            java.util.List.of("Legit", "Normal", "Aggressive"));
-    public final NumberParameter  jitterDelay    = new NumberParameter("JitterDelay", 0.0, 0.0, 100.0, 5.0);
-    public final BooleanParameter strictRotation = new BooleanParameter("StrictRotation", false);
-    public final NumberParameter  maxRate        = new NumberParameter("MaxRate", 2.0, 1.0, 5.0, 1.0);
-    public final BooleanParameter swapSwitchBack = new BooleanParameter("SwapSwitchBack", true);
-    public final BooleanParameter swapInventory  = new BooleanParameter("SwapInventory", false);
-    public final BooleanParameter render         = new BooleanParameter("Render",         true);
-    public final ColorParameter   color          = new ColorParameter("Color",           0xFFFFAA00);
+public class Trap implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "PlaceDelay", min = 0.0, max = 500.0, step = 10.0)
+    public double placeDelay = 50.0;
+    @Parameter(name = "SwapMode", modes = {"Silent", "Normal", "None"})
+    public String swapMode = "Silent";
+    @Parameter(name = "RotateMode", modes = {"Silent", "Normal", "Packet", "None"})
+    public String rotate = "Silent";
+    @Parameter(name = "Roof")
+    public boolean roof = true;
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = true;
+    @Parameter(name = "Target", modes = {"Closest", "LowestHP"})
+    public String targetMode = "Closest";
+    @Parameter(name = "TargetType", modes = {"Players", "Monsters", "Passives", "All"})
+    public String targetType = "Players";
+    @Parameter(name = "SpeedMode", modes = {"Legit", "Normal", "Aggressive"})
+    public String speedMode = "Normal";
+    @Parameter(name = "JitterDelay", min = 0.0, max = 100.0, step = 5.0)
+    public double jitterDelay = 0.0;
+    @Parameter(name = "StrictRotation")
+    public boolean strictRotation = false;
+    @Parameter(name = "MaxRate", min = 1.0, max = 5.0, step = 1.0)
+    public double maxRate = 2.0;
+    @Parameter(name = "SwapSwitchBack")
+    public boolean swapSwitchBack = true;
+    @Parameter(name = "SwapInventory")
+    public boolean swapInventory = false;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFFFFAA00;
     private long lastPlaceTime = 0;
     private long currentPlaceDelay = 0;
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
@@ -64,13 +73,8 @@ public final NumberParameter  range          = new NumberParameter("Range",     
     );
     private Trap() {
         
-        jitterDelay.setVisible(() -> !speedMode.getValue().equals("Aggressive"));
-        strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
-        maxRate.setVisible(() -> !speedMode.getValue().equals("Legit"));
-        swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
-        swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
     }
-    protected void onEnable() {
+    public void onEnable() {
         lastPlaceTime = 0;
         currentPlaceDelay = 0;
         silentRotation.initialized = false;
@@ -78,7 +82,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             trapBlocks.clear();
         }
     }
-    protected void onDisable() {
+    public void onDisable() {
         synchronized (trapBlocks) {
             trapBlocks.clear();
         }
@@ -92,8 +96,8 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         }
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
-            if (autoDisable.getValue()) {
-                enabled = false;
+            if (autoDisable) {
+                ravex.manager.ModuleManager.INSTANCE.getByName("Trap").setEnabled(false);
             }
             return;
         }
@@ -116,8 +120,8 @@ public final NumberParameter  range          = new NumberParameter("Range",     
                         mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                         target.getX(), target.getY(), target.getZ(),
                         currentSolidData,
-                        range.getValue(),
-                        roof.getValue()
+                        range,
+                        roof
                 );
             } else {
                 result = javaFallbackCalculate(mc, target, currentSolidData);
@@ -136,7 +140,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             trapBlocks.addAll(simulatedBlocks);
         }
         long now = System.currentTimeMillis();
-        boolean checkPlaceDelay = !speedMode.getValue().equals("Aggressive");
+        boolean checkPlaceDelay = !speedMode.equals("Aggressive");
         if (checkPlaceDelay && now - lastPlaceTime < currentPlaceDelay) {
             return;
         }
@@ -146,8 +150,8 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         for (double d : solidBlockData) {
             activeSolidBlocks.add(d);
         }
-        int limit = maxRate.getValue().intValue();
-        if (speedMode.getValue().equals("Legit")) {
+        int limit = (int) maxRate;
+        if (speedMode.equals("Legit")) {
             limit = 1;
         }
         int actionsThisTick = 0;
@@ -164,8 +168,8 @@ public final NumberParameter  range          = new NumberParameter("Range",     
                         mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                         target.getX(), target.getY(), target.getZ(),
                         currentSolidData,
-                        range.getValue(),
-                        roof.getValue()
+                        range,
+                        roof
                 );
             } else {
                 result = javaFallbackCalculate(mc, target, currentSolidData);
@@ -178,11 +182,11 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
             net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             rotateTo(mc, hitVec);
-            boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
+            boolean isStrict = strictRotation || speedMode.equals("Legit");
             if (isStrict && !isRotationAligned(mc, hitVec)) {
                 break;
             }
-            String swap = swapMode.getValue();
+            String swap = swapMode;
             if (swap.equals("Normal")) {
                 InventoryUtility.selectSlot(mc.player, blockSlot);
             } else if (swap.equals("Silent")) {
@@ -192,7 +196,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
                     break;
                 }
             }
-            BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
+            net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
             mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
             SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             placedAny = true;
@@ -201,17 +205,17 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             activeSolidBlocks.add((double) targetBlock.getY());
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
-        if (placedAny && swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+        if (placedAny && swapMode.equals("Silent") && swapSwitchBack && originalSlot != -1) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
         if (placedAny) {
             lastPlaceTime = now;
-            double base = placeDelay.getValue();
-            double jitter = (Math.random() - 0.5) * jitterDelay.getValue();
+            double base = placeDelay;
+            double jitter = (Math.random() - 0.5) * jitterDelay;
             currentPlaceDelay = Math.max(0, (long)(base + jitter));
         } else {
-            if (autoDisable.getValue() && simulatedBlocks.isEmpty()) {
-                enabled = false;
+            if (autoDisable && simulatedBlocks.isEmpty()) {
+                ravex.manager.ModuleManager.INSTANCE.getByName("Trap").setEnabled(false);
             }
         }
         if (!silentRotation.hasRotation) {
@@ -221,9 +225,9 @@ public final NumberParameter  range          = new NumberParameter("Range",     
     private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
-        double maxDist = range.getValue() + 2.0;
-        String mode = targetMode.getValue();
-        String typeFilter = targetType.getValue();
+        double maxDist = range + 2.0;
+        String mode = targetMode;
+        String typeFilter = targetType;
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
@@ -258,7 +262,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
                 }
             }
         }
-        if (swapInventory.getValue()) {
+        if (swapInventory) {
             for (int i = 9; i < 36; i++) {
                 var stack = InventoryUtility.getItem(mc.player, i);
                 if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
@@ -280,7 +284,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
     }
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
-        double r = range.getValue() + 3.0;
+        double r = range + 3.0;
         net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int rx = (int) Math.ceil(r);
         int ry = 3;
@@ -290,7 +294,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
                 for (int dz = -rz; dz <= rz; dz++) {
                     net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
-                        BlockState state = mc.level.getBlockState(pos);
+                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -317,7 +321,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         candidates.add(targetPos.south().above());
         candidates.add(targetPos.east().above());
         candidates.add(targetPos.west().above());
-        if (roof.getValue()) {
+        if (roof) {
             candidates.add(targetPos.above(2));
         }
         java.util.Set<net.minecraft.core.BlockPos> simulatedSolids = new java.util.HashSet<>();
@@ -325,7 +329,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             simulatedSolids.add(new net.minecraft.core.BlockPos((int) solidBlockData[i], (int) solidBlockData[i+1], (int) solidBlockData[i+2]));
         }
         net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
-        double r = range.getValue();
+        double r = range;
         for (net.minecraft.core.BlockPos cand : candidates) {
             if (simulatedSolids.contains(cand)) continue;
             if (eyePos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(cand)) > r * r) continue;
@@ -369,7 +373,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         return new double[]{0.0};
     }
     private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotate.getValue();
+        String mode = rotate;
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
         float currentYaw = mc.player.getYRot(), currentPitch = mc.player.getXRot();
@@ -389,7 +393,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         }
     }
     private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        if (rotate.getValue().equals("None")) return true;
+        if (rotate.equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
     public static boolean isNativeAvailable() {
@@ -402,16 +406,5 @@ public final NumberParameter  range          = new NumberParameter("Range",     
         return ravex.manager.ModuleManager.delegate(Trap.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

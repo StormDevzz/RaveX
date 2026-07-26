@@ -1,25 +1,29 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
+import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.phys.AABB;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
-import ravex.utility.player.InventoryUtility;
+
+
+
 @ModuleInfo(name = "AutoFish", category = "World")
-public class AutoFish extends ravex.modules.Module {
-public final NumberParameter castDelay = new NumberParameter("CastDelay", 600, 200, 2000, 100);
-    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
-    public final BooleanParameter autoCast = new BooleanParameter("AutoCast", true);
+public class AutoFish implements ModuleAccess {
+    @Parameter(name = "CastDelay", min = 200, max = 2000, step = 100)
+    public double castDelay = 600;
+    @Parameter(name = "SilentSwap")
+    public boolean silent = true;
+    @Parameter(name = "AutoCast")
+    public boolean autoCast = true;
     private long lastActionTime = 0;
     private boolean wasIdle = false;
     private double prevY = 0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
+        net.minecraft.client.player.LocalPlayer player = mc.player;
         if (player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < 200) return;
@@ -29,7 +33,7 @@ public final NumberParameter castDelay = new NumberParameter("CastDelay", 600, 2
             boolean moving = Math.abs(dy) > 0.02;
             if (wasIdle && moving) {
                 reelIn(mc, player);
-                lastActionTime = now + castDelay.getValue().longValue();
+                lastActionTime = now + (long) castDelay;
                 wasIdle = false;
                 return;
             }
@@ -39,20 +43,20 @@ public final NumberParameter castDelay = new NumberParameter("CastDelay", 600, 2
         }
         wasIdle = false;
         prevY = 0;
-        if (autoCast.getValue()) {
+        if (autoCast) {
             int rodSlot = findRodSlot(player);
             if (rodSlot != -1) {
                 int prev = InventoryUtility.getSelectedSlot(player);
                 InventoryUtility.selectSlot(player, rodSlot);
                 useRod(mc, player);
-                if (silent.getValue()) {
+                if (silent) {
                     InventoryUtility.selectSlot(player, prev);
                 }
                 lastActionTime = now;
             }
         }
     }
-    private FishingHook findBobber(Minecraft mc, LocalPlayer player) {
+    private FishingHook findBobber(Minecraft mc, net.minecraft.client.player.LocalPlayer player) {
         for (var e : mc.level.getEntities(player, AABB.ofSize(player.position(), 32, 32, 32))) {
             if (e instanceof FishingHook hook && hook.getOwner() == player) {
                 return hook;
@@ -60,33 +64,22 @@ public final NumberParameter castDelay = new NumberParameter("CastDelay", 600, 2
         }
         return null;
     }
-    private int findRodSlot(LocalPlayer player) {
+    private int findRodSlot(net.minecraft.client.player.LocalPlayer player) {
         for (int i = 0; i < 9; i++) {
             if (InventoryUtility.isItemInSlot(player, i, "fishing_rod")) return i;
         }
         return -1;
     }
-    private void useRod(Minecraft mc, LocalPlayer player) {
+    private void useRod(Minecraft mc, net.minecraft.client.player.LocalPlayer player) {
         mc.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
         ravex.utility.player.SwingUtility.swingMainHand(player);
     }
-    private void reelIn(Minecraft mc, LocalPlayer player) {
+    private void reelIn(Minecraft mc, net.minecraft.client.player.LocalPlayer player) {
         useRod(mc, player);
     }
     public static AutoFish itz() {
         return ravex.manager.ModuleManager.delegate(AutoFish.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

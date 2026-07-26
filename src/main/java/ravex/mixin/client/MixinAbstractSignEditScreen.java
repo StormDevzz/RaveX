@@ -21,10 +21,10 @@ public abstract class MixinAbstractSignEditScreen {
         if (AutoSign.maybeEnabled()) {
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null && mc.getConnection() != null && sign != null) {
-                String l1 = AutoSign.itz().line1.getValue();
-                String l2 = AutoSign.itz().line2.getValue();
-                String l3 = AutoSign.itz().line3.getValue();
-                String l4 = AutoSign.itz().line4.getValue();
+                String l1 = AutoSign.itz().line1;
+                String l2 = AutoSign.itz().line2;
+                String l3 = AutoSign.itz().line3;
+                String l4 = AutoSign.itz().line4;
 
                 mc.getConnection().send(new ServerboundSignUpdatePacket(
                     sign.getBlockPos(),

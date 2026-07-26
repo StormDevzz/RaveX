@@ -18,7 +18,7 @@ public class MixinHoneyBlock {
     @Inject(method = "entityInside", at = @At("HEAD"), cancellable = true)
     private void onEntityInside(BlockState state, Level level, BlockPos pos, Entity entity, CallbackInfo ci) {
         if (entity instanceof LocalPlayer) {
-            if (NoSlow.maybeEnabled() && NoSlow.itz().blocks.getValue()) {
+            if (NoSlow.maybeEnabled() && NoSlow.itz().blocks) {
                 ci.cancel();
             }
         }

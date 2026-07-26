@@ -1,15 +1,17 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.SwingUtility;
 @ModuleInfo(name = "AutoMount", category = "World")
-public class AutoMount extends ravex.modules.Module {
-public final ravex.parameter.ModeParameter mode = new ravex.parameter.ModeParameter("Mode", "Normal", java.util.List.of("Normal", "Fast"));
+public class AutoMount implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Normal", "Fast"})
+    public String mode = "Normal";
     private int cooldown = 0;
     public void onTick() {
-        if ("Normal".equals(mode.getValue()) && cooldown > 0) {
+        if ("Normal".equals(mode) && cooldown > 0) {
             cooldown--;
             return;
         }
@@ -42,16 +44,5 @@ public final ravex.parameter.ModeParameter mode = new ravex.parameter.ModeParame
         return ravex.manager.ModuleManager.delegate(AutoMount.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

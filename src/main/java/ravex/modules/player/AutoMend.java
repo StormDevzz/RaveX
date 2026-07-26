@@ -1,22 +1,24 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.world.entity.EquipmentSlot;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.EquipmentSlot;
 import java.util.List;
+
+
+
 @ModuleInfo(name = "AutoMend", category = "net.minecraft.world.entity.player.Player")
-public class AutoMend extends ravex.modules.Module {
-public final NumberParameter threshold = new NumberParameter("Threshold", 50.0, 10.0, 95.0, 5.0);
-    public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Normal", "Silent"));
+public class AutoMend implements ModuleAccess {
+    @Parameter(name = "Threshold", min = 10.0, max = 95.0, step = 5.0)
+    public double threshold = 50.0;
+    @Parameter(name = "Swap", modes = {"Normal", "Silent"})
+    public String swapMode = "Silent";
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
         boolean needsMend = false;
         EquipmentSlot[] armorSlots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
@@ -26,7 +28,7 @@ public final NumberParameter threshold = new NumberParameter("Threshold", 50.0, 
                 double maxDamage = stack.getMaxDamage();
                 double currentDamage = stack.getDamageValue();
                 double durabilityPct = ((maxDamage - currentDamage) / maxDamage) * 100.0;
-                if (durabilityPct < threshold.getValue()) {
+                if (durabilityPct < threshold) {
                     needsMend = true;
                     break;
                 }
@@ -42,9 +44,9 @@ public final NumberParameter threshold = new NumberParameter("Threshold", 50.0, 
         }
         if (expSlot == -1) return;
         int prevSlot = InventoryUtility.getSelectedSlot(p);
-        boolean silent = "Silent".equals(swapMode.getValue());
+        boolean silent = "Silent".equals(swapMode);
         InventoryUtility.selectSlot(p, expSlot);
-        p.connection.send(new ServerboundMovePlayerPacket.Rot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision));
+        p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision));
         mc.gameMode.useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
         p.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         if (silent) {
@@ -58,16 +60,5 @@ public final NumberParameter threshold = new NumberParameter("Threshold", 50.0, 
         return ravex.manager.ModuleManager.delegate(AutoMend.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

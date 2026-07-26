@@ -17,7 +17,7 @@ public class MixinFastBreak {
     @Inject(method = "startDestroyBlock", at = @At("HEAD"))
     private void onStartDestroyBlock(BlockPos pos, Direction direction, CallbackInfoReturnable<Boolean> cir) {
         if (FastBreak.maybeEnabled()) {
-            int d = ((Double) FastBreak.itz().delay.getValue()).intValue();
+            int d = ((Double) FastBreak.itz().delay).intValue();
             if (destroyDelay > d) {
                 destroyDelay = d;
             }

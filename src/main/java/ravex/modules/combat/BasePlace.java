@@ -1,59 +1,78 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
-import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import ravex.utility.player.SwingUtility;
-import ravex.utility.misc.EntityUtility;
-
-import net.minecraft.world.item.BlockItem;
-import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import ravex.utility.misc.PhysicUtility;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.effect.MobEffects;
+import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
-
-import ravex.parameter.BooleanParameter;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.EntityUtility;
+import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.PhysicUtility;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.BlockItem;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import ravex.utility.nativelib.NativeLibraryUtility;
+
+
+
+
+
 
 @ModuleInfo(name = "BasePlace", category = "Combat")
-public class BasePlace extends ravex.modules.Module {
-public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
-    public final ModeParameter   targetType      = new ModeParameter("TargetType", "Players", List.of("Players", "Monsters", "Passives", "All"));
-    public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter targetRange     = new NumberParameter("TargetRange", 6.0, 1.0, 10.0, 0.1);
-    public final NumberParameter minDamage       = new NumberParameter("MinDamage", 4.0, 1.0, 20.0, 0.5);
-    public final NumberParameter maxSelfDmg      = new NumberParameter("MaxSelfDmg", 8.0, 1.0, 20.0, 0.5);
-    public final NumberParameter selfDamageWeight = new NumberParameter("SelfDmgWeight", 1.2, 0.0, 5.0, 0.1);
-    public final BooleanParameter antiSuicide    = new BooleanParameter("AntiSuicide", true);
-    public final NumberParameter antiSuicideMinHp = new NumberParameter("AntiSuicideMinHP", 6.0, 1.0, 20.0, 0.5);
-    public final NumberParameter predictTicks    = new NumberParameter("PredictTicks", 1.0, 0.0, 4.0, 0.1);
-    public final BooleanParameter airPlace       = new BooleanParameter("AirPlace", false);
-    public final ModeParameter   airPlaceBypass  = new ModeParameter("AirPlaceBypass", "None", List.of("NCP", "Grim", "None"));
-    public final NumberParameter placeDelay      = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
-    public final ModeParameter   rotate          = new ModeParameter("Rotate", "Grim", List.of("Grim", "NCP", "NCPStrict", "None"));
-    public final ModeParameter   swapMode        = new ModeParameter("Swap", "Grim", List.of("Grim", "NCP", "NCPStrict", "None"));
-    public final BooleanParameter swapSwitchBack  = new BooleanParameter("SwitchBack", true);
-    public final BooleanParameter swapInventory   = new BooleanParameter("SwapInv", true);
-    public final BooleanParameter autoCrystalSync = new BooleanParameter("AutoCrystalSync", true);
-    public final NumberParameter  syncPredictTicks = new NumberParameter("SyncPredictTicks", 5.0, 1.0, 10.0, 1.0);
-    public final BooleanParameter render          = new BooleanParameter("Render", true);
-    public final ColorParameter  color           = new ColorParameter("Color", 0x3F00FF00);
+public class BasePlace implements ModuleAccess {
+    @Parameter(name = "Target", modes = {"Closest", "LowestHP"})
+    public String targetMode = "Closest";
+    @Parameter(name = "TargetType", modes = {"Players", "Monsters", "Passives", "All"})
+    public String targetType = "Players";
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "TargetRange", min = 1.0, max = 10.0, step = 0.1)
+    public double targetRange = 6.0;
+    @Parameter(name = "MinDamage", min = 1.0, max = 20.0, step = 0.5)
+    public double minDamage = 4.0;
+    @Parameter(name = "MaxSelfDmg", min = 1.0, max = 20.0, step = 0.5)
+    public double maxSelfDmg = 8.0;
+    @Parameter(name = "SelfDmgWeight", min = 0.0, max = 5.0, step = 0.1)
+    public double selfDamageWeight = 1.2;
+    @Parameter(name = "AntiSuicide")
+    public boolean antiSuicide = true;
+    @Parameter(name = "AntiSuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
+    public double antiSuicideMinHp = 6.0;
+    @Parameter(name = "PredictTicks", min = 0.0, max = 4.0, step = 0.1)
+    public double predictTicks = 1.0;
+    @Parameter(name = "AirPlace")
+    public boolean airPlace = false;
+    @Parameter(name = "AirPlaceBypass", modes = {"NCP", "Grim", "None"})
+    public String airPlaceBypass = "None";
+    @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
+    public double placeDelay = 100.0;
+    @Parameter(name = "Rotate", modes = {"Grim", "NCP", "NCPStrict", "None"})
+    public String rotate = "Grim";
+    @Parameter(name = "Swap", modes = {"Grim", "NCP", "NCPStrict", "None"})
+    public String swapMode = "Grim";
+    @Parameter(name = "SwitchBack")
+    public boolean swapSwitchBack = true;
+    @Parameter(name = "SwapInv")
+    public boolean swapInventory = true;
+    @Parameter(name = "AutoCrystalSync")
+    public boolean autoCrystalSync = true;
+    @Parameter(name = "SyncPredictTicks", min = 1.0, max = 10.0, step = 1.0)
+    public double syncPredictTicks = 5.0;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0x3F00FF00;
     public static net.minecraft.core.BlockPos lastPlacedBase = null;
     public static long lastPlacedTime = 0;
     public static double currentTargetDamage = 0.0;
@@ -67,11 +86,6 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         NATIVE.load();
     }
     private BasePlace() {
-        
-        swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
-        swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
-        syncPredictTicks.setVisible(autoCrystalSync::getValue);
-        airPlaceBypass.setVisible(airPlace::getValue);
     }
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("BasePlace").getEnabled();
@@ -91,7 +105,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
     public static net.minecraft.core.BlockPos getSimulatedPlacementBlock() {
         return simulatedPlacementBlock;
     }
-    protected void onEnable() {
+    public void onEnable() {
         lastPlaceTime = 0;
         silentRotation.reset();
         lastPlacedBase = null;
@@ -99,7 +113,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         simulatedPlacementBlock = null;
         placedPositions.clear();
     }
-    protected void onDisable() {
+    public void onDisable() {
         silentRotation.reset();
         simulatedPlacementBlock = null;
         placedPositions.clear();
@@ -108,7 +122,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         silentRotation.hasRotation = false;
-        if (autoCrystalSync.getValue()) {
+        if (autoCrystalSync) {
             AutoCrystal ac = ravex.manager.ModuleManager.delegate(ravex.modules.combat.AutoCrystal.class);
             if (!ac.getEnabled()) {
                 simulatedPlacementBlock = null;
@@ -122,11 +136,11 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
                 simulatedPlacementBlock = null;
                 return;
             }
-            String acPlaceMode = ac.placeMode.getValue();
+            String acPlaceMode = ac.placeMode;
             if (acPlaceMode.equals("Grim")) {
-                airPlaceBypass.setValue("Grim");
+                airPlaceBypass = "Grim";
             } else if (acPlaceMode.equals("NCPStrict")) {
-                airPlaceBypass.setValue("NCP");
+                airPlaceBypass = "NCP";
             }
         }
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
@@ -135,8 +149,8 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
             return;
         }
         double[] solidBlockData = collectSolidBlocks(mc);
-        boolean airPlaceMode = airPlace.getValue();
-        String bypassMode = airPlaceBypass.getValue();
+        boolean airPlaceMode = airPlace;
+        String bypassMode = airPlaceBypass;
         if (airPlaceMode && !bypassMode.equals("None")) {
             airPlaceMode = true;
         }
@@ -148,14 +162,14 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
                 target.getX(), target.getY(), target.getZ(),
                 target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
                 solidBlockData,
-                range.getValue(),
-                targetRange.getValue(),
-                minDamage.getValue(),
-                maxSelfDmg.getValue(),
-                selfDamageWeight.getValue(),
-                antiSuicide.getValue(),
-                antiSuicideMinHp.getValue(),
-                predictTicks.getValue(),
+                range,
+                targetRange,
+                minDamage,
+                maxSelfDmg,
+                selfDamageWeight,
+                antiSuicide,
+                antiSuicideMinHp,
+                predictTicks,
                 airPlaceMode
             );
         } else {
@@ -176,7 +190,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
             currentSelfDamage = 0.0;
         }
         long now = System.currentTimeMillis();
-        if (now - lastPlaceTime < placeDelay.getValue().longValue()) {
+        if (now - lastPlaceTime < (long) placeDelay) {
             return;
         }
         int blockSlot = findBlockSlot(mc);
@@ -191,7 +205,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-        String swap = swapMode.getValue();
+        String swap = swapMode;
         if (swap.equals("None")) {
             if (InventoryUtility.getSelectedSlot(mc.player) != blockSlot) {
                 return;
@@ -201,14 +215,14 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
             originalSlot = InventoryUtility.getSelectedSlot(mc.player);
             InventoryUtility.silentSelectSlot(mc.player, blockSlot);
         }
-        BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
+        net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
         SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         placedPositions.put(targetBlock, now);
         lastPlaceTime = now;
         lastPlacedBase = targetBlock;
         lastPlacedTime = now;
-        if (swapSwitchBack.getValue() && originalSlot != -1 && !swap.equals("None")) {
+        if (swapSwitchBack && originalSlot != -1 && !swap.equals("None")) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
     }
@@ -218,7 +232,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         return InventoryUtility.findSlot(mc.player, "end_crystal") != -1;
     }
     private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotate.getValue();
+        String mode = rotate;
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
         if (!silentRotation.initialized) { silentRotation.init(mc.player.getYRot(), mc.player.getXRot()); }
@@ -234,13 +248,13 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
         net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
-        int r = (int) Math.ceil(range.getValue()) + 2;
+        int r = (int) Math.ceil(range) + 2;
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -4; dy <= 4; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
                     net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
-                        BlockState state = mc.level.getBlockState(pos);
+                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -262,7 +276,7 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
                 return i;
             }
         }
-        if (swapInventory.getValue()) {
+        if (swapInventory) {
             for (int i = 9; i < 36; i++) {
                 var stack = InventoryUtility.getItem(mc.player, i);
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
@@ -278,9 +292,9 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
     private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
-        double maxDist = targetRange.getValue();
-        String mode = targetMode.getValue();
-        String typeFilter = targetType.getValue();
+        double maxDist = targetRange;
+        String mode = targetMode;
+        String typeFilter = targetType;
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
@@ -385,10 +399,10 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         net.minecraft.core.BlockPos bestNeighbor = null;
         int bestFace = 1;
         int r = 2;
-        double maxPlaceRange = range.getValue();
-        double maxTargetRange = targetRange.getValue();
-        boolean allowAirPlace = airPlace.getValue();
-        String bypassMode = airPlaceBypass.getValue();
+        double maxPlaceRange = range;
+        double maxTargetRange = targetRange;
+        boolean allowAirPlace = airPlace;
+        String bypassMode = airPlaceBypass;
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
@@ -472,16 +486,5 @@ public final ModeParameter   targetMode      = new ModeParameter("Target", "Clos
         boolean airPlace
     );
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

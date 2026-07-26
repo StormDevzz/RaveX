@@ -1,29 +1,45 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
-
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "ViewModel", category = "Render")
-public class ViewModel extends ravex.modules.Module {
-public final NumberParameter mainX = new NumberParameter("MainX", 0.0, -2.0, 2.0, 0.01);
-    public final NumberParameter mainY = new NumberParameter("MainY", 0.0, -2.0, 2.0, 0.01);
-    public final NumberParameter mainZ = new NumberParameter("MainZ", 0.0, -2.0, 2.0, 0.01);
-    public final NumberParameter mainRotX = new NumberParameter("MainRotX", 0.0, -180.0, 180.0, 0.5);
-    public final NumberParameter mainRotY = new NumberParameter("MainRotY", 0.0, -180.0, 180.0, 0.5);
-    public final NumberParameter mainRotZ = new NumberParameter("MainRotZ", 0.0, -180.0, 180.0, 0.5);
-    public final NumberParameter mainScale = new NumberParameter("MainScale", 1.0, 0.1, 3.0, 0.05);
-    public final NumberParameter offX = new NumberParameter("OffX", 0.0, -2.0, 2.0, 0.01);
-    public final NumberParameter offY = new NumberParameter("OffY", 0.0, -2.0, 2.0, 0.01);
-    public final NumberParameter offZ = new NumberParameter("OffZ", 0.0, -2.0, 2.0, 0.01);
-    public final NumberParameter offRotX = new NumberParameter("OffRotX", 0.0, -180.0, 180.0, 0.5);
-    public final NumberParameter offRotY = new NumberParameter("OffRotY", 0.0, -180.0, 180.0, 0.5);
-    public final NumberParameter offRotZ = new NumberParameter("OffRotZ", 0.0, -180.0, 180.0, 0.5);
-    public final NumberParameter offScale = new NumberParameter("OffScale", 1.0, 0.1, 3.0, 0.05);
-    public final NumberParameter swingSpeed = new NumberParameter("SwingSpeed", 1.0, 0.1, 3.0, 0.05);
-    public final BooleanParameter hideMainHand = new BooleanParameter("HideMain", false);
-    public final BooleanParameter hideOffHand = new BooleanParameter("HideOff", false);
-    public final BooleanParameter noSwing = new BooleanParameter("NoSwing", false);
+public class ViewModel implements ModuleAccess {
+    @Parameter(name = "MainX", min = -2.0, max = 2.0, step = 0.01)
+    public double mainX = 0.0;
+    @Parameter(name = "MainY", min = -2.0, max = 2.0, step = 0.01)
+    public double mainY = 0.0;
+    @Parameter(name = "MainZ", min = -2.0, max = 2.0, step = 0.01)
+    public double mainZ = 0.0;
+    @Parameter(name = "MainRotX", min = -180.0, max = 180.0, step = 0.5)
+    public double mainRotX = 0.0;
+    @Parameter(name = "MainRotY", min = -180.0, max = 180.0, step = 0.5)
+    public double mainRotY = 0.0;
+    @Parameter(name = "MainRotZ", min = -180.0, max = 180.0, step = 0.5)
+    public double mainRotZ = 0.0;
+    @Parameter(name = "MainScale", min = 0.1, max = 3.0, step = 0.05)
+    public double mainScale = 1.0;
+    @Parameter(name = "OffX", min = -2.0, max = 2.0, step = 0.01)
+    public double offX = 0.0;
+    @Parameter(name = "OffY", min = -2.0, max = 2.0, step = 0.01)
+    public double offY = 0.0;
+    @Parameter(name = "OffZ", min = -2.0, max = 2.0, step = 0.01)
+    public double offZ = 0.0;
+    @Parameter(name = "OffRotX", min = -180.0, max = 180.0, step = 0.5)
+    public double offRotX = 0.0;
+    @Parameter(name = "OffRotY", min = -180.0, max = 180.0, step = 0.5)
+    public double offRotY = 0.0;
+    @Parameter(name = "OffRotZ", min = -180.0, max = 180.0, step = 0.5)
+    public double offRotZ = 0.0;
+    @Parameter(name = "OffScale", min = 0.1, max = 3.0, step = 0.05)
+    public double offScale = 1.0;
+    @Parameter(name = "SwingSpeed", min = 0.1, max = 3.0, step = 0.05)
+    public double swingSpeed = 1.0;
+    @Parameter(name = "HideMain")
+    public boolean hideMainHand = false;
+    @Parameter(name = "HideOff")
+    public boolean hideOffHand = false;
+    @Parameter(name = "NoSwing")
+    public boolean noSwing = false;
 
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("ViewModel").getEnabled();
@@ -33,16 +49,5 @@ public final NumberParameter mainX = new NumberParameter("MainX", 0.0, -2.0, 2.0
         return ravex.manager.ModuleManager.delegate(ViewModel.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

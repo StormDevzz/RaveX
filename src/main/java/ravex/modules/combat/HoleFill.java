@@ -1,28 +1,33 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.chat.Component;
 import ravex.utility.misc.PhysicUtility;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
-import ravex.parameter.ColorParameter;
 import ravex.utility.player.InventoryUtility;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 @ModuleInfo(name = "HoleFill", category = "Combat")
-public class HoleFill extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0, 0.5);
-    public final NumberParameter delay = new NumberParameter("Delay", 80, 20, 300, 10);
-    public final NumberParameter maxBlocks = new NumberParameter("MaxBlocks", 6, 1, 24, 1);
-    public final BooleanParameter fillAll = new BooleanParameter("FillAll", false);
-    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter color = new ColorParameter("Color", 0x3F00FF00);
+public class HoleFill implements ModuleAccess {
+    @Parameter(name = "Range", min = 2.0, max = 8.0, step = 0.5)
+    public double range = 4.0;
+    @Parameter(name = "Delay", min = 20, max = 300, step = 10)
+    public double delay = 80;
+    @Parameter(name = "MaxBlocks", min = 1, max = 24, step = 1)
+    public double maxBlocks = 6;
+    @Parameter(name = "FillAll")
+    public boolean fillAll = false;
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = true;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0x3F00FF00;
     public static List<Long> holePositions = new ArrayList<>();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_holefill");
     static {
@@ -34,13 +39,13 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
     private int holeIndex = 0;
     private long lastActionTime = 0;
     private int totalPlaced = 0;
-    protected void onEnable() {
+    public void onEnable() {
         state = State.IDLE;
         holes.clear();
         holeIndex = 0;
         totalPlaced = 0;
     }
-    protected void onDisable() {
+    public void onDisable() {
         state = State.IDLE;
         holes.clear();
         holeIndex = 0;
@@ -54,7 +59,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
             case SEARCH -> searchHoles(mc);
             case PLACING -> placeNext(mc, now);
             case DONE -> {
-                if (autoDisable.getValue()) enabled = false;
+                if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("HoleFill").setEnabled(false);
                 else state = State.IDLE;
             }
         }
@@ -63,7 +68,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
         holes.clear();
         holePositions.clear();
         holeIndex = 0;
-        double r = range.getValue();
+        double r = range;
         if (NATIVE.isLoaded()) {
             searchNative(mc, r);
         } else {
@@ -81,7 +86,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
             double dz = BlockUtility.unpackZ(p) - pz;
             return dx * dx + dy * dy + dz * dz;
         }));
-        int max = maxBlocks.getValue().intValue();
+        int max = (int) maxBlocks;
         if (holes.size() > max) holes = holes.subList(0, max);
         holePositions.clear();
         holePositions.addAll(holes);
@@ -91,7 +96,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
     private void searchNative(Minecraft mc, double range) {
         int[] result = nativeFindHoles(
             mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-            range, maxBlocks.getValue().intValue() * 2
+            range, (int) maxBlocks * 2
         );
         if (result == null) return;
         for (int i = 0; i < result.length; i += 3) {
@@ -144,13 +149,13 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
                 solidSides++;
             }
         }
-        if (fillAll.getValue()) {
+        if (fillAll) {
             return solidSides >= 2;
         }
         return solidSides >= 3;
     }
     private void placeNext(Minecraft mc, long now) {
-        if (now - lastActionTime < delay.getValue().longValue()) return;
+        if (now - lastActionTime < (long) delay) return;
         lastActionTime = now;
         if (holeIndex >= holes.size()) {
             sendMsg(mc, "Filled " + totalPlaced + " block(s)");
@@ -165,7 +170,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
         int slot = findBlockSlot(mc);
         if (slot == -1) {
             sendMsg(mc, "Not enough blocks, disabling");
-            enabled = false;
+            ravex.manager.ModuleManager.INSTANCE.getByName("HoleFill").setEnabled(false);
             return;
         }
         if (!BlockUtility.placeBlock(mc, BlockUtility.fromPacked(targetPacked), slot)) {
@@ -201,16 +206,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0,
         return ravex.manager.ModuleManager.delegate(HoleFill.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

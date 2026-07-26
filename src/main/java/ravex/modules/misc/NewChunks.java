@@ -1,6 +1,7 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
@@ -15,8 +16,6 @@ import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.world.level.ChunkPos;
 import ravex.utility.misc.PhysicUtility;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
 import ravex.utility.render.Render3DUtility;
 import org.joml.Matrix4f;
 import java.util.HashSet;
@@ -25,15 +24,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ModuleInfo(name = "NewChunks", category = "Misc")
-public class NewChunks extends ravex.modules.Module {
-public final BooleanParameter notify = new BooleanParameter("Notify", true);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final BooleanParameter renderLoaded = new BooleanParameter("RenderLoaded", true);
-    public final BooleanParameter renderVisited = new BooleanParameter("RenderVisited", true);
-    public final BooleanParameter render112 = new BooleanParameter("Render1.12.2", true);
-    public final ColorParameter loadedColor = new ColorParameter("LoadedColor", 0xFFFFFFFF);
-    public final ColorParameter visitedColor = new ColorParameter("VisitedColor", 0xFFFF3333);
-    public final ColorParameter old112Color = new ColorParameter("1.12.2Color", 0xFF33FF33);
+public class NewChunks implements ModuleAccess {
+    @Parameter(name = "Notify")
+    public boolean notify = true;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "RenderLoaded")
+    public boolean renderLoaded = true;
+    @Parameter(name = "RenderVisited")
+    public boolean renderVisited = true;
+    @Parameter(name = "Render1.12.2")
+    public boolean render112 = true;
+    @Parameter(name = "LoadedColor", color = true)
+    public int loadedColor = 0xFFFFFFFF;
+    @Parameter(name = "VisitedColor", color = true)
+    public int visitedColor = 0xFFFF3333;
+    @Parameter(name = "1.12.2Color", color = true)
+    public int old112Color = 0xFF33FF33;
     private final Set<ChunkPos> loadedChunks = new HashSet<>();
     private final Set<ChunkPos> visitedChunks = new HashSet<>();
     private final Set<ChunkPos> old112Chunks = new HashSet<>();
@@ -103,11 +110,11 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
         }
         if (result == 2) {
             old112Chunks.add(pos);
-            if (notify.getValue()) {
+            if (notify) {
                 Minecraft.getInstance().execute(() -> {
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
-                        int color = ravex.manager.ModuleManager.delegate(ravex.modules.client.Notifications.class).messageColor.getValue();
+                        int color = ravex.manager.ModuleManager.delegate(ravex.modules.client.Notifications.class).messageColor;
                         Component message = Component.literal("[")
                             .withStyle(style -> style.withColor(0x7F7F7F))
                             .append(Component.literal("NewChunks").withStyle(style -> style.withColor(color)))
@@ -124,12 +131,12 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
     }
     @Subscribe
     public void onPacketEvent(PacketEvent event) {
-        if (!getEnabled() || !event.isReceive()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NewChunks").getEnabled() || !event.isReceive()) return;
         onPacketReceive(event.getPacket());
     }
 
     public void onPacketReceive(Object packet) {
-        if (!getEnabled()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NewChunks").getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (packet instanceof ClientboundLevelChunkWithLightPacket chunkPacket) {
@@ -149,14 +156,14 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
         }
     }
     public void render(Matrix4f modelViewMatrix, net.minecraft.client.Camera camera) {
-        if (!render.getValue()) return;
+        if (!render) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         net.minecraft.world.phys.Vec3 camPos = camera.position();
         float y = (float) (mc.level.getMinY() - camPos.y + 0.01f);
         Matrix4f reusable = new Matrix4f();
-        if (renderLoaded.getValue()) {
-            int loadedVal = loadedColor.getValue();
+        if (renderLoaded) {
+            int loadedVal = loadedColor;
             float lr = ((loadedVal >> 16) & 0xFF) / 255.0f;
             float lg = ((loadedVal >> 8) & 0xFF) / 255.0f;
             float lb = (loadedVal & 0xFF) / 255.0f;
@@ -165,8 +172,8 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
                 drawChunkOutline(modelViewMatrix, reusable, pos, camPos, y, lr, lg, lb, la);
             }
         }
-        if (renderVisited.getValue()) {
-            int visitedVal = visitedColor.getValue();
+        if (renderVisited) {
+            int visitedVal = visitedColor;
             float vr = ((visitedVal >> 16) & 0xFF) / 255.0f;
             float vg = ((visitedVal >> 8) & 0xFF) / 255.0f;
             float vb = (visitedVal & 0xFF) / 255.0f;
@@ -175,8 +182,8 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
                 drawChunkOutline(modelViewMatrix, reusable, pos, camPos, y, vr, vg, vb, va);
             }
         }
-        if (render112.getValue()) {
-            int oldVal = old112Color.getValue();
+        if (render112) {
+            int oldVal = old112Color;
             float or = ((oldVal >> 16) & 0xFF) / 255.0f;
             float og = ((oldVal >> 8) & 0xFF) / 255.0f;
             float ob = (oldVal & 0xFF) / 255.0f;
@@ -201,7 +208,7 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
             Render3DUtility.batchFilledBox(reusable, 1.0, r, g, b, a * 0.15f, true);
         } catch (Exception ignored) {}
     }
-    protected void onDisable() {
+    public void onDisable() {
         loadedChunks.clear();
         visitedChunks.clear();
         old112Chunks.clear();
@@ -216,16 +223,5 @@ public final BooleanParameter notify = new BooleanParameter("Notify", true);
         return ravex.manager.ModuleManager.delegate(NewChunks.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

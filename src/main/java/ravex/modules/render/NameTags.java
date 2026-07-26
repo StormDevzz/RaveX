@@ -1,35 +1,37 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.parameter.MultiSelectParameter;
-
+import java.util.List;
 @ModuleInfo(name = "NameTags", category = "Render")
-public class NameTags extends ravex.modules.Module {
-public final BooleanParameter armor = new BooleanParameter("Armor", true);
-    public final BooleanParameter handItems = new BooleanParameter("HandItems", true);
-    public final NumberParameter size = new NumberParameter("Size", 1.0, 0.5, 2.5, 0.1);
-    public final BooleanParameter distScale = new BooleanParameter("DistScale", true);
-    public final NumberParameter range = new NumberParameter("Range", 64.0, 5.0, 256.0, 1.0);
-    public final BooleanParameter background = new BooleanParameter("Background", true);
-    public final ColorParameter backgroundColor = new ColorParameter("BackgroundColor", 0x20000000);
-    public final BooleanParameter customFont = new BooleanParameter("CustomFont", false);
+public class NameTags implements ModuleAccess {
+    @Parameter(name = "Armor")
+    public boolean armor = true;
+    @Parameter(name = "HandItems")
+    public boolean handItems = true;
+    @Parameter(name = "Size", min = 0.5, max = 2.5, step = 0.1)
+    public double size = 1.0;
+    @Parameter(name = "DistScale")
+    public boolean distScale = true;
+    @Parameter(name = "Range", min = 5.0, max = 256.0, step = 1.0)
+    public double range = 64.0;
+    @Parameter(name = "Background")
+    public boolean background = true;
+    @Parameter(name = "BackgroundColor", color = true)
+    public int backgroundColor = 0x20000000;
+    @Parameter(name = "CustomFont")
+    public boolean customFont = false;
 
-    public final MultiSelectParameter entities = new MultiSelectParameter(
-        "Entities",
-        java.util.List.of("Players", "Monsters"),
-        java.util.List.of("Players", "Monsters", "Passives")
-    );
+    @Parameter(name = "Entities", options = {"Players", "Monsters", "Passives"})
+    public MultiSelectParameter entities = new MultiSelectParameter("Entities", List.of("Players", "Monsters"), List.of("Players", "Monsters", "Passives"));
 
     private NameTags() {
         
-        backgroundColor.setVisible(background::getValue);
     }
 
     public boolean shouldDraw(net.minecraft.world.entity.Entity target) {
-        if (!getEnabled()) return false;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NameTags").getEnabled()) return false;
         if (!(target instanceof net.minecraft.world.entity.LivingEntity le)) return false;
         if (target instanceof net.minecraft.world.entity.player.Player) {
             return entities.isSelected("Players");
@@ -146,16 +148,5 @@ public final BooleanParameter armor = new BooleanParameter("Armor", true);
         return ravex.manager.ModuleManager.delegate(NameTags.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

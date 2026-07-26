@@ -1,34 +1,42 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 
-import ravex.parameter.BooleanParameter;
+
+
+
 @ModuleInfo(name = "Religion", category = "Misc")
-public class Religion extends ravex.modules.Module {
-public final BooleanParameter christianity = new BooleanParameter("Christianity", false);
-    public final BooleanParameter atheism = new BooleanParameter("Atheism", false);
-    public final BooleanParameter islam = new BooleanParameter("Islam", false);
-    public final BooleanParameter buddhism = new BooleanParameter("Buddhism", false);
-    public final BooleanParameter hinduism = new BooleanParameter("Hinduism", false);
-    public final BooleanParameter suka = new BooleanParameter("Suka", false);
-    protected void onEnable() {
+public class Religion implements ModuleAccess {
+    @Parameter(name = "Christianity")
+    public boolean christianity = false;
+    @Parameter(name = "Atheism")
+    public boolean atheism = false;
+    @Parameter(name = "Islam")
+    public boolean islam = false;
+    @Parameter(name = "Buddhism")
+    public boolean buddhism = false;
+    @Parameter(name = "Hinduism")
+    public boolean hinduism = false;
+    @Parameter(name = "Suka")
+    public boolean suka = false;
+    public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
-        LocalPlayer player = mc.player;
+        net.minecraft.client.player.LocalPlayer player = mc.player;
         if (player == null || player.connection == null) return;
-        if (christianity.getValue()) {
+        if (christianity) {
             player.connection.sendChat("Amen");
-        } else if (atheism.getValue()) {
+        } else if (atheism) {
             player.connection.sendChat("Nothing");
-        } else if (islam.getValue()) {
+        } else if (islam) {
             player.connection.sendChat("AllahuAkbar");
-        } else if (buddhism.getValue()) {
+        } else if (buddhism) {
             player.connection.sendChat("OmManiPadmeHum");
-        } else if (hinduism.getValue()) {
+        } else if (hinduism) {
             player.connection.sendChat("Hare Krishna");
-        } else if (suka.getValue()) {
+        } else if (suka) {
             player.connection.sendChat("Suka");
         }
 
@@ -38,16 +46,5 @@ public final BooleanParameter christianity = new BooleanParameter("Christianity"
         return ravex.manager.ModuleManager.delegate(Religion.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

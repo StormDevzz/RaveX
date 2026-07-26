@@ -14,13 +14,13 @@ RaveX is an open-source Minecraft client modification by StormDevzz organization
 ---
 
 > [!CAUTION]
-> # WANT TO CONTRIBUTE? **READ CONTRIBUTING FIRST!**
+> # WANNA CONTRIBUTE? **READ CONTRIBUTING FIRST, BRADAR.**
 >
-> Before writing code, forking the repo, or opening a pull request - **you must** read [`CONTRIBUTING.md`](CONTRIBUTING.md).
+> Before you fork the repo, crack open your IDE, or sling a pull request our way — **you best** read [`CONTRIBUTING.md`](CONTRIBUTING.md) proper.
 >
-> It covers all the rules: naming conventions, using utilities over raw Minecraft imports, module placement, build process, and what NOT to contribute. **PRs that don't follow these guidelines will be rejected.**
+> It's got all the rules, bradar: naming, using utilities instead of raw Minecraft imports, where modules go, build process, and what not to send our way. **PRs that don't follow these will get binned, no cap.**
 >
-> Don't waste your time or ours - read it first.
+> Don't waste your time or ours, bradar — read it first.
 
 ---
 

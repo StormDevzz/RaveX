@@ -1,54 +1,58 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 
 @ModuleInfo(name = "Waypoint", category = "Render")
-public class Waypoint extends ravex.modules.Module {
+public class Waypoint implements ModuleAccess {
 public record WaypointData(String name, double x, double y, double z, String dimension) {
     }
 
     public final List<WaypointData> waypoints = new ArrayList<>();
-    public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
-    public final NumberParameter markerSize = new NumberParameter("Size", 2.0, 0.5, 5.0, 0.5);
-    public final NumberParameter range = new NumberParameter("Range", 256.0, 16.0, 512.0, 16.0);
-    public final BooleanParameter showName = new BooleanParameter("ShowName", true);
-    public final BooleanParameter showDistance = new BooleanParameter("ShowDistance", true);
-    public final BooleanParameter showBeam = new BooleanParameter("Beam", true);
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFF33AAFF;
+    @Parameter(name = "Size", min = 0.5, max = 5.0, step = 0.5)
+    public double markerSize = 2.0;
+    @Parameter(name = "Range", min = 16.0, max = 512.0, step = 16.0)
+    public double range = 256.0;
+    @Parameter(name = "ShowName")
+    public boolean showName = true;
+    @Parameter(name = "ShowDistance")
+    public boolean showDistance = true;
+    @Parameter(name = "Beam")
+    public boolean showBeam = true;
 
     public static List<WaypointData> getWaypoints() {
         return ravex.manager.ModuleManager.delegate(Waypoint.class).waypoints;
     }
 
     public static int getColor() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).color.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).color;
     }
 
     public static double getMarkerSize() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).markerSize.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).markerSize;
     }
 
     public static double getRange() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).range.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).range;
     }
 
     public static boolean isShowName() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).showName.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).showName;
     }
 
     public static boolean isShowDistance() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).showDistance.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).showDistance;
     }
 
     public static boolean isShowBeam() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).showBeam.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).showBeam;
     }
 
     public void addWaypoint(String name, double x, double y, double z, String dimension) {
@@ -98,16 +102,5 @@ public record WaypointData(String name, double x, double y, double z, String dim
         return ravex.manager.ModuleManager.delegate(Waypoint.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

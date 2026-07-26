@@ -1,17 +1,23 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "GhostHand", category = "net.minecraft.world.entity.player.Player")
-public class GhostHand extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 12.0, 0.5);
-    public final BooleanParameter chests = new BooleanParameter("Chests", true);
-    public final BooleanParameter enderChests = new BooleanParameter("EnderChests", true);
-    public final BooleanParameter furnaces = new BooleanParameter("Furnaces", true);
-    public final BooleanParameter craftingTables = new BooleanParameter("Crafting", true);
-    public final BooleanParameter enchantTables = new BooleanParameter("Enchanting", true);
-    public final BooleanParameter allBlocks = new BooleanParameter("AllBlocks", false);
+public class GhostHand implements ModuleAccess {
+    @Parameter(name = "Range", min = 3.0, max = 12.0, step = 0.5)
+    public double range = 6.0;
+    @Parameter(name = "Chests")
+    public boolean chests = true;
+    @Parameter(name = "EnderChests")
+    public boolean enderChests = true;
+    @Parameter(name = "Furnaces")
+    public boolean furnaces = true;
+    @Parameter(name = "Crafting")
+    public boolean craftingTables = true;
+    @Parameter(name = "Enchanting")
+    public boolean enchantTables = true;
+    @Parameter(name = "AllBlocks")
+    public boolean allBlocks = false;
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("GhostHand").getEnabled();
     }
@@ -19,16 +25,5 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 12.0
         return ravex.manager.ModuleManager.delegate(GhostHand.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

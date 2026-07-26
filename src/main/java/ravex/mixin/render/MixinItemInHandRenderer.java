@@ -40,27 +40,27 @@ public abstract class MixinItemInHandRenderer {
 
     private void applyViewModel(PoseStack poseStack, HumanoidArm arm) {
         ViewModel vm = ViewModel.itz();
-        if (!vm.getEnabled()) return;
+        if (!ViewModel.maybeEnabled()) return;
 
         boolean isRight = arm == HumanoidArm.RIGHT;
         float tx, ty, tz, rx, ry, rz, scale;
 
         if (isRight) {
-            tx    = vm.mainX.getValue().floatValue();
-            ty    = vm.mainY.getValue().floatValue();
-            tz    = vm.mainZ.getValue().floatValue();
-            rx    = vm.mainRotX.getValue().floatValue();
-            ry    = vm.mainRotY.getValue().floatValue();
-            rz    = vm.mainRotZ.getValue().floatValue();
-            scale = vm.mainScale.getValue().floatValue();
+            tx    = (float) vm.mainX;
+            ty    = (float) vm.mainY;
+            tz    = (float) vm.mainZ;
+            rx    = (float) vm.mainRotX;
+            ry    = (float) vm.mainRotY;
+            rz    = (float) vm.mainRotZ;
+            scale = (float) vm.mainScale;
         } else {
-            tx    = vm.offX.getValue().floatValue();
-            ty    = vm.offY.getValue().floatValue();
-            tz    = vm.offZ.getValue().floatValue();
-            rx    = vm.offRotX.getValue().floatValue();
-            ry    = vm.offRotY.getValue().floatValue();
-            rz    = vm.offRotZ.getValue().floatValue();
-            scale = vm.offScale.getValue().floatValue();
+            tx    = (float) vm.offX;
+            ty    = (float) vm.offY;
+            tz    = (float) vm.offZ;
+            rx    = (float) vm.offRotX;
+            ry    = (float) vm.offRotY;
+            rz    = (float) vm.offRotZ;
+            scale = (float) vm.offScale;
         }
 
         poseStack.translate(tx, ty, tz);
@@ -136,8 +136,8 @@ public abstract class MixinItemInHandRenderer {
 
         if (NoSwing.maybeEnabled()) {
             capturedSwingProgress = swingProgress;
-            if (NoSwing.itz().self.getValue() && isSelf) return 1.0f;
-            if (NoSwing.itz().others.getValue() && !isSelf) return 1.0f;
+            if (NoSwing.itz().self && isSelf) return 1.0f;
+            if (NoSwing.itz().others && !isSelf) return 1.0f;
             return swingProgress;
         }
 
@@ -156,7 +156,7 @@ public abstract class MixinItemInHandRenderer {
     )
     private float modifyEquipProgress(float equipProgress) {
         if (!SwingAnimation.maybeEnabled()) return equipProgress;
-        if ("Swipe".equals(SwingAnimation.itz().mode.getValue())) return 0.0f;
+        if ("Swipe".equals(SwingAnimation.itz().mode)) return 0.0f;
         return equipProgress;
     }
 
@@ -168,7 +168,7 @@ public abstract class MixinItemInHandRenderer {
     )
     private void onApplyItemArmTransformReturn(PoseStack poseStack, HumanoidArm arm, float f, CallbackInfo ci) {
         if (SwingAnimation.maybeEnabled() && !NoSwing.maybeEnabled()) {
-            String mode = SwingAnimation.itz().mode.getValue();
+            String mode = SwingAnimation.itz().mode;
             if ("Default".equals(mode) || "Akrien".equals(mode) || "Swipe".equals(mode) || "Rich".equals(mode)) return;
         }
         applyViewModel(poseStack, arm);
@@ -188,12 +188,12 @@ public abstract class MixinItemInHandRenderer {
         capturedPlayer = player;
 
         ViewModel vm = ViewModel.itz();
-        if (vm.getEnabled()) {
-            if (hand == InteractionHand.MAIN_HAND && vm.hideMainHand.getValue()) {
+        if (ViewModel.maybeEnabled()) {
+            if (hand == InteractionHand.MAIN_HAND && vm.hideMainHand) {
                 ci.cancel();
                 return;
             }
-            if (hand == InteractionHand.OFF_HAND && vm.hideOffHand.getValue()) {
+            if (hand == InteractionHand.OFF_HAND && vm.hideOffHand) {
                 ci.cancel();
                 return;
             }
@@ -205,7 +205,7 @@ public abstract class MixinItemInHandRenderer {
 
         ci.cancel();
 
-        String mode = SwingAnimation.itz().mode.getValue();
+        String mode = SwingAnimation.itz().mode;
         HumanoidArm arm = player.getMainArm();
         boolean rightHand = arm == HumanoidArm.RIGHT;
 
@@ -233,7 +233,7 @@ public abstract class MixinItemInHandRenderer {
     @Inject(method = "tick", at = @At("TAIL"))
     private void onTickTail(CallbackInfo ci) {
         if (SwingAnimation.maybeEnabled()) {
-            String mode = SwingAnimation.itz().mode.getValue();
+            String mode = SwingAnimation.itz().mode;
             if ("Default".equals(mode) || "Akrien".equals(mode)) {
                 LocalPlayer player = Minecraft.getInstance().player;
                 if (player != null) {

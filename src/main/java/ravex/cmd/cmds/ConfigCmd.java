@@ -12,7 +12,7 @@ public class ConfigCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        String pref = ModuleManager.get(Commands.class).prefix.getValue();
+        String pref = ModuleManager.get(Commands.class).prefix;
         if (args.length < 2) {
             CmdReg.print("§5[RaveX] Config commands: §e" + pref + "config save/load/list/delete <name>");
             return;

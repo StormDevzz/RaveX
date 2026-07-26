@@ -1,6 +1,7 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
@@ -15,34 +16,51 @@ import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.render.Render3DUtility;
 import java.util.*;
 
 @ModuleInfo(name = "Trails", category = "Render")
-public class Trails extends ravex.modules.Module {
-public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
-    public final NumberParameter width = new NumberParameter("Width", 2.0, 1.0, 6.0, 0.5);
-    public final NumberParameter time = new NumberParameter("Time", 3.0, 0.5, 10.0, 0.5);
-    public final BooleanParameter arrows = new BooleanParameter("Arrows", true);
-    public final BooleanParameter pearls = new BooleanParameter("Pearls", true);
-    public final BooleanParameter tridents = new BooleanParameter("Tridents", true);
-    public final BooleanParameter fireworks = new BooleanParameter("Fireworks", true);
-    public final BooleanParameter potions = new BooleanParameter("Potions", true);
-    public final BooleanParameter fireballs = new BooleanParameter("Fireballs", true);
-    public final BooleanParameter windCharges = new BooleanParameter("WindCharges", true);
-    public final BooleanParameter other = new BooleanParameter("OtherProjectiles", false);
-    public final BooleanParameter self = new BooleanParameter("Self", true);
-    public final BooleanParameter playerEnabled = new BooleanParameter("Players", false);
-    public final ColorParameter playerColor = new ColorParameter("PlayerColor", 0xFFFF4444);
-    public final NumberParameter playerWidth = new NumberParameter("PlayerWidth", 2.0, 1.0, 6.0, 0.5);
-    public final NumberParameter playerTime = new NumberParameter("PlayerTime", 3.0, 0.5, 10.0, 0.5);
-    public final BooleanParameter glow = new BooleanParameter("Glow", true);
-    public final NumberParameter glowLayers = new NumberParameter("GlowLayers", 4, 1, 8, 1);
-    public final NumberParameter glowSpread = new NumberParameter("GlowSpread", 1.5, 0.5, 5.0, 0.5);
-    public final BooleanParameter mobs = new BooleanParameter("Mobs", false);
+public class Trails implements ModuleAccess {
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFF33AAFF;
+    @Parameter(name = "Width", min = 1.0, max = 6.0, step = 0.5)
+    public double width = 2.0;
+    @Parameter(name = "Time", min = 0.5, max = 10.0, step = 0.5)
+    public double time = 3.0;
+    @Parameter(name = "Arrows")
+    public boolean arrows = true;
+    @Parameter(name = "Pearls")
+    public boolean pearls = true;
+    @Parameter(name = "Tridents")
+    public boolean tridents = true;
+    @Parameter(name = "Fireworks")
+    public boolean fireworks = true;
+    @Parameter(name = "Potions")
+    public boolean potions = true;
+    @Parameter(name = "Fireballs")
+    public boolean fireballs = true;
+    @Parameter(name = "WindCharges")
+    public boolean windCharges = true;
+    @Parameter(name = "OtherProjectiles")
+    public boolean other = false;
+    @Parameter(name = "Self")
+    public boolean self = true;
+    @Parameter(name = "Players")
+    public boolean playerEnabled = false;
+    @Parameter(name = "PlayerColor", color = true)
+    public int playerColor = 0xFFFF4444;
+    @Parameter(name = "PlayerWidth", min = 1.0, max = 6.0, step = 0.5)
+    public double playerWidth = 2.0;
+    @Parameter(name = "PlayerTime", min = 0.5, max = 10.0, step = 0.5)
+    public double playerTime = 3.0;
+    @Parameter(name = "Glow")
+    public boolean glow = true;
+    @Parameter(name = "GlowLayers", min = 1, max = 8, step = 1)
+    public double glowLayers = 4;
+    @Parameter(name = "GlowSpread", min = 0.5, max = 5.0, step = 0.5)
+    public double glowSpread = 1.5;
+    @Parameter(name = "Mobs")
+    public boolean mobs = false;
     private static final Map<Integer, List<TrailPoint>> entityTrails = new HashMap<>();
     private static final Map<Integer, List<TrailPoint>> playerTrails = new HashMap<>();
 
@@ -51,26 +69,21 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
 
     private Trails() {
         
-        playerColor.setVisible(() -> playerEnabled.getValue());
-        playerWidth.setVisible(() -> playerEnabled.getValue());
-        playerTime.setVisible(() -> playerEnabled.getValue());
-        glowLayers.setVisible(() -> glow.getValue());
-        glowSpread.setVisible(() -> glow.getValue());
     }
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null)
             return;
         long now = System.currentTimeMillis();
-        purgeOldPoints(entityTrails, (long) (time.getValue() * 1000.0), now);
-        purgeOldPoints(playerTrails, (long) (playerTime.getValue() * 1000.0), now);
-        if (self.getValue()) {
+        purgeOldPoints(entityTrails, (long) (time * 1000.0), now);
+        purgeOldPoints(playerTrails, (long) (playerTime * 1000.0), now);
+        if (self) {
             addPoint(entityTrails, mc.player.getId(), mc.player.position(), now);
         }
         for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             if (entity == mc.player)
                 continue;
-            if (entity instanceof net.minecraft.world.entity.player.Player && playerEnabled.getValue()) {
+            if (entity instanceof net.minecraft.world.entity.player.Player && playerEnabled) {
                 addPoint(playerTrails, entity.getId(), entity.position(), now);
             } else if (shouldTrack(entity)) {
                 addPoint(entityTrails, entity.getId(), entity.position(), now);
@@ -79,23 +92,23 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     }
 
     private boolean shouldTrack(net.minecraft.world.entity.Entity entity) {
-        if (arrows.getValue() && entity instanceof Arrow)
+        if (arrows && entity instanceof Arrow)
             return true;
-        if (pearls.getValue() && entity instanceof ThrownEnderpearl)
+        if (pearls && entity instanceof ThrownEnderpearl)
             return true;
-        if (tridents.getValue() && entity instanceof ThrownTrident)
+        if (tridents && entity instanceof ThrownTrident)
             return true;
-        if (fireworks.getValue() && entity instanceof FireworkRocketEntity)
+        if (fireworks && entity instanceof FireworkRocketEntity)
             return true;
-        if (potions.getValue() && entity instanceof AbstractThrownPotion)
+        if (potions && entity instanceof AbstractThrownPotion)
             return true;
-        if (fireballs.getValue() && entity instanceof AbstractHurtingProjectile)
+        if (fireballs && entity instanceof AbstractHurtingProjectile)
             return true;
-        if (windCharges.getValue() && entity instanceof AbstractWindCharge)
+        if (windCharges && entity instanceof AbstractWindCharge)
             return true;
-        if (other.getValue() && entity instanceof Projectile)
+        if (other && entity instanceof Projectile)
             return true;
-        if (mobs.getValue() && !(entity instanceof Projectile))
+        if (mobs && !(entity instanceof Projectile))
             return true;
         return false;
     }
@@ -144,16 +157,16 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
                 return;
             }
 
-            boolean glowEnabled = ravex.manager.ModuleManager.delegate(Trails.class).glow.getValue();
-            int glowLayersVal = ravex.manager.ModuleManager.delegate(Trails.class).glowLayers.getValue().intValue();
-            float glowSpreadVal = ravex.manager.ModuleManager.delegate(Trails.class).glowSpread.getValue().floatValue();
+            boolean glowEnabled = ravex.manager.ModuleManager.delegate(Trails.class).glow;
+            int glowLayersVal = (int) ravex.manager.ModuleManager.delegate(Trails.class).glowLayers;
+            float glowSpreadVal = (float) ravex.manager.ModuleManager.delegate(Trails.class).glowSpread;
             renderFadingTrail(entityTrails, modelViewMatrix, camPos, now,
-                    ravex.manager.ModuleManager.delegate(Trails.class).color.getValue(), ravex.manager.ModuleManager.delegate(Trails.class).width.getValue().floatValue(),
-                    (long) (ravex.manager.ModuleManager.delegate(Trails.class).time.getValue() * 1000.0),
+                    ravex.manager.ModuleManager.delegate(Trails.class).color, (float) ravex.manager.ModuleManager.delegate(Trails.class).width,
+                    (long) (ravex.manager.ModuleManager.delegate(Trails.class).time * 1000.0),
                     glowEnabled, glowLayersVal, glowSpreadVal);
             renderFadingTrail(playerTrails, modelViewMatrix, camPos, now,
-                    ravex.manager.ModuleManager.delegate(Trails.class).playerColor.getValue(), ravex.manager.ModuleManager.delegate(Trails.class).playerWidth.getValue().floatValue(),
-                    (long) (ravex.manager.ModuleManager.delegate(Trails.class).playerTime.getValue() * 1000.0),
+                    ravex.manager.ModuleManager.delegate(Trails.class).playerColor, (float) ravex.manager.ModuleManager.delegate(Trails.class).playerWidth,
+                    (long) (ravex.manager.ModuleManager.delegate(Trails.class).playerTime * 1000.0),
                     glowEnabled, glowLayersVal, glowSpreadVal);
         } catch (Throwable t) {
             System.err.println("[RaveX] Trails render error: " + t.getMessage());
@@ -250,7 +263,7 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
         Render3DUtility.batchLineStrip(matrix, List.of(new Vector3f(x1, y1, z1), new Vector3f(x2, y2, z2)), cr, cg, cb,
                 alpha, width);
     }
-    protected void onDisable() {
+    public void onDisable() {
         // Do nothing to let existing trails smoothly fade out
     }
 
@@ -262,16 +275,5 @@ public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
         return ravex.manager.ModuleManager.delegate(Trails.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

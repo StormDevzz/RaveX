@@ -1,10 +1,11 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "FastBreak", category = "net.minecraft.world.entity.player.Player")
-public class FastBreak extends ravex.modules.Module {
-public final NumberParameter delay = new NumberParameter("Delay", 0, 0, 4, 1);
+public class FastBreak implements ModuleAccess {
+    @Parameter(name = "Delay", min = 0, max = 4, step = 1)
+    public double delay = 0;
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("FastBreak").getEnabled();
     }
@@ -12,16 +13,5 @@ public final NumberParameter delay = new NumberParameter("Delay", 0, 0, 4, 1);
         return ravex.manager.ModuleManager.delegate(FastBreak.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

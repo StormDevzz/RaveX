@@ -1,6 +1,7 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import org.joml.Matrix4f;
 
@@ -11,41 +12,48 @@ import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.CameraUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.parameter.MultiSelectParameter;
-import ravex.parameter.ColorParameter;
+import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.List;
 
 @ModuleInfo(name = "KillAura", category = "Combat")
-public class KillAura extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("Tracker", "Snap", "HvH"));
+public class KillAura implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Tracker", "Snap", "HvH"})
+    public String mode = "Tracker";
 
-    public final NumberParameter range = new NumberParameter("Range", 3.0, 2.0, 6.0, 0.1);
-    public final NumberParameter cooldownThreshold = new NumberParameter("Attack Cooldown", 1.0, 0.0, 1.0, 0.05);
+    @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.1)
+    public double range = 3.0;
+    @Parameter(name = "Attack Cooldown", min = 0.0, max = 1.0, step = 0.05)
+    public double cooldownThreshold = 1.0;
 
-    public final BooleanParameter targetEsp = new BooleanParameter("Target ESP", true);
-    public final ModeParameter targetEspMode = new ModeParameter("ESP Mode", "Circle", List.of("RaveXV1", "Circle"));
-    public final ColorParameter targetEspColor = new ColorParameter("ESP Color", 0xFF00FFFF);
+    @Parameter(name = "Target ESP")
+    public boolean targetEsp = true;
+    @Parameter(name = "ESP Mode", modes = {"RaveXV1", "Circle"})
+    public String targetEspMode = "Circle";
+    @Parameter(name = "ESP Color", color = true)
+    public int targetEspColor = 0xFF00FFFF;
 
-    public final MultiSelectParameter targets = new MultiSelectParameter(
-        "Targets",
-        List.of("Players", "Monsters"),
-        List.of("Players", "Monsters", "Passives", "Invisibles")
-    );
+    @Parameter(name = "Targets", options = {"Players", "Monsters", "Passives", "Invisibles"})
+    public MultiSelectParameter targets = new MultiSelectParameter("Targets", List.of("Players", "Monsters"), List.of("Players", "Monsters", "Passives", "Invisibles"));
 
-    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
-    public final BooleanParameter smartCrits = new BooleanParameter("SmartCrits", true);
-    public final ModeParameter sprintMode = new ModeParameter("Sprint", "Normal", List.of("Normal", "Legit", "HvH"));
+    @Parameter(name = "ThroughWalls")
+    public boolean throughWalls = true;
+    @Parameter(name = "SmartCrits")
+    public boolean smartCrits = true;
+    @Parameter(name = "Sprint", modes = {"Normal", "Legit", "HvH"})
+    public String sprintMode = "Normal";
 
-    public final BooleanParameter autoWeapon = new BooleanParameter("AutoWeapon", false);
-    public final ModeParameter swapMode = ((ModeParameter) new ModeParameter("SwapMode", "Normal", List.of("Normal", "Silent", "None")).setVisible(() -> autoWeapon.getValue()));
-    public final BooleanParameter swordsOnly = ((BooleanParameter) new BooleanParameter("SwordsOnly", false).setVisible(() -> autoWeapon.getValue()));
+    @Parameter(name = "AutoWeapon")
+    public boolean autoWeapon = false;
+    public final ModeParameter swapMode = ((ModeParameter) new ModeParameter("SwapMode", "Normal", List.of("Normal", "Silent", "None")).setVisible(() -> autoWeapon));
+    public final BooleanParameter swordsOnly = ((BooleanParameter) new BooleanParameter("SwordsOnly", false).setVisible(() -> autoWeapon));
 
-    public final BooleanParameter keepSprint = new BooleanParameter("KeepSprint", false);
-    public final NumberParameter keepSprintSpeed = ((NumberParameter) new NumberParameter("KeepSprintSpeed", 100, 0, 100, 5).setVisible(() -> keepSprint.getValue()));
+    @Parameter(name = "KeepSprint")
+    public boolean keepSprint = false;
+    public final NumberParameter keepSprintSpeed = ((NumberParameter) new NumberParameter("KeepSprintSpeed", 100, 0, 100, 5).setVisible(() -> keepSprint));
 
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private net.minecraft.world.entity.LivingEntity currentTarget = null;
@@ -77,7 +85,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
-    protected void onDisable() {
+    public void onDisable() {
         silentRotation.hasRotation = false;
         currentTarget = null;
         prevYaw = 0;
@@ -91,7 +99,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        switch (ka.sprintMode.getValue()) {
+        switch (ka.sprintMode) {
             case "Legit" -> {
                 if (ka.sprintResetTicks > 0) {
                     ka.sprintResetTicks--;
@@ -145,21 +153,21 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
             var mobVel = target.getDeltaMovement();
             double mobSpeed = Math.sqrt(mobVel.x * mobVel.x + mobVel.z * mobVel.z);
             double buffer = 0.15 + Math.min(mobSpeed * 1.5, 0.1);
-            if (dist > ka.range.getValue() - buffer) return;
+            if (dist > ka.range - buffer) return;
         }
 
-        if (ka.smartCrits.getValue() && !mc.player.onGround()) {
+        if (ka.smartCrits && !mc.player.onGround()) {
             double velY = mc.player.getDeltaMovement().y;
             if (velY > -0.08) return;
         }
 
         float scale = mc.player.getAttackStrengthScale(0.5f);
-        if (scale < ka.cooldownThreshold.getValue().floatValue()) return;
+        if (scale < ka.cooldownThreshold) return;
 
         long now = System.currentTimeMillis();
         if (now - ka.lastAttackTime < 50) return;
 
-        if (ka.mode.getValue().equals("Tracker")) {
+        if (ka.mode.equals("Tracker")) {
             var targetAimPos = target.position().add(0, target.getBbHeight() * 0.45, 0);
             float[] desired = RotationUtility.anglesTo(eyePos, targetAimPos);
             float yawDiff   = Math.abs(RotationUtility.normalizeYaw(freshYaw - desired[0]));
@@ -168,7 +176,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         }
 
         // легит/ сброс спринта перед ударом
-        if (ka.sprintMode.getValue().equals("Legit") && mc.player.isSprinting()) {
+        if (ka.sprintMode.equals("Legit") && mc.player.isSprinting()) {
             mc.player.setSprinting(false);
             ka.sprintResetTicks = 3;
             return; // пропуск тика
@@ -177,11 +185,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         ka.attack(mc, target);
         ka.lastAttackTime = now;
 
-        if (ka.sprintMode.getValue().equals("Legit")) {
+        if (ka.sprintMode.equals("Legit")) {
             ka.sprintResetTicks = 2;
         }
 
-        if (ka.keepSprint.getValue()) {
+        if (ka.keepSprint) {
             if (mc.player.hurtTime > 0) {
                 mc.player.setSprinting(true);
                 double multiplier = ka.keepSprintSpeed.getValue() / 100.0;
@@ -280,9 +288,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
             double mobSpeed = Math.sqrt(mobVel.x * mobVel.x + mobVel.z * mobVel.z);
             double buffer = BASE_BUFFER + Math.min(mobSpeed * 1.5, 0.1);
 
-            if (dist > range.getValue() - buffer) continue;
+            if (dist > range - buffer) continue;
 
-            if (!throughWalls.getValue() && !mc.player.hasLineOfSight(le)) continue;
+            if (!throughWalls && !mc.player.hasLineOfSight(le)) continue;
             if (ravex.manager.ModuleManager.delegate(ravex.modules.combat.AntiBot.class).getEnabled()
                     && ravex.manager.ModuleManager.delegate(ravex.modules.combat.AntiBot.class).isBot(e)) continue;
 
@@ -295,7 +303,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
     }
 
     private void attack(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
-        if (autoWeapon.getValue() && !swapMode.getValue().equals("None")) {
+        if (autoWeapon && !swapMode.equals("None")) {
             int bestSlot = -1;
             double bestDmg = -1.0;
             for (int i = 0; i < 9; i++) {
@@ -308,7 +316,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
                 }
             }
             if (bestSlot != -1 && bestSlot != InventoryUtility.getSelectedSlot(mc.player) && bestDmg > 1.0) {
-                if (swapMode.getValue().equals("Silent")) {
+                if (swapMode.equals("Silent")) {
                     mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(bestSlot));
                 } else {
                     InventoryUtility.selectSlot(mc.player, bestSlot);
@@ -352,7 +360,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         }
 
         float yaw, pitch;
-        if (mode.getValue().equals("Tracker")) {
+        if (mode.equals("Tracker")) {
             var stomachPos = target.position().add(0, target.getBbHeight() * 0.45, 0);
             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), stomachPos);
             float targetYaw = angles[0];
@@ -381,7 +389,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
 
             yaw = prevYaw + stepYaw;
             pitch = prevPitch + stepPitch;
-        } else if (mode.getValue().equals("Snap")) {
+        } else if (mode.equals("Snap")) {
             var chestPos = target.position().add(0, target.getBbHeight() * 0.65, 0);
             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), chestPos);
             yaw = angles[0];
@@ -405,24 +413,24 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         var target = currentTarget;
         if (target == null || target.isDeadOrDying()) return;
 
-        if (targetEspMode.getValue().equals("RaveXV1")) {
+        if (targetEspMode.equals("RaveXV1")) {
             float progressVal = prevScanProgress + (scanProgress - prevScanProgress) * tickDelta;
             float rotation = prevSlowRotation + (slowRotation - prevSlowRotation) * tickDelta;
             ravex.utility.render.Render3DUtility.renderRaveXESP(
                 modelViewMatrix,
                 camera,
                 target,
-                targetEspColor.getValue(),
+                targetEspColor,
                 progressVal,
                 rotation,
                 tickDelta
             );
-        } else if (targetEspMode.getValue().equals("Circle")) {
+        } else if (targetEspMode.equals("Circle")) {
             ravex.utility.render.Render3DUtility.renderCircleESP(
                 modelViewMatrix,
                 camera,
                 target,
-                targetEspColor.getValue(),
+                targetEspColor,
                 circleStep,
                 prevCircleStep,
                 tickDelta
@@ -430,16 +438,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("
         }
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

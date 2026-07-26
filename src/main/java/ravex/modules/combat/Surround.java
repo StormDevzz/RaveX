@@ -1,24 +1,23 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
-import ravex.utility.player.InventoryUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.BlockItem;
 import java.util.ArrayList;
 import java.util.List;
+
+
+
+
 @ModuleInfo(name = "Surround", category = "Combat")
-public class Surround extends ravex.modules.Module {
+public class Surround implements ModuleAccess {
 public static final List<net.minecraft.core.BlockPos> surroundBlocks = new ArrayList<>();
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
@@ -26,14 +25,20 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
     public static float renderG = 0.8f;
     public static float renderB = 1.0f;
     public static net.minecraft.world.phys.Vec3 animatedCenter = null;
-    public final ModeParameter mode = new ModeParameter("Mode", "Full",
-        java.util.List.of("Full", "AntiFace", "Extra"));
-    public final BooleanParameter autoCenter = new BooleanParameter("AutoCenter", true);
-    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final BooleanParameter animate = new BooleanParameter("Animate", true);
-    public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
-    public final NumberParameter delay = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
+    @Parameter(name = "Mode", modes = {"Full", "AntiFace", "Extra"})
+    public String mode = "Full";
+    @Parameter(name = "AutoCenter")
+    public boolean autoCenter = true;
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = true;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Animate")
+    public boolean animate = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFF33AAFF;
+    @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
+    public double delay = 100.0;
     private static boolean nativeAvailable = false;
     static {
         try {
@@ -49,7 +54,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
     private final SlideAnimationUtility slideAnim = new SlideAnimationUtility();
     private long lastPlaceTime = 0;
     private boolean placed = false;
-    protected void onEnable() {
+    public void onEnable() {
         surroundBlocks.clear();
         renderAlpha = 0.0f;
         renderSize = 0.0;
@@ -60,7 +65,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         sizeAnim.reset();
         slideAnim.reset();
     }
-    protected void onDisable() {
+    public void onDisable() {
         surroundBlocks.clear();
         renderAlpha = 0.0f;
         renderSize = 0.0;
@@ -74,11 +79,11 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
             renderSize = sizeAnim.update(false, 0.15);
             return;
         }
-        if (autoDisable.getValue() && (!mc.player.onGround() || mc.options.keyJump.isDown())) {
-            enabled = false;
+        if (autoDisable && (!mc.player.onGround() || mc.options.keyJump.isDown())) {
+            ravex.manager.ModuleManager.INSTANCE.getByName("Surround").setEnabled(false);
             return;
         }
-        if (autoCenter.getValue()) {
+        if (autoCenter) {
             double[] center;
             if (nativeAvailable) {
                 try {
@@ -112,7 +117,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
             return;
         }
         List<net.minecraft.core.BlockPos> targets = new ArrayList<>();
-        String m = mode.getValue();
+        String m = mode;
         switch (m) {
             case "Full" -> {
                 targets.add(playerPos.north());
@@ -163,14 +168,14 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         }
         surroundBlocks.clear();
         surroundBlocks.addAll(toPlace);
-        if (render.getValue()) {
-            int c = color.getValue();
+        if (render) {
+            int c = color;
             renderR = ((c >> 16) & 0xFF) / 255.0f;
             renderG = ((c >> 8) & 0xFF) / 255.0f;
             renderB = (c & 0xFF) / 255.0f;
             renderAlpha = fadeAnim.updateFloat(!toPlace.isEmpty(), 0.2f);
             renderSize = sizeAnim.update(!toPlace.isEmpty(), 0.15);
-            if (animate.getValue() && !toPlace.isEmpty()) {
+            if (animate && !toPlace.isEmpty()) {
                 double avgX = toPlace.stream().mapToDouble(b -> b.getX() + 0.5).average().orElse(0);
                 double avgY = toPlace.stream().mapToDouble(b -> b.getY() + 0.5).average().orElse(0);
                 double avgZ = toPlace.stream().mapToDouble(b -> b.getZ() + 0.5).average().orElse(0);
@@ -184,13 +189,13 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
             animatedCenter = null;
         }
         if (toPlace.isEmpty()) {
-            if (autoDisable.getValue() && placed) {
-                enabled = false;
+            if (autoDisable && placed) {
+                ravex.manager.ModuleManager.INSTANCE.getByName("Surround").setEnabled(false);
             }
             return;
         }
         long now = System.currentTimeMillis();
-        long msDelay = delay.getValue().longValue();
+        long msDelay = (long) delay;
         if (now - lastPlaceTime < msDelay) return;
         lastPlaceTime = now;
         int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
@@ -208,7 +213,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
             if (face == null) face = net.minecraft.core.Direction.UP;
             net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighbor)
                 .add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
-            BlockHitResult blockHit = new BlockHitResult(hitVec, face, neighbor, false);
+            net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighbor, false);
             mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
             SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             placed = true;
@@ -268,16 +273,5 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         return ravex.manager.ModuleManager.delegate(Surround.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

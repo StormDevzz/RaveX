@@ -21,7 +21,7 @@ public class MixinPlayerTabOverlay {
     private void onGetPlayerInfos(CallbackInfoReturnable<List<PlayerInfo>> cir) {
         if (TabHelper.maybeEnabled()) {
             List<PlayerInfo> list = cir.getReturnValue();
-            int limit = TabHelper.itz().limit.getValue().intValue();
+            int limit = (int) TabHelper.itz().limit;
             if (list.size() > limit) {
                 cir.setReturnValue(list.subList(0, limit));
             }
@@ -37,10 +37,10 @@ public class MixinPlayerTabOverlay {
 
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (rawName.equals(mc.getUser().getName())) {
-                int selfColor = TabHelper.itz().selfColor.getValue();
+                int selfColor = TabHelper.itz().selfColor;
                 cir.setReturnValue(Component.literal(nameStr).withStyle(style -> style.withColor(selfColor)));
             } else if (ravex.manager.FriendManager.INSTANCE.isFriend(rawName)) {
-                int friendColor = TabHelper.itz().friendColor.getValue();
+                int friendColor = TabHelper.itz().friendColor;
                 cir.setReturnValue(Component.literal(nameStr).withStyle(style -> style.withColor(friendColor)));
             }
         }
@@ -48,7 +48,7 @@ public class MixinPlayerTabOverlay {
 
     @Inject(method = "renderPingIcon", at = @At("HEAD"), cancellable = true)
     private void onRenderPingIcon(GuiGraphics graphics, int width, int x, int y, PlayerInfo playerInfo, CallbackInfo ci) {
-        if (TabHelper.maybeEnabled() && TabHelper.itz().showPing.getValue()) {
+        if (TabHelper.maybeEnabled() && TabHelper.itz().showPing) {
             ci.cancel();
             int latency = playerInfo.getLatency();
             String pingStr = latency + "ms";

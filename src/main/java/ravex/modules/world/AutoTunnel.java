@@ -1,26 +1,31 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "AutoTunnel", category = "World")
-public class AutoTunnel extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
-    public final NumberParameter height = new NumberParameter("Height", 2, 1, 3, 1);
-    public final NumberParameter width = new NumberParameter("Width", 2, 1, 3, 1);
-    public final NumberParameter delay = new NumberParameter("Delay", 200, 50, 1000, 50);
-    public final BooleanParameter fillLava = new BooleanParameter("FillLava", true);
-    public final BooleanParameter autoWalk = new BooleanParameter("AutoWalk", false);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter color = new ColorParameter("Color", 0x3FFFFF00);
+public class AutoTunnel implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 10.0, step = 0.5)
+    public double range = 5.0;
+    @Parameter(name = "Height", min = 1, max = 3, step = 1)
+    public double height = 2;
+    @Parameter(name = "Width", min = 1, max = 3, step = 1)
+    public double width = 2;
+    @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
+    public double delay = 200;
+    @Parameter(name = "FillLava")
+    public boolean fillLava = true;
+    @Parameter(name = "AutoWalk")
+    public boolean autoWalk = false;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0x3FFFFF00;
     private static int targetX, targetY, targetZ;
     private static boolean hasTarget;
     private long lastActionTime = 0;
@@ -31,7 +36,7 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         if (!hasTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (hasMiningTarget && mc.gameMode != null) {
             mc.gameMode.stopDestroyBlock();
@@ -43,13 +48,13 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         long now = System.currentTimeMillis();
-        if (now - lastActionTime < delay.getValue()) return;
-        if (autoWalk.getValue()) {
+        if (now - lastActionTime < delay) return;
+        if (autoWalk) {
             mc.options.keyUp.setDown(true);
         }
         List<Long> blocks = getTunnelBlocks(mc);
         if (blocks.isEmpty()) return;
-        if (fillLava.getValue()) {
+        if (fillLava) {
             for (long packed : blocks) {
                 int bx = BlockUtility.unpackX(packed), by = BlockUtility.unpackY(packed), bz = BlockUtility.unpackZ(packed);
                 if (BlockUtility.isLiquid(mc.level, bx, by, bz)) {
@@ -102,9 +107,9 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         List<Long> result = new ArrayList<>();
         var eye = mc.player.getEyePosition();
         var facing = mc.player.getDirection();
-        int h = height.getValue().intValue();
-        int w = width.getValue().intValue();
-        double r = range.getValue();
+        int h = (int) height;
+        int w = (int) width;
+        double r = range;
         var startPos = mc.player.blockPosition();
         int sx = startPos.getX(), sy = startPos.getY(), sz = startPos.getZ();
         for (int f = 0; f < 3; f++) {
@@ -117,7 +122,7 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
                     var state = BlockUtility.getState(mc.level, px, py, pz);
                     if (state.isAir()) continue;
                     if (state.liquid()) {
-                        if (fillLava.getValue()) {
+                        if (fillLava) {
                             result.add(BlockUtility.packPos(px, py, pz));
                         }
                         continue;
@@ -148,16 +153,5 @@ public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0
         return ravex.manager.ModuleManager.delegate(AutoTunnel.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

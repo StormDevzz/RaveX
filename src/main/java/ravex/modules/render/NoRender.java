@@ -1,23 +1,35 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.nativelib.NativeLoader;
 import ravex.utility.nativelib.NativeLibraryUtility;
 @ModuleInfo(name = "NoRender", category = "Render")
-public class NoRender extends ravex.modules.Module {
-public final BooleanParameter blockParticles = new BooleanParameter("BlockParticles", true);
-    public final BooleanParameter explosions = new BooleanParameter("Explosions", true);
-    public final BooleanParameter weather = new BooleanParameter("Weather", true);
-    public final BooleanParameter portal = new BooleanParameter("Portal", true);
-    public final BooleanParameter sprint = new BooleanParameter("Sprint", false);
-    public final BooleanParameter armor = new BooleanParameter("Armor", false);
-    public final BooleanParameter items = new BooleanParameter("Items", false);
-    public final BooleanParameter tripwire = new BooleanParameter("Tripwire", false);
-    public final BooleanParameter signs = new BooleanParameter("Signs", false);
-    public final BooleanParameter fog = new BooleanParameter("Fog", true);
-    public final BooleanParameter fire = new BooleanParameter("Fire", true);
-    public final BooleanParameter inventoryBackground = new BooleanParameter("InventoryBackground", false);
+public class NoRender implements ModuleAccess {
+    @Parameter(name = "BlockParticles")
+    public boolean blockParticles = true;
+    @Parameter(name = "Explosions")
+    public boolean explosions = true;
+    @Parameter(name = "Weather")
+    public boolean weather = true;
+    @Parameter(name = "Portal")
+    public boolean portal = true;
+    @Parameter(name = "Sprint")
+    public boolean sprint = false;
+    @Parameter(name = "Armor")
+    public boolean armor = false;
+    @Parameter(name = "Items")
+    public boolean items = false;
+    @Parameter(name = "Tripwire")
+    public boolean tripwire = false;
+    @Parameter(name = "Signs")
+    public boolean signs = false;
+    @Parameter(name = "Fog")
+    public boolean fog = true;
+    @Parameter(name = "Fire")
+    public boolean fire = true;
+    @Parameter(name = "InventoryBackground")
+    public boolean inventoryBackground = false;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_norender");
     static {
         try {
@@ -73,16 +85,5 @@ public final BooleanParameter blockParticles = new BooleanParameter("BlockPartic
         return ravex.manager.ModuleManager.delegate(NoRender.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

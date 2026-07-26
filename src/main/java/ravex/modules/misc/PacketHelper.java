@@ -1,68 +1,67 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
-import ravex.parameter.ModeParameter;
 import net.minecraft.network.protocol.Packet;
 import ravex.utility.network.NetworkUtility;
 import java.util.List;
 @ModuleInfo(name = "PacketHelper", category = "Misc")
-public class PacketHelper extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Logging", List.of("Logging", "Filter", "Cancel"));
+public class PacketHelper implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Logging", "Filter", "Cancel"})
+    public String mode = "Logging";
 
-    public final BooleanParameter loggingEnabled = new BooleanParameter("Logging", false);
-    public final BooleanParameter filterEnabled = new BooleanParameter("Filter", false);
-    public final BooleanParameter cancelEnabled = new BooleanParameter("Cancel", false);
+    @Parameter(name = "Logging")
+    public boolean loggingEnabled = false;
+    @Parameter(name = "Filter")
+    public boolean filterEnabled = false;
+    @Parameter(name = "Cancel")
+    public boolean cancelEnabled = false;
 
-    public final BooleanParameter logOutgoing = new BooleanParameter("LogOutgoing", true);
-    public final BooleanParameter logIncoming = new BooleanParameter("LogIncoming", false);
-    public final BooleanParameter logToChat = new BooleanParameter("LogToChat", true);
+    @Parameter(name = "LogOutgoing")
+    public boolean logOutgoing = true;
+    @Parameter(name = "LogIncoming")
+    public boolean logIncoming = false;
+    @Parameter(name = "LogToChat")
+    public boolean logToChat = true;
 
-    public final NumberParameter rateLimit = new NumberParameter("RateLimit", 80, 10, 500, 5);
-    public final NumberParameter burst = new NumberParameter("Burst", 15, 5, 50, 1);
+    @Parameter(name = "RateLimit", min = 10, max = 500, step = 5)
+    public double rateLimit = 80;
+    @Parameter(name = "Burst", min = 5, max = 50, step = 1)
+    public double burst = 15;
 
-    public final BooleanParameter filterMove = new BooleanParameter("FilterMove", true);
-    public final BooleanParameter filterInteract = new BooleanParameter("FilterInteract", false);
-    public final BooleanParameter filterChat = new BooleanParameter("FilterChat", false);
+    @Parameter(name = "FilterMove")
+    public boolean filterMove = true;
+    @Parameter(name = "FilterInteract")
+    public boolean filterInteract = false;
+    @Parameter(name = "FilterChat")
+    public boolean filterChat = false;
 
-    public final BooleanParameter cancelMove = new BooleanParameter("CancelMove", false);
-    public final BooleanParameter cancelInput = new BooleanParameter("CancelInput", false);
-    public final BooleanParameter cancelInteract = new BooleanParameter("CancelInteract", false);
-    public final BooleanParameter cancelSwing = new BooleanParameter("CancelSwing", false);
-    public final BooleanParameter cancelUse = new BooleanParameter("CancelUse", false);
+    @Parameter(name = "CancelMove")
+    public boolean cancelMove = false;
+    @Parameter(name = "CancelInput")
+    public boolean cancelInput = false;
+    @Parameter(name = "CancelInteract")
+    public boolean cancelInteract = false;
+    @Parameter(name = "CancelSwing")
+    public boolean cancelSwing = false;
+    @Parameter(name = "CancelUse")
+    public boolean cancelUse = false;
 
     private PacketHelper() {
         
-        loggingEnabled.setVisible(() -> "Logging".equals(mode.getValue()));
-        logOutgoing.setVisible(() -> "Logging".equals(mode.getValue()));
-        logIncoming.setVisible(() -> "Logging".equals(mode.getValue()));
-        logToChat.setVisible(() -> "Logging".equals(mode.getValue()));
-        rateLimit.setVisible(() -> "Logging".equals(mode.getValue()));
-        burst.setVisible(() -> "Logging".equals(mode.getValue()));
-        filterEnabled.setVisible(() -> "Filter".equals(mode.getValue()));
-        filterMove.setVisible(() -> "Filter".equals(mode.getValue()));
-        filterInteract.setVisible(() -> "Filter".equals(mode.getValue()));
-        filterChat.setVisible(() -> "Filter".equals(mode.getValue()));
-        cancelEnabled.setVisible(() -> "Cancel".equals(mode.getValue()));
-        cancelMove.setVisible(() -> "Cancel".equals(mode.getValue()));
-        cancelInput.setVisible(() -> "Cancel".equals(mode.getValue()));
-        cancelInteract.setVisible(() -> "Cancel".equals(mode.getValue()));
-        cancelSwing.setVisible(() -> "Cancel".equals(mode.getValue()));
-        cancelUse.setVisible(() -> "Cancel".equals(mode.getValue()));
     }
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!getEnabled()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("PacketHelper").getEnabled()) return;
         Packet<?> packet = event.getPacket();
-        if (event.isSend() && loggingEnabled.getValue() && logOutgoing.getValue()) {
+        if (event.isSend() && loggingEnabled && logOutgoing) {
             logPacket("C2S ->", packet);
         }
-        if (event.isReceive() && loggingEnabled.getValue() && logIncoming.getValue()) {
+        if (event.isReceive() && loggingEnabled && logIncoming) {
             logPacket("S2C <-", packet);
         }
         if (event.isSend() && shouldCancel(packet)) {
@@ -71,10 +70,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Logging", List.of("
     }
 
     public void logPacket(String direction, Packet<?> packet) {
-        if (!getEnabled() || !loggingEnabled.getValue()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("PacketHelper").getEnabled() || !loggingEnabled) return;
         String name = NetworkUtility.packetName(packet);
         String message = "§7[§6Packet§7] §d" + direction + " §e" + name;
-        if (logToChat.getValue()) {
+        if (logToChat) {
             NetworkUtility.displayClientMessage(message);
         } else {
             System.out.println("[PacketHelper] " + direction + " " + packet.getClass().getName());
@@ -82,12 +81,12 @@ public final ModeParameter mode = new ModeParameter("Mode", "Logging", List.of("
     }
 
     public boolean shouldCancel(Packet<?> packet) {
-        if (!getEnabled() || !cancelEnabled.getValue()) return false;
-        if (NetworkUtility.isMovePacket(packet) && cancelMove.getValue()) return true;
-        if (NetworkUtility.isInputPacket(packet) && cancelInput.getValue()) return true;
-        if (NetworkUtility.isSwingPacket(packet) && cancelSwing.getValue()) return true;
-        if (NetworkUtility.isInteractPacket(packet) && cancelInteract.getValue()) return true;
-        if (NetworkUtility.isUsePacket(packet) && cancelUse.getValue()) return true;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("PacketHelper").getEnabled() || !cancelEnabled) return false;
+        if (NetworkUtility.isMovePacket(packet) && cancelMove) return true;
+        if (NetworkUtility.isInputPacket(packet) && cancelInput) return true;
+        if (NetworkUtility.isSwingPacket(packet) && cancelSwing) return true;
+        if (NetworkUtility.isInteractPacket(packet) && cancelInteract) return true;
+        if (NetworkUtility.isUsePacket(packet) && cancelUse) return true;
         return false;
     }
 
@@ -95,16 +94,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Logging", List.of("
         return ravex.manager.ModuleManager.delegate(PacketHelper.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

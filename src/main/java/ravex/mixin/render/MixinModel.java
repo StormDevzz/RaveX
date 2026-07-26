@@ -36,8 +36,8 @@ public class MixinModel {
 
         boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
 
-        if (isPlayerModel && Shaders.itz().players.getValue()) {
-            return new NativeAnimateVertexConsumerUtility(consumer, Shaders.itz().fillColor.getValue(), false);
+        if (isPlayerModel && Shaders.itz().players) {
+            return new NativeAnimateVertexConsumerUtility(consumer, Shaders.itz().fillColor, false);
         }
 
         return consumer;
@@ -55,17 +55,17 @@ public class MixinModel {
                 if (entity != null) {
                     boolean isPlayer = entity instanceof net.minecraft.world.entity.player.Player;
                     boolean shouldRender = false;
-                    if (isPlayer && ravex.modules.render.Skeleton.itz().players.getValue()) {
+                    if (isPlayer && ravex.modules.render.Skeleton.itz().players) {
                         shouldRender = true;
-                    } else if (!isPlayer && ravex.modules.render.Skeleton.itz().mobs.getValue()) {
+                    } else if (!isPlayer && ravex.modules.render.Skeleton.itz().mobs) {
                         shouldRender = true;
                     }
                     if (shouldRender) {
                         try {
                             net.minecraft.client.model.HumanoidModel<?> humanoidModel = (net.minecraft.client.model.HumanoidModel<?>) self;
-                            int colorVal = ravex.modules.render.Skeleton.itz().color.getValue();
-                            float lineWidth = ravex.modules.render.Skeleton.itz().lineWidth.getValue().floatValue();
-                            boolean throughWalls = ravex.modules.render.Skeleton.itz().throughWalls.getValue();
+                            int colorVal = ravex.modules.render.Skeleton.itz().color;
+                            float lineWidth = (float) ravex.modules.render.Skeleton.itz().lineWidth;
+                            boolean throughWalls = ravex.modules.render.Skeleton.itz().throughWalls;
                             ravex.modules.render.Skeleton.renderSkeleton(poseStack, humanoidModel, colorVal, lineWidth, throughWalls);
                         } catch (Exception ignored) {}
                     }
@@ -73,13 +73,13 @@ public class MixinModel {
             }
         }
 
-        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls.getValue()) {
+        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls) {
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();
 
             boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
 
-            if (isPlayerModel && Shaders.itz().players.getValue()) {
+            if (isPlayerModel && Shaders.itz().players) {
                 GlStateManager._disableDepthTest();
             }
         }
@@ -90,13 +90,13 @@ public class MixinModel {
         at = @At("RETURN")
     )
     private void onRenderReturn(PoseStack poseStack, VertexConsumer consumer, int light, int overlay, int tint, CallbackInfo ci) {
-        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls.getValue()) {
+        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls) {
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();
 
             boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
 
-            if (isPlayerModel && Shaders.itz().players.getValue()) {
+            if (isPlayerModel && Shaders.itz().players) {
                 GlStateManager._enableDepthTest();
             }
         }

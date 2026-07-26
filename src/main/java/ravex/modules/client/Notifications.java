@@ -1,10 +1,7 @@
 package ravex.modules.client;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.manager.NotificationManager;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PotionUtility;
@@ -23,18 +20,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 @ModuleInfo(name = "Notifications", category = "Client")
-public class Notifications extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Text", "Toast"));
-    public final ModeParameter visualRange = new ModeParameter("VisualRange", "Toast", List.of("Off", "Text", "Toast"));
-    public final ModeParameter itemCollection = new ModeParameter("ItemCollection", "Off", List.of("Off", "Toast", "Text"));
-    public final ModeParameter tracker = new ModeParameter("Tracker", "Off", List.of("Off", "Toast", "Text"));
-    public final ColorParameter messageColor = new ColorParameter("MessageColor", 0xFF0066FF);
-    public final NumberParameter toastOpacity = new NumberParameter("ToastOpacity", 0.25, 0.25, 1.0, 0.05);
-    public final NumberParameter toastSize = new NumberParameter("ToastSize", 16.0, 12.0, 32.0, 1.0);
-    public final BooleanParameter itemMonsters = new BooleanParameter("Monsters", true);
-    public final BooleanParameter itemAnimals = new BooleanParameter("Animals", true);
-    public final BooleanParameter itemPlayers = new BooleanParameter("Players", true);
-    public final BooleanParameter itemSelf = new BooleanParameter("Self", false);
+public class Notifications implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Text", "Toast"})
+    public String mode = "Toast";
+    @Parameter(name = "VisualRange", modes = {"Off", "Text", "Toast"})
+    public String visualRange = "Toast";
+    @Parameter(name = "ItemCollection", modes = {"Off", "Toast", "Text"})
+    public String itemCollection = "Off";
+    @Parameter(name = "Tracker", modes = {"Off", "Toast", "Text"})
+    public String tracker = "Off";
+    @Parameter(name = "MessageColor", color = true)
+    public int messageColor = 0xFF0066FF;
+    @Parameter(name = "ToastOpacity", min = 0.25, max = 1.0, step = 0.05)
+    public double toastOpacity = 0.25;
+    @Parameter(name = "ToastSize", min = 12.0, max = 32.0, step = 1.0)
+    public double toastSize = 16.0;
+    @Parameter(name = "Monsters")
+    public boolean itemMonsters = true;
+    @Parameter(name = "Animals")
+    public boolean itemAnimals = true;
+    @Parameter(name = "Players")
+    public boolean itemPlayers = true;
+    @Parameter(name = "Self")
+    public boolean itemSelf = false;
 
     private final List<String> knownPlayers = new ArrayList<>();
     private final Map<Integer, ItemEntry> trackedItems = new HashMap<>();
@@ -50,24 +58,18 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
 
     private Notifications() {
         
-        enabled = true;
-        toastOpacity.setVisible(() -> mode.getValue().equals("Toast"));
-        toastSize.setVisible(() -> mode.getValue().equals("Toast"));
-        itemMonsters.setVisible(() -> !"Off".equals(itemCollection.getValue()));
-        itemAnimals.setVisible(() -> !"Off".equals(itemCollection.getValue()));
-        itemPlayers.setVisible(() -> !"Off".equals(itemCollection.getValue()));
-        itemSelf.setVisible(() -> !"Off".equals(itemCollection.getValue()));
+        ravex.manager.ModuleManager.INSTANCE.getByName("Notifications").setEnabled(true);
     }
 
     private void notifyOpt(String modeVal, String text, int color) {
         if ("Toast".equals(modeVal)) {
-            NotificationManager.addToast(text, color, true, toastOpacity.getValue().floatValue(), toastSize.getValue().intValue());
+            NotificationManager.addToast(text, color, true, (float) toastOpacity, (int) toastSize);
         } else if ("Text".equals(modeVal)) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) mc.player.displayClientMessage(Component.literal(text), false);
         }
     }
-    protected void onEnable() {
+    public void onEnable() {
         knownPlayers.clear();
         trackedItems.clear();
         playerStates.clear();
@@ -81,7 +83,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
     }
 
     private void tickVisualRange(Minecraft mc) {
-        String vr = visualRange.getValue();
+        String vr = visualRange;
         if ("Off".equals(vr)) return;
         List<String> currentPlayers = new ArrayList<>();
         for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
@@ -89,12 +91,12 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
             String name = p.getName().getString();
             currentPlayers.add(name);
             if (!knownPlayers.contains(name)) {
-                notifyOpt(vr, ravex.utility.misc.LanguageUtility.t("entered", name), messageColor.getValue());
+                notifyOpt(vr, ravex.utility.misc.LanguageUtility.t("entered", name), messageColor);
             }
         }
         for (String name : knownPlayers) {
             if (!currentPlayers.contains(name)) {
-                notifyOpt(vr, ravex.utility.misc.LanguageUtility.t("left", name), messageColor.getValue());
+                notifyOpt(vr, ravex.utility.misc.LanguageUtility.t("left", name), messageColor);
             }
         }
         knownPlayers.clear();
@@ -102,7 +104,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
     }
 
     private void tickItemCollection(Minecraft mc) {
-        String ic = itemCollection.getValue();
+        String ic = itemCollection;
         if ("Off".equals(ic)) return;
         AABB range = new AABB(mc.player.blockPosition()).inflate(64);
         Set<Integer> currentIds = new HashSet<>();
@@ -127,10 +129,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
                     boolean player = le instanceof net.minecraft.world.entity.player.Player && !self;
                     boolean monster = MobUtility.isHostile(le);
                     boolean animal = MobUtility.isPassive(le);
-                    if (!itemSelf.getValue() && self) continue;
-                    if (!itemPlayers.getValue() && player) continue;
-                    if (!itemMonsters.getValue() && monster) continue;
-                    if (!itemAnimals.getValue() && animal) continue;
+                    if (!itemSelf && self) continue;
+                    if (!itemPlayers && player) continue;
+                    if (!itemMonsters && monster) continue;
+                    if (!itemAnimals && animal) continue;
                     if (d < nearestDist) {
                         nearest = le;
                         nearestDist = d;
@@ -146,7 +148,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
     }
 
     private void tickTracker(Minecraft mc) {
-        String tr = tracker.getValue();
+        String tr = tracker;
         if ("Off".equals(tr)) return;
         for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
             String name = p.getName().getString();
@@ -210,9 +212,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
     public static void notifyToggle(ravex.modules.Module module, boolean enabled) {
         if (!ravex.manager.ModuleManager.delegate(Notifications.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
-        int color = ravex.manager.ModuleManager.delegate(Notifications.class).messageColor.getValue();
-        if (ravex.manager.ModuleManager.delegate(Notifications.class).mode.getValue().equals("Toast")) {
-            NotificationManager.addToast(module.getName(), color, enabled, ravex.manager.ModuleManager.delegate(Notifications.class).toastOpacity.getValue().floatValue(), ravex.manager.ModuleManager.delegate(Notifications.class).toastSize.getValue().intValue());
+        int color = ravex.manager.ModuleManager.delegate(Notifications.class).messageColor;
+        if (ravex.manager.ModuleManager.delegate(Notifications.class).mode.equals("Toast")) {
+            NotificationManager.addToast(module.getName(), color, enabled, ravex.manager.ModuleManager.delegate(Notifications.class).toastOpacity, (int) ravex.manager.ModuleManager.delegate(Notifications.class).toastSize);
             return;
         }
         String action = enabled ? "Enabled" : "Disabled";
@@ -237,16 +239,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Te
         return ravex.manager.ModuleManager.delegate(Notifications.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

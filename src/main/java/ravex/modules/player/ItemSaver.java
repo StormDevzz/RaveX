@@ -1,17 +1,20 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
+
+
+
 @ModuleInfo(name = "ItemSaver", category = "net.minecraft.world.entity.player.Player")
-public class ItemSaver extends ravex.modules.Module {
-public final NumberParameter threshold = new NumberParameter("MinDurability", 10.0, 1.0, 50.0, 1.0);
+public class ItemSaver implements ModuleAccess {
+    @Parameter(name = "MinDurability", min = 1.0, max = 50.0, step = 1.0)
+    public double threshold = 10.0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null) return;
         ItemStack mainHand = InventoryUtility.getMainHand(p);
         if (shouldSave(mainHand)) {
@@ -21,9 +24,9 @@ public final NumberParameter threshold = new NumberParameter("MinDurability", 10
         }
     }
     public boolean shouldSave(ItemStack stack) {
-        if (!getEnabled()) return false;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ItemSaver").getEnabled()) return false;
         if (stack.isEmpty() || !stack.isDamageableItem()) return false;
-        return (stack.getMaxDamage() - stack.getDamageValue()) <= threshold.getValue().intValue();
+        return (stack.getMaxDamage() - stack.getDamageValue()) <= (int) threshold;
     }
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("ItemSaver").getEnabled();
@@ -32,16 +35,5 @@ public final NumberParameter threshold = new NumberParameter("MinDurability", 10
         return ravex.manager.ModuleManager.delegate(ItemSaver.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

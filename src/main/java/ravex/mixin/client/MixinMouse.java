@@ -17,7 +17,7 @@ public class MixinMouse {
     @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
     private void onMouseButton(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
         GuiMove gw = GuiMove.itz();
-        if (!gw.getEnabled() || !"NoClick".equals(gw.mode.getValue())) return;
+        if (!GuiMove.maybeEnabled() || !"NoClick".equals(gw.mode)) return;
         Minecraft mc = Minecraft.getInstance();
         if (!(mc.screen instanceof AbstractContainerScreen<?> screen)) return;
         double mx = mc.mouseHandler.xpos() * mc.getWindow().getGuiScaledWidth() / mc.getWindow().getWidth();
@@ -35,7 +35,7 @@ public class MixinMouse {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        if (Hud.itz().dragEnabled.getValue() && buttonInfo.button() == 0) {
+        if (Hud.itz().dragEnabled && buttonInfo.button() == 0) {
             if (action == 1) {
                 if (mc.screen == null) {
                     double mx = mc.mouseHandler.xpos() * mc.getWindow().getGuiScaledWidth() / mc.getWindow().getWidth();

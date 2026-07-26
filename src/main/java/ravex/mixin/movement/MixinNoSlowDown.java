@@ -16,8 +16,8 @@ public abstract class MixinNoSlowDown {
     @Inject(method = "isSlowDueToUsingItem", at = @At("HEAD"), cancellable = true)
     private void onIsSlowDueToUsingItem(CallbackInfoReturnable<Boolean> cir) {
         NoSlow ns = NoSlow.itz();
-        if (!ns.getEnabled() || !ns.items.getValue()) return;
-        String mode = ns.mode.getValue();
+        if (!NoSlow.maybeEnabled() || !ns.items) return;
+        String mode = ns.mode;
         if ("GrimStrict".equals(mode) && Minecraft.getInstance().player != null && !Minecraft.getInstance().player.isUsingItem()) {
             cir.setReturnValue(false);
             return;
@@ -37,8 +37,8 @@ public abstract class MixinNoSlowDown {
     @ModifyExpressionValue(method = "modifyInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isUsingItem()Z"))
     private boolean redirectUsingItem(boolean isUsingItem) {
         NoSlow ns = NoSlow.itz();
-        if (!ns.getEnabled() || !ns.items.getValue()) return isUsingItem;
-        String mode = ns.mode.getValue();
+        if (!NoSlow.maybeEnabled() || !ns.items) return isUsingItem;
+        String mode = ns.mode;
         if ("GrimStrict".equals(mode)) {
             if (!isUsingItem) return false;
             grimStrictTicks++;
@@ -55,7 +55,7 @@ public abstract class MixinNoSlowDown {
 
     @Inject(method = "isMovingSlowly", at = @At("HEAD"), cancellable = true)
     private void onIsMovingSlowly(CallbackInfoReturnable<Boolean> cir) {
-        if (NoSlow.maybeEnabled() && NoSlow.itz().sneaking.getValue()) {
+        if (NoSlow.maybeEnabled() && NoSlow.itz().sneaking) {
             cir.setReturnValue(false);
         }
     }

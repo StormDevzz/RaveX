@@ -16,7 +16,7 @@ public class MixinScreen {
 
     @Inject(method = "renderTransparentBackground", at = @At("HEAD"), cancellable = true)
     private void onRenderTransparentBackground(GuiGraphics guiGraphics, CallbackInfo ci) {
-        if (NoRender.maybeEnabled() && NoRender.itz().inventoryBackground.getValue()) {
+        if (NoRender.maybeEnabled() && NoRender.itz().inventoryBackground) {
             if ((Object)this instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen) {
                 ci.cancel();
             }

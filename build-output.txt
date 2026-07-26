@@ -1,0 +1,875 @@
+﻿
+> Configure project :
+Fabric Loom: 1.10.5
+
+> Task :compileJava
+./gradlew : C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\client\Settings.java:12: error: type Parameter does 
+not take parameters
+At line:1 char:31
++ cd C:\Users\nprevenant\RaveX; ./gradlew build 2>&1 | Out-File -FilePa ...
++                               ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\npreve...take parameters:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    public final Parameter<String> language = new ModeParameter("Language", "English", java.util.List.of("English", 
+"Russian"));
+                          ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\combat\KillAura.java:47: error: cannot find symbol
+    public final ModeParameter swapMode = ((ModeParameter) new ModeParameter("SwapMode", "Normal", List.of("Normal", 
+"Silent", "None")).setVisible(() -> autoWeapon.getValue()));
+                 ^
+  symbol:   class ModeParameter
+  location: class KillAura
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\combat\KillAura.java:48: error: cannot find symbol
+    public final BooleanParameter swordsOnly = ((BooleanParameter) new BooleanParameter("SwordsOnly", 
+false).setVisible(() -> autoWeapon.getValue()));
+                 ^
+  symbol:   class BooleanParameter
+  location: class KillAura
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\combat\KillAura.java:52: error: cannot find symbol
+    public final NumberParameter keepSprintSpeed = ((NumberParameter) new NumberParameter("KeepSprintSpeed", 100, 0, 
+100, 5).setVisible(() -> keepSprint.getValue()));
+                 ^
+  symbol:   class NumberParameter
+  location: class KillAura
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\hud\ArmorHud.java:30: error: cannot find symbol
+    public final DependencyParameter<Integer, ColorParameter> customColor = new DependencyParameter<>(
+                                              ^
+  symbol:   class ColorParameter
+  location: class ArmorHud
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\player\AutoArmor.java:31: error: cannot find symbol
+    public final DependencyParameter<Double, NumberParameter> customDelay =
+                                             ^
+  symbol:   class NumberParameter
+  location: class AutoArmor
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\player\AutoArmor.java:33: error: cannot find symbol
+    public final DependencyParameter<Boolean, BooleanParameter> openInventory =
+                                              ^
+  symbol:   class BooleanParameter
+  location: class AutoArmor
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\player\AutoArmor.java:35: error: cannot find symbol
+    public final DependencyParameter<Boolean, BooleanParameter> ignoreEnchants =
+                                              ^
+  symbol:   class BooleanParameter
+  location: class AutoArmor
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\render\WorldColor.java:9: error: cannot find symbol
+    public final ColorParameter fogColor = ((ColorParameter) new ColorParameter("FogColor", 0xFFFF5500).setVisible(() 
+-> fog.getValue()));
+                 ^
+  symbol:   class ColorParameter
+  location: class WorldColor
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\render\WorldColor.java:13: error: cannot find symbol
+    public final ColorParameter skyColor = ((ColorParameter) new ColorParameter("SkyColor", 0xFF4FC3F7).setVisible(() 
+-> sky.getValue()));
+                 ^
+  symbol:   class ColorParameter
+  location: class WorldColor
+C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\render\WorldColor.java:17: error: cannot find symbol
+    public final ColorParameter cloudColor = ((ColorParameter) new ColorParameter("CloudColor", 
+0xFFFFFFFF).setVisible(() -> cloud.getValue()));
+                 ^
+  symbol:   class ColorParameter
+  location: class WorldColor
+C:\Users\nprevenant\RaveX\src\main\java\ravex\cmd\core\CmdReg.java:27: error: cannot find symbol
+        if (!ModuleManager.get(Commands.class).getEnabled()) return false;
+                                              ^
+  symbol:   method getEnabled()
+  location: class Commands
+C:\Users\nprevenant\RaveX\src\main\java\ravex\cmd\core\CmdReg.java:46: error: showFeedback has private access in 
+Commands
+        if (!ModuleManager.get(Commands.class).showFeedback.getValue()) {
+                                              ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\cmd\core\CmdReg.java:46: error: boolean cannot be dereferenced
+        if (!ModuleManager.get(Commands.class).showFeedback.getValue()) {
+                                                           ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:81: error: smoothScroll has private 
+access in ClickGui
+        double dragLerp = ModuleManager.get(ClickGui.class).smoothScroll.getValue()
+                                                           ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:81: error: boolean cannot be dereferenced
+        double dragLerp = ModuleManager.get(ClickGui.class).smoothScroll.getValue()
+                                                                        ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:82: error: scrollSmoothness has private 
+access in ClickGui
+            ? (ModuleManager.get(ClickGui.class).scrollSmoothness.getValue().doubleValue() / 100.0)
+                                                ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:82: error: double cannot be dereferenced
+            ? (ModuleManager.get(ClickGui.class).scrollSmoothness.getValue().doubleValue() / 100.0)
+                                                                 ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:99: error: panelWidth has private access 
+in ClickGui
+        int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                     ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:99: error: double cannot be dereferenced
+        int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                                ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:113: error: buttonHeight has private 
+access in ClickGui
+        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                    ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:113: error: double cannot be dereferenced
+        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                 ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:132: error: cornerRadius has private 
+access in ClickGui
+        int r = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), panelH / 2);
+                                                          ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:132: error: double cannot be dereferenced
+        int r = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), panelH / 2);
+                                                                       ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:134: error: panelOpacity has private 
+access in ClickGui
+        int pAlpha = ModuleManager.get(ClickGui.class).panelOpacity.getValue().intValue();
+                                                      ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:134: error: double cannot be dereferenced
+        int pAlpha = ModuleManager.get(ClickGui.class).panelOpacity.getValue().intValue();
+                                                                   ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:137: error: outlines has private access 
+in ClickGui
+        if (ModuleManager.get(ClickGui.class).outlines.getValue()) {
+                                             ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:137: error: boolean cannot be 
+dereferenced
+        if (ModuleManager.get(ClickGui.class).outlines.getValue()) {
+                                                      ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:155: error: moduleCounter has private 
+access in ClickGui
+        if (ModuleManager.get(ClickGui.class).moduleCounter.getValue()) {
+                                             ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:155: error: boolean cannot be 
+dereferenced
+        if (ModuleManager.get(ClickGui.class).moduleCounter.getValue()) {
+                                                           ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:203: error: panelWidth has private 
+access in ClickGui
+        int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                     ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:203: error: double cannot be dereferenced
+        int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                                ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:232: error: panelWidth has private 
+access in ClickGui
+        int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                     ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:232: error: double cannot be dereferenced
+        int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                                ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:240: error: buttonHeight has private 
+access in ClickGui
+            int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                        ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:240: error: double cannot be dereferenced
+            int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                     ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:263: error: panelWidth has private 
+access in ClickGui
+        int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                     ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:263: error: double cannot be dereferenced
+        int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                                ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:268: error: buttonHeight has private 
+access in ClickGui
+        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                    ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:268: error: double cannot be dereferenced
+        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                 ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:30: error: gearRotationSpeed has private 
+access in ClickGui
+        float speed = ModuleManager.get(ClickGui.class).gearRotationSpeed.getValue().floatValue();
+                                                       ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:30: error: double cannot be dereferenced
+        float speed = ModuleManager.get(ClickGui.class).gearRotationSpeed.getValue().floatValue();
+                                                                         ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:116: error: buttonHeight has private 
+access in ClickGui
+        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                    ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:116: error: double cannot be dereferenced
+        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                 ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:135: error: buttonOpacity has private 
+access in ClickGui
+        int btnAlpha = ModuleManager.get(ClickGui.class).buttonOpacity.getValue().intValue();
+                                                        ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:135: error: double cannot be dereferenced
+        int btnAlpha = ModuleManager.get(ClickGui.class).buttonOpacity.getValue().intValue();
+                                                                      ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:137: error: cornerRadius has private 
+access in ClickGui
+        int btnRadius = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2);
+                                                                  ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:137: error: double cannot be dereferenced
+        int btnRadius = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2);
+                                                                               ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:179: error: moduleTextX has private 
+access in Settings
+            renderHighlightedName(graphics, displayName, x + 
+ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, 
+searchQuery);
+                                                                                                                   ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:179: error: double cannot be dereferenced
+            renderHighlightedName(graphics, displayName, x + 
+ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, 
+searchQuery);
+                                                                                                                       
+        ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:181: error: moduleTextX has private 
+access in Settings
+            FontRenderUtility.drawString(graphics, displayName, x + 
+ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, true);
+                                                                                                                       
+   ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:181: error: double cannot be dereferenced
+            FontRenderUtility.drawString(graphics, displayName, x + 
+ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, true);
+                                                                                                                       
+               ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:185: error: showGear has private access 
+in ClickGui
+        if (hasParams && ModuleManager.get(ClickGui.class).showGear.getValue()) {
+                                                          ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:185: error: boolean cannot be dereferenced
+        if (hasParams && ModuleManager.get(ClickGui.class).showGear.getValue()) {
+                                                                   ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:281: error: cornerRadius has private 
+access in ClickGui
+            Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentYOut[0], width - 4, btnH, 
+Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 
+0x050510);
+                                                                                                                       
+                       ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:281: error: double cannot be dereferenced
+            Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentYOut[0], width - 4, btnH, 
+Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 
+0x050510);
+                                                                                                                       
+                                    ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:358: error: buttonHeight has private 
+access in ClickGui
+        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                    ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:358: error: double cannot be dereferenced
+        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                 ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:55: error: smoothOption has private 
+access in ClickGui
+        boolean smoothOption = ModuleManager.get(ravex.modules.client.ClickGui.class).smoothOption.getValue();
+                                                                                     ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:55: error: boolean cannot be 
+dereferenced
+        boolean smoothOption = ModuleManager.get(ravex.modules.client.ClickGui.class).smoothOption.getValue();
+                                                                                                  ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:56: error: optionSmoothness has 
+private access in ClickGui
+        float optionSmoothness = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).optionSmoothness.getValue().floatValue();
+                                                                                       ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:56: error: double cannot be 
+dereferenced
+        float optionSmoothness = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).optionSmoothness.getValue().floatValue();
+                                                                                                        ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:126: error: switchless has private 
+access in ClickGui
+        boolean switchless = ModuleManager.get(ravex.modules.client.ClickGui.class).switchless.getValue();
+                                                                                   ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:126: error: boolean cannot be 
+dereferenced
+        boolean switchless = ModuleManager.get(ravex.modules.client.ClickGui.class).switchless.getValue();
+                                                                                              ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:505: error: wheelControl has private 
+access in ClickGui
+        if (parameter instanceof NumberParameter np && 
+ModuleManager.get(ravex.modules.client.ClickGui.class).wheelControl.getValue()) {
+                                                                                                             ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:505: error: boolean cannot be 
+dereferenced
+        if (parameter instanceof NumberParameter np && 
+ModuleManager.get(ravex.modules.client.ClickGui.class).wheelControl.getValue()) {
+                                                                                                                       
+   ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:90: error: panelWidth has private access in 
+ClickGui
+        int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+                                                                           ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:90: error: double cannot be dereferenced
+        int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+                                                                                      ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:106: error: panelWidth has private access in 
+ClickGui
+        int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+                                                                           ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:106: error: double cannot be dereferenced
+        int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+                                                                                      ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:138: error: guiScale has private access in 
+ClickGui
+        float target = ModuleManager.get(ravex.modules.client.ClickGui.class).guiScale.getValue().floatValue();
+                                                                             ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:138: error: double cannot be dereferenced
+        float target = ModuleManager.get(ravex.modules.client.ClickGui.class).guiScale.getValue().floatValue();
+                                                                                      ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:191: error: drawBackground has private access 
+in ClickGui
+        boolean drawBg = ModuleManager.get(ravex.modules.client.ClickGui.class).drawBackground.getValue();
+                                                                               ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:191: error: boolean cannot be dereferenced
+        boolean drawBg = ModuleManager.get(ravex.modules.client.ClickGui.class).drawBackground.getValue();
+                                                                                              ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:193: error: backgroundOpacity has private 
+access in ClickGui
+            int bgOpacity = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).backgroundOpacity.getValue().intValue();
+                                                                                  ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:193: error: double cannot be dereferenced
+            int bgOpacity = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).backgroundOpacity.getValue().intValue();
+                                                                                                    ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:197: error: cannot find symbol
+        if (ModuleManager.get(ravex.modules.client.GuiParticles.class).getEnabled()) {
+                                                                      ^
+  symbol:   method getEnabled()
+  location: class GuiParticles
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:201: error: companionImage has private access 
+in ClickGui
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).companionImage.getValue()) {
+                                                                  ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:201: error: boolean cannot be dereferenced
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).companionImage.getValue()) {
+                                                                                 ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:202: error: companionType has private access 
+in ClickGui
+            String type = ModuleManager.get(ravex.modules.client.ClickGui.class).companionType.getValue();
+                                                                                ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:202: error: cannot find symbol
+            String type = ModuleManager.get(ravex.modules.client.ClickGui.class).companionType.getValue();
+                                                                                              ^
+  symbol:   method getValue()
+  location: variable companionType of type String
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:242: error: showToolbar has private access in 
+ClickGui
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+                                                                  ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:242: error: boolean cannot be dereferenced
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+                                                                              ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:319: error: descriptionPanel has private 
+access in ClickGui
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionPanel.getValue()) {
+                                                                  ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:319: error: boolean cannot be dereferenced
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionPanel.getValue()) {
+                                                                                   ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:353: error: tooltipSpeed has private access 
+in ClickGui
+                float speed = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                                                                                    ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:353: error: double cannot be dereferenced
+                float speed = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                                                                                                 ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:356: error: tooltipSpeed has private access 
+in ClickGui
+                float speed = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                                                                                    ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:356: error: double cannot be dereferenced
+                float speed = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                                                                                                 ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:361: error: tooltipOffsetX has private access 
+in ClickGui
+                int ox = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetX.getValue().intValue();
+                                                                               ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:361: error: double cannot be dereferenced
+                int ox = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetX.getValue().intValue();
+                                                                                              ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:362: error: tooltipOffsetY has private access 
+in ClickGui
+                int oy = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetY.getValue().intValue();
+                                                                               ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:362: error: double cannot be dereferenced
+                int oy = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetY.getValue().intValue();
+                                                                                              ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:383: error: descriptionOpacity has private 
+access in ClickGui
+                int to = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionOpacity.getValue().intValue();
+                                                                               ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:383: error: double cannot be dereferenced
+                int to = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionOpacity.getValue().intValue();
+                                                                                                  ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:419: error: panelOpacity has private access 
+in ClickGui
+        int pAlpha = ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity.getValue().intValue();
+                                                                           ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:419: error: double cannot be dereferenced
+        int pAlpha = ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity.getValue().intValue();
+                                                                                        ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:509: error: showToolbar has private access in 
+ClickGui
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+                                                                  ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:509: error: boolean cannot be dereferenced
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+                                                                              ^
+C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:765: error: amount has private access in 
+GuiParticles
+        int count = gp.amount.getValue().intValue();
+                      ^
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+100 errors
+
+> Task :compileJava FAILED
+
+
+[Incubating] Problems report is available at: file:///C:/Users/nprevenant/RaveX/build/reports/problems/problems-report.html
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\cmd\core\CmdReg.java:46: error: showFeedback has private access in 
+Commands
+          if (!ModuleManager.get(Commands.class).showFeedback.getValue()) {
+                                                ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:81: error: smoothScroll has private 
+access in ClickGui
+          double dragLerp = ModuleManager.get(ClickGui.class).smoothScroll.getValue()
+                                                             ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:82: error: scrollSmoothness has 
+private access in ClickGui
+              ? (ModuleManager.get(ClickGui.class).scrollSmoothness.getValue().doubleValue() / 100.0)
+                                                  ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:99: error: panelWidth has private 
+access in ClickGui
+          int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                       ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:113: error: buttonHeight has private 
+access in ClickGui
+          int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                      ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:132: error: cornerRadius has private 
+access in ClickGui
+          int r = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), panelH / 2);
+                                                            ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:134: error: panelOpacity has private 
+access in ClickGui
+          int pAlpha = ModuleManager.get(ClickGui.class).panelOpacity.getValue().intValue();
+                                                        ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:137: error: outlines has private 
+access in ClickGui
+          if (ModuleManager.get(ClickGui.class).outlines.getValue()) {
+                                               ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:155: error: moduleCounter has private 
+access in ClickGui
+          if (ModuleManager.get(ClickGui.class).moduleCounter.getValue()) {
+                                               ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:203: error: panelWidth has private 
+access in ClickGui
+          int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                       ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:232: error: panelWidth has private 
+access in ClickGui
+          int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                       ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:240: error: buttonHeight has private 
+access in ClickGui
+              int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                          ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:263: error: panelWidth has private 
+access in ClickGui
+          int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                       ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:268: error: buttonHeight has private 
+access in ClickGui
+          int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                      ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:30: error: gearRotationSpeed has 
+private access in ClickGui
+          float speed = ModuleManager.get(ClickGui.class).gearRotationSpeed.getValue().floatValue();
+                                                         ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:116: error: buttonHeight has private 
+access in ClickGui
+          int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                      ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:135: error: buttonOpacity has private 
+access in ClickGui
+          int btnAlpha = ModuleManager.get(ClickGui.class).buttonOpacity.getValue().intValue();
+                                                          ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:137: error: cornerRadius has private 
+access in ClickGui
+          int btnRadius = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2);
+                                                                    ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:179: error: moduleTextX has private 
+access in Settings
+              renderHighlightedName(graphics, displayName, x + 
+ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, 
+searchQuery);
+                                                                                                                     ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:181: error: moduleTextX has private 
+access in Settings
+              FontRenderUtility.drawString(graphics, displayName, x + 
+ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, true);
+                                                                                                                       
+     ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:185: error: showGear has private access 
+in ClickGui
+          if (hasParams && ModuleManager.get(ClickGui.class).showGear.getValue()) {
+                                                            ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:281: error: cornerRadius has private 
+access in ClickGui
+              Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentYOut[0], width - 4, btnH, 
+Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 
+0x050510);
+                                                                                                                       
+                         ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:358: error: buttonHeight has private 
+access in ClickGui
+          int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                      ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:55: error: smoothOption has private 
+access in ClickGui
+          boolean smoothOption = ModuleManager.get(ravex.modules.client.ClickGui.class).smoothOption.getValue();
+                                                                                       ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:56: error: optionSmoothness has 
+private access in ClickGui
+          float optionSmoothness = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).optionSmoothness.getValue().floatValue();
+                                                                                         ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:126: error: switchless has private 
+access in ClickGui
+          boolean switchless = ModuleManager.get(ravex.modules.client.ClickGui.class).switchless.getValue();
+                                                                                     ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:505: error: wheelControl has 
+private access in ClickGui
+          if (parameter instanceof NumberParameter np && 
+ModuleManager.get(ravex.modules.client.ClickGui.class).wheelControl.getValue()) {
+                                                                                                               ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:90: error: panelWidth has private access in 
+ClickGui
+          int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+                                                                             ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:106: error: panelWidth has private access 
+in ClickGui
+          int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+                                                                             ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:138: error: guiScale has private access in 
+ClickGui
+          float target = ModuleManager.get(ravex.modules.client.ClickGui.class).guiScale.getValue().floatValue();
+                                                                               ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:191: error: drawBackground has private 
+access in ClickGui
+          boolean drawBg = ModuleManager.get(ravex.modules.client.ClickGui.class).drawBackground.getValue();
+                                                                                 ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:193: error: backgroundOpacity has private 
+access in ClickGui
+              int bgOpacity = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).backgroundOpacity.getValue().intValue();
+                                                                                    ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:201: error: companionImage has private 
+access in ClickGui
+          if (ModuleManager.get(ravex.modules.client.ClickGui.class).companionImage.getValue()) {
+                                                                    ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:202: error: companionType has private 
+access in ClickGui
+              String type = ModuleManager.get(ravex.modules.client.ClickGui.class).companionType.getValue();
+                                                                                  ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:242: error: showToolbar has private access 
+in ClickGui
+          if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+                                                                    ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:319: error: descriptionPanel has private 
+access in ClickGui
+          if (ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionPanel.getValue()) {
+                                                                    ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:353: error: tooltipSpeed has private access 
+in ClickGui
+                  float speed = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                                                                                      ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:356: error: tooltipSpeed has private access 
+in ClickGui
+                  float speed = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                                                                                      ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:361: error: tooltipOffsetX has private 
+access in ClickGui
+                  int ox = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetX.getValue().intValue();
+                                                                                 ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:362: error: tooltipOffsetY has private 
+access in ClickGui
+                  int oy = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetY.getValue().intValue();
+                                                                                 ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:383: error: descriptionOpacity has private 
+access in ClickGui
+                  int to = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionOpacity.getValue().intValue();
+                                                                                 ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:419: error: panelOpacity has private access 
+in ClickGui
+          int pAlpha = ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity.getValue().intValue();
+                                                                             ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:509: error: showToolbar has private access 
+in ClickGui
+          if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+                                                                    ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:765: error: amount has private access in 
+GuiParticles
+          int count = gp.amount.getValue().intValue();
+                        ^Note: Recompile with -Xlint:deprecation for 
+details.C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\combat\KillAura.java:47: error: cannot find symbol
+      public final ModeParameter swapMode = ((ModeParameter) new ModeParameter("SwapMode", "Normal", List.of("Normal", 
+"Silent", "None")).setVisible(() -> autoWeapon.getValue()));
+                   ^
+    symbol:   class ModeParameter
+    location: class KillAura
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\combat\KillAura.java:48: error: cannot find symbol
+      public final BooleanParameter swordsOnly = ((BooleanParameter) new BooleanParameter("SwordsOnly", 
+false).setVisible(() -> autoWeapon.getValue()));
+                   ^
+    symbol:   class BooleanParameter
+    location: class KillAura
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\combat\KillAura.java:52: error: cannot find symbol
+      public final NumberParameter keepSprintSpeed = ((NumberParameter) new NumberParameter("KeepSprintSpeed", 100, 0, 
+100, 5).setVisible(() -> keepSprint.getValue()));
+                   ^
+    symbol:   class NumberParameter
+    location: class KillAura
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\hud\ArmorHud.java:30: error: cannot find symbol
+      public final DependencyParameter<Integer, ColorParameter> customColor = new DependencyParameter<>(
+                                                ^
+    symbol:   class ColorParameter
+    location: class ArmorHud
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\player\AutoArmor.java:31: error: cannot find symbol
+      public final DependencyParameter<Double, NumberParameter> customDelay =
+                                               ^
+    symbol:   class NumberParameter
+    location: class AutoArmor
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\player\AutoArmor.java:33: error: cannot find symbol
+      public final DependencyParameter<Boolean, BooleanParameter> openInventory =
+                                                ^
+    symbol:   class BooleanParameter
+    location: class AutoArmor
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\player\AutoArmor.java:35: error: cannot find symbol
+      public final DependencyParameter<Boolean, BooleanParameter> ignoreEnchants =
+                                                ^
+    symbol:   class BooleanParameter
+    location: class AutoArmor
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\render\WorldColor.java:9: error: cannot find symbol
+      public final ColorParameter fogColor = ((ColorParameter) new ColorParameter("FogColor", 
+0xFFFF5500).setVisible(() -> fog.getValue()));
+                   ^
+    symbol:   class ColorParameter
+    location: class WorldColor
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\render\WorldColor.java:13: error: cannot find symbol
+      public final ColorParameter skyColor = ((ColorParameter) new ColorParameter("SkyColor", 
+0xFF4FC3F7).setVisible(() -> sky.getValue()));
+                   ^
+    symbol:   class ColorParameter
+    location: class WorldColor
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\modules\render\WorldColor.java:17: error: cannot find symbol
+      public final ColorParameter cloudColor = ((ColorParameter) new ColorParameter("CloudColor", 
+0xFFFFFFFF).setVisible(() -> cloud.getValue()));
+                   ^
+    symbol:   class ColorParameter
+    location: class WorldColorC:\Users\nprevenant\RaveX\src\main\java\ravex\cmd\core\CmdReg.java:46: error: boolean 
+cannot be dereferenced
+          if (!ModuleManager.get(Commands.class).showFeedback.getValue()) {
+                                                             ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:81: error: boolean cannot be 
+dereferenced
+          double dragLerp = ModuleManager.get(ClickGui.class).smoothScroll.getValue()
+                                                                          ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:82: error: double cannot be 
+dereferenced
+              ? (ModuleManager.get(ClickGui.class).scrollSmoothness.getValue().doubleValue() / 100.0)
+                                                                   ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:99: error: double cannot be 
+dereferenced
+          int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                                  ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:113: error: double cannot be 
+dereferenced
+          int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                   ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:132: error: double cannot be 
+dereferenced
+          int r = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), panelH / 2);
+                                                                         ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:134: error: double cannot be 
+dereferenced
+          int pAlpha = ModuleManager.get(ClickGui.class).panelOpacity.getValue().intValue();
+                                                                     ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:137: error: boolean cannot be 
+dereferenced
+          if (ModuleManager.get(ClickGui.class).outlines.getValue()) {
+                                                        ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:155: error: boolean cannot be 
+dereferenced
+          if (ModuleManager.get(ClickGui.class).moduleCounter.getValue()) {
+                                                             ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:203: error: double cannot be 
+dereferenced
+          int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                                  ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:232: error: double cannot be 
+dereferenced
+          int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                                  ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:240: error: double cannot be 
+dereferenced
+              int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                       ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:263: error: double cannot be 
+dereferenced
+          int width = ModuleManager.get(ClickGui.class).panelWidth.getValue().intValue();
+                                                                  ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\CategoryPanel.java:268: error: double cannot be 
+dereferenced
+          int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                   ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:30: error: double cannot be dereferenced
+          float speed = ModuleManager.get(ClickGui.class).gearRotationSpeed.getValue().floatValue();
+                                                                           ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:116: error: double cannot be 
+dereferenced
+          int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                   ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:135: error: double cannot be 
+dereferenced
+          int btnAlpha = ModuleManager.get(ClickGui.class).buttonOpacity.getValue().intValue();
+                                                                        ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:137: error: double cannot be 
+dereferenced
+          int btnRadius = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2);
+                                                                                 ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:179: error: double cannot be 
+dereferenced
+              renderHighlightedName(graphics, displayName, x + 
+ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, 
+searchQuery);
+                                                                                                                       
+          ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:181: error: double cannot be 
+dereferenced
+              FontRenderUtility.drawString(graphics, displayName, x + 
+ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, true);
+                                                                                                                       
+                 ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:185: error: boolean cannot be 
+dereferenced
+          if (hasParams && ModuleManager.get(ClickGui.class).showGear.getValue()) {
+                                                                     ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:281: error: double cannot be 
+dereferenced
+              Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentYOut[0], width - 4, btnH, 
+Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 
+0x050510);
+                                                                                                                       
+                                      ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ModuleButton.java:358: error: double cannot be 
+dereferenced
+          int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+                                                                   ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:55: error: boolean cannot be 
+dereferenced
+          boolean smoothOption = ModuleManager.get(ravex.modules.client.ClickGui.class).smoothOption.getValue();
+                                                                                                    ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:56: error: double cannot be 
+dereferenced
+          float optionSmoothness = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).optionSmoothness.getValue().floatValue();
+                                                                                                          ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:126: error: boolean cannot be 
+dereferenced
+          boolean switchless = ModuleManager.get(ravex.modules.client.ClickGui.class).switchless.getValue();
+                                                                                                ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ParameterElement.java:505: error: boolean cannot be 
+dereferenced
+          if (parameter instanceof NumberParameter np && 
+ModuleManager.get(ravex.modules.client.ClickGui.class).wheelControl.getValue()) {
+                                                                                                                       
+     ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:90: error: double cannot be dereferenced
+          int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+                                                                                        ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:106: error: double cannot be dereferenced
+          int panelW = ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth.getValue().intValue();
+                                                                                        ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:138: error: double cannot be dereferenced
+          float target = ModuleManager.get(ravex.modules.client.ClickGui.class).guiScale.getValue().floatValue();
+1 actionable task: 1 executed
+                                                                                        ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:191: error: boolean cannot be dereferenced
+          boolean drawBg = ModuleManager.get(ravex.modules.client.ClickGui.class).drawBackground.getValue();
+                                                                                                ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:193: error: double cannot be dereferenced
+              int bgOpacity = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).backgroundOpacity.getValue().intValue();
+                                                                                                      ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:201: error: boolean cannot be dereferenced
+          if (ModuleManager.get(ravex.modules.client.ClickGui.class).companionImage.getValue()) {
+                                                                                   ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:242: error: boolean cannot be dereferenced
+          if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+                                                                                ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:319: error: boolean cannot be dereferenced
+          if (ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionPanel.getValue()) {
+                                                                                     ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:353: error: double cannot be dereferenced
+                  float speed = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                                                                                                   ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:356: error: double cannot be dereferenced
+                  float speed = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipSpeed.getValue().floatValue() / 10f;
+                                                                                                   ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:361: error: double cannot be dereferenced
+                  int ox = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetX.getValue().intValue();
+                                                                                                ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:362: error: double cannot be dereferenced
+                  int oy = ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetY.getValue().intValue();
+                                                                                                ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:383: error: double cannot be dereferenced
+                  int to = 
+ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionOpacity.getValue().intValue();
+                                                                                                    ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:419: error: double cannot be dereferenced
+          int pAlpha = ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity.getValue().intValue();
+                                                                                          ^
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:509: error: boolean cannot be dereferenced
+          if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar.getValue()) {
+                                                                                
+^C:\Users\nprevenant\RaveX\src\main\java\ravex\cmd\core\CmdReg.java:27: error: cannot find symbol
+          if (!ModuleManager.get(Commands.class).getEnabled()) return false;
+                                                ^
+    symbol:   method getEnabled()
+    location: class Commands
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:197: error: cannot find symbol
+          if (ModuleManager.get(ravex.modules.client.GuiParticles.class).getEnabled()) {
+                                                                        ^
+    symbol:   method getEnabled()
+    location: class GuiParticles
+  C:\Users\nprevenant\RaveX\src\main\java\ravex\gui\clickgui\ClickGUI.java:202: error: cannot find symbol
+              String type = ModuleManager.get(ravex.modules.client.ClickGui.class).companionType.getValue();
+                                                                                                ^
+    symbol:   method getValue()
+    location: variable companionType of type 
+StringC:\Users\nprevenant\RaveX\src\main\java\ravex\modules\client\Settings.java:12: error: type Parameter does not 
+take parameters
+      public final Parameter<String> language = new ModeParameter("Language", "English", java.util.List.of("English", 
+"Russian"));
+                            ^Note: Some input files use or override a deprecated API.
+  100 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 7s

@@ -1,6 +1,7 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -13,27 +14,28 @@ import ravex.event.player.DeathEvent;
 import ravex.utility.misc.MobUtility;
 import net.minecraft.core.particles.ParticleTypes;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
 import java.util.List;
 @ModuleInfo(name = "KillEffects", category = "Render")
-public class KillEffects extends ravex.modules.Module {
-public final ModeParameter effect = new ModeParameter("Effect", "Lightning",
-        List.of("Lightning", "Fire", "Both"));
-    public final BooleanParameter players = new BooleanParameter("Players", true);
-    public final BooleanParameter monsters = new BooleanParameter("Monsters", false);
-    public final BooleanParameter animals = new BooleanParameter("Animals", false);
+public class KillEffects implements ModuleAccess {
+    @Parameter(name = "Effect", modes = {"Lightning", "Fire", "Both"})
+    public String effect = "Lightning";
+    @Parameter(name = "Players")
+    public boolean players = true;
+    @Parameter(name = "Monsters")
+    public boolean monsters = false;
+    @Parameter(name = "Animals")
+    public boolean animals = false;
 
     @Subscribe
     public void onDeath(DeathEvent event) {
-        if (!getEnabled()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("KillEffects").getEnabled()) return;
         net.minecraft.world.entity.player.Player victim = event.getPlayer();
         if (victim == Minecraft.getInstance().player) return;
         net.minecraft.world.entity.LivingEntity living = victim;
         if (!shouldAffect(living)) return;
         ClientLevel level = (ClientLevel) living.level();
         if (level == null) return;
-        String eff = effect.getValue();
+        String eff = effect;
         if (eff.equals("Lightning") || eff.equals("Both")) {
             spawnLightning(level, living.getX(), living.getY(), living.getZ());
         }
@@ -43,9 +45,9 @@ public final ModeParameter effect = new ModeParameter("Effect", "Lightning",
     }
 
     private boolean shouldAffect(net.minecraft.world.entity.LivingEntity e) {
-        if (MobUtility.isPlayer(e) && players.getValue()) return true;
-        if (MobUtility.isHostile(e) && monsters.getValue()) return true;
-        if (MobUtility.isPassive(e) && animals.getValue()) return true;
+        if (MobUtility.isPlayer(e) && players) return true;
+        if (MobUtility.isHostile(e) && monsters) return true;
+        if (MobUtility.isPassive(e) && animals) return true;
         return false;
     }
     private void spawnLightning(ClientLevel level, double x, double y, double z) {
@@ -79,16 +81,5 @@ public final ModeParameter effect = new ModeParameter("Effect", "Lightning",
         return ravex.manager.ModuleManager.delegate(KillEffects.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

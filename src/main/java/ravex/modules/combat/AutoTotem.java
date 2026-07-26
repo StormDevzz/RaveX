@@ -1,28 +1,32 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
+import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.inventory.ClickType;
 import java.util.List;
-import ravex.utility.player.InventoryUtility;
+
+
+
 @ModuleInfo(name = "AutoTotem", category = "Combat")
-public class AutoTotem extends ravex.modules.Module {
-public final ModeParameter offhandItem = new ModeParameter("Offhand", "Totem", List.of("Totem", "Gapple", "Crystal", "Shield", "None"));
-    public final ModeParameter mainHandItem = new ModeParameter("MainHand", "Sword", List.of("Sword", "Gapple", "Crystal", "Shield", "Totem", "None"));
-    public final NumberParameter minHealth = new NumberParameter("MinHP", 8.0, 1.0, 20.0, 0.5);
+public class AutoTotem implements ModuleAccess {
+    @Parameter(name = "Offhand", modes = {"Totem", "Gapple", "Crystal", "Shield", "None"})
+    public String offhandItem = "Totem";
+    @Parameter(name = "MainHand", modes = {"Sword", "Gapple", "Crystal", "Shield", "Totem", "None"})
+    public String mainHandItem = "Sword";
+    @Parameter(name = "MinHP", min = 1.0, max = 20.0, step = 0.5)
+    public double minHealth = 8.0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
         if (p == null || mc.gameMode == null) return;
-        boolean forceTotem = p.getHealth() <= minHealth.getValue();
+        boolean forceTotem = p.getHealth() <= minHealth;
         handleOffhand(mc, p, forceTotem);
         handleMainHand(mc, p, forceTotem);
     }
-    private void handleOffhand(Minecraft mc, LocalPlayer p, boolean forceTotem) {
-        String choice = offhandItem.getValue();
+    private void handleOffhand(Minecraft mc, net.minecraft.client.player.LocalPlayer p, boolean forceTotem) {
+        String choice = offhandItem;
         if (choice.equals("None") && !forceTotem) return;
         net.minecraft.world.item.Item targetItem = net.minecraft.world.item.Items.TOTEM_OF_UNDYING;
         if (!forceTotem) {
@@ -53,8 +57,8 @@ public final ModeParameter offhandItem = new ModeParameter("Offhand", "Totem", L
             swapToOffhand(mc, p, foundSlot);
         }
     }
-    private void handleMainHand(Minecraft mc, LocalPlayer p, boolean forceTotem) {
-        String mainChoice = mainHandItem.getValue();
+    private void handleMainHand(Minecraft mc, net.minecraft.client.player.LocalPlayer p, boolean forceTotem) {
+        String mainChoice = mainHandItem;
         if (mainChoice.equals("None")) return;
         net.minecraft.world.item.Item targetItem = null;
         if (forceTotem) {
@@ -87,7 +91,7 @@ public final ModeParameter offhandItem = new ModeParameter("Offhand", "Totem", L
             InventoryUtility.selectSlot(p, slot);
         }
     }
-    private void swapToOffhand(Minecraft mc, LocalPlayer p, int invSlot) {
+    private void swapToOffhand(Minecraft mc, net.minecraft.client.player.LocalPlayer p, int invSlot) {
         int containerSlot = invSlot < 9 ? invSlot + 36 : invSlot;
         mc.gameMode.handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, p);
         mc.gameMode.handleInventoryMouseClick(p.containerMenu.containerId, 45, 0, ClickType.PICKUP, p);
@@ -109,16 +113,5 @@ public final ModeParameter offhandItem = new ModeParameter("Offhand", "Totem", L
         return ravex.manager.ModuleManager.delegate(AutoTotem.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

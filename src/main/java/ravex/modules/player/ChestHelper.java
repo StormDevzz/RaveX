@@ -1,22 +1,26 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
-import ravex.parameter.BooleanParameter;
 import ravex.utility.player.ContainerUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "ChestHelper", category = "net.minecraft.world.entity.player.Player")
-public class ChestHelper extends ravex.modules.Module {
-public final BooleanParameter steal   = new BooleanParameter("Steal", true);
-    public final BooleanParameter dump    = new BooleanParameter("Dump",  true);
-    public final BooleanParameter fill    = new BooleanParameter("Fill",  true);
-    public final BooleanParameter dropAll = new BooleanParameter("DropAll", true);
+public class ChestHelper implements ModuleAccess {
+    @Parameter(name = "Steal")
+    public boolean steal = true;
+    @Parameter(name = "Dump")
+    public boolean dump = true;
+    @Parameter(name = "Fill")
+    public boolean fill = true;
+    @Parameter(name = "DropAll")
+    public boolean dropAll = true;
 
     public void onRenderButtons(AbstractContainerScreen<?> screen, net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY) {
-        if (!getEnabled() || !ContainerUtility.isChestLike(screen.getMenu())) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChestHelper").getEnabled() || !ContainerUtility.isChestLike(screen.getMenu())) return;
         int startX = ContainerUtility.getButtonStartX(screen), startY = ContainerUtility.getButtonStartY(screen);
         List<ButtonDef> btns = getButtons();
         for (int i = 0; i < btns.size(); i++) {
@@ -25,7 +29,7 @@ public final BooleanParameter steal   = new BooleanParameter("Steal", true);
         }
     }
     public boolean onMouseClicked(AbstractContainerScreen<?> screen, int mouseX, int mouseY) {
-        if (!getEnabled() || !ContainerUtility.isChestLike(screen.getMenu())) return false;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChestHelper").getEnabled() || !ContainerUtility.isChestLike(screen.getMenu())) return false;
         int startX = ContainerUtility.getButtonStartX(screen), startY = ContainerUtility.getButtonStartY(screen);
         List<ButtonDef> btns = getButtons();
         for (int i = 0; i < btns.size(); i++) {
@@ -50,10 +54,10 @@ public final BooleanParameter steal   = new BooleanParameter("Steal", true);
     }
     private List<ButtonDef> getButtons() {
         List<ButtonDef> list = new ArrayList<>();
-        if (steal.getValue())   list.add(new ButtonDef("Steal", "STEAL"));
-        if (dump.getValue())    list.add(new ButtonDef("Dump", "DUMP"));
-        if (fill.getValue())    list.add(new ButtonDef("Fill", "FILL"));
-        if (dropAll.getValue()) list.add(new ButtonDef("Drop", "DROP"));
+        if (steal)   list.add(new ButtonDef("Steal", "STEAL"));
+        if (dump)    list.add(new ButtonDef("Dump", "DUMP"));
+        if (fill)    list.add(new ButtonDef("Fill", "FILL"));
+        if (dropAll) list.add(new ButtonDef("Drop", "DROP"));
         return list;
     }
     record ButtonDef(String label, String action) {}
@@ -64,16 +68,5 @@ public final BooleanParameter steal   = new BooleanParameter("Steal", true);
         return ravex.manager.ModuleManager.delegate(ChestHelper.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

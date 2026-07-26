@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
@@ -9,7 +9,6 @@ import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
 
 import ravex.modules.client.Hud;
-import ravex.parameter.BooleanParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import java.io.BufferedReader;
@@ -27,27 +26,48 @@ public class CurrencyHud extends ravex.modules.Module {
     public int height;
 private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
-    public final BooleanParameter btc = new BooleanParameter("BTC/USD", true);
-    public final BooleanParameter usd_rub = new BooleanParameter("USD/RUB", true);
-    public final BooleanParameter eur_rub = new BooleanParameter("EUR/RUB", true);
-    public final BooleanParameter usd_byn = new BooleanParameter("USD/BYN", false);
-    public final BooleanParameter usd_kzt = new BooleanParameter("USD/KZT", false);
-    public final BooleanParameter usd_uzs = new BooleanParameter("USD/UZS", false);
-    public final BooleanParameter usd_amd = new BooleanParameter("USD/AMD", false);
-    public final BooleanParameter usd_kgs = new BooleanParameter("USD/KGS", false);
-    public final BooleanParameter usd_tjs = new BooleanParameter("USD/TJS", false);
-    public final BooleanParameter usd_azn = new BooleanParameter("USD/AZN", false);
-    public final BooleanParameter usd_mdl = new BooleanParameter("USD/MDL", false);
-    public final BooleanParameter usd_eur = new BooleanParameter("USD/EUR", false);
-    public final BooleanParameter usd_gbp = new BooleanParameter("USD/GBP", false);
-    public final BooleanParameter usd_cad = new BooleanParameter("USD/CAD", false);
-    public final BooleanParameter usd_try = new BooleanParameter("USD/TRY", false);
-    public final BooleanParameter usd_pln = new BooleanParameter("USD/PLN", false);
-    public final BooleanParameter usd_nok = new BooleanParameter("USD/NOK", false);
-    public final BooleanParameter usd_dkk = new BooleanParameter("USD/DKK", false);
-    public final BooleanParameter usd_huf = new BooleanParameter("USD/HUF", false);
-    public final BooleanParameter usd_czk = new BooleanParameter("USD/CZK", false);
-    public final BooleanParameter usd_ron = new BooleanParameter("USD/RON", false);
+    @Parameter(name = "BTC/USD")
+    public boolean btc = true;
+    @Parameter(name = "USD/RUB")
+    public boolean usd_rub = true;
+    @Parameter(name = "EUR/RUB")
+    public boolean eur_rub = true;
+    @Parameter(name = "USD/BYN")
+    public boolean usd_byn = false;
+    @Parameter(name = "USD/KZT")
+    public boolean usd_kzt = false;
+    @Parameter(name = "USD/UZS")
+    public boolean usd_uzs = false;
+    @Parameter(name = "USD/AMD")
+    public boolean usd_amd = false;
+    @Parameter(name = "USD/KGS")
+    public boolean usd_kgs = false;
+    @Parameter(name = "USD/TJS")
+    public boolean usd_tjs = false;
+    @Parameter(name = "USD/AZN")
+    public boolean usd_azn = false;
+    @Parameter(name = "USD/MDL")
+    public boolean usd_mdl = false;
+    @Parameter(name = "USD/EUR")
+    public boolean usd_eur = false;
+    @Parameter(name = "USD/GBP")
+    public boolean usd_gbp = false;
+    @Parameter(name = "USD/CAD")
+    public boolean usd_cad = false;
+    @Parameter(name = "USD/TRY")
+    public boolean usd_try = false;
+    @Parameter(name = "USD/PLN")
+    public boolean usd_pln = false;
+    @Parameter(name = "USD/NOK")
+    public boolean usd_nok = false;
+    @Parameter(name = "USD/DKK")
+    public boolean usd_dkk = false;
+    @Parameter(name = "USD/HUF")
+    public boolean usd_huf = false;
+    @Parameter(name = "USD/CZK")
+    public boolean usd_czk = false;
+    @Parameter(name = "USD/RON")
+    public boolean usd_ron = false;
     private double usdToRub = 89.50;
     private double usdToByn = 3.25;
     private double usdToKzt = 465.20;
@@ -71,6 +91,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
     private long lastFetchMs = 0;
     private long lastTickMs = 0;
     private CurrencyHud() {
+        super("CurrencyHud", 100, 27, 100, 20);
         this.x = 10; this.y = 300; this.width = 110; this.height = 50;
     }
     private static class DisplayPair {
@@ -95,33 +116,33 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
             simulateTicks();
         }
         List<DisplayPair> active = new ArrayList<>();
-        if (btc.getValue()) {
+        if (btc) {
             double price = usdToBtc > 0 ? 1.0 / usdToBtc : 67432.0;
             active.add(new DisplayPair("BTC/USD", String.format("$%,.0f", price)));
         }
-        if (usd_rub.getValue()) active.add(new DisplayPair("USD/RUB", String.format("%.2f \u20BD", usdToRub)));
-        if (eur_rub.getValue()) {
+        if (usd_rub) active.add(new DisplayPair("USD/RUB", String.format("%.2f \u20BD", usdToRub)));
+        if (eur_rub) {
             double eurRub = usdToEur > 0 ? usdToRub / usdToEur : 96.20;
             active.add(new DisplayPair("EUR/RUB", String.format("%.2f \u20BD", eurRub)));
         }
-        if (usd_byn.getValue()) active.add(new DisplayPair("USD/BYN", String.format("%.2f Br", usdToByn)));
-        if (usd_kzt.getValue()) active.add(new DisplayPair("USD/KZT", String.format("%.1f \u20B8", usdToKzt)));
-        if (usd_uzs.getValue()) active.add(new DisplayPair("USD/UZS", String.format("%.0f UZS", usdToUzs)));
-        if (usd_amd.getValue()) active.add(new DisplayPair("USD/AMD", String.format("%.1f AMD", usdToAmd)));
-        if (usd_kgs.getValue()) active.add(new DisplayPair("USD/KGS", String.format("%.2f KGS", usdToKgs)));
-        if (usd_tjs.getValue()) active.add(new DisplayPair("USD/TJS", String.format("%.2f TJS", usdToTjs)));
-        if (usd_azn.getValue()) active.add(new DisplayPair("USD/AZN", String.format("%.2f \u20BC", usdToAzn)));
-        if (usd_mdl.getValue()) active.add(new DisplayPair("USD/MDL", String.format("%.2f MDL", usdToMdl)));
-        if (usd_eur.getValue()) active.add(new DisplayPair("USD/EUR", String.format("%.3f \u20AC", usdToEur)));
-        if (usd_gbp.getValue()) active.add(new DisplayPair("USD/GBP", String.format("%.3f \u00A3", usdToGbp)));
-        if (usd_cad.getValue()) active.add(new DisplayPair("USD/CAD", String.format("%.3f CA$", usdToCad)));
-        if (usd_try.getValue()) active.add(new DisplayPair("USD/TRY", String.format("%.2f \u20BA", usdToTry)));
-        if (usd_pln.getValue()) active.add(new DisplayPair("USD/PLN", String.format("%.2f PLN", usdToPln)));
-        if (usd_nok.getValue()) active.add(new DisplayPair("USD/NOK", String.format("%.2f NOK", usdToNok)));
-        if (usd_dkk.getValue()) active.add(new DisplayPair("USD/DKK", String.format("%.2f DKK", usdToDkk)));
-        if (usd_huf.getValue()) active.add(new DisplayPair("USD/HUF", String.format("%.1f HUF", usdToHuf)));
-        if (usd_czk.getValue()) active.add(new DisplayPair("USD/CZK", String.format("%.2f CZK", usdToCzk)));
-        if (usd_ron.getValue()) active.add(new DisplayPair("USD/RON", String.format("%.2f RON", usdToRon)));
+        if (usd_byn) active.add(new DisplayPair("USD/BYN", String.format("%.2f Br", usdToByn)));
+        if (usd_kzt) active.add(new DisplayPair("USD/KZT", String.format("%.1f \u20B8", usdToKzt)));
+        if (usd_uzs) active.add(new DisplayPair("USD/UZS", String.format("%.0f UZS", usdToUzs)));
+        if (usd_amd) active.add(new DisplayPair("USD/AMD", String.format("%.1f AMD", usdToAmd)));
+        if (usd_kgs) active.add(new DisplayPair("USD/KGS", String.format("%.2f KGS", usdToKgs)));
+        if (usd_tjs) active.add(new DisplayPair("USD/TJS", String.format("%.2f TJS", usdToTjs)));
+        if (usd_azn) active.add(new DisplayPair("USD/AZN", String.format("%.2f \u20BC", usdToAzn)));
+        if (usd_mdl) active.add(new DisplayPair("USD/MDL", String.format("%.2f MDL", usdToMdl)));
+        if (usd_eur) active.add(new DisplayPair("USD/EUR", String.format("%.3f \u20AC", usdToEur)));
+        if (usd_gbp) active.add(new DisplayPair("USD/GBP", String.format("%.3f \u00A3", usdToGbp)));
+        if (usd_cad) active.add(new DisplayPair("USD/CAD", String.format("%.3f CA$", usdToCad)));
+        if (usd_try) active.add(new DisplayPair("USD/TRY", String.format("%.2f \u20BA", usdToTry)));
+        if (usd_pln) active.add(new DisplayPair("USD/PLN", String.format("%.2f PLN", usdToPln)));
+        if (usd_nok) active.add(new DisplayPair("USD/NOK", String.format("%.2f NOK", usdToNok)));
+        if (usd_dkk) active.add(new DisplayPair("USD/DKK", String.format("%.2f DKK", usdToDkk)));
+        if (usd_huf) active.add(new DisplayPair("USD/HUF", String.format("%.1f HUF", usdToHuf)));
+        if (usd_czk) active.add(new DisplayPair("USD/CZK", String.format("%.2f CZK", usdToCzk)));
+        if (usd_ron) active.add(new DisplayPair("USD/RON", String.format("%.2f RON", usdToRon)));
         if (active.isEmpty()) {
             width = 80;
             height = 14;
@@ -205,18 +226,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
         return ravex.manager.ModuleManager.delegate(CurrencyHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

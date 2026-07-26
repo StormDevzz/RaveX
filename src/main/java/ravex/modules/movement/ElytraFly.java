@@ -1,33 +1,42 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.MoverType;
 import ravex.utility.misc.PhysicUtility;
 import ravex.RaveX;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "ElytraFly", category = "Movement")
-public class ElytraFly extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
-        List.of("Vanilla", "Control", "NCP", "Fireworks"));
-    public final NumberParameter hSpeed = new NumberParameter("H-Speed", 1.5, 0.1, 5.0, 0.1);
-    public final NumberParameter vSpeed = new NumberParameter("V-Speed", 1.0, 0.1, 5.0, 0.1);
-    public final NumberParameter glide = new NumberParameter("Glide", 0.005, 0.001, 0.1, 0.001);
-    public final NumberParameter fireworkDelay = new NumberParameter("FireworkDelay", 10.0, 1.0, 30.0, 1.0);
-    public final NumberParameter fireworkBoost = new NumberParameter("FireworkBoost", 1.0, 0.5, 5.0, 0.1);
-    public final BooleanParameter autoTakeoff = new BooleanParameter("AutoTakeoff", true);
-    public final BooleanParameter speedControl = new BooleanParameter("SpeedControl", true);
-    public final BooleanParameter accelerate = new BooleanParameter("Accelerate", false);
-    public final NumberParameter acceleration = new NumberParameter("Acceleration", 0.15, 0.01, 1.0, 0.01);
-    public final NumberParameter timer = new NumberParameter("Timer", 1.0, 0.5, 3.0, 0.1);
-    public final BooleanParameter fallBypass = new BooleanParameter("FallBypass", true);
+public class ElytraFly implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Vanilla", "Control", "NCP", "Fireworks"})
+    public String mode = "Vanilla";
+    @Parameter(name = "H-Speed", min = 0.1, max = 5.0, step = 0.1)
+    public double hSpeed = 1.5;
+    @Parameter(name = "V-Speed", min = 0.1, max = 5.0, step = 0.1)
+    public double vSpeed = 1.0;
+    @Parameter(name = "Glide", min = 0.001, max = 0.1, step = 0.001)
+    public double glide = 0.005;
+    @Parameter(name = "FireworkDelay", min = 1.0, max = 30.0, step = 1.0)
+    public double fireworkDelay = 10.0;
+    @Parameter(name = "FireworkBoost", min = 0.5, max = 5.0, step = 0.1)
+    public double fireworkBoost = 1.0;
+    @Parameter(name = "AutoTakeoff")
+    public boolean autoTakeoff = true;
+    @Parameter(name = "SpeedControl")
+    public boolean speedControl = true;
+    @Parameter(name = "Accelerate")
+    public boolean accelerate = false;
+    @Parameter(name = "Acceleration", min = 0.01, max = 1.0, step = 0.01)
+    public double acceleration = 0.15;
+    @Parameter(name = "Timer", min = 0.5, max = 3.0, step = 0.1)
+    public double timer = 1.0;
+    @Parameter(name = "FallBypass")
+    public boolean fallBypass = true;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_elytraplusplus");
     static {
         NATIVE.load();
@@ -44,11 +53,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
     private int fwTimer = 0;
     private double accelMul = 0.0;
     public net.minecraft.world.phys.Vec3 applyTimerAndAccel(net.minecraft.world.phys.Vec3 vel) {
-        double t = timer.getValue();
+        double t = timer;
         if (t != 1.0) {
             vel = new net.minecraft.world.phys.Vec3(vel.x * t, vel.y, vel.z * t);
         }
-        if (accelerate.getValue()) {
+        if (accelerate) {
             vel = new net.minecraft.world.phys.Vec3(vel.x * accelMul, vel.y * accelMul, vel.z * accelMul);
         }
         return vel;
@@ -59,11 +68,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         boolean moving = mc.options.keyUp.isDown() || mc.options.keyDown.isDown() ||
                          mc.options.keyLeft.isDown() || mc.options.keyRight.isDown() ||
                          mc.options.keyJump.isDown() || mc.options.keyShift.isDown();
-        if (accelerate.getValue()) {
+        if (accelerate) {
             if (moving) {
-                accelMul = Math.min(accelMul + acceleration.getValue(), 1.0);
+                accelMul = Math.min(accelMul + acceleration, 1.0);
             } else {
-                accelMul = Math.max(accelMul - acceleration.getValue() * 2.0, 0.0);
+                accelMul = Math.max(accelMul - acceleration * 2.0, 0.0);
             }
         } else {
             accelMul = 1.0;
@@ -71,9 +80,6 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
     }
     private ElytraFly() {
         
-        fireworkDelay.setVisible(() -> "Fireworks".equals(mode.getValue()));
-        fireworkBoost.setVisible(() -> "Fireworks".equals(mode.getValue()));
-        acceleration.setVisible(() -> accelerate.getValue());
     }
     public static double[] calculateVelocity(
         String mode, double hSpeed, double vSpeed, double glide,
@@ -194,19 +200,19 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         }
         return new double[]{mx, my, mz};
     }
-    protected void onEnable() {
-        RaveX.LOGGER.info("[Elytra++] Enabled with mode: {}", mode.getValue());
+    public void onEnable() {
+        RaveX.LOGGER.info("[Elytra++] Enabled with mode: {}", mode);
         fwTimer = 0;
         accelMul = 0.0;
     }
-    protected void onDisable() {
+    public void onDisable() {
         fwTimer = 0;
     }
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gameMode == null) return;
         updateAccelState();
-        if (autoTakeoff.getValue() && mc.player.onGround() && !mc.player.isFallFlying()) {
+        if (autoTakeoff && mc.player.onGround() && !mc.player.isFallFlying()) {
             if (mc.options.keyJump.isDown()) {
                 mc.player.jumpFromGround();
             }
@@ -221,17 +227,17 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         if (mc.options.keyDown.isDown()) forward--;
         if (mc.options.keyLeft.isDown()) strafe++;
         if (mc.options.keyRight.isDown()) strafe--;
-        if (speedControl.getValue()) {
-            String curMode = mode.getValue();
+        if (speedControl) {
+            String curMode = mode;
             if (curMode.equals("Control") || curMode.equals("Fireworks")) {
                 double rad = Math.toRadians(yaw);
-                double targetX = (-Math.sin(rad) * forward + Math.cos(rad) * strafe) * hSpeed.getValue();
-                double targetZ = (Math.cos(rad) * forward + Math.sin(rad) * strafe) * hSpeed.getValue();
-                double targetY = space ? vSpeed.getValue() : (shift ? -vSpeed.getValue() : -glide.getValue());
+                double targetX = (-Math.sin(rad) * forward + Math.cos(rad) * strafe) * hSpeed;
+                double targetZ = (Math.cos(rad) * forward + Math.sin(rad) * strafe) * hSpeed;
+                double targetY = space ? vSpeed : (shift ? -vSpeed : -glide);
                 net.minecraft.world.phys.Vec3 vel;
                 if (forward == 0 && strafe == 0 && !space && !shift) {
                     net.minecraft.world.phys.Vec3 m = mc.player.getDeltaMovement();
-                    vel = new net.minecraft.world.phys.Vec3(m.x * 0.2, -glide.getValue(), m.z * 0.2);
+                    vel = new net.minecraft.world.phys.Vec3(m.x * 0.2, -glide, m.z * 0.2);
                 } else {
                     vel = new net.minecraft.world.phys.Vec3(targetX, targetY, targetZ);
                 }
@@ -240,14 +246,14 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
                 mc.player.move(MoverType.SELF, vel);
                 if ("Fireworks".equals(curMode)) {
                     fwTimer++;
-                    if (fwTimer >= fireworkDelay.getValue().intValue()) {
+                    if (fwTimer >= (int) fireworkDelay) {
                         useFirework(mc);
                         fwTimer = 0;
                     }
                 }
             } else {
                 double[] vel = calculateVelocity(
-                    curMode, hSpeed.getValue(), vSpeed.getValue(), glide.getValue(),
+                    curMode, hSpeed, vSpeed, glide,
                     yaw, pitch, space, shift
                 );
                 net.minecraft.world.phys.Vec3 v = new net.minecraft.world.phys.Vec3(vel[0], vel[1], vel[2]);
@@ -278,16 +284,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         InventoryUtility.selectSlot(mc.player, prevSlot);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

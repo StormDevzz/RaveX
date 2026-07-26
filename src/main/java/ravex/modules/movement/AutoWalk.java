@@ -1,37 +1,36 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-import ravex.parameter.BooleanParameter;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 
 @ModuleInfo(name = "AutoWalk", category = "Movement")
-public class AutoWalk extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Simple", List.of("Simple", "Baritone"));
-    public final NumberParameter baritoneInterval = new NumberParameter("Interval", 30.0, 5.0, 120.0, 5.0);
-    public final NumberParameter baritoneRange = new NumberParameter("Range", 2000.0, 100.0, 10000.0, 100.0);
-    public final BooleanParameter silentMode = new BooleanParameter("SilentMode", true);
+public class AutoWalk implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Simple", "Baritone"})
+    public String mode = "Simple";
+    @Parameter(name = "Interval", min = 5.0, max = 120.0, step = 5.0)
+    public double baritoneInterval = 30.0;
+    @Parameter(name = "Range", min = 100.0, max = 10000.0, step = 100.0)
+    public double baritoneRange = 2000.0;
+    @Parameter(name = "SilentMode")
+    public boolean silentMode = true;
 
     {
-        baritoneInterval.setVisible(() -> "Baritone".equals(mode.getValue()));
-        baritoneRange.setVisible(() -> "Baritone".equals(mode.getValue()));
-        silentMode.setVisible(() -> "Baritone".equals(mode.getValue()));
     }
 
     private long lastGotoTime = 0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        String m = mode.getValue();
+        String m = mode;
         if ("Simple".equals(m)) {
             mc.options.keyUp.setDown(true);
         } else if ("Baritone".equals(m)) {
             mc.options.keyUp.setDown(true);
             long now = System.currentTimeMillis();
-            if (now - lastGotoTime >= baritoneInterval.getValue().intValue() * 1000L) {
-                int range = baritoneRange.getValue().intValue();
+            if (now - lastGotoTime >= (int) baritoneInterval * 1000L) {
+                int range = (int) baritoneRange;
                 double yaw = Math.toRadians(mc.player.getYRot());
                 int x = mc.player.blockPosition().getX() + (int)(-Math.sin(yaw) * range);
                 int z = mc.player.blockPosition().getZ() + (int)(Math.cos(yaw) * range);
@@ -49,10 +48,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Simple", List.of("S
             }
         }
     }
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         mc.options.keyUp.setDown(false);
-        if ("Baritone".equals(mode.getValue())) {
+        if ("Baritone".equals(mode)) {
             try {
                 Class<?> apiClass = Class.forName("baritone.api.BaritoneAPI");
                 Object provider = apiClass.getMethod("getProvider").invoke(null);
@@ -67,16 +66,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Simple", List.of("S
         return ravex.manager.ModuleManager.delegate(AutoWalk.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

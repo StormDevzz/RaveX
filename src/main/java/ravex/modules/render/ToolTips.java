@@ -1,21 +1,25 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import ravex.utility.player.InventoryUtility;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "ToolTips", category = "Render")
-public class ToolTips extends ravex.modules.Module {
-public final BooleanParameter showId = new BooleanParameter("ShowID", false);
-    public final BooleanParameter showShulker = new BooleanParameter("ShowShulker", true);
-    public final BooleanParameter showFood = new BooleanParameter("ShowFood", false);
-    public final BooleanParameter showEnchants = new BooleanParameter("ShowEnchants", false);
-    public final NumberParameter maxLines = new NumberParameter("MaxLines", 10, 2, 30, 1);
+public class ToolTips implements ModuleAccess {
+    @Parameter(name = "ShowID")
+    public boolean showId = false;
+    @Parameter(name = "ShowShulker")
+    public boolean showShulker = true;
+    @Parameter(name = "ShowFood")
+    public boolean showFood = false;
+    @Parameter(name = "ShowEnchants")
+    public boolean showEnchants = false;
+    @Parameter(name = "MaxLines", min = 2, max = 30, step = 1)
+    public double maxLines = 10;
     public net.minecraft.world.item.ItemStack lastStack = net.minecraft.world.item.ItemStack.EMPTY;
     public int lastX;
     public int lastY;
@@ -23,9 +27,9 @@ public final BooleanParameter showId = new BooleanParameter("ShowID", false);
     public List<Component> getTooltip(net.minecraft.world.item.ItemStack stack) {
         List<Component> lines = new ArrayList<>();
         if (stack.isEmpty()) return lines;
-        int max = maxLines.getValue().intValue();
+        int max = (int) maxLines;
         int count = 0;
-        if (showFood.getValue()) {
+        if (showFood) {
             var food = InventoryUtility.getFoodProperties(stack);
             if (food != null) {
                 if (count < max) {
@@ -34,7 +38,7 @@ public final BooleanParameter showId = new BooleanParameter("ShowID", false);
                 }
             }
         }
-        if (showEnchants.getValue()) {
+        if (showEnchants) {
             var ench = InventoryUtility.getEnchantments(stack);
             if (ench != null && ench.entrySet() != null) {
                 for (var entry : ench.entrySet()) {
@@ -58,16 +62,5 @@ public final BooleanParameter showId = new BooleanParameter("ShowID", false);
         return ravex.manager.ModuleManager.delegate(ToolTips.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

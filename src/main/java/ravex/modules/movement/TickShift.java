@@ -1,27 +1,35 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Input;
 
 import ravex.utility.misc.PhysicUtility;
 
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import java.util.List;
 import java.util.Random;
 
 @ModuleInfo(name = "TickShift", category = "Movement")
-public class TickShift extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("Motion", "Strafe", "Timer", "GrimStrict"));
-    public final NumberParameter delay = new NumberParameter("Delay", 20.0, 1.0, 200.0, 1.0);
-    public final NumberParameter duration = new NumberParameter("Duration", 10.0, 1.0, 100.0, 1.0);
-    public final NumberParameter speed = new NumberParameter("Speed", 1.8, 1.0, 5.0, 0.1);
-    public final NumberParameter timerSpeed = new NumberParameter("TimerSpeed", 1.5, 1.0, 5.0, 0.1);
-    public final NumberParameter grimMaxTicks = new NumberParameter("GrimMaxTicks", 10.0, 2.0, 30.0, 1.0);
-    public final NumberParameter grimAccumulation = new NumberParameter("GrimAccumulation", 0.3, 0.05, 1.0, 0.05);
-    public final NumberParameter grimSpeed = new NumberParameter("GrimSpeed", 1.15, 1.0, 2.0, 0.01);
-    public final NumberParameter grimDelay = new NumberParameter("GrimDelay", 50.0, 5.0, 200.0, 1.0);
+public class TickShift implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Motion", "Strafe", "Timer", "GrimStrict"})
+    public String mode = "Motion";
+    @Parameter(name = "Delay", min = 1.0, max = 200.0, step = 1.0)
+    public double delay = 20.0;
+    @Parameter(name = "Duration", min = 1.0, max = 100.0, step = 1.0)
+    public double duration = 10.0;
+    @Parameter(name = "Speed", min = 1.0, max = 5.0, step = 0.1)
+    public double speed = 1.8;
+    @Parameter(name = "TimerSpeed", min = 1.0, max = 5.0, step = 0.1)
+    public double timerSpeed = 1.5;
+    @Parameter(name = "GrimMaxTicks", min = 2.0, max = 30.0, step = 1.0)
+    public double grimMaxTicks = 10.0;
+    @Parameter(name = "GrimAccumulation", min = 0.05, max = 1.0, step = 0.05)
+    public double grimAccumulation = 0.3;
+    @Parameter(name = "GrimSpeed", min = 1.0, max = 2.0, step = 0.01)
+    public double grimSpeed = 1.15;
+    @Parameter(name = "GrimDelay", min = 5.0, max = 200.0, step = 1.0)
+    public double grimDelay = 50.0;
 
     private final Random random = new Random();
     private double idleTicks = 0;
@@ -29,12 +37,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("M
     private int releaseCounter = 0;
 
     {
-        grimMaxTicks.setVisible(() -> "GrimStrict".equals(mode.getValue()));
-        grimAccumulation.setVisible(() -> "GrimStrict".equals(mode.getValue()));
-        grimSpeed.setVisible(() -> "GrimStrict".equals(mode.getValue()));
-        grimDelay.setVisible(() -> "GrimStrict".equals(mode.getValue()));
     }
-    protected void onEnable() {
+    public void onEnable() {
         idleTicks = 0;
         boostTicks = 0;
         releaseCounter = 0;
@@ -45,9 +49,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("M
         Input input = mc.player.input.keyPresses;
         boolean moving = input.forward() || input.backward() || input.left() || input.right();
 
-        if ("GrimStrict".equals(mode.getValue())) {
+        if ("GrimStrict".equals(mode)) {
             if (!moving) {
-                idleTicks += grimAccumulation.getValue();
+                idleTicks += grimAccumulation;
                 boostTicks = 0;
                 return;
             }
@@ -58,16 +62,16 @@ public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("M
                     releaseCounter = 0;
                     boostTicks--;
                 }
-            } else if (idleTicks < grimDelay.getValue().intValue()) {
+            } else if (idleTicks < (int) grimDelay) {
                 return;
             } else {
-                boostTicks = grimMaxTicks.getValue().intValue();
+                boostTicks = (int) grimMaxTicks;
                 idleTicks = 0;
                 releaseCounter = 0;
             }
             if (boostTicks == 0) return;
             net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
-            double mult = grimSpeed.getValue();
+            double mult = grimSpeed;
             mc.player.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
             return;
         }
@@ -79,17 +83,17 @@ public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("M
         }
         if (boostTicks > 0) {
             boostTicks--;
-        } else if (idleTicks < delay.getValue().intValue()) {
+        } else if (idleTicks < (int) delay) {
             return;
         } else {
-            boostTicks = duration.getValue().intValue();
+            boostTicks = (int) duration;
             idleTicks = 0;
         }
         if (boostTicks == 0) return;
         net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
-        String m = mode.getValue();
+        String m = mode;
         if (m.equals("Motion")) {
-            double mult = speed.getValue();
+            double mult = speed;
             mc.player.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
         } else if (m.equals("Strafe")) {
             double yaw = mc.player.getYRot() * Math.PI / 180.0;
@@ -105,11 +109,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("M
                 dz /= len;
             }
             double baseSpeed = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
-            double mult = speed.getValue();
+            double mult = speed;
             double targetSpeed = Math.max(baseSpeed, 0.2873) * mult;
             mc.player.setDeltaMovement(dx * targetSpeed, motion.y, dz * targetSpeed);
         } else if (m.equals("Timer")) {
-            double mult = timerSpeed.getValue();
+            double mult = timerSpeed;
             mc.player.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
         }
     }
@@ -117,16 +121,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("M
         return ravex.manager.ModuleManager.delegate(TickShift.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

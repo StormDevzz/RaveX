@@ -1,20 +1,19 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.util.Mth;
 
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-
 import java.util.List;
 
 @ModuleInfo(name = "SwingAnimation", category = "Render")
-public class SwingAnimation extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Akrien",
-            List.of("Default", "Swipe", "Akrien", "Rich"));
-    public final NumberParameter speed = new NumberParameter("Speed", 1.0, 0.1, 5.0, 0.1);
+public class SwingAnimation implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Default", "Swipe", "Akrien", "Rich"})
+    public String mode = "Akrien";
+    @Parameter(name = "Speed", min = 0.1, max = 5.0, step = 0.1)
+    public double speed = 1.0;
 
     private SwingAnimation() {
         
@@ -64,9 +63,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Akrien",
         ViewModel vm = ViewModel.itz();
         boolean vmEnabled = vm.getEnabled();
         if (vmEnabled) {
-            float mx = vm.mainX.getValue().floatValue();
-            float my = vm.mainY.getValue().floatValue();
-            float mz = vm.mainZ.getValue().floatValue();
+            float mx = (float) vm.mainX;
+            float my = (float) vm.mainY;
+            float mz = (float) vm.mainZ;
             poseStack.translate(-mx, my, mz);
         }
 
@@ -78,9 +77,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "Akrien",
         poseStack.mulPose(Axis.YP.rotationDegrees(i * -45.0F));
 
         if (vmEnabled) {
-            float mx = vm.mainX.getValue().floatValue();
-            float my = vm.mainY.getValue().floatValue();
-            float mz = vm.mainZ.getValue().floatValue();
+            float mx = (float) vm.mainX;
+            float my = (float) vm.mainY;
+            float mz = (float) vm.mainZ;
             poseStack.translate(mx, -my, -mz);
         }
     }
@@ -93,16 +92,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Akrien",
         return ravex.manager.ModuleManager.delegate(SwingAnimation.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

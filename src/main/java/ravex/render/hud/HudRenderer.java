@@ -41,10 +41,10 @@ public final class HudRenderer {
         Minecraft mc = Minecraft.getInstance();
 
         if (ModuleManager.get(Ambient.class).getEnabled()) {
-            int rVal = ModuleManager.get(Ambient.class).r.getValue().intValue();
-            int gVal = ModuleManager.get(Ambient.class).g.getValue().intValue();
-            int bVal = ModuleManager.get(Ambient.class).b.getValue().intValue();
-            int aVal = ModuleManager.get(Ambient.class).a.getValue().intValue();
+            int rVal = (int) ModuleManager.get(Ambient.class).r;
+            int gVal = (int) ModuleManager.get(Ambient.class).g;
+            int bVal = (int) ModuleManager.get(Ambient.class).b;
+            int aVal = (int) ModuleManager.get(Ambient.class).a;
             int color = ((aVal & 0xFF) << 24) | ((rVal & 0xFF) << 16) | ((gVal & 0xFF) << 8) | (bVal & 0xFF);
             context.fill(0, 0, context.guiWidth(), context.guiHeight(), color);
         }
@@ -58,7 +58,7 @@ public final class HudRenderer {
         Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
         boolean espEnabled = ModuleManager.get(ESP.class).getEnabled();
         boolean nameTagsEnabled = ModuleManager.get(NameTags.class).getEnabled();
-        boolean mobOwnerEnabled = ModuleManager.get(MobOwner.class).getEnabled() && ModuleManager.get(MobOwner.class).animals.getValue();
+        boolean mobOwnerEnabled = ModuleManager.get(MobOwner.class).getEnabled() && ModuleManager.get(MobOwner.class).animals;
 
         int guiWidth = context.guiWidth();
         int guiHeight = context.guiHeight();
@@ -95,9 +95,9 @@ public final class HudRenderer {
 
             double dist = mc.player.distanceTo(target);
 
-            double maxDist = ModuleManager.get(ESP.class).maxDistance.getValue();
-            if (nameTagsEnabled) maxDist = Math.max(maxDist, ModuleManager.get(NameTags.class).range.getValue());
-            if (tracersEnabled) maxDist = Math.max(maxDist, ModuleManager.get(Tracers.class).maxDistance.getValue());
+            double maxDist = ModuleManager.get(ESP.class).maxDistance;
+            if (nameTagsEnabled) maxDist = Math.max(maxDist, ModuleManager.get(NameTags.class).range);
+            if (tracersEnabled) maxDist = Math.max(maxDist, ModuleManager.get(Tracers.class).maxDistance);
             if (dist > maxDist) continue;
 
             if (firstPerson && dist < 1.2 && !nameTagsEnabled) continue;
@@ -109,17 +109,17 @@ public final class HudRenderer {
             boolean isFrame = target instanceof net.minecraft.world.entity.decoration.ItemFrame;
 
             boolean showESP = espEnabled && (
-                (isPlayer && ModuleManager.get(ESP.class).players.getValue()) ||
-                (isMonster && ModuleManager.get(ESP.class).monsters.getValue()) ||
-                (isAnimal && ModuleManager.get(ESP.class).animals.getValue()) ||
-                (isItem && ModuleManager.get(ESP.class).items.getValue()) ||
-                (isFrame && ModuleManager.get(ESP.class).frames.getValue())
+                (isPlayer && ModuleManager.get(ESP.class).players) ||
+                (isMonster && ModuleManager.get(ESP.class).monsters) ||
+                (isAnimal && ModuleManager.get(ESP.class).animals) ||
+                (isItem && ModuleManager.get(ESP.class).items) ||
+                (isFrame && ModuleManager.get(ESP.class).frames)
             );
             boolean showTracers = tracersEnabled && (
-                (isPlayer && ModuleManager.get(Tracers.class).players.getValue()) ||
-                (isMonster && ModuleManager.get(Tracers.class).monsters.getValue()) ||
-                (isAnimal && ModuleManager.get(Tracers.class).animals.getValue()) ||
-                (isItem && ModuleManager.get(Tracers.class).items.getValue())
+                (isPlayer && ModuleManager.get(Tracers.class).players) ||
+                (isMonster && ModuleManager.get(Tracers.class).monsters) ||
+                (isAnimal && ModuleManager.get(Tracers.class).animals) ||
+                (isItem && ModuleManager.get(Tracers.class).items)
             );
             boolean showNameTags = nameTagsEnabled && NameTags.itz().shouldDraw(target);
             boolean showOwner = mobOwnerEnabled && (target instanceof LivingEntity living) && MobOwner.getOwnerName(living) != null;
@@ -145,10 +145,10 @@ public final class HudRenderer {
 
             boolean show = false;
             int color = 0;
-            if (isPlayer && tracers.players.getValue()) { show = true; color = tracers.playerColor.getValue(); }
-            else if (isMonster && tracers.monsters.getValue()) { show = true; color = tracers.mobColor.getValue(); }
-            else if (isAnimal && tracers.animals.getValue()) { show = true; color = tracers.animalColor.getValue(); }
-            else if (isItem && tracers.items.getValue()) { show = true; color = tracers.itemColor.getValue(); }
+            if (isPlayer && tracers.players) { show = true; color = tracers.playerColor; }
+            else if (isMonster && tracers.monsters) { show = true; color = tracers.mobColor; }
+            else if (isAnimal && tracers.animals) { show = true; color = tracers.animalColor; }
+            else if (isItem && tracers.items) { show = true; color = tracers.itemColor; }
 
             if (show) {
                 tracerEntities.add(target);
@@ -156,10 +156,10 @@ public final class HudRenderer {
             }
         }
 
-        if ("Arrows".equals(tracers.mode.getValue())) {
+        if ("Arrows".equals(tracers.mode)) {
             Tracers.renderArrows(context, tracerEntities, tracerColors, pt, cameraPos, cameraLook, guiWidth, guiHeight);
         } else {
-            float width = tracers.lineWidth.getValue().floatValue();
+            float width = (float) tracers.lineWidth;
             for (int i = 0; i < tracerEntities.size(); i++) {
                 Entity target = tracerEntities.get(i);
                 int color = tracerColors.get(i);
@@ -251,9 +251,9 @@ public final class HudRenderer {
                             int health = (int) Math.ceil(livingTarget.getHealth());
                             int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
                             String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-                            tw = ModuleManager.get(NameTags.class).customFont.getValue() ? FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText);
-                            showArmor = ModuleManager.get(NameTags.class).armor.getValue();
-                            showHands = ModuleManager.get(NameTags.class).handItems.getValue();
+                            tw = ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText);
+                            showArmor = ModuleManager.get(NameTags.class).armor;
+                            showHands = ModuleManager.get(NameTags.class).handItems;
                             hasMainHand = !livingTarget.getMainHandItem().isEmpty();
                             hasOffHand = !livingTarget.getOffhandItem().isEmpty();
                             if (showArmor) {
@@ -264,7 +264,7 @@ public final class HudRenderer {
                             }
                         }
                         if (hasOwner) {
-                            ow = ModuleManager.get(NameTags.class).customFont.getValue() ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName);
+                            ow = ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName);
                         }
                     }
                     textWidths[i * 2 + 0] = tw;
@@ -282,8 +282,8 @@ public final class HudRenderer {
                 renderedCount = GuiOptimizerUtility.nativeOptimizeNameTags(
                     cameraPosArr, modelViewArr, projectionArr, playerViewVecArr,
                     positions, textWidths, booleans, armorCounts, count,
-                    ModuleManager.get(NameTags.class).size.getValue(), true,
-                    Math.max(ModuleManager.get(ESP.class).maxDistance.getValue(), nameTagsEnabled ? ModuleManager.get(NameTags.class).range.getValue() : 0.0),
+                    ModuleManager.get(NameTags.class).size, true,
+                    Math.max(ModuleManager.get(ESP.class).maxDistance, nameTagsEnabled ? ModuleManager.get(NameTags.class).range : 0.0),
                     guiWidth, guiHeight, outLayouts, outIndices
                 );
                 nativeSuccess = true;
@@ -336,7 +336,7 @@ public final class HudRenderer {
                 renderESPBox(context, mc, target, boxX, y, boxW, boxH, isPlayer, isMonster, isAnimal, isItem);
             }
 
-            boolean withinRange = dist <= ModuleManager.get(NameTags.class).range.getValue();
+            boolean withinRange = dist <= ModuleManager.get(NameTags.class).range;
             boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange && NameTags.itz().shouldDraw(target);
             if (drawNametags || hasOwner) {
                 renderNametag(context, mc, target, bx, y, scale, totalW, totalH, armorRowY, mainRowY, ownerRowY, textYOff, mainRowW, armorRowW, drawNametags, hasOwner, ownerName);
@@ -389,7 +389,7 @@ public final class HudRenderer {
                 renderESPBox(context, mc, target, boxX, y, boxW, boxH, isPlayer, isMonster, isAnimal, isItem);
             }
 
-            boolean withinRange = dist <= ModuleManager.get(NameTags.class).range.getValue();
+            boolean withinRange = dist <= ModuleManager.get(NameTags.class).range;
             boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange && NameTags.itz().shouldDraw(target);
             if (drawNametags || hasOwner) {
                 LivingEntity livingTarget = (LivingEntity) target;
@@ -397,11 +397,11 @@ public final class HudRenderer {
                 int health = (int) Math.ceil(livingTarget.getHealth());
                 int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
                 String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-                double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont.getValue() ? FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText)) : 0.0;
-                double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont.getValue() ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName)) : 0.0;
+                double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText)) : 0.0;
+                double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName)) : 0.0;
 
-                boolean showArmor = drawNametags && ModuleManager.get(NameTags.class).armor.getValue();
-                boolean showHands = drawNametags && ModuleManager.get(NameTags.class).handItems.getValue();
+                boolean showArmor = drawNametags && ModuleManager.get(NameTags.class).armor;
+                boolean showHands = drawNametags && ModuleManager.get(NameTags.class).handItems;
                 boolean hasMainHand = drawNametags && !livingTarget.getMainHandItem().isEmpty();
                 boolean hasOffHand = drawNametags && !livingTarget.getOffhandItem().isEmpty();
 
@@ -418,7 +418,7 @@ public final class HudRenderer {
                     || (livingTarget instanceof net.minecraft.world.entity.monster.skeleton.AbstractSkeleton)
                     || (livingTarget instanceof net.minecraft.world.entity.monster.piglin.AbstractPiglin);
 
-                double[] layout = NameTags.calculateLayout(dist, ModuleManager.get(NameTags.class).size.getValue(), NameTags.itz().distScale.getValue(), showArmor, showHands, hasOwner, tw, ow, hasMainHand, hasOffHand, armorCount, alwaysShowSlots);
+                double[] layout = NameTags.calculateLayout(dist, ModuleManager.get(NameTags.class).size, NameTags.itz().distScale, showArmor, showHands, hasOwner, tw, ow, hasMainHand, hasOffHand, armorCount, alwaysShowSlots);
 
                 double scale = layout[0], totalW = layout[1], totalH = layout[2];
                 double armorRowY = layout[3], mainRowY = layout[4], ownerRowY = layout[5];
@@ -430,12 +430,12 @@ public final class HudRenderer {
     }
 
     private void renderESPBox(GuiGraphics context, Minecraft mc, Entity target, int boxX, int y, int boxW, int boxH, boolean isPlayer, boolean isMonster, boolean isAnimal, boolean isItem) {
-        String mode = ModuleManager.get(ESP.class).mode.getValue();
-        int espColor = isPlayer ? ModuleManager.get(ESP.class).playerColor.getValue()
-            : (isMonster ? ModuleManager.get(ESP.class).mobColor.getValue()
-            : (isAnimal ? ModuleManager.get(ESP.class).animalColor.getValue()
-            : (isItem ? ModuleManager.get(ESP.class).itemColor.getValue()
-            : ModuleManager.get(ESP.class).frameColor.getValue())));
+        String mode = ModuleManager.get(ESP.class).mode;
+        int espColor = isPlayer ? ModuleManager.get(ESP.class).playerColor
+            : (isMonster ? ModuleManager.get(ESP.class).mobColor
+            : (isAnimal ? ModuleManager.get(ESP.class).animalColor
+            : (isItem ? ModuleManager.get(ESP.class).itemColor
+            : ModuleManager.get(ESP.class).frameColor)));
 
         if ("Box2D".equals(mode)) {
             context.fill(boxX, y, boxX + boxW, y + 1, espColor);
@@ -456,10 +456,10 @@ public final class HudRenderer {
         int health = (int) Math.ceil(livingTarget.getHealth());
         int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
         String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-        double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont.getValue() ? FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText)) : 0.0;
-        double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont.getValue() ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName)) : 0.0;
-        boolean showArmor = drawNametags && ModuleManager.get(NameTags.class).armor.getValue();
-        boolean showHands = drawNametags && ModuleManager.get(NameTags.class).handItems.getValue();
+        double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText)) : 0.0;
+        double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName)) : 0.0;
+        boolean showArmor = drawNametags && ModuleManager.get(NameTags.class).armor;
+        boolean showHands = drawNametags && ModuleManager.get(NameTags.class).handItems;
         boolean hasMainHand = drawNametags && !livingTarget.getMainHandItem().isEmpty();
         boolean hasOffHand = drawNametags && !livingTarget.getOffhandItem().isEmpty();
         int armorCount = 0;
@@ -477,9 +477,9 @@ public final class HudRenderer {
         context.pose().translate((float) bx, (float) y);
         context.pose().scale((float) scale, (float) scale);
 
-        boolean bgEnabled = drawNametags ? ModuleManager.get(NameTags.class).background.getValue() : (hasOwner && ModuleManager.get(MobOwner.class).background.getValue());
+        boolean bgEnabled = drawNametags ? ModuleManager.get(NameTags.class).background : (hasOwner && ModuleManager.get(MobOwner.class).background);
         if (bgEnabled) {
-            int bgColor = drawNametags ? ModuleManager.get(NameTags.class).backgroundColor.getValue() : 0x7005050A;
+            int bgColor = drawNametags ? ModuleManager.get(NameTags.class).backgroundColor : 0x7005050A;
             int bgLeft = (int)(-totalW / 2.0 - 4.0);
             int bgRight = (int)(totalW / 2.0 + 4.0);
             int bgBottom = -1;
@@ -496,7 +496,7 @@ public final class HudRenderer {
                 int activeColor = ravex.gui.clickgui.ColorUtility.getActiveColor();
                 borderCol = ravex.utility.render.ColorUtility.withAlpha(activeColor, 120);
             } else if (hasOwner) {
-                drawBorder = ModuleManager.get(MobOwner.class).background.getValue();
+                drawBorder = ModuleManager.get(MobOwner.class).background;
                 borderCol = 0x44FFAA00;
             }
             if (drawBorder) {
@@ -585,7 +585,7 @@ public final class HudRenderer {
         if (drawNametags) {
             int rx = (int)(-tw / 2.0);
             int mY = (int) mainRowY;
-            if (ModuleManager.get(NameTags.class).customFont.getValue()) {
+            if (ModuleManager.get(NameTags.class).customFont) {
                 FontRenderUtility.drawString(context, tagText, rx, mY, 0xFFFFFFFF, false);
             } else {
                 context.drawString(mc.font, tagText, rx, mY, 0xFFFFFFFF, false);
@@ -595,10 +595,10 @@ public final class HudRenderer {
         if (hasOwner) {
             int otx = (int)(-ow / 2.0);
             int oty = (int) ownerRowY;
-            if (ModuleManager.get(NameTags.class).customFont.getValue()) {
-                FontRenderUtility.drawString(context, "Owner: " + ownerName, otx, oty, ModuleManager.get(MobOwner.class).textColor.getValue(), false);
+            if (ModuleManager.get(NameTags.class).customFont) {
+                FontRenderUtility.drawString(context, "Owner: " + ownerName, otx, oty, ModuleManager.get(MobOwner.class).textColor, false);
             } else {
-                context.drawString(mc.font, "Owner: " + ownerName, otx, oty, ModuleManager.get(MobOwner.class).textColor.getValue(), false);
+                context.drawString(mc.font, "Owner: " + ownerName, otx, oty, ModuleManager.get(MobOwner.class).textColor, false);
             }
         }
 
@@ -620,7 +620,7 @@ public final class HudRenderer {
 
 
         AutoCrystal ac = ModuleManager.get(AutoCrystal.class);
-        if (ac.getEnabled() && ac.renderDamage.getValue() && AutoCrystal.currentPlacementBlock != null) {
+        if (ac.getEnabled() && ac.renderDamage && AutoCrystal.currentPlacementBlock != null) {
             BlockPos p = AutoCrystal.currentPlacementBlock;
             Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
             Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
@@ -640,7 +640,7 @@ public final class HudRenderer {
 
 
         PVEUtils asm = ModuleManager.get(PVEUtils.class);
-        if (asm.getEnabled() && asm.mode.getValue().equals("AutoSmelt") && asm.smeltRender.getValue() && PVEUtils.smeltTarget != null) {
+        if (asm.getEnabled() && asm.mode.equals("AutoSmelt") && asm.smeltRender && PVEUtils.smeltTarget != null) {
             BlockPos p = PVEUtils.smeltTarget;
             Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
             Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
@@ -665,7 +665,7 @@ public final class HudRenderer {
         }
 
 
-        if (asm.getEnabled() && asm.mode.getValue().equals("AutoBrew") && asm.brewRender.getValue()) {
+        if (asm.getEnabled() && asm.mode.equals("AutoBrew") && asm.brewRender) {
             BlockPos p = PVEUtils.getBrewTarget();
             if (p != null) {
                 Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
@@ -727,7 +727,7 @@ public final class HudRenderer {
 
     private void renderPacketMine(GuiGraphics context, Minecraft mc) {
         PacketMine pm = ModuleManager.get(PacketMine.class);
-        if (pm.getEnabled() && pm.render.getValue()) {
+        if (pm.getEnabled() && pm.render) {
             for (var mb : PacketMine.miningBlocks) {
                 if (mb == null || mb.pos == null) continue;
                 long now = System.currentTimeMillis();
@@ -750,10 +750,10 @@ public final class HudRenderer {
 
     private void renderWaypoints(GuiGraphics context, Minecraft mc) {
         if (ModuleManager.get(Waypoint.class).getEnabled()) {
-            int wpColor = ModuleManager.get(Waypoint.class).color.getValue();
+            int wpColor = ModuleManager.get(Waypoint.class).color;
             String currentDim = mc.level != null ? mc.level.dimension().identifier().toString() : null;
-            boolean showDist = ModuleManager.get(Waypoint.class).showDistance.getValue();
-            boolean showNm = ModuleManager.get(Waypoint.class).showName.getValue();
+            boolean showDist = ModuleManager.get(Waypoint.class).showDistance;
+            boolean showNm = ModuleManager.get(Waypoint.class).showName;
             for (var wp : Waypoint.getWaypoints()) {
                 if (currentDim != null && !wp.dimension().equals(currentDim)) continue;
                 Vec3 pos3d = new Vec3(wp.x() + 0.5, wp.y() + 1.5, wp.z() + 0.5);

@@ -1,17 +1,18 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
 @ModuleInfo(name = "AutoWither", category = "World")
-public class AutoWither extends ravex.modules.Module {
-public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0, 1.0);
-    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
+public class AutoWither implements ModuleAccess {
+    @Parameter(name = "Count", min = 1.0, max = 12.0, step = 1.0)
+    public double count = 1.0;
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = true;
     private enum State { IDLE, BUILDING, RETRY, DONE }
     private State state = State.IDLE;
     private int baseX, baseY, baseZ;
@@ -26,7 +27,7 @@ public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0
         {1, 0, 0}, {0, 1, 0}, {1, 1, 0}, {2, 1, 0}, {0, 2, 0}, {2, 2, 0}, {1, 2, 0},
     };
     private static final int SOUL_SAND_COUNT = 4;
-    protected void onEnable() {
+    public void onEnable() {
         state = State.IDLE;
         hasBase = false;
         buildIndex = 0;
@@ -34,7 +35,7 @@ public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0
         hasFailed = false;
         buildsCompleted = 0;
     }
-    protected void onDisable() {
+    public void onDisable() {
         state = State.IDLE;
         hasBase = false;
         buildIndex = 0;
@@ -115,7 +116,7 @@ public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0
             }
         }
         sendMsg(mc, "NoSuitablePositionFound");
-        enabled = false;
+        ravex.manager.ModuleManager.INSTANCE.getByName("AutoWither").setEnabled(false);
     }
     private void tryPlaceNext(Minecraft mc, long now) {
         if (now - lastActionTime < 50) return;
@@ -137,7 +138,7 @@ public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0
         int slot = findItemSlot(mc);
         if (slot == -1) {
             sendMsg(mc, getMissingMsg());
-            enabled = false;
+            ravex.manager.ModuleManager.INSTANCE.getByName("AutoWither").setEnabled(false);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.player);
@@ -181,7 +182,7 @@ public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0
         int slot = findItemSlot(mc);
         if (slot == -1) {
             sendMsg(mc, getMissingMsg());
-            enabled = false;
+            ravex.manager.ModuleManager.INSTANCE.getByName("AutoWither").setEnabled(false);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.player);
@@ -196,7 +197,7 @@ public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0
     }
     private void doDone(Minecraft mc) {
         buildsCompleted++;
-        int target = count.getValue().intValue();
+        int target = (int) count;
         if (buildsCompleted < target && hasBase) {
             baseX += 5;
             buildIndex = 0;
@@ -204,8 +205,8 @@ public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0
             hasFailed = false;
             state = State.BUILDING;
         } else {
-            if (autoDisable.getValue()) {
-                enabled = false;
+            if (autoDisable) {
+                ravex.manager.ModuleManager.INSTANCE.getByName("AutoWither").setEnabled(false);
             } else {
                 state = State.IDLE;
             }
@@ -258,16 +259,5 @@ public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0
         return ravex.manager.ModuleManager.delegate(AutoWither.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

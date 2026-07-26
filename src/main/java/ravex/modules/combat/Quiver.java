@@ -1,24 +1,26 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.inventory.ClickType;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.ArrayList;
 import java.util.List;
 @ModuleInfo(name = "Quiver", category = "Combat")
-public class Quiver extends ravex.modules.Module {
-public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", List.of("Healing", "Speed", "Strength", "FireResistance"));
-    public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal"));
-    public final NumberParameter chargeDuration = new NumberParameter("ChargeTicks", 3.0, 2.0, 10.0, 1.0);
-    public final BooleanParameter autoSwapBow = new BooleanParameter("AutoSwapBow", true);
+public class Quiver implements ModuleAccess {
+    @Parameter(name = "ArrowType", modes = {"Healing", "Speed", "Strength", "FireResistance"})
+    public String arrowType = "Speed";
+    @Parameter(name = "Rotate", modes = {"Silent", "Normal"})
+    public String rotate = "Silent";
+    @Parameter(name = "ChargeTicks", min = 2.0, max = 10.0, step = 1.0)
+    public double chargeDuration = 3.0;
+    @Parameter(name = "AutoSwapBow")
+    public boolean autoSwapBow = true;
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private int state = 0;
     private int ticksHolding = 0;
@@ -32,13 +34,13 @@ public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", L
     static {
         NATIVE.load();
     }
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (state == 1 && mc.player != null && mc.gameMode != null) {
             mc.player.releaseUsingItem();
             mc.gameMode.releaseUsingItem(mc.player);
             mc.options.keyUse.setDown(false);
-            if (rotate.getValue().equals("Normal")) {
+            if (rotate.equals("Normal")) {
                 mc.player.setYRot(savedClientYaw);
                 mc.player.setXRot(savedClientPitch);
             }
@@ -66,14 +68,14 @@ public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", L
             return;
         }
         if (state == 1) {
-            if (rotate.getValue().equals("Normal")) {
+            if (rotate.equals("Normal")) {
                 mc.player.setXRot(-90.0f);
             } else {
                 silentRotation.set(mc.player.getYRot(), -90.0f);
             }
             mc.options.keyUse.setDown(true);
             ticksHolding++;
-            if (ticksHolding >= chargeDuration.getValue().intValue()) {
+            if (ticksHolding >= (int) chargeDuration) {
                 mc.options.keyUse.setDown(false);
                 mc.player.releaseUsingItem();
                 mc.gameMode.releaseUsingItem(mc.player);
@@ -90,27 +92,27 @@ public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", L
                 net.minecraft.network.chat.Component.literal("§7[§cQuiver§7] §cNo bow found in hotbar! Disabling..."),
                 false
             );
-            enabled = false;
+            ravex.manager.ModuleManager.INSTANCE.getByName("Quiver").setEnabled(false);
             return;
         }
         int bestArrowIndex = findBestArrowIndex(mc);
         if (bestArrowIndex == -1) {
             mc.player.displayClientMessage(
-                net.minecraft.network.chat.Component.literal("§7[§cQuiver§7] §cNo arrows of type " + arrowType.getValue() + " found! Disabling..."),
+                net.minecraft.network.chat.Component.literal("§7[§cQuiver§7] §cNo arrows of type " + arrowType + " found! Disabling..."),
                 false
             );
-            enabled = false;
+            ravex.manager.ModuleManager.INSTANCE.getByName("Quiver").setEnabled(false);
             return;
         }
         arrowInvSlot = bestArrowIndex;
         previousSelectedSlot = InventoryUtility.getSelectedSlot(mc.player);
-        if (autoSwapBow.getValue() && previousSelectedSlot != bowSlot) {
+        if (autoSwapBow && previousSelectedSlot != bowSlot) {
             InventoryUtility.selectSlot(mc.player, bowSlot);
         }
         InventoryUtility.swapToOffhand(mc, mc.player, arrowInvSlot);
         savedClientYaw = mc.player.getYRot();
         savedClientPitch = mc.player.getXRot();
-        if (rotate.getValue().equals("Normal")) {
+        if (rotate.equals("Normal")) {
             mc.player.setXRot(-90.0f);
         } else {
             silentRotation.set(mc.player.getYRot(), -90.0f);
@@ -129,7 +131,7 @@ public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", L
             InventoryUtility.selectSlot(mc.player, previousSelectedSlot);
             previousSelectedSlot = -1;
         }
-        if (rotate.getValue().equals("Normal") && mc.player != null) {
+        if (rotate.equals("Normal") && mc.player != null) {
             mc.player.setYRot(savedClientYaw);
             mc.player.setXRot(savedClientPitch);
         }
@@ -190,13 +192,13 @@ public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", L
             resultIdx = nativeSelectBestArrow(
                 activeEffArr, activeAmpArr, activeDurArr,
                 arrowEffArr, arrowAmpArr,
-                arrowType.getValue()
+                arrowType
             );
         } else {
             resultIdx = javaSelectBestArrow(
                 activeEffects, activeAmps, activeDurs,
                 arrowEffects, arrowAmplifiers,
-                arrowType.getValue()
+                arrowType
             );
         }
         if (resultIdx >= 0 && resultIdx < inventorySlots.size()) {
@@ -269,16 +271,5 @@ public final ModeParameter arrowType = new ModeParameter("ArrowType", "Speed", L
         String preferredType
     );
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

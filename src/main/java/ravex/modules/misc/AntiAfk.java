@@ -1,35 +1,41 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 @ModuleInfo(name = "AntiAfk", category = "Misc")
-public class AntiAfk extends ravex.modules.Module {
-public final NumberParameter interval   = new NumberParameter("Interval", 12.0, 5.0, 60.0, 1.0);
-    public final BooleanParameter mouseMove = new BooleanParameter("MouseMove", true);
-    public final BooleanParameter keyPress  = new BooleanParameter("KeyPress", true);
-    public final BooleanParameter lookAround = new BooleanParameter("LookAround", true);
-    public final BooleanParameter jump      = new BooleanParameter("Jump", true);
-    public final NumberParameter rotationRange = new NumberParameter("Rotation", 45.0, 10.0, 180.0, 5.0);
-    public final BooleanParameter debugLog = new BooleanParameter("DebugLog", false);
+public class AntiAfk implements ModuleAccess {
+    @Parameter(name = "Interval", min = 5.0, max = 60.0, step = 1.0)
+    public double interval = 12.0;
+    @Parameter(name = "MouseMove")
+    public boolean mouseMove = true;
+    @Parameter(name = "KeyPress")
+    public boolean keyPress = true;
+    @Parameter(name = "LookAround")
+    public boolean lookAround = true;
+    @Parameter(name = "Jump")
+    public boolean jump = true;
+    @Parameter(name = "Rotation", min = 10.0, max = 180.0, step = 5.0)
+    public double rotationRange = 45.0;
+    @Parameter(name = "DebugLog")
+    public boolean debugLog = false;
 
     static {
         ravex.utility.nativelib.NativeLoader.load();
     }
-    protected void onEnable() {
+    public void onEnable() {
         try {
-            int intervalMs = (int)(interval.getValue() * 1000.0);
+            int intervalMs = (int)(interval * 1000.0);
             int jitterMs   = (int)(intervalMs * 0.3);
-            int rotRange   = rotationRange.getValue().intValue();
+            int rotRange   = (int) rotationRange;
             boolean ok = nativeStart(intervalMs, jitterMs,
-                mouseMove.getValue(), false,
-                keyPress.getValue(), lookAround.getValue(),
-                jump.getValue(), rotRange);
+                mouseMove, false,
+                keyPress, lookAround,
+                jump, rotRange);
             Minecraft mc = Minecraft.getInstance();
             if (ok) {
-                if (debugLog.getValue() && mc.player != null) {
+                if (debugLog && mc.player != null) {
                     mc.player.displayClientMessage(
                         Component.literal("§7[§cRaveX§7] §aAntiAFK started (native)"), false);
                 }
@@ -40,19 +46,19 @@ public final NumberParameter interval   = new NumberParameter("Interval", 12.0, 
             startFallback();
         }
     }
-    protected void onDisable() {
+    public void onDisable() {
         try {
             nativeStop();
         } catch (UnsatisfiedLinkError ignored) {}
         Minecraft mc = Minecraft.getInstance();
-        if (debugLog.getValue() && mc.player != null) {
+        if (debugLog && mc.player != null) {
             mc.player.displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §cAntiAFK stopped"), false);
         }
     }
     private void startFallback() {
         Minecraft mc = Minecraft.getInstance();
-        if (debugLog.getValue() && mc.player != null) {
+        if (debugLog && mc.player != null) {
             mc.player.displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §eAntiAFK fallback (Java)"), false);
         }
@@ -68,16 +74,5 @@ public final NumberParameter interval   = new NumberParameter("Interval", 12.0, 
         return ravex.manager.ModuleManager.delegate(AntiAfk.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

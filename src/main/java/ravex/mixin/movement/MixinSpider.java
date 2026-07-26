@@ -21,13 +21,13 @@ public class MixinSpider {
 
         if (!player.horizontalCollision && !isAgainstWall(player)) return;
 
-        String mode = Spider.itz().mode.getValue();
+        String mode = Spider.itz().mode;
         double motion;
 
         switch (mode) {
             case "Normal" -> motion = 0.2;
             case "NCP" -> motion = 0.18;
-            case "Custom" -> motion = Spider.itz().motion.getValue();
+            case "Custom" -> motion = Spider.itz().motion;
             default -> motion = 0.2;
         }
 

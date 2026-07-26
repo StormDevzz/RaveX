@@ -1,6 +1,7 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import ravex.event.Subscribe;
@@ -8,27 +9,25 @@ import ravex.event.network.PacketEvent;
 import ravex.mixin.network.AccessorClientIntentionPacket;
 
 import ravex.parameter.StringParameter;
-import ravex.parameter.NumberParameter;
-import ravex.parameter.ModeParameter;
 import ravex.manager.LuaManager;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.LuaFunction;
 import java.util.List;
 @ModuleInfo(name = "Handshake", category = "net.minecraft.world.entity.player.Player")
-public class Handshake extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Basic",
-            List.of("Basic", "Forge", "Lunar", "Custom"));
-    public final StringParameter hostSuffix = new StringParameter("Suffix", "\u0000LUNAR\u0000");
-    public final NumberParameter protocol = new NumberParameter("Protocol", 767.0, 47.0, 1000.0, 1.0);
+public class Handshake implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Basic", "Forge", "Lunar", "Custom"})
+    public String mode = "Basic";
+    @Parameter(name = "Suffix")
+    public String hostSuffix = "\u0000LUNAR\u0000";
+    @Parameter(name = "Protocol", min = 47.0, max = 1000.0, step = 1.0)
+    public double protocol = 767.0;
 
     public Handshake() {
-        hostSuffix.setVisible(() -> mode.getValue().equals("Custom"));
-        protocol.setVisible(() -> mode.getValue().equals("Custom"));
     }
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!getEnabled() || !event.isSend()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Handshake").getEnabled() || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (packet instanceof ClientIntentionPacket handshakePacket) {
             AccessorClientIntentionPacket accessor = (AccessorClientIntentionPacket) (Object) handshakePacket;
@@ -38,11 +37,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Basic",
     }
 
     public String getSpoofedHost(String originalHost) {
-        if (!getEnabled()) return originalHost;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Handshake").getEnabled()) return originalHost;
         LuaValue fn = LuaManager.INSTANCE.getGlobals().get("onHandshake");
         if (fn.isfunction()) {
             try {
-                LuaValue[] args = { LuaValue.valueOf(originalHost), LuaValue.valueOf((int) protocol.getValue().doubleValue()) };
+                LuaValue[] args = { LuaValue.valueOf(originalHost), LuaValue.valueOf((int) (double) protocol) };
                 org.luaj.vm2.Varargs res = ((LuaFunction) fn).invoke(LuaValue.varargsOf(args));
                 if (res.narg() >= 1 && !res.arg(1).isnil()) {
                     return res.arg(1).tojstring();
@@ -51,7 +50,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Basic",
                 System.err.println("[Lua Handshake Error] " + e.getMessage());
             }
         }
-        String m = mode.getValue();
+        String m = mode;
         switch (m) {
             case "Forge":
                 return originalHost + "\u0000FML\u0000";
@@ -60,11 +59,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Basic",
             case "Basic":
                 return originalHost;
             default:
-                return originalHost + hostSuffix.getValue();
+                return originalHost + hostSuffix;
         }
     }
     public int getSpoofedProtocol(int originalProtocol) {
-        if (!getEnabled()) return originalProtocol;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Handshake").getEnabled()) return originalProtocol;
         LuaValue fn = LuaManager.INSTANCE.getGlobals().get("onHandshake");
         if (fn.isfunction()) {
             try {
@@ -77,7 +76,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Basic",
                 System.err.println("[Lua Handshake Error] " + e.getMessage());
             }
         }
-        String m = mode.getValue();
+        String m = mode;
         switch (m) {
             case "Forge":
             case "Lunar":
@@ -85,7 +84,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Basic",
             case "Basic":
                 return originalProtocol;
             default:
-                return (int) protocol.getValue().doubleValue();
+                return (int) (double) protocol;
         }
     }
     public static boolean maybeEnabled() {
@@ -95,16 +94,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Basic",
         return ravex.manager.ModuleManager.delegate(Handshake.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

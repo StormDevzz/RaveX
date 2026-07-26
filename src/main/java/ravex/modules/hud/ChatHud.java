@@ -1,19 +1,20 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 
 import ravex.modules.client.Hud;
 
-import ravex.parameter.NumberParameter;
 @ModuleInfo(name = "ChatHud", category = "HUD")
 public class ChatHud extends ravex.modules.Module {
     public int x;
     public int y;
     public int width;
     public int height;
-public final NumberParameter scale = new NumberParameter("Scale", 1.0, 0.25, 4.0, 0.05);
+    @Parameter(name = "Scale", min = 0.25, max = 4.0, step = 0.05)
+    public double scale = 1.0;
     private ChatHud() {
+        super("ChatHud", 2, 30, 200, 100);
         this.x = 4; this.y = 4; this.width = 0; this.height = 0;
     }
     public void render(GuiGraphics graphics, float partialTicks) {
@@ -27,18 +28,7 @@ public final NumberParameter scale = new NumberParameter("Scale", 1.0, 0.25, 4.0
         return ravex.manager.ModuleManager.delegate(ChatHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

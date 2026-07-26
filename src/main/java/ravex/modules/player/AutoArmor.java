@@ -1,41 +1,50 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.DependencyParameter;
-import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.ArmorUtility;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.EquipmentSlot;
+import ravex.parameter.ModeParameter;
 import java.util.List;
 
+
+
+
 @ModuleInfo(name = "AutoArmor", category = "net.minecraft.world.entity.player.Player")
-public class AutoArmor extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Normal",
-            List.of("Normal", "Legit", "Custom"));
-    public final NumberParameter delay = new NumberParameter("Delay", 150.0, 0.0, 1000.0, 10.0);
-    public final BooleanParameter onlyBetter = new BooleanParameter("OnlyBetter", true);
-    public final BooleanParameter helmet = new BooleanParameter("Helmet", true);
-    public final BooleanParameter chestplate = new BooleanParameter("Chestplate", true);
-    public final BooleanParameter leggings = new BooleanParameter("Leggings", true);
-    public final BooleanParameter boots = new BooleanParameter("Boots", true);
+public class AutoArmor implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Normal", "Legit", "Custom"})
+    public String mode = "Normal";
+    @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
+    public double delay = 150.0;
+    @Parameter(name = "OnlyBetter")
+    public boolean onlyBetter = true;
+    @Parameter(name = "Helmet")
+    public boolean helmet = true;
+    @Parameter(name = "Chestplate")
+    public boolean chestplate = true;
+    @Parameter(name = "Leggings")
+    public boolean leggings = true;
+    @Parameter(name = "Boots")
+    public boolean boots = true;
     public final DependencyParameter<Double, NumberParameter> customDelay =
-            new DependencyParameter<>(new NumberParameter("CustomDelay", 50.0, 0.0, 500.0, 10.0), mode, "Custom");
+            new DependencyParameter<>(new NumberParameter("CustomDelay", 50.0, 0.0, 500.0, 10.0), new ModeParameter("Mode", "Normal", List.of("Normal", "Legit", "Custom")), "Custom");
     public final DependencyParameter<Boolean, BooleanParameter> openInventory =
-            new DependencyParameter<>(new BooleanParameter("OpenInventory", true), mode, "Custom");
+            new DependencyParameter<>(new BooleanParameter("OpenInventory", true), new ModeParameter("Mode", "Normal", List.of("Normal", "Legit", "Custom")), "Custom");
     public final DependencyParameter<Boolean, BooleanParameter> ignoreEnchants =
-            new DependencyParameter<>(new BooleanParameter("IgnoreEnchants", false), mode, "Custom");
+            new DependencyParameter<>(new BooleanParameter("IgnoreEnchants", false), new ModeParameter("Mode", "Normal", List.of("Normal", "Legit", "Custom")), "Custom");
     private long lastEquipTime = 0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
-        String currentMode = mode.getValue();
+        String currentMode = mode;
         if ("Custom".equals(currentMode)) {
             tickCustom(mc, p);
         } else {
@@ -45,17 +54,17 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
 
     private boolean isSlotEnabled(int armorIndex) {
         return switch (armorIndex) {
-            case 0 -> helmet.getValue();
-            case 1 -> chestplate.getValue();
-            case 2 -> leggings.getValue();
-            case 3 -> boots.getValue();
+            case 0 -> helmet;
+            case 1 -> chestplate;
+            case 2 -> leggings;
+            case 3 -> boots;
             default -> true;
         };
     }
 
-    private void tickNormal(Minecraft mc, LocalPlayer p, String currentMode) {
+    private void tickNormal(Minecraft mc, net.minecraft.client.player.LocalPlayer p, String currentMode) {
         if (mc.screen != null && !(mc.screen instanceof InventoryScreen)) return;
-        if (System.currentTimeMillis() - lastEquipTime < delay.getValue()) return;
+        if (System.currentTimeMillis() - lastEquipTime < delay) return;
         for (int armorIndex = 0; armorIndex < 4; armorIndex++) {
             if (!isSlotEnabled(armorIndex)) continue;
             EquipmentSlot equipSlot = ArmorUtility.getEquipmentSlotForIndex(armorIndex);
@@ -64,7 +73,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             if (bestSlot == -1) continue;
             var bestStack = InventoryUtility.getItem(p, bestSlot);
             if (!ArmorUtility.isArmorItem(bestStack) || !ArmorUtility.slotMatches(bestStack, equipSlot)) continue;
-            if (onlyBetter.getValue() && !currentArmor.isEmpty()
+            if (onlyBetter && !currentArmor.isEmpty()
                 && !ArmorUtility.isBetterArmor(bestStack, currentArmor, equipSlot)) continue;
             if ("Legit".equals(currentMode)) {
                 int hotbarSlot = InventoryUtility.findEmptyHotbarSlot(p);
@@ -83,7 +92,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         }
     }
 
-    private void tickCustom(Minecraft mc, LocalPlayer p) {
+    private void tickCustom(Minecraft mc, net.minecraft.client.player.LocalPlayer p) {
         if (openInventory.getValue() && !(mc.screen instanceof InventoryScreen)) {
             return;
         }
@@ -96,7 +105,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             if (bestSlot == -1) continue;
             var bestStack = InventoryUtility.getItem(p, bestSlot);
             if (!ArmorUtility.isArmorItem(bestStack) || !ArmorUtility.slotMatches(bestStack, equipSlot)) continue;
-            if (onlyBetter.getValue() && !currentArmor.isEmpty()
+            if (onlyBetter && !currentArmor.isEmpty()
                 && !isBetterArmorIgnoreEnchants(bestStack, currentArmor, equipSlot)) continue;
             InventoryUtility.quickMoveStack(mc, p, bestSlot);
             lastEquipTime = System.currentTimeMillis();
@@ -114,7 +123,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         return ArmorUtility.isBetterArmor(a, b, slot);
     }
 
-    private int getBestHotbarSlot(LocalPlayer p) {
+    private int getBestHotbarSlot(net.minecraft.client.player.LocalPlayer p) {
         int bestSlot = -1;
         double bestScore = Double.MIN_VALUE;
         for (int i = 0; i < 9; i++) {
@@ -144,16 +153,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         return ravex.manager.ModuleManager.delegate(AutoArmor.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

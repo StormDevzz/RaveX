@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -16,8 +16,10 @@ import java.util.*;
 
 @ModuleInfo(name = "CooldownsHud", category = "HUD")
 public class CooldownsHud extends ravex.modules.Module {
-    public final ColorParameter color = new ColorParameter("Color", 0xFFFFCC33);
-    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFFFFCC33;
+    @Parameter(name = "Shadow")
+    public boolean shadow = true;
 
     public int x;
     public int y;
@@ -79,18 +81,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COOLDOWN_WHITE;
         return ravex.manager.ModuleManager.delegate(CooldownsHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

@@ -1,16 +1,19 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.EntityUtility;
+import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.PhysicUtility;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.gui.screens.inventory.BlastFurnaceScreen;
 import net.minecraft.client.gui.screens.inventory.BrewingStandScreen;
 import net.minecraft.client.gui.screens.inventory.FurnaceScreen;
-import net.minecraft.client.gui.screens.inventory.BlastFurnaceScreen;
 import net.minecraft.client.gui.screens.inventory.SmokerScreen;
-import net.minecraft.client.player.LocalPlayer;
-import ravex.utility.misc.block.BlockUtility;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
-import ravex.utility.player.SwingUtility;
-import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.animal.equine.Llama;
 import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.animal.wolf.Wolf;
@@ -19,55 +22,48 @@ import net.minecraft.world.inventory.BrewingStandMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.BrewingStandBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-import ravex.utility.misc.MobUtility;
-
-import ravex.utility.player.InventoryUtility;
 import java.util.List;
+
+
+
+
+
 @ModuleInfo(name = "PVEUtils", category = "World")
-public class PVEUtils extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
-        List.of("AutoSmelt", "AutoTame", "BoneMeal", "AutoBrew", "AutoLight"));
-    public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
-    public final BooleanParameter autoFuel = new BooleanParameter("AutoFuel", true);
-    public final BooleanParameter smeltRender = new BooleanParameter("SmeltRender", true);
-    public final ColorParameter smeltColor = new ColorParameter("SmeltColor", 0x3FFF8800);
-    public final BooleanParameter brewRender = new BooleanParameter("BrewRender", true);
-    public final ColorParameter brewColor = new ColorParameter("BrewColor", 0x3FCC44FF);
-    public final ModeParameter tameAnimal = new ModeParameter("Animal", "Wolf",
-        List.of("Wolf", "Cat", "Llama"));
-    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
-    public final NumberParameter lightLevel = new NumberParameter("LightLevel", 8, 0, 15, 1);
-    public final NumberParameter lightDelay = new NumberParameter("Delay", 500, 100, 2000, 50);
-    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
+public class PVEUtils implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"AutoSmelt", "AutoTame", "BoneMeal", "AutoBrew", "AutoLight"})
+    public String mode = "AutoSmelt";
+    @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "AutoFuel")
+    public boolean autoFuel = true;
+    @Parameter(name = "SmeltRender")
+    public boolean smeltRender = true;
+    @Parameter(name = "SmeltColor", color = true)
+    public int smeltColor = 0x3FFF8800;
+    @Parameter(name = "BrewRender")
+    public boolean brewRender = true;
+    @Parameter(name = "BrewColor", color = true)
+    public int brewColor = 0x3FCC44FF;
+    @Parameter(name = "Animal", modes = {"Wolf", "Cat", "Llama"})
+    public String tameAnimal = "Wolf";
+    @Parameter(name = "AutoSwitch")
+    public boolean autoSwitch = true;
+    @Parameter(name = "LightLevel", min = 0, max = 15, step = 1)
+    public double lightLevel = 8;
+    @Parameter(name = "Delay", min = 100, max = 2000, step = 50)
+    public double lightDelay = 500;
+    @Parameter(name = "SilentSwap")
+    public boolean silent = true;
     public static net.minecraft.core.BlockPos smeltTarget = null;
     private static int brewTargetX, brewTargetY, brewTargetZ;
     private static boolean hasBrewTarget;
     private long lastLightPlace = 0;
     private PVEUtils() {
         
-        tameAnimal.setVisible(() -> mode.getValue().equals("AutoTame"));
-        autoSwitch.setVisible(() -> mode.getValue().equals("AutoTame"));
-        autoFuel.setVisible(() -> mode.getValue().equals("AutoSmelt") || mode.getValue().equals("AutoBrew"));
-        smeltRender.setVisible(() -> mode.getValue().equals("AutoSmelt"));
-        smeltColor.setVisible(() -> mode.getValue().equals("AutoSmelt") && smeltRender.getValue());
-        brewRender.setVisible(() -> mode.getValue().equals("AutoBrew"));
-        brewColor.setVisible(() -> mode.getValue().equals("AutoBrew") && brewRender.getValue());
-        lightLevel.setVisible(() -> mode.getValue().equals("AutoLight"));
-        lightDelay.setVisible(() -> mode.getValue().equals("AutoLight"));
-        silent.setVisible(() -> mode.getValue().equals("AutoLight"));
-        range.setVisible(() -> mode.getValue().equals("AutoTame") || mode.getValue().equals("AutoLight") || mode.getValue().equals("BoneMeal") || mode.getValue().equals("AutoBrew") || mode.getValue().equals("AutoSmelt"));
     }
     public void onTick() {
-        switch (mode.getValue()) {
+        switch (mode) {
             case "AutoSmelt" -> tickSmelt();
             case "AutoTame" -> tickTame();
             case "AutoBrew" -> tickBrew();
@@ -86,7 +82,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
         if (smeltTarget == null) {
             if (mc.hitResult != null && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
                 net.minecraft.core.BlockPos pos = ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos();
-                BlockState st = mc.level.getBlockState(pos);
+                net.minecraft.world.level.block.state.BlockState st = mc.level.getBlockState(pos);
                 if (st.getBlock() instanceof AbstractFurnaceBlock) {
                     smeltTarget = pos;
                 }
@@ -122,7 +118,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
                 }
             }
         }
-        if (autoFuel.getValue() && !furnace.getSlot(1).hasItem()) {
+        if (autoFuel && !furnace.getSlot(1).hasItem()) {
             for (int i = playerInvStart; i < furnace.slots.size(); i++) {
                 var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
@@ -135,9 +131,9 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
     }
     private void tickTame() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
-        double r = range.getValue();
+        double r = range;
         AABB box = p.getBoundingBox().inflate(r);
         List<net.minecraft.world.entity.Entity> entities = mc.level.getEntities(p, box, e -> isTameTarget(e) && e.isAlive());
         for (net.minecraft.world.entity.Entity e : entities) {
@@ -145,7 +141,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
             if (!p.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND).isEmpty()) {
                 mc.gameMode.interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
                 break;
-            } else if (autoSwitch.getValue()) {
+            } else if (autoSwitch) {
                 int slot = findTameItem();
                 if (slot != -1) {
                     InventoryUtility.selectSlot(p, slot);
@@ -156,7 +152,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
         }
     }
     private boolean isTameTarget(net.minecraft.world.entity.Entity e) {
-        return switch (tameAnimal.getValue()) {
+        return switch (tameAnimal) {
             case "Wolf" -> e instanceof Wolf;
             case "Cat" -> e instanceof Cat;
             case "Llama" -> e instanceof Llama;
@@ -166,7 +162,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
     private int findTameItem() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return -1;
-        String mode = tameAnimal.getValue();
+        String mode = tameAnimal;
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty()) continue;
@@ -204,7 +200,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
         int containerId = brew.containerId;
         int playerInvStart = 5;
         int hotbarStart = playerInvStart + 27;
-        if (autoFuel.getValue() && brew.getFuel() <= 0) {
+        if (autoFuel && brew.getFuel() <= 0) {
             if (!brew.getSlot(4).hasItem()) {
                 for (int i = playerInvStart; i < brew.slots.size(); i++) {
                     var stack = brew.slots.get(i).getItem();
@@ -270,7 +266,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
-        if (now - lastLightPlace < lightDelay.getValue()) return;
+        if (now - lastLightPlace < lightDelay) return;
         int torchSlot = -1;
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
@@ -280,7 +276,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
             }
         }
         if (torchSlot == -1) return;
-        double r = range.getValue();
+        double r = range;
         var playerPos = mc.player.blockPosition();
         int minX = (int) Math.floor(playerPos.getX() - r);
         int maxX = (int) Math.ceil(playerPos.getX() + r);
@@ -288,7 +284,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
         int maxY = (int) Math.ceil(playerPos.getY() + r);
         int minZ = (int) Math.floor(playerPos.getZ() - r);
         int maxZ = (int) Math.ceil(playerPos.getZ() + r);
-        int targetLight = lightLevel.getValue().intValue();
+        int targetLight = (int) lightLevel;
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
@@ -304,8 +300,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
                     if (center.distanceToSqr(mc.player.getEyePosition()) > r * r) continue;
                     int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
                     InventoryUtility.selectSlot(mc.player, torchSlot);
-                    BlockUtility.useItemOn(mc, new BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false));
-                    if (silent.getValue()) {
+                    BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false));
+                    if (silent) {
                         InventoryUtility.selectSlot(mc.player, prevSlot);
                     }
                     lastLightPlace = now;
@@ -314,7 +310,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
             }
         }
     }
-    protected void onDisable() {
+    public void onDisable() {
         smeltTarget = null;
         hasBrewTarget = false;
     }
@@ -326,16 +322,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
         return ravex.manager.ModuleManager.delegate(PVEUtils.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

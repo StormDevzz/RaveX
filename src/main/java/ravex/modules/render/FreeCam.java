@@ -1,14 +1,13 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 @ModuleInfo(name = "FreeCam", category = "Render")
-public class FreeCam extends ravex.modules.Module {
+public class FreeCam implements ModuleAccess {
 public double x, y, z;
     public float yaw, pitch;
     public double prevX, prevY, prevZ;
@@ -16,12 +15,17 @@ public double x, y, z;
     private double targetX, targetY, targetZ;
     private double frozenX, frozenY, frozenZ;
     private float frozenYaw, frozenPitch;
-    public final NumberParameter speed = new NumberParameter("Speed", 0.5, 0.1, 5.0, 0.1);
-    public final BooleanParameter freeze = new BooleanParameter("Freeze", true);
-    public final BooleanParameter blockInteract = new BooleanParameter("BlockInteract", true);
-    public final BooleanParameter entityInteract = new BooleanParameter("EntityInteract", true);
-    public final BooleanParameter noSwing = new BooleanParameter("NoSwing", false);
-    protected void onEnable() {
+    @Parameter(name = "Speed", min = 0.1, max = 5.0, step = 0.1)
+    public double speed = 0.5;
+    @Parameter(name = "Freeze")
+    public boolean freeze = true;
+    @Parameter(name = "BlockInteract")
+    public boolean blockInteract = true;
+    @Parameter(name = "EntityInteract")
+    public boolean entityInteract = true;
+    @Parameter(name = "NoSwing")
+    public boolean noSwing = false;
+    public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             double startX = mc.player.getX();
@@ -44,11 +48,11 @@ public double x, y, z;
             this.targetZ = this.z;
         }
     }
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             mc.player.setDeltaMovement(0, 0, 0);
-            if (freeze.getValue()) {
+            if (freeze) {
                 mc.player.setPos(frozenX, frozenY, frozenZ);
                 mc.player.setYRot(frozenYaw);
                 mc.player.setXRot(frozenPitch);
@@ -62,10 +66,10 @@ public double x, y, z;
     }
     @Subscribe
     public void onTick(TickEvent.Client event) {
-        if (!getEnabled()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("FreeCam").getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        if (freeze.getValue()) {
+        if (freeze) {
             mc.player.setYRot(frozenYaw);
             mc.player.setXRot(frozenPitch);
             mc.player.setPos(frozenX, frozenY, frozenZ);
@@ -77,7 +81,7 @@ public double x, y, z;
             mc.player.setYRot(frozenYaw + clamped);
             mc.player.setXRot(this.pitch);
         }
-        double moveSpeed = speed.getValue();
+        double moveSpeed = speed;
         boolean keyUp = mc.options.keyUp.isDown();
         boolean keyDown = mc.options.keyDown.isDown();
         boolean keyLeft = mc.options.keyLeft.isDown();
@@ -158,16 +162,5 @@ public double x, y, z;
         return ravex.manager.ModuleManager.delegate(FreeCam.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

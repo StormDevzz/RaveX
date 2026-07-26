@@ -1,39 +1,49 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.client.player.LocalPlayer;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
 import java.util.List;
+
+
+
+
 @ModuleInfo(name = "SoundBlock", category = "Misc")
-public class SoundBlock extends ravex.modules.Module {
-public final BooleanParameter blockAmbient   = new BooleanParameter("Ambient", false);
-    public final BooleanParameter blockBlocks    = new BooleanParameter("net.minecraft.world.level.block.Blocks", false);
-    public final BooleanParameter blockWeather   = new BooleanParameter("Weather", false);
-    public final BooleanParameter blockHostile   = new BooleanParameter("Hostile", false);
-    public final BooleanParameter blockNeutral   = new BooleanParameter("Neutral", false);
-    public final BooleanParameter blockPlayers   = new BooleanParameter("Players", false);
-    public final BooleanParameter blockVoice     = new BooleanParameter("Voice", false);
-    public final BooleanParameter blockMusic     = new BooleanParameter("Music", false);
-    public final BooleanParameter blockRecords   = new BooleanParameter("Records", false);
+public class SoundBlock implements ModuleAccess {
+    @Parameter(name = "Ambient")
+    public boolean blockAmbient = false;
+    @Parameter(name = "net.minecraft.world.level.block.Blocks")
+    public boolean blockBlocks = false;
+    @Parameter(name = "Weather")
+    public boolean blockWeather = false;
+    @Parameter(name = "Hostile")
+    public boolean blockHostile = false;
+    @Parameter(name = "Neutral")
+    public boolean blockNeutral = false;
+    @Parameter(name = "Players")
+    public boolean blockPlayers = false;
+    @Parameter(name = "Voice")
+    public boolean blockVoice = false;
+    @Parameter(name = "Music")
+    public boolean blockMusic = false;
+    @Parameter(name = "Records")
+    public boolean blockRecords = false;
 
     public boolean shouldBlock(SoundInstance sound) {
-        if (!getEnabled()) return false;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("SoundBlock").getEnabled()) return false;
         var source = sound.getSource();
         if (source == null) return false;
         return switch (source) {
-            case AMBIENT -> blockAmbient.getValue();
-            case BLOCKS -> blockBlocks.getValue();
-            case WEATHER -> blockWeather.getValue();
-            case HOSTILE -> blockHostile.getValue();
-            case NEUTRAL -> blockNeutral.getValue();
-            case PLAYERS -> blockPlayers.getValue();
-            case VOICE -> blockVoice.getValue();
-            case MUSIC -> blockMusic.getValue();
-            case RECORDS -> blockRecords.getValue();
+            case AMBIENT -> blockAmbient;
+            case BLOCKS -> blockBlocks;
+            case WEATHER -> blockWeather;
+            case HOSTILE -> blockHostile;
+            case NEUTRAL -> blockNeutral;
+            case PLAYERS -> blockPlayers;
+            case VOICE -> blockVoice;
+            case MUSIC -> blockMusic;
+            case RECORDS -> blockRecords;
             default -> false;
         };
     }
@@ -46,16 +56,5 @@ public final BooleanParameter blockAmbient   = new BooleanParameter("Ambient", f
         return ravex.manager.ModuleManager.delegate(SoundBlock.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

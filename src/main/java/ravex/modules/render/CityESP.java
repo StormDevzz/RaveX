@@ -1,26 +1,29 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
 
 import ravex.modules.combat.KillAura;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
-
 import java.util.ArrayList;
 import java.util.List;
 
 @ModuleInfo(name = "CityESP", category = "Render")
-public class CityESP extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 10.0, 0.5);
-    public final NumberParameter renderRange = new NumberParameter("RenderRange", 64.0, 8.0, 128.0, 8.0);
-    public final BooleanParameter filled = new BooleanParameter("Filled", true);
-    public final BooleanParameter wireframe = new BooleanParameter("Wireframe", true);
-    public final ColorParameter fillColor = new ColorParameter("FillColor", 0x33FF0000);
-    public final ColorParameter lineColor = new ColorParameter("LineColor", 0xFFFF0000);
+public class CityESP implements ModuleAccess {
+    @Parameter(name = "Range", min = 3.0, max = 10.0, step = 0.5)
+    public double range = 6.0;
+    @Parameter(name = "RenderRange", min = 8.0, max = 128.0, step = 8.0)
+    public double renderRange = 64.0;
+    @Parameter(name = "Filled")
+    public boolean filled = true;
+    @Parameter(name = "Wireframe")
+    public boolean wireframe = true;
+    @Parameter(name = "FillColor", color = true)
+    public int fillColor = 0x33FF0000;
+    @Parameter(name = "LineColor", color = true)
+    public int lineColor = 0xFFFF0000;
 
     private net.minecraft.core.BlockPos cityBlock;
 
@@ -34,12 +37,12 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 10.0
         net.minecraft.world.entity.player.Player target = null;
         if (ravex.manager.ModuleManager.delegate(KillAura.class).getEnabled()) {
             var kaTarget = ravex.manager.ModuleManager.delegate(KillAura.class).getCurrentTarget();
-            if (kaTarget instanceof net.minecraft.world.entity.player.Player p && p.isAlive() && mc.player.distanceTo(p) <= range.getValue()) {
+            if (kaTarget instanceof net.minecraft.world.entity.player.Player p && p.isAlive() && mc.player.distanceTo(p) <= range) {
                 target = p;
             }
         }
         if (target == null) {
-            double best = range.getValue() * range.getValue();
+            double best = range * range;
             for (var e : mc.level.entitiesForRendering()) {
                 if (e instanceof net.minecraft.world.entity.player.Player p && p != mc.player && p.isAlive()) {
                     double dist = mc.player.distanceToSqr(p);
@@ -92,16 +95,5 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 10.0
         return ravex.manager.ModuleManager.delegate(CityESP.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

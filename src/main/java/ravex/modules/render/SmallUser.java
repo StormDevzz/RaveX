@@ -1,25 +1,26 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 
 import ravex.utility.misc.MobUtility;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 @ModuleInfo(name = "SmallUser", category = "Render")
-public class SmallUser extends ravex.modules.Module {
-public final ModeParameter target = new ModeParameter("Target", "All", java.util.List.of("All", "Others", "Self"));
-    public final NumberParameter scale = new NumberParameter("Scale", 0.5, 0.2, 1.0, 0.05);
+public class SmallUser implements ModuleAccess {
+    @Parameter(name = "Target", modes = {"All", "Others", "Self"})
+    public String target = "All";
+    @Parameter(name = "Scale", min = 0.2, max = 1.0, step = 0.05)
+    public double scale = 0.5;
     public final Map<Object, Float> stateScaleMap = new ConcurrentHashMap<>();
 
     public boolean shouldScale(net.minecraft.world.entity.player.Player player) {
-        if (!getEnabled()) return false;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("SmallUser").getEnabled()) return false;
         Minecraft mc = Minecraft.getInstance();
         boolean isSelf = MobUtility.isSelf(player);
-        String t = target.getValue();
+        String t = target;
         if (t.equals("Self")) {
             return isSelf;
         } else if (t.equals("Others")) {
@@ -36,16 +37,5 @@ public final ModeParameter target = new ModeParameter("Target", "All", java.util
         return ravex.manager.ModuleManager.delegate(SmallUser.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

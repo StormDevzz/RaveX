@@ -1,34 +1,36 @@
 package ravex.modules.player;
-
-import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.Minecraft;
-import ravex.event.Subscribe;
+import ravex.modules.ModuleAccess;
 import ravex.event.network.PacketEvent;
+import ravex.event.Subscribe;
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
-
-import ravex.parameter.ModeParameter;
+import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.network.protocol.Packet;
 import java.util.List;
 
+
+
+
+
 @ModuleInfo(name = "AntiHunger", category = "net.minecraft.world.entity.player.Player")
-public class AntiHunger extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "NCP", List.of("NCP", "NCPStrict"));
+public class AntiHunger implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"NCP", "NCPStrict"})
+    public String mode = "NCP";
 
     private boolean canSprint() {
-        LocalPlayer p = Minecraft.getInstance().player;
+        net.minecraft.client.player.LocalPlayer p = Minecraft.getInstance().player;
         return p != null && (p.getFoodData().getFoodLevel() > 5 || p.getAbilities().flying || p.getAbilities().mayfly);
     }
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!getEnabled() || !event.isSend()) return;
-        String m = mode.getValue();
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("AntiHunger").getEnabled() || !event.isSend()) return;
+        String m = mode;
         Packet<?> packet = event.getPacket();
 
-        if (packet instanceof ServerboundMovePlayerPacket movePacket) {
+        if (packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket movePacket) {
             ((AccessorServerboundMovePlayerPacket) movePacket).setOnGround(false);
         }
 
@@ -54,16 +56,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "NCP", List.of("NCP"
         return ravex.manager.ModuleManager.delegate(AntiHunger.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -1,13 +1,14 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "Sounds", category = "Render")
-public class Sounds extends ravex.modules.Module {
-public final NumberParameter volume = new NumberParameter("Volume", 1.0, 0.0, 1.0, 0.1);
+public class Sounds implements ModuleAccess {
+    @Parameter(name = "Volume", min = 0.0, max = 1.0, step = 0.1)
+    public double volume = 1.0;
     private Sounds() {
         
-        enabled = true;
+        ravex.manager.ModuleManager.INSTANCE.getByName("Sounds").setEnabled(true);
     }
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("Sounds").getEnabled();
@@ -17,16 +18,5 @@ public final NumberParameter volume = new NumberParameter("Volume", 1.0, 0.0, 1.
         return ravex.manager.ModuleManager.delegate(Sounds.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

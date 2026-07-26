@@ -1,21 +1,22 @@
 package ravex.modules.client;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.parameter.ToggleLockParameter;
 import java.util.List;
 
 @ModuleInfo(name = "Fonts", category = "Client")
-public class Fonts extends ravex.modules.Module {
-public final BooleanParameter p_enabled = new BooleanParameter("Enabled", true);
-    public final ModeParameter fontType = new ModeParameter("Font", "SFBold",
-            List.of("Comfortaa", "SFMedium", "SFBold", "Vanilla"));
-    public final NumberParameter fontSize = new NumberParameter("FontSize", 1.0, 0.5, 3.0, 0.1);
-    public final BooleanParameter textShadow = new BooleanParameter("TextShadow", true);
-    public final ModeParameter textCase = new ModeParameter("TextCase", "Normal",
-            List.of("Normal", "Upper", "Lower"));
+public class Fonts implements ModuleAccess {
+    @Parameter(name = "Enabled")
+    public boolean p_enabled = true;
+    @Parameter(name = "Font", modes = {"Comfortaa", "SFMedium", "SFBold", "Vanilla"})
+    public String fontType = "SFBold";
+    @Parameter(name = "FontSize", min = 0.5, max = 3.0, step = 0.1)
+    public double fontSize = 1.0;
+    @Parameter(name = "TextShadow")
+    public boolean textShadow = true;
+    @Parameter(name = "TextCase", modes = {"Normal", "Upper", "Lower"})
+    public String textCase = "Normal";
     public final ToggleLockParameter lockToggle = new ToggleLockParameter("LockToggle", true);
 
     public static boolean maybeEnabled() {
@@ -27,19 +28,19 @@ public final BooleanParameter p_enabled = new BooleanParameter("Enabled", true);
     }
 
     public static String getActiveFont() {
-        return ravex.manager.ModuleManager.delegate(Fonts.class).fontType.getValue();
+        return ravex.manager.ModuleManager.delegate(Fonts.class).fontType;
     }
 
     public static float getActiveFontSize() {
-        return ravex.manager.ModuleManager.delegate(Fonts.class).fontSize.getValue().floatValue();
+        return (float) ravex.manager.ModuleManager.delegate(Fonts.class).fontSize;
     }
 
     public static boolean hasTextShadow() {
-        return ravex.manager.ModuleManager.delegate(Fonts.class).textShadow.getValue();
+        return ravex.manager.ModuleManager.delegate(Fonts.class).textShadow;
     }
 
     public static String applyTextCase(String text) {
-        String val = ravex.manager.ModuleManager.delegate(Fonts.class).textCase.getValue();
+        String val = ravex.manager.ModuleManager.delegate(Fonts.class).textCase;
         if ("Upper".equals(val))
             return text.toUpperCase();
         if ("Lower".equals(val))
@@ -47,16 +48,5 @@ public final BooleanParameter p_enabled = new BooleanParameter("Enabled", true);
         return text;
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

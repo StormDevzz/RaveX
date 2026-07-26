@@ -1,15 +1,15 @@
 package ravex.modules.client;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 
-import ravex.parameter.NumberParameter;
-
 @ModuleInfo(name = "FastLatency", category = "Client")
-public class FastLatency extends ravex.modules.Module {
-public final NumberParameter interval = new NumberParameter("Interval", 1000.0, 200.0, 5000.0, 100.0);
+public class FastLatency implements ModuleAccess {
+    @Parameter(name = "Interval", min = 200.0, max = 5000.0, step = 100.0)
+    public double interval = 1000.0;
     private long lastPingTime = 0;
     private long lastPingSentAt = 0;
     private int measuredPing = -1;
@@ -20,7 +20,7 @@ public final NumberParameter interval = new NumberParameter("Interval", 1000.0, 
         if (mc.level == null)
             return;
         long now = System.currentTimeMillis();
-        long intervalMs = interval.getValue().longValue();
+        long intervalMs = (long) interval;
         if (now - lastPingTime >= intervalMs) {
             lastPingTime = now;
             lastPingSentAt = now;
@@ -45,8 +45,9 @@ public final NumberParameter interval = new NumberParameter("Interval", 1000.0, 
 
     public static int getDisplayPing() {
         Minecraft mc = Minecraft.getInstance();
-        if (ravex.manager.ModuleManager.delegate(FastLatency.class).getEnabled() && ravex.manager.ModuleManager.delegate(FastLatency.class).measuredPing >= 0) {
-            return ravex.manager.ModuleManager.delegate(FastLatency.class).measuredPing;
+        var fl = ravex.manager.ModuleManager.delegate(FastLatency.class);
+        if (ravex.manager.ModuleManager.INSTANCE.getByName("FastLatency").getEnabled() && fl.measuredPing >= 0) {
+            return fl.measuredPing;
         }
         if (mc.getConnection() != null && mc.player != null) {
             PlayerInfo info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
@@ -63,16 +64,5 @@ public final NumberParameter interval = new NumberParameter("Interval", 1000.0, 
         return ravex.manager.ModuleManager.delegate(FastLatency.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

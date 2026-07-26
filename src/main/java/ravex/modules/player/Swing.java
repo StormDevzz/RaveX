@@ -1,23 +1,27 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import com.google.gson.Gson;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 
 import java.lang.reflect.Field;
 import java.util.List;
 @ModuleInfo(name = "Swing", category = "net.minecraft.world.entity.player.Player")
-public class Swing extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "1.8", List.of("1.8", "1.12.2", "Custom"));
-    public final NumberParameter duration = new NumberParameter("Duration", 6, 1, 20, 1);
-    public final ModeParameter swingPath = new ModeParameter("SwingPath", "Normal", List.of("Normal", "Smooth", "Bounce", "Reverse"));
-    public final NumberParameter swingCurve = new NumberParameter("SwingCurve", 1.0, 0.1, 5.0, 0.1);
-    public final NumberParameter progressCap = new NumberParameter("ProgressCap", 1.0, 0.0, 1.0, 0.05);
-    public final NumberParameter progressFloor = new NumberParameter("ProgressFloor", 0.0, 0.0, 1.0, 0.05);
-    public final BooleanParameter noEquip = new BooleanParameter("NoEquip", false);
+public class Swing implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"1.8", "1.12.2", "Custom"})
+    public String mode = "1.8";
+    @Parameter(name = "Duration", min = 1, max = 20, step = 1)
+    public double duration = 6;
+    @Parameter(name = "SwingPath", modes = {"Normal", "Smooth", "Bounce", "Reverse"})
+    public String swingPath = "Normal";
+    @Parameter(name = "SwingCurve", min = 0.1, max = 5.0, step = 0.1)
+    public double swingCurve = 1.0;
+    @Parameter(name = "ProgressCap", min = 0.0, max = 1.0, step = 0.05)
+    public double progressCap = 1.0;
+    @Parameter(name = "ProgressFloor", min = 0.0, max = 1.0, step = 0.05)
+    public double progressFloor = 0.0;
+    @Parameter(name = "NoEquip")
+    public boolean noEquip = false;
     private static final String LOCO_MAIN = "com.trainguy9512.locomotion.LocomotionMain";
     private Object locoConfig;
     private Object locoConfigData;
@@ -25,12 +29,6 @@ public final ModeParameter mode = new ModeParameter("Mode", "1.8", List.of("1.8"
     private boolean locomotionAvailable;
     private Swing() {
         
-        duration.setVisible(() -> "Custom".equals(mode.getValue()));
-        swingPath.setVisible(() -> "Custom".equals(mode.getValue()));
-        swingCurve.setVisible(() -> "Custom".equals(mode.getValue()));
-        progressCap.setVisible(() -> "Custom".equals(mode.getValue()));
-        progressFloor.setVisible(() -> "Custom".equals(mode.getValue()));
-        noEquip.setVisible(() -> "Custom".equals(mode.getValue()));
         initLocomotion();
     }
     private void initLocomotion() {
@@ -66,11 +64,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "1.8", List.of("1.8"
         } catch (Exception ignored) {
         }
     }
-    protected void onEnable() {
+    public void onEnable() {
         
         setLocomotionEnabled(true);
     }
-    protected void onDisable() {
+    public void onDisable() {
         
         setLocomotionEnabled(false);
     }
@@ -81,16 +79,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "1.8", List.of("1.8"
         return ravex.manager.ModuleManager.delegate(Swing.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -1,25 +1,32 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
 @ModuleInfo(name = "AutoPortal", category = "Misc")
-public class AutoPortal extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0, 0.5);
-    public final NumberParameter minRange = new NumberParameter("MinRange", 2.0, 1.0, 4.0, 0.5);
-    public final NumberParameter avoidRange = new NumberParameter("Avoid", 8.0, 1.0, 24.0, 1.0);
-    public final BooleanParameter build = new BooleanParameter("Build", true);
-    public final BooleanParameter light = new BooleanParameter("Light", true);
-    public final NumberParameter portalsToBuild = new NumberParameter("Portals", 2.0, 1.0, 6.0, 1.0);
-    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter color = new ColorParameter("Color", 0x3FAA00FF);
+public class AutoPortal implements ModuleAccess {
+    @Parameter(name = "Range", min = 2.0, max = 12.0, step = 0.5)
+    public double range = 6.0;
+    @Parameter(name = "MinRange", min = 1.0, max = 4.0, step = 0.5)
+    public double minRange = 2.0;
+    @Parameter(name = "Avoid", min = 1.0, max = 24.0, step = 1.0)
+    public double avoidRange = 8.0;
+    @Parameter(name = "Build")
+    public boolean build = true;
+    @Parameter(name = "Light")
+    public boolean light = true;
+    @Parameter(name = "Portals", min = 1.0, max = 6.0, step = 1.0)
+    public double portalsToBuild = 2.0;
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = true;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0x3FAA00FF;
     private enum State { IDLE, FIND, BUILDING, RETRY, VERIFY, LIGHTING, DONE }
     private State state = State.IDLE;
     private int baseX, baseY, baseZ;
@@ -46,7 +53,7 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
         if (!hasRenderTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
-    protected void onEnable() {
+    public void onEnable() {
         state = State.IDLE;
         hasBase = false;
         frameIndex = 0;
@@ -56,7 +63,7 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
         portalBuildCount = 0;
         hasFirstBase = false;
     }
-    protected void onDisable() {
+    public void onDisable() {
         state = State.IDLE;
         hasBase = false;
         frameIndex = 0;
@@ -88,8 +95,8 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
             float yaw = mc.player.getYRot();
             double[] result = findBestPortalPos(
                 px, py, pz, yaw,
-                minRange.getValue(), range.getValue(),
-                avoidRange.getValue(), findExistingPortals(mc));
+                minRange, range,
+                avoidRange, findExistingPortals(mc));
             if (result[3] < 0) return;
             px = result[0];
             py = result[1];
@@ -119,7 +126,7 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
         if (!hasFirstBase) { firstBaseX = gx; firstBaseY = groundY; firstBaseZ = gz; hasFirstBase = true; }
         frameIndex = 0;
         retries = 0;
-        state = build.getValue() ? State.BUILDING : State.VERIFY;
+        state = build ? State.BUILDING : State.VERIFY;
     }
     private void tryPlaceNext(Minecraft mc, long now) {
         if (now - lastActionTime < 100) return;
@@ -142,7 +149,7 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
         int slot = findObsidianSlot(mc);
         if (slot == -1) {
             sendMsg(mc, "Not enough obsidian, disabling");
-            enabled = false;
+            ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").setEnabled(false);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.player);
@@ -186,7 +193,7 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
         int slot = findObsidianSlot(mc);
         if (slot == -1) {
             sendMsg(mc, "Not enough obsidian, disabling");
-            enabled = false;
+            ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").setEnabled(false);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.player);
@@ -215,7 +222,7 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
             state = State.DONE;
             return;
         }
-        state = light.getValue() ? State.LIGHTING : State.DONE;
+        state = light ? State.LIGHTING : State.DONE;
     }
     private void doLight(Minecraft mc, long now) {
         if (now - lastActionTime < 100) return;
@@ -240,11 +247,11 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
     private void doDone(Minecraft mc) {
         hasRenderTarget = false;
         portalBuildCount++;
-        int target = portalsToBuild.getValue().intValue();
+        int target = (int) portalsToBuild;
         if (portalBuildCount < target) {
             state = State.FIND;
-        } else if (autoDisable.getValue()) {
-            enabled = false;
+        } else if (autoDisable) {
+            ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").setEnabled(false);
         } else {
             state = State.IDLE;
         }
@@ -306,7 +313,7 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
         return new double[]{bestX, bestY, bestZ, bestScore};
     }
     private double[] findExistingPortals(Minecraft mc) {
-        double r = avoidRange.getValue();
+        double r = avoidRange;
         var eye = mc.player.getEyePosition();
         java.util.ArrayList<Double> list = new java.util.ArrayList<>();
         int minX = (int)(eye.x - r), minY = (int)(eye.y - 5), minZ = (int)(eye.z - r);
@@ -357,16 +364,5 @@ public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0
         return ravex.manager.ModuleManager.delegate(AutoPortal.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -1,33 +1,36 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.NumberParameter;
-import ravex.parameter.ModeParameter;
+import ravex.modules.annotations.Parameter;
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.VoidUtility;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import ravex.utility.misc.PhysicUtility;
 import java.util.List;
+
+
+
 @ModuleInfo(name = "AntiVoid", category = "Movement")
-public class AntiVoid extends ravex.modules.Module {
-public final NumberParameter fallDistance = new NumberParameter("Distance", 5.0, 1.0, 10.0, 0.5);
-    public final ModeParameter mode = new ModeParameter("Mode", "Teleport", List.of("Teleport", "Bounce"));
+public class AntiVoid implements ModuleAccess {
+    @Parameter(name = "Distance", min = 1.0, max = 10.0, step = 0.5)
+    public double fallDistance = 5.0;
+    @Parameter(name = "Mode", modes = {"Teleport", "Bounce"})
+    public String mode = "Teleport";
     private net.minecraft.world.phys.Vec3 lastOnGroundPos = null;
-    protected void onEnable() {
+    public void onEnable() {
         lastOnGroundPos = null;
     }
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
+        net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
         if (p.onGround()) {
             lastOnGroundPos = p.position();
-        } else if (lastOnGroundPos != null && lastOnGroundPos.y - p.getY() > fallDistance.getValue()) {
+        } else if (lastOnGroundPos != null && lastOnGroundPos.y - p.getY() > fallDistance) {
             if (VoidUtility.isFallingIntoVoid(p)) {
-                if (mode.getValue().equals("Teleport")) {
+                if (mode.equals("Teleport")) {
                     p.setDeltaMovement(0, 0, 0);
                     p.teleportTo(lastOnGroundPos.x, lastOnGroundPos.y, lastOnGroundPos.z);
-                } else if (mode.getValue().equals("Bounce")) {
+                } else if (mode.equals("Bounce")) {
                     p.setDeltaMovement(p.getDeltaMovement().x, 0.45, p.getDeltaMovement().z);
                 }
             }
@@ -37,16 +40,5 @@ public final NumberParameter fallDistance = new NumberParameter("Distance", 5.0,
         return ravex.manager.ModuleManager.delegate(AntiVoid.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

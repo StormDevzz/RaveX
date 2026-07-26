@@ -1,27 +1,28 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "AutoApple", category = "Combat")
-public class AutoApple extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Default",
-            java.util.List.of("Default", "Grim"));
-    public final ModeParameter appleType = new ModeParameter("AppleType", "Both",
-            java.util.List.of("Golden", "Enchanted", "Both"));
-    public final ModeParameter swapMode = new ModeParameter("SwapMode", "Silent",
-            java.util.List.of("Silent", "Normal"));
-    public final NumberParameter healthThreshold = new NumberParameter("HealthThreshold", 10.0, 1.0, 20.0, 0.5);
-    public final NumberParameter grimDelay = new NumberParameter("GrimDelay", 5.0, 1.0, 20.0, 0.5);
-    public final BooleanParameter grimRandom = new BooleanParameter("GrimRandom", true);
+public class AutoApple implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Default", "Grim"})
+    public String mode = "Default";
+    @Parameter(name = "AppleType", modes = {"Golden", "Enchanted", "Both"})
+    public String appleType = "Both";
+    @Parameter(name = "SwapMode", modes = {"Silent", "Normal"})
+    public String swapMode = "Silent";
+    @Parameter(name = "HealthThreshold", min = 1.0, max = 20.0, step = 0.5)
+    public double healthThreshold = 10.0;
+    @Parameter(name = "GrimDelay", min = 1.0, max = 20.0, step = 0.5)
+    public double grimDelay = 5.0;
+    @Parameter(name = "GrimRandom")
+    public boolean grimRandom = true;
     private int originalSlot = -1;
     private boolean isEating = false;
     private int eatingSlot = -1;
@@ -29,11 +30,8 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
     private int grimDelayTicks = 0;
 
     private AutoApple() {
-        
-        grimDelay.setVisible(() -> "Grim".equals(mode.getValue()));
-        grimRandom.setVisible(() -> "Grim".equals(mode.getValue()));
     }
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (isEating && mc.player != null) {
             stopEating(mc);
@@ -44,10 +42,10 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         
         // Grim mode: add delay before eating
-        if ("Grim".equals(mode.getValue()) && !isEating) {
+        if ("Grim".equals(mode) && !isEating) {
             grimDelayTicks++;
-            int delayTicks = (int)(grimDelay.getValue() * 20);
-            if (grimRandom.getValue()) {
+            int delayTicks = (int)(grimDelay * 20);
+            if (grimRandom) {
                 delayTicks += (int)(Math.random() * 10 - 5);
             }
             if (grimDelayTicks < delayTicks) {
@@ -64,7 +62,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
                 return;
             }
             boolean finished = false;
-            if (swapMode.getValue().equals("Normal")) {
+            if (swapMode.equals("Normal")) {
                 if (!mc.player.isUsingItem() && eatTicks > 5) {
                     finished = true;
                 }
@@ -77,7 +75,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
                 stopEating(mc);
                 return;
             }
-            if (swapMode.getValue().equals("Normal")) {
+            if (swapMode.equals("Normal")) {
                 mc.options.keyUse.setDown(true);
             } else {
                 if (mc.player.connection != null) {
@@ -89,7 +87,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
         boolean shouldEat = javaFallbackShouldEat(
             mc.player.getHealth(),
             mc.player.getAbsorptionAmount(),
-            healthThreshold.getValue()
+            healthThreshold
         );
         if (shouldEat) {
             int appleSlot = findAppleSlot(mc);
@@ -103,7 +101,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
         eatingSlot = slot;
         isEating = true;
         eatTicks = 0;
-        if (swapMode.getValue().equals("Normal")) {
+        if (swapMode.equals("Normal")) {
             InventoryUtility.selectSlot(mc.player, slot);
             mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             mc.options.keyUse.setDown(true);
@@ -116,7 +114,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
     }
     private void stopEating(Minecraft mc) {
         if (!isEating) return;
-        if (swapMode.getValue().equals("Normal")) {
+        if (swapMode.equals("Normal")) {
             mc.options.keyUse.setDown(false);
             if (originalSlot != -1 && originalSlot >= 0 && originalSlot < 9) {
                 InventoryUtility.selectSlot(mc.player, originalSlot);
@@ -133,11 +131,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
     }
     private int findAppleSlot(Minecraft mc) {
         boolean highDanger = (mc.player.getHealth() + mc.player.getAbsorptionAmount()) <= 6.0;
-        if (highDanger && !appleType.getValue().equals("Golden")) {
+        if (highDanger && !appleType.equals("Golden")) {
             FoodUtility.Data enchanted = FoodUtility.findEnchantedApple();
             if (enchanted != null) return enchanted.getSlot();
         }
-        FoodUtility.Data best = FoodUtility.findApple(appleType.getValue());
+        FoodUtility.Data best = FoodUtility.findApple(appleType);
         return best != null ? best.getSlot() : -1;
     }
     public static boolean javaFallbackShouldEat(
@@ -161,16 +159,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Default",
         return ravex.manager.ModuleManager.delegate(AutoApple.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

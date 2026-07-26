@@ -12,7 +12,7 @@ public class MixinCommandHistory {
     @ModifyConstant(method = "<init>", constant = @Constant(intValue = 50))
     private int modifyInitCapacity(int original) {
         if (ChatHelper.maybeEnabled()) {
-            return ChatHelper.itz().chatHistorySize.getValue().intValue();
+            return (int) ChatHelper.itz().chatHistorySize;
         }
         return original;
     }
@@ -20,7 +20,7 @@ public class MixinCommandHistory {
     @ModifyConstant(method = "addCommand", constant = @Constant(intValue = 50))
     private int modifyMaxHistory(int original) {
         if (ChatHelper.maybeEnabled()) {
-            return ChatHelper.itz().chatHistorySize.getValue().intValue();
+            return (int) ChatHelper.itz().chatHistorySize;
         }
         return original;
     }

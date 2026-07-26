@@ -1,13 +1,15 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "Glint", category = "Render")
-public class Glint extends ravex.modules.Module {
-public final BooleanParameter items = new BooleanParameter("Items", true);
-    public final BooleanParameter armor = new BooleanParameter("Armor", true);
-    public final ColorParameter color = new ColorParameter("Color", 0xFFFF00FF);
+public class Glint implements ModuleAccess {
+    @Parameter(name = "Items")
+    public boolean items = true;
+    @Parameter(name = "Armor")
+    public boolean armor = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFFFF00FF;
 
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("Glint").getEnabled();
@@ -17,16 +19,5 @@ public final BooleanParameter items = new BooleanParameter("Items", true);
         return ravex.manager.ModuleManager.delegate(Glint.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

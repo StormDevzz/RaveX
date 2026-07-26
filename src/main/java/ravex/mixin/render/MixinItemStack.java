@@ -35,7 +35,7 @@ public class MixinItemStack {
         List<Component> original = cir.getReturnValue();
         List<Component> modified = new ArrayList<>(original);
 
-        if (ToolTips.itz().showShulker.getValue() && ToolTips.itz().isShulker(self)) {
+        if (ToolTips.itz().showShulker && ToolTips.itz().isShulker(self)) {
             IN_RECURSION.set(true);
             try {
                 ItemStack copy = self.copy();
@@ -53,7 +53,7 @@ public class MixinItemStack {
 
     @Inject(method = "getTooltipImage()Ljava/util/Optional;", at = @At("HEAD"), cancellable = true)
     private void onGetTooltipImage(CallbackInfoReturnable<Optional<TooltipComponent>> cir) {
-        if (!ToolTips.maybeEnabled() || !ToolTips.itz().showShulker.getValue()) return;
+        if (!ToolTips.maybeEnabled() || !ToolTips.itz().showShulker) return;
         ItemStack self = (ItemStack) (Object) this;
         if (ToolTips.itz().isShulker(self)) {
             ItemContainerContents contents = self.get(DataComponents.CONTAINER);

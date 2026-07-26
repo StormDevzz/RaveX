@@ -12,7 +12,7 @@ public class FriendCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        String pref = ModuleManager.get(Commands.class).prefix.getValue();
+        String pref = ModuleManager.get(Commands.class).prefix;
         if (args.length < 2) {
             CmdReg.print("§c[RaveX] Usage: " + pref + "friend <add/remove/list> [name]");
             return;

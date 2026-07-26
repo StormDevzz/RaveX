@@ -1,46 +1,47 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.food.FoodUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import java.util.List;
 @ModuleInfo(name = "AutoEat", category = "Misc")
-public class AutoEat extends ravex.modules.Module {
-public final NumberParameter threshold = new NumberParameter("Hunger", 15.0, 1.0, 20.0, 1.0);
-    public final BooleanParameter priority = new BooleanParameter("BestFood", true);
-    public final BooleanParameter notify = new BooleanParameter("Notify", false);
-    public final ModeParameter mode = new ModeParameter("Mode", "Normal",
-            List.of("Normal", "Silent", "Vanilla"));
+public class AutoEat implements ModuleAccess {
+    @Parameter(name = "Hunger", min = 1.0, max = 20.0, step = 1.0)
+    public double threshold = 15.0;
+    @Parameter(name = "BestFood")
+    public boolean priority = true;
+    @Parameter(name = "Notify")
+    public boolean notify = false;
+    @Parameter(name = "Mode", modes = {"Normal", "Silent", "Vanilla"})
+    public String mode = "Normal";
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         float hunger = mc.player.getFoodData().getFoodLevel();
-        if ("Vanilla".equals(mode.getValue())) {
-            mc.options.keyUse.setDown(hunger < threshold.getValue());
+        if ("Vanilla".equals(mode)) {
+            mc.options.keyUse.setDown(hunger < threshold);
             return;
         }
         if (FoodUtility.INSTANCE.isEating()) {
             FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
-            if (result == FoodUtility.Result.FINISHED && notify.getValue()) {
+            if (result == FoodUtility.Result.FINISHED && notify) {
                 mc.player.displayClientMessage(
                     Component.literal("§7[§cAutoEat§7] §aDone eating"), false);
             }
             return;
         }
-        if (hunger >= threshold.getValue()) return;
+        if (hunger >= threshold) return;
         FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
-        if (result == FoodUtility.Result.STARTED && notify.getValue()) {
+        if (result == FoodUtility.Result.STARTED && notify) {
             mc.player.displayClientMessage(
                 Component.literal("§7[§cAutoEat§7] §aEating (" + (int)hunger + " hunger)"),
                 false);
         }
     }
-    protected void onDisable() {
-        if ("Vanilla".equals(mode.getValue())) {
+    public void onDisable() {
+        if ("Vanilla".equals(mode)) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.options != null) mc.options.keyUse.setDown(false);
         }
@@ -51,16 +52,5 @@ public final NumberParameter threshold = new NumberParameter("Hunger", 15.0, 1.0
         return ravex.manager.ModuleManager.delegate(AutoEat.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

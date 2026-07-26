@@ -1,10 +1,7 @@
 package ravex.modules.world;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
@@ -16,17 +13,27 @@ import ravex.utility.render.animate.SlideAnimationUtility;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 @ModuleInfo(name = "Scaffold", category = "World")
-public class Scaffold extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "Grim"));
-    public final BooleanParameter expand = new BooleanParameter("Expand", false);
-    public final NumberParameter expandLength = new NumberParameter("ExpandLength", 4.0, 1.0, 10.0, 1.0);
-    public final NumberParameter rotationSpeed = new NumberParameter("RotationSpeed", 120.0, 10.0, 360.0, 5.0);
-    public final BooleanParameter tower = new BooleanParameter("Tower", true);
-    public final BooleanParameter eagle = new BooleanParameter("Eagle", true);
-    public final BooleanParameter keepY = new BooleanParameter("KeepY", false);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final BooleanParameter animate = new BooleanParameter("Animate", true);
-    public final ColorParameter highlightColor = new ColorParameter("Color", 0xFFFF33CC);
+public class Scaffold implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Vanilla", "Grim"})
+    public String mode = "Vanilla";
+    @Parameter(name = "Expand")
+    public boolean expand = false;
+    @Parameter(name = "ExpandLength", min = 1.0, max = 10.0, step = 1.0)
+    public double expandLength = 4.0;
+    @Parameter(name = "RotationSpeed", min = 10.0, max = 360.0, step = 5.0)
+    public double rotationSpeed = 120.0;
+    @Parameter(name = "Tower")
+    public boolean tower = true;
+    @Parameter(name = "Eagle")
+    public boolean eagle = true;
+    @Parameter(name = "KeepY")
+    public boolean keepY = false;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Animate")
+    public boolean animate = true;
+    @Parameter(name = "Color", color = true)
+    public int highlightColor = 0xFFFF33CC;
     public static net.minecraft.world.phys.Vec3 highlightPos = null;
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
@@ -46,7 +53,6 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
     private static boolean hasPending;
 
     public Scaffold() {
-        expandLength.setVisible(() -> expand.getValue());
     }
 
     public net.minecraft.core.BlockPos getCurrentPos() {
@@ -83,7 +89,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
         if (slot != prevSlot) InventoryUtility.selectSlot(p, prevSlot);
         hasPending = false;
     }
-    protected void onEnable() {
+    public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             targetY = Math.floor(mc.player.getY());
@@ -99,7 +105,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
         sizeAnim.reset();
         slideAnim.reset();
     }
-    protected void onDisable() {
+    public void onDisable() {
         highlightPos = null;
         renderAlpha = 0.0f;
         renderSize = 0.0;
@@ -113,7 +119,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
         if (p.onGround()) {
             targetY = Math.floor(p.getY());
         }
-        if (tower.getValue() && mc.options.keyJump.isDown()) {
+        if (tower && mc.options.keyJump.isDown()) {
             p.setDeltaMovement(p.getDeltaMovement().x, 0.42, p.getDeltaMovement().z);
             targetY = Math.floor(p.getY());
         }
@@ -123,13 +129,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
             return;
         }
         int bx = (int) Math.floor(p.getX());
-        int by = (int) ((keepY.getValue() && targetY != -1) ? (targetY - 1) : (p.getY() - 1));
+        int by = (int) ((keepY && targetY != -1) ? (targetY - 1) : (p.getY() - 1));
         int bz = (int) Math.floor(p.getZ());
         int tx = bx, ty = by, tz = bz;
-        if (expand.getValue()) {
+        if (expand) {
             double dx = p.getDeltaMovement().x;
             double dz = p.getDeltaMovement().z;
-            int len = (int) Math.round(expandLength.getValue());
+            int len = (int) Math.round(expandLength);
             int offX = dx > 0.05 ? len : (dx < -0.05 ? -len : 0);
             int offZ = dz > 0.05 ? len : (dz < -0.05 ? -len : 0);
             int ex = bx + offX, ez = bz + offZ;
@@ -140,13 +146,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
             return;
         }
         currX = tx; currY = ty; currZ = tz; hasCurr = true;
-        if (render.getValue()) {
-            int hc = highlightColor.getValue();
+        if (render) {
+            int hc = highlightColor;
             renderR = ((hc >> 16) & 0xFF) / 255.0f;
             renderG = ((hc >> 8) & 0xFF) / 255.0f;
             renderB = (hc & 0xFF) / 255.0f;
         }
-        boolean isGrim = "Grim".equals(mode.getValue());
+        boolean isGrim = "Grim".equals(mode);
         var neighbor = findNeighbor(tx, ty, tz, isGrim);
         if (neighbor == null || neighbor.neighbor == null) {
             int by2 = BlockUtility.belowY(ty);
@@ -162,7 +168,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
             }
             if (fallbackOk) {
                 var center = SwingUtility.centerOf(fallback);
-                float speed = rotationSpeed.getValue().floatValue();
+                float speed = (float) rotationSpeed;
                 smoothRotate(p, center, speed);
                 pendingPos = BlockUtility.pos(tx, ty, tz);
                 pendingFace = net.minecraft.core.Direction.UP;
@@ -174,13 +180,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
         var nb = neighbor.neighbor;
         var face = neighbor.face;
         var nbCenter = SwingUtility.centerOf(nb);
-        float speed = rotationSpeed.getValue().floatValue();
+        float speed = (float) rotationSpeed;
         smoothRotate(p, nbCenter, speed);
         pendingPos = BlockUtility.pos(tx, ty, tz);
         pendingFace = face;
         pendingNeighbor = nb;
         hasPending = true;
-        if (eagle.getValue()) {
+        if (eagle) {
             var feetPos = BlockUtility.pos(bx, by, bz);
             if (mc.level.getBlockState(feetPos).isAir()) {
                 mc.options.keyShift.setDown(true);
@@ -259,16 +265,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
         return ravex.manager.ModuleManager.delegate(Scaffold.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

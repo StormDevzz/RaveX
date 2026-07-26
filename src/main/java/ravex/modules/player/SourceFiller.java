@@ -1,32 +1,37 @@
 package ravex.modules.player;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
-import ravex.parameter.ModeParameter;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.SwingUtility;
-import ravex.utility.player.rotation.RotationUtility;
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+
+
 @ModuleInfo(name = "SourceFiller", category = "net.minecraft.world.entity.player.Player")
-public class SourceFiller extends ravex.modules.Module {
-public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final ModeParameter mode = new ModeParameter("Mode", "Smart", List.of("Normal", "Smart"));
-    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
-    public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
-    public final NumberParameter delay = new NumberParameter("Delay", 200.0, 0.0, 1000.0, 10.0);
+public class SourceFiller implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "Mode", modes = {"Normal", "Smart"})
+    public String mode = "Smart";
+    @Parameter(name = "SilentSwap")
+    public boolean silent = true;
+    @Parameter(name = "Rotate")
+    public boolean rotate = true;
+    @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
+    public double delay = 200.0;
     private long lastPlaceTime = 0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
         if (p == null || mc.level == null) return;
-        if (System.currentTimeMillis() - lastPlaceTime < delay.getValue()) return;
+        if (System.currentTimeMillis() - lastPlaceTime < delay) return;
         int spongeSlot = InventoryUtility.findHotbarSlot(p, "sponge");
         if (spongeSlot == -1) return;
         net.minecraft.core.BlockPos targetPos = findTargetWater(p, mc);
@@ -34,20 +39,20 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, spongeSlot);
         net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(targetPos);
-        BlockHitResult hit = new BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
-        if (rotate.getValue()) {
+        net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
+        if (rotate) {
             float[] rots = RotationUtility.anglesTo(p.getEyePosition(), net.minecraft.world.phys.Vec3.atCenterOf(targetPos));
             p.setYRot(rots[0]);
             p.setXRot(rots[1]);
         }
         BlockUtility.useItemOn(mc, hit);
         SwingUtility.swingMainHand(p);
-        if (silent.getValue() && spongeSlot != prevSlot)
+        if (silent && spongeSlot != prevSlot)
             InventoryUtility.selectSlot(p, prevSlot);
         lastPlaceTime = System.currentTimeMillis();
     }
     private net.minecraft.core.BlockPos findTargetWater(net.minecraft.client.player.LocalPlayer p, Minecraft mc) {
-        double r = range.getValue();
+        double r = range;
         List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
         for (int x = (int) Math.floor(p.getX() - r); x <= Math.ceil(p.getX() + r); x++)
             for (int y = (int) Math.floor(p.getY() - r); y <= Math.ceil(p.getY() + r); y++)
@@ -57,7 +62,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
                     if (mc.level.getFluidState(bp).is(net.minecraft.tags.FluidTags.WATER)) candidates.add(bp);
                 }
         if (candidates.isEmpty()) return null;
-        return "Smart".equals(mode.getValue())
+        return "Smart".equals(mode)
             ? candidates.stream().max(Comparator.comparingInt(bp -> countAdjacentWater(bp, mc))).orElse(null)
             : candidates.stream().min(Comparator.comparingDouble(bp -> p.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(bp)))).orElse(null);
     }
@@ -74,16 +79,5 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
         return ravex.manager.ModuleManager.delegate(SourceFiller.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

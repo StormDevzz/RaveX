@@ -1,80 +1,116 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
-
-import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
+import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.SwingUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-import ravex.utility.nativelib.NativeLibraryUtility;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
+import net.minecraft.world.phys.AABB;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
 @ModuleInfo(name = "AutoCrystal", category = "Combat")
-public class AutoCrystal extends ravex.modules.Module {
-public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",    4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  breakRange     = new NumberParameter("BreakRange",    4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  placeDelay     = new NumberParameter("PlaceDelay",   100, 0, 500, 10);
-    public final NumberParameter  breakDelay     = new NumberParameter("BreakDelay",    50, 0, 500, 10);
-    public final NumberParameter  minDamage      = new NumberParameter("MinDamage",     4.0, 1.0, 20.0, 0.5);
-    public final NumberParameter  maxSelfDmg     = new NumberParameter("MaxSelfDmg",   8.0, 1.0, 20.0, 0.5);
-    public final BooleanParameter antiSuicide    = new BooleanParameter("AntiSuicide",  true);
-    public final NumberParameter  antiSuicideMinHp = new NumberParameter("AntiSuicideMinHP", 6.0, 1.0, 20.0, 0.5);
-    public final ModeParameter    rotate         = new ModeParameter("RotateMode", "Grim",
-            java.util.List.of("Grim", "NCP", "NCPStrict", "None"));
-    public final ModeParameter    swapMode       = new ModeParameter("SwapMode", "Grim",
-            java.util.List.of("Grim", "NCP", "NCPStrict", "None"));
-    public final NumberParameter  swapDelay      = new NumberParameter("SwapDelay", 0.0, 0.0, 500.0, 10.0);
-    public final BooleanParameter onlyInRender   = new BooleanParameter("OnlyRender",   false);
-    public final ModeParameter    targetMode     = new ModeParameter("Target", "Closest",
-            java.util.List.of("Closest", "LowestHP", "HighestDamage"));
-    public final ModeParameter    targetType     = new ModeParameter("TargetType", "Players",
-            java.util.List.of("Players", "Monsters", "Passives", "All"));
-    public final BooleanParameter renderPlacement = new BooleanParameter("RenderPlacement", true);
-    public final BooleanParameter renderDamage    = new BooleanParameter("RenderDamage", true);
-    public final BooleanParameter armorBreaker    = new BooleanParameter("ArmorBreaker", true);
-    public final NumberParameter  armorPercent    = new NumberParameter("ArmorPercent", 15.0, 1.0, 50.0, 1.0);
-    public final NumberParameter  predictTicks    = new NumberParameter("PredictTicks", 1.0, 0.0, 4.0, 0.1);
-    public final BooleanParameter totemDetection  = new BooleanParameter("TotemDetection", true);
-    public final NumberParameter  totemMinDamage  = new NumberParameter("TotemMinDamage", 1.5, 0.5, 10.0, 0.5);
-    public final NumberParameter  totemSelfMinHp  = new NumberParameter("TotemSelfMinHP", 8.0, 2.0, 20.0, 0.5);
-    public final ModeParameter    placeMode      = new ModeParameter("PlaceMode", "Grim",
-            java.util.List.of("Strict", "NCPStrict", "Grim"));
-    public final NumberParameter  rotateSpeed     = new NumberParameter("RotateSpeed", 180.0, 10.0, 180.0, 5.0);
-    public final NumberParameter  rotateRandomize = new NumberParameter("RotateRandomize", 0.0, 0.0, 3.0, 0.1);
-    public final BooleanParameter antiSuicideCheckBreaking = new BooleanParameter("AntiSuicideBreak", true);
-    public final BooleanParameter antiSuicideIgnoreWithTotem = new BooleanParameter("AntiSuicideIgnoreTotem", false);
-    public final BooleanParameter totemCheckTarget = new BooleanParameter("TotemCheckTarget", true);
-    public final BooleanParameter totemPopSwap     = new BooleanParameter("TotemPopSwap", false);
-    public final NumberParameter  totemPopHp       = new NumberParameter("TotemPopHP", 6.0, 1.0, 20.0, 0.5);
-    public final NumberParameter  placeWallRange  = new NumberParameter("PlaceWallRange", 3.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  breakWallRange  = new NumberParameter("BreakWallRange", 3.5, 1.0, 6.0, 0.1);
-    public final BooleanParameter placeAirPlace   = new BooleanParameter("AirPlace", false);
-    public final NumberParameter  placeUnderHp     = new NumberParameter("PlaceUnderHP", 10.0, 0.0, 36.0, 0.5);
-    public final BooleanParameter placeMultiPlace  = new BooleanParameter("MultiPlace", false);
-    public final BooleanParameter swapSwitchBack   = new BooleanParameter("SwapSwitchBack", true);
-    public final BooleanParameter swapNoGap        = new BooleanParameter("SwapNoGap", true);
-    public final BooleanParameter swapInventory    = new BooleanParameter("SwapInventory", false);
-    public final BooleanParameter bgBlockScanner = new BooleanParameter("BGBlockScanner", true);
-    public final BooleanParameter suicide        = new BooleanParameter("Suicide", false);
-    public final BooleanParameter kbPrediction   = new BooleanParameter("KBPrediction", true);
-    public final BooleanParameter collateralPop  = new BooleanParameter("CollateralPopList", true);
+public class AutoCrystal implements ModuleAccess {
+    @Parameter(name = "PlaceRange", min = 1.0, max = 6.0, step = 0.1)
+    public double placeRange = 4.5;
+    @Parameter(name = "BreakRange", min = 1.0, max = 6.0, step = 0.1)
+    public double breakRange = 4.5;
+    @Parameter(name = "PlaceDelay", min = 0, max = 500, step = 10)
+    public double placeDelay = 100;
+    @Parameter(name = "BreakDelay", min = 0, max = 500, step = 10)
+    public double breakDelay = 50;
+    @Parameter(name = "MinDamage", min = 1.0, max = 20.0, step = 0.5)
+    public double minDamage = 4.0;
+    @Parameter(name = "MaxSelfDmg", min = 1.0, max = 20.0, step = 0.5)
+    public double maxSelfDmg = 8.0;
+    @Parameter(name = "AntiSuicide")
+    public boolean antiSuicide = true;
+    @Parameter(name = "AntiSuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
+    public double antiSuicideMinHp = 6.0;
+    @Parameter(name = "RotateMode", modes = {"Grim", "NCP", "NCPStrict", "None"})
+    public String rotate = "Grim";
+    @Parameter(name = "SwapMode", modes = {"Grim", "NCP", "NCPStrict", "None"})
+    public String swapMode = "Grim";
+    @Parameter(name = "SwapDelay", min = 0.0, max = 500.0, step = 10.0)
+    public double swapDelay = 0.0;
+    @Parameter(name = "OnlyRender")
+    public boolean onlyInRender = false;
+    @Parameter(name = "Target", modes = {"Closest", "LowestHP", "HighestDamage"})
+    public String targetMode = "Closest";
+    @Parameter(name = "TargetType", modes = {"Players", "Monsters", "Passives", "All"})
+    public String targetType = "Players";
+    @Parameter(name = "RenderPlacement")
+    public boolean renderPlacement = true;
+    @Parameter(name = "RenderDamage")
+    public boolean renderDamage = true;
+    @Parameter(name = "ArmorBreaker")
+    public boolean armorBreaker = true;
+    @Parameter(name = "ArmorPercent", min = 1.0, max = 50.0, step = 1.0)
+    public double armorPercent = 15.0;
+    @Parameter(name = "PredictTicks", min = 0.0, max = 4.0, step = 0.1)
+    public double predictTicks = 1.0;
+    @Parameter(name = "TotemDetection")
+    public boolean totemDetection = true;
+    @Parameter(name = "TotemMinDamage", min = 0.5, max = 10.0, step = 0.5)
+    public double totemMinDamage = 1.5;
+    @Parameter(name = "TotemSelfMinHP", min = 2.0, max = 20.0, step = 0.5)
+    public double totemSelfMinHp = 8.0;
+    @Parameter(name = "PlaceMode", modes = {"Strict", "NCPStrict", "Grim"})
+    public String placeMode = "Grim";
+    @Parameter(name = "RotateSpeed", min = 10.0, max = 180.0, step = 5.0)
+    public double rotateSpeed = 180.0;
+    @Parameter(name = "RotateRandomize", min = 0.0, max = 3.0, step = 0.1)
+    public double rotateRandomize = 0.0;
+    @Parameter(name = "AntiSuicideBreak")
+    public boolean antiSuicideCheckBreaking = true;
+    @Parameter(name = "AntiSuicideIgnoreTotem")
+    public boolean antiSuicideIgnoreWithTotem = false;
+    @Parameter(name = "TotemCheckTarget")
+    public boolean totemCheckTarget = true;
+    @Parameter(name = "TotemPopSwap")
+    public boolean totemPopSwap = false;
+    @Parameter(name = "TotemPopHP", min = 1.0, max = 20.0, step = 0.5)
+    public double totemPopHp = 6.0;
+    @Parameter(name = "PlaceWallRange", min = 1.0, max = 6.0, step = 0.1)
+    public double placeWallRange = 3.5;
+    @Parameter(name = "BreakWallRange", min = 1.0, max = 6.0, step = 0.1)
+    public double breakWallRange = 3.5;
+    @Parameter(name = "AirPlace")
+    public boolean placeAirPlace = false;
+    @Parameter(name = "PlaceUnderHP", min = 0.0, max = 36.0, step = 0.5)
+    public double placeUnderHp = 10.0;
+    @Parameter(name = "MultiPlace")
+    public boolean placeMultiPlace = false;
+    @Parameter(name = "SwapSwitchBack")
+    public boolean swapSwitchBack = true;
+    @Parameter(name = "SwapNoGap")
+    public boolean swapNoGap = true;
+    @Parameter(name = "SwapInventory")
+    public boolean swapInventory = false;
+    @Parameter(name = "BGBlockScanner")
+    public boolean bgBlockScanner = true;
+    @Parameter(name = "Suicide")
+    public boolean suicide = false;
+    @Parameter(name = "KBPrediction")
+    public boolean kbPrediction = true;
+    @Parameter(name = "CollateralPopList")
+    public boolean collateralPop = true;
     public static net.minecraft.core.BlockPos currentPlacementBlock = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
@@ -116,23 +152,6 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
             double[] blockData
     );
     private AutoCrystal() {
-        
-        armorPercent.setVisible(() -> armorBreaker.getValue());
-        renderDamage.setVisible(() -> renderPlacement.getValue());
-        antiSuicideMinHp.setVisible(() -> antiSuicide.getValue());
-        totemMinDamage.setVisible(() -> totemDetection.getValue());
-        totemSelfMinHp.setVisible(() -> totemDetection.getValue());
-        swapDelay.setVisible(() -> !swapMode.getValue().equals("None"));
-        rotateSpeed.setVisible(() -> !rotate.getValue().equals("None"));
-        rotateRandomize.setVisible(() -> !rotate.getValue().equals("None"));
-        antiSuicideCheckBreaking.setVisible(() -> antiSuicide.getValue());
-        antiSuicideIgnoreWithTotem.setVisible(() -> antiSuicide.getValue());
-        totemCheckTarget.setVisible(() -> totemDetection.getValue());
-        totemPopHp.setVisible(() -> totemPopSwap.getValue());
-        placeUnderHp.setVisible(() -> !placeMode.getValue().equals("Strict"));
-        swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
-        swapNoGap.setVisible(() -> !swapMode.getValue().equals("None"));
-        swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
     }
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private int originalSlot = -1;
@@ -145,9 +164,9 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         silentRotation.hasRotation = false;
-        if (totemPopSwap.getValue()) {
+        if (totemPopSwap) {
             double selfHp = MobUtility.getHealthWithAbsorption(mc.player);
-            if (selfHp <= totemPopHp.getValue()) {
+            if (selfHp <= totemPopHp) {
                 if (!InventoryUtility.isOffhand(mc.player, "totem_of_undying")) {
                     int totemSlot = InventoryUtility.findSlot(mc.player, "totem_of_undying");
                     if (totemSlot != -1) {
@@ -171,8 +190,8 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         double[] crystalData = collectCrystals(mc, playerPos);
         double[] pStats = getEntityStats(mc.player);
         double[] tStats = getEntityStats(target);
-        boolean grimAC = rotate.getValue().equals("Grim") || placeMode.getValue().equals("Grim");
-        boolean ncpBypass = rotate.getValue().equals("NCP") || rotate.getValue().equals("NCPStrict") || placeMode.getValue().equals("NCPStrict");
+        boolean grimAC = rotate.equals("Grim") || placeMode.equals("Grim");
+        boolean ncpBypass = rotate.equals("NCP") || rotate.equals("NCPStrict") || placeMode.equals("NCPStrict");
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeTick(
@@ -181,18 +200,18 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                     targetPos.x, targetPos.y, targetPos.z,
                     tHp, tAbs, tStats,
                     blockData, crystalData,
-                    placeRange.getValue(), placeWallRange.getValue(),
-                    breakRange.getValue(), breakWallRange.getValue(),
-                    minDamage.getValue(), maxSelfDmg.getValue(),
-                    1.2, antiSuicide.getValue(),
-                    antiSuicideCheckBreaking.getValue(), antiSuicideIgnoreWithTotem.getValue(),
-                    armorBreaker.getValue(), armorPercent.getValue(),
-                    predictTicks.getValue(), totemDetection.getValue(),
-                    totemCheckTarget.getValue(), placeAirPlace.getValue(),
-                    placeMultiPlace.getValue(), suicide.getValue(),
+                    placeRange, placeWallRange,
+                    breakRange, breakWallRange,
+                    minDamage, maxSelfDmg,
+                    1.2, antiSuicide,
+                    antiSuicideCheckBreaking, antiSuicideIgnoreWithTotem,
+                    armorBreaker, armorPercent,
+                    predictTicks, totemDetection,
+                    totemCheckTarget, placeAirPlace,
+                    placeMultiPlace, suicide,
                     grimAC, ncpBypass,
-                    bgBlockScanner.getValue(), kbPrediction.getValue(),
-                    collateralPop.getValue()
+                    bgBlockScanner, kbPrediction,
+                    collateralPop
             );
         } else {
             result = javaFallbackTick(
@@ -207,11 +226,11 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         }
         boolean shouldPlace = result[0] > 0.5;
         boolean shouldBreak = result[6] > 0.5;
-        if (shouldPlace && antiSuicide.getValue()) {
-            boolean ignoreSuicide = antiSuicideIgnoreWithTotem.getValue() && pStats[14] > 0.0;
+        if (shouldPlace && antiSuicide) {
+            boolean ignoreSuicide = antiSuicideIgnoreWithTotem && pStats[14] > 0.0;
             if (!ignoreSuicide) {
                 double selfDmg = result[5];
-                if (pHp + pAbs - selfDmg < antiSuicideMinHp.getValue()) {
+                if (pHp + pAbs - selfDmg < antiSuicideMinHp) {
                     shouldPlace = false;
                 }
             }
@@ -239,7 +258,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         if (rotationTarget != null) {
             rotateTo(mc, rotationTarget);
         }
-        boolean isStrict = rotate.getValue().equals("Grim") || rotate.getValue().equals("NCPStrict");
+        boolean isStrict = rotate.equals("Grim") || rotate.equals("NCPStrict");
         boolean aligned = true;
         if (isStrict && rotationTarget != null) {
             aligned = isRotationAligned(mc, rotationTarget);
@@ -256,7 +275,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                         lastBreakTime = now;
                         lastBreakId   = entityId;
                         actionsThisTick++;
-                        currentBreakDelay = breakDelay.getValue().longValue();
+                        currentBreakDelay = (long) breakDelay;
                     }
                 }
             }
@@ -264,7 +283,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         boolean checkPlaceDelay = true;
         if (target != null) {
             double targetEffHp = MobUtility.getHealthWithAbsorption(target);
-            if (targetEffHp <= placeUnderHp.getValue()) {
+            if (targetEffHp <= placeUnderHp) {
                 checkPlaceDelay = false;
             }
         }
@@ -277,10 +296,10 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                     net.minecraft.world.phys.Vec3 hitVec = new net.minecraft.world.phys.Vec3(
                             result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
-                    BlockHitResult hitResult = new BlockHitResult(hitVec, face, placePos, false);
+                    net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, placePos, false);
                     mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
                     SwingUtility.swing(mc.player, mc.player.getUsedItemHand());
-                    if (swapSwitchBack.getValue() && originalSlot != -1) {
+                    if (swapSwitchBack && originalSlot != -1) {
                         if (mc.player.connection != null) {
                             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
                         }
@@ -288,16 +307,16 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                     }
                     lastPlaceTime = now;
                     actionsThisTick++;
-                    currentPlaceDelay = placeDelay.getValue().longValue();
+                    currentPlaceDelay = (long) placeDelay;
                 }
             }
         }
-        boolean shouldPlace2 = placeMultiPlace.getValue() && result.length >= 16 && result[12] > 0.5;
-        if (shouldPlace2 && antiSuicide.getValue()) {
-            boolean ignoreSuicide2 = antiSuicideIgnoreWithTotem.getValue() && pStats[14] > 0.0;
+        boolean shouldPlace2 = placeMultiPlace && result.length >= 16 && result[12] > 0.5;
+        if (shouldPlace2 && antiSuicide) {
+            boolean ignoreSuicide2 = antiSuicideIgnoreWithTotem && pStats[14] > 0.0;
             if (!ignoreSuicide2) {
                 double selfDmg2 = result[17];
-                if (pHp + pAbs - selfDmg2 < antiSuicideMinHp.getValue()) {
+                if (pHp + pAbs - selfDmg2 < antiSuicideMinHp) {
                     shouldPlace2 = false;
                 }
             }
@@ -310,10 +329,10 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                     net.minecraft.world.phys.Vec3 hitVec2 = new net.minecraft.world.phys.Vec3(
                             result[13] + 0.5, result[14] + 1.0, result[15] + 0.5);
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
-                    BlockHitResult hitResult2 = new BlockHitResult(hitVec2, face, placePos2, false);
+                    net.minecraft.world.phys.BlockHitResult hitResult2 = new net.minecraft.world.phys.BlockHitResult(hitVec2, face, placePos2, false);
                     mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult2);
                     SwingUtility.swing(mc.player, mc.player.getUsedItemHand());
-                    if (swapSwitchBack.getValue() && originalSlot != -1) {
+                    if (swapSwitchBack && originalSlot != -1) {
                         if (mc.player.connection != null) {
                             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
                         }
@@ -321,7 +340,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                     }
                     lastPlaceTime = now;
                     actionsThisTick++;
-                    currentPlaceDelay = placeDelay.getValue().longValue();
+                    currentPlaceDelay = (long) placeDelay;
                 }
             }
         }
@@ -329,9 +348,9 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
     private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
-        double maxDist = Math.max(placeRange.getValue(), breakRange.getValue()) + 2.0;
-        String mode = targetMode.getValue();
-        String typeFilter = targetType.getValue();
+        double maxDist = Math.max(placeRange, breakRange) + 2.0;
+        String mode = targetMode;
+        String typeFilter = targetType;
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
@@ -360,20 +379,20 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
     }
     private double[] collectValidBlocks(Minecraft mc, net.minecraft.world.phys.Vec3 playerPos) {
         long now = System.currentTimeMillis();
-        if (bgBlockScanner.getValue() && cachedBlockData != null && now - lastBlockScanTime < 150) {
+        if (bgBlockScanner && cachedBlockData != null && now - lastBlockScanTime < 150) {
             return cachedBlockData;
         }
         List<Double> data = new ArrayList<>();
-        int r = (int) Math.ceil(placeRange.getValue()) + 1;
+        int r = (int) Math.ceil(placeRange) + 1;
         net.minecraft.core.BlockPos origin = net.minecraft.core.BlockPos.containing(playerPos);
         for (int dx = -r; dx <= r; dx++) {
             for (int dz = -r; dz <= r; dz++) {
                 for (int dy = -2; dy <= 2; dy++) {
                     net.minecraft.core.BlockPos pos = origin.offset(dx, dy, dz);
-                    BlockState state = mc.level.getBlockState(pos);
+                    net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
                     if (state.is(net.minecraft.world.level.block.Blocks.OBSIDIAN) || state.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
-                        BlockState above = mc.level.getBlockState(pos.above());
-                        BlockState above2 = mc.level.getBlockState(pos.above(2));
+                        net.minecraft.world.level.block.state.BlockState above = mc.level.getBlockState(pos.above());
+                        net.minecraft.world.level.block.state.BlockState above2 = mc.level.getBlockState(pos.above(2));
                         if (above.isAir() && above2.isAir()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -383,12 +402,12 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                 }
             }
         }
-        if (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).getEnabled() && ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).autoCrystalSync.getValue() && BasePlace.lastPlacedBase != null) {
-            long msLimit = (long) (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).syncPredictTicks.getValue() * 50);
+        if (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).getEnabled() && ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).autoCrystalSync && BasePlace.lastPlacedBase != null) {
+            long msLimit = (long) (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).syncPredictTicks * 50);
             if (System.currentTimeMillis() - BasePlace.lastPlacedTime <= msLimit) {
                 net.minecraft.core.BlockPos predictedPos = BasePlace.lastPlacedBase;
                 double dist = Math.sqrt(predictedPos.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
-                if (dist <= placeRange.getValue()) {
+                if (dist <= placeRange) {
                     boolean alreadyAdded = false;
                     for (int i = 0; i < data.size(); i += 3) {
                         if (data.get(i) == predictedPos.getX() &&
@@ -408,7 +427,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         }
         double[] arr = new double[data.size()];
         for (int i = 0; i < arr.length; i++) arr[i] = data.get(i);
-        if (bgBlockScanner.getValue()) {
+        if (bgBlockScanner) {
             cachedBlockData = arr;
             lastBlockScanTime = now;
         } else {
@@ -420,7 +439,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         List<Double> data = new ArrayList<>();
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof EndCrystal)) continue;
-            if (mc.player.distanceTo(e) > breakRange.getValue() + 2.0) continue;
+            if (mc.player.distanceTo(e) > breakRange + 2.0) continue;
             data.add((double) e.getId());
             data.add(e.getX());
             data.add(e.getY());
@@ -432,9 +451,9 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
     }
     private boolean switchToCrystal(Minecraft mc) {
         if (InventoryUtility.isHolding(mc.player, "end_crystal")) return true;
-        String mode = swapMode.getValue();
+        String mode = swapMode;
         if (mode.equals("None")) return false;
-        if (swapNoGap.getValue() && mc.player.isUsingItem()) {
+        if (swapNoGap && mc.player.isUsingItem()) {
             var usingItem = mc.player.getUseItem();
             if (InventoryUtility.isGoldenApple(usingItem) || InventoryUtility.isEnchantedGoldenApple(usingItem)) {
                 return false;
@@ -446,7 +465,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
             InventoryUtility.silentSelectSlot(mc.player, slot);
             return true;
         }
-        if (swapInventory.getValue()) {
+        if (swapInventory) {
             slot = InventoryUtility.findSlot(mc.player, "end_crystal", 9, 36);
             if (slot != -1) {
                 int targetHotbarSlot = 0;
@@ -459,7 +478,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         return false;
     }
     private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotate.getValue();
+        String mode = rotate;
         if (mode.equals("None")) return;
         float[] targetAngles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
         float currentYaw = mc.player.getYRot();
@@ -467,11 +486,11 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
         currentYaw = silentRotation.lastYaw;
         currentPitch = silentRotation.lastPitch;
-        float maxSpeed = rotateSpeed.getValue().floatValue();
+        float maxSpeed = (float) rotateSpeed;
         float[] limited = AimUtility.limitAngles(currentYaw, targetAngles[0], currentPitch, targetAngles[1], maxSpeed);
         float finalYaw = limited[0], finalPitch = limited[1];
-        if (rotateRandomize.getValue() > 0.0) {
-            float[] rnd = AimUtility.randomize(finalYaw, finalPitch, rotateRandomize.getValue().floatValue());
+        if (rotateRandomize > 0.0) {
+            float[] rnd = AimUtility.randomize(finalYaw, finalPitch, (float) rotateRandomize);
             finalYaw = rnd[0]; finalPitch = rnd[1];
         }
         silentRotation.set(finalYaw, finalPitch);
@@ -481,7 +500,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
     private long currentPlaceDelay = 0;
     private long currentBreakDelay = 0;
     private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        if (rotate.getValue().equals("None")) return true;
+        if (rotate.equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
     private double calcQuickDamage(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
@@ -506,7 +525,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof EndCrystal)) continue;
             double dist = mc.player.distanceTo(e);
-            if (dist > breakRange.getValue()) continue;
+            if (dist > breakRange) continue;
             net.minecraft.world.phys.Vec3 cp = e.position();
             double tdist = cp.distanceTo(targetPos);
             double sdist = cp.distanceTo(playerPos);
@@ -515,12 +534,12 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
             double sImpact = Math.max(0, (1.0 - sdist / 12.0));
             double tDmg = (tImpact * tImpact + tImpact) / 2.0 * 84.0 + 1.0;
             double sDmg = (sImpact * sImpact + sImpact) / 2.0 * 84.0 + 1.0;
-            if (tDmg < minDamage.getValue()) continue;
-            if (!suicide.getValue()) {
-                if (sDmg > maxSelfDmg.getValue()) continue;
-                if (antiSuicide.getValue() && pHp + pAbs - sDmg <= 0) continue;
+            if (tDmg < minDamage) continue;
+            if (!suicide) {
+                if (sDmg > maxSelfDmg) continue;
+                if (antiSuicide && pHp + pAbs - sDmg <= 0) continue;
             }
-            double score = suicide.getValue() ? (sDmg * 100.0 + tDmg) : tDmg;
+            double score = suicide ? (sDmg * 100.0 + tDmg) : tDmg;
             if (score > bestBreakDmg) {
                 bestBreakDmg = score;
                 bestId = e.getId();
@@ -615,16 +634,5 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
         return stats;
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

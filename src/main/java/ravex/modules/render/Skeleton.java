@@ -1,9 +1,7 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
@@ -20,12 +18,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 @ModuleInfo(name = "Skeleton", category = "Render")
-public class Skeleton extends ravex.modules.Module {
-public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
-    public final NumberParameter lineWidth = new NumberParameter("LineWidth", 1.0, 0.5, 3.0, 0.1);
-    public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
-    public final BooleanParameter players = new BooleanParameter("Players", true);
-    public final BooleanParameter mobs = new BooleanParameter("Mobs", true);
+public class Skeleton implements ModuleAccess {
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFFFFFFFF;
+    @Parameter(name = "LineWidth", min = 0.5, max = 3.0, step = 0.1)
+    public double lineWidth = 1.0;
+    @Parameter(name = "ThroughWalls")
+    public boolean throughWalls = true;
+    @Parameter(name = "Players")
+    public boolean players = true;
+    @Parameter(name = "Mobs")
+    public boolean mobs = true;
     private static ByteBufferBuilder ALLOCATOR;
     private static ByteBufferBuilder getAllocator() {
         if (ALLOCATOR == null) {
@@ -166,16 +169,5 @@ public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
         return ravex.manager.ModuleManager.delegate(Skeleton.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

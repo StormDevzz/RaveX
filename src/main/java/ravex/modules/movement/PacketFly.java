@@ -1,46 +1,50 @@
 package ravex.modules.movement;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import java.util.List;
+
+
+
+
 @ModuleInfo(name = "PacketFly", category = "Movement")
-public class PacketFly extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Fast", List.of("Fast", "Damage", "Setback"));
-    public final NumberParameter speed = new NumberParameter("Speed", 0.2, 0.05, 1.0, 0.05);
-    public final NumberParameter vertical = new NumberParameter("Vertical", 0.2, 0.0, 1.0, 0.05);
+public class PacketFly implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Fast", "Damage", "Setback"})
+    public String mode = "Fast";
+    @Parameter(name = "Speed", min = 0.05, max = 1.0, step = 0.05)
+    public double speed = 0.2;
+    @Parameter(name = "Vertical", min = 0.0, max = 1.0, step = 0.05)
+    public double vertical = 0.2;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
-        String m = mode.getValue();
-        double spd = speed.getValue();
-        double vert = vertical.getValue();
+        String m = mode;
+        double spd = speed;
+        double vert = vertical;
         double x = mc.player.getX();
         double y = mc.player.getY();
         double z = mc.player.getZ();
         boolean onGround = mc.player.onGround();
         if (m.equals("Fast")) {
-            mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                 x, y + vert, z, false, onGround
             ));
-            mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                 x, y - 0.05, z, true, onGround
             ));
         } else if (m.equals("Damage")) {
-            mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                 x, y + spd, z, false, onGround
             ));
-            mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                 x, y, z, false, onGround
             ));
         } else if (m.equals("Setback")) {
-            mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                 x, y + 9, z, false, onGround
             ));
-            mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(
+            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                 x, y + vert, z, false, onGround
             ));
         }
@@ -49,16 +53,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Fast", List.of("Fas
         return ravex.manager.ModuleManager.delegate(PacketFly.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

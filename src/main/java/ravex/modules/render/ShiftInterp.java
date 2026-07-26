@@ -1,20 +1,21 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 
-import ravex.parameter.ModeParameter;
 @ModuleInfo(name = "ShiftInterp", category = "Render")
-public class ShiftInterp extends ravex.modules.Module {
-public final ModeParameter target = new ModeParameter("Target", "All", java.util.List.of("All", "Others", "Self"));
+public class ShiftInterp implements ModuleAccess {
+    @Parameter(name = "Target", modes = {"All", "Others", "Self"})
+    public String target = "All";
 
     public boolean shouldCrouch(net.minecraft.world.entity.Entity entity) {
-        if (!getEnabled()) return false;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ShiftInterp").getEnabled()) return false;
         if (!(entity instanceof net.minecraft.world.entity.player.Player)) return false;
         Minecraft mc = Minecraft.getInstance();
         boolean isSelf = (entity == mc.player);
-        String t = target.getValue();
+        String t = target;
         if (t.equals("Self")) {
             return isSelf;
         } else if (t.equals("Others")) {
@@ -31,16 +32,5 @@ public final ModeParameter target = new ModeParameter("Target", "All", java.util
         return ravex.manager.ModuleManager.delegate(ShiftInterp.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -1,5 +1,4 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,6 +24,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
         NATIVE.load();
     }
     private ServerBrandHud() {
+        super("ServerBrandHud", 3, 70, 150, 20);
         this.x = 10; this.y = 200; this.width = 100; this.height = 26;
     }
     public static native String nativeFormatBrand(String rawBrand);
@@ -69,18 +69,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
         return ravex.manager.ModuleManager.INSTANCE.getByName("ServerBrandHud").getEnabled();
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

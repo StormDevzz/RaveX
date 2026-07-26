@@ -1,28 +1,32 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.BlockItem;
+
+
+
+
 @ModuleInfo(name = "Burrow", category = "Combat")
-public class Burrow extends ravex.modules.Module {
-public final ModeParameter block = new ModeParameter("Block", "Obsidian",
-        java.util.List.of("Obsidian", "Cobblestone", "Web", "Anvil"));
-    public final BooleanParameter autoCenter = new BooleanParameter("AutoCenter", true);
-    public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
-    public final BooleanParameter instant = new BooleanParameter("Instant", true);
-    public final NumberParameter height = new NumberParameter("Height", 0.42, 0.2, 1.0, 0.01);
-    public final NumberParameter delay = new NumberParameter("Delay", 0, 0, 5, 1);
+public class Burrow implements ModuleAccess {
+    @Parameter(name = "Block", modes = {"Obsidian", "Cobblestone", "Web", "Anvil"})
+    public String block = "Obsidian";
+    @Parameter(name = "AutoCenter")
+    public boolean autoCenter = true;
+    @Parameter(name = "Rotate")
+    public boolean rotate = true;
+    @Parameter(name = "Instant")
+    public boolean instant = true;
+    @Parameter(name = "Height", min = 0.2, max = 1.0, step = 0.01)
+    public double height = 0.42;
+    @Parameter(name = "Delay", min = 0, max = 5, step = 1)
+    public double delay = 0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_burrow");
     static {
         NATIVE.load();
@@ -34,31 +38,31 @@ public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         if (mc.player == null || mc.level == null) return;
         if (hasPlaced) return;
         tickCounter++;
-        if (tickCounter < delay.getValue().intValue()) return;
+        if (tickCounter < (int) delay) return;
         net.minecraft.core.BlockPos headPos = mc.player.blockPosition();
         if (!mc.level.getBlockState(headPos).isAir() && !mc.level.getBlockState(headPos).canBeReplaced()) return;
         int slot = findBlockSlot(mc);
         if (slot == -1) return;
-        if (autoCenter.getValue()) {
+        if (autoCenter) {
             double centerX = Math.floor(mc.player.getX()) + 0.5;
             double centerZ = Math.floor(mc.player.getZ()) + 0.5;
             mc.player.setPos(centerX, mc.player.getY(), centerZ);
             if (mc.player.connection != null) {
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(centerX, mc.player.getY(), centerZ, mc.player.onGround(), false));
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(centerX, mc.player.getY(), centerZ, mc.player.onGround(), false));
             }
         }
-        if (instant.getValue()) {
-            double h = height.getValue();
+        if (instant) {
+            double h = height;
             net.minecraft.world.phys.Vec3 orig = mc.player.position();
             mc.player.setPos(orig.x, orig.y + h, orig.z);
             if (mc.player.connection != null) {
-                mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(orig.x, orig.y + h, orig.z, false, false));
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(orig.x, orig.y + h, orig.z, false, false));
             }
         }
         int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
         if (slot < 0 || slot > 8) return;
         InventoryUtility.selectSlot(mc.player, slot);
-        BlockHitResult hit = new BlockHitResult(
+        net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
             new net.minecraft.world.phys.Vec3(headPos.getX() + 0.5, headPos.getY() + 2, headPos.getZ() + 0.5),
             net.minecraft.core.Direction.DOWN, headPos, false
         );
@@ -69,12 +73,12 @@ public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         InventoryUtility.selectSlot(mc.player, prevSlot);
         hasPlaced = true;
     }
-    protected void onDisable() {
+    public void onDisable() {
         hasPlaced = false;
         tickCounter = 0;
     }
     private int findBlockSlot(Minecraft mc) {
-        String b = block.getValue();
+        String b = block;
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) continue;
@@ -94,16 +98,5 @@ public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         return ravex.manager.ModuleManager.delegate(Burrow.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

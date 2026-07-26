@@ -99,8 +99,8 @@ public class HudPanel {
         if (targetY + ph > screenH) targetY = screenH - ph - 4;
         if (targetY < 0) targetY = 4;
 
-        double dragLerp = ModuleManager.get(ravex.modules.client.ClickGui.class).smoothScroll.getValue()
-            ? (ModuleManager.get(ravex.modules.client.ClickGui.class).scrollSmoothness.getValue().doubleValue() / 100.0)
+        double dragLerp = ModuleManager.get(ravex.modules.client.ClickGui.class).smoothScroll
+            ? (ModuleManager.get(ravex.modules.client.ClickGui.class).scrollSmoothness / 100.0)
             : 1.0;
         float dragFactor = (float) Math.min(1.0, dragLerp * 0.85);
 
@@ -140,8 +140,8 @@ public class HudPanel {
         float animAlpha = alpha / 255f;
 
 
-        int pAlpha = (int)(ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity.getValue().intValue() * animAlpha);
-        int cornerRadius = Math.min(ModuleManager.get(ravex.modules.client.ClickGui.class).cornerRadius.getValue().intValue(), ph / 2);
+        int pAlpha = (int)((int) ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity * animAlpha);
+        int cornerRadius = Math.min((int) ModuleManager.get(ravex.modules.client.ClickGui.class).cornerRadius, ph / 2);
 
         float stretch = Math.abs(rotation) * 0.3f;
         boolean hasTransform = Math.abs(rotation) > 0.0001f || stretch > 0.0001f;
@@ -159,8 +159,8 @@ public class HudPanel {
         Render2DUtility.drawRound(g, px, py, pw, ph, cornerRadius, bodyColor);
 
 
-        if (ModuleManager.get(ravex.modules.client.ClickGui.class).outlines.getValue()) {
-            int borderColor = ColorUtility.withAlpha(ModuleManager.get(ravex.modules.client.ClickGui.class).outlineColor.getValue(), (int)(255 * animAlpha));
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).outlines) {
+            int borderColor = ColorUtility.withAlpha(ModuleManager.get(ravex.modules.client.ClickGui.class).outlineColor, (int)(255 * animAlpha));
             Render2DUtility.drawRoundBorder(g, px, py, pw, ph, cornerRadius, 1, borderColor);
         }
 
@@ -181,7 +181,7 @@ public class HudPanel {
             ColorUtility.withAlpha(0xFFD0D0E0, alpha), true);
 
 
-        if (ModuleManager.get(Hud.class).showCounter.getValue()) {
+        if (ModuleManager.get(Hud.class).showCounter) {
             List<Module> huds = ModuleManager.INSTANCE.getHudModules();
             int enabledCount = 0;
             for (Module m : huds) { if (m.getEnabled()) enabledCount++; }

@@ -1,6 +1,7 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.EntityUtility;
@@ -8,20 +9,22 @@ import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.misc.MobUtility;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.InventoryUtility;
 @ModuleInfo(name = "WindAura", category = "Combat")
-public class WindAura extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.List.of("Normal", "Silent"));
-    public final NumberParameter range = new NumberParameter("Range", 10.0, 3.0, 30.0, 0.5);
-    public final NumberParameter delay = new NumberParameter("Delay", 5.0, 1.0, 20.0, 1.0);
-    public final BooleanParameter players = new BooleanParameter("Players", true);
-    public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", true);
+public class WindAura implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Normal", "Silent"})
+    public String mode = "Normal";
+    @Parameter(name = "Range", min = 3.0, max = 30.0, step = 0.5)
+    public double range = 10.0;
+    @Parameter(name = "Delay", min = 1.0, max = 20.0, step = 1.0)
+    public double delay = 5.0;
+    @Parameter(name = "Players")
+    public boolean players = true;
+    @Parameter(name = "AutoSwitch")
+    public boolean autoSwitch = true;
     private int tickCounter = 0;
-    protected void onEnable() {
+    public void onEnable() {
         tickCounter = 0;
     }
     private int findWindChargeSlot() {
@@ -36,15 +39,15 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         tickCounter++;
-        if (tickCounter < delay.getValue().intValue()) return;
+        if (tickCounter < (int) delay) return;
         tickCounter = 0;
-        double r = range.getValue();
+        double r = range;
         net.minecraft.world.entity.Entity target = null;
         double nearest = r + 1;
         for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             var living = MobUtility.asLivingEntity(entity);
             if (living == null || MobUtility.isSelf(living)) continue;
-            if (!players.getValue() && MobUtility.isPlayer(living)) continue;
+            if (!players && MobUtility.isPlayer(living)) continue;
             double dist = MobUtility.distanceToPlayer(entity);
             if (dist > r) continue;
             if (dist < nearest) {
@@ -53,7 +56,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.
             }
         }
         if (target == null) return;
-        if (autoSwitch.getValue()) {
+        if (autoSwitch) {
             int slot = findWindChargeSlot();
             if (slot < 0) return;
             InventoryUtility.selectSlot(mc.player, slot);
@@ -62,7 +65,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.
         }
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target.getBoundingBox().getCenter());
         float yaw = angles[0], pitch = angles[1];
-        if (mode.getValue().equals("Silent")) {
+        if (mode.equals("Silent")) {
             float oldYaw = mc.player.getYRot();
             float oldPitch = mc.player.getXRot();
             mc.player.setYRot(yaw); mc.player.setXRot(pitch);
@@ -80,16 +83,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Normal", java.util.
         return ravex.manager.ModuleManager.delegate(WindAura.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

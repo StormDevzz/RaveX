@@ -1,46 +1,53 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.item.BlockItem;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
+import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.BlockItem;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import ravex.utility.nativelib.NativeLibraryUtility;
-import ravex.utility.player.InventoryUtility;
+
+
+
+
 @ModuleInfo(name = "TntAura", category = "Combat")
-public class TntAura extends ravex.modules.Module {
-public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
-    public final NumberParameter  placeDelay   = new NumberParameter("PlaceDelay", 50.0, 0.0, 500.0, 10.0);
-    public final NumberParameter  tntDelay     = new NumberParameter("TNTDelay", 200.0, 0.0, 1000.0, 10.0);
-    public final NumberParameter  igniteDelay  = new NumberParameter("IgniteDelay", 100.0, 0.0, 500.0, 10.0);
-    public final ModeParameter    swapMode     = new ModeParameter("SwapMode", "Silent",
-            java.util.List.of("Silent", "Normal", "None"));
-    public final ModeParameter    rotateMode   = new ModeParameter("RotateMode", "Silent",
-            java.util.List.of("Silent", "Normal", "Packet", "None"));
-    public final BooleanParameter roof         = new BooleanParameter("Roof", true);
-    public final BooleanParameter autoDisable  = new BooleanParameter("AutoDisable", true);
-    public final ModeParameter    targetMode   = new ModeParameter("Target", "Closest",
-            java.util.List.of("Closest", "LowestHP"));
-    public final ModeParameter    targetType   = new ModeParameter("TargetType", "Players",
-            java.util.List.of("Players", "Monsters", "All"));
-    public final NumberParameter  maxRate      = new NumberParameter("MaxRate", 2.0, 1.0, 5.0, 1.0);
-    public final BooleanParameter render       = new BooleanParameter("Render", true);
-    public final ColorParameter   color        = new ColorParameter("Color", 0xFFFF4400);
+public class TntAura implements ModuleAccess {
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
+    public double range = 4.5;
+    @Parameter(name = "PlaceDelay", min = 0.0, max = 500.0, step = 10.0)
+    public double placeDelay = 50.0;
+    @Parameter(name = "TNTDelay", min = 0.0, max = 1000.0, step = 10.0)
+    public double tntDelay = 200.0;
+    @Parameter(name = "IgniteDelay", min = 0.0, max = 500.0, step = 10.0)
+    public double igniteDelay = 100.0;
+    @Parameter(name = "SwapMode", modes = {"Silent", "Normal", "None"})
+    public String swapMode = "Silent";
+    @Parameter(name = "RotateMode", modes = {"Silent", "Normal", "Packet", "None"})
+    public String rotateMode = "Silent";
+    @Parameter(name = "Roof")
+    public boolean roof = true;
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = true;
+    @Parameter(name = "Target", modes = {"Closest", "LowestHP"})
+    public String targetMode = "Closest";
+    @Parameter(name = "TargetType", modes = {"Players", "Monsters", "All"})
+    public String targetType = "Players";
+    @Parameter(name = "MaxRate", min = 1.0, max = 5.0, step = 1.0)
+    public double maxRate = 2.0;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFFFF4400;
     private enum State { TRAPPING, PLACING_TNT, IGNITING, WAITING }
     private State currentState = State.TRAPPING;
     private long lastActionTime = 0;
@@ -74,7 +81,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         boolean hasResistance, int resistanceAmplifier
     );
     public static boolean hasSilentRotations() { return silentRotation.hasRotation; }
-    protected void onEnable() {
+    public void onEnable() {
         currentState = State.TRAPPING;
         lastActionTime = 0;
         gapPos = null;
@@ -82,7 +89,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         failedTntPlacements = 0;
         synchronized (renderBlocks) { renderBlocks.clear(); }
     }
-    protected void onDisable() {
+    public void onDisable() {
         silentRotation.hasRotation = false;
         currentTarget = null;
         gapPos = null;
@@ -95,7 +102,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         silentRotation.hasRotation = false;
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
-            if (autoDisable.getValue()) enabled = false;
+            if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
             return;
         }
         if (currentTarget != target) {
@@ -120,16 +127,16 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         }
     }
     private void tickTrapping(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
-        if (now - lastActionTime < placeDelay.getValue()) return;
+        if (now - lastActionTime < placeDelay) return;
         double[] solidData = collectSolidBlocks(mc);
         double[] gapData = gapPos != null ? new double[]{gapPos[0], gapPos[1], gapPos[2]} : null;
         double[] result = null;
-        double placeRange = range.getValue() + 1.5;
+        double placeRange = range + 1.5;
         if (NATIVE.isLoaded()) {
             result = nativeCalculateCage(
                 mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                 target.getX(), target.getY(), target.getZ(),
-                solidData, placeRange, roof.getValue(),
+                solidData, placeRange, roof,
                 0, gapData
             );
         } else {
@@ -152,7 +159,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
             new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         swapTo(mc, blockSlot);
-        BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
+        net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
         SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         restoreSlot(mc, blockSlot);
@@ -160,7 +167,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         lastActionTime = now;
     }
     private void tickPlacingTnt(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
-        if (now - lastActionTime < tntDelay.getValue()) return;
+        if (now - lastActionTime < tntDelay) return;
         if (gapPos == null) {
             net.minecraft.core.BlockPos feet = target.blockPosition();
             double dx = mc.player.getX() - (feet.getX() + 0.5);
@@ -176,12 +183,12 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         }
         int tntSlot = findTntSlot(mc);
         if (tntSlot == -1) {
-            if (autoDisable.getValue()) enabled = false;
+            if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
             return;
         }
         double[] solidData = collectSolidBlocks(mc);
         double[] result = null;
-        double placeRange = range.getValue() + 1.5;
+        double placeRange = range + 1.5;
         if (NATIVE.isLoaded()) {
             result = nativeCalculateTntSlot(
                 mc.player.getX(), mc.player.getY(), mc.player.getZ(),
@@ -194,8 +201,8 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         if (result == null || result[0] < 0.5) {
             failedTntPlacements++;
             if (failedTntPlacements >= 5) {
-                if (autoDisable.getValue()) {
-                    enabled = false;
+                if (autoDisable) {
+                    ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
                 } else {
                     currentState = State.TRAPPING;
                     gapPos = null;
@@ -211,7 +218,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
             new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         swapTo(mc, tntSlot);
-        BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
+        net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
         SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         restoreSlot(mc, tntSlot);
@@ -219,17 +226,17 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         lastActionTime = now;
     }
     private void tickIgniting(Minecraft mc, net.minecraft.world.entity.LivingEntity target, long now) {
-        if (now - lastActionTime < igniteDelay.getValue()) return;
+        if (now - lastActionTime < igniteDelay) return;
         int flintSlot = findFlintAndSteelSlot(mc);
         if (flintSlot == -1) {
-            if (autoDisable.getValue()) enabled = false;
+            if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
             return;
         }
         net.minecraft.core.BlockPos tntPos = new net.minecraft.core.BlockPos(gapPos[0], gapPos[1], gapPos[2]);
         net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(tntPos);
         rotateTo(mc, hitVec);
         swapTo(mc, flintSlot);
-        BlockHitResult hitResult = new BlockHitResult(hitVec, net.minecraft.core.Direction.UP, tntPos, false);
+        net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, tntPos, false);
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
         SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         restoreSlot(mc, flintSlot);
@@ -238,8 +245,8 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
     }
     private void tickWaiting(Minecraft mc, long now) {
         if (now - lastActionTime > 5000) {
-            if (autoDisable.getValue()) {
-                enabled = false;
+            if (autoDisable) {
+                ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
             } else {
                 currentState = State.TRAPPING;
                 gapPos = null;
@@ -250,9 +257,9 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
     private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
-        double maxDist = range.getValue() + 2.0;
-        String mode = targetMode.getValue();
-        String typeFilter = targetType.getValue();
+        double maxDist = range + 2.0;
+        String mode = targetMode;
+        String typeFilter = targetType;
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
@@ -304,7 +311,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
     }
     private double[] collectSolidBlocks(Minecraft mc) {
         List<Double> data = new ArrayList<>();
-        double r = range.getValue() + 3.0;
+        double r = range + 3.0;
         net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int rx = (int) Math.ceil(r);
         int ry = 3;
@@ -314,7 +321,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
                 for (int dz = -rz; dz <= rz; dz++) {
                     net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
-                        BlockState state = mc.level.getBlockState(pos);
+                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -329,7 +336,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         return arr;
     }
     private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotateMode.getValue();
+        String mode = rotateMode;
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
         float yaw = angles[0], pitch = angles[1];
@@ -346,7 +353,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
     }
     private int savedSlot = -1;
     private void swapTo(Minecraft mc, int slot) {
-        String swap = swapMode.getValue();
+        String swap = swapMode;
         savedSlot = InventoryUtility.getSelectedSlot(mc.player);
         if (swap.equals("Normal")) {
             InventoryUtility.selectSlot(mc.player, slot);
@@ -358,7 +365,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         }
     }
     private void restoreSlot(Minecraft mc, int slot) {
-        if (swapMode.getValue().equals("Silent") && savedSlot != -1) {
+        if (swapMode.equals("Silent") && savedSlot != -1) {
             if (mc.player.connection != null) {
                 mc.player.connection.send(
                     new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(savedSlot));
@@ -389,13 +396,13 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         for (net.minecraft.core.BlockPos h : headSides) {
             if (!h.equals(gapBlock)) candidates.add(h);
         }
-        if (roof.getValue()) candidates.add(feet.above(2));
+        if (roof) candidates.add(feet.above(2));
         Set<net.minecraft.core.BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidData.length; i += 3) {
             solids.add(new net.minecraft.core.BlockPos((int) solidData[i], (int) solidData[i + 1], (int) solidData[i + 2]));
         }
         net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
-        double r = range.getValue();
+        double r = range;
         for (net.minecraft.core.BlockPos cand : candidates) {
             if (solids.contains(cand)) continue;
             if (eyePos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(cand)) > r * r) continue;
@@ -418,11 +425,11 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         if (gapPos == null) return new double[]{0.0};
         net.minecraft.core.BlockPos gap = new net.minecraft.core.BlockPos(gapPos[0], gapPos[1], gapPos[2]);
         net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
-        double r = range.getValue();
+        double r = range;
         if (eyePos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(gap)) > r * r) return new double[]{0.0};
         for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
             net.minecraft.core.BlockPos side = gap.relative(d);
-            BlockState state = mc.level.getBlockState(side);
+            net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(side);
             if (!state.isAir() && !state.liquid()) {
                 return new double[]{
                     1.0,
@@ -441,16 +448,5 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         return ravex.manager.ModuleManager.delegate(TntAura.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

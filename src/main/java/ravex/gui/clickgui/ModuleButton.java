@@ -27,7 +27,7 @@ public class ModuleButton {
     private boolean matchesSearch = true;
 
     public static void tickAllGears() {
-        float speed = ModuleManager.get(ClickGui.class).gearRotationSpeed.getValue().floatValue();
+        float speed = (float) ModuleManager.get(ClickGui.class).gearRotationSpeed;
         if (speed <= 0 || expandedModules.isEmpty()) return;
         long now = System.currentTimeMillis();
         float dt = Math.min(100f, now - lastGearTick) / 1000f;
@@ -113,7 +113,7 @@ public class ModuleButton {
     public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut, String searchQuery, int viewTop, int viewBot) {
         int currentY = currentYOut[0];
         if (searchReveal < 0.001f) return;
-        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+        int btnH = (int) ModuleManager.get(ClickGui.class).buttonHeight;
         boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + btnH
             && currentY + btnH > viewTop && currentY < viewBot;
 
@@ -132,9 +132,9 @@ public class ModuleButton {
         }
 
         int activeColor = ColorUtility.getActiveColor();
-        int btnAlpha = ModuleManager.get(ClickGui.class).buttonOpacity.getValue().intValue();
+        int btnAlpha = (int) ModuleManager.get(ClickGui.class).buttonOpacity;
         int disabledBg = ColorUtility.withAlpha(0x252530, btnAlpha);
-        int btnRadius = Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2);
+        int btnRadius = Math.min((int) ModuleManager.get(ClickGui.class).cornerRadius, btnH / 2);
 
         int mergedBg = disabledBg;
         if (enableAnim > 0.01f) {
@@ -176,13 +176,13 @@ public class ModuleButton {
         int textY = currentY + (btnH - FontRenderUtility.getFontHeight()) / 2 + 1;
 
         if (searchQuery != null && !searchQuery.isEmpty() && !module.getName().isEmpty()) {
-            renderHighlightedName(graphics, displayName, x + ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, searchQuery);
+            renderHighlightedName(graphics, displayName, x + (int) ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX, textY, textColor, searchQuery);
         } else {
-            FontRenderUtility.drawString(graphics, displayName, x + ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX.getValue().intValue(), textY, textColor, true);
+            FontRenderUtility.drawString(graphics, displayName, x + (int) ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX, textY, textColor, true);
         }
 
         boolean hasParams = !module.getParameters().isEmpty();
-        if (hasParams && ModuleManager.get(ClickGui.class).showGear.getValue()) {
+        if (hasParams && ModuleManager.get(ClickGui.class).showGear) {
             Identifier settingsTex = ravex.utility.render.TextureLoaderUtility.getSettingsWhiteTexture();
             if (settingsTex == null) settingsTex = ravex.utility.render.TextureLoaderUtility.getSettingsTexture();
             if (settingsTex != null) {
@@ -278,7 +278,7 @@ public class ModuleButton {
         float revealH = (!searching || matchesSearch) ? 1.0f : searchReveal;
         if (revealH < 0.99f) {
             int fadeAlpha = (int)((1.0f - revealH) * 200);
-            Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min(ModuleManager.get(ClickGui.class).cornerRadius.getValue().intValue(), btnH / 2), (fadeAlpha << 24) | 0x050510);
+            Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min((int) ModuleManager.get(ClickGui.class).cornerRadius, btnH / 2), (fadeAlpha << 24) | 0x050510);
         }
         currentYOut[0] = currentYOut[0] + (int)((currentY - currentYOut[0]) * revealH);
     }
@@ -355,7 +355,7 @@ public class ModuleButton {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int width, int[] currentYOut, net.minecraft.client.Minecraft mc) {
         int currentY = currentYOut[0];
-        int btnH = ModuleManager.get(ClickGui.class).buttonHeight.getValue().intValue();
+        int btnH = (int) ModuleManager.get(ClickGui.class).buttonHeight;
         int gap = 2;
         int paramH = expanded ? getExpandedHeight(width) : 0;
         int totalH = btnH + paramH + (expanded ? gap : 0);

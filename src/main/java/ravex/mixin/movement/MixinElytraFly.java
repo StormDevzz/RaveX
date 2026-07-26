@@ -33,13 +33,13 @@ public abstract class MixinElytraFly {
         LocalPlayer player = (LocalPlayer) entity;
         if (!player.isFallFlying()) return;
 
-        if (ElytraFly.itz().speedControl.getValue()) return;
+        if (ElytraFly.itz().speedControl) return;
 
         Minecraft mc = Minecraft.getInstance();
-        String mode = ElytraFly.itz().mode.getValue();
-        double hSpeed = ElytraFly.itz().hSpeed.getValue();
-        double vSpeed = ElytraFly.itz().vSpeed.getValue();
-        double glide = ElytraFly.itz().glide.getValue();
+        String mode = ElytraFly.itz().mode;
+        double hSpeed = ElytraFly.itz().hSpeed;
+        double vSpeed = ElytraFly.itz().vSpeed;
+        double glide = ElytraFly.itz().glide;
 
         boolean space = mc.options.keyJump.isDown();
         boolean shift = mc.options.keyShift.isDown();

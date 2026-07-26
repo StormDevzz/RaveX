@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -14,10 +14,14 @@ import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "FpsHud", category = "HUD")
 public class FpsHud extends ravex.modules.Module {
-    public final ColorParameter highColor = new ColorParameter("HighColor", 0xFF44FF88);
-    public final ColorParameter midColor = new ColorParameter("MidColor", 0xFFFFCC33);
-    public final ColorParameter lowColor = new ColorParameter("LowColor", 0xFFFF4455);
-    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+    @Parameter(name = "HighColor", color = true)
+    public int highColor = 0xFF44FF88;
+    @Parameter(name = "MidColor", color = true)
+    public int midColor = 0xFFFFCC33;
+    @Parameter(name = "LowColor", color = true)
+    public int lowColor = 0xFFFF4455;
+    @Parameter(name = "Shadow")
+    public boolean shadow = true;
 
     public int x;
     public int y;
@@ -69,18 +73,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_FPS_WHITE;
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ac);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

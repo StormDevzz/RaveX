@@ -1,40 +1,45 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.EntityUtility;
-
-import net.minecraft.world.item.BlockItem;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.world.level.block.FallingBlock;
-import net.minecraft.world.phys.BlockHitResult;
 import ravex.utility.misc.PhysicUtility;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.FallingBlock;
+
+
+
+
+
 @ModuleInfo(name = "AutoDrop", category = "Combat")
-public class AutoDrop extends ravex.modules.Module {
-public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
-        java.util.List.of("Gravel", "Anvil", "Sand", "Both"));
-    public final ModeParameter target = new ModeParameter("Target", "Self",
-        java.util.List.of("Self", "Nearby", "Enemy"));
-    public final NumberParameter range = new NumberParameter("Range", 4.0, 1.0, 6.0, 0.5);
-    public final NumberParameter dropHeight = new NumberParameter("DropHeight", 3, 2, 6, 1);
-    public final BooleanParameter airPlace = new BooleanParameter("AirPlace", true);
-    public final ModeParameter rotate = new ModeParameter("Rotate", "NCP",
-            java.util.List.of("NCP", "NCPStrict", "Strict", "None"));
-    public final ModeParameter swapMode = new ModeParameter("Swap", "NCP",
-            java.util.List.of("NCP", "NCPStrict", "Strict", "None"));
-    public final BooleanParameter swapSwitchBack = new BooleanParameter("SwitchBack", true);
-    public final NumberParameter placeDelay = new NumberParameter("Delay", 2, 1, 10, 1);
+public class AutoDrop implements ModuleAccess {
+    @Parameter(name = "BlockType", modes = {"Gravel", "Anvil", "Sand", "Both"})
+    public String blockType = "Gravel";
+    @Parameter(name = "Target", modes = {"Self", "Nearby", "Enemy"})
+    public String target = "Self";
+    @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.5)
+    public double range = 4.0;
+    @Parameter(name = "DropHeight", min = 2, max = 6, step = 1)
+    public double dropHeight = 3;
+    @Parameter(name = "AirPlace")
+    public boolean airPlace = true;
+    @Parameter(name = "Rotate", modes = {"NCP", "NCPStrict", "Strict", "None"})
+    public String rotate = "NCP";
+    @Parameter(name = "Swap", modes = {"NCP", "NCPStrict", "Strict", "None"})
+    public String swapMode = "NCP";
+    @Parameter(name = "SwitchBack")
+    public boolean swapSwitchBack = true;
+    @Parameter(name = "Delay", min = 1, max = 10, step = 1)
+    public double placeDelay = 2;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autodrop");
     static {
         NATIVE.load();
@@ -46,15 +51,15 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         tickCounter++;
-        if (tickCounter < placeDelay.getValue().intValue()) return;
+        if (tickCounter < (int) placeDelay) return;
         tickCounter = 0;
         net.minecraft.world.entity.Entity targetEntity = findTarget(mc);
         if (targetEntity == null) return;
-        net.minecraft.core.BlockPos placePos = targetEntity.blockPosition().above(dropHeight.getValue().intValue());
+        net.minecraft.core.BlockPos placePos = targetEntity.blockPosition().above((int) dropHeight);
         if (!mc.level.getBlockState(placePos).isAir() && !mc.level.getBlockState(placePos).canBeReplaced()) return;
         int slot = findDropBlock(mc);
         if (slot == -1) return;
-        String swap = swapMode.getValue();
+        String swap = swapMode;
         if (swap.equals("None")) {
             if (InventoryUtility.getSelectedSlot(mc.player) != slot) return;
             originalSlot = -1;
@@ -64,11 +69,11 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
         }
         net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(placePos);
         rotateTo(mc, center);
-        String rot = rotate.getValue();
+        String rot = rotate;
         if ((rot.equals("Strict") || rot.equals("NCPStrict")) && !isRotationAligned(mc, center)) return;
         net.minecraft.core.BlockPos neighbor;
         net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
-        if (airPlace.getValue() || mc.level.getBlockState(placePos.below()).isAir()) {
+        if (airPlace || mc.level.getBlockState(placePos.below()).isAir()) {
             neighbor = null;
             for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
                 net.minecraft.core.BlockPos side = placePos.relative(dir);
@@ -82,17 +87,17 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
             neighbor.getZ() + 0.5 + face.getStepZ() * 0.5
         );
         if (mc.gameMode != null)
-            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, new BlockHitResult(hitVec, face, neighbor, false));
+            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighbor, false));
         SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (swapSwitchBack.getValue() && originalSlot != -1 && !swap.equals("None")) {
+        if (swapSwitchBack && originalSlot != -1 && !swap.equals("None")) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
     }
     private net.minecraft.world.entity.Entity findTarget(Minecraft mc) {
-        String t = target.getValue();
+        String t = target;
         if (t.equals("Self")) return mc.player;
         net.minecraft.world.entity.Entity best = null;
-        double bestDist = range.getValue();
+        double bestDist = range;
         for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
             net.minecraft.world.entity.LivingEntity le = MobUtility.asLivingEntity(e);
             if (le == null || MobUtility.isSelf(le) || !e.isAlive()) continue;
@@ -103,7 +108,7 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
         return best;
     }
     private int findDropBlock(Minecraft mc) {
-        String type = blockType.getValue();
+        String type = blockType;
         for (int i = 0; i < 36; i++) {
             var stack = InventoryUtility.getItem(mc.player, i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) continue;
@@ -116,7 +121,7 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
         return -1;
     }
     private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotate.getValue();
+        String mode = rotate;
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
         float currentYaw = mc.player.getYRot();
@@ -141,16 +146,5 @@ public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
         return ravex.manager.ModuleManager.delegate(AutoDrop.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

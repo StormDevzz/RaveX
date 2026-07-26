@@ -1,18 +1,19 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import ravex.utility.misc.EntityUtility;
 import ravex.event.Subscribe;
 import ravex.event.combat.TotemPopEvent;
 
-import ravex.parameter.BooleanParameter;
 import java.util.HashMap;
 import java.util.Map;
 @ModuleInfo(name = "PopCounter", category = "Misc")
-public class PopCounter extends ravex.modules.Module {
-public final BooleanParameter onlyOwn = new BooleanParameter("OnlyOwn", false);
+public class PopCounter implements ModuleAccess {
+    @Parameter(name = "OnlyOwn")
+    public boolean onlyOwn = false;
     private final Map<String, Integer> popCounts = new HashMap<>();
 
     @Subscribe
@@ -21,8 +22,8 @@ public final BooleanParameter onlyOwn = new BooleanParameter("OnlyOwn", false);
     }
 
     public void onPop(net.minecraft.world.entity.player.Player player) {
-        if (!getEnabled()) return;
-        if (player == Minecraft.getInstance().player && !onlyOwn.getValue()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("PopCounter").getEnabled()) return;
+        if (player == Minecraft.getInstance().player && !onlyOwn) return;
         if (player == Minecraft.getInstance().player) return;
         String name = player.getName().getString();
         int count = popCounts.getOrDefault(name, 1);
@@ -43,16 +44,5 @@ public final BooleanParameter onlyOwn = new BooleanParameter("OnlyOwn", false);
         return ravex.manager.ModuleManager.delegate(PopCounter.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

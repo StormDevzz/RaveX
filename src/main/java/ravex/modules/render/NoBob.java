@@ -1,11 +1,11 @@
 package ravex.modules.render;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 @ModuleInfo(name = "NoBob", category = "Render")
-public class NoBob extends ravex.modules.Module {
+public class NoBob implements ModuleAccess {
 private boolean originalBob = true;
-    protected void onEnable() {
+    public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options != null) {
             originalBob = mc.options.bobView().get();
@@ -19,7 +19,7 @@ private boolean originalBob = true;
             mc.options.bobView().set(false);
         }
     }
-    protected void onDisable() {
+    public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null) return;
         mc.options.bobView().set(originalBob);
@@ -32,16 +32,5 @@ private boolean originalBob = true;
         return ravex.manager.ModuleManager.delegate(NoBob.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

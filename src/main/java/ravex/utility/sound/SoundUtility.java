@@ -68,7 +68,7 @@ public class SoundUtility {
         }
 
 
-        float multiplier = (sounds != null) ? sounds.volume.getValue().floatValue() : 1.0f;
+        float multiplier = (sounds != null) ? (float) sounds.volume : 1.0f;
         float finalVolume = volume * multiplier;
         if (finalVolume <= 0.0f) return;
 

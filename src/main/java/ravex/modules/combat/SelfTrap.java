@@ -1,34 +1,32 @@
 package ravex.modules.combat;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
-import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import ravex.utility.misc.PhysicUtility;
-import ravex.RaveX;
-
+import ravex.modules.annotations.Parameter;
 import ravex.parameter.ActionParameter;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import ravex.RaveX;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.Block;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+
+
+
 
 @ModuleInfo(name = "SelfTrap", category = "Combat")
-public class SelfTrap extends ravex.modules.Module {
+public class SelfTrap implements ModuleAccess {
 public static final SelfTrap INSTANCE = new SelfTrap();
     public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.browser.BlockBrowserScreen(
@@ -37,18 +35,30 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             ravex.manager.ModuleManager.delegate(ravex.modules.combat.SelfTrap.class)::setBlockSelected
         ));
     });
-    public final ModeParameter mode = new ModeParameter("Mode", "Full", List.of("Full", "Simple", "Roof"));
-    public final ModeParameter speedMode = new ModeParameter("Speed", "Normal", List.of("Legit", "Normal", "Aggressive"));
-    public final NumberParameter maxRate = new NumberParameter("MaxRate", 2.0, 1.0, 5.0, 1.0);
-    public final NumberParameter placeDelay = new NumberParameter("Delay", 100.0, 0.0, 1000.0, 10.0);
-    public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
-    public final BooleanParameter strictRotation = new BooleanParameter("StrictRotation", false);
-    public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal", "None"));
-    public final BooleanParameter swapSwitchBack = new BooleanParameter("SwitchBack", true);
-    public final BooleanParameter swapInventory = new BooleanParameter("SwapInv", true);
-    public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
-    public final BooleanParameter render = new BooleanParameter("Render", true);
-    public final ColorParameter color = new ColorParameter("Color", 0x3F00DDFF);
+    @Parameter(name = "Mode", modes = {"Full", "Simple", "Roof"})
+    public String mode = "Full";
+    @Parameter(name = "Speed", modes = {"Legit", "Normal", "Aggressive"})
+    public String speedMode = "Normal";
+    @Parameter(name = "MaxRate", min = 1.0, max = 5.0, step = 1.0)
+    public double maxRate = 2.0;
+    @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
+    public double placeDelay = 100.0;
+    @Parameter(name = "Rotate", modes = {"Silent", "Normal", "None"})
+    public String rotate = "Silent";
+    @Parameter(name = "StrictRotation")
+    public boolean strictRotation = false;
+    @Parameter(name = "Swap", modes = {"Silent", "Normal", "None"})
+    public String swapMode = "Silent";
+    @Parameter(name = "SwitchBack")
+    public boolean swapSwitchBack = true;
+    @Parameter(name = "SwapInv")
+    public boolean swapInventory = true;
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = true;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0x3F00DDFF;
     private final Set<Identifier> selectedBlocks = new HashSet<>();
     private static final List<net.minecraft.core.BlockPos> selfTrapBlocks = new ArrayList<>();
     private long lastPlaceTime = 0;
@@ -59,10 +69,6 @@ public static final SelfTrap INSTANCE = new SelfTrap();
     }
     private SelfTrap() {
         
-        maxRate.setVisible(() -> !speedMode.getValue().equals("Legit"));
-        strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
-        swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
-        swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
     }
     public static boolean maybeEnabled() {
         return ravex.manager.ModuleManager.INSTANCE.getByName("SelfTrap").getEnabled();
@@ -95,7 +101,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             selectedBlocks.remove(id);
         }
     }
-    protected void onEnable() {
+    public void onEnable() {
         lastPlaceTime = 0;
         silentRotation.hasRotation = false;
         synchronized (selfTrapBlocks) {
@@ -105,7 +111,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.OBSIDIAN));
         }
     }
-    protected void onDisable() {
+    public void onDisable() {
         silentRotation.hasRotation = false;
         synchronized (selfTrapBlocks) {
             selfTrapBlocks.clear();
@@ -121,7 +127,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             activeSolidBlocks.add(d);
         }
         int modeVal = 0;
-        String mStr = mode.getValue();
+        String mStr = mode;
         if ("Simple".equals(mStr)) modeVal = 1;
         else if ("Roof".equals(mStr)) modeVal = 2;
         int simLimit = 9;
@@ -158,8 +164,8 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             selfTrapBlocks.addAll(simulatedBlocks);
         }
         long now = System.currentTimeMillis();
-        boolean checkDelay = !speedMode.getValue().equals("Aggressive");
-        if (checkDelay && now - lastPlaceTime < placeDelay.getValue().longValue()) {
+        boolean checkDelay = !speedMode.equals("Aggressive");
+        if (checkDelay && now - lastPlaceTime < (long) placeDelay) {
             return;
         }
         int blockSlot = findBlockSlot(mc);
@@ -168,8 +174,8 @@ public static final SelfTrap INSTANCE = new SelfTrap();
         for (double d : solidBlockData) {
             activeSolidBlocks.add(d);
         }
-        int limit = maxRate.getValue().intValue();
-        if (speedMode.getValue().equals("Legit")) {
+        int limit = (int) maxRate;
+        if (speedMode.equals("Legit")) {
             limit = 1;
         }
         int actionsThisTick = 0;
@@ -199,11 +205,11 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
             net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             rotateTo(mc, hitVec);
-            boolean isStrict = strictRotation.getValue() || speedMode.getValue().equals("Legit");
+            boolean isStrict = strictRotation || speedMode.equals("Legit");
             if (isStrict && !isRotationAligned(mc, hitVec)) {
                 break;
             }
-            String swap = swapMode.getValue();
+            String swap = swapMode;
             if (swap.equals("Normal")) {
                 InventoryUtility.selectSlot(mc.player, blockSlot);
             } else if (swap.equals("Silent")) {
@@ -213,7 +219,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
                     break;
                 }
             }
-            BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
+            net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
             mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
             SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             placedAny = true;
@@ -222,29 +228,29 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             activeSolidBlocks.add((double) targetBlock.getY());
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
-        if (placedAny && swapMode.getValue().equals("Silent") && swapSwitchBack.getValue() && originalSlot != -1) {
+        if (placedAny && swapMode.equals("Silent") && swapSwitchBack && originalSlot != -1) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
         if (placedAny) {
             lastPlaceTime = now;
         } else {
-            if (autoDisable.getValue() && simulatedBlocks.isEmpty()) {
-                enabled = false;
+            if (autoDisable && simulatedBlocks.isEmpty()) {
+                ravex.manager.ModuleManager.INSTANCE.getByName("SelfTrap").setEnabled(false);
             }
         }
     }
     private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        if (rotate.getValue().equals("None")) return;
+        if (rotate.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.player, target);
-        if (rotate.getValue().equals("Normal")) {
+        if (rotate.equals("Normal")) {
             mc.player.setYRot(angles[0]);
             mc.player.setXRot(angles[1]);
-        } else if (rotate.getValue().equals("Silent")) {
+        } else if (rotate.equals("Silent")) {
             silentRotation.set(angles[0], angles[1]);
         }
     }
     private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        if (rotate.getValue().equals("None")) return true;
+        if (rotate.equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 12.0F);
     }
     private double[] collectSolidBlocks(Minecraft mc) {
@@ -258,7 +264,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
                 for (int dz = -rz; dz <= rz; dz++) {
                     net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
                     if (mc.level.isLoaded(pos)) {
-                        BlockState state = mc.level.getBlockState(pos);
+                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -284,7 +290,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
                 return i;
             }
         }
-        if (swapInventory.getValue()) {
+        if (swapInventory) {
             for (int i = 9; i < 36; i++) {
                 var stack = InventoryUtility.getItem(mc.player, i);
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
@@ -349,16 +355,5 @@ public static final SelfTrap INSTANCE = new SelfTrap();
         int mode
     );
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

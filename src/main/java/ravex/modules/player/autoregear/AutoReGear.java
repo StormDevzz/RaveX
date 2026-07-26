@@ -1,6 +1,7 @@
 package ravex.modules.player.autoregear;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
@@ -8,15 +9,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.ClickType;
 
 import ravex.parameter.ActionParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.gui.clickgui.AutoReGearScreen;
 import java.util.HashMap;
 import java.util.Map;
 @ModuleInfo(name = "AutoReGear", category = "net.minecraft.world.entity.player.Player")
-public class AutoReGear extends ravex.modules.Module {
-public final NumberParameter delayParam = new NumberParameter("Delay", 200, 50, 1000, 50);
+public class AutoReGear implements ModuleAccess {
+    @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
+    public double delayParam = 200;
     public final ActionParameter items = new ActionParameter("Items", () -> {
         Minecraft.getInstance().setScreen(
             new AutoReGearScreen(Minecraft.getInstance().screen)
@@ -65,7 +66,7 @@ public final NumberParameter delayParam = new NumberParameter("Delay", 200, 50, 
         String title = containerScreen.getTitle().getString().toLowerCase();
         if (!title.contains("shulker") && !title.contains("chest") && !title.contains("box") && !title.contains("barrel")) return;
         long now = System.currentTimeMillis();
-        if (now - lastActionTime < delayParam.getValue().longValue()) return;
+        if (now - lastActionTime < (long) delayParam) return;
         var menu = mc.player.containerMenu;
         if (menu == null || menu.slots.size() < 63) return;
         String[] containerItemIds = new String[27];
@@ -163,16 +164,5 @@ public final NumberParameter delayParam = new NumberParameter("Delay", 200, 50, 
         return -1;
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

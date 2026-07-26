@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -14,8 +14,10 @@ import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "TpsHud", category = "HUD")
 public class TpsHud extends ravex.modules.Module {
-    public final ColorParameter color = new ColorParameter("Color", 0xFF44FF88);
-    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFF44FF88;
+    @Parameter(name = "Shadow")
+    public boolean shadow = true;
 
     public int x;
     public int y;
@@ -81,18 +83,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_TPS_WHITE;
         return ravex.manager.ModuleManager.delegate(TpsHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

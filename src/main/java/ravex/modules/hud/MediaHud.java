@@ -1,5 +1,4 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
@@ -48,6 +47,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
     private ScheduledExecutorService scheduler;
 
     private MediaHud() {
+        super("MediaHud", 2, 100, 200, 60);
         this.x = 10; this.y = 310; this.width = 180; this.height = 20;
     }
     protected void onEnable() {
@@ -309,18 +309,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
         return ravex.manager.ModuleManager.delegate(MediaHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

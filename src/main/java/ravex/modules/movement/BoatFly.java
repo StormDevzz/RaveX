@@ -1,39 +1,44 @@
 package ravex.modules.movement;
-
-import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
-import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
-import ravex.utility.misc.EntityUtility;
-import net.minecraft.world.entity.vehicle.boat.Boat;
-import ravex.utility.player.SwingUtility;
-import ravex.utility.misc.PhysicUtility;
+import ravex.modules.ModuleAccess;
 import ravex.event.EventBusHolder;
-import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
-
+import ravex.event.Subscribe;
+import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
+import ravex.utility.misc.EntityUtility;
+import ravex.utility.misc.PhysicUtility;
+import ravex.utility.player.SwingUtility;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import java.util.ArrayList;
 import java.util.List;
 
-@ModuleInfo(name = "BoatFly", category = "Movement")
-public class BoatFly extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Packet",
-            List.of("Packet", "PacketStrict", "Motion"));
-    public final NumberParameter speed = new NumberParameter("Speed", 2.0, 0.1, 25.0, 0.1);
-    public final NumberParameter ySpeed = new NumberParameter("YSpeed", 1.0, 0.0, 10.0, 0.1);
-    public final NumberParameter boatScale = new NumberParameter("BoatScale", 0.1, 0.05, 1.0, 0.05);
-    public final BooleanParameter autoMount = new BooleanParameter("AutoMount", true);
-    public final BooleanParameter gravity = new BooleanParameter("Gravity", false);
-    public final BooleanParameter phase = new BooleanParameter("Phase", false);
-    public final BooleanParameter cancelPackets = new BooleanParameter("CancelPackets", true);
-    public final BooleanParameter allowShift = new BooleanParameter("AllowShift", true);
 
-    private final ArrayList<ServerboundMoveVehiclePacket> vehiclePackets = new ArrayList<>();
+
+
+
+@ModuleInfo(name = "BoatFly", category = "Movement")
+public class BoatFly implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Packet", "PacketStrict", "Motion"})
+    public String mode = "Packet";
+    @Parameter(name = "Speed", min = 0.1, max = 25.0, step = 0.1)
+    public double speed = 2.0;
+    @Parameter(name = "YSpeed", min = 0.0, max = 10.0, step = 0.1)
+    public double ySpeed = 1.0;
+    @Parameter(name = "BoatScale", min = 0.05, max = 1.0, step = 0.05)
+    public double boatScale = 0.1;
+    @Parameter(name = "AutoMount")
+    public boolean autoMount = true;
+    @Parameter(name = "Gravity")
+    public boolean gravity = false;
+    @Parameter(name = "Phase")
+    public boolean phase = false;
+    @Parameter(name = "CancelPackets")
+    public boolean cancelPackets = true;
+    @Parameter(name = "AllowShift")
+    public boolean allowShift = true;
+
+    private final ArrayList<net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket> vehiclePackets = new ArrayList<>();
     private float currentScale = 1.0f;
 
     public static boolean isBoatScaleActive() {
@@ -45,7 +50,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
     }
 
     private void updateScale() {
-        float target = boatScale.getValue().floatValue();
+        float target = (float) boatScale;
         float speed = 0.15f;
         if (currentScale > target) {
             currentScale = Math.max(target, currentScale - speed);
@@ -53,13 +58,13 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
             currentScale = Math.min(target, currentScale + speed);
         }
     }
-    protected void onEnable() {
+    public void onEnable() {
         vehiclePackets.clear();
         currentScale = 1.0f;
         EventBusHolder.get().subscribe(this);
-        if (autoMount.getValue()) mountToNearestBoat();
+        if (autoMount) mountToNearestBoat();
     }
-    protected void onDisable() {
+    public void onDisable() {
         vehiclePackets.clear();
         currentScale = 1.0f;
         EventBusHolder.get().unsubscribe(this);
@@ -82,7 +87,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         if (event.isSend()) {
             var packet = event.getPacket();
 
-            if (packet instanceof ServerboundMoveVehiclePacket pac && mode.getValue().equals("Packet")) {
+            if (packet instanceof net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket pac && mode.equals("Packet")) {
                 if (vehiclePackets.contains(pac)) {
                     vehiclePackets.remove(pac);
                 } else {
@@ -90,12 +95,12 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
                 }
             }
 
-            if (allowShift.getValue() && packet instanceof net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket) {
+            if (allowShift && packet instanceof net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket) {
                 event.setCancelled(true);
             }
         }
 
-        if (event.isReceive() && cancelPackets.getValue()) {
+        if (event.isReceive() && cancelPackets) {
             var packet = event.getPacket();
             if (packet instanceof net.minecraft.network.protocol.game.ClientboundMoveVehiclePacket
                     || packet instanceof net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket) {
@@ -111,45 +116,45 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
 
         net.minecraft.world.entity.Entity vehicle = mc.player.getVehicle();
         if (vehicle == null || !(vehicle instanceof Boat)) {
-            if (autoMount.getValue()) mountToNearestBoat();
+            if (autoMount) mountToNearestBoat();
             return;
         }
 
-        if (phase.getValue()) {
+        if (phase) {
             vehicle.noPhysics = true;
             mc.player.noPhysics = true;
         }
 
-        vehicle.setNoGravity(!gravity.getValue());
-        mc.player.setNoGravity(!gravity.getValue());
+        vehicle.setNoGravity(!gravity);
+        mc.player.setNoGravity(!gravity);
 
         vehicle.setYRot(mc.player.getYRot());
 
-        double[] motion = forward(speed.getValue());
+        double[] motion = forward(speed);
         double px = vehicle.getX() + motion[0];
         double pz = vehicle.getZ() + motion[1];
         double py = vehicle.getY();
 
         if (mc.options.keyJump.isDown()) {
-            py += ySpeed.getValue();
+            py += ySpeed;
         } else if (mc.options.keyShift.isDown()) {
-            py -= ySpeed.getValue();
+            py -= ySpeed;
         }
 
-        String currentMode = mode.getValue();
+        String currentMode = mode;
 
         if (currentMode.equals("Motion")) {
             net.minecraft.world.phys.Vec3 vel = vehicle.getDeltaMovement();
-            double vy = vel.y + (mc.options.keyJump.isDown() ? ySpeed.getValue() : (mc.options.keyShift.isDown() ? -ySpeed.getValue() : 0));
+            double vy = vel.y + (mc.options.keyJump.isDown() ? ySpeed : (mc.options.keyShift.isDown() ? -ySpeed : 0));
             vehicle.setDeltaMovement(motion[0], vy, motion[1]);
         } else {
             vehicle.setPos(px, py, pz);
-            ServerboundMoveVehiclePacket packet = ServerboundMoveVehiclePacket.fromEntity(vehicle);
+            net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket packet = net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket.fromEntity(vehicle);
             vehiclePackets.add(packet);
             mc.player.connection.send(packet);
 
             if (currentMode.equals("PacketStrict")) {
-                mc.player.connection.send(ServerboundMoveVehiclePacket.fromEntity(vehicle));
+                mc.player.connection.send(net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket.fromEntity(vehicle));
             }
         }
     }
@@ -207,16 +212,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         return ravex.manager.ModuleManager.delegate(BoatFly.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

@@ -20,7 +20,7 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyAmbientLight(float value) {
-        return isFullbright() ? Fullbright.itz().brightness.getValue().floatValue() : value;
+        return isFullbright() ? (float) Fullbright.itz().brightness : value;
     }
 
     @ModifyArg(
@@ -29,7 +29,7 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyNightVision(float value) {
-        return isFullbright() ? Fullbright.itz().brightness.getValue().floatValue() : value;
+        return isFullbright() ? (float) Fullbright.itz().brightness : value;
     }
 
     @ModifyArg(
@@ -38,6 +38,6 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyDarkness(float value) {
-        return isFullbright() ? Fullbright.itz().darknessMult.getValue().floatValue() : value;
+        return isFullbright() ? (float) Fullbright.itz().darknessMult : value;
     }
 }

@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 
 import ravex.modules.client.Hud;
@@ -17,10 +17,12 @@ import java.util.List;
 import java.util.Map;
 @ModuleInfo(name = "ArrayListHud", category = "HUD")
 public class ArrayListHud extends ravex.modules.Module {
-    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
-    public final ModeParameter _case = new ModeParameter("Case", "Normal",
-            java.util.List.of("Normal", "Lowercase", "UPPERCASE"));
-    public final NumberParameter animationSpeed = new NumberParameter("AnimationSpeed", 4.0, 0.0, 12.0, 0.5);
+    @Parameter(name = "Shadow")
+    public boolean shadow = true;
+    @Parameter(name = "Case", modes = {"Normal", "Lowercase", "UPPERCASE"})
+    public String _case = "Normal";
+    @Parameter(name = "AnimationSpeed", min = 0.0, max = 12.0, step = 0.5)
+    public double animationSpeed = 4.0;
 
     public int x;
     public int y;
@@ -30,12 +32,12 @@ private final Map<String, Float> animProgress = new LinkedHashMap<>();
     private final Map<String, Long> entryStartTime = new HashMap<>();
     private long enableTime = 0;
 
-    public void onEnable() {
+    protected void onEnable() {
         enableTime = System.currentTimeMillis();
         animProgress.clear();
         entryStartTime.clear();
     }
-    public void onDisable() {
+    protected void onDisable() {
         animProgress.clear();
         entryStartTime.clear();
     }
@@ -154,18 +156,7 @@ private final Map<String, Float> animProgress = new LinkedHashMap<>();
         return ravex.manager.ModuleManager.delegate(ArrayListHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override

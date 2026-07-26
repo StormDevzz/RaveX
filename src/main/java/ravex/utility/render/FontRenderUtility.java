@@ -34,10 +34,10 @@ public class FontRenderUtility {
     }
 
     public static FontType getCurrentFontType() {
-        if (!ModuleManager.get(ravex.modules.client.Fonts.class).p_enabled.getValue()) {
+        if (!ModuleManager.get(ravex.modules.client.Fonts.class).p_enabled) {
             return FontType.VANILLA;
         }
-        String font = ModuleManager.get(ravex.modules.client.Fonts.class).fontType.getValue();
+        String font = ModuleManager.get(ravex.modules.client.Fonts.class).fontType;
         switch (font) {
             case "Comfortaa":     return FontType.COMFORTAA;
             case "SFMedium":      return FontType.SF_MEDIUM;
@@ -50,7 +50,7 @@ public class FontRenderUtility {
         if (text == null) return Component.empty();
 
         FontType actualType = fontType;
-        boolean customFontActive = ModuleManager.get(ravex.modules.client.Fonts.class).p_enabled.getValue();
+        boolean customFontActive = ModuleManager.get(ravex.modules.client.Fonts.class).p_enabled;
 
         if (actualType != FontType.VANILLA && !customFontActive) {
             actualType = FontType.VANILLA;
@@ -122,7 +122,7 @@ public class FontRenderUtility {
     }
 
     public static void drawString(GuiGraphics graphics, FontType fontType, String text, int x, int y, int color, boolean shadow) {
-        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize.getValue();
+        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
         Component component = getFontComponent(fontType, text);
 
         if (!renderOnce) {
@@ -147,12 +147,12 @@ public class FontRenderUtility {
     }
 
     public static int getStringWidth(FontType fontType, String text) {
-        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize.getValue();
+        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
         return (int) (Minecraft.getInstance().font.width(getFontComponent(fontType, text)) * scale);
     }
 
     public static int getFontHeight() {
-        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize.getValue();
+        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
         return (int) (Minecraft.getInstance().font.lineHeight * scale);
     }
 }

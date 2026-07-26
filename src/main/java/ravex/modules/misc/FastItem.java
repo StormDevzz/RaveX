@@ -1,13 +1,14 @@
 package ravex.modules.misc;
-
+import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import ravex.parameter.NumberParameter;
+import ravex.modules.annotations.Parameter;
 @ModuleInfo(name = "FastItem", category = "Misc")
-public class FastItem extends ravex.modules.Module {
-public final NumberParameter delay = new NumberParameter("Delay", 0.0, 0.0, 500.0, 10.0);
+public class FastItem implements ModuleAccess {
+    @Parameter(name = "Delay", min = 0.0, max = 500.0, step = 10.0)
+    public double delay = 0.0;
 
     public long getDelayMs() {
-        return delay.getValue().longValue();
+        return (long) delay;
     }
 
     public static boolean maybeEnabled() {
@@ -18,16 +19,5 @@ public final NumberParameter delay = new NumberParameter("Delay", 0.0, 0.0, 500.
         return ravex.manager.ModuleManager.delegate(FastItem.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

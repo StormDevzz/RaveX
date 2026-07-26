@@ -1,28 +1,31 @@
 package ravex.modules.misc;
-
-import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import ravex.modules.ModuleAccess;
 import ravex.mixin.client.AccessorMinecraft;
+import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
+import ravex.utility.player.InventoryUtility;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.NumberParameter;
-import ravex.utility.player.InventoryUtility;
+
+
+
 @ModuleInfo(name = "AutoSoup", category = "Misc")
-public class AutoSoup extends ravex.modules.Module {
-public final NumberParameter health = new NumberParameter("Health", 10.0, 1.0, 20.0, 1.0);
-    public final BooleanParameter hotbarOnly = new BooleanParameter("HotbarOnly", true);
+public class AutoSoup implements ModuleAccess {
+    @Parameter(name = "Health", min = 1.0, max = 20.0, step = 1.0)
+    public double health = 10.0;
+    @Parameter(name = "HotbarOnly")
+    public boolean hotbarOnly = true;
     private long lastUse = 0;
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
+        net.minecraft.client.player.LocalPlayer player = mc.player;
         if (player == null) return;
         long now = System.currentTimeMillis();
         if (now - lastUse < 500) return;
-        if (player.getHealth() + player.getAbsorptionAmount() > health.getValue()) return;
+        if (player.getHealth() + player.getAbsorptionAmount() > health) return;
         if (!player.getMainHandItem().isEmpty() && !isHealingPotion(player.getMainHandItem())) return;
         int potionSlot = findHealingPotion(player);
         if (potionSlot == -1) return;
@@ -34,14 +37,14 @@ public final NumberParameter health = new NumberParameter("Health", 10.0, 1.0, 2
             InventoryUtility.selectSlot(player, prevSlot);
         }
     }
-    private int findHealingPotion(LocalPlayer player) {
-        int end = hotbarOnly.getValue() ? 9 : 36;
-        int start = hotbarOnly.getValue() ? 0 : 9;
+    private int findHealingPotion(net.minecraft.client.player.LocalPlayer player) {
+        int end = hotbarOnly ? 9 : 36;
+        int start = hotbarOnly ? 0 : 9;
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(player, i);
             if (isHealingPotion(stack)) return i;
         }
-        if (hotbarOnly.getValue()) return -1;
+        if (hotbarOnly) return -1;
         for (int i = 9; i < 36; i++) {
             var stack = InventoryUtility.getItem(player, i);
             if (isHealingPotion(stack)) return i;
@@ -62,16 +65,5 @@ public final NumberParameter health = new NumberParameter("Health", 10.0, 1.0, 2
         return ravex.manager.ModuleManager.delegate(AutoSoup.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

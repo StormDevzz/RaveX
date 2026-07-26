@@ -1,31 +1,34 @@
 package ravex.modules.movement;
-
-import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import ravex.event.Subscribe;
+import ravex.modules.ModuleAccess;
 import ravex.event.client.TickEvent;
 import ravex.event.network.PacketEvent;
+import ravex.event.Subscribe;
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
-
-import ravex.parameter.ModeParameter;
+import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.protocol.Packet;
 import java.util.List;
+
+
+
+
 @ModuleInfo(name = "NoFall", category = "Movement")
-public class NoFall extends ravex.modules.Module {
-public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "NCP", "Grim"));
+public class NoFall implements ModuleAccess {
+    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim"})
+    public String mode = "Vanilla";
 
     private boolean wasOnGround = true;
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!getEnabled() || !event.isSend()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoFall").getEnabled() || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
-        if (!(packet instanceof ServerboundMovePlayerPacket movePacket)) return;
+        if (!(packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket movePacket)) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        if ("Grim".equals(mode.getValue())) return;
+        if ("Grim".equals(mode)) return;
 
         if (mc.player.fallDistance <= 2.0) return;
 
@@ -35,11 +38,11 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
 
     @Subscribe
     public void onTick(TickEvent.Client event) {
-        if (!getEnabled()) return;
+        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoFall").getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        String modeVal = mode.getValue();
+        String modeVal = mode;
         if ("Grim".equals(modeVal)) {
             if (wasOnGround && !mc.player.onGround() && mc.player.fallDistance > 0.5) {
                 mc.player.setDeltaMovement(
@@ -57,16 +60,5 @@ public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("
         return ravex.manager.ModuleManager.delegate(NoFall.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
 }

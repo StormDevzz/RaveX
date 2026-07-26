@@ -1,6 +1,6 @@
 package ravex.modules.hud;
-
 import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Parameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -13,8 +13,10 @@ import ravex.utility.render.TextureLoaderUtility;
 
 @ModuleInfo(name = "CoordsHud", category = "HUD")
 public class CoordsHud extends ravex.modules.Module {
-    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
-    public final BooleanParameter coloredLabels = new BooleanParameter("ColoredLabels", true);
+    @Parameter(name = "Shadow")
+    public boolean shadow = true;
+    @Parameter(name = "ColoredLabels")
+    public boolean coloredLabels = true;
 
     public int x;
     public int y;
@@ -71,18 +73,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COORDS_WHITE;
         return ravex.manager.ModuleManager.delegate(CoordsHud.class);
     }
 
-    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
-        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
-        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
-            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
-                try {
-                    field.setAccessible(true);
-                    list.add((ravex.parameter.Parameter<?>) field.get(this));
-                } catch (Exception ignored) {}
-            }
-        }
-        return list;
-    }
+
     
 
     @Override
