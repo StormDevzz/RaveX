@@ -55,7 +55,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             } else {
                 net.minecraft.core.Direction dir = getDirection(mc.player.getEyePosition(), currentMiningTarget);
                 mc.gameMode.continueDestroyBlock(currentMiningTarget, dir);
-                mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 lastBreakTime = now;
                 return;
             }
@@ -115,7 +115,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             currentMiningTarget = target;
             net.minecraft.core.Direction dir = getDirection(mc.player.getEyePosition(), target);
             mc.gameMode.startDestroyBlock(target, dir);
-            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             GhostBlocks.markMined(target);
             lastBreakTime = now;
         }

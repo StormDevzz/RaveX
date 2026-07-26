@@ -88,4 +88,6 @@ public class PlayerWrapper {
     public void setVelocity(Vec3 velocity) { player.setDeltaMovement(velocity); }
 
     public Object getInput() { return player.input; }
+
+    public net.minecraft.core.BlockPos getBlockPosition() { return player.blockPosition(); }
 }

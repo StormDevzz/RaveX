@@ -1,4 +1,5 @@
 package ravex.modules.player;
+import ravex.utility.misc.ScreenUtility;
 
 import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
@@ -103,7 +104,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Swap", List.of("Swa
         if (state == 0) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP); state = 1; lastActionTime = now; }
         else if (state == 1) { InventoryUtility.clickChestSlot(mc, p, 6, net.minecraft.world.inventory.ClickType.PICKUP); state = 2; lastActionTime = now; }
         else if (state == 2) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP); state = 3; lastActionTime = now; }
-        else if (state == 3) { if ("Positive3".equals(swapMode.getValue())) mc.setScreen(null); enabled = false; }
+        else if (state == 3) { if ("Positive3".equals(swapMode.getValue())) ScreenUtility.closeScreen(mc); enabled = false; }
     }
     private void tickReplace(Minecraft mc, net.minecraft.client.player.LocalPlayer p) {
         if (!ElytraUtility.isElytraEquipped(p)) return;

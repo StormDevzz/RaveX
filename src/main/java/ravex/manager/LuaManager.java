@@ -1,4 +1,5 @@
 package ravex.manager;
+import ravex.utility.player.SwingUtility;
 
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaFunction;
@@ -243,7 +244,7 @@ public class LuaManager {
             @Override public LuaValue call() {
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.player != null) {
-                    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                    SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
                 return LuaValue.NIL;
             }

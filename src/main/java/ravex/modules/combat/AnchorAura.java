@@ -202,7 +202,7 @@ public final ModeParameter targetMode = new ModeParameter("Target", "Closest", L
         }
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, targetBlock, false);
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         lastActionTime = System.currentTimeMillis();
         if (swapSwitchBack.getValue() && originalSlot != -1 && !swap.equals("None")) {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);

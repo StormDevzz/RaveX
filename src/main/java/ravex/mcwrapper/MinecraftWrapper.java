@@ -16,6 +16,10 @@ public class MinecraftWrapper {
         this.mc = Minecraft.getInstance();
     }
 
+    public GameModeWrapper getGameMode() {
+        return mc.gameMode != null ? new GameModeWrapper(mc.gameMode) : null;
+    }
+
     public Minecraft getRaw() { return mc; }
 
     public boolean isAvailable() {

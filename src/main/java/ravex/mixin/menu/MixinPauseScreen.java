@@ -1,4 +1,5 @@
 package ravex.mixin.menu;
+import ravex.utility.misc.ScreenUtility;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -34,7 +35,7 @@ public abstract class MixinPauseScreen extends Screen {
                 if (mc.getConnection() != null) {
                     mc.getConnection().getConnection().disconnect(Component.literal("Reconnecting"));
                 }
-                mc.setScreen(null);
+                ScreenUtility.closeScreen(mc);
                 AutoReconnect.reconnect(mc);
             }
         ).bounds(btnX, btnY, btnW, 20).build());

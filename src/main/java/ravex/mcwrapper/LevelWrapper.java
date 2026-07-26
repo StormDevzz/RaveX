@@ -93,4 +93,8 @@ public class LevelWrapper {
     public boolean isEnd() {
         return level.dimension() == net.minecraft.world.level.Level.END;
     }
+
+    public Object getChunkSource() {
+        return level.getChunkSource();
+    }
 }

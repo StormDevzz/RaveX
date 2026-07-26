@@ -79,7 +79,7 @@ public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40
         if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit && MobUtility.asLivingEntity(hit.getEntity()) != null) {
             mc.gameMode.attack(mc.player, hit.getEntity());
         }
-        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         mc.options.keyAttack.setDown(false);
         if (jitterStrength.getValue() > 0 && mc.player != null) {
             double str = jitterStrength.getValue();

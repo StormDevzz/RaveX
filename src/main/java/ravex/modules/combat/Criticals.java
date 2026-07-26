@@ -48,7 +48,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Packet",
                     && mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
                     mc.player.connection.send(
                         ServerboundInteractPacket.createAttackPacket(target, mc.player.isShiftKeyDown()));
-                    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                    SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
             seq = Sequence.NONE;

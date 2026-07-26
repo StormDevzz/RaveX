@@ -65,7 +65,7 @@ public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         if (mc.gameMode != null) {
             mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
         }
-        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         InventoryUtility.selectSlot(mc.player, prevSlot);
         hasPlaced = true;
     }

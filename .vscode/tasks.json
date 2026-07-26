@@ -1,0 +1,71 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build RaveX (Gradle)",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "args": ["build"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": ["$java-compiler"]
+    },
+    {
+      "label": "Run Minecraft Client",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "args": ["runClient"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean Build",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "args": ["clean", "build"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": ["$java-compiler"]
+    },
+    {
+      "label": "Run Loader",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "args": ["runLoader"],
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": ["$java-compiler"]
+    },
+    {
+      "label": "Gen Sources (Eclipse)",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "args": ["genSources"],
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

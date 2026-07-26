@@ -1,4 +1,5 @@
 package ravex.mixin.client;
+import ravex.utility.misc.ScreenUtility;
 
 import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
@@ -32,7 +33,7 @@ public abstract class MixinAbstractSignEditScreen {
                 ));
 
 
-                mc.execute(() -> mc.setScreen(null));
+                mc.execute(() -> ScreenUtility.closeScreen(mc));
             }
         }
     }

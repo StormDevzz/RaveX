@@ -154,7 +154,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         swapTo(mc, blockSlot);
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         restoreSlot(mc, blockSlot);
         synchronized (renderBlocks) { renderBlocks.add(targetBlock); }
         lastActionTime = now;
@@ -213,7 +213,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         swapTo(mc, tntSlot);
         BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         restoreSlot(mc, tntSlot);
         currentState = State.IGNITING;
         lastActionTime = now;
@@ -231,7 +231,7 @@ public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1
         swapTo(mc, flintSlot);
         BlockHitResult hitResult = new BlockHitResult(hitVec, net.minecraft.core.Direction.UP, tntPos, false);
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         restoreSlot(mc, flintSlot);
         currentState = State.WAITING;
         lastActionTime = now;

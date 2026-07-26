@@ -102,7 +102,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             net.minecraft.world.phys.Vec3.atCenterOf(placePos), net.minecraft.core.Direction.UP, placePos, false
         );
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
-        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         InventoryUtility.selectSlot(mc.player, prev);
         state = State.WAITING;
     }
@@ -123,7 +123,7 @@ public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0,
             net.minecraft.world.phys.Vec3.atCenterOf(bedPos), net.minecraft.core.Direction.UP, bedPos, false
         );
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
-        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         state = State.IDLE;
     }
     private net.minecraft.world.entity.LivingEntity findNearestEnemy(Minecraft mc) {

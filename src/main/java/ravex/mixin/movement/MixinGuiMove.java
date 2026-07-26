@@ -1,4 +1,5 @@
 package ravex.mixin.movement;
+import ravex.utility.misc.ScreenUtility;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -23,7 +24,7 @@ public abstract class MixinGuiMove {
 
         Minecraft mc = (Minecraft)(Object)this;
         if (mc.screen == null || mc.player == null || mc.getWindow() == null) return;
-        if (mc.screen instanceof ChatScreen) return;
+        if (ScreenUtility.isChatScreen(mc)) return;
 
         switch (gw.mode.getValue()) {
             case "Grim" -> handleGrim(mc, gw);

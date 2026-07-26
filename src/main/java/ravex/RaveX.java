@@ -1,4 +1,5 @@
 package ravex;
+import ravex.utility.misc.ScreenUtility;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
@@ -278,7 +279,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
         if (isDown && !rightShiftWasDown) {
             if (mc.screen instanceof ClickGUI) {
-                mc.setScreen(null);
+                ScreenUtility.closeScreen(mc);
             } else {
                 mc.setScreen(new ClickGUI());
             }

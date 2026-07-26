@@ -14,6 +14,7 @@ import ravex.utility.misc.PhysicUtility;
 
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
@@ -278,7 +279,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
                     BlockHitResult hitResult = new BlockHitResult(hitVec, face, placePos, false);
                     mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-                    mc.player.swing(mc.player.getUsedItemHand());
+                    SwingUtility.swing(mc.player, mc.player.getUsedItemHand());
                     if (swapSwitchBack.getValue() && originalSlot != -1) {
                         if (mc.player.connection != null) {
                             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
@@ -311,7 +312,7 @@ public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
                     BlockHitResult hitResult2 = new BlockHitResult(hitVec2, face, placePos2, false);
                     mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult2);
-                    mc.player.swing(mc.player.getUsedItemHand());
+                    SwingUtility.swing(mc.player, mc.player.getUsedItemHand());
                     if (swapSwitchBack.getValue() && originalSlot != -1) {
                         if (mc.player.connection != null) {
                             mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));

@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.utility.player.SwingUtility;
 
 import ravex.modules.annotations.ModuleInfo;
 import ravex.utility.misc.CameraUtility;
@@ -235,7 +236,7 @@ public final ModeParameter mode = new ModeParameter("Mode", "Combat",
             mc.player.setXRot(RotationUtility.clampPitch(angles[1]));
         }
         mc.gameMode.attack(mc.player, target);
-        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         lastAttackTime = now;
     }
     private void doAutoTotem(Minecraft mc) {

@@ -1,4 +1,5 @@
 package ravex.gui.clickgui;
+import ravex.utility.misc.ScreenUtility;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -278,7 +279,7 @@ public class ClickGUI extends Screen {
 
         float finalScale = getAdaptiveScale();
         if (closing && (System.currentTimeMillis() - closingStartTime >= 150)) {
-            this.minecraft.setScreen(null);
+            ScreenUtility.closeScreen(this.minecraft);
             return;
         }
 

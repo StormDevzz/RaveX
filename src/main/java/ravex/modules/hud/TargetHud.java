@@ -1,4 +1,5 @@
 package ravex.modules.hud;
+import ravex.utility.misc.ScreenUtility;
 
 import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
@@ -120,7 +121,7 @@ public final BooleanParameter showMainHand = new BooleanParameter("MainHand", tr
             targetEntity = living;
             lastTarget = living;
             hasActiveTarget = true;
-        } else if (mc.screen instanceof ChatScreen || mc.screen instanceof ravex.gui.hudeditor.HudEditorScreen) {
+        } else if (ScreenUtility.isChatScreen(mc) || mc.screen instanceof ravex.gui.hudeditor.HudEditorScreen) {
             targetEntity = mc.player;
             lastTarget = mc.player;
             hasActiveTarget = true;

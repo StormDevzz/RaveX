@@ -3,6 +3,8 @@ package ravex.manager;
 import ravex.event.EventBusHolder;
 import ravex.modules.Category;
 import ravex.modules.Module;
+import ravex.modules.annotations.ModuleInfo;
+import ravex.utility.system.AnnotationScannerUtility;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,114 +12,35 @@ import java.util.List;
 import java.util.Map;
 
 public class ModuleManager {
-    private static final Map<String, String> SUBPACKAGES = Map.of(
-        "InvClean", "player.invclean",
-        "AutoReGear", "player.autoregear",
-        "Nuker", "world.nuker",
-        "Xray", "player"
-    );
-
     public static final ModuleManager INSTANCE = new ModuleManager();
 
     private final List<Module> modules = new ArrayList<>();
     private final Map<Class<?>, Module> byClass = new HashMap<>();
 
     private ModuleManager() {
-        register(Category.COMBAT,
-            "KillAura", "AutoCrystal", "AimAssist",
-            "Trigger", "MaceSwap", "WebAura",
-            "MaceAura", "Hitboxes",
-            "Reach", "Surround", "SelfTrap",
-            "BasePlace", "AnchorAura", "BowAim",
-            "Breaker", "Quiver", "WindAura",
-            "Trap", "AutoApple", "WebSelf",
-            "KeyPearl", "PearlTarget", "AntiPearl",
-            "BedBomb", "Criticals", "AutoBow",
-            "HoleFill", "AutoClicker", "AntiBot",
-            "AutoDrop", "Burrow", "AntiReGear",
-            "TntAura", "ShieldFucker",
-            "AutoCart", "AutoTotem"
-        );
-
-        register(Category.RENDER,
-            "Crosshair", "ESP", "Skeleton",
-            "NameTags", "Tracers", "NoBob",
-            "Ambient", "Weather",
-            "Shaders", "FreeLook", "FreeCam",
-            "ViewClip", "Glint", "Sounds",
-            "ItemPhysics", "Fullbright", "BlockOutline",
-            "BreadCrumbs", "ViewModel",
-            "NoRender", "ShiftInterp", "SmallUser",
-            "WorldColor", "Trails",
-            "Waypoint", "KillEffects", "Particles",
-            "AspectRatio", "Borders", "Zoom",
-            "ToolTips", "DeathText",
-            "Search", "SwingAnimation", "CityESP"
-        );
-
-        register(Category.PLAYER,
-            "AutoTool", "NoInteract", "SourceFiller",
-            "AirPlace", "AutoArmor", "AutoMend",
-            "NoDelay", "AutoRespawn", "FastBreak",
-            "TabHelper", "ChestHelper", "MiddleClick",
-            "ElytraHelper", "ViewLock", "ItemSaver",
-            "AntiAim", "invclean.InvClean", "Replenish",
-            "MobOwner", "NoSwing",
-            "AntiHunger", "ChorusExploit",
-            "GhostHand", "Handshake", "MultiTask",
-            "MineAnimation", "PacketMine", "autoregear.AutoReGear"
-        );
-
-        register(Category.MOVEMENT,
-            "GuiMove", "NoSlow", "Velocity",
-            "Step", "ReverseStep", "NoWeb",
-            "AutoWalk", "AntiVoid", "LongJump",
-            "Sleepy", "NoPush", "AutoSprint",
-            "Spider", "Speed", "NoRotate",
-            "Avoid", "RidingHelper", "SafeWalk",
-            "HighJump", "FastStairs", "NoFall",
-            "ElytraFly", "Flight", "LiquidControl",
-            "Blink", "ClickFly", "ClickTP",
-            "PacketFly", "Phase", "TickShift",
-            "Timer", "TridentBoost", "BoatFly"
-        );
-
-        register(Category.MISC,
-            "AntiAfk", "AutoEat", "PacketHelper",
-            "AutoLog", "AntiAttack", "LagNotify",
-            "MessageAura", "PopCounter", "WaxAura", "AutoReconnect",
-            "FastItem", "BlockMixer", "AutoSoup",
-            "NameProtect", "StashFinder", "AutoAuth",
-            "AntiQuit", "SoundBlock", "ChatHelper",
-            "BookHelper", "Religion", "PauseBaritone",
-            "AutoPortal", "FakePearl", "NewChunks",
-            "PortalGod", "PortalGui", "PingSpoof",
-            "RideExploit", "Xray"
-        );
-
-        register(Category.WORLD,
-            "PVEUtils", "Scaffold", "AutoSign",
-            "AutoShear", "AutoNameTag", "AutoMount",
-            "FakePlayer", "ChestAura", "Igniter",
-            "TreeCutter", "AutoReplant", "nuker.Nuker",
-            "AutoTrade", "AutoFish", "AutoTunnel",
-            "ECFarmer", "GhostBlocks", "AutoWither"
-        );
-
-        register(Category.CLIENT,
-            "RichPresence", "GuiParticles", "FastLatency",
-            "Fonts", "Notifications", "Hud",
-            "DesktopGui", "Settings", "Calculator",
-            "ClickGui", "BaritoneModule", "Commands"
-        );
-
-        register(Category.HUD,
-            "WatermarkHud", "ArrayListHud", "CoordsHud",
-            "FpsHud", "MediaHud", "ChatHud",
-            "TpsHud", "CooldownsHud", "InvPreviewHud",
-            "IndicatorsHud", "CurrencyHud", "ServerBrandHud",
-            "TargetHud", "SpeedometerHud", "ArmorHud"
-        );
+        List<Class<?>> annotated = AnnotationScannerUtility.findAnnotatedClasses("ravex.modules", ModuleInfo.class);
+        for (Class<?> clazz : annotated) {
+            try {
+                ModuleInfo info = clazz.getDeclaredAnnotation(ModuleInfo.class);
+                if (info == null) continue;
+                Category cat;
+                try {
+                    cat = Category.valueOf(info.category().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    cat = Category.CUSTOM;
+                }
+                var ctor = clazz.getDeclaredConstructor();
+                ctor.setAccessible(true);
+                Object instance = ctor.newInstance();
+                Module module = (Module) instance;
+                byClass.put(clazz, module);
+                module.setCategory(cat);
+                if (cat == Category.HUD) module.setHud(true);
+                modules.add(module);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to register " + clazz.getName(), e);
+            }
+        }
     }
 
     public List<Module> getClickGuiModules() {
@@ -171,28 +94,6 @@ public class ModuleManager {
     public void onTick() {
         for (Module m : modules) {
             if (!m.isHud() && m.getEnabled()) m.onTick();
-        }
-    }
-
-    private void register(Category category, String... classNames) {
-        String basePkg = "ravex.modules." + category.name().toLowerCase();
-        for (String name : classNames) {
-            try {
-                String fullName = SUBPACKAGES.containsKey(name)
-                    ? "ravex.modules." + SUBPACKAGES.get(name) + "." + name
-                    : basePkg + "." + name;
-                Class<?> clazz = Class.forName(fullName);
-                var ctor = clazz.getDeclaredConstructor();
-                ctor.setAccessible(true);
-                Object instance = ctor.newInstance();
-                Module module = (Module) instance;
-                module.setCategory(category);
-                if (category == Category.HUD) module.setHud(true);
-                modules.add(module);
-                byClass.put(clazz, module);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to register " + name + " (" + category + ")", e);
-            }
         }
     }
 }

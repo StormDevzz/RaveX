@@ -210,7 +210,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
                 .add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             BlockHitResult blockHit = new BlockHitResult(hitVec, face, neighbor, false);
             mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
-            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             placed = true;
         }
         if (prevSlot != blockSlot) {
@@ -236,7 +236,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
             for (net.minecraft.world.entity.Entity crystal : entities) {
                 if (mc.gameMode != null) {
                     mc.gameMode.attack(mc.player, crystal);
-                    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                    SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
             return true;

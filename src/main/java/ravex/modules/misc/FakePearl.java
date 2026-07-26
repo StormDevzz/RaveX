@@ -9,6 +9,7 @@ import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.utility.nativelib.NativeLibraryUtility;
 
+import ravex.utility.player.SwingUtility;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -37,7 +38,7 @@ public final ModeParameter trigger = new ModeParameter("Trigger", "OnEnable", ja
             if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
                 event.setCancelled(true);
                 throwFakePearl();
-                mc.player.swing(usePacket.getHand());
+                SwingUtility.swing(mc.player, usePacket.getHand());
             }
         }
     }

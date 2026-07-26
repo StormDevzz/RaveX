@@ -194,7 +194,7 @@ public final NumberParameter  range          = new NumberParameter("Range",     
             }
             BlockHitResult hitResult = new BlockHitResult(hitVec, face, neighborPos, false);
             mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             placedAny = true;
             actionsThisTick++;
             activeSolidBlocks.add((double) targetBlock.getX());

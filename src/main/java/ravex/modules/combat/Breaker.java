@@ -185,7 +185,7 @@ public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0,
             } else {
                 mc.gameMode.continueDestroyBlock(targetPos, net.minecraft.core.Direction.UP);
             }
-            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         }
     }
 
