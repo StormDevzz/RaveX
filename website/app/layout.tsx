@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "ravex",
   description:
     "ravex - open-source minecraft utility client for fabric 1.21.x",
-  icons: undefined,
+  icons: "/favicon.png",
 }
 
 export default function RootLayout({
