@@ -1,4 +1,6 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.item.Items;
@@ -6,16 +8,16 @@ import ravex.RaveX;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.utility.nativelib.NativeLibrary;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.phys.Vec3;
-public class FakePearl extends Module {
-    public final ModeParameter trigger = new ModeParameter("Trigger", "OnEnable", java.util.List.of("OnEnable", "RightClick", "Both"));
+@ModuleInfo(name = "FakePearl", category = "Misc")
+public class FakePearl extends ravex.modules.Module {
+public final ModeParameter trigger = new ModeParameter("Trigger", "OnEnable", java.util.List.of("OnEnable", "RightClick", "Both"));
     public final NumberParameter velocity = new NumberParameter("Velocity", 1.5, 0.5, 3.0, 0.1);
     public final NumberParameter gravity = new NumberParameter("Gravity", 0.03, 0.01, 0.1, 0.01);
     public final BooleanParameter sound = new BooleanParameter("Sound", true);
@@ -39,18 +41,16 @@ public class FakePearl extends Module {
             }
         }
     }
-
-    @Override
     public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
-            setEnabled(false);
+            enabled = false;
             return;
         }
         if ("OnEnable".equals(trigger.getValue()) || "Both".equals(trigger.getValue())) {
             throwFakePearl();
             if ("OnEnable".equals(trigger.getValue())) {
-                setEnabled(false);
+                enabled = false;
             }
         }
     }
@@ -71,7 +71,6 @@ public class FakePearl extends Module {
             javaCalculateVelocity(yaw, pitch, speed, vel);
         }
         ThrownEnderpearl pearl = new ThrownEnderpearl(mc.level, mc.player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ENDER_PEARL)) {
-            @Override
             protected double getDefaultGravity() {
                 return gravity.getValue();
             }
@@ -96,6 +95,19 @@ public class FakePearl extends Module {
     private static native void nativeCalculateVelocity(double yaw, double pitch, double speed, double[] outVel);
 
     public static FakePearl itz() {
-        return ModuleManager.get(FakePearl.class);
+        return ravex.manager.ModuleManager.delegate(FakePearl.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

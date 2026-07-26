@@ -1,5 +1,6 @@
 package ravex.modules.combat;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
@@ -7,7 +8,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import ravex.modules.Module;
+
 import ravex.utility.misc.MobUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -18,20 +19,17 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 import java.util.List;
-import ravex.manager.ModuleManager;
 
-public class KillAura extends Module {
-
-    public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("Tracker", "Snap", "HvH"));
+@ModuleInfo(name = "KillAura", category = "Combat")
+public class KillAura extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Tracker", List.of("Tracker", "Snap", "HvH"));
 
     public final NumberParameter range = new NumberParameter("Range", 3.0, 2.0, 6.0, 0.1);
     public final NumberParameter cooldownThreshold = new NumberParameter("Attack Cooldown", 1.0, 0.0, 1.0, 0.05);
 
-
     public final BooleanParameter targetEsp = new BooleanParameter("Target ESP", true);
     public final ModeParameter targetEspMode = new ModeParameter("ESP Mode", "Circle", List.of("RaveXV1", "Circle"));
     public final ColorParameter targetEspColor = new ColorParameter("ESP Color", 0xFF00FFFF);
-
 
     public final MultiSelectParameter targets = new MultiSelectParameter(
         "Targets",
@@ -70,18 +68,16 @@ public class KillAura extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(KillAura.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("KillAura").getEnabled();
     }
 
     public static KillAura itz() {
-        return ModuleManager.get(KillAura.class);
+        return ravex.manager.ModuleManager.delegate(KillAura.class);
     }
 
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
-
-    @Override
     protected void onDisable() {
         silentRotation.hasRotation = false;
         currentTarget = null;
@@ -90,17 +86,11 @@ public class KillAura extends Module {
         sprintResetTicks = 0;
     }
 
-
-
-
-
-
     public static void onPreTick() {
-        KillAura ka = ModuleManager.get(KillAura.class);
+        KillAura ka = ravex.manager.ModuleManager.delegate(KillAura.class);
         if (ka == null || !ka.getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-
 
         switch (ka.sprintMode.getValue()) {
             case "Legit" -> {
@@ -126,11 +116,9 @@ public class KillAura extends Module {
         LivingEntity target = ka.currentTarget;
         if (target == null || MobUtility.isDead(target)) return;
 
-
         Vec3 eyePos = mc.player.getEyePosition();
         Vec3 aimPos = target.position().add(0, target.getBbHeight() * 0.5, 0);
         float[] freshAngles = RotationUtility.anglesTo(eyePos, aimPos);
-
 
         // гцд коррекция к дельте
         float rawFreshYaw   = freshAngles[0];
@@ -148,8 +136,6 @@ public class KillAura extends Module {
         float freshPitch = ppPitch + dPitch;
         silentRotation.set(freshYaw, freshPitch);
 
-
-
         {
             net.minecraft.world.phys.AABB pa = mc.player.getBoundingBox();
             net.minecraft.world.phys.AABB ea = target.getBoundingBox();
@@ -163,19 +149,16 @@ public class KillAura extends Module {
             if (dist > ka.range.getValue() - buffer) return;
         }
 
-
         if (ka.smartCrits.getValue() && !mc.player.onGround()) {
             double velY = mc.player.getDeltaMovement().y;
             if (velY > -0.08) return;
         }
-
 
         float scale = mc.player.getAttackStrengthScale(0.5f);
         if (scale < ka.cooldownThreshold.getValue().floatValue()) return;
 
         long now = System.currentTimeMillis();
         if (now - ka.lastAttackTime < 50) return;
-
 
         if (ka.mode.getValue().equals("Tracker")) {
             Vec3 targetAimPos = target.position().add(0, target.getBbHeight() * 0.45, 0);
@@ -213,11 +196,6 @@ public class KillAura extends Module {
             }
         }
     }
-
-
-
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
@@ -258,7 +236,6 @@ public class KillAura extends Module {
         mc.player.yHeadRot = yaw;
         mc.player.yBodyRot = yaw;
 
-
         prevScanProgress = scanProgress;
         scanProgress += 0.02f;
         if (scanProgress >= 2.0f) {
@@ -293,15 +270,12 @@ public class KillAura extends Module {
             if (!targets.isSelected("Monsters") && MobUtility.isHostile(le)) continue;
             if (!targets.isSelected("Passives") && MobUtility.isPassive(le)) continue;
 
-
             net.minecraft.world.phys.AABB pa = mc.player.getBoundingBox();
             net.minecraft.world.phys.AABB ea = le.getBoundingBox();
             double dx = Math.max(0, Math.max(pa.minX - ea.maxX, ea.minX - pa.maxX));
             double dy = Math.max(0, Math.max(pa.minY - ea.maxY, ea.minY - pa.maxY));
             double dz = Math.max(0, Math.max(pa.minZ - ea.maxZ, ea.minZ - pa.maxZ));
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-
 
             Vec3 mobVel = le.getDeltaMovement();
             double mobSpeed = Math.sqrt(mobVel.x * mobVel.x + mobVel.z * mobVel.z);
@@ -310,8 +284,8 @@ public class KillAura extends Module {
             if (dist > range.getValue() - buffer) continue;
 
             if (!throughWalls.getValue() && !mc.player.hasLineOfSight(le)) continue;
-            if (ModuleManager.get(ravex.modules.combat.AntiBot.class).getEnabled()
-                    && ModuleManager.get(ravex.modules.combat.AntiBot.class).isBot(e)) continue;
+            if (ravex.manager.ModuleManager.delegate(ravex.modules.combat.AntiBot.class).getEnabled()
+                    && ravex.manager.ModuleManager.delegate(ravex.modules.combat.AntiBot.class).isBot(e)) continue;
 
             if (dist < closestDist) {
                 closestDist = dist;
@@ -389,22 +363,16 @@ public class KillAura extends Module {
             float diffPitch = targetPitch - prevPitch;
             float absDiffYaw = Math.abs(diffYaw);
 
-
-
-
             float MAX_YAW_SPEED   = 30.0f;
             float MAX_PITCH_SPEED = 20.0f;
-
 
             float tYaw   = Math.min(absDiffYaw / 180.0f, 1.0f);
             float tPitch = Math.min(Math.abs(diffPitch) / 90.0f, 1.0f);
             float speedYaw   = MAX_YAW_SPEED   * (2.0f * tYaw   - tYaw   * tYaw);
             float speedPitch = MAX_PITCH_SPEED * (2.0f * tPitch - tPitch * tPitch);
 
-
             speedYaw   = Math.max(speedYaw,   0.5f);
             speedPitch = Math.max(speedPitch, 0.3f);
-
 
             float jitterYaw   = (float) (Math.random() * 0.6 - 0.3);
             float jitterPitch = (float) (Math.random() * 0.4 - 0.2);
@@ -461,5 +429,18 @@ public class KillAura extends Module {
                 tickDelta
             );
         }
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -315,7 +315,7 @@ void gtk_thread_func(std::vector<ravex::ModuleGuiData> modules) {
     gtk_widget_set_margin_bottom(header, 8);
     gtk_box_pack_start(GTK_BOX(main_box), header, FALSE, FALSE, 0);
 
-    GtkWidget* title_label = gtk_label_new("RaveX v1.4.7");
+    GtkWidget* title_label = gtk_label_new("RaveX v1.4.8 Recode");
     gtk_style_context_add_class(gtk_widget_get_style_context(title_label), "win-title");
     gtk_box_pack_start(GTK_BOX(header), title_label, FALSE, FALSE, 0);
 

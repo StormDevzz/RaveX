@@ -1,5 +1,6 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
@@ -7,7 +8,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -15,8 +16,9 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.render.Render3DUtils;
 import java.util.ArrayList;
 import java.util.List;
-public class Particles extends Module {
-    private static String lastTrigger = "";
+@ModuleInfo(name = "Particles", category = "Render")
+public class Particles extends ravex.modules.Module {
+private static String lastTrigger = "";
     public final ModeParameter shape = new ModeParameter("Shape", "All",
         List.of("Square", "Circle", "Triangle", "All"));
     public final ModeParameter trigger = new ModeParameter("Trigger", "Always",
@@ -73,8 +75,6 @@ public class Particles extends Module {
             this.colorSeed = colorSeed;
         }
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
@@ -269,17 +269,17 @@ public class Particles extends Module {
         p.pos = newPos;
     }
     public static void renderParticles(Matrix4f matrix, Vec3 camPos) {
-        if (!ModuleManager.get(Particles.class).getEnabled() || ModuleManager.get(Particles.class).particles.isEmpty()) return;
+        if (!ravex.manager.ModuleManager.delegate(Particles.class).getEnabled() || ravex.manager.ModuleManager.delegate(Particles.class).particles.isEmpty()) return;
         long now = System.currentTimeMillis();
-        long maxAge = (long) (ModuleManager.get(Particles.class).lifetime.getValue() * 1000);
-        float baseAlpha = ModuleManager.get(Particles.class).alpha.getValue().floatValue();
-        float baseSize = ModuleManager.get(Particles.class).size.getValue().floatValue();
-        boolean glowEnabled = ModuleManager.get(Particles.class).glow.getValue();
-        float lineW = ModuleManager.get(Particles.class).lineWidth.getValue().floatValue();
-        int seg = ModuleManager.get(Particles.class).segments.getValue().intValue();
-        boolean rainbowMode = ModuleManager.get(Particles.class).rainbow.getValue();
-        int mainColor = ModuleManager.get(Particles.class).color.getValue();
-        for (Particle p : ModuleManager.get(Particles.class).particles) {
+        long maxAge = (long) (ravex.manager.ModuleManager.delegate(Particles.class).lifetime.getValue() * 1000);
+        float baseAlpha = ravex.manager.ModuleManager.delegate(Particles.class).alpha.getValue().floatValue();
+        float baseSize = ravex.manager.ModuleManager.delegate(Particles.class).size.getValue().floatValue();
+        boolean glowEnabled = ravex.manager.ModuleManager.delegate(Particles.class).glow.getValue();
+        float lineW = ravex.manager.ModuleManager.delegate(Particles.class).lineWidth.getValue().floatValue();
+        int seg = ravex.manager.ModuleManager.delegate(Particles.class).segments.getValue().intValue();
+        boolean rainbowMode = ravex.manager.ModuleManager.delegate(Particles.class).rainbow.getValue();
+        int mainColor = ravex.manager.ModuleManager.delegate(Particles.class).color.getValue();
+        for (Particle p : ravex.manager.ModuleManager.delegate(Particles.class).particles) {
             long age = now - p.spawnTime;
             float lifeProgress = (float) age / (float) maxAge;
             if (lifeProgress >= 1.0f) continue;
@@ -340,7 +340,7 @@ public class Particles extends Module {
             ));
         }
         pts.add(pts.get(0));
-        boolean tw = ModuleManager.get(Particles.class).throughWalls.getValue();
+        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls.getValue();
         if (glow) {
             Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -367,7 +367,7 @@ public class Particles extends Module {
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-        boolean tw = ModuleManager.get(Particles.class).throughWalls.getValue();
+        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls.getValue();
         if (glow) {
             Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -394,21 +394,33 @@ public class Particles extends Module {
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-        boolean tw = ModuleManager.get(Particles.class).throughWalls.getValue();
+        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls.getValue();
         if (glow) {
             Render3DUtils.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
         Render3DUtils.batchLineStrip(matrix, pts, r, g, b, alpha, lineWidth, tw);
     }
-    @Override
     protected void onDisable() {
         particles.clear();
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Particles.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Particles").getEnabled();
     }
 
     public static Particles itz() {
-        return ModuleManager.get(Particles.class);
+        return ravex.manager.ModuleManager.delegate(Particles.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,5 +1,6 @@
 package ravex.modules.hud;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -8,7 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.modules.combat.KillAura;
 import ravex.modules.combat.Trigger;
@@ -16,15 +17,18 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.utility.render.Render2DEngine;
 import ravex.utility.render.FontRenderUtility;
-import ravex.manager.ModuleManager;
 
-public class TargetHud extends Module {
-    public final BooleanParameter showMainHand = new BooleanParameter("MainHand", true);
+@ModuleInfo(name = "TargetHud", category = "HUD")
+public class TargetHud extends ravex.modules.Module {
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+public final BooleanParameter showMainHand = new BooleanParameter("MainHand", true);
     public final BooleanParameter showArmor = new BooleanParameter("Armor", true);
     public final BooleanParameter showOnHover = new BooleanParameter("ShowOnHover", true);
     public final ModeParameter healthDisplay = new ModeParameter("Health", "HP", java.util.List.of("HP", "%"));
     public final BooleanParameter healthColor = new BooleanParameter("HealthColor", false);
-
 
     private static final net.minecraft.world.entity.EquipmentSlot[] SLOTS = {
         net.minecraft.world.entity.EquipmentSlot.MAINHAND,
@@ -54,7 +58,6 @@ public class TargetHud extends Module {
     private float animatedHpPercent = -1f;
     private float animatedAbsorbPercent = -1f;
 
-
     private float lastFormattedHp = -1f;
     private String cachedHpText = "";
     private float targetHurtAnim = 0f;
@@ -62,16 +65,16 @@ public class TargetHud extends Module {
     private int lastEntityId = -1;
 
     private TargetHud() {
-        super("TargetHud", 10, 400, 175, 46);
+        this.x = 10; this.y = 400; this.width = 175; this.height = 46;
     }
 
     private LivingEntity getTarget(Minecraft mc) {
-        if (ModuleManager.get(KillAura.class).getEnabled()) {
-            LivingEntity target = ModuleManager.get(KillAura.class).getCurrentTarget();
+        if (ravex.manager.ModuleManager.delegate(KillAura.class).getEnabled()) {
+            LivingEntity target = ravex.manager.ModuleManager.delegate(KillAura.class).getCurrentTarget();
             if (target != null && target.isAlive()) return target;
         }
-        if (ModuleManager.get(Trigger.class).getEnabled()) {
-            LivingEntity target = ModuleManager.get(Trigger.class).getCurrentTarget();
+        if (ravex.manager.ModuleManager.delegate(Trigger.class).getEnabled()) {
+            LivingEntity target = ravex.manager.ModuleManager.delegate(Trigger.class).getCurrentTarget();
             if (target != null && target.isAlive()) return target;
         }
         return null;
@@ -95,10 +98,8 @@ public class TargetHud extends Module {
         if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon) return DRAGON_HEAD;
         return SKELETON_SKULL;
     }
-
-    @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
@@ -143,10 +144,10 @@ public class TargetHud extends Module {
             return;
         }
 
-        int bx = getX();
-        int by = getY();
-        int w = getWidth();
-        int h = getHeight();
+        int bx = x;
+        int by = y;
+        int w = width;
+        int h = height;
 
         float scale = 0.92f + 0.08f * hudAlpha;
         graphics.pose().pushMatrix();
@@ -160,7 +161,6 @@ public class TargetHud extends Module {
         int bgColor = (bgAlpha << 24) | 0x0A0A0E;
         Render2DEngine.drawPixelPerfectRound(graphics, bx, by, w, h, 6, bgColor);
         Render2DEngine.drawRoundBorder(graphics, bx, by, w, h, 6, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), (int)(120 * hudAlpha)));
-
 
         if (targetEntity != null) {
             if (targetEntity.getId() != lastEntityId) {
@@ -326,10 +326,45 @@ public class TargetHud extends Module {
     }
 
     public static TargetHud itz() {
-        return ModuleManager.get(TargetHud.class);
+        return ravex.manager.ModuleManager.delegate(TargetHud.class);
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(TargetHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("TargetHud").getEnabled();
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

@@ -1,11 +1,12 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.mixin.network.AccessorClientIntentionPacket;
-import ravex.modules.Module;
+
 import ravex.parameter.StringParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.ModeParameter;
@@ -13,8 +14,9 @@ import ravex.manager.LuaManager;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.LuaFunction;
 import java.util.List;
-public class Handshake extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Basic",
+@ModuleInfo(name = "Handshake", category = "Player")
+public class Handshake extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Basic",
             List.of("Basic", "Forge", "Lunar", "Custom"));
     public final StringParameter hostSuffix = new StringParameter("Suffix", "\u0000LUNAR\u0000");
     public final NumberParameter protocol = new NumberParameter("Protocol", 767.0, 47.0, 1000.0, 1.0);
@@ -87,10 +89,22 @@ public class Handshake extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Handshake.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Handshake").getEnabled();
     }
     public static Handshake itz() {
-        return ModuleManager.get(Handshake.class);
+        return ravex.manager.ModuleManager.delegate(Handshake.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

@@ -1,14 +1,16 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
-import ravex.modules.Module;
-import ravex.manager.ModuleManager;
+
 import ravex.parameter.NumberParameter;
-public class AutoReconnect extends Module {
-    public final NumberParameter delay = new NumberParameter("Delay", 3.0, 0.0, 30.0, 1.0);
+@ModuleInfo(name = "AutoReconnect", category = "Misc")
+public class AutoReconnect extends ravex.modules.Module {
+public final NumberParameter delay = new NumberParameter("Delay", 3.0, 0.0, 30.0, 1.0);
     private static ServerData lastServer = null;
     private static boolean pendingAutoReconnect = false;
     private static long reconnectAt = 0;
@@ -27,7 +29,6 @@ public class AutoReconnect extends Module {
         pendingAutoReconnect = true;
         reconnectAt = System.currentTimeMillis() + (long)(delay.getValue() * 1000);
     }
-    @Override
     public void onTick() {
         if (!pendingAutoReconnect) return;
         if (System.currentTimeMillis() < reconnectAt) return;
@@ -43,10 +44,23 @@ public class AutoReconnect extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoReconnect.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoReconnect").getEnabled();
     }
 
     public static AutoReconnect itz() {
-        return ModuleManager.get(AutoReconnect.class);
+        return ravex.manager.ModuleManager.delegate(AutoReconnect.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

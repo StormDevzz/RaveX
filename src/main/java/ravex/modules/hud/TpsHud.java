@@ -1,33 +1,38 @@
 package ravex.modules.hud;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
-import ravex.manager.ModuleManager;
-public class TpsHud extends Module {
-    private static final Identifier ICON = TextureLoader.HUD_TPS_WHITE;
+
+@ModuleInfo(name = "TpsHud", category = "HUD")
+public class TpsHud extends ravex.modules.Module {
+    public final ColorParameter color = new ColorParameter("Color", 0xFF44FF88);
+    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final Identifier ICON = TextureLoader.HUD_TPS_WHITE;
     private static final int IS = HudRenderer.getIconSize();
     private long lastRealTime = 0;
     private long lastGameTick = -1;
     private float smoothedTPS = 20.0f;
-    private TpsHud() {
-        super("TPS", 10, 240, 70, 30);
-        addParameter(new ColorParameter("Color", 0xFF44FF88));
-        addParameter(new BooleanParameter("Shadow", true));
-    }
-    @Override
+
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         updateTPS(mc);
-        int bx = getX(), by = getY();
+        int bx = x, by = y;
         int col = 0xFF44FF88;
         for (var p : getParameters()) {
             if (p instanceof ColorParameter cp && cp.getName().equals("Color")) col = cp.getValue();
@@ -42,8 +47,8 @@ public class TpsHud extends Module {
         int lw = ravex.utility.render.FontRenderUtility.getStringWidth(label);
         int pw = 4 + Math.max(tw, lw) + 4 + IS + 4;
         int ph = 26;
-        setWidth(pw);
-        setHeight(ph);
+        width = pw;
+        height = ph;
         HudRenderer.drawBackground(graphics, bx, by, pw, ph);
         int cx = bx + 4;
         ravex.utility.render.FontRenderUtility.drawString(graphics, text, cx, by + 4, col, shadow);
@@ -69,10 +74,45 @@ public class TpsHud extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(TpsHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("TpsHud").getEnabled();
     }
 
     public static TpsHud itz() {
-        return ModuleManager.get(TpsHud.class);
+        return ravex.manager.ModuleManager.delegate(TpsHud.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

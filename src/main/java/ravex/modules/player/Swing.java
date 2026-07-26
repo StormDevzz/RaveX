@@ -1,15 +1,17 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import com.google.gson.Gson;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 
 import java.lang.reflect.Field;
 import java.util.List;
-public class Swing extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "1.8", List.of("1.8", "1.12.2", "Custom"));
+@ModuleInfo(name = "Swing", category = "Player")
+public class Swing extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "1.8", List.of("1.8", "1.12.2", "Custom"));
     public final NumberParameter duration = new NumberParameter("Duration", 6, 1, 20, 1);
     public final ModeParameter swingPath = new ModeParameter("SwingPath", "Normal", List.of("Normal", "Smooth", "Bounce", "Reverse"));
     public final NumberParameter swingCurve = new NumberParameter("SwingCurve", 1.0, 0.1, 5.0, 0.1);
@@ -22,7 +24,7 @@ public class Swing extends Module {
     private String savedLocoConfigJson;
     private boolean locomotionAvailable;
     private Swing() {
-        super("Swing");
+        
         duration.setVisible(() -> "Custom".equals(mode.getValue()));
         swingPath.setVisible(() -> "Custom".equals(mode.getValue()));
         swingCurve.setVisible(() -> "Custom".equals(mode.getValue()));
@@ -64,20 +66,31 @@ public class Swing extends Module {
         } catch (Exception ignored) {
         }
     }
-    @Override
     protected void onEnable() {
-        super.onEnable();
+        
         setLocomotionEnabled(true);
     }
-    @Override
     protected void onDisable() {
-        super.onDisable();
+        
         setLocomotionEnabled(false);
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Swing.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Swing").getEnabled();
     }
     public static Swing itz() {
-        return ModuleManager.get(Swing.class);
+        return ravex.manager.ModuleManager.delegate(Swing.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

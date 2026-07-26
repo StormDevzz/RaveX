@@ -1,5 +1,6 @@
 package ravex.modules.world;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -8,7 +9,7 @@ import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.resources.Identifier;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.misc.block.BlockUtility;
@@ -17,14 +18,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-public class GhostBlocks extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Strict", java.util.List.of("Strict", "Smooth"));
+@ModuleInfo(name = "GhostBlocks", category = "World")
+public class GhostBlocks extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Strict", java.util.List.of("Strict", "Smooth"));
     public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0, 0.5);
     private final Set<Long> recentlyMined = new HashSet<>();
     private final Map<Long, String> serverBlocks = new HashMap<>();
     private long lastCheckTime = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.getConnection() == null) return;
@@ -58,8 +58,8 @@ public class GhostBlocks extends Module {
         }
     }
     public static void markMined(net.minecraft.core.BlockPos pos) {
-        if (ModuleManager.get(GhostBlocks.class).getEnabled()) {
-            ModuleManager.get(GhostBlocks.class).recentlyMined.add(pos.asLong());
+        if (ravex.manager.ModuleManager.delegate(GhostBlocks.class).getEnabled()) {
+            ravex.manager.ModuleManager.delegate(GhostBlocks.class).recentlyMined.add(pos.asLong());
         }
     }
     @Subscribe
@@ -77,20 +77,20 @@ public class GhostBlocks extends Module {
     }
 
     public static void onServerBlockUpdate(int x, int y, int z, String blockId) {
-        if (!ModuleManager.get(GhostBlocks.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(GhostBlocks.class).getEnabled()) return;
         long packed = BlockUtility.packPos(x, y, z);
-        ModuleManager.get(GhostBlocks.class).recentlyMined.remove(packed);
+        ravex.manager.ModuleManager.delegate(GhostBlocks.class).recentlyMined.remove(packed);
         if (blockId != null && !blockId.equals("minecraft:air")) {
-            ModuleManager.get(GhostBlocks.class).serverBlocks.put(packed, blockId);
+            ravex.manager.ModuleManager.delegate(GhostBlocks.class).serverBlocks.put(packed, blockId);
         } else {
-            ModuleManager.get(GhostBlocks.class).serverBlocks.remove(packed);
+            ravex.manager.ModuleManager.delegate(GhostBlocks.class).serverBlocks.remove(packed);
         }
     }
     public static boolean isGhostBlock(int x, int y, int z, String clientBlockId) {
-        if (!ModuleManager.get(GhostBlocks.class).getEnabled()) return false;
+        if (!ravex.manager.ModuleManager.delegate(GhostBlocks.class).getEnabled()) return false;
         long packed = BlockUtility.packPos(x, y, z);
-        if (ModuleManager.get(GhostBlocks.class).recentlyMined.contains(packed)) return true;
-        String serverBlock = ModuleManager.get(GhostBlocks.class).serverBlocks.get(packed);
+        if (ravex.manager.ModuleManager.delegate(GhostBlocks.class).recentlyMined.contains(packed)) return true;
+        String serverBlock = ravex.manager.ModuleManager.delegate(GhostBlocks.class).serverBlocks.get(packed);
         if (serverBlock != null && !serverBlock.equals(clientBlockId)) return true;
         return false;
     }
@@ -100,9 +100,22 @@ public class GhostBlocks extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(GhostBlocks.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("GhostBlocks").getEnabled();
     }
     public static GhostBlocks itz() {
-        return ModuleManager.get(GhostBlocks.class);
+        return ravex.manager.ModuleManager.delegate(GhostBlocks.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,4 +1,6 @@
 package ravex.modules.movement;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -6,14 +8,14 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
-public class ClickFly extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly", "TP"));
+@ModuleInfo(name = "ClickFly", category = "Movement")
+public class ClickFly extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Fly", List.of("Fly", "TP"));
     public final NumberParameter speed = new NumberParameter("Speed", 1.5, 0.5, 5.0, 0.25);
     public final NumberParameter range = new NumberParameter("Range", 100.0, 10.0, 300.0, 10.0);
     public final NumberParameter height = new NumberParameter("Height", 0.0, -5.0, 10.0, 0.5);
@@ -21,18 +23,14 @@ public class ClickFly extends Module {
     private Vec3 target = null;
     private boolean flying = false;
     private long lastClick = 0;
-
-    @Override
     protected void onEnable() {
         target = null;
         flying = false;
     }
-    @Override
     protected void onDisable() {
         target = null;
         flying = false;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -113,6 +111,19 @@ public class ClickFly extends Module {
         p.setPos(next.x, next.y, next.z);
     }
     public static ClickFly itz() {
-        return ModuleManager.get(ClickFly.class);
+        return ravex.manager.ModuleManager.delegate(ClickFly.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

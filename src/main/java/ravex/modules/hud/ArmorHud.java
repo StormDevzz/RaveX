@@ -1,20 +1,25 @@
 package ravex.modules.hud;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.parameter.DependencyParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.Render2DEngine;
-import ravex.manager.ModuleManager;
 
-public class ArmorHud extends Module {
-    private static final EquipmentSlot[] SLOTS = {
+@ModuleInfo(name = "ArmorHud", category = "HUD")
+public class ArmorHud extends ravex.modules.Module {
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final EquipmentSlot[] SLOTS = {
         EquipmentSlot.HEAD,
         EquipmentSlot.CHEST,
         EquipmentSlot.LEGS,
@@ -27,20 +32,18 @@ public class ArmorHud extends Module {
     );
 
     private ArmorHud() {
-        super("ArmorHud", 10, 260, 92, 29);
+        this.x = 10; this.y = 260; this.width = 92; this.height = 29;
     }
 
     public static ArmorHud itz() {
-        return ModuleManager.get(ArmorHud.class);
+        return ravex.manager.ModuleManager.delegate(ArmorHud.class);
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(ArmorHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ArmorHud").getEnabled();
     }
-
-    @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
@@ -49,10 +52,10 @@ public class ArmorHud extends Module {
         int cellGap = 4;
         int cellSize = 18;
 
-        setWidth(pw);
-        setHeight(ph);
+        width = pw;
+        height = ph;
 
-        int bx = getX(), by = getY();
+        int bx = x, by = y;
         HudRenderer.drawBackground(graphics, bx, by, pw, ph);
 
         for (int i = 0; i < 4; i++) {
@@ -80,5 +83,40 @@ public class ArmorHud extends Module {
                 }
             }
         }
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

@@ -1,6 +1,6 @@
 package ravex.modules.world;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.ModeParameter;
@@ -11,12 +11,11 @@ import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import java.util.List;
-public class AutoShear extends Module {
-    public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
+@ModuleInfo(name = "AutoShear", category = "World")
+public class AutoShear extends ravex.modules.Module {
+public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     public final NumberParameter range = new NumberParameter("Range", 4.5, 3.0, 6.0, 0.1);
     public final ModeParameter exploitType = new ModeParameter("ExploitType", "Packet", List.of("Client", "Packet"));
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
@@ -61,6 +60,19 @@ public class AutoShear extends Module {
         }
     }
     public static AutoShear itz() {
-        return ModuleManager.get(AutoShear.class);
+        return ravex.manager.ModuleManager.delegate(AutoShear.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

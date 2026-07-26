@@ -22,7 +22,7 @@ public abstract class MixinChatHud {
         ravex$transformed.set(true);
         var pose = graphics.pose();
         pose.pushMatrix();
-        pose.translate(ChatHud.itz().getX(), ChatHud.itz().getY());
+        pose.translate(ChatHud.itz().x, ChatHud.itz().y);
         float s = ChatHud.itz().scale.getValue().floatValue();
         pose.scale(s, s);
     }

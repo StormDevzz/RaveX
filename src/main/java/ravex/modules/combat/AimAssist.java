@@ -1,6 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -11,13 +11,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.BowItem;
 import ravex.utility.misc.MobUtility;
-public class AimAssist extends Module {
-    public final ModeParameter targetMode = new ModeParameter("Target", "Players", java.util.List.of("Players", "Monsters", "All"));
+@ModuleInfo(name = "AimAssist", category = "Combat")
+public class AimAssist extends ravex.modules.Module {
+public final ModeParameter targetMode = new ModeParameter("Target", "Players", java.util.List.of("Players", "Monsters", "All"));
     public final NumberParameter fov = new NumberParameter("FOV", 45.0, 10.0, 180.0, 5.0);
     public final NumberParameter speed = new NumberParameter("Speed", 5.0, 1.0, 20.0, 0.5);
     public final BooleanParameter bowOnly = new BooleanParameter("BowOnly", false);
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -50,10 +49,22 @@ public class AimAssist extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AimAssist.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AimAssist").getEnabled();
     }
     public static AimAssist itz() {
-        return ModuleManager.get(AimAssist.class);
+        return ravex.manager.ModuleManager.delegate(AimAssist.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

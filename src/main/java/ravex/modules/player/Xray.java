@@ -1,20 +1,22 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.block.Block;
-import ravex.modules.Module;
+
 import ravex.parameter.ActionParameter;
 import ravex.utility.misc.OreUtility;
 import java.util.HashSet;
 import java.util.Set;
-public class Xray extends Module {
-    public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
+@ModuleInfo(name = "Xray", category = "Player")
+public class Xray extends ravex.modules.Module {
+public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         Minecraft.getInstance().setScreen(ravex.gui.browser.BlockBrowserScreen.forXray(Minecraft.getInstance().screen));
     });
     private final Set<net.minecraft.resources.Identifier> selectedBlocks = new HashSet<>();
 
     private Xray() {
-        super("Xray");
+        
         selectedBlocks.addAll(OreUtility.getDefaultXrayBlocks());
     }
     public boolean isBlockSelected(Block block) {
@@ -31,20 +33,31 @@ public class Xray extends Module {
     public Set<net.minecraft.resources.Identifier> getSelectedBlocks() {
         return selectedBlocks;
     }
-    @Override
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.levelRenderer != null) mc.levelRenderer.allChanged();
     }
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.levelRenderer != null) mc.levelRenderer.allChanged();
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Xray.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Xray").getEnabled();
     }
     public static Xray itz() {
-        return ModuleManager.get(Xray.class);
+        return ravex.manager.ModuleManager.delegate(Xray.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

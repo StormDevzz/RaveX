@@ -1,4 +1,6 @@
 package ravex.modules.movement;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -6,18 +8,16 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
-public class ClickTP extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Instant", List.of("Instant", "Blink"));
+@ModuleInfo(name = "ClickTP", category = "Movement")
+public class ClickTP extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Instant", List.of("Instant", "Blink"));
     public final NumberParameter range = new NumberParameter("Range", 50.0, 10.0, 200.0, 5.0);
     public final NumberParameter cooldown = new NumberParameter("Cooldown", 500, 100, 2000, 50);
     private long lastClick = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -73,6 +73,19 @@ public class ClickTP extends Module {
         p.setPos(target.x, target.y, target.z);
     }
     public static ClickTP itz() {
-        return ModuleManager.get(ClickTP.class);
+        return ravex.manager.ModuleManager.delegate(ClickTP.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

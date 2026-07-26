@@ -1,17 +1,18 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.ModeParameter;
 import net.minecraft.network.protocol.Packet;
 import ravex.utility.network.NetworkUtility;
 import java.util.List;
-public class PacketHelper extends Module {
-
-    public final ModeParameter mode = new ModeParameter("Mode", "Logging", List.of("Logging", "Filter", "Cancel"));
+@ModuleInfo(name = "PacketHelper", category = "Misc")
+public class PacketHelper extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Logging", List.of("Logging", "Filter", "Cancel"));
 
     public final BooleanParameter loggingEnabled = new BooleanParameter("Logging", false);
     public final BooleanParameter filterEnabled = new BooleanParameter("Filter", false);
@@ -35,7 +36,7 @@ public class PacketHelper extends Module {
     public final BooleanParameter cancelUse = new BooleanParameter("CancelUse", false);
 
     private PacketHelper() {
-        super("PacketHelper");
+        
         loggingEnabled.setVisible(() -> "Logging".equals(mode.getValue()));
         logOutgoing.setVisible(() -> "Logging".equals(mode.getValue()));
         logIncoming.setVisible(() -> "Logging".equals(mode.getValue()));
@@ -91,6 +92,19 @@ public class PacketHelper extends Module {
     }
 
     public static PacketHelper itz() {
-        return ModuleManager.get(PacketHelper.class);
+        return ravex.manager.ModuleManager.delegate(PacketHelper.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

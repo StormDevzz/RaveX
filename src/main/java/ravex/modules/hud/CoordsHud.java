@@ -1,25 +1,30 @@
 package ravex.modules.hud;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
-import ravex.manager.ModuleManager;
-public class CoordsHud extends Module {
-    private static final Identifier ICON = TextureLoader.HUD_COORDS_WHITE;
+
+@ModuleInfo(name = "CoordsHud", category = "HUD")
+public class CoordsHud extends ravex.modules.Module {
+    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+    public final BooleanParameter coloredLabels = new BooleanParameter("ColoredLabels", true);
+
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final Identifier ICON = TextureLoader.HUD_COORDS_WHITE;
     private static final int IS = HudRenderer.getIconSize();
-    private CoordsHud() {
-        super("Coords", 10, 200, 140, 14);
-        addParameter(new BooleanParameter("Shadow", true));
-        addParameter(new BooleanParameter("ColoredLabels", true));
-    }
-    @Override
+
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         var player = Minecraft.getInstance().player;
         if (player == null) return;
         int ac = ColorUtility.getActiveColor();
@@ -29,15 +34,15 @@ public class CoordsHud extends Module {
             if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) shadow = bp.getValue();
             if (p instanceof BooleanParameter bp && bp.getName().equals("ColoredLabels")) colored = bp.getValue();
         }
-        int bx = getX(), by = getY();
+        int bx = x, by = y;
         String xStr = String.format("%.1f", player.getX());
         String yStr = String.format("%.1f", player.getY());
         String zStr = String.format("%.1f", player.getZ());
         String full = (colored ? "X " : "") + xStr + (colored ? " Y " : " / ") + yStr + (colored ? " Z " : " / ") + zStr;
         int pw = 4 + HudRenderer.textWidth(full) + 4 + IS + 4;
         int ph = 14;
-        setWidth(pw);
-        setHeight(ph);
+        width = pw;
+        height = ph;
         HudRenderer.drawBackground(graphics, bx, by, pw, ph);
         int cx = bx + 4;
         HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ac);
@@ -59,10 +64,45 @@ public class CoordsHud extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(CoordsHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("CoordsHud").getEnabled();
     }
 
     public static CoordsHud itz() {
-        return ModuleManager.get(CoordsHud.class);
+        return ravex.manager.ModuleManager.delegate(CoordsHud.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

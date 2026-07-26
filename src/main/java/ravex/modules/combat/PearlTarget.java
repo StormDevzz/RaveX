@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -8,7 +9,7 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnder
 import ravex.utility.misc.MobUtility;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.parameter.ColorParameter;
@@ -24,8 +25,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-public class PearlTarget extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Combat",
+@ModuleInfo(name = "PearlTarget", category = "Combat")
+public class PearlTarget extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Combat",
         List.of("Combat", "Pearl", "Follow"));
     public final NumberParameter range = new NumberParameter("Range", 16.0, 1.0, 32.0, 0.5);
     public final ModeParameter targetMode = new ModeParameter("TargetMode", "Nearest",
@@ -87,7 +89,7 @@ public class PearlTarget extends Module {
         NATIVE.load();
     }
     private PearlTarget() {
-        super("PearlTarget");
+        
         weaponMode.setVisible(autoWeapon::getValue);
         gapHealth.setVisible(autoGap::getValue);
         pearlRange.setVisible(autoPearl::getValue);
@@ -103,7 +105,6 @@ public class PearlTarget extends Module {
         pearlColor.setVisible(() -> render.getValue() && renderTrail.getValue());
         lineWidth.setVisible(() -> render.getValue() && (renderLine.getValue() || renderPredictionLine.getValue()));
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -393,7 +394,6 @@ public class PearlTarget extends Module {
         renderLandingPos = lastPearlLanding;
         renderTargetPos = moveTarget;
     }
-    @Override
     protected void onDisable() {
         trackedPearls.clear();
         target = null;
@@ -463,10 +463,10 @@ public class PearlTarget extends Module {
     }
     private static native void nativePredictPearl(double x, double y, double z, double mx, double my, double mz, int maxTicks, double[] out);
     public static boolean maybeEnabled() {
-        return maybeEnabled(PearlTarget.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("PearlTarget").getEnabled();
     }
     public static PearlTarget itz() {
-        return ModuleManager.get(PearlTarget.class);
+        return ravex.manager.ModuleManager.delegate(PearlTarget.class);
     }
     private static class PearlData {
         int entityId;
@@ -483,5 +483,18 @@ public class PearlTarget extends Module {
             this.time = t;
             this.pearl = p;
         }
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

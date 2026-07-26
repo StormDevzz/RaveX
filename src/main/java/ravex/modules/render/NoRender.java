@@ -1,11 +1,12 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.nativelib.NativeLoader;
 import ravex.utility.nativelib.NativeLibrary;
-public class NoRender extends Module {
-    public final BooleanParameter blockParticles = new BooleanParameter("BlockParticles", true);
+@ModuleInfo(name = "NoRender", category = "Render")
+public class NoRender extends ravex.modules.Module {
+public final BooleanParameter blockParticles = new BooleanParameter("BlockParticles", true);
     public final BooleanParameter explosions = new BooleanParameter("Explosions", true);
     public final BooleanParameter weather = new BooleanParameter("Weather", true);
     public final BooleanParameter portal = new BooleanParameter("Portal", true);
@@ -65,10 +66,23 @@ public class NoRender extends Module {
         return new float[] { 999999.0f, 999999.0f, 999999.0f, 999999.0f, 999999.0f, 999999.0f };
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(NoRender.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NoRender").getEnabled();
     }
 
     public static NoRender itz() {
-        return ModuleManager.get(NoRender.class);
+        return ravex.manager.ModuleManager.delegate(NoRender.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

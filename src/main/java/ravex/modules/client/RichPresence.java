@@ -1,14 +1,15 @@
 package ravex.modules.client;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.StringParameter;
 import ravex.manager.LuaManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
-public class RichPresence extends Module {
-    public final StringParameter largeImage = new StringParameter("LargeImage", "ravexdc");
+@ModuleInfo(name = "RichPresence", category = "Client")
+public class RichPresence extends ravex.modules.Module {
+public final StringParameter largeImage = new StringParameter("LargeImage", "ravexdc");
     public final BooleanParameter showHP     = new BooleanParameter("ShowHP",     true);
     public final BooleanParameter showCoords = new BooleanParameter("ShowCoords", false);
     public final BooleanParameter showIP     = new BooleanParameter("ShowIP",     true);
@@ -17,8 +18,6 @@ public class RichPresence extends Module {
     public final BooleanParameter showOS     = new BooleanParameter("ShowOS",     true);
     private Thread updateThread;
     private volatile boolean running = false;
-
-    @Override
     protected void onEnable() {
         running = true;
         updateThread = new Thread(() -> {
@@ -46,7 +45,6 @@ public class RichPresence extends Module {
         updateThread.setDaemon(true);
         updateThread.start();
     }
-    @Override
     protected void onDisable() {
         running = false;
         if (updateThread != null) {
@@ -112,10 +110,23 @@ public class RichPresence extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(RichPresence.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("RichPresence").getEnabled();
     }
 
     public static RichPresence itz() {
-        return ModuleManager.get(RichPresence.class);
+        return ravex.manager.ModuleManager.delegate(RichPresence.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

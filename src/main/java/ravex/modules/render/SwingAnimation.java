@@ -1,22 +1,23 @@
 package ravex.modules.render;
 
+import ravex.modules.annotations.ModuleInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.util.Mth;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 
 import java.util.List;
 
-public class SwingAnimation extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Akrien",
+@ModuleInfo(name = "SwingAnimation", category = "Render")
+public class SwingAnimation extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Akrien",
             List.of("Default", "Swipe", "Akrien", "Rich"));
     public final NumberParameter speed = new NumberParameter("Speed", 1.0, 0.1, 5.0, 0.1);
 
     private SwingAnimation() {
-        super("SwingAnimation");
+        
     }
 
     public void applyFourteen(PoseStack poseStack, float swingProgress, float equipProgress) {
@@ -85,10 +86,23 @@ public class SwingAnimation extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(SwingAnimation.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("SwingAnimation").getEnabled();
     }
 
     public static SwingAnimation itz() {
-        return ModuleManager.get(SwingAnimation.class);
+        return ravex.manager.ModuleManager.delegate(SwingAnimation.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

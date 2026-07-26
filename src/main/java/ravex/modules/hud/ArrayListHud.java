@@ -1,7 +1,8 @@
 package ravex.modules.hud;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.gui.GuiGraphics;
-import ravex.modules.Module;
-import ravex.manager.ModuleManager;
+
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -14,33 +15,32 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-public class ArrayListHud extends Module {
-    private final Map<String, Float> animProgress = new LinkedHashMap<>();
+@ModuleInfo(name = "ArrayListHud", category = "HUD")
+public class ArrayListHud extends ravex.modules.Module {
+    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+    public final ModeParameter _case = new ModeParameter("Case", "Normal",
+            java.util.List.of("Normal", "Lowercase", "UPPERCASE"));
+    public final NumberParameter animationSpeed = new NumberParameter("AnimationSpeed", 4.0, 0.0, 12.0, 0.5);
+
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private final Map<String, Float> animProgress = new LinkedHashMap<>();
     private final Map<String, Long> entryStartTime = new HashMap<>();
     private long enableTime = 0;
-    private ArrayListHud() {
-        super("ArrayList", 10, 320, 90, 100);
-        addParameter(new BooleanParameter("Shadow", true));
-        addParameter(new ModeParameter("Case", "Normal",
-            java.util.List.of("Normal", "Lowercase", "UPPERCASE")));
-        addParameter(new NumberParameter("AnimationSpeed", 4.0, 0.0, 12.0, 0.5));
-    }
-    @Override
+
     public void onEnable() {
         enableTime = System.currentTimeMillis();
         animProgress.clear();
         entryStartTime.clear();
     }
-
-    @Override
     public void onDisable() {
         animProgress.clear();
         entryStartTime.clear();
     }
-
-    @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         boolean shadow = true;
         String caseMode = "Normal";
         double animSpeed = 4.0;
@@ -49,11 +49,11 @@ public class ArrayListHud extends Module {
             if (p instanceof ModeParameter mp && mp.getName().equals("Case")) caseMode = mp.getValue();
             if (p instanceof NumberParameter np && np.getName().equals("AnimationSpeed")) animSpeed = np.getValue();
         }
-        List<Module> allModules = ModuleManager.INSTANCE.getClickGuiModules();
+        List<ravex.modules.Module> allModules = ravex.manager.ModuleManager.INSTANCE.getClickGuiModules();
 
         long now = System.currentTimeMillis();
-        java.util.Map<Module, String> casedNames = new java.util.LinkedHashMap<>();
-        for (Module m : allModules) {
+        java.util.Map<ravex.modules.Module, String> casedNames = new java.util.LinkedHashMap<>();
+        for (ravex.modules.Module m : allModules) {
             if (m.getCategory() == ravex.modules.Category.CLIENT) continue;
             String name = m.getName();
             switch (caseMode) {
@@ -63,7 +63,7 @@ public class ArrayListHud extends Module {
             casedNames.put(m, name);
         }
 
-        List<java.util.Map.Entry<Module, String>> modList = new ArrayList<>(casedNames.entrySet());
+        List<java.util.Map.Entry<ravex.modules.Module, String>> modList = new ArrayList<>(casedNames.entrySet());
         modList.sort((a, b) -> Integer.compare(FontRenderUtility.getStringWidth(b.getValue()), FontRenderUtility.getStringWidth(a.getValue())));
 
         float speed = (float) (animSpeed * 0.035f);
@@ -101,7 +101,7 @@ public class ArrayListHud extends Module {
 
         if (animProgress.isEmpty()) return;
 
-        int bx = getX(), by = getY();
+        int bx = x, by = y;
         int lh = 12;
         int maxTextW = 10;
         for (String n : activeNames) {
@@ -116,8 +116,8 @@ public class ArrayListHud extends Module {
         }
         int ph = Math.round(totalH);
 
-        setWidth(pw);
-        setHeight(ph);
+        width = pw;
+        height = ph;
 
         HudRenderer.drawBackground(graphics, bx, by, pw, ph);
 
@@ -147,10 +147,45 @@ public class ArrayListHud extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(ArrayListHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ArrayListHud").getEnabled();
     }
 
     public static ArrayListHud itz() {
-        return ModuleManager.get(ArrayListHud.class);
+        return ravex.manager.ModuleManager.delegate(ArrayListHud.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

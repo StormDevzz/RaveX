@@ -1,15 +1,17 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import ravex.modules.Module;
-import ravex.manager.ModuleManager;
+
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-public class AutoPortal extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0, 0.5);
+@ModuleInfo(name = "AutoPortal", category = "Misc")
+public class AutoPortal extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 12.0, 0.5);
     public final NumberParameter minRange = new NumberParameter("MinRange", 2.0, 1.0, 4.0, 0.5);
     public final NumberParameter avoidRange = new NumberParameter("Avoid", 8.0, 1.0, 24.0, 1.0);
     public final BooleanParameter build = new BooleanParameter("Build", true);
@@ -44,8 +46,6 @@ public class AutoPortal extends Module {
         if (!hasRenderTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
-
-    @Override
     protected void onEnable() {
         state = State.IDLE;
         hasBase = false;
@@ -56,14 +56,12 @@ public class AutoPortal extends Module {
         portalBuildCount = 0;
         hasFirstBase = false;
     }
-    @Override
     protected void onDisable() {
         state = State.IDLE;
         hasBase = false;
         frameIndex = 0;
         hasRenderTarget = false;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -144,7 +142,7 @@ public class AutoPortal extends Module {
         int slot = findObsidianSlot(mc);
         if (slot == -1) {
             sendMsg(mc, "Not enough obsidian, disabling");
-            setEnabled(false);
+            enabled = false;
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.player);
@@ -188,7 +186,7 @@ public class AutoPortal extends Module {
         int slot = findObsidianSlot(mc);
         if (slot == -1) {
             sendMsg(mc, "Not enough obsidian, disabling");
-            setEnabled(false);
+            enabled = false;
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.player);
@@ -246,7 +244,7 @@ public class AutoPortal extends Module {
         if (portalBuildCount < target) {
             state = State.FIND;
         } else if (autoDisable.getValue()) {
-            setEnabled(false);
+            enabled = false;
         } else {
             state = State.IDLE;
         }
@@ -352,10 +350,23 @@ public class AutoPortal extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoPortal.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").getEnabled();
     }
 
     public static AutoPortal itz() {
-        return ModuleManager.get(AutoPortal.class);
+        return ravex.manager.ModuleManager.delegate(AutoPortal.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

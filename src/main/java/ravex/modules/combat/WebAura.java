@@ -1,6 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
@@ -16,12 +16,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
-public class WebAura extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Positive", "Custom"));
+@ModuleInfo(name = "WebAura", category = "Combat")
+public class WebAura extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Positive", "Custom"));
     public final NumberParameter customRange = new NumberParameter("CustomRange", 4.0, 2.0, 6.0, 0.1);
     private int delay = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
@@ -82,10 +81,22 @@ public class WebAura extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(WebAura.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("WebAura").getEnabled();
     }
     public static WebAura itz() {
-        return ModuleManager.get(WebAura.class);
+        return ravex.manager.ModuleManager.delegate(WebAura.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

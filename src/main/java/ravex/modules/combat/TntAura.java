@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -10,7 +11,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
@@ -23,8 +24,9 @@ import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
-public class TntAura extends Module {
-    public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
+@ModuleInfo(name = "TntAura", category = "Combat")
+public class TntAura extends ravex.modules.Module {
+public final NumberParameter  range        = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay   = new NumberParameter("PlaceDelay", 50.0, 0.0, 500.0, 10.0);
     public final NumberParameter  tntDelay     = new NumberParameter("TNTDelay", 200.0, 0.0, 1000.0, 10.0);
     public final NumberParameter  igniteDelay  = new NumberParameter("IgniteDelay", 100.0, 0.0, 500.0, 10.0);
@@ -74,8 +76,6 @@ public class TntAura extends Module {
         boolean hasResistance, int resistanceAmplifier
     );
     public static boolean hasSilentRotations() { return silentRotation.hasRotation; }
-
-    @Override
     protected void onEnable() {
         currentState = State.TRAPPING;
         lastActionTime = 0;
@@ -84,7 +84,6 @@ public class TntAura extends Module {
         failedTntPlacements = 0;
         synchronized (renderBlocks) { renderBlocks.clear(); }
     }
-    @Override
     protected void onDisable() {
         silentRotation.hasRotation = false;
         currentTarget = null;
@@ -92,14 +91,13 @@ public class TntAura extends Module {
         failedTntPlacements = 0;
         synchronized (renderBlocks) { renderBlocks.clear(); }
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         silentRotation.hasRotation = false;
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
-            if (autoDisable.getValue()) setEnabled(false);
+            if (autoDisable.getValue()) enabled = false;
             return;
         }
         if (currentTarget != target) {
@@ -180,7 +178,7 @@ public class TntAura extends Module {
         }
         int tntSlot = findTntSlot(mc);
         if (tntSlot == -1) {
-            if (autoDisable.getValue()) setEnabled(false);
+            if (autoDisable.getValue()) enabled = false;
             return;
         }
         double[] solidData = collectSolidBlocks(mc);
@@ -199,7 +197,7 @@ public class TntAura extends Module {
             failedTntPlacements++;
             if (failedTntPlacements >= 5) {
                 if (autoDisable.getValue()) {
-                    setEnabled(false);
+                    enabled = false;
                 } else {
                     currentState = State.TRAPPING;
                     gapPos = null;
@@ -226,7 +224,7 @@ public class TntAura extends Module {
         if (now - lastActionTime < igniteDelay.getValue()) return;
         int flintSlot = findFlintAndSteelSlot(mc);
         if (flintSlot == -1) {
-            if (autoDisable.getValue()) setEnabled(false);
+            if (autoDisable.getValue()) enabled = false;
             return;
         }
         BlockPos tntPos = new BlockPos(gapPos[0], gapPos[1], gapPos[2]);
@@ -243,7 +241,7 @@ public class TntAura extends Module {
     private void tickWaiting(Minecraft mc, long now) {
         if (now - lastActionTime > 5000) {
             if (autoDisable.getValue()) {
-                setEnabled(false);
+                enabled = false;
             } else {
                 currentState = State.TRAPPING;
                 gapPos = null;
@@ -439,10 +437,22 @@ public class TntAura extends Module {
         return new double[]{0.0};
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(TntAura.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").getEnabled();
     }
     public static TntAura itz() {
-        return ModuleManager.get(TntAura.class);
+        return ravex.manager.ModuleManager.delegate(TntAura.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

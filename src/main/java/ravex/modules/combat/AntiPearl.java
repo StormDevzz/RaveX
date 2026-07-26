@@ -1,19 +1,21 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
-public class AntiPearl extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0, 0.5);
+@ModuleInfo(name = "AntiPearl", category = "Combat")
+public class AntiPearl extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 8.0, 1.0, 16.0, 0.5);
     public final BooleanParameter autoAttack = new BooleanParameter("AutoAttack", true);
     public final BooleanParameter autoWarn = new BooleanParameter("Warn", true);
     public final BooleanParameter predict = new BooleanParameter("Predict", true);
@@ -21,8 +23,6 @@ public class AntiPearl extends Module {
     static {
         NATIVE.load();
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -85,10 +85,22 @@ public class AntiPearl extends Module {
     }
     private static native void nativePredictLanding(double x, double y, double z, double mx, double my, double mz, double[] out);
     public static boolean maybeEnabled() {
-        return maybeEnabled(AntiPearl.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiPearl").getEnabled();
     }
     public static AntiPearl itz() {
-        return ModuleManager.get(AntiPearl.class);
+        return ravex.manager.ModuleManager.delegate(AntiPearl.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

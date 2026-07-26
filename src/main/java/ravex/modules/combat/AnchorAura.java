@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 
-import ravex.manager.ModuleManager;
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 import ravex.RaveX;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
@@ -35,8 +35,9 @@ import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
 
-public class AnchorAura extends Module {
-    public final ModeParameter targetMode = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
+@ModuleInfo(name = "AnchorAura", category = "Combat")
+public class AnchorAura extends ravex.modules.Module {
+public final ModeParameter targetMode = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
     public final ModeParameter targetType = new ModeParameter("TargetType", "Players",
             List.of("Players", "Monsters", "Passives", "All"));
     public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
@@ -70,7 +71,7 @@ public class AnchorAura extends Module {
     }
 
     private AnchorAura() {
-        super("AnchorAura");
+        
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
         armorDurabilityThreshold.setVisible(alwaysConsiderDurability::getValue);
@@ -78,10 +79,10 @@ public class AnchorAura extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(AnchorAura.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AnchorAura").getEnabled();
     }
     public static AnchorAura itz() {
-        return ModuleManager.get(AnchorAura.class);
+        return ravex.manager.ModuleManager.delegate(AnchorAura.class);
     }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
@@ -94,8 +95,6 @@ public class AnchorAura extends Module {
     public static float getSilentPitch() {
         return silentRotation.pitch;
     }
-
-    @Override
     protected void onEnable() {
         lastActionTime = 0;
         silentRotation.reset();
@@ -103,14 +102,10 @@ public class AnchorAura extends Module {
         currentTargetDamage = 0.0;
         currentSelfDamage = 0.0;
     }
-
-    @Override
     protected void onDisable() {
         silentRotation.reset();
         simulatedPlacementBlock = null;
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null)
@@ -579,4 +574,17 @@ public class AnchorAura extends Module {
             double predictTicks,
             boolean alwaysConsiderDurability,
             double armorDurabilityThreshold);
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

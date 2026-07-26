@@ -1,13 +1,15 @@
 package ravex.modules.render;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
-public class FreeCam extends Module {
-    public double x, y, z;
+@ModuleInfo(name = "FreeCam", category = "Render")
+public class FreeCam extends ravex.modules.Module {
+public double x, y, z;
     public float yaw, pitch;
     public double prevX, prevY, prevZ;
     public float prevYaw, prevPitch;
@@ -19,8 +21,6 @@ public class FreeCam extends Module {
     public final BooleanParameter blockInteract = new BooleanParameter("BlockInteract", true);
     public final BooleanParameter entityInteract = new BooleanParameter("EntityInteract", true);
     public final BooleanParameter noSwing = new BooleanParameter("NoSwing", false);
-
-    @Override
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
@@ -44,7 +44,6 @@ public class FreeCam extends Module {
             this.targetZ = this.z;
         }
     }
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
@@ -152,10 +151,23 @@ public class FreeCam extends Module {
     }
     public record Vec3(double x, double y, double z) {}
     public static boolean maybeEnabled() {
-        return maybeEnabled(FreeCam.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("FreeCam").getEnabled();
     }
 
     public static FreeCam itz() {
-        return ModuleManager.get(FreeCam.class);
+        return ravex.manager.ModuleManager.delegate(FreeCam.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

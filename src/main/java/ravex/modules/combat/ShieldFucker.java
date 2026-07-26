@@ -1,9 +1,10 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import ravex.utility.misc.MobUtility;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
@@ -13,8 +14,9 @@ import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
-public class ShieldFucker extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
+@ModuleInfo(name = "ShieldFucker", category = "Combat")
+public class ShieldFucker extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter wallRange = new NumberParameter("WallRange", 3.0, 1.0, 6.0, 0.1);
     public final NumberParameter switchDelay = new NumberParameter("SwitchDelay", 100, 0, 500, 10);
     public final NumberParameter attackDelay = new NumberParameter("AttackDelay", 200, 50, 1000, 10);
@@ -32,10 +34,10 @@ public class ShieldFucker extends Module {
         NATIVE.load();
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(ShieldFucker.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ShieldFucker").getEnabled();
     }
     public static ShieldFucker itz() {
-        return ModuleManager.get(ShieldFucker.class);
+        return ravex.manager.ModuleManager.delegate(ShieldFucker.class);
     }
     public static class BreakAction {
         public final int targetId;
@@ -58,14 +60,12 @@ public class ShieldFucker extends Module {
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
-    @Override
     protected void onDisable() {
         silentRotation.hasRotation = false;
         if (NATIVE.isLoaded()) {
             nativeReset();
         }
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
@@ -235,4 +235,17 @@ public class ShieldFucker extends Module {
         String currentItem, int currentSlot
     );
     private static native void nativeReset();
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

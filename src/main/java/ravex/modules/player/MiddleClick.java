@@ -1,6 +1,6 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.utility.player.InventoryUtility;
@@ -9,8 +9,9 @@ import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
-public class MiddleClick extends Module {
-    public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Firework", List.of("Firework", "None"));
+@ModuleInfo(name = "MiddleClick", category = "Player")
+public class MiddleClick extends ravex.modules.Module {
+public final ModeParameter elytraAction = new ModeParameter("ElytraAction", "Firework", List.of("Firework", "None"));
     public final ModeParameter blockAction = new ModeParameter("BlockAction", "XPBottle", List.of("XPBottle", "XPBottleFast", "None"));
     public final ModeParameter airAction = new ModeParameter("AirAction", "EnderPearl", List.of("EnderPearl", "None"));
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
@@ -20,8 +21,6 @@ public class MiddleClick extends Module {
     static {
         NATIVE.load();
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -75,15 +74,27 @@ public class MiddleClick extends Module {
         int prev = InventoryUtility.getSelectedSlot(mc.player);
         InventoryUtility.selectSlot(mc.player, slot);
         mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (ModuleManager.get(MiddleClick.class).silent.getValue()) InventoryUtility.selectSlot(mc.player, prev);
+        if (ravex.manager.ModuleManager.delegate(MiddleClick.class).silent.getValue()) InventoryUtility.selectSlot(mc.player, prev);
     }
     private static native void nativeStartFastXp();
     private static native void nativeStopFastXp();
     public static boolean maybeEnabled() {
-        return maybeEnabled(MiddleClick.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("MiddleClick").getEnabled();
     }
     public static MiddleClick itz() {
-        return ModuleManager.get(MiddleClick.class);
+        return ravex.manager.ModuleManager.delegate(MiddleClick.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

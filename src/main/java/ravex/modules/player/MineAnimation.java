@@ -1,14 +1,16 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
-public class MineAnimation extends Module {
-    public final BooleanParameter hideSwing = new BooleanParameter("HideHandSwing", true);
+@ModuleInfo(name = "MineAnimation", category = "Player")
+public class MineAnimation extends ravex.modules.Module {
+public final BooleanParameter hideSwing = new BooleanParameter("HideHandSwing", true);
     public final BooleanParameter hideCracks = new BooleanParameter("HideBlockCracks", true);
 
     @Subscribe
@@ -23,10 +25,22 @@ public class MineAnimation extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(MineAnimation.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("MineAnimation").getEnabled();
     }
     public static MineAnimation itz() {
-        return ModuleManager.get(MineAnimation.class);
+        return ravex.manager.ModuleManager.delegate(MineAnimation.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

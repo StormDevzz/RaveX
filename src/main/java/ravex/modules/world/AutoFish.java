@@ -1,22 +1,22 @@
 package ravex.modules.world;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.phys.AABB;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
-public class AutoFish extends Module {
-    public final NumberParameter castDelay = new NumberParameter("CastDelay", 600, 200, 2000, 100);
+@ModuleInfo(name = "AutoFish", category = "World")
+public class AutoFish extends ravex.modules.Module {
+public final NumberParameter castDelay = new NumberParameter("CastDelay", 600, 200, 2000, 100);
     public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     public final BooleanParameter autoCast = new BooleanParameter("AutoCast", true);
     private long lastActionTime = 0;
     private boolean wasIdle = false;
     private double prevY = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -74,6 +74,19 @@ public class AutoFish extends Module {
         useRod(mc, player);
     }
     public static AutoFish itz() {
-        return ModuleManager.get(AutoFish.class);
+        return ravex.manager.ModuleManager.delegate(AutoFish.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

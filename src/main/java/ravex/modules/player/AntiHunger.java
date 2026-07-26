@@ -1,5 +1,6 @@
 package ravex.modules.player;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
@@ -8,12 +9,13 @@ import net.minecraft.client.Minecraft;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import java.util.List;
 
-public class AntiHunger extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "NCP", List.of("NCP", "NCPStrict"));
+@ModuleInfo(name = "AntiHunger", category = "Player")
+public class AntiHunger extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "NCP", List.of("NCP", "NCPStrict"));
 
     private boolean canSprint() {
         LocalPlayer p = Minecraft.getInstance().player;
@@ -45,10 +47,23 @@ public class AntiHunger extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(AntiHunger.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiHunger").getEnabled();
     }
 
     public static AntiHunger itz() {
-        return self(AntiHunger.class);
+        return ravex.manager.ModuleManager.delegate(AntiHunger.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,14 +1,14 @@
 package ravex.modules.render;
 
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.MultiSelectParameter;
 
-public class NameTags extends Module {
-    public final BooleanParameter armor = new BooleanParameter("Armor", true);
+@ModuleInfo(name = "NameTags", category = "Render")
+public class NameTags extends ravex.modules.Module {
+public final BooleanParameter armor = new BooleanParameter("Armor", true);
     public final BooleanParameter handItems = new BooleanParameter("HandItems", true);
     public final NumberParameter size = new NumberParameter("Size", 1.0, 0.5, 2.5, 0.1);
     public final BooleanParameter distScale = new BooleanParameter("DistScale", true);
@@ -24,7 +24,7 @@ public class NameTags extends Module {
     );
 
     private NameTags() {
-        super("NameTags");
+        
         backgroundColor.setVisible(background::getValue);
     }
 
@@ -44,7 +44,6 @@ public class NameTags extends Module {
         if (!distScale) {
             return scaleParam;
         }
-
 
         double distFactor = 1.0;
         if (distance > 15.0) {
@@ -140,10 +139,23 @@ public class NameTags extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(NameTags.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NameTags").getEnabled();
     }
 
     public static NameTags itz() {
-        return ModuleManager.get(NameTags.class);
+        return ravex.manager.ModuleManager.delegate(NameTags.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

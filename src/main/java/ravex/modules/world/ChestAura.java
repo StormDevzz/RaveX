@@ -1,16 +1,18 @@
 package ravex.modules.world;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-import ravex.manager.ModuleManager;
+
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-public class ChestAura extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
+@ModuleInfo(name = "ChestAura", category = "World")
+public class ChestAura extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
     public final NumberParameter delay = new NumberParameter("Delay", 2.0, 0.0, 20.0, 1.0);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter highlightColor = new ColorParameter("Color", 0xFF00FF88);
@@ -29,21 +31,18 @@ public class ChestAura extends Module {
     public static final List<PlacedChest> placedChests = new CopyOnWriteArrayList<>();
     private int delayTimer = 0;
     private ChestAura() {
-        super("ChestAura");
+        
         highlightColor.setVisible(render::getValue);
         fadeSpeed.setVisible(render::getValue);
         filled.setVisible(render::getValue);
     }
-    @Override
     protected void onEnable() {
         delayTimer = 0;
         placedChests.clear();
     }
-    @Override
     protected void onDisable() {
         placedChests.clear();
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
@@ -132,9 +131,22 @@ public class ChestAura extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(ChestAura.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ChestAura").getEnabled();
     }
     public static ChestAura itz() {
-        return ModuleManager.get(ChestAura.class);
+        return ravex.manager.ModuleManager.delegate(ChestAura.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

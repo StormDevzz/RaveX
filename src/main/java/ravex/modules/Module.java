@@ -19,13 +19,13 @@ public abstract class Module {
     }
     private String name;
     private Category category;
-    private boolean enabled;
+    protected boolean enabled;
     private int keyBind = org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN;
     private final List<Parameter<?>> parameters = new ArrayList<>();
     private boolean paramFieldsScanned = false;
     private float gearAngle = 0f;
     private long gearLastTick = 0L;
-    protected final boolean hud;
+    protected boolean hud;
     private int targetX;
     private int targetY;
     private int width;
@@ -148,7 +148,7 @@ public abstract class Module {
         }
         return parameters;
     }
-    private void scanParameterFields() {
+    protected void scanParameterFields() {
         Class<?> clazz = getClass();
         while (clazz != Module.class && clazz != null) {
             for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
@@ -171,7 +171,7 @@ public abstract class Module {
     protected void onEnable() {}
     protected void onDisable() {}
 
-    private void ensureNativeLoaded() {
+    protected void ensureNativeLoaded() {
         if (hud) return;
         try {
             java.lang.reflect.Field f = getClass().getDeclaredField("NATIVE");

@@ -1,12 +1,13 @@
 package ravex.modules.misc;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-public class AntiAfk extends Module {
-    public final NumberParameter interval   = new NumberParameter("Interval", 12.0, 5.0, 60.0, 1.0);
+@ModuleInfo(name = "AntiAfk", category = "Misc")
+public class AntiAfk extends ravex.modules.Module {
+public final NumberParameter interval   = new NumberParameter("Interval", 12.0, 5.0, 60.0, 1.0);
     public final BooleanParameter mouseMove = new BooleanParameter("MouseMove", true);
     public final BooleanParameter keyPress  = new BooleanParameter("KeyPress", true);
     public final BooleanParameter lookAround = new BooleanParameter("LookAround", true);
@@ -17,7 +18,6 @@ public class AntiAfk extends Module {
     static {
         ravex.utility.nativelib.NativeLoader.load();
     }
-    @Override
     protected void onEnable() {
         try {
             int intervalMs = (int)(interval.getValue() * 1000.0);
@@ -40,7 +40,6 @@ public class AntiAfk extends Module {
             startFallback();
         }
     }
-    @Override
     protected void onDisable() {
         try {
             nativeStop();
@@ -66,6 +65,19 @@ public class AntiAfk extends Module {
     private native boolean nativePerformAction();
 
     public static AntiAfk itz() {
-        return ModuleManager.get(AntiAfk.class);
+        return ravex.manager.ModuleManager.delegate(AntiAfk.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

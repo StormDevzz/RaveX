@@ -1,16 +1,15 @@
 package ravex.modules.movement;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.List;
-public class Step extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "Packet", "Grim"));
+@ModuleInfo(name = "Step", category = "Movement")
+public class Step extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "Packet", "Grim"));
     public final NumberParameter height = new NumberParameter("Height", 1.0, 1.0, 2.5, 0.5);
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -60,7 +59,6 @@ public class Step extends Module {
             }
         }
     }
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
@@ -71,6 +69,19 @@ public class Step extends Module {
         }
     }
     public static Step itz() {
-        return ModuleManager.get(Step.class);
+        return ravex.manager.ModuleManager.delegate(Step.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

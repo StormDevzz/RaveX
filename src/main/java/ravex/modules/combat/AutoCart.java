@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,7 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.RaveX;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -20,8 +21,9 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
 import java.util.List;
-public class AutoCart extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
+@ModuleInfo(name = "AutoCart", category = "Combat")
+public class AutoCart extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 6, 1, 10, 1);
     public final NumberParameter targetRange = new NumberParameter("TargetRange", 20, 5, 50, 1);
     public final ModeParameter cartType = new ModeParameter("CartType", "TNT",
             List.of("TNT", "Chest", "Furnace", "Hopper"));
@@ -39,8 +41,6 @@ public class AutoCart extends Module {
     private int originalSlot = -1;
     private BlockPos lastPlacedPos = null;
     private long lastPlaceTime = 0;
-
-    @Override
     protected void onEnable() {
         wasUsingBow = false;
         lastBowCharge = 0;
@@ -50,7 +50,6 @@ public class AutoCart extends Module {
         lastPlaceTime = 0;
         targetRenderPos = null;
     }
-    @Override
     protected void onDisable() {
         if (originalSlot != -1 && Minecraft.getInstance().player != null) {
             selectSlot(originalSlot, Minecraft.getInstance());
@@ -58,7 +57,6 @@ public class AutoCart extends Module {
         }
         targetRenderPos = null;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -217,10 +215,22 @@ public class AutoCart extends Module {
         return playerPos.distanceTo(targetPos) <= range.getValue();
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoCart.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoCart").getEnabled();
     }
     public static AutoCart itz() {
-        return ModuleManager.get(AutoCart.class);
+        return ravex.manager.ModuleManager.delegate(AutoCart.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

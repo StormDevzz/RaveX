@@ -1,18 +1,20 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import ravex.utility.misc.MobUtility;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.rotation.SilentRotation;
-public class BowAim extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.0, 1.0);
+@ModuleInfo(name = "BowAim", category = "Combat")
+public class BowAim extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 20.0, 5.0, 40.0, 1.0);
     public final ModeParameter targetType = new ModeParameter("Targets", "Players", List.of("Players", "Mobs", "Both"));
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent", List.of("Silent", "Normal", "None"));
     public static final SilentRotation silentRotation = new SilentRotation();
@@ -20,12 +22,9 @@ public class BowAim extends Module {
     static {
         NATIVE.load();
     }
-
-    @Override
     protected void onDisable() {
         silentRotation.hasRotation = false;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
@@ -165,10 +164,10 @@ public class BowAim extends Module {
         return silentRotation.hasRotation;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(BowAim.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("BowAim").getEnabled();
     }
     public static BowAim itz() {
-        return ModuleManager.get(BowAim.class);
+        return ravex.manager.ModuleManager.delegate(BowAim.class);
     }
     private static native double[] nativeCalculateBowAim(
         double playerX, double playerY, double playerZ,
@@ -177,4 +176,17 @@ public class BowAim extends Module {
         double targetHeight,
         double arrowSpeed
     );
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

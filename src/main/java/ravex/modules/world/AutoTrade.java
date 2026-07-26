@@ -1,29 +1,28 @@
 package ravex.modules.world;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.misc.MobUtility;
 import java.util.Comparator;
 import java.util.List;
-public class AutoTrade extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0, 0.5);
+@ModuleInfo(name = "AutoTrade", category = "World")
+public class AutoTrade extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 6.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Best", List.of("Best", "Cheapest", "First"));
     public final NumberParameter maxTrades = new NumberParameter("MaxTrades", 10, 1, 100, 1);
     public final BooleanParameter autoOpen = new BooleanParameter("AutoOpen", true);
     private int tradesDone = 0;
     private long lastActionTime = 0;
-
-    @Override
     protected void onEnable() {
         tradesDone = 0;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var player = mc.player;
@@ -83,6 +82,19 @@ public class AutoTrade extends Module {
         return cost;
     }
     public static AutoTrade itz() {
-        return ModuleManager.get(AutoTrade.class);
+        return ravex.manager.ModuleManager.delegate(AutoTrade.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

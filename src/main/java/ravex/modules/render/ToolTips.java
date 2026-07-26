@@ -1,15 +1,17 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import ravex.utility.player.InventoryUtility;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
-public class ToolTips extends Module {
-    public final BooleanParameter showId = new BooleanParameter("ShowID", false);
+@ModuleInfo(name = "ToolTips", category = "Render")
+public class ToolTips extends ravex.modules.Module {
+public final BooleanParameter showId = new BooleanParameter("ShowID", false);
     public final BooleanParameter showShulker = new BooleanParameter("ShowShulker", true);
     public final BooleanParameter showFood = new BooleanParameter("ShowFood", false);
     public final BooleanParameter showEnchants = new BooleanParameter("ShowEnchants", false);
@@ -49,10 +51,23 @@ public class ToolTips extends Module {
         return InventoryUtility.isShulkerBox(stack) || stack.has(net.minecraft.core.component.DataComponents.CONTAINER);
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(ToolTips.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ToolTips").getEnabled();
     }
 
     public static ToolTips itz() {
-        return ModuleManager.get(ToolTips.class);
+        return ravex.manager.ModuleManager.delegate(ToolTips.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,6 +1,6 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
 
+import ravex.modules.annotations.ModuleInfo;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -22,8 +22,9 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-public class Tracers extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Default", List.of("Default", "Arrows"));
+@ModuleInfo(name = "Tracers", category = "Render")
+public class Tracers extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Default", List.of("Default", "Arrows"));
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", false);
     public final BooleanParameter animals = new BooleanParameter("Animals", false);
@@ -41,7 +42,7 @@ public class Tracers extends Module {
     private static boolean arrowLoaded = false;
 
     private Tracers() {
-        super("Tracers");
+        
         lineWidth.setVisible(() -> mode.getValue().equals("Default"));
         arrowSize.setVisible(() -> mode.getValue().equals("Arrows"));
         arrowMargin.setVisible(() -> mode.getValue().equals("Arrows"));
@@ -90,7 +91,7 @@ public class Tracers extends Module {
         if (tex == null)
             return;
 
-        Tracers t = ModuleManager.get(Tracers.class);
+        Tracers t = ravex.manager.ModuleManager.delegate(Tracers.class);
         if (!t.getEnabled() || !t.mode.getValue().equals("Arrows"))
             return;
 
@@ -110,7 +111,6 @@ public class Tracers extends Module {
         double cx = guiWidth / 2.0;
         double cy = guiHeight / 2.0;
         float playerYawRad = (float) Math.toRadians(mc.player.getYRot());
-
 
         float[] targetAngles = new float[count];
         int[] ids = new int[count];
@@ -156,7 +156,6 @@ public class Tracers extends Module {
         if (validCount == 0)
             return;
 
-
         float[] adjustedAngles = targetAngles.clone();
         if (validCount > 1) {
             Integer[] order = new Integer[validCount];
@@ -184,7 +183,6 @@ public class Tracers extends Module {
                     adjustedAngles[oi] += 2 * Math.PI;
             }
         }
-
 
         for (int i = 0; i < count; i++) {
             if (!valid[i])
@@ -225,10 +223,23 @@ public class Tracers extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Tracers.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Tracers").getEnabled();
     }
 
     public static Tracers itz() {
-        return ModuleManager.get(Tracers.class);
+        return ravex.manager.ModuleManager.delegate(Tracers.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

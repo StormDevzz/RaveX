@@ -1,11 +1,13 @@
 package ravex.modules.client;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.integrations.baritone.BaritoneIntegration;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
-public class BaritoneModule extends Module {
-    private final BaritoneIntegration baritone = new BaritoneIntegration();
+@ModuleInfo(name = "BaritoneModule", category = "Client")
+public class BaritoneModule extends ravex.modules.Module {
+private final BaritoneIntegration baritone = new BaritoneIntegration();
     public final ColorParameter colorCurrentPath = new ColorParameter("CurrentPath", 0xFF00AA00);
     public final ColorParameter colorNextPath = new ColorParameter("NextPath", 0xFF005500);
     public final ColorParameter colorBlocksToBreak = new ColorParameter("BlocksToBreak", 0xFFFF0000);
@@ -47,44 +49,13 @@ public class BaritoneModule extends Module {
     private int cc, np, cbb, cbp, cbw, bp, mr, gb, ig, sel, s1, s2;
     private boolean ab, ap, asp, apk, app, apa, ada, add_, av, ai, awb, sa, as_, wwb, acc, cog, bfl;
     private boolean elf, esl, ecf, eaj, eas, eael, ealnf, rp, rg;
-    private BaritoneModule() {
-        super("Baritone");
-        setVisibleCondition(BaritoneIntegration::isBaritonePresent);
-        if (isVisible()) {
-            super.setEnabled(true);
-        }
-    }
-    @Override
-    public void setEnabled(boolean enabled) {
-        if (enabled) {
-            if (!getEnabled()) {
-                super.setEnabled(true);
-            }
-            if (baritone.init()) {
-                syncAll();
-            }
-        }
-    }
-    @Override
-    public void toggle() {
-        if (!getEnabled()) {
-            super.setEnabled(true);
-        }
-    }
-    @Override
-    protected boolean hasToggleSound() {
-        return false;
-    }
-    @Override
-    protected void onEnable() {
+    public void onEnable() {
         if (baritone.init()) {
             syncAll();
         }
     }
-    @Override
-    protected void onDisable() {
+    public void onDisable() {
     }
-    @Override
     public void onTick() {
         if (!baritone.isAvailable()) {
             if (getEnabled() && baritone.init()) {
@@ -231,6 +202,19 @@ public class BaritoneModule extends Module {
     }
 
     public static BaritoneModule itz() {
-        return ModuleManager.get(BaritoneModule.class);
+        return ravex.manager.ModuleManager.delegate(BaritoneModule.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

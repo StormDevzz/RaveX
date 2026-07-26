@@ -1,12 +1,14 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
-public class ShiftInterp extends Module {
-    public final ModeParameter target = new ModeParameter("Target", "All", java.util.List.of("All", "Others", "Self"));
+@ModuleInfo(name = "ShiftInterp", category = "Render")
+public class ShiftInterp extends ravex.modules.Module {
+public final ModeParameter target = new ModeParameter("Target", "All", java.util.List.of("All", "Others", "Self"));
 
     public boolean shouldCrouch(Entity entity) {
         if (!getEnabled()) return false;
@@ -23,10 +25,23 @@ public class ShiftInterp extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(ShiftInterp.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ShiftInterp").getEnabled();
     }
 
     public static ShiftInterp itz() {
-        return ModuleManager.get(ShiftInterp.class);
+        return ravex.manager.ModuleManager.delegate(ShiftInterp.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

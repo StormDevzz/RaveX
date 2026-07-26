@@ -1,25 +1,19 @@
 package ravex.modules.misc;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import ravex.manager.ModuleManager;
-import ravex.modules.Category;
-import ravex.modules.Module;
+
 import ravex.parameter.NumberParameter;
 import ravex.parameter.StringParameter;
 
-public class MessageAura extends Module {
-    public final StringParameter message = new StringParameter("Message", "Hello from RaveX!");
+@ModuleInfo(name = "MessageAura", category = "Misc")
+public class MessageAura extends ravex.modules.Module {
+public final StringParameter message = new StringParameter("Message", "Hello from RaveX!");
     public final NumberParameter interval = new NumberParameter("Interval", 5.0, 1.0, 60.0, 0.5);
 
     private long lastMessageTime;
 
-    public MessageAura() {
-        super("MessageAura");
-        setCategory(Category.MISC);
-    }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -29,13 +23,24 @@ public class MessageAura extends Module {
             lastMessageTime = System.currentTimeMillis();
         }
     }
-
-    @Override
     protected void onEnable() {
         lastMessageTime = System.currentTimeMillis();
     }
 
     public static MessageAura itz() {
-        return ModuleManager.get(MessageAura.class);
+        return ravex.manager.ModuleManager.delegate(MessageAura.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

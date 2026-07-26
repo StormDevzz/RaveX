@@ -1,6 +1,6 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -15,15 +15,16 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThr
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.render.Render3DUtils;
 import java.util.*;
 
-public class Trails extends Module {
-    public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
+@ModuleInfo(name = "Trails", category = "Render")
+public class Trails extends ravex.modules.Module {
+public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     public final NumberParameter width = new NumberParameter("Width", 2.0, 1.0, 6.0, 0.5);
     public final NumberParameter time = new NumberParameter("Time", 3.0, 0.5, 10.0, 0.5);
     public final BooleanParameter arrows = new BooleanParameter("Arrows", true);
@@ -50,15 +51,13 @@ public class Trails extends Module {
     }
 
     private Trails() {
-        super("Trails");
+        
         playerColor.setVisible(() -> playerEnabled.getValue());
         playerWidth.setVisible(() -> playerEnabled.getValue());
         playerTime.setVisible(() -> playerEnabled.getValue());
         glowLayers.setVisible(() -> glow.getValue());
         glowSpread.setVisible(() -> glow.getValue());
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null)
@@ -123,13 +122,13 @@ public class Trails extends Module {
     private static float toggleAlpha = 0.0f;
 
     public static boolean shouldRender() {
-        return maybeEnabled(Trails.class) || toggleAlpha > 0.001f;
+        return ravex.manager.ModuleManager.delegate(Trails.class).getEnabled() || toggleAlpha > 0.001f;
     }
 
     public static void renderTrails(Matrix4f modelViewMatrix, Vec3 camPos) {
         try {
             long now = System.currentTimeMillis();
-            boolean enabled = maybeEnabled(Trails.class);
+            boolean enabled = ravex.manager.ModuleManager.delegate(Trails.class).getEnabled();
             
             // Smoothly animate the global module toggle fade-in and fade-out
             float targetToggle = enabled ? 1.0f : 0.0f;
@@ -146,16 +145,16 @@ public class Trails extends Module {
                 return;
             }
 
-            boolean glowEnabled = ModuleManager.get(Trails.class).glow.getValue();
-            int glowLayersVal = ModuleManager.get(Trails.class).glowLayers.getValue().intValue();
-            float glowSpreadVal = ModuleManager.get(Trails.class).glowSpread.getValue().floatValue();
+            boolean glowEnabled = ravex.manager.ModuleManager.delegate(Trails.class).glow.getValue();
+            int glowLayersVal = ravex.manager.ModuleManager.delegate(Trails.class).glowLayers.getValue().intValue();
+            float glowSpreadVal = ravex.manager.ModuleManager.delegate(Trails.class).glowSpread.getValue().floatValue();
             renderFadingTrail(entityTrails, modelViewMatrix, camPos, now,
-                    ModuleManager.get(Trails.class).color.getValue(), ModuleManager.get(Trails.class).width.getValue().floatValue(),
-                    (long) (ModuleManager.get(Trails.class).time.getValue() * 1000.0),
+                    ravex.manager.ModuleManager.delegate(Trails.class).color.getValue(), ravex.manager.ModuleManager.delegate(Trails.class).width.getValue().floatValue(),
+                    (long) (ravex.manager.ModuleManager.delegate(Trails.class).time.getValue() * 1000.0),
                     glowEnabled, glowLayersVal, glowSpreadVal);
             renderFadingTrail(playerTrails, modelViewMatrix, camPos, now,
-                    ModuleManager.get(Trails.class).playerColor.getValue(), ModuleManager.get(Trails.class).playerWidth.getValue().floatValue(),
-                    (long) (ModuleManager.get(Trails.class).playerTime.getValue() * 1000.0),
+                    ravex.manager.ModuleManager.delegate(Trails.class).playerColor.getValue(), ravex.manager.ModuleManager.delegate(Trails.class).playerWidth.getValue().floatValue(),
+                    (long) (ravex.manager.ModuleManager.delegate(Trails.class).playerTime.getValue() * 1000.0),
                     glowEnabled, glowLayersVal, glowSpreadVal);
         } catch (Throwable t) {
             System.err.println("[RaveX] Trails render error: " + t.getMessage());
@@ -252,17 +251,28 @@ public class Trails extends Module {
         Render3DUtils.batchLineStrip(matrix, List.of(new Vector3f(x1, y1, z1), new Vector3f(x2, y2, z2)), cr, cg, cb,
                 alpha, width);
     }
-
-    @Override
     protected void onDisable() {
         // Do nothing to let existing trails smoothly fade out
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(Trails.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Trails").getEnabled();
     }
 
     public static Trails itz() {
-        return ModuleManager.get(Trails.class);
+        return ravex.manager.ModuleManager.delegate(Trails.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

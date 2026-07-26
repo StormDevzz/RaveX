@@ -1,5 +1,6 @@
 package ravex.modules.hud;
 
+import ravex.modules.annotations.ModuleInfo;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -7,11 +8,11 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.RaveX;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
-import ravex.manager.ModuleManager;
+
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import ravex.utility.system.SystemUtility;
 
@@ -21,8 +22,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class MediaHud extends Module {
-    private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
+@ModuleInfo(name = "MediaHud", category = "HUD")
+public class MediaHud extends ravex.modules.Module {
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final Identifier ICON = TextureLoader.HUD_MEDIA_WHITE;
     private static final int IS = HudRenderer.getIconSize();
 
     private volatile String cachedTitle = "";
@@ -42,15 +48,11 @@ public class MediaHud extends Module {
     private ScheduledExecutorService scheduler;
 
     private MediaHud() {
-        super("Media", 10, 310, 180, 20);
+        this.x = 10; this.y = 310; this.width = 180; this.height = 20;
     }
-
-    @Override
     protected void onEnable() {
         startPolling();
     }
-
-    @Override
     protected void onDisable() {
         stopPolling();
         if (coverTexture != null) {
@@ -229,22 +231,20 @@ public class MediaHud extends Module {
 
         ravex.utility.render.Render2DEngine.popScissor(graphics);
     }
-
-    @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
 
         String title = cachedTitle;
         if (title.isEmpty()) return;
 
         int activeColor = ColorUtility.getActiveColor();
-        int bx = getX();
-        int by = getY();
+        int bx = x;
+        int by = y;
         int pw = 160;
         int ph = 42;
 
-        setWidth(pw);
-        setHeight(ph);
+        width = pw;
+        height = ph;
 
         long pos = cachedPosition;
         if (cachedPlaying && cachedLength > 0) {
@@ -302,10 +302,45 @@ public class MediaHud extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(MediaHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("MediaHud").getEnabled();
     }
 
     public static MediaHud itz() {
-        return ModuleManager.get(MediaHud.class);
+        return ravex.manager.ModuleManager.delegate(MediaHud.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

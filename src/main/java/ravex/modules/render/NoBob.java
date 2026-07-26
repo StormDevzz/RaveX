@@ -1,11 +1,10 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
-import net.minecraft.client.Minecraft;
-public class NoBob extends Module {
-    private boolean originalBob = true;
 
-    @Override
+import ravex.modules.annotations.ModuleInfo;
+import net.minecraft.client.Minecraft;
+@ModuleInfo(name = "NoBob", category = "Render")
+public class NoBob extends ravex.modules.Module {
+private boolean originalBob = true;
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options != null) {
@@ -13,7 +12,6 @@ public class NoBob extends Module {
             mc.options.bobView().set(false);
         }
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null) return;
@@ -21,17 +19,29 @@ public class NoBob extends Module {
             mc.options.bobView().set(false);
         }
     }
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null) return;
         mc.options.bobView().set(originalBob);
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(NoBob.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NoBob").getEnabled();
     }
 
     public static NoBob itz() {
-        return ModuleManager.get(NoBob.class);
+        return ravex.manager.ModuleManager.delegate(NoBob.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,5 +1,6 @@
 package ravex.modules.movement;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
@@ -11,8 +12,7 @@ import net.minecraft.world.phys.Vec3;
 import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -20,8 +20,9 @@ import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BoatFly extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Packet",
+@ModuleInfo(name = "BoatFly", category = "Movement")
+public class BoatFly extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Packet",
             List.of("Packet", "PacketStrict", "Motion"));
     public final NumberParameter speed = new NumberParameter("Speed", 2.0, 0.1, 25.0, 0.1);
     public final NumberParameter ySpeed = new NumberParameter("YSpeed", 1.0, 0.0, 10.0, 0.1);
@@ -36,7 +37,7 @@ public class BoatFly extends Module {
     private float currentScale = 1.0f;
 
     public static boolean isBoatScaleActive() {
-        return maybeEnabled(BoatFly.class);
+        return ravex.manager.ModuleManager.delegate(BoatFly.class).getEnabled();
     }
 
     public float getScale() {
@@ -52,16 +53,12 @@ public class BoatFly extends Module {
             currentScale = Math.min(target, currentScale + speed);
         }
     }
-
-    @Override
     protected void onEnable() {
         vehiclePackets.clear();
         currentScale = 1.0f;
         EventBusHolder.get().subscribe(this);
         if (autoMount.getValue()) mountToNearestBoat();
     }
-
-    @Override
     protected void onDisable() {
         vehiclePackets.clear();
         currentScale = 1.0f;
@@ -106,8 +103,6 @@ public class BoatFly extends Module {
             }
         }
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -205,10 +200,23 @@ public class BoatFly extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(BoatFly.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("BoatFly").getEnabled();
     }
 
     public static BoatFly itz() {
-        return ModuleManager.get(BoatFly.class);
+        return ravex.manager.ModuleManager.delegate(BoatFly.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

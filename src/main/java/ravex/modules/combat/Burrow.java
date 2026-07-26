@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -9,14 +10,15 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
-public class Burrow extends Module {
-    public final ModeParameter block = new ModeParameter("Block", "Obsidian",
+@ModuleInfo(name = "Burrow", category = "Combat")
+public class Burrow extends ravex.modules.Module {
+public final ModeParameter block = new ModeParameter("Block", "Obsidian",
         java.util.List.of("Obsidian", "Cobblestone", "Web", "Anvil"));
     public final BooleanParameter autoCenter = new BooleanParameter("AutoCenter", true);
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
@@ -29,8 +31,6 @@ public class Burrow extends Module {
     }
     private int tickCounter = 0;
     private boolean hasPlaced = false;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -71,7 +71,6 @@ public class Burrow extends Module {
         InventoryUtility.selectSlot(mc.player, prevSlot);
         hasPlaced = true;
     }
-    @Override
     protected void onDisable() {
         hasPlaced = false;
         tickCounter = 0;
@@ -91,10 +90,22 @@ public class Burrow extends Module {
     }
     private static native double[] nativeCalculate(double px, double py, double pz, double height, boolean autoCenter);
     public static boolean maybeEnabled() {
-        return maybeEnabled(Burrow.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Burrow").getEnabled();
     }
     public static Burrow itz() {
-        return ModuleManager.get(Burrow.class);
+        return ravex.manager.ModuleManager.delegate(Burrow.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

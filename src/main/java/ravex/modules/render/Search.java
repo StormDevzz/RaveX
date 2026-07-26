@@ -1,4 +1,6 @@
 package ravex.modules.render;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
@@ -8,8 +10,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import ravex.gui.browser.SearchBrowserScreen;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.ActionParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -19,8 +20,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class Search extends Module {
-    private final Set<Identifier> selectedBlocks = new HashSet<>();
+@ModuleInfo(name = "Search", category = "Render")
+public class Search extends ravex.modules.Module {
+private final Set<Identifier> selectedBlocks = new HashSet<>();
     private final Set<Identifier> selectedEntities = new HashSet<>();
     private final List<BlockPos> foundBlocks = new ArrayList<>();
 
@@ -41,7 +43,7 @@ public class Search extends Module {
     public final BooleanParameter esp = new BooleanParameter("ESP", true);
 
     private Search() {
-        super("Search");
+        
     }
 
     public boolean isBlockSelected(Identifier id) {
@@ -96,24 +98,33 @@ public class Search extends Module {
             }
         }
     }
-
-    @Override
     public void onTick() {
         if (getEnabled()) {
             scanBlocks();
         }
     }
-
-    @Override
     public void onEnable() {
         scanBlocks();
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(Search.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Search").getEnabled();
     }
 
     public static Search itz() {
-        return ModuleManager.get(Search.class);
+        return ravex.manager.ModuleManager.delegate(Search.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

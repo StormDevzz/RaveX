@@ -1,6 +1,6 @@
 package ravex.modules.misc;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.utility.nativelib.NativeLoader;
 import net.minecraft.client.Minecraft;
@@ -10,14 +10,14 @@ import net.minecraft.network.chat.Component;
 import com.mojang.blaze3d.platform.Window;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
-public class AntiQuit extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Server",
+@ModuleInfo(name = "AntiQuit", category = "Misc")
+public class AntiQuit extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Server",
         List.of("Server", "Game", "Both"));
 
     static {
         NativeLoader.load();
     }
-    @Override
     protected void onEnable() {
         try {
             nativeBlockQuit(true);
@@ -50,7 +50,6 @@ public class AntiQuit extends Module {
             }
         });
     }
-    @Override
     protected void onDisable() {
         try {
             nativeBlockQuit(false);
@@ -62,7 +61,7 @@ public class AntiQuit extends Module {
         }
     }
     public static boolean shouldBlockDisconnect() {
-        AntiQuit $ = ravex.manager.ModuleManager.get(AntiQuit.class);
+        AntiQuit $ = ravex.manager.ModuleManager.delegate(AntiQuit.class);
         if ($ == null || !$.getEnabled()) return false;
         String m = $.mode.getValue();
         return m.equals("Server") || m.equals("Both");
@@ -71,6 +70,19 @@ public class AntiQuit extends Module {
     private native boolean nativeIsQuitBlocked();
 
     public static AntiQuit itz() {
-        return ModuleManager.get(AntiQuit.class);
+        return ravex.manager.ModuleManager.delegate(AntiQuit.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

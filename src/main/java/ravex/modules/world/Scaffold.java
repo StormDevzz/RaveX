@@ -1,6 +1,6 @@
 package ravex.modules.world;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -15,8 +15,9 @@ import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.SlideAnimation;
 import net.minecraft.client.Minecraft;
 import java.util.List;
-public class Scaffold extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "Grim"));
+@ModuleInfo(name = "Scaffold", category = "World")
+public class Scaffold extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "Grim"));
     public final BooleanParameter expand = new BooleanParameter("Expand", false);
     public final NumberParameter expandLength = new NumberParameter("ExpandLength", 4.0, 1.0, 10.0, 1.0);
     public final NumberParameter rotationSpeed = new NumberParameter("RotationSpeed", 120.0, 10.0, 360.0, 5.0);
@@ -82,8 +83,6 @@ public class Scaffold extends Module {
         if (slot != prevSlot) InventoryUtility.selectSlot(p, prevSlot);
         hasPending = false;
     }
-
-    @Override
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
@@ -100,7 +99,6 @@ public class Scaffold extends Module {
         sizeAnim.reset();
         slideAnim.reset();
     }
-    @Override
     protected void onDisable() {
         highlightPos = null;
         renderAlpha = 0.0f;
@@ -108,7 +106,6 @@ public class Scaffold extends Module {
         hasCurr = false;
         hasPending = false;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
@@ -256,9 +253,22 @@ public class Scaffold extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(Scaffold.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Scaffold").getEnabled();
     }
     public static Scaffold itz() {
-        return ModuleManager.get(Scaffold.class);
+        return ravex.manager.ModuleManager.delegate(Scaffold.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

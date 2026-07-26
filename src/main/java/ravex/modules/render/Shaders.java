@@ -1,7 +1,8 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import java.util.List;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -9,8 +10,9 @@ import ravex.utility.shaders.*;
 import ravex.manager.HandShaderManager;
 import ravex.manager.PlayerShaderManager;
 import ravex.utility.shaders.nativec.ShaderNative;
-public class Shaders extends Module {
-    public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInitial(() -> false);
+@ModuleInfo(name = "Shaders", category = "Render")
+public class Shaders extends ravex.modules.Module {
+public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> RENDERING_HAND = ThreadLocal.withInitial(() -> false);
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", false);
@@ -18,16 +20,14 @@ public class Shaders extends Module {
     public final ModeParameter effectMode = new ModeParameter("Effect", "FireAura",
         List.of("FireAura", "EnergyGlow", "Chroma", "Ripple", "Pulse"));
     public Shaders() {
-        super("Shaders");
+        
     }
-    @Override
     protected void onEnable() {
         ShaderNative.isAvailable();
         HandShaderManager.init();
         PlayerShaderManager.init();
         System.out.println("[RaveX-Shaders] Enabled. Native: " + ShaderNative.isAvailable());
     }
-    @Override
     protected void onDisable() {
         HandShaderManager.shutdown();
         PlayerShaderManager.shutdown();
@@ -47,10 +47,23 @@ public class Shaders extends Module {
         return cfg;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Shaders.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Shaders").getEnabled();
     }
 
     public static Shaders itz() {
-        return ModuleManager.get(Shaders.class);
+        return ravex.manager.ModuleManager.delegate(Shaders.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

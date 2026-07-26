@@ -1,6 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
@@ -8,12 +8,11 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.inventory.ClickType;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
-public class AutoTotem extends Module {
-    public final ModeParameter offhandItem = new ModeParameter("Offhand", "Totem", List.of("Totem", "Gapple", "Crystal", "Shield", "None"));
+@ModuleInfo(name = "AutoTotem", category = "Combat")
+public class AutoTotem extends ravex.modules.Module {
+public final ModeParameter offhandItem = new ModeParameter("Offhand", "Totem", List.of("Totem", "Gapple", "Crystal", "Shield", "None"));
     public final ModeParameter mainHandItem = new ModeParameter("MainHand", "Sword", List.of("Sword", "Gapple", "Crystal", "Shield", "Totem", "None"));
     public final NumberParameter minHealth = new NumberParameter("MinHP", 8.0, 1.0, 20.0, 0.5);
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
@@ -104,10 +103,22 @@ public class AutoTotem extends Module {
         return -1;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoTotem.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoTotem").getEnabled();
     }
     public static AutoTotem itz() {
-        return ModuleManager.get(AutoTotem.class);
+        return ravex.manager.ModuleManager.delegate(AutoTotem.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

@@ -1,20 +1,20 @@
 package ravex.modules.client;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;
 import ravex.event.combat.ModuleToggleEvent;
-import ravex.modules.Module;
-import ravex.manager.ModuleManager;
+
 import ravex.parameter.*;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
-public class DesktopGui extends Module {
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_desktopgui");
+@ModuleInfo(name = "DesktopGui", category = "Client")
+public class DesktopGui extends ravex.modules.Module {
+private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_desktopgui");
     static {
         NATIVE.load();
     }
-
-    @Override
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (!NATIVE.isLoaded()) {
@@ -22,11 +22,11 @@ public class DesktopGui extends Module {
                 mc.player.displayClientMessage(
                     net.minecraft.network.chat.Component.literal("§7[§5DesktopGui§7] §cNative library not found!"), false);
             }
-            setEnabled(false);
+            enabled = false;
             return;
         }
         EventBusHolder.get().subscribe(this);
-        List<Module> modules = ModuleManager.INSTANCE.getModules();
+        List<ravex.modules.Module> modules = ravex.manager.ModuleManager.INSTANCE.getModules();
         String[] names = new String[modules.size()];
         boolean[] states = new boolean[modules.size()];
         for (int i = 0; i < modules.size(); i++) {
@@ -35,7 +35,6 @@ public class DesktopGui extends Module {
         }
         openDesktopGui(names, states);
     }
-    @Override
     protected void onDisable() {
         EventBusHolder.get().unsubscribe(this);
         if (NATIVE.isLoaded()) {
@@ -52,7 +51,7 @@ public class DesktopGui extends Module {
     public static void toggleModuleFromNative(String name) {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
-            Module m = ModuleManager.INSTANCE.getByName(name);
+            ravex.modules.Module m = ravex.manager.ModuleManager.INSTANCE.getByName(name);
             if (m != null) {
                 m.toggle();
             }
@@ -61,13 +60,13 @@ public class DesktopGui extends Module {
     public static void onNativeClose() {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
-            if (ModuleManager.get(DesktopGui.class).getEnabled()) {
-                ModuleManager.get(DesktopGui.class).setEnabled(false);
+            if (ravex.manager.ModuleManager.delegate(DesktopGui.class).getEnabled()) {
+                ravex.manager.ModuleManager.delegate(DesktopGui.class).setEnabled(false);
             }
         });
     }
     public static String getModuleParams(String name) {
-        Module m = ModuleManager.INSTANCE.getByName(name);
+        ravex.modules.Module m = ravex.manager.ModuleManager.INSTANCE.getByName(name);
         if (m == null) return "";
         List<Parameter<?>> params = m.getParameters();
         if (params.isEmpty()) return "";
@@ -98,7 +97,7 @@ public class DesktopGui extends Module {
     }
     @SuppressWarnings("unchecked")
     public static void setModuleParam(String name, String paramName, String value) {
-        Module m = ModuleManager.INSTANCE.getByName(name);
+        ravex.modules.Module m = ravex.manager.ModuleManager.INSTANCE.getByName(name);
         if (m == null) return;
         for (Parameter<?> p : m.getParameters()) {
             if (!p.getName().equals(paramName)) continue;
@@ -123,10 +122,23 @@ public class DesktopGui extends Module {
     private static native void closeDesktopGui();
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(DesktopGui.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").getEnabled();
     }
 
     public static DesktopGui itz() {
-        return ModuleManager.get(DesktopGui.class);
+        return ravex.manager.ModuleManager.delegate(DesktopGui.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

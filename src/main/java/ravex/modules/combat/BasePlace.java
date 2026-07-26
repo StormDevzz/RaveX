@@ -1,4 +1,6 @@
 package ravex.modules.combat;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 import ravex.RaveX;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
@@ -31,9 +33,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.utility.nativelib.NativeLibrary;
-import ravex.manager.ModuleManager;
-public class BasePlace extends Module {
-    public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
+
+@ModuleInfo(name = "BasePlace", category = "Combat")
+public class BasePlace extends ravex.modules.Module {
+public final ModeParameter   targetMode      = new ModeParameter("Target", "Closest", List.of("Closest", "LowestHP"));
     public final ModeParameter   targetType      = new ModeParameter("TargetType", "Players", List.of("Players", "Monsters", "Passives", "All"));
     public final NumberParameter range           = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter targetRange     = new NumberParameter("TargetRange", 6.0, 1.0, 10.0, 0.1);
@@ -67,17 +70,17 @@ public class BasePlace extends Module {
         NATIVE.load();
     }
     private BasePlace() {
-        super("BasePlace");
+        
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
         syncPredictTicks.setVisible(autoCrystalSync::getValue);
         airPlaceBypass.setVisible(airPlace::getValue);
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(BasePlace.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("BasePlace").getEnabled();
     }
     public static BasePlace itz() {
-        return ModuleManager.get(BasePlace.class);
+        return ravex.manager.ModuleManager.delegate(BasePlace.class);
     }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
@@ -91,7 +94,6 @@ public class BasePlace extends Module {
     public static BlockPos getSimulatedPlacementBlock() {
         return simulatedPlacementBlock;
     }
-    @Override
     protected void onEnable() {
         lastPlaceTime = 0;
         silentRotation.reset();
@@ -100,19 +102,17 @@ public class BasePlace extends Module {
         simulatedPlacementBlock = null;
         placedPositions.clear();
     }
-    @Override
     protected void onDisable() {
         silentRotation.reset();
         simulatedPlacementBlock = null;
         placedPositions.clear();
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         silentRotation.hasRotation = false;
         if (autoCrystalSync.getValue()) {
-            AutoCrystal ac = ModuleManager.get(ravex.modules.combat.AutoCrystal.class);
+            AutoCrystal ac = ravex.manager.ModuleManager.delegate(ravex.modules.combat.AutoCrystal.class);
             if (!ac.getEnabled()) {
                 simulatedPlacementBlock = null;
                 return;
@@ -474,4 +474,17 @@ public class BasePlace extends Module {
         double predictTicks,
         boolean airPlace
     );
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

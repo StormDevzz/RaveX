@@ -1,17 +1,20 @@
 package ravex.modules.combat;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import ravex.modules.Module;
+
 import ravex.utility.misc.MobUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
-import ravex.manager.ModuleManager;
-public class AntiBot extends Module {
-    public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKillAura", false);
+
+@ModuleInfo(name = "AntiBot", category = "Combat")
+public class AntiBot extends ravex.modules.Module {
+public final BooleanParameter onlyOnKillAura = new BooleanParameter("OnlyWithKillAura", false);
     public final BooleanParameter onlyOnTrigger = new BooleanParameter("OnlyWithTrigger", false);
     public final BooleanParameter removeInvisible = new BooleanParameter("RemoveInvisible", true);
     public final BooleanParameter checkPing = new BooleanParameter("PingCheck", true);
@@ -28,11 +31,10 @@ public class AntiBot extends Module {
         return botList.contains(entity);
     }
     public boolean shouldProtectTarget() {
-        if (onlyOnKillAura.getValue() && !ModuleManager.get(ravex.modules.combat.KillAura.class).getEnabled()) return false;
-        if (onlyOnTrigger.getValue() && !ModuleManager.get(ravex.modules.combat.Trigger.class).getEnabled()) return false;
+        if (onlyOnKillAura.getValue() && !ravex.manager.ModuleManager.delegate(ravex.modules.combat.KillAura.class).getEnabled()) return false;
+        if (onlyOnTrigger.getValue() && !ravex.manager.ModuleManager.delegate(ravex.modules.combat.Trigger.class).getEnabled()) return false;
         return true;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -105,10 +107,22 @@ public class AntiBot extends Module {
         boolean pingCheck, boolean nameCheck, boolean moveCheck
     );
     public static boolean maybeEnabled() {
-        return maybeEnabled(AntiBot.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiBot").getEnabled();
     }
     public static AntiBot itz() {
-        return ModuleManager.get(AntiBot.class);
+        return ravex.manager.ModuleManager.delegate(AntiBot.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

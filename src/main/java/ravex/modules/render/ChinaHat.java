@@ -1,17 +1,18 @@
 package ravex.modules.render;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import ravex.modules.Module;
-import ravex.manager.ModuleManager;
+
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.render.Render3DUtils;
 
-public class ChinaHat extends Module {
-    public static final ChinaHat INSTANCE = new ChinaHat();
+@ModuleInfo(name = "ChinaHat", category = "Render")
+public class ChinaHat extends ravex.modules.Module {
+public static final ChinaHat INSTANCE = new ChinaHat();
 
     public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
     public final NumberParameter alpha = new NumberParameter("Alpha", 200.0, 0.0, 255.0, 1.0);
@@ -19,11 +20,11 @@ public class ChinaHat extends Module {
     public final NumberParameter height = new NumberParameter("Height", 0.4, 0.1, 1.0, 0.05);
 
     private ChinaHat() {
-        super("ChinaHat");
+        
     }
 
     public static void render(Matrix4f modelViewMatrix, Vec3 camPos) {
-        ChinaHat ch = ModuleManager.get(ChinaHat.class);
+        ChinaHat ch = ravex.manager.ModuleManager.delegate(ChinaHat.class);
         if (ch == null || !ch.getEnabled()) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -69,5 +70,18 @@ public class ChinaHat extends Module {
                 }
             }
         }
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

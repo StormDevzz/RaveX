@@ -1,5 +1,6 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -8,7 +9,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -18,8 +19,9 @@ import ravex.utility.player.SwingUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.render.animate.EasingAnimation;
 import ravex.utility.render.animate.SlideAnimation;
-public class AirPlace extends Module {
-    public static Vec3 highlightPos = null;
+@ModuleInfo(name = "AirPlace", category = "Player")
+public class AirPlace extends ravex.modules.Module {
+public static Vec3 highlightPos = null;
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
     public static float renderR = 0.3f;
@@ -34,8 +36,6 @@ public class AirPlace extends Module {
     private final SlideAnimation slideAnim = new SlideAnimation();
     public BlockPos currentTarget = null;
     private long lastPlaceTime = 0;
-
-    @Override
     protected void onEnable() {
         highlightPos = null;
         renderAlpha = 0.0f;
@@ -45,14 +45,12 @@ public class AirPlace extends Module {
         sizeAnim.reset();
         slideAnim.reset();
     }
-    @Override
     protected void onDisable() {
         highlightPos = null;
         renderAlpha = 0.0f;
         renderSize = 0.0;
         currentTarget = null;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
@@ -153,9 +151,22 @@ public class AirPlace extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AirPlace.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AirPlace").getEnabled();
     }
     public static AirPlace itz() {
-        return ModuleManager.get(AirPlace.class);
+        return ravex.manager.ModuleManager.delegate(AirPlace.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

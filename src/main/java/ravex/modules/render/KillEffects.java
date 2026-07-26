@@ -1,5 +1,6 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -11,12 +12,13 @@ import ravex.event.Subscribe;
 import ravex.event.player.DeathEvent;
 import ravex.utility.misc.MobUtility;
 import net.minecraft.core.particles.ParticleTypes;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import java.util.List;
-public class KillEffects extends Module {
-    public final ModeParameter effect = new ModeParameter("Effect", "Lightning",
+@ModuleInfo(name = "KillEffects", category = "Render")
+public class KillEffects extends ravex.modules.Module {
+public final ModeParameter effect = new ModeParameter("Effect", "Lightning",
         List.of("Lightning", "Fire", "Both"));
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", false);
@@ -70,10 +72,23 @@ public class KillEffects extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(KillEffects.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("KillEffects").getEnabled();
     }
 
     public static KillEffects itz() {
-        return ModuleManager.get(KillEffects.class);
+        return ravex.manager.ModuleManager.delegate(KillEffects.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

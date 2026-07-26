@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,7 +12,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
@@ -22,8 +23,9 @@ import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
-public class Trap extends Module {
-    public final NumberParameter  range          = new NumberParameter("Range",          4.5, 1.0, 6.0, 0.1);
+@ModuleInfo(name = "Trap", category = "Combat")
+public class Trap extends ravex.modules.Module {
+public final NumberParameter  range          = new NumberParameter("Range",          4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay     = new NumberParameter("PlaceDelay",     50.0, 0.0, 500.0, 10.0);
     public final ModeParameter    swapMode       = new ModeParameter("SwapMode", "Silent",
             java.util.List.of("Silent", "Normal", "None"));
@@ -63,14 +65,13 @@ public class Trap extends Module {
             boolean roof
     );
     private Trap() {
-        super("Trap");
+        
         jitterDelay.setVisible(() -> !speedMode.getValue().equals("Aggressive"));
         strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
         maxRate.setVisible(() -> !speedMode.getValue().equals("Legit"));
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
     }
-    @Override
     protected void onEnable() {
         lastPlaceTime = 0;
         currentPlaceDelay = 0;
@@ -79,13 +80,11 @@ public class Trap extends Module {
             trapBlocks.clear();
         }
     }
-    @Override
     protected void onDisable() {
         synchronized (trapBlocks) {
             trapBlocks.clear();
         }
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -96,7 +95,7 @@ public class Trap extends Module {
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             if (autoDisable.getValue()) {
-                setEnabled(false);
+                enabled = false;
             }
             return;
         }
@@ -214,7 +213,7 @@ public class Trap extends Module {
             currentPlaceDelay = Math.max(0, (long)(base + jitter));
         } else {
             if (autoDisable.getValue() && simulatedBlocks.isEmpty()) {
-                setEnabled(false);
+                enabled = false;
             }
         }
         if (!silentRotation.hasRotation) {
@@ -399,9 +398,22 @@ public class Trap extends Module {
         return NATIVE.isLoaded();
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Trap.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Trap").getEnabled();
     }
     public static Trap itz() {
-        return ModuleManager.get(Trap.class);
+        return ravex.manager.ModuleManager.delegate(Trap.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

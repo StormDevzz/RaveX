@@ -1,12 +1,11 @@
 package ravex.modules.movement;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
-public class ReverseStep extends Module {
-    public final NumberParameter force = new NumberParameter("Force", 1.5, 1.0, 4.0, 0.5);
-
-    @Override
+@ModuleInfo(name = "ReverseStep", category = "Movement")
+public class ReverseStep extends ravex.modules.Module {
+public final NumberParameter force = new NumberParameter("Force", 1.5, 1.0, 4.0, 0.5);
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -33,6 +32,19 @@ public class ReverseStep extends Module {
         }
     }
     public static ReverseStep itz() {
-        return ModuleManager.get(ReverseStep.class);
+        return ravex.manager.ModuleManager.delegate(ReverseStep.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

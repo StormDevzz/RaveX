@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -8,19 +9,18 @@ import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BowItem;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
-public class AutoBow extends Module {
-    public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 100.0, 1.0);
+@ModuleInfo(name = "AutoBow", category = "Combat")
+public class AutoBow extends ravex.modules.Module {
+public final NumberParameter charge = new NumberParameter("Charge", 95.0, 10.0, 100.0, 1.0);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
     public final BooleanParameter autoSwitch = new BooleanParameter("AutoSwitch", false);
     public final BooleanParameter onlyWhenTarget = new BooleanParameter("OnlyWhenTarget", false);
     private long lastAction = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
@@ -58,10 +58,22 @@ public class AutoBow extends Module {
         return -1;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoBow.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoBow").getEnabled();
     }
     public static AutoBow itz() {
-        return ModuleManager.get(AutoBow.class);
+        return ravex.manager.ModuleManager.delegate(AutoBow.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

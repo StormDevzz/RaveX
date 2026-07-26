@@ -1,14 +1,14 @@
 package ravex.modules.client;
 
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 
-public class ClickGui extends Module {
-    public final BooleanParameter drawBackground = new BooleanParameter("Background", true);
+@ModuleInfo(name = "ClickGui", category = "Client")
+public class ClickGui extends ravex.modules.Module {
+public final BooleanParameter drawBackground = new BooleanParameter("Background", true);
     public final ModeParameter colorMode = new ModeParameter("ColorMode", "Positive",
             List.of("Positive", "Fade", "Rainbow", "DoubleColor"));
     public final NumberParameter colorSpeed = new NumberParameter("Speed", 18, 2, 54, 1);
@@ -54,7 +54,7 @@ public class ClickGui extends Module {
     public final BooleanParameter showGear = new BooleanParameter("ShowGear", false);
 
     private ClickGui() {
-        super("ClickGui");
+        
         optionSmoothness.setVisible(() -> smoothOption.getValue());
         color1.setVisible(() -> "Positive".equals(colorMode.getValue()) || "Fade".equals(colorMode.getValue())
                 || "DoubleColor".equals(colorMode.getValue()));
@@ -65,10 +65,23 @@ public class ClickGui extends Module {
         gearRotationSpeed.setVisible(() -> showGear.getValue());
         scrollSmoothness.setVisible(() -> smoothScroll.getValue());
         headerGlowIntensity.setVisible(() -> headerGlow.getValue());
-        setEnabled(true);
+        enabled = true;
     }
 
     public static ClickGui itz() {
-        return ModuleManager.get(ClickGui.class);
+        return ravex.manager.ModuleManager.delegate(ClickGui.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

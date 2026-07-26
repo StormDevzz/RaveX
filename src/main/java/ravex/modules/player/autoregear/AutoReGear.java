@@ -1,11 +1,12 @@
 package ravex.modules.player.autoregear;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
 
 import net.minecraft.world.inventory.ClickType;
-import ravex.modules.Module;
+
 import ravex.parameter.ActionParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
@@ -13,8 +14,9 @@ import ravex.utility.player.InventoryUtility;
 import ravex.gui.clickgui.AutoReGearScreen;
 import java.util.HashMap;
 import java.util.Map;
-public class AutoReGear extends Module {
-    public final NumberParameter delayParam = new NumberParameter("Delay", 200, 50, 1000, 50);
+@ModuleInfo(name = "AutoReGear", category = "Player")
+public class AutoReGear extends ravex.modules.Module {
+public final NumberParameter delayParam = new NumberParameter("Delay", 200, 50, 1000, 50);
     public final ActionParameter items = new ActionParameter("Items", () -> {
         Minecraft.getInstance().setScreen(
             new AutoReGearScreen(Minecraft.getInstance().screen)
@@ -32,8 +34,6 @@ public class AutoReGear extends Module {
         int[] currentCounts
     );
     private long lastActionTime = 0;
-
-    @Override
     public void saveExtra(JsonObject obj) {
         JsonArray arr = new JsonArray();
         for (Map.Entry<String, Integer> entry : AutoReGearData.INSTANCE.getSelectedItems().entrySet()) {
@@ -44,7 +44,6 @@ public class AutoReGear extends Module {
         }
         obj.add("regearItems", arr);
     }
-    @Override
     public void loadExtra(JsonObject obj) {
         if (!obj.has("regearItems")) return;
         AutoReGearData.INSTANCE.clear();
@@ -59,7 +58,6 @@ public class AutoReGear extends Module {
             }
         }
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gameMode == null) return;
@@ -163,5 +161,18 @@ public class AutoReGear extends Module {
             }
         }
         return -1;
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

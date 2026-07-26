@@ -1,6 +1,6 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
@@ -10,11 +10,10 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.EquipmentSlot;
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
-public class AutoMend extends Module {
-    public final NumberParameter threshold = new NumberParameter("Threshold", 50.0, 10.0, 95.0, 5.0);
+@ModuleInfo(name = "AutoMend", category = "Player")
+public class AutoMend extends ravex.modules.Module {
+public final NumberParameter threshold = new NumberParameter("Threshold", 50.0, 10.0, 95.0, 5.0);
     public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Normal", "Silent"));
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
@@ -53,10 +52,22 @@ public class AutoMend extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoMend.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoMend").getEnabled();
     }
     public static AutoMend itz() {
-        return ModuleManager.get(AutoMend.class);
+        return ravex.manager.ModuleManager.delegate(AutoMend.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

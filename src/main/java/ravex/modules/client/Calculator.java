@@ -1,16 +1,16 @@
 package ravex.modules.client;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import ravex.modules.Module;
+
 import ravex.utility.nativelib.NativeLibrary;
-public class Calculator extends Module {
-    private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_calculator");
+@ModuleInfo(name = "Calculator", category = "Client")
+public class Calculator extends ravex.modules.Module {
+private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_calculator");
     static {
         NATIVE.load();
     }
-
-    @Override
     protected void onEnable() {
         if (!NATIVE.isLoaded()) {
             Minecraft mc = Minecraft.getInstance();
@@ -18,12 +18,11 @@ public class Calculator extends Module {
                 mc.player.displayClientMessage(
                     Component.literal("§7[§5Calculator§7] §cNative library not found!"), false);
             }
-            setEnabled(false);
+            enabled = false;
             return;
         }
         openCalculator();
     }
-    @Override
     protected void onDisable() {
         if (NATIVE.isLoaded()) {
             closeCalculator();
@@ -32,8 +31,8 @@ public class Calculator extends Module {
     public static void onNativeClose() {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
-            if (ModuleManager.get(Calculator.class).getEnabled()) {
-                ModuleManager.get(Calculator.class).setEnabled(false);
+            if (ravex.manager.ModuleManager.delegate(Calculator.class).getEnabled()) {
+                ravex.manager.ModuleManager.delegate(Calculator.class).setEnabled(false);
             }
         });
     }
@@ -42,10 +41,23 @@ public class Calculator extends Module {
     public static native String nativeEvaluate(String expr);
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(Calculator.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Calculator").getEnabled();
     }
 
     public static Calculator itz() {
-        return ModuleManager.get(Calculator.class);
+        return ravex.manager.ModuleManager.delegate(Calculator.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

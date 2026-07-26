@@ -1,14 +1,16 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.ContainerUtility;
 import java.util.ArrayList;
 import java.util.List;
-public class ChestHelper extends Module {
-    public final BooleanParameter steal   = new BooleanParameter("Steal", true);
+@ModuleInfo(name = "ChestHelper", category = "Player")
+public class ChestHelper extends ravex.modules.Module {
+public final BooleanParameter steal   = new BooleanParameter("Steal", true);
     public final BooleanParameter dump    = new BooleanParameter("Dump",  true);
     public final BooleanParameter fill    = new BooleanParameter("Fill",  true);
     public final BooleanParameter dropAll = new BooleanParameter("DropAll", true);
@@ -56,9 +58,22 @@ public class ChestHelper extends Module {
     }
     record ButtonDef(String label, String action) {}
     public static boolean maybeEnabled() {
-        return maybeEnabled(ChestHelper.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ChestHelper").getEnabled();
     }
     public static ChestHelper itz() {
-        return ModuleManager.get(ChestHelper.class);
+        return ravex.manager.ModuleManager.delegate(ChestHelper.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

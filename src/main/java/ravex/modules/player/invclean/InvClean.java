@@ -1,28 +1,27 @@
 package ravex.modules.player.invclean;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
-import ravex.modules.Module;
+
 import ravex.parameter.ActionParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
-public class InvClean extends Module {
-    public final BooleanParameter autoClean = new BooleanParameter("AutoClean", false);
+@ModuleInfo(name = "InvClean", category = "Player")
+public class InvClean extends ravex.modules.Module {
+public final BooleanParameter autoClean = new BooleanParameter("AutoClean", false);
     public final NumberParameter interval   = new NumberParameter("Interval", 10, 2, 60, 1);
     public final ActionParameter items = new ActionParameter("Items", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.clickgui.InvCleanScreen(Minecraft.getInstance().screen));
     });
     private long lastCleanTime = 0;
-
-    @Override
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         mc.execute(() -> mc.setScreen(new ravex.gui.clickgui.InvCleanScreen(null)));
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
@@ -58,5 +57,18 @@ public class InvClean extends Module {
                 });
             }
         }
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

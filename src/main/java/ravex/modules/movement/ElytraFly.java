@@ -1,19 +1,21 @@
 package ravex.modules.movement;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
 import ravex.RaveX;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
-public class ElytraFly extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
+@ModuleInfo(name = "ElytraFly", category = "Movement")
+public class ElytraFly extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         List.of("Vanilla", "Control", "NCP", "Fireworks"));
     public final NumberParameter hSpeed = new NumberParameter("H-Speed", 1.5, 0.1, 5.0, 0.1);
     public final NumberParameter vSpeed = new NumberParameter("V-Speed", 1.0, 0.1, 5.0, 0.1);
@@ -68,7 +70,7 @@ public class ElytraFly extends Module {
         }
     }
     private ElytraFly() {
-        super("Elytra++");
+        
         fireworkDelay.setVisible(() -> "Fireworks".equals(mode.getValue()));
         fireworkBoost.setVisible(() -> "Fireworks".equals(mode.getValue()));
         acceleration.setVisible(() -> accelerate.getValue());
@@ -192,17 +194,14 @@ public class ElytraFly extends Module {
         }
         return new double[]{mx, my, mz};
     }
-    @Override
     protected void onEnable() {
         RaveX.LOGGER.info("[Elytra++] Enabled with mode: {}", mode.getValue());
         fwTimer = 0;
         accelMul = 0.0;
     }
-    @Override
     protected void onDisable() {
         fwTimer = 0;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gameMode == null) return;
@@ -259,10 +258,10 @@ public class ElytraFly extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(ElytraFly.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ElytraFly").getEnabled();
     }
     public static ElytraFly itz() {
-        return ModuleManager.get(ElytraFly.class);
+        return ravex.manager.ModuleManager.delegate(ElytraFly.class);
     }
     private void useFirework(Minecraft mc) {
         int slot = -1;
@@ -277,5 +276,18 @@ public class ElytraFly extends Module {
         InventoryUtility.selectSlot(mc.player, slot);
         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
         InventoryUtility.selectSlot(mc.player, prevSlot);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

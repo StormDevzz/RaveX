@@ -1,4 +1,6 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -10,14 +12,14 @@ import net.minecraft.network.chat.Component;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 import ravex.event.player.DeathEvent;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.StringParameter;
 import ravex.event.EventBusHolder;
 import ravex.event.client.SoundEvent;
-import ravex.manager.ModuleManager;
+
 import ravex.utility.misc.MobUtility;
 import java.io.File;
 import java.io.FileWriter;
@@ -33,8 +35,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-public class ChatHelper extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of("Announcer", "Welcomer", "AutoEZ", "ZoV", "Spammer", "CoordLogger", "DurabAlert", "ChatFilter"));
+@ModuleInfo(name = "ChatHelper", category = "Misc")
+public class ChatHelper extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Announcer", List.of("Announcer", "Welcomer", "AutoEZ", "ZoV", "Spammer", "CoordLogger", "DurabAlert", "ChatFilter"));
     public final BooleanParameter announcerEnabled = new BooleanParameter("Announcer", false);
     public final BooleanParameter welcomerEnabled = new BooleanParameter("Welcomer", false);
     public final BooleanParameter autoEZEnabled = new BooleanParameter("AutoEZ", false);
@@ -113,7 +116,7 @@ public class ChatHelper extends Module {
     private int duplicateCount = 0;
 
     private ChatHelper() {
-        super("ChatHelper");
+        
         chatFilter.setVisible(() -> "ChatFilter".equals(mode.getValue()));
         onlyName.setVisible(() -> "ChatFilter".equals(mode.getValue()));
         timestamp.setVisible(() -> false);
@@ -233,8 +236,6 @@ public class ChatHelper extends Module {
             }
         }
     }
-
-    @Override
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -308,8 +309,6 @@ public class ChatHelper extends Module {
         if (!getEnabled() || !announcerEnabled.getValue()) return;
         if (announceHit.getValue()) hitsDealt++;
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
@@ -451,10 +450,23 @@ public class ChatHelper extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(ChatHelper.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled();
     }
 
     public static ChatHelper itz() {
-        return ModuleManager.get(ChatHelper.class);
+        return ravex.manager.ModuleManager.delegate(ChatHelper.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

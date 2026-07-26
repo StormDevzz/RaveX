@@ -1,10 +1,12 @@
 package ravex.modules.hud;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -12,9 +14,21 @@ import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.Render2DEngine;
 import ravex.utility.render.TextureLoader;
-import ravex.manager.ModuleManager;
-public class IndicatorsHud extends Module {
-    private static final Identifier ICON = TextureLoader.HUD_INDICATORS_WHITE;
+
+@ModuleInfo(name = "IndicatorsHud", category = "HUD")
+public class IndicatorsHud extends ravex.modules.Module {
+    public final ColorParameter healthColor = new ColorParameter("HealthColor", 0xFFFF4455);
+    public final ColorParameter armorColor = new ColorParameter("ArmorColor", 0xFF44AAFF);
+    public final ColorParameter tPSColor = new ColorParameter("TPSColor", 0xFF44FF88);
+    public final ColorParameter speedColor = new ColorParameter("SpeedColor", 0xFFFFCC33);
+    public final ColorParameter kBColor = new ColorParameter("KBColor", 0xFFCC44FF);
+    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final Identifier ICON = TextureLoader.HUD_INDICATORS_WHITE;
     private static final int IS = HudRenderer.getIconSize();
     private long lastRealTime  = 0;
     private long lastGameTick  = -1;
@@ -22,15 +36,7 @@ public class IndicatorsHud extends Module {
     private float prevVelX = 0, prevVelZ = 0;
     private float smoothKB = 0;
     private float animHealth = 1f, animArmor = 1f, animTPS = 1f, animSpeed = 0f, animKB = 0f;
-    private IndicatorsHud() {
-        super("Indicators", 10, 340, 10, 10);
-        addParameter(new ColorParameter("HealthColor", 0xFFFF4455));
-        addParameter(new ColorParameter("ArmorColor", 0xFF44AAFF));
-        addParameter(new ColorParameter("TPSColor", 0xFF44FF88));
-        addParameter(new ColorParameter("SpeedColor", 0xFFFFCC33));
-        addParameter(new ColorParameter("KBColor", 0xFFCC44FF));
-        addParameter(new BooleanParameter("Shadow", true));
-    }
+
     private int getGaugeColor(int index) {
         String[] names = {"HealthColor", "ArmorColor", "TPSColor", "SpeedColor", "KBColor"};
         for (var p : getParameters()) {
@@ -45,9 +51,8 @@ public class IndicatorsHud extends Module {
         }
         return true;
     }
-    @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         Player player = mc.player;
@@ -86,9 +91,9 @@ public class IndicatorsHud extends Module {
         }
         int pw = 4 + 9 + labelMax + 4 + valueMax + 4 + barW + 4 + IS + 4;
         int ph = 6 + 5 * lineH;
-        setWidth(pw);
-        setHeight(ph);
-        int bx = getX(), by = getY();
+        width = pw;
+        height = ph;
+        int bx = x, by = y;
         HudRenderer.drawBackground(graphics, bx, by, pw, ph);
         HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
         int cx = bx + 4;
@@ -138,10 +143,45 @@ public class IndicatorsHud extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(IndicatorsHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("IndicatorsHud").getEnabled();
     }
 
     public static IndicatorsHud itz() {
-        return ModuleManager.get(IndicatorsHud.class);
+        return ravex.manager.ModuleManager.delegate(IndicatorsHud.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

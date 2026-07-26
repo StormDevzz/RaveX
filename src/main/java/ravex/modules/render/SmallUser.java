@@ -1,15 +1,17 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
-import ravex.modules.Module;
+
 import ravex.utility.misc.MobUtility;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-public class SmallUser extends Module {
-    public final ModeParameter target = new ModeParameter("Target", "All", java.util.List.of("All", "Others", "Self"));
+@ModuleInfo(name = "SmallUser", category = "Render")
+public class SmallUser extends ravex.modules.Module {
+public final ModeParameter target = new ModeParameter("Target", "All", java.util.List.of("All", "Others", "Self"));
     public final NumberParameter scale = new NumberParameter("Scale", 0.5, 0.2, 1.0, 0.05);
     public final Map<Object, Float> stateScaleMap = new ConcurrentHashMap<>();
 
@@ -27,10 +29,23 @@ public class SmallUser extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(SmallUser.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("SmallUser").getEnabled();
     }
 
     public static SmallUser itz() {
-        return ModuleManager.get(SmallUser.class);
+        return ravex.manager.ModuleManager.delegate(SmallUser.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

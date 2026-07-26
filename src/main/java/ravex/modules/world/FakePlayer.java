@@ -1,6 +1,6 @@
 package ravex.modules.world;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.StringParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
@@ -8,16 +8,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.RemotePlayer;
 import com.mojang.authlib.GameProfile;
 import java.util.UUID;
-public class FakePlayer extends Module {
-    public final StringParameter nickname = new StringParameter("Nickname", "FakePlayer");
+@ModuleInfo(name = "FakePlayer", category = "World")
+public class FakePlayer extends ravex.modules.Module {
+public final StringParameter nickname = new StringParameter("Nickname", "FakePlayer");
     public final BooleanParameter copyInventory = new BooleanParameter("CopyInv", true);
     private RemotePlayer remotePlayer = null;
-
-    @Override
     public void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
-            setEnabled(false);
+            enabled = false;
             return;
         }
         GameProfile profile = new GameProfile(UUID.fromString("c0ffeed0-dec0-4ba5-babe-0123456789ab"), nickname.getValue());
@@ -34,7 +33,6 @@ public class FakePlayer extends Module {
         }
         mc.level.addEntity(remotePlayer);
     }
-    @Override
     public void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && remotePlayer != null) {
@@ -43,6 +41,19 @@ public class FakePlayer extends Module {
         remotePlayer = null;
     }
     public static FakePlayer itz() {
-        return ModuleManager.get(FakePlayer.class);
+        return ravex.manager.ModuleManager.delegate(FakePlayer.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

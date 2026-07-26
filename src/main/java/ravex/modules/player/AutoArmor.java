@@ -1,7 +1,6 @@
 package ravex.modules.player;
 
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.DependencyParameter;
 import ravex.parameter.ModeParameter;
@@ -15,8 +14,9 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import java.util.List;
 
-public class AutoArmor extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Normal",
+@ModuleInfo(name = "AutoArmor", category = "Player")
+public class AutoArmor extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             List.of("Normal", "Legit", "Custom"));
     public final NumberParameter delay = new NumberParameter("Delay", 150.0, 0.0, 1000.0, 10.0);
     public final BooleanParameter onlyBetter = new BooleanParameter("OnlyBetter", true);
@@ -31,8 +31,6 @@ public class AutoArmor extends Module {
     public final DependencyParameter<Boolean, BooleanParameter> ignoreEnchants =
             new DependencyParameter<>(new BooleanParameter("IgnoreEnchants", false), mode, "Custom");
     private long lastEquipTime = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
@@ -139,10 +137,23 @@ public class AutoArmor extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoArmor.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoArmor").getEnabled();
     }
 
     public static AutoArmor itz() {
-        return ModuleManager.get(AutoArmor.class);
+        return ravex.manager.ModuleManager.delegate(AutoArmor.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

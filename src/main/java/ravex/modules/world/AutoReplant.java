@@ -1,4 +1,6 @@
 package ravex.modules.world;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,15 +14,15 @@ import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 import java.util.HashSet;
 import java.util.Set;
-public class AutoReplant extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.0, 1.0, 6.0, 0.5);
+@ModuleInfo(name = "AutoReplant", category = "World")
+public class AutoReplant extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.0, 1.0, 6.0, 0.5);
     public final NumberParameter delay = new NumberParameter("Delay", 300, 100, 1000, 50);
     public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     private long lastReplantTime = 0;
@@ -28,8 +30,6 @@ public class AutoReplant extends Module {
     static {
         farmBlocks.add(Blocks.FARMLAND);
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -82,6 +82,19 @@ public class AutoReplant extends Module {
         return -1;
     }
     public static AutoReplant itz() {
-        return ModuleManager.get(AutoReplant.class);
+        return ravex.manager.ModuleManager.delegate(AutoReplant.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

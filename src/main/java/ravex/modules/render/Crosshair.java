@@ -1,17 +1,19 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.gui.clickgui.ColorUtility;
-public class Crosshair extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Normal",
+@ModuleInfo(name = "Crosshair", category = "Render")
+public class Crosshair extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         java.util.List.of("Normal", "Circle", "Triangle"));
     public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
     public final ColorParameter dotColor = new ColorParameter("DotColor", 0xFFFF3333);
@@ -31,7 +33,7 @@ public class Crosshair extends Module {
     private float moveSpreadAnim = 0f;
 
     private Crosshair() {
-        super("Crosshair");
+        
         dotColor.setVisible(dot::getValue);
     }
 
@@ -43,8 +45,6 @@ public class Crosshair extends Module {
     public void onHit() {
         lastHitTime = System.currentTimeMillis();
     }
-
-    @Override
     public void onTick() {
     }
 
@@ -246,10 +246,23 @@ public class Crosshair extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(Crosshair.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Crosshair").getEnabled();
     }
 
     public static Crosshair itz() {
-        return ModuleManager.get(Crosshair.class);
+        return ravex.manager.ModuleManager.delegate(Crosshair.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

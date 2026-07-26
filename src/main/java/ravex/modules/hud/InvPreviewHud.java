@@ -1,27 +1,33 @@
 package ravex.modules.hud;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
-import ravex.manager.ModuleManager;
-public class InvPreviewHud extends Module {
-    private static final Identifier ICON = TextureLoader.HUD_INVENTORY_WHITE;
+
+@ModuleInfo(name = "InvPreviewHud", category = "HUD")
+public class InvPreviewHud extends ravex.modules.Module {
+    public final ColorParameter accentColor = new ColorParameter("AccentColor", 0xFF1E88E5);
+    public final BooleanParameter showLabel = new BooleanParameter("ShowLabel", true);
+
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final Identifier ICON = TextureLoader.HUD_INVENTORY_WHITE;
     private static final int IS = HudRenderer.getIconSize();
     private static final int CELL = 16;
     private static final int PAD  = 2;
     private static final int COLS = 9;
-    private InvPreviewHud() {
-        super("InvPreview", 10, 280, COLS * (CELL + PAD) + PAD, 4 * (CELL + PAD) + PAD + 12);
-        addParameter(new ColorParameter("AccentColor", 0xFF1E88E5));
-        addParameter(new BooleanParameter("ShowLabel", true));
-    }
+
     private int getAccent() {
         for (var p : getParameters()) {
             if (p instanceof ColorParameter cp) return cp.getValue();
@@ -34,16 +40,15 @@ public class InvPreviewHud extends Module {
         }
         return true;
     }
-    @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         int accent = getAccent();
-        int bx = getX();
-        int by = getY();
-        int w  = getWidth();
-        int h  = getHeight();
+        int bx = x;
+        int by = y;
+        int w  = width;
+        int h  = height;
         HudRenderer.drawBackground(graphics, bx, by, w, h);
         if (showLabel()) {
             HudRenderer.drawLabel(graphics, "Inventory", bx + 4, by, accent);
@@ -80,10 +85,45 @@ public class InvPreviewHud extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(InvPreviewHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("InvPreviewHud").getEnabled();
     }
 
     public static InvPreviewHud itz() {
-        return ModuleManager.get(InvPreviewHud.class);
+        return ravex.manager.ModuleManager.delegate(InvPreviewHud.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

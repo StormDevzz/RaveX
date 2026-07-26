@@ -21,3 +21,8 @@ Thumbs.db
 libs/*.jar
 src/main/java/ravex/telemetry/BuildConfig.java
 src/main/resources/assets/ravex/security/private.der
+
+# Community website
+website/node_modules/
+website/.next/
+website/out/

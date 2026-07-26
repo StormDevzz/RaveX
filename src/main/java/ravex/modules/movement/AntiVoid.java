@@ -1,6 +1,6 @@
 package ravex.modules.movement;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.ModeParameter;
 import ravex.utility.movement.VoidUtility;
@@ -8,16 +8,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
-public class AntiVoid extends Module {
-    public final NumberParameter fallDistance = new NumberParameter("Distance", 5.0, 1.0, 10.0, 0.5);
+@ModuleInfo(name = "AntiVoid", category = "Movement")
+public class AntiVoid extends ravex.modules.Module {
+public final NumberParameter fallDistance = new NumberParameter("Distance", 5.0, 1.0, 10.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Teleport", List.of("Teleport", "Bounce"));
     private Vec3 lastOnGroundPos = null;
-
-    @Override
     protected void onEnable() {
         lastOnGroundPos = null;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
@@ -36,6 +34,19 @@ public class AntiVoid extends Module {
         }
     }
     public static AntiVoid itz() {
-        return ModuleManager.get(AntiVoid.class);
+        return ravex.manager.ModuleManager.delegate(AntiVoid.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

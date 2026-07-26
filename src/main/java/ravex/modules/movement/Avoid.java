@@ -1,11 +1,12 @@
 package ravex.modules.movement;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-public class Avoid extends Module {
-    public final BooleanParameter cactus = new BooleanParameter("Cactus", true);
+@ModuleInfo(name = "Avoid", category = "Movement")
+public class Avoid extends ravex.modules.Module {
+public final BooleanParameter cactus = new BooleanParameter("Cactus", true);
     public final BooleanParameter berryBush = new BooleanParameter("BerryBush", true);
     public final BooleanParameter witherRose = new BooleanParameter("WitherRose", true);
     public final BooleanParameter fire = new BooleanParameter("Fire", true);
@@ -21,9 +22,22 @@ public class Avoid extends Module {
         return false;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Avoid.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Avoid").getEnabled();
     }
     public static Avoid itz() {
-        return ModuleManager.get(Avoid.class);
+        return ravex.manager.ModuleManager.delegate(Avoid.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

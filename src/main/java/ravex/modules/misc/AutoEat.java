@@ -1,6 +1,6 @@
 package ravex.modules.misc;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -8,14 +8,13 @@ import ravex.utility.misc.food.FoodUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import java.util.List;
-public class AutoEat extends Module {
-    public final NumberParameter threshold = new NumberParameter("Hunger", 15.0, 1.0, 20.0, 1.0);
+@ModuleInfo(name = "AutoEat", category = "Misc")
+public class AutoEat extends ravex.modules.Module {
+public final NumberParameter threshold = new NumberParameter("Hunger", 15.0, 1.0, 20.0, 1.0);
     public final BooleanParameter priority = new BooleanParameter("BestFood", true);
     public final BooleanParameter notify = new BooleanParameter("Notify", false);
     public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             List.of("Normal", "Silent", "Vanilla"));
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -40,7 +39,6 @@ public class AutoEat extends Module {
                 false);
         }
     }
-    @Override
     protected void onDisable() {
         if ("Vanilla".equals(mode.getValue())) {
             Minecraft mc = Minecraft.getInstance();
@@ -50,6 +48,19 @@ public class AutoEat extends Module {
     }
 
     public static AutoEat itz() {
-        return ModuleManager.get(AutoEat.class);
+        return ravex.manager.ModuleManager.delegate(AutoEat.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

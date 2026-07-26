@@ -1,14 +1,15 @@
 package ravex.modules.movement;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 
-public class AutoWalk extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Simple", List.of("Simple", "Baritone"));
+@ModuleInfo(name = "AutoWalk", category = "Movement")
+public class AutoWalk extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Simple", List.of("Simple", "Baritone"));
     public final NumberParameter baritoneInterval = new NumberParameter("Interval", 30.0, 5.0, 120.0, 5.0);
     public final NumberParameter baritoneRange = new NumberParameter("Range", 2000.0, 100.0, 10000.0, 100.0);
     public final BooleanParameter silentMode = new BooleanParameter("SilentMode", true);
@@ -20,8 +21,6 @@ public class AutoWalk extends Module {
     }
 
     private long lastGotoTime = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -50,8 +49,6 @@ public class AutoWalk extends Module {
             }
         }
     }
-
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         mc.options.keyUp.setDown(false);
@@ -67,6 +64,19 @@ public class AutoWalk extends Module {
         }
     }
     public static AutoWalk itz() {
-        return ModuleManager.get(AutoWalk.class);
+        return ravex.manager.ModuleManager.delegate(AutoWalk.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

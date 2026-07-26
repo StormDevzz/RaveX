@@ -1,17 +1,17 @@
 package ravex.modules.movement;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
-public class PacketFly extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Fast", List.of("Fast", "Damage", "Setback"));
+@ModuleInfo(name = "PacketFly", category = "Movement")
+public class PacketFly extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Fast", List.of("Fast", "Damage", "Setback"));
     public final NumberParameter speed = new NumberParameter("Speed", 0.2, 0.05, 1.0, 0.05);
     public final NumberParameter vertical = new NumberParameter("Vertical", 0.2, 0.0, 1.0, 0.05);
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
@@ -46,6 +46,19 @@ public class PacketFly extends Module {
         }
     }
     public static PacketFly itz() {
-        return ModuleManager.get(PacketFly.class);
+        return ravex.manager.ModuleManager.delegate(PacketFly.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

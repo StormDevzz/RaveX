@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,15 +12,16 @@ import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.modules.world.GhostBlocks;
 import java.util.ArrayList;
 import java.util.List;
-public class AntiReGear extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
+@ModuleInfo(name = "AntiReGear", category = "Combat")
+public class AntiReGear extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter delay = new NumberParameter("Delay", 100, 0, 1000, 50);
     public final BooleanParameter shulkersParam = new BooleanParameter("Shulkers", true);
     public final BooleanParameter chestsParam = new BooleanParameter("Chests", true);
@@ -36,8 +38,6 @@ public class AntiReGear extends Module {
         int[] blockX, int[] blockY, int[] blockZ,
         double range
     );
-
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (currentMiningTarget != null && mc.gameMode != null) {
@@ -45,7 +45,6 @@ public class AntiReGear extends Module {
         }
         currentMiningTarget = null;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -172,10 +171,22 @@ public class AntiReGear extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AntiReGear.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiReGear").getEnabled();
     }
     public static AntiReGear itz() {
-        return ModuleManager.get(AntiReGear.class);
+        return ravex.manager.ModuleManager.delegate(AntiReGear.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

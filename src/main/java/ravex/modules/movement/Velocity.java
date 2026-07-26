@@ -1,17 +1,19 @@
 package ravex.modules.movement;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import ravex.event.Subscribe;
 import ravex.event.movement.VelocityEvent;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 import java.util.Random;
-public class Velocity extends Module {
-    public final ModeParameter mode       = new ModeParameter("Mode", "Cancel",
+@ModuleInfo(name = "Velocity", category = "Movement")
+public class Velocity extends ravex.modules.Module {
+public final ModeParameter mode       = new ModeParameter("Mode", "Cancel",
             List.of("Cancel", "Matrix", "NCP", "Grim", "GrimStrict"));
     public final NumberParameter horizontal = new NumberParameter("Horizontal", 0.0, 0.0, 1.0, 0.05);
     public final NumberParameter vertical   = new NumberParameter("Vertical",   0.0, 0.0, 1.0, 0.05);
@@ -26,7 +28,7 @@ public class Velocity extends Module {
     public Vec3 grimSavedVelocity = Vec3.ZERO;
 
     private Velocity() {
-        super("Velocity");
+        
         horizontal.setVisible(() -> !mode.getValue().equals("Cancel"));
         vertical.setVisible(() -> !mode.getValue().equals("Cancel"));
         grimHorizontal.setVisible(() -> "GrimStrict".equals(mode.getValue()));
@@ -66,8 +68,6 @@ public class Velocity extends Module {
             }
         }
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -92,9 +92,22 @@ public class Velocity extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Velocity.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Velocity").getEnabled();
     }
     public static Velocity itz() {
-        return ModuleManager.get(Velocity.class);
+        return ravex.manager.ModuleManager.delegate(Velocity.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

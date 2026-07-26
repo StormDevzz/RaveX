@@ -1,12 +1,13 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import ravex.utility.misc.MobUtility;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
@@ -15,16 +16,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-public class BreadCrumbs extends Module {
-    public static final Map<Integer, List<Vec3>> trails = new HashMap<>();
+@ModuleInfo(name = "BreadCrumbs", category = "Render")
+public class BreadCrumbs extends ravex.modules.Module {
+public static final Map<Integer, List<Vec3>> trails = new HashMap<>();
     public final ColorParameter color = new ColorParameter("Color", 0xFF33AAFF);
     public final NumberParameter width = new NumberParameter("Width", 2.0, 1.0, 6.0, 0.5);
     public final NumberParameter maxPoints = new NumberParameter("MaxPoints", 200.0, 10.0, 1000.0, 10.0);
     public final BooleanParameter self = new BooleanParameter("Self", true);
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter mobs = new BooleanParameter("Mobs", false);
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
@@ -51,11 +51,11 @@ public class BreadCrumbs extends Module {
         }
     }
     public static void renderTrails(Matrix4f modelViewMatrix, Vec3 camPos) {
-        int color = ModuleManager.get(BreadCrumbs.class).color.getValue();
+        int color = ravex.manager.ModuleManager.delegate(BreadCrumbs.class).color.getValue();
         float cr = ((color >> 16) & 0xFF) / 255.0f;
         float cg = ((color >> 8) & 0xFF) / 255.0f;
         float cb = (color & 0xFF) / 255.0f;
-        float lineWidth = ModuleManager.get(BreadCrumbs.class).width.getValue().floatValue();
+        float lineWidth = ravex.manager.ModuleManager.delegate(BreadCrumbs.class).width.getValue().floatValue();
         for (Map.Entry<Integer, List<Vec3>> entry : trails.entrySet()) {
             List<Vec3> trail = entry.getValue();
             if (trail.size() < 2) continue;
@@ -70,15 +70,27 @@ public class BreadCrumbs extends Module {
             Render3DUtils.batchLineStrip(modelViewMatrix, points, cr, cg, cb, 0.8f, lineWidth);
         }
     }
-    @Override
     protected void onDisable() {
         trails.clear();
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(BreadCrumbs.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("BreadCrumbs").getEnabled();
     }
 
     public static BreadCrumbs itz() {
-        return ModuleManager.get(BreadCrumbs.class);
+        return ravex.manager.ModuleManager.delegate(BreadCrumbs.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

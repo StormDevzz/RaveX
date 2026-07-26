@@ -1,22 +1,22 @@
 package ravex.modules.world;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.rotation.RotationUtility;
-public class Igniter extends Module {
-    public final NumberParameter  range        = new NumberParameter("Range",        4.0, 1.0, 6.0, 0.1);
+@ModuleInfo(name = "Igniter", category = "World")
+public class Igniter extends ravex.modules.Module {
+public final NumberParameter  range        = new NumberParameter("Range",        4.0, 1.0, 6.0, 0.1);
     public final ModeParameter    swapMode     = new ModeParameter("SwapMode", "Silent",
             java.util.List.of("Silent", "Normal", "None"));
     public final BooleanParameter autoDisable  = new BooleanParameter("AutoDisable",  false);
     public final BooleanParameter rotate       = new BooleanParameter("Rotate",       true);
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -49,7 +49,7 @@ public class Igniter extends Module {
             InventoryUtility.silentSelectSlot(mc.player, originalSlot);
         }
         if (autoDisable.getValue()) {
-            setEnabled(false);
+            enabled = false;
         }
     }
     private int[] findNearestTNT(Minecraft mc) {
@@ -90,6 +90,19 @@ public class Igniter extends Module {
         return -1;
     }
     public static Igniter itz() {
-        return ModuleManager.get(Igniter.class);
+        return ravex.manager.ModuleManager.delegate(Igniter.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

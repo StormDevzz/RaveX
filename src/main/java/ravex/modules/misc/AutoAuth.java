@@ -1,20 +1,18 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.NumberParameter;
 import ravex.parameter.StringParameter;
-public class AutoAuth extends Module {
-    public final StringParameter password = new StringParameter("Password", "r1v2x");
+@ModuleInfo(name = "AutoAuth", category = "Misc")
+public class AutoAuth extends ravex.modules.Module {
+public final StringParameter password = new StringParameter("Password", "r1v2x");
     public final NumberParameter delay = new NumberParameter("Delay", 3.0, 0.0, 20.0, 1.0);
     private int tickCounter = 0;
     private boolean hasRegistered = false;
-
-    @Override
     protected void onEnable() { tickCounter = 0; hasRegistered = false; }
-    @Override
     protected void onDisable() { hasRegistered = false; }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
@@ -30,6 +28,19 @@ public class AutoAuth extends Module {
     }
 
     public static AutoAuth itz() {
-        return ModuleManager.get(AutoAuth.class);
+        return ravex.manager.ModuleManager.delegate(AutoAuth.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

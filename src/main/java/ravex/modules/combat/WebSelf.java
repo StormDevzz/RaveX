@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -7,15 +8,16 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
-public class WebSelf extends Module {
-    public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
+@ModuleInfo(name = "WebSelf", category = "Combat")
+public class WebSelf extends ravex.modules.Module {
+public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x88FFFFFF);
     public final NumberParameter placeDelay = new NumberParameter("Delay", 2.0, 0.0, 10.0, 1.0);
@@ -23,17 +25,13 @@ public class WebSelf extends Module {
     public static float renderR = 1.0f, renderG = 1.0f, renderB = 1.0f;
     private int delay = 0;
     public static boolean maybeEnabled() {
-        return maybeEnabled(WebSelf.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("WebSelf").getEnabled();
     }
     public static WebSelf itz() {
-        return ModuleManager.get(WebSelf.class);
+        return ravex.manager.ModuleManager.delegate(WebSelf.class);
     }
-
-    @Override
     protected void onEnable() { targetPos = null; delay = 0; }
-    @Override
     protected void onDisable() { targetPos = null; }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -65,5 +63,18 @@ public class WebSelf extends Module {
             InventoryUtility.selectSlot(mc.player, prevSlot);
             delay = placeDelay.getValue().intValue();
         }
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

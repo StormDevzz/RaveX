@@ -1,6 +1,6 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
@@ -19,8 +19,9 @@ import ravex.utility.render.BlockRenderer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-public class Skeleton extends Module {
-    public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
+@ModuleInfo(name = "Skeleton", category = "Render")
+public class Skeleton extends ravex.modules.Module {
+public final ColorParameter color = new ColorParameter("Color", 0xFFFFFFFF);
     public final NumberParameter lineWidth = new NumberParameter("LineWidth", 1.0, 0.5, 3.0, 0.1);
     public final BooleanParameter throughWalls = new BooleanParameter("ThroughWalls", true);
     public final BooleanParameter players = new BooleanParameter("Players", true);
@@ -158,10 +159,23 @@ public class Skeleton extends Module {
         BlockRenderer.renderLine3D(builder, matrix, x1, y1, z1, x2, y2, z2, r, g, b, a, lineWidth);
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Skeleton.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Skeleton").getEnabled();
     }
 
     public static Skeleton itz() {
-        return ModuleManager.get(Skeleton.class);
+        return ravex.manager.ModuleManager.delegate(Skeleton.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

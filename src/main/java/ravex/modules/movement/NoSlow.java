@@ -1,5 +1,6 @@
 package ravex.modules.movement;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -9,14 +10,14 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec3;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import java.util.List;
 import ravex.parameter.NumberParameter;
 
-public class NoSlow extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Grim",
+@ModuleInfo(name = "NoSlow", category = "Movement")
+public class NoSlow extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Grim",
             List.of("Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3"));
     public final ravex.parameter.BooleanParameter items = new ravex.parameter.BooleanParameter("Items", true);
     public final ravex.parameter.BooleanParameter blocks = new ravex.parameter.BooleanParameter("Blocks", true);
@@ -41,7 +42,7 @@ public class NoSlow extends Module {
     private int v3Ticks = 0;
 
     private NoSlow() {
-        super("NoSlow");
+        
         altInterval.setVisible(() -> "GrimAlternative".equals(mode.getValue()));
         altAction.setVisible(() -> "GrimAlternative".equals(mode.getValue()));
         v3Grace.setVisible(() -> "GrimV3".equals(mode.getValue()));
@@ -146,11 +147,11 @@ public class NoSlow extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(NoSlow.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NoSlow").getEnabled();
     }
 
     public static NoSlow itz() {
-        return ModuleManager.get(NoSlow.class);
+        return ravex.manager.ModuleManager.delegate(NoSlow.class);
     }
 
     public boolean isSlowPhase() {
@@ -180,5 +181,18 @@ public class NoSlow extends Module {
 
     public float getMatrixInputScale() {
         return matrixInputScale.getValue().floatValue();
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

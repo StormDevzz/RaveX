@@ -34,7 +34,7 @@ public class FontRenderUtility {
     }
 
     public static FontType getCurrentFontType() {
-        if (!ModuleManager.get(ravex.modules.client.Fonts.class).enabled.getValue()) {
+        if (!ModuleManager.get(ravex.modules.client.Fonts.class).p_enabled.getValue()) {
             return FontType.VANILLA;
         }
         String font = ModuleManager.get(ravex.modules.client.Fonts.class).fontType.getValue();
@@ -50,7 +50,7 @@ public class FontRenderUtility {
         if (text == null) return Component.empty();
 
         FontType actualType = fontType;
-        boolean customFontActive = ModuleManager.get(ravex.modules.client.Fonts.class).enabled.getValue();
+        boolean customFontActive = ModuleManager.get(ravex.modules.client.Fonts.class).p_enabled.getValue();
 
         if (actualType != FontType.VANILLA && !customFontActive) {
             actualType = FontType.VANILLA;

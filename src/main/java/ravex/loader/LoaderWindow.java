@@ -14,7 +14,7 @@ public class LoaderWindow extends JFrame implements LoaderCallback {
     private static final Color TEXT_COLOR = new Color(0xe2, 0xe2, 0xe8);
     private static final Color TEXT_MUTED = new Color(0x65, 0x65, 0x75);
 
-    private String version = "1.4.7";
+    private String version = "1.4.8 Recode";
     private final String osName = detectOS();
     private String status = "Initializing...";
     private int percent = 0;

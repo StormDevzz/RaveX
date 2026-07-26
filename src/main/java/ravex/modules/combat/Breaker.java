@@ -1,5 +1,6 @@
 package ravex.modules.combat;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,7 +12,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 
-import ravex.modules.Module;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
@@ -22,10 +22,10 @@ import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibrary;
-import ravex.manager.ModuleManager;
 
-public class Breaker extends Module {
-    public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0, 6.0, 0.1);
+@ModuleInfo(name = "Breaker", category = "Combat")
+public class Breaker extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("BreakRange", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter crystalRange = new NumberParameter("CrystalRange", 5.0, 1.0, 6.0, 0.1);
     public final NumberParameter minDamage = new NumberParameter("MinDamage", 4.0, 1.0, 20.0, 0.5);
     public final NumberParameter maxSelfDmg = new NumberParameter("MaxSelfDmg", 8.0, 1.0, 20.0, 0.5);
@@ -42,8 +42,6 @@ public class Breaker extends Module {
     static {
         NATIVE.load();
     }
-
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (currentMiningBlock != null && mc.gameMode != null && !syncPacketMine.getValue()) {
@@ -52,8 +50,6 @@ public class Breaker extends Module {
         currentMiningBlock = null;
         silentRotation.hasRotation = false;
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) {
@@ -172,10 +168,10 @@ public class Breaker extends Module {
             }
         }
         if (syncPacketMine.getValue()) {
-            if (!ModuleManager.get(ravex.modules.player.PacketMine.class).isTargetBlock(targetPos)) {
+            if (!ravex.manager.ModuleManager.delegate(ravex.modules.player.PacketMine.class).isTargetBlock(targetPos)) {
                 ravex.modules.player.PacketMine.miningBlocks.removeIf(m -> !m.done);
                 String name = mc.level.getBlockState(targetPos).getBlock().getName().getString();
-                long breakMs = ModuleManager.get(ravex.modules.player.PacketMine.class).calcBreakTime(mc, targetPos);
+                long breakMs = ravex.manager.ModuleManager.delegate(ravex.modules.player.PacketMine.class).calcBreakTime(mc, targetPos);
                 ravex.modules.player.PacketMine.miningBlocks.add(
                         new ravex.modules.player.PacketMine.MiningBlock(targetPos, breakMs, name));
             }
@@ -333,9 +329,22 @@ public class Breaker extends Module {
             double antiSuicideMinHp);
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(Breaker.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Breaker").getEnabled();
     }
     public static Breaker itz() {
-        return ModuleManager.get(Breaker.class);
+        return ravex.manager.ModuleManager.delegate(Breaker.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

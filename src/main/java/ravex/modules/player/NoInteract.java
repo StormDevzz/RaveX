@@ -1,9 +1,10 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
-public class NoInteract extends Module {
-    public final BooleanParameter allBlocks = new BooleanParameter("AllBlocks", false);
+@ModuleInfo(name = "NoInteract", category = "Player")
+public class NoInteract extends ravex.modules.Module {
+public final BooleanParameter allBlocks = new BooleanParameter("AllBlocks", false);
     public final BooleanParameter chests = new BooleanParameter("Chests", true);
     public final BooleanParameter enderChests = new BooleanParameter("EnderChests", true);
     public final BooleanParameter furnaces = new BooleanParameter("Furnaces", true);
@@ -22,9 +23,22 @@ public class NoInteract extends Module {
         return getEnabled() && allBlocks.getValue();
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(NoInteract.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NoInteract").getEnabled();
     }
     public static NoInteract itz() {
-        return ModuleManager.get(NoInteract.class);
+        return ravex.manager.ModuleManager.delegate(NoInteract.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

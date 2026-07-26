@@ -3,6 +3,7 @@ package ravex.manager;
 import ravex.event.EventBusHolder;
 import ravex.modules.Category;
 import ravex.modules.Module;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -158,7 +159,12 @@ public class ModuleManager {
     public List<Module> getModules() { return modules; }
 
     @SuppressWarnings("unchecked")
-    public static <T extends Module> T get(Class<T> clazz) {
+    public static <T> T get(Class<T> clazz) {
+        return (T) INSTANCE.byClass.get(clazz);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T delegate(Class<T> clazz) {
         return (T) INSTANCE.byClass.get(clazz);
     }
 
@@ -178,7 +184,8 @@ public class ModuleManager {
                 Class<?> clazz = Class.forName(fullName);
                 var ctor = clazz.getDeclaredConstructor();
                 ctor.setAccessible(true);
-                Module module = (Module) ctor.newInstance();
+                Object instance = ctor.newInstance();
+                Module module = (Module) instance;
                 module.setCategory(category);
                 modules.add(module);
                 byClass.put(clazz, module);

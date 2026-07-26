@@ -2,7 +2,6 @@ package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
-import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;
@@ -24,7 +23,7 @@ public class SettingsPanel {
     public SettingsPanel() {
         x = -1;
         y = -1;
-        Module hud = ModuleManager.get(Hud.class);
+        Hud hud = ModuleManager.get(Hud.class);
         for (Parameter<?> p : hud.getParameters()) {
             paramElements.add(new ParameterElement(p));
         }

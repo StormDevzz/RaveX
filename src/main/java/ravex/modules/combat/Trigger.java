@@ -1,7 +1,8 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -9,8 +10,9 @@ import ravex.utility.misc.MobUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import java.util.List;
-public class Trigger extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
+@ModuleInfo(name = "Trigger", category = "Combat")
+public class Trigger extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final NumberParameter cooldown = new NumberParameter("Cooldown", 0.9, 0.0, 1.0, 0.05);
     public final NumberParameter cps = new NumberParameter("CPS", 10, 1, 20, 1);
     public final NumberParameter randomization = new NumberParameter("Randomization", 0.0, 0.0, 5.0, 0.5);
@@ -33,14 +35,10 @@ public class Trigger extends Module {
     public net.minecraft.world.entity.LivingEntity getCurrentTarget() {
         return currentTarget;
     }
-
-    @Override
     protected void onDisable() {
         toggled = false;
         currentTarget = null;
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
@@ -113,10 +111,22 @@ public class Trigger extends Module {
         lastAttackTime = System.currentTimeMillis();
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Trigger.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Trigger").getEnabled();
     }
     public static Trigger itz() {
-        return ModuleManager.get(Trigger.class);
+        return ravex.manager.ModuleManager.delegate(Trigger.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

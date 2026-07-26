@@ -1,5 +1,6 @@
 package ravex.modules.movement;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -10,8 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 import ravex.event.network.PacketEvent;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
@@ -19,8 +19,9 @@ import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Blink extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Normal",
+@ModuleInfo(name = "Blink", category = "Movement")
+public class Blink extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Normal",
             List.of("Normal", "Packet", "Grim", "NCP"));
     public final NumberParameter limit = new NumberParameter("Limit", 30.0, 5.0, 200.0, 5.0);
     public final NumberParameter maxTicks = new NumberParameter("MaxTicks", 4.0, 1.0, 20.0, 1.0);
@@ -44,7 +45,7 @@ public class Blink extends Module {
     private static final double MAX_MOVE_PER_PACKET = 0.35;
 
     private Blink() {
-        super("Blink");
+        
         maxTicks.setVisible(() -> "Grim".equals(mode.getValue()));
         autoDisableTicks.setVisible(() -> "Grim".equals(mode.getValue()) || "NCP".equals(mode.getValue()));
         cancelOnShift.setVisible(() -> "Grim".equals(mode.getValue()) || "NCP".equals(mode.getValue()));
@@ -70,14 +71,14 @@ public class Blink extends Module {
 
         if (isGrim || isNcp) {
             if (cancelOnShift.getValue() && mc.options.keyShift.isDown()) {
-                setEnabled(false);
+                enabled = false;
                 return;
             }
 
             tickCounter++;
 
             if (tickCounter >= autoDisableTicks.getValue()) {
-                setEnabled(false);
+                enabled = false;
                 return;
             }
 
@@ -265,14 +266,12 @@ public class Blink extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(Blink.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Blink").getEnabled();
     }
 
     public static Blink itz() {
-        return ModuleManager.get(Blink.class);
+        return ravex.manager.ModuleManager.delegate(Blink.class);
     }
-
-    @Override
     protected void onEnable() {
         packetBuffer.clear();
         tickCounter = 0;
@@ -285,8 +284,6 @@ public class Blink extends Module {
         idleTicker = 0;
         flushStartTime = 0L;
     }
-
-    @Override
     protected void onDisable() {
         if (!packetBuffer.isEmpty()) {
             startFlush();
@@ -301,5 +298,18 @@ public class Blink extends Module {
                 continueFlush();
             }
         }
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,18 +1,20 @@
 package ravex.modules.movement;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.item.Items;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import net.minecraft.client.Minecraft;
 import java.util.List;
-public class Phase extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Positive1", List.of("Positive1", "Positive2"));
+@ModuleInfo(name = "Phase", category = "Movement")
+public class Phase extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Positive1", List.of("Positive1", "Positive2"));
     public final NumberParameter distance = new NumberParameter("Distance", 2.0, 0.5, 4.0, 0.1);
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_phase");
     static {
@@ -71,9 +73,22 @@ public class Phase extends Module {
     }
     private static native void nativeCalculateOffset(double yaw, double pitch, double distance, double[] outOffset);
     public static boolean maybeEnabled() {
-        return maybeEnabled(Phase.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Phase").getEnabled();
     }
     public static Phase itz() {
-        return ModuleManager.get(Phase.class);
+        return ravex.manager.ModuleManager.delegate(Phase.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,16 +1,18 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import ravex.utility.misc.MobUtility;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
-public class AutoClicker extends Module {
-    public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40.0, 0.5);
+@ModuleInfo(name = "AutoClicker", category = "Combat")
+public class AutoClicker extends ravex.modules.Module {
+public final NumberParameter minCps = new NumberParameter("MinCPS", 8.0, 1.0, 40.0, 0.5);
     public final NumberParameter maxCps = new NumberParameter("MaxCPS", 12.0, 1.0, 40.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Left", java.util.List.of("Left", "Right", "Both"));
     public final BooleanParameter weaponOnly = new BooleanParameter("WeaponOnly", false);
@@ -26,8 +28,6 @@ public class AutoClicker extends Module {
     private long lastClickTime = 0;
     private boolean holding = false;
     private java.util.Random rng = new java.util.Random();
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -98,7 +98,6 @@ public class AutoClicker extends Module {
         mc.options.keyAttack.setDown(false);
         mc.options.keyUse.setDown(false);
     }
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
@@ -109,10 +108,22 @@ public class AutoClicker extends Module {
     }
     private static native long nativeCalculateDelay(double minCps, double maxCps, boolean randomize);
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoClicker.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoClicker").getEnabled();
     }
     public static AutoClicker itz() {
-        return ModuleManager.get(AutoClicker.class);
+        return ravex.manager.ModuleManager.delegate(AutoClicker.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

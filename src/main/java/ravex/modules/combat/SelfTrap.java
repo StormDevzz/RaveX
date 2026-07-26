@@ -1,4 +1,6 @@
 package ravex.modules.combat;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.RaveX;
-import ravex.modules.Module;
+
 import ravex.parameter.ActionParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -26,14 +28,15 @@ import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
-import ravex.manager.ModuleManager;
-public class SelfTrap extends Module {
-    public static final SelfTrap INSTANCE = new SelfTrap();
+
+@ModuleInfo(name = "SelfTrap", category = "Combat")
+public class SelfTrap extends ravex.modules.Module {
+public static final SelfTrap INSTANCE = new SelfTrap();
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         Minecraft.getInstance().setScreen(new ravex.gui.browser.BlockBrowserScreen(
             Minecraft.getInstance().screen,
-            ModuleManager.get(ravex.modules.combat.SelfTrap.class)::isBlockSelected,
-            ModuleManager.get(ravex.modules.combat.SelfTrap.class)::setBlockSelected
+            ravex.manager.ModuleManager.delegate(ravex.modules.combat.SelfTrap.class)::isBlockSelected,
+            ravex.manager.ModuleManager.delegate(ravex.modules.combat.SelfTrap.class)::setBlockSelected
         ));
     });
     public final ModeParameter mode = new ModeParameter("Mode", "Full", List.of("Full", "Simple", "Roof"));
@@ -57,17 +60,17 @@ public class SelfTrap extends Module {
         NATIVE.load();
     }
     private SelfTrap() {
-        super("SelfTrap");
+        
         maxRate.setVisible(() -> !speedMode.getValue().equals("Legit"));
         strictRotation.setVisible(() -> !rotate.getValue().equals("None"));
         swapSwitchBack.setVisible(() -> !swapMode.getValue().equals("None"));
         swapInventory.setVisible(() -> !swapMode.getValue().equals("None"));
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(SelfTrap.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("SelfTrap").getEnabled();
     }
     public static SelfTrap itz() {
-        return ModuleManager.get(SelfTrap.class);
+        return ravex.manager.ModuleManager.delegate(SelfTrap.class);
     }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
@@ -94,7 +97,6 @@ public class SelfTrap extends Module {
             selectedBlocks.remove(id);
         }
     }
-    @Override
     protected void onEnable() {
         lastPlaceTime = 0;
         silentRotation.hasRotation = false;
@@ -105,14 +107,12 @@ public class SelfTrap extends Module {
             selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(Blocks.OBSIDIAN));
         }
     }
-    @Override
     protected void onDisable() {
         silentRotation.hasRotation = false;
         synchronized (selfTrapBlocks) {
             selfTrapBlocks.clear();
         }
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -231,7 +231,7 @@ public class SelfTrap extends Module {
             lastPlaceTime = now;
         } else {
             if (autoDisable.getValue() && simulatedBlocks.isEmpty()) {
-                setEnabled(false);
+                enabled = false;
             }
         }
     }
@@ -350,4 +350,17 @@ public class SelfTrap extends Module {
         double range,
         int mode
     );
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

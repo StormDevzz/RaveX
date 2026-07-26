@@ -1,6 +1,6 @@
 package ravex.modules.client;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -22,8 +22,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-public class Notifications extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Text", "Toast"));
+@ModuleInfo(name = "Notifications", category = "Client")
+public class Notifications extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Toast", List.of("Text", "Toast"));
     public final ModeParameter visualRange = new ModeParameter("VisualRange", "Toast", List.of("Off", "Text", "Toast"));
     public final ModeParameter itemCollection = new ModeParameter("ItemCollection", "Off", List.of("Off", "Toast", "Text"));
     public final ModeParameter tracker = new ModeParameter("Tracker", "Off", List.of("Off", "Toast", "Text"));
@@ -48,8 +49,8 @@ public class Notifications extends Module {
     }
 
     private Notifications() {
-        super("Notifications");
-        setEnabled(true);
+        
+        enabled = true;
         toastOpacity.setVisible(() -> mode.getValue().equals("Toast"));
         toastSize.setVisible(() -> mode.getValue().equals("Toast"));
         itemMonsters.setVisible(() -> !"Off".equals(itemCollection.getValue()));
@@ -66,15 +67,11 @@ public class Notifications extends Module {
             if (mc.player != null) mc.player.displayClientMessage(Component.literal(text), false);
         }
     }
-
-    @Override
     protected void onEnable() {
         knownPlayers.clear();
         trackedItems.clear();
         playerStates.clear();
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
@@ -210,12 +207,12 @@ public class Notifications extends Module {
             "§" + Character.forDigit(b & 0xF, 16);
     }
 
-    public static void notifyToggle(Module module, boolean enabled) {
-        if (!ModuleManager.get(Notifications.class).getEnabled()) return;
+    public static void notifyToggle(ravex.modules.Module module, boolean enabled) {
+        if (!ravex.manager.ModuleManager.delegate(Notifications.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
-        int color = ModuleManager.get(Notifications.class).messageColor.getValue();
-        if (ModuleManager.get(Notifications.class).mode.getValue().equals("Toast")) {
-            NotificationManager.addToast(module.getName(), color, enabled, ModuleManager.get(Notifications.class).toastOpacity.getValue().floatValue(), ModuleManager.get(Notifications.class).toastSize.getValue().intValue());
+        int color = ravex.manager.ModuleManager.delegate(Notifications.class).messageColor.getValue();
+        if (ravex.manager.ModuleManager.delegate(Notifications.class).mode.getValue().equals("Toast")) {
+            NotificationManager.addToast(module.getName(), color, enabled, ravex.manager.ModuleManager.delegate(Notifications.class).toastOpacity.getValue().floatValue(), ravex.manager.ModuleManager.delegate(Notifications.class).toastSize.getValue().intValue());
             return;
         }
         String action = enabled ? "Enabled" : "Disabled";
@@ -223,7 +220,7 @@ public class Notifications extends Module {
             Component message = Component.literal("[")
                 .withStyle(style -> style.withColor(0x7F7F7F))
                 .append(Component.literal("RaveX").withStyle(style -> style.withColor(color)))
-                .append(Component.literal("] Module ").withStyle(style -> style.withColor(color)))
+                .append(Component.literal("] ravex.modules.Module ").withStyle(style -> style.withColor(color)))
                 .append(Component.literal(module.getName()).withStyle(style -> style.withColor(color)))
                 .append(Component.literal(" has been ").withStyle(style -> style.withColor(0x7F7F7F)))
                 .append(Component.literal(action).withStyle(style -> style.withColor(color)))
@@ -233,10 +230,23 @@ public class Notifications extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(Notifications.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Notifications").getEnabled();
     }
 
     public static Notifications itz() {
-        return ModuleManager.get(Notifications.class);
+        return ravex.manager.ModuleManager.delegate(Notifications.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

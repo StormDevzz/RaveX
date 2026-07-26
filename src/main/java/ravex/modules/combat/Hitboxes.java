@@ -1,14 +1,28 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.NumberParameter;
-public class Hitboxes extends Module {
-    public final NumberParameter size = new NumberParameter("Size", 0.3, 0.0, 2.0, 0.05);
+@ModuleInfo(name = "Hitboxes", category = "Combat")
+public class Hitboxes extends ravex.modules.Module {
+public final NumberParameter size = new NumberParameter("Size", 0.3, 0.0, 2.0, 0.05);
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(Hitboxes.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Hitboxes").getEnabled();
     }
     public static Hitboxes itz() {
-        return ModuleManager.get(Hitboxes.class);
+        return ravex.manager.ModuleManager.delegate(Hitboxes.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

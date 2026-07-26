@@ -1,13 +1,15 @@
 package ravex.modules.movement;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.RaveX;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
-public class Flight extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
+@ModuleInfo(name = "Flight", category = "Movement")
+public class Flight extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         List.of("Vanilla", "Creative", "NCP", "Minemen", "Jetpack"));
     public final NumberParameter speed = new NumberParameter("Speed", 2.0, 0.5, 10.0, 0.1);
     public final NumberParameter verticalSpeed = new NumberParameter("VerticalSpeed", 1.0, 0.1, 5.0, 0.1);
@@ -25,14 +27,12 @@ public class Flight extends Module {
         return javaHandleAirFriction(mode, currentSpeed, acceleration, friction);
     }
     private Flight() {
-        super("Flight");
+        
         damageMultiplier.setVisible(() -> damageBoost.getValue());
     }
-    @Override
     public void onEnable() {
         RaveX.LOGGER.info("[Flight] Enabled with mode: {}", mode.getValue());
     }
-    @Override
     public void onDisable() {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player != null) {
@@ -65,15 +65,28 @@ public class Flight extends Module {
         return new double[]{velX, velY, velZ};
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Flight.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Flight").getEnabled();
     }
     public static Flight itz() {
-        return ModuleManager.get(Flight.class);
+        return ravex.manager.ModuleManager.delegate(Flight.class);
     }
     private static double javaHandleAirFriction(String mode, double currentSpeed, double acceleration, double friction) {
         if (mode.equals("NCP")) {
             return currentSpeed * (1.0 - friction * 0.05);
         }
         return Math.min(currentSpeed + acceleration, currentSpeed * (1.0 + acceleration * 0.1));
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

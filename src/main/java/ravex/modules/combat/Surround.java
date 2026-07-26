@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -7,7 +8,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -17,8 +18,9 @@ import ravex.utility.render.animate.SlideAnimation;
 import ravex.utility.player.InventoryUtility;
 import java.util.ArrayList;
 import java.util.List;
-public class Surround extends Module {
-    public static final List<BlockPos> surroundBlocks = new ArrayList<>();
+@ModuleInfo(name = "Surround", category = "Combat")
+public class Surround extends ravex.modules.Module {
+public static final List<BlockPos> surroundBlocks = new ArrayList<>();
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
     public static float renderR = 0.3f;
@@ -48,8 +50,6 @@ public class Surround extends Module {
     private final SlideAnimation slideAnim = new SlideAnimation();
     private long lastPlaceTime = 0;
     private boolean placed = false;
-
-    @Override
     protected void onEnable() {
         surroundBlocks.clear();
         renderAlpha = 0.0f;
@@ -61,14 +61,12 @@ public class Surround extends Module {
         sizeAnim.reset();
         slideAnim.reset();
     }
-    @Override
     protected void onDisable() {
         surroundBlocks.clear();
         renderAlpha = 0.0f;
         renderSize = 0.0;
         animatedCenter = null;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
@@ -78,7 +76,7 @@ public class Surround extends Module {
             return;
         }
         if (autoDisable.getValue() && (!mc.player.onGround() || mc.options.keyJump.isDown())) {
-            setEnabled(false);
+            enabled = false;
             return;
         }
         if (autoCenter.getValue()) {
@@ -188,7 +186,7 @@ public class Surround extends Module {
         }
         if (toPlace.isEmpty()) {
             if (autoDisable.getValue() && placed) {
-                setEnabled(false);
+                enabled = false;
             }
             return;
         }
@@ -265,9 +263,22 @@ public class Surround extends Module {
         return -1;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Surround.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Surround").getEnabled();
     }
     public static Surround itz() {
-        return ModuleManager.get(Surround.class);
+        return ravex.manager.ModuleManager.delegate(Surround.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,11 +1,13 @@
 package ravex.modules.hud;
+
+import ravex.modules.annotations.ModuleInfo;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.render.HudRenderer;
@@ -16,9 +18,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import ravex.manager.ModuleManager;
-public class CurrencyHud extends Module {
-    private static final Identifier ICON = TextureLoader.HUD_CURRENCY_WHITE;
+
+@ModuleInfo(name = "CurrencyHud", category = "HUD")
+public class CurrencyHud extends ravex.modules.Module {
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final Identifier ICON = TextureLoader.HUD_CURRENCY_WHITE;
     private static final int IS = HudRenderer.getIconSize();
     public final BooleanParameter btc = new BooleanParameter("BTC/USD", true);
     public final BooleanParameter usd_rub = new BooleanParameter("USD/RUB", true);
@@ -64,7 +71,7 @@ public class CurrencyHud extends Module {
     private long lastFetchMs = 0;
     private long lastTickMs = 0;
     private CurrencyHud() {
-        super("Currency", 10, 300, 110, 50);
+        this.x = 10; this.y = 300; this.width = 110; this.height = 50;
     }
     private static class DisplayPair {
         String label;
@@ -74,9 +81,8 @@ public class CurrencyHud extends Module {
             this.valStr = valStr;
         }
     }
-    @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
@@ -117,16 +123,16 @@ public class CurrencyHud extends Module {
         if (usd_czk.getValue()) active.add(new DisplayPair("USD/CZK", String.format("%.2f CZK", usdToCzk)));
         if (usd_ron.getValue()) active.add(new DisplayPair("USD/RON", String.format("%.2f RON", usdToRon)));
         if (active.isEmpty()) {
-            setWidth(80);
-            setHeight(14);
+            width = 80;
+            height = 14;
             return;
         }
         int pw = 130;
         int rowH = 11;
         int ph = 18 + active.size() * rowH + 4;
-        setWidth(pw);
-        setHeight(ph);
-        int bx = getX(), by = getY();
+        width = pw;
+        height = ph;
+        int bx = x, by = y;
         HudRenderer.drawBackground(graphics, bx, by, pw, ph);
         ravex.utility.render.FontRenderUtility.drawString(graphics, "CurrencyRates", bx + 4, by + 4, ColorUtility.getActiveColor(), false);
         HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + 4, ColorUtility.getActiveColor());
@@ -192,10 +198,45 @@ public class CurrencyHud extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(CurrencyHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("CurrencyHud").getEnabled();
     }
 
     public static CurrencyHud itz() {
-        return ModuleManager.get(CurrencyHud.class);
+        return ravex.manager.ModuleManager.delegate(CurrencyHud.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

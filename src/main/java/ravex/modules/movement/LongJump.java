@@ -1,26 +1,23 @@
 package ravex.modules.movement;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
-public class LongJump extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla"));
+@ModuleInfo(name = "LongJump", category = "Movement")
+public class LongJump extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla"));
     public final NumberParameter boost = new NumberParameter("Boost", 1.5, 1.0, 10.0, 0.1);
     public static boolean jumped = false;
 
     private LongJump() {
-        super("LongJump");
+        
     }
-
-    @Override
     protected void onEnable() {
         jumped = false;
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -36,9 +33,22 @@ public class LongJump extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(LongJump.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("LongJump").getEnabled();
     }
     public static LongJump itz() {
-        return ModuleManager.get(LongJump.class);
+        return ravex.manager.ModuleManager.delegate(LongJump.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

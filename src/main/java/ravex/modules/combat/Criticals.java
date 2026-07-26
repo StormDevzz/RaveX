@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -8,11 +9,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.EntityHitResult;
 import ravex.utility.misc.MobUtility;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
-public class Criticals extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Packet",
+@ModuleInfo(name = "Criticals", category = "Combat")
+public class Criticals extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Packet",
         java.util.List.of("Legit", "Packet", "Grim", "MiniJump", "Watchdog"));
     public final BooleanParameter autoAttack = new BooleanParameter("AutoAttack", true);
     public final BooleanParameter stopOnWater = new BooleanParameter("StopOnWater", true);
@@ -20,13 +22,10 @@ public class Criticals extends Module {
     private enum Sequence { NONE, JUMPING, LANDING }
     private Sequence seq = Sequence.NONE;
     private int seqTicks = 0;
-
-    @Override
     protected void onDisable() {
         seq = Sequence.NONE;
         seqTicks = 0;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -113,10 +112,22 @@ public class Criticals extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Criticals.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Criticals").getEnabled();
     }
     public static Criticals itz() {
-        return ModuleManager.get(Criticals.class);
+        return ravex.manager.ModuleManager.delegate(Criticals.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

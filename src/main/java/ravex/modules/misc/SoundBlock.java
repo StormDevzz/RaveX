@@ -1,14 +1,16 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.player.LocalPlayer;
-import ravex.modules.Module;
-import ravex.manager.ModuleManager;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import java.util.List;
-public class SoundBlock extends Module {
-    public final BooleanParameter blockAmbient   = new BooleanParameter("Ambient", false);
+@ModuleInfo(name = "SoundBlock", category = "Misc")
+public class SoundBlock extends ravex.modules.Module {
+public final BooleanParameter blockAmbient   = new BooleanParameter("Ambient", false);
     public final BooleanParameter blockBlocks    = new BooleanParameter("Blocks", false);
     public final BooleanParameter blockWeather   = new BooleanParameter("Weather", false);
     public final BooleanParameter blockHostile   = new BooleanParameter("Hostile", false);
@@ -37,10 +39,23 @@ public class SoundBlock extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(SoundBlock.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("SoundBlock").getEnabled();
     }
 
     public static SoundBlock itz() {
-        return ModuleManager.get(SoundBlock.class);
+        return ravex.manager.ModuleManager.delegate(SoundBlock.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

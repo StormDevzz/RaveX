@@ -1,6 +1,6 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.ModeParameter;
@@ -16,15 +16,14 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-public class SourceFiller extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
+@ModuleInfo(name = "SourceFiller", category = "Player")
+public class SourceFiller extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.1);
     public final ModeParameter mode = new ModeParameter("Mode", "Smart", List.of("Normal", "Smart"));
     public final BooleanParameter silent = new BooleanParameter("SilentSwap", true);
     public final BooleanParameter rotate = new BooleanParameter("Rotate", true);
     public final NumberParameter delay = new NumberParameter("Delay", 200.0, 0.0, 1000.0, 10.0);
     private long lastPlaceTime = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
@@ -71,10 +70,22 @@ public class SourceFiller extends Module {
         return count;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(SourceFiller.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("SourceFiller").getEnabled();
     }
     public static SourceFiller itz() {
-        return ModuleManager.get(SourceFiller.class);
+        return ravex.manager.ModuleManager.delegate(SourceFiller.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

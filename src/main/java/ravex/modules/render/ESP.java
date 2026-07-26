@@ -1,17 +1,19 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
-public class ESP extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util.List.of("Outline", "Box2D", "Tunnels", "Holes", "Void"));
+@ModuleInfo(name = "ESP", category = "Render")
+public class ESP extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Outline", java.util.List.of("Outline", "Box2D", "Tunnels", "Holes", "Void"));
     public final BooleanParameter players = new BooleanParameter("Players", true);
     public final BooleanParameter monsters = new BooleanParameter("Monsters", true);
     public final BooleanParameter animals = new BooleanParameter("Animals", false);
@@ -48,7 +50,7 @@ public class ESP extends Module {
     private List<BlockPos> voidBlocks = new ArrayList<>();
     private long lastVoidScan = 0;
     private ESP() {
-        super("ESP");
+        
         playerColor.setVisible(players::getValue);
         mobColor.setVisible(monsters::getValue);
         animalColor.setVisible(animals::getValue);
@@ -73,7 +75,6 @@ public class ESP extends Module {
         voidFloorOnly.setVisible(() -> mode.getValue().equals("Void"));
         voidUpdateInterval.setVisible(() -> mode.getValue().equals("Void"));
     }
-    @Override
     public void onTick() {
         String m = mode.getValue();
         if (m.equals("Tunnels")) scanTunnels();
@@ -175,7 +176,7 @@ public class ESP extends Module {
         voidBlocks = result;
     }
     public static boolean shouldGlow(net.minecraft.world.entity.Entity entity) {
-        ESP $ = ravex.manager.ModuleManager.get(ESP.class);
+        ESP $ = ravex.manager.ModuleManager.delegate(ESP.class);
         if ($ == null || !$.getEnabled() || !$.mode.getValue().equals("Outline")) return false;
         var mc = Minecraft.getInstance();
         if (entity == mc.player) return false;
@@ -192,10 +193,23 @@ public class ESP extends Module {
     public List<BlockPos> getHoles() { return holes; }
     public List<BlockPos> getVoidBlocks() { return voidBlocks; }
     public static boolean maybeEnabled() {
-        return maybeEnabled(ESP.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ESP").getEnabled();
     }
 
     public static ESP itz() {
-        return ModuleManager.get(ESP.class);
+        return ravex.manager.ModuleManager.delegate(ESP.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

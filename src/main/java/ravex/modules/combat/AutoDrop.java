@@ -1,5 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,7 +13,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -22,8 +23,9 @@ import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 import ravex.utility.player.SwingUtility;
-public class AutoDrop extends Module {
-    public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
+@ModuleInfo(name = "AutoDrop", category = "Combat")
+public class AutoDrop extends ravex.modules.Module {
+public final ModeParameter blockType = new ModeParameter("BlockType", "Gravel",
         java.util.List.of("Gravel", "Anvil", "Sand", "Both"));
     public final ModeParameter target = new ModeParameter("Target", "Self",
         java.util.List.of("Self", "Nearby", "Enemy"));
@@ -43,8 +45,6 @@ public class AutoDrop extends Module {
     private static final SilentRotation silentRotation = new SilentRotation();
     private int tickCounter = 0;
     private int originalSlot = -1;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -138,9 +138,22 @@ public class AutoDrop extends Module {
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoDrop.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoDrop").getEnabled();
     }
     public static AutoDrop itz() {
-        return ModuleManager.get(AutoDrop.class);
+        return ravex.manager.ModuleManager.delegate(AutoDrop.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

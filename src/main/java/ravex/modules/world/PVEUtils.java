@@ -1,4 +1,6 @@
 package ravex.modules.world;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.BrewingStandScreen;
 import net.minecraft.client.gui.screens.inventory.FurnaceScreen;
@@ -22,18 +24,19 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.manager.ModuleManager;
+
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
-public class PVEUtils extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
+@ModuleInfo(name = "PVEUtils", category = "World")
+public class PVEUtils extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "AutoSmelt",
         List.of("AutoSmelt", "AutoTame", "BoneMeal", "AutoBrew", "AutoLight"));
     public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
     public final BooleanParameter autoFuel = new BooleanParameter("AutoFuel", true);
@@ -52,7 +55,7 @@ public class PVEUtils extends Module {
     private static boolean hasBrewTarget;
     private long lastLightPlace = 0;
     private PVEUtils() {
-        super("PVEUtils");
+        
         tameAnimal.setVisible(() -> mode.getValue().equals("AutoTame"));
         autoSwitch.setVisible(() -> mode.getValue().equals("AutoTame"));
         autoFuel.setVisible(() -> mode.getValue().equals("AutoSmelt") || mode.getValue().equals("AutoBrew"));
@@ -65,7 +68,6 @@ public class PVEUtils extends Module {
         silent.setVisible(() -> mode.getValue().equals("AutoLight"));
         range.setVisible(() -> mode.getValue().equals("AutoTame") || mode.getValue().equals("AutoLight") || mode.getValue().equals("BoneMeal") || mode.getValue().equals("AutoBrew") || mode.getValue().equals("AutoSmelt"));
     }
-    @Override
     public void onTick() {
         switch (mode.getValue()) {
             case "AutoSmelt" -> tickSmelt();
@@ -314,16 +316,28 @@ public class PVEUtils extends Module {
             }
         }
     }
-    @Override
     protected void onDisable() {
         smeltTarget = null;
         hasBrewTarget = false;
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(PVEUtils.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("PVEUtils").getEnabled();
     }
     public static PVEUtils itz() {
-        return ModuleManager.get(PVEUtils.class);
+        return ravex.manager.ModuleManager.delegate(PVEUtils.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

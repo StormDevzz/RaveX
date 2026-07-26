@@ -1,4 +1,6 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.animal.wolf.Wolf;
@@ -8,11 +10,11 @@ import net.minecraft.world.entity.npc.villager.Villager;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 import ravex.utility.misc.MobUtility;
-import ravex.modules.Module;
-import ravex.manager.ModuleManager;
+
 import ravex.parameter.BooleanParameter;
-public class AntiAttack extends Module {
-    public final BooleanParameter villagers = new BooleanParameter("Villager", true);
+@ModuleInfo(name = "AntiAttack", category = "Misc")
+public class AntiAttack extends ravex.modules.Module {
+public final BooleanParameter villagers = new BooleanParameter("Villager", true);
     public final BooleanParameter horses    = new BooleanParameter("Horse", true);
     public final BooleanParameter wolves    = new BooleanParameter("Wolf", false);
     public final BooleanParameter cats      = new BooleanParameter("Cat", true);
@@ -38,10 +40,23 @@ public class AntiAttack extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(AntiAttack.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiAttack").getEnabled();
     }
 
     public static AntiAttack itz() {
-        return ModuleManager.get(AntiAttack.class);
+        return ravex.manager.ModuleManager.delegate(AntiAttack.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

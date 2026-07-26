@@ -1,6 +1,6 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
@@ -11,10 +11,9 @@ import ravex.utility.misc.MobUtility;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.world.InteractionHand;
-public class MaceAura extends Module {
-    public final NumberParameter height = new NumberParameter("Height", 10.0, 2.0, 40.0, 1.0);
-
-    @Override
+@ModuleInfo(name = "MaceAura", category = "Combat")
+public class MaceAura extends ravex.modules.Module {
+public final NumberParameter height = new NumberParameter("Height", 10.0, 2.0, 40.0, 1.0);
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
@@ -43,10 +42,22 @@ public class MaceAura extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(MaceAura.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("MaceAura").getEnabled();
     }
     public static MaceAura itz() {
-        return ModuleManager.get(MaceAura.class);
+        return ravex.manager.ModuleManager.delegate(MaceAura.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

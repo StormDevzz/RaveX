@@ -1,18 +1,17 @@
 package ravex.modules.misc;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import ravex.utility.misc.MobUtility;
-public class AutoLog extends Module {
-    public final BooleanParameter onLowHealth = new BooleanParameter("LowHealth", true);
+@ModuleInfo(name = "AutoLog", category = "Misc")
+public class AutoLog extends ravex.modules.Module {
+public final BooleanParameter onLowHealth = new BooleanParameter("LowHealth", true);
     public final NumberParameter healthLimit = new NumberParameter("MinHP", 6.0, 1.0, 20.0, 0.5);
     public final BooleanParameter onPlayerNearby = new BooleanParameter("PlayerNearby", false);
     public final NumberParameter playerRange = new NumberParameter("Range", 16.0, 4.0, 64.0, 1.0);
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -34,10 +33,23 @@ public class AutoLog extends Module {
         if (mc.getConnection() != null) {
             mc.getConnection().getConnection().disconnect(net.minecraft.network.chat.Component.literal("§c[RaveX AutoLog] §f" + reason));
         }
-        setEnabled(false);
+        enabled = false;
     }
 
     public static AutoLog itz() {
-        return ModuleManager.get(AutoLog.class);
+        return ravex.manager.ModuleManager.delegate(AutoLog.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

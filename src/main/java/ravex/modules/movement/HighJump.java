@@ -1,16 +1,15 @@
 package ravex.modules.movement;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
-public class HighJump extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "GrimShulker"));
+@ModuleInfo(name = "HighJump", category = "Movement")
+public class HighJump extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Vanilla", List.of("Vanilla", "GrimShulker"));
     public final NumberParameter height = new NumberParameter("Height", 2.0, 0.5, 10.0, 0.1);
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -57,9 +56,22 @@ public class HighJump extends Module {
         return -1;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(HighJump.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("HighJump").getEnabled();
     }
     public static HighJump itz() {
-        return ModuleManager.get(HighJump.class);
+        return ravex.manager.ModuleManager.delegate(HighJump.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

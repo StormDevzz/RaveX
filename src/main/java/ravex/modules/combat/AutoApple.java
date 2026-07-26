@@ -1,17 +1,19 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.player.InventoryUtility;
-public class AutoApple extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Default",
+@ModuleInfo(name = "AutoApple", category = "Combat")
+public class AutoApple extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Default",
             java.util.List.of("Default", "Grim"));
     public final ModeParameter appleType = new ModeParameter("AppleType", "Both",
             java.util.List.of("Golden", "Enchanted", "Both"));
@@ -27,19 +29,16 @@ public class AutoApple extends Module {
     private int grimDelayTicks = 0;
 
     private AutoApple() {
-        super("AutoApple");
+        
         grimDelay.setVisible(() -> "Grim".equals(mode.getValue()));
         grimRandom.setVisible(() -> "Grim".equals(mode.getValue()));
     }
-
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (isEating && mc.player != null) {
             stopEating(mc);
         }
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -156,10 +155,22 @@ public class AutoApple extends Module {
         return false;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoApple.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoApple").getEnabled();
     }
     public static AutoApple itz() {
-        return ModuleManager.get(AutoApple.class);
+        return ravex.manager.ModuleManager.delegate(AutoApple.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

@@ -1,15 +1,18 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
-import ravex.manager.ModuleManager;
+
 import ravex.utility.player.InventoryUtility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-public class BlockMixer extends Module {
-    public final ModeParameter swap = new ModeParameter("Swap", "Normal", List.of("Normal", "Silent"));
+@ModuleInfo(name = "BlockMixer", category = "Misc")
+public class BlockMixer extends ravex.modules.Module {
+public final ModeParameter swap = new ModeParameter("Swap", "Normal", List.of("Normal", "Silent"));
     private static final Random RANDOM = new Random();
 
     public void shuffle() {
@@ -40,10 +43,23 @@ public class BlockMixer extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(BlockMixer.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("BlockMixer").getEnabled();
     }
 
     public static BlockMixer itz() {
-        return ModuleManager.get(BlockMixer.class);
+        return ravex.manager.ModuleManager.delegate(BlockMixer.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

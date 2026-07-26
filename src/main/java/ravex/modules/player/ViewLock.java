@@ -1,14 +1,14 @@
 package ravex.modules.player;
 
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 
-public class ViewLock extends Module {
-    public final BooleanParameter lockYaw = new BooleanParameter("LockYaw", true);
+@ModuleInfo(name = "ViewLock", category = "Player")
+public class ViewLock extends ravex.modules.Module {
+public final BooleanParameter lockYaw = new BooleanParameter("LockYaw", true);
     public final BooleanParameter lockPitch = new BooleanParameter("LockPitch", true);
     public final ModeParameter mode = new ModeParameter("Mode", "Freeze",
             java.util.List.of("Freeze", "Smooth", "Direction"));
@@ -20,8 +20,6 @@ public class ViewLock extends Module {
     private float targetYaw = 0;
     private float targetPitch = 0;
     private boolean hasTarget = false;
-
-    @Override
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
@@ -75,10 +73,23 @@ public class ViewLock extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(ViewLock.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled();
     }
 
     public static ViewLock itz() {
-        return ModuleManager.get(ViewLock.class);
+        return ravex.manager.ModuleManager.delegate(ViewLock.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,10 +1,11 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
@@ -19,8 +20,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-public class PacketMine extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Normal",
+@ModuleInfo(name = "PacketMine", category = "Player")
+public class PacketMine extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Normal",
         java.util.List.of("Normal", "Grim", "NCP"));
     public final NumberParameter range = new NumberParameter("Range", 6.0, 2.0, 10.0, 0.5);
     public final ModeParameter rotate = new ModeParameter("Rotate", "Silent",
@@ -69,7 +71,7 @@ public class PacketMine extends Module {
     private boolean needRestore = false;
     private boolean attackWasDown = false;
     private PacketMine() {
-        super("PacketMine");
+        
         range.setVisible(() -> mode.getValue().equals("Normal"));
         swapMode.setVisible(() -> !mode.getValue().equals("Grim"));
         rotate.setVisible(() -> !mode.getValue().equals("Grim"));
@@ -78,7 +80,6 @@ public class PacketMine extends Module {
         maxBlocks.setVisible(doubleMine::getValue);
         speed.setVisible(doubleMine::getValue);
     }
-    @Override
     protected void onEnable() {
         miningBlocks.clear();
         restoreSlot = -1;
@@ -86,7 +87,6 @@ public class PacketMine extends Module {
         needRestore = false;
         attackWasDown = false;
     }
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.gameMode != null) {
@@ -115,7 +115,6 @@ public class PacketMine extends Module {
         }
         return Math.max(50, ms);
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -325,9 +324,22 @@ public class PacketMine extends Module {
         return nativeCanSee(eye.x, eye.y, eye.z, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, solids);
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(PacketMine.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();
     }
     public static PacketMine itz() {
-        return ModuleManager.get(PacketMine.class);
+        return ravex.manager.ModuleManager.delegate(PacketMine.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

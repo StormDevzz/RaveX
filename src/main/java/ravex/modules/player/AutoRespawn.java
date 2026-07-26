@@ -1,12 +1,14 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import ravex.event.Subscribe;
 import ravex.event.player.DeathEvent;
-import ravex.modules.Module;
-public class AutoRespawn extends Module {
-    public final ravex.parameter.BooleanParameter showDeathScreen = new ravex.parameter.BooleanParameter("ShowDeathScreen", false);
+
+@ModuleInfo(name = "AutoRespawn", category = "Player")
+public class AutoRespawn extends ravex.modules.Module {
+public final ravex.parameter.BooleanParameter showDeathScreen = new ravex.parameter.BooleanParameter("ShowDeathScreen", false);
     private long deathTime = 0;
     private boolean dead = false;
 
@@ -16,14 +18,10 @@ public class AutoRespawn extends Module {
         dead = true;
         deathTime = System.currentTimeMillis();
     }
-
-    @Override
     protected void onDisable() {
         deathTime = 0;
         dead = false;
     }
-
-    @Override
     public void onTick() {
         if (!getEnabled() || !dead) return;
         Minecraft mc = Minecraft.getInstance();
@@ -36,10 +34,22 @@ public class AutoRespawn extends Module {
         deathTime = 0;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoRespawn.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoRespawn").getEnabled();
     }
     public static AutoRespawn itz() {
-        return ModuleManager.get(AutoRespawn.class);
+        return ravex.manager.ModuleManager.delegate(AutoRespawn.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

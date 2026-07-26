@@ -1,11 +1,13 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
-public class Zoom extends Module {
-    public final BooleanParameter smooth = new BooleanParameter("Smooth", true);
+@ModuleInfo(name = "Zoom", category = "Render")
+public class Zoom extends ravex.modules.Module {
+public final BooleanParameter smooth = new BooleanParameter("Smooth", true);
     public final NumberParameter smoothSpeed = new NumberParameter("SmoothSpeed", 0.15, 0.05, 0.5, 0.05);
     public final NumberParameter defaultZoom = new NumberParameter("DefaultZoom", 30, 5, 90, 5);
     public final BooleanParameter scroll = new BooleanParameter("Scroll", true);
@@ -15,8 +17,6 @@ public class Zoom extends Module {
     private double currentFov;
     private double targetFov;
     private double savedFov;
-
-    @Override
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options != null) {
@@ -25,7 +25,6 @@ public class Zoom extends Module {
             currentFov = savedFov;
         }
     }
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options != null && savedFov > 0) {
@@ -35,7 +34,6 @@ public class Zoom extends Module {
             savedFov = 0;
         }
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -60,10 +58,23 @@ public class Zoom extends Module {
         return currentFov;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Zoom.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Zoom").getEnabled();
     }
 
     public static Zoom itz() {
-        return ModuleManager.get(Zoom.class);
+        return ravex.manager.ModuleManager.delegate(Zoom.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

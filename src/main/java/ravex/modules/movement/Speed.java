@@ -1,13 +1,14 @@
 package ravex.modules.movement;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.BooleanParameter;
 import net.minecraft.client.Minecraft;
 
-public class Speed extends Module {
-    public static boolean cancelVertical = false;
+@ModuleInfo(name = "Speed", category = "Movement")
+public class Speed extends ravex.modules.Module {
+public static boolean cancelVertical = false;
     public static float matrixTimer = 1.0f;
     public final ModeParameter mode = new ModeParameter("Mode", "Vanilla",
         java.util.List.of("Vanilla", "Strafe", "StrafeStrict", "NCP", "NCPStrict", "Matrix", "Grim", "GrimStrict"));
@@ -21,7 +22,7 @@ public class Speed extends Module {
     public final BooleanParameter strafeStrictTimer = new BooleanParameter("SSTimer", true);
 
     private Speed() {
-        super("Speed");
+        
         strafeJump.setVisible(() -> "Strafe".equals(mode.getValue()));
         grimBoost.setVisible(() -> "Grim".equals(mode.getValue()) || "GrimStrict".equals(mode.getValue()));
         autoJump.setVisible(() -> !"GrimStrict".equals(mode.getValue()) && !"Grim".equals(mode.getValue()) && !"StrafeStrict".equals(mode.getValue()));
@@ -31,8 +32,6 @@ public class Speed extends Module {
         strafeStrictCap.setVisible(() -> "StrafeStrict".equals(mode.getValue()));
         strafeStrictTimer.setVisible(() -> "StrafeStrict".equals(mode.getValue()));
     }
-
-    @Override
     public void onTick() {
         if (!"Matrix".equals(mode.getValue())) {
             return;
@@ -50,9 +49,22 @@ public class Speed extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Speed.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Speed").getEnabled();
     }
     public static Speed itz() {
-        return ModuleManager.get(Speed.class);
+        return ravex.manager.ModuleManager.delegate(Speed.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

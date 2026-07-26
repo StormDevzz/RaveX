@@ -1,16 +1,19 @@
 package ravex.modules.world;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
-import ravex.manager.ModuleManager;
+
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.List;
-public class AutoTunnel extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
+@ModuleInfo(name = "AutoTunnel", category = "World")
+public class AutoTunnel extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
     public final NumberParameter height = new NumberParameter("Height", 2, 1, 3, 1);
     public final NumberParameter width = new NumberParameter("Width", 2, 1, 3, 1);
     public final NumberParameter delay = new NumberParameter("Delay", 200, 50, 1000, 50);
@@ -28,8 +31,6 @@ public class AutoTunnel extends Module {
         if (!hasTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
-
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (hasMiningTarget && mc.gameMode != null) {
@@ -38,7 +39,6 @@ public class AutoTunnel extends Module {
         hasMiningTarget = false;
         hasTarget = false;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -142,9 +142,22 @@ public class AutoTunnel extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoTunnel.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoTunnel").getEnabled();
     }
     public static AutoTunnel itz() {
-        return ModuleManager.get(AutoTunnel.class);
+        return ravex.manager.ModuleManager.delegate(AutoTunnel.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

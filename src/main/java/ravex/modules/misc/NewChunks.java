@@ -1,4 +1,6 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
@@ -12,7 +14,7 @@ import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.Render3DUtils;
@@ -21,9 +23,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
-import ravex.manager.ModuleManager;
-public class NewChunks extends Module {
-    public final BooleanParameter notify = new BooleanParameter("Notify", true);
+
+@ModuleInfo(name = "NewChunks", category = "Misc")
+public class NewChunks extends ravex.modules.Module {
+public final BooleanParameter notify = new BooleanParameter("Notify", true);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter renderLoaded = new BooleanParameter("RenderLoaded", true);
     public final BooleanParameter renderVisited = new BooleanParameter("RenderVisited", true);
@@ -40,8 +43,6 @@ public class NewChunks extends Module {
         NATIVE.load();
     }
     private static native int nativeAnalyzeChunk(String[] blockNames, int[] blockYs);
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -106,7 +107,7 @@ public class NewChunks extends Module {
                 Minecraft.getInstance().execute(() -> {
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null) {
-                        int color = ModuleManager.get(ravex.modules.client.Notifications.class).messageColor.getValue();
+                        int color = ravex.manager.ModuleManager.delegate(ravex.modules.client.Notifications.class).messageColor.getValue();
                         Component message = Component.literal("[")
                             .withStyle(style -> style.withColor(0x7F7F7F))
                             .append(Component.literal("NewChunks").withStyle(style -> style.withColor(color)))
@@ -200,7 +201,6 @@ public class NewChunks extends Module {
             Render3DUtils.batchFilledBox(reusable, 1.0, r, g, b, a * 0.15f, true);
         } catch (Exception ignored) {}
     }
-    @Override
     protected void onDisable() {
         loadedChunks.clear();
         visitedChunks.clear();
@@ -209,10 +209,23 @@ public class NewChunks extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(NewChunks.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NewChunks").getEnabled();
     }
 
     public static NewChunks itz() {
-        return ModuleManager.get(NewChunks.class);
+        return ravex.manager.ModuleManager.delegate(NewChunks.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

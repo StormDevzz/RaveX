@@ -1,5 +1,6 @@
 package ravex.modules.world.nuker;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
@@ -10,7 +11,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.ActionParameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -20,8 +21,9 @@ import ravex.modules.world.GhostBlocks;
 import ravex.utility.nativelib.NativeLibrary;
 import java.util.ArrayList;
 import java.util.List;
-public class Nuker extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
+@ModuleInfo(name = "Nuker", category = "World")
+public class Nuker extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 5.0, 1.0, 10.0, 0.5);
     public final ModeParameter mode = new ModeParameter("Mode", "Sphere", List.of("Sphere", "Cube"));
     public final NumberParameter delay = new NumberParameter("Delay", 200, 50, 1000, 50);
     public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", false);
@@ -46,8 +48,6 @@ public class Nuker extends Module {
         int[] bx, int[] by, int[] bz,
         int blockCount
     );
-
-    @Override
     public void saveExtra(JsonObject obj) {
         JsonArray arr = new JsonArray();
         for (Identifier id : NukerData.INSTANCE.getSelectedBlocks()) {
@@ -55,7 +55,6 @@ public class Nuker extends Module {
         }
         obj.add("selectedBlocks", arr);
     }
-    @Override
     public void loadExtra(JsonObject obj) {
         if (!obj.has("selectedBlocks")) return;
         NukerData.INSTANCE.clear();
@@ -65,7 +64,6 @@ public class Nuker extends Module {
             NukerData.INSTANCE.select(id);
         }
     }
-    @Override
     protected void onDisable() {
         Minecraft mc = Minecraft.getInstance();
         if (currentMiningTarget != null && mc.gameMode != null) {
@@ -74,7 +72,6 @@ public class Nuker extends Module {
         currentMiningTarget = null;
         currentTarget = null;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -117,7 +114,7 @@ public class Nuker extends Module {
         }
         if (candidates.isEmpty()) {
             currentTarget = null;
-            if (autoDisable.getValue()) setEnabled(false);
+            if (autoDisable.getValue()) enabled = false;
             return;
         }
         BlockPos target = null;
@@ -218,6 +215,19 @@ public class Nuker extends Module {
         }
     }
     public static Nuker itz() {
-        return ModuleManager.get(Nuker.class);
+        return ravex.manager.ModuleManager.delegate(Nuker.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

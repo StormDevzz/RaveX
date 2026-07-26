@@ -1,14 +1,16 @@
 package ravex.modules.world;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
-public class AutoWither extends Module {
-    public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0, 1.0);
+@ModuleInfo(name = "AutoWither", category = "World")
+public class AutoWither extends ravex.modules.Module {
+public final NumberParameter count = new NumberParameter("Count", 1.0, 1.0, 12.0, 1.0);
     public final BooleanParameter autoDisable = new BooleanParameter("AutoDisable", true);
     private enum State { IDLE, BUILDING, RETRY, DONE }
     private State state = State.IDLE;
@@ -24,8 +26,6 @@ public class AutoWither extends Module {
         {1, 0, 0}, {0, 1, 0}, {1, 1, 0}, {2, 1, 0}, {0, 2, 0}, {2, 2, 0}, {1, 2, 0},
     };
     private static final int SOUL_SAND_COUNT = 4;
-
-    @Override
     protected void onEnable() {
         state = State.IDLE;
         hasBase = false;
@@ -34,13 +34,11 @@ public class AutoWither extends Module {
         hasFailed = false;
         buildsCompleted = 0;
     }
-    @Override
     protected void onDisable() {
         state = State.IDLE;
         hasBase = false;
         buildIndex = 0;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -117,7 +115,7 @@ public class AutoWither extends Module {
             }
         }
         sendMsg(mc, "NoSuitablePositionFound");
-        setEnabled(false);
+        enabled = false;
     }
     private void tryPlaceNext(Minecraft mc, long now) {
         if (now - lastActionTime < 50) return;
@@ -139,7 +137,7 @@ public class AutoWither extends Module {
         int slot = findItemSlot(mc);
         if (slot == -1) {
             sendMsg(mc, getMissingMsg());
-            setEnabled(false);
+            enabled = false;
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.player);
@@ -183,7 +181,7 @@ public class AutoWither extends Module {
         int slot = findItemSlot(mc);
         if (slot == -1) {
             sendMsg(mc, getMissingMsg());
-            setEnabled(false);
+            enabled = false;
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.player);
@@ -207,7 +205,7 @@ public class AutoWither extends Module {
             state = State.BUILDING;
         } else {
             if (autoDisable.getValue()) {
-                setEnabled(false);
+                enabled = false;
             } else {
                 state = State.IDLE;
             }
@@ -257,6 +255,19 @@ public class AutoWither extends Module {
         }
     }
     public static AutoWither itz() {
-        return ModuleManager.get(AutoWither.class);
+        return ravex.manager.ModuleManager.delegate(AutoWither.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,13 +1,13 @@
 package ravex.modules.render;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.modules.combat.KillAura;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
@@ -16,8 +16,9 @@ import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CityESP extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 10.0, 0.5);
+@ModuleInfo(name = "CityESP", category = "Render")
+public class CityESP extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 6.0, 3.0, 10.0, 0.5);
     public final NumberParameter renderRange = new NumberParameter("RenderRange", 64.0, 8.0, 128.0, 8.0);
     public final BooleanParameter filled = new BooleanParameter("Filled", true);
     public final BooleanParameter wireframe = new BooleanParameter("Wireframe", true);
@@ -27,17 +28,15 @@ public class CityESP extends Module {
     private BlockPos cityBlock;
 
     private CityESP() {
-        super("CityESP");
+        
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
         Player target = null;
-        if (ModuleManager.get(KillAura.class).getEnabled()) {
-            var kaTarget = ModuleManager.get(KillAura.class).getCurrentTarget();
+        if (ravex.manager.ModuleManager.delegate(KillAura.class).getEnabled()) {
+            var kaTarget = ravex.manager.ModuleManager.delegate(KillAura.class).getCurrentTarget();
             if (kaTarget instanceof Player p && p.isAlive() && mc.player.distanceTo(p) <= range.getValue()) {
                 target = p;
             }
@@ -89,10 +88,23 @@ public class CityESP extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(CityESP.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("CityESP").getEnabled();
     }
 
     public static CityESP itz() {
-        return ModuleManager.get(CityESP.class);
+        return ravex.manager.ModuleManager.delegate(CityESP.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

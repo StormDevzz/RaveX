@@ -1,18 +1,18 @@
 package ravex.modules.render;
-import ravex.manager.ModuleManager;
 
+import ravex.modules.annotations.ModuleInfo;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Waypoint extends Module {
-
-    public record WaypointData(String name, double x, double y, double z, String dimension) {
+@ModuleInfo(name = "Waypoint", category = "Render")
+public class Waypoint extends ravex.modules.Module {
+public record WaypointData(String name, double x, double y, double z, String dimension) {
     }
 
     public final List<WaypointData> waypoints = new ArrayList<>();
@@ -24,31 +24,31 @@ public class Waypoint extends Module {
     public final BooleanParameter showBeam = new BooleanParameter("Beam", true);
 
     public static List<WaypointData> getWaypoints() {
-        return ModuleManager.get(Waypoint.class).waypoints;
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).waypoints;
     }
 
     public static int getColor() {
-        return ModuleManager.get(Waypoint.class).color.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).color.getValue();
     }
 
     public static double getMarkerSize() {
-        return ModuleManager.get(Waypoint.class).markerSize.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).markerSize.getValue();
     }
 
     public static double getRange() {
-        return ModuleManager.get(Waypoint.class).range.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).range.getValue();
     }
 
     public static boolean isShowName() {
-        return ModuleManager.get(Waypoint.class).showName.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).showName.getValue();
     }
 
     public static boolean isShowDistance() {
-        return ModuleManager.get(Waypoint.class).showDistance.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).showDistance.getValue();
     }
 
     public static boolean isShowBeam() {
-        return ModuleManager.get(Waypoint.class).showBeam.getValue();
+        return ravex.manager.ModuleManager.delegate(Waypoint.class).showBeam.getValue();
     }
 
     public void addWaypoint(String name, double x, double y, double z, String dimension) {
@@ -62,8 +62,6 @@ public class Waypoint extends Module {
     public void clearWaypoints() {
         waypoints.clear();
     }
-
-    @Override
     public void saveExtra(JsonObject obj) {
         JsonArray arr = new JsonArray();
         for (WaypointData wp : waypoints) {
@@ -77,8 +75,6 @@ public class Waypoint extends Module {
         }
         obj.add("waypoints", arr);
     }
-
-    @Override
     public void loadExtra(JsonObject obj) {
         waypoints.clear();
         if (obj.has("waypoints")) {
@@ -95,10 +91,23 @@ public class Waypoint extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Waypoint.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Waypoint").getEnabled();
     }
 
     public static Waypoint itz() {
-        return ModuleManager.get(Waypoint.class);
+        return ravex.manager.ModuleManager.delegate(Waypoint.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

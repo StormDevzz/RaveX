@@ -1,16 +1,19 @@
 package ravex.modules.movement;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Input;
-import ravex.manager.ModuleManager;
+
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import java.util.List;
 import java.util.Random;
 
-public class TickShift extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("Motion", "Strafe", "Timer", "GrimStrict"));
+@ModuleInfo(name = "TickShift", category = "Movement")
+public class TickShift extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Motion", List.of("Motion", "Strafe", "Timer", "GrimStrict"));
     public final NumberParameter delay = new NumberParameter("Delay", 20.0, 1.0, 200.0, 1.0);
     public final NumberParameter duration = new NumberParameter("Duration", 10.0, 1.0, 100.0, 1.0);
     public final NumberParameter speed = new NumberParameter("Speed", 1.8, 1.0, 5.0, 0.1);
@@ -31,15 +34,11 @@ public class TickShift extends Module {
         grimSpeed.setVisible(() -> "GrimStrict".equals(mode.getValue()));
         grimDelay.setVisible(() -> "GrimStrict".equals(mode.getValue()));
     }
-
-    @Override
     protected void onEnable() {
         idleTicks = 0;
         boostTicks = 0;
         releaseCounter = 0;
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -115,6 +114,19 @@ public class TickShift extends Module {
         }
     }
     public static TickShift itz() {
-        return ModuleManager.get(TickShift.class);
+        return ravex.manager.ModuleManager.delegate(TickShift.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,10 +1,11 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
@@ -14,8 +15,9 @@ import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-public class HoleFill extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0, 0.5);
+@ModuleInfo(name = "HoleFill", category = "Combat")
+public class HoleFill extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.0, 2.0, 8.0, 0.5);
     public final NumberParameter delay = new NumberParameter("Delay", 80, 20, 300, 10);
     public final NumberParameter maxBlocks = new NumberParameter("MaxBlocks", 6, 1, 24, 1);
     public final BooleanParameter fillAll = new BooleanParameter("FillAll", false);
@@ -33,21 +35,17 @@ public class HoleFill extends Module {
     private int holeIndex = 0;
     private long lastActionTime = 0;
     private int totalPlaced = 0;
-
-    @Override
     protected void onEnable() {
         state = State.IDLE;
         holes.clear();
         holeIndex = 0;
         totalPlaced = 0;
     }
-    @Override
     protected void onDisable() {
         state = State.IDLE;
         holes.clear();
         holeIndex = 0;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -57,7 +55,7 @@ public class HoleFill extends Module {
             case SEARCH -> searchHoles(mc);
             case PLACING -> placeNext(mc, now);
             case DONE -> {
-                if (autoDisable.getValue()) setEnabled(false);
+                if (autoDisable.getValue()) enabled = false;
                 else state = State.IDLE;
             }
         }
@@ -168,7 +166,7 @@ public class HoleFill extends Module {
         int slot = findBlockSlot(mc);
         if (slot == -1) {
             sendMsg(mc, "Not enough blocks, disabling");
-            setEnabled(false);
+            enabled = false;
             return;
         }
         if (!BlockUtility.placeBlock(mc, BlockUtility.fromPacked(targetPacked), slot)) {
@@ -198,9 +196,22 @@ public class HoleFill extends Module {
         double px, double py, double pz, double range, int maxResults);
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(HoleFill.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("HoleFill").getEnabled();
     }
     public static HoleFill itz() {
-        return ModuleManager.get(HoleFill.class);
+        return ravex.manager.ModuleManager.delegate(HoleFill.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,15 +1,17 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import ravex.modules.Module;
-import ravex.manager.ModuleManager;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import java.util.ArrayList;
 import java.util.List;
-public class StashFinder extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 64.0, 16.0, 256.0, 8.0);
+@ModuleInfo(name = "StashFinder", category = "Misc")
+public class StashFinder extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 64.0, 16.0, 256.0, 8.0);
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final BooleanParameter logToChat = new BooleanParameter("ChatLog", true);
     private final List<StashEntry> stashes = new ArrayList<>();
@@ -71,10 +73,23 @@ public class StashFinder extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(StashFinder.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("StashFinder").getEnabled();
     }
 
     public static StashFinder itz() {
-        return ModuleManager.get(StashFinder.class);
+        return ravex.manager.ModuleManager.delegate(StashFinder.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

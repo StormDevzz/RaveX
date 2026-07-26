@@ -1,13 +1,27 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.NumberParameter;
-public class FastBreak extends Module {
-    public final NumberParameter delay = new NumberParameter("Delay", 0, 0, 4, 1);
+@ModuleInfo(name = "FastBreak", category = "Player")
+public class FastBreak extends ravex.modules.Module {
+public final NumberParameter delay = new NumberParameter("Delay", 0, 0, 4, 1);
     public static boolean maybeEnabled() {
-        return maybeEnabled(FastBreak.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("FastBreak").getEnabled();
     }
     public static FastBreak itz() {
-        return ModuleManager.get(FastBreak.class);
+        return ravex.manager.ModuleManager.delegate(FastBreak.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

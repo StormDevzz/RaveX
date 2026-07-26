@@ -1,12 +1,14 @@
 package ravex.modules.movement;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import java.util.List;
 import java.util.Random;
-public class NoRotate extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Strict"));
+@ModuleInfo(name = "NoRotate", category = "Movement")
+public class NoRotate extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Normal", List.of("Normal", "Strict"));
     private float savedYaw;
     private float savedPitch;
     private final Random random = new Random();
@@ -37,9 +39,22 @@ public class NoRotate extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(NoRotate.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("NoRotate").getEnabled();
     }
     public static NoRotate itz() {
-        return ModuleManager.get(NoRotate.class);
+        return ravex.manager.ModuleManager.delegate(NoRotate.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

@@ -1,16 +1,18 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import ravex.event.Subscribe;
 import ravex.event.combat.TotemPopEvent;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import java.util.HashMap;
 import java.util.Map;
-public class PopCounter extends Module {
-    public final BooleanParameter onlyOwn = new BooleanParameter("OnlyOwn", false);
+@ModuleInfo(name = "PopCounter", category = "Misc")
+public class PopCounter extends ravex.modules.Module {
+public final BooleanParameter onlyOwn = new BooleanParameter("OnlyOwn", false);
     private final Map<String, Integer> popCounts = new HashMap<>();
 
     @Subscribe
@@ -38,6 +40,19 @@ public class PopCounter extends Module {
     }
 
     public static PopCounter itz() {
-        return ModuleManager.get(PopCounter.class);
+        return ravex.manager.ModuleManager.delegate(PopCounter.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

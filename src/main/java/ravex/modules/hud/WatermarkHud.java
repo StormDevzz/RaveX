@@ -1,4 +1,6 @@
 package ravex.modules.hud;
+
+import ravex.modules.annotations.ModuleInfo;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
@@ -8,16 +10,22 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import ravex.RaveX;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.parameter.ColorParameter;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import net.minecraft.resources.Identifier;
-import ravex.manager.ModuleManager;
 
-public class WatermarkHud extends Module {
-    private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", "textures/ravexx");
+@ModuleInfo(name = "WatermarkHud", category = "HUD")
+public class WatermarkHud extends ravex.modules.Module {
+    public final ColorParameter color = new ColorParameter("Color", 0xFF1E88E5);
+
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", "textures/ravexx");
     private static final int LOGO_W = 305;
     private static final int LOGO_H = 349;
     private static boolean logoLoaded = false;
@@ -49,14 +57,8 @@ public class WatermarkHud extends Module {
         }
     }
 
-    private WatermarkHud() {
-        super("Watermark", 10, 10, 80, 14);
-        addParameter(new ColorParameter("Color", 0xFF1E88E5));
-    }
-
-    @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
 
         if (!logoLoaded) ensureLogo();
 
@@ -65,13 +67,13 @@ public class WatermarkHud extends Module {
             if (p instanceof ColorParameter cp && cp.getName().equals("Color")) ac = cp.getValue();
         }
 
-        int bx = getX(), by = getY();
+        int bx = x, by = y;
         long now = System.currentTimeMillis();
         float aspect = (float) LOGO_W / LOGO_H;
         int logoH = 22;
         int logoW = (int) (logoH * aspect);
-        setWidth(logoW);
-        setHeight(logoH);
+        width = logoW;
+        height = logoH;
 
         int cx = bx + logoW / 2;
         int cy = by + logoH / 2;
@@ -86,10 +88,45 @@ public class WatermarkHud extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(WatermarkHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("WatermarkHud").getEnabled();
     }
 
     public static WatermarkHud itz() {
-        return ModuleManager.get(WatermarkHud.class);
+        return ravex.manager.ModuleManager.delegate(WatermarkHud.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

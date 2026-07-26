@@ -1,19 +1,18 @@
 package ravex.modules.client;
-import ravex.manager.ModuleManager;
 
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import ravex.modules.Module;
+
 import ravex.parameter.NumberParameter;
 
-public class FastLatency extends Module {
-    public final NumberParameter interval = new NumberParameter("Interval", 1000.0, 200.0, 5000.0, 100.0);
+@ModuleInfo(name = "FastLatency", category = "Client")
+public class FastLatency extends ravex.modules.Module {
+public final NumberParameter interval = new NumberParameter("Interval", 1000.0, 200.0, 5000.0, 100.0);
     private long lastPingTime = 0;
     private long lastPingSentAt = 0;
     private int measuredPing = -1;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.getConnection() == null)
@@ -46,8 +45,8 @@ public class FastLatency extends Module {
 
     public static int getDisplayPing() {
         Minecraft mc = Minecraft.getInstance();
-        if (ModuleManager.get(FastLatency.class).getEnabled() && ModuleManager.get(FastLatency.class).measuredPing >= 0) {
-            return ModuleManager.get(FastLatency.class).measuredPing;
+        if (ravex.manager.ModuleManager.delegate(FastLatency.class).getEnabled() && ravex.manager.ModuleManager.delegate(FastLatency.class).measuredPing >= 0) {
+            return ravex.manager.ModuleManager.delegate(FastLatency.class).measuredPing;
         }
         if (mc.getConnection() != null && mc.player != null) {
             PlayerInfo info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
@@ -57,10 +56,23 @@ public class FastLatency extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(FastLatency.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("FastLatency").getEnabled();
     }
 
     public static FastLatency itz() {
-        return ModuleManager.get(FastLatency.class);
+        return ravex.manager.ModuleManager.delegate(FastLatency.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

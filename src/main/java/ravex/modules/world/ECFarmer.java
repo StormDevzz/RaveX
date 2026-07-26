@@ -1,19 +1,22 @@
 package ravex.modules.world;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.nativelib.NativeLibrary;
-import ravex.manager.ModuleManager;
+
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.List;
-public class ECFarmer extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.5);
+@ModuleInfo(name = "ECFarmer", category = "World")
+public class ECFarmer extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.5, 1.0, 6.0, 0.5);
     public final ModeParameter swapMode = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal"));
     public final BooleanParameter render = new BooleanParameter("Render", true);
     public final ColorParameter color = new ColorParameter("Color", 0x3F8800FF);
@@ -35,15 +38,12 @@ public class ECFarmer extends Module {
         if (!hasRenderTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
-
-    @Override
     protected void onEnable() {
         state = State.IDLE;
         hasEc = false;
         hasRenderTarget = false;
         prevSlot = -1;
     }
-    @Override
     protected void onDisable() {
         if (hasEc) {
             var st = BlockUtility.getState(Minecraft.getInstance().level, ecX, ecY, ecZ);
@@ -57,7 +57,6 @@ public class ECFarmer extends Module {
         prevSlot = -1;
         state = State.IDLE;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -274,9 +273,22 @@ public class ECFarmer extends Module {
     private static native int nativeCalcDurabilityLoss(String toolId, int efficiency);
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(ECFarmer.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ECFarmer").getEnabled();
     }
     public static ECFarmer itz() {
-        return ModuleManager.get(ECFarmer.class);
+        return ravex.manager.ModuleManager.delegate(ECFarmer.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

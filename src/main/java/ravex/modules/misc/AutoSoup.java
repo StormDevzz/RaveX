@@ -1,21 +1,21 @@
 package ravex.modules.misc;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import ravex.mixin.client.AccessorMinecraft;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
-public class AutoSoup extends Module {
-    public final NumberParameter health = new NumberParameter("Health", 10.0, 1.0, 20.0, 1.0);
+@ModuleInfo(name = "AutoSoup", category = "Misc")
+public class AutoSoup extends ravex.modules.Module {
+public final NumberParameter health = new NumberParameter("Health", 10.0, 1.0, 20.0, 1.0);
     public final BooleanParameter hotbarOnly = new BooleanParameter("HotbarOnly", true);
     private long lastUse = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -59,6 +59,19 @@ public class AutoSoup extends Module {
     }
 
     public static AutoSoup itz() {
-        return ModuleManager.get(AutoSoup.class);
+        return ravex.manager.ModuleManager.delegate(AutoSoup.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

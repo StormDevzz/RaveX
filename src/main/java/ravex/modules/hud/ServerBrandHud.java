@@ -1,29 +1,35 @@
 package ravex.modules.hud;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.utility.interfaces.IClientPacketListener;
 import ravex.utility.nativelib.NativeLibrary;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
-import ravex.manager.ModuleManager;
-public class ServerBrandHud extends Module {
-    private static final Identifier ICON = TextureLoader.HUD_SERVERBRAND_WHITE;
+
+@ModuleInfo(name = "ServerBrandHud", category = "HUD")
+public class ServerBrandHud extends ravex.modules.Module {
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final Identifier ICON = TextureLoader.HUD_SERVERBRAND_WHITE;
     private static final int IS = HudRenderer.getIconSize();
     private static final NativeLibrary NATIVE = NativeLibrary.of("ravex_jni");
     static {
         NATIVE.load();
     }
     private ServerBrandHud() {
-        super("ServerBrand", 10, 200, 100, 26);
+        this.x = 10; this.y = 200; this.width = 100; this.height = 26;
     }
     public static native String nativeFormatBrand(String rawBrand);
-    @Override
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.player.connection == null) return;
         String rawBrand = null;
@@ -47,19 +53,54 @@ public class ServerBrandHud extends Module {
         int tw = ravex.utility.render.FontRenderUtility.getStringWidth(labelText);
         int pw = Math.max(100, 4 + tw + 4 + IS + 4);
         int ph = 26;
-        setWidth(pw);
-        setHeight(ph);
-        int bx = getX(), by = getY();
+        width = pw;
+        height = ph;
+        int bx = x, by = y;
         HudRenderer.drawBackground(graphics, bx, by, pw, ph);
         ravex.utility.render.FontRenderUtility.drawString(graphics, labelText, bx + 4, by + 8, 0xFFFFFFFF, false);
         HudRenderer.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
     }
 
     public static ServerBrandHud itz() {
-        return ModuleManager.get(ServerBrandHud.class);
+        return ravex.manager.ModuleManager.delegate(ServerBrandHud.class);
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(ServerBrandHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ServerBrandHud").getEnabled();
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

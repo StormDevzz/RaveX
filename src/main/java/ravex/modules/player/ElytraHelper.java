@@ -1,6 +1,6 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -8,8 +8,9 @@ import ravex.utility.player.ElytraUtility;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.Minecraft;
 import java.util.List;
-public class ElytraHelper extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Swap", List.of("Swap", "Replace", "Auto"));
+@ModuleInfo(name = "ElytraHelper", category = "Player")
+public class ElytraHelper extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Swap", List.of("Swap", "Replace", "Auto"));
     public final ModeParameter swapMode = new ModeParameter("SwapMode", "Positive1", List.of("Positive1", "Positive2", "Positive3"));
     public final NumberParameter minDurability = new NumberParameter("MinDurability", 10.0, 1.0, 50.0, 1.0);
     public final BooleanParameter preferBetter = new BooleanParameter("PreferBetter", true);
@@ -27,7 +28,7 @@ public class ElytraHelper extends Module {
     private long lastRocketTime = 0;
 
     private ElytraHelper() {
-        super("ElytraHelper");
+        
         swapMode.setVisible(() -> mode.getValue().equals("Swap"));
         minDurability.setVisible(() -> mode.getValue().equals("Replace") || mode.getValue().equals("Auto"));
         preferBetter.setVisible(() -> mode.getValue().equals("Replace") || mode.getValue().equals("Auto"));
@@ -35,19 +36,18 @@ public class ElytraHelper extends Module {
         rocketDelay.setVisible(() -> rocketMode.getValue().equals("Auto"));
         pitchAngle.setVisible(() -> autoPitch.getValue());
     }
-    @Override
     protected void onEnable() {
         if ("Swap".equals(mode.getValue())) initSwap();
     }
     private void initSwap() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
-        if (p == null || mc.gameMode == null) { setEnabled(false); return; }
+        if (p == null || mc.gameMode == null) { enabled = false; return; }
         boolean hasElytra = ElytraUtility.isElytraEquipped(p);
         int foundSlot = hasElytra ? ElytraUtility.findChestplateSlot(p) : ElytraUtility.findElytraSlot(p);
         if (foundSlot == -1) {
             p.displayClientMessage(net.minecraft.network.chat.Component.literal("§7[§5ElytraHelper§7] §cNo replacement chest item found!"), false);
-            setEnabled(false); return;
+            enabled = false; return;
         }
         targetInvSlot = foundSlot;
         state = 0;
@@ -57,16 +57,15 @@ public class ElytraHelper extends Module {
             InventoryUtility.clickSlot(mc, p, foundSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP);
             InventoryUtility.clickChestSlot(mc, p, 6, net.minecraft.world.inventory.ClickType.PICKUP);
             InventoryUtility.clickSlot(mc, p, foundSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP);
-            setEnabled(false);
+            enabled = false;
         } else if ("Positive3".equals(cm)) {
             InventoryUtility.openInventoryScreen(p);
         }
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
-        if (p == null || mc.gameMode == null) { setEnabled(false); return; }
+        if (p == null || mc.gameMode == null) { enabled = false; return; }
         String m = mode.getValue();
         if ("Swap".equals(m)) tickSwap(mc, p);
         else if ("Replace".equals(m) || "Auto".equals(m)) tickReplace(mc, p);
@@ -104,7 +103,7 @@ public class ElytraHelper extends Module {
         if (state == 0) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP); state = 1; lastActionTime = now; }
         else if (state == 1) { InventoryUtility.clickChestSlot(mc, p, 6, net.minecraft.world.inventory.ClickType.PICKUP); state = 2; lastActionTime = now; }
         else if (state == 2) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP); state = 3; lastActionTime = now; }
-        else if (state == 3) { if ("Positive3".equals(swapMode.getValue())) mc.setScreen(null); setEnabled(false); }
+        else if (state == 3) { if ("Positive3".equals(swapMode.getValue())) mc.setScreen(null); enabled = false; }
     }
     private void tickReplace(Minecraft mc, net.minecraft.client.player.LocalPlayer p) {
         if (!ElytraUtility.isElytraEquipped(p)) return;
@@ -117,10 +116,22 @@ public class ElytraHelper extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(ElytraHelper.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").getEnabled();
     }
     public static ElytraHelper itz() {
-        return ModuleManager.get(ElytraHelper.class);
+        return ravex.manager.ModuleManager.delegate(ElytraHelper.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

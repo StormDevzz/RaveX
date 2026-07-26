@@ -1,28 +1,33 @@
 package ravex.modules.hud;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemCooldowns;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Module;
+
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.HudRenderer;
 import ravex.utility.render.TextureLoader;
 import java.util.*;
-import ravex.manager.ModuleManager;
-public class CooldownsHud extends Module {
-    private static final Identifier ICON = TextureLoader.HUD_COOLDOWN_WHITE;
+
+@ModuleInfo(name = "CooldownsHud", category = "HUD")
+public class CooldownsHud extends ravex.modules.Module {
+    public final ColorParameter color = new ColorParameter("Color", 0xFFFFCC33);
+    public final BooleanParameter shadow = new BooleanParameter("Shadow", true);
+
+    public int x;
+    public int y;
+    public int width;
+    public int height;
+private static final Identifier ICON = TextureLoader.HUD_COOLDOWN_WHITE;
     private static final int IS = HudRenderer.getIconSize();
-    private CooldownsHud() {
-        super("Cooldowns", 10, 260, 90, 14);
-        addParameter(new ColorParameter("Color", 0xFFFFCC33));
-        addParameter(new BooleanParameter("Shadow", true));
-    }
-    @Override
+
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ModuleManager.get(Hud.class).getEnabled()) return;
+        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         int col = 0xFFFFCC33;
@@ -46,7 +51,7 @@ public class CooldownsHud extends Module {
             }
         }
         if (lines.isEmpty()) return;
-        int bx = getX(), by = getY();
+        int bx = x, by = y;
         int lh = 10;
         int pw = 10;
         for (var line : lines) {
@@ -55,8 +60,8 @@ public class CooldownsHud extends Module {
         }
         pw = 4 + pw + 4 + IS + 4;
         int ph = lines.size() * lh + 8;
-        setWidth(pw);
-        setHeight(ph);
+        width = pw;
+        height = ph;
         HudRenderer.drawBackground(graphics, bx, by, pw, ph);
         int cy = by + 5;
         for (var line : lines) {
@@ -67,10 +72,45 @@ public class CooldownsHud extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(CooldownsHud.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("CooldownsHud").getEnabled();
     }
 
     public static CooldownsHud itz() {
-        return ModuleManager.get(CooldownsHud.class);
+        return ravex.manager.ModuleManager.delegate(CooldownsHud.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
+    
+
+    @Override
+    public int getX() { return x; }
+    @Override
+    public void setX(int x) { this.x = x; }
+    @Override
+    public int getY() { return y; }
+    @Override
+    public void setY(int y) { this.y = y; }
+    @Override
+    public int getWidth() { return width; }
+    @Override
+    public void setWidth(int w) { this.width = w; }
+    @Override
+    public int getHeight() { return height; }
+    @Override
+    public void setHeight(int h) { this.height = h; }
+
+    public boolean isHud() {
+        return hud;
     }
 }

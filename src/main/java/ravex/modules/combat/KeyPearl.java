@@ -1,15 +1,15 @@
 package ravex.modules.combat;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
-import ravex.modules.Module;
+
 import ravex.parameter.ModeParameter;
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
-public class KeyPearl extends Module {
-    public final ModeParameter swap = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal"));
-
-    @Override
+@ModuleInfo(name = "KeyPearl", category = "Combat")
+public class KeyPearl extends ravex.modules.Module {
+public final ModeParameter swap = new ModeParameter("Swap", "Silent", List.of("Silent", "Normal"));
     protected void onEnable() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -25,13 +25,25 @@ public class KeyPearl extends Module {
         if ("Silent".equals(swap.getValue())) {
             InventoryUtility.selectSlot(mc.player, prevSlot);
         }
-        setEnabled(false);
+        enabled = false;
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(KeyPearl.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("KeyPearl").getEnabled();
     }
     public static KeyPearl itz() {
-        return ModuleManager.get(KeyPearl.class);
+        return ravex.manager.ModuleManager.delegate(KeyPearl.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

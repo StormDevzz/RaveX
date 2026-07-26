@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <variant>
+#include <cstdint>
 #include <stdexcept>
 
 namespace ravex {

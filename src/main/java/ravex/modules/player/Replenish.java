@@ -1,18 +1,18 @@
 package ravex.modules.player;
-import ravex.manager.ModuleManager;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.ClickType;
-import ravex.modules.Module;
+
 import ravex.parameter.NumberParameter;
 import ravex.utility.player.InventoryUtility;
-public class Replenish extends Module {
-    public final NumberParameter threshold = new NumberParameter("Threshold", 32, 1, 64, 1);
+@ModuleInfo(name = "Replenish", category = "Player")
+public class Replenish extends ravex.modules.Module {
+public final NumberParameter threshold = new NumberParameter("Threshold", 32, 1, 64, 1);
     private long lastActionTime = 0;
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gameMode == null) return;
@@ -44,10 +44,22 @@ public class Replenish extends Module {
         }
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(Replenish.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("Replenish").getEnabled();
     }
     public static Replenish itz() {
-        return ModuleManager.get(Replenish.class);
+        return ravex.manager.ModuleManager.delegate(Replenish.class);
     }
 
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
+    }
 }

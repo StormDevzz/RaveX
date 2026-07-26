@@ -1,4 +1,6 @@
 package ravex.modules.combat;
+
+import ravex.modules.annotations.ModuleInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -11,7 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import ravex.modules.Module;
+
 import ravex.parameter.BooleanParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
@@ -24,9 +26,10 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 import java.util.ArrayList;
 import java.util.List;
-import ravex.manager.ModuleManager;
-public class AutoCrystal extends Module {
-    public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",    4.5, 1.0, 6.0, 0.1);
+
+@ModuleInfo(name = "AutoCrystal", category = "Combat")
+public class AutoCrystal extends ravex.modules.Module {
+public final NumberParameter  placeRange     = new NumberParameter("PlaceRange",    4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  breakRange     = new NumberParameter("BreakRange",    4.5, 1.0, 6.0, 0.1);
     public final NumberParameter  placeDelay     = new NumberParameter("PlaceDelay",   100, 0, 500, 10);
     public final NumberParameter  breakDelay     = new NumberParameter("BreakDelay",    50, 0, 500, 10);
@@ -114,7 +117,7 @@ public class AutoCrystal extends Module {
             double[] blockData
     );
     private AutoCrystal() {
-        super("AutoCrystal");
+        
         armorPercent.setVisible(() -> armorBreaker.getValue());
         renderDamage.setVisible(() -> renderPlacement.getValue());
         antiSuicideMinHp.setVisible(() -> antiSuicide.getValue());
@@ -139,7 +142,6 @@ public class AutoCrystal extends Module {
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -382,8 +384,8 @@ public class AutoCrystal extends Module {
                 }
             }
         }
-        if (ModuleManager.get(ravex.modules.combat.BasePlace.class).getEnabled() && ModuleManager.get(ravex.modules.combat.BasePlace.class).autoCrystalSync.getValue() && BasePlace.lastPlacedBase != null) {
-            long msLimit = (long) (ModuleManager.get(ravex.modules.combat.BasePlace.class).syncPredictTicks.getValue() * 50);
+        if (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).getEnabled() && ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).autoCrystalSync.getValue() && BasePlace.lastPlacedBase != null) {
+            long msLimit = (long) (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).syncPredictTicks.getValue() * 50);
             if (System.currentTimeMillis() - BasePlace.lastPlacedTime <= msLimit) {
                 BlockPos predictedPos = BasePlace.lastPlacedBase;
                 double dist = Math.sqrt(predictedPos.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
@@ -540,10 +542,10 @@ public class AutoCrystal extends Module {
         return NATIVE.isLoaded();
     }
     public static boolean maybeEnabled() {
-        return maybeEnabled(AutoCrystal.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoCrystal").getEnabled();
     }
     public static AutoCrystal itz() {
-        return ModuleManager.get(AutoCrystal.class);
+        return ravex.manager.ModuleManager.delegate(AutoCrystal.class);
     }
     private double[] getEntityStats(LivingEntity player) {
         int protectionEpf = 0;
@@ -612,5 +614,18 @@ public class AutoCrystal extends Module {
         }
         stats[14] = totems;
         return stats;
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

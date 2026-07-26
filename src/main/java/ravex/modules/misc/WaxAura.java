@@ -1,6 +1,6 @@
 package ravex.modules.misc;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
@@ -13,18 +13,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.utility.player.InventoryUtility;
-public class WaxAura extends Module {
-    public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
+@ModuleInfo(name = "WaxAura", category = "Misc")
+public class WaxAura extends ravex.modules.Module {
+public final NumberParameter range = new NumberParameter("Range", 4.5, 2.0, 6.0, 0.1);
     public final NumberParameter delay = new NumberParameter("Delay", 2.0, 0.0, 20.0, 1.0);
     public final BooleanParameter autoSwap = new BooleanParameter("AutoSwap", true);
     public final BooleanParameter silent = new BooleanParameter("Silent", true);
     private int delayTimer = 0;
-
-    @Override
     protected void onEnable() {
         delayTimer = 0;
     }
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
@@ -79,6 +77,19 @@ public class WaxAura extends Module {
     }
 
     public static WaxAura itz() {
-        return ModuleManager.get(WaxAura.class);
+        return ravex.manager.ModuleManager.delegate(WaxAura.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

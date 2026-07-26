@@ -1,7 +1,6 @@
 package ravex.modules.player;
 
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -11,8 +10,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotation;
 
-public class AntiAim extends Module {
-    public final ModeParameter yawMode = new ModeParameter("YawMode", "Spin",
+@ModuleInfo(name = "AntiAim", category = "Player")
+public class AntiAim extends ravex.modules.Module {
+public final ModeParameter yawMode = new ModeParameter("YawMode", "Spin",
             List.of("Spin", "Jitter", "Static", "Random"));
     public final ModeParameter pitchMode = new ModeParameter("PitchMode", "Down",
             List.of("Down", "Up", "Jitter", "Static", "None"));
@@ -35,8 +35,6 @@ public class AntiAim extends Module {
     public static float getSilentPitch() {
         return silentRotation.pitch;
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -89,10 +87,23 @@ public class AntiAim extends Module {
     }
 
     public static boolean maybeEnabled() {
-        return maybeEnabled(AntiAim.class);
+        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiAim").getEnabled();
     }
 
     public static AntiAim itz() {
-        return ModuleManager.get(AntiAim.class);
+        return ravex.manager.ModuleManager.delegate(AntiAim.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }

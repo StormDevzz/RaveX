@@ -1,12 +1,13 @@
 package ravex.modules.movement;
-import ravex.manager.ModuleManager;
-import ravex.modules.Module;
+
+import ravex.modules.annotations.ModuleInfo;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import net.minecraft.client.Minecraft;
 import java.util.List;
-public class FastStairs extends Module {
-    public final ModeParameter mode = new ModeParameter("Mode", "Simple", List.of("Simple", "Boost"));
+@ModuleInfo(name = "FastStairs", category = "Movement")
+public class FastStairs extends ravex.modules.Module {
+public final ModeParameter mode = new ModeParameter("Mode", "Simple", List.of("Simple", "Boost"));
     public final NumberParameter speed = new NumberParameter("Speed", 1.5, 1.0, 5.0, 0.1);
     public static double calculateClimbSpeed(String mode, double currentY, double speedFactor) {
         double baseSpeed = (currentY > 0.0) ? currentY : 0.15;
@@ -15,8 +16,6 @@ public class FastStairs extends Module {
         }
         return baseSpeed * speedFactor;
     }
-
-    @Override
     public void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -29,6 +28,19 @@ public class FastStairs extends Module {
         }
     }
     public static FastStairs itz() {
-        return ModuleManager.get(FastStairs.class);
+        return ravex.manager.ModuleManager.delegate(FastStairs.class);
+    }
+
+    public java.util.List<ravex.parameter.Parameter<?>> getParameters() {
+        java.util.List<ravex.parameter.Parameter<?>> list = new java.util.ArrayList<>();
+        for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            if (ravex.parameter.Parameter.class.isAssignableFrom(field.getType())) {
+                try {
+                    field.setAccessible(true);
+                    list.add((ravex.parameter.Parameter<?>) field.get(this));
+                } catch (Exception ignored) {}
+            }
+        }
+        return list;
     }
 }
