@@ -18,9 +18,9 @@ public class AutoApple {
     public String swapMode = "Silent";
     @Parameter(name = "HealthThreshold", min = 1.0, max = 20.0, step = 0.5)
     public double healthThreshold = 10.0;
-    @Parameter(name = "GrimDelay", min = 1.0, max = 20.0, step = 0.5)
+    @Parameter(name = "GrimDelay", min = 1.0, max = 20.0, step = 0.5, visible = "mode=Grim")
     public double grimDelay = 5.0;
-    @Parameter(name = "GrimRandom")
+    @Parameter(name = "GrimRandom", visible = "mode=Grim")
     public boolean grimRandom = true;
     private int originalSlot = -1;
     private boolean isEating = false;

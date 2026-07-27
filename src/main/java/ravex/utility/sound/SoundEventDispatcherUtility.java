@@ -43,6 +43,10 @@ public class SoundEventDispatcherUtility {
             case SETTINGS_CLOSE -> SoundUtility.SETTINGS_CLOSE;
             case GUI_OPEN -> SoundUtility.GUI_OPEN;
             case GUI_CLOSE -> SoundUtility.GUI_CLOSE;
+            case HOVER -> SoundUtility.HOVER;
+            case SCROLL -> SoundUtility.SCROLL;
+            case TOGGLE -> SoundUtility.TOGGLE;
+            case SLIDE -> SoundUtility.SLIDE;
             default -> null;
         };
     }

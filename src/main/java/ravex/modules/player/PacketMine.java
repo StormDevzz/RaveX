@@ -40,9 +40,9 @@ public class PacketMine {
     public double speed = 1.0;
     @Parameter(name = "Raycast")
     public boolean raycast = false;
-    @Parameter(name = "GrimRange", min = 0.0, max = 6.0, step = 0.1)
+    @Parameter(name = "GrimRange", min = 0.0, max = 6.0, step = 0.1, visible = "mode=Grim")
     public double grimRange = 4.5;
-    @Parameter(name = "GrimMode", modes = {"Strict", "Normal", "Dev"})
+    @Parameter(name = "GrimMode", modes = {"Strict", "Normal", "Dev"}, visible = "mode=Grim")
     public String grimMode = "Strict";
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_packetmine");

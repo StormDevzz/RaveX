@@ -21,13 +21,13 @@ public class TickShift {
     public double speed = 1.8;
     @Parameter(name = "TimerSpeed", min = 1.0, max = 5.0, step = 0.1)
     public double timerSpeed = 1.5;
-    @Parameter(name = "GrimMaxTicks", min = 2.0, max = 30.0, step = 1.0)
+    @Parameter(name = "GrimMaxTicks", min = 2.0, max = 30.0, step = 1.0, visible = "mode=GrimStrict")
     public double grimMaxTicks = 10.0;
-    @Parameter(name = "GrimAccumulation", min = 0.05, max = 1.0, step = 0.05)
+    @Parameter(name = "GrimAccumulation", min = 0.05, max = 1.0, step = 0.05, visible = "mode=GrimStrict")
     public double grimAccumulation = 0.3;
-    @Parameter(name = "GrimSpeed", min = 1.0, max = 2.0, step = 0.01)
+    @Parameter(name = "GrimSpeed", min = 1.0, max = 2.0, step = 0.01, visible = "mode=GrimStrict")
     public double grimSpeed = 1.15;
-    @Parameter(name = "GrimDelay", min = 5.0, max = 200.0, step = 1.0)
+    @Parameter(name = "GrimDelay", min = 5.0, max = 200.0, step = 1.0, visible = "mode=GrimStrict")
     public double grimDelay = 50.0;
 
     private final Random random = new Random();

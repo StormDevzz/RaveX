@@ -18,6 +18,10 @@ public class SoundUtility {
     private static final Identifier GUI_OPEN_ID       = id("gui_open");
     private static final Identifier GUI_CLOSE_ID      = id("gui_close");
     private static final Identifier FAILURE_ID        = id("failure");
+    private static final Identifier HOVER_ID          = id("hover");
+    private static final Identifier SCROLL_ID         = id("scroll");
+    private static final Identifier TOGGLE_ID          = id("toggle");
+    private static final Identifier SLIDE_ID           = id("slide");
 
     public static SoundEvent ENABLE;
     public static SoundEvent DISABLE;
@@ -26,6 +30,10 @@ public class SoundUtility {
     public static SoundEvent GUI_OPEN;
     public static SoundEvent GUI_CLOSE;
     public static SoundEvent FAILURE;
+    public static SoundEvent HOVER;
+    public static SoundEvent SCROLL;
+    public static SoundEvent TOGGLE;
+    public static SoundEvent SLIDE;
 
     private static Identifier id(String name) {
         return Identifier.fromNamespaceAndPath("ravex", name);
@@ -42,6 +50,10 @@ public class SoundUtility {
         GUI_OPEN      = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_OPEN_ID,      SoundEvent.createVariableRangeEvent(GUI_OPEN_ID));
         GUI_CLOSE     = Registry.register(BuiltInRegistries.SOUND_EVENT, GUI_CLOSE_ID,     SoundEvent.createVariableRangeEvent(GUI_CLOSE_ID));
         FAILURE       = Registry.register(BuiltInRegistries.SOUND_EVENT, FAILURE_ID,       SoundEvent.createVariableRangeEvent(FAILURE_ID));
+        HOVER         = Registry.register(BuiltInRegistries.SOUND_EVENT, HOVER_ID,         SoundEvent.createVariableRangeEvent(HOVER_ID));
+        SCROLL        = Registry.register(BuiltInRegistries.SOUND_EVENT, SCROLL_ID,        SoundEvent.createVariableRangeEvent(SCROLL_ID));
+        TOGGLE        = Registry.register(BuiltInRegistries.SOUND_EVENT, TOGGLE_ID,        SoundEvent.createVariableRangeEvent(TOGGLE_ID));
+        SLIDE         = Registry.register(BuiltInRegistries.SOUND_EVENT, SLIDE_ID,         SoundEvent.createVariableRangeEvent(SLIDE_ID));
     }
 
 
@@ -55,6 +67,10 @@ public class SoundUtility {
     public static void playGuiOpen()       { play(GUI_OPEN,       1.0f); }
     public static void playGuiClose()      { play(GUI_CLOSE,      1.0f); }
     public static void playFailure()       { play(FAILURE,        1.0f); }
+    public static void playHover()         { play(HOVER,          0.5f); }
+    public static void playScroll()        { play(SCROLL,         0.5f); }
+    public static void playToggle()        { play(TOGGLE,         0.6f); }
+    public static void playSlide()         { play(SLIDE,          0.4f); }
 
 
     private static void play(SoundEvent soundEvent, float volume) {

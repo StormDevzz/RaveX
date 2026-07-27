@@ -202,42 +202,38 @@ public abstract class Module {
     private Parameter<?> createParameterFromAnnotation(java.lang.reflect.Field field, ravex.modules.annotations.Parameter ann) {
         Class<?> type = field.getType();
         String name = ann.name();
+        Parameter<?> param = null;
         if (type == boolean.class || type == Boolean.class) {
             try {
-                return new BooleanParameter(name, field.getBoolean(this));
+                param = new BooleanParameter(name, field.getBoolean(this));
             } catch (IllegalAccessException e) {
-                return new BooleanParameter(name, false);
+                param = new BooleanParameter(name, false);
             }
-        }
-        if (ann.color() && (type == int.class || type == Integer.class)) {
+        } else if (ann.color() && (type == int.class || type == Integer.class)) {
             try {
-                return new ColorParameter(name, field.getInt(this));
+                param = new ColorParameter(name, field.getInt(this));
             } catch (IllegalAccessException e) {
-                return new ColorParameter(name, 0xFFFFFFFF);
+                param = new ColorParameter(name, 0xFFFFFFFF);
             }
-        }
-        if (type == int.class || type == Integer.class) {
+        } else if (type == int.class || type == Integer.class) {
             try {
-                return new NumberParameter(name, field.getInt(this), ann.min(), ann.max(), ann.step());
+                param = new NumberParameter(name, field.getInt(this), ann.min(), ann.max(), ann.step());
             } catch (IllegalAccessException e) {
-                return new NumberParameter(name, 0, ann.min(), ann.max(), ann.step());
+                param = new NumberParameter(name, 0, ann.min(), ann.max(), ann.step());
             }
-        }
-        if (type == double.class || type == Double.class) {
+        } else if (type == double.class || type == Double.class) {
             try {
-                return new NumberParameter(name, field.getDouble(this), ann.min(), ann.max(), ann.step());
+                param = new NumberParameter(name, field.getDouble(this), ann.min(), ann.max(), ann.step());
             } catch (IllegalAccessException e) {
-                return new NumberParameter(name, 0.0, ann.min(), ann.max(), ann.step());
+                param = new NumberParameter(name, 0.0, ann.min(), ann.max(), ann.step());
             }
-        }
-        if (type == float.class || type == Float.class) {
+        } else if (type == float.class || type == Float.class) {
             try {
-                return new NumberParameter(name, field.getFloat(this), ann.min(), ann.max(), ann.step());
+                param = new NumberParameter(name, field.getFloat(this), ann.min(), ann.max(), ann.step());
             } catch (IllegalAccessException e) {
-                return new NumberParameter(name, 0.0, ann.min(), ann.max(), ann.step());
+                param = new NumberParameter(name, 0.0, ann.min(), ann.max(), ann.step());
             }
-        }
-        if (type == String.class) {
+        } else if (type == String.class) {
             String[] modes = ann.modes();
             if (modes.length > 0) {
                 String defaultValue;
@@ -246,27 +242,66 @@ public abstract class Module {
                 } catch (IllegalAccessException e) {
                     defaultValue = modes[0];
                 }
-                return new ModeParameter(name, defaultValue, java.util.Arrays.asList(modes));
+                param = new ModeParameter(name, defaultValue, java.util.Arrays.asList(modes));
+            } else {
+                try {
+                    param = new StringParameter(name, (String) field.get(this));
+                } catch (IllegalAccessException e) {
+                    param = new StringParameter(name, "");
+                }
             }
-            try {
-                return new StringParameter(name, (String) field.get(this));
-            } catch (IllegalAccessException e) {
-                return new StringParameter(name, "");
-            }
-        }
-        if (java.util.List.class.isAssignableFrom(type)) {
+        } else if (java.util.List.class.isAssignableFrom(type)) {
             String[] options = ann.options().length > 0 ? ann.options() : ann.modes();
             if (options.length > 0) {
                 try {
                     @SuppressWarnings("unchecked")
                     java.util.List<String> val = (java.util.List<String>) field.get(this);
-                    return new MultiSelectParameter(name, val != null ? val : new java.util.ArrayList<>(), java.util.Arrays.asList(options));
+                    param = new MultiSelectParameter(name, val != null ? val : new java.util.ArrayList<>(), java.util.Arrays.asList(options));
                 } catch (IllegalAccessException e) {
-                    return new MultiSelectParameter(name, new java.util.ArrayList<>(), java.util.Arrays.asList(options));
+                    param = new MultiSelectParameter(name, new java.util.ArrayList<>(), java.util.Arrays.asList(options));
                 }
             }
         }
-        return null;
+        if (param != null) {
+            applyVisibleCondition(param, ann.visible());
+        }
+        return param;
+    }
+
+    private void applyVisibleCondition(Parameter<?> param, String visibleExpr) {
+        if (visibleExpr == null || visibleExpr.isEmpty()) return;
+        int eqIdx = visibleExpr.indexOf('=');
+        String fieldName;
+        if (eqIdx >= 0) {
+            fieldName = visibleExpr.substring(0, eqIdx).trim();
+            String expectedValue = visibleExpr.substring(eqIdx + 1).trim();
+            try {
+                java.lang.reflect.Field depField = getClass().getDeclaredField(fieldName);
+                depField.setAccessible(true);
+                Object self = this;
+                param.setVisible(() -> {
+                    try {
+                        return expectedValue.equals(depField.get(self));
+                    } catch (IllegalAccessException e) {
+                        return false;
+                    }
+                });
+            } catch (NoSuchFieldException ignored) {}
+        } else {
+            fieldName = visibleExpr.trim();
+            try {
+                java.lang.reflect.Field depField = getClass().getDeclaredField(fieldName);
+                depField.setAccessible(true);
+                Object self = this;
+                param.setVisible(() -> {
+                    try {
+                        return depField.getBoolean(self);
+                    } catch (IllegalAccessException e) {
+                        return false;
+                    }
+                });
+            } catch (NoSuchFieldException ignored) {}
+        }
     }
     protected void addParameter(Parameter<?> p) {
         parameters.add(p);

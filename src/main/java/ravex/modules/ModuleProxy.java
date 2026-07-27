@@ -78,44 +78,81 @@ public final class ModuleProxy extends Module {
         if (ann == null) return null;
         Class<?> type = field.getType();
         String name = ann.name();
+        Parameter<?> param = null;
         try {
             if (type == boolean.class || type == Boolean.class) {
                 if (ann.maybe()) {
                     try { field.setBoolean(component, true); } catch (IllegalAccessException ignored) {}
-                    return new BooleanParameter(name, true);
+                    param = new BooleanParameter(name, true);
+                } else {
+                    param = new BooleanParameter(name, field.getBoolean(component));
                 }
-                return new BooleanParameter(name, field.getBoolean(component));
-            }
-            if (ann.color() && (type == int.class || type == Integer.class)) {
-                return new ColorParameter(name, field.getInt(component));
-            }
-            if (type == int.class || type == Integer.class) {
-                return new NumberParameter(name, field.getInt(component), ann.min(), ann.max(), ann.step());
-            }
-            if (type == double.class || type == Double.class) {
-                return new NumberParameter(name, field.getDouble(component), ann.min(), ann.max(), ann.step());
-            }
-            if (type == float.class || type == Float.class) {
-                return new NumberParameter(name, field.getFloat(component), ann.min(), ann.max(), ann.step());
-            }
-            if (type == String.class) {
+            } else if (ann.color() && (type == int.class || type == Integer.class)) {
+                param = new ColorParameter(name, field.getInt(component));
+            } else if (type == int.class || type == Integer.class) {
+                param = new NumberParameter(name, field.getInt(component), ann.min(), ann.max(), ann.step());
+            } else if (type == double.class || type == Double.class) {
+                param = new NumberParameter(name, field.getDouble(component), ann.min(), ann.max(), ann.step());
+            } else if (type == float.class || type == Float.class) {
+                param = new NumberParameter(name, field.getFloat(component), ann.min(), ann.max(), ann.step());
+            } else if (type == String.class) {
                 String[] modes = ann.modes();
                 String value = (String) field.get(component);
                 if (modes.length > 0) {
-                    return new ModeParameter(name, value, Arrays.asList(modes));
+                    param = new ModeParameter(name, value, Arrays.asList(modes));
+                } else {
+                    param = new StringParameter(name, value);
                 }
-                return new StringParameter(name, value);
-            }
-            if (List.class.isAssignableFrom(type)) {
+            } else if (List.class.isAssignableFrom(type)) {
                 String[] opts = ann.options().length > 0 ? ann.options() : ann.modes();
                 if (opts.length > 0) {
                     @SuppressWarnings("unchecked")
                     List<String> selected = (List<String>) field.get(component);
-                    return new MultiSelectParameter(name, selected, Arrays.asList(opts));
+                    param = new MultiSelectParameter(name, selected, Arrays.asList(opts));
                 }
             }
         } catch (IllegalAccessException ignored) {}
-        return null;
+
+        if (param != null) {
+            applyVisibleCondition(param, ann.visible());
+        }
+        return param;
+    }
+
+    private void applyVisibleCondition(Parameter<?> param, String visibleExpr) {
+        if (visibleExpr == null || visibleExpr.isEmpty()) return;
+        int eqIdx = visibleExpr.indexOf('=');
+        String fieldName;
+        if (eqIdx >= 0) {
+            fieldName = visibleExpr.substring(0, eqIdx).trim();
+            String expectedValue = visibleExpr.substring(eqIdx + 1).trim();
+            try {
+                Field depField = compClass.getDeclaredField(fieldName);
+                depField.setAccessible(true);
+                Object comp = component;
+                param.setVisible(() -> {
+                    try {
+                        return expectedValue.equals(depField.get(comp));
+                    } catch (IllegalAccessException e) {
+                        return false;
+                    }
+                });
+            } catch (NoSuchFieldException ignored) {}
+        } else {
+            fieldName = visibleExpr.trim();
+            try {
+                Field depField = compClass.getDeclaredField(fieldName);
+                depField.setAccessible(true);
+                Object comp = component;
+                param.setVisible(() -> {
+                    try {
+                        return depField.getBoolean(comp);
+                    } catch (IllegalAccessException e) {
+                        return false;
+                    }
+                });
+            } catch (NoSuchFieldException ignored) {}
+        }
     }
 
     private void scanHudDelegates() {

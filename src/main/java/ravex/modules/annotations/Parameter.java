@@ -16,4 +16,5 @@ public @interface Parameter {
     String[] options() default {};
     boolean color() default false;
     boolean maybe() default false;
+    String visible() default "";
 }

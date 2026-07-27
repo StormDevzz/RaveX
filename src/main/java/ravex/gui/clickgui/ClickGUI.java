@@ -109,7 +109,7 @@ public class ClickGUI extends Screen {
 
         float totalW = num * panelW + (num - 1) * spacing;
         float startX = Math.max(10, (this.width - totalW) / 2f);
-        float startY = Math.max(65, (this.height - Math.min(this.height * 0.55f, getMaxPanelHeight())) / 2f);
+        float startY = Math.max(65, (this.height - Math.min(this.height * 0.75f, getMaxPanelHeight())) / 2f);
         this.panelStartY = (int) startY;
 
         for (int i = 0; i < num; i++) {

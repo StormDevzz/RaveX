@@ -7,6 +7,7 @@ import ravex.modules.Module;
 import ravex.modules.client.ClickGui;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
+import ravex.utility.render.animate.AnimationUtility;
 import ravex.parameter.Parameter;
 
 import java.awt.*;
@@ -15,6 +16,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.manager.ModuleManager;
+import ravex.event.EventBusHolder;
+import ravex.event.client.SoundEvent;
 import ravex.modules.Modules;
 
 public class ModuleButton {
@@ -45,6 +48,11 @@ public class ModuleButton {
     private float enableAnim = 0.0f;
     private boolean expanded = false;
     private float expandAnim = 0.0f;
+    private float hoverGlow = 0.0f;
+    private float expandFlash = 0f;
+    private static double circleX = 0;
+    private static double circleY = 0;
+    private boolean lastHovered = false;
 
     public ModuleButton(Module module) {
         this.module = module;
@@ -120,10 +128,14 @@ public class ModuleButton {
 
         if (hovered) {
             ClickGUI.hoveredDescription = module.getDescription();
+            if (!lastHovered) {
+                EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.HOVER, 0.5f));
+            }
             hoverProgress = Math.min(1.0f, hoverProgress + 0.10f);
         } else {
             hoverProgress = Math.max(0.0f, hoverProgress - 0.10f);
         }
+        lastHovered = hovered;
 
         float targetAnim = module.getEnabled() ? 1.0f : 0.0f;
         if (enableAnim < targetAnim) {
@@ -146,8 +158,31 @@ public class ModuleButton {
             int hoverAlpha = (int) (hoverProgress * Math.min(30, btnAlpha / 2));
             mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
         }
+        if (expandFlash > 0.01f) {
+            int flashAlpha = (int) (expandFlash * Math.min(140, btnAlpha * 2));
+            mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(activeColor, flashAlpha));
+        }
 
         Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, mergedBg);
+
+        if (expandFlash > 0.01f) {
+            Render2DUtility.drawGaussianShadow(graphics, x + 2, currentY - 2, width - 4, btnH + 8, 14, ColorUtility.withAlpha(activeColor, (int) (expandFlash * 160)));
+        }
+
+        if (hovered) {
+            hoverGlow = Math.min(1.0f, hoverGlow + 0.12f);
+            circleX += (x + width / 2.0 - circleX) * 0.25;
+            circleY += (currentY + btnH / 2.0 - circleY) * 0.25;
+        } else {
+            hoverGlow = Math.max(0.0f, hoverGlow - 0.10f);
+        }
+        if (hoverGlow > 0.01f) {
+            int alpha = (int) (hoverGlow * 120);
+            int whiteGlow = ColorUtility.withAlpha(0xFFFFFFFF, alpha);
+            graphics.enableScissor(x + 2, currentY, x + width - 2, currentY + btnH);
+            Render2DUtility.drawGaussianShadow(graphics, mouseX - 8, mouseY - 8, 16, 16, 11, whiteGlow);
+            graphics.disableScissor();
+        }
 
         if (searchQuery != null && !searchQuery.isEmpty()
             && module.getName().toLowerCase().contains(searchQuery.toLowerCase())) {
@@ -222,8 +257,9 @@ public class ModuleButton {
             if (expandAnim < targetExpand) {
                 expandAnim = Math.min(targetExpand, expandAnim + 0.10f);
             } else if (expandAnim > targetExpand) {
-                expandAnim = Math.max(targetExpand, expandAnim - 0.10f);
+                expandAnim = Math.max(targetExpand, expandAnim - 0.15f);
             }
+            expandFlash = Math.max(0f, expandFlash - 0.03f);
 
             if (expandAnim > 0.01f) {
                 int paramAreaH = 0;
@@ -371,9 +407,12 @@ public class ModuleButton {
                     if (expanded) {
                         expandedModules.add(module);
                         inlineScrollTarget = 0;
+                        expandFlash = 1.4f;
+                        EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.SETTINGS_OPEN, 0.6f));
                     } else {
                         expandedModules.remove(module);
                         module.setGearAngle(0f, System.currentTimeMillis());
+                        EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.SETTINGS_CLOSE, 0.6f));
                     }
                 } else if (button == 2) {
                     ClickGUI.bindingModuleButton = this;

@@ -24,25 +24,25 @@ public class NoSlow {
     public boolean sneaking = true;
     @Parameter(name = "Ice")
     public boolean ice = false;
-    @Parameter(name = "AltInterval", min = 2.0, max = 20.0, step = 1.0)
+    @Parameter(name = "AltInterval", min = 2.0, max = 20.0, step = 1.0, visible = "mode=GrimAlternative")
     public double altInterval = 4.0;
-    @Parameter(name = "AltAction", modes = {"Packet", "Alternate"})
+    @Parameter(name = "AltAction", modes = {"Packet", "Alternate"}, visible = "mode=GrimAlternative")
     public String altAction = "Packet";
-    @Parameter(name = "V3Grace", min = 1.0, max = 10.0, step = 1.0)
+    @Parameter(name = "V3Grace", min = 1.0, max = 10.0, step = 1.0, visible = "mode=GrimV3")
     public double v3Grace = 2.0;
-    @Parameter(name = "V3Forward", min = 0.05, max = 1.0, step = 0.05)
+    @Parameter(name = "V3Forward", min = 0.05, max = 1.0, step = 0.05, visible = "mode=GrimV3")
     public double v3Forward = 0.24;
-    @Parameter(name = "V3Strafe", min = 0.05, max = 1.0, step = 0.05)
+    @Parameter(name = "V3Strafe", min = 0.05, max = 1.0, step = 0.05, visible = "mode=GrimV3")
     public double v3Strafe = 0.24;
-    @Parameter(name = "V3Interval", min = 1, max = 20, step = 1)
+    @Parameter(name = "V3Interval", min = 1, max = 20, step = 1, visible = "mode=GrimV3")
     public double v3Interval = 4;
 
     // Matrix mode parameters
-    @Parameter(name = "SwapInterval", min = 1.0, max = 8.0, step = 1.0)
+    @Parameter(name = "SwapInterval", min = 1.0, max = 8.0, step = 1.0, visible = "mode=Matrix")
     public double matrixSwapInterval = 3.0;
-    @Parameter(name = "VelocityScale", min = 0.5, max = 2.0, step = 0.01)
+    @Parameter(name = "VelocityScale", min = 0.5, max = 2.0, step = 0.01, visible = "mode=Matrix")
     public double matrixVelocityScale = 1.15;
-    @Parameter(name = "InputScale", min = 0.5, max = 2.0, step = 0.05)
+    @Parameter(name = "InputScale", min = 0.5, max = 2.0, step = 0.05, visible = "mode=Matrix")
     public double matrixInputScale = 1.0;
 
     private int matrixSwapTicks = 0;

@@ -1,19 +1,19 @@
 {
   "enable": {
     "category": "master",
-    "sounds": [ "ravex:enable" ]
+    "sounds": [ "ravex:other/enable" ]
   },
   "disable": {
     "category": "master",
-    "sounds": [ "ravex:disable" ]
+    "sounds": [ "ravex:other/disable" ]
   },
   "settings_open": {
     "category": "master",
-    "sounds": [ "ravex:settings_open" ]
+    "sounds": [ "ravex:other/swipein" ]
   },
   "settings_close": {
     "category": "master",
-    "sounds": [ "ravex:settings_close" ]
+    "sounds": [ "ravex:other/swipeout" ]
   },
   "gui_open": {
     "category": "master",
@@ -26,5 +26,21 @@
   "failure": {
     "category": "master",
     "sounds": [ "ravex:settings_close" ]
+  },
+  "hover": {
+    "category": "master",
+    "sounds": [ "ravex:other/keypress" ]
+  },
+  "scroll": {
+    "category": "master",
+    "sounds": [ "ravex:other/scroll" ]
+  },
+  "toggle": {
+    "category": "master",
+    "sounds": [ "ravex:other/boolean" ]
+  },
+  "slide": {
+    "category": "master",
+    "sounds": [ "ravex:other/keyrelease" ]
   }
 }

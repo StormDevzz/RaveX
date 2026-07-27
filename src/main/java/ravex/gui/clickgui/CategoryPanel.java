@@ -116,15 +116,26 @@ public class CategoryPanel {
             totalH += Math.max(1, (int)(btnH * btn.getSearchReveal())) + 2;
             if (btn.isExpanded()) totalH += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
         }
-        int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.55f);
+        int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.75f);
         int viewportH = Math.min(totalH, maxPanelHeight);
         int panelBot = iy + viewportH;
 
         int maxScroll = max(0, totalH - viewportH);
+        double spring = 0.2;
         if (maxScroll <= 0) {
-            scrollOffset = 0;
+            if (Math.abs(scrollOffset) > 0.5) {
+                scrollOffset -= scrollOffset * spring;
+            } else {
+                scrollOffset = 0;
+            }
         } else {
-            scrollOffset = max(-maxScroll, min(0.0, scrollOffset));
+            if (scrollOffset > 0) {
+                scrollOffset -= scrollOffset * spring;
+                if (scrollOffset < 0.5) scrollOffset = 0;
+            } else if (scrollOffset < -maxScroll) {
+                scrollOffset += (-maxScroll - scrollOffset) * spring;
+                if (Math.abs(scrollOffset + maxScroll) < 0.5) scrollOffset = -maxScroll;
+            }
         }
 
         int panelH = panelBot - iy;
@@ -211,7 +222,7 @@ public class CategoryPanel {
         String query = ClickGUI.searchQuery;
         int listTop = iy + 22;
         int totalH = getCurrentHeight(query);
-        int maxPanelHeight = (int)(mc.getWindow().getGuiScaledHeight() * 0.55f);
+        int maxPanelHeight = (int)(mc.getWindow().getGuiScaledHeight() * 0.75f);
         int panelBot = iy + Math.min(totalH, maxPanelHeight);
 
         if (mouseY < listTop || mouseY > panelBot) return false;
@@ -231,7 +242,7 @@ public class CategoryPanel {
         int width = (int) ModuleManager.get(ClickGui.class).panelWidth;
         int listTop = iy + 22;
         int totalH = getCurrentHeight(searchQuery);
-        int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.55f);
+        int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.75f);
         int panelBot = iy + Math.min(totalH, maxPanelHeight);
 
         if (mouseX >= ix && mouseX <= ix + width && mouseY >= iy && mouseY <= panelBot) {

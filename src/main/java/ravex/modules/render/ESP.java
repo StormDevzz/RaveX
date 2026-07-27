@@ -36,41 +36,41 @@ public class ESP {
     public int itemColor = 0xFFFFFF33;
     @Parameter(name = "FrameColor", color = true)
     public int frameColor = 0xFFFF9933;
-    @Parameter(name = "TunnelRange", min = 8, max = 64, step = 4)
+    @Parameter(name = "TunnelRange", min = 8, max = 64, step = 4, visible = "mode=Tunnels")
     public double tunnelRange = 32;
-    @Parameter(name = "TunnelMaxY", min = 5, max = 60, step = 5)
+    @Parameter(name = "TunnelMaxY", min = 5, max = 60, step = 5, visible = "mode=Tunnels")
     public double tunnelMaxY = 40;
-    @Parameter(name = "TunnelMinY", min = 1, max = 30, step = 1)
+    @Parameter(name = "TunnelMinY", min = 1, max = 30, step = 1, visible = "mode=Tunnels")
     public double tunnelMinY = 5;
-    @Parameter(name = "TunnelColor", color = true)
+    @Parameter(name = "TunnelColor", color = true, visible = "mode=Tunnels")
     public int tunnelColor = 0x44FFFF00;
-    @Parameter(name = "TunnelFilled")
+    @Parameter(name = "TunnelFilled", visible = "mode=Tunnels")
     public boolean tunnelFilled = false;
-    @Parameter(name = "TunnelWireframe")
+    @Parameter(name = "TunnelWireframe", visible = "mode=Tunnels")
     public boolean tunnelWireframe = true;
-    @Parameter(name = "TunnelUpdate", min = 5, max = 100, step = 5)
+    @Parameter(name = "TunnelUpdate", min = 5, max = 100, step = 5, visible = "mode=Tunnels")
     public double tunnelUpdateInterval = 20;
-    @Parameter(name = "HoleRange", min = 4, max = 24, step = 2)
+    @Parameter(name = "HoleRange", min = 4, max = 24, step = 2, visible = "mode=Holes")
     public double holeRange = 8;
-    @Parameter(name = "SafeColor", color = true)
+    @Parameter(name = "SafeColor", color = true, visible = "mode=Holes")
     public int safeColor = 0xAA00FF00;
-    @Parameter(name = "HoleFilled")
+    @Parameter(name = "HoleFilled", visible = "mode=Holes")
     public boolean holeFilled = true;
-    @Parameter(name = "HoleWireframe")
+    @Parameter(name = "HoleWireframe", visible = "mode=Holes")
     public boolean holeWireframe = true;
-    @Parameter(name = "VoidRange", min = 8, max = 64, step = 4)
+    @Parameter(name = "VoidRange", min = 8, max = 64, step = 4, visible = "mode=Void")
     public double voidRange = 32;
-    @Parameter(name = "VoidHeight", min = 2, max = 30, step = 2)
+    @Parameter(name = "VoidHeight", min = 2, max = 30, step = 2, visible = "mode=Void")
     public double voidHeight = 10;
-    @Parameter(name = "VoidColor", color = true)
+    @Parameter(name = "VoidColor", color = true, visible = "mode=Void")
     public int voidColor = 0x66FF0000;
-    @Parameter(name = "VoidFilled")
+    @Parameter(name = "VoidFilled", visible = "mode=Void")
     public boolean voidFilled = true;
-    @Parameter(name = "VoidWireframe")
+    @Parameter(name = "VoidWireframe", visible = "mode=Void")
     public boolean voidWireframe = true;
-    @Parameter(name = "VoidFloorOnly")
+    @Parameter(name = "VoidFloorOnly", visible = "mode=Void")
     public boolean voidFloorOnly = true;
-    @Parameter(name = "VoidUpdate", min = 5, max = 100, step = 5)
+    @Parameter(name = "VoidUpdate", min = 5, max = 100, step = 5, visible = "mode=Void")
     public double voidUpdateInterval = 20;
     private List<net.minecraft.core.BlockPos> tunnelBlocks = new ArrayList<>();
     private long lastTunnelScan = 0;

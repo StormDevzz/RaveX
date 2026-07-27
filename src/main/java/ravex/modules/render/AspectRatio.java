@@ -7,9 +7,9 @@ import ravex.modules.Modules;
 public class AspectRatio {
     @Parameter(name = "Ratio", modes = {"16:9", "16:10", "4:3", "21:9", "Custom"})
     public String ratio = "16:9";
-    @Parameter(name = "Width", min = 1, max = 100, step = 1)
+    @Parameter(name = "Width", min = 1, max = 100, step = 1, visible = "ratio=Custom")
     public double customWidth = 16;
-    @Parameter(name = "Height", min = 1, max = 100, step = 1)
+    @Parameter(name = "Height", min = 1, max = 100, step = 1, visible = "ratio=Custom")
     public double customHeight = 9;
     public float getAspectRatio(float original) {
         if (!Modules.enabled(AspectRatio.class)) return original;

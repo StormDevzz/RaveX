@@ -19,9 +19,9 @@ public class Velocity {
     public double vertical = 0.0;
     @Parameter(name = "Explosion")
     public boolean explosion = true;
-    @Parameter(name = "GrimHorizontal", min = 0.0, max = 100.0, step = 1.0)
+    @Parameter(name = "GrimHorizontal", min = 0.0, max = 100.0, step = 1.0, visible = "mode=GrimStrict")
     public double grimHorizontal = 70.0;
-    @Parameter(name = "GrimVertical", min = 0.0, max = 100.0, step = 1.0)
+    @Parameter(name = "GrimVertical", min = 0.0, max = 100.0, step = 1.0, visible = "mode=GrimStrict")
     public double grimVertical = 80.0;
 
     private final Random random = new Random();

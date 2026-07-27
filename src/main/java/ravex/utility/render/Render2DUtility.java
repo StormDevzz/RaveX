@@ -12,6 +12,8 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics2D;
 import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -584,6 +586,112 @@ public class Render2DUtility {
     }
 
 
+
+    private static class BlurredShadow {
+        final Identifier textureId;
+        final int width;
+        final int height;
+        BlurredShadow(Identifier textureId, int width, int height) {
+            this.textureId = textureId;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    private static final Map<Integer, BlurredShadow> GAUSSIAN_SHADOW_CACHE = new HashMap<>();
+
+    private static int gaussianShadowKey(int width, int height, int radius) {
+        return width * height + width * radius;
+    }
+
+    public static void drawGaussianShadow(GuiGraphics graphics, float x, float y, float width, float height, int radius, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0 || width <= 0 || height <= 0) return;
+
+        int padding = radius * 2;
+        int texW = (int) Math.ceil(width) + padding * 2;
+        int texH = (int) Math.ceil(height) + padding * 2;
+        texW = Math.max(1, texW);
+        texH = Math.max(1, texH);
+
+        int key = gaussianShadowKey(texW, texH, radius);
+        BlurredShadow shadow = GAUSSIAN_SHADOW_CACHE.get(key);
+
+        if (shadow == null) {
+            BufferedImage img = new BufferedImage(texW, texH, BufferedImage.TYPE_INT_ARGB_PRE);
+            Graphics2D g = img.createGraphics();
+            g.setColor(java.awt.Color.WHITE);
+            g.fillRect(padding, padding, (int) Math.ceil(width), (int) Math.ceil(height));
+            g.dispose();
+
+            BufferedImage blurred = GaussianFilter.blur(img, radius);
+
+            NativeImage nativeImg = new NativeImage(texW, texH, false);
+            for (int py = 0; py < texH; py++) {
+                for (int px = 0; px < texW; px++) {
+                    int rgb = blurred.getRGB(px, py);
+                    int aa = (rgb >> 24) & 0xFF;
+                    nativeImg.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
+                }
+            }
+
+            DynamicTexture tex = new DynamicTexture(() -> "gshadow_" + key, nativeImg);
+            setLinearSampler(tex);
+            Identifier id = Identifier.fromNamespaceAndPath("ravex", "gshadow_" + key);
+            Minecraft.getInstance().getTextureManager().register(id, tex);
+            shadow = new BlurredShadow(id, texW, texH);
+            GAUSSIAN_SHADOW_CACHE.put(key, shadow);
+        }
+
+        int drawX = (int) (x - padding);
+        int drawY = (int) (y - padding);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, shadow.textureId, drawX, drawY, 0f, 0f, shadow.width, shadow.height, shadow.width, shadow.height, color);
+    }
+
+    public static void drawGradientBlurredShadow(GuiGraphics graphics, float x, float y, float width, float height, int radius, int color1, int color2) {
+        int a1 = (color1 >> 24) & 0xFF;
+        int a2 = (color2 >> 24) & 0xFF;
+        if (a1 == 0 && a2 == 0) return;
+
+        int padding = radius * 2;
+        int texW = (int) Math.ceil(width) + padding * 2;
+        int texH = (int) Math.ceil(height) + padding * 2;
+        texW = Math.max(1, texW);
+        texH = Math.max(1, texH);
+
+        int key = gaussianShadowKey(texW, texH, radius);
+        BlurredShadow shadow = GAUSSIAN_SHADOW_CACHE.get(key);
+
+        if (shadow == null) {
+            BufferedImage img = new BufferedImage(texW, texH, BufferedImage.TYPE_INT_ARGB_PRE);
+            Graphics2D g = img.createGraphics();
+            g.setColor(java.awt.Color.WHITE);
+            g.fillRect(padding, padding, (int) Math.ceil(width), (int) Math.ceil(height));
+            g.dispose();
+
+            BufferedImage blurred = GaussianFilter.blur(img, radius);
+
+            NativeImage nativeImg = new NativeImage(texW, texH, false);
+            for (int py = 0; py < texH; py++) {
+                for (int px = 0; px < texW; px++) {
+                    int rgb = blurred.getRGB(px, py);
+                    int aa = (rgb >> 24) & 0xFF;
+                    nativeImg.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
+                }
+            }
+
+            DynamicTexture tex = new DynamicTexture(() -> "gshadow_" + key, nativeImg);
+            setLinearSampler(tex);
+            Identifier id = Identifier.fromNamespaceAndPath("ravex", "gshadow_" + key);
+            Minecraft.getInstance().getTextureManager().register(id, tex);
+            shadow = new BlurredShadow(id, texW, texH);
+            GAUSSIAN_SHADOW_CACHE.put(key, shadow);
+        }
+
+        int drawX = (int) (x - padding);
+        int drawY = (int) (y - padding);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, shadow.textureId, drawX, drawY, 0f, 0f, shadow.width, shadow.height, shadow.width, shadow.height, color1);
+    }
 
     public static void drawRoundedRectWithBorder(GuiGraphics graphics, int x, int y, int width, int height, int radius, int fillColor, int borderColor, int borderWidth) {
         drawRound(graphics, x, y, width, height, radius, fillColor);

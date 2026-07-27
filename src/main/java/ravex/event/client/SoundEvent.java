@@ -3,7 +3,7 @@ package ravex.event.client;
 import ravex.event.Event;
 
 public class SoundEvent implements Event {
-    public enum Type { ENABLE, DISABLE, SETTINGS_OPEN, SETTINGS_CLOSE, GUI_OPEN, GUI_CLOSE, FAILURE }
+    public enum Type { ENABLE, DISABLE, SETTINGS_OPEN, SETTINGS_CLOSE, GUI_OPEN, GUI_CLOSE, FAILURE, HOVER, SCROLL, TOGGLE, SLIDE }
 
     private final Type type;
     private final float volume;

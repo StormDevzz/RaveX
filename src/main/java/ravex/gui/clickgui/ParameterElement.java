@@ -13,6 +13,8 @@ import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.parameter.MultiSelectParameter;
 import ravex.manager.ModuleManager;
+import ravex.event.EventBusHolder;
+import ravex.event.client.SoundEvent;
 
 public class ParameterElement {
     private final Parameter<?> parameter;
@@ -26,6 +28,7 @@ public class ParameterElement {
     private boolean isEditingNumber = false;
     private String numberInputText = "";
     private long lastAnimTime = 0;
+    private double lastSliderValue = Double.NaN;
 
     public ParameterElement(Parameter<?> parameter) {
         this.parameter = parameter;
@@ -265,8 +268,16 @@ public class ParameterElement {
                     double newValue = min + relative * (max - min);
                     double step = np.getStep();
                     newValue = Math.round(newValue / step) * step;
+                    if (newValue != np.getValue()) {
+                        if (Double.isNaN(lastSliderValue) || Math.abs(newValue - lastSliderValue) > step * 0.5) {
+                            EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.SLIDE, 0.35f));
+                            lastSliderValue = newValue;
+                        }
+                    }
                     np.setValue(newValue);
                 }
+            } else {
+                lastSliderValue = Double.NaN;
             }
 
             float targetKnobX = slX + (float)(slW * progress);
@@ -305,15 +316,16 @@ public class ParameterElement {
             int chipSize = 10;
             int argb = cp.getValue();
 
-            graphics.fill(chipX - 1, chipY - 1, chipX + chipSize + 1, chipY, ColorUtility.withAlpha(activeColor, 40));
-            graphics.fill(chipX - 1, chipY + chipSize, chipX + chipSize + 1, chipY + chipSize + 1, ColorUtility.withAlpha(activeColor, 40));
-            graphics.fill(chipX - 1, chipY - 1, chipX, chipY + chipSize + 1, ColorUtility.withAlpha(activeColor, 40));
-            graphics.fill(chipX + chipSize, chipY - 1, chipX + chipSize + 1, chipY + chipSize + 1, ColorUtility.withAlpha(activeColor, 40));
+            int glowColor = ColorUtility.withAlpha(argb, 120);
+            Render2DUtility.drawGaussianShadow(graphics, chipX - 2, chipY - 2, chipSize + 4, chipSize + 4, 8, glowColor);
 
-            graphics.fill(chipX, chipY, chipX + chipSize, chipY + chipSize, 0xFF888888);
-            graphics.fill(chipX + chipSize / 2, chipY, chipX + chipSize, chipY + chipSize / 2, 0xFF444444);
-            graphics.fill(chipX, chipY + chipSize / 2, chipX + chipSize / 2, chipY + chipSize, 0xFF444444);
-            graphics.fill(chipX, chipY, chipX + chipSize, chipY + chipSize, argb);
+            int chipRadius = 2;
+            Render2DUtility.drawRoundBorder(graphics, chipX - 1, chipY - 1, chipSize + 2, chipSize + 2, chipRadius, 1, ColorUtility.withAlpha(activeColor, 40));
+
+            Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, 0xFF888888);
+            Render2DUtility.drawRound(graphics, chipX + chipSize / 2, chipY, chipSize - chipSize / 2, chipSize / 2, 0, 0xFF444444);
+            Render2DUtility.drawRound(graphics, chipX, chipY + chipSize / 2, chipSize / 2, chipSize - chipSize / 2, 0, 0xFF444444);
+            Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, argb);
 
         } else if (parameter instanceof ravex.parameter.ActionParameter ap) {
             FontRenderUtility.drawString(graphics, ap.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
@@ -417,6 +429,13 @@ public class ParameterElement {
                 }
             }
 
+            if (parameter instanceof ColorParameter cp) {
+                ClickGUI.activeColorParameter = cp;
+                ClickGUI.activeColorPalette = new ColorPaletteModal(cp);
+                playSound();
+                return true;
+            }
+
             if (button == 1) {
                 parameter.setExpanded(!parameter.isExpanded());
                 playSound();
@@ -442,11 +461,6 @@ public class ParameterElement {
                 if (np.getName().equalsIgnoreCase("Gui Scale")) {
                     ClickGUI.isDraggingSlider = true;
                 }
-                return true;
-            } else if (parameter instanceof ColorParameter cp) {
-                ClickGUI.activeColorParameter = cp;
-                ClickGUI.activeColorPalette = new ColorPaletteModal(cp);
-                playSound();
                 return true;
             } else if (parameter instanceof ravex.parameter.ActionParameter ap) {
                 ap.getValue().run();
@@ -524,6 +538,7 @@ public class ParameterElement {
     }
 
     private void playSound() {
+        EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.TOGGLE, 0.5f));
     }
 
     private void drawTintedTexture(GuiGraphics graphics, Identifier texture, int x, int y, int width, int height, int color) {

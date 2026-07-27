@@ -20,9 +20,9 @@ public class ElytraFly {
     public double vSpeed = 1.0;
     @Parameter(name = "Glide", min = 0.001, max = 0.1, step = 0.001)
     public double glide = 0.005;
-    @Parameter(name = "FireworkDelay", min = 1.0, max = 30.0, step = 1.0)
+    @Parameter(name = "FireworkDelay", min = 1.0, max = 30.0, step = 1.0, visible = "mode=Fireworks")
     public double fireworkDelay = 10.0;
-    @Parameter(name = "FireworkBoost", min = 0.5, max = 5.0, step = 0.1)
+    @Parameter(name = "FireworkBoost", min = 0.5, max = 5.0, step = 0.1, visible = "mode=Fireworks")
     public double fireworkBoost = 1.0;
     @Parameter(name = "AutoTakeoff")
     public boolean autoTakeoff = true;
