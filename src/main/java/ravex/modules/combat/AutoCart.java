@@ -6,6 +6,8 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.AimUtility;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
 
 import java.util.List;
@@ -27,6 +29,10 @@ public class AutoCart {
     public String swapMode = "Normal";
     @Parameter(name = "Rotate")
     public boolean rotate = true;
+    @Parameter(name = "Bypass", modes = {"Vanilla", "Legit", "NCP"})
+    public String bypass = "Vanilla";
+    @Parameter(name = "RotateSpeed", min = 10, max = 180, step = 5)
+    public double rotateSpeed = 180;
     @Parameter(name = "Repeat")
     public boolean repeat = false;
     @Parameter(name = "RepeatDelay", min = 5, max = 100, step = 5)
@@ -36,12 +42,16 @@ public class AutoCart {
     @Parameter(name = "Color", color = true)
     public int color = 0x3FFF4444;
     public static net.minecraft.core.BlockPos targetRenderPos = null;
+    public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private boolean wasUsingBow = false;
     private int lastBowCharge = 0;
     private int repeatTimer = 0;
     private int originalSlot = -1;
     private net.minecraft.core.BlockPos lastPlacedPos = null;
     private long lastPlaceTime = 0;
+    public static boolean hasSilentRotations() {
+        return silentRotation.hasRotation;
+    }
     public void onEnable() {
         wasUsingBow = false;
         lastBowCharge = 0;
@@ -188,9 +198,38 @@ public class AutoCart {
         return -1;
     }
     private void faceBlock(MinecraftWrapper mc, net.minecraft.core.BlockPos pos) {
-        float[] angles = RotationUtility.anglesTo(mc.getPlayer(), net.minecraft.world.phys.Vec3.atCenterOf(pos));
-        mc.getPlayer().setYRot(angles[0]);
-        mc.getPlayer().setXRot(angles[1]);
+        String mode = bypass;
+        net.minecraft.world.phys.Vec3 target = net.minecraft.world.phys.Vec3.atCenterOf(pos);
+        float[] targetAngles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
+
+        if ("NCP".equals(mode)) {
+            float currentYaw = mc.getPlayer().getYRot();
+            float currentPitch = mc.getPlayer().getXRot();
+            if (!silentRotation.initialized) silentRotation.init(currentYaw, currentPitch);
+            float maxSpeed = (float) rotateSpeed;
+            float[] limited = AimUtility.limitAngles(silentRotation.lastYaw, targetAngles[0], silentRotation.lastPitch, targetAngles[1], maxSpeed);
+            float finalYaw = RotationUtility.fixAngle(limited[0]);
+            float finalPitch = RotationUtility.fixAngle(limited[1]);
+            silentRotation.set(finalYaw, finalPitch);
+            silentRotation.lastYaw = finalYaw;
+            silentRotation.lastPitch = finalPitch;
+        } else if ("Legit".equals(mode)) {
+            float currentYaw = mc.getPlayer().getYRot();
+            float currentPitch = mc.getPlayer().getXRot();
+            float maxSpeed = (float) rotateSpeed;
+            float[] limited = AimUtility.limitAngles(currentYaw, targetAngles[0], currentPitch, targetAngles[1], maxSpeed);
+            float yawRand = (float) ((Math.random() - 0.5) * 1.5);
+            float pitchRand = (float) ((Math.random() - 0.5) * 0.8);
+            float finalYaw = RotationUtility.fixAngle(limited[0] + yawRand);
+            float finalPitch = RotationUtility.fixAngle(limited[1] + pitchRand);
+            mc.getPlayer().setYRot(finalYaw);
+            mc.getPlayer().setXRot(finalPitch);
+        } else {
+            float yaw = RotationUtility.fixAngle(targetAngles[0]);
+            float pitch = RotationUtility.fixAngle(targetAngles[1]);
+            mc.getPlayer().setYRot(yaw);
+            mc.getPlayer().setXRot(pitch);
+        }
     }
     private void selectSlot(int slot, MinecraftWrapper mc) {
         if (swapMode.equals("Silent")) {

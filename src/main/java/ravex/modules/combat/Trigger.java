@@ -1,42 +1,34 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.network.NetworkUtility;
+import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+
 @Module(name = "Trigger", category = "Combat")
 public class Trigger {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
-    @Parameter(name = "Cooldown", min = 0.0, max = 1.0, step = 0.05)
-    public double cooldown = 0.9;
     @Parameter(name = "CPS", min = 1, max = 20, step = 1)
     public double cps = 10;
-    @Parameter(name = "Randomization", min = 0.0, max = 5.0, step = 0.5)
-    public double randomization = 0.0;
-    @Parameter(name = "FOV", min = 10, max = 180, step = 5)
-    public double fov = 180;
-    @Parameter(name = "Players")
-    public boolean players = true;
-    @Parameter(name = "Monsters")
-    public boolean monsters = true;
-    @Parameter(name = "Passives")
-    public boolean passives = false;
-    @Parameter(name = "Invisibles")
-    public boolean invisibles = true;
-    @Parameter(name = "ThroughWalls")
-    public boolean throughWalls = true;
-    @Parameter(name = "WeaponOnly")
-    public boolean weaponOnly = false;
-    @Parameter(name = "Raytrace")
-    public boolean raytrace = true;
-    @Parameter(name = "Swing", modes = {"Client", "Server", "Off"})
-    public String swingMode = "Client";
+
+    @Parameter(name = "Targets", options = {"Players", "Monsters", "Passives", "Invisibles"})
+    public List<String> targets = new ArrayList<>(List.of("Players"));
+
+    @Parameter(name = "SmartCrits")
+    public boolean smartCrits = false;
+
+    @Parameter(name = "AutoWeapon")
+    public boolean autoWeapon = false;
+    @Parameter(name = "Swap", modes = {"Silent", "Normal", "None"})
+    public String swapMode = "Silent";
+
     @Parameter(name = "ClickMode", modes = {"Hold", "Toggle"})
     public String clickMode = "Hold";
+
     private boolean toggled = false;
     private long lastAttackTime = 0;
     private net.minecraft.world.entity.LivingEntity currentTarget = null;
@@ -44,83 +36,123 @@ public class Trigger {
     public net.minecraft.world.entity.LivingEntity getCurrentTarget() {
         return currentTarget;
     }
+
     public void onDisable() {
         toggled = false;
         currentTarget = null;
     }
+
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) {
             currentTarget = null;
             return;
         }
+
         String clickModeVal = clickMode;
         boolean shouldAttack;
         if (clickModeVal.equals("Toggle")) {
-            if (mc.options.keyAttack.consumeClick()) toggled = !toggled;
+            if (mc.getOptions().keyAttack.consumeClick()) toggled = !toggled;
             shouldAttack = toggled;
         } else {
-            shouldAttack = mc.options.keyAttack.isDown();
+            shouldAttack = mc.getOptions().keyAttack.isDown();
         }
         if (!shouldAttack) {
             currentTarget = null;
             return;
         }
-        if (weaponOnly && !InventoryUtility.isWeapon(mc.player.getMainHandItem().getItem())) {
-            currentTarget = null;
-            return;
-        }
-        var target = MobUtility.asLivingEntity(InventoryUtility.getHitEntity(ravex.mcwrapper.MinecraftWrapper.getWrapper()));
+
+        var target = MobUtility.asLivingEntity(InventoryUtility.getHitEntity(mc));
         if (target == null || !MobUtility.isAlive(target) || MobUtility.isSelf(target) || MobUtility.isArmorStand(target)) {
             currentTarget = null;
             return;
         }
+
         if (MobUtility.distanceToPlayer(target) > range) {
             currentTarget = null;
             return;
         }
-        if (!invisibles && target.isInvisible()) {
+
+        if (!targets.contains("Invisibles") && target.isInvisible()) {
             currentTarget = null;
             return;
         }
-        if (!players && MobUtility.isPlayer(target)) {
+        if (!targets.contains("Players") && MobUtility.isPlayer(target)) {
             currentTarget = null;
             return;
         }
-        if (!monsters && MobUtility.isHostile(target)) {
+        if (!targets.contains("Monsters") && MobUtility.isHostile(target)) {
             currentTarget = null;
             return;
         }
-        if (!passives && MobUtility.isPassive(target)) {
+        if (!targets.contains("Passives") && MobUtility.isPassive(target)) {
             currentTarget = null;
             return;
         }
-        if (!throughWalls && !mc.player.hasLineOfSight(target)) {
-            currentTarget = null;
-            return;
-        }
-        if (raytrace && !InventoryUtility.isLookingAtEntity(ravex.mcwrapper.MinecraftWrapper.getWrapper(), target, 20.0)) {
-            currentTarget = null;
-            return;
-        }
-        float[] angles = RotationUtility.anglesTo(mc.player, target.position().add(0, target.getEyeHeight(target.getPose()) * 0.75, 0));
-        float diffYaw = net.minecraft.util.Mth.wrapDegrees(angles[0] - mc.player.getYRot());
-        float diffPitch = net.minecraft.util.Mth.wrapDegrees(angles[1] - mc.player.getXRot());
-        if (Math.abs(diffYaw) > fov || Math.abs(diffPitch) > fov) {
-            currentTarget = null;
-            return;
-        }
+
         currentTarget = target;
+
+        if (smartCrits && !mc.getPlayer().onGround()) {
+            double velY = mc.getPlayer().getDeltaMovement().y;
+            if (velY > -0.08) return;
+        }
+
         long interval = 1000L / (long) (double) cps;
-        double r = randomization;
-        if (r > 0.01) interval += (long) ((Math.random() - 0.5) * r * 100.0);
         if (System.currentTimeMillis() - lastAttackTime < interval) return;
-        if (mc.player.getAttackStrengthScale(0.0f) < (float) cooldown) return;
-        InventoryUtility.attackEntity(ravex.mcwrapper.MinecraftWrapper.getWrapper(), target, swingMode);
+
+        attack(mc, target);
         lastAttackTime = System.currentTimeMillis();
     }
 
+    private void attack(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target) {
+        if (autoWeapon) {
+            int bestSlot = -1;
+            double bestDmg = -1.0;
+            for (int i = 0; i < 9; i++) {
+                var stack = InventoryUtility.getItem(mc.getPlayer(), i);
+                double dmg = getWeaponDamage(stack);
+                if (dmg > bestDmg) {
+                    bestDmg = dmg;
+                    bestSlot = i;
+                }
+            }
+            int originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+            if (bestSlot != -1 && bestSlot != originalSlot && bestDmg > 1.0) {
+                if (swapMode.equals("Silent")) {
+                    NetworkUtility.sendSetCarriedItem(bestSlot);
+                } else if (swapMode.equals("Normal")) {
+                    InventoryUtility.selectSlot(mc.getPlayer(), bestSlot);
+                }
+            }
+            InventoryUtility.attackEntity(mc, target, "Server");
+            if (bestSlot != -1 && bestSlot != originalSlot && bestDmg > 1.0) {
+                if (swapMode.equals("Silent")) {
+                    NetworkUtility.sendSetCarriedItem(originalSlot);
+                } else if (swapMode.equals("Normal")) {
+                    InventoryUtility.selectSlot(mc.getPlayer(), originalSlot);
+                }
+            }
+        } else {
+            InventoryUtility.attackEntity(mc, target, "Server");
+        }
+    }
 
+    private double getWeaponDamage(net.minecraft.world.item.ItemStack stack) {
+        if (stack.isEmpty()) return 0.0;
+        String name = stack.getItem().toString().toLowerCase();
+        double dmg = 0.0;
+        if (name.contains("netherite_sword")) dmg = 8.0;
+        else if (name.contains("diamond_sword")) dmg = 7.0;
+        else if (name.contains("netherite_axe")) dmg = 7.0;
+        else if (name.contains("mace")) dmg = 6.5;
+        else if (name.contains("diamond_axe")) dmg = 6.0;
+        else if (name.contains("iron_sword")) dmg = 6.0;
+        else if (name.contains("iron_axe")) dmg = 5.0;
+        else if (name.contains("stone_sword")) dmg = 5.0;
+        else if (name.contains("stone_axe")) dmg = 4.0;
+        else if (name.contains("golden_sword") || name.contains("wooden_sword")) dmg = 4.0;
+        return dmg;
+    }
 
 
 }

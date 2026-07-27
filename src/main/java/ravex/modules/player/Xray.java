@@ -9,7 +9,7 @@ import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Xray", category = "net.minecraft.world.entity.player.Player")
 public class Xray {
-public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
+    public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         MinecraftWrapper.getInstance().setScreen(ravex.gui.browser.BlockBrowserScreen.forXray(MinecraftWrapper.getInstance().screen));
     });
     private final Set<net.minecraft.resources.Identifier> selectedBlocks = new HashSet<>();

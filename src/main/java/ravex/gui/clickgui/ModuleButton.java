@@ -180,10 +180,14 @@ public class ModuleButton {
         Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, mergedBg);
 
         if (expandFlash > 0.01f) {
-            int glowAlpha = (int) (expandFlash * 18);
+            int glowAlpha = (int) (expandFlash * 60);
+            int glowAlphaTop = (int) (expandFlash * 25);
             int glowColor = ColorUtility.withAlpha(activeColor, glowAlpha);
-            int gap = 4;
-            Render2DUtility.drawPixelPerfectRound(graphics, x + 2 - gap, currentY - gap, width - 4 + gap * 2, btnH + gap * 2, btnRadius + gap, glowColor);
+            int glowColorTop = ColorUtility.withAlpha(activeColor, glowAlphaTop);
+            float barW = width - 16;
+            float barH = 4f;
+            Render2DUtility.drawGlow(graphics, x + 8, currentY + btnH - barH, barW, barH, 6f, glowColor);
+            Render2DUtility.drawGlow(graphics, x + 8, currentY, barW, barH, 6f, glowColorTop);
             expandFlash = Math.max(0f, expandFlash - 0.02f);
         }
 

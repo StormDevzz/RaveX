@@ -33,7 +33,7 @@ public class Nuker {
     public boolean render = true;
     @Parameter(name = "Color", color = true)
     public int color = 0x3FFF4444;
-    public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
+    public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         MinecraftWrapper.getWrapper().setScreen(
             ravex.gui.browser.            BlockBrowserScreen.forNuker(MinecraftWrapper.getWrapper().getCurrentScreen())
         );

@@ -6,6 +6,7 @@ import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
@@ -25,10 +26,10 @@ public class Trap {
     public double range = 4.5;
     @Parameter(name = "PlaceDelay", min = 0.0, max = 500.0, step = 10.0)
     public double placeDelay = 50.0;
-    @Parameter(name = "SwapMode", modes = {"Silent", "Normal", "None"})
-    public String swapMode = "Silent";
-    @Parameter(name = "RotateMode", modes = {"Silent", "Normal", "Packet", "None"})
-    public String rotate = "Silent";
+    @Parameter(name = "Swap", modes = {"NCP", "Vanilla", "Legit", "None"})
+    public String swapMode = "NCP";
+    @Parameter(name = "Rotate", modes = {"NCP", "Vanilla", "Legit", "None"})
+    public String rotate = "NCP";
     @Parameter(name = "Roof")
     public boolean roof = true;
     @Parameter(name = "AutoDisable")
@@ -41,8 +42,6 @@ public class Trap {
     public String speedMode = "Normal";
     @Parameter(name = "JitterDelay", min = 0.0, max = 100.0, step = 5.0)
     public double jitterDelay = 0.0;
-    @Parameter(name = "StrictRotation")
-    public boolean strictRotation = false;
     @Parameter(name = "MaxRate", min = 1.0, max = 5.0, step = 1.0)
     public double maxRate = 2.0;
     @Parameter(name = "SwapSwitchBack")
@@ -179,15 +178,20 @@ public class Trap {
             net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
             net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             rotateTo(mc, hitVec);
-            boolean isStrict = strictRotation || speedMode.equals("Legit");
-            if (isStrict && !isRotationAligned(mc, hitVec)) {
+            if (speedMode.equals("Legit") && !isRotationAligned(mc, hitVec)) {
                 break;
             }
             String swap = swapMode;
-            if (swap.equals("Normal")) {
+            if (swap.equals("NCP")) {
+                if (InventoryUtility.getSelectedSlot(mc.getPlayer()) != blockSlot) {
+                    InventoryUtility.silentSelectSlot(mc.getPlayer(), blockSlot);
+                }
+            } else if (swap.equals("Vanilla")) {
                 InventoryUtility.selectSlot(mc.getPlayer(), blockSlot);
-            } else if (swap.equals("Silent")) {
-                InventoryUtility.silentSelectSlot(mc.getPlayer(), blockSlot);
+            } else if (swap.equals("Legit")) {
+                if (InventoryUtility.getSelectedSlot(mc.getPlayer()) != blockSlot) {
+                    InventoryUtility.selectSlot(mc.getPlayer(), blockSlot);
+                }
             } else if (swap.equals("None")) {
                 if (InventoryUtility.getSelectedSlot(mc.getPlayer()) != blockSlot) {
                     break;
@@ -202,8 +206,10 @@ public class Trap {
             activeSolidBlocks.add((double) targetBlock.getY());
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
-        if (placedAny && swapMode.equals("Silent") && swapSwitchBack && originalSlot != -1) {
+        if (placedAny && swapMode.equals("NCP") && swapSwitchBack && originalSlot != -1) {
             InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
+        } else if (placedAny && (swapMode.equals("Vanilla") || swapMode.equals("Legit")) && swapSwitchBack && originalSlot != -1 && originalSlot != blockSlot) {
+            InventoryUtility.selectSlot(mc.getPlayer(), originalSlot);
         }
         if (placedAny) {
             lastPlaceTime = now;
@@ -373,20 +379,27 @@ public class Trap {
         String mode = rotate;
         if (mode.equals("None")) return;
         float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
-        float currentYaw = mc.getPlayer().getYRot(), currentPitch = mc.getPlayer().getXRot();
-        if (mode.equals("Silent")) {
+        float currentYaw = mc.getPlayer().getYRot();
+        float currentPitch = mc.getPlayer().getXRot();
+        if (mode.equals("NCP")) {
             if (!silentRotation.initialized) {
                 silentRotation.init(currentYaw, currentPitch);
             }
-            currentYaw = silentRotation.lastYaw; currentPitch = silentRotation.lastPitch;
-        }
-        if (mode.equals("Normal")) {
-            mc.getPlayer().setYRot(angles[0]); mc.getPlayer().setXRot(angles[1]);
-        } else if (mode.equals("Silent")) {
-            silentRotation.set(angles[0], angles[1]);
-            silentRotation.lastYaw = angles[0]; silentRotation.lastPitch = angles[1];
-        } else if (mode.equals("Packet") && mc.getPlayer().connection != null) {
-            mc.getPlayer().connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(angles[0], angles[1], mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision));
+            currentYaw = silentRotation.lastYaw;
+            currentPitch = silentRotation.lastPitch;
+            float[] limited = AimUtility.limitAngles(currentYaw, RotationUtility.fixAngle(angles[0]), currentPitch, RotationUtility.fixAngle(angles[1]), 180.0f);
+            silentRotation.set(limited[0], limited[1]);
+            silentRotation.lastYaw = limited[0];
+            silentRotation.lastPitch = limited[1];
+        } else if (mode.equals("Vanilla")) {
+            mc.getPlayer().setYRot(angles[0]);
+            mc.getPlayer().setXRot(angles[1]);
+        } else if (mode.equals("Legit")) {
+            float maxSpeed = 90.0f;
+            float[] limited = AimUtility.limitAngles(currentYaw, angles[0], currentPitch, angles[1], maxSpeed);
+            limited = AimUtility.randomize(limited[0], limited[1], 1.5f);
+            mc.getPlayer().setYRot(limited[0]);
+            mc.getPlayer().setXRot(limited[1]);
         }
     }
     private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {

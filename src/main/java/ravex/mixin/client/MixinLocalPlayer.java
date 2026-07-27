@@ -14,6 +14,7 @@ import ravex.modules.combat.BasePlace;
 import ravex.modules.combat.AnchorAura;
 import ravex.modules.combat.KillAura;
 import ravex.modules.combat.ShieldFucker;
+import ravex.modules.combat.AutoCart;
 import ravex.modules.combat.Breaker;
 import ravex.modules.player.PacketMine;
 import ravex.modules.player.AntiAim;
@@ -91,12 +92,12 @@ public class MixinLocalPlayer {
             ravexSavedPitch = player.getXRot();
             player.setYRot(Quiver.silentRotation.yaw);
             player.setXRot(Quiver.silentRotation.pitch);
-        } else if (Modules.enabled(Scaffold.class) && Scaffold.silentRotation.hasRotation) {
+        } else if (Modules.enabled(AutoCart.class) && Modules.get(AutoCart.class).bypass.equals("NCP") && AutoCart.hasSilentRotations()) {
             ravexSavedYaw = player.getYRot();
             ravexSavedPitch = player.getXRot();
-            player.setYRot(Scaffold.silentRotation.yaw);
-            player.setXRot(Scaffold.silentRotation.pitch);
-        } else if (Modules.enabled(KillAura.class) && KillAura.hasSilentRotations()) {
+            player.setYRot(AutoCart.silentRotation.yaw);
+            player.setXRot(AutoCart.silentRotation.pitch);
+        } else if (Modules.enabled(Scaffold.class) && Scaffold.silentRotation.hasRotation) {
             ravexSavedYaw = player.getYRot();
             ravexSavedPitch = player.getXRot();
             player.setYRot(KillAura.silentRotation.yaw);
@@ -124,8 +125,9 @@ public class MixinLocalPlayer {
         boolean pmActive = Modules.enabled(PacketMine.class) && Modules.get(PacketMine.class).rotate.equals("Silent") && PacketMine.silentRotation.hasRotation;
         boolean kaActive = Modules.enabled(KillAura.class) && KillAura.hasSilentRotations();
         boolean sfActive = Modules.enabled(ShieldFucker.class) && Modules.get(ShieldFucker.class).rotate.equals("Silent") && ShieldFucker.hasSilentRotations();
+        boolean autoCartActive = Modules.enabled(AutoCart.class) && Modules.get(AutoCart.class).bypass.equals("NCP") && AutoCart.hasSilentRotations();
         boolean scaffoldSilent = Modules.enabled(Scaffold.class) && Scaffold.silentRotation.hasRotation;
-        if (acActive || trapActive || selfTrapActive || basePlaceActive || anchorAuraActive || antiAimActive || bowAimActive || quiverActive || breakerActive || pmActive || kaActive || sfActive || scaffoldSilent) {
+        if (acActive || trapActive || selfTrapActive || basePlaceActive || anchorAuraActive || antiAimActive || bowAimActive || quiverActive || breakerActive || pmActive || kaActive || sfActive || autoCartActive || scaffoldSilent) {
             player.setYRot(ravexSavedYaw);
             player.setXRot(ravexSavedPitch);
         }
