@@ -2,13 +2,13 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
 import ravex.event.movement.VelocityEvent;
 
 import java.util.List;
 import java.util.Random;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Velocity", category = "Movement")
 public class Velocity implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Cancel", "Matrix", "NCP", "Grim", "GrimStrict"})
@@ -51,7 +51,7 @@ public class Velocity implements ModuleAccess {
             case "NCP" -> event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * h, cur.y, cur.z * h));
             case "Grim" -> {
                 event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * 0.1, 0.0, cur.z * 0.1));
-                Minecraft mc = Minecraft.getInstance();
+                var mc = MinecraftWrapper.getInstance();
                 if (mc.player != null) {
                     mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                         mc.player.getX(), mc.player.getY(), mc.player.getZ(),
@@ -68,7 +68,7 @@ public class Velocity implements ModuleAccess {
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         if ("GrimStrict".equals(mode) && grimVelocityActive) {
             if (grimDelayTicks > 0) {

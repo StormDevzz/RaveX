@@ -3,8 +3,8 @@ import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -13,7 +13,7 @@ public class ItemSaver implements ModuleAccess {
     @Parameter(name = "MinDurability", min = 1.0, max = 50.0, step = 1.0)
     public double threshold = 10.0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null) return;
         ItemStack mainHand = InventoryUtility.getMainHand(p);

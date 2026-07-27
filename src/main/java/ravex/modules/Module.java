@@ -24,7 +24,7 @@ public abstract class Module {
         return m != null && m.getEnabled();
     }
     private String name;
-    private Category category;
+    private String category;
     protected boolean enabled;
     private int keyBind = org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN;
     private final List<Parameter<?>> parameters = new ArrayList<>();
@@ -57,12 +57,12 @@ public abstract class Module {
         this.hud = false;
         this.gearLastTick = System.currentTimeMillis();
     }
-    public void setCategory(Category category) {
+    public void setCategory(String category) {
         this.category = category;
     }
     public Module(String name, int defaultX, int defaultY, int width, int height) {
         this.name = name;
-        this.category = Category.CUSTOM;
+        this.category = "Custom";
         this.enabled = false;
         this.hud = true;
         this.targetX = defaultX;
@@ -76,7 +76,7 @@ public abstract class Module {
     public String getName() {
         return name != null ? name : getClass().getSimpleName();
     }
-    public Category getCategory() {
+    public String getCategory() {
         return category;
     }
     public String getDescription() {

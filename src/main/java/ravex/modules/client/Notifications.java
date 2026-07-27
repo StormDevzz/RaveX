@@ -5,7 +5,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.manager.NotificationManager;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PotionUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
 
 import net.minecraft.world.entity.item.ItemEntity;
@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Notifications", category = "Client")
 public class Notifications implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Text", "Toast"})
@@ -65,8 +66,8 @@ public class Notifications implements ModuleAccess {
         if ("Toast".equals(modeVal)) {
             NotificationManager.addToast(text, color, true, (float) toastOpacity, (int) toastSize);
         } else if ("Text".equals(modeVal)) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) mc.player.displayClientMessage(Component.literal(text), false);
+            var mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) mc.getPlayer().displayClientMessage(Component.literal(text), false);
         }
     }
     public void onEnable() {
@@ -75,19 +76,19 @@ public class Notifications implements ModuleAccess {
         playerStates.clear();
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null || mc.getPlayer() == null) return;
         tickVisualRange(mc);
         tickItemCollection(mc);
         tickTracker(mc);
     }
 
-    private void tickVisualRange(Minecraft mc) {
+    private void tickVisualRange(MinecraftWrapper mc) {
         String vr = visualRange;
         if ("Off".equals(vr)) return;
         List<String> currentPlayers = new ArrayList<>();
-        for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
-            if (p == mc.player) continue;
+        for (net.minecraft.world.entity.player.Player p : mc.getLevel().players()) {
+            if (p == mc.getPlayer()) continue;
             String name = p.getName().getString();
             currentPlayers.add(name);
             if (!knownPlayers.contains(name)) {
@@ -103,12 +104,12 @@ public class Notifications implements ModuleAccess {
         knownPlayers.addAll(currentPlayers);
     }
 
-    private void tickItemCollection(Minecraft mc) {
+    private void tickItemCollection(MinecraftWrapper mc) {
         String ic = itemCollection;
         if ("Off".equals(ic)) return;
-        AABB range = new AABB(mc.player.blockPosition()).inflate(64);
+        AABB range = new AABB(mc.getPlayer().blockPosition()).inflate(64);
         Set<Integer> currentIds = new HashSet<>();
-        for (ItemEntity item : mc.level.getEntitiesOfClass(ItemEntity.class, range)) {
+        for (ItemEntity item : mc.getLevel().getEntitiesOfClass(ItemEntity.class, range)) {
             int id = item.getId();
             currentIds.add(id);
             trackedItems.put(id, new ItemEntry(item.getX(), item.getY(), item.getZ(), item.getItem().copy()));
@@ -122,10 +123,10 @@ public class Notifications implements ModuleAccess {
                 net.minecraft.world.entity.LivingEntity nearest = null;
                 double nearestDist = Double.MAX_VALUE;
                 AABB pickRange = new AABB(entry.x - 2, entry.y - 2, entry.z - 2, entry.x + 2, entry.y + 2, entry.z + 2);
-                for (net.minecraft.world.entity.LivingEntity le : mc.level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, pickRange)) {
+                for (net.minecraft.world.entity.LivingEntity le : mc.getLevel().getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, pickRange)) {
                     if (!canPickUpItems(le)) continue;
                     double d = le.distanceToSqr(entry.x, entry.y, entry.z);
-                    boolean self = le == mc.player;
+                    boolean self = le == mc.getPlayer();
                     boolean player = le instanceof net.minecraft.world.entity.player.Player && !self;
                     boolean monster = MobUtility.isHostile(le);
                     boolean animal = MobUtility.isPassive(le);
@@ -147,10 +148,10 @@ public class Notifications implements ModuleAccess {
         for (int id : removed) trackedItems.remove(id);
     }
 
-    private void tickTracker(Minecraft mc) {
+    private void tickTracker(MinecraftWrapper mc) {
         String tr = tracker;
         if ("Off".equals(tr)) return;
-        for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
+        for (net.minecraft.world.entity.player.Player p : mc.getLevel().players()) {
             String name = p.getName().getString();
             PlayerState state = playerStates.computeIfAbsent(name, k -> new PlayerState());
 
@@ -211,14 +212,14 @@ public class Notifications implements ModuleAccess {
 
     public static void notifyToggle(ravex.modules.Module module, boolean enabled) {
         if (!ravex.manager.ModuleManager.delegate(Notifications.class).getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         int color = ravex.manager.ModuleManager.delegate(Notifications.class).messageColor;
         if (ravex.manager.ModuleManager.delegate(Notifications.class).mode.equals("Toast")) {
             NotificationManager.addToast(module.getName(), color, enabled, ravex.manager.ModuleManager.delegate(Notifications.class).toastOpacity, (int) ravex.manager.ModuleManager.delegate(Notifications.class).toastSize);
             return;
         }
         String action = enabled ? "Enabled" : "Disabled";
-        if (mc.player != null) {
+        if (mc.getPlayer() != null) {
             Component message = Component.literal("[")
                 .withStyle(style -> style.withColor(0x7F7F7F))
                 .append(Component.literal("RaveX").withStyle(style -> style.withColor(color)))
@@ -227,7 +228,7 @@ public class Notifications implements ModuleAccess {
                 .append(Component.literal(" has been ").withStyle(style -> style.withColor(0x7F7F7F)))
                 .append(Component.literal(action).withStyle(style -> style.withColor(color)))
                 .append(Component.literal(".").withStyle(style -> style.withColor(0x7F7F7F)));
-            mc.player.displayClientMessage(message, false);
+            mc.getPlayer().displayClientMessage(message, false);
         }
     }
 

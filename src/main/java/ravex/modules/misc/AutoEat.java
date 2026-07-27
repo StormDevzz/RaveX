@@ -3,9 +3,9 @@ import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.food.FoodUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoEat", category = "Misc")
 public class AutoEat implements ModuleAccess {
     @Parameter(name = "Hunger", min = 1.0, max = 20.0, step = 1.0)
@@ -17,7 +17,7 @@ public class AutoEat implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Normal", "Silent", "Vanilla"})
     public String mode = "Normal";
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         float hunger = mc.player.getFoodData().getFoodLevel();
         if ("Vanilla".equals(mode)) {
@@ -42,7 +42,7 @@ public class AutoEat implements ModuleAccess {
     }
     public void onDisable() {
         if ("Vanilla".equals(mode)) {
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.options != null) mc.options.keyUse.setDown(false);
         }
         FoodUtility.INSTANCE.reset();

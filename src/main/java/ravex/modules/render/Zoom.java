@@ -2,7 +2,7 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "Zoom", category = "Render")
 public class Zoom implements ModuleAccess {
@@ -24,7 +24,7 @@ public class Zoom implements ModuleAccess {
     private double targetFov;
     private double savedFov;
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.options != null) {
             savedFov = mc.options.fov().get();
             targetFov = defaultZoom;
@@ -32,7 +32,7 @@ public class Zoom implements ModuleAccess {
         }
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.options != null && savedFov > 0) {
             mc.options.fov().set((int) savedFov);
             currentFov = savedFov;
@@ -41,7 +41,7 @@ public class Zoom implements ModuleAccess {
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         if (smooth) {
             double spd = smoothSpeed;

@@ -10,7 +10,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -155,8 +156,8 @@ public class ChatHelper implements ModuleAccess {
     public boolean shouldFilterMessage(String msg) {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled()) return false;
         if ("ChatFilter".equals(mode)) {
-            if (onlyName && Minecraft.getInstance().player != null) {
-                String playerName = Minecraft.getInstance().player.getGameProfile().name().toLowerCase();
+            if (onlyName && MinecraftWrapper.getWrapper().getPlayer() != null) {
+                String playerName = MinecraftWrapper.getWrapper().getPlayer().getGameProfile().name().toLowerCase();
                 if (!msg.toLowerCase().contains(playerName)) return true;
             }
             return ravex.utility.network.NetworkUtility.isAdMessage(msg);
@@ -225,9 +226,9 @@ public class ChatHelper implements ModuleAccess {
             fw.write(line);
         } catch (Exception ignored) {}
         if (chatNotify) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-                mc.player.displayClientMessage(
+            var mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) {
+                mc.getPlayer().displayClientMessage(
                     Component.literal("§7[§cCoordLogger§7] §fDEATH at X=" +
                         String.format("%.1f", x) + " Y=" + String.format("%.1f", y) +
                         " Z=" + String.format("%.1f", z)),
@@ -237,18 +238,18 @@ public class ChatHelper implements ModuleAccess {
         }
     }
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
         if (announcerEnabled) {
-            lastX = mc.player.getX();
-            lastZ = mc.player.getZ();
-            lastFoodLevel = mc.player.getFoodData().getFoodLevel();
+            lastX = mc.getPlayer().getX();
+            lastZ = mc.getPlayer().getZ();
+            lastFoodLevel = mc.getPlayer().getFoodData().getFoodLevel();
             blocksWalked = 0; foodEaten = 0; hitsDealt = 0; tickCounter = 0;
         }
         if (welcomerEnabled) {
             knownPlayers.clear();
-            if (mc.level != null) {
-                for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
+            if (mc.getLevel() != null) {
+                for (net.minecraft.world.entity.player.Player p : mc.getLevel().players()) {
                     knownPlayers.add(p.getUUID());
                 }
             }
@@ -261,8 +262,8 @@ public class ChatHelper implements ModuleAccess {
                 fw.write("=== CoordLogger Session Started ===\n");
             } catch (Exception ignored) {}
             if (logJoin) {
-                double x = mc.player.getX(), y = mc.player.getY(), z = mc.player.getZ();
-                String dim = mc.player.level().dimension().identifier().toString();
+                double x = mc.getPlayer().getX(), y = mc.getPlayer().getY(), z = mc.getPlayer().getZ();
+                String dim = mc.getPlayer().level().dimension().identifier().toString();
                 SimpleDateFormat tsdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String ts = tsdf.format(new Date());
                 String line = String.format("[%s] JOIN | X: %.1f Y: %.1f Z: %.1f | Dim: %s\n",
@@ -271,7 +272,7 @@ public class ChatHelper implements ModuleAccess {
                     fw.write(line);
                 } catch (Exception ignored) {}
                 if (chatNotify) {
-                    mc.player.displayClientMessage(
+                    mc.getPlayer().displayClientMessage(
                         Component.literal("§7[§cCoordLogger§7] §fJOIN at X=" +
                             String.format("%.1f", x) + " Y=" + String.format("%.1f", y) +
                             " Z=" + String.format("%.1f", z)),
@@ -294,14 +295,14 @@ public class ChatHelper implements ModuleAccess {
         net.minecraft.world.entity.player.Player victim = event.getPlayer();
         if (ezOnlyPlayers && !(victim instanceof net.minecraft.world.entity.player.Player)) return;
         net.minecraft.world.entity.Entity killer = event.getSource().getEntity();
-        if (killer != Minecraft.getInstance().player) return;
+        if (killer != MinecraftWrapper.getWrapper().getPlayer()) return;
         long now = System.currentTimeMillis();
         if (now - lastKillTime < (long) ezDelay) return;
         lastKillTime = now;
         String name = victim.getName().getString();
         String phrase = String.format(EZ_PHRASES.get(random.nextInt(EZ_PHRASES.size())), name);
-        if (Minecraft.getInstance().player != null) {
-            Minecraft.getInstance().player.connection.sendChat(phrase);
+        if (MinecraftWrapper.getWrapper().getPlayer() != null) {
+            MinecraftWrapper.getWrapper().getPlayer().connection.sendChat(phrase);
         }
     }
 
@@ -310,16 +311,16 @@ public class ChatHelper implements ModuleAccess {
         if (announceHit) hitsDealt++;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        net.minecraft.client.player.LocalPlayer p = mc.player;
-        if (p == null || mc.level == null || p.connection == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        net.minecraft.client.player.LocalPlayer p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null || p.connection == null) return;
         if (announcerEnabled) tickAnnouncer(mc, p);
         if (welcomerEnabled) tickWelcomer(mc, p);
         if (spammerEnabled) tickSpammer();
         if (durabAlertEnabled) tickDurabAlert(mc);
     }
 
-    private void tickAnnouncer(Minecraft mc, net.minecraft.client.player.LocalPlayer p) {
+    private void tickAnnouncer(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
         tickCounter++;
         if (announceWalk) {
             double dx = p.getX() - lastX;
@@ -370,8 +371,8 @@ public class ChatHelper implements ModuleAccess {
         blocksWalked = 0; foodEaten = 0; hitsDealt = 0;
     }
 
-    private void tickWelcomer(Minecraft mc, net.minecraft.client.player.LocalPlayer me) {
-        for (net.minecraft.world.entity.player.Player player : mc.level.players()) {
+    private void tickWelcomer(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer me) {
+        for (net.minecraft.world.entity.player.Player player : mc.getLevel().players()) {
             if (player == me) continue;
             if (knownPlayers.contains(player.getUUID())) continue;
             knownPlayers.add(player.getUUID());
@@ -386,7 +387,7 @@ public class ChatHelper implements ModuleAccess {
         long now = System.currentTimeMillis();
         if (now - lastSpamTime < (long) spamDelay) return;
         lastSpamTime = now;
-        net.minecraft.client.player.LocalPlayer p = Minecraft.getInstance().player;
+        net.minecraft.client.player.LocalPlayer p = MinecraftWrapper.getWrapper().getPlayer();
         if (p == null || p.connection == null) return;
         String msg;
         if ("File".equals(spamMode)) {
@@ -400,14 +401,14 @@ public class ChatHelper implements ModuleAccess {
         p.connection.sendChat(msg);
     }
 
-    private void tickDurabAlert(Minecraft mc) {
+    private void tickDurabAlert(MinecraftWrapper mc) {
         double thresh = threshold;
         String am = dAlertMode;
         if (am.equals("Own") || am.equals("Both")) {
             EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
             String[] names = {"Boots", "Leggings", "Chestplate", "Helmet"};
             for (int i = 0; i < slots.length; i++) {
-                var stack = mc.player.getItemBySlot(slots[i]);
+                var stack = mc.getPlayer().getItemBySlot(slots[i]);
                 if (stack.isEmpty() || !stack.isDamageableItem()) continue;
                 int maxDmg = stack.getMaxDamage();
                 int curDmg = stack.getDamageValue();
@@ -418,8 +419,8 @@ public class ChatHelper implements ModuleAccess {
             }
         }
         if (am.equals("Enemy") || am.equals("Both")) {
-            net.minecraft.world.entity.LivingEntity living = MobUtility.asLivingEntity(mc.crosshairPickEntity);
-            if (living != null && !living.equals(mc.player)) {
+            net.minecraft.world.entity.LivingEntity living = MobUtility.asLivingEntity(mc.getCrosshairPickEntity());
+            if (living != null && !living.equals(mc.getPlayer())) {
                 EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
                 String[] names = {"Boots", "Leggings", "Chestplate", "Helmet"};
                 for (int i = 0; i < slots.length; i++) {

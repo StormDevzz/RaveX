@@ -2,9 +2,9 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Step", category = "Movement")
 public class Step implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Vanilla", "Packet", "Grim"})
@@ -12,7 +12,7 @@ public class Step implements ModuleAccess {
     @Parameter(name = "Height", min = 1.0, max = 2.5, step = 0.5)
     public double height = 1.0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         double stepHeight = height;
         var attr = mc.player.getAttribute(Attributes.STEP_HEIGHT);
@@ -61,7 +61,7 @@ public class Step implements ModuleAccess {
         }
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             var attr = mc.player.getAttribute(Attributes.STEP_HEIGHT);
             if (attr != null) {

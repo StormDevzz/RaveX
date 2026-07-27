@@ -2,7 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
 
@@ -12,6 +12,7 @@ import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "ShieldFucker", category = "Combat")
 public class ShieldFucker implements ModuleAccess {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
@@ -75,8 +76,8 @@ public class ShieldFucker implements ModuleAccess {
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) {
             silentRotation.hasRotation = false;
             return;
         }
@@ -87,12 +88,12 @@ public class ShieldFucker implements ModuleAccess {
             javaTick(mc);
         }
     }
-    private void nativeTick(Minecraft mc) {
-        var pos = mc.player.position();
+    private void nativeTick(MinecraftWrapper mc) {
+        var pos = mc.getPlayer().position();
         double[] entityData = collectEntityData(mc);
         BreakAction action = nativeTick(
             pos.x, pos.y, pos.z,
-            mc.player.getYRot(), mc.player.getXRot(),
+            mc.getPlayer().getYRot(), mc.getPlayer().getXRot(),
             entityData,
             range, wallRange,
             switchDelay, attackDelay,
@@ -100,17 +101,17 @@ public class ShieldFucker implements ModuleAccess {
             throughWalls, autoSwitch,
             targetPlayers, targetMonsters,
             onlyAxe,
-            mc.player.getMainHandItem().getItem().toString(),
-            InventoryUtility.getSelectedSlot(mc.player)
+            mc.getPlayer().getMainHandItem().getItem().toString(),
+            InventoryUtility.getSelectedSlot(mc.getPlayer())
         );
         if (action == null) return;
         processAction(mc, action);
     }
-    private void javaTick(Minecraft mc) {
+    private void javaTick(MinecraftWrapper mc) {
         double maxDist = range;
         var target = (net.minecraft.world.entity.LivingEntity) null;
         double bestDist = Double.MAX_VALUE;
-        for (var e : mc.level.entitiesForRendering()) {
+        for (var e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
             if (MobUtility.isArmorStand(le)) continue;
@@ -118,9 +119,9 @@ public class ShieldFucker implements ModuleAccess {
             if (!targetMonsters && MobUtility.isHostile(le)) continue;
             if (!hasShield(le)) continue;
             if (!le.isBlocking()) continue;
-            double dist = mc.player.distanceTo(le);
+            double dist = mc.getPlayer().distanceTo(le);
             if (dist > maxDist) continue;
-            if (!throughWalls && !mc.player.hasLineOfSight(le)) continue;
+            if (!throughWalls && !mc.getPlayer().hasLineOfSight(le)) continue;
             if (dist < bestDist) {
                 bestDist = dist;
                 target = le;
@@ -139,44 +140,44 @@ public class ShieldFucker implements ModuleAccess {
         }
         return false;
     }
-    private void handleAction(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
+    private void handleAction(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target) {
         String rotMode = rotate;
         boolean doRotate = !rotMode.equals("None");
         if (doRotate) {
-            float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target.position().add(0, 0.25, 0));
+            float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target.position().add(0, 0.25, 0));
             if (rotMode.equals("Silent")) {
                 silentRotation.set(angles[0], angles[1]);
             } else {
-                mc.player.setYRot(angles[0]);
-                mc.player.setXRot(angles[1]);
+                mc.getPlayer().setYRot(angles[0]);
+                mc.getPlayer().setXRot(angles[1]);
             }
         }
-        if (onlyAxe && !InventoryUtility.isAxeItem(mc.player.getMainHandItem())) {
+        if (onlyAxe && !InventoryUtility.isAxeItem(mc.getPlayer().getMainHandItem())) {
             if (autoSwitch) {
                 int axeSlot = findAxeSlot(mc);
-                if (axeSlot != -1 && axeSlot != InventoryUtility.getSelectedSlot(mc.player)) {
-                    InventoryUtility.selectSlot(mc.player, axeSlot);
+                if (axeSlot != -1 && axeSlot != InventoryUtility.getSelectedSlot(mc.getPlayer())) {
+                    InventoryUtility.selectSlot(mc.getPlayer(), axeSlot);
                 }
             }
             return;
         }
-        if (mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
+        if (mc.getPlayer().getAttackStrengthScale(0.0f) >= 0.85f) {
             MobUtility.attack(mc, target);
-            ravex.utility.player.SwingUtility.swingMainHand(mc.player);
+            ravex.utility.player.SwingUtility.swingMainHand(mc.getPlayer());
         }
     }
-    private int findAxeSlot(Minecraft mc) {
+    private int findAxeSlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            if (InventoryUtility.isAxeItem(InventoryUtility.getItem(mc.player, i))) return i;
+            if (InventoryUtility.isAxeItem(InventoryUtility.getItem(mc.getPlayer(), i))) return i;
         }
         return -1;
     }
-    private void processAction(Minecraft mc, BreakAction action) {
+    private void processAction(MinecraftWrapper mc, BreakAction action) {
         if (action.targetId < 0) {
             silentRotation.hasRotation = false;
             return;
         }
-        var target = mc.level.getEntity(action.targetId);
+        var target = mc.getLevel().getEntity(action.targetId);
         if (!(target instanceof net.minecraft.world.entity.LivingEntity le) || !le.isAlive()) {
             silentRotation.hasRotation = false;
             return;
@@ -186,27 +187,27 @@ public class ShieldFucker implements ModuleAccess {
             if (rotMode.equals("Silent")) {
                 silentRotation.set(action.yaw, action.pitch);
             } else {
-                mc.player.setYRot(action.yaw);
-                mc.player.setXRot(action.pitch);
+                mc.getPlayer().setYRot(action.yaw);
+                mc.getPlayer().setXRot(action.pitch);
             }
         }
         if (action.shouldSwitch && autoSwitch) {
             int slot = action.switchSlot >= 0 ? action.switchSlot : findAxeSlot(mc);
-            if (slot != -1 && slot != InventoryUtility.getSelectedSlot(mc.player)) {
-                InventoryUtility.selectSlot(mc.player, slot);
+            if (slot != -1 && slot != InventoryUtility.getSelectedSlot(mc.getPlayer())) {
+                InventoryUtility.selectSlot(mc.getPlayer(), slot);
             }
         }
         if (action.shouldBreak) {
-            if (mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
+            if (mc.getPlayer().getAttackStrengthScale(0.0f) >= 0.85f) {
                 MobUtility.attack(mc, le);
-                ravex.utility.player.SwingUtility.swingMainHand(mc.player);
+                ravex.utility.player.SwingUtility.swingMainHand(mc.getPlayer());
             }
         }
     }
-    private double[] collectEntityData(Minecraft mc) {
+    private double[] collectEntityData(MinecraftWrapper mc) {
         List<Double> data = new ArrayList<>();
         double maxDist = range;
-        for (var e : mc.level.entitiesForRendering()) {
+        for (var e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
             if (MobUtility.isArmorStand(le)) continue;

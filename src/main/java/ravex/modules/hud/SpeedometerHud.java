@@ -1,7 +1,6 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
@@ -11,6 +10,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "SpeedometerHud", category = "HUD")
 public class SpeedometerHud extends ravex.modules.Module {
@@ -34,7 +34,7 @@ private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", 
     }
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         String unitMode = "BPS";

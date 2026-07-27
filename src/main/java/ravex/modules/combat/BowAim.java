@@ -3,7 +3,7 @@ import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.misc.MobUtility;
@@ -11,6 +11,7 @@ import ravex.utility.misc.MobUtility;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "BowAim", category = "Combat")
 public class BowAim implements ModuleAccess {
     @Parameter(name = "Range", min = 5.0, max = 40.0, step = 1.0)
@@ -28,15 +29,15 @@ public class BowAim implements ModuleAccess {
         silentRotation.hasRotation = false;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) {
             silentRotation.hasRotation = false;
             return;
         }
         silentRotation.hasRotation = false;
-        boolean usingBow = mc.player.isUsingItem() && InventoryUtility.isBow(mc.player.getUseItem());
+        boolean usingBow = mc.getPlayer().isUsingItem() && InventoryUtility.isBow(mc.getPlayer().getUseItem());
         if (!usingBow) return;
-        int ticksUsed = mc.player.getTicksUsingItem();
+        int ticksUsed = mc.getPlayer().getTicksUsingItem();
         double arrowSpeed = getArrowSpeed(ticksUsed);
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) return;
@@ -44,7 +45,7 @@ public class BowAim implements ModuleAccess {
         double targetVelX = targetVel != null ? targetVel.x : 0.0;
         double targetVelY = targetVel != null ? targetVel.y : 0.0;
         double targetVelZ = targetVel != null ? targetVel.z : 0.0;
-        net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 eyePos = mc.getPlayer().getEyePosition();
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeCalculateBowAim(
@@ -68,8 +69,8 @@ public class BowAim implements ModuleAccess {
         float pitch = (float) result[2];
         String rMode = rotate;
         if (rMode.equals("Normal")) {
-            mc.player.setYRot(yaw);
-            mc.player.setXRot(pitch);
+            mc.getPlayer().setYRot(yaw);
+            mc.getPlayer().setXRot(pitch);
         } else if (rMode.equals("Silent")) {
             silentRotation.set(yaw, pitch);
         }
@@ -80,12 +81,12 @@ public class BowAim implements ModuleAccess {
         if (speed > 1.0) speed = 1.0;
         return speed * 3.0;
     }
-    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestDist = Double.MAX_VALUE;
         double maxDist = range;
         String filter = targetType;
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le) || MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
             if (filter.equals("Players")) {
                 if (!MobUtility.isPlayer(le)) continue;

@@ -2,7 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.inventory.ClickType;
 
@@ -11,6 +11,7 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Quiver", category = "Combat")
 public class Quiver implements ModuleAccess {
     @Parameter(name = "ArrowType", modes = {"Healing", "Speed", "Strength", "FireResistance"})
@@ -35,14 +36,14 @@ public class Quiver implements ModuleAccess {
         NATIVE.load();
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
-        if (state == 1 && mc.player != null && mc.gameMode != null) {
-            mc.player.releaseUsingItem();
-            mc.gameMode.releaseUsingItem(mc.player);
-            mc.options.keyUse.setDown(false);
+        var mc = MinecraftWrapper.getWrapper();
+        if (state == 1 && mc.getPlayer() != null && mc.getGameMode() != null) {
+            mc.getPlayer().releaseUsingItem();
+            mc.getGameMode().releaseUsingItem(mc.getPlayer());
+            mc.getOptions().keyUse.setDown(false);
             if (rotate.equals("Normal")) {
-                mc.player.setYRot(savedClientYaw);
-                mc.player.setXRot(savedClientPitch);
+                mc.getPlayer().setYRot(savedClientYaw);
+                mc.getPlayer().setXRot(savedClientPitch);
             }
             restoreOffhandAndBow(mc);
         }
@@ -55,8 +56,8 @@ public class Quiver implements ModuleAccess {
         silentRotation.hasRotation = false;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) {
             onDisable();
             return;
         }
@@ -69,16 +70,16 @@ public class Quiver implements ModuleAccess {
         }
         if (state == 1) {
             if (rotate.equals("Normal")) {
-                mc.player.setXRot(-90.0f);
+                mc.getPlayer().setXRot(-90.0f);
             } else {
-                silentRotation.set(mc.player.getYRot(), -90.0f);
+                silentRotation.set(mc.getPlayer().getYRot(), -90.0f);
             }
-            mc.options.keyUse.setDown(true);
+            mc.getOptions().keyUse.setDown(true);
             ticksHolding++;
             if (ticksHolding >= (int) chargeDuration) {
-                mc.options.keyUse.setDown(false);
-                mc.player.releaseUsingItem();
-                mc.gameMode.releaseUsingItem(mc.player);
+                mc.getOptions().keyUse.setDown(false);
+                mc.getPlayer().releaseUsingItem();
+                mc.getGameMode().releaseUsingItem(mc.getPlayer());
                 restoreOffhandAndBow(mc);
                 state = 2;
                 cooldownTicks = 20;
@@ -88,7 +89,7 @@ public class Quiver implements ModuleAccess {
         }
         int bowSlot = findBowSlot(mc);
         if (bowSlot == -1) {
-            mc.player.displayClientMessage(
+            mc.getPlayer().displayClientMessage(
                 net.minecraft.network.chat.Component.literal("§7[§cQuiver§7] §cNo bow found in hotbar! Disabling..."),
                 false
             );
@@ -97,7 +98,7 @@ public class Quiver implements ModuleAccess {
         }
         int bestArrowIndex = findBestArrowIndex(mc);
         if (bestArrowIndex == -1) {
-            mc.player.displayClientMessage(
+            mc.getPlayer().displayClientMessage(
                 net.minecraft.network.chat.Component.literal("§7[§cQuiver§7] §cNo arrows of type " + arrowType + " found! Disabling..."),
                 false
             );
@@ -105,53 +106,53 @@ public class Quiver implements ModuleAccess {
             return;
         }
         arrowInvSlot = bestArrowIndex;
-        previousSelectedSlot = InventoryUtility.getSelectedSlot(mc.player);
+        previousSelectedSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         if (autoSwapBow && previousSelectedSlot != bowSlot) {
-            InventoryUtility.selectSlot(mc.player, bowSlot);
+            InventoryUtility.selectSlot(mc.getPlayer(), bowSlot);
         }
-        InventoryUtility.swapToOffhand(mc, mc.player, arrowInvSlot);
-        savedClientYaw = mc.player.getYRot();
-        savedClientPitch = mc.player.getXRot();
+        InventoryUtility.swapToOffhand(mc, mc.getPlayer(), arrowInvSlot);
+        savedClientYaw = mc.getPlayer().getYRot();
+        savedClientPitch = mc.getPlayer().getXRot();
         if (rotate.equals("Normal")) {
-            mc.player.setXRot(-90.0f);
+            mc.getPlayer().setXRot(-90.0f);
         } else {
-            silentRotation.set(mc.player.getYRot(), -90.0f);
+            silentRotation.set(mc.getPlayer().getYRot(), -90.0f);
         }
-        mc.options.keyUse.setDown(true);
-        mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        mc.getOptions().keyUse.setDown(true);
+        mc.getGameMode().useItem(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         state = 1;
         ticksHolding = 0;
     }
-    private void restoreOffhandAndBow(Minecraft mc) {
+    private void restoreOffhandAndBow(MinecraftWrapper mc) {
         if (arrowInvSlot != -1) {
-            InventoryUtility.swapToOffhand(mc, mc.player, arrowInvSlot);
+            InventoryUtility.swapToOffhand(mc, mc.getPlayer(), arrowInvSlot);
             arrowInvSlot = -1;
         }
         if (previousSelectedSlot != -1) {
-            InventoryUtility.selectSlot(mc.player, previousSelectedSlot);
+            InventoryUtility.selectSlot(mc.getPlayer(), previousSelectedSlot);
             previousSelectedSlot = -1;
         }
-        if (rotate.equals("Normal") && mc.player != null) {
-            mc.player.setYRot(savedClientYaw);
-            mc.player.setXRot(savedClientPitch);
+        if (rotate.equals("Normal") && mc.getPlayer() != null) {
+            mc.getPlayer().setYRot(savedClientYaw);
+            mc.getPlayer().setXRot(savedClientPitch);
         }
     }
-    private int findBowSlot(Minecraft mc) {
-        if (InventoryUtility.isBow(mc.player.getMainHandItem())) {
-            return InventoryUtility.getSelectedSlot(mc.player);
+    private int findBowSlot(MinecraftWrapper mc) {
+        if (InventoryUtility.isBow(mc.getPlayer().getMainHandItem())) {
+            return InventoryUtility.getSelectedSlot(mc.getPlayer());
         }
         for (int i = 0; i < 9; i++) {
-            if (InventoryUtility.isBow(InventoryUtility.getItem(mc.player, i))) {
+            if (InventoryUtility.isBow(InventoryUtility.getItem(mc.getPlayer(), i))) {
                 return i;
             }
         }
         return -1;
     }
-    private int findBestArrowIndex(Minecraft mc) {
+    private int findBestArrowIndex(MinecraftWrapper mc) {
         List<String> activeEffects = new ArrayList<>();
         List<Integer> activeAmps = new ArrayList<>();
         List<Double> activeDurs = new ArrayList<>();
-        for (net.minecraft.world.effect.MobEffectInstance inst : mc.player.getActiveEffects()) {
+        for (net.minecraft.world.effect.MobEffectInstance inst : mc.getPlayer().getActiveEffects()) {
             String id = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getKey(inst.getEffect().value()).toString();
             activeEffects.add(id);
             activeAmps.add(inst.getAmplifier());
@@ -161,7 +162,7 @@ public class Quiver implements ModuleAccess {
         List<String> arrowEffects = new ArrayList<>();
         List<Integer> arrowAmplifiers = new ArrayList<>();
         for (int i = 0; i < 36; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (InventoryUtility.isTippedArrow(stack)) {
                 var contents = InventoryUtility.getPotionContents(stack);
                 if (contents != null) {

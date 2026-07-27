@@ -3,7 +3,6 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
@@ -17,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "CurrencyHud", category = "HUD")
 public class CurrencyHud extends ravex.modules.Module {
@@ -104,7 +104,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
     }
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
         if (now - lastFetchMs > 600000) {

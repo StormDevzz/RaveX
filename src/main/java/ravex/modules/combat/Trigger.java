@@ -2,12 +2,12 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Trigger", category = "Combat")
 public class Trigger implements ModuleAccess {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
@@ -50,7 +50,7 @@ public class Trigger implements ModuleAccess {
         currentTarget = null;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) {
             currentTarget = null;
             return;
@@ -71,7 +71,7 @@ public class Trigger implements ModuleAccess {
             currentTarget = null;
             return;
         }
-        var target = MobUtility.asLivingEntity(InventoryUtility.getHitEntity(mc));
+        var target = MobUtility.asLivingEntity(InventoryUtility.getHitEntity(ravex.mcwrapper.MinecraftWrapper.getWrapper()));
         if (target == null || !MobUtility.isAlive(target) || MobUtility.isSelf(target) || MobUtility.isArmorStand(target)) {
             currentTarget = null;
             return;
@@ -100,7 +100,7 @@ public class Trigger implements ModuleAccess {
             currentTarget = null;
             return;
         }
-        if (raytrace && !InventoryUtility.isLookingAtEntity(mc, target, 20.0)) {
+        if (raytrace && !InventoryUtility.isLookingAtEntity(ravex.mcwrapper.MinecraftWrapper.getWrapper(), target, 20.0)) {
             currentTarget = null;
             return;
         }
@@ -117,7 +117,7 @@ public class Trigger implements ModuleAccess {
         if (r > 0.01) interval += (long) ((Math.random() - 0.5) * r * 100.0);
         if (System.currentTimeMillis() - lastAttackTime < interval) return;
         if (mc.player.getAttackStrengthScale(0.0f) < (float) cooldown) return;
-        InventoryUtility.attackEntity(mc, target, swingMode);
+        InventoryUtility.attackEntity(ravex.mcwrapper.MinecraftWrapper.getWrapper(), target, swingMode);
         lastAttackTime = System.currentTimeMillis();
     }
     public static boolean maybeEnabled() {

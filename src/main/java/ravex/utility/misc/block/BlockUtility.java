@@ -1,12 +1,14 @@
 package ravex.utility.misc.block;
 
 import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -37,37 +39,40 @@ public class BlockUtility {
         public SilentRotationUtility silentRotation = null;
     }
 
-    public static boolean breakBlock(Minecraft mc, BlockPos pos) {
+    public static boolean breakBlock(MinecraftWrapper mc, BlockPos pos) {
+        var _mc = mc.getRaw();
         return breakBlock(mc, pos, new BreakConfig());
     }
 
-    public static boolean breakBlock(Minecraft mc, BlockPos pos, BreakConfig cfg) {
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
-        BlockState state = mc.level.getBlockState(pos);
-        int prev = InventoryUtility.getSelectedSlot(mc.player);
-        int toolSlot = ToolUtility.findBestToolSlot(mc.player, state);
-        if (toolSlot != -1) InventoryUtility.selectSlot(mc.player, toolSlot);
+    public static boolean breakBlock(MinecraftWrapper mc, BlockPos pos, BreakConfig cfg) {
+        var _mc = mc.getRaw();
+        if (_mc.player == null || _mc.level == null || _mc.gameMode == null) return false;
+        BlockState state = _mc.level.getBlockState(pos);
+        int prev = InventoryUtility.getSelectedSlot(_mc.player);
+        int toolSlot = ToolUtility.findBestToolSlot(_mc.player, state);
+        if (toolSlot != -1) InventoryUtility.selectSlot(_mc.player, toolSlot);
         if (cfg.rotate && cfg.silentRotation != null) {
             cfg.silentRotation.setAnglesTo(mc, pos.getCenter());
             cfg.silentRotation.hasRotation = true;
         }
-        mc.gameMode.startDestroyBlock(pos, cfg.face);
-        if (cfg.swing) SwingUtility.swing(mc.player, cfg.hand);
-        if (toolSlot != -1) InventoryUtility.selectSlot(mc.player, prev);
+        _mc.gameMode.startDestroyBlock(pos, cfg.face);
+        if (cfg.swing) SwingUtility.swing(_mc.player, cfg.hand);
+        if (toolSlot != -1) InventoryUtility.selectSlot(_mc.player, prev);
         return true;
     }
 
-    public static boolean breakBlock(Minecraft mc, BlockPos pos, String grimMode) {
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
+    public static boolean breakBlock(MinecraftWrapper mc, BlockPos pos, String grimMode) {
+        var _mc = mc.getRaw();
+        if (_mc.player == null || _mc.level == null || _mc.gameMode == null) return false;
         switch (grimMode) {
             case "Strict":
-                mc.gameMode.continueDestroyBlock(pos, Direction.UP);
+                _mc.gameMode.continueDestroyBlock(pos, Direction.UP);
                 return true;
             case "Dev":
-                mc.gameMode.startDestroyBlock(pos, Direction.UP);
-                SwingUtility.swing(mc.player, InteractionHand.MAIN_HAND);
+                _mc.gameMode.startDestroyBlock(pos, Direction.UP);
+                SwingUtility.swing(_mc.player, InteractionHand.MAIN_HAND);
                 for (int i = 0; i < 3; i++) {
-                    mc.gameMode.continueDestroyBlock(pos, Direction.UP);
+                    _mc.gameMode.continueDestroyBlock(pos, Direction.UP);
                 }
                 return true;
             default:
@@ -75,56 +80,63 @@ public class BlockUtility {
         }
     }
 
-    public static int startBreak(Minecraft mc, BlockPos pos, BreakConfig cfg) {
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return -1;
-        BlockState state = mc.level.getBlockState(pos);
-        int toolSlot = ToolUtility.findBestToolSlot(mc.player, state);
-        if (toolSlot != -1) InventoryUtility.selectSlot(mc.player, toolSlot);
+    public static int startBreak(MinecraftWrapper mc, BlockPos pos, BreakConfig cfg) {
+        var _mc = mc.getRaw();
+        if (_mc.player == null || _mc.level == null || _mc.gameMode == null) return -1;
+        BlockState state = _mc.level.getBlockState(pos);
+        int toolSlot = ToolUtility.findBestToolSlot(_mc.player, state);
+        if (toolSlot != -1) InventoryUtility.selectSlot(_mc.player, toolSlot);
         if (cfg.rotate && cfg.silentRotation != null) {
             cfg.silentRotation.setAnglesTo(mc, pos.getCenter());
             cfg.silentRotation.hasRotation = true;
         }
-        mc.gameMode.startDestroyBlock(pos, cfg.face);
-        if (cfg.swing) SwingUtility.swing(mc.player, cfg.hand);
+        _mc.gameMode.startDestroyBlock(pos, cfg.face);
+        if (cfg.swing) SwingUtility.swing(_mc.player, cfg.hand);
         return toolSlot;
     }
 
-    public static int startBreak(Minecraft mc, int x, int y, int z, BreakConfig cfg) {
+    public static int startBreak(MinecraftWrapper mc, int x, int y, int z, BreakConfig cfg) {
+        var _mc = mc.getRaw();
         return startBreak(mc, new BlockPos(x, y, z), cfg);
     }
 
-    public static void continueBreak(Minecraft mc, BlockPos pos, BreakConfig cfg) {
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+    public static void continueBreak(MinecraftWrapper mc, BlockPos pos, BreakConfig cfg) {
+        var _mc = mc.getRaw();
+        if (_mc.player == null || _mc.level == null || _mc.gameMode == null) return;
         if (cfg.rotate && cfg.silentRotation != null) {
             cfg.silentRotation.setAnglesTo(mc, pos.getCenter());
             cfg.silentRotation.hasRotation = true;
         }
-        mc.gameMode.continueDestroyBlock(pos, cfg.face);
-        if (cfg.swing) SwingUtility.swing(mc.player, cfg.hand);
+        _mc.gameMode.continueDestroyBlock(pos, cfg.face);
+        if (cfg.swing) SwingUtility.swing(_mc.player, cfg.hand);
     }
 
-    public static void continueBreak(Minecraft mc, int x, int y, int z, BreakConfig cfg) {
+    public static void continueBreak(MinecraftWrapper mc, int x, int y, int z, BreakConfig cfg) {
+        var _mc = mc.getRaw();
         continueBreak(mc, new BlockPos(x, y, z), cfg);
     }
 
-    public static void stopBreak(Minecraft mc) {
-        if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
+    public static void stopBreak(MinecraftWrapper mc) {
+        var _mc = mc.getRaw();
+        if (_mc.gameMode != null) _mc.gameMode.stopDestroyBlock();
     }
 
-    public static void stopBreak(Minecraft mc, int slotToRestore) {
-        if (mc.gameMode != null) mc.gameMode.stopDestroyBlock();
-        if (slotToRestore != -1) InventoryUtility.selectSlot(mc.player, slotToRestore);
+    public static void stopBreak(MinecraftWrapper mc, int slotToRestore) {
+        var _mc = mc.getRaw();
+        if (_mc.gameMode != null) _mc.gameMode.stopDestroyBlock();
+        if (slotToRestore != -1) InventoryUtility.selectSlot(_mc.player, slotToRestore);
     }
 
-    public static BlockHitResult findPlaceTarget(Minecraft mc, BlockPos target) {
-        Vec3 eye = mc.player.getEyePosition();
+    public static BlockHitResult findPlaceTarget(MinecraftWrapper mc, BlockPos target) {
+        var _mc = mc.getRaw();
+        Vec3 eye = _mc.player.getEyePosition();
         BlockPos bestNeighbor = null;
         Direction bestFace = Direction.UP;
         double bestDist = Double.MAX_VALUE;
         for (Direction dir : Direction.values()) {
             BlockPos neighbor = target.relative(dir);
-            BlockState st = mc.level.getBlockState(neighbor);
-            if (st.isCollisionShapeFullBlock(mc.level, neighbor)) {
+            BlockState st = _mc.level.getBlockState(neighbor);
+            if (st.isCollisionShapeFullBlock(_mc.level, neighbor)) {
                 double d = neighbor.distToCenterSqr(eye);
                 if (d < bestDist) {
                     bestDist = d;
@@ -144,20 +156,23 @@ public class BlockUtility {
         return null;
     }
 
-    public static BlockHitResult placeOnTop(Minecraft mc, BlockPos supportBlock) {
+    public static BlockHitResult placeOnTop(MinecraftWrapper mc, BlockPos supportBlock) {
+        var _mc = mc.getRaw();
         return new BlockHitResult(Vec3.atCenterOf(supportBlock), Direction.UP, supportBlock, false);
     }
 
-    public static boolean placeBlock(Minecraft mc, BlockPos target, int slot) {
+    public static boolean placeBlock(MinecraftWrapper mc, BlockPos target, int slot) {
+        var _mc = mc.getRaw();
         return placeBlock(mc, target, slot, new PlaceConfig());
     }
 
-    public static boolean placeBlock(Minecraft mc, BlockPos target, int slot, PlaceConfig cfg) {
-        int prev = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, slot);
+    public static boolean placeBlock(MinecraftWrapper mc, BlockPos target, int slot, PlaceConfig cfg) {
+        var _mc = mc.getRaw();
+        int prev = InventoryUtility.getSelectedSlot(_mc.player);
+        InventoryUtility.selectSlot(_mc.player, slot);
         BlockHitResult hit = findPlaceTarget(mc, target);
         if (hit == null) {
-            if (cfg.restoreSlot) InventoryUtility.selectSlot(mc.player, prev);
+            if (cfg.restoreSlot) InventoryUtility.selectSlot(_mc.player, prev);
             return false;
         }
         if (cfg.rotate && cfg.silentRotation != null) {
@@ -165,9 +180,9 @@ public class BlockUtility {
             cfg.silentRotation.setAnglesTo(mc, hitCenter);
             cfg.silentRotation.hasRotation = true;
         }
-        mc.gameMode.useItemOn(mc.player, cfg.hand, hit);
-        if (cfg.swing) SwingUtility.swing(mc.player, cfg.hand);
-        if (cfg.restoreSlot) InventoryUtility.selectSlot(mc.player, prev);
+        _mc.gameMode.useItemOn(_mc.player, cfg.hand, hit);
+        if (cfg.swing) SwingUtility.swing(_mc.player, cfg.hand);
+        if (cfg.restoreSlot) InventoryUtility.selectSlot(_mc.player, prev);
         return true;
     }
 
@@ -235,17 +250,20 @@ public class BlockUtility {
         return isBlock(level.getBlockState(pos), name);
     }
 
-    public static void useItemOn(Minecraft mc, BlockHitResult hit) {
+    public static void useItemOn(MinecraftWrapper mc, BlockHitResult hit) {
+        var _mc = mc.getRaw();
         useItemOn(mc, hit, InteractionHand.MAIN_HAND);
     }
 
-    public static void useItemOn(Minecraft mc, BlockHitResult hit, InteractionHand hand) {
-        if (mc.player != null && mc.gameMode != null)
-            mc.gameMode.useItemOn(mc.player, hand, hit);
+    public static void useItemOn(MinecraftWrapper mc, BlockHitResult hit, InteractionHand hand) {
+        var _mc = mc.getRaw();
+        if (_mc.player != null && _mc.gameMode != null)
+            _mc.gameMode.useItemOn(_mc.player, hand, hit);
     }
 
-    public static void swing(Minecraft mc) {
-        if (mc.player != null) SwingUtility.swingMainHand((LocalPlayer) mc.player);
+    public static void swing(MinecraftWrapper mc) {
+        var _mc = mc.getRaw();
+        if (_mc.player != null) SwingUtility.swingMainHand((LocalPlayer) _mc.player);
     }
 
     public static boolean isAir(Level level, BlockPos pos) {
@@ -273,6 +291,10 @@ public class BlockUtility {
 
     public static BlockState getState(Level level, int x, int y, int z) {
         return level.getBlockState(pos(x, y, z));
+    }
+
+    public static BlockState getState(BlockGetter level, BlockPos pos) {
+        return level.getBlockState(pos);
     }
 
     public static boolean isAir(Level level, int x, int y, int z) {
@@ -312,11 +334,12 @@ public class BlockUtility {
     public static BlockPos above(BlockPos pos) { return pos.above(); }
     public static BlockPos relative(BlockPos pos, Direction dir) { return pos.relative(dir); }
 
-    public static boolean grimAirPlace(Minecraft mc, BlockPos target, InteractionHand hand) {
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
+    public static boolean grimAirPlace(MinecraftWrapper mc, BlockPos target, InteractionHand hand) {
+        var _mc = mc.getRaw();
+        if (_mc.player == null || _mc.level == null || _mc.gameMode == null) return false;
         for (Direction dir : Direction.values()) {
             BlockPos side = target.relative(dir);
-            BlockState state = mc.level.getBlockState(side);
+            BlockState state = _mc.level.getBlockState(side);
             if (state.isAir() || state.liquid()) continue;
             Vec3 hitVec = Vec3.atCenterOf(side).add(
                 new Vec3(dir.getStepX(), dir.getStepY(), dir.getStepZ()).scale(0.5)
@@ -328,9 +351,10 @@ public class BlockUtility {
         return false;
     }
 
-    public static boolean grimAirPlaceDesync(Minecraft mc, BlockPos target, BlockPos breakPos, InteractionHand hand) {
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
-        mc.gameMode.startDestroyBlock(breakPos, Direction.UP);
+    public static boolean grimAirPlaceDesync(MinecraftWrapper mc, BlockPos target, BlockPos breakPos, InteractionHand hand) {
+        var _mc = mc.getRaw();
+        if (_mc.player == null || _mc.level == null || _mc.gameMode == null) return false;
+        _mc.gameMode.startDestroyBlock(breakPos, Direction.UP);
         for (Direction dir : Direction.values()) {
             BlockPos side = target.relative(dir);
             if (side.equals(breakPos)) {
@@ -345,17 +369,32 @@ public class BlockUtility {
         return grimAirPlace(mc, target, hand);
     }
 
-    public static boolean ncpBreakBlock(Minecraft mc, BlockPos pos, Direction face) {
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
-        if (mc.player.distanceToSqr(Vec3.atCenterOf(pos)) > 6.25) return false;
-        mc.gameMode.startDestroyBlock(pos, face);
-        SwingUtility.swing(mc.player, InteractionHand.MAIN_HAND);
+    public static boolean ncpBreakBlock(MinecraftWrapper mc, BlockPos pos, Direction face) {
+        var _mc = mc.getRaw();
+        if (_mc.player == null || _mc.level == null || _mc.gameMode == null) return false;
+        if (_mc.player.distanceToSqr(Vec3.atCenterOf(pos)) > 6.25) return false;
+        _mc.gameMode.startDestroyBlock(pos, face);
+        SwingUtility.swing(_mc.player, InteractionHand.MAIN_HAND);
         return true;
     }
 
-    public static boolean ncpAirPlace(Minecraft mc, BlockPos pos, Direction face, InteractionHand hand) {
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return false;
-        if (mc.player.distanceToSqr(Vec3.atCenterOf(pos)) > 6.25) return false;
+    public static boolean isExplodable(Level level) {
+        var dim = level.dimension();
+        return dim == Level.NETHER || dim == Level.END;
+    }
+
+    public static boolean isLoaded(Level level, BlockPos pos) {
+        return level.isLoaded(pos);
+    }
+
+    public static int getMinY(Level level) {
+        return level.getMinY();
+    }
+
+    public static boolean ncpAirPlace(MinecraftWrapper mc, BlockPos pos, Direction face, InteractionHand hand) {
+        var _mc = mc.getRaw();
+        if (_mc.player == null || _mc.level == null || _mc.gameMode == null) return false;
+        if (_mc.player.distanceToSqr(Vec3.atCenterOf(pos)) > 6.25) return false;
         Vec3 hitVec = Vec3.atCenterOf(pos).add(
             new Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5)
         );

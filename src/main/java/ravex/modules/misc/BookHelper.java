@@ -2,7 +2,7 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundEditBookPacket;
 import net.minecraft.server.network.Filterable;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import ravex.utility.player.InventoryUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "BookHelper", category = "Misc")
 public class BookHelper implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Edit", "Fill"})
@@ -28,8 +29,8 @@ public class BookHelper implements ModuleAccess {
     @Parameter(name = "BookTitle")
     public String bookTitle = "";
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.getConnection() == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getConnection() == null) {
             ravex.manager.ModuleManager.INSTANCE.getByName("BookHelper").setEnabled(false);
             return;
         }
@@ -40,11 +41,11 @@ public class BookHelper implements ModuleAccess {
         ravex.manager.ModuleManager.INSTANCE.getByName("BookHelper").setEnabled(false);
     }
 
-    private void onEdit(Minecraft mc) {
-        int slot = InventoryUtility.getSelectedSlot(mc.player);
-        var stack = mc.player.getMainHandItem();
+    private void onEdit(MinecraftWrapper mc) {
+        int slot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        var stack = mc.getPlayer().getMainHandItem();
         if (stack.isEmpty()) {
-            mc.player.displayClientMessage(
+            mc.getPlayer().displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §eHold a book in main hand"),
                 false
             );
@@ -69,20 +70,20 @@ public class BookHelper implements ModuleAccess {
                     content.resolved()
                 );
                 InventoryUtility.setWrittenBookContent(stack, modified);
-                mc.player.displayClientMessage(
+                mc.getPlayer().displayClientMessage(
                     Component.literal("§7[§cRaveX§7] §aBook updated: title=§f" + titleFilterable.raw()
                         + " §aauthor=§f" + newAuthorStr),
                     false
                 );
             } else {
-                mc.player.displayClientMessage(
+                mc.getPlayer().displayClientMessage(
                     Component.literal("§7[§cRaveX§7] §eCould not read book data"),
                     false
                 );
             }
         } else if (InventoryUtility.isWritableBook(stack)) {
             if (title.isEmpty()) {
-                mc.player.displayClientMessage(
+                mc.getPlayer().displayClientMessage(
                     Component.literal("§7[§cRaveX§7] §eProvide a title to sign the book"),
                     false
                 );
@@ -97,23 +98,23 @@ public class BookHelper implements ModuleAccess {
             }
             if (title.length() > 32) title = title.substring(0, 32);
             mc.getConnection().send(new ServerboundEditBookPacket(slot, existingPages, Optional.of(title)));
-            mc.player.displayClientMessage(
+            mc.getPlayer().displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §aBook signed with title=§f" + title),
                 false
             );
         } else {
-            mc.player.displayClientMessage(
+            mc.getPlayer().displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §eHold a writable or written book in main hand"),
                 false
             );
         }
     }
 
-    private void onFill(Minecraft mc) {
-        int slot = InventoryUtility.getSelectedSlot(mc.player);
-        var stack = mc.player.getMainHandItem();
+    private void onFill(MinecraftWrapper mc) {
+        int slot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        var stack = mc.getPlayer().getMainHandItem();
         if (!InventoryUtility.isWritableBook(stack)) {
-            mc.player.displayClientMessage(
+            mc.getPlayer().displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §eHold a writable book in main hand"),
                 false
             );
@@ -137,7 +138,7 @@ public class BookHelper implements ModuleAccess {
             if (title.length() > 32) title = title.substring(0, 32);
             mc.getConnection().send(new ServerboundEditBookPacket(slot, pages, Optional.of(title)));
         }
-        mc.player.displayClientMessage(
+        mc.getPlayer().displayClientMessage(
             Component.literal("§7[§cRaveX§7] §aBook filled with §f" + count + " §apages"),
             false
         );

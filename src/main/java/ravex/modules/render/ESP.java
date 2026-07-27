@@ -3,9 +3,10 @@ import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -88,13 +89,13 @@ public class ESP implements ModuleAccess {
         else if (m.equals("Void")) scanVoid();
     }
     private void scanTunnels() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         long now = System.currentTimeMillis();
         if (now - lastTunnelScan < (int) tunnelUpdateInterval * 50) return;
         lastTunnelScan = now;
         List<net.minecraft.core.BlockPos> result = new ArrayList<>();
-        net.minecraft.core.BlockPos center = mc.player.blockPosition();
+        net.minecraft.core.BlockPos center = mc.getPlayer().blockPosition();
         int r = (int) tunnelRange;
         int my = (int) tunnelMaxY;
         int ny = (int) tunnelMinY;
@@ -102,14 +103,14 @@ public class ESP implements ModuleAccess {
             for (int z = -r; z <= r; z++) {
                 for (int y = ny; y <= my; y++) {
                     net.minecraft.core.BlockPos pos = center.offset(x, y, z);
-                    if (!mc.level.getBlockState(pos).isAir()) continue;
-                    if (!mc.level.getBlockState(pos.above()).isAir()) continue;
-                    if (mc.level.getBlockState(pos.below()).isAir()) continue;
-                    if (mc.level.getBlockState(pos.above(2)).isAir()) continue;
-                    net.minecraft.world.level.block.state.BlockState west = mc.level.getBlockState(pos.west());
-                    net.minecraft.world.level.block.state.BlockState east = mc.level.getBlockState(pos.east());
-                    net.minecraft.world.level.block.state.BlockState north = mc.level.getBlockState(pos.north());
-                    net.minecraft.world.level.block.state.BlockState south = mc.level.getBlockState(pos.south());
+                    if (!mc.getLevel().getBlockState(pos).isAir()) continue;
+                    if (!mc.getLevel().getBlockState(pos.above()).isAir()) continue;
+                    if (mc.getLevel().getBlockState(pos.below()).isAir()) continue;
+                    if (mc.getLevel().getBlockState(pos.above(2)).isAir()) continue;
+                    net.minecraft.world.level.block.state.BlockState west = mc.getLevel().getBlockState(pos.west());
+                    net.minecraft.world.level.block.state.BlockState east = mc.getLevel().getBlockState(pos.east());
+                    net.minecraft.world.level.block.state.BlockState north = mc.getLevel().getBlockState(pos.north());
+                    net.minecraft.world.level.block.state.BlockState south = mc.getLevel().getBlockState(pos.south());
                     boolean wallsEW = !west.isAir() && !east.isAir();
                     boolean wallsNS = !north.isAir() && !south.isAir();
                     if (wallsEW || wallsNS) {
@@ -122,54 +123,54 @@ public class ESP implements ModuleAccess {
         tunnelBlocks = result;
     }
     private void scanHoles() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         if (++holeTick % 5 != 0) return;
         holeTick = 0;
         holes.clear();
-        net.minecraft.core.BlockPos center = mc.player.blockPosition();
+        net.minecraft.core.BlockPos center = mc.getPlayer().blockPosition();
         int r = (int) holeRange;
         for (int x = -r; x <= r; x++) {
             for (int z = -r; z <= r; z++) {
                 for (int y = -4; y <= 2; y++) {
                     net.minecraft.core.BlockPos pos = center.offset(x, y, z);
-                    if (!mc.level.getBlockState(pos).isAir()) continue;
+                    if (!mc.getLevel().getBlockState(pos).isAir()) continue;
                     if (isSafeHole(mc, pos)) holes.add(pos);
                 }
             }
         }
     }
-    private boolean isSafeHole(Minecraft mc, net.minecraft.core.BlockPos pos) {
-        if (!mc.level.getBlockState(pos.below()).isSolid()) return false;
+    private boolean isSafeHole(MinecraftWrapper mc, net.minecraft.core.BlockPos pos) {
+        if (!mc.getLevel().getBlockState(pos.below()).isSolid()) return false;
         net.minecraft.core.BlockPos[] sides = {
             pos.east(), pos.west(), pos.south(), pos.north()
         };
         for (net.minecraft.core.BlockPos side : sides) {
-            net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(side);
+            net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(side);
             if (state.isAir() || !state.isSolid()) return false;
         }
         return true;
     }
     private void scanVoid() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         long now = System.currentTimeMillis();
         if (now - lastVoidScan < (int) voidUpdateInterval * 50) return;
         lastVoidScan = now;
         List<net.minecraft.core.BlockPos> result = new ArrayList<>();
-        net.minecraft.core.BlockPos center = mc.player.blockPosition();
+        net.minecraft.core.BlockPos center = mc.getPlayer().blockPosition();
         int r = (int) voidRange;
         int h = (int) voidHeight;
         int floorH = voidFloorOnly ? 1 : h;
         for (int x = -r; x <= r; x++) {
             for (int z = -r; z <= r; z++) {
                 for (int y = 1; y <= floorH; y++) {
-                    if (center.getY() - y <= mc.level.getMinY()) continue;
+                    if (center.getY() - y <= mc.getLevel().getMinY()) continue;
                     net.minecraft.core.BlockPos pos = center.offset(x, -y, z);
-                    if (mc.level.getBlockState(pos).isAir()) {
+                    if (mc.getLevel().getBlockState(pos).isAir()) {
                         boolean hasFloor = false;
-                        for (int checkY = pos.getY() + 1; checkY <= mc.level.getMaxY(); checkY++) {
-                            if (!mc.level.getBlockState(new net.minecraft.core.BlockPos(pos.getX(), checkY, pos.getZ())).isAir()) {
+                        for (int checkY = pos.getY() + 1; checkY <= mc.getLevel().getMaxY(); checkY++) {
+                            if (!mc.getLevel().getBlockState(new net.minecraft.core.BlockPos(pos.getX(), checkY, pos.getZ())).isAir()) {
                                 hasFloor = true;
                                 break;
                             }
@@ -184,9 +185,9 @@ public class ESP implements ModuleAccess {
     public static boolean shouldGlow(net.minecraft.world.entity.Entity entity) {
         ESP $ = ravex.manager.ModuleManager.delegate(ESP.class);
         if ($ == null || !$.getEnabled() || !$.mode.equals("Outline")) return false;
-        var mc = Minecraft.getInstance();
-        if (entity == mc.player) return false;
-        if (mc.player != null && mc.player.distanceTo(entity) > $.maxDistance) return false;
+        var mc = MinecraftWrapper.getWrapper();
+        if (entity == mc.getPlayer()) return false;
+        if (mc.getPlayer() != null && mc.getPlayer().distanceTo(entity) > $.maxDistance) return false;
         if (entity instanceof net.minecraft.world.entity.player.Player && $.players) return true;
         if (entity instanceof net.minecraft.world.entity.monster.Monster && $.monsters) return true;
         if ((entity instanceof net.minecraft.world.entity.animal.Animal || entity instanceof net.minecraft.world.entity.ambient.AmbientCreature) && $.animals) return true;

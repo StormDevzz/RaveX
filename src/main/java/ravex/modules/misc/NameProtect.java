@@ -2,17 +2,17 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 import ravex.parameter.StringParameter;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "NameProtect", category = "Misc")
 public class NameProtect implements ModuleAccess {
     @Parameter(name = "ReplaceWith")
     public String replaceText = "RaveX";
 
     public Component protectComponent(Component component) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return component;
         String name = mc.player.getName().getString();
         if (name == null || name.isEmpty()) return component;

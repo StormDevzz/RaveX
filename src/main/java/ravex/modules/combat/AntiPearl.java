@@ -6,10 +6,10 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -29,7 +29,7 @@ public class AntiPearl implements ModuleAccess {
         NATIVE.load();
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         double r = range;
         List<ThrownEnderpearl> pearls = new ArrayList<>();

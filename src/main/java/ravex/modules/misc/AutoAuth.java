@@ -2,9 +2,9 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 
 import ravex.parameter.StringParameter;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoAuth", category = "Misc")
 public class AutoAuth implements ModuleAccess {
     @Parameter(name = "Password")
@@ -16,7 +16,7 @@ public class AutoAuth implements ModuleAccess {
     public void onEnable() { tickCounter = 0; hasRegistered = false; }
     public void onDisable() { hasRegistered = false; }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
         if (hasRegistered) return;
         tickCounter++;

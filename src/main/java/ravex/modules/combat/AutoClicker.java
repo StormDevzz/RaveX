@@ -2,12 +2,13 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.MobUtility;
 
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoClicker", category = "Combat")
 public class AutoClicker implements ModuleAccess {
     @Parameter(name = "MinCPS", min = 1.0, max = 40.0, step = 0.5)
@@ -35,17 +36,17 @@ public class AutoClicker implements ModuleAccess {
     private boolean holding = false;
     private java.util.Random rng = new java.util.Random();
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        if (mc.screen != null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        if (mc.getCurrentScreen() != null) return;
         long now = System.currentTimeMillis();
         if (weaponOnly) {
-            var held = mc.player.getMainHandItem();
+            var held = mc.getPlayer().getMainHandItem();
             if (!InventoryUtility.isSwordItem(held) && !InventoryUtility.isTrident(held)) return;
         }
         boolean targetValid = false;
         if (onlyOnTarget) {
-            if (MobUtility.asLivingEntity(mc.crosshairPickEntity) != null) {
+            if (MobUtility.asLivingEntity(mc.getCrosshairPickEntity()) != null) {
                 targetValid = true;
             }
         } else {
@@ -80,33 +81,33 @@ public class AutoClicker implements ModuleAccess {
             holding = true;
         }
     }
-    private void clickLeft(Minecraft mc) {
-        mc.options.keyAttack.setDown(true);
-        if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit && MobUtility.asLivingEntity(hit.getEntity()) != null) {
-            mc.gameMode.attack(mc.player, hit.getEntity());
+    private void clickLeft(MinecraftWrapper mc) {
+        mc.getOptions().keyAttack.setDown(true);
+        if (mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult hit && MobUtility.asLivingEntity(hit.getEntity()) != null) {
+            mc.getGameMode().attack(mc.getPlayer(), hit.getEntity());
         }
-        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        mc.options.keyAttack.setDown(false);
-        if (jitterStrength > 0 && mc.player != null) {
+        SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
+        mc.getOptions().keyAttack.setDown(false);
+        if (jitterStrength > 0 && mc.getPlayer() != null) {
             double str = jitterStrength;
-            mc.player.setYRot((float)(mc.player.getYRot() + (rng.nextFloat() - 0.5) * str));
-            mc.player.setXRot((float)(mc.player.getXRot() + (rng.nextFloat() - 0.5) * str));
+            mc.getPlayer().setYRot((float)(mc.getPlayer().getYRot() + (rng.nextFloat() - 0.5) * str));
+            mc.getPlayer().setXRot((float)(mc.getPlayer().getXRot() + (rng.nextFloat() - 0.5) * str));
         }
     }
-    private void clickRight(Minecraft mc) {
-        mc.options.keyUse.setDown(true);
-        if (mc.gameMode != null) {
-            mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+    private void clickRight(MinecraftWrapper mc) {
+        mc.getOptions().keyUse.setDown(true);
+        if (mc.getGameMode() != null) {
+            mc.getGameMode().useItem(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         }
-        mc.options.keyUse.setDown(false);
+        mc.getOptions().keyUse.setDown(false);
     }
-    private void releaseClick(Minecraft mc) {
-        mc.options.keyAttack.setDown(false);
-        mc.options.keyUse.setDown(false);
+    private void releaseClick(MinecraftWrapper mc) {
+        mc.getOptions().keyAttack.setDown(false);
+        mc.getOptions().keyUse.setDown(false);
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() != null) {
             releaseClick(mc);
         }
         holding = false;

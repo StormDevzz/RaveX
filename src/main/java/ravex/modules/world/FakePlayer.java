@@ -4,10 +4,10 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.RemotePlayer;
 import com.mojang.authlib.GameProfile;
 import java.util.UUID;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "FakePlayer", category = "World")
 public class FakePlayer implements ModuleAccess {
     @Parameter(name = "Nickname")
@@ -16,7 +16,7 @@ public class FakePlayer implements ModuleAccess {
     public boolean copyInventory = true;
     private RemotePlayer remotePlayer = null;
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) {
             ravex.manager.ModuleManager.INSTANCE.getByName("FakePlayer").setEnabled(false);
             return;
@@ -36,7 +36,7 @@ public class FakePlayer implements ModuleAccess {
         mc.level.addEntity(remotePlayer);
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level != null && remotePlayer != null) {
             mc.level.removeEntity(remotePlayer.getId(), net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
         }

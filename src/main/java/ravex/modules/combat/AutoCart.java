@@ -8,11 +8,10 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.world.level.block.RailBlock;
-import net.minecraft.world.level.Level;
+import ravex.mcwrapper.MinecraftWrapper;
+
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -54,15 +53,15 @@ public class AutoCart implements ModuleAccess {
         targetRenderPos = null;
     }
     public void onDisable() {
-        if (originalSlot != -1 && Minecraft.getInstance().player != null) {
-            selectSlot(originalSlot, Minecraft.getInstance());
+        if (originalSlot != -1 && MinecraftWrapper.getWrapper().getPlayer() != null) {
+            selectSlot(originalSlot, MinecraftWrapper.getWrapper());
             originalSlot = -1;
         }
         targetRenderPos = null;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         if (repeat && lastPlacedPos != null) {
             repeatTimer++;
             if (repeatTimer >= (int) repeatDelay) {
@@ -72,24 +71,24 @@ public class AutoCart implements ModuleAccess {
                 }
             }
         }
-        boolean isUsingBow = mc.player.isUsingItem() && InventoryUtility.isBow(mc.player.getUseItem());
+        boolean isUsingBow = mc.getPlayer().isUsingItem() && InventoryUtility.isBow(mc.getPlayer().getUseItem());
         if (isUsingBow) {
-            lastBowCharge = mc.player.getTicksUsingItem();
+            lastBowCharge = mc.getPlayer().getTicksUsingItem();
         }
         if (wasUsingBow && !isUsingBow) {
             handleBowRelease(mc);
         }
         wasUsingBow = isUsingBow;
     }
-    private void handleBowRelease(Minecraft mc) {
-        net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
-        net.minecraft.world.phys.Vec3 look = mc.player.getLookAngle();
+    private void handleBowRelease(MinecraftWrapper mc) {
+        net.minecraft.world.phys.Vec3 eyePos = mc.getPlayer().getEyePosition();
+        net.minecraft.world.phys.Vec3 look = mc.getPlayer().getLookAngle();
         float f = Math.min(lastBowCharge / 20.0F, 1.0F);
         f = (f * f + f * 2.0F) / 3.0F;
         if (f < 0.1F) f = 0.1F;
         net.minecraft.core.BlockPos landingPos = simulateTrajectory(mc, eyePos.add(look.scale(0.1)), look.scale(f * 3.0));
         if (landingPos == null) return;
-        double dist = mc.player.getEyePosition().distanceTo(net.minecraft.world.phys.Vec3.atCenterOf(landingPos));
+        double dist = mc.getPlayer().getEyePosition().distanceTo(net.minecraft.world.phys.Vec3.atCenterOf(landingPos));
         if (dist > targetRange) return;
         int railSlot = findItemSlot(mc, net.minecraft.world.item.Items.RAIL);
         if (railSlot == -1) return;
@@ -100,14 +99,14 @@ public class AutoCart implements ModuleAccess {
         targetRenderPos = landingPos;
         placeCart(mc, landingPos);
     }
-    private void placeCart(Minecraft mc, net.minecraft.core.BlockPos pos) {
+    private void placeCart(MinecraftWrapper mc, net.minecraft.core.BlockPos pos) {
         int railSlot = findItemSlot(mc, net.minecraft.world.item.Items.RAIL);
         int cartSlot = findCartSlot(mc);
         if (railSlot == -1 || cartSlot == -1) return;
         long now = System.currentTimeMillis();
         if (now - lastPlaceTime < 100) return;
         lastPlaceTime = now;
-            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+            originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         RaveX.LOGGER.info("[AutoCart] Placing at {}", pos);
         if (rotate) {
             faceBlock(mc, pos);
@@ -124,17 +123,16 @@ public class AutoCart implements ModuleAccess {
         lastPlacedPos = pos;
         repeatTimer = 0;
     }
-    private boolean shouldPlaceAgain(Minecraft mc, net.minecraft.core.BlockPos pos) {
-        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+    private boolean shouldPlaceAgain(MinecraftWrapper mc, net.minecraft.core.BlockPos pos) {
+        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
         if (state.isAir()) return true;
         net.minecraft.core.BlockPos above = pos.above();
-        net.minecraft.world.level.block.state.BlockState aboveState = mc.level.getBlockState(above);
+        net.minecraft.world.level.block.state.BlockState aboveState = mc.getLevel().getBlockState(above);
         return !aboveState.isAir();
     }
-    private net.minecraft.core.BlockPos simulateTrajectory(Minecraft mc, net.minecraft.world.phys.Vec3 startPos, net.minecraft.world.phys.Vec3 startVel) {
+    private net.minecraft.core.BlockPos simulateTrajectory(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 startPos, net.minecraft.world.phys.Vec3 startVel) {
         net.minecraft.world.phys.Vec3 pos = startPos;
         net.minecraft.world.phys.Vec3 vel = startVel;
-        Level level = mc.level;
         double gravity = 0.05;
         double drag = 0.99;
         for (int i = 0; i < 500; i++) {
@@ -142,31 +140,31 @@ public class AutoCart implements ModuleAccess {
             vel = vel.add(0, -gravity, 0);
             pos = pos.add(vel);
             net.minecraft.core.BlockPos bp = net.minecraft.core.BlockPos.containing(pos);
-            if (!level.isLoaded(bp)) return null;
-            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(bp);
+            if (!mc.getLevel().isLoaded(bp)) return null;
+            net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(bp);
             if (!state.isAir() && !state.canBeReplaced()) {
                 return bp;
             }
-            if (pos.y < level.getMinY()) return null;
+            if (pos.y < mc.getLevel().getMinY()) return null;
         }
         return null;
     }
-    private int findItemSlot(Minecraft mc, net.minecraft.world.item.Item item) {
+    private int findItemSlot(MinecraftWrapper mc, net.minecraft.world.item.Item item) {
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (stack.is(item)) return i;
         }
         for (int i = 9; i < 36; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (stack.is(item)) {
                 int freeSlot = findEmptySlot(mc);
                 if (freeSlot != -1) {
-                    mc.gameMode.handleInventoryMouseClick(
-                        mc.player.containerMenu.containerId,
+                    mc.getGameMode().handleInventoryMouseClick(
+                        mc.getPlayer().containerMenu.containerId,
                         i,
                         freeSlot,
                         net.minecraft.world.inventory.ClickType.SWAP,
-                        mc.player
+                        mc.getPlayer()
                     );
                     return freeSlot;
                 }
@@ -174,7 +172,7 @@ public class AutoCart implements ModuleAccess {
         }
         return -1;
     }
-    private int findCartSlot(Minecraft mc) {
+    private int findCartSlot(MinecraftWrapper mc) {
         net.minecraft.world.item.Item targetItem = switch (cartType) {
             case "Chest" -> net.minecraft.world.item.Items.CHEST_MINECART;
             case "Furnace" -> net.minecraft.world.item.Items.FURNACE_MINECART;
@@ -183,37 +181,36 @@ public class AutoCart implements ModuleAccess {
         };
         return findItemSlot(mc, targetItem);
     }
-    private int findEmptySlot(Minecraft mc) {
+    private int findEmptySlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            if (InventoryUtility.getItem(mc.player, i).isEmpty()) return i;
+            if (InventoryUtility.getItem(mc.getPlayer(), i).isEmpty()) return i;
         }
         return -1;
     }
-    private void faceBlock(Minecraft mc, net.minecraft.core.BlockPos pos) {
-        float[] angles = RotationUtility.anglesTo(mc.player, net.minecraft.world.phys.Vec3.atCenterOf(pos));
-        mc.player.setYRot(angles[0]);
-        mc.player.setXRot(angles[1]);
+    private void faceBlock(MinecraftWrapper mc, net.minecraft.core.BlockPos pos) {
+        float[] angles = RotationUtility.anglesTo(mc.getPlayer(), net.minecraft.world.phys.Vec3.atCenterOf(pos));
+        mc.getPlayer().setYRot(angles[0]);
+        mc.getPlayer().setXRot(angles[1]);
     }
-    private void selectSlot(int slot, Minecraft mc) {
+    private void selectSlot(int slot, MinecraftWrapper mc) {
         if (swapMode.equals("Silent")) {
-            InventoryUtility.silentSelectSlot(mc.player, slot);
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), slot);
         } else {
-            InventoryUtility.selectSlot(mc.player, slot);
+            InventoryUtility.selectSlot(mc.getPlayer(), slot);
         }
     }
-    private void useItemOn(Minecraft mc, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face) {
-        if (mc.gameMode == null) return;
-        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND,
+    private void useItemOn(MinecraftWrapper mc, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face) {
+        if (mc.getGameMode() == null) return;
+        mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND,
             new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), face, pos, false));
-        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
     }
-    private boolean canPlaceBlock(net.minecraft.core.BlockPos pos, Minecraft mc) {
-        Level level = mc.level;
-        net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+    private boolean canPlaceBlock(net.minecraft.core.BlockPos pos, MinecraftWrapper mc) {
+        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
         return state.isAir() || state.canBeReplaced();
     }
-    private boolean isWithinRange(net.minecraft.core.BlockPos pos, Minecraft mc) {
-        net.minecraft.world.phys.Vec3 playerPos = mc.player.getEyePosition();
+    private boolean isWithinRange(net.minecraft.core.BlockPos pos, MinecraftWrapper mc) {
+        net.minecraft.world.phys.Vec3 playerPos = mc.getPlayer().getEyePosition();
         net.minecraft.world.phys.Vec3 targetPos = net.minecraft.world.phys.Vec3.atCenterOf(pos);
         return playerPos.distanceTo(targetPos) <= range;
     }

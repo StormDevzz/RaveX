@@ -1,6 +1,7 @@
 package ravex.utility.player.rotation;
 
 import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
@@ -18,8 +19,9 @@ public class SilentRotationUtility {
         initialized = true;
     }
 
-    public void init(Minecraft mc) {
-        if (mc.player != null) init(mc.player.getYRot(), mc.player.getXRot());
+    public void init(MinecraftWrapper mc) {
+        var _mc = mc.getRaw();
+        if (_mc.player != null) init(_mc.player.getYRot(), _mc.player.getXRot());
     }
 
     public void set(float targetYaw, float targetPitch) {
@@ -32,18 +34,21 @@ public class SilentRotationUtility {
         if (angles.length >= 2) set(angles[0], angles[1]);
     }
 
-    public void setAnglesTo(Minecraft mc, Vec3 target) {
-        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
+    public void setAnglesTo(MinecraftWrapper mc, Vec3 target) {
+        var _mc = mc.getRaw();
+        float[] angles = RotationUtility.anglesTo(_mc.player.getEyePosition(), target);
         set(angles);
     }
 
-    public void setAnglesTo(Minecraft mc, Entity target) {
-        float[] angles = RotationUtility.anglesTo(mc.player, target);
+    public void setAnglesTo(MinecraftWrapper mc, Entity target) {
+        var _mc = mc.getRaw();
+        float[] angles = RotationUtility.anglesTo(_mc.player, target);
         set(angles);
     }
 
-    public void setAnglesTo(Minecraft mc, Entity target, double yOffset) {
-        float[] angles = RotationUtility.anglesTo(mc.player, target, yOffset);
+    public void setAnglesTo(MinecraftWrapper mc, Entity target, double yOffset) {
+        var _mc = mc.getRaw();
+        float[] angles = RotationUtility.anglesTo(_mc.player, target, yOffset);
         set(angles);
     }
 
@@ -68,11 +73,12 @@ public class SilentRotationUtility {
         initialized = false;
     }
 
-    public boolean isRotationAligned(Minecraft mc, Vec3 target, float tolerance) {
-        if (mc.player == null) return false;
-        float[] targetAngles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        float yawDiff = Math.abs(RotationUtility.normalizeYaw(targetAngles[0] - mc.player.getYRot()));
-        float pitchDiff = Math.abs(targetAngles[1] - mc.player.getXRot());
+    public boolean isRotationAligned(MinecraftWrapper mc, Vec3 target, float tolerance) {
+        var _mc = mc.getRaw();
+        if (_mc.player == null) return false;
+        float[] targetAngles = RotationUtility.anglesTo(_mc.player.getEyePosition(), target);
+        float yawDiff = Math.abs(RotationUtility.normalizeYaw(targetAngles[0] - _mc.player.getYRot()));
+        float pitchDiff = Math.abs(targetAngles[1] - _mc.player.getXRot());
         return yawDiff <= tolerance && pitchDiff <= tolerance;
     }
 }

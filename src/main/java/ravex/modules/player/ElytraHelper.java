@@ -6,8 +6,9 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.ElytraUtility;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "ElytraHelper", category = "net.minecraft.world.entity.player.Player")
 public class ElytraHelper implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Swap", "Replace", "Auto"})
@@ -44,9 +45,9 @@ public class ElytraHelper implements ModuleAccess {
         if ("Swap".equals(mode)) initSwap();
     }
     private void initSwap() {
-        Minecraft mc = Minecraft.getInstance();
-        var p = mc.player;
-        if (p == null || mc.gameMode == null) { ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false); return; }
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getGameMode() == null) { ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false); return; }
         boolean hasElytra = ElytraUtility.isElytraEquipped(p);
         int foundSlot = hasElytra ? ElytraUtility.findChestplateSlot(p) : ElytraUtility.findElytraSlot(p);
         if (foundSlot == -1) {
@@ -67,9 +68,9 @@ public class ElytraHelper implements ModuleAccess {
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        var p = mc.player;
-        if (p == null || mc.gameMode == null) { ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false); return; }
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getGameMode() == null) { ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false); return; }
         String m = mode;
         if ("Swap".equals(m)) tickSwap(mc, p);
         else if ("Replace".equals(m) || "Auto".equals(m)) tickReplace(mc, p);
@@ -100,7 +101,7 @@ public class ElytraHelper implements ModuleAccess {
             ElytraUtility.swapToChestplate(p);
         }
     }
-    private void tickSwap(Minecraft mc, net.minecraft.client.player.LocalPlayer p) {
+    private void tickSwap(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
         if ("Positive1".equals(swapMode)) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < 100) return;
@@ -109,7 +110,7 @@ public class ElytraHelper implements ModuleAccess {
         else if (state == 2) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP); state = 3; lastActionTime = now; }
         else if (state == 3) { if ("Positive3".equals(swapMode)) ScreenUtility.closeScreen(mc); ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false); }
     }
-    private void tickReplace(Minecraft mc, net.minecraft.client.player.LocalPlayer p) {
+    private void tickReplace(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
         if (!ElytraUtility.isElytraEquipped(p)) return;
         if (ElytraUtility.getElytraDurability(p) > (int) minDurability) return;
         int slot = ElytraUtility.findElytraSlot(p, preferBetter ? (int) minDurability : 0);

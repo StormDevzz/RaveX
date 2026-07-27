@@ -24,7 +24,7 @@ public abstract class MixinGuiMove {
 
         Minecraft mc = (Minecraft)(Object)this;
         if (mc.screen == null || mc.player == null || mc.getWindow() == null) return;
-        if (ScreenUtility.isChatScreen(mc)) return;
+        if (ScreenUtility.isChatScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper())) return;
 
         switch (gw.mode) {
             case "Grim" -> handleGrim(mc, gw);

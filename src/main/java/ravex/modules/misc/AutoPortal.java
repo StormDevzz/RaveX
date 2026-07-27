@@ -2,11 +2,12 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoPortal", category = "Misc")
 public class AutoPortal implements ModuleAccess {
     @Parameter(name = "Range", min = 2.0, max = 12.0, step = 0.5)
@@ -70,8 +71,8 @@ public class AutoPortal implements ModuleAccess {
         hasRenderTarget = false;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         long now = System.currentTimeMillis();
         switch (state) {
             case IDLE -> state = State.FIND;
@@ -83,16 +84,16 @@ public class AutoPortal implements ModuleAccess {
             case DONE -> doDone(mc);
         }
     }
-    private void doFind(Minecraft mc) {
+    private void doFind(MinecraftWrapper mc) {
         double px, pz;
-        double py = mc.player.getY();
+        double py = mc.getPlayer().getY();
         if (hasFirstBase) {
             px = firstBaseX + portalBuildCount * portalSpacing;
             pz = firstBaseZ;
         } else {
-            px = mc.player.getX();
-            pz = mc.player.getZ();
-            float yaw = mc.player.getYRot();
+            px = mc.getPlayer().getX();
+            pz = mc.getPlayer().getZ();
+            float yaw = mc.getPlayer().getYRot();
             double[] result = findBestPortalPos(
                 px, py, pz, yaw,
                 minRange, range,
@@ -105,11 +106,11 @@ public class AutoPortal implements ModuleAccess {
         int startY = (int) Math.round(py) + 3;
         int groundY = -1;
         for (int y = startY; y >= startY - 16; y--) {
-            if (y < mc.level.getMinY()) break;
-            if (y - 1 < mc.level.getMinY()) break;
+            if (y < mc.getLevel().getMinY()) break;
+            if (y - 1 < mc.getLevel().getMinY()) break;
             int bx = (int) Math.round(px), bz = (int) Math.round(pz);
-            if (BlockUtility.isSolid(mc.level, bx, y - 1, bz)
-                && BlockUtility.isAir(mc.level, bx, y, bz)) {
+            if (BlockUtility.isSolid(mc.getLevel(), bx, y - 1, bz)
+                && BlockUtility.isAir(mc.getLevel(), bx, y, bz)) {
                 groundY = y;
                 break;
             }
@@ -118,8 +119,8 @@ public class AutoPortal implements ModuleAccess {
         int gx = (int) Math.round(px), gz = (int) Math.round(pz);
         for (int[] off : FRAME_OFFSETS) {
             int ox = gx + off[0], oz = gz + off[1];
-            if (!BlockUtility.isAir(mc.level, ox, groundY + off[1], oz)
-                && !BlockUtility.isBlock(mc.level, BlockUtility.pos(ox, groundY + off[1], oz), "obsidian")) return;
+            if (!BlockUtility.isAir(mc.getLevel(), ox, groundY + off[1], oz)
+                && !BlockUtility.isBlock(mc.getLevel(), BlockUtility.pos(ox, groundY + off[1], oz), "obsidian")) return;
         }
         baseX = gx; baseY = groundY; baseZ = gz;
         hasBase = true;
@@ -128,7 +129,7 @@ public class AutoPortal implements ModuleAccess {
         retries = 0;
         state = build ? State.BUILDING : State.VERIFY;
     }
-    private void tryPlaceNext(Minecraft mc, long now) {
+    private void tryPlaceNext(MinecraftWrapper mc, long now) {
         if (now - lastActionTime < 100) return;
         lastActionTime = now;
         if (!hasBase) { state = State.IDLE; return; }
@@ -139,7 +140,7 @@ public class AutoPortal implements ModuleAccess {
         int[] off = FRAME_OFFSETS[frameIndex];
         int tx = baseX + off[0], ty = baseY + off[1], tz = baseZ + off[2];
         targetX = tx; targetY = ty; targetZ = tz; hasRenderTarget = true;
-        var existing = BlockUtility.getState(mc.level, tx, ty, tz);
+        var existing = BlockUtility.getState(mc.getLevel(), tx, ty, tz);
         if (BlockUtility.isBlock(existing, "obsidian")
             || BlockUtility.isBlock(existing, "nether_portal")) {
             frameIndex++;
@@ -152,11 +153,11 @@ public class AutoPortal implements ModuleAccess {
             ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").setEnabled(false);
             return;
         }
-        int prev = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, slot);
+        int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        InventoryUtility.selectSlot(mc.getPlayer(), slot);
         var hit = BlockUtility.findPlaceTarget(mc, BlockUtility.pos(tx, ty, tz));
         if (hit == null) {
-            InventoryUtility.selectSlot(mc.player, prev);
+            InventoryUtility.selectSlot(mc.getPlayer(), prev);
             failX = tx; failY = ty; failZ = tz;
             hasFailed = true;
             retries = 0;
@@ -165,12 +166,12 @@ public class AutoPortal implements ModuleAccess {
         }
         BlockUtility.useItemOn(mc, hit);
         BlockUtility.swing(mc);
-        InventoryUtility.selectSlot(mc.player, prev);
+        InventoryUtility.selectSlot(mc.getPlayer(), prev);
         lastActionTime = now;
         retries = 0;
         frameIndex++;
     }
-    private void retryPlace(Minecraft mc, long now) {
+    private void retryPlace(MinecraftWrapper mc, long now) {
         if (now - lastActionTime < 200) return;
         lastActionTime = now;
         if (!hasFailed) { state = State.BUILDING; return; }
@@ -182,7 +183,7 @@ public class AutoPortal implements ModuleAccess {
             state = State.BUILDING;
             return;
         }
-        var st = BlockUtility.getState(mc.level, failX, failY, failZ);
+        var st = BlockUtility.getState(mc.getLevel(), failX, failY, failZ);
         if (BlockUtility.isBlock(st, "obsidian")) {
             frameIndex++;
             retries = 0;
@@ -196,23 +197,23 @@ public class AutoPortal implements ModuleAccess {
             ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").setEnabled(false);
             return;
         }
-        int prev = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, slot);
+        int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        InventoryUtility.selectSlot(mc.getPlayer(), slot);
         var hit = BlockUtility.findPlaceTarget(mc, BlockUtility.pos(failX, failY, failZ));
         if (hit == null) {
-            InventoryUtility.selectSlot(mc.player, prev);
+            InventoryUtility.selectSlot(mc.getPlayer(), prev);
             return;
         }
         BlockUtility.useItemOn(mc, hit);
         BlockUtility.swing(mc);
-        InventoryUtility.selectSlot(mc.player, prev);
+        InventoryUtility.selectSlot(mc.getPlayer(), prev);
     }
-    private void doVerify(Minecraft mc, long now) {
+    private void doVerify(MinecraftWrapper mc, long now) {
         if (!hasBase) { state = State.IDLE; return; }
         boolean allPlaced = true;
         for (int[] off : FRAME_OFFSETS) {
             int ox = baseX + off[0], oy = baseY + off[1], oz = baseZ + off[2];
-            if (!BlockUtility.isBlock(mc.level, BlockUtility.pos(ox, oy, oz), "obsidian")) {
+            if (!BlockUtility.isBlock(mc.getLevel(), BlockUtility.pos(ox, oy, oz), "obsidian")) {
                 allPlaced = false;
                 break;
             }
@@ -224,7 +225,7 @@ public class AutoPortal implements ModuleAccess {
         }
         state = light ? State.LIGHTING : State.DONE;
     }
-    private void doLight(Minecraft mc, long now) {
+    private void doLight(MinecraftWrapper mc, long now) {
         if (now - lastActionTime < 100) return;
         lastActionTime = now;
         if (!hasBase) { state = State.IDLE; return; }
@@ -235,16 +236,16 @@ public class AutoPortal implements ModuleAccess {
             state = State.DONE;
             return;
         }
-        int prev = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, slot);
+        int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        InventoryUtility.selectSlot(mc.getPlayer(), slot);
         var interiorPos = BlockUtility.pos(ix, iy, iz);
         BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
             net.minecraft.world.phys.Vec3.atCenterOf(interiorPos), net.minecraft.core.Direction.UP, interiorPos, false));
         BlockUtility.swing(mc);
-        InventoryUtility.selectSlot(mc.player, prev);
+        InventoryUtility.selectSlot(mc.getPlayer(), prev);
         state = State.DONE;
     }
-    private void doDone(Minecraft mc) {
+    private void doDone(MinecraftWrapper mc) {
         hasRenderTarget = false;
         portalBuildCount++;
         int target = (int) portalsToBuild;
@@ -256,9 +257,9 @@ public class AutoPortal implements ModuleAccess {
             state = State.IDLE;
         }
     }
-    private void sendMsg(Minecraft mc, String msg) {
-        if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal("§8[§5AutoPortal§8] §7" + msg), false);
+    private void sendMsg(MinecraftWrapper mc, String msg) {
+        if (mc.getPlayer() != null) {
+            mc.getPlayer().displayClientMessage(Component.literal("§8[§5AutoPortal§8] §7" + msg), false);
         }
     }
     private static double[] findBestPortalPos(
@@ -312,16 +313,16 @@ public class AutoPortal implements ModuleAccess {
         }
         return new double[]{bestX, bestY, bestZ, bestScore};
     }
-    private double[] findExistingPortals(Minecraft mc) {
+    private double[] findExistingPortals(MinecraftWrapper mc) {
         double r = avoidRange;
-        var eye = mc.player.getEyePosition();
+        var eye = mc.getPlayer().getEyePosition();
         java.util.ArrayList<Double> list = new java.util.ArrayList<>();
         int minX = (int)(eye.x - r), minY = (int)(eye.y - 5), minZ = (int)(eye.z - r);
         int maxX = (int)(eye.x + r), maxY = (int)(eye.y + 5), maxZ = (int)(eye.z + r);
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
-                    if (BlockUtility.isBlock(mc.level, BlockUtility.pos(x, y, z), "nether_portal")) {
+                    if (BlockUtility.isBlock(mc.getLevel(), BlockUtility.pos(x, y, z), "nether_portal")) {
                         list.add((double) x);
                         list.add((double) y);
                         list.add((double) z);
@@ -334,24 +335,24 @@ public class AutoPortal implements ModuleAccess {
         for (int i = 0; i < list.size(); i++) arr[i] = list.get(i);
         return arr;
     }
-    private int findObsidianSlot(Minecraft mc) {
-        int slot = InventoryUtility.findHotbarSlot(mc.player, "obsidian");
+    private int findObsidianSlot(MinecraftWrapper mc) {
+        int slot = InventoryUtility.findHotbarSlot(mc.getPlayer(), "obsidian");
         if (slot != -1) return slot;
-        slot = InventoryUtility.findSlot(mc.player, "obsidian", 9, 36);
+        slot = InventoryUtility.findSlot(mc.getPlayer(), "obsidian", 9, 36);
         if (slot != -1) {
-            int free = InventoryUtility.findEmptyHotbarSlot(mc.player);
+            int free = InventoryUtility.findEmptyHotbarSlot(mc.getPlayer());
             if (free != -1) {
-                InventoryUtility.selectSlot(mc.player, free);
-                InventoryUtility.handleInventoryClick(mc, mc.player, slot, free, net.minecraft.world.inventory.ClickType.SWAP);
+                InventoryUtility.selectSlot(mc.getPlayer(), free);
+                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, free, net.minecraft.world.inventory.ClickType.SWAP);
                 return free;
             }
         }
         return -1;
     }
-    private int findFlintOrFireChargeSlot(Minecraft mc) {
+    private int findFlintOrFireChargeSlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            if (InventoryUtility.isItemInSlot(mc.player, i, "flint_and_steel")
-                || InventoryUtility.isItemInSlot(mc.player, i, "fire_charge")) return i;
+            if (InventoryUtility.isItemInSlot(mc.getPlayer(), i, "flint_and_steel")
+                || InventoryUtility.isItemInSlot(mc.getPlayer(), i, "fire_charge")) return i;
         }
         return -1;
     }

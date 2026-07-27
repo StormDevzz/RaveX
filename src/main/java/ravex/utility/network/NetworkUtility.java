@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
+import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
@@ -80,6 +81,18 @@ public class NetworkUtility {
             c.send(new ServerboundMovePlayerPacket.Pos(x, y, z, onGround, horizontalCollision));
     }
 
+    public static void sendPosRot(double x, double y, double z, float yRot, float xRot, boolean onGround, boolean horizontalCollision) {
+        var c = mc().getConnection();
+        if (c != null)
+            c.send(new ServerboundMovePlayerPacket.PosRot(x, y, z, yRot, xRot, onGround, horizontalCollision));
+    }
+
+    public static void sendRot(float yRot, float xRot, boolean onGround, boolean horizontalCollision) {
+        var c = mc().getConnection();
+        if (c != null)
+            c.send(new ServerboundMovePlayerPacket.Rot(yRot, xRot, onGround, horizontalCollision));
+    }
+
     public static void sendInteractAttack(Entity target, boolean isShiftKeyDown) {
         var c = mc().getConnection();
         if (c != null)
@@ -102,6 +115,24 @@ public class NetworkUtility {
         var c = mc().getConnection();
         if (c != null)
             c.send(new ServerboundUseItemOnPacket(hand, hitResult, 0));
+    }
+
+    public static void sendReleaseUseItem() {
+        var c = mc().getConnection();
+        if (c != null)
+            c.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM, BlockPos.ZERO, Direction.DOWN, 0));
+    }
+
+    public static void sendSwapWithOffhand() {
+        var c = mc().getConnection();
+        if (c != null)
+            c.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
+    }
+
+    public static void sendRespawn() {
+        var c = mc().getConnection();
+        if (c != null)
+            c.send(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN));
     }
 
     public static void sendPlayerCommand(ServerboundPlayerCommandPacket.Action action) {

@@ -2,8 +2,8 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "AutoWalk", category = "Movement")
 public class AutoWalk implements ModuleAccess {
@@ -21,7 +21,7 @@ public class AutoWalk implements ModuleAccess {
 
     private long lastGotoTime = 0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         String m = mode;
         if ("Simple".equals(m)) {
@@ -49,7 +49,7 @@ public class AutoWalk implements ModuleAccess {
         }
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         mc.options.keyUp.setDown(false);
         if ("Baritone".equals(mode)) {
             try {

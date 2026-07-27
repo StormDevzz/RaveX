@@ -1,17 +1,17 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.block.Block;
 
 import ravex.parameter.ActionParameter;
 import ravex.utility.misc.OreUtility;
 import java.util.HashSet;
 import java.util.Set;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Xray", category = "net.minecraft.world.entity.player.Player")
 public class Xray implements ModuleAccess {
 public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
-        Minecraft.getInstance().setScreen(ravex.gui.browser.BlockBrowserScreen.forXray(Minecraft.getInstance().screen));
+        MinecraftWrapper.getInstance().setScreen(ravex.gui.browser.BlockBrowserScreen.forXray(MinecraftWrapper.getInstance().screen));
     });
     private final Set<net.minecraft.resources.Identifier> selectedBlocks = new HashSet<>();
 
@@ -34,11 +34,11 @@ public final ActionParameter blocks = new ActionParameter("net.minecraft.world.l
         return selectedBlocks;
     }
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.levelRenderer != null) mc.levelRenderer.allChanged();
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.levelRenderer != null) mc.levelRenderer.allChanged();
     }
     public static boolean maybeEnabled() {

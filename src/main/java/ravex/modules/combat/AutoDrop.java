@@ -12,9 +12,10 @@ import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.FallingBlock;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -48,24 +49,24 @@ public class AutoDrop implements ModuleAccess {
     private int tickCounter = 0;
     private int originalSlot = -1;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         tickCounter++;
         if (tickCounter < (int) placeDelay) return;
         tickCounter = 0;
         net.minecraft.world.entity.Entity targetEntity = findTarget(mc);
         if (targetEntity == null) return;
         net.minecraft.core.BlockPos placePos = targetEntity.blockPosition().above((int) dropHeight);
-        if (!mc.level.getBlockState(placePos).isAir() && !mc.level.getBlockState(placePos).canBeReplaced()) return;
+        if (!mc.getLevel().getBlockState(placePos).isAir() && !mc.getLevel().getBlockState(placePos).canBeReplaced()) return;
         int slot = findDropBlock(mc);
         if (slot == -1) return;
         String swap = swapMode;
         if (swap.equals("None")) {
-            if (InventoryUtility.getSelectedSlot(mc.player) != slot) return;
+            if (InventoryUtility.getSelectedSlot(mc.getPlayer()) != slot) return;
             originalSlot = -1;
         } else {
-            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-            InventoryUtility.silentSelectSlot(mc.player, slot);
+            originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), slot);
         }
         net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(placePos);
         rotateTo(mc, center);
@@ -73,11 +74,11 @@ public class AutoDrop implements ModuleAccess {
         if ((rot.equals("Strict") || rot.equals("NCPStrict")) && !isRotationAligned(mc, center)) return;
         net.minecraft.core.BlockPos neighbor;
         net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
-        if (airPlace || mc.level.getBlockState(placePos.below()).isAir()) {
+        if (airPlace || mc.getLevel().getBlockState(placePos.below()).isAir()) {
             neighbor = null;
             for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
                 net.minecraft.core.BlockPos side = placePos.relative(dir);
-                if (!mc.level.getBlockState(side).isAir()) { neighbor = side; face = dir.getOpposite(); break; }
+                if (!mc.getLevel().getBlockState(side).isAir()) { neighbor = side; face = dir.getOpposite(); break; }
             }
             if (neighbor == null) { neighbor = placePos.above(); face = net.minecraft.core.Direction.DOWN; }
         } else { neighbor = placePos.below(); }
@@ -86,19 +87,19 @@ public class AutoDrop implements ModuleAccess {
             neighbor.getY() + 0.5 + face.getStepY() * 0.5,
             neighbor.getZ() + 0.5 + face.getStepZ() * 0.5
         );
-        if (mc.gameMode != null)
-            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighbor, false));
-        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (mc.getGameMode() != null)
+            mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighbor, false));
+        SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         if (swapSwitchBack && originalSlot != -1 && !swap.equals("None")) {
-            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
         }
     }
-    private net.minecraft.world.entity.Entity findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.Entity findTarget(MinecraftWrapper mc) {
         String t = target;
-        if (t.equals("Self")) return mc.player;
+        if (t.equals("Self")) return mc.getPlayer();
         net.minecraft.world.entity.Entity best = null;
         double bestDist = range;
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             net.minecraft.world.entity.LivingEntity le = MobUtility.asLivingEntity(e);
             if (le == null || MobUtility.isSelf(le) || !e.isAlive()) continue;
             double dist = MobUtility.distanceToPlayer(e);
@@ -107,10 +108,10 @@ public class AutoDrop implements ModuleAccess {
         if (t.equals("Enemy") && !MobUtility.isPlayer(MobUtility.asLivingEntity(best))) return null;
         return best;
     }
-    private int findDropBlock(Minecraft mc) {
+    private int findDropBlock(MinecraftWrapper mc) {
         String type = blockType;
         for (int i = 0; i < 36; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) continue;
             var block = ((BlockItem) stack.getItem()).getBlock();
             if (type.equals("Gravel") && block == net.minecraft.world.level.block.Blocks.GRAVEL) return i;
@@ -120,12 +121,12 @@ public class AutoDrop implements ModuleAccess {
         }
         return -1;
     }
-    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate;
         if (mode.equals("None")) return;
-        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        float currentYaw = mc.player.getYRot();
-        float currentPitch = mc.player.getXRot();
+        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
+        float currentYaw = mc.getPlayer().getYRot();
+        float currentPitch = mc.getPlayer().getXRot();
         if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
         currentYaw = silentRotation.lastYaw;
         currentPitch = silentRotation.lastPitch;
@@ -136,7 +137,7 @@ public class AutoDrop implements ModuleAccess {
         silentRotation.lastYaw = finalYaw;
         silentRotation.lastPitch = finalPitch;
     }
-    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
     public static boolean maybeEnabled() {

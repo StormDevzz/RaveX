@@ -73,7 +73,7 @@ public class MixinAbstractContainerScreen {
             if (slot.index == lastHoveredSlot && delay > 0) return;
             lastHoveredSlot = slot.index;
             fastItemLastMove = now;
-            InventoryUtility.quickMoveSlot(mc, screen.getMenu().containerId, slot.index);
+            InventoryUtility.quickMoveSlot(ravex.mcwrapper.MinecraftWrapper.getWrapper(), screen.getMenu().containerId, slot.index);
         }
     }
 }

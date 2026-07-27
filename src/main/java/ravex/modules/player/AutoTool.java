@@ -5,8 +5,8 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.ToolUtility;
-import net.minecraft.client.Minecraft;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -15,7 +15,7 @@ public class AutoTool implements ModuleAccess {
     @Parameter(name = "Swap", modes = {"Silent", "Normal"})
     public String swap = "Silent";
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (!mc.options.keyAttack.isDown()) return;
         if (!(mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult blockHit)) return;

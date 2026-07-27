@@ -1,5 +1,6 @@
 package ravex.mcwrapper;
 
+import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -7,10 +8,24 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.phys.Vec3;
 
 public class MinecraftWrapper {
     private final Minecraft mc;
+
+    private static MinecraftWrapper wrapperInstance;
+
+    public static MinecraftWrapper getWrapper() {
+        if (wrapperInstance == null) {
+            wrapperInstance = new MinecraftWrapper();
+        }
+        return wrapperInstance;
+    }
+
+    public static Minecraft getInstance() {
+        return Minecraft.getInstance();
+    }
 
     public MinecraftWrapper() {
         this.mc = Minecraft.getInstance();
@@ -117,6 +132,10 @@ public class MinecraftWrapper {
         return mc.getConnection();
     }
 
+    public Window getWindow() {
+        return mc.getWindow();
+    }
+
     public long getWindowHandle() {
         return mc.getWindow() != null ? mc.getWindow().handle() : 0;
     }
@@ -133,7 +152,27 @@ public class MinecraftWrapper {
         return mc.getConnection() != null && !mc.isLocalServer();
     }
 
-    public Object getSingleplayerServer() {
+    public MinecraftServer getSingleplayerServer() {
         return mc.getSingleplayerServer();
+    }
+
+    public net.minecraft.world.phys.HitResult getHitResult() {
+        return mc.hitResult;
+    }
+
+    public net.minecraft.client.renderer.LevelRenderer getLevelRenderer() {
+        return mc.levelRenderer;
+    }
+
+    public Entity getCrosshairPickEntity() {
+        return mc.crosshairPickEntity;
+    }
+
+    public net.minecraft.client.renderer.GameRenderer getGameRenderer() {
+        return mc.gameRenderer;
+    }
+
+    public net.minecraft.client.multiplayer.ServerData getCurrentServer() {
+        return mc.getCurrentServer();
     }
 }

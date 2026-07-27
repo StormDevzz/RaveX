@@ -1,10 +1,10 @@
 package ravex.modules.client;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Calculator", category = "Client")
 public class Calculator implements ModuleAccess {
 private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_calculator");
@@ -13,7 +13,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
     }
     public void onEnable() {
         if (!NATIVE.isLoaded()) {
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.player != null) {
                 mc.player.displayClientMessage(
                     Component.literal("§7[§5Calculator§7] §cNative library not found!"), false);
@@ -29,7 +29,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         }
     }
     public static void onNativeClose() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         mc.execute(() -> {
             if (ravex.manager.ModuleManager.INSTANCE.getByName("Calculator").getEnabled()) {
                 ravex.manager.ModuleManager.INSTANCE.getByName("Calculator").setEnabled(false);

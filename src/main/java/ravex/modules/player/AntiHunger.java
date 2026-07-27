@@ -5,10 +5,10 @@ import ravex.event.Subscribe;
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.network.protocol.Packet;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -20,7 +20,7 @@ public class AntiHunger implements ModuleAccess {
     public String mode = "NCP";
 
     private boolean canSprint() {
-        net.minecraft.client.player.LocalPlayer p = Minecraft.getInstance().player;
+        net.minecraft.client.player.LocalPlayer p = MinecraftWrapper.getInstance().player;
         return p != null && (p.getFoodData().getFoodLevel() > 5 || p.getAbilities().flying || p.getAbilities().mayfly);
     }
 

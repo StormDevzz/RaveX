@@ -10,11 +10,12 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -88,8 +89,8 @@ public class Trap implements ModuleAccess {
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         silentRotation.hasRotation = false;
         synchronized (trapBlocks) {
             trapBlocks.clear();
@@ -117,7 +118,7 @@ public class Trap implements ModuleAccess {
             double[] result = null;
             if (NATIVE.isLoaded()) {
                 result = nativeCalculateTrap(
-                        mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                        mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
                         target.getX(), target.getY(), target.getZ(),
                         currentSolidData,
                         range,
@@ -155,7 +156,7 @@ public class Trap implements ModuleAccess {
             limit = 1;
         }
         int actionsThisTick = 0;
-        int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+        int originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         boolean placedAny = false;
         while (actionsThisTick < limit) {
             double[] currentSolidData = new double[activeSolidBlocks.size()];
@@ -165,7 +166,7 @@ public class Trap implements ModuleAccess {
             double[] result = null;
             if (NATIVE.isLoaded()) {
                 result = nativeCalculateTrap(
-                        mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                        mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
                         target.getX(), target.getY(), target.getZ(),
                         currentSolidData,
                         range,
@@ -188,17 +189,17 @@ public class Trap implements ModuleAccess {
             }
             String swap = swapMode;
             if (swap.equals("Normal")) {
-                InventoryUtility.selectSlot(mc.player, blockSlot);
+                InventoryUtility.selectSlot(mc.getPlayer(), blockSlot);
             } else if (swap.equals("Silent")) {
-                InventoryUtility.silentSelectSlot(mc.player, blockSlot);
+                InventoryUtility.silentSelectSlot(mc.getPlayer(), blockSlot);
             } else if (swap.equals("None")) {
-                if (InventoryUtility.getSelectedSlot(mc.player) != blockSlot) {
+                if (InventoryUtility.getSelectedSlot(mc.getPlayer()) != blockSlot) {
                     break;
                 }
             }
             net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
-            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-            SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+            SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
             placedAny = true;
             actionsThisTick++;
             activeSolidBlocks.add((double) targetBlock.getX());
@@ -206,7 +207,7 @@ public class Trap implements ModuleAccess {
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
         if (placedAny && swapMode.equals("Silent") && swapSwitchBack && originalSlot != -1) {
-            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
         }
         if (placedAny) {
             lastPlaceTime = now;
@@ -222,13 +223,13 @@ public class Trap implements ModuleAccess {
             silentRotation.initialized = false;
         }
     }
-    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
         double maxDist = range + 2.0;
         String mode = targetMode;
         String typeFilter = targetType;
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
@@ -253,9 +254,9 @@ public class Trap implements ModuleAccess {
         }
         return closest;
     }
-    private int findBlockSlot(Minecraft mc) {
+    private int findBlockSlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem) {
                 if (blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
                     return i;
@@ -264,28 +265,28 @@ public class Trap implements ModuleAccess {
         }
         if (swapInventory) {
             for (int i = 9; i < 36; i++) {
-                var stack = InventoryUtility.getItem(mc.player, i);
+                var stack = InventoryUtility.getItem(mc.getPlayer(), i);
                 if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
-                    InventoryUtility.handleInventoryClick(mc, mc.player, i, 0, net.minecraft.world.inventory.ClickType.SWAP);
+                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, 0, net.minecraft.world.inventory.ClickType.SWAP);
                     return 0;
                 }
             }
         }
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem) {
                 var block = blockItem.getBlock();
-                if (block.defaultBlockState().isCollisionShapeFullBlock(mc.level, net.minecraft.core.BlockPos.ZERO)) {
+                if (block.defaultBlockState().isCollisionShapeFullBlock(mc.getLevel(), net.minecraft.core.BlockPos.ZERO)) {
                     return i;
                 }
             }
         }
         return -1;
     }
-    private double[] collectSolidBlocks(Minecraft mc) {
+    private double[] collectSolidBlocks(MinecraftWrapper mc) {
         List<Double> data = new ArrayList<>();
         double r = range + 3.0;
-        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.getPlayer().blockPosition();
         int rx = (int) Math.ceil(r);
         int ry = 3;
         int rz = (int) Math.ceil(r);
@@ -293,8 +294,8 @@ public class Trap implements ModuleAccess {
             for (int dy = -ry; dy <= ry; dy++) {
                 for (int dz = -rz; dz <= rz; dz++) {
                     net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
-                    if (mc.level.isLoaded(pos)) {
-                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+                    if (mc.getLevel().isLoaded(pos)) {
+                        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -310,7 +311,7 @@ public class Trap implements ModuleAccess {
         }
         return arr;
     }
-    private double[] javaFallbackCalculate(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlockData) {
+    private double[] javaFallbackCalculate(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlockData) {
         net.minecraft.core.BlockPos targetPos = target.blockPosition();
         List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
         candidates.add(targetPos.north());
@@ -328,7 +329,7 @@ public class Trap implements ModuleAccess {
         for (int i = 0; i + 2 < solidBlockData.length; i += 3) {
             simulatedSolids.add(new net.minecraft.core.BlockPos((int) solidBlockData[i], (int) solidBlockData[i+1], (int) solidBlockData[i+2]));
         }
-        net.minecraft.world.phys.Vec3 eyePos = mc.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 eyePos = mc.getPlayer().getEyePosition();
         double r = range;
         for (net.minecraft.core.BlockPos cand : candidates) {
             if (simulatedSolids.contains(cand)) continue;
@@ -372,11 +373,11 @@ public class Trap implements ModuleAccess {
         }
         return new double[]{0.0};
     }
-    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate;
         if (mode.equals("None")) return;
-        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        float currentYaw = mc.player.getYRot(), currentPitch = mc.player.getXRot();
+        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
+        float currentYaw = mc.getPlayer().getYRot(), currentPitch = mc.getPlayer().getXRot();
         if (mode.equals("Silent")) {
             if (!silentRotation.initialized) {
                 silentRotation.init(currentYaw, currentPitch);
@@ -384,15 +385,15 @@ public class Trap implements ModuleAccess {
             currentYaw = silentRotation.lastYaw; currentPitch = silentRotation.lastPitch;
         }
         if (mode.equals("Normal")) {
-            mc.player.setYRot(angles[0]); mc.player.setXRot(angles[1]);
+            mc.getPlayer().setYRot(angles[0]); mc.getPlayer().setXRot(angles[1]);
         } else if (mode.equals("Silent")) {
             silentRotation.set(angles[0], angles[1]);
             silentRotation.lastYaw = angles[0]; silentRotation.lastPitch = angles[1];
-        } else if (mode.equals("Packet") && mc.player.connection != null) {
-            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(angles[0], angles[1], mc.player.onGround(), mc.player.horizontalCollision));
+        } else if (mode.equals("Packet") && mc.getPlayer().connection != null) {
+            mc.getPlayer().connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(angles[0], angles[1], mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision));
         }
     }
-    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         if (rotate.equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }

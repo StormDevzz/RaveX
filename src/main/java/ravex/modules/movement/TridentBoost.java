@@ -2,11 +2,11 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.PhysicUtility;
 
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "TridentBoost", category = "Movement")
 public class TridentBoost implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Normal", "Always"})
@@ -16,7 +16,7 @@ public class TridentBoost implements ModuleAccess {
     @Parameter(name = "Vertical", min = 0.0, max = 2.0, step = 0.1)
     public double vertical = 0.5;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         var main = mc.player.getMainHandItem();
         if (!InventoryUtility.isTrident(main)) return;

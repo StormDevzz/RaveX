@@ -7,12 +7,13 @@ import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import ravex.RaveX;
 import ravex.gui.clickgui.CategoryPanel;
-import ravex.modules.Category;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class LayoutManager {
@@ -30,18 +31,18 @@ public class LayoutManager {
         layoutFile.getParentFile().mkdirs();
     }
 
-    public void save(Map<Category, CategoryPanel> panels, int width, int height, float scale) {
+    public void save(Map<String, CategoryPanel> panels, int width, int height, float scale) {
         try {
             double cx = width / 2.0;
             double cy = height / 2.0;
             JsonObject root = new JsonObject();
-            for (Map.Entry<Category, CategoryPanel> e : panels.entrySet()) {
+            for (Map.Entry<String, CategoryPanel> e : panels.entrySet()) {
                 JsonObject pos = new JsonObject();
                 double rx = (e.getValue().getX() - cx) / width + 0.5;
                 double ry = (e.getValue().getY() - cy) / height + 0.5;
                 pos.addProperty("rx", rx);
                 pos.addProperty("ry", ry);
-                root.add(e.getKey().name(), pos);
+                root.add(e.getKey(), pos);
             }
             try (FileWriter w = new FileWriter(layoutFile)) {
                 gson.toJson(root, w);
@@ -51,7 +52,7 @@ public class LayoutManager {
         }
     }
 
-    public void save(Map<Category, CategoryPanel> panels) {
+    public void save(Map<String, CategoryPanel> panels) {
 
         int sw = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int sh = Minecraft.getInstance().getWindow().getGuiScaledHeight();
@@ -64,21 +65,25 @@ public class LayoutManager {
         if (layoutFile.exists()) layoutFile.delete();
     }
 
-    public Map<Category, double[]> load() {
-        Map<Category, double[]> result = new HashMap<>();
+    private static final List<String> ALL_CATEGORIES = Arrays.asList(
+        "Combat", "Render", "Player", "Movement", "Misc", "World", "Client", "HUD", "Custom"
+    );
+
+    public Map<String, double[]> load() {
+        Map<String, double[]> result = new HashMap<>();
         if (!layoutFile.exists()) return result;
         try (FileReader r = new FileReader(layoutFile)) {
             JsonObject root = JsonParser.parseReader(r).getAsJsonObject();
-            for (Category cat : Category.values()) {
-                if (root.has(cat.name())) {
-                    JsonObject pos = root.getAsJsonObject(cat.name());
+            for (String cat : ALL_CATEGORIES) {
+                String key = cat.toLowerCase();
+                if (root.has(key)) {
+                    JsonObject pos = root.getAsJsonObject(key);
                     double rx = 0.0;
                     double ry = 0.0;
                     if (pos.has("rx") && pos.has("ry")) {
                         rx = pos.get("rx").getAsDouble();
                         ry = pos.get("ry").getAsDouble();
                     } else if (pos.has("x") && pos.has("y")) {
-
                         rx = pos.get("x").getAsDouble();
                         ry = pos.get("y").getAsDouble();
                     }

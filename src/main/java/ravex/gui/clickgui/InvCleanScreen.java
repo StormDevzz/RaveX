@@ -388,7 +388,7 @@ public class InvCleanScreen extends Screen {
         int cleanX = panelX + (panelW / 2) - cleanW - 6;
         if (mx >= cleanX && mx <= cleanX + cleanW && my >= btnY && my <= btnY + btnH && btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             cleanClickTime = System.currentTimeMillis();
-            InvClean.cleanInventory(Minecraft.getInstance());
+            InvClean.cleanInventory(ravex.mcwrapper.MinecraftWrapper.getWrapper());
             return true;
         }
 
@@ -517,8 +517,8 @@ public class InvCleanScreen extends Screen {
     @Override
     public void onClose() {
 
-        if (ModuleManager.INSTANCE.getByName("InvClean").getEnabled()) {
-            ModuleManager.INSTANCE.getByName("InvClean").setEnabled(false);
+        if (ModuleManager.isEnabled(InvClean.class)) {
+            ModuleManager.get(InvClean.class).setEnabled(false);
         }
         Minecraft.getInstance().setScreen(parent);
     }

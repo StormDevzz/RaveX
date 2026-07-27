@@ -2,8 +2,8 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -17,7 +17,7 @@ public class PacketFly implements ModuleAccess {
     @Parameter(name = "Vertical", min = 0.0, max = 1.0, step = 0.05)
     public double vertical = 0.2;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
         String m = mode;
         double spd = speed;

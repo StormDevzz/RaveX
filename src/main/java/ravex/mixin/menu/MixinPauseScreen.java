@@ -35,8 +35,8 @@ public abstract class MixinPauseScreen extends Screen {
                 if (mc.getConnection() != null) {
                     mc.getConnection().getConnection().disconnect(Component.literal("Reconnecting"));
                 }
-                ScreenUtility.closeScreen(mc);
-                AutoReconnect.reconnect(mc);
+                ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper());
+                AutoReconnect.reconnect(ravex.mcwrapper.MinecraftWrapper.getWrapper());
             }
         ).bounds(btnX, btnY, btnW, 20).build());
     }

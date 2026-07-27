@@ -2,8 +2,8 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "FreeLook", category = "Render")
 public class FreeLook implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"net.minecraft.world.entity.player.Player", "net.minecraft.client.Camera"})
@@ -12,7 +12,7 @@ public class FreeLook implements ModuleAccess {
     private float lookPitch = 0.0f;
     private int originalPerspective = 0;
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             lookYaw = mc.player.getYRot();
             lookPitch = mc.player.getXRot();
@@ -21,7 +21,7 @@ public class FreeLook implements ModuleAccess {
         }
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.options != null) {
             var types = net.minecraft.client.CameraType.values();
             if (originalPerspective >= 0 && originalPerspective < types.length) {

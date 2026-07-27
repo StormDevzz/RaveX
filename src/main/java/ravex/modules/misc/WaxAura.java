@@ -6,8 +6,8 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.HoneycombItem;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -26,7 +26,7 @@ public class WaxAura implements ModuleAccess {
         delayTimer = 0;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
         if (delayTimer > 0) {

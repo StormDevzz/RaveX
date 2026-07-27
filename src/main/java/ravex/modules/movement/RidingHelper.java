@@ -2,11 +2,11 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "RidingHelper", category = "Movement")
 public class RidingHelper implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Normal", "Custom"})
@@ -14,7 +14,7 @@ public class RidingHelper implements ModuleAccess {
     @Parameter(name = "Speed", min = 1.0, max = 5.0, step = 0.1)
     public double speed = 2.0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         net.minecraft.world.entity.Entity vehicle = mc.player.getVehicle();
         if (vehicle == null) return;

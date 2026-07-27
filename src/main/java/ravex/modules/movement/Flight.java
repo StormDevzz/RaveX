@@ -5,6 +5,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
 
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Flight", category = "Movement")
 public class Flight implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Vanilla", "Creative", "NCP", "Minemen", "Jetpack"})
@@ -39,7 +40,7 @@ public class Flight implements ModuleAccess {
         RaveX.LOGGER.info("[Flight] Enabled with mode: {}", mode);
     }
     public void onDisable() {
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             mc.player.getAbilities().flying = false;
             mc.player.getAbilities().invulnerable = false;

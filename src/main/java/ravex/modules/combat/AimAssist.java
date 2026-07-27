@@ -4,11 +4,11 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 
 import net.minecraft.world.item.BowItem;
 import ravex.utility.misc.MobUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AimAssist", category = "Combat")
 public class AimAssist implements ModuleAccess {
     @Parameter(name = "Target", modes = {"Players", "Monsters", "All"})
@@ -20,7 +20,7 @@ public class AimAssist implements ModuleAccess {
     @Parameter(name = "BowOnly")
     public boolean bowOnly = false;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (bowOnly && !(mc.player.getMainHandItem().getItem() instanceof BowItem)) {
             return;

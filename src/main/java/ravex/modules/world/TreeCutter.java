@@ -2,9 +2,9 @@ package ravex.modules.world;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 
 import ravex.utility.misc.block.BlockUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "TreeCutter", category = "World")
 public class TreeCutter implements ModuleAccess {
@@ -26,26 +26,27 @@ public class TreeCutter implements ModuleAccess {
         return BlockUtility.pos(t.miningX, t.miningY, t.miningZ);
     }
     public void onDisable() {
-        if (hasTarget) BlockUtility.stopBreak(Minecraft.getInstance(), currentToolSlot);
+        if (hasTarget) BlockUtility.stopBreak(ravex.mcwrapper.MinecraftWrapper.getWrapper(), currentToolSlot);
         hasTarget = false;
         currentToolSlot = -1;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
+        var mcw = ravex.mcwrapper.MinecraftWrapper.getWrapper();
         if (mc.player == null || mc.level == null || mc.gameMode == null) {
             hasTarget = false;
             return;
         }
         double[] logs = BlockUtility.findLogs(mc.level, mc.player.blockPosition(), range);
         if (logs.length == 0) {
-            if (hasTarget) BlockUtility.stopBreak(mc, currentToolSlot);
+            if (hasTarget) BlockUtility.stopBreak(mcw, currentToolSlot);
             hasTarget = false;
             currentToolSlot = -1;
             return;
         }
         double[] best = BlockUtility.findNearest(logs, mc.player.getX(), mc.player.getY(), mc.player.getZ());
         if (best == null || best[0] < 0.5) {
-            if (hasTarget) BlockUtility.stopBreak(mc, currentToolSlot);
+            if (hasTarget) BlockUtility.stopBreak(mcw, currentToolSlot);
             hasTarget = false;
             currentToolSlot = -1;
             return;
@@ -54,14 +55,14 @@ public class TreeCutter implements ModuleAccess {
         if (rotate) BlockUtility.rotateTo(mc.player, tx, ty, tz);
         BlockUtility.BreakConfig cfg = new BlockUtility.BreakConfig();
         if (!hasTarget || miningX != tx || miningY != ty || miningZ != tz) {
-            if (hasTarget) BlockUtility.stopBreak(mc, currentToolSlot);
+            if (hasTarget) BlockUtility.stopBreak(mcw, currentToolSlot);
             miningX = tx;
             miningY = ty;
             miningZ = tz;
             hasTarget = true;
-            currentToolSlot = BlockUtility.startBreak(mc, tx, ty, tz, cfg);
+            currentToolSlot = BlockUtility.startBreak(mcw, tx, ty, tz, cfg);
         } else {
-            BlockUtility.continueBreak(mc, tx, ty, tz, cfg);
+            BlockUtility.continueBreak(mcw, tx, ty, tz, cfg);
         }
     }
 

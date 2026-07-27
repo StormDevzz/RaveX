@@ -12,7 +12,6 @@ import net.minecraft.client.gui.screens.inventory.BlastFurnaceScreen;
 import net.minecraft.client.gui.screens.inventory.BrewingStandScreen;
 import net.minecraft.client.gui.screens.inventory.FurnaceScreen;
 import net.minecraft.client.gui.screens.inventory.SmokerScreen;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.animal.equine.Llama;
 import net.minecraft.world.entity.animal.feline.Cat;
@@ -24,6 +23,7 @@ import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.BrewingStandBlock;
 import net.minecraft.world.phys.AABB;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -71,7 +71,7 @@ public class PVEUtils implements ModuleAccess {
         }
     }
     private void tickSmelt() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         if (!(mc.screen instanceof FurnaceScreen)
             && !(mc.screen instanceof BlastFurnaceScreen)
@@ -130,7 +130,7 @@ public class PVEUtils implements ModuleAccess {
         }
     }
     private void tickTame() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
         double r = range;
@@ -160,7 +160,7 @@ public class PVEUtils implements ModuleAccess {
         };
     }
     private int findTameItem() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return -1;
         String mode = tameAnimal;
         for (int i = 0; i < 9; i++) {
@@ -177,7 +177,7 @@ public class PVEUtils implements ModuleAccess {
         return -1;
     }
     private void tickBrew() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         if (!(mc.screen instanceof BrewingStandScreen)) {
             hasBrewTarget = false;
@@ -263,7 +263,7 @@ public class PVEUtils implements ModuleAccess {
         return BlockUtility.pos(brewTargetX, brewTargetY, brewTargetZ);
     }
     private void tickLight() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
         if (now - lastLightPlace < lightDelay) return;
@@ -300,7 +300,7 @@ public class PVEUtils implements ModuleAccess {
                     if (center.distanceToSqr(mc.player.getEyePosition()) > r * r) continue;
                     int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
                     InventoryUtility.selectSlot(mc.player, torchSlot);
-                    BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false));
+                    BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false));
                     if (silent) {
                         InventoryUtility.selectSlot(mc.player, prevSlot);
                     }

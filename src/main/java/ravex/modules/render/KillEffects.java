@@ -2,7 +2,6 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -15,6 +14,7 @@ import ravex.utility.misc.MobUtility;
 import net.minecraft.core.particles.ParticleTypes;
 
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "KillEffects", category = "Render")
 public class KillEffects implements ModuleAccess {
     @Parameter(name = "Effect", modes = {"Lightning", "Fire", "Both"})
@@ -30,7 +30,7 @@ public class KillEffects implements ModuleAccess {
     public void onDeath(DeathEvent event) {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("KillEffects").getEnabled()) return;
         net.minecraft.world.entity.player.Player victim = event.getPlayer();
-        if (victim == Minecraft.getInstance().player) return;
+        if (victim == MinecraftWrapper.getInstance().player) return;
         net.minecraft.world.entity.LivingEntity living = victim;
         if (!shouldAffect(living)) return;
         ClientLevel level = (ClientLevel) living.level();

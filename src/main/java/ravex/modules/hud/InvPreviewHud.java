@@ -1,7 +1,7 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
@@ -12,6 +12,7 @@ import ravex.parameter.ColorParameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "InvPreviewHud", category = "HUD")
 public class InvPreviewHud extends ravex.modules.Module {
@@ -44,8 +45,8 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INVENTORY_WHITE;
     }
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
         int accent = getAccent();
         int bx = x;
         int by = y;
@@ -66,22 +67,22 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INVENTORY_WHITE;
         int hotbarY = startY + PAD + 3 * (CELL + PAD);
         graphics.fill(bx + 1, hotbarY - 1, bx + w - 1, hotbarY + CELL + PAD + 1, 0x22FFFFFF);
         for (int col = 0; col < COLS; col++) {
-            boolean isSelected = InventoryUtility.getSelectedSlot(mc.player) == col;
+            boolean isSelected = InventoryUtility.getSelectedSlot(mc.getPlayer()) == col;
             renderSlot(graphics, mc, col, bx + PAD + col * (CELL + PAD), hotbarY, isSelected, accent);
         }
     }
-    private void renderSlot(GuiGraphics graphics, Minecraft mc, int inventorySlot, int x, int y, boolean highlight, int accent) {
+    private void renderSlot(GuiGraphics graphics, MinecraftWrapper mc, int inventorySlot, int x, int y, boolean highlight, int accent) {
         int bg = highlight ? ColorUtility.withAlpha(accent, 40) : 0x22FFFFFF;
         graphics.fill(x, y, x + CELL, y + CELL, bg);
         if (highlight) {
             graphics.fill(x, y, x + CELL, y + 1, accent);
         }
-        var stack = InventoryUtility.getItem(mc.player, inventorySlot);
+        var stack = InventoryUtility.getItem(mc.getPlayer(), inventorySlot);
         if (!stack.isEmpty()) {
             graphics.renderItem(stack, x, y);
             if (stack.getCount() > 1) {
                 String countStr = stack.getCount() >= 64 ? "64" : String.valueOf(stack.getCount());
-                graphics.renderItemDecorations(mc.font, stack, x, y, countStr);
+                graphics.renderItemDecorations(mc.getFont(), stack, x, y, countStr);
             }
         }
     }

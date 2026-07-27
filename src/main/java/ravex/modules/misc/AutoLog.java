@@ -2,9 +2,9 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoLog", category = "Misc")
 public class AutoLog implements ModuleAccess {
     @Parameter(name = "LowHealth")
@@ -16,7 +16,7 @@ public class AutoLog implements ModuleAccess {
     @Parameter(name = "Range", min = 4.0, max = 64.0, step = 1.0)
     public double playerRange = 16.0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (onLowHealth && mc.player.getHealth() <= healthLimit) {
             disconnect("LowHealthTriggered(" + mc.player.getHealth() + " HP)");
@@ -32,7 +32,7 @@ public class AutoLog implements ModuleAccess {
         }
     }
     private void disconnect(String reason) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.getConnection() != null) {
             mc.getConnection().getConnection().disconnect(net.minecraft.network.chat.Component.literal("§c[RaveX AutoLog] §f" + reason));
         }

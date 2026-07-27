@@ -9,10 +9,11 @@ import ravex.utility.player.ArmorUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.EquipmentSlot;
 import ravex.parameter.ModeParameter;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -41,9 +42,9 @@ public class AutoArmor implements ModuleAccess {
             new DependencyParameter<>(new BooleanParameter("IgnoreEnchants", false), new ModeParameter("Mode", "Normal", List.of("Normal", "Legit", "Custom")), "Custom");
     private long lastEquipTime = 0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        net.minecraft.client.player.LocalPlayer p = mc.player;
-        if (p == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        net.minecraft.client.player.LocalPlayer p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null) return;
         String currentMode = mode;
         if ("Custom".equals(currentMode)) {
             tickCustom(mc, p);
@@ -62,8 +63,8 @@ public class AutoArmor implements ModuleAccess {
         };
     }
 
-    private void tickNormal(Minecraft mc, net.minecraft.client.player.LocalPlayer p, String currentMode) {
-        if (mc.screen != null && !(mc.screen instanceof InventoryScreen)) return;
+    private void tickNormal(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, String currentMode) {
+        if (mc.getCurrentScreen() != null && !(mc.getCurrentScreen() instanceof InventoryScreen)) return;
         if (System.currentTimeMillis() - lastEquipTime < delay) return;
         for (int armorIndex = 0; armorIndex < 4; armorIndex++) {
             if (!isSlotEnabled(armorIndex)) continue;
@@ -82,7 +83,7 @@ public class AutoArmor implements ModuleAccess {
                 InventoryUtility.quickMoveStack(mc, p, bestSlot);
                 int prevSlot = InventoryUtility.getSelectedSlot(p);
                 InventoryUtility.selectSlot(p, hotbarSlot);
-                mc.gameMode.useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
+                mc.getGameMode().useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
                 if (prevSlot != hotbarSlot) InventoryUtility.selectSlot(p, prevSlot);
             } else {
                 InventoryUtility.quickMoveStack(mc, p, bestSlot);
@@ -92,8 +93,8 @@ public class AutoArmor implements ModuleAccess {
         }
     }
 
-    private void tickCustom(Minecraft mc, net.minecraft.client.player.LocalPlayer p) {
-        if (openInventory.getValue() && !(mc.screen instanceof InventoryScreen)) {
+    private void tickCustom(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
+        if (openInventory.getValue() && !(mc.getCurrentScreen() instanceof InventoryScreen)) {
             return;
         }
         if (System.currentTimeMillis() - lastEquipTime < customDelay.getValue()) return;

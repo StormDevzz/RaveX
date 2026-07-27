@@ -4,7 +4,6 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.client.Minecraft;
 
 import net.minecraft.world.inventory.ClickType;
 
@@ -14,13 +13,14 @@ import ravex.utility.player.InventoryUtility;
 import ravex.gui.clickgui.AutoReGearScreen;
 import java.util.HashMap;
 import java.util.Map;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoReGear", category = "net.minecraft.world.entity.player.Player")
 public class AutoReGear implements ModuleAccess {
     @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
     public double delayParam = 200;
     public final ActionParameter items = new ActionParameter("Items", () -> {
-        Minecraft.getInstance().setScreen(
-            new AutoReGearScreen(Minecraft.getInstance().screen)
+        MinecraftWrapper.getInstance().setScreen(
+            new AutoReGearScreen(MinecraftWrapper.getInstance().screen)
         );
     });
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autoregear");
@@ -60,7 +60,7 @@ public class AutoReGear implements ModuleAccess {
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.gameMode == null) return;
         if (!(mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen)) return;
         String title = containerScreen.getTitle().getString().toLowerCase();
@@ -136,7 +136,7 @@ public class AutoReGear implements ModuleAccess {
             );
         }
         if (containerSlotToClick >= 0 && containerSlotToClick < 27) {
-            InventoryUtility.handleInventoryClick(mc, (net.minecraft.client.player.LocalPlayer) mc.player, containerSlotToClick, 0, ClickType.QUICK_MOVE);
+            InventoryUtility.handleInventoryClick(ravex.mcwrapper.MinecraftWrapper.getWrapper(), (net.minecraft.client.player.LocalPlayer) mc.player, containerSlotToClick, 0, ClickType.QUICK_MOVE);
             lastActionTime = now;
         }
     }

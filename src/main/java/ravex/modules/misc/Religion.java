@@ -2,7 +2,7 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -22,7 +22,7 @@ public class Religion implements ModuleAccess {
     @Parameter(name = "Suka")
     public boolean suka = false;
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level == null) return;
         net.minecraft.client.player.LocalPlayer player = mc.player;
         if (player == null || player.connection == null) return;

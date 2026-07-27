@@ -4,9 +4,9 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.client.Minecraft;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "ChestAura", category = "World")
 public class ChestAura implements ModuleAccess {
     @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.1)
@@ -46,7 +46,7 @@ public class ChestAura implements ModuleAccess {
         placedChests.clear();
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var p = mc.player;
         if (p == null || mc.level == null) return;
         long now = System.currentTimeMillis();
@@ -120,7 +120,7 @@ public class ChestAura implements ModuleAccess {
                 InventoryUtility.selectSlot(p, chestSlot);
             }
             var below = BlockUtility.pos(tx, BlockUtility.belowY(ty), tz);
-            BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
+            BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), new net.minecraft.world.phys.BlockHitResult(
                 net.minecraft.world.phys.Vec3.atCenterOf(below).add(0, 0.5, 0),
                 net.minecraft.core.Direction.UP, below, false));
             ravex.utility.player.SwingUtility.swingMainHand(p);

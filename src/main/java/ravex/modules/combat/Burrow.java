@@ -7,8 +7,9 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.item.BlockItem;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -34,53 +35,53 @@ public class Burrow implements ModuleAccess {
     private int tickCounter = 0;
     private boolean hasPlaced = false;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         if (hasPlaced) return;
         tickCounter++;
         if (tickCounter < (int) delay) return;
-        net.minecraft.core.BlockPos headPos = mc.player.blockPosition();
-        if (!mc.level.getBlockState(headPos).isAir() && !mc.level.getBlockState(headPos).canBeReplaced()) return;
+        net.minecraft.core.BlockPos headPos = mc.getPlayer().blockPosition();
+        if (!mc.getLevel().getBlockState(headPos).isAir() && !mc.getLevel().getBlockState(headPos).canBeReplaced()) return;
         int slot = findBlockSlot(mc);
         if (slot == -1) return;
         if (autoCenter) {
-            double centerX = Math.floor(mc.player.getX()) + 0.5;
-            double centerZ = Math.floor(mc.player.getZ()) + 0.5;
-            mc.player.setPos(centerX, mc.player.getY(), centerZ);
-            if (mc.player.connection != null) {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(centerX, mc.player.getY(), centerZ, mc.player.onGround(), false));
+            double centerX = Math.floor(mc.getPlayer().getX()) + 0.5;
+            double centerZ = Math.floor(mc.getPlayer().getZ()) + 0.5;
+            mc.getPlayer().setPos(centerX, mc.getPlayer().getY(), centerZ);
+            if (mc.getPlayer().connection != null) {
+                mc.getPlayer().connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(centerX, mc.getPlayer().getY(), centerZ, mc.getPlayer().onGround(), false));
             }
         }
         if (instant) {
             double h = height;
-            net.minecraft.world.phys.Vec3 orig = mc.player.position();
-            mc.player.setPos(orig.x, orig.y + h, orig.z);
-            if (mc.player.connection != null) {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(orig.x, orig.y + h, orig.z, false, false));
+            net.minecraft.world.phys.Vec3 orig = mc.getPlayer().position();
+            mc.getPlayer().setPos(orig.x, orig.y + h, orig.z);
+            if (mc.getPlayer().connection != null) {
+                mc.getPlayer().connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(orig.x, orig.y + h, orig.z, false, false));
             }
         }
-        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         if (slot < 0 || slot > 8) return;
-        InventoryUtility.selectSlot(mc.player, slot);
+        InventoryUtility.selectSlot(mc.getPlayer(), slot);
         net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
             new net.minecraft.world.phys.Vec3(headPos.getX() + 0.5, headPos.getY() + 2, headPos.getZ() + 0.5),
             net.minecraft.core.Direction.DOWN, headPos, false
         );
-        if (mc.gameMode != null) {
-            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+        if (mc.getGameMode() != null) {
+            mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hit);
         }
-        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        InventoryUtility.selectSlot(mc.player, prevSlot);
+        SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
+        InventoryUtility.selectSlot(mc.getPlayer(), prevSlot);
         hasPlaced = true;
     }
     public void onDisable() {
         hasPlaced = false;
         tickCounter = 0;
     }
-    private int findBlockSlot(Minecraft mc) {
+    private int findBlockSlot(MinecraftWrapper mc) {
         String b = block;
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) continue;
             var blk = ((BlockItem) stack.getItem()).getBlock();
             if (b.equals("Obsidian") && blk == net.minecraft.world.level.block.Blocks.OBSIDIAN) return i;

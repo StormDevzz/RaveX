@@ -4,9 +4,9 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.EquipmentSlot;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -17,7 +17,7 @@ public class AutoMend implements ModuleAccess {
     @Parameter(name = "Swap", modes = {"Normal", "Silent"})
     public String swapMode = "Silent";
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
         boolean needsMend = false;

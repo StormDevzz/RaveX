@@ -9,8 +9,8 @@ import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 
 import ravex.utility.nativelib.NativeLibraryUtility;
-import net.minecraft.client.Minecraft;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Phase", category = "Movement")
 public class Phase implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Positive1", "Positive2"})
@@ -27,7 +27,7 @@ public class Phase implements ModuleAccess {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("Phase").getEnabled() || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (packet instanceof ServerboundUseItemPacket usePacket) {
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
                 clip();
             }
@@ -35,7 +35,7 @@ public class Phase implements ModuleAccess {
     }
 
     public void clip() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
         double[] offset = new double[3];
         if (NATIVE.isLoaded()) {

@@ -4,7 +4,6 @@ import ravex.utility.network.NetworkUtility;
 
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
@@ -13,6 +12,7 @@ import ravex.event.network.PacketEvent;
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "Blink", category = "Movement")
 public class Blink implements ModuleAccess {
@@ -59,7 +59,7 @@ public class Blink implements ModuleAccess {
     @Subscribe
     public void onTick(TickEvent.Client event) {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("Blink").getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
 
         boolean isGrim = "Grim".equals(mode);
@@ -116,7 +116,7 @@ public class Blink implements ModuleAccess {
             if (packetBuffer.size() >= (int) limit) return true;
 
             if (startPos == null && packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket move && move.hasPosition()) {
-                Minecraft mc = Minecraft.getInstance();
+                var mc = MinecraftWrapper.getInstance();
                 if (mc.player != null) {
                     startPos = mc.player.position();
                 }
@@ -137,7 +137,7 @@ public class Blink implements ModuleAccess {
 
     private void sendIdleMove() {
         if (packetBuffer.isEmpty()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
         mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.StatusOnly(mc.player.onGround(), mc.player.horizontalCollision));
     }
@@ -146,7 +146,7 @@ public class Blink implements ModuleAccess {
         flushing = true;
         flushIndex = 0;
         flushStartTime = System.currentTimeMillis();
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             flushStartPos = mc.player.position();
         } else {
@@ -180,7 +180,7 @@ public class Blink implements ModuleAccess {
     }
 
     private void continueFlush() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.player.connection == null) {
             finishFlush();
             return;
@@ -286,7 +286,7 @@ public class Blink implements ModuleAccess {
             flushing = true;
             flushIndex = 0;
             flushStartTime = System.currentTimeMillis();
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.player != null) {
                 flushStartPos = mc.player.position();
             }

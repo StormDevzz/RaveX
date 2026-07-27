@@ -5,7 +5,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -29,7 +29,7 @@ public class Criticals implements ModuleAccess {
         seqTicks = 0;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (stopOnWater && (mc.player.isInWater() || mc.player.isInLava())) {
             seq = Sequence.NONE;

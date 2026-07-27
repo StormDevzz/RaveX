@@ -10,7 +10,6 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import ravex.gui.clickgui.ColorUtility;
-import ravex.modules.Category;
 import ravex.manager.ModuleManager;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
@@ -32,7 +31,7 @@ public class ClickGUI extends Screen {
     public static ParameterElement activeKeybindElement = null;
     public static boolean isDraggingSlider = false;
 
-    public static Identifier getCategoryTexture(Category cat) {
+    public static Identifier getCategoryTexture(String cat) {
         return ravex.utility.render.TextureLoaderUtility.getCategoryTexture(cat);
     }
 
@@ -90,7 +89,7 @@ public class ClickGUI extends Screen {
         int panelW = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth;
         int spacing = 10;
         int panelIndex = 0;
-        for (Category cat : Category.values()) {
+        for (String cat : new String[]{"Combat","Render","Player","Movement","Misc","World","Client","HUD","Custom"}) {
             boolean hasModules = ModuleManager.INSTANCE.getByCategory(cat).stream().anyMatch(m -> !m.isHud());
             if (!hasModules) continue;
             int px = 20 + panelIndex * (panelW + spacing);
@@ -194,7 +193,7 @@ public class ClickGUI extends Screen {
             graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.withAlpha(ColorUtility.BACKGROUND_START, bgOpacity), ColorUtility.withAlpha(ColorUtility.BACKGROUND_END, bgOpacity));
         }
 
-        if (ModuleManager.INSTANCE.getByName("GuiParticles").getEnabled()) {
+        if (ModuleManager.isEnabled(ravex.modules.client.GuiParticles.class)) {
             renderStars(graphics);
         }
 
@@ -279,7 +278,7 @@ public class ClickGUI extends Screen {
 
         float finalScale = getAdaptiveScale();
         if (closing && (System.currentTimeMillis() - closingStartTime >= 150)) {
-            ScreenUtility.closeScreen(this.minecraft);
+            ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper());
             return;
         }
 

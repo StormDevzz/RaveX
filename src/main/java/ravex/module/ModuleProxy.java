@@ -1,15 +1,21 @@
 package ravex.module;
 
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.modules.annotations.ModuleInfo;
 
+import ravex.parameter.BooleanParameter;
+import ravex.parameter.ColorParameter;
+import ravex.parameter.ModeParameter;
+import ravex.parameter.MultiSelectParameter;
+import ravex.parameter.NumberParameter;
 import ravex.parameter.Parameter;
+import ravex.parameter.StringParameter;
 import net.minecraft.client.gui.GuiGraphics;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class ModuleProxy extends Module {
@@ -51,10 +57,62 @@ public final class ModuleProxy extends Module {
                         Parameter<?> p = (Parameter<?>) f.get(component);
                         if (p != null) addParameter(p);
                     } catch (IllegalAccessException ignored) {}
+                } else if (f.isAnnotationPresent(ravex.modules.annotations.Parameter.class)) {
+                    f.setAccessible(true);
+                    Parameter<?> p = createParameterFromAnnotation(f);
+                    if (p != null) {
+                        p.bind(f, component);
+                        addParameter(p);
+                    }
                 }
             }
             cl = cl.getSuperclass();
         }
+    }
+
+    private Parameter<?> createParameterFromAnnotation(Field field) {
+        ravex.modules.annotations.Parameter ann = field.getAnnotation(ravex.modules.annotations.Parameter.class);
+        if (ann == null) return null;
+        Class<?> type = field.getType();
+        String name = ann.name();
+        try {
+            if (type == boolean.class || type == Boolean.class) {
+                if (ann.maybe()) {
+                    try { field.setBoolean(component, true); } catch (IllegalAccessException ignored) {}
+                    return new BooleanParameter(name, true);
+                }
+                return new BooleanParameter(name, field.getBoolean(component));
+            }
+            if (ann.color() && (type == int.class || type == Integer.class)) {
+                return new ColorParameter(name, field.getInt(component));
+            }
+            if (type == int.class || type == Integer.class) {
+                return new NumberParameter(name, field.getInt(component), ann.min(), ann.max(), ann.step());
+            }
+            if (type == double.class || type == Double.class) {
+                return new NumberParameter(name, field.getDouble(component), ann.min(), ann.max(), ann.step());
+            }
+            if (type == float.class || type == Float.class) {
+                return new NumberParameter(name, field.getFloat(component), ann.min(), ann.max(), ann.step());
+            }
+            if (type == String.class) {
+                String[] modes = ann.modes();
+                String value = (String) field.get(component);
+                if (modes.length > 0) {
+                    return new ModeParameter(name, value, Arrays.asList(modes));
+                }
+                return new StringParameter(name, value);
+            }
+            if (List.class.isAssignableFrom(type)) {
+                String[] opts = ann.options().length > 0 ? ann.options() : ann.modes();
+                if (opts.length > 0) {
+                    @SuppressWarnings("unchecked")
+                    List<String> selected = (List<String>) field.get(component);
+                    return new MultiSelectParameter(name, selected, Arrays.asList(opts));
+                }
+            }
+        } catch (IllegalAccessException ignored) {}
+        return null;
     }
 
     private void scanHudDelegates() {

@@ -2,7 +2,6 @@ package ravex.modules.world;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
@@ -10,6 +9,7 @@ import net.minecraft.world.item.trading.MerchantOffers;
 import ravex.utility.misc.MobUtility;
 import java.util.Comparator;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoTrade", category = "World")
 public class AutoTrade implements ModuleAccess {
     @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.5)
@@ -26,7 +26,7 @@ public class AutoTrade implements ModuleAccess {
         tradesDone = 0;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var player = mc.player;
         if (player == null || mc.level == null) return;
         long now = System.currentTimeMillis();

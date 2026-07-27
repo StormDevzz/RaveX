@@ -2,13 +2,13 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
 
 import ravex.modules.combat.KillAura;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "CityESP", category = "Render")
 public class CityESP implements ModuleAccess {
@@ -31,7 +31,7 @@ public class CityESP implements ModuleAccess {
         
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
 
         net.minecraft.world.entity.player.Player target = null;
@@ -68,12 +68,12 @@ public class CityESP implements ModuleAccess {
 
         for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.Plane.HORIZONTAL) {
             net.minecraft.core.BlockPos pos = player.blockPosition().relative(dir);
-            net.minecraft.world.level.block.state.BlockBehaviour block = Minecraft.getInstance().level.getBlockState(pos).getBlock();
+            net.minecraft.world.level.block.state.BlockBehaviour block = MinecraftWrapper.getInstance().level.getBlockState(pos).getBlock();
             if (block != net.minecraft.world.level.block.Blocks.OBSIDIAN && block != net.minecraft.world.level.block.Blocks.NETHERITE_BLOCK
                 && block != net.minecraft.world.level.block.Blocks.CRYING_OBSIDIAN && block != net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR
                 && block != net.minecraft.world.level.block.Blocks.ANCIENT_DEBRIS) continue;
 
-            double distSq = Minecraft.getInstance().player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+            double distSq = MinecraftWrapper.getInstance().player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
             if (distSq < bestDistSq) {
                 bestDistSq = distSq;
                 bestPos = pos;

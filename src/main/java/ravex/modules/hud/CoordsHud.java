@@ -1,7 +1,6 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
@@ -10,6 +9,7 @@ import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "CoordsHud", category = "HUD")
 public class CoordsHud extends ravex.modules.Module {
@@ -27,7 +27,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COORDS_WHITE;
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        var player = Minecraft.getInstance().player;
+        var player = MinecraftWrapper.getInstance().player;
         if (player == null) return;
         int ac = ColorUtility.getActiveColor();
         boolean shadow = true;

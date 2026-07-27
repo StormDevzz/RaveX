@@ -2,15 +2,16 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BowItem;
 
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.network.NetworkUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoBow", category = "Combat")
 public class AutoBow implements ModuleAccess {
     @Parameter(name = "Charge", min = 10.0, max = 100.0, step = 1.0)
@@ -23,38 +24,38 @@ public class AutoBow implements ModuleAccess {
     public boolean onlyWhenTarget = false;
     private long lastAction = 0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.player.connection == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getPlayer().connection == null) return;
         long now = System.currentTimeMillis();
         if (now - lastAction < 100) return;
-        boolean holdingBow = InventoryUtility.isBow(mc.player.getMainHandItem());
+        boolean holdingBow = InventoryUtility.isBow(mc.getPlayer().getMainHandItem());
         if (!holdingBow && !autoSwitch) return;
         int bowSlot = -1;
         if (!holdingBow) {
             bowSlot = findBowSlot(mc);
             if (bowSlot == -1) return;
         }
-        if (!mc.player.isUsingItem()) return;
-        if (!mc.player.getUsedItemHand().equals(net.minecraft.world.InteractionHand.MAIN_HAND)) return;
-        if (onlyWhenTarget && !(mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult)) return;
-        float chargeProgress = mc.player.getTicksUsingItem() / 20.0f;
+        if (!mc.getPlayer().isUsingItem()) return;
+        if (!mc.getPlayer().getUsedItemHand().equals(net.minecraft.world.InteractionHand.MAIN_HAND)) return;
+        if (onlyWhenTarget && !(mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult)) return;
+        float chargeProgress = mc.getPlayer().getTicksUsingItem() / 20.0f;
         chargeProgress = Math.min(chargeProgress, 1.0f);
         float requiredCharge = (float) charge / 100.0f;
         if (chargeProgress < requiredCharge) return;
         if (bowSlot != -1 && silent) {
-            mc.player.connection.send(new ServerboundSetCarriedItemPacket(bowSlot));
+            NetworkUtility.sendSetCarriedItem(bowSlot);
         } else if (bowSlot != -1) {
-            InventoryUtility.selectSlot(mc.player, bowSlot);
+            InventoryUtility.selectSlot(mc.getPlayer(), bowSlot);
         }
-        mc.player.connection.send(new ServerboundPlayerActionPacket(
+        mc.getPlayer().connection.send(new ServerboundPlayerActionPacket(
             ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM,
             net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN, 0
         ));
         lastAction = now;
     }
-    private int findBowSlot(Minecraft mc) {
+    private int findBowSlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            if (InventoryUtility.isBow(InventoryUtility.getItem(mc.player, i))) return i;
+            if (InventoryUtility.isBow(InventoryUtility.getItem(mc.getPlayer(), i))) return i;
         }
         return -1;
     }

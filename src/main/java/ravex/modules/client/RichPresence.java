@@ -4,9 +4,9 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 import ravex.manager.LuaManager;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "RichPresence", category = "Client")
 public class RichPresence implements ModuleAccess {
     @Parameter(name = "LargeImage")
@@ -64,7 +64,7 @@ public class RichPresence implements ModuleAccess {
         } catch (Throwable ignored) {}
     }
     private void updatePresence(long startTime) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         String details;
         String state;
         if (mc.player == null || mc.level == null) {

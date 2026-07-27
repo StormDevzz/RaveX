@@ -2,9 +2,9 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.ChunkPos;
 import ravex.utility.misc.block.BlockUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "Borders", category = "Render")
 public class Borders implements ModuleAccess {
@@ -22,7 +22,7 @@ public class Borders implements ModuleAccess {
     public double renderDistance = 64;
     private ChunkPos lastChunk;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         lastChunk = mc.player.chunkPosition();
     }

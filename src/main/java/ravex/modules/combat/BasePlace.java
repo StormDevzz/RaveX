@@ -13,7 +13,7 @@ import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffects;
@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -119,8 +120,8 @@ public class BasePlace implements ModuleAccess {
         placedPositions.clear();
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         silentRotation.hasRotation = false;
         if (autoCrystalSync) {
             AutoCrystal ac = ravex.manager.ModuleManager.delegate(ravex.modules.combat.AutoCrystal.class);
@@ -157,8 +158,8 @@ public class BasePlace implements ModuleAccess {
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeCalculateBasePlace(
-                mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
+                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
+                mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), getEntityStats(mc.getPlayer()),
                 target.getX(), target.getY(), target.getZ(),
                 target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
                 solidBlockData,
@@ -199,43 +200,43 @@ public class BasePlace implements ModuleAccess {
         net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
         net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
         placedPositions.entrySet().removeIf(entry -> now - entry.getValue() > 1000);
-        if (placedPositions.containsKey(targetBlock) || mc.level.getBlockState(targetBlock).getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
+        if (placedPositions.containsKey(targetBlock) || mc.getLevel().getBlockState(targetBlock).getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
             return;
         }
         net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
-        int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+        int originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         String swap = swapMode;
         if (swap.equals("None")) {
-            if (InventoryUtility.getSelectedSlot(mc.player) != blockSlot) {
+            if (InventoryUtility.getSelectedSlot(mc.getPlayer()) != blockSlot) {
                 return;
             }
             originalSlot = -1;
         } else {
-            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-            InventoryUtility.silentSelectSlot(mc.player, blockSlot);
+            originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), blockSlot);
         }
         net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
-        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+        SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         placedPositions.put(targetBlock, now);
         lastPlaceTime = now;
         lastPlacedBase = targetBlock;
         lastPlacedTime = now;
         if (swapSwitchBack && originalSlot != -1 && !swap.equals("None")) {
-            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
         }
     }
-    private boolean playerHasCrystals(Minecraft mc) {
-        if (InventoryUtility.isHolding(mc.player, "end_crystal")) return true;
-        if (InventoryUtility.isOffhand(mc.player, "end_crystal")) return true;
-        return InventoryUtility.findSlot(mc.player, "end_crystal") != -1;
+    private boolean playerHasCrystals(MinecraftWrapper mc) {
+        if (InventoryUtility.isHolding(mc.getPlayer(), "end_crystal")) return true;
+        if (InventoryUtility.isOffhand(mc.getPlayer(), "end_crystal")) return true;
+        return InventoryUtility.findSlot(mc.getPlayer(), "end_crystal") != -1;
     }
-    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate;
         if (mode.equals("None")) return;
-        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        if (!silentRotation.initialized) { silentRotation.init(mc.player.getYRot(), mc.player.getXRot()); }
+        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
+        if (!silentRotation.initialized) { silentRotation.init(mc.getPlayer().getYRot(), mc.getPlayer().getXRot()); }
         float currentYaw = silentRotation.lastYaw;
         float currentPitch = silentRotation.lastPitch;
         float maxSpeed = 180.0f;
@@ -245,16 +246,16 @@ public class BasePlace implements ModuleAccess {
         silentRotation.lastYaw = finalYaw;
         silentRotation.lastPitch = finalPitch;
     }
-    private double[] collectSolidBlocks(Minecraft mc) {
+    private double[] collectSolidBlocks(MinecraftWrapper mc) {
         List<Double> data = new ArrayList<>();
-        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.getPlayer().blockPosition();
         int r = (int) Math.ceil(range) + 2;
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -4; dy <= 4; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
                     net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
-                    if (mc.level.isLoaded(pos)) {
-                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+                    if (mc.getLevel().isLoaded(pos)) {
+                        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -268,9 +269,9 @@ public class BasePlace implements ModuleAccess {
         for (int i = 0; i < arr.length; i++) arr[i] = data.get(i);
         return arr;
     }
-    private int findBlockSlot(Minecraft mc) {
+    private int findBlockSlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
             if (blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
                 return i;
@@ -278,24 +279,24 @@ public class BasePlace implements ModuleAccess {
         }
         if (swapInventory) {
             for (int i = 9; i < 36; i++) {
-                var stack = InventoryUtility.getItem(mc.player, i);
+                var stack = InventoryUtility.getItem(mc.getPlayer(), i);
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
                 if (blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
-                    int hotbarSlot = InventoryUtility.getSelectedSlot(mc.player);
-                    InventoryUtility.handleInventoryClick(mc, mc.player, i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                    int hotbarSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
                     return hotbarSlot;
                 }
             }
         }
         return -1;
     }
-    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
         double maxDist = targetRange;
         String mode = targetMode;
         String typeFilter = targetType;
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
@@ -388,7 +389,7 @@ public class BasePlace implements ModuleAccess {
         stats[14] = totems;
         return stats;
     }
-    private double[] javaFallbackCalculate(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlocksData) {
+    private double[] javaFallbackCalculate(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlocksData) {
         net.minecraft.core.BlockPos tPos = target.blockPosition();
         Set<net.minecraft.core.BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
@@ -408,13 +409,13 @@ public class BasePlace implements ModuleAccess {
                 for (int dz = -r; dz <= r; dz++) {
                     net.minecraft.core.BlockPos c = tPos.offset(dx, dy, dz);
                     if (solids.contains(c)) continue;
-                    double pDist = Math.sqrt(c.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
+                    double pDist = Math.sqrt(c.distToCenterSqr(mc.getPlayer().getX(), mc.getPlayer().getEyeY(), mc.getPlayer().getZ()));
                     if (pDist > maxPlaceRange) continue;
                     double tDist = Math.sqrt(c.distToCenterSqr(target.getX(), target.getY(), target.getZ()));
                     if (tDist > maxTargetRange) continue;
                     if (solids.contains(c.above())) continue;
                     if (!allowAirPlace && solids.contains(c.above(2))) continue;
-                    if (intersectsEntity(mc.player, c) || intersectsEntity(target, c)) continue;
+                    if (intersectsEntity(mc.getPlayer(), c) || intersectsEntity(target, c)) continue;
                     boolean hasNeighbor = false;
                     net.minecraft.core.BlockPos neighbor = null;
                     int faceIndex = 1;

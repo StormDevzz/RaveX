@@ -6,7 +6,6 @@ import ravex.modules.annotations.Parameter;
 import ravex.parameter.ActionParameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -27,7 +27,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
     private final List<net.minecraft.core.BlockPos> foundBlocks = new ArrayList<>();
 
     public final ActionParameter openBrowser = new ActionParameter("Open Browser", () -> {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         mc.setScreen(new SearchBrowserScreen(
             mc.screen,
             id -> selectedBlocks.contains(id),
@@ -72,7 +72,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
 
     public void scanBlocks() {
         foundBlocks.clear();
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
 
         int r = (int) range;

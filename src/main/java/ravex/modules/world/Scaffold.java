@@ -10,8 +10,8 @@ import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
-import net.minecraft.client.Minecraft;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Scaffold", category = "World")
 public class Scaffold implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Vanilla", "Grim"})
@@ -63,7 +63,7 @@ public class Scaffold implements ModuleAccess {
 
     public static void onPreTick() {
         if (!hasPending) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var p = mc.player;
         if (p == null || mc.level == null) return;
         int slot = findBlockSlot(p);
@@ -84,13 +84,13 @@ public class Scaffold implements ModuleAccess {
         p.setXRot(exact[1]);
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, slot);
-        BlockUtility.useItemOn(mc, SwingUtility.hitResult(hitVec, pendingFace, pendingNeighbor));
-        BlockUtility.swing(mc);
+        BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), SwingUtility.hitResult(hitVec, pendingFace, pendingNeighbor));
+        BlockUtility.swing(ravex.mcwrapper.MinecraftWrapper.getWrapper());
         if (slot != prevSlot) InventoryUtility.selectSlot(p, prevSlot);
         hasPending = false;
     }
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             targetY = Math.floor(mc.player.getY());
         } else {
@@ -113,7 +113,7 @@ public class Scaffold implements ModuleAccess {
         hasPending = false;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var p = mc.player;
         if (p == null || mc.level == null) return;
         if (p.onGround()) {
@@ -205,8 +205,8 @@ public class Scaffold implements ModuleAccess {
     }
 
     private NeighborResult findNeighbor(int tx, int ty, int tz, boolean grim) {
-        var eye = Minecraft.getInstance().player != null
-            ? Minecraft.getInstance().player.getEyePosition()
+        var eye = MinecraftWrapper.getInstance().player != null
+            ? MinecraftWrapper.getInstance().player.getEyePosition()
             : null;
         var bestNeighbor = (net.minecraft.core.BlockPos) null;
         var bestFace = net.minecraft.core.Direction.UP;
@@ -245,7 +245,7 @@ public class Scaffold implements ModuleAccess {
     private record NeighborResult(net.minecraft.core.BlockPos neighbor, net.minecraft.core.Direction face) {}
 
     private boolean isAir(int x, int y, int z) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level == null) return false;
         var state = BlockUtility.getState(mc.level, x, y, z);
         return state.isAir() || BlockUtility.isBlock(state, "snow") || !state.getFluidState().isEmpty();

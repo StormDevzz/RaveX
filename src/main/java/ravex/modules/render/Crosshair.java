@@ -2,12 +2,13 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 
 import ravex.gui.clickgui.ColorUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Crosshair", category = "Render")
 public class Crosshair implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Normal", "Circle", "Triangle"})
@@ -55,8 +56,8 @@ public class Crosshair implements ModuleAccess {
     }
 
     public void render(GuiGraphics graphics) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.getWindow() == null || mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getWindow() == null || mc.getPlayer() == null) return;
 
         long now = System.currentTimeMillis();
         if (lastFrameTime == 0) lastFrameTime = now;
@@ -83,7 +84,7 @@ public class Crosshair implements ModuleAccess {
             hitSpread = 0;
         }
 
-        boolean hasTarget = mc.crosshairPickEntity != null && mc.crosshairPickEntity.isAlive();
+        boolean hasTarget = mc.getCrosshairPickEntity() != null && mc.getCrosshairPickEntity().isAlive();
         if (hasTarget) {
             targetProgress = Math.min(1.0f, targetProgress + delta * 6.0f);
         } else {
@@ -133,10 +134,10 @@ public class Crosshair implements ModuleAccess {
         }
     }
 
-    private float calcMoveSpread(Minecraft mc) {
+    private float calcMoveSpread(MinecraftWrapper mc) {
         float moveEff = (float) moveEffect;
         if (moveEff <= 0) return 0;
-        var player = mc.player;
+        var player = mc.getPlayer();
         double velX = player.getX() - player.xo;
         double velZ = player.getZ() - player.zo;
         double hSpeed = Math.sqrt(velX * velX + velZ * velZ) * 20.0;

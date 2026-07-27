@@ -5,7 +5,7 @@ import ravex.mixin.client.AccessorMinecraft;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -24,7 +24,7 @@ public class NoDelay implements ModuleAccess {
         
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null) return;
         boolean isBlock = InventoryUtility.isHoldingBlock(p);

@@ -1,6 +1,5 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
@@ -10,6 +9,7 @@ import ravex.utility.interfaces.IClientPacketListener;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "ServerBrandHud", category = "HUD")
 public class ServerBrandHud extends ravex.modules.Module {
@@ -30,7 +30,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
     public static native String nativeFormatBrand(String rawBrand);
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null || mc.player.connection == null) return;
         String rawBrand = null;
         if (mc.player.connection instanceof IClientPacketListener) {

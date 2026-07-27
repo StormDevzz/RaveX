@@ -3,7 +3,6 @@ package ravex.gui.clickgui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ClickGUI;
-import ravex.modules.Category;
 import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.utility.render.Render2DUtility;
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
 import static java.lang.Math.*;
 
 public class CategoryPanel {
-    private final Category category;
+    private final String category;
     private double x;
     private double y;
     private double targetX;
@@ -34,7 +33,7 @@ public class CategoryPanel {
     private float headerAnim = 0f;
     private double scrollOffset = 0.0;
 
-    public CategoryPanel(Category category, int x, int y) {
+    public CategoryPanel(String category, int x, int y) {
         this.category = category;
         this.x = x;
         this.y = y;
@@ -48,7 +47,7 @@ public class CategoryPanel {
         }
     }
 
-    public Category getCategory() { return category; }
+    public String getCategory() { return category; }
     public int getX() { return (int) x; }
     public int getY() { return (int) y; }
 
@@ -147,7 +146,7 @@ public class CategoryPanel {
             graphics.blit(catTexWhite, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
         }
 
-        String header = category.getDisplayName();
+        String header = category;
         int headerY = iy + (18 - FontRenderUtility.getFontHeight()) / 2 + 1;
         FontRenderUtility.drawString(graphics, header,
             ix + 23, headerY, 0xFFFFFFFF, true);

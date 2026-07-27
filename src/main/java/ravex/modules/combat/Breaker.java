@@ -11,11 +11,12 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -50,16 +51,16 @@ public class Breaker implements ModuleAccess {
         NATIVE.load();
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
-        if (currentMiningBlock != null && mc.gameMode != null && !syncPacketMine) {
-            mc.gameMode.stopDestroyBlock();
+        var mc = MinecraftWrapper.getWrapper();
+        if (currentMiningBlock != null && mc.getGameMode() != null && !syncPacketMine) {
+            mc.getGameMode().stopDestroyBlock();
         }
         currentMiningBlock = null;
         silentRotation.hasRotation = false;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) {
             currentMiningBlock = null;
             silentRotation.hasRotation = false;
             return;
@@ -69,7 +70,7 @@ public class Breaker implements ModuleAccess {
             boolean packetMineEnabled = getModule("PacketMine").getEnabled();
             if (!packetMineEnabled) {
                 syncPacketMine = false;
-                mc.player.displayClientMessage(
+                mc.getPlayer().displayClientMessage(
                         net.minecraft.network.chat.Component
                                 .literal("§7[§cBreaker§7] §cPacketMine was disabled, Sync PacketMine turned off!"),
                         false);
@@ -81,7 +82,7 @@ public class Breaker implements ModuleAccess {
         if (target == null) {
             if (currentMiningBlock != null) {
                 if (!syncPacketMine) {
-                    mc.gameMode.stopDestroyBlock();
+                    mc.getGameMode().stopDestroyBlock();
                 }
                 currentMiningBlock = null;
             }
@@ -94,8 +95,8 @@ public class Breaker implements ModuleAccess {
         int ty = tPos.getY();
         int tz = tPos.getZ();
         for (net.minecraft.core.BlockPos pos : solid) {
-            net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
-            if (state.getDestroySpeed(mc.level, pos) > 0.0f) {
+            net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
+            if (state.getDestroySpeed(mc.getLevel(), pos) > 0.0f) {
                 int px = pos.getX();
                 int py = pos.getY();
                 int pz = pos.getZ();
@@ -125,7 +126,7 @@ public class Breaker implements ModuleAccess {
         if (candidates.isEmpty()) {
             if (currentMiningBlock != null) {
                 if (!syncPacketMine) {
-                    mc.gameMode.stopDestroyBlock();
+                    mc.getGameMode().stopDestroyBlock();
                 }
                 currentMiningBlock = null;
             }
@@ -133,7 +134,7 @@ public class Breaker implements ModuleAccess {
         }
         net.minecraft.core.BlockPos targetPos = null;
         if (currentMiningBlock != null) {
-            double dist = net.minecraft.world.phys.Vec3.atCenterOf(currentMiningBlock).distanceTo(mc.player.getEyePosition());
+            double dist = net.minecraft.world.phys.Vec3.atCenterOf(currentMiningBlock).distanceTo(mc.getPlayer().getEyePosition());
             if (dist <= range && candidates.contains(currentMiningBlock)) {
                 targetPos = currentMiningBlock;
             }
@@ -142,8 +143,8 @@ public class Breaker implements ModuleAccess {
             double[] solidData = flatten(solid);
             double[] candData = flatten(candidates);
             double[] result = nativeCalculateBreaker(
-                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                    mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
+                    mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
+                    mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), getEntityStats(mc.getPlayer()),
                     target.getX(), target.getY(), target.getZ(),
                     target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
                     solidData,
@@ -158,7 +159,7 @@ public class Breaker implements ModuleAccess {
             if (result == null || result[0] < 0.5) {
                 if (currentMiningBlock != null) {
                     if (!syncPacketMine) {
-                        mc.gameMode.stopDestroyBlock();
+                        mc.getGameMode().stopDestroyBlock();
                     }
                     currentMiningBlock = null;
                 }
@@ -177,7 +178,7 @@ public class Breaker implements ModuleAccess {
         if (syncPacketMine) {
             if (!ravex.manager.ModuleManager.delegate(ravex.modules.player.PacketMine.class).isTargetBlock(targetPos)) {
                 ravex.modules.player.PacketMine.miningBlocks.removeIf(m -> !m.done);
-                String name = mc.level.getBlockState(targetPos).getBlock().getName().getString();
+                String name = mc.getLevel().getBlockState(targetPos).getBlock().getName().getString();
                 long breakMs = ravex.manager.ModuleManager.delegate(ravex.modules.player.PacketMine.class).calcBreakTime(mc, targetPos);
                 ravex.modules.player.PacketMine.miningBlocks.add(
                         new ravex.modules.player.PacketMine.MiningBlock(targetPos, breakMs, name));
@@ -186,22 +187,22 @@ public class Breaker implements ModuleAccess {
         } else {
             if (currentMiningBlock == null || !currentMiningBlock.equals(targetPos)) {
                 if (currentMiningBlock != null) {
-                    mc.gameMode.stopDestroyBlock();
+                    mc.getGameMode().stopDestroyBlock();
                 }
                 currentMiningBlock = targetPos;
-                mc.gameMode.startDestroyBlock(targetPos, net.minecraft.core.Direction.UP);
+                mc.getGameMode().startDestroyBlock(targetPos, net.minecraft.core.Direction.UP);
             } else {
-                mc.gameMode.continueDestroyBlock(targetPos, net.minecraft.core.Direction.UP);
+                mc.getGameMode().continueDestroyBlock(targetPos, net.minecraft.core.Direction.UP);
             }
-            SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         }
     }
 
-    private net.minecraft.world.entity.player.Player findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.player.Player findTarget(MinecraftWrapper mc) {
         net.minecraft.world.entity.player.Player closest = null;
         double bestDist = Double.MAX_VALUE;
         double maxDist = range + 3.0;
-        for (net.minecraft.world.entity.player.Player p : mc.level.players()) {
+        for (net.minecraft.world.entity.player.Player p : mc.getLevel().players()) {
             if (MobUtility.isSelf(p) || MobUtility.isDead(p))
                 continue;
             double dist = MobUtility.distanceToPlayer(p);
@@ -213,7 +214,7 @@ public class Breaker implements ModuleAccess {
         return closest;
     }
 
-    private List<net.minecraft.core.BlockPos> collectSolidBlocks(Minecraft mc, net.minecraft.world.entity.player.Player target) {
+    private List<net.minecraft.core.BlockPos> collectSolidBlocks(MinecraftWrapper mc, net.minecraft.world.entity.player.Player target) {
         List<net.minecraft.core.BlockPos> found = new ArrayList<>();
         net.minecraft.core.BlockPos tPos = target.blockPosition();
         int r = 2;
@@ -221,8 +222,8 @@ public class Breaker implements ModuleAccess {
             for (int dy = -1; dy <= 2; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
                     net.minecraft.core.BlockPos pos = tPos.offset(dx, dy, dz);
-                    if (mc.level.isLoaded(pos)) {
-                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+                    if (mc.getLevel().isLoaded(pos)) {
+                        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             found.add(pos);
                         }
@@ -244,10 +245,10 @@ public class Breaker implements ModuleAccess {
         return arr;
     }
 
-    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        mc.player.setYRot(angles[0]);
-        mc.player.setXRot(angles[1]);
+    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
+        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
+        mc.getPlayer().setYRot(angles[0]);
+        mc.getPlayer().setXRot(angles[1]);
     }
 
     private double[] getEntityStats(net.minecraft.world.entity.player.Player player) {

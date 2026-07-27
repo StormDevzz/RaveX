@@ -15,4 +15,5 @@ public @interface Parameter {
     String[] modes() default {};
     String[] options() default {};
     boolean color() default false;
+    boolean maybe() default false;
 }

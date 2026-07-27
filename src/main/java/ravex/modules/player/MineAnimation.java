@@ -2,11 +2,11 @@ package ravex.modules.player;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "MineAnimation", category = "net.minecraft.world.entity.player.Player")
 public class MineAnimation implements ModuleAccess {
@@ -20,7 +20,7 @@ public class MineAnimation implements ModuleAccess {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("MineAnimation").getEnabled() || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (packet instanceof ServerboundSwingPacket && hideSwing) {
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.gameMode != null && mc.gameMode.isDestroying()) {
                 event.setCancelled(true);
             }

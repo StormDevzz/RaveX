@@ -2,12 +2,12 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 
 import ravex.utility.misc.MobUtility;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "SmallUser", category = "Render")
 public class SmallUser implements ModuleAccess {
     @Parameter(name = "Target", modes = {"All", "Others", "Self"})
@@ -18,7 +18,7 @@ public class SmallUser implements ModuleAccess {
 
     public boolean shouldScale(net.minecraft.world.entity.player.Player player) {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("SmallUser").getEnabled()) return false;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         boolean isSelf = MobUtility.isSelf(player);
         String t = target;
         if (t.equals("Self")) {

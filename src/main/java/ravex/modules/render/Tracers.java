@@ -5,7 +5,6 @@ import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -17,6 +16,7 @@ import ravex.utility.misc.PhysicUtility;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "Tracers", category = "Render")
 public class Tracers implements ModuleAccess {
@@ -73,7 +73,7 @@ public class Tracers implements ModuleAccess {
                     } catch (Exception ignored) {
                     }
                     arrowTexture = Identifier.fromNamespaceAndPath("ravex", "tracers_arrow");
-                    Minecraft.getInstance().getTextureManager().register(arrowTexture, tex);
+                    MinecraftWrapper.getInstance().getTextureManager().register(arrowTexture, tex);
                     arrowLoaded = true;
                 }
             } catch (Exception e) {
@@ -97,7 +97,7 @@ public class Tracers implements ModuleAccess {
         if (!t.getEnabled() || !t.mode.equals("Arrows"))
             return;
 
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null)
             return;
 

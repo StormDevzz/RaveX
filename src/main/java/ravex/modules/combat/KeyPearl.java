@@ -2,17 +2,17 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.player.SwingUtility;
 
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "KeyPearl", category = "Combat")
 public class KeyPearl implements ModuleAccess {
     @Parameter(name = "Swap", modes = {"Silent", "Normal"})
     public String swap = "Silent";
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         int pearlSlot = -1;
         for (int i = 0; i < 9; i++) {

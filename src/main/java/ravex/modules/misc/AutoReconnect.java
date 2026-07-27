@@ -2,11 +2,12 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "AutoReconnect", category = "Misc")
 public class AutoReconnect implements ModuleAccess {
@@ -34,14 +35,14 @@ public class AutoReconnect implements ModuleAccess {
         if (!pendingAutoReconnect) return;
         if (System.currentTimeMillis() < reconnectAt) return;
         pendingAutoReconnect = false;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() != null) return;
         reconnect(mc);
     }
-    public static void reconnect(Minecraft mc) {
+    public static void reconnect(MinecraftWrapper mc) {
         if (!hasLastServer()) return;
         ServerAddress addr = ServerAddress.parseString(lastServer.ip);
-        ConnectScreen.startConnecting(new TitleScreen(), mc, addr, lastServer, false, null);
+        ConnectScreen.startConnecting(new TitleScreen(), mc.getRaw(), addr, lastServer, false, null);
     }
 
     public static boolean maybeEnabled() {

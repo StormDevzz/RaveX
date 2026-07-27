@@ -2,9 +2,9 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.event.EventBusHolder;
 import ravex.event.client.SoundEvent;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "LagNotify", category = "Misc")
 public class LagNotify implements ModuleAccess {
@@ -17,7 +17,7 @@ public class LagNotify implements ModuleAccess {
     private float smoothedTPS = 20.0f;
     private boolean wasLagging = false;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
         long gameTick = mc.level.getGameTime();

@@ -6,7 +6,7 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.StemBlock;
 import java.util.HashSet;
 import java.util.Set;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -32,14 +33,14 @@ public class AutoReplant implements ModuleAccess {
         farmBlocks.add(net.minecraft.world.level.block.Blocks.FARMLAND);
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         long now = System.currentTimeMillis();
         if (now - lastReplantTime < delay) return;
         int seedSlot = findSeedSlot(mc);
         if (seedSlot == -1) return;
         double r = range;
-        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.getPlayer().blockPosition();
         int minX = (int) Math.floor(playerPos.getX() - r);
         int maxX = (int) Math.ceil(playerPos.getX() + r);
         int minY = (int) Math.floor(playerPos.getY() - r);
@@ -50,18 +51,18 @@ public class AutoReplant implements ModuleAccess {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
-                    net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+                    net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                     if (!state.is(net.minecraft.world.level.block.Blocks.FARMLAND)) continue;
-                    if (!mc.level.getBlockState(pos.above()).isAir()) continue;
-                    if (net.minecraft.world.phys.Vec3.atCenterOf(pos).distanceToSqr(mc.player.getEyePosition()) > r * r) continue;
-                    int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
-                    InventoryUtility.selectSlot(mc.player, seedSlot);
+                    if (!mc.getLevel().getBlockState(pos.above()).isAir()) continue;
+                    if (net.minecraft.world.phys.Vec3.atCenterOf(pos).distanceToSqr(mc.getPlayer().getEyePosition()) > r * r) continue;
+                    int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+                    InventoryUtility.selectSlot(mc.getPlayer(), seedSlot);
                     net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
                         net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false
                     );
-                    mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+                    mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hit);
                     if (silent) {
-                        InventoryUtility.selectSlot(mc.player, prevSlot);
+                        InventoryUtility.selectSlot(mc.getPlayer(), prevSlot);
                     }
                     lastReplantTime = now;
                     return;
@@ -69,9 +70,9 @@ public class AutoReplant implements ModuleAccess {
             }
         }
     }
-    private int findSeedSlot(Minecraft mc) {
+    private int findSeedSlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (!stack.isEmpty()) {
                 Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
                 if (id != null && id.getNamespace().equals("minecraft") &&

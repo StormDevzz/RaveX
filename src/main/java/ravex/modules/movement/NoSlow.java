@@ -2,7 +2,6 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
@@ -12,6 +11,7 @@ import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "NoSlow", category = "Movement")
 public class NoSlow implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3"})
@@ -58,7 +58,7 @@ public class NoSlow implements ModuleAccess {
     public void onTick(TickEvent.Client event) {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoSlow").getEnabled()) return;
         String modeVal = mode;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
 
         if ("Matrix".equals(modeVal)) {

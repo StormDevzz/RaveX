@@ -4,9 +4,10 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.phys.HitResult;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -35,9 +36,9 @@ public class ClickFly implements ModuleAccess {
         flying = false;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        if (mc.options.keyUse.isDown()) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        if (mc.getOptions().keyUse.isDown()) {
             long now = System.currentTimeMillis();
             if (now - lastClick > 300) {
                 lastClick = now;
@@ -55,8 +56,8 @@ public class ClickFly implements ModuleAccess {
             flyStep(mc);
         }
     }
-    private net.minecraft.world.phys.Vec3 getTarget(Minecraft mc) {
-        HitResult hit = mc.hitResult;
+    private net.minecraft.world.phys.Vec3 getTarget(MinecraftWrapper mc) {
+        HitResult hit = mc.getHitResult();
         if (hit != null) {
             if (hit.getType() == HitResult.Type.BLOCK) {
                 net.minecraft.world.phys.BlockHitResult blockHit = (net.minecraft.world.phys.BlockHitResult) hit;
@@ -69,12 +70,12 @@ public class ClickFly implements ModuleAccess {
             }
         }
         double dist = range;
-        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition(1.0F);
-        net.minecraft.world.phys.Vec3 look = mc.player.getViewVector(1.0F);
+        net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition(1.0F);
+        net.minecraft.world.phys.Vec3 look = mc.getPlayer().getViewVector(1.0F);
         return eye.add(look.x * dist, look.y * dist + height, look.z * dist);
     }
-    private void flyStep(Minecraft mc) {
-        var p = mc.player;
+    private void flyStep(MinecraftWrapper mc) {
+        var p = mc.getPlayer();
         net.minecraft.world.phys.Vec3 pos = p.position();
         net.minecraft.world.phys.Vec3 diff = target.subtract(pos);
         double dist = diff.length();
@@ -95,8 +96,8 @@ public class ClickFly implements ModuleAccess {
                 pos.z + dir.z * spd,
                 false, p.horizontalCollision));
     }
-    private void tpStep(Minecraft mc) {
-        var p = mc.player;
+    private void tpStep(MinecraftWrapper mc) {
+        var p = mc.getPlayer();
         net.minecraft.world.phys.Vec3 pos = p.position();
         net.minecraft.world.phys.Vec3 diff = target.subtract(pos);
         double dist = diff.length();

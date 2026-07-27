@@ -7,10 +7,11 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -28,9 +29,9 @@ public class SourceFiller implements ModuleAccess {
     public double delay = 200.0;
     private long lastPlaceTime = 0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        var p = mc.player;
-        if (p == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null) return;
         if (System.currentTimeMillis() - lastPlaceTime < delay) return;
         int spongeSlot = InventoryUtility.findHotbarSlot(p, "sponge");
         if (spongeSlot == -1) return;
@@ -51,7 +52,7 @@ public class SourceFiller implements ModuleAccess {
             InventoryUtility.selectSlot(p, prevSlot);
         lastPlaceTime = System.currentTimeMillis();
     }
-    private net.minecraft.core.BlockPos findTargetWater(net.minecraft.client.player.LocalPlayer p, Minecraft mc) {
+    private net.minecraft.core.BlockPos findTargetWater(net.minecraft.client.player.LocalPlayer p, MinecraftWrapper mc) {
         double r = range;
         List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
         for (int x = (int) Math.floor(p.getX() - r); x <= Math.ceil(p.getX() + r); x++)
@@ -59,17 +60,17 @@ public class SourceFiller implements ModuleAccess {
                 for (int z = (int) Math.floor(p.getZ() - r); z <= Math.ceil(p.getZ() + r); z++) {
                     net.minecraft.core.BlockPos bp = BlockUtility.pos(x, y, z);
                     if (p.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(bp)) > r * r) continue;
-                    if (mc.level.getFluidState(bp).is(net.minecraft.tags.FluidTags.WATER)) candidates.add(bp);
+                    if (mc.getLevel().getFluidState(bp).is(net.minecraft.tags.FluidTags.WATER)) candidates.add(bp);
                 }
         if (candidates.isEmpty()) return null;
         return "Smart".equals(mode)
             ? candidates.stream().max(Comparator.comparingInt(bp -> countAdjacentWater(bp, mc))).orElse(null)
             : candidates.stream().min(Comparator.comparingDouble(bp -> p.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(bp)))).orElse(null);
     }
-    private int countAdjacentWater(net.minecraft.core.BlockPos pos, Minecraft mc) {
+    private int countAdjacentWater(net.minecraft.core.BlockPos pos, MinecraftWrapper mc) {
         int count = 0;
         for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values())
-            if (mc.level.getFluidState(pos.relative(dir)).is(net.minecraft.tags.FluidTags.WATER)) count++;
+            if (mc.getLevel().getFluidState(pos.relative(dir)).is(net.minecraft.tags.FluidTags.WATER)) count++;
         return count;
     }
     public static boolean maybeEnabled() {

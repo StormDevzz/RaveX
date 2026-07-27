@@ -1,15 +1,22 @@
 package ravex.manager;
 
 import ravex.event.EventBusHolder;
-import ravex.modules.Category;
+import ravex.module.ModuleProxy;
 import ravex.modules.Module;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.utility.system.AnnotationScannerUtility;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.security.CodeSource;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class ModuleManager {
     public static final ModuleManager INSTANCE = new ModuleManager();
@@ -23,19 +30,19 @@ public class ModuleManager {
             try {
                 ModuleInfo info = clazz.getDeclaredAnnotation(ModuleInfo.class);
                 if (info == null) continue;
-                Category cat;
-                try {
-                    cat = Category.valueOf(info.category().toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    cat = Category.CUSTOM;
-                }
+                String cat = info.category();
                 var ctor = clazz.getDeclaredConstructor();
                 ctor.setAccessible(true);
                 Object instance = ctor.newInstance();
-                Module module = (Module) instance;
+                Module module;
+                if (instance instanceof Module) {
+                    module = (Module) instance;
+                } else {
+                    module = new ModuleProxy(instance);
+                }
                 byClass.put(clazz, module);
                 module.setCategory(cat);
-                if (cat == Category.HUD) module.setHud(true);
+                if ("HUD".equals(cat)) module.setHud(true);
                 modules.add(module);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to register " + clazz.getName(), e);
@@ -50,6 +57,7 @@ public class ModuleManager {
         }
         return list;
     }
+
     public List<Module> getHudModules() {
         List<Module> list = new ArrayList<>();
         for (Module m : modules) {
@@ -58,10 +66,10 @@ public class ModuleManager {
         return list;
     }
 
-    public List<Module> getByCategory(Category category) {
+    public List<Module> getByCategory(String category) {
         List<Module> list = new ArrayList<>();
         for (Module m : modules) {
-            if (m.getCategory() == category) list.add(m);
+            if (m.getCategory().equals(category)) list.add(m);
         }
         return list;
     }
@@ -84,6 +92,11 @@ public class ModuleManager {
     @SuppressWarnings("unchecked")
     public static <T> T get(Class<T> clazz) {
         return (T) INSTANCE.byClass.get(clazz);
+    }
+
+    public static boolean isEnabled(Class<?> clazz) {
+        Module m = INSTANCE.byClass.get(clazz);
+        return m != null && m.getEnabled();
     }
 
     @SuppressWarnings("unchecked")

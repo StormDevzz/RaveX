@@ -4,9 +4,10 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.phys.HitResult;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -21,9 +22,9 @@ public class ClickTP implements ModuleAccess {
     public double cooldown = 500;
     private long lastClick = 0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        if (!mc.options.keyUse.isDown()) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        if (!mc.getOptions().keyUse.isDown()) return;
         long now = System.currentTimeMillis();
         if (now - lastClick < (long) cooldown) return;
         lastClick = now;
@@ -35,8 +36,8 @@ public class ClickTP implements ModuleAccess {
             teleportBlink(mc, target);
         }
     }
-    private net.minecraft.world.phys.Vec3 getTarget(Minecraft mc) {
-        HitResult hit = mc.hitResult;
+    private net.minecraft.world.phys.Vec3 getTarget(MinecraftWrapper mc) {
+        HitResult hit = mc.getHitResult();
         if (hit != null) {
             if (hit.getType() == HitResult.Type.BLOCK) {
                 net.minecraft.world.phys.BlockHitResult blockHit = (net.minecraft.world.phys.BlockHitResult) hit;
@@ -49,18 +50,18 @@ public class ClickTP implements ModuleAccess {
             }
         }
         double dist = range;
-        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition(1.0F);
-        net.minecraft.world.phys.Vec3 look = mc.player.getViewVector(1.0F);
+        net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition(1.0F);
+        net.minecraft.world.phys.Vec3 look = mc.getPlayer().getViewVector(1.0F);
         return eye.add(look.x * dist, look.y * dist, look.z * dist);
     }
-    private void teleportInstant(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        var p = mc.player;
+    private void teleportInstant(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
+        var p = mc.getPlayer();
         p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                 target.x, target.y, target.z, true, p.horizontalCollision));
         p.setPos(target.x, target.y, target.z);
     }
-    private void teleportBlink(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
-        var p = mc.player;
+    private void teleportBlink(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
+        var p = mc.getPlayer();
         double x = p.getX(), y = p.getY(), z = p.getZ();
         double dx = (target.x - x) / 10.0;
         double dy = (target.y - y) / 10.0;

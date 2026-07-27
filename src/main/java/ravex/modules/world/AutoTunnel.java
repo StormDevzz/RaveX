@@ -2,12 +2,13 @@ package ravex.modules.world;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoTunnel", category = "World")
 public class AutoTunnel implements ModuleAccess {
     @Parameter(name = "Range", min = 1.0, max = 10.0, step = 0.5)
@@ -37,27 +38,27 @@ public class AutoTunnel implements ModuleAccess {
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
-        if (hasMiningTarget && mc.gameMode != null) {
-            mc.gameMode.stopDestroyBlock();
+        var mc = MinecraftWrapper.getWrapper();
+        if (hasMiningTarget && mc.getGameMode() != null) {
+            mc.getGameMode().stopDestroyBlock();
         }
         hasMiningTarget = false;
         hasTarget = false;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < delay) return;
         if (autoWalk) {
-            mc.options.keyUp.setDown(true);
+            mc.getOptions().keyUp.setDown(true);
         }
         List<Long> blocks = getTunnelBlocks(mc);
         if (blocks.isEmpty()) return;
         if (fillLava) {
             for (long packed : blocks) {
                 int bx = BlockUtility.unpackX(packed), by = BlockUtility.unpackY(packed), bz = BlockUtility.unpackZ(packed);
-                if (BlockUtility.isLiquid(mc.level, bx, by, bz)) {
+                if (BlockUtility.isLiquid(mc.getLevel(), bx, by, bz)) {
                     fillBlock(mc, bx, by, bz);
                     lastActionTime = now;
                     return;
@@ -66,11 +67,11 @@ public class AutoTunnel implements ModuleAccess {
         }
         for (long packed : blocks) {
             int bx = BlockUtility.unpackX(packed), by = BlockUtility.unpackY(packed), bz = BlockUtility.unpackZ(packed);
-            var state = BlockUtility.getState(mc.level, bx, by, bz);
+            var state = BlockUtility.getState(mc.getLevel(), bx, by, bz);
             if (state.isAir() || state.liquid()) continue;
-            if (state.getDestroySpeed(mc.level, BlockUtility.pos(bx, by, bz)) < 0) continue;
+            if (state.getDestroySpeed(mc.getLevel(), BlockUtility.pos(bx, by, bz)) < 0) continue;
             if (hasMiningTarget && (miningX != bx || miningY != by || miningZ != bz)) {
-                mc.gameMode.stopDestroyBlock();
+                mc.getGameMode().stopDestroyBlock();
             }
             miningX = bx; miningY = by; miningZ = bz;
             hasMiningTarget = true;
@@ -81,16 +82,16 @@ public class AutoTunnel implements ModuleAccess {
             return;
         }
         if (hasMiningTarget) {
-            mc.gameMode.stopDestroyBlock();
+            mc.getGameMode().stopDestroyBlock();
         }
         hasMiningTarget = false;
         hasTarget = false;
     }
-    private void fillBlock(Minecraft mc, int x, int y, int z) {
-        if (!BlockUtility.isLiquid(mc.level, x, y, z)) return;
+    private void fillBlock(MinecraftWrapper mc, int x, int y, int z) {
+        if (!BlockUtility.isLiquid(mc.getLevel(), x, y, z)) return;
         int fillSlot = -1;
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (stack.isEmpty()) continue;
             if (InventoryUtility.isItem(stack, "cobblestone") || InventoryUtility.isItem(stack, "dirt")
                 || InventoryUtility.isItem(stack, "stone") || InventoryUtility.isItem(stack, "gravel")
@@ -103,14 +104,14 @@ public class AutoTunnel implements ModuleAccess {
         if (fillSlot == -1) return;
         BlockUtility.placeBlock(mc, BlockUtility.pos(x, y, z), fillSlot);
     }
-    private List<Long> getTunnelBlocks(Minecraft mc) {
+    private List<Long> getTunnelBlocks(MinecraftWrapper mc) {
         List<Long> result = new ArrayList<>();
-        var eye = mc.player.getEyePosition();
-        var facing = mc.player.getDirection();
+        var eye = mc.getPlayer().getEyePosition();
+        var facing = mc.getPlayer().getDirection();
         int h = (int) height;
         int w = (int) width;
         double r = range;
-        var startPos = mc.player.blockPosition();
+        var startPos = mc.getPlayer().blockPosition();
         int sx = startPos.getX(), sy = startPos.getY(), sz = startPos.getZ();
         for (int f = 0; f < 3; f++) {
             int step = f + 1;
@@ -118,8 +119,8 @@ public class AutoTunnel implements ModuleAccess {
                 for (int dx = 0; dx < w; dx++) {
                     int[] off = offsetCoords(facing, step, dx - (w / 2), dy);
                     int px = sx + off[0], py = sy + off[1], pz = sz + off[2];
-                    if (BlockUtility.distToSqr(mc.level, px, py, pz, eye.x, eye.y, eye.z) > r * r) continue;
-                    var state = BlockUtility.getState(mc.level, px, py, pz);
+                    if (BlockUtility.distToSqr(mc.getLevel(), px, py, pz, eye.x, eye.y, eye.z) > r * r) continue;
+                    var state = BlockUtility.getState(mc.getLevel(), px, py, pz);
                     if (state.isAir()) continue;
                     if (state.liquid()) {
                         if (fillLava) {
@@ -127,7 +128,7 @@ public class AutoTunnel implements ModuleAccess {
                         }
                         continue;
                     }
-                    if (state.getDestroySpeed(mc.level, BlockUtility.pos(px, py, pz)) < 0) continue;
+                    if (state.getDestroySpeed(mc.getLevel(), BlockUtility.pos(px, py, pz)) < 0) continue;
                     result.add(BlockUtility.packPos(px, py, pz));
                 }
             }

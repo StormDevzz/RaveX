@@ -1,7 +1,6 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
 import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
@@ -20,6 +19,7 @@ import java.lang.reflect.Field;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "MediaHud", category = "HUD")
 public class MediaHud extends ravex.modules.Module {
@@ -121,7 +121,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
             if (imageData != null && imageData.length > 0) {
                 RaveX.LOGGER.info("[MediaHud] Cover loaded: {} bytes", imageData.length);
                 String capturedKey = key;
-                Minecraft.getInstance().execute(() -> {
+                MinecraftWrapper.getInstance().execute(() -> {
                     if (registerCover(imageData)) {
                         lastLoadedKey = capturedKey;
                     }
@@ -166,7 +166,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
             if (coverTexture != null) coverTexture.close();
             coverTexture = new DynamicTexture(() -> "ravex:media_cover", resized);
             coverId = texId;
-            Minecraft.getInstance().getTextureManager().register(texId, coverTexture);
+            MinecraftWrapper.getInstance().getTextureManager().register(texId, coverTexture);
 
             try {
                 com.mojang.blaze3d.textures.GpuSampler linearSampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()

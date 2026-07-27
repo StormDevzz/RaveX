@@ -2,12 +2,12 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
 
 import ravex.utility.render.Render3DUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "ChinaHat", category = "Render")
 public class ChinaHat implements ModuleAccess {
@@ -30,7 +30,7 @@ public static final ChinaHat INSTANCE = new ChinaHat();
         ChinaHat ch = ravex.manager.ModuleManager.delegate(ChinaHat.class);
         if (ch == null || !ch.getEnabled()) return;
 
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level == null) return;
 
         int c = ch.color;

@@ -1,7 +1,6 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemCooldowns;
@@ -13,6 +12,7 @@ import ravex.parameter.ColorParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import java.util.*;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "CooldownsHud", category = "HUD")
 public class CooldownsHud extends ravex.modules.Module {
@@ -30,7 +30,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COOLDOWN_WHITE;
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         int col = 0xFFFFCC33;
         boolean shadow = true;

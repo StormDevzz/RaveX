@@ -2,7 +2,6 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.EntityUtility;
 
@@ -11,6 +10,7 @@ import ravex.utility.misc.MobUtility;
 
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "WindAura", category = "Combat")
 public class WindAura implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Normal", "Silent"})
@@ -28,7 +28,7 @@ public class WindAura implements ModuleAccess {
         tickCounter = 0;
     }
     private int findWindChargeSlot() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return -1;
         for (int i = 0; i < 9; i++) {
             if (InventoryUtility.isItem(InventoryUtility.getItem(mc.player, i), "wind_charge")) return i;
@@ -36,7 +36,7 @@ public class WindAura implements ModuleAccess {
         return -1;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         tickCounter++;
         if (tickCounter < (int) delay) return;

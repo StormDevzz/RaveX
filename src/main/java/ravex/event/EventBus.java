@@ -47,12 +47,13 @@ public class EventBus {
         objectListeners.put(object, methods);
     }
 
-    @SuppressWarnings("unchecked")
     private EventListener<Event> createListener(
         Object object, java.lang.reflect.Method method, Class<? extends Event> eventType
     ) {
+        ravex.modules.ModuleAccess module = object instanceof ravex.modules.ModuleAccess ? (ravex.modules.ModuleAccess) object : null;
         Class<?> rawEventType = eventType;
         return event -> {
+            if (module != null && !module.getEnabled()) return;
             if (!rawEventType.isInstance(event)) return;
             try {
                 method.invoke(object, event);

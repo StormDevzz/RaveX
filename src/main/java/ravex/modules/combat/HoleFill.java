@@ -2,7 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.chat.Component;
 import ravex.utility.misc.PhysicUtility;
@@ -12,6 +12,7 @@ import ravex.utility.player.InventoryUtility;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "HoleFill", category = "Combat")
 public class HoleFill implements ModuleAccess {
     @Parameter(name = "Range", min = 2.0, max = 8.0, step = 0.5)
@@ -51,8 +52,8 @@ public class HoleFill implements ModuleAccess {
         holeIndex = 0;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         long now = System.currentTimeMillis();
         switch (state) {
             case IDLE -> state = State.SEARCH;
@@ -64,7 +65,7 @@ public class HoleFill implements ModuleAccess {
             }
         }
     }
-    private void searchHoles(Minecraft mc) {
+    private void searchHoles(MinecraftWrapper mc) {
         holes.clear();
         holePositions.clear();
         holeIndex = 0;
@@ -78,7 +79,7 @@ public class HoleFill implements ModuleAccess {
             state = State.DONE;
             return;
         }
-        var playerPos = mc.player.blockPosition();
+        var playerPos = mc.getPlayer().blockPosition();
         int px = playerPos.getX(), py = playerPos.getY(), pz = playerPos.getZ();
         holes.sort(Comparator.comparingDouble(p -> {
             double dx = BlockUtility.unpackX(p) - px;
@@ -93,9 +94,9 @@ public class HoleFill implements ModuleAccess {
         sendMsg(mc, "Found " + holes.size() + " hole(s)");
         state = State.PLACING;
     }
-    private void searchNative(Minecraft mc, double range) {
+    private void searchNative(MinecraftWrapper mc, double range) {
         int[] result = nativeFindHoles(
-            mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+            mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
             range, (int) maxBlocks * 2
         );
         if (result == null) return;
@@ -106,8 +107,8 @@ public class HoleFill implements ModuleAccess {
             }
         }
     }
-    private void searchJava(Minecraft mc, double range) {
-        var playerPos = mc.player.blockPosition();
+    private void searchJava(MinecraftWrapper mc, double range) {
+        var playerPos = mc.getPlayer().blockPosition();
         int px = playerPos.getX(), py = playerPos.getY(), pz = playerPos.getZ();
         int r = (int) Math.ceil(range);
         for (int dx = -r; dx <= r; dx++) {
@@ -132,20 +133,20 @@ public class HoleFill implements ModuleAccess {
             }
         }
     }
-    private boolean isValidHole(Minecraft mc, int x, int y, int z) {
+    private boolean isValidHole(MinecraftWrapper mc, int x, int y, int z) {
         int by = y - 1;
-        if (by < mc.level.getMinY()) return false;
-        if (!mc.level.getBlockState(BlockUtility.pos(x, y, z)).isAir()) return false;
-        if (!BlockUtility.isSolid(mc.level, x, by, z)) return false;
+        if (by < mc.getLevel().getMinY()) return false;
+        if (!mc.getLevel().getBlockState(BlockUtility.pos(x, y, z)).isAir()) return false;
+        if (!BlockUtility.isSolid(mc.getLevel(), x, by, z)) return false;
         int ay = y + 1;
-        if (ay >= mc.level.getMaxY()) return false;
-        if (!BlockUtility.isAir(mc.level, x, ay, z)) return false;
+        if (ay >= mc.getLevel().getMaxY()) return false;
+        if (!BlockUtility.isAir(mc.getLevel(), x, ay, z)) return false;
         int solidSides = 0;
         net.minecraft.core.Direction[] horizontals = {net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.WEST};
         for (net.minecraft.core.Direction dir : horizontals) {
             int nx = x + dir.getStepX(), ny = y + dir.getStepY(), nz = z + dir.getStepZ();
-            if (!mc.level.getWorldBorder().isWithinBounds(BlockUtility.pos(nx, ny, nz))) return false;
-            if (BlockUtility.isSolid(mc.level, nx, ny, nz)) {
+            if (!mc.getLevel().getWorldBorder().isWithinBounds(BlockUtility.pos(nx, ny, nz))) return false;
+            if (BlockUtility.isSolid(mc.getLevel(), nx, ny, nz)) {
                 solidSides++;
             }
         }
@@ -154,7 +155,7 @@ public class HoleFill implements ModuleAccess {
         }
         return solidSides >= 3;
     }
-    private void placeNext(Minecraft mc, long now) {
+    private void placeNext(MinecraftWrapper mc, long now) {
         if (now - lastActionTime < (long) delay) return;
         lastActionTime = now;
         if (holeIndex >= holes.size()) {
@@ -163,7 +164,7 @@ public class HoleFill implements ModuleAccess {
             return;
         }
         long targetPacked = holes.get(holeIndex);
-        if (!BlockUtility.isAir(mc.level, BlockUtility.unpackX(targetPacked), BlockUtility.unpackY(targetPacked), BlockUtility.unpackZ(targetPacked))) {
+        if (!BlockUtility.isAir(mc.getLevel(), BlockUtility.unpackX(targetPacked), BlockUtility.unpackY(targetPacked), BlockUtility.unpackZ(targetPacked))) {
             holeIndex++;
             return;
         }
@@ -180,20 +181,20 @@ public class HoleFill implements ModuleAccess {
         totalPlaced++;
         holeIndex++;
     }
-    private int findBlockSlot(Minecraft mc) {
+    private int findBlockSlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (InventoryUtility.isItem(stack, "obsidian") || InventoryUtility.isItem(stack, "crying_obsidian")) return i;
         }
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (InventoryUtility.isBlockItem(stack)) return i;
         }
         return -1;
     }
-    private void sendMsg(Minecraft mc, String msg) {
-        if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal("§8[§5HoleFill§8] §7" + msg), false);
+    private void sendMsg(MinecraftWrapper mc, String msg) {
+        if (mc.getPlayer() != null) {
+            mc.getPlayer().displayClientMessage(Component.literal("§8[§5HoleFill§8] §7" + msg), false);
         }
     }
     private static native int[] nativeFindHoles(

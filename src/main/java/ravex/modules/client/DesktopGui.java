@@ -6,9 +6,9 @@ import ravex.event.Subscribe;
 import ravex.event.combat.ModuleToggleEvent;
 
 import ravex.parameter.*;
-import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "DesktopGui", category = "Client")
 public class DesktopGui implements ModuleAccess {
 private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_desktopgui");
@@ -16,7 +16,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         NATIVE.load();
     }
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (!NATIVE.isLoaded()) {
             if (mc.player != null) {
                 mc.player.displayClientMessage(
@@ -49,7 +49,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         }
     }
     public static void toggleModuleFromNative(String name) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         mc.execute(() -> {
             ravex.modules.Module m = ravex.manager.ModuleManager.INSTANCE.getByName(name);
             if (m != null) {
@@ -58,7 +58,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         });
     }
     public static void onNativeClose() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         mc.execute(() -> {
             if (ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").getEnabled()) {
                 ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").setEnabled(false);

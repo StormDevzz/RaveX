@@ -2,12 +2,12 @@ package ravex.modules.player;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 import ravex.utility.player.ContainerUtility;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "ChestHelper", category = "net.minecraft.world.entity.player.Player")
 public class ChestHelper implements ModuleAccess {
     @Parameter(name = "Steal")
@@ -41,15 +41,15 @@ public class ChestHelper implements ModuleAccess {
         return false;
     }
     private void handleAction(AbstractContainerScreen<?> screen, String action) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var player = mc.player;
         if (player == null) return;
         var menu = screen.getMenu();
         switch (action) {
-            case "STEAL" -> ContainerUtility.quickMoveAll(mc, player, ContainerUtility.getContainerSlots(menu));
-            case "DUMP"  -> ContainerUtility.quickMoveAll(mc, player, ContainerUtility.getPlayerSlots(menu));
-            case "FILL"  -> ContainerUtility.fillFromContainer(mc, player, menu);
-            case "DROP"  -> ContainerUtility.throwAll(mc, player, ContainerUtility.getContainerSlots(menu));
+            case "STEAL" -> ContainerUtility.quickMoveAll(ravex.mcwrapper.MinecraftWrapper.getWrapper(), player, ContainerUtility.getContainerSlots(menu));
+            case "DUMP"  -> ContainerUtility.quickMoveAll(ravex.mcwrapper.MinecraftWrapper.getWrapper(), player, ContainerUtility.getPlayerSlots(menu));
+            case "FILL"  -> ContainerUtility.fillFromContainer(ravex.mcwrapper.MinecraftWrapper.getWrapper(), player, menu);
+            case "DROP"  -> ContainerUtility.throwAll(ravex.mcwrapper.MinecraftWrapper.getWrapper(), player, ContainerUtility.getContainerSlots(menu));
         }
     }
     private List<ButtonDef> getButtons() {

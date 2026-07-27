@@ -2,6 +2,7 @@ package ravex.modules.client;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Hud", category = "Client")
 public class Hud implements ModuleAccess {
     @Parameter(name = "HudEditor")
@@ -30,7 +31,7 @@ public class Hud implements ModuleAccess {
     public void onTick() {
         if (hudEditor) {
             hudEditor = false;
-            var mc = net.minecraft.client.Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.player != null) {
                 mc.execute(() -> mc.setScreen(new ravex.gui.hudeditor.HudEditorScreen(null)));
             }

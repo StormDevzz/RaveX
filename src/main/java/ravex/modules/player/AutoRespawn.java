@@ -2,10 +2,10 @@ package ravex.modules.player;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import ravex.event.Subscribe;
 import ravex.event.player.DeathEvent;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "AutoRespawn", category = "net.minecraft.world.entity.player.Player")
 public class AutoRespawn implements ModuleAccess {
@@ -26,7 +26,7 @@ public class AutoRespawn implements ModuleAccess {
     }
     public void onTick() {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("AutoRespawn").getEnabled() || !dead) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         if (showDeathScreen) return;
         mc.getConnection().send(new ServerboundClientCommandPacket(

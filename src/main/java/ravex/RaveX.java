@@ -279,7 +279,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
         if (isDown && !rightShiftWasDown) {
             if (mc.screen instanceof ClickGUI) {
-                ScreenUtility.closeScreen(mc);
+                ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper());
             } else {
                 mc.setScreen(new ClickGUI());
             }

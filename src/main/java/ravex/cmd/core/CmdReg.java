@@ -24,7 +24,7 @@ public class CmdReg {
     }
 
     public boolean process0(String message) {
-        if (!ModuleManager.INSTANCE.getByName("Commands").getEnabled()) return false;
+        if (!ModuleManager.isEnabled(Commands.class)) return false;
         String pref = ModuleManager.get(Commands.class).prefix;
         if (!message.startsWith(pref)) return false;
         String raw = message.substring(pref.length()).trim();

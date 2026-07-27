@@ -4,10 +4,10 @@ import ravex.mixin.client.AccessorMinecraft;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -20,7 +20,7 @@ public class AutoSoup implements ModuleAccess {
     public boolean hotbarOnly = true;
     private long lastUse = 0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer player = mc.player;
         if (player == null) return;
         long now = System.currentTimeMillis();

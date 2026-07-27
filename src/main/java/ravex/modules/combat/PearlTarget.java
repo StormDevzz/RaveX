@@ -5,7 +5,7 @@ import ravex.utility.player.SwingUtility;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.CameraUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import ravex.utility.misc.MobUtility;
@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "PearlTarget", category = "Combat")
 public class PearlTarget implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Combat", "Pearl", "Follow"})
@@ -123,12 +124,12 @@ public class PearlTarget implements ModuleAccess {
     private PearlTarget() {
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         double r = range;
         List<ThrownEnderpearl> pearls = new ArrayList<>();
         List<net.minecraft.world.entity.player.Player> players = new ArrayList<>();
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (e instanceof ThrownEnderpearl pearl) {
                 if (MobUtility.distanceToPlayer(pearl) <= r) {
                     pearls.add(pearl);
@@ -142,7 +143,7 @@ public class PearlTarget implements ModuleAccess {
         }
         for (ThrownEnderpearl pearl : pearls) {
             net.minecraft.world.entity.Entity owner = pearl.getOwner();
-            if (owner == mc.player) continue;
+            if (owner == mc.getPlayer()) continue;
             int id = pearl.getId();
             net.minecraft.world.phys.Vec3 pos = pearl.position();
             net.minecraft.world.phys.Vec3 vel = pearl.getDeltaMovement();
@@ -171,7 +172,7 @@ public class PearlTarget implements ModuleAccess {
         while (it.hasNext()) {
             Map.Entry<Integer, PearlData> entry = it.next();
             PearlData data = entry.getValue();
-            boolean alive = mc.level.getEntity(data.entityId) != null;
+            boolean alive = mc.getLevel().getEntity(data.entityId) != null;
             if (!alive || System.currentTimeMillis() - data.time > chaseTime) {
                 it.remove();
             }
@@ -186,7 +187,7 @@ public class PearlTarget implements ModuleAccess {
             targetPos = null;
         }
         if (target == null && targetPos == null) return;
-        net.minecraft.world.phys.Vec3 myPos = mc.player.position();
+        net.minecraft.world.phys.Vec3 myPos = mc.getPlayer().position();
         net.minecraft.world.phys.Vec3 moveTarget = "Follow".equals(mode) && target != null
             ? target.position() : targetPos;
         if (moveTarget == null) return;
@@ -210,118 +211,118 @@ public class PearlTarget implements ModuleAccess {
             doAutoPearl(mc);
         }
     }
-    private void doChaseMovement(Minecraft mc, net.minecraft.world.phys.Vec3 moveTarget) {
-        net.minecraft.world.phys.Vec3 myPos = mc.player.position();
+    private void doChaseMovement(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 moveTarget) {
+        net.minecraft.world.phys.Vec3 myPos = mc.getPlayer().position();
         net.minecraft.world.phys.Vec3 diff = moveTarget.subtract(myPos);
         double dist = diff.length();
         if (dist < 0.1) return;
         net.minecraft.world.phys.Vec3 dir = new net.minecraft.world.phys.Vec3(diff.x, 0, diff.z).normalize();
-        double speedVal = mc.player.onGround() ? speed : speed * 0.8;
+        double speedVal = mc.getPlayer().onGround() ? speed : speed * 0.8;
         if (sprint) {
-            mc.player.setSprinting(true);
+            mc.getPlayer().setSprinting(true);
             wasSprinting = true;
         }
-        net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
+        net.minecraft.world.phys.Vec3 motion = mc.getPlayer().getDeltaMovement();
         double targetVx = dir.x * speedVal;
         double targetVz = dir.z * speedVal;
-        if (strafe && mc.player.onGround()) {
+        if (strafe && mc.getPlayer().onGround()) {
             motion = new net.minecraft.world.phys.Vec3(targetVx, motion.y, targetVz);
         } else {
             motion = new net.minecraft.world.phys.Vec3(targetVx, motion.y, targetVz);
         }
-        mc.player.setDeltaMovement(motion);
-        if (jump && mc.player.onGround() && dist > 1.5) {
-            mc.player.jumpFromGround();
+        mc.getPlayer().setDeltaMovement(motion);
+        if (jump && mc.getPlayer().onGround() && dist > 1.5) {
+            mc.getPlayer().jumpFromGround();
         }
         if (rotate && target != null) {
-            float[] angles = RotationUtility.anglesTo(mc.player, target.position().add(0, target.getEyeHeight() * 0.8, 0));
-            mc.player.setYRot(angles[0]);
-            mc.player.setXRot(RotationUtility.clampPitch(angles[1]));
+            float[] angles = RotationUtility.anglesTo(mc.getPlayer(), target.position().add(0, target.getEyeHeight() * 0.8, 0));
+            mc.getPlayer().setYRot(angles[0]);
+            mc.getPlayer().setXRot(RotationUtility.clampPitch(angles[1]));
         }
     }
-    private void doAttack(Minecraft mc, net.minecraft.world.entity.player.Player target) {
+    private void doAttack(MinecraftWrapper mc, net.minecraft.world.entity.player.Player target) {
         long now = System.currentTimeMillis();
         long attackDelay = (long) (1000.0 / attackCps);
         if (now - lastAttackTime < attackDelay) return;
         if (autoWeapon) {
             int bestSlot = findBestWeaponSlot(mc);
-            if (bestSlot != -1) InventoryUtility.selectSlot(mc.player, bestSlot);
+            if (bestSlot != -1) InventoryUtility.selectSlot(mc.getPlayer(), bestSlot);
         }
         if (rotate) {
-            float[] angles = RotationUtility.anglesTo(mc.player, target.position().add(0, target.getEyeHeight() * 0.8, 0));
-            mc.player.setYRot(angles[0]);
-            mc.player.setXRot(RotationUtility.clampPitch(angles[1]));
+            float[] angles = RotationUtility.anglesTo(mc.getPlayer(), target.position().add(0, target.getEyeHeight() * 0.8, 0));
+            mc.getPlayer().setYRot(angles[0]);
+            mc.getPlayer().setXRot(RotationUtility.clampPitch(angles[1]));
         }
-        mc.gameMode.attack(mc.player, target);
-        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        mc.getGameMode().attack(mc.getPlayer(), target);
+        SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         lastAttackTime = now;
     }
-    private void doAutoTotem(Minecraft mc) {
+    private void doAutoTotem(MinecraftWrapper mc) {
         String mode = totemMode;
         boolean shouldTotem = "Always".equals(mode)
-            || ("LowHP".equals(mode) && MobUtility.getHealthWithAbsorption(mc.player) <= totemHealth);
+            || ("LowHP".equals(mode) && MobUtility.getHealthWithAbsorption(mc.getPlayer()) <= totemHealth);
         if (!shouldTotem) return;
         int totemSlot = -1;
         for (int i = 0; i < 36; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i < 9 ? i + 36 : i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i < 9 ? i + 36 : i);
             if (InventoryUtility.isTotem(stack)) {
                 totemSlot = i < 9 ? i + 36 : i;
                 break;
             }
         }
         if (totemSlot == -1) return;
-        if (InventoryUtility.isTotem(mc.player.getOffhandItem())) return;
-        if (!mc.player.getOffhandItem().isEmpty()) return;
-        mc.gameMode.handleInventoryMouseClick(
-            mc.player.containerMenu.containerId,
+        if (InventoryUtility.isTotem(mc.getPlayer().getOffhandItem())) return;
+        if (!mc.getPlayer().getOffhandItem().isEmpty()) return;
+        mc.getGameMode().handleInventoryMouseClick(
+            mc.getPlayer().containerMenu.containerId,
             totemSlot < 36 ? totemSlot : totemSlot,
             0,
             net.minecraft.world.inventory.ClickType.QUICK_MOVE,
-            mc.player
+            mc.getPlayer()
         );
     }
-    private void doAutoGap(Minecraft mc) {
-        if (MobUtility.getHealthWithAbsorption(mc.player) > gapHealth) return;
-        if (mc.player.isUsingItem()) return;
+    private void doAutoGap(MinecraftWrapper mc) {
+        if (MobUtility.getHealthWithAbsorption(mc.getPlayer()) > gapHealth) return;
+        if (mc.getPlayer().isUsingItem()) return;
         var gap = FoodUtility.findFood(f -> f.isAnyGoldenApple());
         if (gap == null) return;
         int gapSlot = gap.getSlot();
-        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, gapSlot);
-        mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        InventoryUtility.selectSlot(mc.getPlayer(), gapSlot);
+        mc.getGameMode().useItem(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         if (keepRotate) {
-            InventoryUtility.selectSlot(mc.player, prevSlot);
+            InventoryUtility.selectSlot(mc.getPlayer(), prevSlot);
         }
     }
-    private void doAutoPearl(Minecraft mc) {
-        if (mc.player.isUsingItem()) return;
+    private void doAutoPearl(MinecraftWrapper mc) {
+        if (mc.getPlayer().isUsingItem()) return;
         int pearlSlot = -1;
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (InventoryUtility.isItem(stack, "ender_pearl")) {
                 pearlSlot = i;
                 break;
             }
         }
         if (pearlSlot == -1) return;
-        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, pearlSlot);
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        InventoryUtility.selectSlot(mc.getPlayer(), pearlSlot);
         if (rotate && target != null) {
-            float[] angles = RotationUtility.anglesTo(mc.player, target.position());
-            mc.player.setYRot(angles[0]);
-            mc.player.setXRot(RotationUtility.clampPitch(angles[1]));
+            float[] angles = RotationUtility.anglesTo(mc.getPlayer(), target.position());
+            mc.getPlayer().setYRot(angles[0]);
+            mc.getPlayer().setXRot(RotationUtility.clampPitch(angles[1]));
         }
-        mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        mc.getGameMode().useItem(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         if (!keepRotate) {
-            InventoryUtility.selectSlot(mc.player, prevSlot);
+            InventoryUtility.selectSlot(mc.getPlayer(), prevSlot);
         }
     }
-    private int findBestWeaponSlot(Minecraft mc) {
+    private int findBestWeaponSlot(MinecraftWrapper mc) {
         int bestSlot = -1;
         double bestDamage = -1;
         String weaponModeVal = weaponMode;
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             double dmg = getWeaponDamage(stack);
             if (dmg <= 0) continue;
             String name = stack.getItem().toString().toLowerCase();
@@ -352,7 +353,7 @@ public class PearlTarget implements ModuleAccess {
         if (name.contains("golden_axe") || name.contains("wooden_axe")) return 4.0;
         return 0.0;
     }
-    private net.minecraft.world.entity.player.Player findBestTarget(Minecraft mc, List<net.minecraft.world.entity.player.Player> players) {
+    private net.minecraft.world.entity.player.Player findBestTarget(MinecraftWrapper mc, List<net.minecraft.world.entity.player.Player> players) {
         if (players.isEmpty()) return null;
         String mode = targetMode;
         return switch (mode) {
@@ -362,10 +363,10 @@ public class PearlTarget implements ModuleAccess {
             case "Crosshair" -> {
                 net.minecraft.world.entity.player.Player closest = null;
                 double bestAngle = 180;
-                net.minecraft.world.phys.Vec3 lookVec = mc.player.getLookAngle();
+                net.minecraft.world.phys.Vec3 lookVec = mc.getPlayer().getLookAngle();
                 for (net.minecraft.world.entity.player.Player p : players) {
                     net.minecraft.world.phys.Vec3 toTarget = p.position().add(0, p.getEyeHeight() * 0.5, 0)
-                        .subtract(mc.player.getEyePosition()).normalize();
+                        .subtract(mc.getPlayer().getEyePosition()).normalize();
                     double angle = Math.acos(lookVec.dot(toTarget));
                     if (angle < bestAngle) {
                         bestAngle = angle;
@@ -441,9 +442,9 @@ public class PearlTarget implements ModuleAccess {
         float ldg = ((ldc >> 8) & 0xFF) / 255.0f;
         float ldb = (ldc & 0xFF) / 255.0f;
         if (renderPearlPos != null && renderLine) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-                net.minecraft.world.phys.Vec3 playerPos = mc.player.position();
+            var mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) {
+                net.minecraft.world.phys.Vec3 playerPos = mc.getPlayer().position();
                 Render3DUtility.batchAxisLine(modelViewMatrix,
                     (float) (playerPos.x - camPos.x), (float) (playerPos.y - camPos.y), (float) (playerPos.z - camPos.z),
                     (float) (renderPearlPos.x - camPos.x), (float) (renderPearlPos.y - camPos.y), (float) (renderPearlPos.z - camPos.z),
@@ -468,9 +469,9 @@ public class PearlTarget implements ModuleAccess {
                 ldr, ldg, ldb, 0.9f, lw, throughWalls);
         }
         if (renderTargetPos != null && renderLine) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-                net.minecraft.world.phys.Vec3 playerPos = mc.player.position();
+            var mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) {
+                net.minecraft.world.phys.Vec3 playerPos = mc.getPlayer().position();
                 Render3DUtility.batchAxisLine(modelViewMatrix,
                     (float) (playerPos.x - camPos.x), (float) (playerPos.y - camPos.y), (float) (playerPos.z - camPos.z),
                     (float) (renderTargetPos.x - camPos.x), (float) (renderTargetPos.y - camPos.y), (float) (renderTargetPos.z - camPos.z),

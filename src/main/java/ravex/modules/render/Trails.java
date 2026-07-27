@@ -2,7 +2,6 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -18,6 +17,7 @@ import org.joml.Vector3f;
 
 import ravex.utility.render.Render3DUtility;
 import java.util.*;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "Trails", category = "Render")
 public class Trails implements ModuleAccess {
@@ -71,7 +71,7 @@ public class Trails implements ModuleAccess {
         
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level == null || mc.player == null)
             return;
         long now = System.currentTimeMillis();

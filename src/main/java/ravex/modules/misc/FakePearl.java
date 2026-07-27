@@ -11,9 +11,9 @@ import ravex.event.network.PacketEvent;
 import ravex.utility.nativelib.NativeLibraryUtility;
 
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import ravex.utility.misc.PhysicUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "FakePearl", category = "Misc")
 public class FakePearl implements ModuleAccess {
     @Parameter(name = "Trigger", modes = {"OnEnable", "RightClick", "Both"})
@@ -36,7 +36,7 @@ public class FakePearl implements ModuleAccess {
         if (!(packet instanceof ServerboundUseItemPacket usePacket)) return;
         String trg = trigger;
         if ("Right Click".equals(trg) || "Both".equals(trg)) {
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
                 event.setCancelled(true);
                 throwFakePearl();
@@ -45,7 +45,7 @@ public class FakePearl implements ModuleAccess {
         }
     }
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) {
             ravex.manager.ModuleManager.INSTANCE.getByName("FakePearl").setEnabled(false);
             return;
@@ -58,7 +58,7 @@ public class FakePearl implements ModuleAccess {
         }
     }
     public void throwFakePearl() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         double speed = velocity;
         double yaw = mc.player.getYRot();

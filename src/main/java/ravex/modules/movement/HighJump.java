@@ -2,9 +2,9 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "HighJump", category = "Movement")
 public class HighJump implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Vanilla", "GrimShulker"})
@@ -12,7 +12,7 @@ public class HighJump implements ModuleAccess {
     @Parameter(name = "Height", min = 0.5, max = 10.0, step = 0.1)
     public double height = 2.0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (mc.options.keyJump.isDown() && mc.player.onGround()) {
             if ("Vanilla".equals(mode)) {
@@ -45,7 +45,7 @@ public class HighJump implements ModuleAccess {
         }
     }
     private int findShulkerBox() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         for (int i = 0; i < 9; i++) {
             net.minecraft.world.item.ItemStack stack = InventoryUtility.getItem(mc.player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem) {

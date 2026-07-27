@@ -4,11 +4,11 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.MobUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoNameTag", category = "World")
 public class AutoNameTag implements ModuleAccess {
 public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
         int tagSlot = -1;
@@ -37,7 +37,7 @@ public void onTick() {
         if (target == null) return;
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, tagSlot);
-        MobUtility.interact(mc, target);
+        MobUtility.interact(ravex.mcwrapper.MinecraftWrapper.getWrapper(), target);
         SwingUtility.swingMainHand(p);
         if (tagSlot != prevSlot) {
             InventoryUtility.selectSlot(p, prevSlot);

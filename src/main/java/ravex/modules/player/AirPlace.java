@@ -9,8 +9,8 @@ import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.BlockItem;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -52,7 +52,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
         currentTarget = null;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) {
             highlightPos = null;
             return;
@@ -128,7 +128,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                                     angles[0], angles[1], mc.player.onGround(), mc.player.horizontalCollision
                                 ));
                             }
-                            BlockUtility.ncpAirPlace(mc, neighbor, placeFace, hand);
+                            BlockUtility.ncpAirPlace(ravex.mcwrapper.MinecraftWrapper.getWrapper(), neighbor, placeFace, hand);
                             if (conn != null) {
                                 conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
                                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
@@ -143,7 +143,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                         new net.minecraft.world.phys.Vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                     );
                     net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, placeFace, neighbor, false);
-                    BlockUtility.useItemOn(mc, blockHit, hand);
+                    BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), blockHit, hand);
                     SwingUtility.swing(mc.player, hand);
                 }
                 lastPlaceTime = now;

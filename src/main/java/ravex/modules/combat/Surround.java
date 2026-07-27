@@ -8,10 +8,10 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.BlockItem;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -72,7 +72,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         animatedCenter = null;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) {
             surroundBlocks.clear();
             renderAlpha = fadeAnim.updateFloat(false, 0.2f);
@@ -223,13 +223,13 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         }
     }
     private boolean isReplaceable(net.minecraft.core.BlockPos pos) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level == null) return false;
         net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
         return state.isAir() || state.canBeReplaced();
     }
     private boolean handleBlockingEntities(net.minecraft.core.BlockPos pos) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level == null || mc.player == null) return false;
         net.minecraft.world.phys.AABB aabb = new net.minecraft.world.phys.AABB(pos);
         List<net.minecraft.world.entity.Entity> entities = mc.level.getEntitiesOfClass(
@@ -249,7 +249,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         return false;
     }
     private net.minecraft.core.BlockPos findNeighbor(net.minecraft.core.BlockPos pos) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level == null) return null;
         for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
             net.minecraft.core.BlockPos side = pos.relative(face);

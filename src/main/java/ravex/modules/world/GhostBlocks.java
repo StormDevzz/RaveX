@@ -2,7 +2,6 @@ package ravex.modules.world;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
@@ -16,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "GhostBlocks", category = "World")
 public class GhostBlocks implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Strict", "Smooth"})
@@ -26,7 +26,7 @@ public class GhostBlocks implements ModuleAccess {
     private final Map<Long, String> serverBlocks = new HashMap<>();
     private long lastCheckTime = 0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null || mc.getConnection() == null) return;
         long now = System.currentTimeMillis();
         if (now - lastCheckTime < 500) return;
@@ -51,7 +51,7 @@ public class GhostBlocks implements ModuleAccess {
                         NetworkUtility.sendStartDestroy(pos, net.minecraft.core.Direction.UP, 0);
                         NetworkUtility.sendStopDestroy(pos, net.minecraft.core.Direction.UP, 0);
                         recentlyMined.remove(packed);
-                        BlockUtility.swing(mc);
+                        BlockUtility.swing(ravex.mcwrapper.MinecraftWrapper.getWrapper());
                     }
                 }
             }

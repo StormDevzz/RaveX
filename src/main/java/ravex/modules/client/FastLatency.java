@@ -2,9 +2,9 @@ package ravex.modules.client;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "FastLatency", category = "Client")
 public class FastLatency implements ModuleAccess {
@@ -14,7 +14,7 @@ public class FastLatency implements ModuleAccess {
     private long lastPingSentAt = 0;
     private int measuredPing = -1;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getConnection() == null)
             return;
         if (mc.level == null)
@@ -44,7 +44,7 @@ public class FastLatency implements ModuleAccess {
     }
 
     public static int getDisplayPing() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var fl = ravex.manager.ModuleManager.delegate(FastLatency.class);
         if (ravex.manager.ModuleManager.INSTANCE.getByName("FastLatency").getEnabled() && fl.measuredPing >= 0) {
             return fl.measuredPing;

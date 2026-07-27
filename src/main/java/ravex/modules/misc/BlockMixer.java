@@ -3,10 +3,10 @@ import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -19,7 +19,7 @@ public class BlockMixer implements ModuleAccess {
 
     public void shuffle() {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("BlockMixer").getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer player = mc.player;
         if (player == null) return;
         List<Integer> blockSlots = new ArrayList<>();
@@ -37,7 +37,7 @@ public class BlockMixer implements ModuleAccess {
                 b = blockSlots.get(RANDOM.nextInt(blockSlots.size()));
             }
             if (a == b) return;
-            InventoryUtility.swapSlots(mc, player.containerMenu.containerId, a, b);
+            InventoryUtility.swapSlots(ravex.mcwrapper.MinecraftWrapper.getWrapper(), player.containerMenu.containerId, a, b);
         } else {
             int target = blockSlots.get(RANDOM.nextInt(blockSlots.size()));
             InventoryUtility.selectSlot(player, target);

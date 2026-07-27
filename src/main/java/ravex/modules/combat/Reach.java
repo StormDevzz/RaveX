@@ -2,8 +2,8 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Reach", category = "Combat")
 public class Reach implements ModuleAccess {
     @Parameter(name = "EntityReach", min = 3.0, max = 6.0, step = 0.1)
@@ -11,7 +11,7 @@ public class Reach implements ModuleAccess {
     @Parameter(name = "BlockReach", min = 4.5, max = 7.0, step = 0.1)
     public double blockRange = 5.5;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         var entityAttr = mc.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
         if (entityAttr != null) {
@@ -23,7 +23,7 @@ public class Reach implements ModuleAccess {
         }
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         var entityAttr = mc.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
         if (entityAttr != null) {

@@ -3,13 +3,13 @@ import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.nativelib.NativeLoader;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.network.chat.Component;
 import com.mojang.blaze3d.platform.Window;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AntiQuit", category = "Misc")
 public class AntiQuit implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Server", "Game", "Both"})
@@ -22,7 +22,7 @@ public class AntiQuit implements ModuleAccess {
         try {
             nativeBlockQuit(true);
         } catch (UnsatisfiedLinkError ignored) {}
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         Window window = mc.getWindow();
         if (window == null) return;
         window.setWindowCloseCallback(() -> {
@@ -54,7 +54,7 @@ public class AntiQuit implements ModuleAccess {
         try {
             nativeBlockQuit(false);
         } catch (UnsatisfiedLinkError ignored) {}
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         Window window = mc.getWindow();
         if (window != null) {
             window.setWindowCloseCallback(null);

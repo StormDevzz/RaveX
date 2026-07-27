@@ -2,8 +2,8 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "ShiftInterp", category = "Render")
 public class ShiftInterp implements ModuleAccess {
@@ -13,7 +13,7 @@ public class ShiftInterp implements ModuleAccess {
     public boolean shouldCrouch(net.minecraft.world.entity.Entity entity) {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("ShiftInterp").getEnabled()) return false;
         if (!(entity instanceof net.minecraft.world.entity.player.Player)) return false;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         boolean isSelf = (entity == mc.player);
         String t = target;
         if (t.equals("Self")) {

@@ -1,7 +1,7 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
@@ -11,6 +11,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "TpsHud", category = "HUD")
 public class TpsHud extends ravex.modules.Module {
@@ -31,8 +32,8 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_TPS_WHITE;
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         updateTPS(mc);
         int bx = x, by = y;
         int col = 0xFF44FF88;
@@ -57,9 +58,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_TPS_WHITE;
         ravex.utility.render.FontRenderUtility.drawString(graphics, label, cx, by + 16, 0xFF8080A0, false);
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
     }
-    private void updateTPS(Minecraft mc) {
+    private void updateTPS(MinecraftWrapper mc) {
         long now = System.currentTimeMillis();
-        long gameTick = mc.level.getGameTime();
+        long gameTick = mc.getLevel().getGameTime();
         if (lastGameTick < 0) {
             lastGameTick = gameTick;
             lastRealTime = now;

@@ -3,9 +3,10 @@ import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.phys.AABB;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -22,9 +23,9 @@ public class AutoFish implements ModuleAccess {
     private boolean wasIdle = false;
     private double prevY = 0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        net.minecraft.client.player.LocalPlayer player = mc.player;
-        if (player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        net.minecraft.client.player.LocalPlayer player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < 200) return;
         FishingHook hook = findBobber(mc, player);
@@ -56,8 +57,8 @@ public class AutoFish implements ModuleAccess {
             }
         }
     }
-    private FishingHook findBobber(Minecraft mc, net.minecraft.client.player.LocalPlayer player) {
-        for (var e : mc.level.getEntities(player, AABB.ofSize(player.position(), 32, 32, 32))) {
+    private FishingHook findBobber(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
+        for (var e : mc.getLevel().getEntities(player, AABB.ofSize(player.position(), 32, 32, 32))) {
             if (e instanceof FishingHook hook && hook.getOwner() == player) {
                 return hook;
             }
@@ -70,11 +71,11 @@ public class AutoFish implements ModuleAccess {
         }
         return -1;
     }
-    private void useRod(Minecraft mc, net.minecraft.client.player.LocalPlayer player) {
-        mc.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+    private void useRod(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
+        mc.getGameMode().useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
         ravex.utility.player.SwingUtility.swingMainHand(player);
     }
-    private void reelIn(Minecraft mc, net.minecraft.client.player.LocalPlayer player) {
+    private void reelIn(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
         useRod(mc, player);
     }
     public static AutoFish itz() {

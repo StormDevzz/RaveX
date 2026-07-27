@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import ravex.utility.player.PlayerUtility;
 public class LuaManager {
     public static final LuaManager INSTANCE = new LuaManager();
 
@@ -142,7 +143,7 @@ public class LuaManager {
             @Override public LuaValue call() {
                 Minecraft mc = Minecraft.getInstance();
                 return mc.player != null
-                    ? LuaValue.valueOf((double) mc.player.getHealth())
+                    ? LuaValue.valueOf((double) PlayerUtility.getHealth(mc.player))
                     : LuaValue.valueOf(0);
             }
         });
@@ -150,7 +151,7 @@ public class LuaManager {
             @Override public LuaValue call() {
                 Minecraft mc = Minecraft.getInstance();
                 return mc.player != null
-                    ? LuaValue.valueOf((double) mc.player.getMaxHealth())
+                    ? LuaValue.valueOf((double) PlayerUtility.getMaxHealth(mc.player))
                     : LuaValue.valueOf(20);
             }
         });

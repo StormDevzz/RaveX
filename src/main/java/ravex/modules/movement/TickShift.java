@@ -2,13 +2,13 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Input;
 
 import ravex.utility.misc.PhysicUtility;
 
 import java.util.List;
 import java.util.Random;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "TickShift", category = "Movement")
 public class TickShift implements ModuleAccess {
@@ -44,7 +44,7 @@ public class TickShift implements ModuleAccess {
         releaseCounter = 0;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         Input input = mc.player.input.keyPresses;
         boolean moving = input.forward() || input.backward() || input.left() || input.right();

@@ -1,7 +1,7 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.utility.misc.EntityUtility;
@@ -14,6 +14,7 @@ import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.TextureLoaderUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "IndicatorsHud", category = "HUD")
 public class IndicatorsHud extends ravex.modules.Module {
@@ -59,9 +60,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
     }
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        net.minecraft.world.entity.player.Player player = mc.player;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        net.minecraft.world.entity.player.Player player = mc.getPlayer();
         updateTPS(mc);
         updateKnockback(player);
         boolean shadow = getShadow();
@@ -124,9 +125,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
             cy += lineH;
         }
     }
-    private void updateTPS(Minecraft mc) {
+    private void updateTPS(MinecraftWrapper mc) {
         long now = System.currentTimeMillis();
-        long gameTick = mc.level.getGameTime();
+        long gameTick = mc.getLevel().getGameTime();
         if (lastGameTick < 0) { lastGameTick = gameTick; lastRealTime = now; return; }
         long elapsed = now - lastRealTime;
         if (elapsed >= 1000) {

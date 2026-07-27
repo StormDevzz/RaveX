@@ -2,13 +2,13 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "ReverseStep", category = "Movement")
 public class ReverseStep implements ModuleAccess {
     @Parameter(name = "Force", min = 1.0, max = 4.0, step = 0.5)
     public double force = 1.5;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (mc.player.onGround() || mc.player.isPassenger() || mc.player.getAbilities().flying || mc.player.isFallFlying()) {
             return;

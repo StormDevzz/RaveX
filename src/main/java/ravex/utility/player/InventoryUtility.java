@@ -1,6 +1,7 @@
 package ravex.utility.player;
 
 import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
@@ -21,6 +22,10 @@ import net.minecraft.core.Holder;
 import net.minecraft.world.item.enchantment.Enchantment;
 
 public class InventoryUtility {
+    public static final ClickType PICKUP = ClickType.PICKUP;
+    public static final ClickType QUICK_MOVE = ClickType.QUICK_MOVE;
+    public static final ClickType SWAP = ClickType.SWAP;
+
     public static int inventorySlotToContainerSlot(int slot) {
         if (slot < 0 || slot > 35) return -1;
         return slot < 9 ? slot + 36 : slot;
@@ -97,21 +102,24 @@ public class InventoryUtility {
                item == Items.MACE;
     }
 
-    public static Entity getHitEntity(Minecraft mc) {
-        if (mc.hitResult instanceof EntityHitResult hit) return hit.getEntity();
+    public static Entity getHitEntity(MinecraftWrapper mc) {
+        var _mc = mc.getRaw();
+        if (_mc.hitResult instanceof EntityHitResult hit) return hit.getEntity();
         return null;
     }
 
-    public static boolean isLookingAtEntity(Minecraft mc, Entity target, double range) {
-        var result = mc.player.pick(range, 0.0f, false);
+    public static boolean isLookingAtEntity(MinecraftWrapper mc, Entity target, double range) {
+        var _mc = mc.getRaw();
+        var result = _mc.player.pick(range, 0.0f, false);
         return result instanceof EntityHitResult hit && hit.getEntity() == target;
     }
 
-    public static void attackEntity(Minecraft mc, LivingEntity target, String swingMode) {
-        mc.gameMode.attack(mc.player, target);
-        if (swingMode.equals("Client")) mc.player.swing(InteractionHand.MAIN_HAND);
-        else if (swingMode.equals("Server") && mc.player.connection != null)
-            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+    public static void attackEntity(MinecraftWrapper mc, LivingEntity target, String swingMode) {
+        var _mc = mc.getRaw();
+        _mc.gameMode.attack(_mc.player, target);
+        if (swingMode.equals("Client")) _mc.player.swing(InteractionHand.MAIN_HAND);
+        else if (swingMode.equals("Server") && _mc.player.connection != null)
+            _mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
     }
 
     public static boolean isBlockItem(ItemStack stack) {
@@ -141,40 +149,46 @@ public class InventoryUtility {
             player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
     }
 
-    public static void swapToOffhand(Minecraft mc, LocalPlayer player, int inventorySlot) {
+    public static void swapToOffhand(MinecraftWrapper mc, LocalPlayer player, int inventorySlot) {
+        var _mc = mc.getRaw();
         int containerSlot = inventorySlotToContainerSlot(inventorySlot);
         if (containerSlot == -1) return;
-        mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, player);
-        mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, 45, 0, ClickType.PICKUP, player);
-        mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, player);
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, player);
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, 45, 0, ClickType.PICKUP, player);
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, player);
     }
 
-    public static void quickMoveStack(Minecraft mc, LocalPlayer player, int inventorySlot) {
+    public static void quickMoveStack(MinecraftWrapper mc, LocalPlayer player, int inventorySlot) {
+        var _mc = mc.getRaw();
         int containerSlot = inventorySlotToContainerSlot(inventorySlot);
         if (containerSlot == -1) return;
         player.containerMenu.quickMoveStack(player, containerSlot);
     }
 
-    public static void clickSlot(Minecraft mc, LocalPlayer player, int inventorySlot, int button, ClickType type) {
+    public static void clickSlot(MinecraftWrapper mc, LocalPlayer player, int inventorySlot, int button, ClickType type) {
+        var _mc = mc.getRaw();
         int containerSlot = inventorySlotToContainerSlot(inventorySlot);
         if (containerSlot == -1) return;
-        mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, button, type, player);
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, button, type, player);
     }
 
     public static void openInventoryScreen(LocalPlayer player) {
         Minecraft.getInstance().setScreen(new InventoryScreen(player));
     }
 
-    public static void clickChestSlot(Minecraft mc, LocalPlayer player, int containerSlot, ClickType type) {
-        mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, type, player);
+    public static void clickChestSlot(MinecraftWrapper mc, LocalPlayer player, int containerSlot, ClickType type) {
+        var _mc = mc.getRaw();
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, type, player);
     }
 
-    public static void quickMoveSlot(Minecraft mc, int containerId, int slotIndex) {
-        mc.gameMode.handleInventoryMouseClick(containerId, slotIndex, 0, ClickType.QUICK_MOVE, mc.player);
+    public static void quickMoveSlot(MinecraftWrapper mc, int containerId, int slotIndex) {
+        var _mc = mc.getRaw();
+        _mc.gameMode.handleInventoryMouseClick(containerId, slotIndex, 0, ClickType.QUICK_MOVE, _mc.player);
     }
 
-    public static void swapSlots(Minecraft mc, int containerId, int slotA, int slotB) {
-        mc.gameMode.handleInventoryMouseClick(containerId, slotA, slotB, ClickType.SWAP, mc.player);
+    public static void swapSlots(MinecraftWrapper mc, int containerId, int slotA, int slotB) {
+        var _mc = mc.getRaw();
+        _mc.gameMode.handleInventoryMouseClick(containerId, slotA, slotB, ClickType.SWAP, _mc.player);
     }
 
     public static int getItemUseCooldown(LocalPlayer player, ItemStack stack) {
@@ -218,8 +232,9 @@ public class InventoryUtility {
         return player.containerMenu.containerId;
     }
 
-    public static void handleInventoryClick(Minecraft mc, LocalPlayer player, int containerSlot, int button, ClickType type) {
-        mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, button, type, player);
+    public static void handleInventoryClick(MinecraftWrapper mc, LocalPlayer player, int containerSlot, int button, ClickType type) {
+        var _mc = mc.getRaw();
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, button, type, player);
     }
 
     public static boolean isItemInSlot(net.minecraft.world.entity.player.Player player, int slot, String itemName) {

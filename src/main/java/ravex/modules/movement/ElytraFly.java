@@ -2,7 +2,7 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.MoverType;
 import ravex.utility.misc.PhysicUtility;
@@ -11,6 +11,7 @@ import ravex.RaveX;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "ElytraFly", category = "Movement")
 public class ElytraFly implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Vanilla", "Control", "NCP", "Fireworks"})
@@ -63,11 +64,11 @@ public class ElytraFly implements ModuleAccess {
         return vel;
     }
     private void updateAccelState() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options == null) return;
-        boolean moving = mc.options.keyUp.isDown() || mc.options.keyDown.isDown() ||
-                         mc.options.keyLeft.isDown() || mc.options.keyRight.isDown() ||
-                         mc.options.keyJump.isDown() || mc.options.keyShift.isDown();
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getOptions() == null) return;
+        boolean moving = mc.getOptions().keyUp.isDown() || mc.getOptions().keyDown.isDown() ||
+                         mc.getOptions().keyLeft.isDown() || mc.getOptions().keyRight.isDown() ||
+                         mc.getOptions().keyJump.isDown() || mc.getOptions().keyShift.isDown();
         if (accelerate) {
             if (moving) {
                 accelMul = Math.min(accelMul + acceleration, 1.0);
@@ -115,12 +116,12 @@ public class ElytraFly implements ModuleAccess {
         double pitchRad = Math.toRadians(pitch);
         double forward = jump ? 1.0 : (sneak ? -1.0 : 0.0);
         float fwd = 0, str = 0;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options != null) {
-            if (mc.options.keyUp.isDown()) fwd++;
-            if (mc.options.keyDown.isDown()) fwd--;
-            if (mc.options.keyLeft.isDown()) str++;
-            if (mc.options.keyRight.isDown()) str--;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getOptions() != null) {
+            if (mc.getOptions().keyUp.isDown()) fwd++;
+            if (mc.getOptions().keyDown.isDown()) fwd--;
+            if (mc.getOptions().keyLeft.isDown()) str++;
+            if (mc.getOptions().keyRight.isDown()) str--;
         }
         double velX, velY, velZ;
         switch (mode) {
@@ -142,7 +143,7 @@ public class ElytraFly implements ModuleAccess {
                 }
             }
             case "NCP" -> {
-                double forwardFactor = jump || sneak || mc.options.keyUp.isDown() ? 1.0 : 0.0;
+                double forwardFactor = jump || sneak || mc.getOptions().keyUp.isDown() ? 1.0 : 0.0;
                 velX = -Math.sin(rad) * Math.cos(pitchRad) * hSpeed * forwardFactor;
                 velY = jump ? vSpeed : (sneak ? -vSpeed : -glide);
                 velZ = Math.cos(rad) * Math.cos(pitchRad) * hSpeed * forwardFactor;
@@ -163,13 +164,13 @@ public class ElytraFly implements ModuleAccess {
         boolean jump, boolean sneak, boolean ground
     ) {
         double mx = motion[0], my = motion[1], mz = motion[2];
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         float forward = 0, strafe = 0;
-        if (mc.options != null && mc.player != null) {
-            if (mc.options.keyUp.isDown()) forward++;
-            if (mc.options.keyDown.isDown()) forward--;
-            if (mc.options.keyLeft.isDown()) strafe++;
-            if (mc.options.keyRight.isDown()) strafe--;
+        if (mc.getOptions() != null && mc.getPlayer() != null) {
+            if (mc.getOptions().keyUp.isDown()) forward++;
+            if (mc.getOptions().keyDown.isDown()) forward--;
+            if (mc.getOptions().keyLeft.isDown()) strafe++;
+            if (mc.getOptions().keyRight.isDown()) strafe--;
         }
         switch (mode) {
             case "Control" -> {
@@ -209,24 +210,24 @@ public class ElytraFly implements ModuleAccess {
         fwTimer = 0;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getGameMode() == null) return;
         updateAccelState();
-        if (autoTakeoff && mc.player.onGround() && !mc.player.isFallFlying()) {
-            if (mc.options.keyJump.isDown()) {
-                mc.player.jumpFromGround();
+        if (autoTakeoff && mc.getPlayer().onGround() && !mc.getPlayer().isFallFlying()) {
+            if (mc.getOptions().keyJump.isDown()) {
+                mc.getPlayer().jumpFromGround();
             }
         }
-        if (!mc.player.isFallFlying()) return;
-        double yaw = mc.player.getYRot();
-        double pitch = mc.player.getXRot();
-        boolean space = mc.options.keyJump.isDown();
-        boolean shift = mc.options.keyShift.isDown();
+        if (!mc.getPlayer().isFallFlying()) return;
+        double yaw = mc.getPlayer().getYRot();
+        double pitch = mc.getPlayer().getXRot();
+        boolean space = mc.getOptions().keyJump.isDown();
+        boolean shift = mc.getOptions().keyShift.isDown();
         float forward = 0, strafe = 0;
-        if (mc.options.keyUp.isDown()) forward++;
-        if (mc.options.keyDown.isDown()) forward--;
-        if (mc.options.keyLeft.isDown()) strafe++;
-        if (mc.options.keyRight.isDown()) strafe--;
+        if (mc.getOptions().keyUp.isDown()) forward++;
+        if (mc.getOptions().keyDown.isDown()) forward--;
+        if (mc.getOptions().keyLeft.isDown()) strafe++;
+        if (mc.getOptions().keyRight.isDown()) strafe--;
         if (speedControl) {
             String curMode = mode;
             if (curMode.equals("Control") || curMode.equals("Fireworks")) {
@@ -236,14 +237,14 @@ public class ElytraFly implements ModuleAccess {
                 double targetY = space ? vSpeed : (shift ? -vSpeed : -glide);
                 net.minecraft.world.phys.Vec3 vel;
                 if (forward == 0 && strafe == 0 && !space && !shift) {
-                    net.minecraft.world.phys.Vec3 m = mc.player.getDeltaMovement();
+                    net.minecraft.world.phys.Vec3 m = mc.getPlayer().getDeltaMovement();
                     vel = new net.minecraft.world.phys.Vec3(m.x * 0.2, -glide, m.z * 0.2);
                 } else {
                     vel = new net.minecraft.world.phys.Vec3(targetX, targetY, targetZ);
                 }
                 vel = applyTimerAndAccel(vel);
-                mc.player.setDeltaMovement(vel);
-                mc.player.move(MoverType.SELF, vel);
+                mc.getPlayer().setDeltaMovement(vel);
+                mc.getPlayer().move(MoverType.SELF, vel);
                 if ("Fireworks".equals(curMode)) {
                     fwTimer++;
                     if (fwTimer >= (int) fireworkDelay) {
@@ -258,8 +259,8 @@ public class ElytraFly implements ModuleAccess {
                 );
                 net.minecraft.world.phys.Vec3 v = new net.minecraft.world.phys.Vec3(vel[0], vel[1], vel[2]);
                 v = applyTimerAndAccel(v);
-                mc.player.setDeltaMovement(v);
-                mc.player.move(MoverType.SELF, v);
+                mc.getPlayer().setDeltaMovement(v);
+                mc.getPlayer().move(MoverType.SELF, v);
             }
         }
     }
@@ -269,19 +270,19 @@ public class ElytraFly implements ModuleAccess {
     public static ElytraFly itz() {
         return ravex.manager.ModuleManager.delegate(ElytraFly.class);
     }
-    private void useFirework(Minecraft mc) {
+    private void useFirework(MinecraftWrapper mc) {
         int slot = -1;
         for (int i = 0; i < 9; i++) {
-            if (InventoryUtility.isItem(InventoryUtility.getItem(mc.player, i), "firework_rocket")) {
+            if (InventoryUtility.isItem(InventoryUtility.getItem(mc.getPlayer(), i), "firework_rocket")) {
                 slot = i;
                 break;
             }
         }
         if (slot < 0) return;
-        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, slot);
-        mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        InventoryUtility.selectSlot(mc.player, prevSlot);
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        InventoryUtility.selectSlot(mc.getPlayer(), slot);
+        mc.getGameMode().useItem(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
+        InventoryUtility.selectSlot(mc.getPlayer(), prevSlot);
     }
 
 

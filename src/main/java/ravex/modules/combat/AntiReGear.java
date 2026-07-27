@@ -7,7 +7,7 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -45,35 +46,35 @@ public class AntiReGear implements ModuleAccess {
         double range
     );
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
-        if (currentMiningTarget != null && mc.gameMode != null) {
-            mc.gameMode.stopDestroyBlock();
+        var mc = MinecraftWrapper.getWrapper();
+        if (currentMiningTarget != null && mc.getGameMode() != null) {
+            mc.getGameMode().stopDestroyBlock();
         }
         currentMiningTarget = null;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         long now = System.currentTimeMillis();
         if (currentMiningTarget != null) {
-            net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(currentMiningTarget);
+            net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(currentMiningTarget);
             if (state.isAir() || !isTargetBlock(state)) {
                 currentMiningTarget = null;
             } else {
-                net.minecraft.core.Direction dir = getDirection(mc.player.getEyePosition(), currentMiningTarget);
-                mc.gameMode.continueDestroyBlock(currentMiningTarget, dir);
-                SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                net.minecraft.core.Direction dir = getDirection(mc.getPlayer().getEyePosition(), currentMiningTarget);
+                mc.getGameMode().continueDestroyBlock(currentMiningTarget, dir);
+                SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
                 lastBreakTime = now;
                 return;
             }
         }
         if (now - lastBreakTime < (long) delay) return;
         double r = range;
-        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.getPlayer().blockPosition();
         int minX = (int) Math.floor(playerPos.getX() - r);
         int maxX = (int) Math.ceil(playerPos.getX() + r);
-        int minY = (int) Math.max(mc.level.getMinY(), Math.floor(playerPos.getY() - r));
-        int maxY = (int) Math.min(mc.level.getMaxY(), Math.ceil(playerPos.getY() + r));
+        int minY = (int) Math.max(mc.getLevel().getMinY(), Math.floor(playerPos.getY() - r));
+        int maxY = (int) Math.min(mc.getLevel().getMaxY(), Math.ceil(playerPos.getY() + r));
         int minZ = (int) Math.floor(playerPos.getZ() - r);
         int maxZ = (int) Math.ceil(playerPos.getZ() + r);
         List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
@@ -82,7 +83,7 @@ public class AntiReGear implements ModuleAccess {
                 for (int z = minZ; z <= maxZ; z++) {
                     net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
                     if (pos.closerThan(playerPos, r)) {
-                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+                        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                         if (isTargetBlock(state)) {
                             candidates.add(pos);
                         }
@@ -103,7 +104,7 @@ public class AntiReGear implements ModuleAccess {
                     by[i] = candidates.get(i).getY();
                     bz[i] = candidates.get(i).getZ();
                 }
-                net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
+                net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition();
                 int resultIdx = nativeCalculateTarget(
                     eye.x, eye.y, eye.z,
                     bx, by, bz, r
@@ -120,9 +121,9 @@ public class AntiReGear implements ModuleAccess {
         }
         if (target != null) {
             currentMiningTarget = target;
-            net.minecraft.core.Direction dir = getDirection(mc.player.getEyePosition(), target);
-            mc.gameMode.startDestroyBlock(target, dir);
-            SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            net.minecraft.core.Direction dir = getDirection(mc.getPlayer().getEyePosition(), target);
+            mc.getGameMode().startDestroyBlock(target, dir);
+            SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
             GhostBlocks.markMined(target);
             lastBreakTime = now;
         }
@@ -135,8 +136,8 @@ public class AntiReGear implements ModuleAccess {
         if (block instanceof BarrelBlock) return barrelsParam;
         return false;
     }
-    private net.minecraft.core.BlockPos fallbackFindTarget(List<net.minecraft.core.BlockPos> candidates, Minecraft mc) {
-        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
+    private net.minecraft.core.BlockPos fallbackFindTarget(List<net.minecraft.core.BlockPos> candidates, MinecraftWrapper mc) {
+        net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition();
         net.minecraft.core.BlockPos closest = null;
         double closestDist = Double.MAX_VALUE;
         for (net.minecraft.core.BlockPos pos : candidates) {

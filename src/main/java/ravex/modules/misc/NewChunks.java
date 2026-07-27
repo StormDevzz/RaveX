@@ -2,7 +2,6 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.utility.nativelib.NativeLibraryUtility;
@@ -22,6 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "NewChunks", category = "Misc")
 public class NewChunks implements ModuleAccess {
@@ -51,7 +51,7 @@ public class NewChunks implements ModuleAccess {
     }
     private static native int nativeAnalyzeChunk(String[] blockNames, int[] blockYs);
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (loadedChunks.size() > 3000) loadedChunks.clear();
         if (visitedChunks.size() > 3000) visitedChunks.clear();
@@ -111,8 +111,8 @@ public class NewChunks implements ModuleAccess {
         if (result == 2) {
             old112Chunks.add(pos);
             if (notify) {
-                Minecraft.getInstance().execute(() -> {
-                    Minecraft mc = Minecraft.getInstance();
+                MinecraftWrapper.getInstance().execute(() -> {
+                    var mc = MinecraftWrapper.getInstance();
                     if (mc.player != null) {
                         int color = ravex.manager.ModuleManager.delegate(ravex.modules.client.Notifications.class).messageColor;
                         Component message = Component.literal("[")
@@ -137,7 +137,7 @@ public class NewChunks implements ModuleAccess {
 
     public void onPacketReceive(Object packet) {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("NewChunks").getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (packet instanceof ClientboundLevelChunkWithLightPacket chunkPacket) {
         } else if (packet instanceof ClientboundBlockUpdatePacket blockPacket) {
@@ -157,7 +157,7 @@ public class NewChunks implements ModuleAccess {
     }
     public void render(Matrix4f modelViewMatrix, net.minecraft.client.Camera camera) {
         if (!render) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         net.minecraft.world.phys.Vec3 camPos = camera.position();
         float y = (float) (mc.level.getMinY() - camPos.y + 0.01f);

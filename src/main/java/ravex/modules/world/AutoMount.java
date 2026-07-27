@@ -2,9 +2,9 @@ package ravex.modules.world;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.SwingUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AutoMount", category = "World")
 public class AutoMount implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Normal", "Fast"})
@@ -15,7 +15,7 @@ public class AutoMount implements ModuleAccess {
             cooldown--;
             return;
         }
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
         if (p.getVehicle() != null) {
@@ -35,7 +35,7 @@ public class AutoMount implements ModuleAccess {
             }
         }
         if (target != null) {
-            MobUtility.interact(mc, target);
+            MobUtility.interact(ravex.mcwrapper.MinecraftWrapper.getWrapper(), target);
             SwingUtility.swingMainHand(p);
             cooldown = 20;
         }

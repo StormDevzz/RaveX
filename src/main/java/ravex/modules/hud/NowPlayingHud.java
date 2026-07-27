@@ -1,7 +1,6 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
 import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
@@ -12,6 +11,7 @@ import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 
 import ravex.utility.system.SystemUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "NowPlayingHud", category = "HUD")
 public class NowPlayingHud extends ravex.modules.Module {
     public int x;
@@ -120,11 +120,11 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
                 img.close();
                 Identifier texId = Identifier.parse("ravex:nowplaying_cover");
                 DynamicTexture dynTex = new DynamicTexture(() -> "ravex:nowplaying_cover", out);
-                Minecraft.getInstance().execute(() -> {
+                MinecraftWrapper.getInstance().execute(() -> {
                     if (coverTexture != null) coverTexture.close();
                     coverTexture = dynTex;
                     coverId = texId;
-                    Minecraft.getInstance().getTextureManager().register(texId, dynTex);
+                    MinecraftWrapper.getInstance().getTextureManager().register(texId, dynTex);
                 });
             } catch (Throwable ignored) {
             }

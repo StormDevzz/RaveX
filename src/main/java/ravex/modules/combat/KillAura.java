@@ -2,7 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import org.joml.Matrix4f;
 
 import ravex.utility.misc.MobUtility;
@@ -18,6 +18,8 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.List;
+import ravex.utility.network.NetworkUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "KillAura", category = "Combat")
 public class KillAura implements ModuleAccess {
@@ -96,34 +98,34 @@ public class KillAura implements ModuleAccess {
     public static void onPreTick() {
         KillAura ka = ravex.manager.ModuleManager.delegate(KillAura.class);
         if (ka == null || !ka.getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
 
         switch (ka.sprintMode) {
             case "Legit" -> {
                 if (ka.sprintResetTicks > 0) {
                     ka.sprintResetTicks--;
-                    mc.player.setSprinting(false);
+                    mc.getPlayer().setSprinting(false);
                 } else {
-                    float cooldown = mc.player.getAttackStrengthScale(0.5f);
-                    if (mc.player.input.hasForwardImpulse()
-                            && !mc.player.isUsingItem()
-                            && !mc.player.isShiftKeyDown()
+                    float cooldown = mc.getPlayer().getAttackStrengthScale(0.5f);
+                    if (mc.getPlayer().input.hasForwardImpulse()
+                            && !mc.getPlayer().isUsingItem()
+                            && !mc.getPlayer().isShiftKeyDown()
                             && cooldown >= 0.8f) {
-                        mc.player.setSprinting(true);
+                        mc.getPlayer().setSprinting(true);
                     }
                 }
             }
             case "HvH" -> {
-                if (!mc.player.isUsingItem() && !mc.player.isShiftKeyDown())
-                    mc.player.setSprinting(true);
+                if (!mc.getPlayer().isUsingItem() && !mc.getPlayer().isShiftKeyDown())
+                    mc.getPlayer().setSprinting(true);
             }
         }
 
         var target = ka.currentTarget;
         if (target == null || MobUtility.isDead(target)) return;
 
-        var eyePos = mc.player.getEyePosition();
+        var eyePos = mc.getPlayer().getEyePosition();
         var aimPos = target.position().add(0, target.getBbHeight() * 0.5, 0);
         float[] freshAngles = RotationUtility.anglesTo(eyePos, aimPos);
 
@@ -131,8 +133,8 @@ public class KillAura implements ModuleAccess {
         float rawFreshYaw   = freshAngles[0];
         float rawFreshPitch = RotationUtility.clampPitch(freshAngles[1]);
         float gcdPre = RotationUtility.getGCD();
-        float ppYaw   = mc.player.getYRot();
-        float ppPitch = mc.player.getXRot();
+        float ppYaw   = mc.getPlayer().getYRot();
+        float ppPitch = mc.getPlayer().getXRot();
         float dYaw   = RotationUtility.normalizeYaw(rawFreshYaw - ppYaw);
         float dPitch = rawFreshPitch - ppPitch;
         if (gcdPre > 0) {
@@ -144,7 +146,7 @@ public class KillAura implements ModuleAccess {
         silentRotation.set(freshYaw, freshPitch);
 
         {
-            net.minecraft.world.phys.AABB pa = mc.player.getBoundingBox();
+            net.minecraft.world.phys.AABB pa = mc.getPlayer().getBoundingBox();
             net.minecraft.world.phys.AABB ea = target.getBoundingBox();
             double dx = Math.max(0, Math.max(pa.minX - ea.maxX, ea.minX - pa.maxX));
             double dy = Math.max(0, Math.max(pa.minY - ea.maxY, ea.minY - pa.maxY));
@@ -156,12 +158,12 @@ public class KillAura implements ModuleAccess {
             if (dist > ka.range - buffer) return;
         }
 
-        if (ka.smartCrits && !mc.player.onGround()) {
-            double velY = mc.player.getDeltaMovement().y;
+        if (ka.smartCrits && !mc.getPlayer().onGround()) {
+            double velY = mc.getPlayer().getDeltaMovement().y;
             if (velY > -0.08) return;
         }
 
-        float scale = mc.player.getAttackStrengthScale(0.5f);
+        float scale = mc.getPlayer().getAttackStrengthScale(0.5f);
         if (scale < ka.cooldownThreshold) return;
 
         long now = System.currentTimeMillis();
@@ -176,8 +178,8 @@ public class KillAura implements ModuleAccess {
         }
 
         // легит/ сброс спринта перед ударом
-        if (ka.sprintMode.equals("Legit") && mc.player.isSprinting()) {
-            mc.player.setSprinting(false);
+        if (ka.sprintMode.equals("Legit") && mc.getPlayer().isSprinting()) {
+            mc.getPlayer().setSprinting(false);
             ka.sprintResetTicks = 3;
             return; // пропуск тика
         }
@@ -190,22 +192,22 @@ public class KillAura implements ModuleAccess {
         }
 
         if (ka.keepSprint) {
-            if (mc.player.hurtTime > 0) {
-                mc.player.setSprinting(true);
+            if (mc.getPlayer().hurtTime > 0) {
+                mc.getPlayer().setSprinting(true);
                 double multiplier = ka.keepSprintSpeed.getValue() / 100.0;
                 if (multiplier < 1.0) {
-                    var vel = mc.player.getDeltaMovement();
-                    mc.player.setDeltaMovement(vel.x * multiplier, vel.y, vel.z * multiplier);
+                    var vel = mc.getPlayer().getDeltaMovement();
+                    mc.getPlayer().setDeltaMovement(vel.x * multiplier, vel.y, vel.z * multiplier);
                 }
             }
-            if (mc.player.hasEffect(net.minecraft.world.effect.MobEffects.BLINDNESS) && mc.player.isSprinting()) {
-                mc.player.setSprinting(false);
+            if (mc.getPlayer().hasEffect(net.minecraft.world.effect.MobEffects.BLINDNESS) && mc.getPlayer().isSprinting()) {
+                mc.getPlayer().setSprinting(false);
             }
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) {
             silentRotation.hasRotation = false;
             return;
         }
@@ -226,8 +228,8 @@ public class KillAura implements ModuleAccess {
         float rawYaw = angles[0];
         float rawPitch = RotationUtility.clampPitch(angles[1]);
         float gcd = RotationUtility.getGCD();
-        float prevPlayerYaw   = mc.player.getYRot();
-        float prevPlayerPitch = mc.player.getXRot();
+        float prevPlayerYaw   = mc.getPlayer().getYRot();
+        float prevPlayerPitch = mc.getPlayer().getXRot();
         float deltaYaw   = RotationUtility.normalizeYaw(rawYaw - prevPlayerYaw);
         float deltaPitch = rawPitch - prevPlayerPitch;
         if (gcd > 0) {
@@ -240,8 +242,8 @@ public class KillAura implements ModuleAccess {
         silentRotation.set(yaw, pitch);
 
         // обновляем голову/тело, не трогаем O поля
-        mc.player.yHeadRot = yaw;
-        mc.player.yBodyRot = yaw;
+        mc.getPlayer().yHeadRot = yaw;
+        mc.getPlayer().yBodyRot = yaw;
 
         prevScanProgress = scanProgress;
         scanProgress += 0.02f;
@@ -261,13 +263,13 @@ public class KillAura implements ModuleAccess {
         circleStep += 0.15f;
     }
 
-    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
 
         final double BASE_BUFFER = 0.15;
         net.minecraft.world.entity.LivingEntity closest = null;
         double closestDist = Double.MAX_VALUE;
 
-        for (var e : mc.level.entitiesForRendering()) {
+        for (var e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
@@ -277,7 +279,7 @@ public class KillAura implements ModuleAccess {
             if (!targets.isSelected("Monsters") && MobUtility.isHostile(le)) continue;
             if (!targets.isSelected("Passives") && MobUtility.isPassive(le)) continue;
 
-            net.minecraft.world.phys.AABB pa = mc.player.getBoundingBox();
+            net.minecraft.world.phys.AABB pa = mc.getPlayer().getBoundingBox();
             net.minecraft.world.phys.AABB ea = le.getBoundingBox();
             double dx = Math.max(0, Math.max(pa.minX - ea.maxX, ea.minX - pa.maxX));
             double dy = Math.max(0, Math.max(pa.minY - ea.maxY, ea.minY - pa.maxY));
@@ -290,7 +292,7 @@ public class KillAura implements ModuleAccess {
 
             if (dist > range - buffer) continue;
 
-            if (!throughWalls && !mc.player.hasLineOfSight(le)) continue;
+            if (!throughWalls && !mc.getPlayer().hasLineOfSight(le)) continue;
             if (ravex.manager.ModuleManager.delegate(ravex.modules.combat.AntiBot.class).getEnabled()
                     && ravex.manager.ModuleManager.delegate(ravex.modules.combat.AntiBot.class).isBot(e)) continue;
 
@@ -302,12 +304,12 @@ public class KillAura implements ModuleAccess {
         return closest;
     }
 
-    private void attack(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
+    private void attack(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target) {
         if (autoWeapon && !swapMode.equals("None")) {
             int bestSlot = -1;
             double bestDmg = -1.0;
             for (int i = 0; i < 9; i++) {
-                var stack = InventoryUtility.getItem(mc.player, i);
+                var stack = InventoryUtility.getItem(mc.getPlayer(), i);
                 if (swordsOnly.getValue() && !isSword(stack.getItem())) continue;
                 double dmg = getWeaponDamage(stack);
                 if (dmg > bestDmg) {
@@ -315,11 +317,11 @@ public class KillAura implements ModuleAccess {
                     bestSlot = i;
                 }
             }
-            if (bestSlot != -1 && bestSlot != InventoryUtility.getSelectedSlot(mc.player) && bestDmg > 1.0) {
+            if (bestSlot != -1 && bestSlot != InventoryUtility.getSelectedSlot(mc.getPlayer()) && bestDmg > 1.0) {
                 if (swapMode.equals("Silent")) {
-                    mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(bestSlot));
+                    NetworkUtility.sendSetCarriedItem(bestSlot);
                 } else {
-                    InventoryUtility.selectSlot(mc.player, bestSlot);
+                    InventoryUtility.selectSlot(mc.getPlayer(), bestSlot);
                 }
             }
         }
@@ -353,16 +355,16 @@ public class KillAura implements ModuleAccess {
         return dmg;
     }
 
-    private float[] calculateAngles(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
+    private float[] calculateAngles(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target) {
         if (prevYaw == 0f && prevPitch == 0f) {
-            prevYaw = mc.player.getYRot();
-            prevPitch = mc.player.getXRot();
+            prevYaw = mc.getPlayer().getYRot();
+            prevPitch = mc.getPlayer().getXRot();
         }
 
         float yaw, pitch;
         if (mode.equals("Tracker")) {
             var stomachPos = target.position().add(0, target.getBbHeight() * 0.45, 0);
-            float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), stomachPos);
+            float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), stomachPos);
             float targetYaw = angles[0];
             float targetPitch = angles[1];
 
@@ -391,12 +393,12 @@ public class KillAura implements ModuleAccess {
             pitch = prevPitch + stepPitch;
         } else if (mode.equals("Snap")) {
             var chestPos = target.position().add(0, target.getBbHeight() * 0.65, 0);
-            float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), chestPos);
+            float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), chestPos);
             yaw = angles[0];
             pitch = angles[1];
         } else {
             var headPos = target.position().add(0, target.getBbHeight() * 0.9, 0);
-            float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), headPos);
+            float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), headPos);
             yaw = angles[0];
             pitch = angles[1];
         }
@@ -407,8 +409,8 @@ public class KillAura implements ModuleAccess {
     }
 
     public void render(Matrix4f modelViewMatrix, net.minecraft.client.Camera camera, float tickDelta) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
 
         var target = currentTarget;
         if (target == null || target.isDeadOrDying()) return;

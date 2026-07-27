@@ -2,7 +2,7 @@ package ravex.modules.world;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 
@@ -10,6 +10,7 @@ import ravex.utility.nativelib.NativeLibraryUtility;
 
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "ECFarmer", category = "World")
 public class ECFarmer implements ModuleAccess {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.5)
@@ -46,20 +47,20 @@ public class ECFarmer implements ModuleAccess {
     }
     public void onDisable() {
         if (hasEc) {
-            var st = BlockUtility.getState(Minecraft.getInstance().level, ecX, ecY, ecZ);
+            var st = BlockUtility.getState(MinecraftWrapper.getWrapper().getLevel(), ecX, ecY, ecZ);
             if (BlockUtility.isBlock(st, "ender_chest")) {
-                Minecraft.getInstance().gameMode.stopDestroyBlock();
+                MinecraftWrapper.getWrapper().getGameMode().stopDestroyBlock();
             }
         }
-        if (prevSlot != -1) swapBack(Minecraft.getInstance(), prevSlot);
+        if (prevSlot != -1) swapBack(MinecraftWrapper.getWrapper(), prevSlot);
         hasEc = false;
         hasRenderTarget = false;
         prevSlot = -1;
         state = State.IDLE;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         long now = System.currentTimeMillis();
         switch (state) {
             case IDLE -> state = State.FIND_BREAK;
@@ -69,7 +70,7 @@ public class ECFarmer implements ModuleAccess {
             case PLACING -> doPlace(mc, now);
         }
     }
-    private void findBreakTarget(Minecraft mc) {
+    private void findBreakTarget(MinecraftWrapper mc) {
         int[] found = scanForEC(mc);
         if (found != null) {
             ecX = found[0]; ecY = found[1]; ecZ = found[2];
@@ -82,7 +83,7 @@ public class ECFarmer implements ModuleAccess {
         }
         state = State.FIND_PLACE;
     }
-    private void findPlaceTarget(Minecraft mc) {
+    private void findPlaceTarget(MinecraftWrapper mc) {
         int ecSlot = findECSlot(mc);
         if (ecSlot == -1) return;
         int[] placeOn = findPlacePos(mc);
@@ -92,10 +93,10 @@ public class ECFarmer implements ModuleAccess {
         targetX = ecX; targetY = ecY; targetZ = ecZ; hasRenderTarget = true;
         state = State.PLACING;
     }
-    private void doPlace(Minecraft mc, long now) {
+    private void doPlace(MinecraftWrapper mc, long now) {
         if (now - lastActionTime < 100) return;
         lastActionTime = now;
-        if (!hasEc || !BlockUtility.isAir(mc.level, ecX, ecY, ecZ)) {
+        if (!hasEc || !BlockUtility.isAir(mc.getLevel(), ecX, ecY, ecZ)) {
             state = State.IDLE;
             return;
         }
@@ -104,7 +105,7 @@ public class ECFarmer implements ModuleAccess {
             state = State.IDLE;
             return;
         }
-        int original = InventoryUtility.getSelectedSlot(mc.player);
+        int original = InventoryUtility.getSelectedSlot(mc.getPlayer());
         if (!doSwap(mc, ecSlot)) {
             state = State.IDLE;
             return;
@@ -116,12 +117,12 @@ public class ECFarmer implements ModuleAccess {
         swapBack(mc, original);
         state = State.IDLE;
     }
-    private void doBreak(Minecraft mc, long now) {
+    private void doBreak(MinecraftWrapper mc, long now) {
         if (!hasEc) {
             state = State.IDLE;
             return;
         }
-        var cur = BlockUtility.getState(mc.level, ecX, ecY, ecZ);
+        var cur = BlockUtility.getState(mc.getLevel(), ecX, ecY, ecZ);
         if (!BlockUtility.isBlock(cur, "ender_chest")) {
             if (prevSlot != -1) swapBack(mc, prevSlot);
             hasEc = false;
@@ -136,22 +137,22 @@ public class ECFarmer implements ModuleAccess {
                 state = State.IDLE;
                 return;
             }
-            prevSlot = InventoryUtility.getSelectedSlot(mc.player);
+            prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
             if (!doSwap(mc, pickSlot)) {
                 prevSlot = -1;
                 state = State.IDLE;
                 return;
             }
             breakStartTime = now;
-            var dir = getDirection(mc.player.getEyePosition(), ecX, ecY, ecZ);
-            mc.gameMode.startDestroyBlock(BlockUtility.pos(ecX, ecY, ecZ), dir);
+            var dir = getDirection(mc.getPlayer().getEyePosition(), ecX, ecY, ecZ);
+            mc.getGameMode().startDestroyBlock(BlockUtility.pos(ecX, ecY, ecZ), dir);
             BlockUtility.swing(mc);
             return;
         }
-        var dir2 = getDirection(mc.player.getEyePosition(), ecX, ecY, ecZ);
-        mc.gameMode.continueDestroyBlock(BlockUtility.pos(ecX, ecY, ecZ), dir2);
+        var dir2 = getDirection(mc.getPlayer().getEyePosition(), ecX, ecY, ecZ);
+        mc.getGameMode().continueDestroyBlock(BlockUtility.pos(ecX, ecY, ecZ), dir2);
         BlockUtility.swing(mc);
-        var st = BlockUtility.getState(mc.level, ecX, ecY, ecZ);
+        var st = BlockUtility.getState(mc.getLevel(), ecX, ecY, ecZ);
         if (st.isAir() || !BlockUtility.isBlock(st, "ender_chest")) {
             if (prevSlot != -1) swapBack(mc, prevSlot);
             hasEc = false;
@@ -160,34 +161,34 @@ public class ECFarmer implements ModuleAccess {
             state = State.IDLE;
         }
     }
-    private boolean doSwap(Minecraft mc, int targetSlot) {
+    private boolean doSwap(MinecraftWrapper mc, int targetSlot) {
         String mode = swapMode;
         if (mode.equals("Normal")) {
-            InventoryUtility.selectSlot(mc.player, targetSlot);
+            InventoryUtility.selectSlot(mc.getPlayer(), targetSlot);
             return true;
         } else if (mode.equals("Silent")) {
-            InventoryUtility.silentSelectSlot(mc.player, targetSlot);
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), targetSlot);
             return true;
         }
         return false;
     }
-    private void swapBack(Minecraft mc, int originalSlot) {
+    private void swapBack(MinecraftWrapper mc, int originalSlot) {
         if (originalSlot == -1) return;
         String mode = swapMode;
         if (mode.equals("Normal")) {
-            InventoryUtility.selectSlot(mc.player, originalSlot);
+            InventoryUtility.selectSlot(mc.getPlayer(), originalSlot);
         } else if (mode.equals("Silent")) {
-            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
         }
     }
-    private int[] scanForEC(Minecraft mc) {
+    private int[] scanForEC(MinecraftWrapper mc) {
         double r = range;
-        var eye = mc.player.getEyePosition();
-        var pPos = mc.player.blockPosition();
+        var eye = mc.getPlayer().getEyePosition();
+        var pPos = mc.getPlayer().blockPosition();
         int minX = (int) Math.floor(pPos.getX() - r);
         int maxX = (int) Math.ceil(pPos.getX() + r);
-        int minY = (int) Math.max(mc.level.getMinY(), Math.floor(pPos.getY() - r));
-        int maxY = (int) Math.min(mc.level.getMaxY(), Math.ceil(pPos.getY() + r));
+        int minY = (int) Math.max(mc.getLevel().getMinY(), Math.floor(pPos.getY() - r));
+        int maxY = (int) Math.min(mc.getLevel().getMaxY(), Math.ceil(pPos.getY() + r));
         int minZ = (int) Math.floor(pPos.getZ() - r);
         int maxZ = (int) Math.ceil(pPos.getZ() + r);
         int[] closest = null;
@@ -195,9 +196,9 @@ public class ECFarmer implements ModuleAccess {
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
-                    var st = BlockUtility.getState(mc.level, x, y, z);
+                    var st = BlockUtility.getState(mc.getLevel(), x, y, z);
                     if (BlockUtility.isBlock(st, "ender_chest")) {
-                        double dist = BlockUtility.distToSqr(mc.level, x, y, z, eye.x, eye.y, eye.z);
+                        double dist = BlockUtility.distToSqr(mc.getLevel(), x, y, z, eye.x, eye.y, eye.z);
                         if (dist < closestDist) {
                             closestDist = dist;
                             closest = new int[]{x, y, z};
@@ -208,42 +209,42 @@ public class ECFarmer implements ModuleAccess {
         }
         return closest;
     }
-    private int findECSlot(Minecraft mc) {
-        int slot = InventoryUtility.findHotbarSlot(mc.player, "ender_chest");
+    private int findECSlot(MinecraftWrapper mc) {
+        int slot = InventoryUtility.findHotbarSlot(mc.getPlayer(), "ender_chest");
         if (slot != -1) return slot;
-        slot = InventoryUtility.findSlot(mc.player, "ender_chest", 9, 36);
+        slot = InventoryUtility.findSlot(mc.getPlayer(), "ender_chest", 9, 36);
         if (slot != -1) {
-            int free = InventoryUtility.findEmptyHotbarSlot(mc.player);
+            int free = InventoryUtility.findEmptyHotbarSlot(mc.getPlayer());
             if (free != -1) {
-                InventoryUtility.selectSlot(mc.player, free);
-                InventoryUtility.handleInventoryClick(mc, mc.player, slot, free, net.minecraft.world.inventory.ClickType.SWAP);
+                InventoryUtility.selectSlot(mc.getPlayer(), free);
+                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, free, net.minecraft.world.inventory.ClickType.SWAP);
                 return free;
             }
         }
         return -1;
     }
-    private int findPickaxeSlot(Minecraft mc) {
+    private int findPickaxeSlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (InventoryUtility.isItem(stack, "netherite_pickaxe") || InventoryUtility.isItem(stack, "diamond_pickaxe")
                 || InventoryUtility.isItem(stack, "iron_pickaxe") || InventoryUtility.isItem(stack, "stone_pickaxe")
                 || InventoryUtility.isItem(stack, "wooden_pickaxe")) return i;
         }
         return -1;
     }
-    private int[] findPlacePos(Minecraft mc) {
-        var eye = mc.player.getEyePosition();
-        var facing = mc.player.getDirection();
+    private int[] findPlacePos(MinecraftWrapper mc) {
+        var eye = mc.getPlayer().getEyePosition();
+        var facing = mc.getPlayer().getDirection();
         double r = range;
-        var start = mc.player.blockPosition();
+        var start = mc.getPlayer().blockPosition();
         int sx = start.getX(), sy = start.getY(), sz = start.getZ();
         for (int f = 1; f <= 3; f++) {
             for (int dy = -1; dy <= 1; dy++) {
                 int px = sx + facing.getStepX() * f;
                 int py = sy + dy;
                 int pz = sz + facing.getStepZ() * f;
-                if (BlockUtility.distToSqr(mc.level, px, py, pz, eye.x, eye.y, eye.z) > r * r) continue;
-                if (BlockUtility.isSolid(mc.level, px, py - 1, pz) && BlockUtility.isAir(mc.level, px, py, pz)) {
+                if (BlockUtility.distToSqr(mc.getLevel(), px, py, pz, eye.x, eye.y, eye.z) > r * r) continue;
+                if (BlockUtility.isSolid(mc.getLevel(), px, py - 1, pz) && BlockUtility.isAir(mc.getLevel(), px, py, pz)) {
                     return new int[]{px, py - 1, pz};
                 }
             }

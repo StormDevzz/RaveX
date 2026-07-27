@@ -1,7 +1,6 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
@@ -11,6 +10,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "FpsHud", category = "HUD")
 public class FpsHud extends ravex.modules.Module {
@@ -38,7 +38,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_FPS_WHITE;
     }
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        int fps = Minecraft.getInstance().getFps();
+        int fps = MinecraftWrapper.getInstance().getFps();
         int ac = ColorUtility.getActiveColor();
         boolean shadow = true;
         int highColor = 0xFF44FF88, midColor = 0xFFFFCC33, lowColor = 0xFFFF4455;

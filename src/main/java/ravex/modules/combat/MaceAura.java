@@ -5,7 +5,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -15,7 +15,7 @@ public class MaceAura implements ModuleAccess {
     @Parameter(name = "Height", min = 2.0, max = 40.0, step = 1.0)
     public double height = 10.0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
         if (InventoryUtility.isItem(p.getMainHandItem(), "mace") && mc.options.keyAttack.isDown()) {

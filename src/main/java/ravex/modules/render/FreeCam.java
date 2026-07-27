@@ -5,7 +5,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "FreeCam", category = "Render")
 public class FreeCam implements ModuleAccess {
 public double x, y, z;
@@ -26,7 +26,7 @@ public double x, y, z;
     @Parameter(name = "NoSwing")
     public boolean noSwing = false;
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             double startX = mc.player.getX();
             double startY = mc.player.getY() + mc.player.getEyeHeight();
@@ -49,7 +49,7 @@ public double x, y, z;
         }
     }
     public void onDisable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             mc.player.setDeltaMovement(0, 0, 0);
             if (freeze) {
@@ -67,7 +67,7 @@ public double x, y, z;
     @Subscribe
     public void onTick(TickEvent.Client event) {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("FreeCam").getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         if (freeze) {
             mc.player.setYRot(frozenYaw);

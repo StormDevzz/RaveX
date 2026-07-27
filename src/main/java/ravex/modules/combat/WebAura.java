@@ -7,11 +7,11 @@ import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import java.util.List;
+import ravex.utility.network.NetworkUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -23,7 +23,7 @@ public class WebAura implements ModuleAccess {
     public double customRange = 4.0;
     private int delay = 0;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer p = mc.player;
         if (p == null || mc.level == null) return;
         if (delay > 0) {
@@ -65,7 +65,7 @@ public class WebAura implements ModuleAccess {
         if (mc.level.getBlockState(targetPos).isAir()) {
             int prevSlot = InventoryUtility.getSelectedSlot(p);
             if (webSlot != prevSlot) {
-                p.connection.send(new ServerboundSetCarriedItemPacket(webSlot));
+                NetworkUtility.sendSetCarriedItem(webSlot);
             }
             net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
                 new net.minecraft.world.phys.Vec3(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5),
@@ -76,7 +76,7 @@ public class WebAura implements ModuleAccess {
             p.connection.send(new ServerboundUseItemOnPacket(net.minecraft.world.InteractionHand.MAIN_HAND, hit, 0));
             p.connection.send(new ServerboundSwingPacket(net.minecraft.world.InteractionHand.MAIN_HAND));
             if (webSlot != prevSlot) {
-                p.connection.send(new ServerboundSetCarriedItemPacket(prevSlot));
+                NetworkUtility.sendSetCarriedItem(prevSlot);
             }
             delay = 4;
         }

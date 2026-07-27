@@ -2,7 +2,7 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
@@ -13,6 +13,7 @@ import ravex.event.combat.AttackEvent;
 import ravex.utility.render.Render3DUtility;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "Particles", category = "Render")
 public class Particles implements ModuleAccess {
 private static String lastTrigger = "";
@@ -89,8 +90,8 @@ private static String lastTrigger = "";
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null || mc.getPlayer() == null) return;
         long now = System.currentTimeMillis();
         long maxAge = (long)(lifetime * 1000);
         String trig = trigger;
@@ -108,8 +109,8 @@ private static String lastTrigger = "";
         }
         switch (trig) {
             case "Walking" -> {
-                double dx = mc.player.getX() - mc.player.xo;
-                double dz = mc.player.getZ() - mc.player.zo;
+                double dx = mc.getPlayer().getX() - mc.getPlayer().xo;
+                double dz = mc.getPlayer().getZ() - mc.getPlayer().zo;
                 boolean moving = dx * dx + dz * dz > 0.0001;
                 if (!moving) {
                     attackedThisTick = false;
@@ -153,23 +154,23 @@ private static String lastTrigger = "";
             }
         }
     }
-    private void spawnParticles(Minecraft mc, long now, boolean usePlayerPos) {
+    private void spawnParticles(MinecraftWrapper mc, long now, boolean usePlayerPos) {
         net.minecraft.world.phys.Vec3 center;
         if (usePlayerPos) {
-            center = mc.player.position().add(0, 1.2, 0);
+            center = mc.getPlayer().position().add(0, 1.2, 0);
         } else if (lastAttackPos != null && lastMinePos != null) {
-            center = lastAttackPos.distanceToSqr(mc.player.position()) < lastMinePos.distanceToSqr(mc.player.position())
+            center = lastAttackPos.distanceToSqr(mc.getPlayer().position()) < lastMinePos.distanceToSqr(mc.getPlayer().position())
                 ? lastAttackPos : lastMinePos;
         } else if (lastAttackPos != null) {
             center = lastAttackPos;
         } else if (lastMinePos != null) {
             center = lastMinePos;
         } else {
-            center = mc.player.position().add(0, 1.2, 0);
+            center = mc.getPlayer().position().add(0, 1.2, 0);
         }
         lastAttackPos = null;
         lastMinePos = null;
-        net.minecraft.util.RandomSource rnd = mc.level.random;
+        net.minecraft.util.RandomSource rnd = mc.getLevel().random;
         String shapeType = shape;
         String spawnMode = mode;
         double spreadVal = spread;
@@ -260,7 +261,7 @@ private static String lastTrigger = "";
             ));
         }
     }
-    private void updateParticle(Particle p, Minecraft mc) {
+    private void updateParticle(Particle p, MinecraftWrapper mc) {
         long age = System.currentTimeMillis() - p.spawnTime;
         float lifeProgress = (float) age / (float) (lifetime * 1000);
         p.rotation += p.rotSpeed;
@@ -272,9 +273,9 @@ private static String lastTrigger = "";
             ay -= 0.004;
         }
         net.minecraft.world.phys.Vec3 newPos = p.pos.add(ax, ay, az);
-        if (collide && mc.level != null) {
+        if (collide && mc.getLevel() != null) {
             net.minecraft.core.BlockPos blockPos = net.minecraft.core.BlockPos.containing(newPos);
-            if (!mc.level.getBlockState(blockPos).isAir()) {
+            if (!mc.getLevel().getBlockState(blockPos).isAir()) {
                 return;
             }
         }

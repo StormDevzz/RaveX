@@ -1,6 +1,7 @@
 package ravex.utility.player;
 
 import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.inventory.*;
@@ -38,17 +39,19 @@ public class ContainerUtility {
         return slots.stream().anyMatch(Slot::hasItem);
     }
 
-    public static void quickMoveAll(Minecraft mc, LocalPlayer player, List<Slot> slots) {
+    public static void quickMoveAll(MinecraftWrapper mc, LocalPlayer player, List<Slot> slots) {
+        var _mc = mc.getRaw();
         for (Slot slot : slots) {
             if (slot.hasItem())
-                mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, slot.index, 0, ClickType.QUICK_MOVE, player);
+                _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, slot.index, 0, ClickType.QUICK_MOVE, player);
         }
     }
 
-    public static void throwAll(Minecraft mc, LocalPlayer player, List<Slot> slots) {
+    public static void throwAll(MinecraftWrapper mc, LocalPlayer player, List<Slot> slots) {
+        var _mc = mc.getRaw();
         for (Slot slot : slots) {
             if (slot.hasItem())
-                mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, slot.index, 1, ClickType.THROW, player);
+                _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, slot.index, 1, ClickType.THROW, player);
         }
     }
 
@@ -80,7 +83,8 @@ public class ContainerUtility {
         return mouseX >= x && mouseX <= x + CHEST_BTN_W && mouseY >= y && mouseY <= y + CHEST_BTN_H;
     }
 
-    public static void fillFromContainer(Minecraft mc, LocalPlayer player, AbstractContainerMenu menu) {
+    public static void fillFromContainer(MinecraftWrapper mc, LocalPlayer player, AbstractContainerMenu menu) {
+        var _mc = mc.getRaw();
         List<Slot> containerSlots = getContainerSlots(menu);
         List<Slot> playerSlots = getPlayerSlots(menu);
         java.util.Map<Item, Integer> needed = new java.util.HashMap<>();
@@ -98,7 +102,7 @@ public class ContainerUtility {
             Item item = chestStack.getItem();
             int want = needed.getOrDefault(item, 0);
             if (want <= 0) continue;
-            mc.gameMode.handleInventoryMouseClick(menu.containerId, cs.index, 0, ClickType.QUICK_MOVE, player);
+            _mc.gameMode.handleInventoryMouseClick(menu.containerId, cs.index, 0, ClickType.QUICK_MOVE, player);
             int remaining = want - chestStack.getCount();
             if (remaining <= 0) needed.remove(item);
             else needed.put(item, remaining);

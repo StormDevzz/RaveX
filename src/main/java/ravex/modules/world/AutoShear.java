@@ -4,10 +4,10 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import java.util.List;
+import ravex.utility.network.NetworkUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -20,7 +20,7 @@ public class AutoShear implements ModuleAccess {
     @Parameter(name = "ExploitType", modes = {"Client", "Packet"})
     public String exploitType = "Packet";
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var p = mc.player;
         if (p == null || mc.level == null || mc.gameMode == null) return;
         var target = (net.minecraft.world.entity.animal.sheep.Sheep) null;
@@ -46,12 +46,12 @@ public class AutoShear implements ModuleAccess {
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         if ("Packet".equals(exploitType)) {
             if (shearSlot != prevSlot) {
-                p.connection.send(new ServerboundSetCarriedItemPacket(shearSlot));
+                NetworkUtility.sendSetCarriedItem(shearSlot);
             }
             p.connection.send(net.minecraft.network.protocol.game.ServerboundInteractPacket.createInteractionPacket(target, p.isShiftKeyDown(), net.minecraft.world.InteractionHand.MAIN_HAND));
             p.connection.send(new ServerboundSwingPacket(net.minecraft.world.InteractionHand.MAIN_HAND));
             if (silent && shearSlot != prevSlot) {
-                p.connection.send(new ServerboundSetCarriedItemPacket(prevSlot));
+                NetworkUtility.sendSetCarriedItem(prevSlot);
             }
         } else {
             InventoryUtility.selectSlot(p, shearSlot);

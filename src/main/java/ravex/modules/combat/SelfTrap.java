@@ -11,7 +11,7 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -29,8 +30,8 @@ import java.util.Set;
 public class SelfTrap implements ModuleAccess {
 public static final SelfTrap INSTANCE = new SelfTrap();
     public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
-        Minecraft.getInstance().setScreen(new ravex.gui.browser.BlockBrowserScreen(
-            Minecraft.getInstance().screen,
+        MinecraftWrapper.getWrapper().setScreen(new ravex.gui.browser.BlockBrowserScreen(
+            MinecraftWrapper.getWrapper().getCurrentScreen(),
             ravex.manager.ModuleManager.delegate(ravex.modules.combat.SelfTrap.class)::isBlockSelected,
             ravex.manager.ModuleManager.delegate(ravex.modules.combat.SelfTrap.class)::setBlockSelected
         ));
@@ -118,8 +119,8 @@ public static final SelfTrap INSTANCE = new SelfTrap();
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         silentRotation.hasRotation = false;
         double[] solidBlockData = collectSolidBlocks(mc);
         List<Double> activeSolidBlocks = new ArrayList<>();
@@ -141,7 +142,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             double[] result;
             if (NATIVE.isLoaded()) {
                 result = nativeCalculateSelfTrap(
-                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                    mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
                     currentSolidData,
                     4.0,
                     modeVal
@@ -179,7 +180,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             limit = 1;
         }
         int actionsThisTick = 0;
-        int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+        int originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         boolean placedAny = false;
         while (actionsThisTick < limit) {
             double[] currentSolidData = new double[activeSolidBlocks.size()];
@@ -189,7 +190,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             double[] result;
             if (NATIVE.isLoaded()) {
                 result = nativeCalculateSelfTrap(
-                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                    mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
                     currentSolidData,
                     4.0,
                     modeVal
@@ -211,17 +212,17 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             }
             String swap = swapMode;
             if (swap.equals("Normal")) {
-                InventoryUtility.selectSlot(mc.player, blockSlot);
+                InventoryUtility.selectSlot(mc.getPlayer(), blockSlot);
             } else if (swap.equals("Silent")) {
-                InventoryUtility.silentSelectSlot(mc.player, blockSlot);
+                InventoryUtility.silentSelectSlot(mc.getPlayer(), blockSlot);
             } else if (swap.equals("None")) {
-                if (InventoryUtility.getSelectedSlot(mc.player) != blockSlot) {
+                if (InventoryUtility.getSelectedSlot(mc.getPlayer()) != blockSlot) {
                     break;
                 }
             }
             net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
-            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-            SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+            SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
             placedAny = true;
             actionsThisTick++;
             activeSolidBlocks.add((double) targetBlock.getX());
@@ -229,7 +230,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             activeSolidBlocks.add((double) targetBlock.getZ());
         }
         if (placedAny && swapMode.equals("Silent") && swapSwitchBack && originalSlot != -1) {
-            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
         }
         if (placedAny) {
             lastPlaceTime = now;
@@ -239,23 +240,23 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             }
         }
     }
-    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         if (rotate.equals("None")) return;
-        float[] angles = RotationUtility.anglesTo(mc.player, target);
+        float[] angles = RotationUtility.anglesTo(mc.getPlayer(), target);
         if (rotate.equals("Normal")) {
-            mc.player.setYRot(angles[0]);
-            mc.player.setXRot(angles[1]);
+            mc.getPlayer().setYRot(angles[0]);
+            mc.getPlayer().setXRot(angles[1]);
         } else if (rotate.equals("Silent")) {
             silentRotation.set(angles[0], angles[1]);
         }
     }
-    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         if (rotate.equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 12.0F);
     }
-    private double[] collectSolidBlocks(Minecraft mc) {
+    private double[] collectSolidBlocks(MinecraftWrapper mc) {
         List<Double> data = new ArrayList<>();
-        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.getPlayer().blockPosition();
         int rx = 3;
         int ry = 3;
         int rz = 3;
@@ -263,8 +264,8 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             for (int dy = -ry; dy <= ry; dy++) {
                 for (int dz = -rz; dz <= rz; dz++) {
                     net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
-                    if (mc.level.isLoaded(pos)) {
-                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+                    if (mc.getLevel().isLoaded(pos)) {
+                        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -280,10 +281,10 @@ public static final SelfTrap INSTANCE = new SelfTrap();
         }
         return arr;
     }
-    private int findBlockSlot(Minecraft mc) {
+    private int findBlockSlot(MinecraftWrapper mc) {
         if (selectedBlocks.isEmpty()) return -1;
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
             Identifier id = BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
             if (selectedBlocks.contains(id)) {
@@ -292,20 +293,20 @@ public static final SelfTrap INSTANCE = new SelfTrap();
         }
         if (swapInventory) {
             for (int i = 9; i < 36; i++) {
-                var stack = InventoryUtility.getItem(mc.player, i);
+                var stack = InventoryUtility.getItem(mc.getPlayer(), i);
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
                 Identifier id = BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
                 if (selectedBlocks.contains(id)) {
-                    int hotbarSlot = InventoryUtility.getSelectedSlot(mc.player);
-                    InventoryUtility.handleInventoryClick(mc, mc.player, i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                    int hotbarSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
                     return hotbarSlot;
                 }
             }
         }
         return -1;
     }
-    private double[] javaFallbackCalculate(Minecraft mc, double[] solidBlocksData, int modeVal) {
-        net.minecraft.core.BlockPos pf = mc.player.blockPosition();
+    private double[] javaFallbackCalculate(MinecraftWrapper mc, double[] solidBlocksData, int modeVal) {
+        net.minecraft.core.BlockPos pf = mc.getPlayer().blockPosition();
         List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
         if (modeVal == 0 || modeVal == 1) {
             candidates.add(pf.north());

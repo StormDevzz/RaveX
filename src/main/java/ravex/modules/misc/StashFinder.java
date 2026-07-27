@@ -3,9 +3,9 @@ import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.client.Minecraft;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -36,7 +36,7 @@ public class StashFinder implements ModuleAccess {
         StashEntry entry = new StashEntry(pos, totalItems, valuableCount, System.currentTimeMillis());
         stashes.add(entry);
         if (logToChat) {
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.player != null) {
                 mc.player.displayClientMessage(
                     net.minecraft.network.chat.Component.literal(

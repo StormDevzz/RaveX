@@ -2,9 +2,9 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.PhysicUtility;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "LongJump", category = "Movement")
 public class LongJump implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Vanilla"})
@@ -20,7 +20,7 @@ public class LongJump implements ModuleAccess {
         jumped = false;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         if (mc.player.onGround()) {

@@ -56,7 +56,7 @@ private final Map<String, Float> animProgress = new LinkedHashMap<>();
         long now = System.currentTimeMillis();
         java.util.Map<ravex.modules.Module, String> casedNames = new java.util.LinkedHashMap<>();
         for (ravex.modules.Module m : allModules) {
-            if (m.getCategory() == ravex.modules.Category.CLIENT) continue;
+            if ("Client".equals(m.getCategory())) continue;
             String name = m.getName();
             switch (caseMode) {
                 case "Lowercase": name = name.toLowerCase(); break;

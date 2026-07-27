@@ -2,7 +2,7 @@ package ravex.modules.player;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "ViewLock", category = "net.minecraft.world.entity.player.Player")
 public class ViewLock implements ModuleAccess {
@@ -25,7 +25,7 @@ public class ViewLock implements ModuleAccess {
     private float targetPitch = 0;
     private boolean hasTarget = false;
     public void onEnable() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             targetYaw = mc.player.getYRot();
             targetPitch = mc.player.getXRot();
@@ -34,7 +34,7 @@ public class ViewLock implements ModuleAccess {
     }
 
     public void saveCurrentAngle() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             savedYaw = mc.player.getYRot();
             savedPitch = mc.player.getXRot();

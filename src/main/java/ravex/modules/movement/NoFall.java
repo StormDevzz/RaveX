@@ -6,9 +6,9 @@ import ravex.event.Subscribe;
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.Packet;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -25,7 +25,7 @@ public class NoFall implements ModuleAccess {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoFall").getEnabled() || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (!(packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket movePacket)) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         if ("Grim".equals(mode)) return;
@@ -39,7 +39,7 @@ public class NoFall implements ModuleAccess {
     @Subscribe
     public void onTick(TickEvent.Client event) {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoFall").getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         String modeVal = mode;

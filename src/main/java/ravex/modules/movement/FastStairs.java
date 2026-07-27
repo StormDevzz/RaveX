@@ -2,8 +2,8 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "FastStairs", category = "Movement")
 public class FastStairs implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Simple", "Boost"})
@@ -18,7 +18,7 @@ public class FastStairs implements ModuleAccess {
         return baseSpeed * speedFactor;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (mc.player.onClimbable()) {
             double currentY = mc.player.getDeltaMovement().y;

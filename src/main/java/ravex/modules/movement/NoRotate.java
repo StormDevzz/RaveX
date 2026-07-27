@@ -2,10 +2,10 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 
 import java.util.List;
 import java.util.Random;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "NoRotate", category = "Movement")
 public class NoRotate implements ModuleAccess {
     @Parameter(name = "Mode", modes = {"Normal", "Strict"})
@@ -15,7 +15,7 @@ public class NoRotate implements ModuleAccess {
     private final Random random = new Random();
 
     public void saveRotation() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             savedYaw = mc.player.getYRot();
             savedPitch = mc.player.getXRot();
@@ -23,7 +23,7 @@ public class NoRotate implements ModuleAccess {
     }
     public void restoreRotation() {
         if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoRotate").getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             if ("Strict".equals(mode)) {
                 float yaw = savedYaw;

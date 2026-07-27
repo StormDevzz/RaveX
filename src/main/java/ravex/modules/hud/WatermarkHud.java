@@ -5,7 +5,6 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -16,6 +15,7 @@ import ravex.parameter.ColorParameter;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import net.minecraft.resources.Identifier;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "WatermarkHud", category = "HUD")
 public class WatermarkHud extends ravex.modules.Module {
@@ -51,7 +51,7 @@ private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", 
                     }
                 }
             } catch (Exception ignored) {}
-            Minecraft.getInstance().getTextureManager().register(LOGO, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(LOGO, tex);
             logoLoaded = true;
         } catch (Exception e) {
             RaveX.LOGGER.warn("[WatermarkHud] Failed to load logo: {}", e.getMessage());

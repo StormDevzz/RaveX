@@ -4,10 +4,11 @@ import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "MiddleClick", category = "net.minecraft.world.entity.player.Player")
 public class MiddleClick implements ModuleAccess {
     @Parameter(name = "ElytraAction", modes = {"Firework", "None"})
@@ -25,8 +26,8 @@ public class MiddleClick implements ModuleAccess {
         NATIVE.load();
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         boolean held = GLFW.glfwGetMouseButton(mc.getWindow().handle(), GLFW.GLFW_MOUSE_BUTTON_3) == GLFW.GLFW_PRESS;
         if (held) {
             if (!pressed) {
@@ -39,16 +40,16 @@ public class MiddleClick implements ModuleAccess {
             pressed = false;
         }
     }
-    private boolean useFastXp(Minecraft mc) {
-        return !mc.player.isFallFlying() && isBlockContext(mc) && "XPBottleFast".equals(blockAction) && NATIVE.isLoaded();
+    private boolean useFastXp(MinecraftWrapper mc) {
+        return !mc.getPlayer().isFallFlying() && isBlockContext(mc) && "XPBottleFast".equals(blockAction) && NATIVE.isLoaded();
     }
-    private boolean isBlockContext(Minecraft mc) {
-        var p = mc.player;
-        return mc.hitResult != null && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK
-            && mc.hitResult.getLocation().distanceToSqr(p.getEyePosition()) <= p.blockInteractionRange() * p.blockInteractionRange();
+    private boolean isBlockContext(MinecraftWrapper mc) {
+        var p = mc.getPlayer();
+        return mc.getHitResult() != null && mc.getHitResult().getType() == net.minecraft.world.phys.HitResult.Type.BLOCK
+            && mc.getHitResult().getLocation().distanceToSqr(p.getEyePosition()) <= p.blockInteractionRange() * p.blockInteractionRange();
     }
-    private void click(Minecraft mc) {
-        var player = mc.player;
+    private void click(MinecraftWrapper mc) {
+        var player = mc.getPlayer();
         var target = player.isFallFlying() ? itemFromMode(elytraAction)
             : isBlockContext(mc) ? itemFromMode(blockAction)
             : itemFromMode(airAction);
@@ -57,7 +58,7 @@ public class MiddleClick implements ModuleAccess {
         if (slot == -1) return;
         int prev = InventoryUtility.getSelectedSlot(player);
         InventoryUtility.selectSlot(player, slot);
-        mc.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        mc.getGameMode().useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
         if (silent) InventoryUtility.selectSlot(player, prev);
     }
     private String itemFromMode(String mode) {
@@ -70,14 +71,14 @@ public class MiddleClick implements ModuleAccess {
         };
     }
     private static void fastXpCallback() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.gameMode == null) return;
-        int slot = InventoryUtility.findHotbarSlot(mc.player, "experience_bottle");
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getGameMode() == null) return;
+        int slot = InventoryUtility.findHotbarSlot(mc.getPlayer(), "experience_bottle");
         if (slot == -1) return;
-        int prev = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, slot);
-        mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (ravex.manager.ModuleManager.delegate(MiddleClick.class).silent) InventoryUtility.selectSlot(mc.player, prev);
+        int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        InventoryUtility.selectSlot(mc.getPlayer(), slot);
+        mc.getGameMode().useItem(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (ravex.manager.ModuleManager.delegate(MiddleClick.class).silent) InventoryUtility.selectSlot(mc.getPlayer(), prev);
     }
     private static native void nativeStartFastXp();
     private static native void nativeStopFastXp();

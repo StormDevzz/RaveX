@@ -12,13 +12,15 @@ import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.phys.AABB;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.utility.network.NetworkUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -161,16 +163,16 @@ public class AutoCrystal implements ModuleAccess {
         return silentRotation.hasRotation;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         silentRotation.hasRotation = false;
         if (totemPopSwap) {
-            double selfHp = MobUtility.getHealthWithAbsorption(mc.player);
+            double selfHp = MobUtility.getHealthWithAbsorption(mc.getPlayer());
             if (selfHp <= totemPopHp) {
-                if (!InventoryUtility.isOffhand(mc.player, "totem_of_undying")) {
-                    int totemSlot = InventoryUtility.findSlot(mc.player, "totem_of_undying");
+                if (!InventoryUtility.isOffhand(mc.getPlayer(), "totem_of_undying")) {
+                    int totemSlot = InventoryUtility.findSlot(mc.getPlayer(), "totem_of_undying");
                     if (totemSlot != -1) {
-                        InventoryUtility.swapToOffhand(mc, mc.player, totemSlot);
+                        InventoryUtility.swapToOffhand(mc, mc.getPlayer(), totemSlot);
                     }
                 }
             }
@@ -180,15 +182,15 @@ public class AutoCrystal implements ModuleAccess {
             currentPlacementBlock = null;
             return;
         }
-        net.minecraft.world.phys.Vec3 playerPos = mc.player.position();
-        double pHp  = MobUtility.getHealth(mc.player);
-        double pAbs = MobUtility.getAbsorption(mc.player);
+        net.minecraft.world.phys.Vec3 playerPos = mc.getPlayer().position();
+        double pHp  = MobUtility.getHealth(mc.getPlayer());
+        double pAbs = MobUtility.getAbsorption(mc.getPlayer());
         net.minecraft.world.phys.Vec3 targetPos = target.position();
         double tHp  = MobUtility.getHealth(target);
         double tAbs = MobUtility.getAbsorption(target);
         double[] blockData  = collectValidBlocks(mc, playerPos);
         double[] crystalData = collectCrystals(mc, playerPos);
-        double[] pStats = getEntityStats(mc.player);
+        double[] pStats = getEntityStats(mc.getPlayer());
         double[] tStats = getEntityStats(target);
         boolean grimAC = rotate.equals("Grim") || placeMode.equals("Grim");
         boolean ncpBypass = rotate.equals("NCP") || rotate.equals("NCPStrict") || placeMode.equals("NCPStrict");
@@ -247,7 +249,7 @@ public class AutoCrystal implements ModuleAccess {
         net.minecraft.world.phys.Vec3 rotationTarget = null;
         if (shouldBreak) {
             int entityId = (int) result[7];
-            net.minecraft.world.entity.Entity crystal = mc.level.getEntity(entityId);
+            net.minecraft.world.entity.Entity crystal = mc.getLevel().getEntity(entityId);
             if (crystal instanceof EndCrystal) {
                 rotationTarget = crystal.position();
             }
@@ -268,7 +270,7 @@ public class AutoCrystal implements ModuleAccess {
             if (now - lastBreakTime >= currentBreakDelay) {
                 int entityId = (int) result[7];
                 if (entityId != lastBreakId) {
-                    net.minecraft.world.entity.Entity crystal = mc.level.getEntity(entityId);
+                    net.minecraft.world.entity.Entity crystal = mc.getLevel().getEntity(entityId);
                     if (crystal instanceof EndCrystal) {
                         MobUtility.attack(mc, crystal);
                         MobUtility.swingHand(mc);
@@ -297,11 +299,11 @@ public class AutoCrystal implements ModuleAccess {
                             result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
                     net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, placePos, false);
-                    mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-                    SwingUtility.swing(mc.player, mc.player.getUsedItemHand());
+                    mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+                    SwingUtility.swing(mc.getPlayer(), mc.getPlayer().getUsedItemHand());
                     if (swapSwitchBack && originalSlot != -1) {
-                        if (mc.player.connection != null) {
-                            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
+                        if (mc.getPlayer().connection != null) {
+                            NetworkUtility.sendSetCarriedItem(originalSlot);
                         }
                         originalSlot = -1;
                     }
@@ -330,11 +332,11 @@ public class AutoCrystal implements ModuleAccess {
                             result[13] + 0.5, result[14] + 1.0, result[15] + 0.5);
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
                     net.minecraft.world.phys.BlockHitResult hitResult2 = new net.minecraft.world.phys.BlockHitResult(hitVec2, face, placePos2, false);
-                    mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult2);
-                    SwingUtility.swing(mc.player, mc.player.getUsedItemHand());
+                    mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult2);
+                    SwingUtility.swing(mc.getPlayer(), mc.getPlayer().getUsedItemHand());
                     if (swapSwitchBack && originalSlot != -1) {
-                        if (mc.player.connection != null) {
-                            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(originalSlot));
+                        if (mc.getPlayer().connection != null) {
+                            NetworkUtility.sendSetCarriedItem(originalSlot);
                         }
                         originalSlot = -1;
                     }
@@ -345,13 +347,13 @@ public class AutoCrystal implements ModuleAccess {
             }
         }
     }
-    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
         double maxDist = Math.max(placeRange, breakRange) + 2.0;
         String mode = targetMode;
         String typeFilter = targetType;
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
@@ -377,7 +379,7 @@ public class AutoCrystal implements ModuleAccess {
         }
         return closest;
     }
-    private double[] collectValidBlocks(Minecraft mc, net.minecraft.world.phys.Vec3 playerPos) {
+    private double[] collectValidBlocks(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 playerPos) {
         long now = System.currentTimeMillis();
         if (bgBlockScanner && cachedBlockData != null && now - lastBlockScanTime < 150) {
             return cachedBlockData;
@@ -389,10 +391,10 @@ public class AutoCrystal implements ModuleAccess {
             for (int dz = -r; dz <= r; dz++) {
                 for (int dy = -2; dy <= 2; dy++) {
                     net.minecraft.core.BlockPos pos = origin.offset(dx, dy, dz);
-                    net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+                    net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                     if (state.is(net.minecraft.world.level.block.Blocks.OBSIDIAN) || state.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
-                        net.minecraft.world.level.block.state.BlockState above = mc.level.getBlockState(pos.above());
-                        net.minecraft.world.level.block.state.BlockState above2 = mc.level.getBlockState(pos.above(2));
+                        net.minecraft.world.level.block.state.BlockState above = mc.getLevel().getBlockState(pos.above());
+                        net.minecraft.world.level.block.state.BlockState above2 = mc.getLevel().getBlockState(pos.above(2));
                         if (above.isAir() && above2.isAir()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -406,7 +408,7 @@ public class AutoCrystal implements ModuleAccess {
             long msLimit = (long) (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).syncPredictTicks * 50);
             if (System.currentTimeMillis() - BasePlace.lastPlacedTime <= msLimit) {
                 net.minecraft.core.BlockPos predictedPos = BasePlace.lastPlacedBase;
-                double dist = Math.sqrt(predictedPos.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
+                double dist = Math.sqrt(predictedPos.distToCenterSqr(mc.getPlayer().getX(), mc.getPlayer().getEyeY(), mc.getPlayer().getZ()));
                 if (dist <= placeRange) {
                     boolean alreadyAdded = false;
                     for (int i = 0; i < data.size(); i += 3) {
@@ -435,11 +437,11 @@ public class AutoCrystal implements ModuleAccess {
         }
         return arr;
     }
-    private double[] collectCrystals(Minecraft mc, net.minecraft.world.phys.Vec3 playerPos) {
+    private double[] collectCrystals(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 playerPos) {
         List<Double> data = new ArrayList<>();
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof EndCrystal)) continue;
-            if (mc.player.distanceTo(e) > breakRange + 2.0) continue;
+            if (mc.getPlayer().distanceTo(e) > breakRange + 2.0) continue;
             data.add((double) e.getId());
             data.add(e.getX());
             data.add(e.getY());
@@ -449,40 +451,40 @@ public class AutoCrystal implements ModuleAccess {
         for (int i = 0; i < arr.length; i++) arr[i] = data.get(i);
         return arr;
     }
-    private boolean switchToCrystal(Minecraft mc) {
-        if (InventoryUtility.isHolding(mc.player, "end_crystal")) return true;
+    private boolean switchToCrystal(MinecraftWrapper mc) {
+        if (InventoryUtility.isHolding(mc.getPlayer(), "end_crystal")) return true;
         String mode = swapMode;
         if (mode.equals("None")) return false;
-        if (swapNoGap && mc.player.isUsingItem()) {
-            var usingItem = mc.player.getUseItem();
+        if (swapNoGap && mc.getPlayer().isUsingItem()) {
+            var usingItem = mc.getPlayer().getUseItem();
             if (InventoryUtility.isGoldenApple(usingItem) || InventoryUtility.isEnchantedGoldenApple(usingItem)) {
                 return false;
             }
         }
-        int slot = InventoryUtility.findHotbarSlot(mc.player, "end_crystal");
+        int slot = InventoryUtility.findHotbarSlot(mc.getPlayer(), "end_crystal");
         if (slot != -1) {
-            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-            InventoryUtility.silentSelectSlot(mc.player, slot);
+            originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), slot);
             return true;
         }
         if (swapInventory) {
-            slot = InventoryUtility.findSlot(mc.player, "end_crystal", 9, 36);
+            slot = InventoryUtility.findSlot(mc.getPlayer(), "end_crystal", 9, 36);
             if (slot != -1) {
                 int targetHotbarSlot = 0;
-                InventoryUtility.handleInventoryClick(mc, mc.player, slot, targetHotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
-                originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-                InventoryUtility.silentSelectSlot(mc.player, targetHotbarSlot);
+                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, targetHotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+                InventoryUtility.silentSelectSlot(mc.getPlayer(), targetHotbarSlot);
                 return true;
             }
         }
         return false;
     }
-    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate;
         if (mode.equals("None")) return;
-        float[] targetAngles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        float currentYaw = mc.player.getYRot();
-        float currentPitch = mc.player.getXRot();
+        float[] targetAngles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
+        float currentYaw = mc.getPlayer().getYRot();
+        float currentPitch = mc.getPlayer().getXRot();
         if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
         currentYaw = silentRotation.lastYaw;
         currentPitch = silentRotation.lastPitch;
@@ -499,12 +501,12 @@ public class AutoCrystal implements ModuleAccess {
     }
     private long currentPlaceDelay = 0;
     private long currentBreakDelay = 0;
-    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         if (rotate.equals("None")) return true;
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
-    private double calcQuickDamage(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
-        net.minecraft.world.phys.Vec3 playerPos = mc.player.position();
+    private double calcQuickDamage(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target) {
+        net.minecraft.world.phys.Vec3 playerPos = mc.getPlayer().position();
         net.minecraft.world.phys.Vec3 targetPos = target.position();
         net.minecraft.world.phys.Vec3 crystalPos = targetPos.add(0, 1, 0);
         double dist = playerPos.distanceTo(crystalPos);
@@ -517,14 +519,14 @@ public class AutoCrystal implements ModuleAccess {
             net.minecraft.world.phys.Vec3 targetPos, double tHp, double tAbs,
             double[] blockData, double[] crystalData) {
         double[] result = new double[12];
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return result;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null) return result;
         double bestBreakDmg = 0;
         int bestId = -1;
         net.minecraft.world.phys.Vec3 bestPos = net.minecraft.world.phys.Vec3.ZERO;
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof EndCrystal)) continue;
-            double dist = mc.player.distanceTo(e);
+            double dist = mc.getPlayer().distanceTo(e);
             if (dist > breakRange) continue;
             net.minecraft.world.phys.Vec3 cp = e.position();
             double tdist = cp.distanceTo(targetPos);

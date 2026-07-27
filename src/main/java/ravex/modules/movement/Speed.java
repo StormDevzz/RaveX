@@ -2,7 +2,7 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "Speed", category = "Movement")
 public class Speed implements ModuleAccess {
@@ -34,7 +34,7 @@ public static boolean cancelVertical = false;
         if (!"Matrix".equals(mode)) {
             return;
         }
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         if (!mc.player.isSprinting() && !mc.player.isCrouching()

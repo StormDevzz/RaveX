@@ -8,10 +8,10 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.vehicle.boat.Boat;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -68,7 +68,7 @@ public class BoatFly implements ModuleAccess {
         vehiclePackets.clear();
         currentScale = 1.0f;
         EventBusHolder.get().unsubscribe(this);
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             mc.player.setNoGravity(false);
             net.minecraft.world.entity.Entity vehicle = mc.player.getVehicle();
@@ -80,7 +80,7 @@ public class BoatFly implements ModuleAccess {
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.player.getVehicle() == null) return;
         if (!(mc.player.getVehicle() instanceof Boat)) return;
 
@@ -109,7 +109,7 @@ public class BoatFly implements ModuleAccess {
         }
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         updateScale();
@@ -160,7 +160,7 @@ public class BoatFly implements ModuleAccess {
     }
 
     private void mountToNearestBoat() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             if (entity instanceof Boat && mc.player.distanceTo(entity) < 5.0) {
@@ -171,7 +171,7 @@ public class BoatFly implements ModuleAccess {
     }
 
     private double[] forward(double speed) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return new double[]{0, 0};
 
         float forward = 0;

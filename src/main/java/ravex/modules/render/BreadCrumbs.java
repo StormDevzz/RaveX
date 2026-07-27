@@ -2,7 +2,6 @@ package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.misc.MobUtility;
@@ -14,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "BreadCrumbs", category = "Render")
 public class BreadCrumbs implements ModuleAccess {
 public static final Map<Integer, List<net.minecraft.world.phys.Vec3>> trails = new HashMap<>();
@@ -30,7 +30,7 @@ public static final Map<Integer, List<net.minecraft.world.phys.Vec3>> trails = n
     @Parameter(name = "Mobs")
     public boolean mobs = false;
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level == null || mc.player == null) return;
         int max = (int) maxPoints;
         if (self) {

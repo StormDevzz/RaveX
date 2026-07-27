@@ -2,7 +2,6 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import ravex.utility.misc.EntityUtility;
 
 
@@ -10,6 +9,7 @@ import ravex.utility.misc.MobUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "AntiBot", category = "Combat")
 public class AntiBot implements ModuleAccess {
@@ -41,7 +41,7 @@ public class AntiBot implements ModuleAccess {
         return true;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (!shouldProtectTarget()) return;
         long now = System.currentTimeMillis();

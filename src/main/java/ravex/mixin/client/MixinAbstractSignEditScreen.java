@@ -33,7 +33,7 @@ public abstract class MixinAbstractSignEditScreen {
                 ));
 
 
-                mc.execute(() -> ScreenUtility.closeScreen(mc));
+                mc.execute(() -> ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper()));
             }
         }
     }

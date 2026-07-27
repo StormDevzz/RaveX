@@ -31,7 +31,7 @@ public abstract class MixinDisconnectedScreen extends Screen {
             Component.literal("Reconnect"),
             btn -> {
                 Minecraft mc = Minecraft.getInstance();
-                AutoReconnect.reconnect(mc);
+                AutoReconnect.reconnect(ravex.mcwrapper.MinecraftWrapper.getWrapper());
             }
         ).bounds(btnX, btnY, btnW, 20).build());
 

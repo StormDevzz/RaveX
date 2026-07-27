@@ -3,7 +3,7 @@ import ravex.utility.misc.ScreenUtility;
 
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.resources.Identifier;
@@ -17,6 +17,7 @@ import ravex.modules.combat.KillAura;
 import ravex.modules.combat.Trigger;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.FontRenderUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @ModuleInfo(name = "TargetHud", category = "HUD")
 public class TargetHud extends ravex.modules.Module {
@@ -74,7 +75,7 @@ public class TargetHud extends ravex.modules.Module {
         this.x = 10; this.y = 400; this.width = 175; this.height = 46;
     }
 
-    private net.minecraft.world.entity.LivingEntity getTarget(Minecraft mc) {
+    private net.minecraft.world.entity.LivingEntity getTarget(MinecraftWrapper mc) {
         if (ravex.manager.ModuleManager.delegate(KillAura.class).getEnabled()) {
             net.minecraft.world.entity.LivingEntity target = ravex.manager.ModuleManager.delegate(KillAura.class).getCurrentTarget();
             if (target != null && target.isAlive()) return target;
@@ -106,8 +107,8 @@ public class TargetHud extends ravex.modules.Module {
     }
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
 
         long now = System.currentTimeMillis();
         if (lastFrameTime == 0) lastFrameTime = now;
@@ -122,13 +123,13 @@ public class TargetHud extends ravex.modules.Module {
             targetEntity = target;
             lastTarget = target;
             hasActiveTarget = true;
-        } else if (showOnHover && mc.crosshairPickEntity instanceof net.minecraft.world.entity.LivingEntity living && living.isAlive()) {
+        } else if (showOnHover && mc.getCrosshairPickEntity() instanceof net.minecraft.world.entity.LivingEntity living && living.isAlive()) {
             targetEntity = living;
             lastTarget = living;
             hasActiveTarget = true;
-        } else if (ScreenUtility.isChatScreen(mc) || mc.screen instanceof ravex.gui.hudeditor.HudEditorScreen) {
-            targetEntity = mc.player;
-            lastTarget = mc.player;
+        } else if (ScreenUtility.isChatScreen(mc) || mc.getCurrentScreen() instanceof ravex.gui.hudeditor.HudEditorScreen) {
+            targetEntity = mc.getPlayer();
+            lastTarget = mc.getPlayer();
             hasActiveTarget = true;
         } else {
             targetEntity = lastTarget;
@@ -300,7 +301,7 @@ public class TargetHud extends ravex.modules.Module {
                         graphics.pose().translate(cellX + offset, cellY + offset);
                         graphics.pose().scale(itemScale, itemScale);
                         graphics.renderItem(item, 0, 0);
-                        graphics.renderItemDecorations(mc.font, item, 0, 0);
+                        graphics.renderItemDecorations(mc.getFont(), item, 0, 0);
                         graphics.pose().popMatrix();
                     }
                 }

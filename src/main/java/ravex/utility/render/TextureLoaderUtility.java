@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.RaveX;
-import ravex.modules.Category;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -41,8 +40,8 @@ public class TextureLoaderUtility {
     public static final Identifier TRACK = id("track_white");
     public static final Identifier SWITCHER = id("switcher");
     private static final Identifier FALLBACK = id("misc");
-    private static final Map<Category, Identifier> CAT_IDS = new HashMap<>();
-    private static final Map<Category, Identifier> CAT_WHITE_IDS = new HashMap<>();
+    private static final Map<String, Identifier> CAT_IDS = new HashMap<>();
+    private static final Map<String, Identifier> CAT_WHITE_IDS = new HashMap<>();
 
     public static final Identifier FEMBOY = Identifier.fromNamespaceAndPath(NS, "img/femboy");
     public static final Identifier WYPHER1 = Identifier.fromNamespaceAndPath(NS, "img/wypher1");
@@ -92,8 +91,8 @@ public class TextureLoaderUtility {
     public static final Identifier HUD_ARRAYLIST_WHITE = hudWhiteId("arraylist");
 
     static {
-        for (Category cat : Category.values()) {
-            String name = cat.name().toLowerCase();
+        for (String cat : new String[]{"Combat","Render","Player","Movement","Misc","World","Client","HUD","Custom"}) {
+            String name = cat.toLowerCase();
             CAT_IDS.put(cat, id(name));
             CAT_WHITE_IDS.put(cat, id(name + "_white"));
         }
@@ -266,10 +265,10 @@ public class TextureLoaderUtility {
             && Math.abs(b - bgB) <= tolerance;
     }
 
-    public static Identifier getCategoryTexture(Category cat) {
-        if (cat == Category.CUSTOM) cat = Category.MISC;
+    public static Identifier getCategoryTexture(String cat) {
+        if ("Custom".equals(cat)) cat = "Misc";
         Identifier id = CAT_IDS.get(cat);
-        if (ensureLoaded(id, cat.name().toLowerCase())) return id;
+        if (ensureLoaded(id, cat.toLowerCase())) return id;
         if (ensureLoaded(FALLBACK, "misc")) return FALLBACK;
         return null;
     }
@@ -329,14 +328,14 @@ public class TextureLoaderUtility {
         return SETTINGS_WHITE;
     }
 
-    public static Identifier getCategoryTextureWhite(Category cat) {
-        if (cat == Category.CUSTOM) cat = Category.MISC;
+    public static Identifier getCategoryTextureWhite(String cat) {
+        if ("Custom".equals(cat)) cat = "Misc";
         Identifier whiteId = CAT_WHITE_IDS.get(cat);
         if (whiteId == null) return getCategoryTexture(cat);
         if (loaded.containsKey(whiteId)) return whiteId;
         Identifier originalId = CAT_IDS.get(cat);
-        if (!ensureLoaded(originalId, cat.name().toLowerCase())) return null;
-        Identifier result = makeWhiteCopy(originalId, whiteId, cat.name().toLowerCase());
+        if (!ensureLoaded(originalId, cat.toLowerCase())) return null;
+        Identifier result = makeWhiteCopy(originalId, whiteId, cat.toLowerCase());
         return result != null ? result : originalId;
     }
 
@@ -538,9 +537,9 @@ public class TextureLoaderUtility {
         getSearchWhiteTexture();
         getTrackWhiteTexture();
         getSwitcherTexture();
-        for (Map.Entry<Category, Identifier> e : CAT_IDS.entrySet()) {
-            if (e.getKey() == Category.CUSTOM) continue;
-            ensureLoaded(e.getValue(), e.getKey().name().toLowerCase());
+        for (Map.Entry<String, Identifier> e : CAT_IDS.entrySet()) {
+            if ("Custom".equals(e.getKey())) continue;
+            ensureLoaded(e.getValue(), e.getKey().toLowerCase());
             getCategoryTextureWhite(e.getKey());
         }
         ensureLoaded(FEMBOY, "femboy");

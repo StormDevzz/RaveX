@@ -20,7 +20,7 @@ import ravex.modules.player.*;
 import ravex.modules.world.*;
 import ravex.modules.client.Hud;
 import ravex.utility.misc.GuiOptimizerUtility;
-import ravex.utility.misc.MobUtility;
+
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.HudRendererUtility;
 import org.joml.Matrix4f;
@@ -32,6 +32,7 @@ import ravex.utility.render.Render2DUtility;
 import java.util.ArrayList;
 import java.util.List;
 
+import ravex.utility.misc.EntityUtility;
 public final class HudRenderer {
     public static final HudRenderer INSTANCE = new HudRenderer();
 
@@ -40,7 +41,7 @@ public final class HudRenderer {
     public void render(GuiGraphics context, DeltaTracker tickCounter) {
         Minecraft mc = Minecraft.getInstance();
 
-        if (ModuleManager.get(Ambient.class).getEnabled()) {
+        if (ModuleManager.isEnabled(Ambient.class)) {
             int rVal = (int) ModuleManager.get(Ambient.class).r;
             int gVal = (int) ModuleManager.get(Ambient.class).g;
             int bVal = (int) ModuleManager.get(Ambient.class).b;
@@ -56,9 +57,9 @@ public final class HudRenderer {
 
         float pt = tickCounter.getGameTimeDeltaTicks();
         Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
-        boolean espEnabled = ModuleManager.get(ESP.class).getEnabled();
-        boolean nameTagsEnabled = ModuleManager.get(NameTags.class).getEnabled();
-        boolean mobOwnerEnabled = ModuleManager.get(MobOwner.class).getEnabled() && ModuleManager.get(MobOwner.class).animals;
+        boolean espEnabled = ModuleManager.isEnabled(ESP.class);
+        boolean nameTagsEnabled = ModuleManager.isEnabled(NameTags.class);
+        boolean mobOwnerEnabled = ModuleManager.isEnabled(MobOwner.class) && ModuleManager.get(MobOwner.class).animals;
 
         int guiWidth = context.guiWidth();
         int guiHeight = context.guiHeight();
@@ -67,7 +68,7 @@ public final class HudRenderer {
         Quaternionf cRotation = mc.gameRenderer.getMainCamera().rotation();
         Vector4f lookVec = new Vector4f(0.0F, 0.0F, -1.0F, 0.0F).rotate(cRotation);
         Vec3 cameraLook = new Vec3(lookVec.x(), lookVec.y(), lookVec.z());
-        boolean tracersEnabled = ModuleManager.get(Tracers.class).getEnabled();
+        boolean tracersEnabled = ModuleManager.isEnabled(Tracers.class);
 
         List<Entity> candidates = buildCandidates(mc, espEnabled, nameTagsEnabled, mobOwnerEnabled, tracersEnabled, pt, firstPerson);
 
@@ -80,7 +81,7 @@ public final class HudRenderer {
         renderWaypoints(context, mc);
         NotificationManager.render(context);
 
-        if (ModuleManager.get(Crosshair.class).getEnabled()) {
+        if (ModuleManager.isEnabled(Crosshair.class)) {
             try { ModuleManager.get(Crosshair.class).render(context); } catch (Throwable ignored) {}
         }
 
@@ -103,7 +104,7 @@ public final class HudRenderer {
             if (firstPerson && dist < 1.2 && !nameTagsEnabled) continue;
 
             boolean isPlayer = target instanceof Player;
-            boolean isMonster = target instanceof LivingEntity le && MobUtility.isHostile(le);
+            boolean isMonster = target instanceof LivingEntity le && EntityUtility.isHostile(le);
             boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
             boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
             boolean isFrame = target instanceof net.minecraft.world.entity.decoration.ItemFrame;
@@ -139,7 +140,7 @@ public final class HudRenderer {
 
         for (Entity target : candidates) {
             boolean isPlayer = target instanceof Player;
-            boolean isMonster = target instanceof LivingEntity le && MobUtility.isHostile(le);
+            boolean isMonster = target instanceof LivingEntity le && EntityUtility.isHostile(le);
             boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
             boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
 
@@ -325,7 +326,7 @@ public final class HudRenderer {
             int y = Math.min(by, hy);
 
             boolean isPlayer = target instanceof Player;
-            boolean isMonster = target instanceof LivingEntity le && MobUtility.isHostile(le);
+            boolean isMonster = target instanceof LivingEntity le && EntityUtility.isHostile(le);
             boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
             boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
 
@@ -347,7 +348,7 @@ public final class HudRenderer {
     private void renderFallbackLayout(GuiGraphics context, Minecraft mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled) {
         for (Entity target : candidates) {
             boolean isPlayer = target instanceof Player;
-            boolean isMonster = target instanceof LivingEntity le && MobUtility.isHostile(le);
+            boolean isMonster = target instanceof LivingEntity le && EntityUtility.isHostile(le);
             boolean isAnimal = target instanceof net.minecraft.world.entity.animal.Animal || target instanceof net.minecraft.world.entity.ambient.AmbientCreature;
             boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
 
@@ -749,7 +750,7 @@ public final class HudRenderer {
     }
 
     private void renderWaypoints(GuiGraphics context, Minecraft mc) {
-        if (ModuleManager.get(Waypoint.class).getEnabled()) {
+        if (ModuleManager.isEnabled(Waypoint.class)) {
             int wpColor = ModuleManager.get(Waypoint.class).color;
             String currentDim = mc.level != null ? mc.level.dimension().identifier().toString() : null;
             boolean showDist = ModuleManager.get(Waypoint.class).showDistance;

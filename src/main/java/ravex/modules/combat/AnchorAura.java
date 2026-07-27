@@ -13,7 +13,7 @@ import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffects;
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -116,8 +117,8 @@ public class AnchorAura implements ModuleAccess {
         simulatedPlacementBlock = null;
     }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null)
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null)
             return;
         silentRotation.hasRotation = false;
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
@@ -130,7 +131,7 @@ public class AnchorAura implements ModuleAccess {
         net.minecraft.core.BlockPos existingAnchor = findExistingAnchor(mc, target);
         if (existingAnchor != null) {
             simulatedPlacementBlock = existingAnchor;
-            net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(existingAnchor);
+            net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(existingAnchor);
             int charges = getAnchorCharges(state);
             calculateExpectedDamages(mc, target, existingAnchor);
             if (!canAct)
@@ -156,8 +157,8 @@ public class AnchorAura implements ModuleAccess {
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeCalculateAnchorAura(
-                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                    mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
+                    mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
+                    mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), getEntityStats(mc.getPlayer()),
                     target.getX(), target.getY(), target.getZ(),
                     target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
                     solidBlockData,
@@ -202,31 +203,31 @@ public class AnchorAura implements ModuleAccess {
         performUse(mc, anchorSlot, neighborPos, face, hitVec);
     }
 
-    private void performUse(Minecraft mc, int slot, net.minecraft.core.BlockPos targetBlock, net.minecraft.core.Direction face, net.minecraft.world.phys.Vec3 hitVec) {
-        int originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+    private void performUse(MinecraftWrapper mc, int slot, net.minecraft.core.BlockPos targetBlock, net.minecraft.core.Direction face, net.minecraft.world.phys.Vec3 hitVec) {
+        int originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         String swap = swapMode;
         if (swap.equals("None")) {
-            if (InventoryUtility.getSelectedSlot(mc.player) != slot)
+            if (InventoryUtility.getSelectedSlot(mc.getPlayer()) != slot)
                 return;
         } else {
-            originalSlot = InventoryUtility.getSelectedSlot(mc.player);
-            InventoryUtility.silentSelectSlot(mc.player, slot);
+            originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), slot);
         }
         net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, targetBlock, false);
-        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-        SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+        SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         lastActionTime = System.currentTimeMillis();
         if (swapSwitchBack && originalSlot != -1 && !swap.equals("None")) {
-            InventoryUtility.silentSelectSlot(mc.player, originalSlot);
+            InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
         }
     }
 
-    private void calculateExpectedDamages(Minecraft mc, net.minecraft.world.entity.LivingEntity target, net.minecraft.core.BlockPos anchorPos) {
+    private void calculateExpectedDamages(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, net.minecraft.core.BlockPos anchorPos) {
         if (NATIVE.isLoaded()) {
             double[] solidBlockData = collectSolidBlocks(mc);
             double[] result = nativeCalculateAnchorAura(
-                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                    mc.player.getHealth(), mc.player.getAbsorptionAmount(), getEntityStats(mc.player),
+                    mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
+                    mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), getEntityStats(mc.getPlayer()),
                     target.getX(), target.getY(), target.getZ(),
                     target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
                     solidBlockData,
@@ -250,7 +251,7 @@ public class AnchorAura implements ModuleAccess {
         }
     }
 
-    private net.minecraft.core.BlockPos findExistingAnchor(Minecraft mc, net.minecraft.world.entity.LivingEntity target) {
+    private net.minecraft.core.BlockPos findExistingAnchor(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target) {
         net.minecraft.core.BlockPos tPos = target.blockPosition();
         double maxDist = targetRange;
         double maxPlaceDist = range;
@@ -261,9 +262,9 @@ public class AnchorAura implements ModuleAccess {
             for (int dy = -2; dy <= 2; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
                     net.minecraft.core.BlockPos p = tPos.offset(dx, dy, dz);
-                    if (mc.level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR)) {
+                    if (mc.getLevel().getBlockState(p).is(net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR)) {
                         double pDist = Math
-                                .sqrt(p.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
+                                .sqrt(p.distToCenterSqr(mc.getPlayer().getX(), mc.getPlayer().getEyeY(), mc.getPlayer().getZ()));
                         if (pDist <= maxPlaceDist) {
                             double tDist = Math.sqrt(p.distToCenterSqr(target.getX(), target.getY(), target.getZ()));
                             if (tDist <= maxDist) {
@@ -280,29 +281,29 @@ public class AnchorAura implements ModuleAccess {
         return bestAnchor;
     }
 
-    private int findItemSlot(Minecraft mc, String itemName) {
-        int slot = InventoryUtility.findHotbarSlot(mc.player, itemName);
+    private int findItemSlot(MinecraftWrapper mc, String itemName) {
+        int slot = InventoryUtility.findHotbarSlot(mc.getPlayer(), itemName);
         if (slot != -1) return slot;
         if (swapInventory) {
-            slot = InventoryUtility.findSlot(mc.player, itemName, 9, 36);
+            slot = InventoryUtility.findSlot(mc.getPlayer(), itemName, 9, 36);
             if (slot != -1) {
-                int hotbarSlot = InventoryUtility.getSelectedSlot(mc.player);
-                InventoryUtility.handleInventoryClick(mc, mc.player, slot, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                int hotbarSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
                 return hotbarSlot;
             }
         }
         return -1;
     }
 
-    private int findNonGlowstoneSlot(Minecraft mc) {
+    private int findNonGlowstoneSlot(MinecraftWrapper mc) {
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (!stack.isEmpty() && !InventoryUtility.isGlowstone(stack)) {
                 return i;
             }
         }
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (stack.isEmpty()) {
                 return i;
             }
@@ -310,13 +311,13 @@ public class AnchorAura implements ModuleAccess {
         return -1;
     }
 
-    private void rotateTo(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         String mode = rotate;
         if (mode.equals("None"))
             return;
-        float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), target);
-        float currentYaw = mc.player.getYRot();
-        float currentPitch = mc.player.getXRot();
+        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
+        float currentYaw = mc.getPlayer().getYRot();
+        float currentPitch = mc.getPlayer().getXRot();
         if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
         currentYaw = silentRotation.lastYaw;
         currentPitch = silentRotation.lastPitch;
@@ -328,20 +329,20 @@ public class AnchorAura implements ModuleAccess {
         silentRotation.lastPitch = finalPitch;
     }
 
-    private boolean isRotationAligned(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+    private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         return silentRotation.isRotationAligned(mc, target, 12.0F);
     }
 
-    private double[] collectSolidBlocks(Minecraft mc) {
+    private double[] collectSolidBlocks(MinecraftWrapper mc) {
         List<Double> data = new ArrayList<>();
-        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
+        net.minecraft.core.BlockPos playerPos = mc.getPlayer().blockPosition();
         int r = (int) Math.ceil(range) + 2;
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -4; dy <= 4; dy++) {
                 for (int dz = -r; dz <= r; dz++) {
                     net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
-                    if (mc.level.isLoaded(pos)) {
-                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+                    if (mc.getLevel().isLoaded(pos)) {
+                        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                         if (!state.isAir() && !state.liquid()) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
@@ -358,13 +359,13 @@ public class AnchorAura implements ModuleAccess {
         return arr;
     }
 
-    private net.minecraft.world.entity.LivingEntity findTarget(Minecraft mc) {
+    private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
         double maxDist = targetRange;
         String mode = targetMode;
         String typeFilter = targetType;
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le))
                 continue;
             if (MobUtility.isSelf(le))
@@ -469,7 +470,7 @@ public class AnchorAura implements ModuleAccess {
         return stats;
     }
 
-    private double[] javaFallbackCalculate(Minecraft mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlocksData) {
+    private double[] javaFallbackCalculate(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlocksData) {
         net.minecraft.core.BlockPos tPos = target.blockPosition();
         Set<net.minecraft.core.BlockPos> solids = new HashSet<>();
         for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
@@ -490,7 +491,7 @@ public class AnchorAura implements ModuleAccess {
                     if (solids.contains(c))
                         continue;
                     double pDist = Math
-                            .sqrt(c.distToCenterSqr(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ()));
+                            .sqrt(c.distToCenterSqr(mc.getPlayer().getX(), mc.getPlayer().getEyeY(), mc.getPlayer().getZ()));
                     if (pDist > maxPlaceRange)
                         continue;
                     double tDist = Math.sqrt(c.distToCenterSqr(target.getX(), target.getY(), target.getZ()));
@@ -498,7 +499,7 @@ public class AnchorAura implements ModuleAccess {
                         continue;
                     if (solids.contains(c.above()))
                         continue;
-                    if (intersectsEntity(mc.player, c) || intersectsEntity(target, c))
+                    if (intersectsEntity(mc.getPlayer(), c) || intersectsEntity(target, c))
                         continue;
                     boolean hasNeighbor = false;
                     net.minecraft.core.BlockPos neighbor = null;

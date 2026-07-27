@@ -2,8 +2,8 @@ package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.ModuleInfo;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import ravex.mcwrapper.MinecraftWrapper;
 @ModuleInfo(name = "AntiAfk", category = "Misc")
 public class AntiAfk implements ModuleAccess {
     @Parameter(name = "Interval", min = 5.0, max = 60.0, step = 1.0)
@@ -33,7 +33,7 @@ public class AntiAfk implements ModuleAccess {
                 mouseMove, false,
                 keyPress, lookAround,
                 jump, rotRange);
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (ok) {
                 if (debugLog && mc.player != null) {
                     mc.player.displayClientMessage(
@@ -50,14 +50,14 @@ public class AntiAfk implements ModuleAccess {
         try {
             nativeStop();
         } catch (UnsatisfiedLinkError ignored) {}
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (debugLog && mc.player != null) {
             mc.player.displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §cAntiAFK stopped"), false);
         }
     }
     private void startFallback() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (debugLog && mc.player != null) {
             mc.player.displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §eAntiAFK fallback (Java)"), false);

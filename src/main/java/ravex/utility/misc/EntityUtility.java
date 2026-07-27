@@ -13,6 +13,7 @@ import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.player.LocalPlayer;
 
 public class EntityUtility {
@@ -115,9 +116,10 @@ public class EntityUtility {
         return entity != null && entity.isVehicle();
     }
 
-    public static void interact(Minecraft mc, Entity target) {
-        if (mc.player != null && mc.gameMode != null) {
-            mc.gameMode.interact(mc.player, target, net.minecraft.world.InteractionHand.MAIN_HAND);
+    public static void interact(MinecraftWrapper mc, Entity target) {
+        var _mc = mc.getRaw();
+        if (_mc.player != null && _mc.gameMode != null) {
+            _mc.gameMode.interact(_mc.player, target, net.minecraft.world.InteractionHand.MAIN_HAND);
         }
     }
 
@@ -155,15 +157,17 @@ public class EntityUtility {
         return entity.getHealth() + entity.getAbsorptionAmount();
     }
 
-    public static void attack(Minecraft mc, Entity target) {
-        if (mc.player != null && mc.gameMode != null) {
-            mc.gameMode.attack(mc.player, target);
+    public static void attack(MinecraftWrapper mc, Entity target) {
+        var _mc = mc.getRaw();
+        if (_mc.player != null && _mc.gameMode != null) {
+            _mc.gameMode.attack(_mc.player, target);
         }
     }
 
-    public static void swingHand(Minecraft mc) {
-        if (mc.player != null) {
-            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+    public static void swingHand(MinecraftWrapper mc) {
+        var _mc = mc.getRaw();
+        if (_mc.player != null) {
+            _mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         }
     }
 

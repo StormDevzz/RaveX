@@ -7,7 +7,7 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 
@@ -34,7 +34,7 @@ public class WebSelf implements ModuleAccess {
     public void onEnable() { targetPos = null; delay = 0; }
     public void onDisable() { targetPos = null; }
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (delay > 0) { delay--; return; }
         net.minecraft.core.BlockPos below = mc.player.blockPosition().below();
