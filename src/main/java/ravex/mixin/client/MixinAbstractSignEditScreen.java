@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.world.AutoSign;
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
+import ravex.modules.Modules;
 @Mixin(AbstractSignEditScreen.class)
 public abstract class MixinAbstractSignEditScreen {
     @Shadow @Final private SignBlockEntity sign;
@@ -18,13 +19,13 @@ public abstract class MixinAbstractSignEditScreen {
 
     @Inject(method = "init", at = @At("HEAD"))
     private void onInit(CallbackInfo ci) {
-        if (AutoSign.maybeEnabled()) {
+        if (Modules.enabled(AutoSign.class)) {
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null && mc.getConnection() != null && sign != null) {
-                String l1 = AutoSign.itz().line1;
-                String l2 = AutoSign.itz().line2;
-                String l3 = AutoSign.itz().line3;
-                String l4 = AutoSign.itz().line4;
+                String l1 = Modules.get(AutoSign.class).line1;
+                String l2 = Modules.get(AutoSign.class).line2;
+                String l3 = Modules.get(AutoSign.class).line3;
+                String l4 = Modules.get(AutoSign.class).line4;
 
                 mc.getConnection().send(new ServerboundSignUpdatePacket(
                     sign.getBlockPos(),

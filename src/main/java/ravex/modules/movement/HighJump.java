@@ -1,12 +1,12 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "HighJump", category = "Movement")
-public class HighJump implements ModuleAccess {
+@Module(name = "HighJump", category = "Movement")
+public class HighJump {
     @Parameter(name = "Mode", modes = {"Vanilla", "GrimShulker"})
     public String mode = "Vanilla";
     @Parameter(name = "Height", min = 0.5, max = 10.0, step = 0.1)
@@ -56,12 +56,8 @@ public class HighJump implements ModuleAccess {
         }
         return -1;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("HighJump").getEnabled();
-    }
-    public static HighJump itz() {
-        return ravex.manager.ModuleManager.delegate(HighJump.class);
-    }
+
+
 
 
 }

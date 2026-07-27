@@ -1,14 +1,14 @@
 package ravex.modules.client;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 import ravex.manager.LuaManager;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "RichPresence", category = "Client")
-public class RichPresence implements ModuleAccess {
+@Module(name = "RichPresence", category = "Client")
+public class RichPresence {
     @Parameter(name = "LargeImage")
     public String largeImage = "ravexdc";
     @Parameter(name = "ShowHP")
@@ -116,13 +116,9 @@ public class RichPresence implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("RichPresence").getEnabled();
-    }
 
-    public static RichPresence itz() {
-        return ravex.manager.ModuleManager.delegate(RichPresence.class);
-    }
+
+
 
 
 }

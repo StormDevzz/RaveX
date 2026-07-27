@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.FreeCam;
+import ravex.modules.Modules;
 
 @Mixin(GameRenderer.class)
 public abstract class MixinGameRendererFreeCam {
@@ -16,7 +17,7 @@ public abstract class MixinGameRendererFreeCam {
 
     @Inject(method = "pick", at = @At("HEAD"))
     private void onPickPre(float tickDelta, CallbackInfo ci) {
-        if (!FreeCam.maybeEnabled()) return;
+        if (!Modules.enabled(FreeCam.class)) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
@@ -26,15 +27,15 @@ public abstract class MixinGameRendererFreeCam {
         ravexSavedYaw = mc.player.getYRot();
         ravexSavedPitch = mc.player.getXRot();
 
-        mc.player.setYRot(FreeCam.itz().yaw);
-        mc.player.setXRot(FreeCam.itz().pitch);
-        FreeCam.Vec3 eye = FreeCam.itz().getEyePosition(tickDelta);
+        mc.player.setYRot(Modules.get(FreeCam.class).yaw);
+        mc.player.setXRot(Modules.get(FreeCam.class).pitch);
+        FreeCam.Vec3 eye = Modules.get(FreeCam.class).getEyePosition(tickDelta);
         mc.player.setPos(eye.x(), eye.y() - mc.player.getEyeHeight(), eye.z());
     }
 
     @Inject(method = "pick", at = @At("RETURN"))
     private void onPickPost(float tickDelta, CallbackInfo ci) {
-        if (!FreeCam.maybeEnabled()) return;
+        if (!Modules.enabled(FreeCam.class)) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 

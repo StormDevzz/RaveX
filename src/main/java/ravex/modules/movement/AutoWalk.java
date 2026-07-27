@@ -1,12 +1,12 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@ModuleInfo(name = "AutoWalk", category = "Movement")
-public class AutoWalk implements ModuleAccess {
+@Module(name = "AutoWalk", category = "Movement")
+public class AutoWalk {
     @Parameter(name = "Mode", modes = {"Simple", "Baritone"})
     public String mode = "Simple";
     @Parameter(name = "Interval", min = 5.0, max = 120.0, step = 5.0)
@@ -62,9 +62,7 @@ public class AutoWalk implements ModuleAccess {
             }
         }
     }
-    public static AutoWalk itz() {
-        return ravex.manager.ModuleManager.delegate(AutoWalk.class);
-    }
+
 
 
 }

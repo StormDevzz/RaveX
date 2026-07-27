@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 
@@ -8,8 +8,9 @@ import ravex.utility.misc.MobUtility;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "SmallUser", category = "Render")
-public class SmallUser implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "SmallUser", category = "Render")
+public class SmallUser {
     @Parameter(name = "Target", modes = {"All", "Others", "Self"})
     public String target = "All";
     @Parameter(name = "Scale", min = 0.2, max = 1.0, step = 0.05)
@@ -17,7 +18,7 @@ public class SmallUser implements ModuleAccess {
     public final Map<Object, Float> stateScaleMap = new ConcurrentHashMap<>();
 
     public boolean shouldScale(net.minecraft.world.entity.player.Player player) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("SmallUser").getEnabled()) return false;
+        if (!Modules.enabled(SmallUser.class)) return false;
         var mc = MinecraftWrapper.getInstance();
         boolean isSelf = MobUtility.isSelf(player);
         String t = target;
@@ -29,13 +30,9 @@ public class SmallUser implements ModuleAccess {
             return true;
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("SmallUser").getEnabled();
-    }
 
-    public static SmallUser itz() {
-        return ravex.manager.ModuleManager.delegate(SmallUser.class);
-    }
+
+
 
 
 }

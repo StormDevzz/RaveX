@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
@@ -14,8 +14,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AntiPearl", category = "Combat")
-public class AntiPearl implements ModuleAccess {
+@Module(name = "AntiPearl", category = "Combat")
+public class AntiPearl {
     @Parameter(name = "Range", min = 1.0, max = 16.0, step = 0.5)
     public double range = 8.0;
     @Parameter(name = "AutoAttack")
@@ -89,12 +89,8 @@ public class AntiPearl implements ModuleAccess {
         return new net.minecraft.world.phys.Vec3(x, y, z);
     }
     private static native void nativePredictLanding(double x, double y, double z, double mx, double my, double mz, double[] out);
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiPearl").getEnabled();
-    }
-    public static AntiPearl itz() {
-        return ravex.manager.ModuleManager.delegate(AntiPearl.class);
-    }
+
+
 
 
 }

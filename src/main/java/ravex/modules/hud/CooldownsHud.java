@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -13,8 +13,9 @@ import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import java.util.*;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "CooldownsHud", category = "HUD")
+@Module(name = "CooldownsHud", category = "HUD")
 public class CooldownsHud extends ravex.modules.Module {
     @Parameter(name = "Color", color = true)
     public int color = 0xFFFFCC33;
@@ -29,7 +30,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COOLDOWN_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
 
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         int col = 0xFFFFCC33;
@@ -73,13 +74,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COOLDOWN_WHITE;
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("CooldownsHud").getEnabled();
-    }
 
-    public static CooldownsHud itz() {
-        return ravex.manager.ModuleManager.delegate(CooldownsHud.class);
-    }
+
+
 
 
     

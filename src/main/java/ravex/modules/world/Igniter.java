@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
@@ -8,8 +8,9 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Igniter", category = "World")
-public class Igniter implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "Igniter", category = "World")
+public class Igniter {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.0;
     @Parameter(name = "SwapMode", modes = {"Silent", "Normal", "None"})
@@ -50,7 +51,7 @@ public class Igniter implements ModuleAccess {
             InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
         }
         if (autoDisable) {
-            ravex.manager.ModuleManager.INSTANCE.getByName("Igniter").setEnabled(false);
+            Modules.setEnabled(Igniter.class, false);
         }
     }
     private int[] findNearestTNT(MinecraftWrapper mc) {
@@ -90,9 +91,7 @@ public class Igniter implements ModuleAccess {
         }
         return -1;
     }
-    public static Igniter itz() {
-        return ravex.manager.ModuleManager.delegate(Igniter.class);
-    }
+
 
 
 }

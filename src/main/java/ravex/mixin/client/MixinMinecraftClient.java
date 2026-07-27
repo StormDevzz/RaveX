@@ -13,6 +13,7 @@ import ravex.modules.misc.AntiQuit;
 import ravex.modules.render.ESP;
 import ravex.modules.render.FreeCam;
 import ravex.modules.world.Scaffold;
+import ravex.modules.Modules;
 
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraftClient {
@@ -46,8 +47,8 @@ public abstract class MixinMinecraftClient {
 
     @Inject(method = "startAttack", at = @At("HEAD"), cancellable = true)
     private void onStartAttackPre(CallbackInfoReturnable<Boolean> cir) {
-        if (!FreeCam.maybeEnabled()) return;
-        if (!FreeCam.itz().blockInteract && !FreeCam.itz().entityInteract) {
+        if (!Modules.enabled(FreeCam.class)) return;
+        if (!Modules.get(FreeCam.class).blockInteract && !Modules.get(FreeCam.class).entityInteract) {
             cir.setReturnValue(false);
             return;
         }
@@ -60,15 +61,15 @@ public abstract class MixinMinecraftClient {
         ravexFreeCamSavedYaw = player.getYRot();
         ravexFreeCamSavedPitch = player.getXRot();
 
-        player.setPos(FreeCam.itz().x, FreeCam.itz().y - player.getEyeHeight(), FreeCam.itz().z);
-        player.setYRot(FreeCam.itz().yaw);
-        player.setXRot(FreeCam.itz().pitch);
+        player.setPos(Modules.get(FreeCam.class).x, Modules.get(FreeCam.class).y - player.getEyeHeight(), Modules.get(FreeCam.class).z);
+        player.setYRot(Modules.get(FreeCam.class).yaw);
+        player.setXRot(Modules.get(FreeCam.class).pitch);
     }
 
     @Inject(method = "startAttack", at = @At("RETURN"))
     private void onStartAttackPost(CallbackInfoReturnable<Boolean> cir) {
-        if (!FreeCam.maybeEnabled()) return;
-        if (!FreeCam.itz().blockInteract && !FreeCam.itz().entityInteract) return;
+        if (!Modules.enabled(FreeCam.class)) return;
+        if (!Modules.get(FreeCam.class).blockInteract && !Modules.get(FreeCam.class).entityInteract) return;
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return;
 

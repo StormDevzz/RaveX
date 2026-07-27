@@ -1,14 +1,13 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
-@ModuleInfo(name = "MultiTask", category = "net.minecraft.world.entity.player.Player")
-public class MultiTask implements ModuleAccess {
+import ravex.modules.annotations.Module;
+import ravex.modules.Modules;
+@Module(name = "MultiTask", category = "net.minecraft.world.entity.player.Player")
+public class MultiTask {
 public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("MultiTask").getEnabled();
+        return Modules.enabled(MultiTask.class);
     }
-    public static MultiTask itz() {
-        return ravex.manager.ModuleManager.delegate(MultiTask.class);
-    }
+
 
 
 }

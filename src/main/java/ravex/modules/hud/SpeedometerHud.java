@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -11,8 +11,9 @@ import ravex.parameter.ModeParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "SpeedometerHud", category = "HUD")
+@Module(name = "SpeedometerHud", category = "HUD")
 public class SpeedometerHud extends ravex.modules.Module {
     @Parameter(name = "Unit", modes = {"BPS", "KMH"})
     public String unit = "BPS";
@@ -25,15 +26,11 @@ public class SpeedometerHud extends ravex.modules.Module {
     public int height;
 private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", "hud_white/speedometer");
 
-    public static SpeedometerHud itz() {
-        return ravex.manager.ModuleManager.delegate(SpeedometerHud.class);
-    }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("SpeedometerHud").getEnabled();
-    }
+
+
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 

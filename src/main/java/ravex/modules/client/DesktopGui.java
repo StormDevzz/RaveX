@@ -1,6 +1,6 @@
 package ravex.modules.client;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;
 import ravex.event.combat.ModuleToggleEvent;
@@ -9,8 +9,9 @@ import ravex.parameter.*;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "DesktopGui", category = "Client")
-public class DesktopGui implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "DesktopGui", category = "Client")
+public class DesktopGui {
 private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_desktopgui");
     static {
         NATIVE.load();
@@ -22,7 +23,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
                 mc.player.displayClientMessage(
                     net.minecraft.network.chat.Component.literal("§7[§5DesktopGui§7] §cNative library not found!"), false);
             }
-            ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").setEnabled(false);
+            Modules.setEnabled(DesktopGui.class, false);
             return;
         }
         EventBusHolder.get().subscribe(this);
@@ -60,8 +61,8 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
     public static void onNativeClose() {
         var mc = MinecraftWrapper.getInstance();
         mc.execute(() -> {
-            if (ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").getEnabled()) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").setEnabled(false);
+            if (Modules.enabled(DesktopGui.class)) {
+                Modules.setEnabled(DesktopGui.class, false);
             }
         });
     }
@@ -121,13 +122,9 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
     private static native void updateModuleState(String name, boolean enabled);
     private static native void closeDesktopGui();
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("DesktopGui").getEnabled();
-    }
 
-    public static DesktopGui itz() {
-        return ravex.manager.ModuleManager.delegate(DesktopGui.class);
-    }
+
+
 
 
 }

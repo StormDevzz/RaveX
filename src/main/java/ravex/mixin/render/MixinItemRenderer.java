@@ -10,17 +10,18 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.Glint;
 import ravex.utility.render.GlintVertexConsumerUtility;
+import ravex.modules.Modules;
 
 @Mixin(ItemRenderer.class)
 public class MixinItemRenderer {
 
     @Inject(method = "getFoilBuffer(Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/rendertype/RenderType;ZZ)Lcom/mojang/blaze3d/vertex/VertexConsumer;", at = @At("RETURN"), cancellable = true)
     private static void onGetFoilBuffer(MultiBufferSource bufferSource, RenderType renderType, boolean isItem, boolean glint, CallbackInfoReturnable<VertexConsumer> cir) {
-        if (Glint.maybeEnabled() && glint) {
-            if (isItem && Glint.itz().items) {
-                cir.setReturnValue(new GlintVertexConsumerUtility(cir.getReturnValue(), Glint.itz().color));
-            } else if (!isItem && Glint.itz().armor) {
-                cir.setReturnValue(new GlintVertexConsumerUtility(cir.getReturnValue(), Glint.itz().color));
+        if (Modules.enabled(Glint.class) && glint) {
+            if (isItem && Modules.get(Glint.class).items) {
+                cir.setReturnValue(new GlintVertexConsumerUtility(cir.getReturnValue(), Modules.get(Glint.class).color));
+            } else if (!isItem && Modules.get(Glint.class).armor) {
+                cir.setReturnValue(new GlintVertexConsumerUtility(cir.getReturnValue(), Modules.get(Glint.class).color));
             }
         }
     }

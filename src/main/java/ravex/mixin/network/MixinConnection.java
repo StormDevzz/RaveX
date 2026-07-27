@@ -14,6 +14,7 @@ import ravex.event.EventBusHolder;
 import ravex.event.network.PacketEvent;
 import ravex.modules.movement.GuiMove;
 import io.netty.channel.ChannelHandlerContext;
+import ravex.modules.Modules;
 
 @Mixin(Connection.class)
 public class MixinConnection {
@@ -28,8 +29,8 @@ public class MixinConnection {
         }
 
         if (packet instanceof ServerboundContainerClickPacket) {
-            GuiMove gw = GuiMove.itz();
-            if (GuiMove.maybeEnabled() && "Grim".equals(gw.mode)) {
+            GuiMove gw = Modules.get(GuiMove.class);
+            if (Modules.enabled(GuiMove.class) && "Grim".equals(gw.mode)) {
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.screen instanceof AbstractContainerScreen) {
                     ci.cancel();

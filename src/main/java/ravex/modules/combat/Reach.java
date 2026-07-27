@@ -1,11 +1,11 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Reach", category = "Combat")
-public class Reach implements ModuleAccess {
+@Module(name = "Reach", category = "Combat")
+public class Reach {
     @Parameter(name = "EntityReach", min = 3.0, max = 6.0, step = 0.1)
     public double entityRange = 4.5;
     @Parameter(name = "BlockReach", min = 4.5, max = 7.0, step = 0.1)
@@ -34,12 +34,8 @@ public class Reach implements ModuleAccess {
             blockAttr.setBaseValue(4.5);
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Reach").getEnabled();
-    }
-    public static Reach itz() {
-        return ravex.manager.ModuleManager.delegate(Reach.class);
-    }
+
+
 
 
 }

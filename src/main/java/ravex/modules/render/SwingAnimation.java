@@ -1,23 +1,20 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.util.Mth;
 
 import java.util.List;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "SwingAnimation", category = "Render")
-public class SwingAnimation implements ModuleAccess {
+@Module(name = "SwingAnimation", category = "Render")
+public class SwingAnimation {
     @Parameter(name = "Mode", modes = {"Default", "Swipe", "Akrien", "Rich"})
     public String mode = "Akrien";
     @Parameter(name = "Speed", min = 0.1, max = 5.0, step = 0.1)
     public double speed = 1.0;
-
-    private SwingAnimation() {
-        
-    }
 
     public void applyFourteen(PoseStack poseStack, float swingProgress, float equipProgress) {
         // как в thunderhack fourteen: тупо по swingProgress
@@ -60,8 +57,8 @@ public class SwingAnimation implements ModuleAccess {
         int i = rightHand ? 1 : -1;
         poseStack.translate(i * 0.56F, -0.52F + equipProgress * -0.6F, -0.72F);
 
-        ViewModel vm = ViewModel.itz();
-        boolean vmEnabled = vm.getEnabled();
+        ViewModel vm = Modules.get(ViewModel.class);
+        boolean vmEnabled = Modules.enabled(ViewModel.class);
         if (vmEnabled) {
             float mx = (float) vm.mainX;
             float my = (float) vm.mainY;
@@ -84,13 +81,9 @@ public class SwingAnimation implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("SwingAnimation").getEnabled();
-    }
 
-    public static SwingAnimation itz() {
-        return ravex.manager.ModuleManager.delegate(SwingAnimation.class);
-    }
+
+
 
 
 }

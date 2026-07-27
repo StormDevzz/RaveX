@@ -1,14 +1,14 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
 
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "TridentBoost", category = "Movement")
-public class TridentBoost implements ModuleAccess {
+@Module(name = "TridentBoost", category = "Movement")
+public class TridentBoost {
     @Parameter(name = "Mode", modes = {"Normal", "Always"})
     public String mode = "Normal";
     @Parameter(name = "Speed", min = 0.5, max = 3.0, step = 0.1)
@@ -34,12 +34,8 @@ public class TridentBoost implements ModuleAccess {
         mc.player.setDeltaMovement(new net.minecraft.world.phys.Vec3(dx, dy, dz));
         mc.player.hurtMarked = true;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("TridentBoost").getEnabled();
-    }
-    public static TridentBoost itz() {
-        return ravex.manager.ModuleManager.delegate(TridentBoost.class);
-    }
+
+
 
 
 }

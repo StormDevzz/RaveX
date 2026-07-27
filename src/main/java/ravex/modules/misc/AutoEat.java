@@ -1,13 +1,13 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.food.FoodUtility;
 import net.minecraft.network.chat.Component;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoEat", category = "Misc")
-public class AutoEat implements ModuleAccess {
+@Module(name = "AutoEat", category = "Misc")
+public class AutoEat {
     @Parameter(name = "Hunger", min = 1.0, max = 20.0, step = 1.0)
     public double threshold = 15.0;
     @Parameter(name = "BestFood")
@@ -48,9 +48,7 @@ public class AutoEat implements ModuleAccess {
         FoodUtility.INSTANCE.reset();
     }
 
-    public static AutoEat itz() {
-        return ravex.manager.ModuleManager.delegate(AutoEat.class);
-    }
+
 
 
 }

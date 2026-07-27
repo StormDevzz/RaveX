@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.misc.ChatHelper;
+import ravex.modules.Modules;
 
 @Mixin(LocalPlayer.class)
 public abstract class MixinLocalPlayerDeath {
@@ -13,7 +14,7 @@ public abstract class MixinLocalPlayerDeath {
     private void onDeathScreen(boolean show, CallbackInfo ci) {
         if (!show) return;
         var self = (LocalPlayer)(Object)this;
-        ChatHelper.itz().onDeath(
+        Modules.get(ChatHelper.class).onDeath(
             self.getX(), self.getY(), self.getZ(),
             self.level().dimension().identifier().toString()
         );

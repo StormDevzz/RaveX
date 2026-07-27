@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.MobUtility;
@@ -16,12 +16,13 @@ import net.minecraft.world.level.block.Block;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
-@ModuleInfo(name = "Trap", category = "Combat")
-public class Trap implements ModuleAccess {
+@Module(name = "Trap", category = "Combat")
+public class Trap {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "PlaceDelay", min = 0.0, max = 500.0, step = 10.0)
@@ -72,9 +73,6 @@ public class Trap implements ModuleAccess {
             double range,
             boolean roof
     );
-    private Trap() {
-        
-    }
     public void onEnable() {
         lastPlaceTime = 0;
         currentPlaceDelay = 0;
@@ -98,7 +96,7 @@ public class Trap implements ModuleAccess {
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
             if (autoDisable) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("Trap").setEnabled(false);
+                Modules.setEnabled(Trap.class, false);
             }
             return;
         }
@@ -216,7 +214,7 @@ public class Trap implements ModuleAccess {
             currentPlaceDelay = Math.max(0, (long)(base + jitter));
         } else {
             if (autoDisable && simulatedBlocks.isEmpty()) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("Trap").setEnabled(false);
+                Modules.setEnabled(Trap.class, false);
             }
         }
         if (!silentRotation.hasRotation) {
@@ -267,7 +265,7 @@ public class Trap implements ModuleAccess {
             for (int i = 9; i < 36; i++) {
                 var stack = InventoryUtility.getItem(mc.getPlayer(), i);
                 if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
-                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, 0, net.minecraft.world.inventory.ClickType.SWAP);
+                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, 0, InventoryUtility.SWAP);
                     return 0;
                 }
             }
@@ -400,12 +398,8 @@ public class Trap implements ModuleAccess {
     public static boolean isNativeAvailable() {
         return NATIVE.isLoaded();
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Trap").getEnabled();
-    }
-    public static Trap itz() {
-        return ravex.manager.ModuleManager.delegate(Trap.class);
-    }
+
+
 
 
 }

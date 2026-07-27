@@ -12,7 +12,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.phys.EntityHitResult;
 import java.util.function.Predicate;
@@ -20,6 +19,7 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Holder;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.inventory.ClickType;
 
 public class InventoryUtility {
     public static final ClickType PICKUP = ClickType.PICKUP;
@@ -153,9 +153,9 @@ public class InventoryUtility {
         var _mc = mc.getRaw();
         int containerSlot = inventorySlotToContainerSlot(inventorySlot);
         if (containerSlot == -1) return;
-        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, player);
-        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, 45, 0, ClickType.PICKUP, player);
-        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, player);
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, InventoryUtility.PICKUP, player);
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, 45, 0, InventoryUtility.PICKUP, player);
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, InventoryUtility.PICKUP, player);
     }
 
     public static void quickMoveStack(MinecraftWrapper mc, LocalPlayer player, int inventorySlot) {
@@ -183,12 +183,12 @@ public class InventoryUtility {
 
     public static void quickMoveSlot(MinecraftWrapper mc, int containerId, int slotIndex) {
         var _mc = mc.getRaw();
-        _mc.gameMode.handleInventoryMouseClick(containerId, slotIndex, 0, ClickType.QUICK_MOVE, _mc.player);
+        _mc.gameMode.handleInventoryMouseClick(containerId, slotIndex, 0, InventoryUtility.QUICK_MOVE, _mc.player);
     }
 
     public static void swapSlots(MinecraftWrapper mc, int containerId, int slotA, int slotB) {
         var _mc = mc.getRaw();
-        _mc.gameMode.handleInventoryMouseClick(containerId, slotA, slotB, ClickType.SWAP, _mc.player);
+        _mc.gameMode.handleInventoryMouseClick(containerId, slotA, slotB, InventoryUtility.SWAP, _mc.player);
     }
 
     public static int getItemUseCooldown(LocalPlayer player, ItemStack stack) {

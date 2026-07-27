@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
@@ -11,8 +11,8 @@ import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "ECFarmer", category = "World")
-public class ECFarmer implements ModuleAccess {
+@Module(name = "ECFarmer", category = "World")
+public class ECFarmer {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.5)
     public double range = 4.5;
     @Parameter(name = "Swap", modes = {"Silent", "Normal"})
@@ -217,7 +217,7 @@ public class ECFarmer implements ModuleAccess {
             int free = InventoryUtility.findEmptyHotbarSlot(mc.getPlayer());
             if (free != -1) {
                 InventoryUtility.selectSlot(mc.getPlayer(), free);
-                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, free, net.minecraft.world.inventory.ClickType.SWAP);
+                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, free, InventoryUtility.SWAP);
                 return free;
             }
         }
@@ -273,12 +273,8 @@ public class ECFarmer implements ModuleAccess {
     private static native double nativeCalcBreakTime(String toolId, int efficiency, int haste, int durability, int maxDura);
     private static native int nativeCalcDurabilityLoss(String toolId, int efficiency);
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ECFarmer").getEnabled();
-    }
-    public static ECFarmer itz() {
-        return ravex.manager.ModuleManager.delegate(ECFarmer.class);
-    }
+
+
 
 
 }

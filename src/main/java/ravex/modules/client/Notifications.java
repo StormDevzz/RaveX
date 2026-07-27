@@ -1,6 +1,6 @@
 package ravex.modules.client;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.manager.NotificationManager;
 import ravex.utility.misc.MobUtility;
@@ -20,8 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Notifications", category = "Client")
-public class Notifications implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "Notifications", category = "Client", enabled = true)
+public class Notifications {
     @Parameter(name = "Mode", modes = {"Text", "Toast"})
     public String mode = "Toast";
     @Parameter(name = "VisualRange", modes = {"Off", "Text", "Toast"})
@@ -55,11 +56,6 @@ public class Notifications implements ModuleAccess {
         boolean hasTotem = false;
         boolean hasShield = false;
         float lastHealth = 20;
-    }
-
-    private Notifications() {
-        
-        ravex.manager.ModuleManager.INSTANCE.getByName("Notifications").setEnabled(true);
     }
 
     private void notifyOpt(String modeVal, String text, int color) {
@@ -211,11 +207,11 @@ public class Notifications implements ModuleAccess {
     }
 
     public static void notifyToggle(ravex.modules.Module module, boolean enabled) {
-        if (!ravex.manager.ModuleManager.delegate(Notifications.class).getEnabled()) return;
+        if (!Modules.enabled(Notifications.class)) return;
         var mc = MinecraftWrapper.getWrapper();
-        int color = ravex.manager.ModuleManager.delegate(Notifications.class).messageColor;
-        if (ravex.manager.ModuleManager.delegate(Notifications.class).mode.equals("Toast")) {
-            NotificationManager.addToast(module.getName(), color, enabled, ravex.manager.ModuleManager.delegate(Notifications.class).toastOpacity, (int) ravex.manager.ModuleManager.delegate(Notifications.class).toastSize);
+        int color = Modules.get(Notifications.class).messageColor;
+        if (Modules.get(Notifications.class).mode.equals("Toast")) {
+            NotificationManager.addToast(module.getName(), color, enabled, Modules.get(Notifications.class).toastOpacity, (int) Modules.get(Notifications.class).toastSize);
             return;
         }
         String action = enabled ? "Enabled" : "Disabled";
@@ -232,13 +228,9 @@ public class Notifications implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Notifications").getEnabled();
-    }
 
-    public static Notifications itz() {
-        return ravex.manager.ModuleManager.delegate(Notifications.class);
-    }
+
+
 
 
 }

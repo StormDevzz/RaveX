@@ -1,11 +1,12 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "Zoom", category = "Render")
-public class Zoom implements ModuleAccess {
+@Module(name = "Zoom", category = "Render")
+public class Zoom {
     @Parameter(name = "Smooth")
     public boolean smooth = true;
     @Parameter(name = "SmoothSpeed", min = 0.05, max = 0.5, step = 0.05)
@@ -53,7 +54,7 @@ public class Zoom implements ModuleAccess {
         mc.options.fov().set((int) currentFov);
     }
     public void onScroll(int delta) {
-        if (!scroll || !ravex.manager.ModuleManager.INSTANCE.getByName("Zoom").getEnabled()) return;
+        if (!scroll || !Modules.enabled(Zoom.class)) return;
         if (delta > 0) {
             targetFov = Math.max(minFov, targetFov - scrollStep);
         } else {
@@ -63,13 +64,9 @@ public class Zoom implements ModuleAccess {
     public double getCurrentFov() {
         return currentFov;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Zoom").getEnabled();
-    }
 
-    public static Zoom itz() {
-        return ravex.manager.ModuleManager.delegate(Zoom.class);
-    }
+
+
 
 
 }

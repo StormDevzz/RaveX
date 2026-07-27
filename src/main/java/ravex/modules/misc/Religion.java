@@ -1,14 +1,14 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 
 
 
 
-@ModuleInfo(name = "Religion", category = "Misc")
-public class Religion implements ModuleAccess {
+@Module(name = "Religion", category = "Misc")
+public class Religion {
     @Parameter(name = "Christianity")
     public boolean christianity = false;
     @Parameter(name = "Atheism")
@@ -42,9 +42,7 @@ public class Religion implements ModuleAccess {
 
     }
 
-    public static Religion itz() {
-        return ravex.manager.ModuleManager.delegate(Religion.class);
-    }
+
 
 
 }

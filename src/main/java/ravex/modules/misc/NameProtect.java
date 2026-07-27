@@ -1,13 +1,13 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.chat.Component;
 
 import ravex.parameter.StringParameter;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "NameProtect", category = "Misc")
-public class NameProtect implements ModuleAccess {
+@Module(name = "NameProtect", category = "Misc")
+public class NameProtect {
     @Parameter(name = "ReplaceWith")
     public String replaceText = "RaveX";
 
@@ -21,13 +21,9 @@ public class NameProtect implements ModuleAccess {
         return Component.literal(text.replace(name, replaceText)).setStyle(component.getStyle());
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NameProtect").getEnabled();
-    }
 
-    public static NameProtect itz() {
-        return ravex.manager.ModuleManager.delegate(NameProtect.class);
-    }
+
+
 
 
 }

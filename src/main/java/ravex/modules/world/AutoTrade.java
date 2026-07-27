@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffer;
@@ -10,8 +10,9 @@ import ravex.utility.misc.MobUtility;
 import java.util.Comparator;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoTrade", category = "World")
-public class AutoTrade implements ModuleAccess {
+import ravex.utility.player.InventoryUtility;
+@Module(name = "AutoTrade", category = "World")
+public class AutoTrade {
     @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.5)
     public double range = 4.0;
     @Parameter(name = "Mode", modes = {"Best", "Cheapest", "First"})
@@ -41,7 +42,7 @@ public class AutoTrade implements ModuleAccess {
                 int slot = offers.indexOf(best);
                 mc.gameMode.handleInventoryMouseClick(
                     menu.containerId, slot, 0,
-                    net.minecraft.world.inventory.ClickType.PICKUP, player
+                    InventoryUtility.PICKUP, player
                 );
                 tradesDone++;
                 lastActionTime = now;
@@ -83,9 +84,7 @@ public class AutoTrade implements ModuleAccess {
         if (!b.isEmpty()) cost += b.getCount();
         return cost;
     }
-    public static AutoTrade itz() {
-        return ravex.manager.ModuleManager.delegate(AutoTrade.class);
-    }
+
 
 
 }

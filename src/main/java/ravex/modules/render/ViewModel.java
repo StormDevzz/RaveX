@@ -1,9 +1,9 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-@ModuleInfo(name = "ViewModel", category = "Render")
-public class ViewModel implements ModuleAccess {
+@Module(name = "ViewModel", category = "Render")
+public class ViewModel {
     @Parameter(name = "MainX", min = -2.0, max = 2.0, step = 0.01)
     public double mainX = 0.0;
     @Parameter(name = "MainY", min = -2.0, max = 2.0, step = 0.01)
@@ -41,13 +41,9 @@ public class ViewModel implements ModuleAccess {
     @Parameter(name = "NoSwing")
     public boolean noSwing = false;
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewModel").getEnabled();
-    }
 
-    public static ViewModel itz() {
-        return ravex.manager.ModuleManager.delegate(ViewModel.class);
-    }
+
+
 
 
 }

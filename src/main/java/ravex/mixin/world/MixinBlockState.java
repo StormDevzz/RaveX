@@ -12,19 +12,20 @@ import ravex.modules.movement.LiquidControl;
 import ravex.modules.movement.Phase;
 import ravex.modules.render.NoRender;
 import ravex.modules.world.GhostBlocks;
+import ravex.modules.Modules;
 
 @Mixin(BlockBehaviour.BlockStateBase.class)
 public class MixinBlockState {
 
     @Inject(method = "getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;", at = @At("HEAD"), cancellable = true)
     private void onGetCollisionShape(net.minecraft.world.level.BlockGetter world, net.minecraft.core.BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
-        if (LiquidControl.maybeEnabled()) {
+        if (Modules.enabled(LiquidControl.class)) {
             if (context instanceof net.minecraft.world.phys.shapes.EntityCollisionContext ecc) {
                 if (ecc.getEntity() != null && ecc.getEntity() == net.minecraft.client.Minecraft.getInstance().player) {
                     BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-                    boolean bypassWater = LiquidControl.itz().water;
-                    boolean bypassLava = LiquidControl.itz().lava;
-                    boolean bypassOthers = LiquidControl.itz().others;
+                    boolean bypassWater = Modules.get(LiquidControl.class).water;
+                    boolean bypassLava = Modules.get(LiquidControl.class).lava;
+                    boolean bypassOthers = Modules.get(LiquidControl.class).others;
 
                     net.minecraft.world.level.material.FluidState fluid = self.getFluidState();
                     if (!fluid.isEmpty()) {
@@ -45,7 +46,7 @@ public class MixinBlockState {
             }
         }
 
-        if (Phase.maybeEnabled()) {
+        if (Modules.enabled(Phase.class)) {
             if (context instanceof net.minecraft.world.phys.shapes.EntityCollisionContext ecc) {
                 if (ecc.getEntity() != null && ecc.getEntity() instanceof net.minecraft.client.player.LocalPlayer) {
                     cir.setReturnValue(Shapes.empty());
@@ -54,9 +55,9 @@ public class MixinBlockState {
             }
         }
 
-        if (Avoid.maybeEnabled()) {
+        if (Modules.enabled(Avoid.class)) {
             BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-            if (Avoid.itz().shouldAvoid(self.getBlock())) {
+            if (Modules.get(Avoid.class).shouldAvoid(self.getBlock())) {
                 cir.setReturnValue(Shapes.block());
             }
         }
@@ -64,7 +65,7 @@ public class MixinBlockState {
 
     @Inject(method = "getRenderShape", at = @At("HEAD"), cancellable = true)
     private void onGetRenderShape(CallbackInfoReturnable<net.minecraft.world.level.block.RenderShape> cir) {
-        if (NoRender.maybeEnabled() && NoRender.itz().tripwire) {
+        if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).tripwire) {
             BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
             if (self.getBlock() instanceof net.minecraft.world.level.block.TripWireBlock) {
                 cir.setReturnValue(net.minecraft.world.level.block.RenderShape.INVISIBLE);
@@ -77,7 +78,7 @@ public class MixinBlockState {
     private void onGetVisualShape(net.minecraft.world.level.BlockGetter world, net.minecraft.core.BlockPos pos,
                                   net.minecraft.world.phys.shapes.CollisionContext context,
                                   CallbackInfoReturnable<VoxelShape> cir) {
-        if (GhostBlocks.maybeEnabled()) {
+        if (Modules.enabled(GhostBlocks.class)) {
             net.minecraft.world.level.block.state.BlockState self =
                 (net.minecraft.world.level.block.state.BlockState)(Object)this;
             String blockId = ravex.modules.world.GhostBlocks.getBlockId(self);

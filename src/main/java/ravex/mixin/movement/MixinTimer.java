@@ -7,16 +7,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.Timer;
+import ravex.modules.Modules;
 
 @Mixin(LocalPlayer.class)
 public class MixinTimer {
 
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
-        if (!Timer.maybeEnabled()) return;
+        if (!Modules.enabled(Timer.class)) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
-        float multiplier = (float) Timer.itz().speed;
+        float multiplier = (float) Modules.get(Timer.class).speed;
 
         if (multiplier == 1.0f) return;
 

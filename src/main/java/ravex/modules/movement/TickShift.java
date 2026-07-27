@@ -1,6 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.world.entity.player.Input;
 
@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Random;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@ModuleInfo(name = "TickShift", category = "Movement")
-public class TickShift implements ModuleAccess {
+@Module(name = "TickShift", category = "Movement")
+public class TickShift {
     @Parameter(name = "Mode", modes = {"Motion", "Strafe", "Timer", "GrimStrict"})
     public String mode = "Motion";
     @Parameter(name = "Delay", min = 1.0, max = 200.0, step = 1.0)
@@ -117,9 +117,7 @@ public class TickShift implements ModuleAccess {
             mc.player.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
         }
     }
-    public static TickShift itz() {
-        return ravex.manager.ModuleManager.delegate(TickShift.class);
-    }
+
 
 
 }

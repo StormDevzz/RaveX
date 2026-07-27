@@ -1,6 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -12,8 +12,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "ClickFly", category = "Movement")
-public class ClickFly implements ModuleAccess {
+@Module(name = "ClickFly", category = "Movement")
+public class ClickFly {
     @Parameter(name = "Mode", modes = {"Fly", "TP"})
     public String mode = "Fly";
     @Parameter(name = "Speed", min = 0.5, max = 5.0, step = 0.25)
@@ -114,9 +114,7 @@ public class ClickFly implements ModuleAccess {
                 next.x, next.y, next.z, true, p.horizontalCollision));
         p.setPos(next.x, next.y, next.z);
     }
-    public static ClickFly itz() {
-        return ravex.manager.ModuleManager.delegate(ClickFly.class);
-    }
+
 
 
 }

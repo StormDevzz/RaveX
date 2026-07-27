@@ -13,12 +13,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.player.GhostHand;
+import ravex.modules.Modules;
 
 @Mixin(Minecraft.class)
 public class MixinGhostHand {
     @Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
     private void onStartUseItem(CallbackInfo ci) {
-        if (!GhostHand.maybeEnabled()) return;
+        if (!Modules.enabled(GhostHand.class)) return;
 
         Minecraft mc = (Minecraft)(Object)this;
         if (mc.player == null || mc.level == null) return;
@@ -27,7 +28,7 @@ public class MixinGhostHand {
         if (hit != null && hit.getType() == HitResult.Type.BLOCK) return;
 
         net.minecraft.client.player.LocalPlayer player = mc.player;
-        double range = GhostHand.itz().range;
+        double range = Modules.get(GhostHand.class).range;
         Vec3 eye = player.getEyePosition(1.0F);
         Vec3 look = player.getViewVector(1.0F);
         Vec3 end = eye.add(look.x * range, look.y * range, look.z * range);
@@ -40,13 +41,13 @@ public class MixinGhostHand {
             BlockState state = mc.level.getBlockState(pos);
             Block block = state.getBlock();
 
-            boolean canInteract = GhostHand.itz().allBlocks;
+            boolean canInteract = Modules.get(GhostHand.class).allBlocks;
             if (!canInteract) {
-                if (GhostHand.itz().chests && isChest(block)) canInteract = true;
-                else if (GhostHand.itz().enderChests && block instanceof EnderChestBlock) canInteract = true;
-                else if (GhostHand.itz().furnaces && (block instanceof AbstractFurnaceBlock || block instanceof FurnaceBlock)) canInteract = true;
-                else if (GhostHand.itz().craftingTables && block instanceof CraftingTableBlock) canInteract = true;
-                else if (GhostHand.itz().enchantTables && block instanceof EnchantingTableBlock) canInteract = true;
+                if (Modules.get(GhostHand.class).chests && isChest(block)) canInteract = true;
+                else if (Modules.get(GhostHand.class).enderChests && block instanceof EnderChestBlock) canInteract = true;
+                else if (Modules.get(GhostHand.class).furnaces && (block instanceof AbstractFurnaceBlock || block instanceof FurnaceBlock)) canInteract = true;
+                else if (Modules.get(GhostHand.class).craftingTables && block instanceof CraftingTableBlock) canInteract = true;
+                else if (Modules.get(GhostHand.class).enchantTables && block instanceof EnchantingTableBlock) canInteract = true;
             }
 
             if (canInteract) {

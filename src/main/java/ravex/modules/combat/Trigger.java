@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 
 import ravex.utility.misc.MobUtility;
@@ -8,8 +8,8 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Trigger", category = "Combat")
-public class Trigger implements ModuleAccess {
+@Module(name = "Trigger", category = "Combat")
+public class Trigger {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "Cooldown", min = 0.0, max = 1.0, step = 0.05)
@@ -120,12 +120,8 @@ public class Trigger implements ModuleAccess {
         InventoryUtility.attackEntity(ravex.mcwrapper.MinecraftWrapper.getWrapper(), target, swingMode);
         lastAttackTime = System.currentTimeMillis();
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Trigger").getEnabled();
-    }
-    public static Trigger itz() {
-        return ravex.manager.ModuleManager.delegate(Trigger.class);
-    }
+
+
 
 
 }

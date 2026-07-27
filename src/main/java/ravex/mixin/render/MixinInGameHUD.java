@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.NoRender;
 import ravex.render.hud.HudRenderer;
+import ravex.modules.Modules;
 
 @Mixin(Gui.class)
 public abstract class MixinInGameHUD {
@@ -19,7 +20,7 @@ public abstract class MixinInGameHUD {
 
     @Inject(method = "renderPortalOverlay", at = @At("HEAD"), cancellable = true)
     private void onRenderPortalOverlay(GuiGraphics guiGraphics, float f, CallbackInfo ci) {
-        if (NoRender.maybeEnabled() && NoRender.itz().portal) {
+        if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).portal) {
             ci.cancel();
         }
     }

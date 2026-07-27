@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.NoWeb;
+import ravex.modules.Modules;
 
 @Mixin(Entity.class)
 public abstract class MixinNoWeb {
@@ -19,14 +20,14 @@ public abstract class MixinNoWeb {
 
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (NoWeb.maybeEnabled() && state.is(net.minecraft.world.level.block.Blocks.COBWEB)) {
-            String mode = NoWeb.itz().mode;
+        if (Modules.enabled(NoWeb.class) && state.is(net.minecraft.world.level.block.Blocks.COBWEB)) {
+            String mode = Modules.get(NoWeb.class).mode;
             double horizontal = 1.0;
             double vertical = 1.0;
 
             if (mode.equals("Custom")) {
-                horizontal = NoWeb.itz().horizontalSpeed;
-                vertical = NoWeb.itz().verticalSpeed;
+                horizontal = Modules.get(NoWeb.class).horizontalSpeed;
+                vertical = Modules.get(NoWeb.class).verticalSpeed;
             }
 
             self.fallDistance = 0.0F;

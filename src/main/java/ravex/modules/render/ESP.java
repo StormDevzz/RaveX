@@ -1,18 +1,19 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
-@ModuleInfo(name = "ESP", category = "Render")
-public class ESP implements ModuleAccess {
+@Module(name = "ESP", category = "Render")
+public class ESP {
     @Parameter(name = "Mode", modes = {"Outline", "Box2D", "Tunnels", "Holes", "Void"})
     public String mode = "Outline";
     @Parameter(name = "Players")
@@ -79,9 +80,6 @@ public class ESP implements ModuleAccess {
     private int holeTick = 0;
     private List<net.minecraft.core.BlockPos> voidBlocks = new ArrayList<>();
     private long lastVoidScan = 0;
-    private ESP() {
-        
-    }
     public void onTick() {
         String m = mode;
         if (m.equals("Tunnels")) scanTunnels();
@@ -183,8 +181,8 @@ public class ESP implements ModuleAccess {
         voidBlocks = result;
     }
     public static boolean shouldGlow(net.minecraft.world.entity.Entity entity) {
-        ESP $ = ravex.manager.ModuleManager.delegate(ESP.class);
-        if ($ == null || !$.getEnabled() || !$.mode.equals("Outline")) return false;
+        ESP $ = Modules.get(ESP.class);
+        if ($ == null || !Modules.enabled(ESP.class) || !$.mode.equals("Outline")) return false;
         var mc = MinecraftWrapper.getWrapper();
         if (entity == mc.getPlayer()) return false;
         if (mc.getPlayer() != null && mc.getPlayer().distanceTo(entity) > $.maxDistance) return false;
@@ -199,13 +197,9 @@ public class ESP implements ModuleAccess {
     public List<net.minecraft.core.BlockPos> getTunnelBlocks() { return tunnelBlocks; }
     public List<net.minecraft.core.BlockPos> getHoles() { return holes; }
     public List<net.minecraft.core.BlockPos> getVoidBlocks() { return voidBlocks; }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ESP").getEnabled();
-    }
 
-    public static ESP itz() {
-        return ravex.manager.ModuleManager.delegate(ESP.class);
-    }
+
+
 
 
 }

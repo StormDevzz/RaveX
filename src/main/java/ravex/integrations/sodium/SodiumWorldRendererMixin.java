@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import ravex.modules.render.NoRender;
+import ravex.modules.Modules;
 
 @Mixin(SodiumWorldRenderer.class)
 public abstract class SodiumWorldRendererMixin {
@@ -15,7 +16,7 @@ public abstract class SodiumWorldRendererMixin {
 
     @ModifyVariable(method = "setupTerrain", at = @At("HEAD"), argsOnly = true, name = "fogParameters")
     private FogParameters ravex$modifyFogParameters(FogParameters fogParameters) {
-        if (NoRender.maybeEnabled() && NoRender.itz().fog) {
+        if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).fog) {
             return DISABLED_FOG;
         }
         return fogParameters;

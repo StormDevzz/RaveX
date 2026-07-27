@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorUtility;
@@ -10,8 +10,9 @@ import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "ServerBrandHud", category = "HUD")
+@Module(name = "ServerBrandHud", category = "HUD")
 public class ServerBrandHud extends ravex.modules.Module {
     public int x;
     public int y;
@@ -29,7 +30,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
     }
     public static native String nativeFormatBrand(String rawBrand);
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null || mc.player.connection == null) return;
         String rawBrand = null;
@@ -61,13 +62,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
     }
 
-    public static ServerBrandHud itz() {
-        return ravex.manager.ModuleManager.delegate(ServerBrandHud.class);
-    }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ServerBrandHud").getEnabled();
-    }
+
+
 
 
     

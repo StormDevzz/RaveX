@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
@@ -12,8 +12,8 @@ import net.minecraft.world.item.BowItem;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoBow", category = "Combat")
-public class AutoBow implements ModuleAccess {
+@Module(name = "AutoBow", category = "Combat")
+public class AutoBow {
     @Parameter(name = "Charge", min = 10.0, max = 100.0, step = 1.0)
     public double charge = 95.0;
     @Parameter(name = "Silent")
@@ -59,12 +59,8 @@ public class AutoBow implements ModuleAccess {
         }
         return -1;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoBow").getEnabled();
-    }
-    public static AutoBow itz() {
-        return ravex.manager.ModuleManager.delegate(AutoBow.class);
-    }
+
+
 
 
 }

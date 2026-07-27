@@ -1,14 +1,14 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "ChestAura", category = "World")
-public class ChestAura implements ModuleAccess {
+@Module(name = "ChestAura", category = "World")
+public class ChestAura {
     @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "Delay", min = 0.0, max = 20.0, step = 1.0)
@@ -35,9 +35,6 @@ public class ChestAura implements ModuleAccess {
     }
     public static final List<PlacedChest> placedChests = new CopyOnWriteArrayList<>();
     private int delayTimer = 0;
-    private ChestAura() {
-        
-    }
     public void onEnable() {
         delayTimer = 0;
         placedChests.clear();
@@ -132,12 +129,8 @@ public class ChestAura implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ChestAura").getEnabled();
-    }
-    public static ChestAura itz() {
-        return ravex.manager.ModuleManager.delegate(ChestAura.class);
-    }
+
+
 
 
 }

@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.textures.FilterMode;
@@ -17,9 +17,10 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "Tracers", category = "Render")
-public class Tracers implements ModuleAccess {
+@Module(name = "Tracers", category = "Render")
+public class Tracers {
     @Parameter(name = "Mode", modes = {"Default", "Arrows"})
     public String mode = "Default";
     @Parameter(name = "Players")
@@ -49,10 +50,6 @@ public class Tracers implements ModuleAccess {
 
     private static Identifier arrowTexture;
     private static boolean arrowLoaded = false;
-
-    private Tracers() {
-        
-    }
 
     private static Identifier getArrowTexture() {
         if (!arrowLoaded) {
@@ -93,8 +90,8 @@ public class Tracers implements ModuleAccess {
         if (tex == null)
             return;
 
-        Tracers t = ravex.manager.ModuleManager.delegate(Tracers.class);
-        if (!t.getEnabled() || !t.mode.equals("Arrows"))
+        Tracers t = Modules.get(Tracers.class);
+        if (!Modules.enabled(Tracers.class) || !t.mode.equals("Arrows"))
             return;
 
         var mc = MinecraftWrapper.getInstance();
@@ -224,13 +221,9 @@ public class Tracers implements ModuleAccess {
             context.pose().popMatrix();
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Tracers").getEnabled();
-    }
 
-    public static Tracers itz() {
-        return ravex.manager.ModuleManager.delegate(Tracers.class);
-    }
+
+
 
 
 }

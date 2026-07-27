@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
@@ -15,8 +15,9 @@ import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "IndicatorsHud", category = "HUD")
+@Module(name = "IndicatorsHud", category = "HUD")
 public class IndicatorsHud extends ravex.modules.Module {
     @Parameter(name = "HealthColor", color = true)
     public int healthColor = 0xFFFF4455;
@@ -59,7 +60,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
         return true;
     }
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
         net.minecraft.world.entity.player.Player player = mc.getPlayer();
@@ -149,13 +150,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
         prevVelX = vx; prevVelZ = vz;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("IndicatorsHud").getEnabled();
-    }
 
-    public static IndicatorsHud itz() {
-        return ravex.manager.ModuleManager.delegate(IndicatorsHud.class);
-    }
+
+
 
 
     

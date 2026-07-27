@@ -18,6 +18,7 @@ import ravex.modules.render.ToolTips;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import ravex.modules.Modules;
 
 @Mixin(ItemStack.class)
 public class MixinItemStack {
@@ -27,7 +28,7 @@ public class MixinItemStack {
     @Inject(method = "getTooltipLines(Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/TooltipFlag;)Ljava/util/List;",
             at = @At("RETURN"), cancellable = true)
     private void onGetTooltipLines(Item.TooltipContext context, Player player, TooltipFlag flag, CallbackInfoReturnable<List<Component>> cir) {
-        if (!ToolTips.maybeEnabled()) return;
+        if (!Modules.enabled(ToolTips.class)) return;
         ItemStack self = (ItemStack) (Object) this;
         if (self.isEmpty()) return;
         if (IN_RECURSION.get()) return;
@@ -35,7 +36,7 @@ public class MixinItemStack {
         List<Component> original = cir.getReturnValue();
         List<Component> modified = new ArrayList<>(original);
 
-        if (ToolTips.itz().showShulker && ToolTips.itz().isShulker(self)) {
+        if (Modules.get(ToolTips.class).showShulker && Modules.get(ToolTips.class).isShulker(self)) {
             IN_RECURSION.set(true);
             try {
                 ItemStack copy = self.copy();
@@ -47,15 +48,15 @@ public class MixinItemStack {
             }
         }
 
-        modified.addAll(ToolTips.itz().getTooltip(self));
+        modified.addAll(Modules.get(ToolTips.class).getTooltip(self));
         cir.setReturnValue(modified);
     }
 
     @Inject(method = "getTooltipImage()Ljava/util/Optional;", at = @At("HEAD"), cancellable = true)
     private void onGetTooltipImage(CallbackInfoReturnable<Optional<TooltipComponent>> cir) {
-        if (!ToolTips.maybeEnabled() || !ToolTips.itz().showShulker) return;
+        if (!Modules.enabled(ToolTips.class) || !Modules.get(ToolTips.class).showShulker) return;
         ItemStack self = (ItemStack) (Object) this;
-        if (ToolTips.itz().isShulker(self)) {
+        if (Modules.get(ToolTips.class).isShulker(self)) {
             ItemContainerContents contents = self.get(DataComponents.CONTAINER);
             if (contents != null) {
                 cir.setReturnValue(Optional.of(new ShulkerDataTooltipComponent(contents.stream().toList())));

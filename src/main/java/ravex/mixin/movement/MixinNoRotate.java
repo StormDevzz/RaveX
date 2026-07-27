@@ -7,18 +7,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.NoRotate;
+import ravex.modules.Modules;
 
 @Mixin(ClientPacketListener.class)
 public class MixinNoRotate {
     @Inject(method = "handleMovePlayer", at = @At("HEAD"))
     private void onHandleMovePlayerHead(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
-        if (NoRotate.maybeEnabled()) {
-            NoRotate.itz().saveRotation();
+        if (Modules.enabled(NoRotate.class)) {
+            Modules.get(NoRotate.class).saveRotation();
         }
     }
 
     @Inject(method = "handleMovePlayer", at = @At("TAIL"))
     private void onHandleMovePlayerTail(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
-        NoRotate.itz().restoreRotation();
+        Modules.get(NoRotate.class).restoreRotation();
     }
 }

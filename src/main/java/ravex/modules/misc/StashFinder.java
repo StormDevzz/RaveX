@@ -1,17 +1,18 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
-@ModuleInfo(name = "StashFinder", category = "Misc")
-public class StashFinder implements ModuleAccess {
+@Module(name = "StashFinder", category = "Misc")
+public class StashFinder {
     @Parameter(name = "Range", min = 16.0, max = 256.0, step = 8.0)
     public double range = 64.0;
     @Parameter(name = "Render")
@@ -23,7 +24,7 @@ public class StashFinder implements ModuleAccess {
     private boolean hasChecked = false;
 
     public void onContainerOpened(net.minecraft.core.BlockPos pos, List<net.minecraft.world.item.ItemStack> contents) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("StashFinder").getEnabled()) return;
+        if (!Modules.enabled(StashFinder.class)) return;
         if (stashes.stream().anyMatch(s -> s.pos.equals(pos))) return;
         int valuableCount = 0;
         int totalItems = 0;
@@ -76,13 +77,9 @@ public class StashFinder implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("StashFinder").getEnabled();
-    }
 
-    public static StashFinder itz() {
-        return ravex.manager.ModuleManager.delegate(StashFinder.class);
-    }
+
+
 
 
 }

@@ -9,13 +9,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.NoRender;
+import ravex.modules.Modules;
 
 @Mixin(ScreenEffectRenderer.class)
 public class MixinScreenEffectRenderer {
 
     @Inject(method = "renderFire", at = @At("HEAD"), cancellable = true)
     private static void onRenderFire(PoseStack poseStack, MultiBufferSource multiBufferSource, TextureAtlasSprite textureAtlasSprite, CallbackInfo ci) {
-        if (NoRender.maybeEnabled() && NoRender.itz().fire) {
+        if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).fire) {
             ci.cancel();
         }
     }

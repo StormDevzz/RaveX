@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -14,8 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "BreadCrumbs", category = "Render")
-public class BreadCrumbs implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "BreadCrumbs", category = "Render")
+public class BreadCrumbs {
 public static final Map<Integer, List<net.minecraft.world.phys.Vec3>> trails = new HashMap<>();
     @Parameter(name = "Color", color = true)
     public int color = 0xFF33AAFF;
@@ -55,11 +56,11 @@ public static final Map<Integer, List<net.minecraft.world.phys.Vec3>> trails = n
         }
     }
     public static void renderTrails(Matrix4f modelViewMatrix, net.minecraft.world.phys.Vec3 camPos) {
-        int color = ravex.manager.ModuleManager.delegate(BreadCrumbs.class).color;
+        int color = Modules.get(BreadCrumbs.class).color;
         float cr = ((color >> 16) & 0xFF) / 255.0f;
         float cg = ((color >> 8) & 0xFF) / 255.0f;
         float cb = (color & 0xFF) / 255.0f;
-        float lineWidth = (float) ravex.manager.ModuleManager.delegate(BreadCrumbs.class).width;
+        float lineWidth = (float) Modules.get(BreadCrumbs.class).width;
         for (Map.Entry<Integer, List<net.minecraft.world.phys.Vec3>> entry : trails.entrySet()) {
             List<net.minecraft.world.phys.Vec3> trail = entry.getValue();
             if (trail.size() < 2) continue;
@@ -77,13 +78,9 @@ public static final Map<Integer, List<net.minecraft.world.phys.Vec3>> trails = n
     public void onDisable() {
         trails.clear();
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("BreadCrumbs").getEnabled();
-    }
 
-    public static BreadCrumbs itz() {
-        return ravex.manager.ModuleManager.delegate(BreadCrumbs.class);
-    }
+
+
 
 
 }

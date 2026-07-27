@@ -10,15 +10,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.mixin.network.AccessorMultiPlayerGameMode;
 import ravex.modules.player.PacketMine;
+import ravex.modules.Modules;
 
 @Mixin(MultiPlayerGameMode.class)
 public class MixinMultiPlayerGameMode {
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onStartDestroyBlock(BlockPos pos, Direction facing, CallbackInfoReturnable<Boolean> cir) {
         Minecraft mc = Minecraft.getInstance();
-        PacketMine pm = PacketMine.itz();
+        PacketMine pm = Modules.get(PacketMine.class);
 
-        if (PacketMine.maybeEnabled() && pm.grimMode.equals("Strict")) {
+        if (Modules.enabled(PacketMine.class) && pm.grimMode.equals("Strict")) {
             if (pm.isTargetBlock(pos)) {
                 AccessorMultiPlayerGameMode accessor = (AccessorMultiPlayerGameMode) this;
                 accessor.setDestroyBlockPos(pos);

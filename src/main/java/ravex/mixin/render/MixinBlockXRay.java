@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.player.Xray;
+import ravex.modules.Modules;
 
 @Mixin(BlockBehaviour.BlockStateBase.class)
 public class MixinBlockXRay {
@@ -20,9 +21,9 @@ public class MixinBlockXRay {
 
     @Inject(method = "getRenderShape", at = @At("HEAD"), cancellable = true)
     private void onGetRenderShape(CallbackInfoReturnable<RenderShape> cir) {
-        if (!Xray.maybeEnabled()) return;
+        if (!Modules.enabled(Xray.class)) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (!Xray.itz().isBlockSelected(self.getBlock())) {
+        if (!Modules.get(Xray.class).isBlockSelected(self.getBlock())) {
             cir.setReturnValue(RenderShape.INVISIBLE);
         }
     }
@@ -31,9 +32,9 @@ public class MixinBlockXRay {
 
     @Inject(method = "skipRendering", at = @At("HEAD"), cancellable = true)
     private void onSkipRendering(BlockState adjacent, Direction dir, CallbackInfoReturnable<Boolean> cir) {
-        if (!Xray.maybeEnabled()) return;
+        if (!Modules.enabled(Xray.class)) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (Xray.itz().isBlockSelected(self.getBlock())) {
+        if (Modules.get(Xray.class).isBlockSelected(self.getBlock())) {
 
             cir.setReturnValue(false);
         } else {
@@ -52,18 +53,18 @@ public class MixinBlockXRay {
 
     @Inject(method = "getOcclusionShape", at = @At("HEAD"), cancellable = true)
     private void onGetOcclusionShape(CallbackInfoReturnable<VoxelShape> cir) {
-        if (!Xray.maybeEnabled()) return;
+        if (!Modules.enabled(Xray.class)) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (!Xray.itz().isBlockSelected(self.getBlock())) {
+        if (!Modules.get(Xray.class).isBlockSelected(self.getBlock())) {
             cir.setReturnValue(Shapes.empty());
         }
     }
 
     @Inject(method = "getFaceOcclusionShape", at = @At("HEAD"), cancellable = true)
     private void onGetFaceOcclusionShape(Direction direction, CallbackInfoReturnable<VoxelShape> cir) {
-        if (!Xray.maybeEnabled()) return;
+        if (!Modules.enabled(Xray.class)) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (!Xray.itz().isBlockSelected(self.getBlock())) {
+        if (!Modules.get(Xray.class).isBlockSelected(self.getBlock())) {
             cir.setReturnValue(Shapes.empty());
         }
     }
@@ -72,9 +73,9 @@ public class MixinBlockXRay {
 
     @Inject(method = "isSolidRender", at = @At("HEAD"), cancellable = true)
     private void onIsSolidRender(CallbackInfoReturnable<Boolean> cir) {
-        if (!Xray.maybeEnabled()) return;
+        if (!Modules.enabled(Xray.class)) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (!Xray.itz().isBlockSelected(self.getBlock())) {
+        if (!Modules.get(Xray.class).isBlockSelected(self.getBlock())) {
             cir.setReturnValue(false);
         }
     }
@@ -83,16 +84,16 @@ public class MixinBlockXRay {
 
     @Inject(method = "getLightBlock", at = @At("HEAD"), cancellable = true)
     private void onGetLightBlock(CallbackInfoReturnable<Integer> cir) {
-        if (Xray.maybeEnabled()) {
+        if (Modules.enabled(Xray.class)) {
             cir.setReturnValue(0);
         }
     }
 
     @Inject(method = "getLightEmission", at = @At("HEAD"), cancellable = true)
     private void onGetLightEmission(CallbackInfoReturnable<Integer> cir) {
-        if (!Xray.maybeEnabled()) return;
+        if (!Modules.enabled(Xray.class)) return;
         BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-        if (Xray.itz().isBlockSelected(self.getBlock())) {
+        if (Modules.get(Xray.class).isBlockSelected(self.getBlock())) {
 
             cir.setReturnValue(15);
         }

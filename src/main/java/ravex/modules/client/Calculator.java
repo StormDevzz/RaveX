@@ -1,12 +1,13 @@
 package ravex.modules.client;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import net.minecraft.network.chat.Component;
 
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Calculator", category = "Client")
-public class Calculator implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "Calculator", category = "Client")
+public class Calculator {
 private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_calculator");
     static {
         NATIVE.load();
@@ -18,7 +19,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
                 mc.player.displayClientMessage(
                     Component.literal("§7[§5Calculator§7] §cNative library not found!"), false);
             }
-            ravex.manager.ModuleManager.INSTANCE.getByName("Calculator").setEnabled(false);
+            Modules.setEnabled(Calculator.class, false);
             return;
         }
         openCalculator();
@@ -31,8 +32,8 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
     public static void onNativeClose() {
         var mc = MinecraftWrapper.getInstance();
         mc.execute(() -> {
-            if (ravex.manager.ModuleManager.INSTANCE.getByName("Calculator").getEnabled()) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("Calculator").setEnabled(false);
+            if (Modules.enabled(Calculator.class)) {
+                Modules.setEnabled(Calculator.class, false);
             }
         });
     }
@@ -40,13 +41,9 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
     private static native void closeCalculator();
     public static native String nativeEvaluate(String expr);
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Calculator").getEnabled();
-    }
 
-    public static Calculator itz() {
-        return ravex.manager.ModuleManager.delegate(Calculator.class);
-    }
+
+
 
 
 }

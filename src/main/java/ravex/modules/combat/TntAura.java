@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.MobUtility;
@@ -18,12 +18,13 @@ import java.util.List;
 import java.util.Set;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
-@ModuleInfo(name = "TntAura", category = "Combat")
-public class TntAura implements ModuleAccess {
+@Module(name = "TntAura", category = "Combat")
+public class TntAura {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "PlaceDelay", min = 0.0, max = 500.0, step = 10.0)
@@ -104,7 +105,7 @@ public class TntAura implements ModuleAccess {
         silentRotation.hasRotation = false;
         net.minecraft.world.entity.LivingEntity target = findTarget(mc);
         if (target == null) {
-            if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
+            if (autoDisable) Modules.setEnabled(TntAura.class, false);
             return;
         }
         if (currentTarget != target) {
@@ -185,7 +186,7 @@ public class TntAura implements ModuleAccess {
         }
         int tntSlot = findTntSlot(mc);
         if (tntSlot == -1) {
-            if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
+            if (autoDisable) Modules.setEnabled(TntAura.class, false);
             return;
         }
         double[] solidData = collectSolidBlocks(mc);
@@ -204,7 +205,7 @@ public class TntAura implements ModuleAccess {
             failedTntPlacements++;
             if (failedTntPlacements >= 5) {
                 if (autoDisable) {
-                    ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
+                    Modules.setEnabled(TntAura.class, false);
                 } else {
                     currentState = State.TRAPPING;
                     gapPos = null;
@@ -231,7 +232,7 @@ public class TntAura implements ModuleAccess {
         if (now - lastActionTime < igniteDelay) return;
         int flintSlot = findFlintAndSteelSlot(mc);
         if (flintSlot == -1) {
-            if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
+            if (autoDisable) Modules.setEnabled(TntAura.class, false);
             return;
         }
         net.minecraft.core.BlockPos tntPos = new net.minecraft.core.BlockPos(gapPos[0], gapPos[1], gapPos[2]);
@@ -248,7 +249,7 @@ public class TntAura implements ModuleAccess {
     private void tickWaiting(MinecraftWrapper mc, long now) {
         if (now - lastActionTime > 5000) {
             if (autoDisable) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").setEnabled(false);
+                Modules.setEnabled(TntAura.class, false);
             } else {
                 currentState = State.TRAPPING;
                 gapPos = null;
@@ -441,12 +442,8 @@ public class TntAura implements ModuleAccess {
         }
         return new double[]{0.0};
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("TntAura").getEnabled();
-    }
-    public static TntAura itz() {
-        return ravex.manager.ModuleManager.delegate(TntAura.class);
-    }
+
+
 
 
 }

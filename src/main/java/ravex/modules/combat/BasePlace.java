@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
 import ravex.utility.misc.block.BlockUtility;
@@ -24,14 +24,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
 
 
-@ModuleInfo(name = "BasePlace", category = "Combat")
-public class BasePlace implements ModuleAccess {
+@Module(name = "BasePlace", category = "Combat")
+public class BasePlace {
     @Parameter(name = "Target", modes = {"Closest", "LowestHP"})
     public String targetMode = "Closest";
     @Parameter(name = "TargetType", modes = {"Players", "Monsters", "Passives", "All"})
@@ -86,14 +87,6 @@ public class BasePlace implements ModuleAccess {
     static {
         NATIVE.load();
     }
-    private BasePlace() {
-    }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("BasePlace").getEnabled();
-    }
-    public static BasePlace itz() {
-        return ravex.manager.ModuleManager.delegate(BasePlace.class);
-    }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
@@ -124,8 +117,8 @@ public class BasePlace implements ModuleAccess {
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         silentRotation.hasRotation = false;
         if (autoCrystalSync) {
-            AutoCrystal ac = ravex.manager.ModuleManager.delegate(ravex.modules.combat.AutoCrystal.class);
-            if (!ac.getEnabled()) {
+            AutoCrystal ac = Modules.get(AutoCrystal.class);
+            if (!Modules.enabled(AutoCrystal.class)) {
                 simulatedPlacementBlock = null;
                 return;
             }
@@ -283,7 +276,7 @@ public class BasePlace implements ModuleAccess {
                 if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
                 if (blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
                     int hotbarSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, hotbarSlot, InventoryUtility.SWAP);
                     return hotbarSlot;
                 }
             }

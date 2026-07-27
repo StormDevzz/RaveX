@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -16,8 +16,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "GhostBlocks", category = "World")
-public class GhostBlocks implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "GhostBlocks", category = "World")
+public class GhostBlocks {
     @Parameter(name = "Mode", modes = {"Strict", "Smooth"})
     public String mode = "Strict";
     @Parameter(name = "Range", min = 2.0, max = 12.0, step = 0.5)
@@ -58,13 +59,13 @@ public class GhostBlocks implements ModuleAccess {
         }
     }
     public static void markMined(net.minecraft.core.BlockPos pos) {
-        if (ravex.manager.ModuleManager.delegate(GhostBlocks.class).getEnabled()) {
-            ravex.manager.ModuleManager.delegate(GhostBlocks.class).recentlyMined.add(pos.asLong());
+        if (Modules.enabled(GhostBlocks.class)) {
+            Modules.get(GhostBlocks.class).recentlyMined.add(pos.asLong());
         }
     }
     @Subscribe
     public void onPacketEvent(PacketEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("GhostBlocks").getEnabled() || !event.isReceive()) return;
+        if (!Modules.enabled(GhostBlocks.class) || !event.isReceive()) return;
         Object packet = event.getPacket();
         if (packet instanceof ClientboundBlockUpdatePacket blockUpdate) {
             net.minecraft.core.BlockPos pos = blockUpdate.getPos();
@@ -77,20 +78,20 @@ public class GhostBlocks implements ModuleAccess {
     }
 
     public static void onServerBlockUpdate(int x, int y, int z, String blockId) {
-        if (!ravex.manager.ModuleManager.delegate(GhostBlocks.class).getEnabled()) return;
+        if (!Modules.enabled(GhostBlocks.class)) return;
         long packed = BlockUtility.packPos(x, y, z);
-        ravex.manager.ModuleManager.delegate(GhostBlocks.class).recentlyMined.remove(packed);
+        Modules.get(GhostBlocks.class).recentlyMined.remove(packed);
         if (blockId != null && !blockId.equals("minecraft:air")) {
-            ravex.manager.ModuleManager.delegate(GhostBlocks.class).serverBlocks.put(packed, blockId);
+            Modules.get(GhostBlocks.class).serverBlocks.put(packed, blockId);
         } else {
-            ravex.manager.ModuleManager.delegate(GhostBlocks.class).serverBlocks.remove(packed);
+            Modules.get(GhostBlocks.class).serverBlocks.remove(packed);
         }
     }
     public static boolean isGhostBlock(int x, int y, int z, String clientBlockId) {
-        if (!ravex.manager.ModuleManager.delegate(GhostBlocks.class).getEnabled()) return false;
+        if (!Modules.enabled(GhostBlocks.class)) return false;
         long packed = BlockUtility.packPos(x, y, z);
-        if (ravex.manager.ModuleManager.delegate(GhostBlocks.class).recentlyMined.contains(packed)) return true;
-        String serverBlock = ravex.manager.ModuleManager.delegate(GhostBlocks.class).serverBlocks.get(packed);
+        if (Modules.get(GhostBlocks.class).recentlyMined.contains(packed)) return true;
+        String serverBlock = Modules.get(GhostBlocks.class).serverBlocks.get(packed);
         if (serverBlock != null && !serverBlock.equals(clientBlockId)) return true;
         return false;
     }
@@ -99,12 +100,8 @@ public class GhostBlocks implements ModuleAccess {
         return rl != null ? rl.toString() : "minecraft:air";
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("GhostBlocks").getEnabled();
-    }
-    public static GhostBlocks itz() {
-        return ravex.manager.ModuleManager.delegate(GhostBlocks.class);
-    }
+
+
 
 
 }

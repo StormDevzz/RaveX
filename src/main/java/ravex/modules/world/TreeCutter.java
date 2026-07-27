@@ -1,13 +1,14 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "TreeCutter", category = "World")
-public class TreeCutter implements ModuleAccess {
+@Module(name = "TreeCutter", category = "World")
+public class TreeCutter {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "Rotate")
@@ -21,7 +22,7 @@ public class TreeCutter implements ModuleAccess {
     private int currentToolSlot = -1;
 
     public static net.minecraft.core.BlockPos getMiningPos() {
-        TreeCutter t = ravex.manager.ModuleManager.delegate(TreeCutter.class);
+        TreeCutter t = Modules.get(TreeCutter.class);
         if (!t.hasTarget) return null;
         return BlockUtility.pos(t.miningX, t.miningY, t.miningZ);
     }
@@ -66,12 +67,8 @@ public class TreeCutter implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("TreeCutter").getEnabled();
-    }
-    public static TreeCutter itz() {
-        return ravex.manager.ModuleManager.delegate(TreeCutter.class);
-    }
+
+
 
 
 }

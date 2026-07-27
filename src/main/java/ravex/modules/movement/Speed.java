@@ -1,11 +1,11 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@ModuleInfo(name = "Speed", category = "Movement")
-public class Speed implements ModuleAccess {
+@Module(name = "Speed", category = "Movement")
+public class Speed {
 public static boolean cancelVertical = false;
     public static float matrixTimer = 1.0f;
     @Parameter(name = "Mode", modes = {"Vanilla", "Strafe", "StrafeStrict", "NCP", "NCPStrict", "Matrix", "Grim", "GrimStrict"})
@@ -27,9 +27,6 @@ public static boolean cancelVertical = false;
     @Parameter(name = "SSTimer")
     public boolean strafeStrictTimer = true;
 
-    private Speed() {
-        
-    }
     public void onTick() {
         if (!"Matrix".equals(mode)) {
             return;
@@ -46,12 +43,8 @@ public static boolean cancelVertical = false;
             mc.player.jumpFromGround();
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Speed").getEnabled();
-    }
-    public static Speed itz() {
-        return ravex.manager.ModuleManager.delegate(Speed.class);
-    }
+
+
 
 
 }

@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -15,7 +15,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-@ModuleInfo(name = "ArrayListHud", category = "HUD")
+import ravex.modules.Modules;
+@Module(name = "ArrayListHud", category = "HUD")
 public class ArrayListHud extends ravex.modules.Module {
     @Parameter(name = "Shadow")
     public boolean shadow = true;
@@ -42,7 +43,7 @@ private final Map<String, Float> animProgress = new LinkedHashMap<>();
         entryStartTime.clear();
     }
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         boolean shadow = true;
         String caseMode = "Normal";
         double animSpeed = 4.0;
@@ -148,13 +149,9 @@ private final Map<String, Float> animProgress = new LinkedHashMap<>();
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ArrayListHud").getEnabled();
-    }
 
-    public static ArrayListHud itz() {
-        return ravex.manager.ModuleManager.delegate(ArrayListHud.class);
-    }
+
+
 
 
     

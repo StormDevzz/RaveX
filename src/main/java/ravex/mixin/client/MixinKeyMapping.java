@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.movement.SafeWalk;
+import ravex.modules.Modules;
 
 @Mixin(KeyMapping.class)
 public class MixinKeyMapping {
@@ -17,7 +18,7 @@ public class MixinKeyMapping {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (!((KeyMapping)(Object)this).equals(mc.options.keyShift)) return;
-        if (!SafeWalk.maybeEnabled()) return;
+        if (!Modules.enabled(SafeWalk.class)) return;
         if (!mc.player.onGround()) return;
         if (mc.level.getBlockState(
             BlockPos.containing(mc.player.getX(), mc.player.getY() - 1, mc.player.getZ())

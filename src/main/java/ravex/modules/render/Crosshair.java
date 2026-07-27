@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
@@ -9,8 +9,8 @@ import ravex.event.combat.AttackEvent;
 
 import ravex.gui.clickgui.ColorUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Crosshair", category = "Render")
-public class Crosshair implements ModuleAccess {
+@Module(name = "Crosshair", category = "Render")
+public class Crosshair {
     @Parameter(name = "Mode", modes = {"Normal", "Circle", "Triangle"})
     public String mode = "Normal";
     @Parameter(name = "Color", color = true)
@@ -39,10 +39,6 @@ public class Crosshair implements ModuleAccess {
     private float targetProgress = 0f;
     private float continuousRotation = 0f;
     private float moveSpreadAnim = 0f;
-
-    private Crosshair() {
-        
-    }
 
     @Subscribe
     public void onAttack(AttackEvent event) {
@@ -252,13 +248,9 @@ public class Crosshair implements ModuleAccess {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Crosshair").getEnabled();
-    }
 
-    public static Crosshair itz() {
-        return ravex.manager.ModuleManager.delegate(Crosshair.class);
-    }
+
+
 
 
 }

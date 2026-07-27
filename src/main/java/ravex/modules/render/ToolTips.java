@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -8,8 +8,8 @@ import ravex.utility.player.InventoryUtility;
 
 import java.util.ArrayList;
 import java.util.List;
-@ModuleInfo(name = "ToolTips", category = "Render")
-public class ToolTips implements ModuleAccess {
+@Module(name = "ToolTips", category = "Render")
+public class ToolTips {
     @Parameter(name = "ShowID")
     public boolean showId = false;
     @Parameter(name = "ShowShulker")
@@ -54,13 +54,9 @@ public class ToolTips implements ModuleAccess {
     public boolean isShulker(net.minecraft.world.item.ItemStack stack) {
         return InventoryUtility.isShulkerBox(stack) || stack.has(net.minecraft.core.component.DataComponents.CONTAINER);
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ToolTips").getEnabled();
-    }
 
-    public static ToolTips itz() {
-        return ravex.manager.ModuleManager.delegate(ToolTips.class);
-    }
+
+
 
 
 }

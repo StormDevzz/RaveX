@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -17,8 +17,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "CurrencyHud", category = "HUD")
+@Module(name = "CurrencyHud", category = "HUD")
 public class CurrencyHud extends ravex.modules.Module {
     public int x;
     public int y;
@@ -103,7 +104,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
         }
     }
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         long now = System.currentTimeMillis();
@@ -218,13 +219,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
         }).start();
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("CurrencyHud").getEnabled();
-    }
 
-    public static CurrencyHud itz() {
-        return ravex.manager.ModuleManager.delegate(CurrencyHud.class);
-    }
+
+
 
 
     

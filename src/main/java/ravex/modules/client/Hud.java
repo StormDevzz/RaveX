@@ -1,10 +1,10 @@
 package ravex.modules.client;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Hud", category = "Client")
-public class Hud implements ModuleAccess {
+@Module(name = "Hud", category = "Client", enabled = true)
+public class Hud {
     @Parameter(name = "HudEditor")
     public boolean hudEditor = false;
     @Parameter(name = "EditorOpacity", min = 0, max = 255, step = 1)
@@ -24,10 +24,6 @@ public class Hud implements ModuleAccess {
     public static int dragOffX = 0;
     public static int dragOffY = 0;
 
-    private Hud() {
-        
-        ravex.manager.ModuleManager.INSTANCE.getByName("Hud").setEnabled(true);
-    }
     public void onTick() {
         if (hudEditor) {
             hudEditor = false;
@@ -38,13 +34,9 @@ public class Hud implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Hud").getEnabled();
-    }
 
-    public static Hud itz() {
-        return ravex.manager.ModuleManager.delegate(Hud.class);
-    }
+
+
 
 
 }

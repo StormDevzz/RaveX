@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -14,8 +14,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "Burrow", category = "Combat")
-public class Burrow implements ModuleAccess {
+@Module(name = "Burrow", category = "Combat")
+public class Burrow {
     @Parameter(name = "Block", modes = {"Obsidian", "Cobblestone", "Web", "Anvil"})
     public String block = "Obsidian";
     @Parameter(name = "AutoCenter")
@@ -92,12 +92,8 @@ public class Burrow implements ModuleAccess {
         return -1;
     }
     private static native double[] nativeCalculate(double px, double py, double pz, double height, boolean autoCenter);
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Burrow").getEnabled();
-    }
-    public static Burrow itz() {
-        return ravex.manager.ModuleManager.delegate(Burrow.class);
-    }
+
+
 
 
 }

@@ -1,13 +1,13 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.google.gson.Gson;
 
 import java.lang.reflect.Field;
 import java.util.List;
-@ModuleInfo(name = "Swing", category = "net.minecraft.world.entity.player.Player")
-public class Swing implements ModuleAccess {
+@Module(name = "Swing", category = "net.minecraft.world.entity.player.Player")
+public class Swing {
     @Parameter(name = "Mode", modes = {"1.8", "1.12.2", "Custom"})
     public String mode = "1.8";
     @Parameter(name = "Duration", min = 1, max = 20, step = 1)
@@ -72,12 +72,8 @@ public class Swing implements ModuleAccess {
         
         setLocomotionEnabled(false);
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Swing").getEnabled();
-    }
-    public static Swing itz() {
-        return ravex.manager.ModuleManager.delegate(Swing.class);
-    }
+
+
 
 
 }

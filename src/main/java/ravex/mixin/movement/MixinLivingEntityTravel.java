@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.combat.KillAura;
+import ravex.modules.Modules;
 
 /**
  * Hooks into LivingEntity.travel() to apply silent rotation for KillAura.
@@ -37,7 +38,7 @@ public class MixinLivingEntityTravel {
         if (mc.player == null) return;
 
         if ((Object) this != mc.player) return;
-        if (!KillAura.maybeEnabled() || !KillAura.hasSilentRotations()) return;
+        if (!Modules.enabled(KillAura.class) || !KillAura.hasSilentRotations()) return;
 
         LocalPlayer player = mc.player;
         ravexTravelSavedYaw   = player.getYRot();

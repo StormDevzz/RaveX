@@ -7,7 +7,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,6 +21,7 @@ import ravex.modules.misc.BlockMixer;
 import ravex.modules.player.ItemSaver;
 import ravex.modules.player.PacketMine;
 import ravex.modules.render.FreeCam;
+import ravex.modules.Modules;
 
 @Mixin(MultiPlayerGameMode.class)
 public class MixinMultiPlayerGameMode {
@@ -37,9 +37,9 @@ public class MixinMultiPlayerGameMode {
                              InteractionHand hand,
                              BlockHitResult hitResult,
                              CallbackInfoReturnable<InteractionResult> cir) {
-        if (!BlockMixer.maybeEnabled()) return;
+        if (!Modules.enabled(BlockMixer.class)) return;
         if (cir.getReturnValue() == null || !cir.getReturnValue().consumesAction()) return;
-        BlockMixer.itz().shuffle();
+        Modules.get(BlockMixer.class).shuffle();
     }
 
 
@@ -51,13 +51,13 @@ public class MixinMultiPlayerGameMode {
         EventBusHolder.get().post(event);
         if (event.isCancelled()) { ci.cancel(); return; }
 
-        if (ItemSaver.itz().shouldSave(player.getMainHandItem())) {
+        if (Modules.get(ItemSaver.class).shouldSave(player.getMainHandItem())) {
             ci.cancel();
         }
-        if (AntiAttack.itz().shouldCancel(target)) {
+        if (Modules.get(AntiAttack.class).shouldCancel(target)) {
             ci.cancel();
         }
-        if (FreeCam.maybeEnabled() && !FreeCam.itz().entityInteract) {
+        if (Modules.enabled(FreeCam.class) && !Modules.get(FreeCam.class).entityInteract) {
             ci.cancel();
         }
     }
@@ -65,17 +65,17 @@ public class MixinMultiPlayerGameMode {
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onStartDestroyBlock(net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face, CallbackInfoReturnable<Boolean> cir) {
         var mc = Minecraft.getInstance();
-        if (mc.player != null && ItemSaver.itz().shouldSave(mc.player.getMainHandItem())) {
+        if (mc.player != null && Modules.get(ItemSaver.class).shouldSave(mc.player.getMainHandItem())) {
             cir.setReturnValue(false);
         }
-        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract) {
+        if (Modules.enabled(FreeCam.class) && !Modules.get(FreeCam.class).blockInteract) {
             cir.setReturnValue(false);
         }
         ravex.modules.render.Particles.minedThisTick = true;
         ravex.modules.render.Particles.lastMinePos = net.minecraft.world.phys.Vec3.atCenterOf(pos);
 
-        if (PacketMine.maybeEnabled() && "Grim".equals(PacketMine.itz().mode)) {
-            if (PacketMine.itz().isTargetBlock(pos)) {
+        if (Modules.enabled(PacketMine.class) && "Grim".equals(Modules.get(PacketMine.class).mode)) {
+            if (Modules.get(PacketMine.class).isTargetBlock(pos)) {
                 ((AccessorMultiPlayerGameMode) this).setDestroyBlockPos(pos);
             }
         }
@@ -84,24 +84,24 @@ public class MixinMultiPlayerGameMode {
     @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onContinueDestroyBlock(net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face, CallbackInfoReturnable<Boolean> cir) {
         var mc = Minecraft.getInstance();
-        if (mc.player != null && ItemSaver.itz().shouldSave(mc.player.getMainHandItem())) {
+        if (mc.player != null && Modules.get(ItemSaver.class).shouldSave(mc.player.getMainHandItem())) {
             cir.setReturnValue(false);
         }
-        if (FreeCam.maybeEnabled() && !FreeCam.itz().blockInteract) {
+        if (Modules.enabled(FreeCam.class) && !Modules.get(FreeCam.class).blockInteract) {
             cir.setReturnValue(false);
         }
     }
 
     @Inject(method = "useItem", at = @At("HEAD"), cancellable = true)
     private void onUseItem(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
-        if (ItemSaver.itz().shouldSave(player.getItemInHand(hand))) {
+        if (Modules.get(ItemSaver.class).shouldSave(player.getItemInHand(hand))) {
             cir.setReturnValue(InteractionResult.PASS);
         }
     }
 
     @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
     private void onUseItemOnHead(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir) {
-        if (ItemSaver.itz().shouldSave(player.getItemInHand(hand))) {
+        if (Modules.get(ItemSaver.class).shouldSave(player.getItemInHand(hand))) {
             cir.setReturnValue(InteractionResult.PASS);
         }
     }

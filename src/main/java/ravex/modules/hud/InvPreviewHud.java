@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
@@ -13,8 +13,9 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "InvPreviewHud", category = "HUD")
+@Module(name = "InvPreviewHud", category = "HUD")
 public class InvPreviewHud extends ravex.modules.Module {
     @Parameter(name = "AccentColor", color = true)
     public int accentColor = 0xFF1E88E5;
@@ -44,7 +45,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INVENTORY_WHITE;
         return true;
     }
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null) return;
         int accent = getAccent();
@@ -87,13 +88,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INVENTORY_WHITE;
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("InvPreviewHud").getEnabled();
-    }
 
-    public static InvPreviewHud itz() {
-        return ravex.manager.ModuleManager.delegate(InvPreviewHud.class);
-    }
+
+
 
 
     

@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
@@ -9,9 +9,10 @@ import ravex.modules.combat.KillAura;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "CityESP", category = "Render")
-public class CityESP implements ModuleAccess {
+@Module(name = "CityESP", category = "Render")
+public class CityESP {
     @Parameter(name = "Range", min = 3.0, max = 10.0, step = 0.5)
     public double range = 6.0;
     @Parameter(name = "RenderRange", min = 8.0, max = 128.0, step = 8.0)
@@ -27,16 +28,13 @@ public class CityESP implements ModuleAccess {
 
     private net.minecraft.core.BlockPos cityBlock;
 
-    private CityESP() {
-        
-    }
     public void onTick() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
 
         net.minecraft.world.entity.player.Player target = null;
-        if (ravex.manager.ModuleManager.delegate(KillAura.class).getEnabled()) {
-            var kaTarget = ravex.manager.ModuleManager.delegate(KillAura.class).getCurrentTarget();
+        if (Modules.enabled(KillAura.class)) {
+            var kaTarget = Modules.get(KillAura.class).getCurrentTarget();
             if (kaTarget instanceof net.minecraft.world.entity.player.Player p && p.isAlive() && mc.player.distanceTo(p) <= range) {
                 target = p;
             }
@@ -87,13 +85,9 @@ public class CityESP implements ModuleAccess {
         return cityBlock;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("CityESP").getEnabled();
-    }
 
-    public static CityESP itz() {
-        return ravex.manager.ModuleManager.delegate(CityESP.class);
-    }
+
+
 
 
 }

@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -19,8 +19,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoReplant", category = "World")
-public class AutoReplant implements ModuleAccess {
+@Module(name = "AutoReplant", category = "World")
+public class AutoReplant {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.5)
     public double range = 4.0;
     @Parameter(name = "Delay", min = 100, max = 1000, step = 50)
@@ -83,9 +83,7 @@ public class AutoReplant implements ModuleAccess {
         }
         return -1;
     }
-    public static AutoReplant itz() {
-        return ravex.manager.ModuleManager.delegate(AutoReplant.class);
-    }
+
 
 
 }

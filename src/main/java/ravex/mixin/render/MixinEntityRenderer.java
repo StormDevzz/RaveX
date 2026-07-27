@@ -8,12 +8,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.NameTags;
+import ravex.modules.Modules;
 
 @Mixin(EntityRenderer.class)
 public class MixinEntityRenderer {
     @Inject(method = "shouldShowName", at = @At("HEAD"), cancellable = true)
     private void onShouldShowName(Entity entity, double distance, CallbackInfoReturnable<Boolean> cir) {
-        if (NameTags.maybeEnabled() && entity instanceof LivingEntity) {
+        if (Modules.enabled(NameTags.class) && entity instanceof LivingEntity) {
             cir.setReturnValue(false);
         }
     }

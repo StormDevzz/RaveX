@@ -1,12 +1,13 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoLog", category = "Misc")
-public class AutoLog implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "AutoLog", category = "Misc")
+public class AutoLog {
     @Parameter(name = "LowHealth")
     public boolean onLowHealth = true;
     @Parameter(name = "MinHP", min = 1.0, max = 20.0, step = 0.5)
@@ -36,12 +37,10 @@ public class AutoLog implements ModuleAccess {
         if (mc.getConnection() != null) {
             mc.getConnection().getConnection().disconnect(net.minecraft.network.chat.Component.literal("§c[RaveX AutoLog] §f" + reason));
         }
-        ravex.manager.ModuleManager.INSTANCE.getByName("AutoLog").setEnabled(false);
+        Modules.setEnabled(AutoLog.class, false);
     }
 
-    public static AutoLog itz() {
-        return ravex.manager.ModuleManager.delegate(AutoLog.class);
-    }
+
 
 
 }

@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import ravex.modules.render.AspectRatio;
+import ravex.modules.Modules;
 
 @Mixin(GameRenderer.class)
 public class MixinGameRenderer {
@@ -19,7 +20,7 @@ public class MixinGameRenderer {
     private float modifyAspectRatio(float aspect) {
         Window window = Minecraft.getInstance().getWindow();
         float original = (float) window.getWidth() / (float) window.getHeight();
-        return AspectRatio.itz().getAspectRatio(original);
+        return Modules.get(AspectRatio.class).getAspectRatio(original);
     }
 
     @org.spongepowered.asm.mixin.injection.Inject(

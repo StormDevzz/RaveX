@@ -1,6 +1,6 @@
 package ravex.modules.player.invclean;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -9,8 +9,8 @@ import ravex.parameter.ActionParameter;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "InvClean", category = "net.minecraft.world.entity.player.Player")
-public class InvClean implements ModuleAccess {
+@Module(name = "InvClean", category = "net.minecraft.world.entity.player.Player")
+public class InvClean {
     @Parameter(name = "AutoClean")
     public boolean autoClean = false;
     @Parameter(name = "Interval", min = 2, max = 60, step = 1)

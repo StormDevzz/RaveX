@@ -8,24 +8,25 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.movement.NoSlow;
 import ravex.modules.movement.Sleepy;
+import ravex.modules.Modules;
 
 @Mixin(Block.class)
 public class MixinBlock {
     @Inject(method = "getFriction", at = @At("RETURN"), cancellable = true)
     private void onGetFriction(CallbackInfoReturnable<Float> cir) {
-        if (Sleepy.maybeEnabled()) {
+        if (Modules.enabled(Sleepy.class)) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null) {
-                if (!Sleepy.itz().onlyOnGround || mc.player.onGround()) {
-                    cir.setReturnValue((float) Sleepy.itz().friction);
+                if (!Modules.get(Sleepy.class).onlyOnGround || mc.player.onGround()) {
+                    cir.setReturnValue((float) Modules.get(Sleepy.class).friction);
                     return;
                 }
             }
         }
 
-        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks) {
+        if (Modules.enabled(NoSlow.class) && Modules.get(NoSlow.class).blocks) {
             Block self = (Block) (Object) this;
-            if (NoSlow.itz().ice) {
+            if (Modules.get(NoSlow.class).ice) {
                 if (self == Blocks.ICE || self == Blocks.PACKED_ICE || self == Blocks.BLUE_ICE || self == Blocks.FROSTED_ICE
                     || self == Blocks.SLIME_BLOCK || self == Blocks.HONEY_BLOCK
                     || self == Blocks.SWEET_BERRY_BUSH || self == Blocks.COBWEB) {

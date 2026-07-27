@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
@@ -9,8 +9,9 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "MiddleClick", category = "net.minecraft.world.entity.player.Player")
-public class MiddleClick implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "MiddleClick", category = "net.minecraft.world.entity.player.Player")
+public class MiddleClick {
     @Parameter(name = "ElytraAction", modes = {"Firework", "None"})
     public String elytraAction = "Firework";
     @Parameter(name = "BlockAction", modes = {"XPBottle", "XPBottleFast", "None"})
@@ -78,16 +79,12 @@ public class MiddleClick implements ModuleAccess {
         int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
         InventoryUtility.selectSlot(mc.getPlayer(), slot);
         mc.getGameMode().useItem(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (ravex.manager.ModuleManager.delegate(MiddleClick.class).silent) InventoryUtility.selectSlot(mc.getPlayer(), prev);
+        if (Modules.get(MiddleClick.class).silent) InventoryUtility.selectSlot(mc.getPlayer(), prev);
     }
     private static native void nativeStartFastXp();
     private static native void nativeStopFastXp();
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("MiddleClick").getEnabled();
-    }
-    public static MiddleClick itz() {
-        return ravex.manager.ModuleManager.delegate(MiddleClick.class);
-    }
+
+
 
 
 }

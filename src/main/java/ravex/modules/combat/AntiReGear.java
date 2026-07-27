@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.modules.world.GhostBlocks;
 import ravex.utility.misc.block.BlockUtility;
@@ -20,8 +20,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AntiReGear", category = "Combat")
-public class AntiReGear implements ModuleAccess {
+@Module(name = "AntiReGear", category = "Combat")
+public class AntiReGear {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "Delay", min = 0, max = 1000, step = 50)
@@ -177,12 +177,8 @@ public class AntiReGear implements ModuleAccess {
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiReGear").getEnabled();
-    }
-    public static AntiReGear itz() {
-        return ravex.manager.ModuleManager.delegate(AntiReGear.class);
-    }
+
+
 
 
 }

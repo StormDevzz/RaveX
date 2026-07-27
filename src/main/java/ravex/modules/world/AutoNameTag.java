@@ -1,12 +1,12 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.MobUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoNameTag", category = "World")
-public class AutoNameTag implements ModuleAccess {
+@Module(name = "AutoNameTag", category = "World")
+public class AutoNameTag {
 public void onTick() {
         var mc = MinecraftWrapper.getInstance();
         var p = mc.player;
@@ -43,9 +43,7 @@ public void onTick() {
             InventoryUtility.selectSlot(p, prevSlot);
         }
     }
-    public static AutoNameTag itz() {
-        return ravex.manager.ModuleManager.delegate(AutoNameTag.class);
-    }
+
 
 
 }

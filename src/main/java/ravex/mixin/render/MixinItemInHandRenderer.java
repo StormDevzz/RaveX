@@ -22,6 +22,7 @@ import ravex.modules.player.NoSwing;
 import ravex.modules.render.Shaders;
 import ravex.modules.render.SwingAnimation;
 import ravex.modules.render.ViewModel;
+import ravex.modules.Modules;
 
 @Mixin(ItemInHandRenderer.class)
 public abstract class MixinItemInHandRenderer {
@@ -39,8 +40,8 @@ public abstract class MixinItemInHandRenderer {
                                        SubmitNodeCollector submitNodeCollector, int light);
 
     private void applyViewModel(PoseStack poseStack, HumanoidArm arm) {
-        ViewModel vm = ViewModel.itz();
-        if (!ViewModel.maybeEnabled()) return;
+        ViewModel vm = Modules.get(ViewModel.class);
+        if (!Modules.enabled(ViewModel.class)) return;
 
         boolean isRight = arm == HumanoidArm.RIGHT;
         float tx, ty, tz, rx, ry, rz, scale;
@@ -134,10 +135,10 @@ public abstract class MixinItemInHandRenderer {
 
         boolean isSelf = Minecraft.getInstance().player == capturedPlayer;
 
-        if (NoSwing.maybeEnabled()) {
+        if (Modules.enabled(NoSwing.class)) {
             capturedSwingProgress = swingProgress;
-            if (NoSwing.itz().self && isSelf) return 1.0f;
-            if (NoSwing.itz().others && !isSelf) return 1.0f;
+            if (Modules.get(NoSwing.class).self && isSelf) return 1.0f;
+            if (Modules.get(NoSwing.class).others && !isSelf) return 1.0f;
             return swingProgress;
         }
 
@@ -155,8 +156,8 @@ public abstract class MixinItemInHandRenderer {
         argsOnly = true
     )
     private float modifyEquipProgress(float equipProgress) {
-        if (!SwingAnimation.maybeEnabled()) return equipProgress;
-        if ("Swipe".equals(SwingAnimation.itz().mode)) return 0.0f;
+        if (!Modules.enabled(SwingAnimation.class)) return equipProgress;
+        if ("Swipe".equals(Modules.get(SwingAnimation.class).mode)) return 0.0f;
         return equipProgress;
     }
 
@@ -167,8 +168,8 @@ public abstract class MixinItemInHandRenderer {
         at = @At("RETURN")
     )
     private void onApplyItemArmTransformReturn(PoseStack poseStack, HumanoidArm arm, float f, CallbackInfo ci) {
-        if (SwingAnimation.maybeEnabled() && !NoSwing.maybeEnabled()) {
-            String mode = SwingAnimation.itz().mode;
+        if (Modules.enabled(SwingAnimation.class) && !Modules.enabled(NoSwing.class)) {
+            String mode = Modules.get(SwingAnimation.class).mode;
             if ("Default".equals(mode) || "Akrien".equals(mode) || "Swipe".equals(mode) || "Rich".equals(mode)) return;
         }
         applyViewModel(poseStack, arm);
@@ -187,8 +188,8 @@ public abstract class MixinItemInHandRenderer {
                                       SubmitNodeCollector collector, int light, CallbackInfo ci) {
         capturedPlayer = player;
 
-        ViewModel vm = ViewModel.itz();
-        if (ViewModel.maybeEnabled()) {
+        ViewModel vm = Modules.get(ViewModel.class);
+        if (Modules.enabled(ViewModel.class)) {
             if (hand == InteractionHand.MAIN_HAND && vm.hideMainHand) {
                 ci.cancel();
                 return;
@@ -199,13 +200,13 @@ public abstract class MixinItemInHandRenderer {
             }
         }
 
-        if (!SwingAnimation.maybeEnabled() || NoSwing.maybeEnabled() || stack.isEmpty()) return;
+        if (!Modules.enabled(SwingAnimation.class) || Modules.enabled(NoSwing.class) || stack.isEmpty()) return;
         if (hand != InteractionHand.MAIN_HAND) return;
         if (player.isUsingItem()) return;
 
         ci.cancel();
 
-        String mode = SwingAnimation.itz().mode;
+        String mode = Modules.get(SwingAnimation.class).mode;
         HumanoidArm arm = player.getMainArm();
         boolean rightHand = arm == HumanoidArm.RIGHT;
 
@@ -213,10 +214,10 @@ public abstract class MixinItemInHandRenderer {
 
         float ep = (capturedSwingProgress > 0f) ? 0f : equipProgress;
         switch (mode) {
-            case "Default" -> SwingAnimation.itz().applyDefault(poseStack, capturedSwingProgress, ep, rightHand);
-            case "Akrien"  -> SwingAnimation.itz().applyFourteen(poseStack, capturedSwingProgress, ep);
-            case "Swipe"   -> SwingAnimation.itz().applySwipe(poseStack, capturedSwingProgress, ep);
-            case "Rich"    -> SwingAnimation.itz().applyRich(poseStack, capturedSwingProgress, ep, rightHand);
+            case "Default" -> Modules.get(SwingAnimation.class).applyDefault(poseStack, capturedSwingProgress, ep, rightHand);
+            case "Akrien"  -> Modules.get(SwingAnimation.class).applyFourteen(poseStack, capturedSwingProgress, ep);
+            case "Swipe"   -> Modules.get(SwingAnimation.class).applySwipe(poseStack, capturedSwingProgress, ep);
+            case "Rich"    -> Modules.get(SwingAnimation.class).applyRich(poseStack, capturedSwingProgress, ep, rightHand);
         }
 
         applyViewModel(poseStack, arm);
@@ -232,8 +233,8 @@ public abstract class MixinItemInHandRenderer {
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void onTickTail(CallbackInfo ci) {
-        if (SwingAnimation.maybeEnabled()) {
-            String mode = SwingAnimation.itz().mode;
+        if (Modules.enabled(SwingAnimation.class)) {
+            String mode = Modules.get(SwingAnimation.class).mode;
             if ("Default".equals(mode) || "Akrien".equals(mode)) {
                 LocalPlayer player = Minecraft.getInstance().player;
                 if (player != null) {

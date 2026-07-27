@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
@@ -16,8 +16,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "PacketMine", category = "net.minecraft.world.entity.player.Player")
-public class PacketMine implements ModuleAccess {
+@Module(name = "PacketMine", category = "net.minecraft.world.entity.player.Player")
+public class PacketMine {
     @Parameter(name = "Mode", modes = {"Normal", "Grim", "NCP"})
     public String mode = "Normal";
     @Parameter(name = "Range", min = 2.0, max = 10.0, step = 0.5)
@@ -76,9 +76,6 @@ public class PacketMine implements ModuleAccess {
     private int toolSlot = -1;
     private boolean needRestore = false;
     private boolean attackWasDown = false;
-    private PacketMine() {
-        
-    }
     public void onEnable() {
         miningBlocks.clear();
         restoreSlot = -1;
@@ -322,12 +319,8 @@ public class PacketMine implements ModuleAccess {
         int[] solids = collectSolidBlocks(mc, mc.getPlayer().blockPosition(), maxDist + 2);
         return nativeCanSee(eye.x, eye.y, eye.z, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, solids);
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("PacketMine").getEnabled();
-    }
-    public static PacketMine itz() {
-        return ravex.manager.ModuleManager.delegate(PacketMine.class);
-    }
+
+
 
 
 }

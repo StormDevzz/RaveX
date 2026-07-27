@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
@@ -10,8 +10,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoMend", category = "net.minecraft.world.entity.player.Player")
-public class AutoMend implements ModuleAccess {
+@Module(name = "AutoMend", category = "net.minecraft.world.entity.player.Player")
+public class AutoMend {
     @Parameter(name = "Threshold", min = 10.0, max = 95.0, step = 5.0)
     public double threshold = 50.0;
     @Parameter(name = "Swap", modes = {"Normal", "Silent"})
@@ -53,12 +53,8 @@ public class AutoMend implements ModuleAccess {
             InventoryUtility.selectSlot(p, prevSlot);
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoMend").getEnabled();
-    }
-    public static AutoMend itz() {
-        return ravex.manager.ModuleManager.delegate(AutoMend.class);
-    }
+
+
 
 
 }

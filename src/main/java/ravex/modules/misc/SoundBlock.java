@@ -1,15 +1,16 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import java.util.List;
+import ravex.modules.Modules;
 
 
 
 
-@ModuleInfo(name = "SoundBlock", category = "Misc")
-public class SoundBlock implements ModuleAccess {
+@Module(name = "SoundBlock", category = "Misc")
+public class SoundBlock {
     @Parameter(name = "Ambient")
     public boolean blockAmbient = false;
     @Parameter(name = "net.minecraft.world.level.block.Blocks")
@@ -30,7 +31,7 @@ public class SoundBlock implements ModuleAccess {
     public boolean blockRecords = false;
 
     public boolean shouldBlock(SoundInstance sound) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("SoundBlock").getEnabled()) return false;
+        if (!Modules.enabled(SoundBlock.class)) return false;
         var source = sound.getSource();
         if (source == null) return false;
         return switch (source) {
@@ -47,13 +48,9 @@ public class SoundBlock implements ModuleAccess {
         };
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("SoundBlock").getEnabled();
-    }
 
-    public static SoundBlock itz() {
-        return ravex.manager.ModuleManager.delegate(SoundBlock.class);
-    }
+
+
 
 
 }

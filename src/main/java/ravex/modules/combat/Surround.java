@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -12,12 +12,13 @@ import net.minecraft.world.item.BlockItem;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
-@ModuleInfo(name = "Surround", category = "Combat")
-public class Surround implements ModuleAccess {
+@Module(name = "Surround", category = "Combat")
+public class Surround {
 public static final List<net.minecraft.core.BlockPos> surroundBlocks = new ArrayList<>();
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
@@ -80,7 +81,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
             return;
         }
         if (autoDisable && (!mc.player.onGround() || mc.options.keyJump.isDown())) {
-            ravex.manager.ModuleManager.INSTANCE.getByName("Surround").setEnabled(false);
+            Modules.setEnabled(Surround.class, false);
             return;
         }
         if (autoCenter) {
@@ -190,7 +191,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         }
         if (toPlace.isEmpty()) {
             if (autoDisable && placed) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("Surround").setEnabled(false);
+                Modules.setEnabled(Surround.class, false);
             }
             return;
         }
@@ -266,12 +267,8 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         }
         return -1;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Surround").getEnabled();
-    }
-    public static Surround itz() {
-        return ravex.manager.ModuleManager.delegate(Surround.class);
-    }
+
+
 
 
 }

@@ -1,6 +1,6 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
@@ -8,8 +8,9 @@ import net.minecraft.network.chat.Component;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoPortal", category = "Misc")
-public class AutoPortal implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "AutoPortal", category = "Misc")
+public class AutoPortal {
     @Parameter(name = "Range", min = 2.0, max = 12.0, step = 0.5)
     public double range = 6.0;
     @Parameter(name = "MinRange", min = 1.0, max = 4.0, step = 0.5)
@@ -150,7 +151,7 @@ public class AutoPortal implements ModuleAccess {
         int slot = findObsidianSlot(mc);
         if (slot == -1) {
             sendMsg(mc, "Not enough obsidian, disabling");
-            ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").setEnabled(false);
+            Modules.setEnabled(AutoPortal.class, false);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
@@ -194,7 +195,7 @@ public class AutoPortal implements ModuleAccess {
         int slot = findObsidianSlot(mc);
         if (slot == -1) {
             sendMsg(mc, "Not enough obsidian, disabling");
-            ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").setEnabled(false);
+            Modules.setEnabled(AutoPortal.class, false);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
@@ -252,7 +253,7 @@ public class AutoPortal implements ModuleAccess {
         if (portalBuildCount < target) {
             state = State.FIND;
         } else if (autoDisable) {
-            ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").setEnabled(false);
+            Modules.setEnabled(AutoPortal.class, false);
         } else {
             state = State.IDLE;
         }
@@ -343,7 +344,7 @@ public class AutoPortal implements ModuleAccess {
             int free = InventoryUtility.findEmptyHotbarSlot(mc.getPlayer());
             if (free != -1) {
                 InventoryUtility.selectSlot(mc.getPlayer(), free);
-                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, free, net.minecraft.world.inventory.ClickType.SWAP);
+                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, free, InventoryUtility.SWAP);
                 return free;
             }
         }
@@ -357,13 +358,9 @@ public class AutoPortal implements ModuleAccess {
         return -1;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoPortal").getEnabled();
-    }
 
-    public static AutoPortal itz() {
-        return ravex.manager.ModuleManager.delegate(AutoPortal.class);
-    }
+
+
 
 
 }

@@ -1,12 +1,12 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Step", category = "Movement")
-public class Step implements ModuleAccess {
+@Module(name = "Step", category = "Movement")
+public class Step {
     @Parameter(name = "Mode", modes = {"Vanilla", "Packet", "Grim"})
     public String mode = "Vanilla";
     @Parameter(name = "Height", min = 1.0, max = 2.5, step = 0.5)
@@ -69,9 +69,7 @@ public class Step implements ModuleAccess {
             }
         }
     }
-    public static Step itz() {
-        return ravex.manager.ModuleManager.delegate(Step.class);
-    }
+
 
 
 }

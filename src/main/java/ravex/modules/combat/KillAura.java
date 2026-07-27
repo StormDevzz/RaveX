@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import org.joml.Matrix4f;
@@ -20,9 +20,10 @@ import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.List;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "KillAura", category = "Combat")
-public class KillAura implements ModuleAccess {
+@Module(name = "KillAura", category = "Combat")
+public class KillAura {
     @Parameter(name = "Mode", modes = {"Tracker", "Snap", "HvH"})
     public String mode = "Tracker";
 
@@ -76,13 +77,9 @@ public class KillAura implements ModuleAccess {
         return currentTarget;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("KillAura").getEnabled();
-    }
 
-    public static KillAura itz() {
-        return ravex.manager.ModuleManager.delegate(KillAura.class);
-    }
+
+
 
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
@@ -96,8 +93,8 @@ public class KillAura implements ModuleAccess {
     }
 
     public static void onPreTick() {
-        KillAura ka = ravex.manager.ModuleManager.delegate(KillAura.class);
-        if (ka == null || !ka.getEnabled()) return;
+        KillAura ka = Modules.get(KillAura.class);
+        if (ka == null || !Modules.enabled(KillAura.class)) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
 
@@ -293,8 +290,8 @@ public class KillAura implements ModuleAccess {
             if (dist > range - buffer) continue;
 
             if (!throughWalls && !mc.getPlayer().hasLineOfSight(le)) continue;
-            if (ravex.manager.ModuleManager.delegate(ravex.modules.combat.AntiBot.class).getEnabled()
-                    && ravex.manager.ModuleManager.delegate(ravex.modules.combat.AntiBot.class).isBot(e)) continue;
+            if (Modules.enabled(AntiBot.class)
+                    && Modules.get(AntiBot.class).isBot(e)) continue;
 
             if (dist < closestDist) {
                 closestDist = dist;

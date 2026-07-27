@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
@@ -21,14 +21,15 @@ import java.util.ArrayList;
 import java.util.List;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
 
 
-@ModuleInfo(name = "AutoCrystal", category = "Combat")
-public class AutoCrystal implements ModuleAccess {
+@Module(name = "AutoCrystal", category = "Combat")
+public class AutoCrystal {
     @Parameter(name = "PlaceRange", min = 1.0, max = 6.0, step = 0.1)
     public double placeRange = 4.5;
     @Parameter(name = "BreakRange", min = 1.0, max = 6.0, step = 0.1)
@@ -153,8 +154,6 @@ public class AutoCrystal implements ModuleAccess {
             double[] stats,
             double[] blockData
     );
-    private AutoCrystal() {
-    }
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private int originalSlot = -1;
     private double[] cachedBlockData = null;
@@ -404,8 +403,8 @@ public class AutoCrystal implements ModuleAccess {
                 }
             }
         }
-        if (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).getEnabled() && ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).autoCrystalSync && BasePlace.lastPlacedBase != null) {
-            long msLimit = (long) (ravex.manager.ModuleManager.delegate(ravex.modules.combat.BasePlace.class).syncPredictTicks * 50);
+        if (Modules.enabled(BasePlace.class) && Modules.get(BasePlace.class).autoCrystalSync && BasePlace.lastPlacedBase != null) {
+            long msLimit = (long) (Modules.get(BasePlace.class).syncPredictTicks * 50);
             if (System.currentTimeMillis() - BasePlace.lastPlacedTime <= msLimit) {
                 net.minecraft.core.BlockPos predictedPos = BasePlace.lastPlacedBase;
                 double dist = Math.sqrt(predictedPos.distToCenterSqr(mc.getPlayer().getX(), mc.getPlayer().getEyeY(), mc.getPlayer().getZ()));
@@ -471,7 +470,7 @@ public class AutoCrystal implements ModuleAccess {
             slot = InventoryUtility.findSlot(mc.getPlayer(), "end_crystal", 9, 36);
             if (slot != -1) {
                 int targetHotbarSlot = 0;
-                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, targetHotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, targetHotbarSlot, InventoryUtility.SWAP);
                 originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
                 InventoryUtility.silentSelectSlot(mc.getPlayer(), targetHotbarSlot);
                 return true;
@@ -561,12 +560,8 @@ public class AutoCrystal implements ModuleAccess {
     public static boolean isNativeAvailable() {
         return NATIVE.isLoaded();
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoCrystal").getEnabled();
-    }
-    public static AutoCrystal itz() {
-        return ravex.manager.ModuleManager.delegate(AutoCrystal.class);
-    }
+
+
     private double[] getEntityStats(net.minecraft.world.entity.LivingEntity player) {
         int protectionEpf = 0;
         int blastProtectionEpf = 0;

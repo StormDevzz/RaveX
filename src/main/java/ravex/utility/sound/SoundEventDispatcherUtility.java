@@ -4,7 +4,7 @@ import ravex.event.Subscribe;
 import ravex.event.client.SoundEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import ravex.manager.ModuleManager;
+import ravex.modules.Modules;
 
 public class SoundEventDispatcherUtility {
     @Subscribe
@@ -12,9 +12,9 @@ public class SoundEventDispatcherUtility {
         net.minecraft.sounds.SoundEvent mcSound = resolveSound(event.getType());
         if (mcSound == null) return;
 
-        ravex.modules.render.Sounds sounds = ModuleManager.get(ravex.modules.render.Sounds.class);
-        if (sounds != null && !sounds.getEnabled()) return;
+        if (!Modules.enabled(ravex.modules.render.Sounds.class)) return;
 
+        ravex.modules.render.Sounds sounds = Modules.get(ravex.modules.render.Sounds.class);
         float multiplier = (sounds != null) ? (float) sounds.volume : 1.0f;
         float finalVolume = event.getVolume() * multiplier;
         if (finalVolume <= 0.0f) return;

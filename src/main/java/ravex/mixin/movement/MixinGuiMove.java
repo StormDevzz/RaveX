@@ -13,14 +13,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.GuiMove;
+import ravex.modules.Modules;
 
 @Mixin(Minecraft.class)
 public abstract class MixinGuiMove {
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void onTickGuiMove(CallbackInfo ci) {
-        GuiMove gw = GuiMove.itz();
-        if (!GuiMove.maybeEnabled()) return;
+        GuiMove gw = Modules.get(GuiMove.class);
+        if (!Modules.enabled(GuiMove.class)) return;
 
         Minecraft mc = (Minecraft)(Object)this;
         if (mc.screen == null || mc.player == null || mc.getWindow() == null) return;

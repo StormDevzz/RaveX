@@ -1,19 +1,18 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.world.inventory.ClickType;
-
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Quiver", category = "Combat")
-public class Quiver implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "Quiver", category = "Combat")
+public class Quiver {
     @Parameter(name = "ArrowType", modes = {"Healing", "Speed", "Strength", "FireResistance"})
     public String arrowType = "Speed";
     @Parameter(name = "Rotate", modes = {"Silent", "Normal"})
@@ -93,7 +92,7 @@ public class Quiver implements ModuleAccess {
                 net.minecraft.network.chat.Component.literal("§7[§cQuiver§7] §cNo bow found in hotbar! Disabling..."),
                 false
             );
-            ravex.manager.ModuleManager.INSTANCE.getByName("Quiver").setEnabled(false);
+            Modules.setEnabled(Quiver.class, false);
             return;
         }
         int bestArrowIndex = findBestArrowIndex(mc);
@@ -102,7 +101,7 @@ public class Quiver implements ModuleAccess {
                 net.minecraft.network.chat.Component.literal("§7[§cQuiver§7] §cNo arrows of type " + arrowType + " found! Disabling..."),
                 false
             );
-            ravex.manager.ModuleManager.INSTANCE.getByName("Quiver").setEnabled(false);
+            Modules.setEnabled(Quiver.class, false);
             return;
         }
         arrowInvSlot = bestArrowIndex;
@@ -254,12 +253,8 @@ public class Quiver implements ModuleAccess {
         }
         return bestIndex;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Quiver").getEnabled();
-    }
-    public static Quiver itz() {
-        return ravex.manager.ModuleManager.delegate(Quiver.class);
-    }
+
+
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }

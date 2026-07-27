@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -20,8 +20,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "MediaHud", category = "HUD")
+@Module(name = "MediaHud", category = "HUD")
 public class MediaHud extends ravex.modules.Module {
     public int x;
     public int y;
@@ -232,7 +233,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
         ravex.utility.render.Render2DUtility.popScissor(graphics);
     }
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
 
         String title = cachedTitle;
         if (title.isEmpty()) return;
@@ -301,13 +302,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("MediaHud").getEnabled();
-    }
 
-    public static MediaHud itz() {
-        return ravex.manager.ModuleManager.delegate(MediaHud.class);
-    }
+
+
 
 
     

@@ -15,6 +15,7 @@ import ravex.modules.misc.FastItem;
 import ravex.modules.misc.StashFinder;
 import ravex.modules.player.ChestHelper;
 import ravex.utility.player.InventoryUtility;
+import ravex.modules.Modules;
 
 @Mixin(AbstractContainerScreen.class)
 public class MixinAbstractContainerScreen {
@@ -25,9 +26,9 @@ public class MixinAbstractContainerScreen {
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderTail(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
-        ChestHelper.itz().onRenderButtons(screen, graphics, mouseX, mouseY);
+        Modules.get(ChestHelper.class).onRenderButtons(screen, graphics, mouseX, mouseY);
 
-        if (StashFinder.maybeEnabled()) {
+        if (Modules.enabled(StashFinder.class)) {
             var menu = screen.getMenu();
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && menu instanceof net.minecraft.world.inventory.ChestMenu) {
@@ -37,11 +38,11 @@ public class MixinAbstractContainerScreen {
                     contents.add(menu.slots.get(i).getItem());
                 }
                 BlockPos pos = mc.player.blockPosition();
-                StashFinder.itz().onContainerOpened(pos, contents);
+                Modules.get(StashFinder.class).onContainerOpened(pos, contents);
             }
         }
 
-        if (FastItem.maybeEnabled()) {
+        if (Modules.enabled(FastItem.class)) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || mc.gameMode == null) return;
             if (screen instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen) return;
@@ -54,7 +55,7 @@ public class MixinAbstractContainerScreen {
                 lastHoveredSlot = -1;
                 return;
             }
-            long delay = FastItem.itz().getDelayMs();
+            long delay = Modules.get(FastItem.class).getDelayMs();
             long now = System.currentTimeMillis();
             if (delay > 0 && now - fastItemLastMove < delay) return;
             Slot slot = ((AccessorContainerScreen)screen).getHoveredSlot();

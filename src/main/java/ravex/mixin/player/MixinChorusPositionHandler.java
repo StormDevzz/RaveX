@@ -10,20 +10,21 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.player.ChorusExploit;
+import ravex.modules.Modules;
 
 @Mixin(ClientPacketListener.class)
 public class MixinChorusPositionHandler {
 
     @Inject(method = "handleMovePlayer", at = @At("HEAD"), cancellable = true)
     private void onHandleMovePlayer(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
-        if (!ChorusExploit.itz().shouldCapturePosition(System.currentTimeMillis())) return;
+        if (!Modules.get(ChorusExploit.class).shouldCapturePosition(System.currentTimeMillis())) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
         if (mc.player.getCooldowns().isOnCooldown(new ItemStack(Items.CHORUS_FRUIT))) {
             net.minecraft.world.phys.Vec3 pos = packet.change().position();
-            ChorusExploit.itz().storeTarget(
+            Modules.get(ChorusExploit.class).storeTarget(
                     pos.x, pos.y, pos.z, packet.id());
             ci.cancel();
         }

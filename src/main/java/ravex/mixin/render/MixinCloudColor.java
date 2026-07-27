@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.WorldColor;
+import ravex.modules.Modules;
 
 @Mixin(EnvironmentAttributeProbe.class)
 public class MixinCloudColor {
@@ -16,9 +17,9 @@ public class MixinCloudColor {
     @Inject(method = "getValue", at = @At("HEAD"), cancellable = true)
     private <Value> void onGetValue(EnvironmentAttribute<Value> attribute, float partialTick,
                                     CallbackInfoReturnable<Value> cir) {
-        if (!WorldColor.maybeEnabled() || !WorldColor.itz().cloud) return;
+        if (!Modules.enabled(WorldColor.class) || !Modules.get(WorldColor.class).cloud) return;
         if (attribute == EnvironmentAttributes.CLOUD_COLOR) {
-            cir.setReturnValue((Value) Integer.valueOf(WorldColor.itz().cloudColor.getValue()));
+            cir.setReturnValue((Value) Integer.valueOf(Modules.get(WorldColor.class).cloudColor.getValue()));
         }
     }
 }

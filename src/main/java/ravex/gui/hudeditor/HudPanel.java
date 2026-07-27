@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import ravex.modules.Modules;
 public class HudPanel {
     public static final int PANEL_W = 130;
     public static final int PANEL_RADIUS = 8;

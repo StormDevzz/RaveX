@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
@@ -17,13 +17,15 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
+import ravex.modules.player.PacketMine;
 
 
 
 
 
-@ModuleInfo(name = "Breaker", category = "Combat")
-public class Breaker implements ModuleAccess {
+@Module(name = "Breaker", category = "Combat")
+public class Breaker {
     @Parameter(name = "BreakRange", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "CrystalRange", min = 1.0, max = 6.0, step = 0.1)
@@ -67,7 +69,7 @@ public class Breaker implements ModuleAccess {
         }
         silentRotation.hasRotation = false;
         if (syncPacketMine) {
-            boolean packetMineEnabled = getModule("PacketMine").getEnabled();
+            boolean packetMineEnabled = Modules.enabled(PacketMine.class);
             if (!packetMineEnabled) {
                 syncPacketMine = false;
                 mc.getPlayer().displayClientMessage(
@@ -176,10 +178,10 @@ public class Breaker implements ModuleAccess {
             }
         }
         if (syncPacketMine) {
-            if (!ravex.manager.ModuleManager.delegate(ravex.modules.player.PacketMine.class).isTargetBlock(targetPos)) {
+            if (!Modules.get(PacketMine.class).isTargetBlock(targetPos)) {
                 ravex.modules.player.PacketMine.miningBlocks.removeIf(m -> !m.done);
                 String name = mc.getLevel().getBlockState(targetPos).getBlock().getName().getString();
-                long breakMs = ravex.manager.ModuleManager.delegate(ravex.modules.player.PacketMine.class).calcBreakTime(mc, targetPos);
+                long breakMs = Modules.get(PacketMine.class).calcBreakTime(mc, targetPos);
                 ravex.modules.player.PacketMine.miningBlocks.add(
                         new ravex.modules.player.PacketMine.MiningBlock(targetPos, breakMs, name));
             }
@@ -336,12 +338,8 @@ public class Breaker implements ModuleAccess {
             boolean antiSuicide,
             double antiSuicideMinHp);
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Breaker").getEnabled();
-    }
-    public static Breaker itz() {
-        return ravex.manager.ModuleManager.delegate(Breaker.class);
-    }
+
+
 
 
 }

@@ -1,6 +1,6 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
@@ -22,9 +22,11 @@ import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
+import ravex.modules.client.Notifications;
 
-@ModuleInfo(name = "NewChunks", category = "Misc")
-public class NewChunks implements ModuleAccess {
+@Module(name = "NewChunks", category = "Misc")
+public class NewChunks {
     @Parameter(name = "Notify")
     public boolean notify = true;
     @Parameter(name = "Render")
@@ -114,7 +116,7 @@ public class NewChunks implements ModuleAccess {
                 MinecraftWrapper.getInstance().execute(() -> {
                     var mc = MinecraftWrapper.getInstance();
                     if (mc.player != null) {
-                        int color = ravex.manager.ModuleManager.delegate(ravex.modules.client.Notifications.class).messageColor;
+                        int color = Modules.get(Notifications.class).messageColor;
                         Component message = Component.literal("[")
                             .withStyle(style -> style.withColor(0x7F7F7F))
                             .append(Component.literal("NewChunks").withStyle(style -> style.withColor(color)))
@@ -131,12 +133,12 @@ public class NewChunks implements ModuleAccess {
     }
     @Subscribe
     public void onPacketEvent(PacketEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NewChunks").getEnabled() || !event.isReceive()) return;
+        if (!Modules.enabled(NewChunks.class) || !event.isReceive()) return;
         onPacketReceive(event.getPacket());
     }
 
     public void onPacketReceive(Object packet) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NewChunks").getEnabled()) return;
+        if (!Modules.enabled(NewChunks.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
         if (packet instanceof ClientboundLevelChunkWithLightPacket chunkPacket) {
@@ -215,13 +217,9 @@ public class NewChunks implements ModuleAccess {
         analyzedChunks.clear();
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NewChunks").getEnabled();
-    }
 
-    public static NewChunks itz() {
-        return ravex.manager.ModuleManager.delegate(NewChunks.class);
-    }
+
+
 
 
 }

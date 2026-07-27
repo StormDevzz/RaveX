@@ -1,6 +1,6 @@
 package ravex.modules.world.nuker;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.modules.world.GhostBlocks;
 import ravex.parameter.ActionParameter;
@@ -16,12 +16,13 @@ import java.util.List;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
-@ModuleInfo(name = "Nuker", category = "World")
-public class Nuker implements ModuleAccess {
+@Module(name = "Nuker", category = "World")
+public class Nuker {
     @Parameter(name = "Range", min = 1.0, max = 10.0, step = 0.5)
     public double range = 5.0;
     @Parameter(name = "Mode", modes = {"Sphere", "Cube"})
@@ -119,7 +120,7 @@ public class Nuker implements ModuleAccess {
         }
         if (candidates.isEmpty()) {
             currentTarget = null;
-            if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("Nuker").setEnabled(false);
+            if (autoDisable) Modules.setEnabled(Nuker.class, false);
             return;
         }
         net.minecraft.core.BlockPos target = null;
@@ -219,9 +220,7 @@ public class Nuker implements ModuleAccess {
             }
         }
     }
-    public static Nuker itz() {
-        return ravex.manager.ModuleManager.delegate(Nuker.class);
-    }
+
 
 
 }

@@ -8,13 +8,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.FreeCam;
+import ravex.modules.Modules;
 
 @Mixin(LivingEntity.class)
 public abstract class MixinFreeCamPlayer {
 
     @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
     private void onTravel(Vec3 travelVector, CallbackInfo ci) {
-        if (FreeCam.maybeEnabled()) {
+        if (Modules.enabled(FreeCam.class)) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && (Object) this == mc.player) {
                 ci.cancel();

@@ -17,6 +17,7 @@ import ravex.gui.proxy.ProxyConfigScreen;
 import java.util.Random;
 import ravex.modules.client.Settings;
 import ravex.utility.render.FontRenderUtility;
+import ravex.modules.Modules;
 
 @Mixin(TitleScreen.class)
 public abstract class MixinTitleScreen extends Screen {
@@ -136,7 +137,7 @@ public abstract class MixinTitleScreen extends Screen {
             pose.popMatrix();
         }
 
-        graphics.drawString(font, "RaveX Client", 8, 8, Settings.itz().menuColor, true);
+        graphics.drawString(font, "RaveX Client", 8, 8, Modules.get(Settings.class).menuColor, true);
         graphics.drawString(font, "Logged in as: §f" + mc.getUser().getName(), 8, 20, 0xFF888888, true);
         graphics.drawString(font, "Build: §7" + ravex.RaveX.version, 8, 32, 0xFF888888, true);
 

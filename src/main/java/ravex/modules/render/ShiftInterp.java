@@ -1,17 +1,18 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "ShiftInterp", category = "Render")
-public class ShiftInterp implements ModuleAccess {
+@Module(name = "ShiftInterp", category = "Render")
+public class ShiftInterp {
     @Parameter(name = "Target", modes = {"All", "Others", "Self"})
     public String target = "All";
 
     public boolean shouldCrouch(net.minecraft.world.entity.Entity entity) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ShiftInterp").getEnabled()) return false;
+        if (!Modules.enabled(ShiftInterp.class)) return false;
         if (!(entity instanceof net.minecraft.world.entity.player.Player)) return false;
         var mc = MinecraftWrapper.getInstance();
         boolean isSelf = (entity == mc.player);
@@ -24,13 +25,9 @@ public class ShiftInterp implements ModuleAccess {
             return true;
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ShiftInterp").getEnabled();
-    }
 
-    public static ShiftInterp itz() {
-        return ravex.manager.ModuleManager.delegate(ShiftInterp.class);
-    }
+
+
 
 
 }

@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
@@ -13,8 +13,9 @@ import ravex.manager.LuaManager;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.LuaFunction;
 import java.util.List;
-@ModuleInfo(name = "Handshake", category = "net.minecraft.world.entity.player.Player")
-public class Handshake implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "Handshake", category = "net.minecraft.world.entity.player.Player")
+public class Handshake {
     @Parameter(name = "Mode", modes = {"Basic", "Forge", "Lunar", "Custom"})
     public String mode = "Basic";
     @Parameter(name = "Suffix")
@@ -22,12 +23,9 @@ public class Handshake implements ModuleAccess {
     @Parameter(name = "Protocol", min = 47.0, max = 1000.0, step = 1.0)
     public double protocol = 767.0;
 
-    public Handshake() {
-    }
-
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Handshake").getEnabled() || !event.isSend()) return;
+        if (!Modules.enabled(Handshake.class) || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (packet instanceof ClientIntentionPacket handshakePacket) {
             AccessorClientIntentionPacket accessor = (AccessorClientIntentionPacket) (Object) handshakePacket;
@@ -37,7 +35,7 @@ public class Handshake implements ModuleAccess {
     }
 
     public String getSpoofedHost(String originalHost) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Handshake").getEnabled()) return originalHost;
+        if (!Modules.enabled(Handshake.class)) return originalHost;
         LuaValue fn = LuaManager.INSTANCE.getGlobals().get("onHandshake");
         if (fn.isfunction()) {
             try {
@@ -63,7 +61,7 @@ public class Handshake implements ModuleAccess {
         }
     }
     public int getSpoofedProtocol(int originalProtocol) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Handshake").getEnabled()) return originalProtocol;
+        if (!Modules.enabled(Handshake.class)) return originalProtocol;
         LuaValue fn = LuaManager.INSTANCE.getGlobals().get("onHandshake");
         if (fn.isfunction()) {
             try {
@@ -87,12 +85,8 @@ public class Handshake implements ModuleAccess {
                 return (int) (double) protocol;
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Handshake").getEnabled();
-    }
-    public static Handshake itz() {
-        return ravex.manager.ModuleManager.delegate(Handshake.class);
-    }
+
+
 
 
 }

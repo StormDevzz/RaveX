@@ -9,25 +9,26 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.Spider;
+import ravex.modules.Modules;
 
 @Mixin(LocalPlayer.class)
 public class MixinSpider {
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
-        if (!Spider.maybeEnabled()) return;
+        if (!Modules.enabled(Spider.class)) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
         if (!player.input.keyPresses.jump()) return;
 
         if (!player.horizontalCollision && !isAgainstWall(player)) return;
 
-        String mode = Spider.itz().mode;
+        String mode = Modules.get(Spider.class).mode;
         double motion;
 
         switch (mode) {
             case "Normal" -> motion = 0.2;
             case "NCP" -> motion = 0.18;
-            case "Custom" -> motion = Spider.itz().motion;
+            case "Custom" -> motion = Modules.get(Spider.class).motion;
             default -> motion = 0.2;
         }
 

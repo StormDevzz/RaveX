@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
@@ -11,8 +11,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "Criticals", category = "Combat")
-public class Criticals implements ModuleAccess {
+@Module(name = "Criticals", category = "Combat")
+public class Criticals {
     @Parameter(name = "Mode", modes = {"Legit", "Packet", "Grim", "MiniJump", "Watchdog"})
     public String mode = "Packet";
     @Parameter(name = "AutoAttack")
@@ -113,12 +113,8 @@ public class Criticals implements ModuleAccess {
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Criticals").getEnabled();
-    }
-    public static Criticals itz() {
-        return ravex.manager.ModuleManager.delegate(Criticals.class);
-    }
+
+
 
 
 }

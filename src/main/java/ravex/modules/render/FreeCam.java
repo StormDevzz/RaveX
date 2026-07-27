@@ -1,13 +1,14 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "FreeCam", category = "Render")
-public class FreeCam implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "FreeCam", category = "Render")
+public class FreeCam {
 public double x, y, z;
     public float yaw, pitch;
     public double prevX, prevY, prevZ;
@@ -66,7 +67,7 @@ public double x, y, z;
     }
     @Subscribe
     public void onTick(TickEvent.Client event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("FreeCam").getEnabled()) return;
+        if (!Modules.enabled(FreeCam.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         if (freeze) {
@@ -154,13 +155,9 @@ public double x, y, z;
         );
     }
     public record Vec3(double x, double y, double z) {}
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("FreeCam").getEnabled();
-    }
 
-    public static FreeCam itz() {
-        return ravex.manager.ModuleManager.delegate(FreeCam.class);
-    }
+
+
 
 
 }

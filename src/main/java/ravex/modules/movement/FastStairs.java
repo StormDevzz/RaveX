@@ -1,11 +1,11 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "FastStairs", category = "Movement")
-public class FastStairs implements ModuleAccess {
+@Module(name = "FastStairs", category = "Movement")
+public class FastStairs {
     @Parameter(name = "Mode", modes = {"Simple", "Boost"})
     public String mode = "Simple";
     @Parameter(name = "Speed", min = 1.0, max = 5.0, step = 0.1)
@@ -28,9 +28,7 @@ public class FastStairs implements ModuleAccess {
             }
         }
     }
-    public static FastStairs itz() {
-        return ravex.manager.ModuleManager.delegate(FastStairs.class);
-    }
+
 
 
 }

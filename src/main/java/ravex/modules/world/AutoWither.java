@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
@@ -8,8 +8,9 @@ import net.minecraft.network.chat.Component;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoWither", category = "World")
-public class AutoWither implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "AutoWither", category = "World")
+public class AutoWither {
     @Parameter(name = "Count", min = 1.0, max = 12.0, step = 1.0)
     public double count = 1.0;
     @Parameter(name = "AutoDisable")
@@ -117,7 +118,7 @@ public class AutoWither implements ModuleAccess {
             }
         }
         sendMsg(mc, "NoSuitablePositionFound");
-        ravex.manager.ModuleManager.INSTANCE.getByName("AutoWither").setEnabled(false);
+        Modules.setEnabled(AutoWither.class, false);
     }
     private void tryPlaceNext(MinecraftWrapper mc, long now) {
         if (now - lastActionTime < 50) return;
@@ -139,7 +140,7 @@ public class AutoWither implements ModuleAccess {
         int slot = findItemSlot(mc);
         if (slot == -1) {
             sendMsg(mc, getMissingMsg());
-            ravex.manager.ModuleManager.INSTANCE.getByName("AutoWither").setEnabled(false);
+            Modules.setEnabled(AutoWither.class, false);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
@@ -183,7 +184,7 @@ public class AutoWither implements ModuleAccess {
         int slot = findItemSlot(mc);
         if (slot == -1) {
             sendMsg(mc, getMissingMsg());
-            ravex.manager.ModuleManager.INSTANCE.getByName("AutoWither").setEnabled(false);
+            Modules.setEnabled(AutoWither.class, false);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
@@ -207,7 +208,7 @@ public class AutoWither implements ModuleAccess {
             state = State.BUILDING;
         } else {
             if (autoDisable) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("AutoWither").setEnabled(false);
+                Modules.setEnabled(AutoWither.class, false);
             } else {
                 state = State.IDLE;
             }
@@ -229,7 +230,7 @@ public class AutoWither implements ModuleAccess {
                 int free = InventoryUtility.findEmptyHotbarSlot(mc.getPlayer());
                 if (free != -1) {
                     InventoryUtility.selectSlot(mc.getPlayer(), free);
-                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, free, net.minecraft.world.inventory.ClickType.SWAP);
+                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, free, InventoryUtility.SWAP);
                     return free;
                 }
                 return i;
@@ -239,7 +240,7 @@ public class AutoWither implements ModuleAccess {
                 int free = InventoryUtility.findEmptyHotbarSlot(mc.getPlayer());
                 if (free != -1) {
                     InventoryUtility.selectSlot(mc.getPlayer(), free);
-                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, free, net.minecraft.world.inventory.ClickType.SWAP);
+                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, free, InventoryUtility.SWAP);
                     return free;
                 }
             }
@@ -256,9 +257,7 @@ public class AutoWither implements ModuleAccess {
             mc.getPlayer().displayClientMessage(Component.literal("§8[§5AutoWither§8] §7" + msg), false);
         }
     }
-    public static AutoWither itz() {
-        return ravex.manager.ModuleManager.delegate(AutoWither.class);
-    }
+
 
 
 }

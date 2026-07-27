@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -12,8 +12,8 @@ import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "BowAim", category = "Combat")
-public class BowAim implements ModuleAccess {
+@Module(name = "BowAim", category = "Combat")
+public class BowAim {
     @Parameter(name = "Range", min = 5.0, max = 40.0, step = 1.0)
     public double range = 20.0;
     @Parameter(name = "Targets", modes = {"Players", "Mobs", "Both"})
@@ -166,12 +166,8 @@ public class BowAim implements ModuleAccess {
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("BowAim").getEnabled();
-    }
-    public static BowAim itz() {
-        return ravex.manager.ModuleManager.delegate(BowAim.class);
-    }
+
+
     private static native double[] nativeCalculateBowAim(
         double playerX, double playerY, double playerZ,
         double targetX, double targetY, double targetZ,

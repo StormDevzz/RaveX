@@ -15,6 +15,7 @@ import ravex.event.render.FogEvent;
 import ravex.modules.player.Xray;
 import ravex.modules.render.NoRender;
 import ravex.modules.render.WorldColor;
+import ravex.modules.Modules;
 
 @Mixin(FogRenderer.class)
 public class MixinFogRenderer {
@@ -32,10 +33,10 @@ public class MixinFogRenderer {
     private void onComputeFogColor(Camera camera, float partialTick, ClientLevel level,
                                     int renderDistance, float bossColorModifier,
                                     CallbackInfoReturnable<Vector4f> cir) {
-        if (Xray.maybeEnabled()) {
+        if (Modules.enabled(Xray.class)) {
             cir.setReturnValue(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
-        } else if (WorldColor.maybeEnabled() && WorldColor.itz().sky) {
-            int col = WorldColor.itz().skyColor.getValue();
+        } else if (Modules.enabled(WorldColor.class) && Modules.get(WorldColor.class).sky) {
+            int col = Modules.get(WorldColor.class).skyColor.getValue();
             float r = ((col >> 16) & 0xFF) / 255.0f;
             float g = ((col >> 8) & 0xFF) / 255.0f;
             float b = (col & 0xFF) / 255.0f;
@@ -48,14 +49,14 @@ public class MixinFogRenderer {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V")
     )
     private void onUpdateBufferArgs(Args args) {
-        if (WorldColor.maybeEnabled() && WorldColor.itz().fog) {
-            int argb = WorldColor.itz().fogColor.getValue();
+        if (Modules.enabled(WorldColor.class) && Modules.get(WorldColor.class).fog) {
+            int argb = Modules.get(WorldColor.class).fogColor.getValue();
             float r = ((argb >> 16) & 0xFF) / 255.0f;
             float g = ((argb >>  8) & 0xFF) / 255.0f;
             float b = ( argb        & 0xFF) / 255.0f;
             args.set(2, new Vector4f(r, g, b, 1.0f));
         }
-        if (NoRender.maybeEnabled() && NoRender.itz().fog) {
+        if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).fog) {
             float envStart = args.get(3);
             float envEnd = args.get(4);
             float rdStart = args.get(5);

@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -11,8 +11,9 @@ import ravex.parameter.ColorParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "FpsHud", category = "HUD")
+@Module(name = "FpsHud", category = "HUD")
 public class FpsHud extends ravex.modules.Module {
     @Parameter(name = "HighColor", color = true)
     public int highColor = 0xFF44FF88;
@@ -29,15 +30,11 @@ public class FpsHud extends ravex.modules.Module {
     public int height;
 private static final Identifier ICON = TextureLoaderUtility.HUD_FPS_WHITE;
 
-    public static FpsHud itz() {
-        return ravex.manager.ModuleManager.delegate(FpsHud.class);
-    }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("FpsHud").getEnabled();
-    }
+
+
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         int fps = MinecraftWrapper.getInstance().getFps();
         int ac = ColorUtility.getActiveColor();
         boolean shadow = true;

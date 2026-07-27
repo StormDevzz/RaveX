@@ -2,7 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
 import ravex.utility.player.SwingUtility;
 
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.CameraUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -24,8 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "PearlTarget", category = "Combat")
-public class PearlTarget implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "PearlTarget", category = "Combat")
+public class PearlTarget {
     @Parameter(name = "Mode", modes = {"Combat", "Pearl", "Follow"})
     public String mode = "Combat";
     @Parameter(name = "Range", min = 1.0, max = 32.0, step = 0.5)
@@ -120,8 +121,6 @@ public class PearlTarget implements ModuleAccess {
     public net.minecraft.world.phys.Vec3 renderTargetPos = null;
     static {
         NATIVE.load();
-    }
-    private PearlTarget() {
     }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
@@ -277,7 +276,7 @@ public class PearlTarget implements ModuleAccess {
             mc.getPlayer().containerMenu.containerId,
             totemSlot < 36 ? totemSlot : totemSlot,
             0,
-            net.minecraft.world.inventory.ClickType.QUICK_MOVE,
+            InventoryUtility.QUICK_MOVE,
             mc.getPlayer()
         );
     }
@@ -424,7 +423,7 @@ public class PearlTarget implements ModuleAccess {
         renderTargetPos = null;
     }
     public void render(Matrix4f modelViewMatrix, net.minecraft.client.Camera camera) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("PearlTarget").getEnabled() || !render) return;
+        if (!Modules.enabled(PearlTarget.class) || !render) return;
         if (renderPearlPos == null && renderLandingPos == null && renderTargetPos == null) return;
         net.minecraft.world.phys.Vec3 camPos = camera.position();
         boolean throughWalls = renderThroughWalls;
@@ -480,12 +479,8 @@ public class PearlTarget implements ModuleAccess {
         }
     }
     private static native void nativePredictPearl(double x, double y, double z, double mx, double my, double mz, int maxTicks, double[] out);
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("PearlTarget").getEnabled();
-    }
-    public static PearlTarget itz() {
-        return ravex.manager.ModuleManager.delegate(PearlTarget.class);
-    }
+
+
     private static class PearlData {
         int entityId;
         UUID ownerUUID;

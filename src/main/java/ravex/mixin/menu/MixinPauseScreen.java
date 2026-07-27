@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.misc.AutoReconnect;
+import ravex.modules.Modules;
 
 @Mixin(PauseScreen.class)
 public abstract class MixinPauseScreen extends Screen {
@@ -21,7 +22,7 @@ public abstract class MixinPauseScreen extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        if (!AutoReconnect.maybeEnabled()) return;
+        if (!Modules.enabled(AutoReconnect.class)) return;
         if (!AutoReconnect.hasLastServer()) return;
 
         int btnW = 200;

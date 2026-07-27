@@ -2,7 +2,7 @@ package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
 import ravex.utility.network.NetworkUtility;
 
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
@@ -13,9 +13,10 @@ import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "Blink", category = "Movement")
-public class Blink implements ModuleAccess {
+@Module(name = "Blink", category = "Movement")
+public class Blink {
     @Parameter(name = "Mode", modes = {"Normal", "Packet", "Grim", "NCP"})
     public String mode = "Normal";
     @Parameter(name = "Limit", min = 5.0, max = 200.0, step = 5.0)
@@ -44,10 +45,6 @@ public class Blink implements ModuleAccess {
     private static final int IDLE_INTERVAL = 3;
     private static final double MAX_MOVE_PER_PACKET = 0.35;
 
-    private Blink() {
-        
-    }
-
     @Subscribe
     public void onPacket(PacketEvent event) {
         if (!event.isSend()) return;
@@ -58,7 +55,7 @@ public class Blink implements ModuleAccess {
 
     @Subscribe
     public void onTick(TickEvent.Client event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Blink").getEnabled()) return;
+        if (!Modules.enabled(Blink.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
 
@@ -67,14 +64,14 @@ public class Blink implements ModuleAccess {
 
         if (isGrim || isNcp) {
             if (cancelOnShift && mc.options.keyShift.isDown()) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("Blink").setEnabled(false);
+                Modules.setEnabled(Blink.class, false);
                 return;
             }
 
             tickCounter++;
 
             if (tickCounter >= autoDisableTicks) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("Blink").setEnabled(false);
+                Modules.setEnabled(Blink.class, false);
                 return;
             }
 
@@ -100,7 +97,7 @@ public class Blink implements ModuleAccess {
     }
 
     public boolean shouldCancel(net.minecraft.network.protocol.Packet<?> packet) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Blink").getEnabled()) return false;
+        if (!Modules.enabled(Blink.class)) return false;
 
         String modeVal = mode;
 
@@ -261,13 +258,9 @@ public class Blink implements ModuleAccess {
         return packetBuffer.size();
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Blink").getEnabled();
-    }
 
-    public static Blink itz() {
-        return ravex.manager.ModuleManager.delegate(Blink.class);
-    }
+
+
     public void onEnable() {
         packetBuffer.clear();
         tickCounter = 0;

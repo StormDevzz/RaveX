@@ -1,12 +1,12 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 
 import ravex.parameter.StringParameter;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoAuth", category = "Misc")
-public class AutoAuth implements ModuleAccess {
+@Module(name = "AutoAuth", category = "Misc")
+public class AutoAuth {
     @Parameter(name = "Password")
     public String password = "r1v2x";
     @Parameter(name = "Delay", min = 0.0, max = 20.0, step = 1.0)
@@ -29,9 +29,7 @@ public class AutoAuth implements ModuleAccess {
         }
     }
 
-    public static AutoAuth itz() {
-        return ravex.manager.ModuleManager.delegate(AutoAuth.class);
-    }
+
 
 
 }

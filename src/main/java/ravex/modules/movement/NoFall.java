@@ -4,17 +4,18 @@ import ravex.event.client.TickEvent;
 import ravex.event.network.PacketEvent;
 import ravex.event.Subscribe;
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.protocol.Packet;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
-@ModuleInfo(name = "NoFall", category = "Movement")
-public class NoFall implements ModuleAccess {
+@Module(name = "NoFall", category = "Movement")
+public class NoFall {
     @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim"})
     public String mode = "Vanilla";
 
@@ -22,7 +23,7 @@ public class NoFall implements ModuleAccess {
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoFall").getEnabled() || !event.isSend()) return;
+        if (!Modules.enabled(NoFall.class) || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (!(packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket movePacket)) return;
         var mc = MinecraftWrapper.getInstance();
@@ -38,7 +39,7 @@ public class NoFall implements ModuleAccess {
 
     @Subscribe
     public void onTick(TickEvent.Client event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoFall").getEnabled()) return;
+        if (!Modules.enabled(NoFall.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
@@ -56,9 +57,7 @@ public class NoFall implements ModuleAccess {
         }
     }
 
-    public static NoFall itz() {
-        return ravex.manager.ModuleManager.delegate(NoFall.class);
-    }
+
 
 
 }

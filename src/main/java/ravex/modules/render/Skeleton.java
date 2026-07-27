@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Skeleton", category = "Render")
-public class Skeleton implements ModuleAccess {
+@Module(name = "Skeleton", category = "Render")
+public class Skeleton {
     @Parameter(name = "Color", color = true)
     public int color = 0xFFFFFFFF;
     @Parameter(name = "LineWidth", min = 0.5, max = 3.0, step = 0.1)
@@ -161,13 +161,9 @@ public class Skeleton implements ModuleAccess {
                                  int r, int g, int b, int a, float lineWidth) {
         BlockRendererUtility.renderLine3D(builder, matrix, x1, y1, z1, x2, y2, z2, r, g, b, a, lineWidth);
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Skeleton").getEnabled();
-    }
 
-    public static Skeleton itz() {
-        return ravex.manager.ModuleManager.delegate(Skeleton.class);
-    }
+
+
 
 
 }

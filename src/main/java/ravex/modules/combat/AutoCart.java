@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
 import ravex.utility.misc.block.BlockUtility;
@@ -16,8 +16,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoCart", category = "Combat")
-public class AutoCart implements ModuleAccess {
+@Module(name = "AutoCart", category = "Combat")
+public class AutoCart {
     @Parameter(name = "Range", min = 1, max = 10, step = 1)
     public double range = 6;
     @Parameter(name = "TargetRange", min = 5, max = 50, step = 1)
@@ -163,7 +163,7 @@ public class AutoCart implements ModuleAccess {
                         mc.getPlayer().containerMenu.containerId,
                         i,
                         freeSlot,
-                        net.minecraft.world.inventory.ClickType.SWAP,
+                        InventoryUtility.SWAP,
                         mc.getPlayer()
                     );
                     return freeSlot;
@@ -214,12 +214,8 @@ public class AutoCart implements ModuleAccess {
         net.minecraft.world.phys.Vec3 targetPos = net.minecraft.world.phys.Vec3.atCenterOf(pos);
         return playerPos.distanceTo(targetPos) <= range;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoCart").getEnabled();
-    }
-    public static AutoCart itz() {
-        return ravex.manager.ModuleManager.delegate(AutoCart.class);
-    }
+
+
 
 
 }

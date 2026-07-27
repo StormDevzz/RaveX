@@ -1,6 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.VoidUtility;
@@ -9,8 +9,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AntiVoid", category = "Movement")
-public class AntiVoid implements ModuleAccess {
+@Module(name = "AntiVoid", category = "Movement")
+public class AntiVoid {
     @Parameter(name = "Distance", min = 1.0, max = 10.0, step = 0.5)
     public double fallDistance = 5.0;
     @Parameter(name = "Mode", modes = {"Teleport", "Bounce"})
@@ -36,9 +36,7 @@ public class AntiVoid implements ModuleAccess {
             }
         }
     }
-    public static AntiVoid itz() {
-        return ravex.manager.ModuleManager.delegate(AntiVoid.class);
-    }
+
 
 
 }

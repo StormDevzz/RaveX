@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.SwingUtility;
@@ -9,8 +9,8 @@ import ravex.utility.misc.MobUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoClicker", category = "Combat")
-public class AutoClicker implements ModuleAccess {
+@Module(name = "AutoClicker", category = "Combat")
+public class AutoClicker {
     @Parameter(name = "MinCPS", min = 1.0, max = 40.0, step = 0.5)
     public double minCps = 8.0;
     @Parameter(name = "MaxCPS", min = 1.0, max = 40.0, step = 0.5)
@@ -114,12 +114,8 @@ public class AutoClicker implements ModuleAccess {
         nextClick = 0;
     }
     private static native long nativeCalculateDelay(double minCps, double maxCps, boolean randomize);
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoClicker").getEnabled();
-    }
-    public static AutoClicker itz() {
-        return ravex.manager.ModuleManager.delegate(AutoClicker.class);
-    }
+
+
 
 
 }

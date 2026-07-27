@@ -5,22 +5,23 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import ravex.modules.misc.ChatHelper;
+import ravex.modules.Modules;
 
 @Mixin(CommandHistory.class)
 public class MixinCommandHistory {
 
     @ModifyConstant(method = "<init>", constant = @Constant(intValue = 50))
     private int modifyInitCapacity(int original) {
-        if (ChatHelper.maybeEnabled()) {
-            return (int) ChatHelper.itz().chatHistorySize;
+        if (Modules.enabled(ChatHelper.class)) {
+            return (int) Modules.get(ChatHelper.class).chatHistorySize;
         }
         return original;
     }
 
     @ModifyConstant(method = "addCommand", constant = @Constant(intValue = 50))
     private int modifyMaxHistory(int original) {
-        if (ChatHelper.maybeEnabled()) {
-            return (int) ChatHelper.itz().chatHistorySize;
+        if (Modules.enabled(ChatHelper.class)) {
+            return (int) Modules.get(ChatHelper.class).chatHistorySize;
         }
         return original;
     }

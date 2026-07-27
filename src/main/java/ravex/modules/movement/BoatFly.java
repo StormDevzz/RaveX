@@ -3,7 +3,7 @@ import ravex.modules.ModuleAccess;
 import ravex.event.EventBusHolder;
 import ravex.event.network.PacketEvent;
 import ravex.event.Subscribe;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -12,13 +12,14 @@ import net.minecraft.world.entity.vehicle.boat.Boat;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
 
-@ModuleInfo(name = "BoatFly", category = "Movement")
-public class BoatFly implements ModuleAccess {
+@Module(name = "BoatFly", category = "Movement")
+public class BoatFly {
     @Parameter(name = "Mode", modes = {"Packet", "PacketStrict", "Motion"})
     public String mode = "Packet";
     @Parameter(name = "Speed", min = 0.1, max = 25.0, step = 0.1)
@@ -42,7 +43,7 @@ public class BoatFly implements ModuleAccess {
     private float currentScale = 1.0f;
 
     public static boolean isBoatScaleActive() {
-        return ravex.manager.ModuleManager.delegate(BoatFly.class).getEnabled();
+        return Modules.enabled(BoatFly.class);
     }
 
     public float getScale() {
@@ -204,13 +205,9 @@ public class BoatFly implements ModuleAccess {
         return new double[]{x, z};
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("BoatFly").getEnabled();
-    }
 
-    public static BoatFly itz() {
-        return ravex.manager.ModuleManager.delegate(BoatFly.class);
-    }
+
+
 
 
 }

@@ -1,6 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -12,8 +12,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "ClickTP", category = "Movement")
-public class ClickTP implements ModuleAccess {
+@Module(name = "ClickTP", category = "Movement")
+public class ClickTP {
     @Parameter(name = "Mode", modes = {"Instant", "Blink"})
     public String mode = "Instant";
     @Parameter(name = "Range", min = 10.0, max = 200.0, step = 5.0)
@@ -75,9 +75,7 @@ public class ClickTP implements ModuleAccess {
         }
         p.setPos(target.x, target.y, target.z);
     }
-    public static ClickTP itz() {
-        return ravex.manager.ModuleManager.delegate(ClickTP.class);
-    }
+
 
 
 }

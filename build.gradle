@@ -40,6 +40,7 @@ dependencies {
 
     modCompileOnly(files("libs/sodium-fabric-0.8.13+mc1.21.11-fixed.jar"))
 
+    compileOnly('org.jetbrains:annotations:26.0.2')
 }
 
 loom {

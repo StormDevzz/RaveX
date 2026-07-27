@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -15,8 +15,9 @@ import net.minecraft.core.particles.ParticleTypes;
 
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "KillEffects", category = "Render")
-public class KillEffects implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "KillEffects", category = "Render")
+public class KillEffects {
     @Parameter(name = "Effect", modes = {"Lightning", "Fire", "Both"})
     public String effect = "Lightning";
     @Parameter(name = "Players")
@@ -28,7 +29,7 @@ public class KillEffects implements ModuleAccess {
 
     @Subscribe
     public void onDeath(DeathEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("KillEffects").getEnabled()) return;
+        if (!Modules.enabled(KillEffects.class)) return;
         net.minecraft.world.entity.player.Player victim = event.getPlayer();
         if (victim == MinecraftWrapper.getInstance().player) return;
         net.minecraft.world.entity.LivingEntity living = victim;
@@ -73,13 +74,9 @@ public class KillEffects implements ModuleAccess {
                 dx * 0.1, dy * 0.1, dz * 0.1);
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("KillEffects").getEnabled();
-    }
 
-    public static KillEffects itz() {
-        return ravex.manager.ModuleManager.delegate(KillEffects.class);
-    }
+
+
 
 
 }

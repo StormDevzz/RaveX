@@ -1,7 +1,7 @@
 package ravex.modules.hud;
 import ravex.utility.misc.ScreenUtility;
 
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
@@ -18,8 +18,9 @@ import ravex.modules.combat.Trigger;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "TargetHud", category = "HUD")
+@Module(name = "TargetHud", category = "HUD")
 public class TargetHud extends ravex.modules.Module {
     public int x;
     public int y;
@@ -76,12 +77,12 @@ public class TargetHud extends ravex.modules.Module {
     }
 
     private net.minecraft.world.entity.LivingEntity getTarget(MinecraftWrapper mc) {
-        if (ravex.manager.ModuleManager.delegate(KillAura.class).getEnabled()) {
-            net.minecraft.world.entity.LivingEntity target = ravex.manager.ModuleManager.delegate(KillAura.class).getCurrentTarget();
+        if (Modules.enabled(KillAura.class)) {
+            net.minecraft.world.entity.LivingEntity target = Modules.get(KillAura.class).getCurrentTarget();
             if (target != null && target.isAlive()) return target;
         }
-        if (ravex.manager.ModuleManager.delegate(Trigger.class).getEnabled()) {
-            net.minecraft.world.entity.LivingEntity target = ravex.manager.ModuleManager.delegate(Trigger.class).getCurrentTarget();
+        if (Modules.enabled(Trigger.class)) {
+            net.minecraft.world.entity.LivingEntity target = Modules.get(Trigger.class).getCurrentTarget();
             if (target != null && target.isAlive()) return target;
         }
         return null;
@@ -106,7 +107,7 @@ public class TargetHud extends ravex.modules.Module {
         return SKELETON_SKULL;
     }
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
 
@@ -332,13 +333,9 @@ public class TargetHud extends ravex.modules.Module {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
-    public static TargetHud itz() {
-        return ravex.manager.ModuleManager.delegate(TargetHud.class);
-    }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("TargetHud").getEnabled();
-    }
+
+
 
 
     

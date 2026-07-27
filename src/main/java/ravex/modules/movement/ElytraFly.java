@@ -1,6 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.SwingUtility;
@@ -12,8 +12,8 @@ import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "ElytraFly", category = "Movement")
-public class ElytraFly implements ModuleAccess {
+@Module(name = "ElytraFly", category = "Movement")
+public class ElytraFly {
     @Parameter(name = "Mode", modes = {"Vanilla", "Control", "NCP", "Fireworks"})
     public String mode = "Vanilla";
     @Parameter(name = "H-Speed", min = 0.1, max = 5.0, step = 0.1)
@@ -78,9 +78,6 @@ public class ElytraFly implements ModuleAccess {
         } else {
             accelMul = 1.0;
         }
-    }
-    private ElytraFly() {
-        
     }
     public static double[] calculateVelocity(
         String mode, double hSpeed, double vSpeed, double glide,
@@ -264,12 +261,8 @@ public class ElytraFly implements ModuleAccess {
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ElytraFly").getEnabled();
-    }
-    public static ElytraFly itz() {
-        return ravex.manager.ModuleManager.delegate(ElytraFly.class);
-    }
+
+
     private void useFirework(MinecraftWrapper mc) {
         int slot = -1;
         for (int i = 0; i < 9; i++) {

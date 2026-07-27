@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.NoSlow;
+import ravex.modules.Modules;
 
 @Mixin(HoneyBlock.class)
 public class MixinHoneyBlock {
@@ -18,7 +19,7 @@ public class MixinHoneyBlock {
     @Inject(method = "entityInside", at = @At("HEAD"), cancellable = true)
     private void onEntityInside(BlockState state, Level level, BlockPos pos, Entity entity, CallbackInfo ci) {
         if (entity instanceof LocalPlayer) {
-            if (NoSlow.maybeEnabled() && NoSlow.itz().blocks) {
+            if (Modules.enabled(NoSlow.class) && Modules.get(NoSlow.class).blocks) {
                 ci.cancel();
             }
         }

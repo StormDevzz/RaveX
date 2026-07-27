@@ -1,6 +1,6 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
@@ -8,8 +8,9 @@ import ravex.event.network.PacketEvent;
 import net.minecraft.network.protocol.Packet;
 import ravex.utility.network.NetworkUtility;
 import java.util.List;
-@ModuleInfo(name = "PacketHelper", category = "Misc")
-public class PacketHelper implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "PacketHelper", category = "Misc")
+public class PacketHelper {
     @Parameter(name = "Mode", modes = {"Logging", "Filter", "Cancel"})
     public String mode = "Logging";
 
@@ -50,13 +51,9 @@ public class PacketHelper implements ModuleAccess {
     @Parameter(name = "CancelUse")
     public boolean cancelUse = false;
 
-    private PacketHelper() {
-        
-    }
-
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("PacketHelper").getEnabled()) return;
+        if (!Modules.enabled(PacketHelper.class)) return;
         Packet<?> packet = event.getPacket();
         if (event.isSend() && loggingEnabled && logOutgoing) {
             logPacket("C2S ->", packet);
@@ -70,7 +67,7 @@ public class PacketHelper implements ModuleAccess {
     }
 
     public void logPacket(String direction, Packet<?> packet) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("PacketHelper").getEnabled() || !loggingEnabled) return;
+        if (!Modules.enabled(PacketHelper.class) || !loggingEnabled) return;
         String name = NetworkUtility.packetName(packet);
         String message = "§7[§6Packet§7] §d" + direction + " §e" + name;
         if (logToChat) {
@@ -81,7 +78,7 @@ public class PacketHelper implements ModuleAccess {
     }
 
     public boolean shouldCancel(Packet<?> packet) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("PacketHelper").getEnabled() || !cancelEnabled) return false;
+        if (!Modules.enabled(PacketHelper.class) || !cancelEnabled) return false;
         if (NetworkUtility.isMovePacket(packet) && cancelMove) return true;
         if (NetworkUtility.isInputPacket(packet) && cancelInput) return true;
         if (NetworkUtility.isSwingPacket(packet) && cancelSwing) return true;
@@ -90,9 +87,7 @@ public class PacketHelper implements ModuleAccess {
         return false;
     }
 
-    public static PacketHelper itz() {
-        return ravex.manager.ModuleManager.delegate(PacketHelper.class);
-    }
+
 
 
 }

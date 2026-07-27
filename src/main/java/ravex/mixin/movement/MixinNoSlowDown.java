@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.movement.NoSlow;
+import ravex.modules.Modules;
 
 @Mixin(LocalPlayer.class)
 public abstract class MixinNoSlowDown {
@@ -15,8 +16,8 @@ public abstract class MixinNoSlowDown {
     private int grimStrictTicks = 0;
     @Inject(method = "isSlowDueToUsingItem", at = @At("HEAD"), cancellable = true)
     private void onIsSlowDueToUsingItem(CallbackInfoReturnable<Boolean> cir) {
-        NoSlow ns = NoSlow.itz();
-        if (!NoSlow.maybeEnabled() || !ns.items) return;
+        NoSlow ns = Modules.get(NoSlow.class);
+        if (!Modules.enabled(NoSlow.class) || !ns.items) return;
         String mode = ns.mode;
         if ("GrimStrict".equals(mode) && Minecraft.getInstance().player != null && !Minecraft.getInstance().player.isUsingItem()) {
             cir.setReturnValue(false);
@@ -36,8 +37,8 @@ public abstract class MixinNoSlowDown {
 
     @ModifyExpressionValue(method = "modifyInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isUsingItem()Z"))
     private boolean redirectUsingItem(boolean isUsingItem) {
-        NoSlow ns = NoSlow.itz();
-        if (!NoSlow.maybeEnabled() || !ns.items) return isUsingItem;
+        NoSlow ns = Modules.get(NoSlow.class);
+        if (!Modules.enabled(NoSlow.class) || !ns.items) return isUsingItem;
         String mode = ns.mode;
         if ("GrimStrict".equals(mode)) {
             if (!isUsingItem) return false;
@@ -55,7 +56,7 @@ public abstract class MixinNoSlowDown {
 
     @Inject(method = "isMovingSlowly", at = @At("HEAD"), cancellable = true)
     private void onIsMovingSlowly(CallbackInfoReturnable<Boolean> cir) {
-        if (NoSlow.maybeEnabled() && NoSlow.itz().sneaking) {
+        if (Modules.enabled(NoSlow.class) && Modules.get(NoSlow.class).sneaking) {
             cir.setReturnValue(false);
         }
     }

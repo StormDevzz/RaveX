@@ -1,6 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
@@ -11,8 +11,9 @@ import ravex.event.network.PacketEvent;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Phase", category = "Movement")
-public class Phase implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "Phase", category = "Movement")
+public class Phase {
     @Parameter(name = "Mode", modes = {"Positive1", "Positive2"})
     public String mode = "Positive1";
     @Parameter(name = "Distance", min = 0.5, max = 4.0, step = 0.1)
@@ -24,7 +25,7 @@ public class Phase implements ModuleAccess {
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Phase").getEnabled() || !event.isSend()) return;
+        if (!Modules.enabled(Phase.class) || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (packet instanceof ServerboundUseItemPacket usePacket) {
             var mc = MinecraftWrapper.getInstance();
@@ -73,12 +74,8 @@ public class Phase implements ModuleAccess {
         outOffset[2] = Math.cos(yawRad) * Math.cos(pitchRad) * distance;
     }
     private static native void nativeCalculateOffset(double yaw, double pitch, double distance, double[] outOffset);
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Phase").getEnabled();
-    }
-    public static Phase itz() {
-        return ravex.manager.ModuleManager.delegate(Phase.class);
-    }
+
+
 
 
 }

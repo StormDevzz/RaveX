@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
 import ravex.utility.misc.block.BlockUtility;
@@ -31,8 +31,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AnchorAura", category = "Combat")
-public class AnchorAura implements ModuleAccess {
+@Module(name = "AnchorAura", category = "Combat")
+public class AnchorAura {
     @Parameter(name = "Target", modes = {"Closest", "LowestHP"})
     public String targetMode = "Closest";
     @Parameter(name = "TargetType", modes = {"Players", "Monsters", "Passives", "All"})
@@ -85,15 +85,6 @@ public class AnchorAura implements ModuleAccess {
         NATIVE.load();
     }
 
-    private AnchorAura() {
-    }
-
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AnchorAura").getEnabled();
-    }
-    public static AnchorAura itz() {
-        return ravex.manager.ModuleManager.delegate(AnchorAura.class);
-    }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
@@ -288,7 +279,7 @@ public class AnchorAura implements ModuleAccess {
             slot = InventoryUtility.findSlot(mc.getPlayer(), itemName, 9, 36);
             if (slot != -1) {
                 int hotbarSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, hotbarSlot, InventoryUtility.SWAP);
                 return hotbarSlot;
             }
         }

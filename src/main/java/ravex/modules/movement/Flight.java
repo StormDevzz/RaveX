@@ -1,13 +1,13 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
 
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Flight", category = "Movement")
-public class Flight implements ModuleAccess {
+@Module(name = "Flight", category = "Movement")
+public class Flight {
     @Parameter(name = "Mode", modes = {"Vanilla", "Creative", "NCP", "Minemen", "Jetpack"})
     public String mode = "Vanilla";
     @Parameter(name = "Speed", min = 0.5, max = 10.0, step = 0.1)
@@ -32,9 +32,6 @@ public class Flight implements ModuleAccess {
     }
     public static double handleAirFriction(String mode, double currentSpeed, double acceleration, double friction) {
         return javaHandleAirFriction(mode, currentSpeed, acceleration, friction);
-    }
-    private Flight() {
-        
     }
     public void onEnable() {
         RaveX.LOGGER.info("[Flight] Enabled with mode: {}", mode);
@@ -70,12 +67,8 @@ public class Flight implements ModuleAccess {
         }
         return new double[]{velX, velY, velZ};
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Flight").getEnabled();
-    }
-    public static Flight itz() {
-        return ravex.manager.ModuleManager.delegate(Flight.class);
-    }
+
+
     private static double javaHandleAirFriction(String mode, double currentSpeed, double acceleration, double friction) {
         if (mode.equals("NCP")) {
             return currentSpeed * (1.0 - friction * 0.05);

@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.InventoryUtility;
@@ -12,8 +12,8 @@ import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Scaffold", category = "World")
-public class Scaffold implements ModuleAccess {
+@Module(name = "Scaffold", category = "World")
+public class Scaffold {
     @Parameter(name = "Mode", modes = {"Vanilla", "Grim"})
     public String mode = "Vanilla";
     @Parameter(name = "Expand")
@@ -51,9 +51,6 @@ public class Scaffold implements ModuleAccess {
     private static net.minecraft.core.Direction pendingFace;
     private static net.minecraft.core.BlockPos pendingNeighbor;
     private static boolean hasPending;
-
-    public Scaffold() {
-    }
 
     public net.minecraft.core.BlockPos getCurrentPos() {
         return hasCurr ? BlockUtility.pos(currX, currY, currZ) : null;
@@ -258,12 +255,8 @@ public class Scaffold implements ModuleAccess {
         return -1;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Scaffold").getEnabled();
-    }
-    public static Scaffold itz() {
-        return ravex.manager.ModuleManager.delegate(Scaffold.class);
-    }
+
+
 
 
 }

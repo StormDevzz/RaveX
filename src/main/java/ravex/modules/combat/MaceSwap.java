@@ -1,13 +1,13 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "MaceSwap", category = "Combat")
-public class MaceSwap implements ModuleAccess {
+@Module(name = "MaceSwap", category = "Combat")
+public class MaceSwap {
     @Parameter(name = "Mode", modes = {"Basic", "Smart"})
     public String mode = "Smart";
     @Parameter(name = "FallSpeed", min = 0.1, max = 3.0, step = 0.05)
@@ -52,12 +52,8 @@ public class MaceSwap implements ModuleAccess {
         }
         return -1;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("MaceSwap").getEnabled();
-    }
-    public static MaceSwap itz() {
-        return ravex.manager.ModuleManager.delegate(MaceSwap.class);
-    }
+
+
 
 
 }

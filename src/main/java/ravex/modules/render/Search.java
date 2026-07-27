@@ -1,7 +1,7 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
 import ravex.gui.browser.SearchBrowserScreen;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.ActionParameter;
 import ravex.utility.misc.block.BlockUtility;
@@ -15,13 +15,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
 
-@ModuleInfo(name = "Search", category = "Render")
-public class Search implements ModuleAccess {
+@Module(name = "Search", category = "Render")
+public class Search {
 private final Set<Identifier> selectedBlocks = new HashSet<>();
     private final Set<Identifier> selectedEntities = new HashSet<>();
     private final List<net.minecraft.core.BlockPos> foundBlocks = new ArrayList<>();
@@ -45,10 +46,6 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
     public int entityColor = 0xCC00FFFF;
     @Parameter(name = "ESP")
     public boolean esp = true;
-
-    private Search() {
-        
-    }
 
     public boolean isBlockSelected(Identifier id) {
         return selectedBlocks.contains(id);
@@ -103,7 +100,7 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
         }
     }
     public void onTick() {
-        if (ravex.manager.ModuleManager.INSTANCE.getByName("Search").getEnabled()) {
+        if (Modules.enabled(Search.class)) {
             scanBlocks();
         }
     }
@@ -111,13 +108,9 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
         scanBlocks();
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Search").getEnabled();
-    }
 
-    public static Search itz() {
-        return ravex.manager.ModuleManager.delegate(Search.class);
-    }
+
+
 
 
 }

@@ -1,11 +1,11 @@
 package ravex.modules.client;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 
-@ModuleInfo(name = "ClickGui", category = "Client")
-public class ClickGui implements ModuleAccess {
+@Module(name = "ClickGui", category = "Client", enabled = true)
+public class ClickGui {
     @Parameter(name = "Background")
     public boolean drawBackground = true;
     @Parameter(name = "ColorMode", modes = {"Positive", "Fade", "Rainbow", "DoubleColor"})
@@ -82,15 +82,5 @@ public class ClickGui implements ModuleAccess {
     public boolean descriptionPanel = false;
     @Parameter(name = "ShowGear")
     public boolean showGear = false;
-
-    private ClickGui() {
-        
-        ravex.manager.ModuleManager.INSTANCE.getByName("ClickGui").setEnabled(true);
-    }
-
-    public static ClickGui itz() {
-        return ravex.manager.ModuleManager.delegate(ClickGui.class);
-    }
-
 
 }

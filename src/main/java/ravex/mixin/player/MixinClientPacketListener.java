@@ -8,20 +8,21 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.misc.ChatHelper;
 import ravex.modules.movement.HighJump;
+import ravex.modules.Modules;
 
 @Mixin(ClientPacketListener.class)
 public class MixinClientPacketListener {
 
     @ModifyVariable(method = "sendChat", at = @At("HEAD"), argsOnly = true)
     private String modifyChatMessage(String message) {
-        ChatHelper ch = ChatHelper.itz();
-        if (!ChatHelper.maybeEnabled() || !ch.zov) return message;
+        ChatHelper ch = Modules.get(ChatHelper.class);
+        if (!Modules.enabled(ChatHelper.class) || !ch.zov) return message;
         return ch.applyZov(message);
     }
 
     @Inject(method = "handleOpenScreen", at = @At("HEAD"), cancellable = true)
     private void onHandleOpenScreen(net.minecraft.network.protocol.game.ClientboundOpenScreenPacket packet, CallbackInfo ci) {
-        if (HighJump.maybeEnabled() && "GrimShulker".equals(HighJump.itz().mode)) {
+        if (Modules.enabled(HighJump.class) && "GrimShulker".equals(Modules.get(HighJump.class).mode)) {
             if (packet.getType() == net.minecraft.world.inventory.MenuType.SHULKER_BOX) {
                 ci.cancel();
             }

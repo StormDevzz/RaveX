@@ -1,14 +1,14 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.chat.Component;
 
 import ravex.parameter.StringParameter;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@ModuleInfo(name = "MessageAura", category = "Misc")
-public class MessageAura implements ModuleAccess {
+@Module(name = "MessageAura", category = "Misc")
+public class MessageAura {
     @Parameter(name = "Message")
     public String message = "Hello from RaveX!";
     @Parameter(name = "Interval", min = 1.0, max = 60.0, step = 0.5)
@@ -29,9 +29,7 @@ public class MessageAura implements ModuleAccess {
         lastMessageTime = System.currentTimeMillis();
     }
 
-    public static MessageAura itz() {
-        return ravex.manager.ModuleManager.delegate(MessageAura.class);
-    }
+
 
 
 }

@@ -1,6 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -8,8 +8,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "PacketFly", category = "Movement")
-public class PacketFly implements ModuleAccess {
+@Module(name = "PacketFly", category = "Movement")
+public class PacketFly {
     @Parameter(name = "Mode", modes = {"Fast", "Damage", "Setback"})
     public String mode = "Fast";
     @Parameter(name = "Speed", min = 0.05, max = 1.0, step = 0.05)
@@ -49,9 +49,7 @@ public class PacketFly implements ModuleAccess {
             ));
         }
     }
-    public static PacketFly itz() {
-        return ravex.manager.ModuleManager.delegate(PacketFly.class);
-    }
+
 
 
 }

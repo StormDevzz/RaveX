@@ -1,11 +1,11 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 
 import ravex.modules.client.Hud;
 
-@ModuleInfo(name = "ChatHud", category = "HUD")
+@Module(name = "ChatHud", category = "HUD")
 public class ChatHud extends ravex.modules.Module {
     public int x;
     public int y;
@@ -20,13 +20,9 @@ public class ChatHud extends ravex.modules.Module {
     public void render(GuiGraphics graphics, float partialTicks) {
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ChatHud").getEnabled();
-    }
 
-    public static ChatHud itz() {
-        return ravex.manager.ModuleManager.delegate(ChatHud.class);
-    }
+
+
 
 
     

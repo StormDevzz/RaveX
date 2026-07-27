@@ -10,13 +10,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.ElytraFly;
+import ravex.modules.Modules;
 
 @Mixin(LivingEntity.class)
 public abstract class MixinElytraFly {
 
     @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
     private void onTravel(Vec3 travelVector, CallbackInfo ci) {
-        if (!ElytraFly.maybeEnabled()) return;
+        if (!Modules.enabled(ElytraFly.class)) return;
         LivingEntity entity = (LivingEntity)(Object)this;
         if (!(entity instanceof LocalPlayer)) return;
         LocalPlayer player = (LocalPlayer) entity;
@@ -26,20 +27,20 @@ public abstract class MixinElytraFly {
 
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
-        if (!ElytraFly.maybeEnabled()) return;
+        if (!Modules.enabled(ElytraFly.class)) return;
 
         LivingEntity entity = (LivingEntity)(Object)this;
         if (!(entity instanceof LocalPlayer)) return;
         LocalPlayer player = (LocalPlayer) entity;
         if (!player.isFallFlying()) return;
 
-        if (ElytraFly.itz().speedControl) return;
+        if (Modules.get(ElytraFly.class).speedControl) return;
 
         Minecraft mc = Minecraft.getInstance();
-        String mode = ElytraFly.itz().mode;
-        double hSpeed = ElytraFly.itz().hSpeed;
-        double vSpeed = ElytraFly.itz().vSpeed;
-        double glide = ElytraFly.itz().glide;
+        String mode = Modules.get(ElytraFly.class).mode;
+        double hSpeed = Modules.get(ElytraFly.class).hSpeed;
+        double vSpeed = Modules.get(ElytraFly.class).vSpeed;
+        double glide = Modules.get(ElytraFly.class).glide;
 
         boolean space = mc.options.keyJump.isDown();
         boolean shift = mc.options.keyShift.isDown();
@@ -70,7 +71,7 @@ public abstract class MixinElytraFly {
             vel = new Vec3(v[0], v[1], v[2]);
         }
 
-        vel = ElytraFly.itz().applyTimerAndAccel(vel);
+        vel = Modules.get(ElytraFly.class).applyTimerAndAccel(vel);
         player.setDeltaMovement(vel);
         player.move(MoverType.SELF, vel);
     }

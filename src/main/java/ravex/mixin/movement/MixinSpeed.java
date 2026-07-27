@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.combat.KillAura;
 import ravex.modules.movement.Speed;
+import ravex.modules.Modules;
 
 @Mixin(LocalPlayer.class)
 public abstract class MixinSpeed {
@@ -57,25 +58,25 @@ public abstract class MixinSpeed {
 
     @Inject(method = "applyInput", at = @At("TAIL"))
     private void onApplyInput(CallbackInfo ci) {
-        if (!Speed.maybeEnabled()) return;
-        if (!"Matrix".equals(Speed.itz().mode)) return;
+        if (!Modules.enabled(Speed.class)) return;
+        if (!"Matrix".equals(Modules.get(Speed.class).mode)) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
-        float mul = (float)(double)Speed.itz().matrixInputMul;
+        float mul = (float)(double)Modules.get(Speed.class).matrixInputMul;
         player.zza *= mul;
         player.xxa *= mul;
     }
 
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
-        if (!Speed.maybeEnabled()) return;
+        if (!Modules.enabled(Speed.class)) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
         if (player.horizontalCollision || player.isFallFlying()) return;
 
-        String mode = Speed.itz().mode;
-        double baseSpeed = Speed.itz().speed;
-        double globalLimit = Speed.itz().speedLimit;
+        String mode = Modules.get(Speed.class).mode;
+        double baseSpeed = Modules.get(Speed.class).speed;
+        double globalLimit = Modules.get(Speed.class).speedLimit;
 
         Vec3 motion = player.getDeltaMovement();
 
@@ -103,7 +104,7 @@ public abstract class MixinSpeed {
                 applySpeedLimit(player, globalLimit);
             }
             case "Strafe" -> {
-                if (!Speed.itz().strafeJump) return;
+                if (!Modules.get(Speed.class).strafeJump) return;
 
                 float forward = getForward();
                 float strafe = getStrafe();
@@ -217,7 +218,7 @@ public abstract class MixinSpeed {
                 }
                 ssWasMoving = true;
 
-                if (Speed.itz().strafeStrictTimer) {
+                if (Modules.get(Speed.class).strafeStrictTimer) {
                     Speed.matrixTimer = 1.088f;
                 } else {
                     Speed.matrixTimer = 1.0f;
@@ -250,7 +251,7 @@ public abstract class MixinSpeed {
 
                 ssBaseSpeed = Math.max(ssBaseSpeed, baseMoveSpeed);
 
-                double cap = Speed.itz().strafeStrictCap;
+                double cap = Modules.get(Speed.class).strafeStrictCap;
                 ssBaseSpeed = Math.min(ssBaseSpeed, cap);
 
                 float f = forward;
@@ -273,7 +274,7 @@ public abstract class MixinSpeed {
                 float strafe = getStrafe();
                 if (forward == 0 && strafe == 0) return;
 
-                double boost = Speed.itz().grimBoost;
+                double boost = Modules.get(Speed.class).grimBoost;
                 double currentHoriz = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
                 double speedVal = baseSpeed * 0.04 * boost;
                 double yaw = getMoveYaw(player);
@@ -290,7 +291,7 @@ public abstract class MixinSpeed {
                 applySpeedLimit(player, Math.min(globalLimit, 0.22));
             }
             case "GrimStrict" -> {
-                double grimB = Speed.itz().grimBoost;
+                double grimB = Modules.get(Speed.class).grimBoost;
                 float currentSpeed = player.getAbilities().getWalkingSpeed();
                 float targetSpeed = (float)(0.1 * (0.7 + grimB * 0.3));
                 if (currentSpeed != targetSpeed) {

@@ -6,12 +6,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import ravex.modules.render.Fullbright;
 import ravex.modules.player.Xray;
+import ravex.modules.Modules;
 
 @Mixin(LightTexture.class)
 public class MixinLightTexture {
 
     private static boolean isFullbright() {
-        return Fullbright.maybeEnabled() || Xray.maybeEnabled();
+        return Modules.enabled(Fullbright.class) || Modules.enabled(Xray.class);
     }
 
     @ModifyArg(
@@ -20,7 +21,7 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyAmbientLight(float value) {
-        return isFullbright() ? (float) Fullbright.itz().brightness : value;
+        return isFullbright() ? (float) Modules.get(Fullbright.class).brightness : value;
     }
 
     @ModifyArg(
@@ -29,7 +30,7 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyNightVision(float value) {
-        return isFullbright() ? (float) Fullbright.itz().brightness : value;
+        return isFullbright() ? (float) Modules.get(Fullbright.class).brightness : value;
     }
 
     @ModifyArg(
@@ -38,6 +39,6 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyDarkness(float value) {
-        return isFullbright() ? (float) Fullbright.itz().darknessMult : value;
+        return isFullbright() ? (float) Modules.get(Fullbright.class).darknessMult : value;
     }
 }

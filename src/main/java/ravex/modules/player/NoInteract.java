@@ -1,9 +1,10 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-@ModuleInfo(name = "NoInteract", category = "net.minecraft.world.entity.player.Player")
-public class NoInteract implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "NoInteract", category = "net.minecraft.world.entity.player.Player")
+public class NoInteract {
     @Parameter(name = "AllBlocks")
     public boolean allBlocks = false;
     @Parameter(name = "Chests")
@@ -17,18 +18,11 @@ public class NoInteract implements ModuleAccess {
     @Parameter(name = "Enchanting")
     public boolean enchanting = false;
 
-    public NoInteract() {
+    public boolean shouldBlockAll() {
+        return Modules.enabled(NoInteract.class) && allBlocks;
     }
 
-    public boolean shouldBlockAll() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NoInteract").getEnabled() && allBlocks;
-    }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NoInteract").getEnabled();
-    }
-    public static NoInteract itz() {
-        return ravex.manager.ModuleManager.delegate(NoInteract.class);
-    }
+
 
 
 }

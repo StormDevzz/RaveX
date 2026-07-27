@@ -1,9 +1,9 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "NoBob", category = "Render")
-public class NoBob implements ModuleAccess {
+@Module(name = "NoBob", category = "Render")
+public class NoBob {
 private boolean originalBob = true;
     public void onEnable() {
         var mc = MinecraftWrapper.getInstance();
@@ -24,13 +24,9 @@ private boolean originalBob = true;
         if (mc.options == null) return;
         mc.options.bobView().set(originalBob);
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NoBob").getEnabled();
-    }
 
-    public static NoBob itz() {
-        return ravex.manager.ModuleManager.delegate(NoBob.class);
-    }
+
+
 
 
 }

@@ -1,13 +1,13 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.world.level.ChunkPos;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@ModuleInfo(name = "Borders", category = "Render")
-public class Borders implements ModuleAccess {
+@Module(name = "Borders", category = "Render")
+public class Borders {
     @Parameter(name = "ChunkBorders")
     public boolean showChunkBorders = true;
     @Parameter(name = "CurrentChunk")
@@ -29,13 +29,9 @@ public class Borders implements ModuleAccess {
     public ChunkPos getCurrentChunk() {
         return lastChunk;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Borders").getEnabled();
-    }
 
-    public static Borders itz() {
-        return ravex.manager.ModuleManager.delegate(Borders.class);
-    }
+
+
 
 
 }

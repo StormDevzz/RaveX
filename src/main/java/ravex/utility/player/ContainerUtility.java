@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import java.util.ArrayList;
 import java.util.List;
+import ravex.utility.player.InventoryUtility;
 
 public class ContainerUtility {
     public static boolean isChestLike(AbstractContainerMenu menu) {
@@ -43,7 +44,7 @@ public class ContainerUtility {
         var _mc = mc.getRaw();
         for (Slot slot : slots) {
             if (slot.hasItem())
-                _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, slot.index, 0, ClickType.QUICK_MOVE, player);
+                _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, slot.index, 0, InventoryUtility.QUICK_MOVE, player);
         }
     }
 
@@ -102,7 +103,7 @@ public class ContainerUtility {
             Item item = chestStack.getItem();
             int want = needed.getOrDefault(item, 0);
             if (want <= 0) continue;
-            _mc.gameMode.handleInventoryMouseClick(menu.containerId, cs.index, 0, ClickType.QUICK_MOVE, player);
+            _mc.gameMode.handleInventoryMouseClick(menu.containerId, cs.index, 0, InventoryUtility.QUICK_MOVE, player);
             int remaining = want - chestStack.getCount();
             if (remaining <= 0) needed.remove(item);
             else needed.put(item, remaining);

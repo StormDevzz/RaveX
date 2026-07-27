@@ -1,11 +1,12 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.world.level.block.Block;
 import ravex.utility.misc.block.BlockUtility;
-@ModuleInfo(name = "Avoid", category = "Movement")
-public class Avoid implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "Avoid", category = "Movement")
+public class Avoid {
     @Parameter(name = "Cactus")
     public boolean cactus = true;
     @Parameter(name = "BerryBush")
@@ -18,7 +19,7 @@ public class Avoid implements ModuleAccess {
     public boolean magma = true;
 
     public boolean shouldAvoid(Block block) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Avoid").getEnabled()) return false;
+        if (!Modules.enabled(Avoid.class)) return false;
         if (block == net.minecraft.world.level.block.Blocks.CACTUS) return cactus;
         if (block == net.minecraft.world.level.block.Blocks.SWEET_BERRY_BUSH) return berryBush;
         if (block == net.minecraft.world.level.block.Blocks.WITHER_ROSE) return witherRose;
@@ -26,12 +27,8 @@ public class Avoid implements ModuleAccess {
         if (block == net.minecraft.world.level.block.Blocks.MAGMA_BLOCK) return magma;
         return false;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Avoid").getEnabled();
-    }
-    public static Avoid itz() {
-        return ravex.manager.ModuleManager.delegate(Avoid.class);
-    }
+
+
 
 
 }

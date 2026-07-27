@@ -1,6 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
@@ -9,8 +9,9 @@ import ravex.event.movement.VelocityEvent;
 import java.util.List;
 import java.util.Random;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Velocity", category = "Movement")
-public class Velocity implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "Velocity", category = "Movement")
+public class Velocity {
     @Parameter(name = "Mode", modes = {"Cancel", "Matrix", "NCP", "Grim", "GrimStrict"})
     public String mode = "Cancel";
     @Parameter(name = "Horizontal", min = 0.0, max = 1.0, step = 0.05)
@@ -30,13 +31,9 @@ public class Velocity implements ModuleAccess {
     public int grimDelayTicks = 0;
     public net.minecraft.world.phys.Vec3 grimSavedVelocity = net.minecraft.world.phys.Vec3.ZERO;
 
-    private Velocity() {
-        
-    }
-
     @Subscribe
     public void onVelocity(VelocityEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("Velocity").getEnabled()) return;
+        if (!Modules.enabled(Velocity.class)) return;
         String modeVal = mode;
         net.minecraft.world.phys.Vec3 cur = event.getVelocity();
         double h = horizontal;
@@ -90,12 +87,8 @@ public class Velocity implements ModuleAccess {
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Velocity").getEnabled();
-    }
-    public static Velocity itz() {
-        return ravex.manager.ModuleManager.delegate(Velocity.class);
-    }
+
+
 
 
 }

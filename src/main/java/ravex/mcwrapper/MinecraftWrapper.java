@@ -10,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public class MinecraftWrapper {
     private final Minecraft mc;
@@ -31,6 +32,7 @@ public class MinecraftWrapper {
         this.mc = Minecraft.getInstance();
     }
 
+    @Nullable
     public GameModeWrapper getGameMode() {
         return mc.gameMode != null ? new GameModeWrapper(mc.gameMode) : null;
     }
@@ -41,14 +43,17 @@ public class MinecraftWrapper {
         return mc != null;
     }
 
+    @Nullable
     public LocalPlayer getPlayer() {
         return mc.player;
     }
 
+    @Nullable
     public ClientLevel getLevel() {
         return mc.level;
     }
 
+    @Nullable
     public Level getRawLevel() {
         return mc.level;
     }
@@ -96,6 +101,7 @@ public class MinecraftWrapper {
         mc.setScreen(screen);
     }
 
+    @Nullable
     public net.minecraft.client.gui.screens.Screen getCurrentScreen() {
         return mc.screen;
     }
@@ -104,6 +110,7 @@ public class MinecraftWrapper {
         return mc.screen != null;
     }
 
+    @Nullable
     public Object getPlayerInput() {
         return mc.player != null ? mc.player.input : null;
     }
@@ -128,6 +135,7 @@ public class MinecraftWrapper {
         return mc.getSoundManager();
     }
 
+    @Nullable
     public net.minecraft.client.multiplayer.ClientPacketListener getConnection() {
         return mc.getConnection();
     }
@@ -152,10 +160,12 @@ public class MinecraftWrapper {
         return mc.getConnection() != null && !mc.isLocalServer();
     }
 
+    @Nullable
     public MinecraftServer getSingleplayerServer() {
         return mc.getSingleplayerServer();
     }
 
+    @Nullable
     public net.minecraft.world.phys.HitResult getHitResult() {
         return mc.hitResult;
     }
@@ -164,6 +174,7 @@ public class MinecraftWrapper {
         return mc.levelRenderer;
     }
 
+    @Nullable
     public Entity getCrosshairPickEntity() {
         return mc.crosshairPickEntity;
     }
@@ -172,6 +183,8 @@ public class MinecraftWrapper {
         return mc.gameRenderer;
     }
 
+    @Nullable
+    @Nullable
     public net.minecraft.client.multiplayer.ServerData getCurrentServer() {
         return mc.getCurrentServer();
     }

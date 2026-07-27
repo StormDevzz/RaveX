@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 
@@ -10,9 +10,10 @@ import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "AntiBot", category = "Combat")
-public class AntiBot implements ModuleAccess {
+@Module(name = "AntiBot", category = "Combat")
+public class AntiBot {
     @Parameter(name = "OnlyWithKillAura")
     public boolean onlyOnKillAura = false;
     @Parameter(name = "OnlyWithTrigger")
@@ -36,8 +37,8 @@ public class AntiBot implements ModuleAccess {
         return botList.contains(entity);
     }
     public boolean shouldProtectTarget() {
-        if (onlyOnKillAura && !ravex.manager.ModuleManager.delegate(ravex.modules.combat.KillAura.class).getEnabled()) return false;
-        if (onlyOnTrigger && !ravex.manager.ModuleManager.delegate(ravex.modules.combat.Trigger.class).getEnabled()) return false;
+        if (onlyOnKillAura && !Modules.enabled(KillAura.class)) return false;
+        if (onlyOnTrigger && !Modules.enabled(Trigger.class)) return false;
         return true;
     }
     public void onTick() {
@@ -111,12 +112,8 @@ public class AntiBot implements ModuleAccess {
         double mx, double my, double mz, double dist,
         boolean pingCheck, boolean nameCheck, boolean moveCheck
     );
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiBot").getEnabled();
-    }
-    public static AntiBot itz() {
-        return ravex.manager.ModuleManager.delegate(AntiBot.class);
-    }
+
+
 
 
 }

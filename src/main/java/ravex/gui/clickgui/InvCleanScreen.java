@@ -21,6 +21,7 @@ import ravex.utility.render.Render2DUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.manager.ModuleManager;
+import ravex.modules.Modules;
 
 
 public class InvCleanScreen extends Screen {
@@ -518,7 +519,7 @@ public class InvCleanScreen extends Screen {
     public void onClose() {
 
         if (ModuleManager.isEnabled(InvClean.class)) {
-            ModuleManager.get(InvClean.class).setEnabled(false);
+            Modules.setEnabled(InvClean.class, false);
         }
         Minecraft.getInstance().setScreen(parent);
     }

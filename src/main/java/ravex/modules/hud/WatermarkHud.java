@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -16,8 +16,9 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import net.minecraft.resources.Identifier;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "WatermarkHud", category = "HUD")
+@Module(name = "WatermarkHud", category = "HUD")
 public class WatermarkHud extends ravex.modules.Module {
     @Parameter(name = "Color", color = true)
     public int color = 0xFF1E88E5;
@@ -59,7 +60,7 @@ private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", 
     }
 
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
 
         if (!logoLoaded) ensureLogo();
 
@@ -88,13 +89,9 @@ private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", 
         pose.popMatrix();
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("WatermarkHud").getEnabled();
-    }
 
-    public static WatermarkHud itz() {
-        return ravex.manager.ModuleManager.delegate(WatermarkHud.class);
-    }
+
+
 
 
     

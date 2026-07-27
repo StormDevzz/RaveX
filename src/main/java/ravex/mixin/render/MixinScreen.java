@@ -10,13 +10,14 @@ import ravex.event.EventBusHolder;
 import ravex.event.client.ScreenEvent;
 import ravex.manager.NotificationManager;
 import ravex.modules.render.NoRender;
+import ravex.modules.Modules;
 
 @Mixin(Screen.class)
 public class MixinScreen {
 
     @Inject(method = "renderTransparentBackground", at = @At("HEAD"), cancellable = true)
     private void onRenderTransparentBackground(GuiGraphics guiGraphics, CallbackInfo ci) {
-        if (NoRender.maybeEnabled() && NoRender.itz().inventoryBackground) {
+        if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).inventoryBackground) {
             if ((Object)this instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen) {
                 ci.cancel();
             }

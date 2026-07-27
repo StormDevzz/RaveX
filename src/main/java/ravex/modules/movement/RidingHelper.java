@@ -1,14 +1,14 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "RidingHelper", category = "Movement")
-public class RidingHelper implements ModuleAccess {
+@Module(name = "RidingHelper", category = "Movement")
+public class RidingHelper {
     @Parameter(name = "Mode", modes = {"Normal", "Custom"})
     public String mode = "Normal";
     @Parameter(name = "Speed", min = 1.0, max = 5.0, step = 0.1)
@@ -22,9 +22,7 @@ public class RidingHelper implements ModuleAccess {
         net.minecraft.world.phys.Vec3 motion = vehicle.getDeltaMovement();
         vehicle.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
     }
-    public static RidingHelper itz() {
-        return ravex.manager.ModuleManager.delegate(RidingHelper.class);
-    }
+
 
 
 }

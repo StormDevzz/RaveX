@@ -1,6 +1,6 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.ConnectScreen;
@@ -8,9 +8,10 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "AutoReconnect", category = "Misc")
-public class AutoReconnect implements ModuleAccess {
+@Module(name = "AutoReconnect", category = "Misc")
+public class AutoReconnect {
     @Parameter(name = "Delay", min = 0.0, max = 30.0, step = 1.0)
     public double delay = 3.0;
     private static ServerData lastServer = null;
@@ -27,7 +28,7 @@ public class AutoReconnect implements ModuleAccess {
         return lastServer != null;
     }
     public void scheduleAutoReconnect() {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("AutoReconnect").getEnabled() || !hasLastServer()) return;
+        if (!Modules.enabled(AutoReconnect.class) || !hasLastServer()) return;
         pendingAutoReconnect = true;
         reconnectAt = System.currentTimeMillis() + (long)(delay * 1000);
     }
@@ -45,13 +46,9 @@ public class AutoReconnect implements ModuleAccess {
         ConnectScreen.startConnecting(new TitleScreen(), mc.getRaw(), addr, lastServer, false, null);
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoReconnect").getEnabled();
-    }
 
-    public static AutoReconnect itz() {
-        return ravex.manager.ModuleManager.delegate(AutoReconnect.class);
-    }
+
+
 
 
 }

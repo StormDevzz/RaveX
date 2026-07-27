@@ -1,11 +1,12 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "ViewLock", category = "net.minecraft.world.entity.player.Player")
-public class ViewLock implements ModuleAccess {
+@Module(name = "ViewLock", category = "net.minecraft.world.entity.player.Player")
+public class ViewLock {
     @Parameter(name = "LockYaw")
     public boolean lockYaw = true;
     @Parameter(name = "LockPitch")
@@ -53,11 +54,11 @@ public class ViewLock implements ModuleAccess {
     }
 
     public boolean shouldLockYaw(double yRot, double xRot) {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled() && lockYaw;
+        return Modules.enabled(ViewLock.class) && lockYaw;
     }
 
     public boolean shouldLockPitch(double yRot, double xRot) {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled() && lockPitch;
+        return Modules.enabled(ViewLock.class) && lockPitch;
     }
 
     public float getSensitivity() {
@@ -69,20 +70,16 @@ public class ViewLock implements ModuleAccess {
     }
 
     public boolean isSmoothMode() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled() && "Smooth".equals(mode);
+        return Modules.enabled(ViewLock.class) && "Smooth".equals(mode);
     }
 
     public boolean isDirectionMode() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled() && "net.minecraft.core.Direction".equals(mode);
+        return Modules.enabled(ViewLock.class) && "net.minecraft.core.Direction".equals(mode);
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ViewLock").getEnabled();
-    }
 
-    public static ViewLock itz() {
-        return ravex.manager.ModuleManager.delegate(ViewLock.class);
-    }
+
+
 
 
 }

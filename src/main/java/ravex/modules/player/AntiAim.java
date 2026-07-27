@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -8,8 +8,8 @@ import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@ModuleInfo(name = "AntiAim", category = "net.minecraft.world.entity.player.Player")
-public class AntiAim implements ModuleAccess {
+@Module(name = "AntiAim", category = "net.minecraft.world.entity.player.Player")
+public class AntiAim {
     @Parameter(name = "YawMode", modes = {"Spin", "Jitter", "Static", "Random"})
     public String yawMode = "Spin";
     @Parameter(name = "PitchMode", modes = {"Down", "Up", "Jitter", "Static", "None"})
@@ -91,13 +91,9 @@ public class AntiAim implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiAim").getEnabled();
-    }
 
-    public static AntiAim itz() {
-        return ravex.manager.ModuleManager.delegate(AntiAim.class);
-    }
+
+
 
 
 }

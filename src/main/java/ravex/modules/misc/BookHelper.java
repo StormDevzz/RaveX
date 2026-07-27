@@ -1,6 +1,6 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
@@ -14,8 +14,9 @@ import java.util.List;
 import java.util.Optional;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "BookHelper", category = "Misc")
-public class BookHelper implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "BookHelper", category = "Misc")
+public class BookHelper {
     @Parameter(name = "Mode", modes = {"Edit", "Fill"})
     public String mode = "Edit";
     @Parameter(name = "Title")
@@ -31,14 +32,14 @@ public class BookHelper implements ModuleAccess {
     public void onEnable() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getConnection() == null) {
-            ravex.manager.ModuleManager.INSTANCE.getByName("BookHelper").setEnabled(false);
+            Modules.setEnabled(BookHelper.class, false);
             return;
         }
         switch (mode) {
             case "Edit" -> onEdit(mc);
             case "Fill" -> onFill(mc);
         }
-        ravex.manager.ModuleManager.INSTANCE.getByName("BookHelper").setEnabled(false);
+        Modules.setEnabled(BookHelper.class, false);
     }
 
     private void onEdit(MinecraftWrapper mc) {
@@ -144,9 +145,7 @@ public class BookHelper implements ModuleAccess {
         );
     }
 
-    public static BookHelper itz() {
-        return ravex.manager.ModuleManager.delegate(BookHelper.class);
-    }
+
 
 
 }

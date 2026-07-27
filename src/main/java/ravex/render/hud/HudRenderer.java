@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ravex.utility.misc.EntityUtility;
+import ravex.modules.Modules;
 public final class HudRenderer {
     public static final HudRenderer INSTANCE = new HudRenderer();
 
@@ -41,7 +42,7 @@ public final class HudRenderer {
     public void render(GuiGraphics context, DeltaTracker tickCounter) {
         Minecraft mc = Minecraft.getInstance();
 
-        if (ModuleManager.isEnabled(Ambient.class)) {
+        if (Modules.enabled(Ambient.class)) {
             int rVal = (int) ModuleManager.get(Ambient.class).r;
             int gVal = (int) ModuleManager.get(Ambient.class).g;
             int bVal = (int) ModuleManager.get(Ambient.class).b;
@@ -57,9 +58,9 @@ public final class HudRenderer {
 
         float pt = tickCounter.getGameTimeDeltaTicks();
         Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
-        boolean espEnabled = ModuleManager.isEnabled(ESP.class);
-        boolean nameTagsEnabled = ModuleManager.isEnabled(NameTags.class);
-        boolean mobOwnerEnabled = ModuleManager.isEnabled(MobOwner.class) && ModuleManager.get(MobOwner.class).animals;
+        boolean espEnabled = Modules.enabled(ESP.class);
+        boolean nameTagsEnabled = Modules.enabled(NameTags.class);
+        boolean mobOwnerEnabled = Modules.enabled(MobOwner.class) && ModuleManager.get(MobOwner.class).animals;
 
         int guiWidth = context.guiWidth();
         int guiHeight = context.guiHeight();
@@ -68,7 +69,7 @@ public final class HudRenderer {
         Quaternionf cRotation = mc.gameRenderer.getMainCamera().rotation();
         Vector4f lookVec = new Vector4f(0.0F, 0.0F, -1.0F, 0.0F).rotate(cRotation);
         Vec3 cameraLook = new Vec3(lookVec.x(), lookVec.y(), lookVec.z());
-        boolean tracersEnabled = ModuleManager.isEnabled(Tracers.class);
+        boolean tracersEnabled = Modules.enabled(Tracers.class);
 
         List<Entity> candidates = buildCandidates(mc, espEnabled, nameTagsEnabled, mobOwnerEnabled, tracersEnabled, pt, firstPerson);
 
@@ -81,7 +82,7 @@ public final class HudRenderer {
         renderWaypoints(context, mc);
         NotificationManager.render(context);
 
-        if (ModuleManager.isEnabled(Crosshair.class)) {
+        if (Modules.enabled(Crosshair.class)) {
             try { ModuleManager.get(Crosshair.class).render(context); } catch (Throwable ignored) {}
         }
 
@@ -122,7 +123,7 @@ public final class HudRenderer {
                 (isAnimal && ModuleManager.get(Tracers.class).animals) ||
                 (isItem && ModuleManager.get(Tracers.class).items)
             );
-            boolean showNameTags = nameTagsEnabled && NameTags.itz().shouldDraw(target);
+            boolean showNameTags = nameTagsEnabled && Modules.get(NameTags.class).shouldDraw(target);
             boolean showOwner = mobOwnerEnabled && (target instanceof LivingEntity living) && MobOwner.getOwnerName(living) != null;
 
             if (!showESP && !showTracers && !showNameTags && !showOwner) continue;
@@ -237,7 +238,7 @@ public final class HudRenderer {
                     positions[i * 9 + 3] = headPos.x; positions[i * 9 + 4] = headPos.y; positions[i * 9 + 5] = headPos.z;
                     positions[i * 9 + 6] = sidePos.x; positions[i * 9 + 7] = sidePos.y; positions[i * 9 + 8] = sidePos.z;
 
-                    boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && NameTags.itz().shouldDraw(target);
+                    boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && Modules.get(NameTags.class).shouldDraw(target);
                     String ownerName = (mobOwnerEnabled && target instanceof LivingEntity living) ? MobOwner.getOwnerName(living) : null;
                     boolean hasOwner = ownerName != null;
 
@@ -338,7 +339,7 @@ public final class HudRenderer {
             }
 
             boolean withinRange = dist <= ModuleManager.get(NameTags.class).range;
-            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange && NameTags.itz().shouldDraw(target);
+            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange && Modules.get(NameTags.class).shouldDraw(target);
             if (drawNametags || hasOwner) {
                 renderNametag(context, mc, target, bx, y, scale, totalW, totalH, armorRowY, mainRowY, ownerRowY, textYOff, mainRowW, armorRowW, drawNametags, hasOwner, ownerName);
             }
@@ -391,7 +392,7 @@ public final class HudRenderer {
             }
 
             boolean withinRange = dist <= ModuleManager.get(NameTags.class).range;
-            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange && NameTags.itz().shouldDraw(target);
+            boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange && Modules.get(NameTags.class).shouldDraw(target);
             if (drawNametags || hasOwner) {
                 LivingEntity livingTarget = (LivingEntity) target;
                 String displayName = livingTarget.getDisplayName().getString();
@@ -419,7 +420,7 @@ public final class HudRenderer {
                     || (livingTarget instanceof net.minecraft.world.entity.monster.skeleton.AbstractSkeleton)
                     || (livingTarget instanceof net.minecraft.world.entity.monster.piglin.AbstractPiglin);
 
-                double[] layout = NameTags.calculateLayout(dist, ModuleManager.get(NameTags.class).size, NameTags.itz().distScale, showArmor, showHands, hasOwner, tw, ow, hasMainHand, hasOffHand, armorCount, alwaysShowSlots);
+                double[] layout = NameTags.calculateLayout(dist, ModuleManager.get(NameTags.class).size, Modules.get(NameTags.class).distScale, showArmor, showHands, hasOwner, tw, ow, hasMainHand, hasOffHand, armorCount, alwaysShowSlots);
 
                 double scale = layout[0], totalW = layout[1], totalH = layout[2];
                 double armorRowY = layout[3], mainRowY = layout[4], ownerRowY = layout[5];
@@ -608,20 +609,20 @@ public final class HudRenderer {
 
     private void renderDamageLabels(GuiGraphics context, Minecraft mc, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
 
-        BasePlace bp = ModuleManager.get(BasePlace.class);
-        if (bp.getEnabled() && BasePlace.getSimulatedPlacementBlock() != null) {
+        BasePlace bp = Modules.get(BasePlace.class);
+        if (Modules.enabled(BasePlace.class) && BasePlace.getSimulatedPlacementBlock() != null) {
             renderDamageLabel(context, mc, BasePlace.getSimulatedPlacementBlock(), "Dmg: %.1f | Self: %.1f", BasePlace.currentTargetDamage, BasePlace.currentSelfDamage, 0xFF00FF00, pt, cameraPos, cameraLook, guiWidth, guiHeight);
         }
 
 
-        AnchorAura aa = ModuleManager.get(AnchorAura.class);
-        if (aa.getEnabled() && AnchorAura.simulatedPlacementBlock != null) {
+        AnchorAura aa = Modules.get(AnchorAura.class);
+        if (Modules.enabled(AnchorAura.class) && AnchorAura.simulatedPlacementBlock != null) {
             renderDamageLabel(context, mc, AnchorAura.simulatedPlacementBlock, "Dmg: %.1f | Self: %.1f", AnchorAura.currentTargetDamage, AnchorAura.currentSelfDamage, 0xFF00FFFF, pt, cameraPos, cameraLook, guiWidth, guiHeight);
         }
 
 
-        AutoCrystal ac = ModuleManager.get(AutoCrystal.class);
-        if (ac.getEnabled() && ac.renderDamage && AutoCrystal.currentPlacementBlock != null) {
+        AutoCrystal ac = Modules.get(AutoCrystal.class);
+        if (Modules.enabled(AutoCrystal.class) && ac.renderDamage && AutoCrystal.currentPlacementBlock != null) {
             BlockPos p = AutoCrystal.currentPlacementBlock;
             Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
             Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
@@ -640,8 +641,8 @@ public final class HudRenderer {
         }
 
 
-        PVEUtils asm = ModuleManager.get(PVEUtils.class);
-        if (asm.getEnabled() && asm.mode.equals("AutoSmelt") && asm.smeltRender && PVEUtils.smeltTarget != null) {
+        PVEUtils asm = Modules.get(PVEUtils.class);
+        if (Modules.enabled(PVEUtils.class) && asm.mode.equals("AutoSmelt") && asm.smeltRender && PVEUtils.smeltTarget != null) {
             BlockPos p = PVEUtils.smeltTarget;
             Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
             Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
@@ -666,7 +667,7 @@ public final class HudRenderer {
         }
 
 
-        if (asm.getEnabled() && asm.mode.equals("AutoBrew") && asm.brewRender) {
+        if (Modules.enabled(PVEUtils.class) && asm.mode.equals("AutoBrew") && asm.brewRender) {
             BlockPos p = PVEUtils.getBrewTarget();
             if (p != null) {
                 Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
@@ -727,8 +728,8 @@ public final class HudRenderer {
     }
 
     private void renderPacketMine(GuiGraphics context, Minecraft mc) {
-        PacketMine pm = ModuleManager.get(PacketMine.class);
-        if (pm.getEnabled() && pm.render) {
+        PacketMine pm = Modules.get(PacketMine.class);
+        if (Modules.enabled(PacketMine.class) && pm.render) {
             for (var mb : PacketMine.miningBlocks) {
                 if (mb == null || mb.pos == null) continue;
                 long now = System.currentTimeMillis();
@@ -750,7 +751,7 @@ public final class HudRenderer {
     }
 
     private void renderWaypoints(GuiGraphics context, Minecraft mc) {
-        if (ModuleManager.isEnabled(Waypoint.class)) {
+        if (Modules.enabled(Waypoint.class)) {
             int wpColor = ModuleManager.get(Waypoint.class).color;
             String currentDim = mc.level != null ? mc.level.dimension().identifier().toString() : null;
             boolean showDist = ModuleManager.get(Waypoint.class).showDistance;

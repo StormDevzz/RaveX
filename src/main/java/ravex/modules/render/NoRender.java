@@ -1,11 +1,11 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.nativelib.NativeLoader;
 import ravex.utility.nativelib.NativeLibraryUtility;
-@ModuleInfo(name = "NoRender", category = "Render")
-public class NoRender implements ModuleAccess {
+@Module(name = "NoRender", category = "Render")
+public class NoRender {
     @Parameter(name = "BlockParticles")
     public boolean blockParticles = true;
     @Parameter(name = "Explosions")
@@ -77,13 +77,9 @@ public class NoRender implements ModuleAccess {
         }
         return new float[] { 999999.0f, 999999.0f, 999999.0f, 999999.0f, 999999.0f, 999999.0f };
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NoRender").getEnabled();
-    }
 
-    public static NoRender itz() {
-        return ravex.manager.ModuleManager.delegate(NoRender.class);
-    }
+
+
 
 
 }

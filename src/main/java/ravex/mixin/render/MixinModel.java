@@ -13,6 +13,8 @@ import ravex.modules.render.Shaders;
 import ravex.manager.HandShaderManager;
 import ravex.utility.render.animate.NativeAnimateVertexConsumerUtility;
 import ravex.utility.render.animate.ShaderVertexConsumerUtility;
+import ravex.modules.Modules;
+import ravex.modules.render.Skeleton;
 
 @Mixin(Model.class)
 public class MixinModel {
@@ -23,7 +25,7 @@ public class MixinModel {
         argsOnly = true
     )
     private VertexConsumer modifyVertexConsumer(VertexConsumer consumer) {
-        if (!Shaders.maybeEnabled()) {
+        if (!Modules.enabled(Shaders.class)) {
             return consumer;
         }
 
@@ -36,8 +38,8 @@ public class MixinModel {
 
         boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
 
-        if (isPlayerModel && Shaders.itz().players) {
-            return new NativeAnimateVertexConsumerUtility(consumer, Shaders.itz().fillColor, false);
+        if (isPlayerModel && Modules.get(Shaders.class).players) {
+            return new NativeAnimateVertexConsumerUtility(consumer, Modules.get(Shaders.class).fillColor, false);
         }
 
         return consumer;
@@ -48,24 +50,24 @@ public class MixinModel {
         at = @At("HEAD")
     )
     private void onRenderHead(PoseStack poseStack, VertexConsumer consumer, int light, int overlay, int tint, CallbackInfo ci) {
-        if (ravex.modules.render.Skeleton.maybeEnabled()) {
+        if (Modules.enabled(Skeleton.class)) {
             Model self = (Model)(Object)this;
             if (self instanceof net.minecraft.client.model.HumanoidModel) {
                 net.minecraft.world.entity.LivingEntity entity = ravex.modules.render.Skeleton.getEntityBeingRendered(poseStack);
                 if (entity != null) {
                     boolean isPlayer = entity instanceof net.minecraft.world.entity.player.Player;
                     boolean shouldRender = false;
-                    if (isPlayer && ravex.modules.render.Skeleton.itz().players) {
+                    if (isPlayer && Modules.get(Skeleton.class).players) {
                         shouldRender = true;
-                    } else if (!isPlayer && ravex.modules.render.Skeleton.itz().mobs) {
+                    } else if (!isPlayer && Modules.get(Skeleton.class).mobs) {
                         shouldRender = true;
                     }
                     if (shouldRender) {
                         try {
                             net.minecraft.client.model.HumanoidModel<?> humanoidModel = (net.minecraft.client.model.HumanoidModel<?>) self;
-                            int colorVal = ravex.modules.render.Skeleton.itz().color;
-                            float lineWidth = (float) ravex.modules.render.Skeleton.itz().lineWidth;
-                            boolean throughWalls = ravex.modules.render.Skeleton.itz().throughWalls;
+                            int colorVal = Modules.get(Skeleton.class).color;
+                            float lineWidth = (float) Modules.get(Skeleton.class).lineWidth;
+                            boolean throughWalls = Modules.get(Skeleton.class).throughWalls;
                             ravex.modules.render.Skeleton.renderSkeleton(poseStack, humanoidModel, colorVal, lineWidth, throughWalls);
                         } catch (Exception ignored) {}
                     }
@@ -73,13 +75,13 @@ public class MixinModel {
             }
         }
 
-        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls) {
+        if (Modules.enabled(Shaders.class) && Modules.get(Shaders.class).throughWalls) {
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();
 
             boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
 
-            if (isPlayerModel && Shaders.itz().players) {
+            if (isPlayerModel && Modules.get(Shaders.class).players) {
                 GlStateManager._disableDepthTest();
             }
         }
@@ -90,13 +92,13 @@ public class MixinModel {
         at = @At("RETURN")
     )
     private void onRenderReturn(PoseStack poseStack, VertexConsumer consumer, int light, int overlay, int tint, CallbackInfo ci) {
-        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls) {
+        if (Modules.enabled(Shaders.class) && Modules.get(Shaders.class).throughWalls) {
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();
 
             boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
 
-            if (isPlayerModel && Shaders.itz().players) {
+            if (isPlayerModel && Modules.get(Shaders.class).players) {
                 GlStateManager._enableDepthTest();
             }
         }

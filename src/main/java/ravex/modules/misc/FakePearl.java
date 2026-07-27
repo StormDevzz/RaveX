@@ -1,6 +1,6 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
@@ -14,8 +14,9 @@ import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import ravex.utility.misc.PhysicUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "FakePearl", category = "Misc")
-public class FakePearl implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "FakePearl", category = "Misc")
+public class FakePearl {
     @Parameter(name = "Trigger", modes = {"OnEnable", "RightClick", "Both"})
     public String trigger = "OnEnable";
     @Parameter(name = "Velocity", min = 0.5, max = 3.0, step = 0.1)
@@ -31,7 +32,7 @@ public class FakePearl implements ModuleAccess {
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("FakePearl").getEnabled() || !event.isSend()) return;
+        if (!Modules.enabled(FakePearl.class) || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (!(packet instanceof ServerboundUseItemPacket usePacket)) return;
         String trg = trigger;
@@ -47,13 +48,13 @@ public class FakePearl implements ModuleAccess {
     public void onEnable() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) {
-            ravex.manager.ModuleManager.INSTANCE.getByName("FakePearl").setEnabled(false);
+            Modules.setEnabled(FakePearl.class, false);
             return;
         }
         if ("OnEnable".equals(trigger) || "Both".equals(trigger)) {
             throwFakePearl();
             if ("OnEnable".equals(trigger)) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("FakePearl").setEnabled(false);
+                Modules.setEnabled(FakePearl.class, false);
             }
         }
     }
@@ -97,9 +98,7 @@ public class FakePearl implements ModuleAccess {
     }
     private static native void nativeCalculateVelocity(double yaw, double pitch, double speed, double[] outVel);
 
-    public static FakePearl itz() {
-        return ravex.manager.ModuleManager.delegate(FakePearl.class);
-    }
+
 
 
 }

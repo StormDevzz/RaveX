@@ -1,6 +1,6 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.nativelib.NativeLoader;
 import net.minecraft.client.gui.screens.ConfirmScreen;
@@ -10,8 +10,9 @@ import com.mojang.blaze3d.platform.Window;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AntiQuit", category = "Misc")
-public class AntiQuit implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "AntiQuit", category = "Misc")
+public class AntiQuit {
     @Parameter(name = "Mode", modes = {"Server", "Game", "Both"})
     public String mode = "Server";
 
@@ -61,17 +62,15 @@ public class AntiQuit implements ModuleAccess {
         }
     }
     public static boolean shouldBlockDisconnect() {
-        AntiQuit $ = ravex.manager.ModuleManager.delegate(AntiQuit.class);
-        if ($ == null || !$.getEnabled()) return false;
+        AntiQuit $ = Modules.get(AntiQuit.class);
+        if ($ == null || !Modules.enabled(AntiQuit.class)) return false;
         String m = $.mode;
         return m.equals("Server") || m.equals("Both");
     }
     private native void nativeBlockQuit(boolean block);
     private native boolean nativeIsQuitBlocked();
 
-    public static AntiQuit itz() {
-        return ravex.manager.ModuleManager.delegate(AntiQuit.class);
-    }
+
 
 
 }

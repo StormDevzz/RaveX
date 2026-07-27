@@ -1,13 +1,14 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 
 import java.util.List;
 import java.util.Random;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "NoRotate", category = "Movement")
-public class NoRotate implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "NoRotate", category = "Movement")
+public class NoRotate {
     @Parameter(name = "Mode", modes = {"Normal", "Strict"})
     public String mode = "Normal";
     private float savedYaw;
@@ -22,7 +23,7 @@ public class NoRotate implements ModuleAccess {
         }
     }
     public void restoreRotation() {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoRotate").getEnabled()) return;
+        if (!Modules.enabled(NoRotate.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             if ("Strict".equals(mode)) {
@@ -39,12 +40,8 @@ public class NoRotate implements ModuleAccess {
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NoRotate").getEnabled();
-    }
-    public static NoRotate itz() {
-        return ravex.manager.ModuleManager.delegate(NoRotate.class);
-    }
+
+
 
 
 }

@@ -1,15 +1,16 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "Waypoint", category = "Render")
-public class Waypoint implements ModuleAccess {
+@Module(name = "Waypoint", category = "Render")
+public class Waypoint {
 public record WaypointData(String name, double x, double y, double z, String dimension) {
     }
 
@@ -28,31 +29,31 @@ public record WaypointData(String name, double x, double y, double z, String dim
     public boolean showBeam = true;
 
     public static List<WaypointData> getWaypoints() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).waypoints;
+        return Modules.get(Waypoint.class).waypoints;
     }
 
     public static int getColor() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).color;
+        return Modules.get(Waypoint.class).color;
     }
 
     public static double getMarkerSize() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).markerSize;
+        return Modules.get(Waypoint.class).markerSize;
     }
 
     public static double getRange() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).range;
+        return Modules.get(Waypoint.class).range;
     }
 
     public static boolean isShowName() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).showName;
+        return Modules.get(Waypoint.class).showName;
     }
 
     public static boolean isShowDistance() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).showDistance;
+        return Modules.get(Waypoint.class).showDistance;
     }
 
     public static boolean isShowBeam() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class).showBeam;
+        return Modules.get(Waypoint.class).showBeam;
     }
 
     public void addWaypoint(String name, double x, double y, double z, String dimension) {
@@ -94,13 +95,9 @@ public record WaypointData(String name, double x, double y, double z, String dim
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Waypoint").getEnabled();
-    }
 
-    public static Waypoint itz() {
-        return ravex.manager.ModuleManager.delegate(Waypoint.class);
-    }
+
+
 
 
 }

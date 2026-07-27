@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.SwingUtility;
@@ -10,8 +10,8 @@ import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoApple", category = "Combat")
-public class AutoApple implements ModuleAccess {
+@Module(name = "AutoApple", category = "Combat")
+public class AutoApple {
     @Parameter(name = "Mode", modes = {"Default", "Grim"})
     public String mode = "Default";
     @Parameter(name = "AppleType", modes = {"Golden", "Enchanted", "Both"})
@@ -30,8 +30,6 @@ public class AutoApple implements ModuleAccess {
     private int eatTicks = 0;
     private int grimDelayTicks = 0;
 
-    private AutoApple() {
-    }
     public void onDisable() {
         var mc = MinecraftWrapper.getWrapper();
         if (isEating && mc.getPlayer() != null) {
@@ -153,12 +151,8 @@ public class AutoApple implements ModuleAccess {
         }
         return false;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoApple").getEnabled();
-    }
-    public static AutoApple itz() {
-        return ravex.manager.ModuleManager.delegate(AutoApple.class);
-    }
+
+
 
 
 }

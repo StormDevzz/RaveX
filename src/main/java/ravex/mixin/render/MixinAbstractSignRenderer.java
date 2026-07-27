@@ -10,12 +10,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.NoRender;
+import ravex.modules.Modules;
 
 @Mixin(AbstractSignRenderer.class)
 public class MixinAbstractSignRenderer {
     @Inject(method = "submit(Lnet/minecraft/client/renderer/blockentity/state/SignRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V", at = @At("HEAD"), cancellable = true)
     private void onSubmit(SignRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState, CallbackInfo ci) {
-        if (NoRender.maybeEnabled() && NoRender.itz().signs) {
+        if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).signs) {
             ci.cancel();
         }
     }

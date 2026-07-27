@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.player.FastBreak;
+import ravex.modules.Modules;
 
 @Mixin(MultiPlayerGameMode.class)
 public class MixinFastBreak {
@@ -16,8 +17,8 @@ public class MixinFastBreak {
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"))
     private void onStartDestroyBlock(BlockPos pos, Direction direction, CallbackInfoReturnable<Boolean> cir) {
-        if (FastBreak.maybeEnabled()) {
-            int d = ((Double) FastBreak.itz().delay).intValue();
+        if (Modules.enabled(FastBreak.class)) {
+            int d = ((Double) Modules.get(FastBreak.class).delay).intValue();
             if (destroyDelay > d) {
                 destroyDelay = d;
             }

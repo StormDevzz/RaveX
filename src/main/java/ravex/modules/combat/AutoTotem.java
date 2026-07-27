@@ -1,17 +1,16 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-import net.minecraft.world.inventory.ClickType;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoTotem", category = "Combat")
-public class AutoTotem implements ModuleAccess {
+@Module(name = "AutoTotem", category = "Combat")
+public class AutoTotem {
     @Parameter(name = "Offhand", modes = {"Totem", "Gapple", "Crystal", "Shield", "None"})
     public String offhandItem = "Totem";
     @Parameter(name = "MainHand", modes = {"Sword", "Gapple", "Crystal", "Shield", "Totem", "None"})
@@ -94,9 +93,9 @@ public class AutoTotem implements ModuleAccess {
     }
     private void swapToOffhand(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, int invSlot) {
         int containerSlot = invSlot < 9 ? invSlot + 36 : invSlot;
-        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, p);
-        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, 45, 0, ClickType.PICKUP, p);
-        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, p);
+        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 0, InventoryUtility.PICKUP, p);
+        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, 45, 0, InventoryUtility.PICKUP, p);
+        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 0, InventoryUtility.PICKUP, p);
     }
     private int findSwordSlot() {
         var mc = MinecraftWrapper.getWrapper();
@@ -107,12 +106,8 @@ public class AutoTotem implements ModuleAccess {
         }
         return -1;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoTotem").getEnabled();
-    }
-    public static AutoTotem itz() {
-        return ravex.manager.ModuleManager.delegate(AutoTotem.class);
-    }
+
+
 
 
 }

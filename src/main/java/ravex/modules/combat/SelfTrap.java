@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.ActionParameter;
 import ravex.RaveX;
@@ -21,19 +21,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
 
-@ModuleInfo(name = "SelfTrap", category = "Combat")
-public class SelfTrap implements ModuleAccess {
+@Module(name = "SelfTrap", category = "Combat")
+public class SelfTrap {
 public static final SelfTrap INSTANCE = new SelfTrap();
     public final ActionParameter blocks = new ActionParameter("net.minecraft.world.level.block.Blocks", () -> {
         MinecraftWrapper.getWrapper().setScreen(new ravex.gui.browser.BlockBrowserScreen(
             MinecraftWrapper.getWrapper().getCurrentScreen(),
-            ravex.manager.ModuleManager.delegate(ravex.modules.combat.SelfTrap.class)::isBlockSelected,
-            ravex.manager.ModuleManager.delegate(ravex.modules.combat.SelfTrap.class)::setBlockSelected
+            Modules.get(SelfTrap.class)::isBlockSelected,
+            Modules.get(SelfTrap.class)::setBlockSelected
         ));
     });
     @Parameter(name = "Mode", modes = {"Full", "Simple", "Roof"})
@@ -67,15 +68,6 @@ public static final SelfTrap INSTANCE = new SelfTrap();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_selftrap");
     static {
         NATIVE.load();
-    }
-    private SelfTrap() {
-        
-    }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("SelfTrap").getEnabled();
-    }
-    public static SelfTrap itz() {
-        return ravex.manager.ModuleManager.delegate(SelfTrap.class);
     }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
@@ -236,7 +228,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             lastPlaceTime = now;
         } else {
             if (autoDisable && simulatedBlocks.isEmpty()) {
-                ravex.manager.ModuleManager.INSTANCE.getByName("SelfTrap").setEnabled(false);
+                Modules.setEnabled(SelfTrap.class, false);
             }
         }
     }
@@ -298,7 +290,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
                 Identifier id = BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
                 if (selectedBlocks.contains(id)) {
                     int hotbarSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, hotbarSlot, net.minecraft.world.inventory.ClickType.SWAP);
+                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, hotbarSlot, InventoryUtility.SWAP);
                     return hotbarSlot;
                 }
             }

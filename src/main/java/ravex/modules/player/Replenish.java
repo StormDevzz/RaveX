@@ -1,16 +1,15 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.inventory.ClickType;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Replenish", category = "net.minecraft.world.entity.player.Player")
-public class Replenish implements ModuleAccess {
+@Module(name = "Replenish", category = "net.minecraft.world.entity.player.Player")
+public class Replenish {
     @Parameter(name = "Threshold", min = 1, max = 64, step = 1)
     public double threshold = 32;
     private long lastActionTime = 0;
@@ -38,18 +37,14 @@ public class Replenish implements ModuleAccess {
                 if (invId == null || !invId.toString().equals(targetId)) continue;
                 int available = Math.min(invStack.getCount(), needed);
                 if (available <= 0) continue;
-                InventoryUtility.clickSlot(ravex.mcwrapper.MinecraftWrapper.getWrapper(), mc.player, j, 0, ClickType.QUICK_MOVE);
+                InventoryUtility.clickSlot(ravex.mcwrapper.MinecraftWrapper.getWrapper(), mc.player, j, 0, InventoryUtility.QUICK_MOVE);
                 lastActionTime = now;
                 return;
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Replenish").getEnabled();
-    }
-    public static Replenish itz() {
-        return ravex.manager.ModuleManager.delegate(Replenish.class);
-    }
+
+
 
 
 }

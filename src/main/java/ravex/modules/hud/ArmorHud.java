@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -12,8 +12,9 @@ import ravex.parameter.ModeParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.Render2DUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "ArmorHud", category = "HUD")
+@Module(name = "ArmorHud", category = "HUD")
 public class ArmorHud extends ravex.modules.Module {
     public int x;
     public int y;
@@ -37,15 +38,11 @@ private static final EquipmentSlot[] SLOTS = {
         this.x = 10; this.y = 260; this.width = 92; this.height = 29;
     }
 
-    public static ArmorHud itz() {
-        return ravex.manager.ModuleManager.delegate(ArmorHud.class);
-    }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ArmorHud").getEnabled();
-    }
+
+
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 

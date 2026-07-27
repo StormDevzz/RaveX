@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -17,8 +17,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "BedBomb", category = "Combat")
-public class BedBomb implements ModuleAccess {
+@Module(name = "BedBomb", category = "Combat")
+public class BedBomb {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.5)
     public double range = 4.5;
     @Parameter(name = "TargetRange", min = 1.0, max = 12.0, step = 0.5)
@@ -181,7 +181,7 @@ public class BedBomb implements ModuleAccess {
                     InventoryUtility.selectSlot(mc.getPlayer(), free);
                     mc.getGameMode().handleInventoryMouseClick(
                         mc.getPlayer().containerMenu.containerId, i, free,
-                        net.minecraft.world.inventory.ClickType.SWAP, mc.getPlayer()
+                        InventoryUtility.SWAP, mc.getPlayer()
                     );
                     return free;
                 }
@@ -196,12 +196,8 @@ public class BedBomb implements ModuleAccess {
         return -1;
     }
     private static native void nativeFindBestPlace(double px, double py, double pz, double ex, double ey, double ez, double range, double[] out);
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("BedBomb").getEnabled();
-    }
-    public static BedBomb itz() {
-        return ravex.manager.ModuleManager.delegate(BedBomb.class);
-    }
+
+
 
 
 }

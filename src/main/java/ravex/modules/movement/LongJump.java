@@ -1,21 +1,18 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "LongJump", category = "Movement")
-public class LongJump implements ModuleAccess {
+@Module(name = "LongJump", category = "Movement")
+public class LongJump {
     @Parameter(name = "Mode", modes = {"Vanilla"})
     public String mode = "Vanilla";
     @Parameter(name = "Boost", min = 1.0, max = 10.0, step = 0.1)
     public double boost = 1.5;
     public static boolean jumped = false;
 
-    private LongJump() {
-        
-    }
     public void onEnable() {
         jumped = false;
     }
@@ -33,12 +30,8 @@ public class LongJump implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("LongJump").getEnabled();
-    }
-    public static LongJump itz() {
-        return ravex.manager.ModuleManager.delegate(LongJump.class);
-    }
+
+
 
 
 }

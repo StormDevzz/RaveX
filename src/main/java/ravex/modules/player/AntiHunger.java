@@ -3,19 +3,20 @@ import ravex.modules.ModuleAccess;
 import ravex.event.network.PacketEvent;
 import ravex.event.Subscribe;
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.network.protocol.Packet;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
 
-@ModuleInfo(name = "AntiHunger", category = "net.minecraft.world.entity.player.Player")
-public class AntiHunger implements ModuleAccess {
+@Module(name = "AntiHunger", category = "net.minecraft.world.entity.player.Player")
+public class AntiHunger {
     @Parameter(name = "Mode", modes = {"NCP", "NCPStrict"})
     public String mode = "NCP";
 
@@ -26,7 +27,7 @@ public class AntiHunger implements ModuleAccess {
 
     @Subscribe
     public void onPacket(PacketEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("AntiHunger").getEnabled() || !event.isSend()) return;
+        if (!Modules.enabled(AntiHunger.class) || !event.isSend()) return;
         String m = mode;
         Packet<?> packet = event.getPacket();
 
@@ -48,13 +49,9 @@ public class AntiHunger implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiHunger").getEnabled();
-    }
 
-    public static AntiHunger itz() {
-        return ravex.manager.ModuleManager.delegate(AntiHunger.class);
-    }
+
+
 
 
 }

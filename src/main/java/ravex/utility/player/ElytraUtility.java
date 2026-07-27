@@ -6,8 +6,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.core.component.DataComponents;
+import ravex.utility.player.InventoryUtility;
 
 public class ElytraUtility {
     public static boolean isElytraEquipped(LocalPlayer player) {
@@ -80,11 +80,11 @@ public class ElytraUtility {
         int containerSlot = InventoryUtility.inventorySlotToContainerSlot(slot);
         if (containerSlot == -1) return false;
         mc.gameMode.handleInventoryMouseClick(
-            player.containerMenu.containerId, 6, 0, ClickType.PICKUP, player);
+            player.containerMenu.containerId, 6, 0, InventoryUtility.PICKUP, player);
         mc.gameMode.handleInventoryMouseClick(
-            player.containerMenu.containerId, containerSlot, 0, ClickType.PICKUP, player);
+            player.containerMenu.containerId, containerSlot, 0, InventoryUtility.PICKUP, player);
         mc.gameMode.handleInventoryMouseClick(
-            player.containerMenu.containerId, 6, 0, ClickType.PICKUP, player);
+            player.containerMenu.containerId, 6, 0, InventoryUtility.PICKUP, player);
         return true;
     }
 

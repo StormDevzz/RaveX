@@ -10,13 +10,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.BoatFly;
+import ravex.modules.Modules;
 
 @Mixin(LivingEntity.class)
 public abstract class MixinBoatFly {
 
     @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
     private void onTravel(Vec3 travelVector, CallbackInfo ci) {
-        if (!BoatFly.maybeEnabled()) return;
+        if (!Modules.enabled(BoatFly.class)) return;
         LivingEntity entity = (LivingEntity)(Object)this;
         if (!(entity instanceof LocalPlayer player)) return;
         if (player.getVehicle() == null) return;

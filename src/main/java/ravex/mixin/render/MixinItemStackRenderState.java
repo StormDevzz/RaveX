@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.Shaders;
+import ravex.modules.Modules;
 
 @Mixin(ItemStackRenderState.class)
 public class MixinItemStackRenderState {
@@ -24,8 +25,8 @@ public class MixinItemStackRenderState {
         boolean renderPlayer = Shaders.RENDERING_PLAYER.get();
         boolean renderHand = Shaders.RENDERING_HAND.get();
 
-        if (Shaders.maybeEnabled() && (renderPlayer || renderHand)) {
-            return Shaders.itz().fillColor;
+        if (Modules.enabled(Shaders.class) && (renderPlayer || renderHand)) {
+            return Modules.get(Shaders.class).fillColor;
         }
         return tint;
     }
@@ -38,7 +39,7 @@ public class MixinItemStackRenderState {
         boolean renderPlayer = Shaders.RENDERING_PLAYER.get();
         boolean renderHand = Shaders.RENDERING_HAND.get();
 
-        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls && (renderPlayer || renderHand)) {
+        if (Modules.enabled(Shaders.class) && Modules.get(Shaders.class).throughWalls && (renderPlayer || renderHand)) {
             GlStateManager._disableDepthTest();
         }
     }
@@ -51,7 +52,7 @@ public class MixinItemStackRenderState {
         boolean renderPlayer = Shaders.RENDERING_PLAYER.get();
         boolean renderHand = Shaders.RENDERING_HAND.get();
 
-        if (Shaders.maybeEnabled() && Shaders.itz().throughWalls && (renderPlayer || renderHand)) {
+        if (Modules.enabled(Shaders.class) && Modules.get(Shaders.class).throughWalls && (renderPlayer || renderHand)) {
             GlStateManager._enableDepthTest();
         }
     }

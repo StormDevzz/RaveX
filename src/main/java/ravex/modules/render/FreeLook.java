@@ -1,11 +1,11 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "FreeLook", category = "Render")
-public class FreeLook implements ModuleAccess {
+@Module(name = "FreeLook", category = "Render")
+public class FreeLook {
     @Parameter(name = "Mode", modes = {"net.minecraft.world.entity.player.Player", "net.minecraft.client.Camera"})
     public String mode = "net.minecraft.world.entity.player.Player";
     private float lookYaw = 0.0f;
@@ -40,13 +40,9 @@ public class FreeLook implements ModuleAccess {
     public float getLookPitch() {
         return lookPitch;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("FreeLook").getEnabled();
-    }
 
-    public static FreeLook itz() {
-        return ravex.manager.ModuleManager.delegate(FreeLook.class);
-    }
+
+
 
 
 }

@@ -1,12 +1,12 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoMount", category = "World")
-public class AutoMount implements ModuleAccess {
+@Module(name = "AutoMount", category = "World")
+public class AutoMount {
     @Parameter(name = "Mode", modes = {"Normal", "Fast"})
     public String mode = "Normal";
     private int cooldown = 0;
@@ -40,9 +40,7 @@ public class AutoMount implements ModuleAccess {
             cooldown = 20;
         }
     }
-    public static AutoMount itz() {
-        return ravex.manager.ModuleManager.delegate(AutoMount.class);
-    }
+
 
 
 }

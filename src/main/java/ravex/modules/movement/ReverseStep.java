@@ -1,10 +1,10 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "ReverseStep", category = "Movement")
-public class ReverseStep implements ModuleAccess {
+@Module(name = "ReverseStep", category = "Movement")
+public class ReverseStep {
     @Parameter(name = "Force", min = 1.0, max = 4.0, step = 0.5)
     public double force = 1.5;
     public void onTick() {
@@ -32,9 +32,7 @@ public class ReverseStep implements ModuleAccess {
             mc.player.setDeltaMovement(motion.x, -force, motion.z);
         }
     }
-    public static ReverseStep itz() {
-        return ravex.manager.ModuleManager.delegate(ReverseStep.class);
-    }
+
 
 
 }

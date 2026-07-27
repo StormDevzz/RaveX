@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.EntityUtility;
@@ -13,8 +13,8 @@ import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "ShieldFucker", category = "Combat")
-public class ShieldFucker implements ModuleAccess {
+@Module(name = "ShieldFucker", category = "Combat")
+public class ShieldFucker {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "WallRange", min = 1.0, max = 6.0, step = 0.1)
@@ -42,12 +42,8 @@ public class ShieldFucker implements ModuleAccess {
     static {
         NATIVE.load();
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ShieldFucker").getEnabled();
-    }
-    public static ShieldFucker itz() {
-        return ravex.manager.ModuleManager.delegate(ShieldFucker.class);
-    }
+
+
     public static class BreakAction {
         public final int targetId;
         public final float yaw;

@@ -50,6 +50,7 @@ import ravex.modules.world.Scaffold;
 import ravex.modules.world.TreeCutter;
 import ravex.modules.world.AutoTunnel;
 import ravex.utility.render.Render3DUtility;
+import ravex.modules.Modules;
 
 
 
@@ -83,7 +84,7 @@ public class MixinLevelRenderer {
     )
     private boolean disableVanillaBlockOutline(boolean original) {
 
-        if (BlockOutline.maybeEnabled()) {
+        if (Modules.enabled(BlockOutline.class)) {
             return false;
         }
         return original;
@@ -125,7 +126,7 @@ public class MixinLevelRenderer {
         double slideFactor = Math.min(1.0, (deltaMs / 50.0) * 0.35);
 
 
-        if (BlockOutline.maybeEnabled()) {
+        if (Modules.enabled(BlockOutline.class)) {
             HitResult hit = mc.hitResult;
             if (hit != null && hit.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockHit = (BlockHitResult) hit;
@@ -134,7 +135,7 @@ public class MixinLevelRenderer {
                 double ty = pos.getY();
                 double tz = pos.getZ();
 
-                if (BlockOutline.itz().smooth) {
+                if (Modules.get(BlockOutline.class).smooth) {
                     if (!boInitialized) {
                         boX = tx; boY = ty; boZ = tz;
                         boInitialized = true;
@@ -150,7 +151,7 @@ public class MixinLevelRenderer {
                     boInitialized = true;
                 }
             } else {
-                if (BlockOutline.itz().smooth) {
+                if (Modules.get(BlockOutline.class).smooth) {
                     boAlpha += (0.0f - boAlpha) * factor;
                     if (boAlpha < 0.01f) {
                         boAlpha = 0.0f;
@@ -163,15 +164,15 @@ public class MixinLevelRenderer {
             }
 
             if (boAlpha > 0.0f) {
-                int color = BlockOutline.itz().color;
+                int color = Modules.get(BlockOutline.class).color;
                 float r = ((color >> 16) & 0xFF) / 255.0f;
                 float g = ((color >> 8) & 0xFF) / 255.0f;
                 float b = (color & 0xFF) / 255.0f;
                 float baseAlpha = ((color >> 24) & 0xFF) / 255.0f;
                 float a = baseAlpha * boAlpha;
-                boolean filled = BlockOutline.itz().filled;
+                boolean filled = Modules.get(BlockOutline.class).filled;
                 float lineWidth = 2.0f;
-                String outlineMode = BlockOutline.itz().mode;
+                String outlineMode = Modules.get(BlockOutline.class).mode;
 
                 try {
                     float bx = (float)(boX - camPos.x);
@@ -210,7 +211,7 @@ public class MixinLevelRenderer {
                 } catch (Exception ignored) {}
             }
         } else {
-            if (BlockOutline.itz() != null && BlockOutline.itz().smooth) {
+            if (Modules.get(BlockOutline.class) != null && Modules.get(BlockOutline.class).smooth) {
                 boAlpha += (0.0f - boAlpha) * factor;
                 if (boAlpha < 0.01f) {
                     boAlpha = 0.0f;
@@ -223,8 +224,8 @@ public class MixinLevelRenderer {
         }
 
 
-        AirPlace ap = AirPlace.itz();
-        if (AirPlace.maybeEnabled() && ap.render && ap.currentTarget != null) {
+        AirPlace ap = Modules.get(AirPlace.class);
+        if (Modules.enabled(AirPlace.class) && ap.render && ap.currentTarget != null) {
             double tx = ap.currentTarget.getX();
             double ty = ap.currentTarget.getY();
             double tz = ap.currentTarget.getZ();
@@ -262,7 +263,7 @@ public class MixinLevelRenderer {
             ravex.modules.player.AirPlace.renderSize = apSize;
         }
 
-        if (AirPlace.maybeEnabled()) {
+        if (Modules.enabled(AirPlace.class)) {
             renderBlockHighlight(
                 ravex.modules.player.AirPlace.highlightPos,
                 ravex.modules.player.AirPlace.renderAlpha,
@@ -275,8 +276,8 @@ public class MixinLevelRenderer {
         }
 
 
-        Scaffold sc = Scaffold.itz();
-        if (Scaffold.maybeEnabled() && sc.render) {
+        Scaffold sc = Modules.get(Scaffold.class);
+        if (Modules.enabled(Scaffold.class) && sc.render) {
             var currPos = sc.getCurrentPos();
             if (currPos == null) {} else {
             double tx = currPos.getX();
@@ -316,7 +317,7 @@ public class MixinLevelRenderer {
             ravex.modules.world.Scaffold.renderSize = scSize;
         }
 
-        if (Scaffold.maybeEnabled()) {
+        if (Modules.enabled(Scaffold.class)) {
             renderBlockHighlight(
                 ravex.modules.world.Scaffold.highlightPos,
                 ravex.modules.world.Scaffold.renderAlpha,
@@ -329,14 +330,14 @@ public class MixinLevelRenderer {
         }
 
 
-        if (ChestAura.maybeEnabled() && ChestAura.itz().render && !ChestAura.placedChests.isEmpty()) {
+        if (Modules.enabled(ChestAura.class) && Modules.get(ChestAura.class).render && !ChestAura.placedChests.isEmpty()) {
             long chestNow = System.currentTimeMillis();
-            double durationMs = ChestAura.itz().fadeSpeed * 1000.0;
-            int color = ChestAura.itz().highlightColor;
+            double durationMs = Modules.get(ChestAura.class).fadeSpeed * 1000.0;
+            int color = Modules.get(ChestAura.class).highlightColor;
             float r = ((color >> 16) & 0xFF) / 255.0f;
             float g = ((color >> 8) & 0xFF) / 255.0f;
             float b = (color & 0xFF) / 255.0f;
-            boolean filled = ChestAura.itz().filled;
+            boolean filled = Modules.get(ChestAura.class).filled;
 
             Matrix4f mat = new Matrix4f();
             for (ravex.modules.world.ChestAura.PlacedChest chest : ravex.modules.world.ChestAura.placedChests) {
@@ -365,7 +366,7 @@ public class MixinLevelRenderer {
         }
 
 
-        if (Surround.maybeEnabled()) {
+        if (Modules.enabled(Surround.class)) {
             synchronized (Surround.surroundBlocks) {
                 for (BlockPos pos : Surround.surroundBlocks) {
                     if (pos == null) continue;
@@ -392,8 +393,8 @@ public class MixinLevelRenderer {
         }
 
 
-        Trap trap = Trap.itz();
-        if (Trap.maybeEnabled() && trap.render) {
+        Trap trap = Modules.get(Trap.class);
+        if (Modules.enabled(Trap.class) && trap.render) {
             synchronized (ravex.modules.combat.Trap.trapBlocks) {
                 for (BlockPos pos : ravex.modules.combat.Trap.trapBlocks) {
                     if (pos == null) continue;
@@ -420,8 +421,8 @@ public class MixinLevelRenderer {
         }
 
 
-        SelfTrap selfTrap = SelfTrap.itz();
-        if (SelfTrap.maybeEnabled() && selfTrap.render) {
+        SelfTrap selfTrap = Modules.get(SelfTrap.class);
+        if (Modules.enabled(SelfTrap.class) && selfTrap.render) {
             for (BlockPos pos : ravex.modules.combat.SelfTrap.getSelfTrapBlocks()) {
                 if (pos == null) continue;
                 float sx = (float)(pos.getX() - camPos.x);
@@ -445,8 +446,8 @@ public class MixinLevelRenderer {
         }
 
 
-        BasePlace basePlace = BasePlace.itz();
-        if (BasePlace.maybeEnabled() && basePlace.render && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
+        BasePlace basePlace = Modules.get(BasePlace.class);
+        if (Modules.enabled(BasePlace.class) && basePlace.render && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
             BlockPos pos = ravex.modules.combat.BasePlace.getSimulatedPlacementBlock();
             try {
                 modelViewMatrix.translate(
@@ -470,8 +471,8 @@ public class MixinLevelRenderer {
         }
 
 
-        AnchorAura anchorAura = AnchorAura.itz();
-        if (AnchorAura.maybeEnabled() && anchorAura.render && ravex.modules.combat.AnchorAura.simulatedPlacementBlock != null) {
+        AnchorAura anchorAura = Modules.get(AnchorAura.class);
+        if (Modules.enabled(AnchorAura.class) && anchorAura.render && ravex.modules.combat.AnchorAura.simulatedPlacementBlock != null) {
             BlockPos pos = ravex.modules.combat.AnchorAura.simulatedPlacementBlock;
             try {
                 modelViewMatrix.translate(
@@ -494,12 +495,12 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
-        if (NewChunks.maybeEnabled()) {
-            NewChunks.itz().render(modelViewMatrix, camera);
+        if (Modules.enabled(NewChunks.class)) {
+            Modules.get(NewChunks.class).render(modelViewMatrix, camera);
         }
 
-        AutoCrystal ac = AutoCrystal.itz();
-        if (AutoCrystal.maybeEnabled() && ac.renderPlacement && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
+        AutoCrystal ac = Modules.get(AutoCrystal.class);
+        if (Modules.enabled(AutoCrystal.class) && ac.renderPlacement && ravex.modules.combat.AutoCrystal.currentPlacementBlock != null) {
             BlockPos p = ravex.modules.combat.AutoCrystal.currentPlacementBlock;
             try {
                 modelViewMatrix.translate(
@@ -517,9 +518,9 @@ public class MixinLevelRenderer {
         }
 
 
-        if (StashFinder.maybeEnabled()) {
-            double maxDist = StashFinder.itz().range;
-            for (StashFinder.StashEntry stash : StashFinder.itz().getStashes()) {
+        if (Modules.enabled(StashFinder.class)) {
+            double maxDist = Modules.get(StashFinder.class).range;
+            for (StashFinder.StashEntry stash : Modules.get(StashFinder.class).getStashes()) {
                 Vec3 stashPos = Vec3.atBottomCenterOf(stash.pos);
                 double dist = stashPos.distanceTo(camPos);
                 if (dist > maxDist) continue;
@@ -542,7 +543,7 @@ public class MixinLevelRenderer {
         }
 
 
-        if (BreadCrumbs.maybeEnabled()) {
+        if (Modules.enabled(BreadCrumbs.class)) {
             ravex.modules.render.BreadCrumbs.renderTrails(modelViewMatrix, camPos);
         }
 
@@ -552,14 +553,14 @@ public class MixinLevelRenderer {
         }
 
 
-        if (Particles.maybeEnabled()) {
+        if (Modules.enabled(Particles.class)) {
             ravex.modules.render.Particles.renderParticles(modelViewMatrix, camPos);
         }
 
 
-        TreeCutter tc = TreeCutter.itz();
+        TreeCutter tc = Modules.get(TreeCutter.class);
         BlockPos mp = ravex.modules.world.TreeCutter.getMiningPos();
-        if (TreeCutter.maybeEnabled() && tc.render && mp != null) {
+        if (Modules.enabled(TreeCutter.class) && tc.render && mp != null) {
             BlockPos p = mp;
             try {
                 modelViewMatrix.translate(
@@ -583,8 +584,8 @@ public class MixinLevelRenderer {
         }
 
 
-        WebSelf ws = WebSelf.itz();
-        if (WebSelf.maybeEnabled() && ws.render && ravex.modules.combat.WebSelf.targetPos != null) {
+        WebSelf ws = Modules.get(WebSelf.class);
+        if (Modules.enabled(WebSelf.class) && ws.render && ravex.modules.combat.WebSelf.targetPos != null) {
             BlockPos p = ravex.modules.combat.WebSelf.targetPos;
             try {
                 modelViewMatrix.translate(
@@ -604,8 +605,8 @@ public class MixinLevelRenderer {
         }
 
 
-        Breaker br = Breaker.itz();
-        if (Breaker.maybeEnabled() && ravex.modules.combat.Breaker.currentMiningBlock != null) {
+        Breaker br = Modules.get(Breaker.class);
+        if (Modules.enabled(Breaker.class) && ravex.modules.combat.Breaker.currentMiningBlock != null) {
             BlockPos p = ravex.modules.combat.Breaker.currentMiningBlock;
             try {
                 modelViewMatrix.translate(
@@ -628,8 +629,8 @@ public class MixinLevelRenderer {
         }
 
 
-        AutoTunnel at = AutoTunnel.itz();
-        if (AutoTunnel.maybeEnabled() && at.render) {
+        AutoTunnel at = Modules.get(AutoTunnel.class);
+        if (Modules.enabled(AutoTunnel.class) && at.render) {
             BlockPos p = ravex.modules.world.AutoTunnel.getCurrentTarget();
             if (p != null) try {
                 modelViewMatrix.translate(
@@ -653,7 +654,7 @@ public class MixinLevelRenderer {
         }
 
 
-        Nuker nk = Nuker.itz();
+        Nuker nk = Modules.get(Nuker.class);
         if (ModuleManager.INSTANCE.getByName("Nuker").getEnabled() && nk.render && ravex.modules.world.nuker.Nuker.currentTarget != null) {
             BlockPos p = ravex.modules.world.nuker.Nuker.currentTarget;
             try {
@@ -678,8 +679,8 @@ public class MixinLevelRenderer {
         }
 
 
-        PVEUtils sm = PVEUtils.itz();
-        if (PVEUtils.maybeEnabled() && sm.mode.equals("AutoSmelt") && sm.smeltRender && ravex.modules.world.PVEUtils.smeltTarget != null) {
+        PVEUtils sm = Modules.get(PVEUtils.class);
+        if (Modules.enabled(PVEUtils.class) && sm.mode.equals("AutoSmelt") && sm.smeltRender && ravex.modules.world.PVEUtils.smeltTarget != null) {
             BlockPos p = ravex.modules.world.PVEUtils.smeltTarget;
             try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
@@ -696,8 +697,8 @@ public class MixinLevelRenderer {
         }
 
 
-        PVEUtils bw = PVEUtils.itz();
-        if (PVEUtils.maybeEnabled() && bw.mode.equals("AutoBrew") && bw.brewRender) {
+        PVEUtils bw = Modules.get(PVEUtils.class);
+        if (Modules.enabled(PVEUtils.class) && bw.mode.equals("AutoBrew") && bw.brewRender) {
             BlockPos p = ravex.modules.world.PVEUtils.getBrewTarget();
             if (p != null) try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
@@ -714,8 +715,8 @@ public class MixinLevelRenderer {
         }
 
 
-        ECFarmer ec = ECFarmer.itz();
-        if (ECFarmer.maybeEnabled() && ec.render) {
+        ECFarmer ec = Modules.get(ECFarmer.class);
+        if (Modules.enabled(ECFarmer.class) && ec.render) {
             BlockPos p = ravex.modules.world.ECFarmer.getCurrentTarget();
             if (p != null) try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
@@ -732,8 +733,8 @@ public class MixinLevelRenderer {
         }
 
 
-        AutoPortal pb = AutoPortal.itz();
-        if (AutoPortal.maybeEnabled() && pb.render) {
+        AutoPortal pb = Modules.get(AutoPortal.class);
+        if (Modules.enabled(AutoPortal.class) && pb.render) {
             BlockPos p = ravex.modules.misc.AutoPortal.getCurrentTarget();
             if (p != null) try {
                 modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
@@ -750,8 +751,8 @@ public class MixinLevelRenderer {
         }
 
 
-        HoleFill hf = HoleFill.itz();
-        if (HoleFill.maybeEnabled() && hf.render) {
+        HoleFill hf = Modules.get(HoleFill.class);
+        if (Modules.enabled(HoleFill.class) && hf.render) {
             for (var hole : ravex.modules.combat.HoleFill.holePositions) {
                 if (hole == null) continue;
                 try {
@@ -773,16 +774,16 @@ public class MixinLevelRenderer {
         }
 
 
-        if (Borders.maybeEnabled()) {
-            int rd = (int) Borders.itz().renderDistance;
-            boolean showCurrent = Borders.itz().showCurrentChunk;
-            boolean showAll = Borders.itz().showChunkBorders;
-            int lc = Borders.itz().chunkColor;
+        if (Modules.enabled(Borders.class)) {
+            int rd = (int) Modules.get(Borders.class).renderDistance;
+            boolean showCurrent = Modules.get(Borders.class).showCurrentChunk;
+            boolean showAll = Modules.get(Borders.class).showChunkBorders;
+            int lc = Modules.get(Borders.class).chunkColor;
             float lr = ((lc >> 16) & 0xFF) / 255.0f;
             float lg = ((lc >> 8) & 0xFF) / 255.0f;
             float lb = (lc & 0xFF) / 255.0f;
             float la = ((lc >> 24) & 0xFF) / 255.0f;
-            float lw = (float) Borders.itz().lineWidth;
+            float lw = (float) Modules.get(Borders.class).lineWidth;
 
             if (showAll && mc.player != null) {
                 int cx = mc.player.chunkPosition().x;
@@ -800,7 +801,7 @@ public class MixinLevelRenderer {
             }
 
             if (showCurrent) {
-                int cc = Borders.itz().currentColor;
+                int cc = Modules.get(Borders.class).currentColor;
                 float cr = ((cc >> 16) & 0xFF) / 255.0f;
                 float cg = ((cc >> 8) & 0xFF) / 255.0f;
                 float cb = (cc & 0xFF) / 255.0f;
@@ -818,15 +819,15 @@ public class MixinLevelRenderer {
         }
 
 
-        if (ESP.maybeEnabled() && ESP.itz().mode.equals("Tunnels")) {
-            int tunnelColorVal = ESP.itz().tunnelColor;
+        if (Modules.enabled(ESP.class) && Modules.get(ESP.class).mode.equals("Tunnels")) {
+            int tunnelColorVal = Modules.get(ESP.class).tunnelColor;
             float tr = ((tunnelColorVal >> 16) & 0xFF) / 255.0f;
             float tg = ((tunnelColorVal >> 8) & 0xFF) / 255.0f;
             float tb = (tunnelColorVal & 0xFF) / 255.0f;
             float ta = ((tunnelColorVal >> 24) & 0xFF) / 255.0f;
-            boolean filled = ESP.itz().tunnelFilled;
-            boolean wire = ESP.itz().tunnelWireframe;
-            for (BlockPos pos : ESP.itz().getTunnelBlocks()) {
+            boolean filled = Modules.get(ESP.class).tunnelFilled;
+            boolean wire = Modules.get(ESP.class).tunnelWireframe;
+            for (BlockPos pos : Modules.get(ESP.class).getTunnelBlocks()) {
                 try {
                     modelViewMatrix.translate((float)(pos.getX() - camPos.x), (float)(pos.getY() - camPos.y), (float)(pos.getZ() - camPos.z), REUSABLE_MATRIX);
                     if (filled) Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, tr, tg, tb, ta * 0.3f);
@@ -836,23 +837,23 @@ public class MixinLevelRenderer {
         }
 
 
-        if (ESP.maybeEnabled() && ESP.itz().mode.equals("Holes")) {
-            int c = ESP.itz().safeColor;
+        if (Modules.enabled(ESP.class) && Modules.get(ESP.class).mode.equals("Holes")) {
+            int c = Modules.get(ESP.class).safeColor;
             float hr = ((c >> 16) & 0xFF) / 255.0f;
             float hg = ((c >> 8) & 0xFF) / 255.0f;
             float hb = (c & 0xFF) / 255.0f;
             float ha = ((c >> 24) & 0xFF) / 255.0f;
             float hw = 0.04f;
-            for (var pos : ESP.itz().getHoles()) {
+            for (var pos : Modules.get(ESP.class).getHoles()) {
                 try {
                     float px = (float)(pos.getX() - camPos.x);
                     float py = (float)(pos.getY() - camPos.y);
                     float pz = (float)(pos.getZ() - camPos.z);
-                    if (ESP.itz().holeFilled) {
+                    if (Modules.get(ESP.class).holeFilled) {
                         modelViewMatrix.translate(px, py, pz, REUSABLE_MATRIX);
                         Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, hr, hg, hb, ha * 0.3f, true);
                     }
-                    if (ESP.itz().holeWireframe) {
+                    if (Modules.get(ESP.class).holeWireframe) {
 
                         Render3DUtility.batchAxisLine(modelViewMatrix, px, py, pz, px + 1, py, pz, hw, hr, hg, hb, ha, true);
                         Render3DUtility.batchAxisLine(modelViewMatrix, px + 1, py, pz, px + 1, py, pz + 1, hw, hr, hg, hb, ha, true);
@@ -874,15 +875,15 @@ public class MixinLevelRenderer {
         }
 
 
-        if (ESP.maybeEnabled() && ESP.itz().mode.equals("Void")) {
-            int vc = ESP.itz().voidColor;
+        if (Modules.enabled(ESP.class) && Modules.get(ESP.class).mode.equals("Void")) {
+            int vc = Modules.get(ESP.class).voidColor;
             float vr = ((vc >> 16) & 0xFF) / 255.0f;
             float vg = ((vc >> 8) & 0xFF) / 255.0f;
             float vb = (vc & 0xFF) / 255.0f;
             float va = ((vc >> 24) & 0xFF) / 255.0f;
-            boolean vf = ESP.itz().voidFilled;
-            boolean vw = ESP.itz().voidWireframe;
-            for (BlockPos pos : ESP.itz().getVoidBlocks()) {
+            boolean vf = Modules.get(ESP.class).voidFilled;
+            boolean vw = Modules.get(ESP.class).voidWireframe;
+            for (BlockPos pos : Modules.get(ESP.class).getVoidBlocks()) {
                 try {
                     modelViewMatrix.translate((float)(pos.getX() - camPos.x), 0, (float)(pos.getZ() - camPos.z), REUSABLE_MATRIX);
                     if (vf) Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 16.0, vr, vg, vb, va * 0.15f);
@@ -892,33 +893,33 @@ public class MixinLevelRenderer {
         }
 
 
-        if (CityESP.maybeEnabled()) {
-            BlockPos cp = CityESP.itz().getCityBlock();
+        if (Modules.enabled(CityESP.class)) {
+            BlockPos cp = Modules.get(CityESP.class).getCityBlock();
             if (cp != null) {
                 double dist = Math.sqrt(mc.player.distanceToSqr(cp.getX() + 0.5, cp.getY() + 0.5, cp.getZ() + 0.5));
-                if (dist <= CityESP.itz().renderRange) {
+                if (dist <= Modules.get(CityESP.class).renderRange) {
                     try {
                         modelViewMatrix.translate((float)(cp.getX() - camPos.x), (float)(cp.getY() - camPos.y), (float)(cp.getZ() - camPos.z), REUSABLE_MATRIX);
-                        int fc = CityESP.itz().fillColor;
+                        int fc = Modules.get(CityESP.class).fillColor;
                         float fr = ((fc >> 16) & 0xFF) / 255.0f;
                         float fg = ((fc >> 8) & 0xFF) / 255.0f;
                         float fb = (fc & 0xFF) / 255.0f;
                         float fa = ((fc >> 24) & 0xFF) / 255.0f;
-                        int lc = CityESP.itz().lineColor;
+                        int lc = Modules.get(CityESP.class).lineColor;
                         float lr = ((lc >> 16) & 0xFF) / 255.0f;
                         float lg = ((lc >> 8) & 0xFF) / 255.0f;
                         float lb = (lc & 0xFF) / 255.0f;
                         float la = ((lc >> 24) & 0xFF) / 255.0f;
-                        if (CityESP.itz().filled) Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, fr, fg, fb, fa);
-                        if (CityESP.itz().wireframe) Render3DUtility.batchWireframe(REUSABLE_MATRIX, 1.002, lr, lg, lb, la);
+                        if (Modules.get(CityESP.class).filled) Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, fr, fg, fb, fa);
+                        if (Modules.get(CityESP.class).wireframe) Render3DUtility.batchWireframe(REUSABLE_MATRIX, 1.002, lr, lg, lb, la);
                     } catch (Exception ignored) {}
                 }
             }
         }
 
 
-        PacketMine pm = PacketMine.itz();
-        if (PacketMine.maybeEnabled() && pm.render) {
+        PacketMine pm = Modules.get(PacketMine.class);
+        if (Modules.enabled(PacketMine.class) && pm.render) {
             long globalTime = System.currentTimeMillis();
             for (var mb : ravex.modules.player.PacketMine.miningBlocks) {
                 if (mb == null || mb.pos == null) continue;
@@ -967,7 +968,7 @@ public class MixinLevelRenderer {
         }
 
 
-        if (Waypoint.maybeEnabled()) {
+        if (Modules.enabled(Waypoint.class)) {
             int wpColor = ravex.modules.render.Waypoint.getColor();
             float wr = ((wpColor >> 16) & 0xFF) / 255.0f;
             float wg = ((wpColor >> 8) & 0xFF) / 255.0f;
@@ -1014,14 +1015,14 @@ public class MixinLevelRenderer {
         }
 
 
-        if (PearlTarget.maybeEnabled()) {
+        if (Modules.enabled(PearlTarget.class)) {
             try {
-                PearlTarget.itz().render(modelViewMatrix, camera);
+                Modules.get(PearlTarget.class).render(modelViewMatrix, camera);
             } catch (Exception ignored) {}
         }
 
-        Search search = Search.itz();
-        if (Search.maybeEnabled() && search.esp) {
+        Search search = Modules.get(Search.class);
+        if (Modules.enabled(Search.class) && search.esp) {
             Vec3 sp = camera.position();
             int sbc = search.blockColor;
             float sbr = ((sbc >> 16) & 0xFF) / 255.0f;
@@ -1062,9 +1063,9 @@ public class MixinLevelRenderer {
             }
         }
 
-        if (KillAura.maybeEnabled() && KillAura.itz().targetEsp) {
+        if (Modules.enabled(KillAura.class) && Modules.get(KillAura.class).targetEsp) {
             try {
-                KillAura.itz().render(modelViewMatrix, camera, mc.getDeltaTracker().getGameTimeDeltaTicks());
+                Modules.get(KillAura.class).render(modelViewMatrix, camera, mc.getDeltaTracker().getGameTimeDeltaTicks());
             } catch (Exception ignored) {}
         }
 

@@ -5,7 +5,7 @@ import ravex.event.combat.AttackEvent;
 import ravex.event.EventBusHolder;
 import ravex.event.player.DeathEvent;
 import ravex.event.Subscribe;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 import ravex.utility.misc.EntityUtility;
@@ -29,14 +29,15 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
 
 
-@ModuleInfo(name = "ChatHelper", category = "Misc")
-public class ChatHelper implements ModuleAccess {
+@Module(name = "ChatHelper", category = "Misc")
+public class ChatHelper {
     @Parameter(name = "Mode", modes = {"Announcer", "Welcomer", "AutoEZ", "ZoV", "Spammer", "CoordLogger", "DurabAlert", "ChatFilter"})
     public String mode = "Announcer";
     @Parameter(name = "Announcer")
@@ -149,12 +150,8 @@ public class ChatHelper implements ModuleAccess {
     private String lastMessage = "";
     private int duplicateCount = 0;
 
-    private ChatHelper() {
-        
-    }
-
     public boolean shouldFilterMessage(String msg) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled()) return false;
+        if (!Modules.enabled(ChatHelper.class)) return false;
         if ("ChatFilter".equals(mode)) {
             if (onlyName && MinecraftWrapper.getWrapper().getPlayer() != null) {
                 String playerName = MinecraftWrapper.getWrapper().getPlayer().getGameProfile().name().toLowerCase();
@@ -176,7 +173,7 @@ public class ChatHelper implements ModuleAccess {
     }
 
     public String applyTimestamp(String message) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !timestamp) return message;
+        if (!Modules.enabled(ChatHelper.class) || !timestamp) return message;
         var now = java.time.LocalTime.now();
         String fmt = timestampFormat;
         String ts = switch (fmt) {
@@ -190,7 +187,7 @@ public class ChatHelper implements ModuleAccess {
     }
 
     public String applyZov(String message) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !zov) return message;
+        if (!Modules.enabled(ChatHelper.class) || !zov) return message;
         boolean extended = "Extended".equals(zovStyle);
         String r = message
             .replace('з', 'Z').replace('З', 'Z')
@@ -211,7 +208,7 @@ public class ChatHelper implements ModuleAccess {
     }
 
     public void onDeath(double x, double y, double z, String dimension) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !coordLoggerEnabled) return;
+        if (!Modules.enabled(ChatHelper.class) || !coordLoggerEnabled) return;
         if (!logDeath) return;
         new File(LOG_DIR).mkdirs();
         if (currentFile == null) {
@@ -290,7 +287,7 @@ public class ChatHelper implements ModuleAccess {
 
     @Subscribe
     public void onDeath(DeathEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !autoEZEnabled) return;
+        if (!Modules.enabled(ChatHelper.class) || !autoEZEnabled) return;
         if (event.isSelf()) return;
         net.minecraft.world.entity.player.Player victim = event.getPlayer();
         if (ezOnlyPlayers && !(victim instanceof net.minecraft.world.entity.player.Player)) return;
@@ -307,7 +304,7 @@ public class ChatHelper implements ModuleAccess {
     }
 
     public void onHit() {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled() || !announcerEnabled) return;
+        if (!Modules.enabled(ChatHelper.class) || !announcerEnabled) return;
         if (announceHit) hitsDealt++;
     }
     public void onTick() {
@@ -450,13 +447,9 @@ public class ChatHelper implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ChatHelper").getEnabled();
-    }
 
-    public static ChatHelper itz() {
-        return ravex.manager.ModuleManager.delegate(ChatHelper.class);
-    }
+
+
 
 
 }

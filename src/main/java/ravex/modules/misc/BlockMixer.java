@@ -1,24 +1,25 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
 
 
 
-@ModuleInfo(name = "BlockMixer", category = "Misc")
-public class BlockMixer implements ModuleAccess {
+@Module(name = "BlockMixer", category = "Misc")
+public class BlockMixer {
     @Parameter(name = "Swap", modes = {"Normal", "Silent"})
     public String swap = "Normal";
     private static final Random RANDOM = new Random();
 
     public void shuffle() {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("BlockMixer").getEnabled()) return;
+        if (!Modules.enabled(BlockMixer.class)) return;
         var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer player = mc.player;
         if (player == null) return;
@@ -44,13 +45,9 @@ public class BlockMixer implements ModuleAccess {
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("BlockMixer").getEnabled();
-    }
 
-    public static BlockMixer itz() {
-        return ravex.manager.ModuleManager.delegate(BlockMixer.class);
-    }
+
+
 
 
 }

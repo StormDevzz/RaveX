@@ -1,7 +1,7 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
 import ravex.mixin.client.AccessorMinecraft;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.world.effect.MobEffects;
@@ -12,8 +12,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoSoup", category = "Misc")
-public class AutoSoup implements ModuleAccess {
+@Module(name = "AutoSoup", category = "Misc")
+public class AutoSoup {
     @Parameter(name = "Health", min = 1.0, max = 20.0, step = 1.0)
     public double health = 10.0;
     @Parameter(name = "HotbarOnly")
@@ -61,9 +61,7 @@ public class AutoSoup implements ModuleAccess {
              || contents.potion().get() == Potions.STRONG_HEALING);
     }
 
-    public static AutoSoup itz() {
-        return ravex.manager.ModuleManager.delegate(AutoSoup.class);
-    }
+
 
 
 }

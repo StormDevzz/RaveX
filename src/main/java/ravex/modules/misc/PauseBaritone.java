@@ -1,21 +1,20 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.integrations.baritone.BaritoneIntegration;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "PauseBaritone", category = "Misc")
-public class PauseBaritone implements ModuleAccess {
+@Module(name = "PauseBaritone", category = "Misc")
+public class PauseBaritone {
 private final BaritoneIntegration baritone = new BaritoneIntegration();
     public void onEnable() {
         if (baritone.init()) {
             baritone.cancelPathing();
         }
-        ravex.manager.ModuleManager.INSTANCE.getByName("PauseBaritone").setEnabled(false);
+        Modules.setEnabled(PauseBaritone.class, false);
     }
 
-    public static PauseBaritone itz() {
-        return ravex.manager.ModuleManager.delegate(PauseBaritone.class);
-    }
+
 
 
 }

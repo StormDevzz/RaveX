@@ -1,13 +1,13 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.event.EventBusHolder;
 import ravex.event.client.SoundEvent;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@ModuleInfo(name = "LagNotify", category = "Misc")
-public class LagNotify implements ModuleAccess {
+@Module(name = "LagNotify", category = "Misc")
+public class LagNotify {
     @Parameter(name = "ThresholdTPS", min = 5.0, max = 20.0, step = 1.0)
     public double threshold = 15.0;
     @Parameter(name = "Sound")
@@ -51,9 +51,7 @@ public class LagNotify implements ModuleAccess {
         }
     }
 
-    public static LagNotify itz() {
-        return ravex.manager.ModuleManager.delegate(LagNotify.class);
-    }
+
 
 
 }

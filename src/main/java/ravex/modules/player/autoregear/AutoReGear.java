@@ -1,11 +1,10 @@
 package ravex.modules.player.autoregear;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import net.minecraft.world.inventory.ClickType;
 
 import ravex.parameter.ActionParameter;
 import ravex.utility.nativelib.NativeLibraryUtility;
@@ -14,8 +13,8 @@ import ravex.gui.clickgui.AutoReGearScreen;
 import java.util.HashMap;
 import java.util.Map;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoReGear", category = "net.minecraft.world.entity.player.Player")
-public class AutoReGear implements ModuleAccess {
+@Module(name = "AutoReGear", category = "net.minecraft.world.entity.player.Player")
+public class AutoReGear {
     @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
     public double delayParam = 200;
     public final ActionParameter items = new ActionParameter("Items", () -> {
@@ -136,7 +135,7 @@ public class AutoReGear implements ModuleAccess {
             );
         }
         if (containerSlotToClick >= 0 && containerSlotToClick < 27) {
-            InventoryUtility.handleInventoryClick(ravex.mcwrapper.MinecraftWrapper.getWrapper(), (net.minecraft.client.player.LocalPlayer) mc.player, containerSlotToClick, 0, ClickType.QUICK_MOVE);
+            InventoryUtility.handleInventoryClick(ravex.mcwrapper.MinecraftWrapper.getWrapper(), (net.minecraft.client.player.LocalPlayer) mc.player, containerSlotToClick, 0, InventoryUtility.QUICK_MOVE);
             lastActionTime = now;
         }
     }

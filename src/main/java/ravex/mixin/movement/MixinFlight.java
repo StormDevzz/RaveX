@@ -7,14 +7,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.Flight;
+import ravex.modules.Modules;
 
 @Mixin(LocalPlayer.class)
 public class MixinFlight {
 
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void onAiStep(CallbackInfo ci) {
-        Flight flight = Flight.itz();
-        if (!Flight.maybeEnabled()) return;
+        Flight flight = Modules.get(Flight.class);
+        if (!Modules.enabled(Flight.class)) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
         Minecraft mc = Minecraft.getInstance();

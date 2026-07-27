@@ -15,6 +15,7 @@ import ravex.event.render.CameraEvent;
 import ravex.modules.render.FreeLook;
 import ravex.modules.render.FreeCam;
 import ravex.modules.render.ViewClip;
+import ravex.modules.Modules;
 
 @Mixin(Camera.class)
 public abstract class MixinCamera {
@@ -37,14 +38,14 @@ public abstract class MixinCamera {
 
     @Inject(method = "setup", at = @At("RETURN"))
     private void onSetup(Level area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
-        if (FreeCam.maybeEnabled()) {
-            double[] coords = FreeCam.itz().getCorrectedRenderCoordinates(tickDelta);
+        if (Modules.enabled(FreeCam.class)) {
+            double[] coords = Modules.get(FreeCam.class).getCorrectedRenderCoordinates(tickDelta);
             net.minecraft.world.phys.Vec3 targetPos = new net.minecraft.world.phys.Vec3(coords[0], coords[1], coords[2]);
             this.setPosition(targetPos);
             this.setRotation((float) coords[3], (float) coords[4]);
-        } else if (FreeLook.maybeEnabled()) {
-            float yaw = FreeLook.itz().getLookYaw();
-            float pitch = FreeLook.itz().getLookPitch();
+        } else if (Modules.enabled(FreeLook.class)) {
+            float yaw = Modules.get(FreeLook.class).getLookYaw();
+            float pitch = Modules.get(FreeLook.class).getLookPitch();
 
 
             double renderX = focusedEntity.xo + (focusedEntity.getX() - focusedEntity.xo) * tickDelta;
@@ -67,7 +68,7 @@ public abstract class MixinCamera {
             );
 
 
-            float startingDist = ViewClip.maybeEnabled() ? (float) ViewClip.itz().cameraDistance : 4.0f;
+            float startingDist = Modules.enabled(ViewClip.class) ? (float) Modules.get(ViewClip.class).cameraDistance : 4.0f;
             float zoom = getMaxZoom(startingDist);
             net.minecraft.world.phys.Vec3 targetPos = eyePos.subtract(dirVec.scale(zoom));
             this.setPosition(targetPos);
@@ -79,7 +80,7 @@ public abstract class MixinCamera {
     @Inject(method = "isDetached", at = @At("HEAD"), cancellable = true)
     private void onIsDetached(CallbackInfoReturnable<Boolean> cir) {
 
-        if (FreeCam.maybeEnabled()) {
+        if (Modules.enabled(FreeCam.class)) {
             cir.setReturnValue(true);
         }
     }
@@ -89,9 +90,9 @@ public abstract class MixinCamera {
     @Inject(method = "getMaxZoom", at = @At("HEAD"), cancellable = true)
     private void onGetMaxZoom(float startingDistance, CallbackInfoReturnable<Float> cir) {
         if (inGetMaxZoom) return;
-        if (ViewClip.maybeEnabled()) {
-            float dist = (float) ViewClip.itz().cameraDistance;
-            if (ViewClip.itz().bypassWalls) {
+        if (Modules.enabled(ViewClip.class)) {
+            float dist = (float) Modules.get(ViewClip.class).cameraDistance;
+            if (Modules.get(ViewClip.class).bypassWalls) {
                 cir.setReturnValue(dist);
             } else {
                 inGetMaxZoom = true;

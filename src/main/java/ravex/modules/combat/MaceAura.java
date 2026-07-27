@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.InventoryUtility;
@@ -10,8 +10,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "MaceAura", category = "Combat")
-public class MaceAura implements ModuleAccess {
+@Module(name = "MaceAura", category = "Combat")
+public class MaceAura {
     @Parameter(name = "Height", min = 2.0, max = 40.0, step = 1.0)
     public double height = 10.0;
     public void onTick() {
@@ -41,12 +41,8 @@ public class MaceAura implements ModuleAccess {
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("MaceAura").getEnabled();
-    }
-    public static MaceAura itz() {
-        return ravex.manager.ModuleManager.delegate(MaceAura.class);
-    }
+
+
 
 
 }

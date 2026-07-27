@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
@@ -15,8 +15,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "WebAura", category = "Combat")
-public class WebAura implements ModuleAccess {
+@Module(name = "WebAura", category = "Combat")
+public class WebAura {
     @Parameter(name = "Mode", modes = {"Normal", "Positive", "Custom"})
     public String mode = "Normal";
     @Parameter(name = "CustomRange", min = 2.0, max = 6.0, step = 0.1)
@@ -81,12 +81,8 @@ public class WebAura implements ModuleAccess {
             delay = 4;
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("WebAura").getEnabled();
-    }
-    public static WebAura itz() {
-        return ravex.manager.ModuleManager.delegate(WebAura.class);
-    }
+
+
 
 
 }

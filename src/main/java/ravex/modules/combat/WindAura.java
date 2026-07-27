@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.EntityUtility;
@@ -11,8 +11,8 @@ import ravex.utility.misc.MobUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "WindAura", category = "Combat")
-public class WindAura implements ModuleAccess {
+@Module(name = "WindAura", category = "Combat")
+public class WindAura {
     @Parameter(name = "Mode", modes = {"Normal", "Silent"})
     public String mode = "Normal";
     @Parameter(name = "Range", min = 3.0, max = 30.0, step = 0.5)
@@ -76,12 +76,8 @@ public class WindAura implements ModuleAccess {
             mc.gameMode.useItem(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("WindAura").getEnabled();
-    }
-    public static WindAura itz() {
-        return ravex.manager.ModuleManager.delegate(WindAura.class);
-    }
+
+
 
 
 }

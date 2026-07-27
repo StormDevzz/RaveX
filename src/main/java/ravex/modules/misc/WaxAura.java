@@ -1,6 +1,6 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -11,8 +11,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "WaxAura", category = "Misc")
-public class WaxAura implements ModuleAccess {
+@Module(name = "WaxAura", category = "Misc")
+public class WaxAura {
     @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "Delay", min = 0.0, max = 20.0, step = 1.0)
@@ -78,9 +78,7 @@ public class WaxAura implements ModuleAccess {
         }
     }
 
-    public static WaxAura itz() {
-        return ravex.manager.ModuleManager.delegate(WaxAura.class);
-    }
+
 
 
 }

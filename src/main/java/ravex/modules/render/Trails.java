@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
@@ -18,9 +18,10 @@ import org.joml.Vector3f;
 import ravex.utility.render.Render3DUtility;
 import java.util.*;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "Trails", category = "Render")
-public class Trails implements ModuleAccess {
+@Module(name = "Trails", category = "Render")
+public class Trails {
     @Parameter(name = "Color", color = true)
     public int color = 0xFF33AAFF;
     @Parameter(name = "Width", min = 1.0, max = 6.0, step = 0.5)
@@ -67,9 +68,6 @@ public class Trails implements ModuleAccess {
     private record TrailPoint(net.minecraft.world.phys.Vec3 pos, long time) {
     }
 
-    private Trails() {
-        
-    }
     public void onTick() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.level == null || mc.player == null)
@@ -134,13 +132,13 @@ public class Trails implements ModuleAccess {
     private static float toggleAlpha = 0.0f;
 
     public static boolean shouldRender() {
-        return ravex.manager.ModuleManager.delegate(Trails.class).getEnabled() || toggleAlpha > 0.001f;
+        return Modules.enabled(Trails.class) || toggleAlpha > 0.001f;
     }
 
     public static void renderTrails(Matrix4f modelViewMatrix, net.minecraft.world.phys.Vec3 camPos) {
         try {
             long now = System.currentTimeMillis();
-            boolean enabled = ravex.manager.ModuleManager.delegate(Trails.class).getEnabled();
+            boolean enabled = Modules.enabled(Trails.class);
             
             // Smoothly animate the global module toggle fade-in and fade-out
             float targetToggle = enabled ? 1.0f : 0.0f;
@@ -157,16 +155,16 @@ public class Trails implements ModuleAccess {
                 return;
             }
 
-            boolean glowEnabled = ravex.manager.ModuleManager.delegate(Trails.class).glow;
-            int glowLayersVal = (int) ravex.manager.ModuleManager.delegate(Trails.class).glowLayers;
-            float glowSpreadVal = (float) ravex.manager.ModuleManager.delegate(Trails.class).glowSpread;
+            boolean glowEnabled = Modules.get(Trails.class).glow;
+            int glowLayersVal = (int) Modules.get(Trails.class).glowLayers;
+            float glowSpreadVal = (float) Modules.get(Trails.class).glowSpread;
             renderFadingTrail(entityTrails, modelViewMatrix, camPos, now,
-                    ravex.manager.ModuleManager.delegate(Trails.class).color, (float) ravex.manager.ModuleManager.delegate(Trails.class).width,
-                    (long) (ravex.manager.ModuleManager.delegate(Trails.class).time * 1000.0),
+                    Modules.get(Trails.class).color, (float) Modules.get(Trails.class).width,
+                    (long) (Modules.get(Trails.class).time * 1000.0),
                     glowEnabled, glowLayersVal, glowSpreadVal);
             renderFadingTrail(playerTrails, modelViewMatrix, camPos, now,
-                    ravex.manager.ModuleManager.delegate(Trails.class).playerColor, (float) ravex.manager.ModuleManager.delegate(Trails.class).playerWidth,
-                    (long) (ravex.manager.ModuleManager.delegate(Trails.class).playerTime * 1000.0),
+                    Modules.get(Trails.class).playerColor, (float) Modules.get(Trails.class).playerWidth,
+                    (long) (Modules.get(Trails.class).playerTime * 1000.0),
                     glowEnabled, glowLayersVal, glowSpreadVal);
         } catch (Throwable t) {
             System.err.println("[RaveX] Trails render error: " + t.getMessage());
@@ -267,13 +265,9 @@ public class Trails implements ModuleAccess {
         // Do nothing to let existing trails smoothly fade out
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Trails").getEnabled();
-    }
 
-    public static Trails itz() {
-        return ravex.manager.ModuleManager.delegate(Trails.class);
-    }
+
+
 
 
 }

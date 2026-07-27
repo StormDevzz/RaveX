@@ -1,11 +1,11 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoSprint", category = "Movement")
-public class AutoSprint implements ModuleAccess {
+@Module(name = "AutoSprint", category = "Movement")
+public class AutoSprint {
     @Parameter(name = "Mode", modes = {"Legit", "Rage"})
     public String mode = "Rage";
     public void onTick() {
@@ -19,9 +19,7 @@ public class AutoSprint implements ModuleAccess {
             }
         }
     }
-    public static AutoSprint itz() {
-        return ravex.manager.ModuleManager.delegate(AutoSprint.class);
-    }
+
 
 
 }

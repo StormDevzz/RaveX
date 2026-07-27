@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 
@@ -8,8 +8,8 @@ import ravex.utility.shaders.*;
 import ravex.manager.HandShaderManager;
 import ravex.manager.PlayerShaderManager;
 import ravex.utility.shaders.nativec.ShaderNative;
-@ModuleInfo(name = "Shaders", category = "Render")
-public class Shaders implements ModuleAccess {
+@Module(name = "Shaders", category = "Render")
+public class Shaders {
 public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> RENDERING_HAND = ThreadLocal.withInitial(() -> false);
     @Parameter(name = "Players")
@@ -20,9 +20,6 @@ public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInit
     public int fillColor = 0x77FF00A4;
     @Parameter(name = "Effect", modes = {"FireAura", "EnergyGlow", "Chroma", "Ripple", "Pulse"})
     public String effectMode = "FireAura";
-    public Shaders() {
-        
-    }
     public void onEnable() {
         ShaderNative.isAvailable();
         HandShaderManager.init();
@@ -47,13 +44,9 @@ public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInit
         }
         return cfg;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Shaders").getEnabled();
-    }
 
-    public static Shaders itz() {
-        return ravex.manager.ModuleManager.delegate(Shaders.class);
-    }
+
+
 
 
 }

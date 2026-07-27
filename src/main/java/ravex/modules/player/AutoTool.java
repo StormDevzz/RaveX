@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.InventoryUtility;
@@ -10,8 +10,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoTool", category = "net.minecraft.world.entity.player.Player")
-public class AutoTool implements ModuleAccess {
+@Module(name = "AutoTool", category = "net.minecraft.world.entity.player.Player")
+public class AutoTool {
     @Parameter(name = "Swap", modes = {"Silent", "Normal"})
     public String swap = "Silent";
     public void onTick() {
@@ -27,12 +27,8 @@ public class AutoTool implements ModuleAccess {
         else
             InventoryUtility.selectSlot(mc.player, slot);
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoTool").getEnabled();
-    }
-    public static AutoTool itz() {
-        return ravex.manager.ModuleManager.delegate(AutoTool.class);
-    }
+
+
 
 
 }

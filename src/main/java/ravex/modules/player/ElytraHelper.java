@@ -2,15 +2,16 @@ package ravex.modules.player;
 import ravex.modules.ModuleAccess;
 import ravex.utility.misc.ScreenUtility;
 
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.ElytraUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "ElytraHelper", category = "net.minecraft.world.entity.player.Player")
-public class ElytraHelper implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "ElytraHelper", category = "net.minecraft.world.entity.player.Player")
+public class ElytraHelper {
     @Parameter(name = "Mode", modes = {"Swap", "Replace", "Auto"})
     public String mode = "Swap";
     @Parameter(name = "SwapMode", modes = {"Positive1", "Positive2", "Positive3"})
@@ -38,31 +39,28 @@ public class ElytraHelper implements ModuleAccess {
     private long lastActionTime = 0;
     private long lastRocketTime = 0;
 
-    private ElytraHelper() {
-        
-    }
     public void onEnable() {
         if ("Swap".equals(mode)) initSwap();
     }
     private void initSwap() {
         var mc = MinecraftWrapper.getWrapper();
         var p = mc.getPlayer();
-        if (p == null || mc.getGameMode() == null) { ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false); return; }
+        if (p == null || mc.getGameMode() == null) { Modules.setEnabled(ElytraHelper.class, false); return; }
         boolean hasElytra = ElytraUtility.isElytraEquipped(p);
         int foundSlot = hasElytra ? ElytraUtility.findChestplateSlot(p) : ElytraUtility.findElytraSlot(p);
         if (foundSlot == -1) {
             p.displayClientMessage(net.minecraft.network.chat.Component.literal("§7[§5ElytraHelper§7] §cNo replacement chest item found!"), false);
-            ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false); return;
+            Modules.setEnabled(ElytraHelper.class, false); return;
         }
         targetInvSlot = foundSlot;
         state = 0;
         lastActionTime = System.currentTimeMillis();
         String cm = swapMode;
         if ("Positive1".equals(cm)) {
-            InventoryUtility.clickSlot(mc, p, foundSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP);
-            InventoryUtility.clickChestSlot(mc, p, 6, net.minecraft.world.inventory.ClickType.PICKUP);
-            InventoryUtility.clickSlot(mc, p, foundSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP);
-            ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false);
+            InventoryUtility.clickSlot(mc, p, foundSlot, 0, InventoryUtility.PICKUP);
+            InventoryUtility.clickChestSlot(mc, p, 6, InventoryUtility.PICKUP);
+            InventoryUtility.clickSlot(mc, p, foundSlot, 0, InventoryUtility.PICKUP);
+            Modules.setEnabled(ElytraHelper.class, false);
         } else if ("Positive3".equals(cm)) {
             InventoryUtility.openInventoryScreen(p);
         }
@@ -70,7 +68,7 @@ public class ElytraHelper implements ModuleAccess {
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         var p = mc.getPlayer();
-        if (p == null || mc.getGameMode() == null) { ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false); return; }
+        if (p == null || mc.getGameMode() == null) { Modules.setEnabled(ElytraHelper.class, false); return; }
         String m = mode;
         if ("Swap".equals(m)) tickSwap(mc, p);
         else if ("Replace".equals(m) || "Auto".equals(m)) tickReplace(mc, p);
@@ -105,27 +103,23 @@ public class ElytraHelper implements ModuleAccess {
         if ("Positive1".equals(swapMode)) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < 100) return;
-        if (state == 0) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP); state = 1; lastActionTime = now; }
-        else if (state == 1) { InventoryUtility.clickChestSlot(mc, p, 6, net.minecraft.world.inventory.ClickType.PICKUP); state = 2; lastActionTime = now; }
-        else if (state == 2) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, net.minecraft.world.inventory.ClickType.PICKUP); state = 3; lastActionTime = now; }
-        else if (state == 3) { if ("Positive3".equals(swapMode)) ScreenUtility.closeScreen(mc); ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").setEnabled(false); }
+        if (state == 0) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, InventoryUtility.PICKUP); state = 1; lastActionTime = now; }
+        else if (state == 1) { InventoryUtility.clickChestSlot(mc, p, 6, InventoryUtility.PICKUP); state = 2; lastActionTime = now; }
+        else if (state == 2) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, InventoryUtility.PICKUP); state = 3; lastActionTime = now; }
+        else if (state == 3) { if ("Positive3".equals(swapMode)) ScreenUtility.closeScreen(mc); Modules.setEnabled(ElytraHelper.class, false); }
     }
     private void tickReplace(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
         if (!ElytraUtility.isElytraEquipped(p)) return;
         if (ElytraUtility.getElytraDurability(p) > (int) minDurability) return;
         int slot = ElytraUtility.findElytraSlot(p, preferBetter ? (int) minDurability : 0);
         if (slot >= 0) {
-            InventoryUtility.clickSlot(mc, p, slot, 0, net.minecraft.world.inventory.ClickType.PICKUP);
-            InventoryUtility.clickChestSlot(mc, p, 6, net.minecraft.world.inventory.ClickType.PICKUP);
-            InventoryUtility.clickSlot(mc, p, slot, 0, net.minecraft.world.inventory.ClickType.PICKUP);
+            InventoryUtility.clickSlot(mc, p, slot, 0, InventoryUtility.PICKUP);
+            InventoryUtility.clickChestSlot(mc, p, 6, InventoryUtility.PICKUP);
+            InventoryUtility.clickSlot(mc, p, slot, 0, InventoryUtility.PICKUP);
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ElytraHelper").getEnabled();
-    }
-    public static ElytraHelper itz() {
-        return ravex.manager.ModuleManager.delegate(ElytraHelper.class);
-    }
+
+
 
 
 }

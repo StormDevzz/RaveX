@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.BoatFly;
+import ravex.modules.Modules;
 
 @Mixin(AbstractBoatRenderer.class)
 public class MixinBoatRenderer {
@@ -20,7 +21,7 @@ public class MixinBoatRenderer {
     )
     private void onSubmitHead(BoatRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState, CallbackInfo ci) {
         if (!BoatFly.isBoatScaleActive()) return;
-        float scale = BoatFly.itz().getScale();
+        float scale = Modules.get(BoatFly.class).getScale();
         poseStack.pushPose();
         poseStack.scale(scale, scale, scale);
     }

@@ -1,6 +1,6 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.animal.feline.Cat;
@@ -11,9 +11,10 @@ import net.minecraft.world.entity.npc.villager.Villager;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 import ravex.utility.misc.MobUtility;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "AntiAttack", category = "Misc")
-public class AntiAttack implements ModuleAccess {
+@Module(name = "AntiAttack", category = "Misc")
+public class AntiAttack {
     @Parameter(name = "Villager")
     public boolean villagers = true;
     @Parameter(name = "Horse")
@@ -35,7 +36,7 @@ public class AntiAttack implements ModuleAccess {
     }
 
     public boolean shouldCancel(net.minecraft.world.entity.Entity target) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("AntiAttack").getEnabled() || target == null) return false;
+        if (!Modules.enabled(AntiAttack.class) || target == null) return false;
         if (target instanceof Villager && villagers) return true;
         if (target instanceof Horse && horses) return true;
         if (target instanceof Wolf && wolves) return true;
@@ -45,13 +46,9 @@ public class AntiAttack implements ModuleAccess {
         return false;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AntiAttack").getEnabled();
-    }
 
-    public static AntiAttack itz() {
-        return ravex.manager.ModuleManager.delegate(AntiAttack.class);
-    }
+
+
 
 
 }

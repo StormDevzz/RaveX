@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.hud.ChatHud;
+import ravex.modules.Modules;
 
 @Mixin(ChatComponent.class)
 public abstract class MixinChatHud {
@@ -17,19 +18,19 @@ public abstract class MixinChatHud {
 
     @Inject(method = "render", at = @At("HEAD"))
     private void onChatRenderPre(GuiGraphics graphics, Font font, int mouseX, int mouseY, int something, boolean focused, boolean canFocus, CallbackInfo ci) {
-        if (!ChatHud.maybeEnabled()) return;
+        if (!Modules.enabled(ChatHud.class)) return;
         if (ravex$transformed.get()) return;
         ravex$transformed.set(true);
         var pose = graphics.pose();
         pose.pushMatrix();
-        pose.translate(ChatHud.itz().x, ChatHud.itz().y);
-        float s = (float) ChatHud.itz().scale;
+        pose.translate(Modules.get(ChatHud.class).x, Modules.get(ChatHud.class).y);
+        float s = (float) Modules.get(ChatHud.class).scale;
         pose.scale(s, s);
     }
 
     @Inject(method = "render", at = @At("RETURN"))
     private void onChatRenderPost(GuiGraphics graphics, Font font, int mouseX, int mouseY, int something, boolean focused, boolean canFocus, CallbackInfo ci) {
-        if (!ChatHud.maybeEnabled()) return;
+        if (!Modules.enabled(ChatHud.class)) return;
         if (!ravex$transformed.get()) return;
         ravex$transformed.set(false);
         graphics.pose().popMatrix();

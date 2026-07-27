@@ -2,15 +2,15 @@ package ravex.modules.player;
 import ravex.modules.ModuleAccess;
 import ravex.mixin.client.AccessorLivingEntity;
 import ravex.mixin.client.AccessorMinecraft;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "NoDelay", category = "net.minecraft.world.entity.player.Player")
-public class NoDelay implements ModuleAccess {
+@Module(name = "NoDelay", category = "net.minecraft.world.entity.player.Player")
+public class NoDelay {
     @Parameter(name = "Delay", min = 0.0, max = 4.0, step = 1.0)
     public double delay = 0.0;
     @Parameter(name = "net.minecraft.world.level.block.Blocks")
@@ -20,9 +20,6 @@ public class NoDelay implements ModuleAccess {
     @Parameter(name = "NoJumpDelay")
     public boolean noJumpDelay = false;
 
-    public NoDelay() {
-        
-    }
     public void onTick() {
         var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.player.LocalPlayer p = mc.player;
@@ -38,12 +35,8 @@ public class NoDelay implements ModuleAccess {
             ((AccessorLivingEntity) p).setNoJumpDelay(0);
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NoDelay").getEnabled();
-    }
-    public static NoDelay itz() {
-        return ravex.manager.ModuleManager.delegate(NoDelay.class);
-    }
+
+
 
 
 }

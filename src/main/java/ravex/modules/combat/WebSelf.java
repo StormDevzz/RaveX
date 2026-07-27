@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -12,8 +12,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "WebSelf", category = "Combat")
-public class WebSelf implements ModuleAccess {
+@Module(name = "WebSelf", category = "Combat")
+public class WebSelf {
     @Parameter(name = "Rotate")
     public boolean rotate = true;
     @Parameter(name = "Render")
@@ -25,12 +25,8 @@ public class WebSelf implements ModuleAccess {
     public static net.minecraft.core.BlockPos targetPos = null;
     public static float renderR = 1.0f, renderG = 1.0f, renderB = 1.0f;
     private int delay = 0;
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("WebSelf").getEnabled();
-    }
-    public static WebSelf itz() {
-        return ravex.manager.ModuleManager.delegate(WebSelf.class);
-    }
+
+
     public void onEnable() { targetPos = null; delay = 0; }
     public void onDisable() { targetPos = null; }
     public void onTick() {

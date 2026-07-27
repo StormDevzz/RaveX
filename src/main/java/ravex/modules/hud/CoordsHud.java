@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -10,8 +10,9 @@ import ravex.parameter.BooleanParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "CoordsHud", category = "HUD")
+@Module(name = "CoordsHud", category = "HUD")
 public class CoordsHud extends ravex.modules.Module {
     @Parameter(name = "Shadow")
     public boolean shadow = true;
@@ -26,7 +27,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COORDS_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
 
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var player = MinecraftWrapper.getInstance().player;
         if (player == null) return;
         int ac = ColorUtility.getActiveColor();
@@ -65,13 +66,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COORDS_WHITE;
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("CoordsHud").getEnabled();
-    }
 
-    public static CoordsHud itz() {
-        return ravex.manager.ModuleManager.delegate(CoordsHud.class);
-    }
+
+
 
 
     

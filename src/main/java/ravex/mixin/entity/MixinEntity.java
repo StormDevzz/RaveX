@@ -22,6 +22,7 @@ import ravex.modules.render.ESP;
 import ravex.modules.render.FreeCam;
 import ravex.modules.render.FreeLook;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.modules.Modules;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity {
@@ -30,22 +31,22 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (ViewLock.maybeEnabled()) {
-            boolean lockYaw = ViewLock.itz().shouldLockYaw(yRot, xRot);
-            boolean lockPitch = ViewLock.itz().shouldLockPitch(yRot, xRot);
+        if (Modules.enabled(ViewLock.class)) {
+            boolean lockYaw = Modules.get(ViewLock.class).shouldLockYaw(yRot, xRot);
+            boolean lockPitch = Modules.get(ViewLock.class).shouldLockPitch(yRot, xRot);
 
-            if (ViewLock.itz().isSmoothMode()) {
+            if (Modules.get(ViewLock.class).isSmoothMode()) {
                 if (lockYaw) {
                     float current = self.getYRot();
-                    float target = ViewLock.itz().getTargetYaw();
-                    float speed = ViewLock.itz().getSmoothSpeed();
+                    float target = Modules.get(ViewLock.class).getTargetYaw();
+                    float speed = Modules.get(ViewLock.class).getSmoothSpeed();
                     float diff = ((target - current + 540) % 360) - 180;
                     self.setYRot(current + diff * speed);
                 }
                 if (lockPitch) {
                     float current = self.getXRot();
-                    float target = ViewLock.itz().getTargetPitch();
-                    float speed = ViewLock.itz().getSmoothSpeed();
+                    float target = Modules.get(ViewLock.class).getTargetPitch();
+                    float speed = Modules.get(ViewLock.class).getSmoothSpeed();
                     float diff = target - current;
                     self.setXRot(current + diff * speed);
                 }
@@ -56,7 +57,7 @@ public abstract class MixinEntity {
             if (lockYaw && lockPitch) {
                 ci.cancel();
             } else {
-                float sens = ViewLock.itz().getSensitivity();
+                float sens = Modules.get(ViewLock.class).getSensitivity();
                 float currentYaw = self.getYRot();
                 float currentPitch = self.getXRot();
                 if (!lockYaw)
@@ -68,14 +69,14 @@ public abstract class MixinEntity {
             return;
         }
 
-        if (FreeCam.maybeEnabled()) {
-            FreeCam.itz().turnMixin(yRot * 0.15, xRot * 0.15);
+        if (Modules.enabled(FreeCam.class)) {
+            Modules.get(FreeCam.class).turnMixin(yRot * 0.15, xRot * 0.15);
             ci.cancel();
             return;
         }
 
-        if (FreeLook.maybeEnabled() && "Camera".equals(FreeLook.itz().mode)) {
-            FreeLook.itz().turn(yRot * 0.15, xRot * 0.15);
+        if (Modules.enabled(FreeLook.class) && "Camera".equals(Modules.get(FreeLook.class).mode)) {
+            Modules.get(FreeLook.class).turn(yRot * 0.15, xRot * 0.15);
             ci.cancel();
         }
     }
@@ -86,12 +87,12 @@ public abstract class MixinEntity {
         if (!(self instanceof net.minecraft.client.player.LocalPlayer player)) return;
 
 
-        if (PortalGui.maybeEnabled()) {
+        if (Modules.enabled(PortalGui.class)) {
             self.portalProcess = null;
         }
 
 
-        if (Avoid.maybeEnabled()) {
+        if (Modules.enabled(Avoid.class)) {
             net.minecraft.world.level.Level level = player.level();
             net.minecraft.world.phys.AABB box = player.getBoundingBox().inflate(0.15);
             net.minecraft.core.BlockPos.betweenClosedStream(
@@ -99,7 +100,7 @@ public abstract class MixinEntity {
                     (int) Math.floor(box.maxX), (int) Math.floor(box.maxY), (int) Math.floor(box.maxZ)
             ).forEach(blockPos -> {
                 net.minecraft.world.level.block.state.BlockState state = level.getBlockState(blockPos);
-                if (Avoid.itz().shouldAvoid(state.getBlock())) {
+                if (Modules.get(Avoid.class).shouldAvoid(state.getBlock())) {
 
                     double bx = blockPos.getX() + 0.5;
                     double bz = blockPos.getZ() + 0.5;
@@ -123,7 +124,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks) {
+        if (Modules.enabled(NoSlow.class) && Modules.get(NoSlow.class).blocks) {
             cir.setReturnValue(1.0F);
         }
     }
@@ -133,7 +134,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (NoSlow.maybeEnabled() && NoSlow.itz().blocks) {
+        if (Modules.enabled(NoSlow.class) && Modules.get(NoSlow.class).blocks) {
             cir.setReturnValue(1.0F);
         }
     }
@@ -143,41 +144,41 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         if (!(self instanceof net.minecraft.client.player.LocalPlayer)) return;
 
-        if (NoWeb.maybeEnabled()) {
+        if (Modules.enabled(NoWeb.class)) {
             return;
         }
     }
 
     @Inject(method = "getTeamColor", at = @At("HEAD"), cancellable = true)
     private void onGetTeamColor(CallbackInfoReturnable<Integer> cir) {
-        if (ESP.maybeEnabled() && ESP.itz().mode.equals("Outline")) {
+        if (Modules.enabled(ESP.class) && Modules.get(ESP.class).mode.equals("Outline")) {
             Entity self = (Entity) (Object) this;
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (self == mc.player) return;
 
-            if (mc.player != null && mc.player.distanceTo(self) > ESP.itz().maxDistance) {
+            if (mc.player != null && mc.player.distanceTo(self) > Modules.get(ESP.class).maxDistance) {
                 return;
             }
 
             if (self instanceof Player) {
-                if (ESP.itz().players) {
-                    cir.setReturnValue(ESP.itz().playerColor);
+                if (Modules.get(ESP.class).players) {
+                    cir.setReturnValue(Modules.get(ESP.class).playerColor);
                 }
             } else if (self instanceof Monster) {
-                if (ESP.itz().monsters) {
-                    cir.setReturnValue(ESP.itz().mobColor);
+                if (Modules.get(ESP.class).monsters) {
+                    cir.setReturnValue(Modules.get(ESP.class).mobColor);
                 }
             } else if (self instanceof net.minecraft.world.entity.animal.Animal || self instanceof net.minecraft.world.entity.ambient.AmbientCreature) {
-                if (ESP.itz().animals) {
-                    cir.setReturnValue(ESP.itz().animalColor);
+                if (Modules.get(ESP.class).animals) {
+                    cir.setReturnValue(Modules.get(ESP.class).animalColor);
                 }
             } else if (self instanceof net.minecraft.world.entity.item.ItemEntity) {
-                if (ESP.itz().items) {
-                    cir.setReturnValue(ESP.itz().itemColor);
+                if (Modules.get(ESP.class).items) {
+                    cir.setReturnValue(Modules.get(ESP.class).itemColor);
                 }
             } else if (self instanceof net.minecraft.world.entity.decoration.ItemFrame) {
-                if (ESP.itz().frames) {
-                    cir.setReturnValue(ESP.itz().frameColor);
+                if (Modules.get(ESP.class).frames) {
+                    cir.setReturnValue(Modules.get(ESP.class).frameColor);
                 }
             }
         }
@@ -188,7 +189,7 @@ public abstract class MixinEntity {
         Entity self = (Entity)(Object)this;
         var mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player != null && self.getControllingPassenger() == mc.player) {
-            if (RideExploit.maybeEnabled()) {
+            if (Modules.enabled(RideExploit.class)) {
                 cir.setReturnValue(true);
             }
         }
@@ -196,7 +197,7 @@ public abstract class MixinEntity {
 
     @Inject(method = "getBoundingBox", at = @At("RETURN"), cancellable = true)
     private void onGetBoundingBox(CallbackInfoReturnable<net.minecraft.world.phys.AABB> cir) {
-        if (Hitboxes.maybeEnabled()) {
+        if (Modules.enabled(Hitboxes.class)) {
             Entity self = (Entity)(Object)this;
             if (self != net.minecraft.client.Minecraft.getInstance().player && self instanceof LivingEntity) {
                 boolean isRaytracing = false;
@@ -209,7 +210,7 @@ public abstract class MixinEntity {
                     }
                 }
                 if (isRaytracing) {
-                    double size = Hitboxes.itz().size;
+                    double size = Modules.get(Hitboxes.class).size;
                     if (cir.getReturnValue() != null) {
                         cir.setReturnValue(cir.getReturnValue().inflate(size));
                     }
@@ -220,10 +221,10 @@ public abstract class MixinEntity {
 
     @Inject(method = "push(DDD)V", at = @At("HEAD"), cancellable = true)
     private void onPushVelocity(double x, double y, double z, CallbackInfo ci) {
-        if (NoPush.maybeEnabled()) {
+        if (Modules.enabled(NoPush.class)) {
             Entity self = (Entity)(Object)this;
             if (self instanceof net.minecraft.client.player.LocalPlayer) {
-                if (NoPush.itz().water) {
+                if (Modules.get(NoPush.class).water) {
                     ci.cancel();
                 }
             }
@@ -232,16 +233,16 @@ public abstract class MixinEntity {
 
     @Inject(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"), cancellable = true)
     private void onPushEntity(Entity other, CallbackInfo ci) {
-        if (NoPush.maybeEnabled()) {
+        if (Modules.enabled(NoPush.class)) {
             Entity self = (Entity)(Object)this;
             if (self instanceof net.minecraft.client.player.LocalPlayer) {
-                if (NoPush.itz().shouldCancelPush(self, other)) {
+                if (Modules.get(NoPush.class).shouldCancelPush(self, other)) {
                     ci.cancel();
                     return;
                 }
             }
             if (other instanceof net.minecraft.client.player.LocalPlayer) {
-                if (NoPush.itz().shouldCancelPush(other, self)) {
+                if (Modules.get(NoPush.class).shouldCancelPush(other, self)) {
                     ci.cancel();
                 }
             }
@@ -252,7 +253,7 @@ public abstract class MixinEntity {
     private void onIsInWater(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (LiquidControl.maybeEnabled() && LiquidControl.itz().water) {
+            if (Modules.enabled(LiquidControl.class) && Modules.get(LiquidControl.class).water) {
                 cir.setReturnValue(false);
             }
         }
@@ -262,7 +263,7 @@ public abstract class MixinEntity {
     private void onIsInLava(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (LiquidControl.maybeEnabled() && LiquidControl.itz().lava) {
+            if (Modules.enabled(LiquidControl.class) && Modules.get(LiquidControl.class).lava) {
                 cir.setReturnValue(false);
             }
         }
@@ -272,7 +273,7 @@ public abstract class MixinEntity {
     private void onUpdateInWaterStateAndDoFluidPushing(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (LiquidControl.maybeEnabled() && LiquidControl.itz().water) {
+            if (Modules.enabled(LiquidControl.class) && Modules.get(LiquidControl.class).water) {
                 cir.setReturnValue(false);
             }
         }
@@ -282,10 +283,10 @@ public abstract class MixinEntity {
     private void onUpdateFluidHeightAndDoFluidPushing(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, double d, CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (LiquidControl.maybeEnabled()) {
-                boolean bypassWater = LiquidControl.itz().water;
-                boolean bypassLava = LiquidControl.itz().lava;
-                boolean bypassOthers = LiquidControl.itz().others;
+            if (Modules.enabled(LiquidControl.class)) {
+                boolean bypassWater = Modules.get(LiquidControl.class).water;
+                boolean bypassLava = Modules.get(LiquidControl.class).lava;
+                boolean bypassOthers = Modules.get(LiquidControl.class).others;
 
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);
@@ -304,10 +305,10 @@ public abstract class MixinEntity {
     private void onIsEyeInFluid(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
         if (self == net.minecraft.client.Minecraft.getInstance().player) {
-            if (LiquidControl.maybeEnabled()) {
-                boolean bypassWater = LiquidControl.itz().water;
-                boolean bypassLava = LiquidControl.itz().lava;
-                boolean bypassOthers = LiquidControl.itz().others;
+            if (Modules.enabled(LiquidControl.class)) {
+                boolean bypassWater = Modules.get(LiquidControl.class).water;
+                boolean bypassLava = Modules.get(LiquidControl.class).lava;
+                boolean bypassOthers = Modules.get(LiquidControl.class).others;
 
                 if (tag.equals(net.minecraft.tags.FluidTags.WATER) && bypassWater) {
                     cir.setReturnValue(false);

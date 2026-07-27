@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
@@ -8,8 +8,9 @@ import ravex.utility.player.ContainerUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "ChestHelper", category = "net.minecraft.world.entity.player.Player")
-public class ChestHelper implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "ChestHelper", category = "net.minecraft.world.entity.player.Player")
+public class ChestHelper {
     @Parameter(name = "Steal")
     public boolean steal = true;
     @Parameter(name = "Dump")
@@ -20,7 +21,7 @@ public class ChestHelper implements ModuleAccess {
     public boolean dropAll = true;
 
     public void onRenderButtons(AbstractContainerScreen<?> screen, net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChestHelper").getEnabled() || !ContainerUtility.isChestLike(screen.getMenu())) return;
+        if (!Modules.enabled(ChestHelper.class) || !ContainerUtility.isChestLike(screen.getMenu())) return;
         int startX = ContainerUtility.getButtonStartX(screen), startY = ContainerUtility.getButtonStartY(screen);
         List<ButtonDef> btns = getButtons();
         for (int i = 0; i < btns.size(); i++) {
@@ -29,7 +30,7 @@ public class ChestHelper implements ModuleAccess {
         }
     }
     public boolean onMouseClicked(AbstractContainerScreen<?> screen, int mouseX, int mouseY) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("ChestHelper").getEnabled() || !ContainerUtility.isChestLike(screen.getMenu())) return false;
+        if (!Modules.enabled(ChestHelper.class) || !ContainerUtility.isChestLike(screen.getMenu())) return false;
         int startX = ContainerUtility.getButtonStartX(screen), startY = ContainerUtility.getButtonStartY(screen);
         List<ButtonDef> btns = getButtons();
         for (int i = 0; i < btns.size(); i++) {
@@ -61,12 +62,8 @@ public class ChestHelper implements ModuleAccess {
         return list;
     }
     record ButtonDef(String label, String action) {}
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("ChestHelper").getEnabled();
-    }
-    public static ChestHelper itz() {
-        return ravex.manager.ModuleManager.delegate(ChestHelper.class);
-    }
+
+
 
 
 }

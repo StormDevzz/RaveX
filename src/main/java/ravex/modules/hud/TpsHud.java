@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,8 +12,9 @@ import ravex.parameter.ColorParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "TpsHud", category = "HUD")
+@Module(name = "TpsHud", category = "HUD")
 public class TpsHud extends ravex.modules.Module {
     @Parameter(name = "Color", color = true)
     public int color = 0xFF44FF88;
@@ -31,7 +32,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_TPS_WHITE;
     private float smoothedTPS = 20.0f;
 
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
         updateTPS(mc);
@@ -76,13 +77,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_TPS_WHITE;
         }
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("TpsHud").getEnabled();
-    }
 
-    public static TpsHud itz() {
-        return ravex.manager.ModuleManager.delegate(TpsHud.class);
-    }
+
+
 
 
     

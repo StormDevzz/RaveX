@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.InventoryUtility;
@@ -11,8 +11,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoShear", category = "World")
-public class AutoShear implements ModuleAccess {
+@Module(name = "AutoShear", category = "World")
+public class AutoShear {
     @Parameter(name = "SilentSwap")
     public boolean silent = true;
     @Parameter(name = "Range", min = 3.0, max = 6.0, step = 0.1)
@@ -62,9 +62,7 @@ public class AutoShear implements ModuleAccess {
             }
         }
     }
-    public static AutoShear itz() {
-        return ravex.manager.ModuleManager.delegate(AutoShear.class);
-    }
+
 
 
 }

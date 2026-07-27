@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -15,8 +15,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AirPlace", category = "net.minecraft.world.entity.player.Player")
-public class AirPlace implements ModuleAccess {
+@Module(name = "AirPlace", category = "net.minecraft.world.entity.player.Player")
+public class AirPlace {
 public static net.minecraft.world.phys.Vec3 highlightPos = null;
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
@@ -150,12 +150,8 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AirPlace").getEnabled();
-    }
-    public static AirPlace itz() {
-        return ravex.manager.ModuleManager.delegate(AirPlace.class);
-    }
+
+
 
 
 }

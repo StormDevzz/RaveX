@@ -1,14 +1,15 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.SwingUtility;
 
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "KeyPearl", category = "Combat")
-public class KeyPearl implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "KeyPearl", category = "Combat")
+public class KeyPearl {
     @Parameter(name = "Swap", modes = {"Silent", "Normal"})
     public String swap = "Silent";
     public void onEnable() {
@@ -26,14 +27,10 @@ public class KeyPearl implements ModuleAccess {
         if ("Silent".equals(swap)) {
             InventoryUtility.selectSlot(mc.player, prevSlot);
         }
-        ravex.manager.ModuleManager.INSTANCE.getByName("KeyPearl").setEnabled(false);
+        Modules.setEnabled(KeyPearl.class, false);
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("KeyPearl").getEnabled();
-    }
-    public static KeyPearl itz() {
-        return ravex.manager.ModuleManager.delegate(KeyPearl.class);
-    }
+
+
 
 
 }

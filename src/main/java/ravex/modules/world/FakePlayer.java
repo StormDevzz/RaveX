@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 import ravex.utility.player.InventoryUtility;
@@ -8,8 +8,9 @@ import net.minecraft.client.player.RemotePlayer;
 import com.mojang.authlib.GameProfile;
 import java.util.UUID;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "FakePlayer", category = "World")
-public class FakePlayer implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "FakePlayer", category = "World")
+public class FakePlayer {
     @Parameter(name = "Nickname")
     public String nickname = "FakePlayer";
     @Parameter(name = "CopyInv")
@@ -18,7 +19,7 @@ public class FakePlayer implements ModuleAccess {
     public void onEnable() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) {
-            ravex.manager.ModuleManager.INSTANCE.getByName("FakePlayer").setEnabled(false);
+            Modules.setEnabled(FakePlayer.class, false);
             return;
         }
         GameProfile profile = new GameProfile(UUID.fromString("c0ffeed0-dec0-4ba5-babe-0123456789ab"), nickname);
@@ -42,9 +43,7 @@ public class FakePlayer implements ModuleAccess {
         }
         remotePlayer = null;
     }
-    public static FakePlayer itz() {
-        return ravex.manager.ModuleManager.delegate(FakePlayer.class);
-    }
+
 
 
 }

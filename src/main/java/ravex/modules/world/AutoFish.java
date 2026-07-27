@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -11,8 +11,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoFish", category = "World")
-public class AutoFish implements ModuleAccess {
+@Module(name = "AutoFish", category = "World")
+public class AutoFish {
     @Parameter(name = "CastDelay", min = 200, max = 2000, step = 100)
     public double castDelay = 600;
     @Parameter(name = "SilentSwap")
@@ -78,9 +78,7 @@ public class AutoFish implements ModuleAccess {
     private void reelIn(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
         useRod(mc, player);
     }
-    public static AutoFish itz() {
-        return ravex.manager.ModuleManager.delegate(AutoFish.class);
-    }
+
 
 
 }

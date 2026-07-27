@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.manager.ModuleManager;
+import ravex.modules.Modules;
 
 public class ModuleButton {
     public static final Set<Module> expandedModules = new HashSet<>();

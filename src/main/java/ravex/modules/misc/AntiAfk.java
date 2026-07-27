@@ -1,11 +1,11 @@
 package ravex.modules.misc;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.chat.Component;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AntiAfk", category = "Misc")
-public class AntiAfk implements ModuleAccess {
+@Module(name = "AntiAfk", category = "Misc")
+public class AntiAfk {
     @Parameter(name = "Interval", min = 5.0, max = 60.0, step = 1.0)
     public double interval = 12.0;
     @Parameter(name = "MouseMove")
@@ -70,9 +70,7 @@ public class AntiAfk implements ModuleAccess {
     private native boolean nativeIsRunning();
     private native boolean nativePerformAction();
 
-    public static AntiAfk itz() {
-        return ravex.manager.ModuleManager.delegate(AntiAfk.class);
-    }
+
 
 
 }

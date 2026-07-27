@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
@@ -18,7 +18,6 @@ import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.inventory.AbstractFurnaceMenu;
 import net.minecraft.world.inventory.BrewingStandMenu;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.BrewingStandBlock;
 import net.minecraft.world.phys.AABB;
@@ -29,8 +28,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "PVEUtils", category = "World")
-public class PVEUtils implements ModuleAccess {
+@Module(name = "PVEUtils", category = "World")
+public class PVEUtils {
     @Parameter(name = "Mode", modes = {"AutoSmelt", "AutoTame", "BoneMeal", "AutoBrew", "AutoLight"})
     public String mode = "AutoSmelt";
     @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.1)
@@ -59,9 +58,6 @@ public class PVEUtils implements ModuleAccess {
     private static int brewTargetX, brewTargetY, brewTargetZ;
     private static boolean hasBrewTarget;
     private long lastLightPlace = 0;
-    private PVEUtils() {
-        
-    }
     public void onTick() {
         switch (mode) {
             case "AutoSmelt" -> tickSmelt();
@@ -96,7 +92,7 @@ public class PVEUtils implements ModuleAccess {
         int playerInvStart = 3;
         int hotbarStart = playerInvStart + 27;
         if (furnace.getSlot(2).hasItem()) {
-            mc.gameMode.handleInventoryMouseClick(containerId, 2, 0, ClickType.QUICK_MOVE, mc.player);
+            mc.gameMode.handleInventoryMouseClick(containerId, 2, 0, InventoryUtility.QUICK_MOVE, mc.player);
             return;
         }
         if (furnace.getBurnProgress() > 0.01f) return;
@@ -105,7 +101,7 @@ public class PVEUtils implements ModuleAccess {
                 var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (furnace.canSmelt(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, ClickType.QUICK_MOVE, mc.player);
+                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
                     return;
                 }
             }
@@ -113,7 +109,7 @@ public class PVEUtils implements ModuleAccess {
                 var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (furnace.canSmelt(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, ClickType.QUICK_MOVE, mc.player);
+                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
                     return;
                 }
             }
@@ -123,7 +119,7 @@ public class PVEUtils implements ModuleAccess {
                 var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (furnace.isFuel(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, ClickType.QUICK_MOVE, mc.player);
+                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
                     return;
                 }
             }
@@ -205,7 +201,7 @@ public class PVEUtils implements ModuleAccess {
                 for (int i = playerInvStart; i < brew.slots.size(); i++) {
                     var stack = brew.slots.get(i).getItem();
                     if (InventoryUtility.isItem(stack, "blaze_powder")) {
-                        mc.gameMode.handleInventoryMouseClick(containerId, i, 0, ClickType.QUICK_MOVE, mc.player);
+                        mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
                         return;
                     }
                 }
@@ -215,7 +211,7 @@ public class PVEUtils implements ModuleAccess {
         for (int slot = 0; slot <= 2; slot++) {
             var stack = brew.getSlot(slot).getItem();
             if (!stack.isEmpty() && !InventoryUtility.isItem(stack, "glass_bottle")) {
-                mc.gameMode.handleInventoryMouseClick(containerId, slot, 0, ClickType.QUICK_MOVE, mc.player);
+                mc.gameMode.handleInventoryMouseClick(containerId, slot, 0, InventoryUtility.QUICK_MOVE, mc.player);
                 return;
             }
         }
@@ -224,7 +220,7 @@ public class PVEUtils implements ModuleAccess {
                 var stack = brew.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (isBrewIngredient(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, ClickType.QUICK_MOVE, mc.player);
+                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
                     return;
                 }
             }
@@ -232,7 +228,7 @@ public class PVEUtils implements ModuleAccess {
                 var stack = brew.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (isBrewIngredient(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, ClickType.QUICK_MOVE, mc.player);
+                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
                     return;
                 }
             }
@@ -242,7 +238,7 @@ public class PVEUtils implements ModuleAccess {
                 for (int i = playerInvStart; i < brew.slots.size(); i++) {
                     var stack = brew.slots.get(i).getItem();
                     if (InventoryUtility.isItem(stack, "glass_bottle")) {
-                        mc.gameMode.handleInventoryMouseClick(containerId, i, 0, ClickType.QUICK_MOVE, mc.player);
+                        mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
                         return;
                     }
                 }
@@ -315,12 +311,8 @@ public class PVEUtils implements ModuleAccess {
         hasBrewTarget = false;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("PVEUtils").getEnabled();
-    }
-    public static PVEUtils itz() {
-        return ravex.manager.ModuleManager.delegate(PVEUtils.class);
-    }
+
+
 
 
 }

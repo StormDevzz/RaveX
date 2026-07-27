@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -15,8 +15,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "SourceFiller", category = "net.minecraft.world.entity.player.Player")
-public class SourceFiller implements ModuleAccess {
+@Module(name = "SourceFiller", category = "net.minecraft.world.entity.player.Player")
+public class SourceFiller {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
     @Parameter(name = "Mode", modes = {"Normal", "Smart"})
@@ -73,12 +73,8 @@ public class SourceFiller implements ModuleAccess {
             if (mc.getLevel().getFluidState(pos.relative(dir)).is(net.minecraft.tags.FluidTags.WATER)) count++;
         return count;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("SourceFiller").getEnabled();
-    }
-    public static SourceFiller itz() {
-        return ravex.manager.ModuleManager.delegate(SourceFiller.class);
-    }
+
+
 
 
 }

@@ -1,10 +1,10 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Fullbright", category = "Render")
-public class Fullbright implements ModuleAccess {
+@Module(name = "Fullbright", category = "Render")
+public class Fullbright {
     @Parameter(name = "Brightness", min = 0.0, max = 1.0, step = 0.05)
     public double brightness = 1.0;
     @Parameter(name = "DarknessMult", min = 0.0, max = 1.0, step = 0.05)
@@ -21,13 +21,9 @@ public class Fullbright implements ModuleAccess {
             mc.levelRenderer.allChanged();
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Fullbright").getEnabled();
-    }
 
-    public static Fullbright itz() {
-        return ravex.manager.ModuleManager.delegate(Fullbright.class);
-    }
+
+
 
 
 }

@@ -16,6 +16,7 @@ import ravex.modules.render.NoRender;
 import ravex.utility.render.RaveXStateAccessorUtility;
 
 import java.util.Random;
+import ravex.modules.Modules;
 
 @Mixin(ItemEntityRenderer.class)
 public class MixinItemEntityRenderer {
@@ -33,12 +34,12 @@ public class MixinItemEntityRenderer {
 
     @Inject(method = "submit(Lnet/minecraft/client/renderer/entity/state/ItemEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V", at = @At("HEAD"), cancellable = true)
     private void onSubmit(ItemEntityRenderState state, PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector collector, net.minecraft.client.renderer.state.CameraRenderState cameraState, CallbackInfo ci) {
-        if (NoRender.maybeEnabled() && NoRender.itz().items) {
+        if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).items) {
             ci.cancel();
             return;
         }
 
-        if (!ItemPhysics.maybeEnabled()) {
+        if (!Modules.enabled(ItemPhysics.class)) {
             return;
         }
 
@@ -82,7 +83,7 @@ public class MixinItemEntityRenderer {
         poseStack.translate(0, floatOffset + 0.1875F, 0);
 
 
-        float baseScale = 0.5F * (float) ItemPhysics.itz().scale;
+        float baseScale = 0.5F * (float) Modules.get(ItemPhysics.class).scale;
         poseStack.scale(baseScale, baseScale, baseScale);
 
 

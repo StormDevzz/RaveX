@@ -1,6 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 
@@ -9,8 +9,8 @@ import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AutoTunnel", category = "World")
-public class AutoTunnel implements ModuleAccess {
+@Module(name = "AutoTunnel", category = "World")
+public class AutoTunnel {
     @Parameter(name = "Range", min = 1.0, max = 10.0, step = 0.5)
     public double range = 5.0;
     @Parameter(name = "Height", min = 1, max = 3, step = 1)
@@ -147,12 +147,8 @@ public class AutoTunnel implements ModuleAccess {
         return new int[]{ox, up, oz};
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoTunnel").getEnabled();
-    }
-    public static AutoTunnel itz() {
-        return ravex.manager.ModuleManager.delegate(AutoTunnel.class);
-    }
+
+
 
 
 }

@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
@@ -13,8 +13,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "HoleFill", category = "Combat")
-public class HoleFill implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "HoleFill", category = "Combat")
+public class HoleFill {
     @Parameter(name = "Range", min = 2.0, max = 8.0, step = 0.5)
     public double range = 4.0;
     @Parameter(name = "Delay", min = 20, max = 300, step = 10)
@@ -60,7 +61,7 @@ public class HoleFill implements ModuleAccess {
             case SEARCH -> searchHoles(mc);
             case PLACING -> placeNext(mc, now);
             case DONE -> {
-                if (autoDisable) ravex.manager.ModuleManager.INSTANCE.getByName("HoleFill").setEnabled(false);
+                if (autoDisable) Modules.setEnabled(HoleFill.class, false);
                 else state = State.IDLE;
             }
         }
@@ -171,7 +172,7 @@ public class HoleFill implements ModuleAccess {
         int slot = findBlockSlot(mc);
         if (slot == -1) {
             sendMsg(mc, "Not enough blocks, disabling");
-            ravex.manager.ModuleManager.INSTANCE.getByName("HoleFill").setEnabled(false);
+            Modules.setEnabled(HoleFill.class, false);
             return;
         }
         if (!BlockUtility.placeBlock(mc, BlockUtility.fromPacked(targetPacked), slot)) {
@@ -200,12 +201,8 @@ public class HoleFill implements ModuleAccess {
     private static native int[] nativeFindHoles(
         double px, double py, double pz, double range, int maxResults);
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("HoleFill").getEnabled();
-    }
-    public static HoleFill itz() {
-        return ravex.manager.ModuleManager.delegate(HoleFill.class);
-    }
+
+
 
 
 }

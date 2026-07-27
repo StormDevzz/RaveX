@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
@@ -21,8 +21,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoDrop", category = "Combat")
-public class AutoDrop implements ModuleAccess {
+@Module(name = "AutoDrop", category = "Combat")
+public class AutoDrop {
     @Parameter(name = "BlockType", modes = {"Gravel", "Anvil", "Sand", "Both"})
     public String blockType = "Gravel";
     @Parameter(name = "Target", modes = {"Self", "Nearby", "Enemy"})
@@ -140,12 +140,8 @@ public class AutoDrop implements ModuleAccess {
     private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoDrop").getEnabled();
-    }
-    public static AutoDrop itz() {
-        return ravex.manager.ModuleManager.delegate(AutoDrop.class);
-    }
+
+
 
 
 }

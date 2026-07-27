@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -8,9 +8,10 @@ import org.joml.Matrix4f;
 
 import ravex.utility.render.Render3DUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "ChinaHat", category = "Render")
-public class ChinaHat implements ModuleAccess {
+@Module(name = "ChinaHat", category = "Render")
+public class ChinaHat {
 public static final ChinaHat INSTANCE = new ChinaHat();
 
     @Parameter(name = "Color", color = true)
@@ -22,13 +23,9 @@ public static final ChinaHat INSTANCE = new ChinaHat();
     @Parameter(name = "Height", min = 0.1, max = 1.0, step = 0.05)
     public double height = 0.4;
 
-    private ChinaHat() {
-        
-    }
-
     public static void render(Matrix4f modelViewMatrix, net.minecraft.world.phys.Vec3 camPos) {
-        ChinaHat ch = ravex.manager.ModuleManager.delegate(ChinaHat.class);
-        if (ch == null || !ch.getEnabled()) return;
+        ChinaHat ch = Modules.get(ChinaHat.class);
+        if (ch == null || !Modules.enabled(ChinaHat.class)) return;
 
         var mc = MinecraftWrapper.getInstance();
         if (mc.level == null) return;

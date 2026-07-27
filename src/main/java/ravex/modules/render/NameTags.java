@@ -1,11 +1,12 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.MultiSelectParameter;
 import java.util.List;
-@ModuleInfo(name = "NameTags", category = "Render")
-public class NameTags implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "NameTags", category = "Render")
+public class NameTags {
     @Parameter(name = "Armor")
     public boolean armor = true;
     @Parameter(name = "HandItems")
@@ -26,12 +27,8 @@ public class NameTags implements ModuleAccess {
     @Parameter(name = "Entities", options = {"Players", "Monsters", "Passives"})
     public MultiSelectParameter entities = new MultiSelectParameter("Entities", List.of("Players", "Monsters"), List.of("Players", "Monsters", "Passives"));
 
-    private NameTags() {
-        
-    }
-
     public boolean shouldDraw(net.minecraft.world.entity.Entity target) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NameTags").getEnabled()) return false;
+        if (!Modules.enabled(NameTags.class)) return false;
         if (!(target instanceof net.minecraft.world.entity.LivingEntity le)) return false;
         if (target instanceof net.minecraft.world.entity.player.Player) {
             return entities.isSelected("Players");
@@ -140,13 +137,9 @@ public class NameTags implements ModuleAccess {
         };
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NameTags").getEnabled();
-    }
 
-    public static NameTags itz() {
-        return ravex.manager.ModuleManager.delegate(NameTags.class);
-    }
+
+
 
 
 }

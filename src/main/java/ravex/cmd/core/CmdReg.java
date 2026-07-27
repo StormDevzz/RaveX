@@ -6,6 +6,7 @@ import ravex.utility.misc.LanguageUtility;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import ravex.manager.ModuleManager;
+import ravex.modules.Modules;
 public class CmdReg {
     public static final CmdReg INSTANCE = new CmdReg();
     private final Map<String, Cmd> commands = new LinkedHashMap<>();
@@ -24,7 +25,7 @@ public class CmdReg {
     }
 
     public boolean process0(String message) {
-        if (!ModuleManager.isEnabled(Commands.class)) return false;
+        if (!Modules.enabled(Commands.class)) return false;
         String pref = ModuleManager.get(Commands.class).prefix;
         if (!message.startsWith(pref)) return false;
         String raw = message.substring(pref.length()).trim();

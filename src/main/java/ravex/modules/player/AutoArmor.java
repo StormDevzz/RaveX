@@ -1,6 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.DependencyParameter;
@@ -18,8 +18,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@ModuleInfo(name = "AutoArmor", category = "net.minecraft.world.entity.player.Player")
-public class AutoArmor implements ModuleAccess {
+@Module(name = "AutoArmor", category = "net.minecraft.world.entity.player.Player")
+public class AutoArmor {
     @Parameter(name = "Mode", modes = {"Normal", "Legit", "Custom"})
     public String mode = "Normal";
     @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
@@ -146,13 +146,9 @@ public class AutoArmor implements ModuleAccess {
         return bestSlot;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoArmor").getEnabled();
-    }
 
-    public static AutoArmor itz() {
-        return ravex.manager.ModuleManager.delegate(AutoArmor.class);
-    }
+
+
 
 
 }

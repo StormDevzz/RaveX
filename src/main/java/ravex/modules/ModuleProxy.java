@@ -1,7 +1,6 @@
-package ravex.module;
+package ravex.modules;
 
 import ravex.modules.Module;
-import ravex.modules.annotations.ModuleInfo;
 
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;

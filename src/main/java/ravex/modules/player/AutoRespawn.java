@@ -1,14 +1,15 @@
 package ravex.modules.player;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import ravex.event.Subscribe;
 import ravex.event.player.DeathEvent;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
 
-@ModuleInfo(name = "AutoRespawn", category = "net.minecraft.world.entity.player.Player")
-public class AutoRespawn implements ModuleAccess {
+@Module(name = "AutoRespawn", category = "net.minecraft.world.entity.player.Player")
+public class AutoRespawn {
     @Parameter(name = "ShowDeathScreen")
     public boolean showDeathScreen = false;
     private long deathTime = 0;
@@ -16,7 +17,7 @@ public class AutoRespawn implements ModuleAccess {
 
     @Subscribe
     public void onDeath(DeathEvent event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("AutoRespawn").getEnabled() || !event.isSelf()) return;
+        if (!Modules.enabled(AutoRespawn.class) || !event.isSelf()) return;
         dead = true;
         deathTime = System.currentTimeMillis();
     }
@@ -25,7 +26,7 @@ public class AutoRespawn implements ModuleAccess {
         dead = false;
     }
     public void onTick() {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("AutoRespawn").getEnabled() || !dead) return;
+        if (!Modules.enabled(AutoRespawn.class) || !dead) return;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         if (showDeathScreen) return;
@@ -35,12 +36,8 @@ public class AutoRespawn implements ModuleAccess {
         dead = false;
         deathTime = 0;
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AutoRespawn").getEnabled();
-    }
-    public static AutoRespawn itz() {
-        return ravex.manager.ModuleManager.delegate(AutoRespawn.class);
-    }
+
+
 
 
 }

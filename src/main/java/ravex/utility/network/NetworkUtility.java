@@ -23,6 +23,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Contract;
 
 public class NetworkUtility {
     private static Minecraft mc() { return Minecraft.getInstance(); }
@@ -141,36 +142,44 @@ public class NetworkUtility {
             c.send(new ServerboundPlayerCommandPacket(mc().player, action));
     }
 
+    @Contract(value = "null -> false", pure = true)
     public static boolean isMovePacket(Packet<?> packet) {
         return packet instanceof ServerboundMovePlayerPacket;
     }
 
+    @Contract(value = "null -> false", pure = true)
     public static boolean isInteractPacket(Packet<?> packet) {
         return packet instanceof ServerboundInteractPacket;
     }
 
+    @Contract(value = "null -> false", pure = true)
     public static boolean isSwingPacket(Packet<?> packet) {
         return packet instanceof ServerboundSwingPacket;
     }
 
+    @Contract(value = "null -> false", pure = true)
     public static boolean isUsePacket(Packet<?> packet) {
         return packet instanceof ServerboundUseItemPacket
             || packet instanceof ServerboundUseItemOnPacket;
     }
 
+    @Contract(value = "null -> false", pure = true)
     public static boolean isChatPacket(Packet<?> packet) {
         return packet instanceof ServerboundChatPacket
             || packet instanceof ServerboundChatCommandPacket;
     }
 
+    @Contract(value = "null -> false", pure = true)
     public static boolean isInputPacket(Packet<?> packet) {
         return packet instanceof ServerboundPlayerInputPacket;
     }
 
+    @Contract(value = "null -> false", pure = true)
     public static boolean isCommandPacket(Packet<?> packet) {
         return packet instanceof ServerboundPlayerCommandPacket;
     }
 
+    @Contract(pure = true)
     public static String packetName(Packet<?> packet) {
         String name = packet.getClass().getSimpleName();
         if (name.startsWith("Serverbound")) name = name.substring(11);
@@ -186,6 +195,7 @@ public class NetworkUtility {
         }
     }
 
+    @Contract(pure = true)
     public static boolean isAdMessage(String msg) {
         String lower = msg.toLowerCase();
         if (lower.contains("discord.gg/") || lower.contains("discord.com/invite/")) return true;
@@ -207,6 +217,7 @@ public class NetworkUtility {
         return false;
     }
 
+    @Contract(pure = true)
     public static String formatComponents(ItemStack stack) {
         StringBuilder sb = new StringBuilder();
         if (stack.isEmpty()) return sb.toString();

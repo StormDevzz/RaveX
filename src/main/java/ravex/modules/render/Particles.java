@@ -1,6 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
@@ -14,8 +14,9 @@ import ravex.utility.render.Render3DUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "Particles", category = "Render")
-public class Particles implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "Particles", category = "Render")
+public class Particles {
 private static String lastTrigger = "";
     @Parameter(name = "Shape", modes = {"Square", "Circle", "Triangle", "All"})
     public String shape = "All";
@@ -283,17 +284,17 @@ private static String lastTrigger = "";
         p.pos = newPos;
     }
     public static void renderParticles(Matrix4f matrix, net.minecraft.world.phys.Vec3 camPos) {
-        if (!ravex.manager.ModuleManager.delegate(Particles.class).getEnabled() || ravex.manager.ModuleManager.delegate(Particles.class).particles.isEmpty()) return;
+        if (!Modules.enabled(Particles.class) || Modules.get(Particles.class).particles.isEmpty()) return;
         long now = System.currentTimeMillis();
-        long maxAge = (long) (ravex.manager.ModuleManager.delegate(Particles.class).lifetime * 1000);
-        float baseAlpha = (float) ravex.manager.ModuleManager.delegate(Particles.class).alpha;
-        float baseSize = (float) ravex.manager.ModuleManager.delegate(Particles.class).size;
-        boolean glowEnabled = ravex.manager.ModuleManager.delegate(Particles.class).glow;
-        float lineW = (float) ravex.manager.ModuleManager.delegate(Particles.class).lineWidth;
-        int seg = (int) ravex.manager.ModuleManager.delegate(Particles.class).segments;
-        boolean rainbowMode = ravex.manager.ModuleManager.delegate(Particles.class).rainbow;
-        int mainColor = ravex.manager.ModuleManager.delegate(Particles.class).color;
-        for (Particle p : ravex.manager.ModuleManager.delegate(Particles.class).particles) {
+        long maxAge = (long) (Modules.get(Particles.class).lifetime * 1000);
+        float baseAlpha = (float) Modules.get(Particles.class).alpha;
+        float baseSize = (float) Modules.get(Particles.class).size;
+        boolean glowEnabled = Modules.get(Particles.class).glow;
+        float lineW = (float) Modules.get(Particles.class).lineWidth;
+        int seg = (int) Modules.get(Particles.class).segments;
+        boolean rainbowMode = Modules.get(Particles.class).rainbow;
+        int mainColor = Modules.get(Particles.class).color;
+        for (Particle p : Modules.get(Particles.class).particles) {
             long age = now - p.spawnTime;
             float lifeProgress = (float) age / (float) maxAge;
             if (lifeProgress >= 1.0f) continue;
@@ -354,7 +355,7 @@ private static String lastTrigger = "";
             ));
         }
         pts.add(pts.get(0));
-        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls;
+        boolean tw = Modules.get(Particles.class).throughWalls;
         if (glow) {
             Render3DUtility.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -381,7 +382,7 @@ private static String lastTrigger = "";
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls;
+        boolean tw = Modules.get(Particles.class).throughWalls;
         if (glow) {
             Render3DUtility.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -408,7 +409,7 @@ private static String lastTrigger = "";
                 (float) (p.pos.z + rz * rad * c + uz * rad * s - camPos.z)
             ));
         }
-        boolean tw = ravex.manager.ModuleManager.delegate(Particles.class).throughWalls;
+        boolean tw = Modules.get(Particles.class).throughWalls;
         if (glow) {
             Render3DUtility.batchLineAdditive(matrix, pts, r, g, b, alpha * 0.5f, lineWidth * 2, tw);
         }
@@ -417,13 +418,9 @@ private static String lastTrigger = "";
     public void onDisable() {
         particles.clear();
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("Particles").getEnabled();
-    }
 
-    public static Particles itz() {
-        return ravex.manager.ModuleManager.delegate(Particles.class);
-    }
+
+
 
 
 }

@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -12,7 +12,8 @@ import ravex.utility.render.TextureLoaderUtility;
 
 import ravex.utility.system.SystemUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "NowPlayingHud", category = "HUD")
+import ravex.modules.Modules;
+@Module(name = "NowPlayingHud", category = "HUD")
 public class NowPlayingHud extends ravex.modules.Module {
     public int x;
     public int y;
@@ -35,7 +36,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
         this.x = 10; this.y = 310; this.width = 180; this.height = 20;
     }
     public void render(GuiGraphics graphics, float partialTicks) {
-        if (!ravex.manager.ModuleManager.delegate(Hud.class).getEnabled()) return;
+        if (!Modules.enabled(Hud.class)) return;
         long now = System.currentTimeMillis();
         if (now - lastQuery > 2000) {
             lastQuery = now;
@@ -146,13 +147,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
         clearTrack();
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NowPlayingHud").getEnabled();
-    }
 
-    public static NowPlayingHud itz() {
-        return ravex.manager.ModuleManager.delegate(NowPlayingHud.class);
-    }
+
+
 
 
     

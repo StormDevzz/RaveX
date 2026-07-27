@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.Shaders;
 import ravex.modules.render.NameTags;
+import ravex.modules.Modules;
 
 @Mixin(LivingEntityRenderer.class)
 public class MixinLivingEntityRenderer {
@@ -19,7 +20,7 @@ public class MixinLivingEntityRenderer {
     @Inject(method = "shouldShowName", at = @At("HEAD"), cancellable = true)
     private void onShouldShowName(net.minecraft.world.entity.LivingEntity entity, double distance, CallbackInfoReturnable<Boolean> cir) {
 
-        if (NameTags.maybeEnabled()) {
+        if (Modules.enabled(NameTags.class)) {
             cir.setReturnValue(false);
         }
     }

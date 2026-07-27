@@ -1,6 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
@@ -9,8 +9,8 @@ import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.item.BowItem;
 import ravex.utility.misc.MobUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "AimAssist", category = "Combat")
-public class AimAssist implements ModuleAccess {
+@Module(name = "AimAssist", category = "Combat")
+public class AimAssist {
     @Parameter(name = "Target", modes = {"Players", "Monsters", "All"})
     public String targetMode = "Players";
     @Parameter(name = "FOV", min = 10.0, max = 180.0, step = 5.0)
@@ -50,12 +50,8 @@ public class AimAssist implements ModuleAccess {
             }
         }
     }
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("AimAssist").getEnabled();
-    }
-    public static AimAssist itz() {
-        return ravex.manager.ModuleManager.delegate(AimAssist.class);
-    }
+
+
 
 
 }

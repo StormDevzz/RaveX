@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import ravex.manager.ModuleManager;
+import ravex.modules.Modules;
 
 public class SoundUtility {
 
@@ -62,12 +63,12 @@ public class SoundUtility {
             return;
         }
 
-        ravex.modules.render.Sounds sounds = ModuleManager.get(ravex.modules.render.Sounds.class);
-        if (sounds != null && !sounds.getEnabled()) {
+        if (!Modules.enabled(ravex.modules.render.Sounds.class)) {
             return;
         }
 
 
+        ravex.modules.render.Sounds sounds = Modules.get(ravex.modules.render.Sounds.class);
         float multiplier = (sounds != null) ? (float) sounds.volume : 1.0f;
         float finalVolume = volume * multiplier;
         if (finalVolume <= 0.0f) return;

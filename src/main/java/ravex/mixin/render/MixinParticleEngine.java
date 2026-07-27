@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.NoRender;
 
 import java.util.Map;
+import ravex.modules.Modules;
 
 @Mixin(ParticleEngine.class)
 public class MixinParticleEngine {
@@ -25,7 +26,7 @@ public class MixinParticleEngine {
 
     @Inject(method = "createParticle", at = @At("HEAD"), cancellable = true)
     private void onCreateParticle(ParticleOptions options, double x, double y, double z, double dx, double dy, double dz, CallbackInfoReturnable<Particle> cir) {
-        if (NoRender.maybeEnabled()) {
+        if (Modules.enabled(NoRender.class)) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             net.minecraft.world.entity.Entity cam = mc.getCameraEntity();
             if (cam != null) {
@@ -38,19 +39,19 @@ public class MixinParticleEngine {
                 }
             }
 
-            if (NoRender.itz().blockParticles && (
+            if (Modules.get(NoRender.class).blockParticles && (
                 options.getType() == ParticleTypes.BLOCK ||
                 options.getType() == ParticleTypes.BLOCK_MARKER ||
                 options.getType() == ParticleTypes.BLOCK_CRUMBLE ||
                 options.getType() == ParticleTypes.FALLING_DUST
             )) {
                 cir.setReturnValue(null);
-            } else if (NoRender.itz().explosions && (
+            } else if (Modules.get(NoRender.class).explosions && (
                 options.getType() == ParticleTypes.EXPLOSION ||
                 options.getType() == ParticleTypes.EXPLOSION_EMITTER
             )) {
                 cir.setReturnValue(null);
-            } else if (NoRender.itz().sprint && options.getType() == ParticleTypes.CLOUD) {
+            } else if (Modules.get(NoRender.class).sprint && options.getType() == ParticleTypes.CLOUD) {
                 cir.setReturnValue(null);
             }
         }
@@ -70,8 +71,8 @@ public class MixinParticleEngine {
 
     @Inject(method = "add", at = @At("HEAD"), cancellable = true)
     private void onAdd(Particle particle, CallbackInfo ci) {
-        if (NoRender.maybeEnabled()) {
-            if (NoRender.itz().blockParticles && particle instanceof net.minecraft.client.particle.TerrainParticle) {
+        if (Modules.enabled(NoRender.class)) {
+            if (Modules.get(NoRender.class).blockParticles && particle instanceof net.minecraft.client.particle.TerrainParticle) {
                 ci.cancel();
                 return;
             }

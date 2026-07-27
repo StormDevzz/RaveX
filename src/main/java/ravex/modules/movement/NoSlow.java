@@ -1,6 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.ModuleAccess;
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
@@ -12,8 +12,9 @@ import ravex.event.client.TickEvent;
 
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-@ModuleInfo(name = "NoSlow", category = "Movement")
-public class NoSlow implements ModuleAccess {
+import ravex.modules.Modules;
+@Module(name = "NoSlow", category = "Movement")
+public class NoSlow {
     @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3"})
     public String mode = "Grim";
     @Parameter(name = "Items")
@@ -50,13 +51,9 @@ public class NoSlow implements ModuleAccess {
     private boolean altSlowPhase = false;
     private int v3Ticks = 0;
 
-    private NoSlow() {
-        
-    }
-
     @Subscribe
     public void onTick(TickEvent.Client event) {
-        if (!ravex.manager.ModuleManager.INSTANCE.getByName("NoSlow").getEnabled()) return;
+        if (!Modules.enabled(NoSlow.class)) return;
         String modeVal = mode;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
@@ -146,13 +143,9 @@ public class NoSlow implements ModuleAccess {
         return defaultFriction;
     }
 
-    public static boolean maybeEnabled() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NoSlow").getEnabled();
-    }
 
-    public static NoSlow itz() {
-        return ravex.manager.ModuleManager.delegate(NoSlow.class);
-    }
+
+
 
     public boolean isSlowPhase() {
         return altSlowPhase;
@@ -172,11 +165,11 @@ public class NoSlow implements ModuleAccess {
     }
 
     public boolean isV3Active() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NoSlow").getEnabled() && "GrimV3".equals(mode);
+        return Modules.enabled(NoSlow.class) && "GrimV3".equals(mode);
     }
 
     public boolean isMatrixActive() {
-        return ravex.manager.ModuleManager.INSTANCE.getByName("NoSlow").getEnabled() && "Matrix".equals(mode);
+        return Modules.enabled(NoSlow.class) && "Matrix".equals(mode);
     }
 
     public float getMatrixInputScale() {

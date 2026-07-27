@@ -1,9 +1,10 @@
 package ravex.modules.client;
 
-import ravex.modules.annotations.ModuleInfo;
+import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.integrations.baritone.BaritoneIntegration;
-@ModuleInfo(name = "BaritoneModule", category = "Client")
+import ravex.modules.Modules;
+@Module(name = "BaritoneModule", category = "Client")
 public class BaritoneModule extends ravex.modules.Module {
 private final BaritoneIntegration baritone = new BaritoneIntegration();
         @Parameter(name = "CurrentPath", color = true)
@@ -94,7 +95,7 @@ private final BaritoneIntegration baritone = new BaritoneIntegration();
     }
     public void onTick() {
         if (!baritone.isAvailable()) {
-            if (ravex.manager.ModuleManager.INSTANCE.getByName("BaritoneModule").getEnabled() && baritone.init()) {
+            if (Modules.enabled(BaritoneModule.class) && baritone.init()) {
                 syncAll();
             }
             return;
@@ -237,8 +238,6 @@ private final BaritoneIntegration baritone = new BaritoneIntegration();
         baritone.applyBoolean(name, value);
     }
 
-    public static BaritoneModule itz() {
-        return ravex.manager.ModuleManager.delegate(BaritoneModule.class);
-    }
+
 
 }

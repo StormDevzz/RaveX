@@ -7,13 +7,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.movement.NoSlow;
+import ravex.modules.Modules;
 
 @Mixin(Player.class)
 public abstract class MixinPlayerNoSlow {
 
     @Inject(method = "aiStep", at = @At("HEAD"))
     private void onPlayerAiStep(CallbackInfo ci) {
-        NoSlow ns = NoSlow.itz();
+        NoSlow ns = Modules.get(NoSlow.class);
         if (!ns.items) return;
 
         // GrimV3 input scaling

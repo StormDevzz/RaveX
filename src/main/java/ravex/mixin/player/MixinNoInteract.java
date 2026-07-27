@@ -10,14 +10,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.player.NoInteract;
+import ravex.modules.Modules;
 
 @Mixin(Minecraft.class)
 public class MixinNoInteract {
 
     @Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
     private void onStartUseItem(CallbackInfo ci) {
-        NoInteract ni = NoInteract.itz();
-        if (!NoInteract.maybeEnabled()) return;
+        NoInteract ni = Modules.get(NoInteract.class);
+        if (!Modules.enabled(NoInteract.class)) return;
 
         if (ni.allBlocks) {
             ci.cancel();
