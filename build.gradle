@@ -86,6 +86,7 @@ task runLoader(type: JavaExec) {
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude("assets/ravex/companion/textures/**")
+    exclude("assets/ravex/natives/**")
     manifest {
         attributes(
             'Main-Class': 'ravex.loader.RaveXLoader'

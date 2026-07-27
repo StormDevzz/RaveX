@@ -83,7 +83,7 @@ public class AssetDownloader {
                     }
                 }
             } catch (Throwable t) {
-                System.err.println("[RaveX-Loader] Failed to pre-download " + assetPath + ": " + t.getMessage());
+                System.err.println("[RaveX-Loader] Failed to pre-download " + assetPath + ": " + t.getMessage() + ". If you see this, please report it on our Discord: https://discord.gg/n9HPbgN7S");
             }
         }
     }
