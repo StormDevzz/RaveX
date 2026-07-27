@@ -1,8 +1,6 @@
 package ravex.modules.combat;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 

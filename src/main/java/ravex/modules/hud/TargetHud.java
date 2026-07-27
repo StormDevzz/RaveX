@@ -3,7 +3,6 @@ import ravex.utility.misc.ScreenUtility;
 
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.resources.Identifier;
@@ -19,6 +18,7 @@ import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import org.jetbrains.annotations.Nullable;
 
 @Module(name = "TargetHud", category = "HUD")
 public class TargetHud extends ravex.modules.Module {
@@ -76,6 +76,7 @@ public class TargetHud extends ravex.modules.Module {
         this.x = 10; this.y = 400; this.width = 175; this.height = 46;
     }
 
+    @Nullable
     private net.minecraft.world.entity.LivingEntity getTarget(MinecraftWrapper mc) {
         if (Modules.enabled(KillAura.class)) {
             net.minecraft.world.entity.LivingEntity target = Modules.get(KillAura.class).getCurrentTarget();

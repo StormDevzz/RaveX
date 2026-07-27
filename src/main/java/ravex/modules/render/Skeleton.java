@@ -1,5 +1,4 @@
 package ravex.modules.render;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -17,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import org.jetbrains.annotations.Nullable;
 @Module(name = "Skeleton", category = "Render")
 public class Skeleton {
     @Parameter(name = "Color", color = true)
@@ -37,6 +37,7 @@ public class Skeleton {
         return ALLOCATOR;
     }
 
+    @Nullable
     public static net.minecraft.world.entity.LivingEntity getEntityBeingRendered(PoseStack poseStack) {
         var mc = MinecraftWrapper.getInstance();
         if (mc.level == null || mc.gameRenderer == null || mc.gameRenderer.getMainCamera() == null) return null;

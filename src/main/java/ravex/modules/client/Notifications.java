@@ -1,11 +1,9 @@
 package ravex.modules.client;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.manager.NotificationManager;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PotionUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
 
 import net.minecraft.world.entity.item.ItemEntity;

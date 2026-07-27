@@ -1,5 +1,4 @@
 package ravex.modules.world;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;

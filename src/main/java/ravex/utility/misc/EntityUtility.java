@@ -14,7 +14,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.Minecraft;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.player.PlayerUtility;
 import net.minecraft.client.player.LocalPlayer;
+import org.jetbrains.annotations.Nullable;
 
 public class EntityUtility {
     public static boolean isHostile(LivingEntity entity) {
@@ -30,9 +32,10 @@ public class EntityUtility {
     }
 
     public static boolean isSelf(LivingEntity entity) {
-        return entity == Minecraft.getInstance().player;
+        return entity == PlayerUtility.getPlayer();
     }
 
+    @Nullable
     public static LivingEntity asLivingEntity(Entity entity) {
         return entity instanceof LivingEntity living ? living : null;
     }
@@ -192,6 +195,7 @@ public class EntityUtility {
         return p != null ? p.distanceTo(entity) : Double.MAX_VALUE;
     }
 
+    @Nullable
     public static String getOwnerName(Entity entity, boolean displayUuid) {
         if (!(entity instanceof net.minecraft.world.entity.OwnableEntity owned)) return null;
         java.util.UUID uuid = null;

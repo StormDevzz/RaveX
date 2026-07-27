@@ -1,7 +1,6 @@
 package ravex.modules.hud;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.utility.misc.EntityUtility;

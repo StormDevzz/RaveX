@@ -1,10 +1,8 @@
 package ravex.modules.player;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;

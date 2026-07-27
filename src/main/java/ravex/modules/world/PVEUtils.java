@@ -1,5 +1,4 @@
 package ravex.modules.world;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
@@ -23,6 +22,7 @@ import net.minecraft.world.level.block.BrewingStandBlock;
 import net.minecraft.world.phys.AABB;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import org.jetbrains.annotations.Nullable;
 
 
 
@@ -254,6 +254,7 @@ public class PVEUtils {
             || name.equals("spider_eye") || name.equals("pufferfish") || name.equals("phantom_membrane")
             || name.equals("dragon_breath") || name.equals("turtle_helmet");
     }
+    @Nullable
     public static net.minecraft.core.BlockPos getBrewTarget() {
         if (!hasBrewTarget) return null;
         return BlockUtility.pos(brewTargetX, brewTargetY, brewTargetZ);

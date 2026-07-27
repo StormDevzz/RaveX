@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.RaveX;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -265,7 +266,7 @@ public class TextureLoaderUtility {
             && Math.abs(b - bgB) <= tolerance;
     }
 
-    public static Identifier getCategoryTexture(String cat) {
+    @Nullable public static Identifier getCategoryTexture(String cat) {
         if ("Custom".equals(cat)) cat = "Misc";
         Identifier id = CAT_IDS.get(cat);
         if (ensureLoaded(id, cat.toLowerCase())) return id;
@@ -273,17 +274,17 @@ public class TextureLoaderUtility {
         return null;
     }
 
-    public static Identifier getSearchTexture() {
+    @Nullable public static Identifier getSearchTexture() {
         return ensureLoaded(SEARCH, "search") ? SEARCH : null;
     }
 
-    public static Identifier getSettingsTexture() {
+    @Nullable public static Identifier getSettingsTexture() {
         return ensureLoaded(SETTINGS, "settings") ? SETTINGS : null;
     }
 
     public static final Identifier PALETTE = Identifier.fromNamespaceAndPath(NS, "hud/palette");
 
-    public static Identifier getPaletteTexture() {
+    @Nullable public static Identifier getPaletteTexture() {
         if (loaded.containsKey(PALETTE)) return PALETTE;
         String resourcePath = "/assets/ravex/textures/hud/palette.png";
         try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(resourcePath)) {
@@ -303,7 +304,7 @@ public class TextureLoaderUtility {
         }
     }
 
-    public static Identifier getSettingsWhiteTexture() {
+    @Nullable public static Identifier getSettingsWhiteTexture() {
         if (!loaded.containsKey(SETTINGS_WHITE)) {
             if (!ensureLoaded(SETTINGS, "settings")) return null;
             try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(CLASSPATH_PREFIX + "settings.png")) {
@@ -328,7 +329,7 @@ public class TextureLoaderUtility {
         return SETTINGS_WHITE;
     }
 
-    public static Identifier getCategoryTextureWhite(String cat) {
+    @Nullable public static Identifier getCategoryTextureWhite(String cat) {
         if ("Custom".equals(cat)) cat = "Misc";
         Identifier whiteId = CAT_WHITE_IDS.get(cat);
         if (whiteId == null) return getCategoryTexture(cat);
@@ -339,14 +340,14 @@ public class TextureLoaderUtility {
         return result != null ? result : originalId;
     }
 
-    public static Identifier getSearchWhiteTexture() {
+    @Nullable public static Identifier getSearchWhiteTexture() {
         if (loaded.containsKey(SEARCH_WHITE)) return SEARCH_WHITE;
         if (!ensureLoaded(SEARCH, "search")) return null;
         Identifier result = makeWhiteCopy(SEARCH, SEARCH_WHITE, "search");
         return result != null ? result : SEARCH;
     }
 
-    private static Identifier makeWhiteCopy(Identifier sourceId, Identifier targetId, String name) {
+    @Nullable private static Identifier makeWhiteCopy(Identifier sourceId, Identifier targetId, String name) {
         try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(CLASSPATH_PREFIX + name + ".png")) {
             if (stream == null) return null;
             NativeImage image = NativeImage.read(stream);
@@ -368,7 +369,7 @@ public class TextureLoaderUtility {
         }
     }
 
-    public static Identifier getCircleWhiteTexture() {
+    @Nullable public static Identifier getCircleWhiteTexture() {
         if (!loaded.containsKey(CIRCLE_WHITE)) {
             if (!ensureLoaded(CIRCLE, "circle")) return null;
             try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(CLASSPATH_PREFIX + "circle.png")) {
@@ -450,7 +451,7 @@ public class TextureLoaderUtility {
         return SOLID_CIRCLE;
     }
 
-    public static Identifier getSwitcherTexture() {
+    @Nullable public static Identifier getSwitcherTexture() {
         if (!loaded.containsKey(SWITCHER)) {
             try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(CLASSPATH_PREFIX + "switcher.png")) {
                 if (stream == null) {
@@ -488,7 +489,7 @@ public class TextureLoaderUtility {
         return Identifier.fromNamespaceAndPath(NS, "tinted/" + name.toLowerCase());
     }
 
-    public static Identifier getParticleTexture(String name, int color) {
+    @Nullable public static Identifier getParticleTexture(String name, int color) {
         name = name.toLowerCase();
         Identifier tintedId = tintedParticleId(name);
         if (loaded.containsKey(tintedId) && lastTintedColor.getOrDefault(tintedId, -1) == color) {
@@ -619,7 +620,7 @@ public class TextureLoaderUtility {
         }
     }
 
-    public static Identifier getModuleIcon(String moduleKey) {
+    @Nullable public static Identifier getModuleIcon(String moduleKey) {
         if (MODULE_ICON_MISSING.contains(moduleKey)) return null;
         Identifier cached = MODULE_ICONS.get(moduleKey);
         if (cached != null) return cached;
@@ -637,14 +638,14 @@ public class TextureLoaderUtility {
         return null;
     }
 
-    public static Identifier getHudIcon(String name) {
+    @Nullable public static Identifier getHudIcon(String name) {
         Identifier id = hudId(name);
         if (loaded.containsKey(id)) return id;
         if (ensureHudIcon(id, name)) return id;
         return null;
     }
 
-    public static Identifier getHudIconWhite(String name) {
+    @Nullable public static Identifier getHudIconWhite(String name) {
         Identifier colored = getHudIcon(name);
         if (colored == null) return null;
         Identifier whiteId = Identifier.fromNamespaceAndPath(NS, "hud_white/" + name);

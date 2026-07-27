@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
@@ -8,10 +7,10 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import org.jetbrains.annotations.Nullable;
 
 
 
@@ -130,6 +129,7 @@ public class AutoCart {
         net.minecraft.world.level.block.state.BlockState aboveState = mc.getLevel().getBlockState(above);
         return !aboveState.isAir();
     }
+    @Nullable
     private net.minecraft.core.BlockPos simulateTrajectory(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 startPos, net.minecraft.world.phys.Vec3 startVel) {
         net.minecraft.world.phys.Vec3 pos = startPos;
         net.minecraft.world.phys.Vec3 vel = startVel;

@@ -1,11 +1,11 @@
 package ravex.modules.world;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import org.jetbrains.annotations.Nullable;
 
 @Module(name = "TreeCutter", category = "World")
 public class TreeCutter {
@@ -21,6 +21,7 @@ public class TreeCutter {
     private boolean hasTarget;
     private int currentToolSlot = -1;
 
+    @Nullable
     public static net.minecraft.core.BlockPos getMiningPos() {
         TreeCutter t = Modules.get(TreeCutter.class);
         if (!t.hasTarget) return null;

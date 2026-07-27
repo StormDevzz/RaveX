@@ -1,5 +1,4 @@
 package ravex.modules.misc;
-import ravex.modules.ModuleAccess;
 import ravex.event.client.SoundEvent;
 import ravex.event.combat.AttackEvent;
 import ravex.event.EventBusHolder;
@@ -10,7 +9,6 @@ import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;

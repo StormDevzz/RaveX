@@ -1,5 +1,4 @@
 package ravex.modules.client;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;

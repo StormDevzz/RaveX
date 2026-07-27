@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
@@ -12,7 +11,6 @@ import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;

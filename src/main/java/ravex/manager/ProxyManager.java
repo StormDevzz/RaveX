@@ -2,6 +2,7 @@ package ravex.manager;
 
 import ravex.proxy.ProxyConfig;
 import ravex.proxy.ProxyServer;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -77,7 +78,7 @@ public class ProxyManager {
         return config;
     }
 
-    public InetSocketAddress connect(ProxyConfig targetConfig) {
+    @Nullable public InetSocketAddress connect(ProxyConfig targetConfig) {
         if (targetConfig == null || targetConfig.getTargetHost().isEmpty()) {
             lastError = "Target config is null or empty";
             return null;
@@ -100,7 +101,7 @@ public class ProxyManager {
         return connect(original.getHostString(), original.getPort());
     }
 
-    public static ProxyConfig parseUrl(String url) {
+    @Nullable public static ProxyConfig parseUrl(String url) {
         Matcher m = PROXY_URL_PATTERN.matcher(url.trim());
         if (!m.matches()) {
             try {

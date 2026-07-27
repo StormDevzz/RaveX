@@ -1,14 +1,13 @@
 package ravex.modules.misc;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import org.jetbrains.annotations.Nullable;
 @Module(name = "AutoPortal", category = "Misc")
 public class AutoPortal {
     @Parameter(name = "Range", min = 2.0, max = 12.0, step = 0.5)
@@ -51,6 +50,7 @@ public class AutoPortal {
         {0, 4}, {1, 4}, {2, 4}, {3, 4},
     };
 
+    @Nullable
     public static net.minecraft.core.BlockPos getCurrentTarget() {
         if (!hasRenderTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
@@ -314,6 +314,7 @@ public class AutoPortal {
         }
         return new double[]{bestX, bestY, bestZ, bestScore};
     }
+    @Nullable
     private double[] findExistingPortals(MinecraftWrapper mc) {
         double r = avoidRange;
         var eye = mc.getPlayer().getEyePosition();

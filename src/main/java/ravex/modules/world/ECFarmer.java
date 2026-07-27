@@ -1,8 +1,6 @@
 package ravex.modules.world;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 
@@ -11,6 +9,7 @@ import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import org.jetbrains.annotations.Nullable;
 @Module(name = "ECFarmer", category = "World")
 public class ECFarmer {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.5)
@@ -35,6 +34,7 @@ public class ECFarmer {
         NATIVE.load();
     }
 
+    @Nullable
     public static net.minecraft.core.BlockPos getCurrentTarget() {
         if (!hasRenderTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
@@ -232,6 +232,7 @@ public class ECFarmer {
         }
         return -1;
     }
+    @Nullable
     private int[] findPlacePos(MinecraftWrapper mc) {
         var eye = mc.getPlayer().getEyePosition();
         var facing = mc.getPlayer().getDirection();

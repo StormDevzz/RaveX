@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
@@ -7,7 +6,6 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.item.BlockItem;
 import ravex.mcwrapper.MinecraftWrapper;
 

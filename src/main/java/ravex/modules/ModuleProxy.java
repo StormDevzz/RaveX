@@ -30,6 +30,10 @@ public final class ModuleProxy extends Module {
     public ModuleProxy(Object component) {
         this.component = component;
         this.compClass = component.getClass();
+        var ann = compClass.getDeclaredAnnotation(ravex.modules.annotations.Module.class);
+        if (ann != null) {
+            setName(ann.name());
+        }
         scanLifecycle();
         scanParameters();
         scanHudDelegates();

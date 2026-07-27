@@ -1,5 +1,4 @@
 package ravex.modules.movement;
-import ravex.modules.ModuleAccess;
 import ravex.event.client.TickEvent;
 import ravex.event.network.PacketEvent;
 import ravex.event.Subscribe;

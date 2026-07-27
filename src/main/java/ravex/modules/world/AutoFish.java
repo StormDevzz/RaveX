@@ -1,12 +1,11 @@
 package ravex.modules.world;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.phys.AABB;
 import ravex.mcwrapper.MinecraftWrapper;
+import org.jetbrains.annotations.Nullable;
 
 
 
@@ -57,6 +56,7 @@ public class AutoFish {
             }
         }
     }
+    @Nullable
     private FishingHook findBobber(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
         for (var e : mc.getLevel().getEntities(player, AABB.ofSize(player.position(), 32, 32, 32))) {
             if (e instanceof FishingHook hook && hook.getOwner() == player) {

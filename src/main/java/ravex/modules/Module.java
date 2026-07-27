@@ -65,6 +65,9 @@ public abstract class Module {
     public void setCategory(String category) {
         this.category = category;
     }
+    protected void setName(String name) {
+        this.name = name;
+    }
     public Module(String name, int defaultX, int defaultY, int width, int height) {
         this.name = name;
         this.category = "Custom";

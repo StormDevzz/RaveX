@@ -1,5 +1,4 @@
 package ravex.modules.render;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "NoBob", category = "Render")

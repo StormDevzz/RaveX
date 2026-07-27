@@ -1,5 +1,4 @@
 package ravex.modules.movement;
-import ravex.modules.ModuleAccess;
 import ravex.utility.network.NetworkUtility;
 
 import ravex.modules.annotations.Module;

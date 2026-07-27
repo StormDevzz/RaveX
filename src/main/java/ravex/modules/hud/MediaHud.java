@@ -21,6 +21,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import org.jetbrains.annotations.Nullable;
 
 @Module(name = "MediaHud", category = "HUD")
 public class MediaHud extends ravex.modules.Module {
@@ -136,6 +137,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
         }
     }
 
+    @Nullable
     private byte[] tryDownload(String artUrl, String appIcon) {
         if (!artUrl.isEmpty()) {
             byte[] data = SystemUtility.downloadArt(artUrl);

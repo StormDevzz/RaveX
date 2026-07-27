@@ -1,5 +1,4 @@
 package ravex.modules.world;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
@@ -12,6 +11,7 @@ import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import org.jetbrains.annotations.Nullable;
 @Module(name = "Scaffold", category = "World")
 public class Scaffold {
     @Parameter(name = "Mode", modes = {"Vanilla", "Grim"})
@@ -201,6 +201,7 @@ public class Scaffold {
         p.setXRot(limited[1]);
     }
 
+    @Nullable
     private NeighborResult findNeighbor(int tx, int ty, int tz, boolean grim) {
         var eye = MinecraftWrapper.getInstance().player != null
             ? MinecraftWrapper.getInstance().player.getEyePosition()

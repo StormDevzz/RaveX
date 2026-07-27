@@ -1,14 +1,13 @@
 package ravex.modules.world;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.mcwrapper.MinecraftWrapper;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import org.jetbrains.annotations.Nullable;
 @Module(name = "AutoTunnel", category = "World")
 public class AutoTunnel {
     @Parameter(name = "Range", min = 1.0, max = 10.0, step = 0.5)
@@ -33,6 +32,7 @@ public class AutoTunnel {
     private int miningX, miningY, miningZ;
     private boolean hasMiningTarget;
 
+    @Nullable
     public static net.minecraft.core.BlockPos getCurrentTarget() {
         if (!hasTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);

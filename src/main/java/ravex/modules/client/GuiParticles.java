@@ -1,5 +1,4 @@
 package ravex.modules.client;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 @Module(name = "GuiParticles", category = "Client")

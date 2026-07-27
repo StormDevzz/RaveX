@@ -1,5 +1,4 @@
 package ravex.modules.player;
-import ravex.modules.ModuleAccess;
 import ravex.mixin.client.AccessorLivingEntity;
 import ravex.mixin.client.AccessorMinecraft;
 import ravex.modules.annotations.Module;

@@ -1,5 +1,4 @@
 package ravex.modules.player;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import net.minecraft.world.level.block.Block;
 

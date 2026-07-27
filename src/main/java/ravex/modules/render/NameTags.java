@@ -1,8 +1,7 @@
 package ravex.modules.render;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.parameter.MultiSelectParameter;
+import java.util.ArrayList;
 import java.util.List;
 import ravex.modules.Modules;
 @Module(name = "NameTags", category = "Render")
@@ -25,18 +24,18 @@ public class NameTags {
     public boolean customFont = false;
 
     @Parameter(name = "Entities", options = {"Players", "Monsters", "Passives"})
-    public MultiSelectParameter entities = new MultiSelectParameter("Entities", List.of("Players", "Monsters"), List.of("Players", "Monsters", "Passives"));
+    public List<String> entities = new ArrayList<>(List.of("Players", "Monsters"));
 
     public boolean shouldDraw(net.minecraft.world.entity.Entity target) {
         if (!Modules.enabled(NameTags.class)) return false;
         if (!(target instanceof net.minecraft.world.entity.LivingEntity le)) return false;
         if (target instanceof net.minecraft.world.entity.player.Player) {
-            return entities.isSelected("Players");
+            return entities.contains("Players");
         }
         if (ravex.utility.misc.MobUtility.isHostile(le)) {
-            return entities.isSelected("Monsters");
+            return entities.contains("Monsters");
         }
-        return entities.isSelected("Passives");
+        return entities.contains("Passives");
     }
 
     public static double calculateScale(double distance, double scaleParam, boolean distScale) {

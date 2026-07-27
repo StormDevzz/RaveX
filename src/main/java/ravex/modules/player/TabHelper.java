@@ -1,5 +1,4 @@
 package ravex.modules.player;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 @Module(name = "TabHelper", category = "net.minecraft.world.entity.player.Player")

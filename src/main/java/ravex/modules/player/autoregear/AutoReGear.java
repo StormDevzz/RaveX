@@ -1,5 +1,4 @@
 package ravex.modules.player.autoregear;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonArray;

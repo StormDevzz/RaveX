@@ -5,6 +5,7 @@ import ravex.manager.NativeManager;
 import ravex.nativesc.NativeScBridge;
 import ravex.gui.fileprot.FileProtBridge;
 import ravex.utility.nativelib.NativeLoader;
+import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -74,6 +75,7 @@ public class NativeLayerImpl implements NativeLayer {
         catch (Throwable ignored) {}
     }
 
+    @Nullable
     @Override
     public String captureScreen(String path) {
         try { return NativeScBridge.nativeCaptureScreen(path); }

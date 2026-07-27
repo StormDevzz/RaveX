@@ -1,8 +1,6 @@
 package ravex.modules.misc;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundEditBookPacket;
 import net.minecraft.server.network.Filterable;

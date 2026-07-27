@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
@@ -12,10 +11,10 @@ import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.FallingBlock;
 import ravex.mcwrapper.MinecraftWrapper;
+import org.jetbrains.annotations.Nullable;
 
 
 
@@ -94,6 +93,7 @@ public class AutoDrop {
             InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
         }
     }
+    @Nullable
     private net.minecraft.world.entity.Entity findTarget(MinecraftWrapper mc) {
         String t = target;
         if (t.equals("Self")) return mc.getPlayer();

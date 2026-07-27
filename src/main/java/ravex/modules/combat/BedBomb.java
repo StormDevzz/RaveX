@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
@@ -7,14 +6,12 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.properties.BedPart;
 
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
-
-
+import org.jetbrains.annotations.Nullable;
 
 
 @Module(name = "BedBomb", category = "Combat")
@@ -148,6 +145,7 @@ public class BedBomb {
         }
         return closest;
     }
+    @Nullable
     private net.minecraft.core.BlockPos findPlacePos(MinecraftWrapper mc, net.minecraft.core.BlockPos near) {
         double r = range;
         net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition();

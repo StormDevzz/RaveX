@@ -1,10 +1,8 @@
 package ravex.modules.movement;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.phys.HitResult;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;

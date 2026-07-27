@@ -1,6 +1,7 @@
 package ravex.utility.system;
 
 import ravex.RaveX;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -116,7 +117,7 @@ public class SystemUtility {
         return "";
     }
 
-    private static String getPlayerPriority(String playerName) {
+    @Nullable private static String getPlayerPriority(String playerName) {
         String lower = playerName.toLowerCase(Locale.ROOT);
         for (String blocked : MEDIA_BLOCKED) {
             if (lower.contains(blocked)) return null;
@@ -441,7 +442,7 @@ public class SystemUtility {
         return "";
     }
 
-    public static byte[] downloadArt(String url) {
+    @Nullable public static byte[] downloadArt(String url) {
         if (url == null || url.isEmpty()) return null;
         try {
             if (url.startsWith("file://")) {
@@ -466,13 +467,13 @@ public class SystemUtility {
         return null;
     }
 
-    public static byte[] getAppIcon(String playerName) {
+    @Nullable public static byte[] getAppIcon(String playerName) {
         if (playerName == null || playerName.isEmpty()) return null;
         if (isLinux() || isFreeBSD()) return getLinuxAppIcon(playerName);
         return null;
     }
 
-    private static byte[] getLinuxAppIcon(String playerName) {
+    @Nullable private static byte[] getLinuxAppIcon(String playerName) {
         String lower = playerName.toLowerCase(Locale.ROOT);
         String iconName = lower
             .replace("org.mpris.mediaplayer2.", "")

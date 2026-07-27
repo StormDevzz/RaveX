@@ -1,8 +1,6 @@
 package ravex.modules.movement;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.MoverType;
 import ravex.utility.misc.PhysicUtility;

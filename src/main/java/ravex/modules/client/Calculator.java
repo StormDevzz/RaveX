@@ -1,5 +1,4 @@
 package ravex.modules.client;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import net.minecraft.network.chat.Component;
 

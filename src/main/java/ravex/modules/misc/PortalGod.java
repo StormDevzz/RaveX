@@ -1,5 +1,4 @@
 package ravex.modules.misc;
-import ravex.modules.ModuleAccess;
 import ravex.event.network.PacketEvent;
 import ravex.event.Subscribe;
 import ravex.modules.annotations.Module;

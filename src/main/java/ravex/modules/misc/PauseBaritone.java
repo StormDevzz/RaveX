@@ -1,5 +1,4 @@
 package ravex.modules.misc;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.integrations.baritone.BaritoneIntegration;
 import ravex.modules.Modules;

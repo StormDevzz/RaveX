@@ -1,5 +1,4 @@
 package ravex.modules.combat;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
@@ -13,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
-
+import org.jetbrains.annotations.Nullable;
 
 
 
@@ -249,6 +248,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         }
         return false;
     }
+    @Nullable
     private net.minecraft.core.BlockPos findNeighbor(net.minecraft.core.BlockPos pos) {
         var mc = MinecraftWrapper.getInstance();
         if (mc.level == null) return null;

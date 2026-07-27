@@ -184,7 +184,6 @@ public class MinecraftWrapper {
     }
 
     @Nullable
-    @Nullable
     public net.minecraft.client.multiplayer.ServerData getCurrentServer() {
         return mc.getCurrentServer();
     }

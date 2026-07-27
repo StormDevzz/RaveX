@@ -1,26 +1,23 @@
 package ravex.modules.combat;
-import ravex.modules.ModuleAccess;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.modules.Modules;
 import ravex.mcwrapper.MinecraftWrapper;
-import org.joml.Matrix4f;
-
+import ravex.parameter.BooleanParameter;
+import ravex.parameter.ModeParameter;
+import ravex.parameter.NumberParameter;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
-import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.CameraUtility;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.MultiSelectParameter;
-import ravex.parameter.NumberParameter;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
+import java.util.ArrayList;
 import java.util.List;
-import ravex.utility.network.NetworkUtility;
-import ravex.mcwrapper.MinecraftWrapper;
-import ravex.modules.Modules;
+import org.joml.Matrix4f;
 
 @Module(name = "KillAura", category = "Combat")
 public class KillAura {
@@ -40,7 +37,7 @@ public class KillAura {
     public int targetEspColor = 0xFF00FFFF;
 
     @Parameter(name = "Targets", options = {"Players", "Monsters", "Passives", "Invisibles"})
-    public MultiSelectParameter targets = new MultiSelectParameter("Targets", List.of("Players", "Monsters"), List.of("Players", "Monsters", "Passives", "Invisibles"));
+    public List<String> targets = new ArrayList<>(List.of("Players", "Monsters"));
 
     @Parameter(name = "ThroughWalls")
     public boolean throughWalls = true;
@@ -270,11 +267,11 @@ public class KillAura {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
             if (MobUtility.isSelf(le)) continue;
             if (MobUtility.isDead(le)) continue;
-            if (!targets.isSelected("Invisibles") && le.isInvisible()) continue;
+            if (!targets.contains("Invisibles") && le.isInvisible()) continue;
             if (MobUtility.isArmorStand(le)) continue;
-            if (!targets.isSelected("Players") && MobUtility.isPlayer(le)) continue;
-            if (!targets.isSelected("Monsters") && MobUtility.isHostile(le)) continue;
-            if (!targets.isSelected("Passives") && MobUtility.isPassive(le)) continue;
+            if (!targets.contains("Players") && MobUtility.isPlayer(le)) continue;
+            if (!targets.contains("Monsters") && MobUtility.isHostile(le)) continue;
+            if (!targets.contains("Passives") && MobUtility.isPassive(le)) continue;
 
             net.minecraft.world.phys.AABB pa = mc.getPlayer().getBoundingBox();
             net.minecraft.world.phys.AABB ea = le.getBoundingBox();
