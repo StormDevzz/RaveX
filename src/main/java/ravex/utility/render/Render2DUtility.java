@@ -604,6 +604,136 @@ public class Render2DUtility {
         return width * height + width * radius;
     }
 
+    private static final Map<String, Identifier> GLOW_CACHE = new HashMap<>();
+
+    private static String glowKey(int w, int h, float radius) {
+        return w + "_" + h + "_" + (int) radius;
+    }
+
+    public static void drawGlow(GuiGraphics graphics, float x, float y, float width, float height, float radius, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0 || width <= 0 || height <= 0) return;
+
+        int pad = (int) Math.ceil(radius * 2);
+        int texW = (int) Math.ceil(width) + pad * 2;
+        int texH = (int) Math.ceil(height) + pad * 2;
+        texW = Math.max(1, texW);
+        texH = Math.max(1, texH);
+
+        String key = glowKey(texW, texH, radius);
+        Identifier texId = GLOW_CACHE.get(key);
+
+        if (texId == null) {
+            NativeImage img = new NativeImage(texW, texH, false);
+            float cx = texW / 2f;
+            float cy = texH / 2f;
+            float hw = width / 2f;
+            float hh = height / 2f;
+            float sigma = radius / 2f;
+            float sigma2 = 2f * sigma * sigma;
+
+            for (int py = 0; py < texH; py++) {
+                for (int px = 0; px < texW; px++) {
+                    float dx = Math.abs(px - cx) - hw;
+                    float dy = Math.abs(py - cy) - hh;
+                    float dist = (float) Math.sqrt(Math.max(0, dx) * Math.max(0, dx) + Math.max(0, dy) * Math.max(0, dy));
+                    float alpha = (float) Math.exp(-dist * dist / sigma2);
+                    int aa = Math.min(255, Math.round(alpha * 255));
+                    if (aa > 0) {
+                        img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
+                    }
+                }
+            }
+
+            DynamicTexture dt = new DynamicTexture(() -> "glow_" + key, img);
+            setLinearSampler(dt);
+            texId = Identifier.fromNamespaceAndPath("ravex", "glow_" + key);
+            Minecraft.getInstance().getTextureManager().register(texId, dt);
+            GLOW_CACHE.put(key, texId);
+        }
+
+        int drawX = (int) (x - pad);
+        int drawY = (int) (y - pad);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, texId, drawX, drawY, 0f, 0f, texW, texH, texW, texH, color);
+    }
+
+    private static final Map<Integer, Identifier> CIRCLE_GLOW_CACHE = new HashMap<>();
+
+    public static void drawCircleGlow(GuiGraphics graphics, float cx, float cy, float radius, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0 || radius <= 0) return;
+
+        int d = (int) Math.ceil(radius * 2);
+        int key = d;
+        Identifier texId = CIRCLE_GLOW_CACHE.get(key);
+
+        if (texId == null) {
+            NativeImage img = new NativeImage(d, d, false);
+            float mid = d / 2f;
+            float invSigma2 = 8f / (radius * radius);
+            for (int py = 0; py < d; py++) {
+                for (int px = 0; px < d; px++) {
+                    float dx = px + 0.5f - mid;
+                    float dy = py + 0.5f - mid;
+                    float dist = (float) Math.sqrt(dx * dx + dy * dy);
+                    float alpha = (float) Math.exp(-dist * dist * invSigma2);
+                    int aa = Math.min(255, Math.round(alpha * 255));
+                    if (aa > 0) {
+                        img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
+                    }
+                }
+            }
+
+            DynamicTexture dt = new DynamicTexture(() -> "cglow_" + key, img);
+            setLinearSampler(dt);
+            texId = Identifier.fromNamespaceAndPath("ravex", "cglow_" + key);
+            Minecraft.getInstance().getTextureManager().register(texId, dt);
+            CIRCLE_GLOW_CACHE.put(key, texId);
+        }
+
+        graphics.blit(RenderPipelines.GUI_TEXTURED, texId, (int) (cx - radius), (int) (cy - radius), 0f, 0f, d, d, d, d, color);
+    }
+
+    private static final Map<String, Identifier> PULSE_RING_CACHE = new HashMap<>();
+
+    public static void drawPulseRing(GuiGraphics graphics, float cx, float cy, float outerRadius, float thickness, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0 || outerRadius <= 0 || thickness <= 0) return;
+
+        int d = (int) Math.ceil(outerRadius * 2);
+        String key = d + "_" + (int) thickness;
+        Identifier texId = PULSE_RING_CACHE.get(key);
+
+        if (texId == null) {
+            NativeImage img = new NativeImage(d, d, false);
+            float mid = d / 2f;
+            float invSigma2 = 4f / (thickness * thickness);
+            float innerR = outerRadius - thickness;
+
+            for (int py = 0; py < d; py++) {
+                for (int px = 0; px < d; px++) {
+                    float dx = px + 0.5f - mid;
+                    float dy = py + 0.5f - mid;
+                    float dist = (float) Math.sqrt(dx * dx + dy * dy);
+                    float ringDist = Math.max(0, Math.abs(dist - outerRadius + thickness / 2f) - thickness / 2f);
+                    float alpha = (float) Math.exp(-ringDist * ringDist * invSigma2);
+                    int aa = Math.min(255, Math.round(alpha * 255));
+                    if (aa > 0) {
+                        img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
+                    }
+                }
+            }
+
+            DynamicTexture dt = new DynamicTexture(() -> "ring_" + key, img);
+            setLinearSampler(dt);
+            texId = Identifier.fromNamespaceAndPath("ravex", "ring_" + key);
+            Minecraft.getInstance().getTextureManager().register(texId, dt);
+            PULSE_RING_CACHE.put(key, texId);
+        }
+
+        graphics.blit(RenderPipelines.GUI_TEXTURED, texId, (int) (cx - outerRadius), (int) (cy - outerRadius), 0f, 0f, d, d, d, d, color);
+    }
+
     public static void drawGaussianShadow(GuiGraphics graphics, float x, float y, float width, float height, int radius, int color) {
         int a = (color >> 24) & 0xFF;
         if (a == 0 || width <= 0 || height <= 0) return;

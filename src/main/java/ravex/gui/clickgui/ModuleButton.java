@@ -53,9 +53,13 @@ public class ModuleButton {
     private static double circleX = 0;
     private static double circleY = 0;
     private boolean lastHovered = false;
+    private boolean wasEnabled = false;
+    private float enablePulseAlpha = 0f;
+    private float enablePulseRadius = 0f;
 
     public ModuleButton(Module module) {
         this.module = module;
+        wasEnabled = module.getEnabled();
         for (Parameter<?> p : module.getParameters()) {
             parameterElements.add(new ParameterElement(p));
         }
@@ -144,6 +148,16 @@ public class ModuleButton {
             enableAnim = Math.max(targetAnim, enableAnim - 0.35f);
         }
 
+        if (module.getEnabled() && !wasEnabled) {
+            enablePulseAlpha = 200f;
+            enablePulseRadius = 0f;
+        }
+        wasEnabled = module.getEnabled();
+        if (enablePulseAlpha > 0.5f) {
+            enablePulseRadius += Math.max(2f, width * 0.025f);
+            enablePulseAlpha *= 0.92f;
+        }
+
         int activeColor = ColorUtility.getActiveColor();
         int btnAlpha = (int) ModuleManager.get(ClickGui.class).buttonOpacity;
         int disabledBg = ColorUtility.withAlpha(0x252530, btnAlpha);
@@ -159,14 +173,28 @@ public class ModuleButton {
             mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
         }
         if (expandFlash > 0.01f) {
-            int flashAlpha = (int) (expandFlash * Math.min(140, btnAlpha * 2));
+            int flashAlpha = (int) (expandFlash * Math.min(40, btnAlpha / 3));
             mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(activeColor, flashAlpha));
         }
 
         Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, mergedBg);
 
         if (expandFlash > 0.01f) {
-            Render2DUtility.drawGaussianShadow(graphics, x + 2, currentY - 2, width - 4, btnH + 8, 14, ColorUtility.withAlpha(activeColor, (int) (expandFlash * 160)));
+            int glowAlpha = (int) (expandFlash * 18);
+            int glowColor = ColorUtility.withAlpha(activeColor, glowAlpha);
+            int gap = 4;
+            Render2DUtility.drawPixelPerfectRound(graphics, x + 2 - gap, currentY - gap, width - 4 + gap * 2, btnH + gap * 2, btnRadius + gap, glowColor);
+            expandFlash = Math.max(0f, expandFlash - 0.02f);
+        }
+
+        if (enablePulseAlpha > 0.5f) {
+            float pr = enablePulseRadius;
+            int pulseAlpha = Math.min(200, (int) enablePulseAlpha);
+            Render2DUtility.drawPulseRing(graphics,
+                x + width / 2f,
+                currentY + btnH / 2f,
+                pr, 3f,
+                ColorUtility.withAlpha(activeColor, pulseAlpha));
         }
 
         if (hovered) {
@@ -180,7 +208,7 @@ public class ModuleButton {
             int alpha = (int) (hoverGlow * 120);
             int whiteGlow = ColorUtility.withAlpha(0xFFFFFFFF, alpha);
             graphics.enableScissor(x + 2, currentY, x + width - 2, currentY + btnH);
-            Render2DUtility.drawGaussianShadow(graphics, mouseX - 8, mouseY - 8, 16, 16, 11, whiteGlow);
+            Render2DUtility.drawGaussianShadow(graphics, (float) mouseX - 8, (float) mouseY - 8, 16, 16, 11, whiteGlow);
             graphics.disableScissor();
         }
 
@@ -259,8 +287,6 @@ public class ModuleButton {
             } else if (expandAnim > targetExpand) {
                 expandAnim = Math.max(targetExpand, expandAnim - 0.15f);
             }
-            expandFlash = Math.max(0f, expandFlash - 0.03f);
-
             if (expandAnim > 0.01f) {
                 int paramAreaH = 0;
                 int paramW = width - 6;
@@ -272,6 +298,12 @@ public class ModuleButton {
                 int actualH = getExpandedHeight(width);
                 int bgCol = ColorUtility.withAlpha(0x0A0A14, Math.max(btnAlpha / 2, 24));
                 Render2DUtility.drawPixelPerfectRound(graphics, x + 3, currentY, width - 6, actualH, Math.max(4, btnRadius - 2), bgCol);
+
+                int accentH = (int) (actualH * AnimationUtility.Easing.CUBIC_OUT.apply(expandAnim));
+                if (accentH > 1) {
+                    int barColor = ColorUtility.withAlpha(activeColor, (int) (expandAnim * 150));
+                    Render2DUtility.drawRound(graphics, x + 5, currentY + 1, 2, accentH, 1, barColor);
+                }
 
                 inlineScrollAnim = inlineScrollTarget;
                 int scrollOffset = Math.round(inlineScrollAnim);

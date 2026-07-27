@@ -13,12 +13,14 @@ import ravex.modules.Modules;
 
 
 
+
 @Module(name = "NoFall", category = "Movement")
 public class NoFall {
-    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "UNCP"})
     public String mode = "Vanilla";
 
     private boolean wasOnGround = true;
+    private int uncpCounter = 0;
 
     @Subscribe
     public void onPacket(PacketEvent event) {
@@ -28,7 +30,7 @@ public class NoFall {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
-        if ("Grim".equals(mode)) return;
+        if ("Grim".equals(mode) || "UNCP".equals(mode)) return;
 
         if (mc.player.fallDistance <= 2.0) return;
 
@@ -53,9 +55,26 @@ public class NoFall {
                 mc.player.fallDistance = 0;
             }
             wasOnGround = mc.player.onGround();
+        } else if ("UNCP".equals(modeVal) && mc.player.fallDistance > 0.5) {
+            mc.player.fallDistance = 0;
+            mc.player.setDeltaMovement(
+                mc.player.getDeltaMovement().x * 0.98,
+                Math.min(mc.player.getDeltaMovement().y, 0.0) * 0.5,
+                mc.player.getDeltaMovement().z * 0.98
+            );
+            uncpCounter++;
+            if (uncpCounter % 3 == 0) {
+                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
+                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                    true, mc.player.horizontalCollision
+                ));
+            }
         }
     }
 
+    public void onDisable() {
+        uncpCounter = 0;
+    }
 
 
 

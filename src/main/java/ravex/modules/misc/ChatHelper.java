@@ -38,68 +38,68 @@ import ravex.modules.Modules;
 public class ChatHelper {
     @Parameter(name = "Mode", modes = {"Announcer", "Welcomer", "AutoEZ", "ZoV", "Spammer", "CoordLogger", "DurabAlert", "ChatFilter"})
     public String mode = "Announcer";
-    @Parameter(name = "Announcer")
+    @Parameter(name = "Announcer", visible = "mode=Announcer")
     public boolean announcerEnabled = false;
-    @Parameter(name = "Welcomer")
+    @Parameter(name = "Welcomer", visible = "mode=Welcomer")
     public boolean welcomerEnabled = false;
-    @Parameter(name = "AutoEZ")
+    @Parameter(name = "AutoEZ", visible = "mode=AutoEZ")
     public boolean autoEZEnabled = false;
-    @Parameter(name = "Spammer")
+    @Parameter(name = "Spammer", visible = "mode=Spammer")
     public boolean spammerEnabled = false;
-    @Parameter(name = "CoordLogger")
+    @Parameter(name = "CoordLogger", visible = "mode=CoordLogger")
     public boolean coordLoggerEnabled = false;
-    @Parameter(name = "DurabAlert")
+    @Parameter(name = "DurabAlert", visible = "mode=DurabAlert")
     public boolean durabAlertEnabled = false;
-    @Parameter(name = "ChatFilter")
+    @Parameter(name = "Walk", visible = "mode=Announcer")
+    public boolean announceWalk = true;
+    @Parameter(name = "Eat", visible = "mode=Announcer")
+    public boolean announceEat = true;
+    @Parameter(name = "Hit", visible = "mode=Announcer")
+    public boolean announceHit = true;
+    @Parameter(name = "AnnounceMode", modes = {"Periodic", "Milestone"}, visible = "mode=Announcer")
+    public String announceMode = "Periodic";
+    @Parameter(name = "Interval", min = 10, max = 300, step = 10, visible = "mode=Announcer")
+    public double interval = 10;
+    @Parameter(name = "FirstJoinOnly", visible = "mode=Welcomer")
+    public boolean onlyFirstJoin = true;
+    @Parameter(name = "EZOnlyPlayers", visible = "mode=AutoEZ")
+    public boolean ezOnlyPlayers = true;
+    @Parameter(name = "EZDelay", min = 0.0, max = 3000.0, step = 100.0, visible = "mode=AutoEZ")
+    public double ezDelay = 500.0;
+    @Parameter(name = "ZoV", visible = "mode=ZoV")
+    public boolean zov = false;
+    @Parameter(name = "ZoVStyle", modes = {"Simple", "Extended"}, visible = "mode=ZoV")
+    public String zovStyle = "Extended";
+    @Parameter(name = "SpamMode", modes = {"Text", "File"}, visible = "mode=Spammer")
+    public String spamMode = "Text";
+    @Parameter(name = "SpamText", visible = "mode=Spammer")
+    public String spamText = "RaveX on top!";
+    @Parameter(name = "SpamFile", visible = "mode=Spammer")
+    public String spamFile = "spam.txt";
+    @Parameter(name = "SpamDelay", min = 100.0, max = 10000.0, step = 100.0, visible = "mode=Spammer")
+    public double spamDelay = 1000.0;
+    @Parameter(name = "LogDeath", visible = "mode=CoordLogger")
+    public boolean logDeath = true;
+    @Parameter(name = "LogJoin", visible = "mode=CoordLogger")
+    public boolean logJoin = false;
+    @Parameter(name = "ChatNotify", visible = "mode=CoordLogger")
+    public boolean chatNotify = true;
+    @Parameter(name = "AlertMode", modes = {"Own", "Enemy", "Both"}, visible = "mode=DurabAlert")
+    public String dAlertMode = "Own";
+    @Parameter(name = "Threshold", min = 1.0, max = 100.0, step = 1.0, visible = "mode=DurabAlert")
+    public double threshold = 10.0;
+    @Parameter(name = "Sound", visible = "mode=DurabAlert")
+    public boolean sound = true;
+    @Parameter(name = "ChatFilter", visible = "mode=ChatFilter")
     public boolean chatFilter = false;
-    @Parameter(name = "FilterDuplicate")
+    @Parameter(name = "FilterDuplicate", visible = "mode=ChatFilter")
     public boolean filterDuplicate = false;
-    @Parameter(name = "OnlyName")
+    @Parameter(name = "OnlyName", visible = "mode=ChatFilter")
     public boolean onlyName = true;
     @Parameter(name = "Timestamp")
     public boolean timestamp = false;
     @Parameter(name = "TSFormat", modes = {"HH:mm", "HH:mm:ss", "[HH:mm]", "[HH:mm:ss]"})
     public String timestampFormat = "HH:mm";
-    @Parameter(name = "Walk")
-    public boolean announceWalk = true;
-    @Parameter(name = "Eat")
-    public boolean announceEat = true;
-    @Parameter(name = "Hit")
-    public boolean announceHit = true;
-    @Parameter(name = "AnnounceMode", modes = {"Periodic", "Milestone"})
-    public String announceMode = "Periodic";
-    @Parameter(name = "Interval", min = 10, max = 300, step = 10)
-    public double interval = 10;
-    @Parameter(name = "FirstJoinOnly")
-    public boolean onlyFirstJoin = true;
-    @Parameter(name = "EZOnlyPlayers")
-    public boolean ezOnlyPlayers = true;
-    @Parameter(name = "EZDelay", min = 0.0, max = 3000.0, step = 100.0)
-    public double ezDelay = 500.0;
-    @Parameter(name = "ZoVStyle", modes = {"Simple", "Extended"})
-    public String zovStyle = "Extended";
-    @Parameter(name = "ZoV")
-    public boolean zov = false;
-    @Parameter(name = "SpamMode", modes = {"Text", "File"})
-    public String spamMode = "Text";
-    @Parameter(name = "SpamText")
-    public String spamText = "RaveX on top!";
-    @Parameter(name = "SpamFile")
-    public String spamFile = "spam.txt";
-    @Parameter(name = "SpamDelay", min = 100.0, max = 10000.0, step = 100.0)
-    public double spamDelay = 1000.0;
-    @Parameter(name = "LogDeath")
-    public boolean logDeath = true;
-    @Parameter(name = "LogJoin")
-    public boolean logJoin = false;
-    @Parameter(name = "ChatNotify")
-    public boolean chatNotify = true;
-    @Parameter(name = "AlertMode", modes = {"Own", "Enemy", "Both"})
-    public String dAlertMode = "Own";
-    @Parameter(name = "Threshold", min = 1.0, max = 100.0, step = 1.0)
-    public double threshold = 10.0;
-    @Parameter(name = "Sound")
-    public boolean sound = true;
     @Parameter(name = "ChatHistory", min = 100.0, max = 10000.0, step = 100.0)
     public double chatHistorySize = 1000.0;
     @Parameter(name = "CopyOnClick")

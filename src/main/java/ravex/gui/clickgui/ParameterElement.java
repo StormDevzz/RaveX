@@ -438,7 +438,9 @@ public class ParameterElement {
 
             if (button == 1) {
                 parameter.setExpanded(!parameter.isExpanded());
-                playSound();
+                if (!(parameter instanceof ravex.parameter.StringParameter)) {
+                    playSound();
+                }
                 return true;
             }
             if (parameter instanceof BooleanParameter bp) {
