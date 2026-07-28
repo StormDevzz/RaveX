@@ -3,6 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.network.NetworkUtility;
 
 
 
@@ -26,26 +27,14 @@ public class PacketFly {
         double z = mc.player.getZ();
         boolean onGround = mc.player.onGround();
         if (m.equals("Fast")) {
-            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                x, y + vert, z, false, onGround
-            ));
-            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                x, y - 0.05, z, true, onGround
-            ));
+            NetworkUtility.sendMoveRelative(x, y + vert, z, false, onGround);
+            NetworkUtility.sendMoveRelative(x, y - 0.05, z, true, onGround);
         } else if (m.equals("Damage")) {
-            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                x, y + spd, z, false, onGround
-            ));
-            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                x, y, z, false, onGround
-            ));
+            NetworkUtility.sendMoveRelative(x, y + spd, z, false, onGround);
+            NetworkUtility.sendMoveRelative(x, y, z, false, onGround);
         } else if (m.equals("Setback")) {
-            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                x, y + 9, z, false, onGround
-            ));
-            mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                x, y + vert, z, false, onGround
-            ));
+            NetworkUtility.sendMoveRelative(x, y + 9, z, false, onGround);
+            NetworkUtility.sendMoveRelative(x, y + vert, z, false, onGround);
         }
     }
 

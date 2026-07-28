@@ -3,6 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
@@ -47,8 +48,7 @@ public class Criticals {
                 net.minecraft.world.entity.LivingEntity lt = MobUtility.asLivingEntity(target);
                 if (lt != null && MobUtility.isAlive(lt) && target != mc.player
                     && mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
-                    mc.player.connection.send(
-                        net.minecraft.network.protocol.game.ServerboundInteractPacket.createAttackPacket(target, mc.player.isShiftKeyDown()));
+                    NetworkUtility.sendInteractAttack(target, mc.player.isShiftKeyDown());
                     SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
@@ -73,41 +73,28 @@ public class Criticals {
                 seqTicks = 0;
             }
             case "Packet" -> {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y + 0.0625, z, false, false));
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y, z, false, false));
+                NetworkUtility.sendMoveRelative(x, y + 0.0625, z, false, false);
+                NetworkUtility.sendMoveRelative(x, y, z, false, false);
                 seq = Sequence.LANDING;
             }
             case "Grim" -> {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y + 0.001, z, false, false));
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y, z, false, false));
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y - 0.001, z, false, false));
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y - 0.0625, z, false, false));
+                NetworkUtility.sendMoveRelative(x, y + 0.001, z, false, false);
+                NetworkUtility.sendMoveRelative(x, y, z, false, false);
+                NetworkUtility.sendMoveRelative(x, y - 0.001, z, false, false);
+                NetworkUtility.sendMoveRelative(x, y - 0.0625, z, false, false);
                 seq = Sequence.LANDING;
             }
             case "MiniJump" -> {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y + 0.02, z, false, false));
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y - 0.02, z, false, false));
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y + 0.001, z, false, false));
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y - 0.0625, z, false, false));
+                NetworkUtility.sendMoveRelative(x, y + 0.02, z, false, false);
+                NetworkUtility.sendMoveRelative(x, y - 0.02, z, false, false);
+                NetworkUtility.sendMoveRelative(x, y + 0.001, z, false, false);
+                NetworkUtility.sendMoveRelative(x, y - 0.0625, z, false, false);
                 seq = Sequence.LANDING;
             }
             case "Watchdog" -> {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y + 0.0001, z, false, false));
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y + 0.0001, z, false, false));
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y - 0.1, z, false, false));
+                NetworkUtility.sendMoveRelative(x, y + 0.0001, z, false, false);
+                NetworkUtility.sendMoveRelative(x, y + 0.0001, z, false, false);
+                NetworkUtility.sendMoveRelative(x, y - 0.1, z, false, false);
                 seq = Sequence.LANDING;
             }
         }

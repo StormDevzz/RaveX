@@ -6,6 +6,7 @@ import ravex.event.client.TickEvent;
 
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.utility.movement.MoveUtility;
 @Module(name = "FreeCam", category = "Render")
 public class FreeCam {
 public double x, y, z;
@@ -51,7 +52,7 @@ public double x, y, z;
     public void onDisable() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
-            mc.player.setDeltaMovement(0, 0, 0);
+            MoveUtility.setMotion(0, 0, 0);
             if (freeze) {
                 mc.player.setPos(frozenX, frozenY, frozenZ);
                 mc.player.setYRot(frozenYaw);
@@ -127,7 +128,7 @@ public double x, y, z;
         this.x += this.targetX - this.x;
         this.y += this.targetY - this.y;
         this.z += this.targetZ - this.z;
-        mc.player.setDeltaMovement(0, 0, 0);
+        MoveUtility.setMotion(0, 0, 0);
     }
     public double[] getCorrectedRenderCoordinates(double partialTicks) {
         double[] output = new double[5];

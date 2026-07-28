@@ -2,6 +2,8 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.network.NetworkUtility;
+import ravex.utility.movement.MoveUtility;
 import ravex.event.Subscribe;
 import ravex.event.movement.VelocityEvent;
 
@@ -51,20 +53,20 @@ public class Velocity {
                 if (mc.player != null) {
                     double ox = (random.nextDouble() - 0.5) * 0.01;
                     double oz = (random.nextDouble() - 0.5) * 0.01;
-                    mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
+                    NetworkUtility.sendMoveRelative(
                         mc.player.getX() + ox, mc.player.getY(), mc.player.getZ() + oz,
                         mc.player.onGround(), mc.player.horizontalCollision
-                    ));
+                    );
                 }
             }
             case "Grim" -> {
                 event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * 0.1, 0.0, cur.z * 0.1));
                 var mc = MinecraftWrapper.getInstance();
                 if (mc.player != null) {
-                    mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
+                    NetworkUtility.sendMoveRelative(
                         mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                         mc.player.onGround(), mc.player.horizontalCollision
-                    ));
+                    );
                 }
             }
             case "GrimStrict" -> {
@@ -84,17 +86,17 @@ public class Velocity {
                 if (grimDelayTicks == 0) {
                     double grimH = grimHorizontal / 100.0;
                     double grimV = grimVertical / 100.0;
-                    mc.player.setDeltaMovement(grimSavedVelocity.x * (1.0 - grimH), grimSavedVelocity.y * (1.0 - grimV), grimSavedVelocity.z * (1.0 - grimH));
+                    MoveUtility.setMotion(grimSavedVelocity.x * (1.0 - grimH), grimSavedVelocity.y * (1.0 - grimV), grimSavedVelocity.z * (1.0 - grimH));
                 }
             }
             grimTickCounter++;
             if (grimTickCounter % 2 == 0) {
                 double ox = (random.nextDouble() - 0.5) * 0.011 + 0.001;
                 double oz = (random.nextDouble() - 0.5) * 0.011 + 0.001;
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
+                NetworkUtility.sendMoveRelative(
                     mc.player.getX() + ox, mc.player.getY(), mc.player.getZ() + oz,
                     mc.player.onGround(), mc.player.horizontalCollision
-                ));
+                );
             }
         }
     }

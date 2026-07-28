@@ -2,8 +2,7 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
@@ -70,10 +69,7 @@ public class NoSlow {
             if (matrixSwapTicks >= interval) {
                 matrixSwapTicks = 0;
                 // Swap on this tick: resets server's "using item" state
-                mc.player.connection.send(new ServerboundPlayerActionPacket(
-                    ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND,
-                    net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN
-                ));
+                NetworkUtility.sendSwapWithOffhand();
                 return;
             }
 
@@ -103,13 +99,8 @@ public class NoSlow {
                 if (altTicks < interval) return;
                 altTicks = 0;
                 net.minecraft.world.InteractionHand hand = mc.player.getUsedItemHand();
-                mc.player.connection.send(new ServerboundPlayerActionPacket(
-                    ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM,
-                    net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN, 0
-                ));
-                mc.player.connection.send(new ServerboundUseItemPacket(
-                    hand, 0, mc.player.getYRot(), mc.player.getXRot()
-                ));
+                NetworkUtility.sendReleaseUseItem();
+                NetworkUtility.sendUseItem(hand, mc.player.getYRot(), mc.player.getXRot());
             } else {
                 altSlowPhase = altTicks % 2 == 1;
                 if (altTicks >= Math.max(2, interval * 2)) altTicks = 0;

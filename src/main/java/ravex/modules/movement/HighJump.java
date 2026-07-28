@@ -3,7 +3,9 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import java.util.Random;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.movement.MoveUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "HighJump", category = "Movement")
 public class HighJump {
@@ -34,7 +36,7 @@ public class HighJump {
 
         if ("Vanilla".equals(modeVal)) {
             if (mc.options.keyJump.isDown() && mc.player.onGround()) {
-                mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, height, mc.player.getDeltaMovement().z);
+                MoveUtility.setMotion(mc.player.getDeltaMovement().x, height, mc.player.getDeltaMovement().z);
             }
             return;
         }
@@ -50,18 +52,14 @@ public class HighJump {
                         new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5),
                         net.minecraft.core.Direction.UP, pos, false
                     );
-                    mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(
-                        net.minecraft.world.InteractionHand.MAIN_HAND, hit, 0
-                    ));
+                    NetworkUtility.sendUseItemOn(net.minecraft.world.InteractionHand.MAIN_HAND, hit);
                     net.minecraft.core.BlockPos shulkerPos = pos.above();
                     net.minecraft.world.phys.BlockHitResult openHit = new net.minecraft.world.phys.BlockHitResult(
                         new net.minecraft.world.phys.Vec3(shulkerPos.getX() + 0.5, shulkerPos.getY() + 0.5, shulkerPos.getZ() + 0.5),
                         net.minecraft.core.Direction.UP, shulkerPos, false
                     );
-                    mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundUseItemOnPacket(
-                        net.minecraft.world.InteractionHand.MAIN_HAND, openHit, 0
-                    ));
-                    mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, height, mc.player.getDeltaMovement().z);
+                    NetworkUtility.sendUseItemOn(net.minecraft.world.InteractionHand.MAIN_HAND, openHit);
+                    MoveUtility.setMotion(mc.player.getDeltaMovement().x, height, mc.player.getDeltaMovement().z);
                     InventoryUtility.selectSlot(mc.player, oldSlot);
                 }
             }
@@ -82,7 +80,7 @@ public class HighJump {
     private void handleNCP() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player.onGround() && mc.options.keyJump.isDown()) {
-            mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, 0.42, mc.player.getDeltaMovement().z);
+            MoveUtility.setMotion(mc.player.getDeltaMovement().x, 0.42, mc.player.getDeltaMovement().z);
             ncpJumping = true;
             ncpJumpTicks = 0;
             ncpStartY = mc.player.getY();
@@ -99,13 +97,13 @@ public class HighJump {
 
         double ox = (random.nextDouble() - 0.5) * 0.001;
         double oz = (random.nextDouble() - 0.5) * 0.001;
-        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
+        NetworkUtility.sendMoveRelative(
             mc.player.getX() + ox, mc.player.getY() + 0.001, mc.player.getZ() + oz,
             true, true
-        ));
+        );
 
         if (ncpJumpTicks % ncpDelay == 0) {
-            mc.player.setDeltaMovement(
+            MoveUtility.setMotion(
                 mc.player.getDeltaMovement().x,
                 Math.min(0.42, mc.player.getDeltaMovement().y + 0.08),
                 mc.player.getDeltaMovement().z
@@ -116,7 +114,7 @@ public class HighJump {
     private void handleUNCP() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player.onGround() && mc.options.keyJump.isDown()) {
-            mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, 0.42, mc.player.getDeltaMovement().z);
+            MoveUtility.setMotion(mc.player.getDeltaMovement().x, 0.42, mc.player.getDeltaMovement().z);
             uncpJumping = true;
             uncpStartY = mc.player.getY();
             uncpTicks = 0;
@@ -135,13 +133,13 @@ public class HighJump {
         double increment = Math.min(incrementBase + random.nextDouble() * 0.02, height - currentHeight);
         double ox = (random.nextDouble() - 0.5) * 0.005;
         double oz = (random.nextDouble() - 0.5) * 0.005;
-        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
+        NetworkUtility.sendMoveRelative(
             mc.player.getX() + ox, mc.player.getY() + increment, mc.player.getZ() + oz,
             true, true
-        ));
+        );
 
         if (uncpTicks % uncpDelay == 0) {
-            mc.player.setDeltaMovement(
+            MoveUtility.setMotion(
                 mc.player.getDeltaMovement().x,
                 0.42,
                 mc.player.getDeltaMovement().z

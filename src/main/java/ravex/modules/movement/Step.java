@@ -3,6 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
 import ravex.utility.misc.PotionUtility;
+import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Step", category = "Movement")
 public class Step {
@@ -15,42 +16,25 @@ public class Step {
         if (mc.player == null) return;
         PotionUtility.setStepHeight(mc.player, height);
         String modeVal = mode;
+        boolean hc = mc.player.horizontalCollision;
         if (modeVal.equalsIgnoreCase("Packet")) {
-            if (mc.player.horizontalCollision && mc.player.onGround()) {
-                var connection = mc.player.connection;
-                if (connection != null) {
-                    double x = mc.player.getX();
-                    double y = mc.player.getY();
-                    double z = mc.player.getZ();
-                    connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                        x, y + 0.41999998688698, z, false, mc.player.horizontalCollision
-                    ));
-                    connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                        x, y + 0.7531999805212, z, false, mc.player.horizontalCollision
-                    ));
-                }
+            if (hc && mc.player.onGround()) {
+                double x = mc.player.getX();
+                double y = mc.player.getY();
+                double z = mc.player.getZ();
+                NetworkUtility.sendMoveRelative(x, y + 0.41999998688698, z, false, hc);
+                NetworkUtility.sendMoveRelative(x, y + 0.7531999805212, z, false, hc);
             }
         } else if (modeVal.equalsIgnoreCase("Grim")) {
-            if (mc.player.horizontalCollision && mc.player.onGround()) {
-                var connection = mc.player.connection;
-                if (connection != null) {
-                    double x = mc.player.getX();
-                    double y = mc.player.getY();
-                    double z = mc.player.getZ();
-                    connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                        x, y + 0.42, z, false, mc.player.horizontalCollision
-                    ));
-                    connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                        x, y + 0.75, z, false, mc.player.horizontalCollision
-                    ));
-                    connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                        x, y + 1.0, z, false, mc.player.horizontalCollision
-                    ));
-                    if (height > 1.0) {
-                        connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                            x, y + 1.5, z, false, mc.player.horizontalCollision
-                        ));
-                    }
+            if (hc && mc.player.onGround()) {
+                double x = mc.player.getX();
+                double y = mc.player.getY();
+                double z = mc.player.getZ();
+                NetworkUtility.sendMoveRelative(x, y + 0.42, z, false, hc);
+                NetworkUtility.sendMoveRelative(x, y + 0.75, z, false, hc);
+                NetworkUtility.sendMoveRelative(x, y + 1.0, z, false, hc);
+                if (height > 1.0) {
+                    NetworkUtility.sendMoveRelative(x, y + 1.5, z, false, hc);
                 }
             }
         }

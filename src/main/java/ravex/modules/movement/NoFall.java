@@ -5,6 +5,8 @@ import ravex.event.Subscribe;
 import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.network.NetworkUtility;
+import ravex.utility.movement.MoveUtility;
 import net.minecraft.network.protocol.Packet;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -47,27 +49,23 @@ public class NoFall {
         String modeVal = mode;
         if ("Grim".equals(modeVal)) {
             if (wasOnGround && !mc.player.onGround() && mc.player.fallDistance > 0.5) {
-                mc.player.setDeltaMovement(
-                    mc.player.getDeltaMovement().x,
-                    0.42,
-                    mc.player.getDeltaMovement().z
-                );
+                MoveUtility.setMotion(mc.player.getDeltaMovement().x, 0.42, mc.player.getDeltaMovement().z);
                 mc.player.fallDistance = 0;
             }
             wasOnGround = mc.player.onGround();
         } else if ("UNCP".equals(modeVal) && mc.player.fallDistance > 0.5) {
             mc.player.fallDistance = 0;
-            mc.player.setDeltaMovement(
+            MoveUtility.setMotion(
                 mc.player.getDeltaMovement().x * 0.98,
                 Math.min(mc.player.getDeltaMovement().y, 0.0) * 0.5,
                 mc.player.getDeltaMovement().z * 0.98
             );
             uncpCounter++;
             if (uncpCounter % 3 == 0) {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
+                NetworkUtility.sendMoveRelative(
                     mc.player.getX(), mc.player.getY(), mc.player.getZ(),
                     true, mc.player.horizontalCollision
-                ));
+                );
             }
         }
     }
