@@ -7,6 +7,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.core.component.DataComponents;
+import ravex.utility.misc.PotionUtility;
 import ravex.utility.player.InventoryUtility;
 
 public class ElytraUtility {
@@ -96,8 +97,8 @@ public class ElytraUtility {
         if (b.isEmpty()) return true;
         var modA = a.get(DataComponents.ATTRIBUTE_MODIFIERS);
         var modB = b.get(DataComponents.ATTRIBUTE_MODIFIERS);
-        int defA = modA != null ? (int) modA.compute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR, 0.0, EquipmentSlot.CHEST) : 0;
-        int defB = modB != null ? (int) modB.compute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR, 0.0, EquipmentSlot.CHEST) : 0;
+        int defA = PotionUtility.getArmorDefense(modA, EquipmentSlot.CHEST);
+        int defB = PotionUtility.getArmorDefense(modB, EquipmentSlot.CHEST);
         return defA > defB;
     }
 }

@@ -14,8 +14,7 @@ import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import ravex.utility.misc.PotionUtility;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.RespawnAnchorBlock;
 import java.util.ArrayList;
@@ -423,16 +422,12 @@ public class AnchorAura {
         }
         double[] stats = new double[15];
         stats[0] = player.getArmorValue();
-        var attrToughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS);
-        stats[1] = attrToughness != null ? attrToughness.getValue() : 0.0;
+        stats[1] = PotionUtility.getArmorToughness(player);
         stats[2] = blastProtectionEpf;
         stats[3] = protectionEpf;
-        var resEffect = player.getEffect(MobEffects.RESISTANCE);
-        stats[4] = resEffect != null ? resEffect.getAmplifier() + 1 : 0;
-        var weakEffect = player.getEffect(MobEffects.WEAKNESS);
-        stats[5] = weakEffect != null ? weakEffect.getAmplifier() + 1 : 0;
-        var strEffect = player.getEffect(MobEffects.STRENGTH);
-        stats[6] = strEffect != null ? strEffect.getAmplifier() + 1 : 0;
+        stats[4] = PotionUtility.getResistanceAmplifier(player);
+        stats[5] = PotionUtility.getWeaknessAmplifier(player);
+        stats[6] = PotionUtility.getStrengthAmplifier(player);
         int idx = 7;
         for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
             var armor = player.getItemBySlot(slot);

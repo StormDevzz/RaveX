@@ -1,7 +1,7 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import ravex.utility.misc.PotionUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Reach", category = "Combat")
 public class Reach {
@@ -12,26 +12,14 @@ public class Reach {
     public void onTick() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
-        var entityAttr = mc.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
-        if (entityAttr != null) {
-            entityAttr.setBaseValue(entityRange);
-        }
-        var blockAttr = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
-        if (blockAttr != null) {
-            blockAttr.setBaseValue(blockRange);
-        }
+        PotionUtility.setEntityInteractionRange(mc.player, entityRange);
+        PotionUtility.setBlockInteractionRange(mc.player, blockRange);
     }
     public void onDisable() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
-        var entityAttr = mc.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
-        if (entityAttr != null) {
-            entityAttr.setBaseValue(3.0);
-        }
-        var blockAttr = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
-        if (blockAttr != null) {
-            blockAttr.setBaseValue(4.5);
-        }
+        PotionUtility.resetEntityInteractionRange(mc.player);
+        PotionUtility.resetBlockInteractionRange(mc.player);
     }
 
 

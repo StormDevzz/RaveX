@@ -3,7 +3,6 @@ import ravex.mixin.client.AccessorMinecraft;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import ravex.mcwrapper.MinecraftWrapper;

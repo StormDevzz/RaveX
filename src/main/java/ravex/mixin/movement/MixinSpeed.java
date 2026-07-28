@@ -2,8 +2,8 @@ package ravex.mixin.movement;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
+import ravex.utility.misc.PotionUtility;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -225,12 +225,12 @@ public abstract class MixinSpeed {
                 }
 
                 double baseMoveSpeed = 0.2873;
-                if (player.hasEffect(MobEffects.SPEED)) {
-                    int amp = player.getEffect(MobEffects.SPEED).getAmplifier();
+                if (PotionUtility.hasSpeed(player)) {
+                    int amp = PotionUtility.getSpeedAmplifier(player);
                     baseMoveSpeed *= 1.0 + 0.2 * (amp + 1);
                 }
-                if (player.hasEffect(MobEffects.SLOWNESS)) {
-                    int amp = player.getEffect(MobEffects.SLOWNESS).getAmplifier();
+                if (PotionUtility.hasSlowness(player)) {
+                    int amp = PotionUtility.getSlownessAmplifier(player);
                     baseMoveSpeed /= 1.0 + 0.2 * (amp + 1);
                 }
 

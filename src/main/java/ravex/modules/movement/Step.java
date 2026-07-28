@@ -1,8 +1,8 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.List;
+import ravex.utility.misc.PotionUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Step", category = "Movement")
 public class Step {
@@ -13,11 +13,7 @@ public class Step {
     public void onTick() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
-        double stepHeight = height;
-        var attr = mc.player.getAttribute(Attributes.STEP_HEIGHT);
-        if (attr != null) {
-            attr.setBaseValue(stepHeight);
-        }
+        PotionUtility.setStepHeight(mc.player, height);
         String modeVal = mode;
         if (modeVal.equalsIgnoreCase("Packet")) {
             if (mc.player.horizontalCollision && mc.player.onGround()) {
@@ -50,7 +46,7 @@ public class Step {
                     connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                         x, y + 1.0, z, false, mc.player.horizontalCollision
                     ));
-                    if (stepHeight > 1.0) {
+                    if (height > 1.0) {
                         connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
                             x, y + 1.5, z, false, mc.player.horizontalCollision
                         ));
@@ -62,10 +58,7 @@ public class Step {
     public void onDisable() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
-            var attr = mc.player.getAttribute(Attributes.STEP_HEIGHT);
-            if (attr != null) {
-                attr.setBaseValue(0.6);
-            }
+            PotionUtility.resetStepHeight(mc.player);
         }
     }
 

@@ -7,6 +7,7 @@ import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
 import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.PotionUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.misc.CameraUtility;
@@ -194,7 +195,7 @@ public class KillAura {
                     mc.getPlayer().setDeltaMovement(vel.x * multiplier, vel.y, vel.z * multiplier);
                 }
             }
-            if (mc.getPlayer().hasEffect(net.minecraft.world.effect.MobEffects.BLINDNESS) && mc.getPlayer().isSprinting()) {
+            if (PotionUtility.hasBlindness(mc.getPlayer()) && mc.getPlayer().isSprinting()) {
                 mc.getPlayer().setSprinting(false);
             }
         }

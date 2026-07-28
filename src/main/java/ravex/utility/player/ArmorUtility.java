@@ -7,7 +7,7 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import ravex.utility.misc.PotionUtility;
 
 public class ArmorUtility {
     public static boolean isArmorItem(ItemStack stack) {
@@ -36,7 +36,7 @@ public class ArmorUtility {
         int defense = 0;
         ItemAttributeModifiers modifiers = stack.get(DataComponents.ATTRIBUTE_MODIFIERS);
         if (modifiers != null) {
-            defense = (int) modifiers.compute(Attributes.ARMOR, 0.0, slot);
+            defense = (int) PotionUtility.getArmorDefense(modifiers, slot);
         }
         int protLevel = 0;
         ItemEnchantments enchants = stack.get(DataComponents.ENCHANTMENTS);
