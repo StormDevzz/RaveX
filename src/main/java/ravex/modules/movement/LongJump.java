@@ -17,21 +17,17 @@ public class LongJump {
         jumped = false;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
 
-        if (mc.player.onGround()) {
+        if (mc.isPlayerOnGround()) {
             jumped = false;
         } else if (!jumped) {
             double speed = boost;
-            net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
+            var motion = mc.getPlayerDeltaMovement();
             MoveUtility.setMotion(motion.x * speed, motion.y + 0.05, motion.z * speed);
             jumped = true;
         }
     }
-
-
-
-
-
 }

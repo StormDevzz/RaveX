@@ -29,38 +29,39 @@ public class HighJump {
     private double uncpStartY = 0.0;
 
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
 
         String modeVal = mode;
 
         if ("Vanilla".equals(modeVal)) {
-            if (mc.options.keyJump.isDown() && mc.player.onGround()) {
-                MoveUtility.setMotion(mc.player.getDeltaMovement().x, height, mc.player.getDeltaMovement().z);
+            if (mc.isJumpKeyDown() && mc.isPlayerOnGround()) {
+                MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, height, mc.getPlayerDeltaMovement().z);
             }
             return;
         }
 
         if ("GrimShulker".equals(modeVal)) {
-            if (mc.options.keyJump.isDown() && mc.player.onGround()) {
+            if (mc.isJumpKeyDown() && mc.isPlayerOnGround()) {
                 int shulkerSlot = findShulkerBox();
                 if (shulkerSlot != -1) {
-                    int oldSlot = InventoryUtility.getSelectedSlot(mc.player);
-                    InventoryUtility.selectSlot(mc.player, shulkerSlot);
-                    net.minecraft.core.BlockPos pos = mc.player.blockPosition().below();
-                    net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
+                    int oldSlot = InventoryUtility.getSelectedSlot(player);
+                    InventoryUtility.selectSlot(player, shulkerSlot);
+                    var pos = player.blockPosition().below();
+                    var hit = new net.minecraft.world.phys.BlockHitResult(
                         new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5),
                         net.minecraft.core.Direction.UP, pos, false
                     );
                     NetworkUtility.sendUseItemOn(net.minecraft.world.InteractionHand.MAIN_HAND, hit);
-                    net.minecraft.core.BlockPos shulkerPos = pos.above();
-                    net.minecraft.world.phys.BlockHitResult openHit = new net.minecraft.world.phys.BlockHitResult(
+                    var shulkerPos = pos.above();
+                    var openHit = new net.minecraft.world.phys.BlockHitResult(
                         new net.minecraft.world.phys.Vec3(shulkerPos.getX() + 0.5, shulkerPos.getY() + 0.5, shulkerPos.getZ() + 0.5),
                         net.minecraft.core.Direction.UP, shulkerPos, false
                     );
                     NetworkUtility.sendUseItemOn(net.minecraft.world.InteractionHand.MAIN_HAND, openHit);
-                    MoveUtility.setMotion(mc.player.getDeltaMovement().x, height, mc.player.getDeltaMovement().z);
-                    InventoryUtility.selectSlot(mc.player, oldSlot);
+                    MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, height, mc.getPlayerDeltaMovement().z);
+                    InventoryUtility.selectSlot(player, oldSlot);
                 }
             }
             return;
@@ -78,19 +79,21 @@ public class HighJump {
     }
 
     private void handleNCP() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player.onGround() && mc.options.keyJump.isDown()) {
-            MoveUtility.setMotion(mc.player.getDeltaMovement().x, 0.42, mc.player.getDeltaMovement().z);
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
+        if (mc.isPlayerOnGround() && mc.isJumpKeyDown()) {
+            MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, 0.42, mc.getPlayerDeltaMovement().z);
             ncpJumping = true;
             ncpJumpTicks = 0;
-            ncpStartY = mc.player.getY();
+            ncpStartY = player.getY();
         }
 
         if (!ncpJumping) return;
         ncpJumpTicks++;
 
-        double currentHeight = mc.player.getY() - ncpStartY;
-        if (currentHeight >= height || !mc.options.keyJump.isDown() || mc.player.onGround()) {
+        double currentHeight = player.getY() - ncpStartY;
+        if (currentHeight >= height || !mc.isJumpKeyDown() || mc.isPlayerOnGround()) {
             ncpJumping = false;
             return;
         }
@@ -98,33 +101,35 @@ public class HighJump {
         double ox = (random.nextDouble() - 0.5) * 0.001;
         double oz = (random.nextDouble() - 0.5) * 0.001;
         NetworkUtility.sendMoveRelative(
-            mc.player.getX() + ox, mc.player.getY() + 0.001, mc.player.getZ() + oz,
+            player.getX() + ox, player.getY() + 0.001, player.getZ() + oz,
             true, true
         );
 
         if (ncpJumpTicks % ncpDelay == 0) {
             MoveUtility.setMotion(
-                mc.player.getDeltaMovement().x,
-                Math.min(0.42, mc.player.getDeltaMovement().y + 0.08),
-                mc.player.getDeltaMovement().z
+                mc.getPlayerDeltaMovement().x,
+                Math.min(0.42, mc.getPlayerDeltaMovement().y + 0.08),
+                mc.getPlayerDeltaMovement().z
             );
         }
     }
 
     private void handleUNCP() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player.onGround() && mc.options.keyJump.isDown()) {
-            MoveUtility.setMotion(mc.player.getDeltaMovement().x, 0.42, mc.player.getDeltaMovement().z);
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
+        if (mc.isPlayerOnGround() && mc.isJumpKeyDown()) {
+            MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, 0.42, mc.getPlayerDeltaMovement().z);
             uncpJumping = true;
-            uncpStartY = mc.player.getY();
+            uncpStartY = player.getY();
             uncpTicks = 0;
         }
 
         if (!uncpJumping) return;
         uncpTicks++;
 
-        double currentHeight = mc.player.getY() - uncpStartY;
-        if (currentHeight >= height || !mc.options.keyJump.isDown()) {
+        double currentHeight = player.getY() - uncpStartY;
+        if (currentHeight >= height || !mc.isJumpKeyDown()) {
             uncpJumping = false;
             return;
         }
@@ -134,27 +139,29 @@ public class HighJump {
         double ox = (random.nextDouble() - 0.5) * 0.005;
         double oz = (random.nextDouble() - 0.5) * 0.005;
         NetworkUtility.sendMoveRelative(
-            mc.player.getX() + ox, mc.player.getY() + increment, mc.player.getZ() + oz,
+            player.getX() + ox, player.getY() + increment, player.getZ() + oz,
             true, true
         );
 
         if (uncpTicks % uncpDelay == 0) {
             MoveUtility.setMotion(
-                mc.player.getDeltaMovement().x,
+                mc.getPlayerDeltaMovement().x,
                 0.42,
-                mc.player.getDeltaMovement().z
+                mc.getPlayerDeltaMovement().z
             );
         }
 
-        if (mc.player.onGround() && mc.player.getDeltaMovement().y <= 0.0) {
+        if (mc.isPlayerOnGround() && mc.getPlayerDeltaMovement().y <= 0.0) {
             uncpJumping = false;
         }
     }
 
     private int findShulkerBox() {
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return -1;
         for (int i = 0; i < 9; i++) {
-            net.minecraft.world.item.ItemStack stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(player, i);
             if (!stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem) {
                 if (blockItem.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock) {
                     return i;

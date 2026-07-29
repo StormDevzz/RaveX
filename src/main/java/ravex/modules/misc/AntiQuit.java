@@ -22,7 +22,7 @@ public class AntiQuit {
         try {
             nativeBlockQuit(true);
         } catch (UnsatisfiedLinkError ignored) {}
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         Window window = mc.getWindow();
         if (window == null) return;
         window.setWindowCloseCallback(() -> {
@@ -54,7 +54,7 @@ public class AntiQuit {
         try {
             nativeBlockQuit(false);
         } catch (UnsatisfiedLinkError ignored) {}
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         Window window = mc.getWindow();
         if (window != null) {
             window.setWindowCloseCallback(null);
@@ -68,8 +68,4 @@ public class AntiQuit {
     }
     private native void nativeBlockQuit(boolean block);
     private native boolean nativeIsQuitBlocked();
-
-
-
-
 }

@@ -9,6 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,11 +111,6 @@ public class MinecraftWrapper {
         return mc.screen != null;
     }
 
-    @Nullable
-    public Object getPlayerInput() {
-        return mc.player != null ? mc.player.input : null;
-    }
-
     public net.minecraft.client.Options getOptions() {
         return mc.options;
     }
@@ -186,5 +182,97 @@ public class MinecraftWrapper {
     @Nullable
     public net.minecraft.client.multiplayer.ServerData getCurrentServer() {
         return mc.getCurrentServer();
+    }
+
+    public double getPlayerFallDistance() {
+        return mc.player != null ? mc.player.fallDistance : 0.0;
+    }
+
+    public boolean isPlayerOnGround() {
+        return mc.player != null && mc.player.onGround();
+    }
+
+    public boolean isPlayerHorizontalCollision() {
+        return mc.player != null && mc.player.horizontalCollision;
+    }
+
+    @Nullable
+    public Vec3 getPlayerDeltaMovement() {
+        return mc.player != null ? mc.player.getDeltaMovement() : null;
+    }
+
+    public void setPlayerDeltaMovement(Vec3 motion) {
+        if (mc.player != null) mc.player.setDeltaMovement(motion);
+    }
+
+    public void setPlayerDeltaMovement(double x, double y, double z) {
+        if (mc.player != null) mc.player.setDeltaMovement(x, y, z);
+    }
+
+    public Vec3 getPlayerEyePosition() {
+        return mc.player != null ? mc.player.getEyePosition(1.0F) : Vec3.ZERO;
+    }
+
+    public Vec3 getPlayerViewVector() {
+        return mc.player != null ? mc.player.getViewVector(1.0F) : Vec3.ZERO;
+    }
+
+    public int getPlayerFoodLevel() {
+        return mc.player != null ? mc.player.getFoodData().getFoodLevel() : 20;
+    }
+
+    public float getPlayerHealth() {
+        return mc.player != null ? mc.player.getHealth() : 0;
+    }
+
+    @Nullable
+    public net.minecraft.world.entity.player.Abilities getPlayerAbilities() {
+        return mc.player != null ? mc.player.getAbilities() : null;
+    }
+
+    public boolean isKeyDown(int key) {
+        return mc.options.keyMappings[key].isDown();
+    }
+
+    public boolean isJumpKeyDown() {
+        return mc.options.keyJump.isDown();
+    }
+
+    public boolean isForwardKeyDown() {
+        return mc.options.keyUp.isDown();
+    }
+
+    public boolean isBackKeyDown() {
+        return mc.options.keyDown.isDown();
+    }
+
+    public boolean isLeftKeyDown() {
+        return mc.options.keyLeft.isDown();
+    }
+
+    public boolean isRightKeyDown() {
+        return mc.options.keyRight.isDown();
+    }
+
+    public boolean isSneakKeyDown() {
+        return mc.options.keyShift.isDown();
+    }
+
+    public boolean isUseKeyDown() {
+        return mc.options.keyUse.isDown();
+    }
+
+    public boolean isAttackKeyDown() {
+        return mc.options.keyAttack.isDown();
+    }
+
+    @Nullable
+    public Object getPlayerInput() {
+        return mc.player != null ? mc.player.input : null;
+    }
+
+    public Vec2 getPlayerMovementInput() {
+        if (mc.player == null || mc.player.input == null) return Vec2.ZERO;
+        return mc.player.input.getMoveVector();
     }
 }

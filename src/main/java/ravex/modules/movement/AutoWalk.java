@@ -15,24 +15,22 @@ public class AutoWalk {
     @Parameter(name = "SilentMode")
     public boolean silentMode = true;
 
-    {
-    }
-
     private long lastGotoTime = 0;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
         String m = mode;
         if ("Simple".equals(m)) {
-            mc.options.keyUp.setDown(true);
+            mc.getOptions().keyUp.setDown(true);
         } else if ("Baritone".equals(m)) {
-            mc.options.keyUp.setDown(true);
+            mc.getOptions().keyUp.setDown(true);
             long now = System.currentTimeMillis();
             if (now - lastGotoTime >= (int) baritoneInterval * 1000L) {
                 int range = (int) baritoneRange;
-                double yaw = Math.toRadians(mc.player.getYRot());
-                int x = mc.player.blockPosition().getX() + (int)(-Math.sin(yaw) * range);
-                int z = mc.player.blockPosition().getZ() + (int)(Math.cos(yaw) * range);
+                double yaw = Math.toRadians(player.getYRot());
+                int x = player.blockPosition().getX() + (int)(-Math.sin(yaw) * range);
+                int z = player.blockPosition().getZ() + (int)(Math.cos(yaw) * range);
                 try {
                     Class<?> apiClass = Class.forName("baritone.api.BaritoneAPI");
                     Object provider = apiClass.getMethod("getProvider").invoke(null);
@@ -48,8 +46,8 @@ public class AutoWalk {
         }
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        mc.options.keyUp.setDown(false);
+        var mc = MinecraftWrapper.getWrapper();
+        mc.getOptions().keyUp.setDown(false);
         if ("Baritone".equals(mode)) {
             try {
                 Class<?> apiClass = Class.forName("baritone.api.BaritoneAPI");
@@ -61,7 +59,4 @@ public class AutoWalk {
             }
         }
     }
-
-
-
 }

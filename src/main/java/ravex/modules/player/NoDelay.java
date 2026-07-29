@@ -6,8 +6,6 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
-
-
 @Module(name = "NoDelay", category = "net.minecraft.world.entity.player.Player")
 public class NoDelay {
     @Parameter(name = "Delay", min = 0.0, max = 4.0, step = 1.0)
@@ -21,7 +19,7 @@ public class NoDelay {
 
     public void onTick() {
         var mc = MinecraftWrapper.getInstance();
-        net.minecraft.client.player.LocalPlayer p = mc.player;
+        var p = mc.player;
         if (p == null) return;
         boolean isBlock = InventoryUtility.isHoldingBlock(p);
         if ((isBlock && blocks) || (!isBlock && items)) {
@@ -34,8 +32,4 @@ public class NoDelay {
             ((AccessorLivingEntity) p).setNoJumpDelay(0);
         }
     }
-
-
-
-
 }

@@ -9,17 +9,15 @@ public class AutoSprint {
     @Parameter(name = "Mode", modes = {"Legit", "Rage"})
     public String mode = "Rage";
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
         if ("Rage".equals(mode)) {
-            mc.player.setSprinting(true);
+            player.setSprinting(true);
         } else {
-            if (mc.player.input.hasForwardImpulse() && !PlayerUtility.isUsingItem(mc.player) && !PlayerUtility.isSneaking(mc.player)) {
-                mc.player.setSprinting(true);
+            if (player.input.hasForwardImpulse() && !PlayerUtility.isUsingItem(player) && !PlayerUtility.isSneaking(player)) {
+                player.setSprinting(true);
             }
         }
     }
-
-
-
 }

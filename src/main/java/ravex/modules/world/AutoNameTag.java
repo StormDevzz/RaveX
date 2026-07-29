@@ -7,9 +7,9 @@ import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AutoNameTag", category = "World")
 public class AutoNameTag {
 public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        var p = mc.player;
-        if (p == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         int tagSlot = -1;
         var tagStack = (net.minecraft.world.item.ItemStack) null;
         for (int i = 0; i < 9; i++) {
@@ -24,7 +24,7 @@ public void onTick() {
         String tagName = tagStack.getHoverName().getString();
         var target = (net.minecraft.world.entity.LivingEntity) null;
         double closestDist = 4.5;
-        for (var entity : mc.level.entitiesForRendering()) {
+        for (var entity : mc.getLevel().entitiesForRendering()) {
             if (MobUtility.isNameable(entity) && !MobUtility.hasName(entity, tagName)) {
                 double dist = p.distanceTo(entity);
                 if (dist < closestDist) {
@@ -36,13 +36,10 @@ public void onTick() {
         if (target == null) return;
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, tagSlot);
-        MobUtility.interact(ravex.mcwrapper.MinecraftWrapper.getWrapper(), target);
+        MobUtility.interact(mc, target);
         SwingUtility.swingMainHand(p);
         if (tagSlot != prevSlot) {
             InventoryUtility.selectSlot(p, prevSlot);
         }
     }
-
-
-
 }

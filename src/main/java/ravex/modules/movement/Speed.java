@@ -31,20 +31,17 @@ public static boolean cancelVertical = false;
         if (!"Matrix".equals(mode)) {
             return;
         }
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
 
-        if (!PlayerUtility.isSprinting(mc.player) && !mc.player.isCrouching()
-            && (mc.options.keyUp.isDown() || mc.options.keyDown.isDown() || mc.options.keyLeft.isDown() || mc.options.keyRight.isDown())) {
-            mc.player.setSprinting(true);
+        if (!PlayerUtility.isSprinting(player) && !player.isCrouching()
+            && (mc.isForwardKeyDown() || mc.isBackKeyDown() || mc.isLeftKeyDown() || mc.isRightKeyDown())) {
+            player.setSprinting(true);
         }
 
-        if (mc.player.onGround() && PlayerUtility.isSprinting(mc.player)) {
-            mc.player.jumpFromGround();
+        if (PlayerUtility.isOnGround(player) && PlayerUtility.isSprinting(player)) {
+            player.jumpFromGround();
         }
     }
-
-
-
-
 }

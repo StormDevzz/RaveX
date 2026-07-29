@@ -7,27 +7,22 @@ import ravex.utility.player.ToolUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
-
-
 @Module(name = "AutoTool", category = "net.minecraft.world.entity.player.Player")
 public class AutoTool {
     @Parameter(name = "Swap", modes = {"Silent", "Normal"})
     public String swap = "Silent";
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        if (!mc.options.keyAttack.isDown()) return;
-        if (!(mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult blockHit)) return;
-        net.minecraft.core.BlockPos pos = blockHit.getBlockPos();
-        int slot = ToolUtility.findBestToolSlot(mc.player, mc.level.getBlockState(pos));
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
+        if (!mc.isAttackKeyDown()) return;
+        if (!(mc.getHitResult() instanceof net.minecraft.world.phys.BlockHitResult blockHit)) return;
+        var pos = blockHit.getBlockPos();
+        int slot = ToolUtility.findBestToolSlot(player, mc.getLevel().getBlockState(pos));
         if (slot < 0) return;
         if ("Silent".equals(swap))
-            InventoryUtility.silentSelectSlot(mc.player, slot);
+            InventoryUtility.silentSelectSlot(player, slot);
         else
-            InventoryUtility.selectSlot(mc.player, slot);
+            InventoryUtility.selectSlot(player, slot);
     }
-
-
-
-
 }

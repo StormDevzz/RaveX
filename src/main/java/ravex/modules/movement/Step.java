@@ -12,24 +12,25 @@ public class Step {
     @Parameter(name = "Height", min = 1.0, max = 2.5, step = 0.5)
     public double height = 1.0;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
-        PotionUtility.setStepHeight(mc.player, height);
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
+        PotionUtility.setStepHeight(player, height);
         String modeVal = mode;
-        boolean hc = mc.player.horizontalCollision;
+        boolean hc = mc.isPlayerHorizontalCollision();
         if (modeVal.equalsIgnoreCase("Packet")) {
-            if (hc && mc.player.onGround()) {
-                double x = mc.player.getX();
-                double y = mc.player.getY();
-                double z = mc.player.getZ();
+            if (hc && mc.isPlayerOnGround()) {
+                double x = player.getX();
+                double y = player.getY();
+                double z = player.getZ();
                 NetworkUtility.sendMoveRelative(x, y + 0.41999998688698, z, false, hc);
                 NetworkUtility.sendMoveRelative(x, y + 0.7531999805212, z, false, hc);
             }
         } else if (modeVal.equalsIgnoreCase("Grim")) {
-            if (hc && mc.player.onGround()) {
-                double x = mc.player.getX();
-                double y = mc.player.getY();
-                double z = mc.player.getZ();
+            if (hc && mc.isPlayerOnGround()) {
+                double x = player.getX();
+                double y = player.getY();
+                double z = player.getZ();
                 NetworkUtility.sendMoveRelative(x, y + 0.42, z, false, hc);
                 NetworkUtility.sendMoveRelative(x, y + 0.75, z, false, hc);
                 NetworkUtility.sendMoveRelative(x, y + 1.0, z, false, hc);
@@ -40,12 +41,10 @@ public class Step {
         }
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            PotionUtility.resetStepHeight(mc.player);
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player != null) {
+            PotionUtility.resetStepHeight(player);
         }
     }
-
-
-
 }

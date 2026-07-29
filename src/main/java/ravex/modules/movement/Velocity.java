@@ -6,7 +6,6 @@ import ravex.utility.network.NetworkUtility;
 import ravex.utility.movement.MoveUtility;
 import ravex.event.Subscribe;
 import ravex.event.movement.VelocityEvent;
-
 import java.util.List;
 import java.util.Random;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -36,7 +35,7 @@ public class Velocity {
     public void onVelocity(VelocityEvent event) {
         if (!Modules.enabled(Velocity.class)) return;
         String modeVal = mode;
-        net.minecraft.world.phys.Vec3 cur = event.getVelocity();
+        var cur = event.getVelocity();
         double h = horizontal;
         double v = vertical;
 
@@ -49,23 +48,25 @@ public class Velocity {
             case "NCP" -> event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * h, cur.y, cur.z * h));
             case "UNCP" -> {
                 event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * h, cur.y * (v == 0.0 ? 0.0 : v), cur.z * h));
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.player != null) {
+                var mc = MinecraftWrapper.getWrapper();
+                var player = mc.getPlayer();
+                if (player != null) {
                     double ox = (random.nextDouble() - 0.5) * 0.01;
                     double oz = (random.nextDouble() - 0.5) * 0.01;
                     NetworkUtility.sendMoveRelative(
-                        mc.player.getX() + ox, mc.player.getY(), mc.player.getZ() + oz,
-                        mc.player.onGround(), mc.player.horizontalCollision
+                        player.getX() + ox, player.getY(), player.getZ() + oz,
+                        mc.isPlayerOnGround(), mc.isPlayerHorizontalCollision()
                     );
                 }
             }
             case "Grim" -> {
                 event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * 0.1, 0.0, cur.z * 0.1));
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.player != null) {
+                var mc = MinecraftWrapper.getWrapper();
+                var player = mc.getPlayer();
+                if (player != null) {
                     NetworkUtility.sendMoveRelative(
-                        mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                        mc.player.onGround(), mc.player.horizontalCollision
+                        player.getX(), player.getY(), player.getZ(),
+                        mc.isPlayerOnGround(), mc.isPlayerHorizontalCollision()
                     );
                 }
             }
@@ -78,8 +79,9 @@ public class Velocity {
         }
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
         if ("GrimStrict".equals(mode) && grimVelocityActive) {
             if (grimDelayTicks > 0) {
                 grimDelayTicks--;
@@ -94,14 +96,10 @@ public class Velocity {
                 double ox = (random.nextDouble() - 0.5) * 0.011 + 0.001;
                 double oz = (random.nextDouble() - 0.5) * 0.011 + 0.001;
                 NetworkUtility.sendMoveRelative(
-                    mc.player.getX() + ox, mc.player.getY(), mc.player.getZ() + oz,
-                    mc.player.onGround(), mc.player.horizontalCollision
+                    player.getX() + ox, player.getY(), player.getZ() + oz,
+                    mc.isPlayerOnGround(), mc.isPlayerHorizontalCollision()
                 );
             }
         }
     }
-
-
-
-
 }

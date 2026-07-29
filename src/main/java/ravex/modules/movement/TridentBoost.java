@@ -16,26 +16,23 @@ public class TridentBoost {
     @Parameter(name = "Vertical", min = 0.0, max = 2.0, step = 0.1)
     public double vertical = 0.5;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
-        var main = InventoryUtility.getMainHand(mc.player);
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
+        var main = InventoryUtility.getMainHand(player);
         if (!InventoryUtility.isTrident(main)) return;
         if (!InventoryUtility.hasEnchantment(main, "riptide")) return;
-        if (!PlayerUtility.isUsingItem(mc.player)) return;
+        if (!PlayerUtility.isUsingItem(player)) return;
         String m = mode;
-        if (m.equals("Normal") && !mc.player.isInWaterOrRain()) return;
-        float yaw = mc.player.getYRot() * ((float)Math.PI / 180F);
-        float pitch = mc.player.getXRot() * ((float)Math.PI / 180F);
+        if (m.equals("Normal") && !player.isInWaterOrRain()) return;
+        float yaw = player.getYRot() * ((float)Math.PI / 180F);
+        float pitch = player.getXRot() * ((float)Math.PI / 180F);
         double mult = speed;
         double vert = vertical;
         double dx = -Math.sin(yaw) * Math.cos(pitch) * mult;
         double dy = -Math.sin(pitch) * vert;
         double dz = Math.cos(yaw) * Math.cos(pitch) * mult;
         MoveUtility.setMotion(new net.minecraft.world.phys.Vec3(dx, dy, dz));
-        mc.player.hurtMarked = true;
+        player.hurtMarked = true;
     }
-
-
-
-
 }

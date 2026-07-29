@@ -5,6 +5,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
 
 public class PlayerUtility {
     public static boolean isPlayerInWorld() {
@@ -100,5 +101,33 @@ public class PlayerUtility {
 
     public static boolean isUsingItem(Player player) {
         return player.isUsingItem();
+    }
+
+    public static boolean isOnGround(Player player) {
+        return player.onGround();
+    }
+
+    public static double getFallDistance(Player player) {
+        return player.fallDistance;
+    }
+
+    public static void setFallDistance(Player player, double fallDistance) {
+        player.fallDistance = fallDistance;
+    }
+
+    public static int getFoodLevel(Player player) {
+        return player.getFoodData().getFoodLevel();
+    }
+
+    public static Vec3 getDeltaMovement(Player player) {
+        return player.getDeltaMovement();
+    }
+
+    public static void setDeltaMovement(Player player, Vec3 motion) {
+        player.setDeltaMovement(motion);
+    }
+
+    public static void setDeltaMovement(Player player, double x, double y, double z) {
+        player.setDeltaMovement(x, y, z);
     }
 }

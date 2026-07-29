@@ -8,7 +8,6 @@ import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
-
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
@@ -37,7 +36,6 @@ public class NoSlow {
     @Parameter(name = "V3Interval", min = 1, max = 20, step = 1, visible = "mode=GrimV3")
     public double v3Interval = 4;
 
-    // Matrix mode parameters
     @Parameter(name = "SwapInterval", min = 1.0, max = 8.0, step = 1.0, visible = "mode=Matrix")
     public double matrixSwapInterval = 3.0;
     @Parameter(name = "VelocityScale", min = 0.5, max = 2.0, step = 0.01, visible = "mode=Matrix")
@@ -54,41 +52,36 @@ public class NoSlow {
     public void onTick(TickEvent.Client event) {
         if (!Modules.enabled(NoSlow.class)) return;
         String modeVal = mode;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.getConnection() == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
 
         if ("Matrix".equals(modeVal)) {
-            if (!PlayerUtility.isUsingItem(mc.player)) {
+            if (!PlayerUtility.isUsingItem(player)) {
                 matrixSwapTicks = 0;
                 return;
             }
 
             int interval = (int) matrixSwapInterval;
-            boolean isMoving = mc.player.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
+            boolean isMoving = mc.getPlayerDeltaMovement().horizontalDistanceSqr() > 0.0001;
 
             matrixSwapTicks++;
             if (matrixSwapTicks >= interval) {
                 matrixSwapTicks = 0;
-                // Swap on this tick: resets server's "using item" state
                 NetworkUtility.sendSwapWithOffhand();
                 return;
             }
 
-            // On non-swap ticks, boost velocity to compensate for slowdown
             if (isMoving) {
                 double scale = matrixVelocityScale;
-                net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
-                mc.player.setDeltaMovement(
-                    motion.x * scale,
-                    motion.y,
-                    motion.z * scale
-                );
+                var motion = mc.getPlayerDeltaMovement();
+                mc.setPlayerDeltaMovement(motion.x * scale, motion.y, motion.z * scale);
             }
             return;
         }
 
         if ("GrimAlternative".equals(modeVal)) {
-            if (!PlayerUtility.isUsingItem(mc.player)) {
+            if (!PlayerUtility.isUsingItem(player)) {
                 altTicks = 0;
                 return;
             }
@@ -99,9 +92,9 @@ public class NoSlow {
             if ("Packet".equals(action)) {
                 if (altTicks < interval) return;
                 altTicks = 0;
-                net.minecraft.world.InteractionHand hand = mc.player.getUsedItemHand();
+                var hand = player.getUsedItemHand();
                 NetworkUtility.sendReleaseUseItem();
-                NetworkUtility.sendUseItem(hand, mc.player.getYRot(), mc.player.getXRot());
+                NetworkUtility.sendUseItem(hand, player.getYRot(), player.getXRot());
             } else {
                 altSlowPhase = altTicks % 2 == 1;
                 if (altTicks >= Math.max(2, interval * 2)) altTicks = 0;
@@ -110,7 +103,7 @@ public class NoSlow {
         }
 
         if ("GrimV3".equals(modeVal)) {
-            if (!PlayerUtility.isUsingItem(mc.player)) {
+            if (!PlayerUtility.isUsingItem(player)) {
                 v3Ticks = 0;
                 return;
             }
@@ -133,10 +126,6 @@ public class NoSlow {
         }
         return defaultFriction;
     }
-
-
-
-
 
     public boolean isSlowPhase() {
         return altSlowPhase;
@@ -166,6 +155,4 @@ public class NoSlow {
     public float getMatrixInputScale() {
         return (float) matrixInputScale;
     }
-
-
 }

@@ -7,8 +7,6 @@ import ravex.utility.movement.VoidUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
-
-
 @Module(name = "AntiVoid", category = "Movement")
 public class AntiVoid {
     @Parameter(name = "Distance", min = 1.0, max = 10.0, step = 0.5)
@@ -20,9 +18,9 @@ public class AntiVoid {
         lastOnGroundPos = null;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        net.minecraft.client.player.LocalPlayer p = mc.player;
-        if (p == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null) return;
         if (p.onGround()) {
             lastOnGroundPos = p.position();
         } else if (lastOnGroundPos != null && lastOnGroundPos.y - p.getY() > fallDistance) {
@@ -36,7 +34,4 @@ public class AntiVoid {
             }
         }
     }
-
-
-
 }

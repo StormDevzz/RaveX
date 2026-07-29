@@ -143,6 +143,24 @@ public class NetworkUtility {
             c.send(new ServerboundPlayerCommandPacket(mc().player, action));
     }
 
+    public static void sendPacket(Packet<?> packet) {
+        var c = mc().getConnection();
+        if (c != null)
+            c.send(packet);
+    }
+
+    public static void sendCommand(String command) {
+        var c = mc().getConnection();
+        if (c != null)
+            c.sendCommand(command);
+    }
+
+    public static void sendChat(String message) {
+        var p = mc().player;
+        if (p != null)
+            p.connection.sendChat(message);
+    }
+
     @Contract(value = "null -> false", pure = true)
     public static boolean isMovePacket(Packet<?> packet) {
         return packet instanceof ServerboundMovePlayerPacket;

@@ -69,4 +69,21 @@ public class MoveUtility {
         }
         return null;
     }
+
+    public static Vec3 getMotion() {
+        var p = MinecraftWrapper.getInstance().player;
+        return p != null ? p.getDeltaMovement() : Vec3.ZERO;
+    }
+
+    public static boolean isMoving() {
+        var p = MinecraftWrapper.getInstance().player;
+        if (p == null) return false;
+        var input = p.input.keyPresses;
+        return input != null && (input.forward() || input.backward() || input.left() || input.right());
+    }
+
+    public static boolean horizontalCollision() {
+        var p = MinecraftWrapper.getInstance().player;
+        return p != null && p.horizontalCollision;
+    }
 }

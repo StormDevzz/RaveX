@@ -17,14 +17,15 @@ public class AutoLog {
     @Parameter(name = "Range", min = 4.0, max = 64.0, step = 1.0)
     public double playerRange = 16.0;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        if (onLowHealth && PlayerUtility.getHealth(mc.player) <= healthLimit) {
-            disconnect("LowHealthTriggered(" + PlayerUtility.getHealth(mc.player) + " HP)");
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
+        if (onLowHealth && PlayerUtility.getHealth(player) <= healthLimit) {
+            disconnect("LowHealthTriggered(" + PlayerUtility.getHealth(player) + " HP)");
             return;
         }
-        for (net.minecraft.world.entity.player.Player other : mc.level.players()) {
-            if (other == mc.player) continue;
+        for (var other : mc.getLevel().players()) {
+            if (other == player) continue;
             double dist = MobUtility.distanceToPlayer(other);
             if (onPlayerNearby && dist <= playerRange) {
                 disconnect("net.minecraft.world.entity.player.Player " + other.getGameProfile().name() + " is too close (" + String.format("%.1f", dist) + "m)");
@@ -33,14 +34,11 @@ public class AutoLog {
         }
     }
     private void disconnect(String reason) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.getConnection() != null) {
-            mc.getConnection().getConnection().disconnect(net.minecraft.network.chat.Component.literal("§c[RaveX AutoLog] §f" + reason));
+        var mc = MinecraftWrapper.getWrapper();
+        var connection = mc.getConnection();
+        if (connection != null) {
+            connection.getConnection().disconnect(net.minecraft.network.chat.Component.literal("§c[RaveX AutoLog] §f" + reason));
         }
         Modules.setEnabled(AutoLog.class, false);
     }
-
-
-
-
 }

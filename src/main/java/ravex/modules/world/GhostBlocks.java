@@ -8,7 +8,6 @@ import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.resources.Identifier;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-
 import ravex.utility.network.NetworkUtility;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,17 +25,19 @@ public class GhostBlocks {
     private final Map<Long, String> serverBlocks = new HashMap<>();
     private long lastCheckTime = 0;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null || mc.getConnection() == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null || mc.getConnection() == null) return;
         long now = System.currentTimeMillis();
         if (now - lastCheckTime < 500) return;
         lastCheckTime = now;
         double r = range;
-        var pPos = mc.player.blockPosition();
+        var pPos = player.blockPosition();
+        var level = mc.getLevel();
         int minX = (int) Math.floor(pPos.getX() - r);
         int maxX = (int) Math.ceil(pPos.getX() + r);
-        int minY = (int) Math.max(mc.level.getMinY(), Math.floor(pPos.getY() - r));
-        int maxY = (int) Math.min(mc.level.getMaxY(), Math.ceil(pPos.getY() + r));
+        int minY = (int) Math.max(level.getMinY(), Math.floor(pPos.getY() - r));
+        int maxY = (int) Math.min(level.getMaxY(), Math.ceil(pPos.getY() + r));
         int minZ = (int) Math.floor(pPos.getZ() - r);
         int maxZ = (int) Math.ceil(pPos.getZ() + r);
         for (int x = minX; x <= maxX; x++) {
@@ -44,14 +45,14 @@ public class GhostBlocks {
                 for (int z = minZ; z <= maxZ; z++) {
                     long packed = BlockUtility.packPos(x, y, z);
                     var pos = BlockUtility.pos(x, y, z);
-                    if (BlockUtility.isAir(mc.level, x, y, z)) continue;
-                    if (BlockUtility.destroySpeed(mc.level, pos) < 0) continue;
-                    if (!isGhostBlock(x, y, z, getBlockId(BlockUtility.getState(mc.level, x, y, z)))) continue;
+                    if (BlockUtility.isAir(level, x, y, z)) continue;
+                    if (BlockUtility.destroySpeed(level, pos) < 0) continue;
+                    if (!isGhostBlock(x, y, z, getBlockId(BlockUtility.getState(level, x, y, z)))) continue;
                     if ("Strict".equals(mode)) {
                         NetworkUtility.sendStartDestroy(pos, net.minecraft.core.Direction.UP, 0);
                         NetworkUtility.sendStopDestroy(pos, net.minecraft.core.Direction.UP, 0);
                         recentlyMined.remove(packed);
-                        BlockUtility.swing(ravex.mcwrapper.MinecraftWrapper.getWrapper());
+                        BlockUtility.swing(mc);
                     }
                 }
             }
@@ -98,9 +99,4 @@ public class GhostBlocks {
         Identifier rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         return rl != null ? rl.toString() : "minecraft:air";
     }
-
-
-
-
-
 }

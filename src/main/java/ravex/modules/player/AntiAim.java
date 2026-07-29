@@ -40,27 +40,28 @@ public class AntiAim {
         return silentRotation.pitch;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
         ticks++;
 
         spinYaw += (float) yawSpeed;
         spinYaw = RotationUtility.normalizeYaw(spinYaw);
 
-        float targetYaw = mc.player.getYRot();
-        float targetPitch = mc.player.getXRot();
+        float targetYaw = player.getYRot();
+        float targetPitch = player.getXRot();
 
         String yawModeStr = yawMode;
         switch (yawModeStr) {
             case "Spin" -> targetYaw = spinYaw;
             case "Jitter" -> {
                 float jitter = (float) yawJitterAmount;
-                targetYaw = mc.player.getYRot() + (ticks % 2 == 0 ? jitter : -jitter);
+                targetYaw = player.getYRot() + (ticks % 2 == 0 ? jitter : -jitter);
             }
-            case "Static" -> targetYaw = mc.player.getYRot() + 180f;
+            case "Static" -> targetYaw = player.getYRot() + 180f;
             case "Random" -> {
                 float range = (float) yawJitterAmount;
-                targetYaw = mc.player.getYRot() + ThreadLocalRandom.current().nextFloat(-range, range);
+                targetYaw = player.getYRot() + ThreadLocalRandom.current().nextFloat(-range, range);
             }
         }
 
@@ -85,14 +86,8 @@ public class AntiAim {
         if (silent) {
             silentRotation.set(targetYaw, targetPitch);
         } else {
-            mc.player.setYRot(targetYaw);
-            mc.player.setXRot(targetPitch);
+            player.setYRot(targetYaw);
+            player.setXRot(targetPitch);
         }
     }
-
-
-
-
-
-
 }

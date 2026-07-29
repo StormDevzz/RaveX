@@ -5,11 +5,8 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.HoneycombItem;
 import ravex.mcwrapper.MinecraftWrapper;
-
-
 
 @Module(name = "WaxAura", category = "Misc")
 public class WaxAura {
@@ -26,9 +23,9 @@ public class WaxAura {
         delayTimer = 0;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        net.minecraft.client.player.LocalPlayer p = mc.player;
-        if (p == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null) return;
         if (delayTimer > 0) {
             delayTimer--;
             return;
@@ -43,17 +40,17 @@ public class WaxAura {
         }
         if (honeycombSlot == -1) return;
         double r = range;
-        net.minecraft.core.BlockPos playerPos = p.blockPosition();
+        var playerPos = p.blockPosition();
         net.minecraft.core.BlockPos targetPos = null;
         double closestDistSq = r * r;
         int rangeInt = (int) Math.ceil(r);
         for (int x = -rangeInt; x <= rangeInt; x++) {
             for (int y = -rangeInt; y <= rangeInt; y++) {
                 for (int z = -rangeInt; z <= rangeInt; z++) {
-                    net.minecraft.core.BlockPos pos = playerPos.offset(x, y, z);
+                    var pos = playerPos.offset(x, y, z);
                     double distSq = p.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
                     if (distSq < closestDistSq) {
-                        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+                        var state = mc.getLevel().getBlockState(pos);
                         if (HoneycombItem.getWaxed(state).isPresent()) {
                             closestDistSq = distSq;
                             targetPos = pos;
@@ -67,9 +64,10 @@ public class WaxAura {
             if (autoSwap && honeycombSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, honeycombSlot);
             }
-            net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(targetPos);
-            net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
-            mc.gameMode.useItemOn(p, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
+            var hitVec = PhysicUtility.centerOf(targetPos);
+            var blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
+            var gm = mc.getGameMode();
+            if (gm != null) gm.useItemOn(p, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
             SwingUtility.swing(p, net.minecraft.world.InteractionHand.MAIN_HAND);
             if (autoSwap && silent && honeycombSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, prevSlot);
@@ -77,8 +75,4 @@ public class WaxAura {
             delayTimer = (int) delay;
         }
     }
-
-
-
-
 }

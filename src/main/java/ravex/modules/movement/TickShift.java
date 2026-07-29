@@ -1,14 +1,12 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.world.entity.player.Input;
-
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
-
 import java.util.List;
 import java.util.Random;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.player.PlayerUtility;
 
 @Module(name = "TickShift", category = "Movement")
 public class TickShift {
@@ -36,18 +34,16 @@ public class TickShift {
     private int boostTicks = 0;
     private int releaseCounter = 0;
 
-    {
-    }
     public void onEnable() {
         idleTicks = 0;
         boostTicks = 0;
         releaseCounter = 0;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
-        Input input = mc.player.input.keyPresses;
-        boolean moving = input.forward() || input.backward() || input.left() || input.right();
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
+        boolean moving = MoveUtility.isMoving();
 
         if ("GrimStrict".equals(mode)) {
             if (!moving) {
@@ -70,7 +66,7 @@ public class TickShift {
                 releaseCounter = 0;
             }
             if (boostTicks == 0) return;
-            net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
+            var motion = mc.getPlayerDeltaMovement();
             double mult = grimSpeed;
             MoveUtility.setMotion(motion.x * mult, motion.y, motion.z * mult);
             return;
@@ -90,13 +86,14 @@ public class TickShift {
             idleTicks = 0;
         }
         if (boostTicks == 0) return;
-        net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
+        var motion = mc.getPlayerDeltaMovement();
         String m = mode;
         if (m.equals("Motion")) {
             double mult = speed;
             MoveUtility.setMotion(motion.x * mult, motion.y, motion.z * mult);
         } else if (m.equals("Strafe")) {
-            double yaw = mc.player.getYRot() * Math.PI / 180.0;
+            double yaw = player.getYRot() * Math.PI / 180.0;
+            var input = player.input.keyPresses;
             double forward = (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0);
             double strafe = (input.right() ? 1 : 0) - (input.left() ? 1 : 0);
             double cos = Math.cos(yaw);
@@ -117,7 +114,4 @@ public class TickShift {
             MoveUtility.setMotion(motion.x * mult, motion.y, motion.z * mult);
         }
     }
-
-
-
 }

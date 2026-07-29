@@ -21,16 +21,12 @@ public class Borders {
     public double renderDistance = 64;
     private ChunkPos lastChunk;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        lastChunk = mc.player.chunkPosition();
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
+        lastChunk = player.chunkPosition();
     }
     public ChunkPos getCurrentChunk() {
         return lastChunk;
     }
-
-
-
-
-
 }

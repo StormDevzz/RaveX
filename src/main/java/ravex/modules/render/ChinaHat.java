@@ -4,7 +4,6 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
-
 import ravex.utility.render.Render3DUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
@@ -26,8 +25,9 @@ public static final ChinaHat INSTANCE = new ChinaHat();
         ChinaHat ch = Modules.get(ChinaHat.class);
         if (ch == null || !Modules.enabled(ChinaHat.class)) return;
 
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var level = mc.getLevel();
+        if (level == null) return;
 
         int c = ch.color;
         float r = ((c >> 16) & 0xFF) / 255.0f;
@@ -43,8 +43,9 @@ public static final ChinaHat INSTANCE = new ChinaHat();
         double dotSize = 0.09;
         Matrix4f mat = new Matrix4f();
 
-        for (net.minecraft.world.entity.player.Player player : mc.level.players()) {
-            if (player == mc.player) continue;
+        var self = mc.getPlayer();
+        for (net.minecraft.world.entity.player.Player player : level.players()) {
+            if (player == self) continue;
             if (player.isRemoved() || !player.isAlive()) continue;
 
             net.minecraft.world.phys.Vec3 pos = player.position();
@@ -70,6 +71,4 @@ public static final ChinaHat INSTANCE = new ChinaHat();
             }
         }
     }
-
-
 }

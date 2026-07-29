@@ -2,7 +2,6 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
-
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Flight", category = "Movement")
@@ -36,10 +35,11 @@ public class Flight {
         RaveX.LOGGER.info("[Flight] Enabled with mode: {}", mode);
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            mc.player.getAbilities().flying = false;
-            mc.player.getAbilities().invulnerable = false;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player != null) {
+            player.getAbilities().flying = false;
+            player.getAbilities().invulnerable = false;
         }
     }
     private static double[] javaCalculateVelocity(String mode, double hSpeed, double vSpeed, double glide, double yaw, double pitch, boolean jump, boolean sneak) {
@@ -67,13 +67,10 @@ public class Flight {
         return new double[]{velX, velY, velZ};
     }
 
-
     private static double javaHandleAirFriction(String mode, double currentSpeed, double acceleration, double friction) {
         if (mode.equals("NCP")) {
             return currentSpeed * (1.0 - friction * 0.05);
         }
         return Math.min(currentSpeed + acceleration, currentSpeed * (1.0 + acceleration * 0.1));
     }
-
-
 }

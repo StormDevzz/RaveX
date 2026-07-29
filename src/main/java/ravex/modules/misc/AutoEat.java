@@ -16,17 +16,18 @@ public class AutoEat {
     @Parameter(name = "Mode", modes = {"Normal", "Silent", "Vanilla"})
     public String mode = "Normal";
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        float hunger = mc.player.getFoodData().getFoodLevel();
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
+        float hunger = player.getFoodData().getFoodLevel();
         if ("Vanilla".equals(mode)) {
-            mc.options.keyUse.setDown(hunger < threshold);
+            mc.getOptions().keyUse.setDown(hunger < threshold);
             return;
         }
         if (FoodUtility.INSTANCE.isEating()) {
             FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
             if (result == FoodUtility.Result.FINISHED && notify) {
-                mc.player.displayClientMessage(
+                player.displayClientMessage(
                     Component.literal("§7[§cAutoEat§7] §aDone eating"), false);
             }
             return;
@@ -34,20 +35,17 @@ public class AutoEat {
         if (hunger >= threshold) return;
         FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
         if (result == FoodUtility.Result.STARTED && notify) {
-            mc.player.displayClientMessage(
+            player.displayClientMessage(
                 Component.literal("§7[§cAutoEat§7] §aEating (" + (int)hunger + " hunger)"),
                 false);
         }
     }
     public void onDisable() {
         if ("Vanilla".equals(mode)) {
-            var mc = MinecraftWrapper.getInstance();
-            if (mc.options != null) mc.options.keyUse.setDown(false);
+            var mc = MinecraftWrapper.getWrapper();
+            var options = mc.getOptions();
+            if (options != null) options.keyUse.setDown(false);
         }
         FoodUtility.INSTANCE.reset();
     }
-
-
-
-
 }

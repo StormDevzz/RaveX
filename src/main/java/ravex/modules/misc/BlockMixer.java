@@ -8,9 +8,6 @@ import java.util.Random;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-
-
-
 @Module(name = "BlockMixer", category = "Misc")
 public class BlockMixer {
     @Parameter(name = "Swap", modes = {"Normal", "Silent"})
@@ -19,8 +16,8 @@ public class BlockMixer {
 
     public void shuffle() {
         if (!Modules.enabled(BlockMixer.class)) return;
-        var mc = MinecraftWrapper.getInstance();
-        net.minecraft.client.player.LocalPlayer player = mc.player;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
         if (player == null) return;
         List<Integer> blockSlots = new ArrayList<>();
         for (int i = 0; i < 9; i++) {
@@ -37,16 +34,10 @@ public class BlockMixer {
                 b = blockSlots.get(RANDOM.nextInt(blockSlots.size()));
             }
             if (a == b) return;
-            InventoryUtility.swapSlots(ravex.mcwrapper.MinecraftWrapper.getWrapper(), player.containerMenu.containerId, a, b);
+            InventoryUtility.swapSlots(mc, player.containerMenu.containerId, a, b);
         } else {
             int target = blockSlots.get(RANDOM.nextInt(blockSlots.size()));
             InventoryUtility.selectSlot(player, target);
         }
     }
-
-
-
-
-
-
 }

@@ -25,21 +25,23 @@ public class ViewLock {
     private float targetPitch = 0;
     private boolean hasTarget = false;
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            targetYaw = mc.player.getYRot();
-            targetPitch = mc.player.getXRot();
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player != null) {
+            targetYaw = player.getYRot();
+            targetPitch = player.getXRot();
             hasTarget = true;
         }
     }
 
     public void saveCurrentAngle() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            savedYaw = mc.player.getYRot();
-            savedPitch = mc.player.getXRot();
-            targetYaw = mc.player.getYRot();
-            targetPitch = mc.player.getXRot();
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player != null) {
+            savedYaw = player.getYRot();
+            savedPitch = player.getXRot();
+            targetYaw = player.getYRot();
+            targetPitch = player.getXRot();
             hasTarget = true;
         }
     }
@@ -75,10 +77,4 @@ public class ViewLock {
     public boolean isDirectionMode() {
         return Modules.enabled(ViewLock.class) && "net.minecraft.core.Direction".equals(mode);
     }
-
-
-
-
-
-
 }

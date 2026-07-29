@@ -8,8 +8,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
-
-
 @Module(name = "AutoMend", category = "net.minecraft.world.entity.player.Player")
 public class AutoMend {
     @Parameter(name = "Threshold", min = 10.0, max = 95.0, step = 5.0)
@@ -17,9 +15,9 @@ public class AutoMend {
     @Parameter(name = "Swap", modes = {"Normal", "Silent"})
     public String swapMode = "Silent";
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        net.minecraft.client.player.LocalPlayer p = mc.player;
-        if (p == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         boolean needsMend = false;
         EquipmentSlot[] armorSlots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
         for (EquipmentSlot slot : armorSlots) {
@@ -47,14 +45,11 @@ public class AutoMend {
         boolean silent = "Silent".equals(swapMode);
         InventoryUtility.selectSlot(p, expSlot);
         NetworkUtility.sendRot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision);
-        mc.gameMode.useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
+        var gm = mc.getGameMode();
+        if (gm != null) gm.useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
         SwingUtility.swing(p, net.minecraft.world.InteractionHand.MAIN_HAND);
         if (silent) {
             InventoryUtility.selectSlot(p, prevSlot);
         }
     }
-
-
-
-
 }

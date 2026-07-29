@@ -24,13 +24,14 @@ public class Spider {
     private int uncpTicks = 0;
 
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
         if (!"UNCP".equals(mode)) return;
 
-        if (mc.player.horizontalCollision && mc.options.keyUp.isDown()) {
-            if (mc.player.onGround()) {
-                MoveUtility.setMotion(mc.player.getDeltaMovement().x, uncpMotion, mc.player.getDeltaMovement().z);
+        if (mc.isPlayerHorizontalCollision() && mc.isForwardKeyDown()) {
+            if (mc.isPlayerOnGround()) {
+                MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, uncpMotion, mc.getPlayerDeltaMovement().z);
                 uncpTicks = 0;
             }
 
@@ -38,12 +39,12 @@ public class Spider {
             double ox = (random.nextDouble() - 0.5) * uncpNoise * 2;
             double oz = (random.nextDouble() - 0.5) * uncpNoise * 2;
             NetworkUtility.sendMoveRelative(
-                mc.player.getX() + ox, mc.player.getY() + 0.001, mc.player.getZ() + oz,
+                player.getX() + ox, player.getY() + 0.001, player.getZ() + oz,
                 true, true
             );
 
             if (uncpTicks % uncpDelay == 0) {
-                MoveUtility.setMotion(mc.player.getDeltaMovement().x, uncpMotion, mc.player.getDeltaMovement().z);
+                MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, uncpMotion, mc.getPlayerDeltaMovement().z);
             }
         }
     }

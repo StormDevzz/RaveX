@@ -4,7 +4,6 @@ import ravex.modules.annotations.Parameter;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Replenish", category = "net.minecraft.world.entity.player.Player")
@@ -13,12 +12,13 @@ public class Replenish {
     public double threshold = 32;
     private long lastActionTime = 0;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.gameMode == null) return;
-        if (mc.screen != null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getGameMode() == null) return;
+        if (mc.getCurrentScreen() != null) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < 200) return;
-        Inventory inv = mc.player.getInventory();
+        Inventory inv = player.getInventory();
         int thr = (int) threshold;
         for (int i = 0; i < 9; i++) {
             var stack = inv.getItem(i);
@@ -36,14 +36,10 @@ public class Replenish {
                 if (invId == null || !invId.toString().equals(targetId)) continue;
                 int available = Math.min(invStack.getCount(), needed);
                 if (available <= 0) continue;
-                InventoryUtility.clickSlot(ravex.mcwrapper.MinecraftWrapper.getWrapper(), mc.player, j, 0, InventoryUtility.QUICK_MOVE);
+                InventoryUtility.clickSlot(mc, player, j, 0, InventoryUtility.QUICK_MOVE);
                 lastActionTime = now;
                 return;
             }
         }
     }
-
-
-
-
 }

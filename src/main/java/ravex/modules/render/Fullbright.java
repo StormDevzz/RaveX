@@ -9,20 +9,17 @@ public class Fullbright {
     @Parameter(name = "DarknessMult", min = 0.0, max = 1.0, step = 0.05)
     public double darknessMult = 0.0;
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.levelRenderer != null) {
-            mc.levelRenderer.allChanged();
+        var mc = MinecraftWrapper.getWrapper();
+        var renderer = mc.getLevelRenderer();
+        if (renderer != null) {
+            renderer.allChanged();
         }
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.levelRenderer != null) {
-            mc.levelRenderer.allChanged();
+        var mc = MinecraftWrapper.getWrapper();
+        var renderer = mc.getLevelRenderer();
+        if (renderer != null) {
+            renderer.allChanged();
         }
     }
-
-
-
-
-
 }

@@ -6,7 +6,8 @@ import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.item.Items;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-
+import ravex.utility.movement.MoveUtility;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -27,42 +28,44 @@ public class Phase {
         if (!Modules.enabled(Phase.class) || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (packet instanceof ServerboundUseItemPacket usePacket) {
-            var mc = MinecraftWrapper.getInstance();
-            if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
+            var mc = MinecraftWrapper.getWrapper();
+            var player = mc.getPlayer();
+            if (player != null && player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
                 clip();
             }
         }
     }
 
     public void clip() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.getConnection() == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null) return;
         double[] offset = new double[3];
         if (NATIVE.isLoaded()) {
             try {
-                nativeCalculateOffset(mc.player.getYRot(), mc.player.getXRot(), distance, offset);
+                nativeCalculateOffset(player.getYRot(), player.getXRot(), distance, offset);
             } catch (UnsatisfiedLinkError | Exception e) {
-                javaCalculateOffset(mc.player.getYRot(), mc.player.getXRot(), distance, offset);
+                javaCalculateOffset(player.getYRot(), player.getXRot(), distance, offset);
             }
         } else {
-            javaCalculateOffset(mc.player.getYRot(), mc.player.getXRot(), distance, offset);
+            javaCalculateOffset(player.getYRot(), player.getXRot(), distance, offset);
         }
-        double targetX = mc.player.getX() + offset[0];
-        double targetY = mc.player.getY() + offset[1];
-        double targetZ = mc.player.getZ() + offset[2];
+        double targetX = player.getX() + offset[0];
+        double targetY = player.getY() + offset[1];
+        double targetZ = player.getZ() + offset[2];
         if ("Positive1".equals(mode)) {
-            mc.player.setPos(targetX, targetY, targetZ);
-            mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(targetX, targetY, targetZ, false, mc.player.horizontalCollision));
+            MoveUtility.setPos(targetX, targetY, targetZ);
+            NetworkUtility.sendMoveRelative(targetX, targetY, targetZ, false, player.horizontalCollision);
         } else {
             double steps = 5;
             for (int i = 1; i <= steps; i++) {
                 double ratio = (double) i / steps;
-                double stepX = mc.player.getX() + offset[0] * ratio;
-                double stepY = mc.player.getY() + offset[1] * ratio;
-                double stepZ = mc.player.getZ() + offset[2] * ratio;
-                mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(stepX, stepY, stepZ, false, mc.player.horizontalCollision));
+                double stepX = player.getX() + offset[0] * ratio;
+                double stepY = player.getY() + offset[1] * ratio;
+                double stepZ = player.getZ() + offset[2] * ratio;
+                NetworkUtility.sendMoveRelative(stepX, stepY, stepZ, false, player.horizontalCollision);
             }
-            mc.player.setPos(targetX, targetY, targetZ);
+            MoveUtility.setPos(targetX, targetY, targetZ);
         }
     }
     private void javaCalculateOffset(double yaw, double pitch, double distance, double[] outOffset) {
@@ -73,8 +76,4 @@ public class Phase {
         outOffset[2] = Math.cos(yawRad) * Math.cos(pitchRad) * distance;
     }
     private static native void nativeCalculateOffset(double yaw, double pitch, double distance, double[] outOffset);
-
-
-
-
 }

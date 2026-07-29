@@ -6,11 +6,8 @@ import ravex.utility.misc.MobUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
+import ravex.utility.movement.MoveUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-
-
-
-
 
 @Module(name = "Criticals", category = "Combat")
 public class Criticals {
@@ -30,9 +27,10 @@ public class Criticals {
         seqTicks = 0;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        if (stopOnWater && (mc.player.isInWater() || mc.player.isInLava())) {
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
+        if (stopOnWater && (player.isInWater() || player.isInLava())) {
             seq = Sequence.NONE;
             return;
         }
@@ -44,32 +42,32 @@ public class Criticals {
             return;
         }
         if (seq == Sequence.LANDING) {
-            if (autoAttack && mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult ehr) {
+            if (autoAttack && mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult ehr) {
                 net.minecraft.world.entity.Entity target = ehr.getEntity();
                 net.minecraft.world.entity.LivingEntity lt = MobUtility.asLivingEntity(target);
-                if (lt != null && MobUtility.isAlive(lt) && target != mc.player
-                    && mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
-                    NetworkUtility.sendInteractAttack(target, PlayerUtility.isSneaking(mc.player));
-                    SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                if (lt != null && MobUtility.isAlive(lt) && target != player
+                    && player.getAttackStrengthScale(0.0f) >= 0.85f) {
+                    NetworkUtility.sendInteractAttack(target, PlayerUtility.isSneaking(player));
+                    SwingUtility.swing(player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
             seq = Sequence.NONE;
             seqTicks = 0;
             return;
         }
-        if (!mc.player.onGround()) return;
-        if (mc.player.horizontalCollision) return;
-        boolean wantAttack = mc.options.keyAttack.isDown()
-            || (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult && autoAttack);
+        if (!PlayerUtility.isOnGround(player)) return;
+        if (MoveUtility.horizontalCollision()) return;
+        boolean wantAttack = mc.getOptions().keyAttack.isDown()
+            || (mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult && autoAttack);
         if (!wantAttack) return;
-        if (mc.player.getAttackStrengthScale(0.0f) < 0.85f) return;
-        double x = mc.player.getX();
-        double y = mc.player.getY();
-        double z = mc.player.getZ();
+        if (player.getAttackStrengthScale(0.0f) < 0.85f) return;
+        double x = player.getX();
+        double y = player.getY();
+        double z = player.getZ();
         String m = mode;
         switch (m) {
             case "Legit" -> {
-                mc.player.jumpFromGround();
+                player.jumpFromGround();
                 seq = Sequence.JUMPING;
                 seqTicks = 0;
             }
@@ -100,8 +98,4 @@ public class Criticals {
             }
         }
     }
-
-
-
-
 }

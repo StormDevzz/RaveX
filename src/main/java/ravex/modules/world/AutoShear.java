@@ -8,8 +8,6 @@ import java.util.List;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
-
-
 @Module(name = "AutoShear", category = "World")
 public class AutoShear {
     @Parameter(name = "SilentSwap")
@@ -19,12 +17,12 @@ public class AutoShear {
     @Parameter(name = "ExploitType", modes = {"Client", "Packet"})
     public String exploitType = "Packet";
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        var p = mc.player;
-        if (p == null || mc.level == null || mc.gameMode == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         var target = (net.minecraft.world.entity.animal.sheep.Sheep) null;
         double closestDist = range;
-        for (var entity : mc.level.entitiesForRendering()) {
+        for (var entity : mc.getLevel().entitiesForRendering()) {
             if (entity instanceof net.minecraft.world.entity.animal.sheep.Sheep sheep && MobUtility.isShearable(sheep)) {
                 double dist = p.distanceTo(sheep);
                 if (dist < closestDist) {
@@ -54,14 +52,12 @@ public class AutoShear {
             }
         } else {
             InventoryUtility.selectSlot(p, shearSlot);
-            mc.gameMode.interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
+            var gm = mc.getGameMode();
+            if (gm != null) gm.interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
             ravex.utility.player.SwingUtility.swingMainHand(p);
             if (silent && shearSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, prevSlot);
             }
         }
     }
-
-
-
 }

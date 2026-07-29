@@ -5,7 +5,6 @@ import net.minecraft.network.chat.Component;
 import ravex.utility.misc.EntityUtility;
 import ravex.event.Subscribe;
 import ravex.event.combat.TotemPopEvent;
-
 import java.util.HashMap;
 import java.util.Map;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -23,8 +22,10 @@ public class PopCounter {
 
     public void onPop(net.minecraft.world.entity.player.Player player) {
         if (!Modules.enabled(PopCounter.class)) return;
-        if (player == MinecraftWrapper.getInstance().player && !onlyOwn) return;
-        if (player == MinecraftWrapper.getInstance().player) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var self = mc.getPlayer();
+        if (player == self && !onlyOwn) return;
+        if (player == self) return;
         String name = player.getName().getString();
         int count = popCounts.getOrDefault(name, 1);
         if (count == 1) {
@@ -34,13 +35,8 @@ public class PopCounter {
         }
         String msg = String.format("§7[§6PopCounter§7] §e%s §7just popped §6%d §7%s",
                 name, count, count == 1 ? "totem" : "totems");
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal(msg), false);
+        if (self != null) {
+            self.displayClientMessage(Component.literal(msg), false);
         }
     }
-
-
-
-
 }

@@ -5,27 +5,25 @@ import ravex.mcwrapper.MinecraftWrapper;
 public class NoBob {
 private boolean originalBob = true;
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.options != null) {
-            originalBob = mc.options.bobView().get();
-            mc.options.bobView().set(false);
+        var mc = MinecraftWrapper.getWrapper();
+        var options = mc.getOptions();
+        if (options != null) {
+            originalBob = options.bobView().get();
+            options.bobView().set(false);
         }
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.options == null) return;
-        if (mc.options.bobView().get()) {
-            mc.options.bobView().set(false);
+        var mc = MinecraftWrapper.getWrapper();
+        var options = mc.getOptions();
+        if (options == null) return;
+        if (options.bobView().get()) {
+            options.bobView().set(false);
         }
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.options == null) return;
-        mc.options.bobView().set(originalBob);
+        var mc = MinecraftWrapper.getWrapper();
+        var options = mc.getOptions();
+        if (options == null) return;
+        options.bobView().set(originalBob);
     }
-
-
-
-
-
 }

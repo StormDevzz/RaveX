@@ -8,7 +8,6 @@ import ravex.RaveX;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.utility.nativelib.NativeLibraryUtility;
-
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import ravex.utility.misc.PhysicUtility;
@@ -36,17 +35,18 @@ public class FakePearl {
         if (!(packet instanceof ServerboundUseItemPacket usePacket)) return;
         String trg = trigger;
         if ("Right Click".equals(trg) || "Both".equals(trg)) {
-            var mc = MinecraftWrapper.getInstance();
-            if (mc.player != null && mc.player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
+            var mc = MinecraftWrapper.getWrapper();
+            var player = mc.getPlayer();
+            if (player != null && player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
                 event.setCancelled(true);
                 throwFakePearl();
-                SwingUtility.swing(mc.player, usePacket.getHand());
+                SwingUtility.swing(player, usePacket.getHand());
             }
         }
     }
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) {
             Modules.setEnabled(FakePearl.class, false);
             return;
         }
@@ -58,11 +58,13 @@ public class FakePearl {
         }
     }
     public void throwFakePearl() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        var level = mc.getLevel();
+        if (player == null || level == null) return;
         double speed = velocity;
-        double yaw = mc.player.getYRot();
-        double pitch = mc.player.getXRot();
+        double yaw = player.getYRot();
+        double pitch = player.getXRot();
         double[] vel = new double[3];
         if (NATIVE.isLoaded()) {
             try {
@@ -73,19 +75,19 @@ public class FakePearl {
         } else {
             javaCalculateVelocity(yaw, pitch, speed, vel);
         }
-        ThrownEnderpearl pearl = new ThrownEnderpearl(mc.level, mc.player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ENDER_PEARL)) {
+        ThrownEnderpearl pearl = new ThrownEnderpearl(level, player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ENDER_PEARL)) {
             protected double getDefaultGravity() {
                 return gravity;
             }
         };
-        pearl.setPos(mc.player.getX(), mc.player.getEyeY() - 0.1, mc.player.getZ());
+        pearl.setPos(player.getX(), player.getEyeY() - 0.1, player.getZ());
         pearl.setDeltaMovement(new net.minecraft.world.phys.Vec3(vel[0], vel[1], vel[2]));
-        mc.level.addEntity(pearl);
+        level.addEntity(pearl);
         if (sound) {
-            mc.level.playLocalSound(mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+            level.playLocalSound(player.getX(), player.getY(), player.getZ(),
                 net.minecraft.sounds.SoundEvents.ENDER_PEARL_THROW,
                 net.minecraft.sounds.SoundSource.PLAYERS,
-                0.5F, 0.4F / (mc.level.getRandom().nextFloat() * 0.4F + 0.8F), false);
+                0.5F, 0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F), false);
         }
     }
     private void javaCalculateVelocity(double yaw, double pitch, double speed, double[] outVel) {
@@ -96,8 +98,4 @@ public class FakePearl {
         outVel[2] = Math.cos(yawRad) * Math.cos(pitchRad) * speed;
     }
     private static native void nativeCalculateVelocity(double yaw, double pitch, double speed, double[] outVel);
-
-
-
-
 }

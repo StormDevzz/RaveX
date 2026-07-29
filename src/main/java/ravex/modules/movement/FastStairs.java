@@ -18,17 +18,15 @@ public class FastStairs {
         return baseSpeed * speedFactor;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        if (mc.player.onClimbable()) {
-            double currentY = mc.player.getDeltaMovement().y;
-            if (currentY > 0 && (mc.options.keyUp.isDown() || mc.options.keyDown.isDown() || mc.options.keyLeft.isDown() || mc.options.keyRight.isDown())) {
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
+        if (player.onClimbable()) {
+            double currentY = mc.getPlayerDeltaMovement().y;
+            if (currentY > 0 && (mc.isForwardKeyDown() || mc.isBackKeyDown() || mc.isLeftKeyDown() || mc.isRightKeyDown())) {
                 double newY = calculateClimbSpeed(mode, currentY, speed);
-                MoveUtility.setMotion(mc.player.getDeltaMovement().x, newY, mc.player.getDeltaMovement().z);
+                MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, newY, mc.getPlayerDeltaMovement().z);
             }
         }
     }
-
-
-
 }

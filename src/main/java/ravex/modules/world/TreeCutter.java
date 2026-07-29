@@ -1,7 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
@@ -28,48 +27,43 @@ public class TreeCutter {
         return BlockUtility.pos(t.miningX, t.miningY, t.miningZ);
     }
     public void onDisable() {
-        if (hasTarget) BlockUtility.stopBreak(ravex.mcwrapper.MinecraftWrapper.getWrapper(), currentToolSlot);
+        if (hasTarget) BlockUtility.stopBreak(MinecraftWrapper.getWrapper(), currentToolSlot);
         hasTarget = false;
         currentToolSlot = -1;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        var mcw = ravex.mcwrapper.MinecraftWrapper.getWrapper();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null || mc.getGameMode() == null) {
             hasTarget = false;
             return;
         }
-        double[] logs = BlockUtility.findLogs(mc.level, mc.player.blockPosition(), range);
+        double[] logs = BlockUtility.findLogs(mc.getLevel(), player.blockPosition(), range);
         if (logs.length == 0) {
-            if (hasTarget) BlockUtility.stopBreak(mcw, currentToolSlot);
+            if (hasTarget) BlockUtility.stopBreak(mc, currentToolSlot);
             hasTarget = false;
             currentToolSlot = -1;
             return;
         }
-        double[] best = BlockUtility.findNearest(logs, mc.player.getX(), mc.player.getY(), mc.player.getZ());
+        double[] best = BlockUtility.findNearest(logs, player.getX(), player.getY(), player.getZ());
         if (best == null || best[0] < 0.5) {
-            if (hasTarget) BlockUtility.stopBreak(mcw, currentToolSlot);
+            if (hasTarget) BlockUtility.stopBreak(mc, currentToolSlot);
             hasTarget = false;
             currentToolSlot = -1;
             return;
         }
         int tx = (int) best[1], ty = (int) best[2], tz = (int) best[3];
-        if (rotate) BlockUtility.rotateTo(mc.player, tx, ty, tz);
+        if (rotate) BlockUtility.rotateTo(player, tx, ty, tz);
         BlockUtility.BreakConfig cfg = new BlockUtility.BreakConfig();
         if (!hasTarget || miningX != tx || miningY != ty || miningZ != tz) {
-            if (hasTarget) BlockUtility.stopBreak(mcw, currentToolSlot);
+            if (hasTarget) BlockUtility.stopBreak(mc, currentToolSlot);
             miningX = tx;
             miningY = ty;
             miningZ = tz;
             hasTarget = true;
-            currentToolSlot = BlockUtility.startBreak(mcw, tx, ty, tz, cfg);
+            currentToolSlot = BlockUtility.startBreak(mc, tx, ty, tz, cfg);
         } else {
-            BlockUtility.continueBreak(mcw, tx, ty, tz, cfg);
+            BlockUtility.continueBreak(mc, tx, ty, tz, cfg);
         }
     }
-
-
-
-
-
 }

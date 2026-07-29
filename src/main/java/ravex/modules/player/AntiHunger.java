@@ -10,10 +10,6 @@ import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-
-
-
-
 @Module(name = "AntiHunger", category = "net.minecraft.world.entity.player.Player")
 public class AntiHunger {
     @Parameter(name = "Mode", modes = {"NCP", "NCPStrict", "UNCP"})
@@ -25,7 +21,8 @@ public class AntiHunger {
     private int uncpCounter = 0;
 
     private boolean canSprint() {
-        net.minecraft.client.player.LocalPlayer p = MinecraftWrapper.getInstance().player;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
         return p != null && (p.getFoodData().getFoodLevel() > 5 || p.getAbilities().flying || p.getAbilities().mayfly);
     }
 
@@ -69,8 +66,4 @@ public class AntiHunger {
     public void onDisable() {
         uncpCounter = 0;
     }
-
-
-
-
 }
