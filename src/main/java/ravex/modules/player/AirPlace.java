@@ -10,6 +10,7 @@ import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
 import net.minecraft.world.item.BlockItem;
 import ravex.mcwrapper.MinecraftWrapper;
+import java.util.Random;
 
 
 
@@ -22,8 +23,11 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
     public static float renderR = 0.3f;
     public static float renderG = 0.7f;
     public static float renderB = 1.0f;
-    @Parameter(name = "Mode", modes = {"Vanilla", "NCP"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "UNCP"})
     public String mode = "Vanilla";
+    @Parameter(name = "UNCPNoise", min = 0.0, max = 5.0, step = 0.1, visible = "mode=UNCP")
+    public double uncpNoise = 0.5;
+    private final Random random = new Random();
     @Parameter(name = "Render")
     public boolean render = true;
     @Parameter(name = "Animate")
@@ -120,6 +124,45 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                                 PhysicUtility.vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                             );
                             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), hitVec);
+                            var conn = mc.getConnection();
+                            if (conn != null) {
+                                conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
+                                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                                    angles[0], angles[1], mc.player.onGround(), mc.player.horizontalCollision
+                                ));
+                            }
+                            BlockUtility.ncpAirPlace(ravex.mcwrapper.MinecraftWrapper.getWrapper(), neighbor, placeFace, hand);
+                            if (conn != null) {
+                                conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
+                                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
+                                    mc.player.getYRot(), mc.player.getXRot(), mc.player.onGround(), mc.player.horizontalCollision
+                                ));
+                            }
+                            SwingUtility.swing(mc.player, hand);
+                        }
+                    }
+                } else if (mode.equals("UNCP")) {
+                    neighbor = targetPos;
+                    placeFace = net.minecraft.core.Direction.UP;
+                    for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
+                        net.minecraft.core.BlockPos side = targetPos.relative(face);
+                        if (BlockUtility.isAir(mc.level, side)) continue;
+                        neighbor = side;
+                        placeFace = face.getOpposite();
+                        break;
+                    }
+                    if (!BlockUtility.isAir(mc.level, neighbor)) {
+                        double maxReach = 4.5;
+                        net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(neighbor);
+                        if (mc.player.getEyePosition().distanceTo(center) <= maxReach) {
+                            net.minecraft.world.phys.Vec3 hitVec = center.add(
+                                PhysicUtility.vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
+                            );
+                            float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), hitVec);
+                            float yawNoise = (random.nextFloat() - 0.5f) * (float)uncpNoise * 2;
+                            float pitchNoise = (random.nextFloat() - 0.5f) * (float)uncpNoise * 2;
+                            angles[0] += yawNoise;
+                            angles[1] += pitchNoise;
                             var conn = mc.getConnection();
                             if (conn != null) {
                                 conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(

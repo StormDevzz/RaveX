@@ -16,8 +16,13 @@ import ravex.modules.Modules;
 
 @Module(name = "AntiHunger", category = "net.minecraft.world.entity.player.Player")
 public class AntiHunger {
-    @Parameter(name = "Mode", modes = {"NCP", "NCPStrict"})
+    @Parameter(name = "Mode", modes = {"NCP", "NCPStrict", "UNCP"})
     public String mode = "NCP";
+
+    @Parameter(name = "UNCPDelay", min = 1, max = 20, step = 1, visible = "mode=UNCP")
+    public int uncpDelay = 3;
+
+    private int uncpCounter = 0;
 
     private boolean canSprint() {
         net.minecraft.client.player.LocalPlayer p = MinecraftWrapper.getInstance().player;
@@ -29,6 +34,19 @@ public class AntiHunger {
         if (!Modules.enabled(AntiHunger.class) || !event.isSend()) return;
         String m = mode;
         Packet<?> packet = event.getPacket();
+
+        if ("UNCP".equals(m)) {
+            if (packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket movePacket) {
+                uncpCounter++;
+                if (uncpCounter % uncpDelay != 0) {
+                    ((AccessorServerboundMovePlayerPacket) movePacket).setOnGround(false);
+                }
+            }
+            if (packet instanceof ServerboundPlayerCommandPacket) {
+                event.setCancelled(true);
+            }
+            return;
+        }
 
         if (packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket movePacket) {
             ((AccessorServerboundMovePlayerPacket) movePacket).setOnGround(false);
@@ -48,7 +66,9 @@ public class AntiHunger {
         }
     }
 
-
+    public void onDisable() {
+        uncpCounter = 0;
+    }
 
 
 
