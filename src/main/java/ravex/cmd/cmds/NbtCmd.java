@@ -1,10 +1,11 @@
 package ravex.cmd.cmds;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.network.NetworkUtility;
+import ravex.utility.player.InventoryUtility;
 
 public class NbtCmd extends Cmd {
     public NbtCmd() {
@@ -13,12 +14,12 @@ public class NbtCmd extends Cmd {
 
     @Override
     public void execute(String[] args) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
-        ItemStack stack = mc.player.getMainHandItem();
+        ItemStack stack = InventoryUtility.getMainHand(mc.player);
         if (stack.isEmpty()) {
-            stack = mc.player.getOffhandItem();
+            stack = InventoryUtility.getOffhand(mc.player);
             if (stack.isEmpty()) {
                 CmdReg.print(this, "§cHold an item in your hand.");
                 return;

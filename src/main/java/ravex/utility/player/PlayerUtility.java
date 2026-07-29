@@ -1,18 +1,18 @@
 package ravex.utility.player;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.network.chat.Component;
 
 public class PlayerUtility {
     public static boolean isPlayerInWorld() {
-        return Minecraft.getInstance().player != null && Minecraft.getInstance().level != null;
+        return MinecraftWrapper.getInstance().player != null && MinecraftWrapper.getInstance().level != null;
     }
 
     public static boolean isOverVoid() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return false;
         double px = mc.player.getX(), py = mc.player.getY(), pz = mc.player.getZ();
         int minHeight = mc.level.getMinY();
@@ -25,7 +25,7 @@ public class PlayerUtility {
     }
 
     public static LocalPlayer getPlayer() {
-        return Minecraft.getInstance().player;
+        return MinecraftWrapper.getInstance().player;
     }
 
     public static String getName(Player player) {
@@ -55,9 +55,9 @@ public class PlayerUtility {
     }
 
     public static int getPing(Player player) {
-        if (Minecraft.getInstance().getConnection() == null) return 0;
-        return Minecraft.getInstance().getConnection().getPlayerInfo(player.getUUID()) != null
-            ? Minecraft.getInstance().getConnection().getPlayerInfo(player.getUUID()).getLatency()
+        if (MinecraftWrapper.getInstance().getConnection() == null) return 0;
+        return MinecraftWrapper.getInstance().getConnection().getPlayerInfo(player.getUUID()) != null
+            ? MinecraftWrapper.getInstance().getConnection().getPlayerInfo(player.getUUID()).getLatency()
             : 0;
     }
 

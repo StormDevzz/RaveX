@@ -1,6 +1,6 @@
 package ravex.gui.browser;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -475,7 +475,7 @@ public class BlockBrowserScreen extends Screen {
             id -> ModuleManager.get(ravex.modules.player.Xray.class).isBlockSelected(id),
             (block, sel) -> {
                 ModuleManager.get(ravex.modules.player.Xray.class).setBlockSelected(block, sel);
-                var mc = Minecraft.getInstance();
+                var mc = MinecraftWrapper.getInstance();
                 if (mc.levelRenderer != null) mc.levelRenderer.allChanged();
             },
             null);

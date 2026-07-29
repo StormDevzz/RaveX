@@ -1,15 +1,14 @@
 package ravex.cmd.cmds;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
+import ravex.utility.network.NetworkUtility;
 public class ClipCmd extends Cmd {
     public ClipCmd() {
         super("clip", "Clip forward in look direction", "hclip");
     }
     @Override
     public void execute(String[] args) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = ravex.mcwrapper.MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
         double dist = 1.0;
         if (args.length > 1) {
@@ -24,7 +23,7 @@ public class ClipCmd extends Cmd {
         double tx = mc.player.getX() + dx;
         double tz = mc.player.getZ() + dz;
         double ty = mc.player.getY();
-        mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(tx, ty, tz, true, mc.player.horizontalCollision));
+        NetworkUtility.sendMoveRelative(tx, ty, tz, true, mc.player.horizontalCollision);
         mc.player.setPos(tx, ty, tz);
         CmdReg.print(String.format("§aClipped §e%.1f §ablocks forward.", dist));
     }

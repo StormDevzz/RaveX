@@ -193,7 +193,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
             net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
             net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
-            net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+            net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighborPos).add(PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             rotateTo(mc, hitVec);
             if (speedMode.equals("Legit") && !isRotationAligned(mc, hitVec)) {
                 break;

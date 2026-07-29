@@ -1,9 +1,10 @@
 package ravex.utility.sound;
 
+import net.minecraft.client.Minecraft;
 import ravex.event.Subscribe;
 import ravex.event.client.SoundEvent;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
 public class SoundEventDispatcherUtility {
@@ -19,7 +20,7 @@ public class SoundEventDispatcherUtility {
         float finalVolume = event.getVolume() * multiplier;
         if (finalVolume <= 0.0f) return;
 
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         if (mc == null) return;
 
         ensureMasterVolume(mc);

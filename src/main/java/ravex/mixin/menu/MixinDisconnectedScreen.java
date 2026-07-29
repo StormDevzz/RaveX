@@ -1,7 +1,7 @@
 package ravex.mixin.menu;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -31,7 +31,7 @@ public abstract class MixinDisconnectedScreen extends Screen {
         this.addRenderableWidget(Button.builder(
             Component.literal("Reconnect"),
             btn -> {
-                Minecraft mc = Minecraft.getInstance();
+                var mc = MinecraftWrapper.getInstance();
                 AutoReconnect.reconnect(ravex.mcwrapper.MinecraftWrapper.getWrapper());
             }
         ).bounds(btnX, btnY, btnW, 20).build());

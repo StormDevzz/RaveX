@@ -1,15 +1,14 @@
 package ravex.cmd.cmds;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
+import ravex.utility.network.NetworkUtility;
 public class VClipCmd extends Cmd {
     public VClipCmd() {
         super("vclip", "Clip vertically", "clip2");
     }
     @Override
     public void execute(String[] args) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = ravex.mcwrapper.MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
         double dist = 1.0;
         if (args.length > 1) {
@@ -21,7 +20,7 @@ public class VClipCmd extends Cmd {
         double tx = mc.player.getX();
         double ty = mc.player.getY() + dist;
         double tz = mc.player.getZ();
-        mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(tx, ty, tz, true, mc.player.horizontalCollision));
+        NetworkUtility.sendMoveRelative(tx, ty, tz, true, mc.player.horizontalCollision);
         mc.player.setPos(tx, ty, tz);
         CmdReg.print(String.format("§aClipped §e%.1f §ablocks %s.", Math.abs(dist), (dist >= 0 ? "up" : "down")));
     }

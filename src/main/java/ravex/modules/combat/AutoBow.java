@@ -2,12 +2,11 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BowItem;
 
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.PlayerUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AutoBow", category = "Combat")
@@ -26,14 +25,14 @@ public class AutoBow {
         if (mc.getPlayer() == null || mc.getPlayer().connection == null) return;
         long now = System.currentTimeMillis();
         if (now - lastAction < 100) return;
-        boolean holdingBow = InventoryUtility.isBow(mc.getPlayer().getMainHandItem());
+        boolean holdingBow = InventoryUtility.isBow(InventoryUtility.getMainHand(mc.getPlayer()));
         if (!holdingBow && !autoSwitch) return;
         int bowSlot = -1;
         if (!holdingBow) {
             bowSlot = findBowSlot(mc);
             if (bowSlot == -1) return;
         }
-        if (!mc.getPlayer().isUsingItem()) return;
+        if (!PlayerUtility.isUsingItem(mc.getPlayer())) return;
         if (!mc.getPlayer().getUsedItemHand().equals(net.minecraft.world.InteractionHand.MAIN_HAND)) return;
         if (onlyWhenTarget && !(mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult)) return;
         float chargeProgress = mc.getPlayer().getTicksUsingItem() / 20.0f;
@@ -45,10 +44,7 @@ public class AutoBow {
         } else if (bowSlot != -1) {
             InventoryUtility.selectSlot(mc.getPlayer(), bowSlot);
         }
-        mc.getPlayer().connection.send(new ServerboundPlayerActionPacket(
-            ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM,
-            net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN, 0
-        ));
+        NetworkUtility.sendReleaseUseItem();
         lastAction = now;
     }
     private int findBowSlot(MinecraftWrapper mc) {

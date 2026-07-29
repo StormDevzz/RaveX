@@ -219,17 +219,13 @@ public class Blink {
                                 double sx = prevX + (px - prevX) * st;
                                 double sy = prevY + (py - prevY) * st;
                                 double sz = prevZ + (pz - prevZ) * st;
-                                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                                        sx, sy, sz, move.isOnGround(), move.horizontalCollision()
-                                ));
+                                NetworkUtility.sendMoveRelative(sx, sy, sz, move.isOnGround(), move.horizontalCollision());
                             }
                         }
                     }
                 }
 
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                        px, py, pz, move.isOnGround(), move.horizontalCollision()
-                ));
+                NetworkUtility.sendMoveRelative(px, py, pz, move.isOnGround(), move.horizontalCollision());
             } else {
                 mc.player.connection.send(p);
             }

@@ -1,6 +1,7 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -45,9 +46,9 @@ public class AutoMend {
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         boolean silent = "Silent".equals(swapMode);
         InventoryUtility.selectSlot(p, expSlot);
-        p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision));
+        NetworkUtility.sendRot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision);
         mc.gameMode.useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
-        p.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        SwingUtility.swing(p, net.minecraft.world.InteractionHand.MAIN_HAND);
         if (silent) {
             InventoryUtility.selectSlot(p, prevSlot);
         }

@@ -4,6 +4,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.MoverType;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.movement.MoveUtility;
 import ravex.RaveX;
 
 import java.util.List;
@@ -238,7 +239,7 @@ public class ElytraFly {
                     vel = new net.minecraft.world.phys.Vec3(targetX, targetY, targetZ);
                 }
                 vel = applyTimerAndAccel(vel);
-                mc.getPlayer().setDeltaMovement(vel);
+                MoveUtility.setMotion(vel);
                 mc.getPlayer().move(MoverType.SELF, vel);
                 if ("Fireworks".equals(curMode)) {
                     fwTimer++;
@@ -254,7 +255,7 @@ public class ElytraFly {
                 );
                 net.minecraft.world.phys.Vec3 v = new net.minecraft.world.phys.Vec3(vel[0], vel[1], vel[2]);
                 v = applyTimerAndAccel(v);
-                mc.getPlayer().setDeltaMovement(v);
+                MoveUtility.setMotion(v);
                 mc.getPlayer().move(MoverType.SELF, v);
             }
         }

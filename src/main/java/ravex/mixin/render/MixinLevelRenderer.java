@@ -2,7 +2,7 @@ package ravex.mixin.render;
 import ravex.manager.ModuleManager;
 
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.BlockHitResult;
@@ -112,7 +112,7 @@ public class MixinLevelRenderer {
 
     private void renderHighlights(net.minecraft.client.Camera camera, org.joml.Matrix4f modelViewMatrix) {
         Vec3 camPos = camera.position();
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.level == null || mc.player == null) return;
 
         Render3DUtility.beginFrame();

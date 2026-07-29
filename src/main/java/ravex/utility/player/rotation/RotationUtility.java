@@ -1,7 +1,7 @@
 package ravex.utility.player.rotation;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.Camera;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -100,7 +100,7 @@ public class RotationUtility {
      * Formula: (sensitivity * 0.6 + 0.2)^3 * 8
      */
     public static float getGCD() {
-        double sensitivity = Minecraft.getInstance().options.sensitivity().get();
+        double sensitivity = MinecraftWrapper.getInstance().options.sensitivity().get();
         double value = sensitivity * 0.6 + 0.2;
         return (float) (Math.pow(value, 3) * 8.0);
     }

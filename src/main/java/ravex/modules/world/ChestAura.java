@@ -1,6 +1,7 @@
 package ravex.modules.world;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import java.util.List;
@@ -117,7 +118,7 @@ public class ChestAura {
             }
             var below = BlockUtility.pos(tx, BlockUtility.belowY(ty), tz);
             BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), new net.minecraft.world.phys.BlockHitResult(
-                net.minecraft.world.phys.Vec3.atCenterOf(below).add(0, 0.5, 0),
+                PhysicUtility.centerOf(below).add(0, 0.5, 0),
                 net.minecraft.core.Direction.UP, below, false));
             ravex.utility.player.SwingUtility.swingMainHand(p);
             if (autoSwap && silent && chestSlot != prevSlot) {

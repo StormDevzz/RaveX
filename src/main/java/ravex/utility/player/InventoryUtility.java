@@ -173,7 +173,7 @@ public class InventoryUtility {
     }
 
     public static void openInventoryScreen(LocalPlayer player) {
-        Minecraft.getInstance().setScreen(new InventoryScreen(player));
+        MinecraftWrapper.getInstance().setScreen(new InventoryScreen(player));
     }
 
     public static void clickChestSlot(MinecraftWrapper mc, LocalPlayer player, int containerSlot, ClickType type) {

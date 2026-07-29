@@ -2,8 +2,8 @@ package ravex.gui.browser;
 
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -359,7 +359,7 @@ public class SearchBrowserScreen extends Screen {
     public static void setAtlasFilter(FilterMode mode) {
         try {
             Identifier atlasId = Identifier.fromNamespaceAndPath("minecraft", "textures/atlas/blocks.png");
-            AbstractTexture atlas = Minecraft.getInstance().getTextureManager().getTexture(atlasId);
+            AbstractTexture atlas = MinecraftWrapper.getInstance().getTextureManager().getTexture(atlasId);
             if (samplerField == null) {
                 for (Field f : AbstractTexture.class.getDeclaredFields()) {
                     if (GpuSampler.class.isAssignableFrom(f.getType())) {

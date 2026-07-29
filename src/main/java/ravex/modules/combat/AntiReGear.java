@@ -139,7 +139,7 @@ public class AntiReGear {
         net.minecraft.core.BlockPos closest = null;
         double closestDist = Double.MAX_VALUE;
         for (net.minecraft.core.BlockPos pos : candidates) {
-            double distSq = eye.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos));
+            double distSq = eye.distanceToSqr(PhysicUtility.centerOf(pos));
             if (distSq < closestDist) {
                 closestDist = distSq;
                 closest = pos;
@@ -148,7 +148,7 @@ public class AntiReGear {
         return closest;
     }
     public static net.minecraft.core.Direction getDirection(net.minecraft.world.phys.Vec3 eye, net.minecraft.core.BlockPos pos) {
-        net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(pos);
+        net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(pos);
         double dx = eye.x - center.x;
         double dy = eye.y - pos.getY() - 0.5;
         double dz = eye.z - center.z;

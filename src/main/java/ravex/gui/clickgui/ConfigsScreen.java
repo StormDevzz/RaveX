@@ -1,7 +1,7 @@
 package ravex.gui.clickgui;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.CharacterEvent;
@@ -130,7 +130,7 @@ public class ConfigsScreen extends Screen {
         graphics.fill(rightX, rightY, rightX + rightW, rightY + 1, ColorUtility.withAlpha(activeColor, 80));
 
 
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             int modelX = rightX + rightW / 2;
             int modelY1 = rightY + 16;

@@ -4,6 +4,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BlockItem;
@@ -46,17 +47,13 @@ public class Burrow {
             double centerX = Math.floor(mc.getPlayer().getX()) + 0.5;
             double centerZ = Math.floor(mc.getPlayer().getZ()) + 0.5;
             mc.getPlayer().setPos(centerX, mc.getPlayer().getY(), centerZ);
-            if (mc.getPlayer().connection != null) {
-                mc.getPlayer().connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(centerX, mc.getPlayer().getY(), centerZ, mc.getPlayer().onGround(), false));
-            }
+            NetworkUtility.sendMoveRelative(centerX, mc.getPlayer().getY(), centerZ, mc.getPlayer().onGround(), false);
         }
         if (instant) {
             double h = height;
             net.minecraft.world.phys.Vec3 orig = mc.getPlayer().position();
             mc.getPlayer().setPos(orig.x, orig.y + h, orig.z);
-            if (mc.getPlayer().connection != null) {
-                mc.getPlayer().connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(orig.x, orig.y + h, orig.z, false, false));
-            }
+            NetworkUtility.sendMoveRelative(orig.x, orig.y + h, orig.z, false, false);
         }
         int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         if (slot < 0 || slot > 8) return;

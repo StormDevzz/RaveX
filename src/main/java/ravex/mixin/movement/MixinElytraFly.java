@@ -1,7 +1,7 @@
 package ravex.mixin.movement;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
@@ -36,7 +36,7 @@ public abstract class MixinElytraFly {
 
         if (Modules.get(ElytraFly.class).speedControl) return;
 
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         String mode = Modules.get(ElytraFly.class).mode;
         double hSpeed = Modules.get(ElytraFly.class).hSpeed;
         double vSpeed = Modules.get(ElytraFly.class).vSpeed;

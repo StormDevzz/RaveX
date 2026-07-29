@@ -1,6 +1,6 @@
 package ravex.mixin.movement;
 
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -18,7 +18,7 @@ public class MixinPacketEntityVelocity {
 
     @Inject(method = "handleSetEntityMotion", at = @At("HEAD"), cancellable = true)
     private void onVelocityEvent(ClientboundSetEntityMotionPacket packet, CallbackInfo ci) {
-        LocalPlayer player = Minecraft.getInstance().player;
+        LocalPlayer player = MinecraftWrapper.getInstance().player;
         if (player == null || packet.getId() != player.getId()) return;
 
         Vec3 packetVel = ((AccessorSetEntityMotionPacket) packet).getMovement();

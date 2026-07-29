@@ -1,6 +1,7 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ClickGUI;
 import ravex.modules.Module;
@@ -66,7 +67,7 @@ public class CategoryPanel {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, String searchQuery) {
         if (dragging) {
             boolean isMouseDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(
-                net.minecraft.client.Minecraft.getInstance().getWindow().handle(),
+                MinecraftWrapper.getInstance().getWindow().handle(),
                 org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT
             ) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
 
@@ -116,7 +117,7 @@ public class CategoryPanel {
             totalH += Math.max(1, (int)(btnH * btn.getSearchReveal())) + 2;
             if (btn.isExpanded()) totalH += (int)(btn.getExpandedHeight(width) * btn.getSearchReveal());
         }
-        int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.75f);
+        int maxPanelHeight = (int)(MinecraftWrapper.getInstance().getWindow().getGuiScaledHeight() * 0.75f);
         int viewportH = Math.min(totalH, maxPanelHeight);
         int panelBot = iy + viewportH;
 
@@ -242,7 +243,7 @@ public class CategoryPanel {
         int width = (int) ModuleManager.get(ClickGui.class).panelWidth;
         int listTop = iy + 22;
         int totalH = getCurrentHeight(searchQuery);
-        int maxPanelHeight = (int)(net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight() * 0.75f);
+        int maxPanelHeight = (int)(MinecraftWrapper.getInstance().getWindow().getGuiScaledHeight() * 0.75f);
         int panelBot = iy + Math.min(totalH, maxPanelHeight);
 
         if (mouseX >= ix && mouseX <= ix + width && mouseY >= iy && mouseY <= panelBot) {

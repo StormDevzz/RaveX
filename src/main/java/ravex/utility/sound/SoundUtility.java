@@ -2,6 +2,7 @@ package ravex.utility.sound;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.core.Registry;
@@ -90,7 +91,7 @@ public class SoundUtility {
         if (finalVolume <= 0.0f) return;
 
 
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         if (mc == null) return;
 
 

@@ -1,7 +1,7 @@
 package ravex.gui.proxy;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -47,7 +47,7 @@ public class ProxyConfigScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        Font font = Minecraft.getInstance().font;
+        Font font = MinecraftWrapper.getInstance().font;
         int cx = width / 2;
 
         hostField = new EditBox(font, cx - 90, 80, 180, 18, Component.literal("Proxy Host"));
@@ -144,7 +144,7 @@ public class ProxyConfigScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         graphics.fillGradient(0, 0, this.width, this.height, 0xEA06060E, 0xEA0C0C1A);
 
-        Font font = Minecraft.getInstance().font;
+        Font font = MinecraftWrapper.getInstance().font;
         int cx = width / 2;
 
         graphics.fill(0, 0, width, 38, 0xCC08081A);

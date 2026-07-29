@@ -2,6 +2,7 @@ package ravex.mixin.world;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import ravex.mcwrapper.MinecraftWrapper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,7 +16,7 @@ public class MixinBlock {
     @Inject(method = "getFriction", at = @At("RETURN"), cancellable = true)
     private void onGetFriction(CallbackInfoReturnable<Float> cir) {
         if (Modules.enabled(Sleepy.class)) {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            net.minecraft.client.Minecraft mc = MinecraftWrapper.getInstance();
             if (mc.player != null) {
                 if (!Modules.get(Sleepy.class).onlyOnGround || mc.player.onGround()) {
                     cir.setReturnValue((float) Modules.get(Sleepy.class).friction);

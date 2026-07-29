@@ -1,6 +1,7 @@
 package ravex.mixin.world;
 
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +22,7 @@ public class MixinBlockState {
     private void onGetCollisionShape(net.minecraft.world.level.BlockGetter world, net.minecraft.core.BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
         if (Modules.enabled(LiquidControl.class)) {
             if (context instanceof net.minecraft.world.phys.shapes.EntityCollisionContext ecc) {
-                if (ecc.getEntity() != null && ecc.getEntity() == net.minecraft.client.Minecraft.getInstance().player) {
+                if (ecc.getEntity() != null && ecc.getEntity() == MinecraftWrapper.getInstance().player) {
                     BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
                     boolean bypassWater = Modules.get(LiquidControl.class).water;
                     boolean bypassLava = Modules.get(LiquidControl.class).lava;

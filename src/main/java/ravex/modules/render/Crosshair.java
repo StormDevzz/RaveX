@@ -6,6 +6,7 @@ import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 
 import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Crosshair", category = "Render")
 public class Crosshair {
@@ -136,7 +137,7 @@ public class Crosshair {
         double velZ = player.getZ() - player.zo;
         double hSpeed = Math.sqrt(velX * velX + velZ * velZ) * 20.0;
         float spread = 0;
-        if (player.isSprinting()) spread += moveEff * 0.8f;
+        if (PlayerUtility.isSprinting(player)) spread += moveEff * 0.8f;
         else if (hSpeed > 0.05) spread += moveEff * 0.4f;
         if (!player.onGround()) spread += moveEff * 0.6f;
         return Math.min(spread, moveEff * 2);

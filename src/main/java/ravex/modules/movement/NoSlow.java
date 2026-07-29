@@ -3,6 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.network.NetworkUtility;
+import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.event.Subscribe;
@@ -57,7 +58,7 @@ public class NoSlow {
         if (mc.player == null || mc.getConnection() == null) return;
 
         if ("Matrix".equals(modeVal)) {
-            if (!mc.player.isUsingItem()) {
+            if (!PlayerUtility.isUsingItem(mc.player)) {
                 matrixSwapTicks = 0;
                 return;
             }
@@ -87,7 +88,7 @@ public class NoSlow {
         }
 
         if ("GrimAlternative".equals(modeVal)) {
-            if (!mc.player.isUsingItem()) {
+            if (!PlayerUtility.isUsingItem(mc.player)) {
                 altTicks = 0;
                 return;
             }
@@ -109,7 +110,7 @@ public class NoSlow {
         }
 
         if ("GrimV3".equals(modeVal)) {
-            if (!mc.player.isUsingItem()) {
+            if (!PlayerUtility.isUsingItem(mc.player)) {
                 v3Ticks = 0;
                 return;
             }

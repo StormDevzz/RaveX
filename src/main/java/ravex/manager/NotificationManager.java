@@ -5,6 +5,7 @@ import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -67,7 +68,7 @@ public class NotificationManager {
                     }
                 } catch (Exception ignored) {}
                 Identifier id = Identifier.fromNamespaceAndPath("ravex", "toast_" + name);
-                Minecraft.getInstance().getTextureManager().register(id, tex);
+                MinecraftWrapper.getInstance().getTextureManager().register(id, tex);
                 return id;
             }
         } catch (Exception e) {
@@ -181,7 +182,7 @@ public class NotificationManager {
     }
 
     public static void render(GuiGraphics graphics) {
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         if (mc == null || mc.font == null) return;
 
         renderCenterNotifications(graphics, mc);

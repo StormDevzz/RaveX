@@ -3,6 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.EasingAnimationUtility;
@@ -103,11 +104,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
                 };
             }
             mc.player.setPos(center[0], center[1], center[2]);
-            if (mc.player.connection != null) {
-                mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    center[0], center[1], center[2], mc.player.onGround(), false
-                ));
-            }
+            NetworkUtility.sendMoveRelative(center[0], center[1], center[2], mc.player.onGround(), false);
         }
         net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
         int blockSlot = findBlockSlot(mc.player);
@@ -211,8 +208,8 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
                 }
             }
             if (face == null) face = net.minecraft.core.Direction.UP;
-            net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighbor)
-                .add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+            net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighbor)
+                .add(PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighbor, false);
             mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
             SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
@@ -263,7 +260,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
     private int findBlockSlot(net.minecraft.client.player.LocalPlayer player) {
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(player, i);
-            if (!stack.isEmpty() && stack.getItem() instanceof BlockItem) return i;
+            if (InventoryUtility.isBlockItem(stack)) return i;
         }
         return -1;
     }

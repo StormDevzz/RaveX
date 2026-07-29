@@ -1,14 +1,14 @@
 package ravex.cmd.cmds;
-import net.minecraft.client.Minecraft;
 import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
+import ravex.mcwrapper.MinecraftWrapper;
 public class CoordsCmd extends Cmd {
     public CoordsCmd() {
         super("coords", "Show your coordinates");
     }
     @Override
     public void execute(String[] args) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         var p = mc.player;
         CmdReg.print(String.format("§5[RaveX] §7XYZ: §e%.1f §7/ §e%.1f §7/ §e%.1f", p.getX(), p.getY(), p.getZ()));

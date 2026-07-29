@@ -67,7 +67,7 @@ public class AutoDrop {
             originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
             InventoryUtility.silentSelectSlot(mc.getPlayer(), slot);
         }
-        net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(placePos);
+        net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(placePos);
         rotateTo(mc, center);
         String rot = rotate;
         if ((rot.equals("Strict") || rot.equals("NCPStrict")) && !isRotationAligned(mc, center)) return;

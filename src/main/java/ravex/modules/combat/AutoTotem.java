@@ -2,6 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.PlayerUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
@@ -19,7 +20,7 @@ public class AutoTotem {
         var mc = MinecraftWrapper.getWrapper();
         var p = mc.getPlayer();
         if (p == null || mc.getGameMode() == null) return;
-        boolean forceTotem = p.getHealth() <= minHealth;
+        boolean forceTotem = PlayerUtility.getHealth(p) <= minHealth;
         handleOffhand(mc, p, forceTotem);
         handleMainHand(mc, p, forceTotem);
     }
@@ -33,8 +34,8 @@ public class AutoTotem {
             else if (choice.equals("Crystal")) targetItem = net.minecraft.world.item.Items.END_CRYSTAL;
             else if (choice.equals("Shield")) targetItem = net.minecraft.world.item.Items.SHIELD;
         }
-        if (p.getOffhandItem().is(targetItem)) return;
-        if (targetItem == net.minecraft.world.item.Items.TOTEM_OF_UNDYING && !p.getOffhandItem().isEmpty() && !InventoryUtility.isTotem(p.getOffhandItem())) return;
+        if (InventoryUtility.getOffhand(p).is(targetItem)) return;
+        if (targetItem == net.minecraft.world.item.Items.TOTEM_OF_UNDYING && !InventoryUtility.getOffhand(p).isEmpty() && !InventoryUtility.isTotem(InventoryUtility.getOffhand(p))) return;
         int foundSlot = -1;
         for (int i = 0; i < 36; i++) {
             var stack = InventoryUtility.getItem(p, i);
@@ -74,7 +75,7 @@ public class AutoTotem {
             else if (mainChoice.equals("Totem")) targetItem = net.minecraft.world.item.Items.TOTEM_OF_UNDYING;
         }
         if (targetItem == null) return;
-        if (p.getMainHandItem().is(targetItem) || (targetItem == net.minecraft.world.item.Items.GOLDEN_APPLE && InventoryUtility.isEnchantedGoldenApple(p.getMainHandItem()))) {
+        if (InventoryUtility.getMainHand(p).is(targetItem) || (targetItem == net.minecraft.world.item.Items.GOLDEN_APPLE && InventoryUtility.isEnchantedGoldenApple(InventoryUtility.getMainHand(p)))) {
             return;
         }
         int slot = -1;

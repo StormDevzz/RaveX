@@ -1,7 +1,7 @@
 package ravex.mixin.movement;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
+import ravex.mcwrapper.MinecraftWrapper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -34,7 +34,7 @@ public abstract class MixinPlayerNoSlow {
         }
 
         // Matrix input scaling: boost input to compensate for item use slowdown
-        if (ns.isMatrixActive() && Minecraft.getInstance().player != null) {
+        if (ns.isMatrixActive() && MinecraftWrapper.getInstance().player != null) {
             Player player = (Player)(Object)this;
             float mul = ns.getMatrixInputScale();
             if (mul != 1.0f) {

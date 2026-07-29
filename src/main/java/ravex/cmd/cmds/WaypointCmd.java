@@ -1,10 +1,10 @@
 package ravex.cmd.cmds;
-import net.minecraft.client.Minecraft;
 import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
 import ravex.modules.client.Commands;
 import java.util.Locale;
 import ravex.manager.ModuleManager;
+import ravex.mcwrapper.MinecraftWrapper;
 public class WaypointCmd extends Cmd {
     public WaypointCmd() {
         super("waypoint", "Manage waypoints", "wp");
@@ -17,7 +17,7 @@ public class WaypointCmd extends Cmd {
             return;
         }
         String sub = args[1].toLowerCase(Locale.ROOT);
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         switch (sub) {
             case "add": {
                 if (mc.player == null || mc.level == null) return;

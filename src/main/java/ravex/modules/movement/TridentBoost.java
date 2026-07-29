@@ -2,8 +2,9 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
-
+import ravex.utility.movement.MoveUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.PlayerUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "TridentBoost", category = "Movement")
@@ -17,10 +18,10 @@ public class TridentBoost {
     public void onTick() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
-        var main = mc.player.getMainHandItem();
+        var main = InventoryUtility.getMainHand(mc.player);
         if (!InventoryUtility.isTrident(main)) return;
         if (!InventoryUtility.hasEnchantment(main, "riptide")) return;
-        if (!mc.player.isUsingItem()) return;
+        if (!PlayerUtility.isUsingItem(mc.player)) return;
         String m = mode;
         if (m.equals("Normal") && !mc.player.isInWaterOrRain()) return;
         float yaw = mc.player.getYRot() * ((float)Math.PI / 180F);
@@ -30,7 +31,7 @@ public class TridentBoost {
         double dx = -Math.sin(yaw) * Math.cos(pitch) * mult;
         double dy = -Math.sin(pitch) * vert;
         double dz = Math.cos(yaw) * Math.cos(pitch) * mult;
-        mc.player.setDeltaMovement(new net.minecraft.world.phys.Vec3(dx, dy, dz));
+        MoveUtility.setMotion(new net.minecraft.world.phys.Vec3(dx, dy, dz));
         mc.player.hurtMarked = true;
     }
 

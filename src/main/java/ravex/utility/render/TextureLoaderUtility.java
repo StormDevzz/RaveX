@@ -4,8 +4,8 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.RaveX;
@@ -295,7 +295,7 @@ public class TextureLoaderUtility {
             NativeImage image = NativeImage.read(stream);
             image = downscaleTo(image, ICON_SIZE);
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(PALETTE, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(PALETTE, tex);
             loaded.put(PALETTE, tex);
             return PALETTE;
         } catch (Exception e) {
@@ -319,7 +319,7 @@ public class TextureLoaderUtility {
                 }
                 image = downscaleTo(image, ICON_SIZE);
                 AbstractTexture tex = createLinearTexture(image);
-                Minecraft.getInstance().getTextureManager().register(SETTINGS_WHITE, tex);
+                MinecraftWrapper.getInstance().getTextureManager().register(SETTINGS_WHITE, tex);
                 loaded.put(SETTINGS_WHITE, tex);
             } catch (Exception e) {
                 RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load white settings: {}", e.getMessage());
@@ -360,7 +360,7 @@ public class TextureLoaderUtility {
             }
             image = downscaleTo(image, ICON_SIZE);
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(targetId, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(targetId, tex);
             loaded.put(targetId, tex);
             return targetId;
         } catch (Exception e) {
@@ -384,7 +384,7 @@ public class TextureLoaderUtility {
                 }
                 image = downscaleTo(image, ICON_SIZE);
                 AbstractTexture tex = createLinearTexture(image);
-                Minecraft.getInstance().getTextureManager().register(CIRCLE_WHITE, tex);
+                MinecraftWrapper.getInstance().getTextureManager().register(CIRCLE_WHITE, tex);
                 loaded.put(CIRCLE_WHITE, tex);
             } catch (Exception e) {
                 RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load white circle: {}", e.getMessage());
@@ -417,7 +417,7 @@ public class TextureLoaderUtility {
                 }
             }
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(TRACK, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(TRACK, tex);
             loaded.put(TRACK, tex);
         }
         return TRACK;
@@ -445,7 +445,7 @@ public class TextureLoaderUtility {
                 }
             }
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(SOLID_CIRCLE, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(SOLID_CIRCLE, tex);
             loaded.put(SOLID_CIRCLE, tex);
         }
         return SOLID_CIRCLE;
@@ -475,7 +475,7 @@ public class TextureLoaderUtility {
                 }
                 image = downscaleTo(image, ICON_SIZE);
                 AbstractTexture tex = createLinearTexture(image);
-                Minecraft.getInstance().getTextureManager().register(SWITCHER, tex);
+                MinecraftWrapper.getInstance().getTextureManager().register(SWITCHER, tex);
                 loaded.put(SWITCHER, tex);
             } catch (Exception e) {
                 RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load switcher: {}", e.getMessage());
@@ -516,7 +516,7 @@ public class TextureLoaderUtility {
                 }
             }
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(tintedId, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(tintedId, tex);
             loaded.put(tintedId, tex);
             lastTintedColor.put(tintedId, color);
             return tintedId;
@@ -565,7 +565,7 @@ public class TextureLoaderUtility {
             if (stream != null) {
                 NativeImage image = NativeImage.read(stream);
                 AbstractTexture tex = createLinearTexture(image);
-                Minecraft.getInstance().getTextureManager().register(MARKER, tex);
+                MinecraftWrapper.getInstance().getTextureManager().register(MARKER, tex);
                 loaded.put(MARKER, tex);
             }
         } catch (Exception e) {
@@ -588,7 +588,7 @@ public class TextureLoaderUtility {
                 if (stream != null) {
                     NativeImage image = NativeImage.read(stream);
                     AbstractTexture tex = createLinearTexture(image);
-                    Minecraft.getInstance().getTextureManager().register(MARKER, tex);
+                    MinecraftWrapper.getInstance().getTextureManager().register(MARKER, tex);
                     loaded.put(MARKER, tex);
                 }
             } catch (Exception e) {
@@ -610,7 +610,7 @@ public class TextureLoaderUtility {
                 }
             }
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(tintedId, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(tintedId, tex);
             loaded.put(tintedId, tex);
             lastTintedColor.put(tintedId, color);
             return tintedId;
@@ -665,7 +665,7 @@ public class TextureLoaderUtility {
             NativeImage image = NativeImage.read(stream);
             image = downscaleTo(image, 16);
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(id, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(id, tex);
             loaded.put(id, tex);
             return true;
         } catch (Exception e) {
@@ -683,7 +683,7 @@ public class TextureLoaderUtility {
             removeBackground(image);
             image = downscaleTo(image, MODULE_ICON_SIZE);
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(guiId, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(guiId, tex);
             loaded.put(guiId, tex);
             return true;
         } catch (Exception e) {
@@ -714,7 +714,7 @@ public class TextureLoaderUtility {
                 image = downscaleTo(image, ICON_SIZE);
             }
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(guiId, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(guiId, tex);
             loaded.put(guiId, tex);
             return true;
         } catch (Exception e) {
@@ -760,7 +760,7 @@ public class TextureLoaderUtility {
                 image = NativeImage.read(stream);
             }
             AbstractTexture tex = createLinearTexture(image);
-            Minecraft.getInstance().getTextureManager().register(guiId, tex);
+            MinecraftWrapper.getInstance().getTextureManager().register(guiId, tex);
             loaded.put(guiId, tex);
             return true;
         } catch (Exception e) {

@@ -1,6 +1,7 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "Speed", category = "Movement")
@@ -33,12 +34,12 @@ public static boolean cancelVertical = false;
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
-        if (!mc.player.isSprinting() && !mc.player.isCrouching()
+        if (!PlayerUtility.isSprinting(mc.player) && !mc.player.isCrouching()
             && (mc.options.keyUp.isDown() || mc.options.keyDown.isDown() || mc.options.keyLeft.isDown() || mc.options.keyRight.isDown())) {
             mc.player.setSprinting(true);
         }
 
-        if (mc.player.onGround() && mc.player.isSprinting()) {
+        if (mc.player.onGround() && PlayerUtility.isSprinting(mc.player)) {
             mc.player.jumpFromGround();
         }
     }

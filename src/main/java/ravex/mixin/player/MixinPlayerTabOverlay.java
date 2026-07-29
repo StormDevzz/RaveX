@@ -1,6 +1,7 @@
 package ravex.mixin.player;
 
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
@@ -36,7 +37,7 @@ public class MixinPlayerTabOverlay {
             String rawName = playerInfo.getProfile().name();
             String nameStr = name != null ? name.getString() : rawName;
 
-            var mc = net.minecraft.client.Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (rawName.equals(mc.getUser().getName())) {
                 int selfColor = Modules.get(TabHelper.class).selfColor;
                 cir.setReturnValue(Component.literal(nameStr).withStyle(style -> style.withColor(selfColor)));
@@ -61,8 +62,8 @@ public class MixinPlayerTabOverlay {
                 color = 0xFFFFCC33;
             }
 
-            int textW = net.minecraft.client.Minecraft.getInstance().font.width(pingStr);
-            graphics.drawString(net.minecraft.client.Minecraft.getInstance().font, pingStr, x + width - textW - 2, y + 1, color, false);
+            int textW = MinecraftWrapper.getInstance().font.width(pingStr);
+            graphics.drawString(MinecraftWrapper.getInstance().font, pingStr, x + width - textW - 2, y + 1, color, false);
         }
     }
 }

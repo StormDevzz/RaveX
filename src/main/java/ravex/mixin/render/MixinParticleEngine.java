@@ -1,5 +1,6 @@
 package ravex.mixin.render;
 
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.particle.ParticleRenderType;
@@ -27,7 +28,7 @@ public class MixinParticleEngine {
     @Inject(method = "createParticle", at = @At("HEAD"), cancellable = true)
     private void onCreateParticle(ParticleOptions options, double x, double y, double z, double dx, double dy, double dz, CallbackInfoReturnable<Particle> cir) {
         if (Modules.enabled(NoRender.class)) {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            net.minecraft.client.Minecraft mc = MinecraftWrapper.getInstance();
             net.minecraft.world.entity.Entity cam = mc.getCameraEntity();
             if (cam != null) {
                 double camX = cam.getX();
@@ -77,7 +78,7 @@ public class MixinParticleEngine {
                 return;
             }
 
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            net.minecraft.client.Minecraft mc = MinecraftWrapper.getInstance();
             int currentFps = mc.getFps();
             int active = ravex$getActiveParticles();
             int allowed = NoRender.optimizeBudget(active, currentFps, 60);

@@ -1,6 +1,6 @@
 package ravex.mixin.render;
 
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.network.chat.Component;
@@ -36,7 +36,7 @@ public abstract class MixinChatComponent {
     @ModifyVariable(method = "addMessage(Lnet/minecraft/network/chat/Component;)V",
                     at = @At("HEAD"), argsOnly = true)
     private Component modifyChatMessage(Component message) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return message;
         Component m = message;
         if (Modules.enabled(NameProtect.class)) {

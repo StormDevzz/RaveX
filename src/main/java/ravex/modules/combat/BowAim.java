@@ -2,7 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
-
+import ravex.utility.player.PlayerUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.misc.MobUtility;
 
@@ -33,7 +33,7 @@ public class BowAim {
             return;
         }
         silentRotation.hasRotation = false;
-        boolean usingBow = mc.getPlayer().isUsingItem() && InventoryUtility.isBow(mc.getPlayer().getUseItem());
+        boolean usingBow = PlayerUtility.isUsingItem(mc.getPlayer()) && InventoryUtility.isBow(mc.getPlayer().getUseItem());
         if (!usingBow) return;
         int ticksUsed = mc.getPlayer().getTicksUsingItem();
         double arrowSpeed = getArrowSpeed(ticksUsed);

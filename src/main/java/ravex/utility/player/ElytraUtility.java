@@ -2,6 +2,7 @@ package ravex.utility.player;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
@@ -58,7 +59,7 @@ public class ElytraUtility {
 
     public static boolean useFirework(LocalPlayer player) {
         if (player == null || !player.isFallFlying()) return false;
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         int prevSlot = player.getInventory().getSelectedSlot();
         int slot = InventoryUtility.findSlot(player, Items.FIREWORK_ROCKET);
         if (slot == -1) return false;
@@ -74,7 +75,7 @@ public class ElytraUtility {
 
     public static boolean swapToChestplate(LocalPlayer player) {
         if (player == null || !isElytraEquipped(player)) return false;
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         if (mc.gameMode == null) return false;
         int slot = findChestplateSlot(player);
         if (slot == -1) return false;

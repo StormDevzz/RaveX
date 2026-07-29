@@ -2,6 +2,7 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.movement.MoveUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "LongJump", category = "Movement")
@@ -24,7 +25,7 @@ public class LongJump {
         } else if (!jumped) {
             double speed = boost;
             net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
-            mc.player.setDeltaMovement(motion.x * speed, motion.y + 0.05, motion.z * speed);
+            MoveUtility.setMotion(motion.x * speed, motion.y + 0.05, motion.z * speed);
             jumped = true;
         }
     }

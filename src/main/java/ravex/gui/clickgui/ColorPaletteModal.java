@@ -1,7 +1,7 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import ravex.parameter.ColorParameter;
@@ -88,7 +88,7 @@ public class ColorPaletteModal {
 
         graphics.fill(0, 0, screenWidth, screenHeight, 0x9007070B);
 
-        long win = Minecraft.getInstance().getWindow().handle();
+        long win = MinecraftWrapper.getInstance().getWindow().handle();
         boolean lmb = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
         if (!lmb) {
             draggingSV = draggingHue = draggingAlpha = false;
@@ -312,8 +312,8 @@ public class ColorPaletteModal {
         int mx = (int) mouseX;
         int my = (int) mouseY;
 
-        int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+        int screenWidth = MinecraftWrapper.getInstance().getWindow().getGuiScaledWidth();
+        int screenHeight = MinecraftWrapper.getInstance().getWindow().getGuiScaledHeight();
         int mxLeft = (screenWidth - modalWidth) / 2;
         int myTop = (screenHeight - modalHeight) / 2;
 

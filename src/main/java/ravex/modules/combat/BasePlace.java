@@ -193,7 +193,7 @@ public class BasePlace {
         if (placedPositions.containsKey(targetBlock) || mc.getLevel().getBlockState(targetBlock).getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
             return;
         }
-        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighborPos).add(PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         int originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         String swap = swapMode;

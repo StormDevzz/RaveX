@@ -4,6 +4,8 @@ import ravex.modules.annotations.Parameter;
 import ravex.manager.NotificationManager;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PotionUtility;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.PlayerUtility;
 import net.minecraft.network.chat.Component;
 
 import net.minecraft.world.entity.item.ItemEntity;
@@ -151,29 +153,29 @@ public class Notifications {
 
             ItemStack using = p.getUseItem();
             if (!using.isEmpty() && using != state.usingItem) {
-                if (using.is(Items.GOLDEN_APPLE)) {
+                if (InventoryUtility.isGoldenApple(using)) {
                     notifyOpt(tr, ravex.utility.misc.LanguageUtility.t("ate_gapple", name), 0xFFFFAA00);
-                } else if (using.is(Items.ENCHANTED_GOLDEN_APPLE)) {
+                } else if (InventoryUtility.isEnchantedGoldenApple(using)) {
                     notifyOpt(tr, ravex.utility.misc.LanguageUtility.t("ate_egapple", name), 0xFFFF55FF);
-                } else if (using.is(Items.POTION) || using.is(Items.SPLASH_POTION) || using.is(Items.LINGERING_POTION)) {
+                } else if (InventoryUtility.isPotion(using) || using.is(Items.SPLASH_POTION) || using.is(Items.LINGERING_POTION)) {
                     String effect = PotionUtility.getPotionName(using);
                     notifyOpt(tr, ravex.utility.misc.LanguageUtility.t("drank", name, effect), 0xFF00AAFF);
                 }
             }
             state.usingItem = using;
 
-            boolean nowHasTotem = hasItemInHands(p, Items.TOTEM_OF_UNDYING);
-            if (state.hasTotem && !nowHasTotem && p.getHealth() <= 0.5f) {
+            boolean nowHasTotem = InventoryUtility.isTotem(p.getMainHandItem()) || InventoryUtility.isTotem(p.getOffhandItem());
+            if (state.hasTotem && !nowHasTotem && PlayerUtility.getHealth(p) <= 0.5f) {
                 notifyOpt(tr, ravex.utility.misc.LanguageUtility.t("pop_totem", name), 0xFFFF4444);
             }
             state.hasTotem = nowHasTotem;
 
-            boolean nowHasShield = hasItemInHands(p, Items.SHIELD);
-            if (state.hasShield && !nowHasShield && state.lastHealth - p.getHealth() < 0.01f) {
+            boolean nowHasShield = p.getMainHandItem().is(Items.SHIELD) || p.getOffhandItem().is(Items.SHIELD);
+            if (state.hasShield && !nowHasShield && state.lastHealth - PlayerUtility.getHealth(p) < 0.01f) {
                 notifyOpt(tr, ravex.utility.misc.LanguageUtility.t("shield_broke", name), 0xFF888888);
             }
             state.hasShield = nowHasShield;
-            state.lastHealth = p.getHealth();
+            state.lastHealth = PlayerUtility.getHealth(p);
         }
     }
 

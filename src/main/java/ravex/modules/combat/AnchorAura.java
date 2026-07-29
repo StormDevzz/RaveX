@@ -128,14 +128,14 @@ public class AnchorAura {
                 int glowstoneSlot = findItemSlot(mc, "glowstone");
                 if (glowstoneSlot == -1)
                     return;
-                net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(existingAnchor);
+                net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(existingAnchor);
                 rotateTo(mc, hitVec);
                 performUse(mc, glowstoneSlot, existingAnchor, net.minecraft.core.Direction.UP, hitVec);
             } else {
                 int triggerSlot = findNonGlowstoneSlot(mc);
                 if (triggerSlot == -1)
                     return;
-                net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(existingAnchor);
+                net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(existingAnchor);
                 rotateTo(mc, hitVec);
                 performUse(mc, triggerSlot, existingAnchor, net.minecraft.core.Direction.UP, hitVec);
             }
@@ -185,8 +185,8 @@ public class AnchorAura {
         net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
         net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
         net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
-        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos)
-                .add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighborPos)
+                .add(PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         performUse(mc, anchorSlot, neighborPos, face, hitVec);
     }

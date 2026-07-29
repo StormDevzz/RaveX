@@ -97,7 +97,7 @@ public class AutoCart {
         if (f < 0.1F) f = 0.1F;
         net.minecraft.core.BlockPos landingPos = simulateTrajectory(mc, eyePos.add(look.scale(0.1)), look.scale(f * 3.0));
         if (landingPos == null) return;
-        double dist = mc.getPlayer().getEyePosition().distanceTo(net.minecraft.world.phys.Vec3.atCenterOf(landingPos));
+        double dist = mc.getPlayer().getEyePosition().distanceTo(PhysicUtility.centerOf(landingPos));
         if (dist > targetRange) return;
         int railSlot = findItemSlot(mc, net.minecraft.world.item.Items.RAIL);
         if (railSlot == -1) return;
@@ -199,7 +199,7 @@ public class AutoCart {
     }
     private void faceBlock(MinecraftWrapper mc, net.minecraft.core.BlockPos pos) {
         String mode = bypass;
-        net.minecraft.world.phys.Vec3 target = net.minecraft.world.phys.Vec3.atCenterOf(pos);
+        net.minecraft.world.phys.Vec3 target = PhysicUtility.centerOf(pos);
         float[] targetAngles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
 
         if ("NCP".equals(mode)) {
@@ -241,7 +241,7 @@ public class AutoCart {
     private void useItemOn(MinecraftWrapper mc, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face) {
         if (mc.getGameMode() == null) return;
         mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND,
-            new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), face, pos, false));
+            new net.minecraft.world.phys.BlockHitResult(PhysicUtility.centerOf(pos), face, pos, false));
         SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
     }
     private boolean canPlaceBlock(net.minecraft.core.BlockPos pos, MinecraftWrapper mc) {
@@ -250,7 +250,7 @@ public class AutoCart {
     }
     private boolean isWithinRange(net.minecraft.core.BlockPos pos, MinecraftWrapper mc) {
         net.minecraft.world.phys.Vec3 playerPos = mc.getPlayer().getEyePosition();
-        net.minecraft.world.phys.Vec3 targetPos = net.minecraft.world.phys.Vec3.atCenterOf(pos);
+        net.minecraft.world.phys.Vec3 targetPos = PhysicUtility.centerOf(pos);
         return playerPos.distanceTo(targetPos) <= range;
     }
 

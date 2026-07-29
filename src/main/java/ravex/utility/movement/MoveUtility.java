@@ -1,40 +1,40 @@
 package ravex.utility.movement;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
+import ravex.mcwrapper.MinecraftWrapper;
 
 public class MoveUtility {
     public static void sendPos(double x, double y, double z, boolean onGround, boolean hCollision) {
-        var c = Minecraft.getInstance().getConnection();
+        var c = MinecraftWrapper.getInstance().getConnection();
         if (c != null)
             c.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(x, y, z, onGround, hCollision));
     }
 
     public static void sendRot(float yRot, float xRot, boolean onGround, boolean hCollision) {
-        var c = Minecraft.getInstance().getConnection();
+        var c = MinecraftWrapper.getInstance().getConnection();
         if (c != null)
             c.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(yRot, xRot, onGround, hCollision));
     }
 
     public static void sendPosRot(double x, double y, double z, float yRot, float xRot, boolean onGround, boolean hCollision) {
-        var c = Minecraft.getInstance().getConnection();
+        var c = MinecraftWrapper.getInstance().getConnection();
         if (c != null)
             c.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(x, y, z, yRot, xRot, onGround, hCollision));
     }
 
     public static void setMotion(Vec3 motion) {
-        var p = Minecraft.getInstance().player;
+        var p = MinecraftWrapper.getInstance().player;
         if (p != null) p.setDeltaMovement(motion);
     }
 
     public static void setMotion(double x, double y, double z) {
-        var p = Minecraft.getInstance().player;
+        var p = MinecraftWrapper.getInstance().player;
         if (p != null) p.setDeltaMovement(x, y, z);
     }
 
     public static void setPos(double x, double y, double z) {
-        var p = Minecraft.getInstance().player;
+        var p = MinecraftWrapper.getInstance().player;
         if (p != null) p.setPos(x, y, z);
     }
 
@@ -43,12 +43,12 @@ public class MoveUtility {
     }
 
     public static Vec3 eyePos() {
-        var p = Minecraft.getInstance().player;
+        var p = MinecraftWrapper.getInstance().player;
         return p != null ? p.getEyePosition(1.0F) : Vec3.ZERO;
     }
 
     public static Vec3 lookVec() {
-        var p = Minecraft.getInstance().player;
+        var p = MinecraftWrapper.getInstance().player;
         return p != null ? p.getViewVector(1.0F) : Vec3.ZERO;
     }
 

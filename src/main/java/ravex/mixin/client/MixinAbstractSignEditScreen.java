@@ -2,6 +2,7 @@ package ravex.mixin.client;
 import ravex.utility.misc.ScreenUtility;
 
 import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +21,7 @@ public abstract class MixinAbstractSignEditScreen {
     @Inject(method = "init", at = @At("HEAD"))
     private void onInit(CallbackInfo ci) {
         if (Modules.enabled(AutoSign.class)) {
-            var mc = net.minecraft.client.Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.player != null && mc.getConnection() != null && sign != null) {
                 String l1 = Modules.get(AutoSign.class).line1;
                 String l2 = Modules.get(AutoSign.class).line2;

@@ -133,7 +133,7 @@ public class Breaker {
         }
         net.minecraft.core.BlockPos targetPos = null;
         if (currentMiningBlock != null) {
-            double dist = net.minecraft.world.phys.Vec3.atCenterOf(currentMiningBlock).distanceTo(mc.getPlayer().getEyePosition());
+            double dist = PhysicUtility.centerOf(currentMiningBlock).distanceTo(mc.getPlayer().getEyePosition());
             if (dist <= range && candidates.contains(currentMiningBlock)) {
                 targetPos = currentMiningBlock;
             }
@@ -169,9 +169,9 @@ public class Breaker {
         if (!syncPacketMine) {
             String rotMode = rotate;
             if (rotMode.equals("Normal")) {
-                rotateTo(mc, net.minecraft.world.phys.Vec3.atCenterOf(targetPos));
+                rotateTo(mc, PhysicUtility.centerOf(targetPos));
             } else if (rotMode.equals("Silent")) {
-                silentRotation.setAnglesTo(mc, net.minecraft.world.phys.Vec3.atCenterOf(targetPos));
+                silentRotation.setAnglesTo(mc, PhysicUtility.centerOf(targetPos));
             }
         }
         if (syncPacketMine) {

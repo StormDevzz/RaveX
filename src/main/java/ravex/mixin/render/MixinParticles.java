@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.Particles;
+import ravex.utility.misc.PhysicUtility;
 
 @Mixin(MultiPlayerGameMode.class)
 public class MixinParticles {
@@ -25,6 +26,6 @@ public class MixinParticles {
     @Inject(method = "startDestroyBlock", at = @At("HEAD"))
     private void onStartDestroyBlock(BlockPos pos, Direction face, CallbackInfoReturnable<Boolean> cir) {
         Particles.minedThisTick = true;
-        Particles.lastMinePos = Vec3.atCenterOf(pos);
+        Particles.lastMinePos = PhysicUtility.centerOf(pos);
     }
 }

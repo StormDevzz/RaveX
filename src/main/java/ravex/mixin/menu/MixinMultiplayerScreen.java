@@ -1,7 +1,7 @@
 package ravex.mixin.menu;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.Component;
@@ -22,7 +22,7 @@ public abstract class MixinMultiplayerScreen extends Screen {
     private void onInit(CallbackInfo ci) {
         this.addRenderableWidget(Button.builder(
             Component.literal("Proxy Config"),
-            btn -> Minecraft.getInstance().setScreen(new ProxyConfigScreen((JoinMultiplayerScreen)(Object)this))
+            btn -> MinecraftWrapper.getInstance().setScreen(new ProxyConfigScreen((JoinMultiplayerScreen)(Object)this))
         ).bounds(this.width - 110, this.height - 30, 100, 20).build());
     }
 }

@@ -5,6 +5,7 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -101,7 +102,7 @@ public class BedBomb {
         int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
         InventoryUtility.selectSlot(mc.getPlayer(), slot);
         net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
-            net.minecraft.world.phys.Vec3.atCenterOf(placePos), net.minecraft.core.Direction.UP, placePos, false
+            PhysicUtility.centerOf(placePos), net.minecraft.core.Direction.UP, placePos, false
         );
         mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hit);
         SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
@@ -122,7 +123,7 @@ public class BedBomb {
             if (!isBed) { state = State.IDLE; return; }
         }
         net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
-            net.minecraft.world.phys.Vec3.atCenterOf(bedPos), net.minecraft.core.Direction.UP, bedPos, false
+            PhysicUtility.centerOf(bedPos), net.minecraft.core.Direction.UP, bedPos, false
         );
         mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hit);
         SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
@@ -135,7 +136,7 @@ public class BedBomb {
         for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.player.Player p)) continue;
             if (p == mc.getPlayer()) continue;
-            if (p.isDeadOrDying()) continue;
+            if (PlayerUtility.isDead(p)) continue;
             double dist = mc.getPlayer().distanceTo(p);
             if (dist > maxDist) continue;
             if (dist < closestDist) {

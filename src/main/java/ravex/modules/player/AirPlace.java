@@ -58,7 +58,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
         }
         boolean mainHolding = InventoryUtility.isHoldingBlock(mc.player);
         var off = mc.player.getOffhandItem();
-        boolean offHolding = !off.isEmpty() && off.getItem() instanceof BlockItem;
+        boolean offHolding = InventoryUtility.isBlockItem(off);
         var hand = mainHolding ? net.minecraft.world.InteractionHand.MAIN_HAND : (offHolding ? net.minecraft.world.InteractionHand.OFF_HAND : null);
         if (hand == null) {
             currentTarget = null;
@@ -114,10 +114,10 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                     }
                     if (!BlockUtility.isAir(mc.level, neighbor)) {
                         double maxReach = 4.5;
-                        net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(neighbor);
+                        net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(neighbor);
                         if (mc.player.getEyePosition().distanceTo(center) <= maxReach) {
                             net.minecraft.world.phys.Vec3 hitVec = center.add(
-                                new net.minecraft.world.phys.Vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
+                                PhysicUtility.vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                             );
                             float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), hitVec);
                             var conn = mc.getConnection();
@@ -138,8 +138,8 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                         }
                     }
                 } else {
-                    net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighbor).add(
-                        new net.minecraft.world.phys.Vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
+                    net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighbor).add(
+                        PhysicUtility.vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                     );
                     net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, placeFace, neighbor, false);
                     BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), blockHit, hand);

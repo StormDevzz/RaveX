@@ -4,6 +4,7 @@ import ravex.modules.annotations.Parameter;
 import net.minecraft.world.entity.player.Input;
 
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.movement.MoveUtility;
 
 import java.util.List;
 import java.util.Random;
@@ -71,7 +72,7 @@ public class TickShift {
             if (boostTicks == 0) return;
             net.minecraft.world.phys.Vec3 motion = mc.player.getDeltaMovement();
             double mult = grimSpeed;
-            mc.player.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
+            MoveUtility.setMotion(motion.x * mult, motion.y, motion.z * mult);
             return;
         }
 
@@ -93,7 +94,7 @@ public class TickShift {
         String m = mode;
         if (m.equals("Motion")) {
             double mult = speed;
-            mc.player.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
+            MoveUtility.setMotion(motion.x * mult, motion.y, motion.z * mult);
         } else if (m.equals("Strafe")) {
             double yaw = mc.player.getYRot() * Math.PI / 180.0;
             double forward = (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0);
@@ -110,10 +111,10 @@ public class TickShift {
             double baseSpeed = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
             double mult = speed;
             double targetSpeed = Math.max(baseSpeed, 0.2873) * mult;
-            mc.player.setDeltaMovement(dx * targetSpeed, motion.y, dz * targetSpeed);
+            MoveUtility.setMotion(dx * targetSpeed, motion.y, dz * targetSpeed);
         } else if (m.equals("Timer")) {
             double mult = timerSpeed;
-            mc.player.setDeltaMovement(motion.x * mult, motion.y, motion.z * mult);
+            MoveUtility.setMotion(motion.x * mult, motion.y, motion.z * mult);
         }
     }
 

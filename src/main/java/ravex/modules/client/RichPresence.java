@@ -5,6 +5,7 @@ import ravex.parameter.StringParameter;
 import ravex.manager.LuaManager;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
+import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "RichPresence", category = "Client")
 public class RichPresence {
@@ -73,8 +74,8 @@ public class RichPresence {
             details = "RaveX — " + mc.player.getGameProfile().name();
             StringBuilder stateBuilder = new StringBuilder();
             if (showHP) {
-                int hp = (int) Math.ceil(mc.player.getHealth());
-                int maxHp = (int) Math.ceil(mc.player.getMaxHealth());
+                int hp = (int) Math.ceil(PlayerUtility.getHealth(mc.player));
+                int maxHp = (int) Math.ceil(PlayerUtility.getMaxHealth(mc.player));
                 stateBuilder.append("HP ").append(hp).append("/").append(maxHp);
             }
             if (showIP) {

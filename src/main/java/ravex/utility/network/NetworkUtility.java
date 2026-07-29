@@ -2,6 +2,7 @@ package ravex.utility.network;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -26,7 +27,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Contract;
 
 public class NetworkUtility {
-    private static Minecraft mc() { return Minecraft.getInstance(); }
+    private static Minecraft mc() { return MinecraftWrapper.getInstance(); }
 
     public static void sendStartDestroy(BlockPos pos, Direction dir, int seq) {
         var c = mc().getConnection();
@@ -189,7 +190,7 @@ public class NetworkUtility {
     }
 
     public static void displayClientMessage(String message) {
-        Minecraft mc = mc();
+        var mc = mc();
         if (mc.player != null) {
             mc.player.displayClientMessage(Component.literal(message), false);
         }

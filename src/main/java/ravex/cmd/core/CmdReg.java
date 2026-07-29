@@ -1,11 +1,11 @@
 package ravex.cmd.core;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import ravex.modules.client.Commands;
 import ravex.utility.misc.LanguageUtility;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import ravex.manager.ModuleManager;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 public class CmdReg {
     public static final CmdReg INSTANCE = new CmdReg();
@@ -47,7 +47,7 @@ public class CmdReg {
         if (!ModuleManager.get(Commands.class).showFeedback) {
             if (!text.contains("§c") && !text.contains("§5") && !text.contains("Help")) return;
         }
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null) {
             mc.player.displayClientMessage(Component.literal(text), false);
         }

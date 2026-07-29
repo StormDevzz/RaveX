@@ -1,16 +1,16 @@
 package ravex.cmd.cmds;
-import net.minecraft.client.Minecraft;
 import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
 import java.util.Locale;
 import ravex.manager.ModuleManager;
+import ravex.mcwrapper.MinecraftWrapper;
 public class UUIDCmd extends Cmd {
     public UUIDCmd() {
         super("uuid", "Get UUID of a player", "uuid");
     }
     @Override
     public void execute(String[] args) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getConnection() == null) return;
         String pref = ModuleManager.get(ravex.modules.client.Commands.class).prefix;
 

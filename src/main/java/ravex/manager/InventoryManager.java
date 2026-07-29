@@ -1,7 +1,7 @@
 package ravex.manager;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
+import ravex.mcwrapper.MinecraftWrapper;
 
 public class InventoryManager {
     public static final InventoryManager INSTANCE = new InventoryManager();
@@ -9,7 +9,7 @@ public class InventoryManager {
     private InventoryManager() {}
 
     public int findItemInHotbar(net.minecraft.world.item.Item item) {
-        var player = Minecraft.getInstance().player;
+        var player = MinecraftWrapper.getInstance().player;
         if (player == null) return -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = player.getInventory().getItem(i);
@@ -21,7 +21,7 @@ public class InventoryManager {
     }
 
     public int findItemInInventory(net.minecraft.world.item.Item item) {
-        var player = Minecraft.getInstance().player;
+        var player = MinecraftWrapper.getInstance().player;
         if (player == null) return -1;
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             ItemStack stack = player.getInventory().getItem(i);

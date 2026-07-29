@@ -5,6 +5,7 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
+import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.HoneycombItem;
 import ravex.mcwrapper.MinecraftWrapper;
 
@@ -66,10 +67,10 @@ public class WaxAura {
             if (autoSwap && honeycombSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, honeycombSlot);
             }
-            net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(targetPos);
+            net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(targetPos);
             net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
             mc.gameMode.useItemOn(p, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
-            p.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            SwingUtility.swing(p, net.minecraft.world.InteractionHand.MAIN_HAND);
             if (autoSwap && silent && honeycombSlot != prevSlot) {
                 InventoryUtility.selectSlot(p, prevSlot);
             }

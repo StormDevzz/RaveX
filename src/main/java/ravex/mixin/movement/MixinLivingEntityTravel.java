@@ -1,7 +1,7 @@
 package ravex.mixin.movement;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,7 +34,7 @@ public class MixinLivingEntityTravel {
 
     @Inject(method = "travel", at = @At("HEAD"))
     private void onTravelHead(Vec3 movementInput, CallbackInfo ci) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         if ((Object) this != mc.player) return;
@@ -51,7 +51,7 @@ public class MixinLivingEntityTravel {
     @Inject(method = "travel", at = @At("TAIL"))
     private void onTravelTail(Vec3 movementInput, CallbackInfo ci) {
         if (!ravexTravelModified) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
         if ((Object) this != mc.player) return;
 

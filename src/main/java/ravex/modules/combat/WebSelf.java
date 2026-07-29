@@ -1,6 +1,7 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
@@ -48,7 +49,7 @@ public class WebSelf {
         }
         if (mc.getLevel().getBlockState(below).isAir()) {
             int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-            net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(below);
+            net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(below);
             rotateTo(mc, center);
             String swap = swapMode;
             if (swap.equals("NCP")) {

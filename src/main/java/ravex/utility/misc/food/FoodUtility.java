@@ -2,6 +2,7 @@ package ravex.utility.misc.food;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
@@ -88,7 +89,7 @@ public class FoodUtility {
 
     public static List<Data> findAllFoodInHotbar() {
         List<Data> foods = new ArrayList<>();
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return foods;
         for (int i = 0; i < 9; i++) {
             Data data = toFoodData(i, InventoryUtility.getItem(mc.player, i));
@@ -99,7 +100,7 @@ public class FoodUtility {
 
     public static List<Data> findAllFoodInInventory() {
         List<Data> foods = new ArrayList<>();
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return foods;
         for (int i = 0; i < InventoryUtility.getContainerSize(mc.player); i++) {
             Data data = toFoodData(i, InventoryUtility.getItem(mc.player, i));
@@ -149,7 +150,7 @@ public class FoodUtility {
     }
 
     public static boolean hasFoodInHotbar() {
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return false;
         for (int i = 0; i < 9; i++) {
             if (isFood(InventoryUtility.getItem(mc.player, i))) return true;
@@ -175,7 +176,7 @@ public class FoodUtility {
     }
 
     public Result tryEat() {
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return Result.FAIL;
         if (isEating()) return continueEating(mc);
         Data best = findBestFoodForHunger(mc.player.getFoodData().getFoodLevel());
@@ -184,7 +185,7 @@ public class FoodUtility {
     }
 
     public Result tryEat(int minHunger) {
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return Result.FAIL;
         if (mc.player.getFoodData().getFoodLevel() >= minHunger) return Result.NOT_HUNGRY;
         return tryEat();
@@ -222,7 +223,7 @@ public class FoodUtility {
 
     public void reset() {
         if (eating) {
-            Minecraft mc = Minecraft.getInstance();
+            Minecraft mc = MinecraftWrapper.getInstance();
             if (mc.player != null) finishEating(mc);
         }
         eating = false;

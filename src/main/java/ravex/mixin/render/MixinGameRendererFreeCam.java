@@ -1,6 +1,6 @@
 package ravex.mixin.render;
 
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -18,7 +18,7 @@ public abstract class MixinGameRendererFreeCam {
     @Inject(method = "pick", at = @At("HEAD"))
     private void onPickPre(float tickDelta, CallbackInfo ci) {
         if (!Modules.enabled(FreeCam.class)) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         ravexSavedX = mc.player.getX();
@@ -36,7 +36,7 @@ public abstract class MixinGameRendererFreeCam {
     @Inject(method = "pick", at = @At("RETURN"))
     private void onPickPost(float tickDelta, CallbackInfo ci) {
         if (!Modules.enabled(FreeCam.class)) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         mc.player.setPos(ravexSavedX, ravexSavedY, ravexSavedZ);

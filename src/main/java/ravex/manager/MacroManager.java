@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.macro.Macro;
 import ravex.macro.MacroAction;
 import ravex.manager.ModuleManager;
@@ -61,7 +61,7 @@ public class MacroManager {
     }
 
     public void onTick() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.getWindow() == null) return;
 
         long handle = mc.getWindow().handle();
@@ -78,7 +78,7 @@ public class MacroManager {
     }
 
     private void executeMacro(Macro macro) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         for (MacroAction action : macro.getActions()) {
             switch (action.getType()) {
                 case TOGGLE_MODULE:

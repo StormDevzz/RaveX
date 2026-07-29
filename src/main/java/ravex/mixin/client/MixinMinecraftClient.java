@@ -2,6 +2,7 @@ package ravex.mixin.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import ravex.mcwrapper.MinecraftWrapper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -52,7 +53,7 @@ public abstract class MixinMinecraftClient {
             cir.setReturnValue(false);
             return;
         }
-        LocalPlayer player = Minecraft.getInstance().player;
+        LocalPlayer player = MinecraftWrapper.getInstance().player;
         if (player == null) return;
 
         ravexFreeCamSavedX = player.getX();
@@ -70,7 +71,7 @@ public abstract class MixinMinecraftClient {
     private void onStartAttackPost(CallbackInfoReturnable<Boolean> cir) {
         if (!Modules.enabled(FreeCam.class)) return;
         if (!Modules.get(FreeCam.class).blockInteract && !Modules.get(FreeCam.class).entityInteract) return;
-        LocalPlayer player = Minecraft.getInstance().player;
+        LocalPlayer player = MinecraftWrapper.getInstance().player;
         if (player == null) return;
 
         player.setPos(ravexFreeCamSavedX, ravexFreeCamSavedY, ravexFreeCamSavedZ);

@@ -1,4 +1,5 @@
 package ravex.modules.combat;
+import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
 
 import ravex.modules.annotations.Module;
@@ -8,6 +9,7 @@ import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.movement.MoveUtility;
 import org.joml.Matrix4f;
 
 import ravex.utility.player.rotation.RotationUtility;
@@ -133,7 +135,7 @@ public class PearlTarget {
                     pearls.add(pearl);
                 }
             }
-            if (e instanceof net.minecraft.world.entity.player.Player p && !MobUtility.isSelf(p) && !p.isSpectator()) {
+            if (e instanceof net.minecraft.world.entity.player.Player p && !MobUtility.isSelf(p) && !PlayerUtility.isSpectator(p)) {
                 if (MobUtility.distanceToPlayer(p) <= r * 1.5) {
                     players.add(p);
                 }
@@ -228,7 +230,7 @@ public class PearlTarget {
         } else {
             motion = new net.minecraft.world.phys.Vec3(targetVx, motion.y, targetVz);
         }
-        mc.getPlayer().setDeltaMovement(motion);
+        MoveUtility.setMotion(motion);
         if (jump && mc.getPlayer().onGround() && dist > 1.5) {
             mc.getPlayer().jumpFromGround();
         }
@@ -281,7 +283,7 @@ public class PearlTarget {
     }
     private void doAutoGap(MinecraftWrapper mc) {
         if (MobUtility.getHealthWithAbsorption(mc.getPlayer()) > gapHealth) return;
-        if (mc.getPlayer().isUsingItem()) return;
+        if (PlayerUtility.isUsingItem(mc.getPlayer())) return;
         var gap = FoodUtility.findFood(f -> f.isAnyGoldenApple());
         if (gap == null) return;
         int gapSlot = gap.getSlot();
@@ -293,7 +295,7 @@ public class PearlTarget {
         }
     }
     private void doAutoPearl(MinecraftWrapper mc) {
-        if (mc.getPlayer().isUsingItem()) return;
+        if (PlayerUtility.isUsingItem(mc.getPlayer())) return;
         int pearlSlot = -1;
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.getPlayer(), i);

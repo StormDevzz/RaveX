@@ -3,6 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
+import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "AutoLog", category = "Misc")
@@ -18,8 +19,8 @@ public class AutoLog {
     public void onTick() {
         var mc = MinecraftWrapper.getInstance();
         if (mc.player == null || mc.level == null) return;
-        if (onLowHealth && mc.player.getHealth() <= healthLimit) {
-            disconnect("LowHealthTriggered(" + mc.player.getHealth() + " HP)");
+        if (onLowHealth && PlayerUtility.getHealth(mc.player) <= healthLimit) {
+            disconnect("LowHealthTriggered(" + PlayerUtility.getHealth(mc.player) + " HP)");
             return;
         }
         for (net.minecraft.world.entity.player.Player other : mc.level.players()) {

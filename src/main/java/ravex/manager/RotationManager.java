@@ -1,6 +1,6 @@
 package ravex.manager;
 
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 
 public class RotationManager {
     public static final RotationManager INSTANCE = new RotationManager();
@@ -22,11 +22,11 @@ public class RotationManager {
     }
 
     public float getYaw() {
-        return rotating ? yaw : (Minecraft.getInstance().player != null ? Minecraft.getInstance().player.getYRot() : 0);
+        return rotating ? yaw : (MinecraftWrapper.getInstance().player != null ? MinecraftWrapper.getInstance().player.getYRot() : 0);
     }
 
     public float getPitch() {
-        return rotating ? pitch : (Minecraft.getInstance().player != null ? Minecraft.getInstance().player.getXRot() : 0);
+        return rotating ? pitch : (MinecraftWrapper.getInstance().player != null ? MinecraftWrapper.getInstance().player.getXRot() : 0);
     }
 
     public boolean isRotating() {

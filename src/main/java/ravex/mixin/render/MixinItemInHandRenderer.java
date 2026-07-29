@@ -13,6 +13,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
+import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.PlayerUtility;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -133,7 +136,7 @@ public abstract class MixinItemInHandRenderer {
             return swingProgress;
         }
 
-        boolean isSelf = Minecraft.getInstance().player == capturedPlayer;
+        boolean isSelf = MinecraftWrapper.getWrapper().getPlayer() == capturedPlayer;
 
         if (Modules.enabled(NoSwing.class)) {
             capturedSwingProgress = swingProgress;
@@ -202,7 +205,7 @@ public abstract class MixinItemInHandRenderer {
 
         if (!Modules.enabled(SwingAnimation.class) || Modules.enabled(NoSwing.class) || stack.isEmpty()) return;
         if (hand != InteractionHand.MAIN_HAND) return;
-        if (player.isUsingItem()) return;
+        if (PlayerUtility.isUsingItem(player)) return;
 
         ci.cancel();
 
@@ -236,17 +239,17 @@ public abstract class MixinItemInHandRenderer {
         if (Modules.enabled(SwingAnimation.class)) {
             String mode = Modules.get(SwingAnimation.class).mode;
             if ("Default".equals(mode) || "Akrien".equals(mode)) {
-                LocalPlayer player = Minecraft.getInstance().player;
+                LocalPlayer player = MinecraftWrapper.getWrapper().getPlayer();
                 if (player != null) {
-                    if (mainHandItem != null && mainHandItem.getItem() == player.getMainHandItem().getItem()) {
+                    if (mainHandItem != null && mainHandItem.getItem() == InventoryUtility.getMainHand(player).getItem()) {
                         mainHandHeight = 1.0f;
                         oMainHandHeight = 1.0f;
-                        mainHandItem = player.getMainHandItem();
+                        mainHandItem = InventoryUtility.getMainHand(player);
                     }
-                    if (offHandItem != null && offHandItem.getItem() == player.getOffhandItem().getItem()) {
+                    if (offHandItem != null && offHandItem.getItem() == InventoryUtility.getOffhand(player).getItem()) {
                         offHandHeight = 1.0f;
                         oOffHandHeight = 1.0f;
-                        offHandItem = player.getOffhandItem();
+                        offHandItem = InventoryUtility.getOffhand(player);
                     }
                 }
             }

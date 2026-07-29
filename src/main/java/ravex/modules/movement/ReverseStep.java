@@ -1,6 +1,7 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.movement.MoveUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "ReverseStep", category = "Movement")
 public class ReverseStep {
@@ -28,7 +29,7 @@ public class ReverseStep {
         }
         if (foundGround) {
             var motion = mc.player.getDeltaMovement();
-            mc.player.setDeltaMovement(motion.x, -force, motion.z);
+            MoveUtility.setMotion(motion.x, -force, motion.z);
         }
     }
 

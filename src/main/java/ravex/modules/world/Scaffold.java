@@ -9,6 +9,7 @@ import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
+import ravex.utility.movement.MoveUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +118,7 @@ public class Scaffold {
             targetY = Math.floor(p.getY());
         }
         if (tower && mc.options.keyJump.isDown()) {
-            p.setDeltaMovement(p.getDeltaMovement().x, 0.42, p.getDeltaMovement().z);
+            MoveUtility.setMotion(p.getDeltaMovement().x, 0.42, p.getDeltaMovement().z);
             targetY = Math.floor(p.getY());
         }
         int slot = findBlockSlot(p);

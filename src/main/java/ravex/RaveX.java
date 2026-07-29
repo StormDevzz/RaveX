@@ -254,7 +254,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
     public static void onClientTick() {
         if (!texturesPreloaded) {
-            Minecraft mc = Minecraft.getInstance();
+            Minecraft mc = ravex.mcwrapper.MinecraftWrapper.getInstance();
             if (mc.getWindow() != null) {
                 TextureLoaderUtility.preloadAll();
                 texturesPreloaded = true;
@@ -271,7 +271,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         ravex.addon.core.CAddonManager.onTick();
         ServiceLocator.resolve(ModuleManager.class).onTick();
 
-        Minecraft mc = Minecraft.getInstance();
+        Minecraft mc = ravex.mcwrapper.MinecraftWrapper.getInstance();
         if (mc.getWindow() == null) return;
 
         com.mojang.blaze3d.platform.Window window = mc.getWindow();

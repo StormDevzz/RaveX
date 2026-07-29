@@ -3,6 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.network.NetworkUtility;
 import net.minecraft.world.phys.HitResult;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -40,7 +41,7 @@ public class ClickTP {
             if (hit.getType() == HitResult.Type.BLOCK) {
                 net.minecraft.world.phys.BlockHitResult blockHit = (net.minecraft.world.phys.BlockHitResult) hit;
                 net.minecraft.core.BlockPos pos = blockHit.getBlockPos();
-                return net.minecraft.world.phys.Vec3.atCenterOf(pos).add(0, 0.5, 0);
+                return PhysicUtility.centerOf(pos).add(0, 0.5, 0);
             }
             if (hit.getType() == HitResult.Type.ENTITY) {
                 net.minecraft.world.phys.EntityHitResult entityHit = (net.minecraft.world.phys.EntityHitResult) hit;
@@ -54,8 +55,7 @@ public class ClickTP {
     }
     private void teleportInstant(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         var p = mc.getPlayer();
-        p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                target.x, target.y, target.z, true, p.horizontalCollision));
+        NetworkUtility.sendMoveRelative(target.x, target.y, target.z, true, p.horizontalCollision);
         p.setPos(target.x, target.y, target.z);
     }
     private void teleportBlink(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
@@ -68,8 +68,7 @@ public class ClickTP {
             x += dx;
             y += dy;
             z += dz;
-            p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                    x, y, z, true, p.horizontalCollision));
+            NetworkUtility.sendMoveRelative(x, y, z, true, p.horizontalCollision);
         }
         p.setPos(target.x, target.y, target.z);
     }

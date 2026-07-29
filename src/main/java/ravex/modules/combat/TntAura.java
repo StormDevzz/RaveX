@@ -156,8 +156,8 @@ public class TntAura {
         net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
         net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
         net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
-        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(
-            new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighborPos).add(
+            PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         swapTo(mc, blockSlot);
         net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
@@ -215,8 +215,8 @@ public class TntAura {
         failedTntPlacements = 0;
         net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
         net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
-        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(
-            new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighborPos).add(
+            PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
         rotateTo(mc, hitVec);
         swapTo(mc, tntSlot);
         net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
@@ -234,7 +234,7 @@ public class TntAura {
             return;
         }
         net.minecraft.core.BlockPos tntPos = new net.minecraft.core.BlockPos(gapPos[0], gapPos[1], gapPos[2]);
-        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(tntPos);
+        net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(tntPos);
         rotateTo(mc, hitVec);
         swapTo(mc, flintSlot);
         net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, tntPos, false);
@@ -346,10 +346,8 @@ public class TntAura {
             mc.getPlayer().setXRot(pitch);
         } else if (mode.equals("Silent")) {
             silentRotation.set(yaw, pitch);
-        } else if (mode.equals("Packet") && mc.getPlayer().connection != null) {
-            mc.getPlayer().connection.send(
-                new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot(
-                    yaw, pitch, mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision));
+        } else if (mode.equals("Packet")) {
+            NetworkUtility.sendRot(yaw, pitch, mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision);
         }
     }
     private int savedSlot = -1;
@@ -404,7 +402,7 @@ public class TntAura {
         double r = range;
         for (net.minecraft.core.BlockPos cand : candidates) {
             if (solids.contains(cand)) continue;
-            if (eyePos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(cand)) > r * r) continue;
+            if (eyePos.distanceToSqr(PhysicUtility.centerOf(cand)) > r * r) continue;
             for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
                 net.minecraft.core.BlockPos side = cand.relative(d);
                 if (solids.contains(side)) {
@@ -425,7 +423,7 @@ public class TntAura {
         net.minecraft.core.BlockPos gap = new net.minecraft.core.BlockPos(gapPos[0], gapPos[1], gapPos[2]);
         net.minecraft.world.phys.Vec3 eyePos = mc.getPlayer().getEyePosition();
         double r = range;
-        if (eyePos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(gap)) > r * r) return new double[]{0.0};
+        if (eyePos.distanceToSqr(PhysicUtility.centerOf(gap)) > r * r) return new double[]{0.0};
         for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
             net.minecraft.core.BlockPos side = gap.relative(d);
             net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(side);

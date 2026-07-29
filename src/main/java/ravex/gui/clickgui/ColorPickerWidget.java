@@ -2,6 +2,7 @@ package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.Font;
+import ravex.mcwrapper.MinecraftWrapper;
 
 
 public class ColorPickerWidget {
@@ -44,7 +45,7 @@ public class ColorPickerWidget {
 
     public void render(GuiGraphics graphics, Font font, int wx, int wy, int mouseX, int mouseY) {
 
-        long win = net.minecraft.client.Minecraft.getInstance().getWindow().handle();
+        long win = MinecraftWrapper.getInstance().getWindow().handle();
         boolean lmb = org.lwjgl.glfw.GLFW.glfwGetMouseButton(win, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT)
                       == org.lwjgl.glfw.GLFW.GLFW_PRESS;
 

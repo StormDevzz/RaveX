@@ -52,11 +52,11 @@ public class AutoReplant {
                     net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                     if (!state.is(net.minecraft.world.level.block.Blocks.FARMLAND)) continue;
                     if (!mc.getLevel().getBlockState(pos.above()).isAir()) continue;
-                    if (net.minecraft.world.phys.Vec3.atCenterOf(pos).distanceToSqr(mc.getPlayer().getEyePosition()) > r * r) continue;
+                    if (PhysicUtility.centerOf(pos).distanceToSqr(mc.getPlayer().getEyePosition()) > r * r) continue;
                     int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
                     InventoryUtility.selectSlot(mc.getPlayer(), seedSlot);
                     net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
-                        net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false
+                        PhysicUtility.centerOf(pos), net.minecraft.core.Direction.UP, pos, false
                     );
                     mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hit);
                     if (silent) {

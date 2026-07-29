@@ -4,9 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.client.Minecraft;
 import ravex.RaveX;
 import ravex.gui.clickgui.CategoryPanel;
+import ravex.mcwrapper.MinecraftWrapper;
 
 import java.io.File;
 import java.io.FileReader;
@@ -24,7 +24,7 @@ public class LayoutManager {
     private LayoutManager() {
         File baseDir = null;
         try {
-            baseDir = Minecraft.getInstance().gameDirectory;
+            baseDir = MinecraftWrapper.getInstance().gameDirectory;
         } catch (Throwable ignored) {}
         if (baseDir == null) baseDir = new File(".");
         layoutFile = new File(baseDir, "RaveX/clickgui_layout.json");
@@ -54,8 +54,8 @@ public class LayoutManager {
 
     public void save(Map<String, CategoryPanel> panels) {
 
-        int sw = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        int sh = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+        int sw = MinecraftWrapper.getInstance().getWindow().getGuiScaledWidth();
+        int sh = MinecraftWrapper.getInstance().getWindow().getGuiScaledHeight();
         if (sw <= 0) sw = 960;
         if (sh <= 0) sh = 540;
         save(panels, sw, sh, 1.0f);

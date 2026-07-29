@@ -1,6 +1,6 @@
 package ravex.mixin.movement;
 
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
 import ravex.utility.misc.PotionUtility;
@@ -21,7 +21,7 @@ public abstract class MixinSpeed {
     private static boolean ssWasMoving = false;
 
     private static float getForward() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         float f = 0;
         if (mc.options.keyUp.isDown()) f++;
         if (mc.options.keyDown.isDown()) f--;
@@ -29,7 +29,7 @@ public abstract class MixinSpeed {
     }
 
     private static float getStrafe() {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         float s = 0;
         if (mc.options.keyLeft.isDown()) s++;
         if (mc.options.keyRight.isDown()) s--;
@@ -37,7 +37,7 @@ public abstract class MixinSpeed {
     }
 
     private static boolean isJumping() {
-        return Minecraft.getInstance().options.keyJump.isDown();
+        return MinecraftWrapper.getInstance().options.keyJump.isDown();
     }
 
     private static double getMoveYaw(LocalPlayer player) {

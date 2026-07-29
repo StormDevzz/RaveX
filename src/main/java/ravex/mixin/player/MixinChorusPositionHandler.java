@@ -1,7 +1,7 @@
 package ravex.mixin.player;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -19,7 +19,7 @@ public class MixinChorusPositionHandler {
     private void onHandleMovePlayer(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
         if (!Modules.get(ChorusExploit.class).shouldCapturePosition(System.currentTimeMillis())) return;
 
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         if (mc.player.getCooldowns().isOnCooldown(new ItemStack(Items.CHORUS_FRUIT))) {

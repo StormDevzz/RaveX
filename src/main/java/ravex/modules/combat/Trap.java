@@ -176,7 +176,7 @@ public class Trap {
             net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
             net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
             net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
-            net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(neighborPos).add(new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+            net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighborPos).add(PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             rotateTo(mc, hitVec);
             if (speedMode.equals("Legit") && !isRotationAligned(mc, hitVec)) {
                 break;
@@ -335,7 +335,7 @@ public class Trap {
         double r = range;
         for (net.minecraft.core.BlockPos cand : candidates) {
             if (simulatedSolids.contains(cand)) continue;
-            if (eyePos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(cand)) > r * r) continue;
+            if (eyePos.distanceToSqr(PhysicUtility.centerOf(cand)) > r * r) continue;
             net.minecraft.core.BlockPos neighbor = null;
             net.minecraft.core.Direction face = null;
             for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {

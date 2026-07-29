@@ -2,7 +2,7 @@ package ravex.modules.misc;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.chat.Component;
-
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -241,7 +241,7 @@ public class AutoPortal {
         InventoryUtility.selectSlot(mc.getPlayer(), slot);
         var interiorPos = BlockUtility.pos(ix, iy, iz);
         BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
-            net.minecraft.world.phys.Vec3.atCenterOf(interiorPos), net.minecraft.core.Direction.UP, interiorPos, false));
+            PhysicUtility.centerOf(interiorPos), net.minecraft.core.Direction.UP, interiorPos, false));
         BlockUtility.swing(mc);
         InventoryUtility.selectSlot(mc.getPlayer(), prev);
         state = State.DONE;

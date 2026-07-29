@@ -2,7 +2,9 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.MobUtility;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
@@ -29,13 +31,13 @@ public class MaceAura {
                 double step = 0.25;
                 int loops = (int) Math.ceil(h / step);
                 for (int i = 0; i < loops; i++) {
-                    p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(x, y + 0.001, z, false, p.horizontalCollision));
-                    p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(x, y - step, z, false, p.horizontalCollision));
-                    p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(x, y, z, false, p.horizontalCollision));
+                    NetworkUtility.sendMoveRelative(x, y + 0.001, z, false, p.horizontalCollision);
+                    NetworkUtility.sendMoveRelative(x, y - step, z, false, p.horizontalCollision);
+                    NetworkUtility.sendMoveRelative(x, y, z, false, p.horizontalCollision);
                 }
-                p.connection.send(net.minecraft.network.protocol.game.ServerboundInteractPacket.createAttackPacket(target, p.isShiftKeyDown()));
-                p.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-                p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(x, y, z, true, p.horizontalCollision));
+                NetworkUtility.sendInteractAttack(target, PlayerUtility.isSneaking(p));
+                SwingUtility.swing(p, net.minecraft.world.InteractionHand.MAIN_HAND);
+                NetworkUtility.sendMoveRelative(x, y, z, true, p.horizontalCollision);
                 p.fallDistance = (float) h;
             }
         }

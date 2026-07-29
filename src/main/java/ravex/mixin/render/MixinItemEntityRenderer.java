@@ -4,7 +4,6 @@ import net.minecraft.client.renderer.entity.ItemEntityRenderer;
 import net.minecraft.client.renderer.entity.state.ItemEntityRenderState;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.BlockItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.ItemPhysics;
 import ravex.modules.render.NoRender;
+import ravex.utility.player.InventoryUtility;
 import ravex.utility.render.RaveXStateAccessorUtility;
 
 import java.util.Random;
@@ -28,7 +28,7 @@ public class MixinItemEntityRenderer {
         accessor.setRavexMotionY(entity.getDeltaMovement().y);
 
         ItemStack stack = entity.getItem();
-        boolean isBlock = !stack.isEmpty() && stack.getItem() instanceof BlockItem;
+        boolean isBlock = !stack.isEmpty() && InventoryUtility.isBlockItem(stack);
         accessor.setRavexBlock(isBlock);
     }
 

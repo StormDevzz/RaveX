@@ -1,7 +1,7 @@
 package ravex.mixin.network;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
@@ -31,7 +31,7 @@ public class MixinConnection {
         if (packet instanceof ServerboundContainerClickPacket) {
             GuiMove gw = Modules.get(GuiMove.class);
             if (Modules.enabled(GuiMove.class) && "Grim".equals(gw.mode)) {
-                Minecraft mc = Minecraft.getInstance();
+                var mc = MinecraftWrapper.getInstance();
                 if (mc.screen instanceof AbstractContainerScreen) {
                     ci.cancel();
                     return;

@@ -1,6 +1,5 @@
 package ravex.mixin.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,7 +15,6 @@ import ravex.modules.Modules;
 public class MixinMultiPlayerGameMode {
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onStartDestroyBlock(BlockPos pos, Direction facing, CallbackInfoReturnable<Boolean> cir) {
-        Minecraft mc = Minecraft.getInstance();
         PacketMine pm = Modules.get(PacketMine.class);
 
         if (Modules.enabled(PacketMine.class) && pm.grimMode.equals("Strict")) {

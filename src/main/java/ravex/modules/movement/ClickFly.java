@@ -3,6 +3,8 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.movement.MoveUtility;
+import ravex.utility.network.NetworkUtility;
 import net.minecraft.world.phys.HitResult;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -60,7 +62,7 @@ public class ClickFly {
             if (hit.getType() == HitResult.Type.BLOCK) {
                 net.minecraft.world.phys.BlockHitResult blockHit = (net.minecraft.world.phys.BlockHitResult) hit;
                 net.minecraft.core.BlockPos pos = blockHit.getBlockPos();
-                return net.minecraft.world.phys.Vec3.atCenterOf(pos).add(0, 0.5 + height, 0);
+                return PhysicUtility.centerOf(pos).add(0, 0.5 + height, 0);
             }
             if (hit.getType() == HitResult.Type.ENTITY) {
                 net.minecraft.world.phys.EntityHitResult entityHit = (net.minecraft.world.phys.EntityHitResult) hit;
@@ -79,7 +81,7 @@ public class ClickFly {
         double dist = diff.length();
         if (dist < 1.5) {
             if (autoLand) {
-                p.setDeltaMovement(0, 0, 0);
+                MoveUtility.setMotion(0, 0, 0);
                 flying = false;
                 target = null;
             }
@@ -87,12 +89,8 @@ public class ClickFly {
         }
         net.minecraft.world.phys.Vec3 dir = diff.normalize();
         double spd = speed;
-        p.setDeltaMovement(dir.x * spd, dir.y * spd, dir.z * spd);
-        p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                pos.x + dir.x * spd,
-                pos.y + dir.y * spd,
-                pos.z + dir.z * spd,
-                false, p.horizontalCollision));
+        MoveUtility.setMotion(dir.x * spd, dir.y * spd, dir.z * spd);
+        NetworkUtility.sendMoveRelative(pos.x + dir.x * spd, pos.y + dir.y * spd, pos.z + dir.z * spd, false, p.horizontalCollision);
     }
     private void tpStep(MinecraftWrapper mc) {
         var p = mc.getPlayer();
@@ -108,8 +106,7 @@ public class ClickFly {
         double spd = speed;
         double step = Math.min(spd, dist);
         net.minecraft.world.phys.Vec3 next = pos.add(dir.x * step, dir.y * step, dir.z * step);
-        p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(
-                next.x, next.y, next.z, true, p.horizontalCollision));
+        NetworkUtility.sendMoveRelative(next.x, next.y, next.z, true, p.horizontalCollision);
         p.setPos(next.x, next.y, next.z);
     }
 

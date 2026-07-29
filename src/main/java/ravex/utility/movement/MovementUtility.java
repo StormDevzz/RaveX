@@ -3,9 +3,10 @@ package ravex.utility.movement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import ravex.mcwrapper.MinecraftWrapper;
 
 public class MovementUtility {
-    private static Minecraft mc() { return Minecraft.getInstance(); }
+    private static Minecraft mc() { return MinecraftWrapper.getInstance(); }
 
     public static void strafe(double speed) {
         if (mc().player == null) return;

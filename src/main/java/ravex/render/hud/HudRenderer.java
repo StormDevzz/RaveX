@@ -2,6 +2,7 @@ package ravex.render.hud;
 
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -40,7 +41,7 @@ public final class HudRenderer {
     private HudRenderer() {}
 
     public void render(GuiGraphics context, DeltaTracker tickCounter) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
 
         if (Modules.enabled(Ambient.class)) {
             int rVal = (int) ModuleManager.get(Ambient.class).r;
@@ -790,7 +791,7 @@ public final class HudRenderer {
 
         Module dragHud = Hud.draggingHud;
         if (dragHud != null) {
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             double mx = mc.mouseHandler.xpos() * mc.getWindow().getGuiScaledWidth() / mc.getWindow().getWidth();
             double my = mc.mouseHandler.ypos() * mc.getWindow().getGuiScaledHeight() / mc.getWindow().getHeight();
             int nx = (int)mx - Hud.dragOffX;
@@ -822,7 +823,7 @@ public final class HudRenderer {
     }
 
     private Vec3 projectPointToScreenUnbobbed(Vec3 pos) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         net.minecraft.client.Camera camera = mc.gameRenderer.getMainCamera();
         Matrix4f projectionMatrix = ShaderManager.INSTANCE.getProjectionMatrix();
         if (projectionMatrix == null) return null;

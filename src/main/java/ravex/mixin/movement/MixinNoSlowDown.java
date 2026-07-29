@@ -1,9 +1,9 @@
 package ravex.mixin.movement;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;
+import ravex.utility.player.PlayerUtility;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -19,7 +19,7 @@ public abstract class MixinNoSlowDown {
         NoSlow ns = Modules.get(NoSlow.class);
         if (!Modules.enabled(NoSlow.class) || !ns.items) return;
         String mode = ns.mode;
-        if ("GrimStrict".equals(mode) && Minecraft.getInstance().player != null && !Minecraft.getInstance().player.isUsingItem()) {
+        if ("GrimStrict".equals(mode) && PlayerUtility.isPlayerInWorld() && !PlayerUtility.isUsingItem(PlayerUtility.getPlayer())) {
             cir.setReturnValue(false);
             return;
         }

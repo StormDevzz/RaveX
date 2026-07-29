@@ -4,6 +4,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.network.NetworkUtility;
+import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
@@ -48,7 +49,7 @@ public class Criticals {
                 net.minecraft.world.entity.LivingEntity lt = MobUtility.asLivingEntity(target);
                 if (lt != null && MobUtility.isAlive(lt) && target != mc.player
                     && mc.player.getAttackStrengthScale(0.0f) >= 0.85f) {
-                    NetworkUtility.sendInteractAttack(target, mc.player.isShiftKeyDown());
+                    NetworkUtility.sendInteractAttack(target, PlayerUtility.isSneaking(mc.player));
                     SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }

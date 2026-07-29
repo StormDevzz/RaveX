@@ -1,6 +1,7 @@
 package ravex.mixin.entity;
 
 import net.minecraft.world.entity.Entity;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
@@ -153,7 +154,7 @@ public abstract class MixinEntity {
     private void onGetTeamColor(CallbackInfoReturnable<Integer> cir) {
         if (Modules.enabled(ESP.class) && Modules.get(ESP.class).mode.equals("Outline")) {
             Entity self = (Entity) (Object) this;
-            var mc = net.minecraft.client.Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (self == mc.player) return;
 
             if (mc.player != null && mc.player.distanceTo(self) > Modules.get(ESP.class).maxDistance) {
@@ -187,7 +188,7 @@ public abstract class MixinEntity {
     @Inject(method = "isLocalClientAuthoritative()Z", at = @At("HEAD"), cancellable = true)
     private void onIsLocalClientAuthoritative(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
-        var mc = net.minecraft.client.Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player != null && self.getControllingPassenger() == mc.player) {
             if (Modules.enabled(RideExploit.class)) {
                 cir.setReturnValue(true);
@@ -199,7 +200,7 @@ public abstract class MixinEntity {
     private void onGetBoundingBox(CallbackInfoReturnable<net.minecraft.world.phys.AABB> cir) {
         if (Modules.enabled(Hitboxes.class)) {
             Entity self = (Entity)(Object)this;
-            if (self != net.minecraft.client.Minecraft.getInstance().player && self instanceof LivingEntity) {
+            if (self != MinecraftWrapper.getInstance().player && self instanceof LivingEntity) {
                 boolean isRaytracing = false;
                 for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
                     String className = element.getClassName();
@@ -252,7 +253,7 @@ public abstract class MixinEntity {
     @Inject(method = "isInWater()Z", at = @At("HEAD"), cancellable = true)
     private void onIsInWater(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
-        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+        if (self == MinecraftWrapper.getInstance().player) {
             if (Modules.enabled(LiquidControl.class) && Modules.get(LiquidControl.class).water) {
                 cir.setReturnValue(false);
             }
@@ -262,7 +263,7 @@ public abstract class MixinEntity {
     @Inject(method = "isInLava()Z", at = @At("HEAD"), cancellable = true)
     private void onIsInLava(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
-        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+        if (self == MinecraftWrapper.getInstance().player) {
             if (Modules.enabled(LiquidControl.class) && Modules.get(LiquidControl.class).lava) {
                 cir.setReturnValue(false);
             }
@@ -272,7 +273,7 @@ public abstract class MixinEntity {
     @Inject(method = "updateInWaterStateAndDoFluidPushing()Z", at = @At("HEAD"), cancellable = true)
     private void onUpdateInWaterStateAndDoFluidPushing(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
-        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+        if (self == MinecraftWrapper.getInstance().player) {
             if (Modules.enabled(LiquidControl.class) && Modules.get(LiquidControl.class).water) {
                 cir.setReturnValue(false);
             }
@@ -282,7 +283,7 @@ public abstract class MixinEntity {
     @Inject(method = "updateFluidHeightAndDoFluidPushing(Lnet/minecraft/tags/TagKey;D)Z", at = @At("HEAD"), cancellable = true)
     private void onUpdateFluidHeightAndDoFluidPushing(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, double d, CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
-        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+        if (self == MinecraftWrapper.getInstance().player) {
             if (Modules.enabled(LiquidControl.class)) {
                 boolean bypassWater = Modules.get(LiquidControl.class).water;
                 boolean bypassLava = Modules.get(LiquidControl.class).lava;
@@ -304,7 +305,7 @@ public abstract class MixinEntity {
     @Inject(method = "isEyeInFluid(Lnet/minecraft/tags/TagKey;)Z", at = @At("HEAD"), cancellable = true)
     private void onIsEyeInFluid(net.minecraft.tags.TagKey<net.minecraft.world.level.material.Fluid> tag, CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity)(Object)this;
-        if (self == net.minecraft.client.Minecraft.getInstance().player) {
+        if (self == MinecraftWrapper.getInstance().player) {
             if (Modules.enabled(LiquidControl.class)) {
                 boolean bypassWater = Modules.get(LiquidControl.class).water;
                 boolean bypassLava = Modules.get(LiquidControl.class).lava;

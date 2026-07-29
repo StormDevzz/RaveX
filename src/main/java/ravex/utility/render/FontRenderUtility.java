@@ -1,7 +1,7 @@
 package ravex.utility.render;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.FontDescription;
@@ -131,13 +131,13 @@ public class FontRenderUtility {
         }
 
         if (Math.abs(scale - 1.0) < 0.001) {
-            graphics.drawString(Minecraft.getInstance().font, component, x, y, color, shadow);
+            graphics.drawString(MinecraftWrapper.getInstance().font, component, x, y, color, shadow);
         } else {
             var pose = graphics.pose();
             pose.pushMatrix();
             pose.translate((float) x, (float) y);
             pose.scale((float) scale, (float) scale);
-            graphics.drawString(Minecraft.getInstance().font, component, 0, 0, color, shadow);
+            graphics.drawString(MinecraftWrapper.getInstance().font, component, 0, 0, color, shadow);
             pose.popMatrix();
         }
     }
@@ -148,11 +148,11 @@ public class FontRenderUtility {
 
     public static int getStringWidth(FontType fontType, String text) {
         double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
-        return (int) (Minecraft.getInstance().font.width(getFontComponent(fontType, text)) * scale);
+        return (int) (MinecraftWrapper.getInstance().font.width(getFontComponent(fontType, text)) * scale);
     }
 
     public static int getFontHeight() {
         double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
-        return (int) (Minecraft.getInstance().font.lineHeight * scale);
+        return (int) (MinecraftWrapper.getInstance().font.lineHeight * scale);
     }
 }

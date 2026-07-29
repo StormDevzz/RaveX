@@ -1,7 +1,7 @@
 package ravex.mixin.movement;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import ravex.mcwrapper.MinecraftWrapper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,7 +18,7 @@ public class MixinFlight {
         if (!Modules.enabled(Flight.class)) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
 
         String mode = flight.mode;
         double hSpeed = flight.speed;

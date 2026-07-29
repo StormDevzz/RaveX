@@ -1,7 +1,7 @@
 package ravex.manager;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
+import ravex.mcwrapper.MinecraftWrapper;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +12,7 @@ public class CrystalManager {
 
     public List<EndCrystal> getLoadedCrystals() {
         List<EndCrystal> crystals = new ArrayList<>();
-        var level = Minecraft.getInstance().level;
+        var level = MinecraftWrapper.getInstance().level;
         if (level == null) return crystals;
         for (var entity : level.entitiesForRendering()) {
             if (entity instanceof EndCrystal) {

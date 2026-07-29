@@ -38,10 +38,10 @@ public class SourceFiller {
         if (targetPos == null) return;
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, spongeSlot);
-        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(targetPos);
+        net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(targetPos);
         net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
         if (rotate) {
-            float[] rots = RotationUtility.anglesTo(p.getEyePosition(), net.minecraft.world.phys.Vec3.atCenterOf(targetPos));
+            float[] rots = RotationUtility.anglesTo(p.getEyePosition(), PhysicUtility.centerOf(targetPos));
             p.setYRot(rots[0]);
             p.setXRot(rots[1]);
         }
@@ -59,13 +59,13 @@ public class SourceFiller {
             for (int y = (int) Math.floor(p.getY() - r); y <= Math.ceil(p.getY() + r); y++)
                 for (int z = (int) Math.floor(p.getZ() - r); z <= Math.ceil(p.getZ() + r); z++) {
                     net.minecraft.core.BlockPos bp = BlockUtility.pos(x, y, z);
-                    if (p.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(bp)) > r * r) continue;
+                    if (p.getEyePosition().distanceToSqr(PhysicUtility.centerOf(bp)) > r * r) continue;
                     if (mc.getLevel().getFluidState(bp).is(net.minecraft.tags.FluidTags.WATER)) candidates.add(bp);
                 }
         if (candidates.isEmpty()) return null;
         return "Smart".equals(mode)
             ? candidates.stream().max(Comparator.comparingInt(bp -> countAdjacentWater(bp, mc))).orElse(null)
-            : candidates.stream().min(Comparator.comparingDouble(bp -> p.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(bp)))).orElse(null);
+            : candidates.stream().min(Comparator.comparingDouble(bp -> p.getEyePosition().distanceToSqr(PhysicUtility.centerOf(bp)))).orElse(null);
     }
     private int countAdjacentWater(net.minecraft.core.BlockPos pos, MinecraftWrapper mc) {
         int count = 0;

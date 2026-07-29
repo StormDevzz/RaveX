@@ -10,9 +10,11 @@ import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PotionUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.movement.MoveUtility;
 import ravex.utility.misc.CameraUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
@@ -104,15 +106,15 @@ public class KillAura {
                 } else {
                     float cooldown = mc.getPlayer().getAttackStrengthScale(0.5f);
                     if (mc.getPlayer().input.hasForwardImpulse()
-                            && !mc.getPlayer().isUsingItem()
-                            && !mc.getPlayer().isShiftKeyDown()
+                            && !PlayerUtility.isUsingItem(mc.getPlayer())
+                            && !PlayerUtility.isSneaking(mc.getPlayer())
                             && cooldown >= 0.8f) {
                         mc.getPlayer().setSprinting(true);
                     }
                 }
             }
             case "HvH" -> {
-                if (!mc.getPlayer().isUsingItem() && !mc.getPlayer().isShiftKeyDown())
+                if (!PlayerUtility.isUsingItem(mc.getPlayer()) && !PlayerUtility.isSneaking(mc.getPlayer()))
                     mc.getPlayer().setSprinting(true);
             }
         }
@@ -173,7 +175,7 @@ public class KillAura {
         }
 
         // легит/ сброс спринта перед ударом
-        if (ka.sprintMode.equals("Legit") && mc.getPlayer().isSprinting()) {
+        if (ka.sprintMode.equals("Legit") && PlayerUtility.isSprinting(mc.getPlayer())) {
             mc.getPlayer().setSprinting(false);
             ka.sprintResetTicks = 3;
             return; // пропуск тика
@@ -192,10 +194,10 @@ public class KillAura {
                 double multiplier = ka.keepSprintSpeed.getValue() / 100.0;
                 if (multiplier < 1.0) {
                     var vel = mc.getPlayer().getDeltaMovement();
-                    mc.getPlayer().setDeltaMovement(vel.x * multiplier, vel.y, vel.z * multiplier);
+                    MoveUtility.setMotion(vel.x * multiplier, vel.y, vel.z * multiplier);
                 }
             }
-            if (PotionUtility.hasBlindness(mc.getPlayer()) && mc.getPlayer().isSprinting()) {
+            if (PotionUtility.hasBlindness(mc.getPlayer()) && PlayerUtility.isSprinting(mc.getPlayer())) {
                 mc.getPlayer().setSprinting(false);
             }
         }
@@ -408,7 +410,7 @@ public class KillAura {
         if (mc.getPlayer() == null) return;
 
         var target = currentTarget;
-        if (target == null || target.isDeadOrDying()) return;
+        if (target == null || MobUtility.isDead(target)) return;
 
         if (targetEspMode.equals("RaveXV1")) {
             float progressVal = prevScanProgress + (scanProgress - prevScanProgress) * tickDelta;

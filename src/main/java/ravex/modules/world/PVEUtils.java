@@ -293,11 +293,11 @@ public class PVEUtils {
                     var placeOn = BlockUtility.pos(x, aboveY, z);
                     if (!mc.level.getBlockState(placeOn).isAir()) continue;
                     if (state.getShape(mc.level, pos).isEmpty()) continue;
-                    var center = net.minecraft.world.phys.Vec3.atCenterOf(placeOn);
+                    var center = PhysicUtility.centerOf(placeOn);
                     if (center.distanceToSqr(mc.player.getEyePosition()) > r * r) continue;
                     int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
                     InventoryUtility.selectSlot(mc.player, torchSlot);
-                    BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false));
+                    BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), new net.minecraft.world.phys.BlockHitResult(PhysicUtility.centerOf(pos), net.minecraft.core.Direction.UP, pos, false));
                     if (silent) {
                         InventoryUtility.selectSlot(mc.player, prevSlot);
                     }

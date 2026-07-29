@@ -3,6 +3,7 @@ package ravex.event.player;
 import ravex.event.Event;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Player;
+import ravex.mcwrapper.MinecraftWrapper;
 
 public class DeathEvent implements Event {
     private final Player player;
@@ -12,7 +13,7 @@ public class DeathEvent implements Event {
     public DeathEvent(Player player, DamageSource source) {
         this.player = player;
         this.source = source;
-        this.self = player == net.minecraft.client.Minecraft.getInstance().player;
+        this.self = player == MinecraftWrapper.getInstance().player;
     }
 
     public Player getPlayer() { return player; }

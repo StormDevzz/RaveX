@@ -3,7 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.MobUtility;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import ravex.utility.player.PlayerUtility;
 import java.util.List;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -47,8 +47,8 @@ public class AutoShear {
             if (shearSlot != prevSlot) {
                 NetworkUtility.sendSetCarriedItem(shearSlot);
             }
-            p.connection.send(net.minecraft.network.protocol.game.ServerboundInteractPacket.createInteractionPacket(target, p.isShiftKeyDown(), net.minecraft.world.InteractionHand.MAIN_HAND));
-            p.connection.send(new ServerboundSwingPacket(net.minecraft.world.InteractionHand.MAIN_HAND));
+            NetworkUtility.sendInteract(target, PlayerUtility.isSneaking(p), net.minecraft.world.InteractionHand.MAIN_HAND);
+            NetworkUtility.sendSwing(net.minecraft.world.InteractionHand.MAIN_HAND);
             if (silent && shearSlot != prevSlot) {
                 NetworkUtility.sendSetCarriedItem(prevSlot);
             }

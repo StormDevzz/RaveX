@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import ravex.mcwrapper.MinecraftWrapper;
 
 import ravex.modules.Module;
 import ravex.manager.ModuleManager;
@@ -23,7 +24,7 @@ public class ConfigManager {
     private ConfigManager() {
         File baseDir = null;
         try {
-            baseDir = net.minecraft.client.Minecraft.getInstance().gameDirectory;
+            baseDir = MinecraftWrapper.getInstance().gameDirectory;
         } catch (Throwable ignored) {}
 
         if (baseDir == null) {

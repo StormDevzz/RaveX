@@ -2,6 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
@@ -63,7 +64,7 @@ public class WebAura {
                 return;
             }
         }
-        net.minecraft.world.phys.Vec3 hitVec = net.minecraft.world.phys.Vec3.atCenterOf(targetPos);
+        net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(targetPos);
         rotateTo(mc, hitVec);
 
         int originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());

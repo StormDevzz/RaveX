@@ -2,6 +2,7 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.List;
+import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AutoSprint", category = "Movement")
 public class AutoSprint {
@@ -13,7 +14,7 @@ public class AutoSprint {
         if ("Rage".equals(mode)) {
             mc.player.setSprinting(true);
         } else {
-            if (mc.player.input.hasForwardImpulse() && !mc.player.isUsingItem() && !mc.player.isShiftKeyDown()) {
+            if (mc.player.input.hasForwardImpulse() && !PlayerUtility.isUsingItem(mc.player) && !PlayerUtility.isSneaking(mc.player)) {
                 mc.player.setSprinting(true);
             }
         }

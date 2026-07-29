@@ -1,6 +1,7 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import ravex.parameter.Parameter;
@@ -257,7 +258,7 @@ public class ParameterElement {
             int slH = 4;
 
             if (isDragging) {
-                if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(net.minecraft.client.Minecraft.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
+                if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(MinecraftWrapper.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
                     isDragging = false;
                     if (np.getName().equalsIgnoreCase("Gui Scale")) {
                         ClickGUI.isDraggingSlider = false;

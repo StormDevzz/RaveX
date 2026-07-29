@@ -4,6 +4,7 @@ import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.utility.misc.EntityUtility;
+import ravex.utility.player.PlayerUtility;
 import ravex.gui.clickgui.ColorUtility;
 
 import ravex.modules.client.Hud;
@@ -66,8 +67,8 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
         updateTPS(mc);
         updateKnockback(player);
         boolean shadow = getShadow();
-        float health = player.getHealth() / player.getMaxHealth();
-        float armor  = Math.min(1, player.getArmorValue() / 20.0f);
+        float health = PlayerUtility.getHealth(player) / PlayerUtility.getMaxHealth(player);
+        float armor  = Math.min(1, PlayerUtility.getArmorValue(player) / 20.0f);
         float tps    = smoothedTPS / 20.0f;
         float speed  = (float) Math.min(1, Math.sqrt(player.getDeltaMovement().x * player.getDeltaMovement().x +
                                                        player.getDeltaMovement().z * player.getDeltaMovement().z) / 0.3);
@@ -80,8 +81,8 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
         animKB     += (kb - animKB) * smooth;
         float[] values = { animHealth, animArmor, animTPS, animSpeed, animKB };
         String[][] data = {
-            {"Health", (int)(player.getHealth()) + "/" + (int)(player.getMaxHealth())},
-            {"Armor",  String.valueOf(player.getArmorValue())},
+            {"Health", (int)(PlayerUtility.getHealth(player)) + "/" + (int)(PlayerUtility.getMaxHealth(player))},
+            {"Armor",  String.valueOf(PlayerUtility.getArmorValue(player))},
             {"TPS",    String.format("%.1f", smoothedTPS)},
             {"Speed",  String.format("%.0f", speed * 0.3 * 20)},
             {"KB",     player.hurtTime > 0 ? String.format("%.2f", smoothKB) : "0.00"}

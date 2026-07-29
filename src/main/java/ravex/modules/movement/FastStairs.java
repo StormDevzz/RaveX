@@ -1,6 +1,7 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.movement.MoveUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "FastStairs", category = "Movement")
@@ -23,7 +24,7 @@ public class FastStairs {
             double currentY = mc.player.getDeltaMovement().y;
             if (currentY > 0 && (mc.options.keyUp.isDown() || mc.options.keyDown.isDown() || mc.options.keyLeft.isDown() || mc.options.keyRight.isDown())) {
                 double newY = calculateClimbSpeed(mode, currentY, speed);
-                mc.player.setDeltaMovement(mc.player.getDeltaMovement().x, newY, mc.player.getDeltaMovement().z);
+                MoveUtility.setMotion(mc.player.getDeltaMovement().x, newY, mc.player.getDeltaMovement().z);
             }
         }
     }

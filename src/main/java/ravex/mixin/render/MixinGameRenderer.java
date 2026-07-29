@@ -1,7 +1,7 @@
 package ravex.mixin.render;
 
 import com.mojang.blaze3d.platform.Window;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,7 +18,7 @@ public class MixinGameRenderer {
         index = 1
     )
     private float modifyAspectRatio(float aspect) {
-        Window window = Minecraft.getInstance().getWindow();
+        Window window = MinecraftWrapper.getInstance().getWindow();
         float original = (float) window.getWidth() / (float) window.getHeight();
         return Modules.get(AspectRatio.class).getAspectRatio(original);
     }

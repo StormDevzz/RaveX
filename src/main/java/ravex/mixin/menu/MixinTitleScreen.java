@@ -1,7 +1,7 @@
 package ravex.mixin.menu;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.SplashRenderer;
 import net.minecraft.client.gui.screens.Screen;
@@ -93,13 +93,13 @@ public abstract class MixinTitleScreen extends Screen {
 
         this.addRenderableWidget(Button.builder(
             Component.literal("Proxy Config"),
-            btn -> Minecraft.getInstance().setScreen(new ProxyConfigScreen((TitleScreen)(Object)this))
+            btn -> MinecraftWrapper.getInstance().setScreen(new ProxyConfigScreen((TitleScreen)(Object)this))
         ).bounds(this.width / 2 + 104, this.height / 4 + 72, 100, 20).build());
     }
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRender(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
-        var mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         var font = mc.font;
         if (font == null)
             return;

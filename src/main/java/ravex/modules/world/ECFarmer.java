@@ -112,7 +112,7 @@ public class ECFarmer {
         }
         var below = BlockUtility.pos(ecX, ecY - 1, ecZ);
         BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
-            net.minecraft.world.phys.Vec3.atCenterOf(below), net.minecraft.core.Direction.UP, below, false));
+            PhysicUtility.centerOf(below), net.minecraft.core.Direction.UP, below, false));
         BlockUtility.swing(mc);
         swapBack(mc, original);
         state = State.IDLE;
@@ -253,7 +253,7 @@ public class ECFarmer {
         return null;
     }
     private static net.minecraft.core.Direction getDirection(net.minecraft.world.phys.Vec3 eye, int x, int y, int z) {
-        var center = net.minecraft.world.phys.Vec3.atCenterOf(BlockUtility.pos(x, y, z));
+        var center = PhysicUtility.centerOf(BlockUtility.pos(x, y, z));
         double dx = eye.x - center.x;
         double dy = eye.y - y - 0.5;
         double dz = eye.z - center.z;

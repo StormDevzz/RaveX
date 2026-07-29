@@ -1,7 +1,7 @@
 package ravex.mixin.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.world.inventory.Slot;
@@ -19,7 +19,7 @@ public class MixinMouse {
     private void onMouseButton(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
         GuiMove gw = Modules.get(GuiMove.class);
         if (!Modules.enabled(GuiMove.class) || !"NoClick".equals(gw.mode)) return;
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (!(mc.screen instanceof AbstractContainerScreen<?> screen)) return;
         double mx = mc.mouseHandler.xpos() * mc.getWindow().getGuiScaledWidth() / mc.getWindow().getWidth();
         double my = mc.mouseHandler.ypos() * mc.getWindow().getGuiScaledHeight() / mc.getWindow().getHeight();
@@ -33,7 +33,7 @@ public class MixinMouse {
 
     @Inject(method = "onButton", at = @At("TAIL"))
     private void onMouseButtonPost(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
-        Minecraft mc = Minecraft.getInstance();
+        var mc = MinecraftWrapper.getInstance();
         if (mc.player == null) return;
 
         if (Modules.get(Hud.class).dragEnabled && buttonInfo.button() == 0) {

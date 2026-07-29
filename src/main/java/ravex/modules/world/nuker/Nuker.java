@@ -173,7 +173,7 @@ public class Nuker {
         double closestDist = Double.MAX_VALUE;
         for (net.minecraft.core.BlockPos pos : candidates) {
             if (sphere) {
-                net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(pos);
+                net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(pos);
                 double distSq = eye.distanceToSqr(center);
                 if (distSq > rSq) continue;
                 if (distSq < closestDist) {
@@ -181,7 +181,7 @@ public class Nuker {
                     closest = pos;
                 }
             } else {
-                double dist = eye.distanceTo(net.minecraft.world.phys.Vec3.atCenterOf(pos));
+                double dist = eye.distanceTo(PhysicUtility.centerOf(pos));
                 if (dist < closestDist) {
                     closestDist = dist;
                     closest = pos;
@@ -191,7 +191,7 @@ public class Nuker {
         return closest;
     }
     public static net.minecraft.core.Direction getDirection(net.minecraft.world.phys.Vec3 eye, net.minecraft.core.BlockPos pos) {
-        net.minecraft.world.phys.Vec3 center = net.minecraft.world.phys.Vec3.atCenterOf(pos);
+        net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(pos);
         double dx = eye.x - center.x;
         double dy = eye.y - pos.getY() - 0.5;
         double dz = eye.z - center.z;

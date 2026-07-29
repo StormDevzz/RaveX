@@ -22,7 +22,7 @@ public class AddonManager {
 
     public void init() {
         ravex.addon.core.CAddonManager.init();
-        File addonsDir = new File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "RaveX/addons");
+        File addonsDir = new File(ravex.mcwrapper.MinecraftWrapper.getInstance().gameDirectory, "RaveX/addons");
         if (!addonsDir.exists()) addonsDir.mkdirs();
 
         File nativeAddonsDir = new File(addonsDir, "native");

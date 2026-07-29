@@ -1,7 +1,7 @@
 package ravex.mixin.player;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.Slot;
@@ -30,7 +30,7 @@ public class MixinAbstractContainerScreen {
 
         if (Modules.enabled(StashFinder.class)) {
             var menu = screen.getMenu();
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.player != null && menu instanceof net.minecraft.world.inventory.ChestMenu) {
                 java.util.List<ItemStack> contents = new java.util.ArrayList<>();
                 int containerSize = Math.min(menu.slots.size() - 36, 54);
@@ -43,7 +43,7 @@ public class MixinAbstractContainerScreen {
         }
 
         if (Modules.enabled(FastItem.class)) {
-            Minecraft mc = Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             if (mc.player == null || mc.gameMode == null) return;
             if (screen instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen) return;
             long handle = GLFW.glfwGetCurrentContext();

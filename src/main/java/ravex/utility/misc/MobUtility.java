@@ -10,11 +10,11 @@ import net.minecraft.world.entity.ambient.AmbientCreature;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.Minecraft;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.player.LocalPlayer;
+import ravex.utility.player.InventoryUtility;
 
 public class MobUtility {
     public static boolean isHostile(LivingEntity entity) {
@@ -30,7 +30,7 @@ public class MobUtility {
     }
 
     public static boolean isSelf(LivingEntity entity) {
-        return entity == Minecraft.getInstance().player;
+        return entity == MinecraftWrapper.getInstance().player;
     }
 
     public static LivingEntity asLivingEntity(Entity entity) {
@@ -58,7 +58,7 @@ public class MobUtility {
     }
 
     public static double distanceToPlayer(LivingEntity entity) {
-        LocalPlayer p = Minecraft.getInstance().player;
+        var p = MinecraftWrapper.getInstance().player;
         return p != null ? p.distanceTo(entity) : Double.MAX_VALUE;
     }
 
@@ -83,8 +83,8 @@ public class MobUtility {
     }
 
     public static boolean isHoldingTotem(LivingEntity entity) {
-        return entity.getOffhandItem().is(Items.TOTEM_OF_UNDYING)
-            || entity.getMainHandItem().is(Items.TOTEM_OF_UNDYING);
+        return InventoryUtility.isTotem(entity.getOffhandItem())
+            || InventoryUtility.isTotem(entity.getMainHandItem());
     }
 
     public static boolean isArmorStand(LivingEntity entity) {
@@ -176,7 +176,7 @@ public class MobUtility {
     }
 
     public static double distanceToPlayer(Entity entity) {
-        LocalPlayer p = Minecraft.getInstance().player;
+        var p = MinecraftWrapper.getInstance().player;
         return p != null ? p.distanceTo(entity) : Double.MAX_VALUE;
     }
 
@@ -204,7 +204,7 @@ public class MobUtility {
             if (owner != null) return owner.getScoreboardName();
         } catch (Exception ignored) {}
         try {
-            var mc = net.minecraft.client.Minecraft.getInstance();
+            var mc = MinecraftWrapper.getInstance();
             var conn = mc.getConnection();
             if (conn != null) {
                 var info = conn.getClass().getMethod("getPlayerInfo", java.util.UUID.class).invoke(conn, uuid);

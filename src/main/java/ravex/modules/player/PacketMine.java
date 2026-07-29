@@ -203,7 +203,7 @@ public class PacketMine {
         if (BlockUtility.isBlock(state, "bedrock")) return false;
         if (BlockUtility.destroySpeed(mc.getLevel(), pos) < 0) return false;
         if (!mc.getLevel().getWorldBorder().isWithinBounds(pos)) return false;
-        double dist = net.minecraft.world.phys.Vec3.atCenterOf(pos).distanceTo(mc.getPlayer().getEyePosition());
+        double dist = PhysicUtility.centerOf(pos).distanceTo(mc.getPlayer().getEyePosition());
         double maxDist = mode.equals("Grim") ? grimRange
             : mode.equals("NCP") ? 4.5 : range;
         if (dist > maxDist) return false;
@@ -218,7 +218,7 @@ public class PacketMine {
     }
     private net.minecraft.core.Direction getDirection(MinecraftWrapper mc, net.minecraft.core.BlockPos pos) {
         net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition();
-        net.minecraft.world.phys.Vec3 blockCenter = net.minecraft.world.phys.Vec3.atCenterOf(pos);
+        net.minecraft.world.phys.Vec3 blockCenter = PhysicUtility.centerOf(pos);
         net.minecraft.world.phys.Vec3 diff = blockCenter.subtract(eye);
         double ax = Math.abs(diff.x), ay = Math.abs(diff.y), az = Math.abs(diff.z);
         if (ay >= ax && ay >= az) return diff.y > 0 ? net.minecraft.core.Direction.UP : net.minecraft.core.Direction.DOWN;
@@ -267,7 +267,7 @@ public class PacketMine {
     private void rotateTo(MinecraftWrapper mc, net.minecraft.core.BlockPos pos) {
         String modeVal = rotate;
         if (modeVal.equals("None")) return;
-        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), net.minecraft.world.phys.Vec3.atCenterOf(pos));
+        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), PhysicUtility.centerOf(pos));
         if (modeVal.equals("Normal")) {
             mc.getPlayer().setYRot(angles[0]);
             mc.getPlayer().setXRot(angles[1]);

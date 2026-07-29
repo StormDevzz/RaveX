@@ -1,8 +1,8 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 
 import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.player.InventoryUtility;
@@ -60,7 +60,7 @@ public class AutoApple {
             }
             boolean finished = false;
             if (swapMode.equals("Normal")) {
-                if (!mc.getPlayer().isUsingItem() && eatTicks > 5) {
+                if (!PlayerUtility.isUsingItem(mc.getPlayer()) && eatTicks > 5) {
                     finished = true;
                 }
             } else {
@@ -75,14 +75,12 @@ public class AutoApple {
             if (swapMode.equals("Normal")) {
                 mc.getOptions().keyUse.setDown(true);
             } else {
-                if (mc.getPlayer().connection != null) {
-                    mc.getPlayer().connection.send(new ServerboundUseItemPacket(net.minecraft.world.InteractionHand.MAIN_HAND, 0, mc.getPlayer().getYRot(), mc.getPlayer().getXRot()));
-                }
+                NetworkUtility.sendUseItem(net.minecraft.world.InteractionHand.MAIN_HAND, mc.getPlayer().getYRot(), mc.getPlayer().getXRot());
             }
             return;
         }
         boolean shouldEat = javaFallbackShouldEat(
-            mc.getPlayer().getHealth(),
+            PlayerUtility.getHealth(mc.getPlayer()),
             mc.getPlayer().getAbsorptionAmount(),
             healthThreshold
         );
@@ -105,7 +103,7 @@ public class AutoApple {
         } else {
             if (mc.getPlayer().connection != null) {
                 NetworkUtility.sendSetCarriedItem(slot);
-                mc.getPlayer().connection.send(new ServerboundUseItemPacket(net.minecraft.world.InteractionHand.MAIN_HAND, 0, mc.getPlayer().getYRot(), mc.getPlayer().getXRot()));
+                NetworkUtility.sendUseItem(net.minecraft.world.InteractionHand.MAIN_HAND, mc.getPlayer().getYRot(), mc.getPlayer().getXRot());
             }
         }
     }
@@ -127,7 +125,7 @@ public class AutoApple {
         eatTicks = 0;
     }
     private int findAppleSlot(MinecraftWrapper mc) {
-        boolean highDanger = (mc.getPlayer().getHealth() + mc.getPlayer().getAbsorptionAmount()) <= 6.0;
+        boolean highDanger = (PlayerUtility.getHealth(mc.getPlayer()) + mc.getPlayer().getAbsorptionAmount()) <= 6.0;
         if (highDanger && !appleType.equals("Golden")) {
             FoodUtility.Data enchanted = FoodUtility.findEnchantedApple();
             if (enchanted != null) return enchanted.getSlot();

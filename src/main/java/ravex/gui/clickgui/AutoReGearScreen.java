@@ -1,6 +1,6 @@
 package ravex.gui.clickgui;
 
-import net.minecraft.client.Minecraft;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -577,6 +577,6 @@ public class AutoReGearScreen extends Screen {
     @Override
     public void onClose() {
         saveEditingTargetCount();
-        Minecraft.getInstance().setScreen(parent);
+        MinecraftWrapper.getInstance().setScreen(parent);
     }
 }

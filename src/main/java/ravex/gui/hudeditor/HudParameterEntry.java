@@ -1,6 +1,7 @@
 package ravex.gui.hudeditor;
 
 import net.minecraft.client.gui.GuiGraphics;
+import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.resources.Identifier;
 import ravex.gui.clickgui.ColorPaletteModal;
 import ravex.gui.clickgui.ColorUtility;
@@ -92,7 +93,7 @@ public class HudParameterEntry {
             int slH = 4;
 
             if (isDraggingSlider) {
-                if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(net.minecraft.client.Minecraft.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
+                if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(MinecraftWrapper.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
                     isDraggingSlider = false;
                 } else {
                     double relative = (double)(mouseX - slX) / slW;
@@ -180,7 +181,7 @@ public class HudParameterEntry {
             } else if (param instanceof ColorParameter cp) {
                 ColorPaletteModal palette = new ColorPaletteModal(cp);
                 palette.setOnClose(() -> {});
-                HudEditorScreen screen = (HudEditorScreen) net.minecraft.client.Minecraft.getInstance().screen;
+                HudEditorScreen screen = (HudEditorScreen) MinecraftWrapper.getInstance().screen;
                 if (screen != null) {
                     screen.activeColorParameter = cp;
                     screen.activeColorPalette = palette;

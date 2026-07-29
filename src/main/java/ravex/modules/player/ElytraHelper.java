@@ -3,6 +3,7 @@ import ravex.utility.misc.ScreenUtility;
 
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.movement.MoveUtility;
 import ravex.utility.player.ElytraUtility;
 import ravex.utility.player.InventoryUtility;
 import java.util.List;
@@ -75,11 +76,7 @@ public class ElytraHelper {
             double accel = rocketSpeed;
             net.minecraft.world.phys.Vec3 look = p.getLookAngle();
             net.minecraft.world.phys.Vec3 motion = p.getDeltaMovement();
-            p.setDeltaMovement(
-                motion.x + look.x * accel,
-                motion.y + Math.abs(look.y) * accel * 0.5,
-                motion.z + look.z * accel
-            );
+            MoveUtility.setMotion(motion.x + look.x * accel, motion.y + Math.abs(look.y) * accel * 0.5, motion.z + look.z * accel);
             if (rocketMode.equals("Auto")) {
                 long now = System.currentTimeMillis();
                 if (now - lastRocketTime >= (long) rocketDelay) {

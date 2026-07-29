@@ -75,7 +75,7 @@ public class ContainerUtility {
         graphics.fill(x, y, x + 1, y + CHEST_BTN_H, topCol);
         graphics.fill(x, y + CHEST_BTN_H - 1, x + CHEST_BTN_W, y + CHEST_BTN_H, botCol);
         graphics.fill(x + CHEST_BTN_W - 1, y, x + CHEST_BTN_W, y + CHEST_BTN_H, botCol);
-        var font = Minecraft.getInstance().font;
+        var font = MinecraftWrapper.getInstance().font;
         int tw = font.width(label);
         graphics.drawString(font, label, x + (CHEST_BTN_W - tw) / 2, y + (CHEST_BTN_H - 8) / 2, 0xFFFFFFFF, true);
     }

@@ -1,8 +1,8 @@
 package ravex.modules.world;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.misc.block.BlockUtility;
-
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -24,7 +24,7 @@ public class Igniter {
         if (tntPos == null) return;
         int itemSlot = findIgnitionItem(mc);
         if (itemSlot == -1) return;
-        var hitVec = net.minecraft.world.phys.Vec3.atCenterOf(BlockUtility.pos(tntPos[0], tntPos[1], tntPos[2]));
+        var hitVec = PhysicUtility.centerOf(BlockUtility.pos(tntPos[0], tntPos[1], tntPos[2]));
         if (rotate) {
             float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), hitVec);
             mc.getPlayer().setYRot(angles[0]);
@@ -66,7 +66,7 @@ public class Igniter {
                     if (mc.getLevel().isLoaded(pos)) {
                         var state = mc.getLevel().getBlockState(pos);
                         if (BlockUtility.isBlock(state, "tnt")) {
-                            double distSqr = mc.getPlayer().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos));
+                            double distSqr = mc.getPlayer().distanceToSqr(PhysicUtility.centerOf(pos));
                             if (distSqr <= r * r && distSqr < bestDistSqr) {
                                 bestDistSqr = distSqr;
                                 closest = new int[]{x, y, z};
