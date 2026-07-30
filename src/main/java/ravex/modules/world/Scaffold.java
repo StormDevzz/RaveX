@@ -15,7 +15,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import org.jetbrains.annotations.Nullable;
 @Module(name = "Scaffold", category = "World")
 public class Scaffold {
-    @Parameter(name = "Mode", modes = {"Vanilla", "Grim"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "Grim", "Verus"})
     public String mode = "Vanilla";
     @Parameter(name = "Expand")
     public boolean expand = false;

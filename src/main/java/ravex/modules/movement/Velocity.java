@@ -12,7 +12,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "Velocity", category = "Movement")
 public class Velocity {
-    @Parameter(name = "Mode", modes = {"Cancel", "Matrix", "NCP", "UNCP", "Grim", "GrimStrict"})
+    @Parameter(name = "Mode", modes = {"Cancel", "Matrix", "NCP", "UNCP", "Grim", "GrimStrict", "Verus"})
     public String mode = "Cancel";
     @Parameter(name = "Horizontal", min = 0.0, max = 1.0, step = 0.05)
     public double horizontal = 0.0;
@@ -75,6 +75,21 @@ public class Velocity {
                 grimDelayTicks = 3;
                 grimTickCounter = 0;
                 grimVelocityActive = true;
+            }
+            case "Verus" -> {
+                double verusH = h;
+                double verusV = v;
+                if (verusH == 0.0 && verusV == 0.0) {
+                    verusH = 0.3;
+                    verusV = 0.01;
+                }
+                double noiseX = (random.nextDouble() - 0.5) * 0.005;
+                double noiseZ = (random.nextDouble() - 0.5) * 0.005;
+                event.setVelocity(new net.minecraft.world.phys.Vec3(
+                    cur.x * verusH + noiseX,
+                    cur.y * verusV,
+                    cur.z * verusH + noiseZ
+                ));
             }
         }
     }

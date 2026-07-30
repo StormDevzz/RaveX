@@ -17,7 +17,7 @@ public class MixinTimer {
         if (!Modules.enabled(Timer.class)) return;
 
         LocalPlayer player = (LocalPlayer)(Object)this;
-        float multiplier = (float) Modules.get(Timer.class).speed;
+        float multiplier = (float) Modules.get(Timer.class).getEffectiveSpeed();
 
         if (multiplier == 1.0f) return;
 

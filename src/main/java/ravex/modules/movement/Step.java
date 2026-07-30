@@ -7,7 +7,7 @@ import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Step", category = "Movement")
 public class Step {
-    @Parameter(name = "Mode", modes = {"Vanilla", "Packet", "Grim"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "Packet", "Grim", "Verus"})
     public String mode = "Vanilla";
     @Parameter(name = "Height", min = 1.0, max = 2.5, step = 0.5)
     public double height = 1.0;

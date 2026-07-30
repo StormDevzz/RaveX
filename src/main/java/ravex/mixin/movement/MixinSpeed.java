@@ -298,6 +298,19 @@ public abstract class MixinSpeed {
                     player.getAbilities().setWalkingSpeed(targetSpeed);
                 }
             }
+            case "Verus" -> {
+                if (!player.onGround()) return;
+                float forward = getForward();
+                float strafe = getStrafe();
+                if (forward == 0 && strafe == 0) return;
+                double speedVal = Modules.get(Speed.class).verusSpeed * 0.15;
+                double yaw = getMoveYaw(player);
+                double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
+                double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+                player.setDeltaMovement(velX, motion.y, velZ);
+                double limit = Modules.get(Speed.class).verusSpeed;
+                applySpeedLimit(player, Math.min(globalLimit, limit));
+            }
         }
     }
 }

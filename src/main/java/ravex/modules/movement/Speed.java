@@ -8,7 +8,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 public class Speed {
 public static boolean cancelVertical = false;
     public static float matrixTimer = 1.0f;
-    @Parameter(name = "Mode", modes = {"Vanilla", "Strafe", "StrafeStrict", "NCP", "NCPStrict", "Matrix", "Grim", "GrimStrict"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "Strafe", "StrafeStrict", "NCP", "NCPStrict", "Matrix", "Grim", "GrimStrict", "Verus"})
     public String mode = "Vanilla";
     @Parameter(name = "Speed", min = 0.5, max = 5.0, step = 0.1)
     public double speed = 1.5;
@@ -26,8 +26,24 @@ public static boolean cancelVertical = false;
     public double strafeStrictCap = 0.44;
     @Parameter(name = "SSTimer", visible = "mode=StrafeStrict")
     public boolean strafeStrictTimer = true;
+    @Parameter(name = "VerusSpeed", min = 0.1, max = 0.5, step = 0.01, visible = "mode=Verus")
+    public double verusSpeed = 0.28;
 
     public void onTick() {
+        if ("Verus".equals(mode)) {
+            var mc = MinecraftWrapper.getWrapper();
+            var player = mc.getPlayer();
+            if (player == null) return;
+            if (!player.onGround()) return;
+            if (!PlayerUtility.isSprinting(player) && !player.isCrouching()
+                && (mc.isForwardKeyDown() || mc.isBackKeyDown() || mc.isLeftKeyDown() || mc.isRightKeyDown())) {
+                player.setSprinting(true);
+            }
+            if (player.onGround() && PlayerUtility.isSprinting(player)) {
+                player.jumpFromGround();
+            }
+            return;
+        }
         if (!"Matrix".equals(mode)) {
             return;
         }

@@ -15,7 +15,7 @@ import ravex.modules.Modules;
 
 @Module(name = "NoFall", category = "Movement")
 public class NoFall {
-    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "UNCP"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "UNCP", "Verus"})
     public String mode = "Vanilla";
 
     private boolean wasOnGround = true;
