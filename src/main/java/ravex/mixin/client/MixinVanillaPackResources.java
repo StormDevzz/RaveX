@@ -118,6 +118,14 @@ public class MixinVanillaPackResources {
                 "sounds/gui_open.ogg",
                 "sounds/settings_close.ogg",
                 "sounds/settings_open.ogg",
+                "sounds/other/boolean.ogg",
+                "sounds/other/disable.ogg",
+                "sounds/other/enable.ogg",
+                "sounds/other/keypress.ogg",
+                "sounds/other/keyrelease.ogg",
+                "sounds/other/scroll.ogg",
+                "sounds/other/swipein.ogg",
+                "sounds/other/swipeout.ogg",
                 "textures/skull.png"
             };
 
