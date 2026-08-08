@@ -13,7 +13,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "NoSlow", category = "Movement")
 public class NoSlow {
-    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3", "FunSky"})
     public String mode = "Grim";
     @Parameter(name = "Items")
     public boolean items = true;
@@ -23,6 +23,8 @@ public class NoSlow {
     public boolean sneaking = true;
     @Parameter(name = "Ice")
     public boolean ice = false;
+    @Parameter(name = "FunSkyInterval", min = 1.0, max = 20.0, step = 1.0, visible = "mode=FunSky")
+    public double funSkyInterval = 4.0;
     @Parameter(name = "AltInterval", min = 2.0, max = 20.0, step = 1.0, visible = "mode=GrimAlternative")
     public double altInterval = 4.0;
     @Parameter(name = "AltAction", modes = {"Packet", "Alternate"}, visible = "mode=GrimAlternative")
@@ -47,6 +49,7 @@ public class NoSlow {
     private int altTicks = 0;
     private boolean altSlowPhase = false;
     private int v3Ticks = 0;
+    private int funSkyTicks = 0;
 
     @Subscribe
     public void onTick(TickEvent.Client event) {
@@ -77,6 +80,19 @@ public class NoSlow {
                 var motion = mc.getPlayerDeltaMovement();
                 mc.setPlayerDeltaMovement(motion.x * scale, motion.y, motion.z * scale);
             }
+            return;
+        }
+
+        if ("FunSky".equals(modeVal)) {
+            if (!PlayerUtility.isUsingItem(player)) {
+                funSkyTicks = 0;
+                return;
+            }
+            funSkyTicks++;
+            if (funSkyTicks % (int) funSkyInterval != 0) return;
+            int slot = ravex.utility.player.InventoryUtility.getSelectedSlot(player);
+            NetworkUtility.sendSetCarriedItem((slot + 1) % 9);
+            NetworkUtility.sendSetCarriedItem(slot);
             return;
         }
 
