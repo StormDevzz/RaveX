@@ -4,7 +4,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 
 
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,16 +41,16 @@ public class AntiBot {
         return true;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         if (!shouldProtectTarget()) return;
         long now = System.currentTimeMillis();
         if (now - lastCleanup < 500) return;
         lastCleanup = now;
         List<net.minecraft.world.entity.Entity> newBots = new ArrayList<>();
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
-            if (e == mc.player) continue;
-            if (!MobUtility.isPlayer(MobUtility.asLivingEntity(e)) || !e.isAlive()) continue;
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
+            if (e == mc.getPlayer()) continue;
+            if (!EntityUtility.isPlayer(EntityUtility.asLivingEntity(e)) || !e.isAlive()) continue;
             net.minecraft.world.entity.player.Player p = (net.minecraft.world.entity.player.Player) e;
             boolean suspect = false;
             if (removeInvisible && p.isInvisible()) {
@@ -62,7 +62,7 @@ public class AntiBot {
                     p.tickCount,
                     p.getX(), p.getY(), p.getZ(),
                     p.getDeltaMovement().x, p.getDeltaMovement().y, p.getDeltaMovement().z,
-                    mc.player.distanceTo(p),
+                    mc.getPlayer().distanceTo(p),
                     checkPing,
                     checkName,
                     checkMovement

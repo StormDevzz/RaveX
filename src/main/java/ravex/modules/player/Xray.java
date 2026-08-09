@@ -10,7 +10,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Xray", category = "net.minecraft.world.entity.player.Player")
 public class Xray {
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
-        MinecraftWrapper.getInstance().setScreen(ravex.gui.browser.BlockBrowserScreen.forXray(MinecraftWrapper.getInstance().screen));
+        MinecraftWrapper.getWrapper().setScreen(ravex.gui.browser.BlockBrowserScreen.forXray(MinecraftWrapper.getWrapper().getCurrentScreen()));
     });
     private final Set<net.minecraft.resources.Identifier> selectedBlocks = new HashSet<>();
 
@@ -33,12 +33,12 @@ public class Xray {
         return selectedBlocks;
     }
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.levelRenderer != null) mc.levelRenderer.allChanged();
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevelRenderer() != null) mc.getLevelRenderer().allChanged();
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.levelRenderer != null) mc.levelRenderer.allChanged();
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevelRenderer() != null) mc.getLevelRenderer().allChanged();
     }
 
 

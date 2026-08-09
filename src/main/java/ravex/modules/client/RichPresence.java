@@ -64,18 +64,18 @@ public class RichPresence {
         } catch (Throwable ignored) {}
     }
     private void updatePresence(long startTime) {
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         String details;
         String state;
-        if (mc.player == null || mc.level == null) {
+        if (mc.getPlayer() == null || mc.getLevel() == null) {
             details = "Menu";
             state = "InMainMenu";
         } else {
-            details = "RaveX — " + mc.player.getGameProfile().name();
+            details = "RaveX — " + mc.getPlayer().getGameProfile().name();
             StringBuilder stateBuilder = new StringBuilder();
             if (showHP) {
-                int hp = (int) Math.ceil(PlayerUtility.getHealth(mc.player));
-                int maxHp = (int) Math.ceil(PlayerUtility.getMaxHealth(mc.player));
+                int hp = (int) Math.ceil(PlayerUtility.getHealth(mc.getPlayer()));
+                int maxHp = (int) Math.ceil(PlayerUtility.getMaxHealth(mc.getPlayer()));
                 stateBuilder.append("HP ").append(hp).append("/").append(maxHp);
             }
             if (showIP) {
@@ -88,7 +88,7 @@ public class RichPresence {
             if (showPing) {
                 if (stateBuilder.length() > 0) stateBuilder.append(" | ");
                 if (mc.getConnection() != null) {
-                    PlayerInfo info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
+                    PlayerInfo info = mc.getConnection().getPlayerInfo(mc.getPlayer().getUUID());
                     if (info != null) {
                         stateBuilder.append(info.getLatency()).append("ms");
                     }
@@ -96,7 +96,7 @@ public class RichPresence {
             }
             if (showCoords) {
                 if (stateBuilder.length() > 0) stateBuilder.append(" | ");
-                stateBuilder.append(String.format("XYZ: %.0f, %.0f, %.0f", mc.player.getX(), mc.player.getY(), mc.player.getZ()));
+                stateBuilder.append(String.format("XYZ: %.0f, %.0f, %.0f", mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ()));
             } else {
                 int enabledCount = 0;
                 for (var m : ravex.manager.ModuleManager.INSTANCE.getModules()) {

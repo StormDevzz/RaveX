@@ -10,11 +10,8 @@ import net.minecraft.world.entity.ambient.AmbientCreature;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.client.Minecraft;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.PlayerUtility;
-import net.minecraft.client.player.LocalPlayer;
 import ravex.utility.player.InventoryUtility;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +58,7 @@ public class EntityUtility {
     }
 
     public static double distanceToPlayer(LivingEntity entity) {
-        var p = MinecraftWrapper.getInstance().player;
+        var p = MinecraftWrapper.getWrapper().getPlayer();
         return p != null ? p.distanceTo(entity) : Double.MAX_VALUE;
     }
 
@@ -191,7 +188,7 @@ public class EntityUtility {
     }
 
     public static double distanceToPlayer(Entity entity) {
-        var p = MinecraftWrapper.getInstance().player;
+        var p = MinecraftWrapper.getWrapper().getPlayer();
         return p != null ? p.distanceTo(entity) : Double.MAX_VALUE;
     }
 
@@ -220,7 +217,7 @@ public class EntityUtility {
             if (owner != null) return owner.getScoreboardName();
         } catch (Exception ignored) {}
         try {
-            var mc = MinecraftWrapper.getInstance();
+            var mc = MinecraftWrapper.getWrapper();
             var conn = mc.getConnection();
             if (conn != null) {
                 var info = conn.getClass().getMethod("getPlayerInfo", java.util.UUID.class).invoke(conn, uuid);

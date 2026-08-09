@@ -3,7 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;

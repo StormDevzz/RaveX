@@ -24,25 +24,25 @@ public class Zoom {
     private double targetFov;
     private double savedFov;
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.options != null) {
-            savedFov = mc.options.fov().get();
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getOptions() != null) {
+            savedFov = mc.getOptions().fov().get();
             targetFov = defaultZoom;
             currentFov = savedFov;
         }
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.options != null && savedFov > 0) {
-            mc.options.fov().set((int) savedFov);
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getOptions() != null && savedFov > 0) {
+            mc.getOptions().fov().set((int) savedFov);
             currentFov = savedFov;
             targetFov = savedFov;
             savedFov = 0;
         }
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
         if (smooth) {
             double spd = smoothSpeed;
             currentFov += (targetFov - currentFov) * spd;
@@ -50,7 +50,7 @@ public class Zoom {
         } else {
             currentFov = targetFov;
         }
-        mc.options.fov().set((int) currentFov);
+        mc.getOptions().fov().set((int) currentFov);
     }
     public void onScroll(int delta) {
         if (!scroll || !Modules.enabled(Zoom.class)) return;

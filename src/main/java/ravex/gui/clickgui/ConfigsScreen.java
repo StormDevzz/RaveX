@@ -130,18 +130,18 @@ public class ConfigsScreen extends Screen {
         graphics.fill(rightX, rightY, rightX + rightW, rightY + 1, ColorUtility.withAlpha(activeColor, 80));
 
 
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() != null) {
             int modelX = rightX + rightW / 2;
             int modelY1 = rightY + 16;
             int modelY2 = rightY + 100;
             int scale = 35;
             InventoryScreen.renderEntityInInventoryFollowsMouse(
                 graphics, modelX - scale, modelY1, modelX + scale, modelY2,
-                scale, 0.0625f, mouseX, mouseY, mc.player);
+                scale, 0.0625f, mouseX, mouseY, mc.getPlayer());
 
 
-            String playerName = mc.player.getName().getString();
+            String playerName = mc.getPlayer().getName().getString();
             int nameW = FontRenderUtility.getStringWidth(playerName);
             graphics.fill(rightX + (rightW - nameW - 12) / 2, rightY + 100,
                           rightX + (rightW + nameW + 12) / 2, rightY + 114,
@@ -150,7 +150,7 @@ public class ConfigsScreen extends Screen {
                 rightX + (rightW - nameW) / 2, rightY + 102, activeColor, true);
 
 
-            var skinType = mc.player.getSkin().model();
+            var skinType = mc.getPlayer().getSkin().model();
             String modelName = skinType.name().equals("slim") ? "Alex model" : "Steve model";
             int mnW = FontRenderUtility.getStringWidth(modelName);
             FontRenderUtility.drawString(graphics, modelName,

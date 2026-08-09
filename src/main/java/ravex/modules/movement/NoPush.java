@@ -5,7 +5,7 @@ import ravex.modules.annotations.Parameter;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.item.ItemEntity;
 
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.modules.Modules;
 @Module(name = "NoPush", category = "Movement")
 public class NoPush {
@@ -20,7 +20,7 @@ public class NoPush {
 
     public boolean shouldCancelPush(net.minecraft.world.entity.Entity self, net.minecraft.world.entity.Entity other) {
         if (!Modules.enabled(NoPush.class)) return false;
-        boolean otherPlayer = MobUtility.isPlayer(MobUtility.asLivingEntity(other));
+        boolean otherPlayer = EntityUtility.isPlayer(EntityUtility.asLivingEntity(other));
         boolean otherMob = other instanceof net.minecraft.world.entity.LivingEntity && !otherPlayer;
         boolean otherItem = other instanceof ItemEntity;
         return (otherPlayer && players) || (otherMob && mobs) || (otherItem && items);

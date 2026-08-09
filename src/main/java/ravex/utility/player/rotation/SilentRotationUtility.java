@@ -1,6 +1,5 @@
 package ravex.utility.player.rotation;
 
-import net.minecraft.client.Minecraft;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;

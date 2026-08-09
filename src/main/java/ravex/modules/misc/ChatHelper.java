@@ -8,7 +8,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.StringParameter;
 import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.network.NetworkUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -297,7 +297,7 @@ public class ChatHelper {
         String name = victim.getName().getString();
         String phrase = String.format(EZ_PHRASES.get(random.nextInt(EZ_PHRASES.size())), name);
         if (MinecraftWrapper.getWrapper().getPlayer() != null) {
-            MinecraftWrapper.getWrapper().getPlayer().connection.sendChat(phrase);
+            NetworkUtility.sendChat(phrase);
         }
     }
 
@@ -338,11 +338,11 @@ public class ChatHelper {
             checkMilestone(1000, p); checkMilestone(2500, p);
             checkMilestone(5000, p); checkMilestone(10000, p);
             if (foodEaten == 10 || foodEaten == 25 || foodEaten == 50 || foodEaten == 100) {
-                p.connection.sendChat("I just ate " + foodEaten + " times, damn I'm hungry af");
+                NetworkUtility.sendChat("I just ate " + foodEaten + " times, damn I'm hungry af");
                 foodEaten = 0;
             }
             if (hitsDealt == 100 || hitsDealt == 500 || hitsDealt == 1000 || hitsDealt == 5000) {
-                p.connection.sendChat("I dealt " + hitsDealt + " hits, stop moving!");
+                NetworkUtility.sendChat("I dealt " + hitsDealt + " hits, stop moving!");
                 hitsDealt = 0;
             }
         }
@@ -350,7 +350,7 @@ public class ChatHelper {
 
     private void checkMilestone(int target, net.minecraft.client.player.LocalPlayer p) {
         if (blocksWalked >= target && blocksWalked - 50 < target) {
-            p.connection.sendChat("I walked " + target + " blocks already");
+            NetworkUtility.sendChat("I walked " + target + " blocks already");
             blocksWalked = 0;
         }
     }
@@ -362,7 +362,7 @@ public class ChatHelper {
         if (announceWalk && blocksWalked >= 1.0) { sb.append("Walked ").append(String.format("%.0f", blocksWalked)).append("b. "); added = true; }
         if (announceEat && foodEaten > 0) { sb.append("Ate ").append(foodEaten).append("x. "); added = true; }
         if (announceHit && hitsDealt > 0) { sb.append("Hit ").append(hitsDealt).append("x. "); added = true; }
-        if (added) p.connection.sendChat(sb.toString());
+        if (added) NetworkUtility.sendChat(sb.toString());
         blocksWalked = 0; foodEaten = 0; hitsDealt = 0;
     }
 
@@ -374,7 +374,7 @@ public class ChatHelper {
             String name = player.getGameProfile().name();
             int idx = me.getRandom().nextInt(welcomeMessages.length);
             String msg = String.format(welcomeMessages[idx], name);
-            me.connection.sendCommand(msg);
+            NetworkUtility.sendCommand(msg);
         }
     }
 
@@ -393,7 +393,7 @@ public class ChatHelper {
         } else {
             msg = spamText;
         }
-        p.connection.sendChat(msg);
+        NetworkUtility.sendChat(msg);
     }
 
     private void tickDurabAlert(MinecraftWrapper mc) {
@@ -414,7 +414,7 @@ public class ChatHelper {
             }
         }
         if (am.equals("Enemy") || am.equals("Both")) {
-            net.minecraft.world.entity.LivingEntity living = MobUtility.asLivingEntity(mc.getCrosshairPickEntity());
+            net.minecraft.world.entity.LivingEntity living = EntityUtility.asLivingEntity(mc.getCrosshairPickEntity());
             if (living != null && !living.equals(mc.getPlayer())) {
                 EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
                 String[] names = {"Boots", "Leggings", "Chestplate", "Helmet"};

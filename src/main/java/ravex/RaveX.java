@@ -31,8 +31,8 @@ import ravex.utility.misc.GuiOptimizerUtility;
 import ravex.utility.misc.GithubUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.utility.sound.SoundEventDispatcherUtility;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.nativelib.NativeLibraryUtility;
-import net.minecraft.client.Minecraft;
 
 public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEntrypoint {
     public static final String MOD_ID = "ravex";
@@ -254,7 +254,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
     public static void onClientTick() {
         if (!texturesPreloaded) {
-            Minecraft mc = ravex.mcwrapper.MinecraftWrapper.getInstance();
+            MinecraftWrapper mc = MinecraftWrapper.getWrapper();
             if (mc.getWindow() != null) {
                 TextureLoaderUtility.preloadAll();
                 texturesPreloaded = true;
@@ -271,14 +271,14 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         ravex.addon.core.CAddonManager.onTick();
         ServiceLocator.resolve(ModuleManager.class).onTick();
 
-        Minecraft mc = ravex.mcwrapper.MinecraftWrapper.getInstance();
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
         if (mc.getWindow() == null) return;
 
         com.mojang.blaze3d.platform.Window window = mc.getWindow();
 
         boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
         if (isDown && !rightShiftWasDown) {
-            if (mc.screen instanceof ClickGUI) {
+            if (mc.getCurrentScreen() instanceof ClickGUI) {
                 ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper());
             } else {
                 mc.setScreen(new ClickGUI());
@@ -291,7 +291,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
             if (bind > 0 && bind < keysState.length) {
                 boolean isKeyBindDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, bind);
                 if (isKeyBindDown && !keysState[bind]) {
-                    if (mc.screen == null || mc.screen instanceof ClickGUI) {
+                    if (mc.getCurrentScreen() == null || mc.getCurrentScreen() instanceof ClickGUI) {
                         m.toggle();
                     }
                 }

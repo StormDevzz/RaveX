@@ -2,7 +2,7 @@ package ravex.modules.client;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.manager.NotificationManager;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PotionUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;
@@ -124,8 +124,8 @@ public class Notifications {
                     double d = le.distanceToSqr(entry.x, entry.y, entry.z);
                     boolean self = le == mc.getPlayer();
                     boolean player = le instanceof net.minecraft.world.entity.player.Player && !self;
-                    boolean monster = MobUtility.isHostile(le);
-                    boolean animal = MobUtility.isPassive(le);
+                    boolean monster = EntityUtility.isHostile(le);
+                    boolean animal = EntityUtility.isPassive(le);
                     if (!itemSelf && self) continue;
                     if (!itemPlayers && player) continue;
                     if (!itemMonsters && monster) continue;
@@ -181,7 +181,7 @@ public class Notifications {
 
     private boolean canPickUpItems(net.minecraft.world.entity.LivingEntity entity) {
         if (entity instanceof net.minecraft.world.entity.player.Player) return true;
-        if (MobUtility.isHostile(entity)) return true;
+        if (EntityUtility.isHostile(entity)) return true;
         if (entity instanceof net.minecraft.world.entity.npc.villager.Villager) return true;
         if (entity instanceof net.minecraft.world.entity.animal.equine.Llama) return true;
         if (entity instanceof net.minecraft.world.entity.animal.equine.Donkey) return true;

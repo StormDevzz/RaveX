@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
@@ -67,24 +66,24 @@ public class PVEUtils {
         }
     }
     private void tickSmelt() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-        if (!(mc.screen instanceof FurnaceScreen)
-            && !(mc.screen instanceof BlastFurnaceScreen)
-            && !(mc.screen instanceof SmokerScreen)) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
+        if (!(mc.getCurrentScreen() instanceof FurnaceScreen)
+            && !(mc.getCurrentScreen() instanceof BlastFurnaceScreen)
+            && !(mc.getCurrentScreen() instanceof SmokerScreen)) {
             smeltTarget = null;
             return;
         }
         if (smeltTarget == null) {
-            if (mc.hitResult != null && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
-                net.minecraft.core.BlockPos pos = ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos();
-                net.minecraft.world.level.block.state.BlockState st = mc.level.getBlockState(pos);
+            if (mc.getHitResult() != null && mc.getHitResult().getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+                net.minecraft.core.BlockPos pos = ((net.minecraft.world.phys.BlockHitResult) mc.getHitResult()).getBlockPos();
+                net.minecraft.world.level.block.state.BlockState st = mc.getLevel().getBlockState(pos);
                 if (st.getBlock() instanceof AbstractFurnaceBlock) {
                     smeltTarget = pos;
                 }
             }
         }
-        if (!(mc.player.containerMenu instanceof AbstractFurnaceMenu furnace)) {
+        if (!(mc.getPlayer().containerMenu instanceof AbstractFurnaceMenu furnace)) {
             smeltTarget = null;
             return;
         }
@@ -92,7 +91,7 @@ public class PVEUtils {
         int playerInvStart = 3;
         int hotbarStart = playerInvStart + 27;
         if (furnace.getSlot(2).hasItem()) {
-            mc.gameMode.handleInventoryMouseClick(containerId, 2, 0, InventoryUtility.QUICK_MOVE, mc.player);
+            mc.getGameMode().handleInventoryMouseClick(containerId, 2, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
             return;
         }
         if (furnace.getBurnProgress() > 0.01f) return;
@@ -101,7 +100,7 @@ public class PVEUtils {
                 var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (furnace.canSmelt(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
+                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
                     return;
                 }
             }
@@ -109,7 +108,7 @@ public class PVEUtils {
                 var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (furnace.canSmelt(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
+                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
                     return;
                 }
             }
@@ -119,29 +118,29 @@ public class PVEUtils {
                 var stack = furnace.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (furnace.isFuel(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
+                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
                     return;
                 }
             }
         }
     }
     private void tickTame() {
-        var mc = MinecraftWrapper.getInstance();
-        net.minecraft.client.player.LocalPlayer p = mc.player;
-        if (p == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        net.minecraft.client.player.LocalPlayer p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null) return;
         double r = range;
         AABB box = p.getBoundingBox().inflate(r);
-        List<net.minecraft.world.entity.Entity> entities = mc.level.getEntities(p, box, e -> isTameTarget(e) && e.isAlive());
+        List<net.minecraft.world.entity.Entity> entities = mc.getLevel().getEntities(p, box, e -> isTameTarget(e) && e.isAlive());
         for (net.minecraft.world.entity.Entity e : entities) {
-            var target = MobUtility.asLivingEntity(e);
+            var target = EntityUtility.asLivingEntity(e);
             if (!p.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND).isEmpty()) {
-                mc.gameMode.interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
+                mc.getGameMode().interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
                 break;
             } else if (autoSwitch) {
                 int slot = findTameItem();
                 if (slot != -1) {
                     InventoryUtility.selectSlot(p, slot);
-                    mc.gameMode.interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
+                    mc.getGameMode().interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
                     break;
                 }
             }
@@ -156,11 +155,11 @@ public class PVEUtils {
         };
     }
     private int findTameItem() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return -1;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return -1;
         String mode = tameAnimal;
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (stack.isEmpty()) continue;
             boolean match = switch (mode) {
                 case "Wolf" -> InventoryUtility.isItem(stack, "bone");
@@ -173,23 +172,23 @@ public class PVEUtils {
         return -1;
     }
     private void tickBrew() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null || mc.gameMode == null) return;
-        if (!(mc.screen instanceof BrewingStandScreen)) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
+        if (!(mc.getCurrentScreen() instanceof BrewingStandScreen)) {
             hasBrewTarget = false;
             return;
         }
         if (!hasBrewTarget) {
-            if (mc.hitResult != null && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
-                var pos = ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos();
-                var st = mc.level.getBlockState(pos);
+            if (mc.getHitResult() != null && mc.getHitResult().getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+                var pos = ((net.minecraft.world.phys.BlockHitResult) mc.getHitResult()).getBlockPos();
+                var st = mc.getLevel().getBlockState(pos);
                 if (st.getBlock() instanceof BrewingStandBlock) {
                     brewTargetX = pos.getX(); brewTargetY = pos.getY(); brewTargetZ = pos.getZ();
                     hasBrewTarget = true;
                 }
             }
         }
-        if (!(mc.player.containerMenu instanceof BrewingStandMenu brew)) {
+        if (!(mc.getPlayer().containerMenu instanceof BrewingStandMenu brew)) {
             hasBrewTarget = false;
             return;
         }
@@ -201,7 +200,7 @@ public class PVEUtils {
                 for (int i = playerInvStart; i < brew.slots.size(); i++) {
                     var stack = brew.slots.get(i).getItem();
                     if (InventoryUtility.isItem(stack, "blaze_powder")) {
-                        mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
+                        mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
                         return;
                     }
                 }
@@ -211,7 +210,7 @@ public class PVEUtils {
         for (int slot = 0; slot <= 2; slot++) {
             var stack = brew.getSlot(slot).getItem();
             if (!stack.isEmpty() && !InventoryUtility.isItem(stack, "glass_bottle")) {
-                mc.gameMode.handleInventoryMouseClick(containerId, slot, 0, InventoryUtility.QUICK_MOVE, mc.player);
+                mc.getGameMode().handleInventoryMouseClick(containerId, slot, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
                 return;
             }
         }
@@ -220,7 +219,7 @@ public class PVEUtils {
                 var stack = brew.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (isBrewIngredient(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
+                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
                     return;
                 }
             }
@@ -228,7 +227,7 @@ public class PVEUtils {
                 var stack = brew.slots.get(i).getItem();
                 if (stack.isEmpty()) continue;
                 if (isBrewIngredient(stack)) {
-                    mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
+                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
                     return;
                 }
             }
@@ -238,7 +237,7 @@ public class PVEUtils {
                 for (int i = playerInvStart; i < brew.slots.size(); i++) {
                     var stack = brew.slots.get(i).getItem();
                     if (InventoryUtility.isItem(stack, "glass_bottle")) {
-                        mc.gameMode.handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.player);
+                        mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
                         return;
                     }
                 }
@@ -260,13 +259,13 @@ public class PVEUtils {
         return BlockUtility.pos(brewTargetX, brewTargetY, brewTargetZ);
     }
     private void tickLight() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         long now = System.currentTimeMillis();
         if (now - lastLightPlace < lightDelay) return;
         int torchSlot = -1;
         for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.player, i);
+            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
             if (InventoryUtility.isItem(stack, "torch") || InventoryUtility.isItem(stack, "soul_torch")) {
                 torchSlot = i;
                 break;
@@ -274,7 +273,7 @@ public class PVEUtils {
         }
         if (torchSlot == -1) return;
         double r = range;
-        var playerPos = mc.player.blockPosition();
+        var playerPos = mc.getPlayer().blockPosition();
         int minX = (int) Math.floor(playerPos.getX() - r);
         int maxX = (int) Math.ceil(playerPos.getX() + r);
         int minY = (int) Math.floor(playerPos.getY() - r);
@@ -286,20 +285,20 @@ public class PVEUtils {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     var pos = BlockUtility.pos(x, y, z);
-                    var state = mc.level.getBlockState(pos);
+                    var state = mc.getLevel().getBlockState(pos);
                     if (state.isAir()) continue;
-                    if (mc.level.getMaxLocalRawBrightness(pos) > targetLight) continue;
+                    if (mc.getLevel().getMaxLocalRawBrightness(pos) > targetLight) continue;
                     int aboveY = BlockUtility.aboveY(y);
                     var placeOn = BlockUtility.pos(x, aboveY, z);
-                    if (!mc.level.getBlockState(placeOn).isAir()) continue;
-                    if (state.getShape(mc.level, pos).isEmpty()) continue;
+                    if (!mc.getLevel().getBlockState(placeOn).isAir()) continue;
+                    if (state.getShape(mc.getLevel(), pos).isEmpty()) continue;
                     var center = PhysicUtility.centerOf(placeOn);
-                    if (center.distanceToSqr(mc.player.getEyePosition()) > r * r) continue;
-                    int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
-                    InventoryUtility.selectSlot(mc.player, torchSlot);
+                    if (center.distanceToSqr(mc.getPlayer().getEyePosition()) > r * r) continue;
+                    int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+                    InventoryUtility.selectSlot(mc.getPlayer(), torchSlot);
                     BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), new net.minecraft.world.phys.BlockHitResult(PhysicUtility.centerOf(pos), net.minecraft.core.Direction.UP, pos, false));
                     if (silent) {
-                        InventoryUtility.selectSlot(mc.player, prevSlot);
+                        InventoryUtility.selectSlot(mc.getPlayer(), prevSlot);
                     }
                     lastLightPlace = now;
                     return;

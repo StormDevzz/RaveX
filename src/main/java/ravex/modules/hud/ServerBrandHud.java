@@ -2,7 +2,7 @@ package ravex.modules.hud;
 import ravex.modules.annotations.Module;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.utility.interfaces.IClientPacketListener;
@@ -31,11 +31,11 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
     public static native String nativeFormatBrand(String rawBrand);
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null || mc.player.connection == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getPlayer().connection == null) return;
         String rawBrand = null;
-        if (mc.player.connection instanceof IClientPacketListener) {
-            rawBrand = ((IClientPacketListener) mc.player.connection).ravex$getServerBrand();
+        if (mc.getPlayer().connection instanceof IClientPacketListener) {
+            rawBrand = ((IClientPacketListener) mc.getPlayer().connection).ravex$getServerBrand();
         }
         if (rawBrand == null || rawBrand.isEmpty()) {
             rawBrand = "Vanilla";

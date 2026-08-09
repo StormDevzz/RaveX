@@ -5,7 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.RaveX;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.utility.render.HudRendererUtility;
@@ -123,7 +123,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
             if (imageData != null && imageData.length > 0) {
                 RaveX.LOGGER.info("[MediaHud] Cover loaded: {} bytes", imageData.length);
                 String capturedKey = key;
-                MinecraftWrapper.getInstance().execute(() -> {
+                MinecraftWrapper.getWrapper().execute(() -> {
                     if (registerCover(imageData)) {
                         lastLoadedKey = capturedKey;
                     }
@@ -169,7 +169,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
             if (coverTexture != null) coverTexture.close();
             coverTexture = new DynamicTexture(() -> "ravex:media_cover", resized);
             coverId = texId;
-            MinecraftWrapper.getInstance().getTextureManager().register(texId, coverTexture);
+            MinecraftWrapper.getWrapper().getTextureManager().register(texId, coverTexture);
 
             try {
                 com.mojang.blaze3d.textures.GpuSampler linearSampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()

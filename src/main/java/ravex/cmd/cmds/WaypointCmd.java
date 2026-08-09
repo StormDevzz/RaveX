@@ -17,10 +17,10 @@ public class WaypointCmd extends Cmd {
             return;
         }
         String sub = args[1].toLowerCase(Locale.ROOT);
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         switch (sub) {
             case "add": {
-                if (mc.player == null || mc.level == null) return;
+                if (mc.getPlayer() == null || mc.getLevel() == null) return;
 
                 if (args.length >= 6) {
                     try {
@@ -33,7 +33,7 @@ public class WaypointCmd extends Cmd {
                             nameBuilder.append(args[i]);
                         }
                         String name = nameBuilder.toString();
-                        String dim = mc.level.dimension().identifier().toString();
+                        String dim = mc.getLevel().dimension().identifier().toString();
                         ModuleManager.get(ravex.modules.render.Waypoint.class).addWaypoint(name, x, y, z, dim);
                         CmdReg.print(this, "§aAdded waypoint: §e" + name + " §7(" + String.format("%.1f", x) + ", " + String.format("%.1f", y) + ", " + String.format("%.1f", z) + ")");
                     } catch (NumberFormatException e) {
@@ -41,8 +41,8 @@ public class WaypointCmd extends Cmd {
                     }
                 } else if (args.length >= 3) {
                     String name = args[2];
-                    double x = mc.player.getX(), y = mc.player.getY(), z = mc.player.getZ();
-                    String dim = mc.level.dimension().identifier().toString();
+                    double x = mc.getPlayer().getX(), y = mc.getPlayer().getY(), z = mc.getPlayer().getZ();
+                    String dim = mc.getLevel().dimension().identifier().toString();
                     ModuleManager.get(ravex.modules.render.Waypoint.class).addWaypoint(name, x, y, z, dim);
                     CmdReg.print(this, "§aAdded waypoint: §e" + name + " §7(" + String.format("%.1f", x) + ", " + String.format("%.1f", y) + ", " + String.format("%.1f", z) + ")");
                 } else {
@@ -71,8 +71,8 @@ public class WaypointCmd extends Cmd {
                     String dim = wp.dimension();
                     if (dim.startsWith("minecraft:")) dim = dim.substring(10);
                     double dist = 0;
-                    if (mc.player != null) {
-                        dist = Math.sqrt((wp.x() + 0.5 - mc.player.getX()) * (wp.x() + 0.5 - mc.player.getX()) + (wp.y() + 0.5 - mc.player.getY()) * (wp.y() + 0.5 - mc.player.getY()) + (wp.z() + 0.5 - mc.player.getZ()) * (wp.z() + 0.5 - mc.player.getZ()));
+                    if (mc.getPlayer() != null) {
+                        dist = Math.sqrt((wp.x() + 0.5 - mc.getPlayer().getX()) * (wp.x() + 0.5 - mc.getPlayer().getX()) + (wp.y() + 0.5 - mc.getPlayer().getY()) * (wp.y() + 0.5 - mc.getPlayer().getY()) + (wp.z() + 0.5 - mc.getPlayer().getZ()) * (wp.z() + 0.5 - mc.getPlayer().getZ()));
                     }
                     CmdReg.print(" §e" + wp.name() + " §7- " + String.format("%.1f", wp.x()) + " " + String.format("%.1f", wp.y()) + " " + String.format("%.1f", wp.z()) + " §8[" + dim + "] §7(" + String.format("%.0f", dist) + "m)");
                 }

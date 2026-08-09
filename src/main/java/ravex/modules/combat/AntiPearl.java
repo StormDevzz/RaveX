@@ -28,13 +28,13 @@ public class AntiPearl {
         NATIVE.load();
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         double r = range;
         List<ThrownEnderpearl> pearls = new ArrayList<>();
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (e instanceof ThrownEnderpearl pearl) {
-                double dist = mc.player.distanceTo(pearl);
+                double dist = mc.getPlayer().distanceTo(pearl);
                 if (dist <= r) pearls.add(pearl);
             }
         }
@@ -46,10 +46,10 @@ public class AntiPearl {
                 double[] result = new double[6];
                 nativePredictLanding(pos.x, pos.y, pos.z, vel.x, vel.y, vel.z, result);
                 net.minecraft.world.phys.Vec3 landing = new net.minecraft.world.phys.Vec3(result[0], result[1], result[2]);
-                double distToMe = landing.distanceTo(mc.player.position());
+                double distToMe = landing.distanceTo(mc.getPlayer().position());
                 double impactTicks = result[3];
                 if (autoWarn && distToMe < 3.0) {
-                    mc.player.displayClientMessage(
+                    mc.getPlayer().displayClientMessage(
                         net.minecraft.network.chat.Component.literal(
                             "§7[§cRaveX§7] §ePearl incoming! §f" + String.format("%.1f", distToMe) + "mAway"
                         ), true
@@ -57,9 +57,9 @@ public class AntiPearl {
                 }
             } else if (predict) {
                 net.minecraft.world.phys.Vec3 landing = pearlPosAtTicks(pos, vel, 30);
-                double distToMe = landing.distanceTo(mc.player.position());
+                double distToMe = landing.distanceTo(mc.getPlayer().position());
                 if (autoWarn && distToMe < 3.0) {
-                    mc.player.displayClientMessage(
+                    mc.getPlayer().displayClientMessage(
                         net.minecraft.network.chat.Component.literal(
                             "§7[§cRaveX§7] §ePearl incoming!"
                         ), true

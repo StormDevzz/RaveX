@@ -2,7 +2,7 @@ package ravex.modules.world;
 import ravex.modules.annotations.Module;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AutoNameTag", category = "World")
 public class AutoNameTag {
@@ -25,7 +25,7 @@ public void onTick() {
         var target = (net.minecraft.world.entity.LivingEntity) null;
         double closestDist = 4.5;
         for (var entity : mc.getLevel().entitiesForRendering()) {
-            if (MobUtility.isNameable(entity) && !MobUtility.hasName(entity, tagName)) {
+            if (EntityUtility.isNameable(entity) && !EntityUtility.hasName(entity, tagName)) {
                 double dist = p.distanceTo(entity);
                 if (dist < closestDist) {
                     closestDist = dist;
@@ -36,7 +36,7 @@ public void onTick() {
         if (target == null) return;
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, tagSlot);
-        MobUtility.interact(mc, target);
+        EntityUtility.interact(mc, target);
         SwingUtility.swingMainHand(p);
         if (tagSlot != prevSlot) {
             InventoryUtility.selectSlot(p, prevSlot);

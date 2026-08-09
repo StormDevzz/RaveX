@@ -8,9 +8,9 @@ public class ClearCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.gui != null) {
-            mc.gui.getChat().clearMessages(true);
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getRaw().gui != null) {
+            mc.getRaw().gui.getChat().clearMessages(true);
             CmdReg.print(this, "§aChat cleared.");
         }
     }

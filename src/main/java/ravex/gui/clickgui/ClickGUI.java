@@ -9,7 +9,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.manager.ModuleManager;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;

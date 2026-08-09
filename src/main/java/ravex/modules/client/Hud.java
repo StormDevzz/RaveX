@@ -26,8 +26,8 @@ public class Hud {
     public void onTick() {
         if (hudEditor) {
             hudEditor = false;
-            var mc = MinecraftWrapper.getInstance();
-            if (mc.player != null) {
+            var mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) {
                 mc.execute(() -> mc.setScreen(new ravex.gui.hudeditor.HudEditorScreen(null)));
             }
         }

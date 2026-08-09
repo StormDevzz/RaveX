@@ -1,7 +1,6 @@
 package ravex.render.hud;
 
 import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -41,7 +40,7 @@ public final class HudRenderer {
     private HudRenderer() {}
 
     public void render(GuiGraphics context, DeltaTracker tickCounter) {
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
 
         if (Modules.enabled(Ambient.class)) {
             int rVal = (int) ModuleManager.get(Ambient.class).r;
@@ -52,22 +51,22 @@ public final class HudRenderer {
             context.fill(0, 0, context.guiWidth(), context.guiHeight(), color);
         }
 
-        if (mc.level == null || mc.player == null) {
+        if (mc.getLevel() == null || mc.getPlayer() == null) {
             renderHud(context, tickCounter);
             return;
         }
 
         float pt = tickCounter.getGameTimeDeltaTicks();
-        Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
+        Vec3 cameraPos = mc.getGameRenderer().getMainCamera().position();
         boolean espEnabled = Modules.enabled(ESP.class);
         boolean nameTagsEnabled = Modules.enabled(NameTags.class);
         boolean mobOwnerEnabled = Modules.enabled(MobOwner.class) && ModuleManager.get(MobOwner.class).animals;
 
         int guiWidth = context.guiWidth();
         int guiHeight = context.guiHeight();
-        boolean firstPerson = mc.options.getCameraType().isFirstPerson();
-        Vec3 playerViewVec = mc.player != null ? mc.player.getViewVector(pt) : null;
-        Quaternionf cRotation = mc.gameRenderer.getMainCamera().rotation();
+        boolean firstPerson = mc.getOptions().getCameraType().isFirstPerson();
+        Vec3 playerViewVec = mc.getPlayer() != null ? mc.getPlayer().getViewVector(pt) : null;
+        Quaternionf cRotation = mc.getGameRenderer().getMainCamera().rotation();
         Vector4f lookVec = new Vector4f(0.0F, 0.0F, -1.0F, 0.0F).rotate(cRotation);
         Vec3 cameraLook = new Vec3(lookVec.x(), lookVec.y(), lookVec.z());
         boolean tracersEnabled = Modules.enabled(Tracers.class);
@@ -90,13 +89,13 @@ public final class HudRenderer {
         renderHud(context, tickCounter);
     }
 
-    private List<Entity> buildCandidates(Minecraft mc, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled, boolean tracersEnabled, float pt, boolean firstPerson) {
+    private List<Entity> buildCandidates(MinecraftWrapper mc, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled, boolean tracersEnabled, float pt, boolean firstPerson) {
         List<Entity> candidates = new ArrayList<>();
-        for (Entity target : mc.level.entitiesForRendering()) {
-            if (target == mc.player) continue;
+        for (Entity target : mc.getLevel().entitiesForRendering()) {
+            if (target == mc.getPlayer()) continue;
             if (target instanceof LivingEntity living && !living.isAlive()) continue;
 
-            double dist = mc.player.distanceTo(target);
+            double dist = mc.getPlayer().distanceTo(target);
 
             double maxDist = ModuleManager.get(ESP.class).maxDistance;
             if (nameTagsEnabled) maxDist = Math.max(maxDist, ModuleManager.get(NameTags.class).range);
@@ -133,7 +132,7 @@ public final class HudRenderer {
         return candidates;
     }
 
-    private void renderTracers(GuiGraphics context, Minecraft mc, List<Entity> candidates, boolean tracersEnabled, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
+    private void renderTracers(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, boolean tracersEnabled, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
         if (!tracersEnabled) return;
         Tracers tracers = ModuleManager.get(Tracers.class);
 
@@ -203,7 +202,7 @@ public final class HudRenderer {
         }
     }
 
-    private void renderNameTagsAndESP(GuiGraphics context, Minecraft mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled, Vec3 playerViewVec) {
+    private void renderNameTagsAndESP(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled, Vec3 playerViewVec) {
 
         boolean nativeSuccess = false;
         int count = candidates.size();
@@ -215,7 +214,7 @@ public final class HudRenderer {
             try {
                 double[] cameraPosArr = new double[]{cameraPos.x, cameraPos.y, cameraPos.z};
                 Matrix4f projMatrix = ShaderManager.INSTANCE.getProjectionMatrix();
-                Quaternionf cameraRotation = new Quaternionf(mc.gameRenderer.getMainCamera().rotation());
+                Quaternionf cameraRotation = new Quaternionf(mc.getGameRenderer().getMainCamera().rotation());
                 Matrix4f mvMatrix = new Matrix4f().rotation(cameraRotation.conjugate());
                 float[] projectionArr = new float[16];
                 float[] modelViewArr = new float[16];
@@ -254,7 +253,7 @@ public final class HudRenderer {
                             int health = (int) Math.ceil(livingTarget.getHealth());
                             int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
                             String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-                            tw = ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText);
+                            tw = ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.getFont().width(tagText);
                             showArmor = ModuleManager.get(NameTags.class).armor;
                             showHands = ModuleManager.get(NameTags.class).handItems;
                             hasMainHand = !livingTarget.getMainHandItem().isEmpty();
@@ -267,7 +266,7 @@ public final class HudRenderer {
                             }
                         }
                         if (hasOwner) {
-                            ow = ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName);
+                            ow = ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.getFont().width("Owner: " + ownerName);
                         }
                     }
                     textWidths[i * 2 + 0] = tw;
@@ -300,7 +299,7 @@ public final class HudRenderer {
         }
     }
 
-    private void renderNativeLayout(GuiGraphics context, Minecraft mc, List<Entity> candidates, int renderedCount, int[] outIndices, double[] outLayouts, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled) {
+    private void renderNativeLayout(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, int renderedCount, int[] outIndices, double[] outLayouts, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled) {
         for (int k = 0; k < renderedCount; k++) {
             int idx = outIndices[k];
             Entity target = candidates.get(idx);
@@ -347,7 +346,7 @@ public final class HudRenderer {
         }
     }
 
-    private void renderFallbackLayout(GuiGraphics context, Minecraft mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled) {
+    private void renderFallbackLayout(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled) {
         for (Entity target : candidates) {
             boolean isPlayer = target instanceof Player;
             boolean isMonster = target instanceof LivingEntity le && EntityUtility.isHostile(le);
@@ -355,15 +354,15 @@ public final class HudRenderer {
             boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
 
             Vec3 basePos = target.getPosition(pt);
-            double dist = mc.player.distanceTo(target);
+            double dist = mc.getPlayer().distanceTo(target);
             float bbHeight = target.getBbHeight();
             float bbWidth = target.getBbWidth();
             Vec3 headPos = basePos.add(0, bbHeight, 0);
             Vec3 sidePos = basePos.add(bbWidth / 2.0f, bbHeight / 2.0f, 0);
 
-            Vec3 baseProj = mc.gameRenderer.projectPointToScreen(basePos);
-            Vec3 headProj = mc.gameRenderer.projectPointToScreen(headPos);
-            Vec3 sideProj = mc.gameRenderer.projectPointToScreen(sidePos);
+            Vec3 baseProj = mc.getGameRenderer().projectPointToScreen(basePos);
+            Vec3 headProj = mc.getGameRenderer().projectPointToScreen(headPos);
+            Vec3 sideProj = mc.getGameRenderer().projectPointToScreen(sidePos);
             if (baseProj == null || headProj == null || sideProj == null) continue;
 
             Vec3 dir = (new Vec3(basePos.x - cameraPos.x, basePos.y - cameraPos.y, basePos.z - cameraPos.z)).normalize();
@@ -400,8 +399,8 @@ public final class HudRenderer {
                 int health = (int) Math.ceil(livingTarget.getHealth());
                 int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
                 String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-                double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText)) : 0.0;
-                double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName)) : 0.0;
+                double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.getFont().width(tagText)) : 0.0;
+                double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.getFont().width("Owner: " + ownerName)) : 0.0;
 
                 boolean showArmor = drawNametags && ModuleManager.get(NameTags.class).armor;
                 boolean showHands = drawNametags && ModuleManager.get(NameTags.class).handItems;
@@ -432,7 +431,7 @@ public final class HudRenderer {
         }
     }
 
-    private void renderESPBox(GuiGraphics context, Minecraft mc, Entity target, int boxX, int y, int boxW, int boxH, boolean isPlayer, boolean isMonster, boolean isAnimal, boolean isItem) {
+    private void renderESPBox(GuiGraphics context, MinecraftWrapper mc, Entity target, int boxX, int y, int boxW, int boxH, boolean isPlayer, boolean isMonster, boolean isAnimal, boolean isItem) {
         String mode = ModuleManager.get(ESP.class).mode;
         int espColor = isPlayer ? ModuleManager.get(ESP.class).playerColor
             : (isMonster ? ModuleManager.get(ESP.class).mobColor
@@ -453,14 +452,14 @@ public final class HudRenderer {
         }
     }
 
-    private void renderNametag(GuiGraphics context, Minecraft mc, Entity target, int bx, int y, double scale, double totalW, double totalH, double armorRowY, double mainRowY, double ownerRowY, double textYOff, double mainRowW, double armorRowW, boolean drawNametags, boolean hasOwner, String ownerName) {
+    private void renderNametag(GuiGraphics context, MinecraftWrapper mc, Entity target, int bx, int y, double scale, double totalW, double totalH, double armorRowY, double mainRowY, double ownerRowY, double textYOff, double mainRowW, double armorRowW, boolean drawNametags, boolean hasOwner, String ownerName) {
         LivingEntity livingTarget = (LivingEntity) target;
         String displayName = livingTarget.getDisplayName().getString();
         int health = (int) Math.ceil(livingTarget.getHealth());
         int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
         String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
-        double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.font.width(tagText)) : 0.0;
-        double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.font.width("Owner: " + ownerName)) : 0.0;
+        double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.getFont().width(tagText)) : 0.0;
+        double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.getFont().width("Owner: " + ownerName)) : 0.0;
         boolean showArmor = drawNametags && ModuleManager.get(NameTags.class).armor;
         boolean showHands = drawNametags && ModuleManager.get(NameTags.class).handItems;
         boolean hasMainHand = drawNametags && !livingTarget.getMainHandItem().isEmpty();
@@ -475,7 +474,7 @@ public final class HudRenderer {
         renderNametagAt(context, mc, bx, y, scale, totalW, totalH, armorRowY, mainRowY, ownerRowY, textYOff, mainRowW, armorRowW, drawNametags, hasOwner, livingTarget, ownerName, tagText, tw, ow, showArmor, showHands, armorCount, hasMainHand, hasOffHand);
     }
 
-    private void renderNametagAt(GuiGraphics context, Minecraft mc, int bx, int y, double scale, double totalW, double totalH, double armorRowY, double mainRowY, double ownerRowY, double textYOff, double mainRowW, double armorRowW, boolean drawNametags, boolean hasOwner, LivingEntity livingTarget, String ownerName, String tagText, double tw, double ow, boolean showArmor, boolean showHands, int armorCount, boolean hasMainHand, boolean hasOffHand) {
+    private void renderNametagAt(GuiGraphics context, MinecraftWrapper mc, int bx, int y, double scale, double totalW, double totalH, double armorRowY, double mainRowY, double ownerRowY, double textYOff, double mainRowW, double armorRowW, boolean drawNametags, boolean hasOwner, LivingEntity livingTarget, String ownerName, String tagText, double tw, double ow, boolean showArmor, boolean showHands, int armorCount, boolean hasMainHand, boolean hasOffHand) {
         context.pose().pushMatrix();
         context.pose().translate((float) bx, (float) y);
         context.pose().scale((float) scale, (float) scale);
@@ -540,7 +539,7 @@ public final class HudRenderer {
                         context.pose().pushMatrix();
                         context.pose().translate((float)(ax + 1), (float)(ay + 1));
                         context.renderItem(stack, 0, 0);
-                        context.renderItemDecorations(mc.font, stack, 0, 0);
+                        context.renderItemDecorations(mc.getFont(), stack, 0, 0);
                         context.pose().popMatrix();
                     }
                     ax += 18 + 3;
@@ -562,7 +561,7 @@ public final class HudRenderer {
                             context.pose().pushMatrix();
                             context.pose().translate((float)(ax + 1), (float)(ay + 1));
                             context.renderItem(stack, 0, 0);
-                            context.renderItemDecorations(mc.font, stack, 0, 0);
+                            context.renderItemDecorations(mc.getFont(), stack, 0, 0);
                             context.pose().popMatrix();
                         }
                         ax += 18 + 3;
@@ -578,7 +577,7 @@ public final class HudRenderer {
                         context.pose().pushMatrix();
                         context.pose().translate((float)(ax + 1), (float)(ay + 1));
                         context.renderItem(stack, 0, 0);
-                        context.renderItemDecorations(mc.font, stack, 0, 0);
+                        context.renderItemDecorations(mc.getFont(), stack, 0, 0);
                         context.pose().popMatrix();
                     }
                 }
@@ -591,7 +590,7 @@ public final class HudRenderer {
             if (ModuleManager.get(NameTags.class).customFont) {
                 FontRenderUtility.drawString(context, tagText, rx, mY, 0xFFFFFFFF, false);
             } else {
-                context.drawString(mc.font, tagText, rx, mY, 0xFFFFFFFF, false);
+                context.drawString(mc.getFont(), tagText, rx, mY, 0xFFFFFFFF, false);
             }
         }
 
@@ -601,14 +600,14 @@ public final class HudRenderer {
             if (ModuleManager.get(NameTags.class).customFont) {
                 FontRenderUtility.drawString(context, "Owner: " + ownerName, otx, oty, ModuleManager.get(MobOwner.class).textColor, false);
             } else {
-                context.drawString(mc.font, "Owner: " + ownerName, otx, oty, ModuleManager.get(MobOwner.class).textColor, false);
+                context.drawString(mc.getFont(), "Owner: " + ownerName, otx, oty, ModuleManager.get(MobOwner.class).textColor, false);
             }
         }
 
         context.pose().popMatrix();
     }
 
-    private void renderDamageLabels(GuiGraphics context, Minecraft mc, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
+    private void renderDamageLabels(GuiGraphics context, MinecraftWrapper mc, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
 
         BasePlace bp = Modules.get(BasePlace.class);
         if (Modules.enabled(BasePlace.class) && BasePlace.getSimulatedPlacementBlock() != null) {
@@ -626,10 +625,10 @@ public final class HudRenderer {
         if (Modules.enabled(AutoCrystal.class) && ac.renderDamage && AutoCrystal.currentPlacementBlock != null) {
             BlockPos p = AutoCrystal.currentPlacementBlock;
             Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
-            Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+            Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
             if (proj != null) {
                 Vec3 dir = pos3d.subtract(cameraPos).normalize();
-                Vec3 look = mc.player.getViewVector(pt);
+                Vec3 look = mc.getPlayer().getViewVector(pt);
                 if (dir.dot(look) > 0.0) {
                     double sx = (proj.x + 1.0) / 2.0 * guiWidth;
                     double sy = (1.0 - proj.y) / 2.0 * guiHeight;
@@ -646,23 +645,23 @@ public final class HudRenderer {
         if (Modules.enabled(PVEUtils.class) && asm.mode.equals("AutoSmelt") && asm.smeltRender && PVEUtils.smeltTarget != null) {
             BlockPos p = PVEUtils.smeltTarget;
             Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
-            Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+            Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
             if (proj != null) {
                 Vec3 dir = pos3d.subtract(cameraPos).normalize();
-                Vec3 look = mc.player.getViewVector(pt);
+                Vec3 look = mc.getPlayer().getViewVector(pt);
                 if (dir.dot(look) > 0.0) {
                     double sx = (proj.x + 1.0) / 2.0 * guiWidth;
                     double sy = (1.0 - proj.y) / 2.0 * guiHeight;
                     int x = (int) sx, y = (int) sy;
                     String statusText;
-                    if (mc.player.containerMenu instanceof net.minecraft.world.inventory.AbstractFurnaceMenu furnace) {
+                    if (mc.getPlayer().containerMenu instanceof net.minecraft.world.inventory.AbstractFurnaceMenu furnace) {
                         var result = furnace.getSlot(2).getItem();
                         var input = furnace.getSlot(0).getItem();
                         if (!result.isEmpty()) statusText = "§fResult: §e" + result.getHoverName().getString() + " §7x" + result.getCount();
                         else if (!input.isEmpty()) statusText = "§7Smelting: §f" + input.getHoverName().getString() + " §7(" + (int)(furnace.getBurnProgress() * 100) + "%)";
                         else statusText = "§7Idle";
                     } else statusText = "§7Furnace";
-                    context.drawString(mc.font, statusText, x - mc.font.width(statusText) / 2, y - 4, 0xFFFFFFFF, true);
+                    context.drawString(mc.getFont(), statusText, x - mc.getFont().width(statusText) / 2, y - 4, 0xFFFFFFFF, true);
                 }
             }
         }
@@ -672,16 +671,16 @@ public final class HudRenderer {
             BlockPos p = PVEUtils.getBrewTarget();
             if (p != null) {
                 Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
-                Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+                Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
                 if (proj != null) {
                     Vec3 dir = pos3d.subtract(cameraPos).normalize();
-                    Vec3 look = mc.player.getViewVector(pt);
+                    Vec3 look = mc.getPlayer().getViewVector(pt);
                     if (dir.dot(look) > 0.0) {
                         double sx = (proj.x + 1.0) / 2.0 * guiWidth;
                         double sy = (1.0 - proj.y) / 2.0 * guiHeight;
                         int x = (int) sx, y = (int) sy;
                         String statusText;
-                        if (mc.player.containerMenu instanceof net.minecraft.world.inventory.BrewingStandMenu brew) {
+                        if (mc.getPlayer().containerMenu instanceof net.minecraft.world.inventory.BrewingStandMenu brew) {
                             int ticks = brew.getBrewingTicks();
                             int fuel = brew.getFuel();
                             var ingr = brew.getSlot(3).getItem();
@@ -690,7 +689,7 @@ public final class HudRenderer {
                             else statusText = "§7Idle";
                             String fuelText = "§7Fuel: " + fuel;
                             String total = statusText + " | " + fuelText;
-                            context.drawString(mc.font, total, x - mc.font.width(total) / 2, y - 4, 0xFFFFFFFF, true);
+                            context.drawString(mc.getFont(), total, x - mc.getFont().width(total) / 2, y - 4, 0xFFFFFFFF, true);
                         }
                     }
                 }
@@ -698,37 +697,37 @@ public final class HudRenderer {
         }
     }
 
-    private void renderDamageLabel(GuiGraphics context, Minecraft mc, BlockPos p, String format, double targetDmg, double selfDmg, int borderColor, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
+    private void renderDamageLabel(GuiGraphics context, MinecraftWrapper mc, BlockPos p, String format, double targetDmg, double selfDmg, int borderColor, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
         Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
-        Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+        Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
         if (proj != null) {
             Vec3 dir = pos3d.subtract(cameraPos).normalize();
-            Vec3 look = mc.player.getViewVector(pt);
+            Vec3 look = mc.getPlayer().getViewVector(pt);
             if (dir.dot(look) > 0.0) {
                 double sx = (proj.x + 1.0) / 2.0 * guiWidth;
                 double sy = (1.0 - proj.y) / 2.0 * guiHeight;
                 int x = (int) sx, y = (int) sy;
                 String text = String.format(format, targetDmg, selfDmg);
-                int w = mc.font.width(text);
+                int w = mc.getFont().width(text);
                 context.fill(x - w / 2 - 4, y - 5, x + w / 2 + 4, y + 5, 0xAA000000);
                 context.fill(x - w / 2 - 4, y - 5, x + w / 2 + 4, y - 4, borderColor);
-                context.drawString(mc.font, text, x - w / 2, y - 4, 0xFFFFFFFF, false);
+                context.drawString(mc.getFont(), text, x - w / 2, y - 4, 0xFFFFFFFF, false);
             }
         }
     }
 
-    private void renderLabelBox(GuiGraphics context, Minecraft mc, int x, int y, String line1, String line2, int borderColor) {
-        int w1 = mc.font.width(line1);
-        int w2 = mc.font.width(line2);
+    private void renderLabelBox(GuiGraphics context, MinecraftWrapper mc, int x, int y, String line1, String line2, int borderColor) {
+        int w1 = mc.getFont().width(line1);
+        int w2 = mc.getFont().width(line2);
         int w = Math.max(w1, w2);
         int left = x - w / 2 - 4, top = y - 10, right = x + w / 2 + 4, bottom = y + 10;
         context.fill(left, top, right, bottom, 0xAA000000);
         context.fill(left, top, right, top + 1, borderColor);
-        context.drawString(mc.font, line1, x - w1 / 2, y - 8, 0xFFFFFFFF, false);
-        context.drawString(mc.font, line2, x - w2 / 2, y + 1, 0xFFFFCC00, false);
+        context.drawString(mc.getFont(), line1, x - w1 / 2, y - 8, 0xFFFFFFFF, false);
+        context.drawString(mc.getFont(), line2, x - w2 / 2, y + 1, 0xFFFFCC00, false);
     }
 
-    private void renderPacketMine(GuiGraphics context, Minecraft mc) {
+    private void renderPacketMine(GuiGraphics context, MinecraftWrapper mc) {
         PacketMine pm = Modules.get(PacketMine.class);
         if (Modules.enabled(PacketMine.class) && pm.render) {
             for (var mb : PacketMine.miningBlocks) {
@@ -745,37 +744,37 @@ public final class HudRenderer {
                     int pct = mb.done ? 100 : (int)((float)elapsed / Math.max(1, mb.breakAt) * 100);
                     pct = Math.min(100, pct);
                     String text = mb.done ? "Done" : pct + "%";
-                    context.drawString(mc.font, text, x - mc.font.width(text) / 2, y - 4, 0xFFFFFFFF, true);
+                    context.drawString(mc.getFont(), text, x - mc.getFont().width(text) / 2, y - 4, 0xFFFFFFFF, true);
                 }
             }
         }
     }
 
-    private void renderWaypoints(GuiGraphics context, Minecraft mc) {
+    private void renderWaypoints(GuiGraphics context, MinecraftWrapper mc) {
         if (Modules.enabled(Waypoint.class)) {
             int wpColor = ModuleManager.get(Waypoint.class).color;
-            String currentDim = mc.level != null ? mc.level.dimension().identifier().toString() : null;
+            String currentDim = mc.getLevel() != null ? mc.getLevel().dimension().identifier().toString() : null;
             boolean showDist = ModuleManager.get(Waypoint.class).showDistance;
             boolean showNm = ModuleManager.get(Waypoint.class).showName;
             for (var wp : Waypoint.getWaypoints()) {
                 if (currentDim != null && !wp.dimension().equals(currentDim)) continue;
                 Vec3 pos3d = new Vec3(wp.x() + 0.5, wp.y() + 1.5, wp.z() + 0.5);
-                Vec3 proj = mc.gameRenderer.projectPointToScreen(pos3d);
+                Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
                 if (proj != null && proj.z > 0.0) {
                     double sx = (proj.x + 1.0) / 2.0 * context.guiWidth();
                     double sy = (1.0 - proj.y) / 2.0 * context.guiHeight();
                     int ix = (int) sx, iy = (int) sy;
-                    double dist = Math.sqrt(mc.player.distanceToSqr(wp.x(), wp.y(), wp.z()));
+                    double dist = Math.sqrt(mc.getPlayer().distanceToSqr(wp.x(), wp.y(), wp.z()));
                     String text = showNm ? wp.name() : "";
                     if (showDist) text += (text.isEmpty() ? "" : " ") + "§7" + (int)dist + "m";
                     if (text.isEmpty()) text = wp.name();
-                    int tw = mc.font.width(text);
-                    int th = mc.font.lineHeight;
+                    int tw = mc.getFont().width(text);
+                    int th = mc.getFont().lineHeight;
                     int pad = 3;
                     context.pose().pushMatrix();
                     context.pose().translate(ix, iy);
                     context.fill(-tw / 2 - pad, -th / 2 - pad, tw / 2 + pad, th / 2 + pad, 0xAA000000);
-                    context.drawString(mc.font, text, -tw / 2, -th / 2, wpColor, false);
+                    context.drawString(mc.getFont(), text, -tw / 2, -th / 2, wpColor, false);
                     context.pose().popMatrix();
                 }
             }
@@ -791,9 +790,9 @@ public final class HudRenderer {
 
         Module dragHud = Hud.draggingHud;
         if (dragHud != null) {
-            var mc = MinecraftWrapper.getInstance();
-            double mx = mc.mouseHandler.xpos() * mc.getWindow().getGuiScaledWidth() / mc.getWindow().getWidth();
-            double my = mc.mouseHandler.ypos() * mc.getWindow().getGuiScaledHeight() / mc.getWindow().getHeight();
+            var mc = MinecraftWrapper.getWrapper();
+            double mx = mc.getRaw().mouseHandler.xpos() * mc.getWindow().getGuiScaledWidth() / mc.getWindow().getWidth();
+            double my = mc.getRaw().mouseHandler.ypos() * mc.getWindow().getGuiScaledHeight() / mc.getWindow().getHeight();
             int nx = (int)mx - Hud.dragOffX;
             int ny = (int)my - Hud.dragOffY;
             nx = Math.max(0, Math.min(mc.getWindow().getGuiScaledWidth() - dragHud.getWidth(), nx));
@@ -823,8 +822,8 @@ public final class HudRenderer {
     }
 
     private Vec3 projectPointToScreenUnbobbed(Vec3 pos) {
-        var mc = MinecraftWrapper.getInstance();
-        net.minecraft.client.Camera camera = mc.gameRenderer.getMainCamera();
+        var mc = MinecraftWrapper.getWrapper();
+        net.minecraft.client.Camera camera = mc.getGameRenderer().getMainCamera();
         Matrix4f projectionMatrix = ShaderManager.INSTANCE.getProjectionMatrix();
         if (projectionMatrix == null) return null;
         Quaternionf cameraRotation = new Quaternionf(camera.rotation());

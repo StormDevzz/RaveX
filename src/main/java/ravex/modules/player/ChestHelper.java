@@ -41,8 +41,8 @@ public class ChestHelper {
         return false;
     }
     private void handleAction(AbstractContainerScreen<?> screen, String action) {
-        var mc = MinecraftWrapper.getInstance();
-        var player = mc.player;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
         if (player == null) return;
         var menu = screen.getMenu();
         switch (action) {

@@ -100,7 +100,7 @@ public class RotationUtility {
      * Formula: (sensitivity * 0.6 + 0.2)^3 * 8
      */
     public static float getGCD() {
-        double sensitivity = MinecraftWrapper.getInstance().options.sensitivity().get();
+        double sensitivity = MinecraftWrapper.getWrapper().getOptions().sensitivity().get();
         double value = sensitivity * 0.6 + 0.2;
         return (float) (Math.pow(value, 3) * 8.0);
     }

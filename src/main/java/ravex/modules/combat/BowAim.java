@@ -4,7 +4,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.utility.misc.PhysicUtility;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 
 import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
@@ -85,13 +85,13 @@ public class BowAim {
         double maxDist = range;
         String filter = targetType;
         for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
-            if (!(e instanceof net.minecraft.world.entity.LivingEntity le) || MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le) || EntityUtility.isSelf(le) || EntityUtility.isDead(le)) continue;
             if (filter.equals("Players")) {
-                if (!MobUtility.isPlayer(le)) continue;
+                if (!EntityUtility.isPlayer(le)) continue;
             } else if (filter.equals("Mobs")) {
-                if (!MobUtility.isMob(le)) continue;
+                if (!EntityUtility.isMob(le)) continue;
             }
-            double dist = MobUtility.distanceToPlayer(le);
+            double dist = EntityUtility.distanceToPlayer(le);
             if (dist <= maxDist && dist < bestDist) {
                 bestDist = dist;
                 closest = le;

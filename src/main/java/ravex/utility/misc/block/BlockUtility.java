@@ -1,6 +1,5 @@
 package ravex.utility.misc.block;
 
-import net.minecraft.client.Minecraft;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;

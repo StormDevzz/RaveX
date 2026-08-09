@@ -10,18 +10,18 @@ public class UUIDCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.getConnection() == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getConnection() == null) return;
         String pref = ModuleManager.get(ravex.modules.client.Commands.class).prefix;
 
         if (args.length < 2) {
-            CmdReg.print(this, "§eYour UUID: §7" + mc.player.getUUID().toString());
+            CmdReg.print(this, "§eYour UUID: §7" + mc.getPlayer().getUUID().toString());
             return;
         }
 
         String target = args[1];
-        if (target.equalsIgnoreCase(mc.player.getGameProfile().name())) {
-            CmdReg.print(this, "§eYour UUID: §7" + mc.player.getUUID().toString());
+        if (target.equalsIgnoreCase(mc.getPlayer().getGameProfile().name())) {
+            CmdReg.print(this, "§eYour UUID: §7" + mc.getPlayer().getUUID().toString());
             return;
         }
 

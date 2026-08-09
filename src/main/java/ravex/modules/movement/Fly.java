@@ -30,8 +30,8 @@ public class Fly {
 
         String m = mode;
         if ("VerusDamage".equals(m)) {
-            var mc = MinecraftWrapper.getInstance();
-            var player = mc.player;
+            var mc = MinecraftWrapper.getWrapper();
+            var player = mc.getPlayer();
             if (player == null) return;
             double x = player.getX();
             double y = player.getY();
@@ -45,8 +45,8 @@ public class Fly {
     }
 
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        var player = mc.player;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
         if (player == null) return;
 
         String m = mode;
@@ -86,8 +86,8 @@ public class Fly {
         if (!Modules.enabled(Fly.class)) return;
 
         String m = mode;
-        var mc = MinecraftWrapper.getInstance();
-        var player = mc.player;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
         if (player == null) return;
 
         if ("VerusFlat".equals(m)) {

@@ -5,8 +5,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 public class VoidUtility {
     public static boolean isFallingIntoVoid(LocalPlayer player) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.level == null) return false;
-        return player.getY() < mc.level.getMinY() && player.getDeltaMovement().y < 0;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null) return false;
+        return player.getY() < mc.getLevel().getMinY() && player.getDeltaMovement().y < 0;
     }
 }

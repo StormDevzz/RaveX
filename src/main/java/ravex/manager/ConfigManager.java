@@ -24,7 +24,7 @@ public class ConfigManager {
     private ConfigManager() {
         File baseDir = null;
         try {
-            baseDir = MinecraftWrapper.getInstance().gameDirectory;
+            baseDir = MinecraftWrapper.getWrapper().getRaw().gameDirectory;
         } catch (Throwable ignored) {}
 
         if (baseDir == null) {

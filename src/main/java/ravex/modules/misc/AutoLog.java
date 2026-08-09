@@ -2,7 +2,6 @@ package ravex.modules.misc;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.MobUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
@@ -26,7 +25,7 @@ public class AutoLog {
         }
         for (var other : mc.getLevel().players()) {
             if (other == player) continue;
-            double dist = MobUtility.distanceToPlayer(other);
+            double dist = EntityUtility.distanceToPlayer(other);
             if (onPlayerNearby && dist <= playerRange) {
                 disconnect("net.minecraft.world.entity.player.Player " + other.getGameProfile().name() + " is too close (" + String.format("%.1f", dist) + "m)");
                 return;

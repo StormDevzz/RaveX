@@ -73,14 +73,14 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         animatedCenter = null;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) {
             surroundBlocks.clear();
             renderAlpha = fadeAnim.updateFloat(false, 0.2f);
             renderSize = sizeAnim.update(false, 0.15);
             return;
         }
-        if (autoDisable && (!mc.player.onGround() || mc.options.keyJump.isDown())) {
+        if (autoDisable && (!mc.getPlayer().onGround() || mc.getOptions().keyJump.isDown())) {
             Modules.setEnabled(Surround.class, false);
             return;
         }
@@ -88,26 +88,26 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
             double[] center;
             if (nativeAvailable) {
                 try {
-                    center = nativeGetCenter(mc.player.getX(), mc.player.getY(), mc.player.getZ(), true);
+                    center = nativeGetCenter(mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(), true);
                 } catch (Throwable t) {
                     center = new double[]{
-                        Math.floor(mc.player.getX()) + 0.5,
-                        mc.player.getY(),
-                        Math.floor(mc.player.getZ()) + 0.5
+                        Math.floor(mc.getPlayer().getX()) + 0.5,
+                        mc.getPlayer().getY(),
+                        Math.floor(mc.getPlayer().getZ()) + 0.5
                     };
                 }
             } else {
                 center = new double[]{
-                    Math.floor(mc.player.getX()) + 0.5,
-                    mc.player.getY(),
-                    Math.floor(mc.player.getZ()) + 0.5
+                    Math.floor(mc.getPlayer().getX()) + 0.5,
+                    mc.getPlayer().getY(),
+                    Math.floor(mc.getPlayer().getZ()) + 0.5
                 };
             }
-            mc.player.setPos(center[0], center[1], center[2]);
-            NetworkUtility.sendMoveRelative(center[0], center[1], center[2], mc.player.onGround(), false);
+            mc.getPlayer().setPos(center[0], center[1], center[2]);
+            NetworkUtility.sendMoveRelative(center[0], center[1], center[2], mc.getPlayer().onGround(), false);
         }
-        net.minecraft.core.BlockPos playerPos = mc.player.blockPosition();
-        int blockSlot = findBlockSlot(mc.player);
+        net.minecraft.core.BlockPos playerPos = mc.getPlayer().blockPosition();
+        int blockSlot = findBlockSlot(mc.getPlayer());
         if (blockSlot == -1) {
             surroundBlocks.clear();
             renderAlpha = fadeAnim.updateFloat(false, 0.2f);
@@ -127,7 +127,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
                 targets.add(playerPos.south().west());
             }
             case "AntiFace" -> {
-                net.minecraft.core.Direction facing = mc.player.getDirection();
+                net.minecraft.core.Direction facing = mc.getPlayer().getDirection();
                 targets.add(playerPos.relative(facing.getClockWise()));
                 targets.add(playerPos.relative(facing.getCounterClockWise()));
                 targets.add(playerPos.relative(facing.getOpposite()));
@@ -195,8 +195,8 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
         long msDelay = (long) delay;
         if (now - lastPlaceTime < msDelay) return;
         lastPlaceTime = now;
-        int prevSlot = InventoryUtility.getSelectedSlot(mc.player);
-        InventoryUtility.selectSlot(mc.player, blockSlot);
+        int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        InventoryUtility.selectSlot(mc.getPlayer(), blockSlot);
         for (net.minecraft.core.BlockPos target : toPlace) {
             net.minecraft.core.BlockPos neighbor = findNeighbor(target);
             if (neighbor == null) continue;
@@ -211,34 +211,34 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
             net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighbor)
                 .add(PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
             net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighbor, false);
-            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
-            SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
+            SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
             placed = true;
         }
         if (prevSlot != blockSlot) {
-            InventoryUtility.selectSlot(mc.player, prevSlot);
+            InventoryUtility.selectSlot(mc.getPlayer(), prevSlot);
         }
     }
     private boolean isReplaceable(net.minecraft.core.BlockPos pos) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.level == null) return false;
-        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null) return false;
+        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
         return state.isAir() || state.canBeReplaced();
     }
     private boolean handleBlockingEntities(net.minecraft.core.BlockPos pos) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.level == null || mc.player == null) return false;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null || mc.getPlayer() == null) return false;
         net.minecraft.world.phys.AABB aabb = new net.minecraft.world.phys.AABB(pos);
-        List<net.minecraft.world.entity.Entity> entities = mc.level.getEntitiesOfClass(
+        List<net.minecraft.world.entity.Entity> entities = mc.getLevel().getEntitiesOfClass(
             net.minecraft.world.entity.Entity.class,
             aabb,
             entity -> entity instanceof net.minecraft.world.entity.boss.enderdragon.EndCrystal
         );
         if (!entities.isEmpty()) {
             for (net.minecraft.world.entity.Entity crystal : entities) {
-                if (mc.gameMode != null) {
-                    mc.gameMode.attack(mc.player, crystal);
-                    SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                if (mc.getGameMode() != null) {
+                    mc.getGameMode().attack(mc.getPlayer(), crystal);
+                    SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
             return true;
@@ -247,8 +247,8 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
     }
     @Nullable
     private net.minecraft.core.BlockPos findNeighbor(net.minecraft.core.BlockPos pos) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.level == null) return null;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null) return null;
         for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
             net.minecraft.core.BlockPos side = pos.relative(face);
             if (!isReplaceable(side)) {

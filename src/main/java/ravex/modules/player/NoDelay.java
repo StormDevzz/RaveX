@@ -18,12 +18,12 @@ public class NoDelay {
     public boolean noJumpDelay = false;
 
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        var p = mc.player;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
         if (p == null) return;
         boolean isBlock = InventoryUtility.isHoldingBlock(p);
         if ((isBlock && blocks) || (!isBlock && items)) {
-            AccessorMinecraft accessor = (AccessorMinecraft) mc;
+            AccessorMinecraft accessor = (AccessorMinecraft) mc.getRaw();
             int target = (int) (double) delay;
             if (accessor.getRightClickDelay() > target)
                 accessor.setRightClickDelay(target);

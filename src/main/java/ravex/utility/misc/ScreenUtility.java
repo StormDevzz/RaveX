@@ -1,6 +1,5 @@
 package ravex.utility.misc;
 
-import net.minecraft.client.Minecraft;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.ChatScreen;

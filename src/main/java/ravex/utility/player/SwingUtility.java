@@ -10,6 +10,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import ravex.utility.network.NetworkUtility;
 
 public class SwingUtility {
     public static void swing(LocalPlayer player, InteractionHand hand) {
@@ -25,8 +26,7 @@ public class SwingUtility {
     }
 
     public static void swingServer(LocalPlayer player, InteractionHand hand) {
-        if (player != null && player.connection != null)
-            player.connection.send(new net.minecraft.network.protocol.game.ServerboundSwingPacket(hand));
+        if (player != null) NetworkUtility.sendSwing(hand);
     }
 
     public static Vec3 centerOf(BlockPos pos) {

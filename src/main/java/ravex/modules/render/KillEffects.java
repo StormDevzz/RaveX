@@ -9,7 +9,7 @@ import net.minecraft.world.entity.LightningBolt;
 import ravex.utility.misc.EntityUtility;
 import ravex.event.Subscribe;
 import ravex.event.player.DeathEvent;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import net.minecraft.core.particles.ParticleTypes;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class KillEffects {
     public void onDeath(DeathEvent event) {
         if (!Modules.enabled(KillEffects.class)) return;
         net.minecraft.world.entity.player.Player victim = event.getPlayer();
-        if (victim == MinecraftWrapper.getInstance().player) return;
+        if (victim == MinecraftWrapper.getWrapper().getPlayer()) return;
         net.minecraft.world.entity.LivingEntity living = victim;
         if (!shouldAffect(living)) return;
         ClientLevel level = (ClientLevel) living.level();
@@ -45,9 +45,9 @@ public class KillEffects {
     }
 
     private boolean shouldAffect(net.minecraft.world.entity.LivingEntity e) {
-        if (MobUtility.isPlayer(e) && players) return true;
-        if (MobUtility.isHostile(e) && monsters) return true;
-        if (MobUtility.isPassive(e) && animals) return true;
+        if (EntityUtility.isPlayer(e) && players) return true;
+        if (EntityUtility.isHostile(e) && monsters) return true;
+        if (EntityUtility.isPassive(e) && animals) return true;
         return false;
     }
     private void spawnLightning(ClientLevel level, double x, double y, double z) {

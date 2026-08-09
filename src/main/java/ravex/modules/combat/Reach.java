@@ -10,16 +10,16 @@ public class Reach {
     @Parameter(name = "BlockReach", min = 4.5, max = 7.0, step = 0.1)
     public double blockRange = 5.5;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
-        PotionUtility.setEntityInteractionRange(mc.player, entityRange);
-        PotionUtility.setBlockInteractionRange(mc.player, blockRange);
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
+        PotionUtility.setEntityInteractionRange(mc.getPlayer(), entityRange);
+        PotionUtility.setBlockInteractionRange(mc.getPlayer(), blockRange);
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
-        PotionUtility.resetEntityInteractionRange(mc.player);
-        PotionUtility.resetBlockInteractionRange(mc.player);
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
+        PotionUtility.resetEntityInteractionRange(mc.getPlayer());
+        PotionUtility.resetBlockInteractionRange(mc.getPlayer());
     }
 
 

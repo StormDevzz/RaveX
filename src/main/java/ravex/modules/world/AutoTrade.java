@@ -5,7 +5,7 @@ import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import java.util.Comparator;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -26,9 +26,9 @@ public class AutoTrade {
         tradesDone = 0;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        var player = mc.player;
-        if (player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < 200) return;
         if (player.containerMenu instanceof MerchantMenu menu) {
@@ -39,7 +39,7 @@ public class AutoTrade {
             MerchantOffer best = findBestOffer(offers);
             if (best != null && !best.isOutOfStock()) {
                 int slot = offers.indexOf(best);
-                mc.gameMode.handleInventoryMouseClick(
+                mc.getGameMode().handleInventoryMouseClick(
                     menu.containerId, slot, 0,
                     InventoryUtility.PICKUP, player
                 );
@@ -50,8 +50,8 @@ public class AutoTrade {
         }
         if (!autoOpen) return;
         double r = range;
-        for (var entity : mc.level.entitiesForRendering()) {
-            if (MobUtility.isVillager(entity)) {
+        for (var entity : mc.getLevel().entitiesForRendering()) {
+            if (EntityUtility.isVillager(entity)) {
                 player.interactOn(entity, net.minecraft.world.InteractionHand.MAIN_HAND);
                 lastActionTime = now;
                 break;

@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
@@ -202,9 +201,9 @@ public class Breaker {
         double bestDist = Double.MAX_VALUE;
         double maxDist = range + 3.0;
         for (net.minecraft.world.entity.player.Player p : mc.getLevel().players()) {
-            if (MobUtility.isSelf(p) || MobUtility.isDead(p))
+            if (EntityUtility.isSelf(p) || EntityUtility.isDead(p))
                 continue;
-            double dist = MobUtility.distanceToPlayer(p);
+            double dist = EntityUtility.distanceToPlayer(p);
             if (dist <= maxDist && dist < bestDist) {
                 bestDist = dist;
                 closest = p;

@@ -9,24 +9,26 @@ import net.minecraft.world.phys.Vec3;
 
 public class PlayerUtility {
     public static boolean isPlayerInWorld() {
-        return MinecraftWrapper.getInstance().player != null && MinecraftWrapper.getInstance().level != null;
+        return MinecraftWrapper.getWrapper().hasPlayer() && MinecraftWrapper.getWrapper().hasWorld();
     }
 
     public static boolean isOverVoid() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return false;
-        double px = mc.player.getX(), py = mc.player.getY(), pz = mc.player.getZ();
-        int minHeight = mc.level.getMinY();
+        var mc = MinecraftWrapper.getWrapper();
+        if (!mc.hasPlayer() || !mc.hasWorld()) return false;
+        var player = mc.getPlayer();
+        double px = player.getX(), py = player.getY(), pz = player.getZ();
+        var level = mc.getLevel();
+        int minHeight = level.getMinY();
         var pos = new net.minecraft.core.BlockPos.MutableBlockPos(px, py, pz);
         for (int y = (int) py; y >= minHeight; y--) {
             pos.setY(y);
-            if (!mc.level.getBlockState(pos).isAir()) return false;
+            if (!level.getBlockState(pos).isAir()) return false;
         }
         return true;
     }
 
     public static LocalPlayer getPlayer() {
-        return MinecraftWrapper.getInstance().player;
+        return MinecraftWrapper.getWrapper().getPlayer();
     }
 
     public static String getName(Player player) {
@@ -56,9 +58,10 @@ public class PlayerUtility {
     }
 
     public static int getPing(Player player) {
-        if (MinecraftWrapper.getInstance().getConnection() == null) return 0;
-        return MinecraftWrapper.getInstance().getConnection().getPlayerInfo(player.getUUID()) != null
-            ? MinecraftWrapper.getInstance().getConnection().getPlayerInfo(player.getUUID()).getLatency()
+        var conn = MinecraftWrapper.getWrapper().getConnection();
+        if (conn == null) return 0;
+        return conn.getPlayerInfo(player.getUUID()) != null
+            ? conn.getPlayerInfo(player.getUUID()).getLatency()
             : 0;
     }
 

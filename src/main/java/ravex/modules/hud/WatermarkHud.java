@@ -52,7 +52,7 @@ private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", 
                     }
                 }
             } catch (Exception ignored) {}
-            MinecraftWrapper.getInstance().getTextureManager().register(LOGO, tex);
+            MinecraftWrapper.getWrapper().getTextureManager().register(LOGO, tex);
             logoLoaded = true;
         } catch (Exception e) {
             RaveX.LOGGER.warn("[WatermarkHud] Failed to load logo: {}", e.getMessage());

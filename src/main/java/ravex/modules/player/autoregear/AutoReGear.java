@@ -17,8 +17,8 @@ public class AutoReGear {
     @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
     public double delayParam = 200;
     public final ActionParameter items = new ActionParameter("Items", () -> {
-        MinecraftWrapper.getInstance().setScreen(
-            new AutoReGearScreen(MinecraftWrapper.getInstance().screen)
+        MinecraftWrapper.getWrapper().setScreen(
+            new AutoReGearScreen(MinecraftWrapper.getWrapper().getCurrentScreen())
         );
     });
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autoregear");
@@ -58,14 +58,14 @@ public class AutoReGear {
         }
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.gameMode == null) return;
-        if (!(mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen)) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getGameMode() == null) return;
+        if (!(mc.getCurrentScreen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen)) return;
         String title = containerScreen.getTitle().getString().toLowerCase();
         if (!title.contains("shulker") && !title.contains("chest") && !title.contains("box") && !title.contains("barrel")) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < (long) delayParam) return;
-        var menu = mc.player.containerMenu;
+        var menu = mc.getPlayer().containerMenu;
         if (menu == null || menu.slots.size() < 63) return;
         String[] containerItemIds = new String[27];
         int[] containerCounts = new int[27];
@@ -134,7 +134,7 @@ public class AutoReGear {
             );
         }
         if (containerSlotToClick >= 0 && containerSlotToClick < 27) {
-            InventoryUtility.handleInventoryClick(ravex.mcwrapper.MinecraftWrapper.getWrapper(), (net.minecraft.client.player.LocalPlayer) mc.player, containerSlotToClick, 0, InventoryUtility.QUICK_MOVE);
+            InventoryUtility.handleInventoryClick(ravex.mcwrapper.MinecraftWrapper.getWrapper(), (net.minecraft.client.player.LocalPlayer) mc.getPlayer(), containerSlotToClick, 0, InventoryUtility.QUICK_MOVE);
             lastActionTime = now;
         }
     }

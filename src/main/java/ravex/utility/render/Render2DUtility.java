@@ -91,7 +91,7 @@ public class Render2DUtility {
             DynamicTexture tex = new DynamicTexture(() -> "rrt_hd", img);
             setLinearSampler(tex);
             rrtHdTex = Identifier.fromNamespaceAndPath("ravex", "rrt_hd");
-            MinecraftWrapper.getInstance().getTextureManager().register(rrtHdTex, tex);
+            MinecraftWrapper.getWrapper().getTextureManager().register(rrtHdTex, tex);
         }
         return rrtHdTex;
     }
@@ -118,7 +118,7 @@ public class Render2DUtility {
             DynamicTexture tex = new DynamicTexture(() -> "rro_" + key, img);
             setLinearSampler(tex);
             Identifier id = Identifier.fromNamespaceAndPath("ravex", "rro_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(id, tex);
+            MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
             return id;
         });
     }
@@ -171,7 +171,7 @@ public class Render2DUtility {
             DynamicTexture tex = new DynamicTexture(() -> "smooth_circle_" + d, out);
             setLinearSampler(tex);
             Identifier id = Identifier.fromNamespaceAndPath("ravex", "smooth_circle_" + d);
-            MinecraftWrapper.getInstance().getTextureManager().register(id, tex);
+            MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
             return id;
         });
     }
@@ -196,7 +196,7 @@ public class Render2DUtility {
             DynamicTexture tex = new DynamicTexture(() -> "smooth_circle_hd", img);
             setLinearSampler(tex);
             smoothCircleTex = Identifier.fromNamespaceAndPath("ravex", "smooth_circle_hd");
-            MinecraftWrapper.getInstance().getTextureManager().register(smoothCircleTex, tex);
+            MinecraftWrapper.getWrapper().getTextureManager().register(smoothCircleTex, tex);
         }
         return smoothCircleTex;
     }
@@ -222,7 +222,7 @@ public class Render2DUtility {
             DynamicTexture tex = new DynamicTexture(() -> "smooth_ring_" + key, img);
             setLinearSampler(tex);
             Identifier id = Identifier.fromNamespaceAndPath("ravex", "smooth_ring_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(id, tex);
+            MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
             return id;
         });
     }
@@ -420,7 +420,7 @@ public class Render2DUtility {
             DynamicTexture dt = new DynamicTexture(() -> "smooth_border_" + key, img);
             setLinearSampler(dt);
             tex = Identifier.fromNamespaceAndPath("ravex", "smooth_border_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(tex, dt);
+            MinecraftWrapper.getWrapper().getTextureManager().register(tex, dt);
             SMOOTH_BORDER_CACHE.put(key, tex);
         }
         graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, width, height, width, height, color);
@@ -570,7 +570,7 @@ public class Render2DUtility {
             DynamicTexture tex = new DynamicTexture(() -> "shadow_" + key, img);
             setLinearSampler(tex);
             Identifier id = Identifier.fromNamespaceAndPath("ravex", "shadow_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(id, tex);
+            MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
             SHADOW_CACHE.put(key, id);
             shadowTex = id;
         }
@@ -648,7 +648,7 @@ public class Render2DUtility {
             DynamicTexture dt = new DynamicTexture(() -> "glow_" + key, img);
             setLinearSampler(dt);
             texId = Identifier.fromNamespaceAndPath("ravex", "glow_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(texId, dt);
+            MinecraftWrapper.getWrapper().getTextureManager().register(texId, dt);
             GLOW_CACHE.put(key, texId);
         }
 
@@ -687,7 +687,7 @@ public class Render2DUtility {
             DynamicTexture dt = new DynamicTexture(() -> "cglow_" + key, img);
             setLinearSampler(dt);
             texId = Identifier.fromNamespaceAndPath("ravex", "cglow_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(texId, dt);
+            MinecraftWrapper.getWrapper().getTextureManager().register(texId, dt);
             CIRCLE_GLOW_CACHE.put(key, texId);
         }
 
@@ -727,7 +727,7 @@ public class Render2DUtility {
             DynamicTexture dt = new DynamicTexture(() -> "ring_" + key, img);
             setLinearSampler(dt);
             texId = Identifier.fromNamespaceAndPath("ravex", "ring_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(texId, dt);
+            MinecraftWrapper.getWrapper().getTextureManager().register(texId, dt);
             PULSE_RING_CACHE.put(key, texId);
         }
 
@@ -768,7 +768,7 @@ public class Render2DUtility {
             DynamicTexture tex = new DynamicTexture(() -> "gshadow_" + key, nativeImg);
             setLinearSampler(tex);
             Identifier id = Identifier.fromNamespaceAndPath("ravex", "gshadow_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(id, tex);
+            MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
             shadow = new BlurredShadow(id, texW, texH);
             GAUSSIAN_SHADOW_CACHE.put(key, shadow);
         }
@@ -813,7 +813,7 @@ public class Render2DUtility {
             DynamicTexture tex = new DynamicTexture(() -> "gshadow_" + key, nativeImg);
             setLinearSampler(tex);
             Identifier id = Identifier.fromNamespaceAndPath("ravex", "gshadow_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(id, tex);
+            MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
             shadow = new BlurredShadow(id, texW, texH);
             GAUSSIAN_SHADOW_CACHE.put(key, shadow);
         }
@@ -899,7 +899,7 @@ public class Render2DUtility {
             DynamicTexture dt = new DynamicTexture(() -> "perfect_rr_" + key, img);
             setLinearSampler(dt);
             tex = Identifier.fromNamespaceAndPath("ravex", "perfect_rr_" + key);
-            MinecraftWrapper.getInstance().getTextureManager().register(tex, dt);
+            MinecraftWrapper.getWrapper().getTextureManager().register(tex, dt);
             PERFECT_RR_CACHE.put(key, tex);
         }
 

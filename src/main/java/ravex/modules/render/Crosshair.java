@@ -5,7 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Crosshair", category = "Render")

@@ -5,6 +5,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import ravex.utility.network.NetworkUtility;
 
 public class PlayerWrapper {
     private final LocalPlayer player;
@@ -72,7 +73,7 @@ public class PlayerWrapper {
     public int getInvulnerableTime() { return player.invulnerableTime; }
 
     public void sendChatMessage(String message) {
-        player.connection.sendChat(message);
+        NetworkUtility.sendChat(message);
     }
 
     public void displayClientMessage(net.minecraft.network.chat.Component component, boolean actionBar) {

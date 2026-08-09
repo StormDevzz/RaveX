@@ -61,15 +61,15 @@ public class Scaffold {
 
     public static void onPreTick() {
         if (!hasPending) return;
-        var mc = MinecraftWrapper.getInstance();
-        var p = mc.player;
-        if (p == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null) return;
         int slot = findBlockSlot(p);
         if (slot == -1) {
             hasPending = false;
             return;
         }
-        if (!BlockUtility.isAir(mc.level, pendingPos)) {
+        if (!BlockUtility.isAir(mc.getLevel(), pendingPos)) {
             hasPending = false;
             return;
         }
@@ -88,9 +88,9 @@ public class Scaffold {
         hasPending = false;
     }
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            targetY = Math.floor(mc.player.getY());
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() != null) {
+            targetY = Math.floor(mc.getPlayer().getY());
         } else {
             targetY = -1;
         }
@@ -111,13 +111,13 @@ public class Scaffold {
         hasPending = false;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        var p = mc.player;
-        if (p == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null) return;
         if (p.onGround()) {
             targetY = Math.floor(p.getY());
         }
-        if (tower && mc.options.keyJump.isDown()) {
+        if (tower && mc.getOptions().keyJump.isDown()) {
             MoveUtility.setMotion(p.getDeltaMovement().x, 0.42, p.getDeltaMovement().z);
             targetY = Math.floor(p.getY());
         }
@@ -186,8 +186,8 @@ public class Scaffold {
         hasPending = true;
         if (eagle) {
             var feetPos = BlockUtility.pos(bx, by, bz);
-            if (mc.level.getBlockState(feetPos).isAir()) {
-                mc.options.keyShift.setDown(true);
+            if (mc.getLevel().getBlockState(feetPos).isAir()) {
+                mc.getOptions().keyShift.setDown(true);
             }
         }
     }
@@ -204,8 +204,8 @@ public class Scaffold {
 
     @Nullable
     private NeighborResult findNeighbor(int tx, int ty, int tz, boolean grim) {
-        var eye = MinecraftWrapper.getInstance().player != null
-            ? MinecraftWrapper.getInstance().player.getEyePosition()
+        var eye = MinecraftWrapper.getWrapper().getPlayer() != null
+            ? MinecraftWrapper.getWrapper().getPlayer().getEyePosition()
             : null;
         var bestNeighbor = (net.minecraft.core.BlockPos) null;
         var bestFace = net.minecraft.core.Direction.UP;
@@ -244,9 +244,9 @@ public class Scaffold {
     private record NeighborResult(net.minecraft.core.BlockPos neighbor, net.minecraft.core.Direction face) {}
 
     private boolean isAir(int x, int y, int z) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.level == null) return false;
-        var state = BlockUtility.getState(mc.level, x, y, z);
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null) return false;
+        var state = BlockUtility.getState(mc.getLevel(), x, y, z);
         return state.isAir() || BlockUtility.isBlock(state, "snow") || !state.getFluidState().isEmpty();
     }
     private static int findBlockSlot(net.minecraft.client.player.LocalPlayer p) {

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.animal.equine.Llama;
 import net.minecraft.world.entity.npc.villager.Villager;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.modules.Modules;
 
 @Module(name = "AntiAttack", category = "Misc")
@@ -41,7 +41,7 @@ public class AntiAttack {
         if (target instanceof Wolf && wolves) return true;
         if (target instanceof Cat && cats) return true;
         if (target instanceof Llama && llamas) return true;
-        if (MobUtility.isPlayer(MobUtility.asLivingEntity(target)) && friends) return true;
+        if (EntityUtility.isPlayer(EntityUtility.asLivingEntity(target)) && friends) return true;
         return false;
     }
 

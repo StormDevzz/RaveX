@@ -1,7 +1,7 @@
 package ravex.gui.hudeditor;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;

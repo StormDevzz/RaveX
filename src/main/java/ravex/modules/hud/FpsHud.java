@@ -3,7 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
@@ -35,7 +35,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_FPS_WHITE;
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
-        int fps = MinecraftWrapper.getInstance().getFps();
+        int fps = MinecraftWrapper.getWrapper().getFps();
         int ac = ColorUtility.getActiveColor();
         boolean shadow = true;
         int highColor = 0xFF44FF88, midColor = 0xFFFFCC33, lowColor = 0xFFFF4455;

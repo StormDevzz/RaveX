@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
@@ -163,7 +162,7 @@ public class AutoCrystal {
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         silentRotation.hasRotation = false;
         if (totemPopSwap) {
-            double selfHp = MobUtility.getHealthWithAbsorption(mc.getPlayer());
+            double selfHp = EntityUtility.getHealthWithAbsorption(mc.getPlayer());
             if (selfHp <= totemPopHp) {
                 if (!InventoryUtility.isOffhand(mc.getPlayer(), "totem_of_undying")) {
                     int totemSlot = InventoryUtility.findSlot(mc.getPlayer(), "totem_of_undying");
@@ -179,11 +178,11 @@ public class AutoCrystal {
             return;
         }
         net.minecraft.world.phys.Vec3 playerPos = mc.getPlayer().position();
-        double pHp  = MobUtility.getHealth(mc.getPlayer());
-        double pAbs = MobUtility.getAbsorption(mc.getPlayer());
+        double pHp  = EntityUtility.getHealth(mc.getPlayer());
+        double pAbs = EntityUtility.getAbsorption(mc.getPlayer());
         net.minecraft.world.phys.Vec3 targetPos = target.position();
-        double tHp  = MobUtility.getHealth(target);
-        double tAbs = MobUtility.getAbsorption(target);
+        double tHp  = EntityUtility.getHealth(target);
+        double tAbs = EntityUtility.getAbsorption(target);
         double[] blockData  = collectValidBlocks(mc, playerPos);
         double[] crystalData = collectCrystals(mc, playerPos);
         double[] pStats = getEntityStats(mc.getPlayer());
@@ -268,8 +267,8 @@ public class AutoCrystal {
                 if (entityId != lastBreakId) {
                     net.minecraft.world.entity.Entity crystal = mc.getLevel().getEntity(entityId);
                     if (crystal instanceof EndCrystal) {
-                        MobUtility.attack(mc, crystal);
-                        MobUtility.swingHand(mc);
+                        EntityUtility.attack(mc, crystal);
+                        EntityUtility.swingHand(mc);
                         lastBreakTime = now;
                         lastBreakId   = entityId;
                         actionsThisTick++;
@@ -280,7 +279,7 @@ public class AutoCrystal {
         }
         boolean checkPlaceDelay = true;
         if (target != null) {
-            double targetEffHp = MobUtility.getHealthWithAbsorption(target);
+            double targetEffHp = EntityUtility.getHealthWithAbsorption(target);
             if (targetEffHp <= placeUnderHp) {
                 checkPlaceDelay = false;
             }
@@ -351,20 +350,20 @@ public class AutoCrystal {
         String typeFilter = targetType;
         for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
-            if (MobUtility.isSelf(le)) continue;
-            if (MobUtility.isDead(le)) continue;
+            if (EntityUtility.isSelf(le)) continue;
+            if (EntityUtility.isDead(le)) continue;
             if (typeFilter.equals("Players")) {
-                if (!MobUtility.isPlayer(le)) continue;
+                if (!EntityUtility.isPlayer(le)) continue;
             } else if (typeFilter.equals("Monsters")) {
-                if (!MobUtility.isHostile(le)) continue;
+                if (!EntityUtility.isHostile(le)) continue;
             } else if (typeFilter.equals("Passives")) {
-                if (MobUtility.isPlayer(le) || MobUtility.isHostile(le)) continue;
+                if (EntityUtility.isPlayer(le) || EntityUtility.isHostile(le)) continue;
             }
-            double dist = MobUtility.distanceToPlayer(le);
+            double dist = EntityUtility.distanceToPlayer(le);
             if (dist > maxDist) continue;
             double metric = switch (mode) {
                 case "Closest"        -> dist;
-                case "LowestHP"      -> MobUtility.getHealth(le);
+                case "LowestHP"      -> EntityUtility.getHealth(le);
                 case "HighestDamage" -> -calcQuickDamage(mc, le);
                 default               -> dist;
             };

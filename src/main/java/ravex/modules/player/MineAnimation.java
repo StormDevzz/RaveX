@@ -20,8 +20,8 @@ public class MineAnimation {
         if (!Modules.enabled(MineAnimation.class) || !event.isSend()) return;
         Packet<?> packet = event.getPacket();
         if (packet instanceof ServerboundSwingPacket && hideSwing) {
-            var mc = MinecraftWrapper.getInstance();
-            if (mc.gameMode != null && mc.gameMode.isDestroying()) {
+            var mc = MinecraftWrapper.getWrapper();
+            if (mc.getGameMode() != null && mc.getGameMode().isDestroying()) {
                 event.setCancelled(true);
             }
         }

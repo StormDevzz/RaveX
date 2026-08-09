@@ -27,15 +27,15 @@ public double x, y, z;
     @Parameter(name = "NoSwing")
     public boolean noSwing = false;
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            double startX = mc.player.getX();
-            double startY = mc.player.getY() + mc.player.getEyeHeight();
-            double startZ = mc.player.getZ();
-            float startYaw = mc.player.getYRot();
-            float startPitch = mc.player.getXRot();
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() != null) {
+            double startX = mc.getPlayer().getX();
+            double startY = mc.getPlayer().getY() + mc.getPlayer().getEyeHeight();
+            double startZ = mc.getPlayer().getZ();
+            float startYaw = mc.getPlayer().getYRot();
+            float startPitch = mc.getPlayer().getXRot();
             frozenX = startX;
-            frozenY = mc.player.getY();
+            frozenY = mc.getPlayer().getY();
             frozenZ = startZ;
             frozenYaw = startYaw;
             frozenPitch = startPitch;
@@ -50,13 +50,13 @@ public double x, y, z;
         }
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() != null) {
             MoveUtility.setMotion(0, 0, 0);
             if (freeze) {
-                mc.player.setPos(frozenX, frozenY, frozenZ);
-                mc.player.setYRot(frozenYaw);
-                mc.player.setXRot(frozenPitch);
+                mc.getPlayer().setPos(frozenX, frozenY, frozenZ);
+                mc.getPlayer().setYRot(frozenYaw);
+                mc.getPlayer().setXRot(frozenPitch);
             }
         }
     }
@@ -68,27 +68,27 @@ public double x, y, z;
     @Subscribe
     public void onTick(TickEvent.Client event) {
         if (!Modules.enabled(FreeCam.class)) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
         if (freeze) {
-            mc.player.setYRot(frozenYaw);
-            mc.player.setXRot(frozenPitch);
-            mc.player.setPos(frozenX, frozenY, frozenZ);
+            mc.getPlayer().setYRot(frozenYaw);
+            mc.getPlayer().setXRot(frozenPitch);
+            mc.getPlayer().setPos(frozenX, frozenY, frozenZ);
         } else {
             float diff = this.yaw - frozenYaw;
             while (diff <= -180.0f) diff += 360.0f;
             while (diff > 180.0f) diff -= 360.0f;
             float clamped = Math.max(-90.0f, Math.min(90.0f, diff));
-            mc.player.setYRot(frozenYaw + clamped);
-            mc.player.setXRot(this.pitch);
+            mc.getPlayer().setYRot(frozenYaw + clamped);
+            mc.getPlayer().setXRot(this.pitch);
         }
         double moveSpeed = speed;
-        boolean keyUp = mc.options.keyUp.isDown();
-        boolean keyDown = mc.options.keyDown.isDown();
-        boolean keyLeft = mc.options.keyLeft.isDown();
-        boolean keyRight = mc.options.keyRight.isDown();
-        boolean keyJump = mc.options.keyJump.isDown();
-        boolean keyShift = mc.options.keyShift.isDown();
+        boolean keyUp = mc.getOptions().keyUp.isDown();
+        boolean keyDown = mc.getOptions().keyDown.isDown();
+        boolean keyLeft = mc.getOptions().keyLeft.isDown();
+        boolean keyRight = mc.getOptions().keyRight.isDown();
+        boolean keyJump = mc.getOptions().keyJump.isDown();
+        boolean keyShift = mc.getOptions().keyShift.isDown();
         this.prevX = this.x;
         this.prevY = this.y;
         this.prevZ = this.z;

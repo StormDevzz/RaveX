@@ -22,11 +22,11 @@ public class RotationManager {
     }
 
     public float getYaw() {
-        return rotating ? yaw : (MinecraftWrapper.getInstance().player != null ? MinecraftWrapper.getInstance().player.getYRot() : 0);
+        return rotating ? yaw : (MinecraftWrapper.getWrapper().getPlayer() != null ? MinecraftWrapper.getWrapper().getPlayer().getYRot() : 0);
     }
 
     public float getPitch() {
-        return rotating ? pitch : (MinecraftWrapper.getInstance().player != null ? MinecraftWrapper.getInstance().player.getXRot() : 0);
+        return rotating ? pitch : (MinecraftWrapper.getWrapper().getPlayer() != null ? MinecraftWrapper.getWrapper().getPlayer().getXRot() : 0);
     }
 
     public boolean isRotating() {

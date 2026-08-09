@@ -13,7 +13,6 @@ import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.ThreeArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.client.Minecraft;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
@@ -90,9 +89,9 @@ public class LuaManager {
 
         lib.set("print", new OneArgFunction() {
             @Override public LuaValue call(LuaValue arg) {
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.player != null) {
-                    mc.player.displayClientMessage(
+                var mc = MinecraftWrapper.getWrapper();
+                if (mc.getPlayer() != null) {
+                    mc.getPlayer().displayClientMessage(
                         Component.literal("§7[§5Lua§7] §f" + arg.tojstring()), false);
                 }
                 return LuaValue.NIL;
@@ -137,66 +136,66 @@ public class LuaManager {
 
         lib.set("isInGame", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                return LuaValue.valueOf(mc.player != null && mc.level != null);
+                var mc = MinecraftWrapper.getWrapper();
+                return LuaValue.valueOf(mc.getPlayer() != null && mc.getLevel() != null);
             }
         });
         lib.set("getHealth", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                return mc.player != null
-                    ? LuaValue.valueOf((double) PlayerUtility.getHealth(mc.player))
+                var mc = MinecraftWrapper.getWrapper();
+                return mc.getPlayer() != null
+                    ? LuaValue.valueOf((double) PlayerUtility.getHealth(mc.getPlayer()))
                     : LuaValue.valueOf(0);
             }
         });
         lib.set("getMaxHealth", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                return mc.player != null
-                    ? LuaValue.valueOf((double) PlayerUtility.getMaxHealth(mc.player))
+                var mc = MinecraftWrapper.getWrapper();
+                return mc.getPlayer() != null
+                    ? LuaValue.valueOf((double) PlayerUtility.getMaxHealth(mc.getPlayer()))
                     : LuaValue.valueOf(20);
             }
         });
         lib.set("getX", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                return mc.player != null ? LuaValue.valueOf(mc.player.getX()) : LuaValue.valueOf(0);
+                var mc = MinecraftWrapper.getWrapper();
+                return mc.getPlayer() != null ? LuaValue.valueOf(mc.getPlayer().getX()) : LuaValue.valueOf(0);
             }
         });
         lib.set("getY", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                return mc.player != null ? LuaValue.valueOf(mc.player.getY()) : LuaValue.valueOf(0);
+                var mc = MinecraftWrapper.getWrapper();
+                return mc.getPlayer() != null ? LuaValue.valueOf(mc.getPlayer().getY()) : LuaValue.valueOf(0);
             }
         });
         lib.set("getZ", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                return mc.player != null ? LuaValue.valueOf(mc.player.getZ()) : LuaValue.valueOf(0);
+                var mc = MinecraftWrapper.getWrapper();
+                return mc.getPlayer() != null ? LuaValue.valueOf(mc.getPlayer().getZ()) : LuaValue.valueOf(0);
             }
         });
         lib.set("getName", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                return mc.player != null
-                    ? LuaValue.valueOf(mc.player.getGameProfile().name())
+                var mc = MinecraftWrapper.getWrapper();
+                return mc.getPlayer() != null
+                    ? LuaValue.valueOf(mc.getPlayer().getGameProfile().name())
                     : LuaValue.valueOf("Unknown");
             }
         });
 
         lib.set("isRightClicking", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                return LuaValue.valueOf(mc.options.keyUse.isDown());
+                var mc = MinecraftWrapper.getWrapper();
+                return LuaValue.valueOf(mc.getOptions().keyUse.isDown());
             }
         });
 
         lib.set("getLookingPos", new OneArgFunction() {
             @Override public LuaValue call(LuaValue arg) {
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.player == null) return LuaValue.NIL;
+                var mc = MinecraftWrapper.getWrapper();
+                if (mc.getPlayer() == null) return LuaValue.NIL;
                 double dist = arg.optdouble(4.5);
-                net.minecraft.world.phys.HitResult hit = mc.player.pick(dist, 1.0F, false);
+                net.minecraft.world.phys.HitResult hit = mc.getPlayer().pick(dist, 1.0F, false);
                 if (hit != null && hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
                     net.minecraft.core.BlockPos pos = ((net.minecraft.world.phys.BlockHitResult) hit).getBlockPos();
                     LuaValue tbl = LuaValue.tableOf();
@@ -205,8 +204,8 @@ public class LuaManager {
                     tbl.set("z", pos.getZ());
                     return tbl;
                 } else {
-                    net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition(1.0F);
-                    net.minecraft.world.phys.Vec3 look = mc.player.getViewVector(1.0F);
+                    net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition(1.0F);
+                    net.minecraft.world.phys.Vec3 look = mc.getPlayer().getViewVector(1.0F);
                     net.minecraft.world.phys.Vec3 target = eye.add(look.x * dist, look.y * dist, look.z * dist);
                     net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(target);
                     LuaValue tbl = LuaValue.tableOf();
@@ -233,21 +232,21 @@ public class LuaManager {
 
         lib.set("placeBlock", new ThreeArgFunction() {
             @Override public LuaValue call(LuaValue xVal, LuaValue yVal, LuaValue zVal) {
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.player == null || mc.level == null) return LuaValue.FALSE;
+                var mc = MinecraftWrapper.getWrapper();
+                if (mc.getPlayer() == null || mc.getLevel() == null) return LuaValue.FALSE;
                 net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(xVal.checkint(), yVal.checkint(), zVal.checkint());
                 net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(pos);
                 net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, pos, false);
-                mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+                mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hit);
                 return LuaValue.TRUE;
             }
         });
 
         lib.set("swingHand", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.player != null) {
-                    SwingUtility.swing(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                var mc = MinecraftWrapper.getWrapper();
+                if (mc.getPlayer() != null) {
+                    SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
                 return LuaValue.NIL;
             }
@@ -255,19 +254,16 @@ public class LuaManager {
 
         lib.set("isHoldingBlock", new ZeroArgFunction() {
             @Override public LuaValue call() {
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.player == null) return LuaValue.FALSE;
-                net.minecraft.world.item.ItemStack stack = mc.player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+                var mc = MinecraftWrapper.getWrapper();
+                if (mc.getPlayer() == null) return LuaValue.FALSE;
+                net.minecraft.world.item.ItemStack stack = mc.getPlayer().getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
                 return LuaValue.valueOf(!stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem);
             }
         });
 
         lib.set("sendChat", new OneArgFunction() {
             @Override public LuaValue call(LuaValue arg) {
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.player != null && mc.player.connection != null) {
-                    mc.player.connection.sendChat(arg.checkjstring());
-                }
+                ravex.utility.network.NetworkUtility.sendChat(arg.checkjstring());
                 return LuaValue.NIL;
             }
         });
@@ -607,8 +603,8 @@ public class LuaManager {
     }
 
     public void loadAndRunScripts() {
-        var mc = MinecraftWrapper.getInstance();
-        File scriptsFolder = new File(mc.gameDirectory, "RaveX/scripts");
+        var mc = MinecraftWrapper.getWrapper();
+        File scriptsFolder = new File(mc.getRaw().gameDirectory, "RaveX/scripts");
         if (!scriptsFolder.exists()) {
             scriptsFolder.mkdirs();
         }
@@ -621,13 +617,13 @@ public class LuaManager {
         }
     }
 
-    private void runScript(Minecraft mc, File f) {
+    private void runScript(MinecraftWrapper mc, File f) {
         try {
             LuaValue chunk = globals.loadfile(f.getAbsolutePath());
             chunk.call();
         } catch (Exception e) {
-            if (mc.player != null) {
-                mc.player.displayClientMessage(
+            if (mc.getPlayer() != null) {
+                mc.getPlayer().displayClientMessage(
                     Component.literal("§7[§5Lua Error§7] §c" + f.getName() + ": " + e.getMessage()),
                     false);
             }

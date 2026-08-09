@@ -258,7 +258,7 @@ public class ParameterElement {
             int slH = 4;
 
             if (isDragging) {
-                if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(MinecraftWrapper.getInstance().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
+                if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(MinecraftWrapper.getWrapper().getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
                     isDragging = false;
                     if (np.getName().equalsIgnoreCase("Gui Scale")) {
                         ClickGUI.isDraggingSlider = false;

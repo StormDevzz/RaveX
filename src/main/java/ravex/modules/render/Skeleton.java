@@ -39,21 +39,21 @@ public class Skeleton {
 
     @Nullable
     public static net.minecraft.world.entity.LivingEntity getEntityBeingRendered(PoseStack poseStack) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.level == null || mc.gameRenderer == null || mc.gameRenderer.getMainCamera() == null) return null;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null || mc.getGameRenderer() == null || mc.getGameRenderer().getMainCamera() == null) return null;
         Matrix4f matrix = poseStack.last().pose();
         float tx = matrix.m30();
         float ty = matrix.m31();
         float tz = matrix.m32();
-        double camX = mc.gameRenderer.getMainCamera().position().x;
-        double camY = mc.gameRenderer.getMainCamera().position().y;
-        double camZ = mc.gameRenderer.getMainCamera().position().z;
+        double camX = mc.getGameRenderer().getMainCamera().position().x;
+        double camY = mc.getGameRenderer().getMainCamera().position().y;
+        double camZ = mc.getGameRenderer().getMainCamera().position().z;
         double worldX = tx + camX;
         double worldY = ty + camY;
         double worldZ = tz + camZ;
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestDist = 9.0;
-        for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity entity : mc.getLevel().entitiesForRendering()) {
             if (entity instanceof net.minecraft.world.entity.LivingEntity) {
                 net.minecraft.world.entity.LivingEntity le = (net.minecraft.world.entity.LivingEntity) entity;
                 double ex = le.getX();

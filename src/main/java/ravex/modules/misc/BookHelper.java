@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.network.NetworkUtility;
 import ravex.modules.Modules;
 @Module(name = "BookHelper", category = "Misc")
 public class BookHelper {
@@ -96,7 +97,7 @@ public class BookHelper {
                 }
             }
             if (title.length() > 32) title = title.substring(0, 32);
-            mc.getConnection().send(new ServerboundEditBookPacket(slot, existingPages, Optional.of(title)));
+            NetworkUtility.sendPacket(new ServerboundEditBookPacket(slot, existingPages, Optional.of(title)));
             mc.getPlayer().displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §aBook signed with title=§f" + title),
                 false
@@ -132,10 +133,10 @@ public class BookHelper {
         String title = bookTitle;
         if (title == null) title = "";
         if (title.isEmpty()) {
-            mc.getConnection().send(new ServerboundEditBookPacket(slot, pages, Optional.empty()));
+            NetworkUtility.sendPacket(new ServerboundEditBookPacket(slot, pages, Optional.empty()));
         } else {
             if (title.length() > 32) title = title.substring(0, 32);
-            mc.getConnection().send(new ServerboundEditBookPacket(slot, pages, Optional.of(title)));
+            NetworkUtility.sendPacket(new ServerboundEditBookPacket(slot, pages, Optional.of(title)));
         }
         mc.getPlayer().displayClientMessage(
             Component.literal("§7[§cRaveX§7] §aBook filled with §f" + count + " §apages"),

@@ -1,7 +1,7 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.modules.Modules;
 @Module(name = "MobOwner", category = "net.minecraft.world.entity.player.Player")
 public class MobOwner {
@@ -15,7 +15,7 @@ public class MobOwner {
     public int textColor = 0xFFFFAA00;
 
     public static String getOwnerName(net.minecraft.world.entity.LivingEntity entity) {
-        return MobUtility.getOwnerName(entity, Modules.get(MobOwner.class).displayUUID);
+        return EntityUtility.getOwnerName(entity, Modules.get(MobOwner.class).displayUUID);
     }
 
 

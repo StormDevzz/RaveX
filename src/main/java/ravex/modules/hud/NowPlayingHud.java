@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.utility.render.HudRendererUtility;
@@ -121,11 +121,11 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
                 img.close();
                 Identifier texId = Identifier.parse("ravex:nowplaying_cover");
                 DynamicTexture dynTex = new DynamicTexture(() -> "ravex:nowplaying_cover", out);
-                MinecraftWrapper.getInstance().execute(() -> {
+                MinecraftWrapper.getWrapper().execute(() -> {
                     if (coverTexture != null) coverTexture.close();
                     coverTexture = dynTex;
                     coverId = texId;
-                    MinecraftWrapper.getInstance().getTextureManager().register(texId, dynTex);
+                    MinecraftWrapper.getWrapper().getTextureManager().register(texId, dynTex);
                 });
             } catch (Throwable ignored) {
             }

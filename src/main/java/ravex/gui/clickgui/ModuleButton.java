@@ -1,6 +1,5 @@
 package ravex.gui.clickgui;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.modules.Module;

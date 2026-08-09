@@ -47,9 +47,9 @@ public class CmdReg {
         if (!ModuleManager.get(Commands.class).showFeedback) {
             if (!text.contains("§c") && !text.contains("§5") && !text.contains("Help")) return;
         }
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal(text), false);
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() != null) {
+            mc.getPlayer().displayClientMessage(Component.literal(text), false);
         }
     }
 

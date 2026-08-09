@@ -3,7 +3,6 @@ package ravex.manager;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -68,7 +67,7 @@ public class NotificationManager {
                     }
                 } catch (Exception ignored) {}
                 Identifier id = Identifier.fromNamespaceAndPath("ravex", "toast_" + name);
-                MinecraftWrapper.getInstance().getTextureManager().register(id, tex);
+                MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
                 return id;
             }
         } catch (Exception e) {
@@ -182,14 +181,14 @@ public class NotificationManager {
     }
 
     public static void render(GuiGraphics graphics) {
-        Minecraft mc = MinecraftWrapper.getInstance();
-        if (mc == null || mc.font == null) return;
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
+        if (mc == null || mc.getFont() == null) return;
 
         renderCenterNotifications(graphics, mc);
         renderToasts(graphics);
     }
 
-    private static void renderCenterNotifications(GuiGraphics graphics, Minecraft mc) {
+    private static void renderCenterNotifications(GuiGraphics graphics, MinecraftWrapper mc) {
         int screenW = graphics.guiWidth();
         int screenH = graphics.guiHeight();
         int startY = screenH / 3;
@@ -204,7 +203,7 @@ public class NotificationManager {
             float alpha = n.getAlpha();
             if (alpha <= 0.01f) continue;
 
-            int textW = mc.font.width(n.text);
+            int textW = mc.getFont().width(n.text);
             int panelW = textW + PANEL_PADDING_X * 2;
             int panelH = LINE_HEIGHT + PANEL_PADDING_Y * 2;
             int panelX = (screenW - panelW) / 2;
@@ -222,7 +221,7 @@ public class NotificationManager {
             int textColor = (n.color & 0x00FFFFFF) | ((int)(0xFF * alpha) << 24);
             int textX = panelX + PANEL_PADDING_X;
             int textY = currentY + PANEL_PADDING_Y;
-            graphics.drawString(mc.font, n.text, textX, textY, textColor, false);
+            graphics.drawString(mc.getFont(), n.text, textX, textY, textColor, false);
 
             currentY += panelH + GAP;
         }

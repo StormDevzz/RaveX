@@ -13,8 +13,8 @@ public class ShiftInterp {
     public boolean shouldCrouch(net.minecraft.world.entity.Entity entity) {
         if (!Modules.enabled(ShiftInterp.class)) return false;
         if (!(entity instanceof net.minecraft.world.entity.player.Player)) return false;
-        var mc = MinecraftWrapper.getInstance();
-        boolean isSelf = (entity == mc.player);
+        var mc = MinecraftWrapper.getWrapper();
+        boolean isSelf = (entity == mc.getPlayer());
         String t = target;
         if (t.equals("Self")) {
             return isSelf;

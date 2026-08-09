@@ -10,6 +10,7 @@ import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
 import net.minecraft.world.item.BlockItem;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.network.NetworkUtility;
 import java.util.Random;
 
 
@@ -55,13 +56,13 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
         currentTarget = null;
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) {
             highlightPos = null;
             return;
         }
-        boolean mainHolding = InventoryUtility.isHoldingBlock(mc.player);
-        var off = mc.player.getOffhandItem();
+        boolean mainHolding = InventoryUtility.isHoldingBlock(mc.getPlayer());
+        var off = mc.getPlayer().getOffhandItem();
         boolean offHolding = InventoryUtility.isBlockItem(off);
         var hand = mainHolding ? net.minecraft.world.InteractionHand.MAIN_HAND : (offHolding ? net.minecraft.world.InteractionHand.OFF_HAND : null);
         if (hand == null) {
@@ -72,7 +73,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
             return;
         }
         double dist = 4.5;
-        var hit = mc.player.pick(dist, 1.0F, false);
+        var hit = mc.getPlayer().pick(dist, 1.0F, false);
         net.minecraft.core.BlockPos targetPos;
         net.minecraft.core.BlockPos neighbor;
         net.minecraft.core.Direction placeFace;
@@ -82,15 +83,15 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
             placeFace = bhr.getDirection();
             targetPos = neighbor.relative(placeFace);
         } else {
-            net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition(1.0F);
-            net.minecraft.world.phys.Vec3 look = mc.player.getViewVector(1.0F);
+            net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition(1.0F);
+            net.minecraft.world.phys.Vec3 look = mc.getPlayer().getViewVector(1.0F);
             net.minecraft.world.phys.Vec3 target = eye.add(look.x * dist, look.y * dist, look.z * dist);
             targetPos = BlockUtility.containing(target.x, target.y, target.z);
             neighbor = targetPos;
             placeFace = net.minecraft.core.Direction.UP;
             for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
                 net.minecraft.core.BlockPos side = targetPos.relative(face);
-                if (BlockUtility.isAir(mc.level, side)) continue;
+                if (BlockUtility.isAir(mc.getLevel(), side)) continue;
                 neighbor = side;
                 placeFace = face.getOpposite();
                 break;
@@ -103,7 +104,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
             renderG = ((hc >> 8) & 0xFF) / 255.0f;
             renderB = (hc & 0xFF) / 255.0f;
         }
-        if (mc.options.keyUse.isDown()) {
+        if (mc.getOptions().keyUse.isDown()) {
             long now = System.currentTimeMillis();
             if (now - lastPlaceTime > 200) {
                 if (mode.equals("NCP")) {
@@ -111,34 +112,29 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                     placeFace = net.minecraft.core.Direction.UP;
                     for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
                         net.minecraft.core.BlockPos side = targetPos.relative(face);
-                        if (BlockUtility.isAir(mc.level, side)) continue;
+                        if (BlockUtility.isAir(mc.getLevel(), side)) continue;
                         neighbor = side;
                         placeFace = face.getOpposite();
                         break;
                     }
-                    if (!BlockUtility.isAir(mc.level, neighbor)) {
+                    if (!BlockUtility.isAir(mc.getLevel(), neighbor)) {
                         double maxReach = 4.5;
                         net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(neighbor);
-                        if (mc.player.getEyePosition().distanceTo(center) <= maxReach) {
+                        if (mc.getPlayer().getEyePosition().distanceTo(center) <= maxReach) {
                             net.minecraft.world.phys.Vec3 hitVec = center.add(
                                 PhysicUtility.vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                             );
-                            float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), hitVec);
-                            var conn = mc.getConnection();
-                            if (conn != null) {
-                                conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
-                                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                                    angles[0], angles[1], mc.player.onGround(), mc.player.horizontalCollision
-                                ));
-                            }
+                            float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), hitVec);
+                            NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
+                                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
+                                angles[0], angles[1], mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision
+                            ));
                             BlockUtility.ncpAirPlace(ravex.mcwrapper.MinecraftWrapper.getWrapper(), neighbor, placeFace, hand);
-                            if (conn != null) {
-                                conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
-                                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                                    mc.player.getYRot(), mc.player.getXRot(), mc.player.onGround(), mc.player.horizontalCollision
-                                ));
-                            }
-                            SwingUtility.swing(mc.player, hand);
+                            NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
+                                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
+                                mc.getPlayer().getYRot(), mc.getPlayer().getXRot(), mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision
+                            ));
+                            SwingUtility.swing(mc.getPlayer(), hand);
                         }
                     }
                 } else if (mode.equals("UNCP")) {
@@ -146,38 +142,33 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                     placeFace = net.minecraft.core.Direction.UP;
                     for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
                         net.minecraft.core.BlockPos side = targetPos.relative(face);
-                        if (BlockUtility.isAir(mc.level, side)) continue;
+                        if (BlockUtility.isAir(mc.getLevel(), side)) continue;
                         neighbor = side;
                         placeFace = face.getOpposite();
                         break;
                     }
-                    if (!BlockUtility.isAir(mc.level, neighbor)) {
+                    if (!BlockUtility.isAir(mc.getLevel(), neighbor)) {
                         double maxReach = 4.5;
                         net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(neighbor);
-                        if (mc.player.getEyePosition().distanceTo(center) <= maxReach) {
+                        if (mc.getPlayer().getEyePosition().distanceTo(center) <= maxReach) {
                             net.minecraft.world.phys.Vec3 hitVec = center.add(
                                 PhysicUtility.vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                             );
-                            float[] angles = RotationUtility.anglesTo(mc.player.getEyePosition(), hitVec);
+                            float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), hitVec);
                             float yawNoise = (random.nextFloat() - 0.5f) * (float)uncpNoise * 2;
                             float pitchNoise = (random.nextFloat() - 0.5f) * (float)uncpNoise * 2;
                             angles[0] += yawNoise;
                             angles[1] += pitchNoise;
-                            var conn = mc.getConnection();
-                            if (conn != null) {
-                                conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
-                                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                                    angles[0], angles[1], mc.player.onGround(), mc.player.horizontalCollision
-                                ));
-                            }
+                            NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
+                                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
+                                angles[0], angles[1], mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision
+                            ));
                             BlockUtility.ncpAirPlace(ravex.mcwrapper.MinecraftWrapper.getWrapper(), neighbor, placeFace, hand);
-                            if (conn != null) {
-                                conn.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
-                                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                                    mc.player.getYRot(), mc.player.getXRot(), mc.player.onGround(), mc.player.horizontalCollision
-                                ));
-                            }
-                            SwingUtility.swing(mc.player, hand);
+                            NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
+                                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
+                                mc.getPlayer().getYRot(), mc.getPlayer().getXRot(), mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision
+                            ));
+                            SwingUtility.swing(mc.getPlayer(), hand);
                         }
                     }
                 } else {
@@ -186,7 +177,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                     );
                     net.minecraft.world.phys.BlockHitResult blockHit = new net.minecraft.world.phys.BlockHitResult(hitVec, placeFace, neighbor, false);
                     BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), blockHit, hand);
-                    SwingUtility.swing(mc.player, hand);
+                    SwingUtility.swing(mc.getPlayer(), hand);
                 }
                 lastPlaceTime = now;
             }

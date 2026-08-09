@@ -13,7 +13,7 @@ public class DeathEvent implements Event {
     public DeathEvent(Player player, DamageSource source) {
         this.player = player;
         this.source = source;
-        this.self = player == MinecraftWrapper.getInstance().player;
+        this.self = player == MinecraftWrapper.getWrapper().getPlayer();
     }
 
     public Player getPlayer() { return player; }

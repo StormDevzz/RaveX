@@ -3,7 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -30,17 +30,17 @@ public static final Map<Integer, List<net.minecraft.world.phys.Vec3>> trails = n
     @Parameter(name = "Mobs")
     public boolean mobs = false;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.level == null || mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null || mc.getPlayer() == null) return;
         int max = (int) maxPoints;
         if (self) {
-            addPoint(mc.player.getId(), mc.player.position(), max);
+            addPoint(mc.getPlayer().getId(), mc.getPlayer().position(), max);
         }
         if (players || mobs) {
-            for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
-                if (entity == mc.player) continue;
-                if (MobUtility.isPlayer(MobUtility.asLivingEntity(entity)) && !players) continue;
-                if (!MobUtility.isPlayer(MobUtility.asLivingEntity(entity)) && !mobs) continue;
+            for (net.minecraft.world.entity.Entity entity : mc.getLevel().entitiesForRendering()) {
+                if (entity == mc.getPlayer()) continue;
+                if (EntityUtility.isPlayer(EntityUtility.asLivingEntity(entity)) && !players) continue;
+                if (!EntityUtility.isPlayer(EntityUtility.asLivingEntity(entity)) && !mobs) continue;
                 addPoint(entity.getId(), entity.position(), max);
             }
         }

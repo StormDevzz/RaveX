@@ -577,6 +577,6 @@ public class AutoReGearScreen extends Screen {
     @Override
     public void onClose() {
         saveEditingTargetCount();
-        MinecraftWrapper.getInstance().setScreen(parent);
+        MinecraftWrapper.getWrapper().setScreen(parent);
     }
 }

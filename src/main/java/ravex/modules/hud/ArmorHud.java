@@ -43,8 +43,8 @@ private static final EquipmentSlot[] SLOTS = {
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
 
         int pw = 92;
         int ph = 29;
@@ -65,10 +65,10 @@ private static final EquipmentSlot[] SLOTS = {
             Render2DUtility.drawRound(graphics, cellX, cellY, cellSize, cellSize, 3, 0x15FFFFFF);
             Render2DUtility.drawRoundBorder(graphics, cellX, cellY, cellSize, cellSize, 3, 1, 0x10FFFFFF);
 
-            ItemStack stack = mc.player.getItemBySlot(slot);
+            ItemStack stack = mc.getPlayer().getItemBySlot(slot);
             if (!stack.isEmpty()) {
                 graphics.renderItem(stack, cellX + 1, cellY + 1);
-                graphics.renderItemDecorations(mc.font, stack, cellX + 1, cellY + 1);
+                graphics.renderItemDecorations(mc.getFont(), stack, cellX + 1, cellY + 1);
 
                 if (stack.isDamageableItem()) {
                     float pct = (float) (stack.getMaxDamage() - stack.getDamageValue()) / stack.getMaxDamage();

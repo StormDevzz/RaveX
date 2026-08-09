@@ -69,7 +69,7 @@ public class Tracers {
                     } catch (Exception ignored) {
                     }
                     arrowTexture = Identifier.fromNamespaceAndPath("ravex", "tracers_arrow");
-                    MinecraftWrapper.getInstance().getTextureManager().register(arrowTexture, tex);
+                    MinecraftWrapper.getWrapper().getTextureManager().register(arrowTexture, tex);
                     arrowLoaded = true;
                 }
             } catch (Exception e) {
@@ -93,8 +93,8 @@ public class Tracers {
         if (!Modules.enabled(Tracers.class) || !t.mode.equals("Arrows"))
             return;
 
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null)
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null)
             return;
 
         float size = (float) t.arrowSize;
@@ -108,7 +108,7 @@ public class Tracers {
 
         double cx = guiWidth / 2.0;
         double cy = guiHeight / 2.0;
-        float playerYawRad = (float) Math.toRadians(mc.player.getYRot());
+        float playerYawRad = (float) Math.toRadians(mc.getPlayer().getYRot());
 
         float[] targetAngles = new float[count];
         int[] ids = new int[count];

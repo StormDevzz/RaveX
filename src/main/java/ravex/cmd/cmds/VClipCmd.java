@@ -8,8 +8,8 @@ public class VClipCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        var mc = ravex.mcwrapper.MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.getConnection() == null) return;
+        var mc = ravex.mcwrapper.MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getConnection() == null) return;
         double dist = 1.0;
         if (args.length > 1) {
             try { dist = Double.parseDouble(args[1]); } catch (NumberFormatException e) {
@@ -17,11 +17,11 @@ public class VClipCmd extends Cmd {
                 return;
             }
         }
-        double tx = mc.player.getX();
-        double ty = mc.player.getY() + dist;
-        double tz = mc.player.getZ();
-        NetworkUtility.sendMoveRelative(tx, ty, tz, true, mc.player.horizontalCollision);
-        mc.player.setPos(tx, ty, tz);
+        double tx = mc.getPlayer().getX();
+        double ty = mc.getPlayer().getY() + dist;
+        double tz = mc.getPlayer().getZ();
+        NetworkUtility.sendMoveRelative(tx, ty, tz, true, mc.getPlayer().horizontalCollision);
+        mc.getPlayer().setPos(tx, ty, tz);
         CmdReg.print(String.format("§aClipped §e%.1f §ablocks %s.", Math.abs(dist), (dist >= 0 ? "up" : "down")));
     }
 }

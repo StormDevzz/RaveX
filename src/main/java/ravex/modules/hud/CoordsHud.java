@@ -3,7 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
@@ -28,7 +28,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COORDS_WHITE;
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
-        var player = MinecraftWrapper.getInstance().player;
+        var player = MinecraftWrapper.getWrapper().getPlayer();
         if (player == null) return;
         int ac = ColorUtility.getActiveColor();
         boolean shadow = true;

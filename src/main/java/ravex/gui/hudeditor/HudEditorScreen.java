@@ -7,7 +7,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
 import org.lwjgl.glfw.GLFW;
 import ravex.gui.clickgui.ColorPaletteModal;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;

@@ -1,7 +1,7 @@
 package ravex.utility.player;
 
-import net.minecraft.client.Minecraft;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.network.NetworkUtility;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
@@ -119,7 +119,7 @@ public class InventoryUtility {
         _mc.gameMode.attack(_mc.player, target);
         if (swingMode.equals("Client")) _mc.player.swing(InteractionHand.MAIN_HAND);
         else if (swingMode.equals("Server") && _mc.player.connection != null)
-            _mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+            NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
     }
 
     public static boolean isBlockItem(ItemStack stack) {
@@ -146,7 +146,7 @@ public class InventoryUtility {
 
     public static void silentSelectSlot(LocalPlayer player, int slot) {
         if (player.connection != null)
-            player.connection.send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
+            NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
     }
 
     public static void swapToOffhand(MinecraftWrapper mc, LocalPlayer player, int inventorySlot) {
@@ -173,7 +173,7 @@ public class InventoryUtility {
     }
 
     public static void openInventoryScreen(LocalPlayer player) {
-        MinecraftWrapper.getInstance().setScreen(new InventoryScreen(player));
+        MinecraftWrapper.getWrapper().setScreen(new InventoryScreen(player));
     }
 
     public static void clickChestSlot(MinecraftWrapper mc, LocalPlayer player, int containerSlot, ClickType type) {

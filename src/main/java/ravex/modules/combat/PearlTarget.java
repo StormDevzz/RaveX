@@ -7,7 +7,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.CameraUtility;
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
 import org.joml.Matrix4f;
@@ -131,12 +131,12 @@ public class PearlTarget {
         List<net.minecraft.world.entity.player.Player> players = new ArrayList<>();
         for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (e instanceof ThrownEnderpearl pearl) {
-                if (MobUtility.distanceToPlayer(pearl) <= r) {
+                if (EntityUtility.distanceToPlayer(pearl) <= r) {
                     pearls.add(pearl);
                 }
             }
-            if (e instanceof net.minecraft.world.entity.player.Player p && !MobUtility.isSelf(p) && !PlayerUtility.isSpectator(p)) {
-                if (MobUtility.distanceToPlayer(p) <= r * 1.5) {
+            if (e instanceof net.minecraft.world.entity.player.Player p && !EntityUtility.isSelf(p) && !PlayerUtility.isSpectator(p)) {
+                if (EntityUtility.distanceToPlayer(p) <= r * 1.5) {
                     players.add(p);
                 }
             }
@@ -181,8 +181,8 @@ public class PearlTarget {
             target = findBestTarget(mc, players);
             if (target != null) targetPos = target.position();
         }
-        if (target != null && (target.isRemoved() || MobUtility.isDead(target)
-            || MobUtility.distanceToPlayer(target) > r * 2)) {
+        if (target != null && (target.isRemoved() || EntityUtility.isDead(target)
+            || EntityUtility.distanceToPlayer(target) > r * 2)) {
             target = null;
             targetPos = null;
         }
@@ -260,7 +260,7 @@ public class PearlTarget {
     private void doAutoTotem(MinecraftWrapper mc) {
         String mode = totemMode;
         boolean shouldTotem = "Always".equals(mode)
-            || ("LowHP".equals(mode) && MobUtility.getHealthWithAbsorption(mc.getPlayer()) <= totemHealth);
+            || ("LowHP".equals(mode) && EntityUtility.getHealthWithAbsorption(mc.getPlayer()) <= totemHealth);
         if (!shouldTotem) return;
         int totemSlot = -1;
         for (int i = 0; i < 36; i++) {
@@ -282,7 +282,7 @@ public class PearlTarget {
         );
     }
     private void doAutoGap(MinecraftWrapper mc) {
-        if (MobUtility.getHealthWithAbsorption(mc.getPlayer()) > gapHealth) return;
+        if (EntityUtility.getHealthWithAbsorption(mc.getPlayer()) > gapHealth) return;
         if (PlayerUtility.isUsingItem(mc.getPlayer())) return;
         var gap = FoodUtility.findFood(f -> f.isAnyGoldenApple());
         if (gap == null) return;
@@ -359,7 +359,7 @@ public class PearlTarget {
         String mode = targetMode;
         return switch (mode) {
             case "Health" -> players.stream()
-                .min(java.util.Comparator.comparingDouble(p -> MobUtility.getHealthWithAbsorption(p)))
+                .min(java.util.Comparator.comparingDouble(p -> EntityUtility.getHealthWithAbsorption(p)))
                 .orElse(null);
             case "Crosshair" -> {
                 net.minecraft.world.entity.player.Player closest = null;
@@ -377,11 +377,11 @@ public class PearlTarget {
                 yield closest;
             }
             case "Distance" -> players.stream()
-                .min(java.util.Comparator.comparingDouble(p -> MobUtility.distanceToPlayer(p)))
+                .min(java.util.Comparator.comparingDouble(p -> EntityUtility.distanceToPlayer(p)))
                 .orElse(null);
             default ->
                 players.stream()
-                    .min(java.util.Comparator.comparingDouble(p -> MobUtility.distanceToPlayer(p)))
+                    .min(java.util.Comparator.comparingDouble(p -> EntityUtility.distanceToPlayer(p)))
                     .orElse(null);
         };
     }

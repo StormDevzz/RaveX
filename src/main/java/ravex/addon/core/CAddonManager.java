@@ -23,7 +23,7 @@ public class CAddonManager {
         if (!tryLoadNative()) return;
 
         File addonsDir = new File(
-            ravex.mcwrapper.MinecraftWrapper.getInstance().gameDirectory,
+            ravex.mcwrapper.MinecraftWrapper.getWrapper().getRaw().gameDirectory,
             "RaveX/addons/c_native"
         );
         if (!addonsDir.exists()) addonsDir.mkdirs();

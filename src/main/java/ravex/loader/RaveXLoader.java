@@ -4,8 +4,6 @@ import java.io.*;
 import java.util.*;
 
 public class RaveXLoader {
-    private static volatile boolean ready = false;
-    private static Process childProcess;
     private static LoaderWindow window;
     private static boolean nativeAvailable = false;
 

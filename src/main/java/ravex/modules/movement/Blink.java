@@ -38,7 +38,6 @@ public class Blink {
     private net.minecraft.world.phys.Vec3 flushStartPos = null;
     private double flushTotalHPos = 0.0;
     private int idleTicker = 0;
-    private long flushStartTime = 0L;
 
     private static final int MAX_PACKETS_PER_TICK = 4;
     private static final int IDLE_INTERVAL = 3;
@@ -55,14 +54,14 @@ public class Blink {
     @Subscribe
     public void onTick(TickEvent.Client event) {
         if (!Modules.enabled(Blink.class)) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.getConnection() == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getConnection() == null) return;
 
         boolean isGrim = "Grim".equals(mode);
         boolean isNcp = "NCP".equals(mode);
 
         if (isGrim || isNcp) {
-            if (cancelOnShift && mc.options.keyShift.isDown()) {
+            if (cancelOnShift && mc.getOptions().keyShift.isDown()) {
                 Modules.setEnabled(Blink.class, false);
                 return;
             }
@@ -112,9 +111,9 @@ public class Blink {
             if (packetBuffer.size() >= (int) limit) return true;
 
             if (startPos == null && packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket move && move.hasPosition()) {
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.player != null) {
-                    startPos = mc.player.position();
+                var mc = MinecraftWrapper.getWrapper();
+                if (mc.getPlayer() != null) {
+                    startPos = mc.getPlayer().position();
                 }
             }
 
@@ -133,18 +132,17 @@ public class Blink {
 
     private void sendIdleMove() {
         if (packetBuffer.isEmpty()) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.player.connection == null) return;
-        mc.player.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.StatusOnly(mc.player.onGround(), mc.player.horizontalCollision));
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getConnection() == null) return;
+        NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.StatusOnly(mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision));
     }
 
     private void startFlush() {
         flushing = true;
         flushIndex = 0;
-        flushStartTime = System.currentTimeMillis();
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            flushStartPos = mc.player.position();
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() != null) {
+            flushStartPos = mc.getPlayer().position();
         } else {
             flushStartPos = startPos != null ? startPos : net.minecraft.world.phys.Vec3.ZERO;
         }
@@ -176,8 +174,8 @@ public class Blink {
     }
 
     private void continueFlush() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.player.connection == null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getConnection() == null) {
             finishFlush();
             return;
         }
@@ -191,7 +189,7 @@ public class Blink {
 
             if (isNcp && p instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket move && move.hasPosition() && flushStartPos != null) {
                 double t = (double) flushIndex / Math.max(1, packetBuffer.size());
-                net.minecraft.world.phys.Vec3 currentPlayerPos = mc.player.position();
+                net.minecraft.world.phys.Vec3 currentPlayerPos = mc.getPlayer().position();
                 double dx = currentPlayerPos.x - flushStartPos.x;
                 double dy = currentPlayerPos.y - flushStartPos.y;
                 double dz = currentPlayerPos.z - flushStartPos.z;
@@ -227,7 +225,7 @@ public class Blink {
 
                 NetworkUtility.sendMoveRelative(px, py, pz, move.isOnGround(), move.horizontalCollision());
             } else {
-                mc.player.connection.send(p);
+                NetworkUtility.sendPacket(p);
             }
 
             flushIndex++;
@@ -266,17 +264,15 @@ public class Blink {
         flushStartPos = null;
         flushTotalHPos = 0.0;
         idleTicker = 0;
-        flushStartTime = 0L;
     }
     public void onDisable() {
         if (!packetBuffer.isEmpty()) {
-            startFlush();
-            flushing = true;
-            flushIndex = 0;
-            flushStartTime = System.currentTimeMillis();
-            var mc = MinecraftWrapper.getInstance();
-            if (mc.player != null) {
-                flushStartPos = mc.player.position();
+        startFlush();
+        flushing = true;
+        flushIndex = 0;
+        var mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) {
+                flushStartPos = mc.getPlayer().position();
             }
             for (int i = 0; i < packetBuffer.size(); i++) {
                 continueFlush();

@@ -1,6 +1,5 @@
 package ravex.utility.network;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.core.Direction;
@@ -27,7 +26,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Contract;
 
 public class NetworkUtility {
-    private static Minecraft mc() { return MinecraftWrapper.getInstance(); }
+    private static MinecraftWrapper mc() { return MinecraftWrapper.getWrapper(); }
 
     public static void sendStartDestroy(BlockPos pos, Direction dir, int seq) {
         var c = mc().getConnection();
@@ -140,7 +139,7 @@ public class NetworkUtility {
     public static void sendPlayerCommand(ServerboundPlayerCommandPacket.Action action) {
         var c = mc().getConnection();
         if (c != null)
-            c.send(new ServerboundPlayerCommandPacket(mc().player, action));
+            c.send(new ServerboundPlayerCommandPacket(mc().getPlayer(), action));
     }
 
     public static void sendPacket(Packet<?> packet) {
@@ -156,7 +155,7 @@ public class NetworkUtility {
     }
 
     public static void sendChat(String message) {
-        var p = mc().player;
+        var p = mc().getPlayer();
         if (p != null)
             p.connection.sendChat(message);
     }
@@ -209,8 +208,8 @@ public class NetworkUtility {
 
     public static void displayClientMessage(String message) {
         var mc = mc();
-        if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal(message), false);
+        if (mc.getPlayer() != null) {
+            mc.getPlayer().displayClientMessage(Component.literal(message), false);
         }
     }
 

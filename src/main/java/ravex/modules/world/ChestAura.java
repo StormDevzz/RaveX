@@ -43,9 +43,9 @@ public class ChestAura {
         placedChests.clear();
     }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        var p = mc.player;
-        if (p == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null) return;
         long now = System.currentTimeMillis();
         double durationMs = fadeSpeed * 1000.0;
         placedChests.removeIf(chest -> (now - chest.placeTime) > durationMs);
@@ -67,7 +67,7 @@ public class ChestAura {
         long targetPacked = 0;
         boolean hasTarget = false;
         double closestDistSq = r * r;
-        for (var entity : mc.level.entitiesForRendering()) {
+        for (var entity : mc.getLevel().entitiesForRendering()) {
             if (entity == p || !entity.isAlive() || !(entity instanceof net.minecraft.world.entity.LivingEntity)) continue;
             if (p.distanceTo(entity) > r) continue;
             var entityPos = entity.blockPosition();
@@ -75,9 +75,9 @@ public class ChestAura {
             for (var dir : net.minecraft.core.Direction.values()) {
                 if (dir == net.minecraft.core.Direction.DOWN || dir == net.minecraft.core.Direction.UP) continue;
                 int ax = ex + dir.getStepX(), ay = ey + dir.getStepY(), az = ez + dir.getStepZ();
-                if (BlockUtility.isAir(mc.level, ax, ay, az)) {
+                if (BlockUtility.isAir(mc.getLevel(), ax, ay, az)) {
                     int by = BlockUtility.belowY(ay);
-                    if (BlockUtility.isSolid(mc.level, ax, by, az)) {
+                    if (BlockUtility.isSolid(mc.getLevel(), ax, by, az)) {
                         double distSq = p.distanceToSqr(ax + 0.5, ay + 0.5, az + 0.5);
                         if (distSq < closestDistSq) {
                             closestDistSq = distSq;
@@ -97,9 +97,9 @@ public class ChestAura {
                         int wx = px + x, wy = py + y, wz = pz + z;
                         double distSq = p.distanceToSqr(wx + 0.5, wy + 0.5, wz + 0.5);
                         if (distSq < closestDistSq) {
-                            if (BlockUtility.isAir(mc.level, wx, wy, wz)) {
+                            if (BlockUtility.isAir(mc.getLevel(), wx, wy, wz)) {
                                 int by = BlockUtility.belowY(wy);
-                                if (BlockUtility.isSolid(mc.level, wx, by, wz)) {
+                                if (BlockUtility.isSolid(mc.getLevel(), wx, by, wz)) {
                                     closestDistSq = distSq;
                                     targetPacked = BlockUtility.packPos(wx, wy, wz);
                                     hasTarget = true;

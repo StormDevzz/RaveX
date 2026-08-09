@@ -18,8 +18,8 @@ public class AutoSoup {
     public boolean hotbarOnly = true;
     private long lastUse = 0;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        net.minecraft.client.player.LocalPlayer player = mc.player;
+        var mc = MinecraftWrapper.getWrapper();
+        net.minecraft.client.player.LocalPlayer player = mc.getPlayer();
         if (player == null) return;
         long now = System.currentTimeMillis();
         if (now - lastUse < 500) return;

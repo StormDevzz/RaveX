@@ -52,22 +52,22 @@ public class NewChunks {
     }
     private static native int nativeAnalyzeChunk(String[] blockNames, int[] blockYs);
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         if (loadedChunks.size() > 3000) loadedChunks.clear();
         if (visitedChunks.size() > 3000) visitedChunks.clear();
         if (old112Chunks.size() > 3000) old112Chunks.clear();
         if (analyzedChunks.size() > 3000) analyzedChunks.clear();
-        int renderDist = mc.options.renderDistance().get();
-        int pChunkX = mc.player.chunkPosition().x;
-        int pChunkZ = mc.player.chunkPosition().z;
+        int renderDist = mc.getOptions().renderDistance().get();
+        int pChunkX = mc.getPlayer().chunkPosition().x;
+        int pChunkZ = mc.getPlayer().chunkPosition().z;
         for (int dx = -renderDist; dx <= renderDist; dx++) {
             for (int dz = -renderDist; dz <= renderDist; dz++) {
                 int cx = pChunkX + dx;
                 int cz = pChunkZ + dz;
                 ChunkPos pos = new ChunkPos(cx, cz);
-                if (mc.level.getChunkSource().hasChunk(cx, cz) && !analyzedChunks.contains(pos)) {
-                    var chunk = mc.level.getChunkSource().getChunk(cx, cz, false);
+                if (mc.getLevel().getChunkSource().hasChunk(cx, cz) && !analyzedChunks.contains(pos)) {
+                    var chunk = mc.getLevel().getChunkSource().getChunk(cx, cz, false);
                     if (chunk != null) {
                         analyzeChunk(chunk);
                     }
@@ -112,9 +112,9 @@ public class NewChunks {
         if (result == 2) {
             old112Chunks.add(pos);
             if (notify) {
-                MinecraftWrapper.getInstance().execute(() -> {
-                    var mc = MinecraftWrapper.getInstance();
-                    if (mc.player != null) {
+                MinecraftWrapper.getWrapper().execute(() -> {
+                    var mc = MinecraftWrapper.getWrapper();
+                    if (mc.getPlayer() != null) {
                         int color = Modules.get(Notifications.class).messageColor;
                         Component message = Component.literal("[")
                             .withStyle(style -> style.withColor(0x7F7F7F))
@@ -122,7 +122,7 @@ public class NewChunks {
                             .append(Component.literal("] ").withStyle(style -> style.withColor(0x7F7F7F)))
                             .append(Component.literal("Old 1.12.2 chunk found at: ").withStyle(style -> style.withColor(0x7F7F7F)))
                             .append(Component.literal(pos.getMinBlockX() + ", " + pos.getMinBlockZ()).withStyle(style -> style.withColor(color)));
-                        mc.player.displayClientMessage(message, false);
+                        mc.getPlayer().displayClientMessage(message, false);
                     }
                 });
             }
@@ -138,19 +138,19 @@ public class NewChunks {
 
     public void onPacketReceive(Object packet) {
         if (!Modules.enabled(NewChunks.class)) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         if (packet instanceof ClientboundLevelChunkWithLightPacket chunkPacket) {
         } else if (packet instanceof ClientboundBlockUpdatePacket blockPacket) {
             net.minecraft.core.BlockPos bp = blockPacket.getPos();
             ChunkPos cp = new ChunkPos(bp);
-            if (mc.player.chunkPosition().x != cp.x || mc.player.chunkPosition().z != cp.z) {
+            if (mc.getPlayer().chunkPosition().x != cp.x || mc.getPlayer().chunkPosition().z != cp.z) {
                 visitedChunks.add(cp);
             }
         } else if (packet instanceof ClientboundSectionBlocksUpdatePacket sectionPacket) {
             sectionPacket.runUpdates((bp, state) -> {
                 ChunkPos cp = new ChunkPos(bp);
-                if (mc.player.chunkPosition().x != cp.x || mc.player.chunkPosition().z != cp.z) {
+                if (mc.getPlayer().chunkPosition().x != cp.x || mc.getPlayer().chunkPosition().z != cp.z) {
                     visitedChunks.add(cp);
                 }
             });
@@ -158,10 +158,10 @@ public class NewChunks {
     }
     public void render(Matrix4f modelViewMatrix, net.minecraft.client.Camera camera) {
         if (!render) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         net.minecraft.world.phys.Vec3 camPos = camera.position();
-        float y = (float) (mc.level.getMinY() - camPos.y + 0.01f);
+        float y = (float) (mc.getLevel().getMinY() - camPos.y + 0.01f);
         Matrix4f reusable = new Matrix4f();
         if (renderLoaded) {
             int loadedVal = loadedColor;

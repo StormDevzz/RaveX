@@ -19,8 +19,6 @@ public class StashFinder {
     @Parameter(name = "ChatLog")
     public boolean logToChat = true;
     private final List<StashEntry> stashes = new ArrayList<>();
-    private double lastCheckX, lastCheckY, lastCheckZ;
-    private boolean hasChecked = false;
 
     public void onContainerOpened(net.minecraft.core.BlockPos pos, List<net.minecraft.world.item.ItemStack> contents) {
         if (!Modules.enabled(StashFinder.class)) return;
@@ -36,9 +34,9 @@ public class StashFinder {
         StashEntry entry = new StashEntry(pos, totalItems, valuableCount, System.currentTimeMillis());
         stashes.add(entry);
         if (logToChat) {
-            var mc = MinecraftWrapper.getInstance();
-            if (mc.player != null) {
-                mc.player.displayClientMessage(
+            var mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) {
+                mc.getPlayer().displayClientMessage(
                     net.minecraft.network.chat.Component.literal(
                         String.format("§6[StashFinder] §eFound stash at §f%s §e(%d items, %d valuable)",
                             pos.toShortString(), totalItems, valuableCount)),

@@ -17,7 +17,7 @@ import ravex.modules.Modules;
 public class MixinHoneyBlock {
 
     @Inject(method = "entityInside", at = @At("HEAD"), cancellable = true)
-    private void onEntityInside(BlockState state, Level level, BlockPos pos, Entity entity, CallbackInfo ci) {
+    private void onEntityInside(BlockState state, Level level, BlockPos pos, Entity entity, net.minecraft.world.entity.InsideBlockEffectApplier insideBlockEffectApplier, boolean isInside, CallbackInfo ci) {
         if (entity instanceof LocalPlayer) {
             if (Modules.enabled(NoSlow.class) && Modules.get(NoSlow.class).blocks) {
                 ci.cancel();

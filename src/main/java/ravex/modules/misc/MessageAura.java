@@ -16,11 +16,11 @@ public class MessageAura {
     private long lastMessageTime;
 
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
 
         if (System.currentTimeMillis() - lastMessageTime >= interval * 1000) {
-            mc.player.displayClientMessage(Component.literal(message), false);
+            mc.getPlayer().displayClientMessage(Component.literal(message), false);
             lastMessageTime = System.currentTimeMillis();
         }
     }

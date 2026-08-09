@@ -1,7 +1,7 @@
 package ravex.modules.world;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;
 import java.util.List;
@@ -23,7 +23,7 @@ public class AutoShear {
         var target = (net.minecraft.world.entity.animal.sheep.Sheep) null;
         double closestDist = range;
         for (var entity : mc.getLevel().entitiesForRendering()) {
-            if (entity instanceof net.minecraft.world.entity.animal.sheep.Sheep sheep && MobUtility.isShearable(sheep)) {
+            if (entity instanceof net.minecraft.world.entity.animal.sheep.Sheep sheep && EntityUtility.isShearable(sheep)) {
                 double dist = p.distanceTo(sheep);
                 if (dist < closestDist) {
                     closestDist = dist;

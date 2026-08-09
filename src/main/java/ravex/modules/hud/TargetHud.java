@@ -9,7 +9,7 @@ import net.minecraft.resources.Identifier;
 
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.item.ItemStack;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.modules.combat.KillAura;

@@ -24,7 +24,7 @@ public class LayoutManager {
     private LayoutManager() {
         File baseDir = null;
         try {
-            baseDir = MinecraftWrapper.getInstance().gameDirectory;
+            baseDir = MinecraftWrapper.getWrapper().getRaw().gameDirectory;
         } catch (Throwable ignored) {}
         if (baseDir == null) baseDir = new File(".");
         layoutFile = new File(baseDir, "RaveX/clickgui_layout.json");
@@ -54,8 +54,8 @@ public class LayoutManager {
 
     public void save(Map<String, CategoryPanel> panels) {
 
-        int sw = MinecraftWrapper.getInstance().getWindow().getGuiScaledWidth();
-        int sh = MinecraftWrapper.getInstance().getWindow().getGuiScaledHeight();
+        int sw = MinecraftWrapper.getWrapper().getWindow().getGuiScaledWidth();
+        int sh = MinecraftWrapper.getWrapper().getWindow().getGuiScaledHeight();
         if (sw <= 0) sw = 960;
         if (sh <= 0) sh = 540;
         save(panels, sw, sh, 1.0f);

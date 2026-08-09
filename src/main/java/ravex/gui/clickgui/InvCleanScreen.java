@@ -521,6 +521,6 @@ public class InvCleanScreen extends Screen {
         if (ModuleManager.isEnabled(InvClean.class)) {
             Modules.setEnabled(InvClean.class, false);
         }
-        MinecraftWrapper.getInstance().setScreen(parent);
+        MinecraftWrapper.getWrapper().setScreen(parent);
     }
 }

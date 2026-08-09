@@ -1,7 +1,7 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.network.NetworkUtility;
 import java.util.ArrayList;
@@ -62,13 +62,13 @@ public class Trigger {
             return;
         }
 
-        var target = MobUtility.asLivingEntity(InventoryUtility.getHitEntity(mc));
-        if (target == null || !MobUtility.isAlive(target) || MobUtility.isSelf(target) || MobUtility.isArmorStand(target)) {
+        var target = EntityUtility.asLivingEntity(InventoryUtility.getHitEntity(mc));
+        if (target == null || !EntityUtility.isAlive(target) || EntityUtility.isSelf(target) || EntityUtility.isArmorStand(target)) {
             currentTarget = null;
             return;
         }
 
-        if (MobUtility.distanceToPlayer(target) > range) {
+        if (EntityUtility.distanceToPlayer(target) > range) {
             currentTarget = null;
             return;
         }
@@ -77,15 +77,15 @@ public class Trigger {
             currentTarget = null;
             return;
         }
-        if (!targets.contains("Players") && MobUtility.isPlayer(target)) {
+        if (!targets.contains("Players") && EntityUtility.isPlayer(target)) {
             currentTarget = null;
             return;
         }
-        if (!targets.contains("Monsters") && MobUtility.isHostile(target)) {
+        if (!targets.contains("Monsters") && EntityUtility.isHostile(target)) {
             currentTarget = null;
             return;
         }
-        if (!targets.contains("Passives") && MobUtility.isPassive(target)) {
+        if (!targets.contains("Passives") && EntityUtility.isPassive(target)) {
             currentTarget = null;
             return;
         }

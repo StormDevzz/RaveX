@@ -17,15 +17,15 @@ public class PacketFly {
     @Parameter(name = "Vertical", min = 0.0, max = 1.0, step = 0.05)
     public double vertical = 0.2;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.player.connection == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getConnection() == null) return;
         String m = mode;
         double spd = speed;
         double vert = vertical;
-        double x = mc.player.getX();
-        double y = mc.player.getY();
-        double z = mc.player.getZ();
-        boolean onGround = mc.player.onGround();
+        double x = mc.getPlayer().getX();
+        double y = mc.getPlayer().getY();
+        double z = mc.getPlayer().getZ();
+        boolean onGround = mc.getPlayer().onGround();
         if (m.equals("Fast")) {
             NetworkUtility.sendMoveRelative(x, y + vert, z, false, onGround);
             NetworkUtility.sendMoveRelative(x, y - 0.05, z, true, onGround);

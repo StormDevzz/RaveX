@@ -32,10 +32,10 @@ public class AntiAfk {
                 mouseMove, false,
                 keyPress, lookAround,
                 jump, rotRange);
-            var mc = MinecraftWrapper.getInstance();
+            var mc = MinecraftWrapper.getWrapper();
             if (ok) {
-                if (debugLog && mc.player != null) {
-                    mc.player.displayClientMessage(
+                if (debugLog && mc.getPlayer() != null) {
+                    mc.getPlayer().displayClientMessage(
                         Component.literal("§7[§cRaveX§7] §aAntiAFK started (native)"), false);
                 }
             } else {
@@ -49,16 +49,16 @@ public class AntiAfk {
         try {
             nativeStop();
         } catch (UnsatisfiedLinkError ignored) {}
-        var mc = MinecraftWrapper.getInstance();
-        if (debugLog && mc.player != null) {
-            mc.player.displayClientMessage(
+        var mc = MinecraftWrapper.getWrapper();
+        if (debugLog && mc.getPlayer() != null) {
+            mc.getPlayer().displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §cAntiAFK stopped"), false);
         }
     }
     private void startFallback() {
-        var mc = MinecraftWrapper.getInstance();
-        if (debugLog && mc.player != null) {
-            mc.player.displayClientMessage(
+        var mc = MinecraftWrapper.getWrapper();
+        if (debugLog && mc.getPlayer() != null) {
+            mc.getPlayer().displayClientMessage(
                 Component.literal("§7[§cRaveX§7] §eAntiAFK fallback (Java)"), false);
         }
     }

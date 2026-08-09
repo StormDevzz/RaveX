@@ -2,7 +2,6 @@ package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.MobUtility;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -17,7 +16,7 @@ public class SmallUser {
 
     public boolean shouldScale(net.minecraft.world.entity.player.Player player) {
         if (!Modules.enabled(SmallUser.class)) return false;
-        boolean isSelf = MobUtility.isSelf(player);
+        boolean isSelf = EntityUtility.isSelf(player);
         String t = target;
         if (t.equals("Self")) {
             return isSelf;

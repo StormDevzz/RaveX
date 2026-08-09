@@ -2,7 +2,6 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.MobUtility;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
@@ -107,10 +106,10 @@ public class ShieldFucker {
         double bestDist = Double.MAX_VALUE;
         for (var e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
-            if (MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
-            if (MobUtility.isArmorStand(le)) continue;
-            if (!targetPlayers && MobUtility.isPlayer(le)) continue;
-            if (!targetMonsters && MobUtility.isHostile(le)) continue;
+            if (EntityUtility.isSelf(le) || EntityUtility.isDead(le)) continue;
+            if (EntityUtility.isArmorStand(le)) continue;
+            if (!targetPlayers && EntityUtility.isPlayer(le)) continue;
+            if (!targetMonsters && EntityUtility.isHostile(le)) continue;
             if (!hasShield(le)) continue;
             if (!le.isBlocking()) continue;
             double dist = mc.getPlayer().distanceTo(le);
@@ -156,7 +155,7 @@ public class ShieldFucker {
             return;
         }
         if (mc.getPlayer().getAttackStrengthScale(0.0f) >= 0.85f) {
-            MobUtility.attack(mc, target);
+            EntityUtility.attack(mc, target);
             ravex.utility.player.SwingUtility.swingMainHand(mc.getPlayer());
         }
     }
@@ -193,7 +192,7 @@ public class ShieldFucker {
         }
         if (action.shouldBreak) {
             if (mc.getPlayer().getAttackStrengthScale(0.0f) >= 0.85f) {
-                MobUtility.attack(mc, le);
+                EntityUtility.attack(mc, le);
                 ravex.utility.player.SwingUtility.swingMainHand(mc.getPlayer());
             }
         }
@@ -203,11 +202,11 @@ public class ShieldFucker {
         double maxDist = range;
         for (var e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
-            if (MobUtility.isSelf(le) || MobUtility.isDead(le)) continue;
-            if (MobUtility.isArmorStand(le)) continue;
-            if (!targetPlayers && MobUtility.isPlayer(le)) continue;
-            if (!targetMonsters && MobUtility.isHostile(le)) continue;
-            if (MobUtility.distanceToPlayer(le) > maxDist) continue;
+            if (EntityUtility.isSelf(le) || EntityUtility.isDead(le)) continue;
+            if (EntityUtility.isArmorStand(le)) continue;
+            if (!targetPlayers && EntityUtility.isPlayer(le)) continue;
+            if (!targetMonsters && EntityUtility.isHostile(le)) continue;
+            if (EntityUtility.distanceToPlayer(le) > maxDist) continue;
             if (!(le instanceof net.minecraft.world.entity.player.Player player)) continue;
             boolean shield = InventoryUtility.isItem(player.getOffhandItem(), "shield")
                 || InventoryUtility.isItem(player.getMainHandItem(), "shield");

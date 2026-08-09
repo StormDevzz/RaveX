@@ -6,7 +6,7 @@ import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.misc.EntityUtility;
 
 import net.minecraft.world.item.BowItem;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AimAssist", category = "Combat")
 public class AimAssist {
@@ -19,33 +19,33 @@ public class AimAssist {
     @Parameter(name = "BowOnly")
     public boolean bowOnly = false;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        if (bowOnly && !(mc.player.getMainHandItem().getItem() instanceof BowItem)) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        if (bowOnly && !(mc.getPlayer().getMainHandItem().getItem() instanceof BowItem)) {
             return;
         }
         net.minecraft.world.entity.LivingEntity target = null;
         double bestDist = Double.MAX_VALUE;
-        for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
+        for (net.minecraft.world.entity.Entity entity : mc.getLevel().entitiesForRendering()) {
             if (!(entity instanceof net.minecraft.world.entity.LivingEntity p)) continue;
-            if (MobUtility.isSelf(p) || !MobUtility.isAlive(p)) continue;
+            if (EntityUtility.isSelf(p) || !EntityUtility.isAlive(p)) continue;
             String mode = targetMode;
-            if (mode.equals("Players") && !MobUtility.isPlayer(p)) continue;
-            if (mode.equals("Monsters") && !MobUtility.isHostile(p)) continue;
-            double dist = MobUtility.distanceToPlayer(p);
+            if (mode.equals("Players") && !EntityUtility.isPlayer(p)) continue;
+            if (mode.equals("Monsters") && !EntityUtility.isHostile(p)) continue;
+            double dist = EntityUtility.distanceToPlayer(p);
             if (dist < bestDist && dist <= 40.0) {
                 target = p;
                 bestDist = dist;
             }
         }
         if (target != null) {
-            float[] angles = RotationUtility.anglesTo(mc.player, target);
-            float diffYaw = RotationUtility.diffYaw(mc.player.getYRot(), angles[0]);
-            float diffPitch = RotationUtility.diffPitch(mc.player.getXRot(), angles[1]);
+            float[] angles = RotationUtility.anglesTo(mc.getPlayer(), target);
+            float diffYaw = RotationUtility.diffYaw(mc.getPlayer().getYRot(), angles[0]);
+            float diffPitch = RotationUtility.diffPitch(mc.getPlayer().getXRot(), angles[1]);
             if (Math.abs(diffYaw) < fov) {
                 float speedVal = (float) speed;
-                mc.player.setYRot(mc.player.getYRot() + (diffYaw / speedVal));
-                mc.player.setXRot(mc.player.getXRot() + (diffPitch / speedVal));
+                mc.getPlayer().setYRot(mc.getPlayer().getYRot() + (diffYaw / speedVal));
+                mc.getPlayer().setXRot(mc.getPlayer().getXRot() + (diffPitch / speedVal));
             }
         }
     }

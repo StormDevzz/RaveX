@@ -2,7 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.SwingUtility;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
@@ -44,7 +44,7 @@ public class AutoClicker {
         }
         boolean targetValid = false;
         if (onlyOnTarget) {
-            if (MobUtility.asLivingEntity(mc.getCrosshairPickEntity()) != null) {
+            if (EntityUtility.asLivingEntity(mc.getCrosshairPickEntity()) != null) {
                 targetValid = true;
             }
         } else {
@@ -81,7 +81,7 @@ public class AutoClicker {
     }
     private void clickLeft(MinecraftWrapper mc) {
         mc.getOptions().keyAttack.setDown(true);
-        if (mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult hit && MobUtility.asLivingEntity(hit.getEntity()) != null) {
+        if (mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult hit && EntityUtility.asLivingEntity(hit.getEntity()) != null) {
             mc.getGameMode().attack(mc.getPlayer(), hit.getEntity());
         }
         SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);

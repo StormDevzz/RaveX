@@ -1,6 +1,5 @@
 package ravex.utility.sound;
 
-import net.minecraft.client.Minecraft;
 import ravex.event.Subscribe;
 import ravex.event.client.SoundEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -20,7 +19,7 @@ public class SoundEventDispatcherUtility {
         float finalVolume = event.getVolume() * multiplier;
         if (finalVolume <= 0.0f) return;
 
-        Minecraft mc = MinecraftWrapper.getInstance();
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
         if (mc == null) return;
 
         ensureMasterVolume(mc);
@@ -28,7 +27,7 @@ public class SoundEventDispatcherUtility {
         final float fv = finalVolume;
         final net.minecraft.sounds.SoundEvent se = mcSound;
 
-        if (mc.isSameThread()) {
+        if (mc.isOnSameThread()) {
             dispatchSound(mc, se, fv);
         } else {
             mc.execute(() -> dispatchSound(mc, se, fv));
@@ -52,14 +51,14 @@ public class SoundEventDispatcherUtility {
         };
     }
 
-    private void ensureMasterVolume(Minecraft mc) {
+    private void ensureMasterVolume(MinecraftWrapper mc) {
         try {
-            if (mc.options != null) {
-                var masterOpt = mc.options.getSoundSourceOptionInstance(net.minecraft.sounds.SoundSource.MASTER);
+            if (mc.getOptions() != null) {
+                var masterOpt = mc.getOptions().getSoundSourceOptionInstance(net.minecraft.sounds.SoundSource.MASTER);
                 if (masterOpt != null && masterOpt.get() <= 0.0) {
                     masterOpt.set(1.0);
                     ravex.RaveX.LOGGER.info("[Sound] Master Volume was 0.0, auto-set to 1.0 to enable client sounds.");
-                    mc.options.save();
+                    mc.getOptions().save();
                 }
             }
         } catch (Exception e) {
@@ -67,13 +66,13 @@ public class SoundEventDispatcherUtility {
         }
     }
 
-    private void dispatchSound(Minecraft mc, net.minecraft.sounds.SoundEvent soundEvent, float volume) {
+    private void dispatchSound(MinecraftWrapper mc, net.minecraft.sounds.SoundEvent soundEvent, float volume) {
         try {
-            if (mc.getSoundManager() == null) return;
-            if (mc.player != null) {
-                mc.player.playSound(soundEvent, volume, 1.0f);
+            if (mc.getRaw().getSoundManager() == null) return;
+            if (mc.getPlayer() != null) {
+                mc.getPlayer().playSound(soundEvent, volume, 1.0f);
             } else {
-                mc.getSoundManager().play(SimpleSoundInstance.forUI(soundEvent, 1.0f, volume));
+                mc.getRaw().getSoundManager().play(SimpleSoundInstance.forUI(soundEvent, 1.0f, volume));
             }
         } catch (Exception e) {
             ravex.RaveX.LOGGER.warn("[Sound] Playback error: {}", e.getMessage());

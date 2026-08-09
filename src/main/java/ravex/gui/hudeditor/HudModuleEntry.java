@@ -1,6 +1,6 @@
 package ravex.gui.hudeditor;
 import net.minecraft.client.gui.GuiGraphics;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.modules.Module;
 import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;

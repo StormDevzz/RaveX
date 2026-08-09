@@ -11,20 +11,20 @@ public class FreeLook {
     private float lookPitch = 0.0f;
     private int originalPerspective = 0;
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player != null) {
-            lookYaw = mc.player.getYRot();
-            lookPitch = mc.player.getXRot();
-            originalPerspective = mc.options.getCameraType().ordinal();
-            mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() != null) {
+            lookYaw = mc.getPlayer().getYRot();
+            lookPitch = mc.getPlayer().getXRot();
+            originalPerspective = mc.getOptions().getCameraType().ordinal();
+            mc.getOptions().setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
         }
     }
     public void onDisable() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.options != null) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getOptions() != null) {
             var types = net.minecraft.client.CameraType.values();
             if (originalPerspective >= 0 && originalPerspective < types.length) {
-                mc.options.setCameraType(types[originalPerspective]);
+                mc.getOptions().setCameraType(types[originalPerspective]);
             }
         }
     }

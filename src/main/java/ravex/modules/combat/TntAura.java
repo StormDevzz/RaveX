@@ -2,7 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
@@ -263,13 +263,13 @@ public class TntAura {
         String typeFilter = targetType;
         for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
-            if (MobUtility.isSelf(le)) continue;
-            if (MobUtility.isDead(le)) continue;
-            if (typeFilter.equals("Players") && !MobUtility.isPlayer(le)) continue;
+            if (EntityUtility.isSelf(le)) continue;
+            if (EntityUtility.isDead(le)) continue;
+            if (typeFilter.equals("Players") && !EntityUtility.isPlayer(le)) continue;
             if (typeFilter.equals("Monsters") && !(le instanceof net.minecraft.world.entity.monster.Monster)) continue;
-            double dist = MobUtility.distanceToPlayer(le);
+            double dist = EntityUtility.distanceToPlayer(le);
             if (dist > maxDist) continue;
-            double metric = mode.equals("LowestHP") ? MobUtility.getHealth(le) : dist;
+            double metric = mode.equals("LowestHP") ? EntityUtility.getHealth(le) : dist;
             if (metric < bestMetric) {
                 bestMetric = metric;
                 closest = le;

@@ -131,13 +131,13 @@ public class FontRenderUtility {
         }
 
         if (Math.abs(scale - 1.0) < 0.001) {
-            graphics.drawString(MinecraftWrapper.getInstance().font, component, x, y, color, shadow);
+            graphics.drawString(MinecraftWrapper.getWrapper().getFont(), component, x, y, color, shadow);
         } else {
             var pose = graphics.pose();
             pose.pushMatrix();
             pose.translate((float) x, (float) y);
             pose.scale((float) scale, (float) scale);
-            graphics.drawString(MinecraftWrapper.getInstance().font, component, 0, 0, color, shadow);
+            graphics.drawString(MinecraftWrapper.getWrapper().getFont(), component, 0, 0, color, shadow);
             pose.popMatrix();
         }
     }
@@ -148,11 +148,11 @@ public class FontRenderUtility {
 
     public static int getStringWidth(FontType fontType, String text) {
         double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
-        return (int) (MinecraftWrapper.getInstance().font.width(getFontComponent(fontType, text)) * scale);
+        return (int) (MinecraftWrapper.getWrapper().getFont().width(getFontComponent(fontType, text)) * scale);
     }
 
     public static int getFontHeight() {
         double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
-        return (int) (MinecraftWrapper.getInstance().font.lineHeight * scale);
+        return (int) (MinecraftWrapper.getWrapper().getFont().lineHeight * scale);
     }
 }

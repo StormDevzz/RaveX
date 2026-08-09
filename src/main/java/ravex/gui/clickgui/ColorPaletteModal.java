@@ -88,7 +88,7 @@ public class ColorPaletteModal {
 
         graphics.fill(0, 0, screenWidth, screenHeight, 0x9007070B);
 
-        long win = MinecraftWrapper.getInstance().getWindow().handle();
+        long win = MinecraftWrapper.getWrapper().getWindow().handle();
         boolean lmb = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
         if (!lmb) {
             draggingSV = draggingHue = draggingAlpha = false;
@@ -312,8 +312,8 @@ public class ColorPaletteModal {
         int mx = (int) mouseX;
         int my = (int) mouseY;
 
-        int screenWidth = MinecraftWrapper.getInstance().getWindow().getGuiScaledWidth();
-        int screenHeight = MinecraftWrapper.getInstance().getWindow().getGuiScaledHeight();
+        int screenWidth = MinecraftWrapper.getWrapper().getWindow().getGuiScaledWidth();
+        int screenHeight = MinecraftWrapper.getWrapper().getWindow().getGuiScaledHeight();
         int mxLeft = (screenWidth - modalWidth) / 2;
         int myTop = (screenHeight - modalHeight) / 2;
 

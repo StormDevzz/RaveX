@@ -68,17 +68,17 @@ public class Trails {
     }
 
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.level == null || mc.player == null)
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getLevel() == null || mc.getPlayer() == null)
             return;
         long now = System.currentTimeMillis();
         purgeOldPoints(entityTrails, (long) (time * 1000.0), now);
         purgeOldPoints(playerTrails, (long) (playerTime * 1000.0), now);
         if (self) {
-            addPoint(entityTrails, mc.player.getId(), mc.player.position(), now);
+            addPoint(entityTrails, mc.getPlayer().getId(), mc.getPlayer().position(), now);
         }
-        for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
-            if (entity == mc.player)
+        for (net.minecraft.world.entity.Entity entity : mc.getLevel().entitiesForRendering()) {
+            if (entity == mc.getPlayer())
                 continue;
             if (entity instanceof net.minecraft.world.entity.player.Player && playerEnabled) {
                 addPoint(playerTrails, entity.getId(), entity.position(), now);

@@ -9,7 +9,7 @@ public class InventoryManager {
     private InventoryManager() {}
 
     public int findItemInHotbar(net.minecraft.world.item.Item item) {
-        var player = MinecraftWrapper.getInstance().player;
+        var player = MinecraftWrapper.getWrapper().getPlayer();
         if (player == null) return -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = player.getInventory().getItem(i);
@@ -21,7 +21,7 @@ public class InventoryManager {
     }
 
     public int findItemInInventory(net.minecraft.world.item.Item item) {
-        var player = MinecraftWrapper.getInstance().player;
+        var player = MinecraftWrapper.getWrapper().getPlayer();
         if (player == null) return -1;
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             ItemStack stack = player.getInventory().getItem(i);

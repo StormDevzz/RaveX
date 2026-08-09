@@ -4,7 +4,7 @@ import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemCooldowns;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
@@ -31,18 +31,18 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COOLDOWN_WHITE;
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         int col = 0xFFFFCC33;
         boolean shadow = true;
         for (var p : getParameters()) {
             if (p instanceof ColorParameter cp && cp.getName().equals("Color")) col = cp.getValue();
             if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) shadow = bp.getValue();
         }
-        ItemCooldowns cd = mc.player.getCooldowns();
+        ItemCooldowns cd = mc.getPlayer().getCooldowns();
         Set<String> seen = new HashSet<>();
         List<String> lines = new ArrayList<>();
-        var inv = mc.player.getInventory();
+        var inv = mc.getPlayer().getInventory();
         for (int slot = 0; slot < inv.getContainerSize(); slot++) {
             var stack = inv.getItem(slot);
             if (stack.isEmpty()) continue;

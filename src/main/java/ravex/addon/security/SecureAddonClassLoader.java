@@ -32,19 +32,6 @@ public class SecureAddonClassLoader extends URLClassLoader {
         "jdk.internal"
     ));
 
-    private static final Set<String> ALLOWED_PACKAGES = new HashSet<>(Arrays.asList(
-        "java.lang",
-        "java.util",
-        "java.math",
-        "java.text",
-        "java.io.String",
-        "ravex.addon",
-        "com.google.gson",
-        "org.slf4j",
-        "org.apache.logging",
-        "net.minecraft"
-    ));
-
     private final String addonName;
     private final File addonDir;
 

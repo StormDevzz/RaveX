@@ -18,7 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import org.lwjgl.glfw.GLFW;
 import ravex.RaveX;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
 import java.lang.reflect.Field;
@@ -359,7 +359,7 @@ public class SearchBrowserScreen extends Screen {
     public static void setAtlasFilter(FilterMode mode) {
         try {
             Identifier atlasId = Identifier.fromNamespaceAndPath("minecraft", "textures/atlas/blocks.png");
-            AbstractTexture atlas = MinecraftWrapper.getInstance().getTextureManager().getTexture(atlasId);
+            AbstractTexture atlas = MinecraftWrapper.getWrapper().getTextureManager().getTexture(atlasId);
             if (samplerField == null) {
                 for (Field f : AbstractTexture.class.getDeclaredFields()) {
                     if (GpuSampler.class.isAssignableFrom(f.getType())) {

@@ -16,10 +16,10 @@ public class LagNotify {
     private float smoothedTPS = 20.0f;
     private boolean wasLagging = false;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
         long now = System.currentTimeMillis();
-        long gameTick = mc.level.getGameTime();
+        long gameTick = mc.getLevel().getGameTime();
         if (lastGameTick < 0) {
             lastGameTick = gameTick;
             lastRealTime = now;

@@ -2,7 +2,7 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
@@ -233,20 +233,20 @@ public class Trap {
         String typeFilter = targetType;
         for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
-            if (MobUtility.isSelf(le)) continue;
-            if (MobUtility.isDead(le)) continue;
+            if (EntityUtility.isSelf(le)) continue;
+            if (EntityUtility.isDead(le)) continue;
             if (typeFilter.equals("Players")) {
-                if (!MobUtility.isPlayer(le)) continue;
+                if (!EntityUtility.isPlayer(le)) continue;
             } else if (typeFilter.equals("Monsters")) {
-                if (!MobUtility.isHostile(le)) continue;
+                if (!EntityUtility.isHostile(le)) continue;
             } else if (typeFilter.equals("Passives")) {
-                if (MobUtility.isPlayer(le) || MobUtility.isHostile(le)) continue;
+                if (EntityUtility.isPlayer(le) || EntityUtility.isHostile(le)) continue;
             }
-            double dist = MobUtility.distanceToPlayer(le);
+            double dist = EntityUtility.distanceToPlayer(le);
             if (dist > maxDist) continue;
             double metric = switch (mode) {
                 case "Closest"   -> dist;
-                case "LowestHP" -> MobUtility.getHealth(le);
+                case "LowestHP" -> EntityUtility.getHealth(le);
                 default          -> dist;
             };
             if (metric < bestMetric) {

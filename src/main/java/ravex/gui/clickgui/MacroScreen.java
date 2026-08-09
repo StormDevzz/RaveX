@@ -1,6 +1,5 @@
 package ravex.gui.clickgui;
 
-import net.minecraft.client.Minecraft;
 import ravex.utility.render.FontRenderUtility;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;

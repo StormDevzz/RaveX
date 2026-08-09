@@ -1,4 +1,5 @@
 package ravex.modules.misc;
+import ravex.utility.network.NetworkUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 
@@ -15,15 +16,15 @@ public class AutoAuth {
     public void onEnable() { tickCounter = 0; hasRegistered = false; }
     public void onDisable() { hasRegistered = false; }
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.player.connection == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getPlayer().connection == null) return;
         if (hasRegistered) return;
         tickCounter++;
         if (tickCounter >= (int) delay * 20) {
             String pw = password;
             if (pw.isEmpty()) pw = "r1v2x";
-            mc.player.connection.sendCommand("register " + pw + " " + pw);
-            mc.player.connection.sendCommand("login " + pw);
+            NetworkUtility.sendCommand("register " + pw + " " + pw);
+            NetworkUtility.sendCommand("login " + pw);
             hasRegistered = true;
         }
     }

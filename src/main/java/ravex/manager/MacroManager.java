@@ -1,4 +1,5 @@
 package ravex.manager;
+import ravex.utility.network.NetworkUtility;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -61,8 +62,8 @@ public class MacroManager {
     }
 
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.getWindow() == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getWindow() == null) return;
 
         long handle = mc.getWindow().handle();
         for (Macro macro : macros) {
@@ -78,7 +79,7 @@ public class MacroManager {
     }
 
     private void executeMacro(Macro macro) {
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         for (MacroAction action : macro.getActions()) {
             switch (action.getType()) {
                 case TOGGLE_MODULE:
@@ -86,10 +87,10 @@ public class MacroManager {
                     if (mod != null) mod.toggle();
                     break;
                 case SEND_CHAT:
-                    if (mc.player != null) mc.player.connection.sendChat(action.getData());
+                    if (mc.getPlayer() != null) NetworkUtility.sendChat(action.getData());
                     break;
                 case EXECUTE_COMMAND:
-                    if (mc.player != null) mc.player.connection.sendCommand(action.getData());
+                    if (mc.getPlayer() != null) NetworkUtility.sendCommand(action.getData());
                     break;
                 case DELAY:
                     try {

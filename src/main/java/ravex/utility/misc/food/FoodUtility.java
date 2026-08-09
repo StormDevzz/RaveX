@@ -1,6 +1,5 @@
 package ravex.utility.misc.food;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.InteractionHand;
@@ -89,10 +88,10 @@ public class FoodUtility {
 
     public static List<Data> findAllFoodInHotbar() {
         List<Data> foods = new ArrayList<>();
-        Minecraft mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return foods;
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return foods;
         for (int i = 0; i < 9; i++) {
-            Data data = toFoodData(i, InventoryUtility.getItem(mc.player, i));
+            Data data = toFoodData(i, InventoryUtility.getItem(mc.getPlayer(), i));
             if (data != null) foods.add(data);
         }
         return foods;
@@ -100,10 +99,10 @@ public class FoodUtility {
 
     public static List<Data> findAllFoodInInventory() {
         List<Data> foods = new ArrayList<>();
-        Minecraft mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return foods;
-        for (int i = 0; i < InventoryUtility.getContainerSize(mc.player); i++) {
-            Data data = toFoodData(i, InventoryUtility.getItem(mc.player, i));
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return foods;
+        for (int i = 0; i < InventoryUtility.getContainerSize(mc.getPlayer()); i++) {
+            Data data = toFoodData(i, InventoryUtility.getItem(mc.getPlayer(), i));
             if (data != null) foods.add(data);
         }
         return foods;
@@ -150,10 +149,10 @@ public class FoodUtility {
     }
 
     public static boolean hasFoodInHotbar() {
-        Minecraft mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return false;
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return false;
         for (int i = 0; i < 9; i++) {
-            if (isFood(InventoryUtility.getItem(mc.player, i))) return true;
+            if (isFood(InventoryUtility.getItem(mc.getPlayer(), i))) return true;
         }
         return false;
     }
@@ -176,55 +175,55 @@ public class FoodUtility {
     }
 
     public Result tryEat() {
-        Minecraft mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return Result.FAIL;
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return Result.FAIL;
         if (isEating()) return continueEating(mc);
-        Data best = findBestFoodForHunger(mc.player.getFoodData().getFoodLevel());
+        Data best = findBestFoodForHunger(mc.getPlayer().getFoodData().getFoodLevel());
         if (best == null) return Result.NO_FOOD;
         return startEating(best, mc);
     }
 
     public Result tryEat(int minHunger) {
-        Minecraft mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return Result.FAIL;
-        if (mc.player.getFoodData().getFoodLevel() >= minHunger) return Result.NOT_HUNGRY;
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return Result.FAIL;
+        if (mc.getPlayer().getFoodData().getFoodLevel() >= minHunger) return Result.NOT_HUNGRY;
         return tryEat();
     }
 
-    private Result startEating(Data food, Minecraft mc) {
-        originalSlot = InventoryUtility.getSelectedSlot(mc.player);
+    private Result startEating(Data food, MinecraftWrapper mc) {
+        originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         if (originalSlot != food.getSlot()) {
-            InventoryUtility.selectSlot(mc.player, food.getSlot());
+            InventoryUtility.selectSlot(mc.getPlayer(), food.getSlot());
         }
-        mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+        mc.getGameMode().useItem(mc.getPlayer(), InteractionHand.MAIN_HAND);
         eating = true;
         eatTicks = 35;
         currentFood = food;
         return Result.STARTED;
     }
 
-    private Result continueEating(Minecraft mc) {
-        if (--eatTicks <= 0 || !mc.player.isUsingItem()) {
+    private Result continueEating(MinecraftWrapper mc) {
+        if (--eatTicks <= 0 || !mc.getPlayer().isUsingItem()) {
             finishEating(mc);
             return Result.FINISHED;
         }
         return Result.EATING;
     }
 
-    public void finishEating(Minecraft mc) {
+    public void finishEating(MinecraftWrapper mc) {
         eating = false;
         eatTicks = 0;
         currentFood = null;
         if (originalSlot != -1) {
-            InventoryUtility.selectSlot(mc.player, originalSlot);
+            InventoryUtility.selectSlot(mc.getPlayer(), originalSlot);
             originalSlot = -1;
         }
     }
 
     public void reset() {
         if (eating) {
-            Minecraft mc = MinecraftWrapper.getInstance();
-            if (mc.player != null) finishEating(mc);
+            MinecraftWrapper mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) finishEating(mc);
         }
         eating = false;
         eatTicks = 0;

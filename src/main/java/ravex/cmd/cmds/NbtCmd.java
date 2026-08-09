@@ -14,12 +14,12 @@ public class NbtCmd extends Cmd {
 
     @Override
     public void execute(String[] args) {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
 
-        ItemStack stack = InventoryUtility.getMainHand(mc.player);
+        ItemStack stack = InventoryUtility.getMainHand(mc.getPlayer());
         if (stack.isEmpty()) {
-            stack = InventoryUtility.getOffhand(mc.player);
+            stack = InventoryUtility.getOffhand(mc.getPlayer());
             if (stack.isEmpty()) {
                 CmdReg.print(this, "§cHold an item in your hand.");
                 return;

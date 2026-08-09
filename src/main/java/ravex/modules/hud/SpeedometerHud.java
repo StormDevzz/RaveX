@@ -3,7 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
@@ -31,8 +31,8 @@ private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", 
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
 
         String unitMode = "BPS";
         boolean shadow = true;
@@ -41,8 +41,8 @@ private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", 
             if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) shadow = bp.getValue();
         }
 
-        double dX = mc.player.getX() - mc.player.xo;
-        double dZ = mc.player.getZ() - mc.player.zo;
+        double dX = mc.getPlayer().getX() - mc.getPlayer().xo;
+        double dZ = mc.getPlayer().getZ() - mc.getPlayer().zo;
         double speedBps = Math.sqrt(dX * dX + dZ * dZ) * 20.0;
         double displaySpeed = unitMode.equals("KMH") ? speedBps * 3.6 : speedBps;
 

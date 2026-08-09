@@ -32,7 +32,7 @@ public class NameTags {
         if (target instanceof net.minecraft.world.entity.player.Player) {
             return entities.contains("Players");
         }
-        if (ravex.utility.misc.MobUtility.isHostile(le)) {
+        if (ravex.utility.misc.EntityUtility.isHostile(le)) {
             return entities.contains("Monsters");
         }
         return entities.contains("Passives");

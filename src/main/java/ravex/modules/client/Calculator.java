@@ -13,9 +13,9 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
     }
     public void onEnable() {
         if (!NATIVE.isLoaded()) {
-            var mc = MinecraftWrapper.getInstance();
-            if (mc.player != null) {
-                mc.player.displayClientMessage(
+            var mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) {
+                mc.getPlayer().displayClientMessage(
                     Component.literal("§7[§5Calculator§7] §cNative library not found!"), false);
             }
             Modules.setEnabled(Calculator.class, false);
@@ -29,7 +29,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         }
     }
     public static void onNativeClose() {
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         mc.execute(() -> {
             if (Modules.enabled(Calculator.class)) {
                 Modules.setEnabled(Calculator.class, false);

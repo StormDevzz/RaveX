@@ -1,6 +1,5 @@
 package ravex.utility.sound;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.resources.Identifier;
@@ -91,17 +90,17 @@ public class SoundUtility {
         if (finalVolume <= 0.0f) return;
 
 
-        Minecraft mc = MinecraftWrapper.getInstance();
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
         if (mc == null) return;
 
 
         try {
-            if (mc.options != null) {
-                var masterOpt = mc.options.getSoundSourceOptionInstance(net.minecraft.sounds.SoundSource.MASTER);
+            if (mc.getOptions() != null) {
+                var masterOpt = mc.getOptions().getSoundSourceOptionInstance(net.minecraft.sounds.SoundSource.MASTER);
                 if (masterOpt != null && masterOpt.get() <= 0.0) {
                     masterOpt.set(1.0);
                     ravex.RaveX.LOGGER.info("[Sound] Master Volume was 0.0, auto-set to 1.0 to enable client sounds.");
-                    mc.options.save();
+                    mc.getOptions().save();
                 }
             }
         } catch (Exception e) {
@@ -111,7 +110,7 @@ public class SoundUtility {
         final float fv = finalVolume;
         final SoundEvent se = soundEvent;
 
-        if (mc.isSameThread()) {
+        if (mc.isOnSameThread()) {
 
             dispatchSound(mc, se, fv);
         } else {
@@ -120,13 +119,13 @@ public class SoundUtility {
         }
     }
 
-    private static void dispatchSound(Minecraft mc, SoundEvent soundEvent, float volume) {
+    private static void dispatchSound(MinecraftWrapper mc, SoundEvent soundEvent, float volume) {
         try {
-            if (mc.getSoundManager() == null) return;
-            if (mc.player != null) {
-                mc.player.playSound(soundEvent, volume, 1.0f);
+            if (mc.getRaw().getSoundManager() == null) return;
+            if (mc.getPlayer() != null) {
+                mc.getPlayer().playSound(soundEvent, volume, 1.0f);
             } else {
-                mc.getSoundManager().play(SimpleSoundInstance.forUI(soundEvent, 1.0f, volume));
+                mc.getRaw().getSoundManager().play(SimpleSoundInstance.forUI(soundEvent, 1.0f, volume));
             }
         } catch (Exception e) {
             ravex.RaveX.LOGGER.warn("[Sound] Playback error: " + e.getMessage());

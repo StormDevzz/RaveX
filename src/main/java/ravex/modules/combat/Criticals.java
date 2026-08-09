@@ -2,7 +2,6 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.MobUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
@@ -44,8 +43,8 @@ public class Criticals {
         if (seq == Sequence.LANDING) {
             if (autoAttack && mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult ehr) {
                 net.minecraft.world.entity.Entity target = ehr.getEntity();
-                net.minecraft.world.entity.LivingEntity lt = MobUtility.asLivingEntity(target);
-                if (lt != null && MobUtility.isAlive(lt) && target != player
+                net.minecraft.world.entity.LivingEntity lt = EntityUtility.asLivingEntity(target);
+                if (lt != null && EntityUtility.isAlive(lt) && target != player
                     && player.getAttackStrengthScale(0.0f) >= 0.85f) {
                     NetworkUtility.sendInteractAttack(target, PlayerUtility.isSneaking(player));
                     SwingUtility.swing(player, net.minecraft.world.InteractionHand.MAIN_HAND);

@@ -27,9 +27,9 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
     private final List<net.minecraft.core.BlockPos> foundBlocks = new ArrayList<>();
 
     public final ActionParameter openBrowser = new ActionParameter("Open Browser", () -> {
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         mc.setScreen(new SearchBrowserScreen(
-            mc.screen,
+            mc.getCurrentScreen(),
             id -> selectedBlocks.contains(id),
             (id, sel) -> { if (sel) selectedBlocks.add(id); else selectedBlocks.remove(id); },
             id -> selectedEntities.contains(id),
@@ -68,23 +68,23 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
 
     public void scanBlocks() {
         foundBlocks.clear();
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
 
         int r = (int) range;
-        net.minecraft.core.BlockPos c = mc.player.blockPosition();
+        net.minecraft.core.BlockPos c = mc.getPlayer().blockPosition();
         int minX = c.getX() - r, minZ = c.getZ() - r;
         int maxX = c.getX() + r, maxZ = c.getZ() + r;
 
         for (int cx = minX >> 4; cx <= maxX >> 4; cx++) {
             for (int cz = minZ >> 4; cz <= maxZ >> 4; cz++) {
-                LevelChunk chunk = mc.level.getChunkSource().getChunk(cx, cz, false);
+                LevelChunk chunk = mc.getLevel().getChunkSource().getChunk(cx, cz, false);
                 if (chunk == null) continue;
                 int cxStart = cx << 4, czStart = cz << 4;
                 for (int bx = Math.max(minX, cxStart); bx <= Math.min(maxX, cxStart + 15); bx++) {
                     for (int bz = Math.max(minZ, czStart); bz <= Math.min(maxZ, czStart + 15); bz++) {
-                        int maxY = mc.level.getHeight();
-                        for (int by = mc.level.getMinY(); by < maxY; by++) {
+                        int maxY = mc.getLevel().getHeight();
+                        for (int by = mc.getLevel().getMinY(); by < maxY; by++) {
                             net.minecraft.core.BlockPos p = new net.minecraft.core.BlockPos(bx, by, bz);
                             net.minecraft.world.level.block.state.BlockState state = chunk.getBlockState(p);
                             if (state.isAir()) continue;

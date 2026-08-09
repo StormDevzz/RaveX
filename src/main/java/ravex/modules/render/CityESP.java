@@ -28,21 +28,21 @@ public class CityESP {
     private net.minecraft.core.BlockPos cityBlock;
 
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
 
         net.minecraft.world.entity.player.Player target = null;
         if (Modules.enabled(KillAura.class)) {
             var kaTarget = Modules.get(KillAura.class).getCurrentTarget();
-            if (kaTarget instanceof net.minecraft.world.entity.player.Player p && p.isAlive() && mc.player.distanceTo(p) <= range) {
+            if (kaTarget instanceof net.minecraft.world.entity.player.Player p && p.isAlive() && mc.getPlayer().distanceTo(p) <= range) {
                 target = p;
             }
         }
         if (target == null) {
             double best = range * range;
-            for (var e : mc.level.entitiesForRendering()) {
-                if (e instanceof net.minecraft.world.entity.player.Player p && p != mc.player && p.isAlive()) {
-                    double dist = mc.player.distanceToSqr(p);
+            for (var e : mc.getLevel().entitiesForRendering()) {
+                if (e instanceof net.minecraft.world.entity.player.Player p && p != mc.getPlayer() && p.isAlive()) {
+                    double dist = mc.getPlayer().distanceToSqr(p);
                     if (dist < best) {
                         best = dist;
                         target = p;
@@ -65,12 +65,12 @@ public class CityESP {
 
         for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.Plane.HORIZONTAL) {
             net.minecraft.core.BlockPos pos = player.blockPosition().relative(dir);
-            net.minecraft.world.level.block.state.BlockBehaviour block = MinecraftWrapper.getInstance().level.getBlockState(pos).getBlock();
+            net.minecraft.world.level.block.state.BlockBehaviour block = MinecraftWrapper.getWrapper().getLevel().getBlockState(pos).getBlock();
             if (block != net.minecraft.world.level.block.Blocks.OBSIDIAN && block != net.minecraft.world.level.block.Blocks.NETHERITE_BLOCK
                 && block != net.minecraft.world.level.block.Blocks.CRYING_OBSIDIAN && block != net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR
                 && block != net.minecraft.world.level.block.Blocks.ANCIENT_DEBRIS) continue;
 
-            double distSq = MinecraftWrapper.getInstance().player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+            double distSq = MinecraftWrapper.getWrapper().getPlayer().distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
             if (distSq < bestDistSq) {
                 bestDistSq = distSq;
                 bestPos = pos;

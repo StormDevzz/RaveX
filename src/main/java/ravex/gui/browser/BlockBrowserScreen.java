@@ -11,7 +11,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import org.lwjgl.glfw.GLFW;
-import ravex.gui.clickgui.ColorUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
 import java.util.ArrayList;
@@ -475,8 +475,8 @@ public class BlockBrowserScreen extends Screen {
             id -> ModuleManager.get(ravex.modules.player.Xray.class).isBlockSelected(id),
             (block, sel) -> {
                 ModuleManager.get(ravex.modules.player.Xray.class).setBlockSelected(block, sel);
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.levelRenderer != null) mc.levelRenderer.allChanged();
+                var mc = MinecraftWrapper.getWrapper();
+                if (mc.getLevelRenderer() != null) mc.getLevelRenderer().allChanged();
             },
             null);
     }

@@ -6,7 +6,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PotionUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
@@ -120,7 +120,7 @@ public class KillAura {
         }
 
         var target = ka.currentTarget;
-        if (target == null || MobUtility.isDead(target)) return;
+        if (target == null || EntityUtility.isDead(target)) return;
 
         var eyePos = mc.getPlayer().getEyePosition();
         var aimPos = target.position().add(0, target.getBbHeight() * 0.5, 0);
@@ -268,13 +268,13 @@ public class KillAura {
 
         for (var e : mc.getLevel().entitiesForRendering()) {
             if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
-            if (MobUtility.isSelf(le)) continue;
-            if (MobUtility.isDead(le)) continue;
+            if (EntityUtility.isSelf(le)) continue;
+            if (EntityUtility.isDead(le)) continue;
             if (!targets.contains("Invisibles") && le.isInvisible()) continue;
-            if (MobUtility.isArmorStand(le)) continue;
-            if (!targets.contains("Players") && MobUtility.isPlayer(le)) continue;
-            if (!targets.contains("Monsters") && MobUtility.isHostile(le)) continue;
-            if (!targets.contains("Passives") && MobUtility.isPassive(le)) continue;
+            if (EntityUtility.isArmorStand(le)) continue;
+            if (!targets.contains("Players") && EntityUtility.isPlayer(le)) continue;
+            if (!targets.contains("Monsters") && EntityUtility.isHostile(le)) continue;
+            if (!targets.contains("Passives") && EntityUtility.isPassive(le)) continue;
 
             net.minecraft.world.phys.AABB pa = mc.getPlayer().getBoundingBox();
             net.minecraft.world.phys.AABB ea = le.getBoundingBox();
@@ -322,8 +322,8 @@ public class KillAura {
                 }
             }
         }
-        MobUtility.attack(mc, target);
-        MobUtility.swingHand(mc);
+        EntityUtility.attack(mc, target);
+        EntityUtility.swingHand(mc);
     }
 
     private boolean isSword(net.minecraft.world.item.Item item) {
@@ -410,7 +410,7 @@ public class KillAura {
         if (mc.getPlayer() == null) return;
 
         var target = currentTarget;
-        if (target == null || MobUtility.isDead(target)) return;
+        if (target == null || EntityUtility.isDead(target)) return;
 
         if (targetEspMode.equals("RaveXV1")) {
             float progressVal = prevScanProgress + (scanProgress - prevScanProgress) * tickDelta;

@@ -39,8 +39,8 @@ public class Disabler {
     @Subscribe
     public void onTick(TickEvent.Client event) {
         if (!Modules.enabled(Disabler.class)) return;
-        var mc = MinecraftWrapper.getInstance();
-        if (mc.player == null || mc.getConnection() == null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getConnection() == null) return;
 
         String modeVal = mode;
         tickCounter++;
@@ -49,24 +49,21 @@ public class Disabler {
         boolean isCombat = "VerusCombat".equals(modeVal) || "VerusAll".equals(modeVal);
 
         if (isMovement && tickCounter % (int) delay == 0) {
-            double x = mc.player.getX();
-            double y = mc.player.getY();
-            double z = mc.player.getZ();
-            boolean onGround = mc.player.onGround();
-            boolean hc = mc.player.horizontalCollision;
+            double x = mc.getPlayer().getX();
+            double y = mc.getPlayer().getY();
+            double z = mc.getPlayer().getZ();
+            boolean onGround = mc.getPlayer().onGround();
+            boolean hc = mc.getPlayer().horizontalCollision;
             double ox = (Math.random() - 0.5) * 0.001;
             double oz = (Math.random() - 0.5) * 0.001;
             NetworkUtility.sendMoveRelative(x + ox, y, z + oz, onGround, hc);
         }
 
         if (isCombat && tickCounter % ((int) delay * 2) == 0) {
-            var conn = mc.getConnection();
-            if (conn != null) {
-                conn.send(new ServerboundPlayerCommandPacket(
-                    mc.player, ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
-                conn.send(new ServerboundPlayerCommandPacket(
-                    mc.player, ServerboundPlayerCommandPacket.Action.START_SPRINTING));
-            }
+            NetworkUtility.sendPacket(new ServerboundPlayerCommandPacket(
+                mc.getPlayer(), ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
+            NetworkUtility.sendPacket(new ServerboundPlayerCommandPacket(
+                mc.getPlayer(), ServerboundPlayerCommandPacket.Action.START_SPRINTING));
         }
 
         if (tickCounter >= 40) tickCounter = 0;

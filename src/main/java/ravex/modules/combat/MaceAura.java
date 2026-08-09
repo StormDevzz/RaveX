@@ -1,7 +1,7 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.MobUtility;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;
@@ -16,14 +16,14 @@ public class MaceAura {
     @Parameter(name = "Height", min = 2.0, max = 40.0, step = 1.0)
     public double height = 10.0;
     public void onTick() {
-        var mc = MinecraftWrapper.getInstance();
-        net.minecraft.client.player.LocalPlayer p = mc.player;
-        if (p == null || mc.level == null) return;
-        if (InventoryUtility.isItem(p.getMainHandItem(), "mace") && mc.options.keyAttack.isDown()) {
-            if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit) {
-                net.minecraft.world.entity.LivingEntity target = MobUtility.asLivingEntity(hit.getEntity());
+        var mc = MinecraftWrapper.getWrapper();
+        net.minecraft.client.player.LocalPlayer p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null) return;
+        if (InventoryUtility.isItem(p.getMainHandItem(), "mace") && mc.getOptions().keyAttack.isDown()) {
+            if (mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult hit) {
+                net.minecraft.world.entity.LivingEntity target = EntityUtility.asLivingEntity(hit.getEntity());
                 if (target == null) return;
-                if (MobUtility.isDead(target) || MobUtility.isSelf(target)) return;
+                if (EntityUtility.isDead(target) || EntityUtility.isSelf(target)) return;
                 double h = height;
                 double x = p.getX();
                 double y = p.getY();

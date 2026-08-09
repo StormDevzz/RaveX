@@ -16,10 +16,10 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         NATIVE.load();
     }
     public void onEnable() {
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         if (!NATIVE.isLoaded()) {
-            if (mc.player != null) {
-                mc.player.displayClientMessage(
+            if (mc.getPlayer() != null) {
+                mc.getPlayer().displayClientMessage(
                     net.minecraft.network.chat.Component.literal("§7[§5DesktopGui§7] §cNative library not found!"), false);
             }
             Modules.setEnabled(DesktopGui.class, false);
@@ -49,7 +49,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         }
     }
     public static void toggleModuleFromNative(String name) {
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         mc.execute(() -> {
             ravex.modules.Module m = ravex.manager.ModuleManager.INSTANCE.getByName(name);
             if (m != null) {
@@ -58,7 +58,7 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         });
     }
     public static void onNativeClose() {
-        var mc = MinecraftWrapper.getInstance();
+        var mc = MinecraftWrapper.getWrapper();
         mc.execute(() -> {
             if (Modules.enabled(DesktopGui.class)) {
                 Modules.setEnabled(DesktopGui.class, false);

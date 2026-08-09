@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.MobUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
@@ -100,12 +99,12 @@ public class AutoDrop {
         net.minecraft.world.entity.Entity best = null;
         double bestDist = range;
         for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
-            net.minecraft.world.entity.LivingEntity le = MobUtility.asLivingEntity(e);
-            if (le == null || MobUtility.isSelf(le) || !e.isAlive()) continue;
-            double dist = MobUtility.distanceToPlayer(e);
+            net.minecraft.world.entity.LivingEntity le = EntityUtility.asLivingEntity(e);
+            if (le == null || EntityUtility.isSelf(le) || !e.isAlive()) continue;
+            double dist = EntityUtility.distanceToPlayer(e);
             if (dist < bestDist) { bestDist = dist; best = e; }
         }
-        if (t.equals("Enemy") && !MobUtility.isPlayer(MobUtility.asLivingEntity(best))) return null;
+        if (t.equals("Enemy") && !EntityUtility.isPlayer(EntityUtility.asLivingEntity(best))) return null;
         return best;
     }
     private int findDropBlock(MinecraftWrapper mc) {
