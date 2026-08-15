@@ -1,4 +1,5 @@
 package ravex.gui.clickgui;
+import ravex.utility.render.ColorUtility;
 
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -6,6 +7,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.PaletteTextureUtility;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import org.lwjgl.glfw.GLFW;
@@ -137,9 +139,7 @@ public class ColorPaletteModal {
         graphics.fill(mx + 10, my + 23, mx + modalWidth - 10, my + 24, 0xFF252535);
 
 
-        int hColor = hsbToRgb(hue, 1.0f, 1.0f);
-        Render2DUtility.drawGradientRectHorizontal(graphics, svX, svY, svSize, svSize, 0xFFFFFFFF, hColor);
-        Render2DUtility.drawGradientRect(graphics, svX, svY, svSize, svSize, 0x00000000, 0xFF000000);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, PaletteTextureUtility.getSvGradient(hue), svX, svY, 0f, 0f, svSize, svSize, PaletteTextureUtility.SIZE, PaletteTextureUtility.SIZE, PaletteTextureUtility.SIZE, PaletteTextureUtility.SIZE, 0xFFFFFFFF);
 
         graphics.fill(svX - 1, svY - 1, svX + svSize + 1, svY, 0xFF353545);
         graphics.fill(svX - 1, svY + svSize, svX + svSize + 1, svY + svSize + 1, 0xFF353545);
@@ -154,12 +154,7 @@ public class ColorPaletteModal {
         Render2DUtility.fillCircle(graphics, curX, curY, 3, 0xFFFFFFFF);
 
 
-        int hueSegments = 6;
-        int segW = hueW / hueSegments;
-        int[] hueColors = { 0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000 };
-        for (int s = 0; s < hueSegments; s++) {
-            Render2DUtility.drawGradientRectHorizontal(graphics, hueX + s * segW, hueY, segW, sliderHeight, hueColors[s], hueColors[s + 1]);
-        }
+        graphics.blit(RenderPipelines.GUI_TEXTURED, PaletteTextureUtility.getHueGradient(), hueX, hueY, 0f, 0f, hueW, sliderHeight, PaletteTextureUtility.SIZE, 1, PaletteTextureUtility.SIZE, 1, 0xFFFFFFFF);
 
         graphics.fill(hueX - 1, hueY - 1, hueX + hueW + 1, hueY, 0xFF353545);
         graphics.fill(hueX - 1, hueY + sliderHeight, hueX + hueW + 1, hueY + sliderHeight + 1, 0xFF353545);
@@ -180,7 +175,7 @@ public class ColorPaletteModal {
         }
 
         int currentRgb = hsbToRgb(hue, saturation, value) & 0x00FFFFFF;
-        Render2DUtility.drawGradientRectHorizontal(graphics, alphaX, alphaY, alphaW, sliderHeight, currentRgb, (0xFF << 24) | currentRgb);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, PaletteTextureUtility.getAlphaGradient(currentRgb), alphaX, alphaY, 0f, 0f, alphaW, sliderHeight, PaletteTextureUtility.SIZE, 1, PaletteTextureUtility.SIZE, 1, 0xFFFFFFFF);
 
         graphics.fill(alphaX - 1, alphaY - 1, alphaX + alphaW + 1, alphaY, 0xFF353545);
         graphics.fill(alphaX - 1, alphaY + sliderHeight, alphaX + alphaW + 1, alphaY + sliderHeight + 1, 0xFF353545);
@@ -196,10 +191,22 @@ public class ColorPaletteModal {
         int previewRadius = 20;
         int previewCX = mx + 175;
         int previewCY = my + 55;
+        int previewSize = previewRadius * 2;
+        int previewX = previewCX - previewRadius;
+        int previewY = previewCY - previewRadius;
 
+        int checkerCell = 4;
+        for (int py = 0; py < previewSize; py += checkerCell) {
+            for (int px = 0; px < previewSize; px += checkerCell) {
+                boolean light = ((px / checkerCell) + (py / checkerCell)) % 2 == 0;
+                int chk = light ? 0xFF888888 : 0xFF444444;
+                graphics.fill(previewX + px, previewY + py, previewX + Math.min(px + checkerCell, previewSize), previewY + Math.min(py + checkerCell, previewSize), chk);
+            }
+        }
 
-        Render2DUtility.drawRound(graphics, previewCX - previewRadius, previewCY - previewRadius, previewRadius * 2, previewRadius * 2, previewRadius, getArgb());
-        Render2DUtility.drawSmoothRoundOutline(graphics, previewCX - previewRadius, previewCY - previewRadius, previewRadius * 2, previewRadius * 2, previewRadius, 1, 0xFF4A4A5A);
+        Render2DUtility.drawRound(graphics, previewX, previewY, previewSize, previewSize, previewRadius, getArgb());
+        Render2DUtility.drawRoundCutout(graphics, previewX, previewY, previewSize, previewSize, previewRadius, 0xFF0D0D14);
+        Render2DUtility.drawSmoothRoundOutline(graphics, previewX, previewY, previewSize, previewSize, previewRadius, 1, 0xFF4A4A5A);
 
 
         String hex = editingHex ? hexInput : String.format("%08X", getArgb() & 0xFFFFFFFF);
@@ -225,6 +232,14 @@ public class ColorPaletteModal {
             int px = sectionX + (col * (swatchSize + swatchGap));
             int py = recentSwatchY + (row * (swatchSize + swatchGap));
             boolean hovered = mouseX >= px && mouseX <= px + swatchSize && mouseY >= py && mouseY <= py + swatchSize;
+            int swCell = 2;
+            for (int cy = 0; cy < swatchSize; cy += swCell) {
+                for (int cx = 0; cx < swatchSize; cx += swCell) {
+                    boolean light = ((cx / swCell) + (cy / swCell)) % 2 == 0;
+                    int chk = light ? 0xFF888888 : 0xFF444444;
+                    graphics.fill(px + cx, py + cy, px + Math.min(cx + swCell, swatchSize), py + Math.min(cy + swCell, swatchSize), chk);
+                }
+            }
             graphics.fill(px, py, px + swatchSize, py + swatchSize, recentColors.get(i));
             graphics.fill(px, py, px + 1, py + swatchSize, hovered ? 0x99FFFFFF : 0xFF2A2A3A);
             graphics.fill(px + swatchSize - 1, py, px + swatchSize, py + swatchSize, hovered ? 0x99FFFFFF : 0xFF2A2A3A);
@@ -377,8 +392,8 @@ public class ColorPaletteModal {
         if (mx >= swX && mx <= swX + swW && my >= swY && my <= swY + swH) {
             parameter.setThemeSync(!parameter.isThemeSync());
             if (parameter.isThemeSync()) {
-                setFromArgb(ravex.gui.clickgui.ColorUtility.getActiveColor());
-                parameter.setValue(ravex.gui.clickgui.ColorUtility.getActiveColor());
+                setFromArgb(ColorUtility.getActiveColor());
+                parameter.setValue(ColorUtility.getActiveColor());
             }
             playClickSound();
             return true;

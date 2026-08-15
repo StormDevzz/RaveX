@@ -1,7 +1,7 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-@Module(name = "TabHelper", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "TabHelper", category = "Player")
 public class TabHelper {
     @Parameter(name = "ShowPing")
     public boolean showPing = true;

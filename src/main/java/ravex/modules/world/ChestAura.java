@@ -15,7 +15,7 @@ public class ChestAura {
     public double delay = 2.0;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int highlightColor = 0xFF00FF88;
     @Parameter(name = "FadeDuration", min = 0.1, max = 3.0, step = 0.1)
     public double fadeSpeed = 1.0;

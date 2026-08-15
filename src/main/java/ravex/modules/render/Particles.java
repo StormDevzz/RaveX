@@ -301,8 +301,7 @@ private static String lastTrigger = "";
             float particleSize = baseSize * p.sizeMod;
             int color;
             if (rainbowMode) {
-                float hue = (System.currentTimeMillis() % 3600) / 3600f;
-                color = java.awt.Color.HSBtoRGB(hue + p.colorSeed * 0.01f, 0.8f, 1.0f);
+                color = ravex.utility.render.ColorUtility.rainbow(10, p.colorSeed, 0.8f, 1.0f, 1.0f);
             } else {
                 color = mainColor;
             }

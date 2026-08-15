@@ -26,15 +26,15 @@ public class ESP {
     public boolean frames = false;
     @Parameter(name = "Distance", min = 10.0, max = 300.0, step = 10.0)
     public double maxDistance = 100.0;
-    @Parameter(name = "PlayerColor", color = true)
+    @Parameter(name = "PlayerColor", color = true, visible = "players")
     public int playerColor = 0xFFFF3333;
-    @Parameter(name = "MobColor", color = true)
+    @Parameter(name = "MobColor", color = true, visible = "monsters")
     public int mobColor = 0xFF33FF33;
-    @Parameter(name = "AnimalColor", color = true)
+    @Parameter(name = "AnimalColor", color = true, visible = "animals")
     public int animalColor = 0xFF33FF55;
-    @Parameter(name = "ItemColor", color = true)
+    @Parameter(name = "ItemColor", color = true, visible = "items")
     public int itemColor = 0xFFFFFF33;
-    @Parameter(name = "FrameColor", color = true)
+    @Parameter(name = "FrameColor", color = true, visible = "frames")
     public int frameColor = 0xFFFF9933;
     @Parameter(name = "TunnelRange", min = 8, max = 64, step = 4, visible = "mode=Tunnels")
     public double tunnelRange = 32;

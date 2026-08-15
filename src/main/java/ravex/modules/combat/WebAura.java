@@ -27,7 +27,7 @@ public class WebAura {
     public String targetType = "Players";
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0xFFFFFFFF;
     private long lastPlaceTime = 0;
     private static final SilentRotationUtility silentRotation = new SilentRotationUtility();

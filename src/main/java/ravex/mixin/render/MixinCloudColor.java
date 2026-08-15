@@ -19,7 +19,7 @@ public class MixinCloudColor {
                                     CallbackInfoReturnable<Value> cir) {
         if (!Modules.enabled(WorldColor.class) || !Modules.get(WorldColor.class).cloud) return;
         if (attribute == EnvironmentAttributes.CLOUD_COLOR) {
-            cir.setReturnValue((Value) Integer.valueOf(Modules.get(WorldColor.class).cloudColor.getValue()));
+            cir.setReturnValue((Value) Integer.valueOf(Modules.get(WorldColor.class).cloudColor));
         }
     }
 }

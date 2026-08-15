@@ -4,10 +4,8 @@ import ravex.utility.player.SwingUtility;
 
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.CameraUtility;
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
 import org.joml.Matrix4f;
@@ -84,13 +82,13 @@ public class PearlTarget {
     public boolean keepRotate = false;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "LineColor", color = true)
+    @Parameter(name = "LineColor", color = true, visible = "render")
     public int lineColor = 0xFFFF5500;
-    @Parameter(name = "LandingColor", color = true)
+    @Parameter(name = "LandingColor", color = true, visible = "render")
     public int landingColor = 0xFFFF3333;
-    @Parameter(name = "PearlColor", color = true)
+    @Parameter(name = "PearlColor", color = true, visible = "render")
     public int pearlColor = 0xFFFFFF00;
-    @Parameter(name = "LineWidth", min = 0.5, max = 5.0, step = 0.5)
+    @Parameter(name = "LineWidth", min = 0.5, max = 5.0, step = 0.5, visible = "render")
     public double lineWidth = 2.0;
     @Parameter(name = "RenderLine")
     public boolean renderLine = true;

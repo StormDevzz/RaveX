@@ -1,7 +1,7 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-@Module(name = "GhostHand", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "GhostHand", category = "Player")
 public class GhostHand {
     @Parameter(name = "Range", min = 3.0, max = 12.0, step = 0.5)
     public double range = 6.0;

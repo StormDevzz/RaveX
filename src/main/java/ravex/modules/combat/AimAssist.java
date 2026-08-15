@@ -6,7 +6,6 @@ import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.misc.EntityUtility;
 
 import net.minecraft.world.item.BowItem;
-import ravex.utility.misc.EntityUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AimAssist", category = "Combat")
 public class AimAssist {

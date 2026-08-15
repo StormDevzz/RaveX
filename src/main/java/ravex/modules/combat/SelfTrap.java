@@ -56,7 +56,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
     public boolean autoDisable = true;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x3F00DDFF;
     private final Set<Identifier> selectedBlocks = new HashSet<>();
     private static final List<net.minecraft.core.BlockPos> selfTrapBlocks = new ArrayList<>();

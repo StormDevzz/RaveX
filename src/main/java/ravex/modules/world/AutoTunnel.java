@@ -24,7 +24,7 @@ public class AutoTunnel {
     public boolean autoWalk = false;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x3FFFFF00;
     private static int targetX, targetY, targetZ;
     private static boolean hasTarget;

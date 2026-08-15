@@ -7,7 +7,7 @@ import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@Module(name = "AntiAim", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "AntiAim", category = "Player")
 public class AntiAim {
     @Parameter(name = "YawMode", modes = {"Spin", "Jitter", "Static", "Random"})
     public String yawMode = "Spin";

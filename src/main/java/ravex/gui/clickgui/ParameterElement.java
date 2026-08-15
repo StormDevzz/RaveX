@@ -1,4 +1,5 @@
 package ravex.gui.clickgui;
+import ravex.utility.render.ColorUtility;
 
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -320,12 +321,16 @@ public class ParameterElement {
             int glowColor = ColorUtility.withAlpha(argb, 120);
             Render2DUtility.drawGaussianShadow(graphics, chipX - 2, chipY - 2, chipSize + 4, chipSize + 4, 8, glowColor);
 
-            int chipRadius = 2;
+            int chipRadius = chipSize / 2;
             Render2DUtility.drawRoundBorder(graphics, chipX - 1, chipY - 1, chipSize + 2, chipSize + 2, chipRadius, 1, ColorUtility.withAlpha(activeColor, 40));
 
             Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, 0xFF888888);
-            Render2DUtility.drawRound(graphics, chipX + chipSize / 2, chipY, chipSize - chipSize / 2, chipSize / 2, 0, 0xFF444444);
-            Render2DUtility.drawRound(graphics, chipX, chipY + chipSize / 2, chipSize / 2, chipSize - chipSize / 2, 0, 0xFF444444);
+            graphics.enableScissor(chipX + chipSize / 2, chipY, chipX + chipSize, chipY + chipSize);
+            Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, 0xFF444444);
+            graphics.enableScissor(chipX, chipY + chipSize / 2, chipX + chipSize, chipY + chipSize);
+            Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, 0xFF444444);
+            graphics.disableScissor();
+            graphics.disableScissor();
             Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, argb);
 
         } else if (parameter instanceof ravex.parameter.ActionParameter ap) {

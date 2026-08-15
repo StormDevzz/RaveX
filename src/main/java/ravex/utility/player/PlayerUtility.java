@@ -9,7 +9,8 @@ import net.minecraft.world.phys.Vec3;
 
 public class PlayerUtility {
     public static boolean isPlayerInWorld() {
-        return MinecraftWrapper.getWrapper().hasPlayer() && MinecraftWrapper.getWrapper().hasWorld();
+        var mc = MinecraftWrapper.getWrapper();
+        return mc.hasPlayer() && mc.hasWorld();
     }
 
     public static boolean isOverVoid() {

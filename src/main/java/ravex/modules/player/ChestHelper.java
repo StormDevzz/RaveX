@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
-@Module(name = "ChestHelper", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "ChestHelper", category = "Player")
 public class ChestHelper {
     @Parameter(name = "Steal")
     public boolean steal = true;

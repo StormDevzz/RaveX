@@ -6,11 +6,11 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@Module(name = "NoDelay", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "NoDelay", category = "Player")
 public class NoDelay {
     @Parameter(name = "Delay", min = 0.0, max = 4.0, step = 1.0)
     public double delay = 0.0;
-    @Parameter(name = "net.minecraft.world.level.block.Blocks")
+    @Parameter(name = "Blocks")
     public boolean blocks = true;
     @Parameter(name = "Items")
     public boolean items = true;

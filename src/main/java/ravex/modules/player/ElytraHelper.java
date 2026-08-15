@@ -9,7 +9,7 @@ import ravex.utility.player.InventoryUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
-@Module(name = "ElytraHelper", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "ElytraHelper", category = "Player")
 public class ElytraHelper {
     @Parameter(name = "Mode", modes = {"Swap", "Replace", "Auto"})
     public String mode = "Swap";

@@ -26,7 +26,7 @@ public class HoleFill {
     public boolean autoDisable = true;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x3F00FF00;
     public static List<Long> holePositions = new ArrayList<>();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_holefill");

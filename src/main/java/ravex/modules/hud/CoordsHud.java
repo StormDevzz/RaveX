@@ -18,6 +18,12 @@ public class CoordsHud extends ravex.modules.Module {
     public boolean shadow = true;
     @Parameter(name = "ColoredLabels")
     public boolean coloredLabels = true;
+    @Parameter(name = "XColor", color = true)
+    public int xColor = 0xFFFF4455;
+    @Parameter(name = "YColor", color = true)
+    public int yColor = 0xFF44FF88;
+    @Parameter(name = "ZColor", color = true)
+    public int zColor = 0xFF44AAFF;
 
     public int x;
     public int y;
@@ -50,15 +56,15 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COORDS_WHITE;
         int cx = bx + 4;
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ac);
         if (colored) {
-            HudRendererUtility.drawText(graphics, "X ", cx, by + 2, 0xFFFF4455, shadow);
+            HudRendererUtility.drawText(graphics, "X ", cx, by + 2, xColor, shadow);
             cx += HudRendererUtility.textWidth("X ");
             HudRendererUtility.drawText(graphics, xStr, cx, by + 2, 0xFFD0D0E0, shadow);
             cx += HudRendererUtility.textWidth(xStr);
-            HudRendererUtility.drawText(graphics, " Y ", cx, by + 2, 0xFF44FF88, shadow);
+            HudRendererUtility.drawText(graphics, " Y ", cx, by + 2, yColor, shadow);
             cx += HudRendererUtility.textWidth(" Y ");
             HudRendererUtility.drawText(graphics, yStr, cx, by + 2, 0xFFD0D0E0, shadow);
             cx += HudRendererUtility.textWidth(yStr);
-            HudRendererUtility.drawText(graphics, " Z ", cx, by + 2, 0xFF44AAFF, shadow);
+            HudRendererUtility.drawText(graphics, " Z ", cx, by + 2, zColor, shadow);
             cx += HudRendererUtility.textWidth(" Z ");
             HudRendererUtility.drawText(graphics, zStr, cx, by + 2, 0xFFD0D0E0, shadow);
         } else {

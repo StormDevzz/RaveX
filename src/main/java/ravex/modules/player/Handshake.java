@@ -13,7 +13,7 @@ import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.LuaFunction;
 import java.util.List;
 import ravex.modules.Modules;
-@Module(name = "Handshake", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "Handshake", category = "Player")
 public class Handshake {
     @Parameter(name = "Mode", modes = {"Basic", "Forge", "Lunar", "Custom"})
     public String mode = "Basic";

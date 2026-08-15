@@ -36,7 +36,7 @@ public class MixinFogRenderer {
         if (Modules.enabled(Xray.class)) {
             cir.setReturnValue(new Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
         } else if (Modules.enabled(WorldColor.class) && Modules.get(WorldColor.class).sky) {
-            int col = Modules.get(WorldColor.class).skyColor.getValue();
+            int col = Modules.get(WorldColor.class).skyColor;
             float r = ((col >> 16) & 0xFF) / 255.0f;
             float g = ((col >> 8) & 0xFF) / 255.0f;
             float b = (col & 0xFF) / 255.0f;
@@ -50,7 +50,7 @@ public class MixinFogRenderer {
     )
     private void onUpdateBufferArgs(Args args) {
         if (Modules.enabled(WorldColor.class) && Modules.get(WorldColor.class).fog) {
-            int argb = Modules.get(WorldColor.class).fogColor.getValue();
+            int argb = Modules.get(WorldColor.class).fogColor;
             float r = ((argb >> 16) & 0xFF) / 255.0f;
             float g = ((argb >>  8) & 0xFF) / 255.0f;
             float b = ( argb        & 0xFF) / 255.0f;

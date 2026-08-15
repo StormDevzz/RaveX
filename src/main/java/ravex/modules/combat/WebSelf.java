@@ -18,7 +18,7 @@ public class WebSelf {
     public String swapMode = "NCP";
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x88FFFFFF;
     @Parameter(name = "Delay", min = 0.0, max = 10.0, step = 1.0)
     public double placeDelay = 2.0;

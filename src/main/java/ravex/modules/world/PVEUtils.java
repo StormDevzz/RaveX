@@ -37,11 +37,11 @@ public class PVEUtils {
     public boolean autoFuel = true;
     @Parameter(name = "SmeltRender")
     public boolean smeltRender = true;
-    @Parameter(name = "SmeltColor", color = true)
+    @Parameter(name = "SmeltColor", color = true, visible = "smeltRender")
     public int smeltColor = 0x3FFF8800;
     @Parameter(name = "BrewRender")
     public boolean brewRender = true;
-    @Parameter(name = "BrewColor", color = true)
+    @Parameter(name = "BrewColor", color = true, visible = "brewRender")
     public int brewColor = 0x3FCC44FF;
     @Parameter(name = "Animal", modes = {"Wolf", "Cat", "Llama"})
     public String tameAnimal = "Wolf";

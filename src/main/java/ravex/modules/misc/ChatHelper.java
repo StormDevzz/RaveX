@@ -151,9 +151,12 @@ public class ChatHelper {
     public boolean shouldFilterMessage(String msg) {
         if (!Modules.enabled(ChatHelper.class)) return false;
         if ("ChatFilter".equals(mode)) {
-            if (onlyName && MinecraftWrapper.getWrapper().getPlayer() != null) {
-                String playerName = MinecraftWrapper.getWrapper().getPlayer().getGameProfile().name().toLowerCase();
-                if (!msg.toLowerCase().contains(playerName)) return true;
+            if (onlyName) {
+                var player = MinecraftWrapper.getWrapper().getPlayer();
+                if (player != null) {
+                    String playerName = player.getGameProfile().name().toLowerCase();
+                    if (!msg.toLowerCase().contains(playerName)) return true;
+                }
             }
             return ravex.utility.network.NetworkUtility.isAdMessage(msg);
         }

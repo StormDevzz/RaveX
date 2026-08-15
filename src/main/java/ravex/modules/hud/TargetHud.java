@@ -34,8 +34,12 @@ public class TargetHud extends ravex.modules.Module {
     public boolean showOnHover = true;
     @Parameter(name = "Health", modes = {"HP", "%"})
     public String healthDisplay = "HP";
-    @Parameter(name = "HealthColor")
-    public boolean healthColor = false;
+    @Parameter(name = "ColoredHealthText")
+    public boolean coloredHealthText = false;
+    @Parameter(name = "LowHPColor", color = true)
+    public int lowHpColor = 0xFFFF3333;
+    @Parameter(name = "HighHPColor", color = true)
+    public int highHpColor = 0xFF33FF33;
 
     private static final net.minecraft.world.entity.EquipmentSlot[] SLOTS = {
         net.minecraft.world.entity.EquipmentSlot.MAINHAND,
@@ -252,7 +256,7 @@ public class TargetHud extends ravex.modules.Module {
             case "HP" -> String.format("%.0f / %.0f", hp, maxHp);
             default -> maxHp > 0 ? String.format("%d%%", (int)(hp / maxHp * 100)) : "0%";
         };
-        int hpTextColor = healthColor ? lerpColor(0xFFFF3333, 0xFF33FF33, maxHp > 0 ? hp / maxHp : 1f) : 0xFFFFFFFF;
+        int hpTextColor = coloredHealthText ? lerpColor(lowHpColor, highHpColor, maxHp > 0 ? hp / maxHp : 1f) : 0xFFFFFFFF;
         FontRenderUtility.drawString(graphics, hpText, nx, by + 21, ColorUtility.withAlpha(hpTextColor, (int)(255 * hudAlpha)), true);
 
         int gridX = bx + w - 55;
@@ -264,7 +268,7 @@ public class TargetHud extends ravex.modules.Module {
 
         int fillHpW = (int) (barW * animatedHpPercent);
         if (fillHpW > 0) {
-            int hpColor = lerpColor(0xFFFF3333, 0xFF33FF33, hp / maxHp);
+            int hpColor = lerpColor(lowHpColor, highHpColor, hp / maxHp);
             Render2DUtility.drawRound(graphics, barX, barY, fillHpW, 3, 1, ColorUtility.withAlpha(hpColor, (int)(255 * hudAlpha)));
         }
 

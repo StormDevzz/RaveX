@@ -12,7 +12,7 @@ import ravex.modules.Modules;
 public class SoundBlock {
     @Parameter(name = "Ambient")
     public boolean blockAmbient = false;
-    @Parameter(name = "net.minecraft.world.level.block.Blocks")
+    @Parameter(name = "Blocks")
     public boolean blockBlocks = false;
     @Parameter(name = "Weather")
     public boolean blockWeather = false;

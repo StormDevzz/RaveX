@@ -26,6 +26,7 @@ public final class ModuleProxy extends Module {
     private final List<Method> renderMethods = new ArrayList<>();
     private Method pojoGetX, pojoSetX, pojoGetY, pojoSetY;
     private Method pojoGetW, pojoSetW, pojoGetH, pojoSetH;
+    private Method pojoConsumesKeyBind;
 
     public ModuleProxy(Object component) {
         this.component = component;
@@ -48,6 +49,7 @@ public final class ModuleProxy extends Module {
             if ("onDisable".equals(name)) disableMethods.add(m);
             if ("render".equals(name)) renderMethods.add(m);
         }
+        try { pojoConsumesKeyBind = compClass.getMethod("consumesKeyBindPress"); } catch (NoSuchMethodException ignored) {}
     }
 
     private void scanParameters() {
@@ -167,6 +169,14 @@ public final class ModuleProxy extends Module {
     }
 
     public Object getComponent() { return component; }
+
+    @Override
+    public boolean consumesKeyBindPress() {
+        if (pojoConsumesKeyBind != null) {
+            try { return (boolean) pojoConsumesKeyBind.invoke(component); } catch (Exception ignored) {}
+        }
+        return super.consumesKeyBindPress();
+    }
 
     @Override
     public int getX() {

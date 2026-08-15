@@ -16,7 +16,7 @@ import java.util.Random;
 
 
 
-@Module(name = "AirPlace", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "AirPlace", category = "Player")
 public class AirPlace {
 public static net.minecraft.world.phys.Vec3 highlightPos = null;
     public static float renderAlpha = 0.0f;
@@ -33,7 +33,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
     public boolean render = true;
     @Parameter(name = "Animate")
     public boolean animate = true;
-    @Parameter(name = "HighlightColor", color = true)
+    @Parameter(name = "HighlightColor", color = true, visible = "render")
     public int highlightColor = 0xFF55AAFF;
     private final EasingAnimationUtility fadeAnim = new EasingAnimationUtility();
     private final EasingAnimationUtility sizeAnim = new EasingAnimationUtility();
@@ -119,22 +119,23 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                     }
                     if (!BlockUtility.isAir(mc.getLevel(), neighbor)) {
                         double maxReach = 4.5;
+                        var p = mc.getPlayer();
                         net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(neighbor);
-                        if (mc.getPlayer().getEyePosition().distanceTo(center) <= maxReach) {
+                        if (p.getEyePosition().distanceTo(center) <= maxReach) {
                             net.minecraft.world.phys.Vec3 hitVec = center.add(
                                 PhysicUtility.vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                             );
-                            float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), hitVec);
+                            float[] angles = RotationUtility.anglesTo(p.getEyePosition(), hitVec);
                             NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
-                                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
-                                angles[0], angles[1], mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision
+                                p.getX(), p.getY(), p.getZ(),
+                                angles[0], angles[1], p.onGround(), p.horizontalCollision
                             ));
-                            BlockUtility.ncpAirPlace(ravex.mcwrapper.MinecraftWrapper.getWrapper(), neighbor, placeFace, hand);
+                            BlockUtility.ncpAirPlace(mc, neighbor, placeFace, hand);
                             NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
-                                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
-                                mc.getPlayer().getYRot(), mc.getPlayer().getXRot(), mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision
+                                p.getX(), p.getY(), p.getZ(),
+                                p.getYRot(), p.getXRot(), p.onGround(), p.horizontalCollision
                             ));
-                            SwingUtility.swing(mc.getPlayer(), hand);
+                            SwingUtility.swing(p, hand);
                         }
                     }
                 } else if (mode.equals("UNCP")) {
@@ -149,26 +150,27 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
                     }
                     if (!BlockUtility.isAir(mc.getLevel(), neighbor)) {
                         double maxReach = 4.5;
+                        var p = mc.getPlayer();
                         net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(neighbor);
-                        if (mc.getPlayer().getEyePosition().distanceTo(center) <= maxReach) {
+                        if (p.getEyePosition().distanceTo(center) <= maxReach) {
                             net.minecraft.world.phys.Vec3 hitVec = center.add(
                                 PhysicUtility.vec3(placeFace.getStepX(), placeFace.getStepY(), placeFace.getStepZ()).scale(0.5)
                             );
-                            float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), hitVec);
+                            float[] angles = RotationUtility.anglesTo(p.getEyePosition(), hitVec);
                             float yawNoise = (random.nextFloat() - 0.5f) * (float)uncpNoise * 2;
                             float pitchNoise = (random.nextFloat() - 0.5f) * (float)uncpNoise * 2;
                             angles[0] += yawNoise;
                             angles[1] += pitchNoise;
                             NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
-                                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
-                                angles[0], angles[1], mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision
+                                p.getX(), p.getY(), p.getZ(),
+                                angles[0], angles[1], p.onGround(), p.horizontalCollision
                             ));
-                            BlockUtility.ncpAirPlace(ravex.mcwrapper.MinecraftWrapper.getWrapper(), neighbor, placeFace, hand);
+                            BlockUtility.ncpAirPlace(mc, neighbor, placeFace, hand);
                             NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
-                                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
-                                mc.getPlayer().getYRot(), mc.getPlayer().getXRot(), mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision
+                                p.getX(), p.getY(), p.getZ(),
+                                p.getYRot(), p.getXRot(), p.onGround(), p.horizontalCollision
                             ));
-                            SwingUtility.swing(mc.getPlayer(), hand);
+                            SwingUtility.swing(p, hand);
                         }
                     }
                 } else {

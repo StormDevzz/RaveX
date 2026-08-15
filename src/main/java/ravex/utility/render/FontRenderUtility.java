@@ -130,14 +130,15 @@ public class FontRenderUtility {
             LOGGER.info("[RaveX/font] Custom fonts successfully initialized!");
         }
 
+        var font = MinecraftWrapper.getWrapper().getFont();
         if (Math.abs(scale - 1.0) < 0.001) {
-            graphics.drawString(MinecraftWrapper.getWrapper().getFont(), component, x, y, color, shadow);
+            graphics.drawString(font, component, x, y, color, shadow);
         } else {
             var pose = graphics.pose();
             pose.pushMatrix();
             pose.translate((float) x, (float) y);
             pose.scale((float) scale, (float) scale);
-            graphics.drawString(MinecraftWrapper.getWrapper().getFont(), component, 0, 0, color, shadow);
+            graphics.drawString(font, component, 0, 0, color, shadow);
             pose.popMatrix();
         }
     }

@@ -69,7 +69,7 @@ public class BasePlace {
     public double syncPredictTicks = 5.0;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x3F00FF00;
     public static net.minecraft.core.BlockPos lastPlacedBase = null;
     public static long lastPlacedTime = 0;

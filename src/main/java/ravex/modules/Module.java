@@ -165,6 +165,10 @@ public abstract class Module {
     public void setKeyBind(int keyBind) {
         this.keyBind = keyBind;
     }
+    @Contract(pure = true)
+    public boolean consumesKeyBindPress() {
+        return false;
+    }
     @Unmodifiable
     public List<Parameter<?>> getParameters() {
         if (!paramFieldsScanned) {

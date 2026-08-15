@@ -38,13 +38,13 @@ public class Tracers {
     public double arrowSize = 20.0;
     @Parameter(name = "ArrowMargin", min = 0.0, max = 30.0, step = 1.0)
     public double arrowMargin = 4.0;
-    @Parameter(name = "PlayerColor", color = true)
+    @Parameter(name = "PlayerColor", color = true, visible = "players")
     public int playerColor = 0xFFFF3333;
-    @Parameter(name = "MobColor", color = true)
+    @Parameter(name = "MobColor", color = true, visible = "monsters")
     public int mobColor = 0xFFFF3333;
-    @Parameter(name = "AnimalColor", color = true)
+    @Parameter(name = "AnimalColor", color = true, visible = "animals")
     public int animalColor = 0xFF33FF33;
-    @Parameter(name = "ItemColor", color = true)
+    @Parameter(name = "ItemColor", color = true, visible = "items")
     public int itemColor = 0xFFFFFF33;
 
     private static Identifier arrowTexture;

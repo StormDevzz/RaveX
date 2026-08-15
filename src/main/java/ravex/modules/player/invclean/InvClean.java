@@ -7,7 +7,7 @@ import ravex.parameter.ActionParameter;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@Module(name = "InvClean", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "InvClean", category = "Player")
 public class InvClean {
     @Parameter(name = "AutoClean")
     public boolean autoClean = false;

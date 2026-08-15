@@ -1,22 +1,17 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.DependencyParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.player.ArmorUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.entity.EquipmentSlot;
-import ravex.parameter.ModeParameter;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
 
 
 
-@Module(name = "AutoArmor", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "AutoArmor", category = "Player")
 public class AutoArmor {
     @Parameter(name = "Mode", modes = {"Normal", "Legit", "Custom"})
     public String mode = "Normal";
@@ -32,12 +27,12 @@ public class AutoArmor {
     public boolean leggings = true;
     @Parameter(name = "Boots")
     public boolean boots = true;
-    public final DependencyParameter<Double, NumberParameter> customDelay =
-            new DependencyParameter<>(new NumberParameter("CustomDelay", 50.0, 0.0, 500.0, 10.0), new ModeParameter("Mode", "Normal", List.of("Normal", "Legit", "Custom")), "Custom");
-    public final DependencyParameter<Boolean, BooleanParameter> openInventory =
-            new DependencyParameter<>(new BooleanParameter("OpenInventory", true), new ModeParameter("Mode", "Normal", List.of("Normal", "Legit", "Custom")), "Custom");
-    public final DependencyParameter<Boolean, BooleanParameter> ignoreEnchants =
-            new DependencyParameter<>(new BooleanParameter("IgnoreEnchants", false), new ModeParameter("Mode", "Normal", List.of("Normal", "Legit", "Custom")), "Custom");
+    @Parameter(name = "CustomDelay", min = 0.0, max = 500.0, step = 10.0, visible = "mode=Custom")
+    public double customDelay = 50.0;
+    @Parameter(name = "OpenInventory", visible = "mode=Custom")
+    public boolean openInventory = true;
+    @Parameter(name = "IgnoreEnchants", visible = "mode=Custom")
+    public boolean ignoreEnchants = false;
     private long lastEquipTime = 0;
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
@@ -92,10 +87,10 @@ public class AutoArmor {
     }
 
     private void tickCustom(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
-        if (openInventory.getValue() && !(mc.getCurrentScreen() instanceof InventoryScreen)) {
+        if (openInventory && !(mc.getCurrentScreen() instanceof InventoryScreen)) {
             return;
         }
-        if (System.currentTimeMillis() - lastEquipTime < customDelay.getValue()) return;
+        if (System.currentTimeMillis() - lastEquipTime < customDelay) return;
         for (int armorIndex = 0; armorIndex < 4; armorIndex++) {
             if (!isSlotEnabled(armorIndex)) continue;
             EquipmentSlot equipSlot = ArmorUtility.getEquipmentSlotForIndex(armorIndex);
@@ -116,7 +111,7 @@ public class AutoArmor {
             net.minecraft.world.item.ItemStack b, EquipmentSlot slot) {
         if (!ArmorUtility.isArmorItem(a)) return false;
         if (!ArmorUtility.isArmorItem(b)) return true;
-        if (ignoreEnchants.getValue()) {
+        if (ignoreEnchants) {
             return ArmorUtility.getArmorScore(a, slot) > ArmorUtility.getArmorScore(b, slot);
         }
         return ArmorUtility.isBetterArmor(a, b, slot);

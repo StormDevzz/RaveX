@@ -291,7 +291,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
             if (bind > 0 && bind < keysState.length) {
                 boolean isKeyBindDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, bind);
                 if (isKeyBindDown && !keysState[bind]) {
-                    if (mc.getCurrentScreen() == null || mc.getCurrentScreen() instanceof ClickGUI) {
+                    if (!m.consumesKeyBindPress() && (mc.getCurrentScreen() == null || mc.getCurrentScreen() instanceof ClickGUI)) {
                         m.toggle();
                     }
                 }

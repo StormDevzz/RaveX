@@ -31,11 +31,11 @@ public class ClickGui {
     public boolean switchless = true;
     @Parameter(name = "Outlines")
     public boolean outlines = false;
-    @Parameter(name = "OutlineColor", color = true)
+    @Parameter(name = "OutlineColor", color = true, visible = "outlines")
     public int outlineColor = 0x30FFFFFF;
     @Parameter(name = "ButtonOutlines")
     public boolean moduleOutlines = true;
-    @Parameter(name = "ButtonBorder", color = true)
+    @Parameter(name = "ButtonBorder", color = true, visible = "moduleOutlines")
     public int moduleOutlineColor = 0xFFFFFFFF;
     @Parameter(name = "ButtonHeight", min = 8, max = 30, step = 1)
     public double buttonHeight = 18;

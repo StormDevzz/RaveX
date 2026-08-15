@@ -47,17 +47,17 @@ public class Trails {
     public boolean self = true;
     @Parameter(name = "Players")
     public boolean playerEnabled = false;
-    @Parameter(name = "PlayerColor", color = true)
+    @Parameter(name = "PlayerColor", color = true, visible = "playerEnabled")
     public int playerColor = 0xFFFF4444;
-    @Parameter(name = "PlayerWidth", min = 1.0, max = 6.0, step = 0.5)
+    @Parameter(name = "PlayerWidth", min = 1.0, max = 6.0, step = 0.5, visible = "playerEnabled")
     public double playerWidth = 2.0;
-    @Parameter(name = "PlayerTime", min = 0.5, max = 10.0, step = 0.5)
+    @Parameter(name = "PlayerTime", min = 0.5, max = 10.0, step = 0.5, visible = "playerEnabled")
     public double playerTime = 3.0;
     @Parameter(name = "Glow")
     public boolean glow = true;
-    @Parameter(name = "GlowLayers", min = 1, max = 8, step = 1)
+    @Parameter(name = "GlowLayers", min = 1, max = 8, step = 1, visible = "glow")
     public double glowLayers = 4;
-    @Parameter(name = "GlowSpread", min = 0.5, max = 5.0, step = 0.5)
+    @Parameter(name = "GlowSpread", min = 0.5, max = 5.0, step = 0.5, visible = "glow")
     public double glowSpread = 1.5;
     @Parameter(name = "Mobs")
     public boolean mobs = false;

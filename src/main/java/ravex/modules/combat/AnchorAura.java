@@ -69,7 +69,7 @@ public class AnchorAura {
     public boolean swapInventory = true;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x3F00FFFF;
     public static net.minecraft.core.BlockPos simulatedPlacementBlock = null;
     public static double currentTargetDamage = 0.0;

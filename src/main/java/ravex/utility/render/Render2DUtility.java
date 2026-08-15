@@ -26,7 +26,6 @@ public class Render2DUtility {
     private static Identifier rrtHdTex = null;
     private static final Map<String, Identifier> ROUND_RECT_OUTLINE_CACHE = new HashMap<>();
     private static final Map<Integer, int[]> CORNER_EDGES = new HashMap<>();
-    private static final Map<Integer, Identifier> SMOOTH_CIRCLE_CACHE = new HashMap<>();
     private static final Map<String, Identifier> SMOOTH_RING_CACHE = new HashMap<>();
 
     private static final int SHADOW_SIZE = 32;
@@ -96,6 +95,31 @@ public class Render2DUtility {
         return rrtHdTex;
     }
 
+    private static Identifier invertedCornerTex = null;
+
+    private static Identifier getInvertedCornerTexture() {
+        if (invertedCornerTex == null) {
+            int size = 128;
+            NativeImage img = new NativeImage(size, size, false);
+            int ss = 4;
+            float cx = size / 2f;
+            float cy = size / 2f;
+            float rVal = size / 2f - 0.5f;
+            float r2 = rVal * rVal;
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    int a = 255 - calcCornerAA(x, y, cx, cy, ss, r2);
+                    img.setPixel(x, y, (a << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture tex = new DynamicTexture(() -> "rrt_hd_inv", img);
+            setLinearSampler(tex);
+            invertedCornerTex = Identifier.fromNamespaceAndPath("ravex", "rrt_hd_inv");
+            MinecraftWrapper.getWrapper().getTextureManager().register(invertedCornerTex, tex);
+        }
+        return invertedCornerTex;
+    }
+
     private static Identifier getCornerOutlineTexture(int radius, int thickness) {
         String key = radius + "_" + thickness;
         return ROUND_RECT_OUTLINE_CACHE.computeIfAbsent(key, k -> {
@@ -152,30 +176,6 @@ public class Render2DUtility {
         return Math.min(255, total * 255 / (ss * ss));
     }
 
-    public static Identifier getSmoothCircle(int diameter) {
-        return SMOOTH_CIRCLE_CACHE.computeIfAbsent(diameter, d -> {
-            NativeImage out = new NativeImage(d, d, false);
-            float cx = d / 2f;
-            float cy = d / 2f;
-            float radius = d / 2f - 0.5f;
-            for (int y = 0; y < d; y++) {
-                for (int x = 0; x < d; x++) {
-                    float dx = x + 0.5f - cx;
-                    float dy = y + 0.5f - cy;
-                    float dist = (float) Math.sqrt(dx * dx + dy * dy);
-                    float coverage = radius + 0.5f - dist;
-                    int a = (int) (Math.max(0, Math.min(1, coverage)) * 255);
-                    out.setPixel(x, y, (a << 24) | 0x00FFFFFF);
-                }
-            }
-            DynamicTexture tex = new DynamicTexture(() -> "smooth_circle_" + d, out);
-            setLinearSampler(tex);
-            Identifier id = Identifier.fromNamespaceAndPath("ravex", "smooth_circle_" + d);
-            MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
-            return id;
-        });
-    }
-
     private static Identifier smoothCircleTex = null;
 
     public static Identifier getSmoothCircle() {
@@ -227,7 +227,7 @@ public class Render2DUtility {
         });
     }
 
-    private static void setLinearSampler(AbstractTexture tex) {
+    public static void setLinearSampler(AbstractTexture tex) {
         try {
             GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
             for (Field f : AbstractTexture.class.getDeclaredFields()) {
@@ -316,6 +316,27 @@ public class Render2DUtility {
 
     public static void drawRound(GuiGraphics graphics, float x, float y, float w, float h, float r, int color) {
         drawRound(graphics, (int) x, (int) y, (int) Math.ceil(w), (int) Math.ceil(h), Math.round(r), color);
+    }
+
+    public static void drawRoundCutout(GuiGraphics graphics, int x, int y, int width, int height, int radius, int color) {
+        if (width <= 1 || height <= 1) return;
+        int maxR = Math.min(width, height) / 2;
+        if (radius > maxR) radius = maxR;
+        if (radius <= 0) return;
+        int a = (color >> 24) & 0xFF;
+        if (a == 0) return;
+
+        Identifier tex = getInvertedCornerTexture();
+        if (tex != null) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, radius, radius, 64, 64, 128, 128, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y, 64f, 0f, radius, radius, 64, 64, 128, 128, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y + height - radius, 0f, 64f, radius, radius, 64, 64, 128, 128, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x + width - radius, y + height - radius, 64f, 64f, radius, radius, 64, 64, 128, 128, color);
+        }
+        drawRect(graphics, x + radius, y, width - radius * 2, radius, color);
+        drawRect(graphics, x + radius, y + height - radius, width - radius * 2, radius, color);
+        drawRect(graphics, x, y + radius, radius, height - radius * 2, color);
+        drawRect(graphics, x + width - radius, y + radius, radius, height - radius * 2, color);
     }
 
     public static void drawSmoothRound(GuiGraphics graphics, float x, float y, float w, float h, float r, int color) {
@@ -427,10 +448,11 @@ public class Render2DUtility {
     }
 
     public static void fillCircle(GuiGraphics graphics, int x, int y, int radius, int color) {
+        if (radius <= 0) return;
         int d = radius * 2;
-        Identifier tex = getSmoothCircle(d);
+        Identifier tex = getSmoothCircle();
         if (tex != null) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x - radius, y - radius, 0f, 0f, d, d, d, d, color);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x - radius, y - radius, 0f, 0f, d, d, 128, 128, color);
         }
     }
 

@@ -12,6 +12,15 @@ public class NumberParameter extends Parameter<Double> {
         this.step = step;
     }
 
+    @Override
+    public Double getValue() {
+        Object raw = super.getValue();
+        if (raw instanceof Number num) {
+            return num.doubleValue();
+        }
+        return null;
+    }
+
     public double getMin() {
         return min;
     }

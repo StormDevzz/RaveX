@@ -6,7 +6,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@Module(name = "Replenish", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "Replenish", category = "Player")
 public class Replenish {
     @Parameter(name = "Threshold", min = 1, max = 64, step = 1)
     public double threshold = 32;

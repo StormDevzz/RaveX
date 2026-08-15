@@ -36,7 +36,7 @@ public static final List<net.minecraft.core.BlockPos> surroundBlocks = new Array
     public boolean render = true;
     @Parameter(name = "Animate")
     public boolean animate = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0xFF33AAFF;
     @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
     public double delay = 100.0;

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 
-@Module(name = "SourceFiller", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "SourceFiller", category = "Player")
 public class SourceFiller {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;

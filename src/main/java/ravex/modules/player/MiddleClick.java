@@ -8,7 +8,7 @@ import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
-@Module(name = "MiddleClick", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "MiddleClick", category = "Player")
 public class MiddleClick {
     @Parameter(name = "ElytraAction", modes = {"Firework", "None"})
     public String elytraAction = "Firework";

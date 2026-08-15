@@ -156,7 +156,8 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("FastStairs", "Climb fast");
         DESCRIPTIONS.put("NoFall", "Safe fall");
         DESCRIPTIONS.put("Elytra++", "Elytra fly");
-        DESCRIPTIONS.put("Flight", "Creative fly");
+        DESCRIPTIONS.put("Flight", "Flip flop nga");
+        DESCRIPTIONS.put("Disabler", "Disable everything");
         DESCRIPTIONS.put("InvClean", "Clean inventory");
         DESCRIPTIONS.put("Replenish", "Refill items");
 

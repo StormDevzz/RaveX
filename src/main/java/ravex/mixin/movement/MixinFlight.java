@@ -17,10 +17,12 @@ public class MixinFlight {
         Flight flight = Modules.get(Flight.class);
         if (!Modules.enabled(Flight.class)) return;
 
+        String mode = flight.mode;
+        if ("VerusFlat".equals(mode) || "VerusDamage".equals(mode)) return;
+
         LocalPlayer player = (LocalPlayer)(Object)this;
         var mc = MinecraftWrapper.getInstance();
 
-        String mode = flight.mode;
         double hSpeed = flight.speed;
         double vSpeed = flight.verticalSpeed;
         double glide = flight.glide;

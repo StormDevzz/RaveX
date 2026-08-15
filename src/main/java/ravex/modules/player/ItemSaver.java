@@ -6,7 +6,7 @@ import net.minecraft.world.item.ItemStack;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-@Module(name = "ItemSaver", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "ItemSaver", category = "Player")
 public class ItemSaver {
     @Parameter(name = "MinDurability", min = 1.0, max = 50.0, step = 1.0)
     public double threshold = 10.0;

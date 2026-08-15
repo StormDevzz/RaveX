@@ -25,7 +25,7 @@ public class BedBomb {
     public boolean rotate = true;
     @Parameter(name = "AutoSwitch")
     public boolean autoSwitch = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x3FFF4444;
     @Parameter(name = "Render")
     public boolean render = true;

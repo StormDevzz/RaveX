@@ -18,7 +18,7 @@ public class NameTags {
     public double range = 64.0;
     @Parameter(name = "Background")
     public boolean background = true;
-    @Parameter(name = "BackgroundColor", color = true)
+    @Parameter(name = "BackgroundColor", color = true, visible = "background")
     public int backgroundColor = 0x20000000;
     @Parameter(name = "CustomFont")
     public boolean customFont = false;

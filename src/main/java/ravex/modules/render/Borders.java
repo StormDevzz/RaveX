@@ -11,9 +11,9 @@ public class Borders {
     public boolean showChunkBorders = true;
     @Parameter(name = "CurrentChunk")
     public boolean showCurrentChunk = true;
-    @Parameter(name = "ChunkColor", color = true)
+    @Parameter(name = "ChunkColor", color = true, visible = "showChunkBorders")
     public int chunkColor = 0x55FFFFFF;
-    @Parameter(name = "CurrentColor", color = true)
+    @Parameter(name = "CurrentColor", color = true, visible = "showCurrentChunk")
     public int currentColor = 0x55FF5500;
     @Parameter(name = "LineWidth", min = 0.5, max = 5.0, step = 0.5)
     public double lineWidth = 1.5;

@@ -39,9 +39,9 @@ private final Set<Identifier> selectedBlocks = new HashSet<>();
     });
     @Parameter(name = "Range", min = 16.0, max = 256.0, step = 8.0)
     public double range = 64.0;
-    @Parameter(name = "Block Color", color = true)
+    @Parameter(name = "Block Color", color = true, visible = "esp")
     public int blockColor = 0xCC00FF00;
-    @Parameter(name = "net.minecraft.world.entity.Entity Color", color = true)
+    @Parameter(name = "Entity Color", color = true, visible = "esp")
     public int entityColor = 0xCC00FFFF;
     @Parameter(name = "ESP")
     public boolean esp = true;

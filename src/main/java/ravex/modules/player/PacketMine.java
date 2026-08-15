@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
-@Module(name = "PacketMine", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "PacketMine", category = "Player")
 public class PacketMine {
     @Parameter(name = "Mode", modes = {"Normal", "Grim", "NCP"})
     public String mode = "Normal";
@@ -30,7 +30,7 @@ public class PacketMine {
     public boolean switchBack = true;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x3FFF4444;
     @Parameter(name = "DoubleMine")
     public boolean doubleMine = false;

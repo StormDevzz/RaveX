@@ -9,7 +9,6 @@ import ravex.utility.player.PlayerUtility;
 import net.minecraft.network.chat.Component;
 
 import net.minecraft.world.entity.item.ItemEntity;
-import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;

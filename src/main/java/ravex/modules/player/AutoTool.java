@@ -7,7 +7,7 @@ import ravex.utility.player.ToolUtility;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@Module(name = "AutoTool", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "AutoTool", category = "Player")
 public class AutoTool {
     @Parameter(name = "Swap", modes = {"Silent", "Normal"})
     public String swap = "Silent";

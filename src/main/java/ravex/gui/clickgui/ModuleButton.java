@@ -1,4 +1,5 @@
 package ravex.gui.clickgui;
+import ravex.utility.render.ColorUtility;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -55,6 +56,8 @@ public class ModuleButton {
     private boolean wasEnabled = false;
     private float enablePulseAlpha = 0f;
     private float enablePulseRadius = 0f;
+    private float pulseX = 0f;
+    private float pulseY = 0f;
 
     public ModuleButton(Module module) {
         this.module = module;
@@ -150,6 +153,8 @@ public class ModuleButton {
         if (module.getEnabled() && !wasEnabled) {
             enablePulseAlpha = 200f;
             enablePulseRadius = 0f;
+            pulseX = mouseX;
+            pulseY = mouseY;
         }
         wasEnabled = module.getEnabled();
         if (enablePulseAlpha > 0.5f) {
@@ -194,8 +199,8 @@ public class ModuleButton {
             float pr = enablePulseRadius;
             int pulseAlpha = Math.min(200, (int) enablePulseAlpha);
             Render2DUtility.drawPulseRing(graphics,
-                x + width / 2f,
-                currentY + btnH / 2f,
+                pulseX,
+                pulseY,
                 pr, 3f,
                 ColorUtility.withAlpha(activeColor, pulseAlpha));
         }

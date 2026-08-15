@@ -18,7 +18,7 @@ public class MixinSkyColor {
     private void onExtractRenderState(ClientLevel level, float partialTick, Camera camera,
                                       SkyRenderState state, CallbackInfo ci) {
         if (!Modules.enabled(WorldColor.class)) return;
-        state.skyColor = Modules.get(WorldColor.class).skyColor.getValue();
+        state.skyColor = Modules.get(WorldColor.class).skyColor;
         state.sunriseAndSunsetColor = 0;
         state.starBrightness = 0.0f;
         state.rainBrightness = 0.0f;

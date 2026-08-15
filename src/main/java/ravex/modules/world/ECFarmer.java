@@ -18,7 +18,7 @@ public class ECFarmer {
     public String swapMode = "Silent";
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x3F8800FF;
     private enum State { IDLE, FIND_BREAK, BREAKING, FIND_PLACE, PLACING }
     private State state = State.IDLE;

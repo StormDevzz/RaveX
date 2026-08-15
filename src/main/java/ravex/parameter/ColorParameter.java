@@ -18,7 +18,7 @@ public class ColorParameter extends Parameter<Integer> {
     @Override
     public Integer getValue() {
         if (themeSync) {
-            return ravex.gui.clickgui.ColorUtility.getActiveColor();
+            return ravex.utility.render.ColorUtility.getActiveColor();
         }
         return super.getValue();
     }

@@ -2,7 +2,7 @@ package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.modules.Modules;
-@Module(name = "NoInteract", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "NoInteract", category = "Player")
 public class NoInteract {
     @Parameter(name = "AllBlocks")
     public boolean allBlocks = false;

@@ -12,7 +12,7 @@ import ravex.gui.clickgui.AutoReGearScreen;
 import java.util.HashMap;
 import java.util.Map;
 import ravex.mcwrapper.MinecraftWrapper;
-@Module(name = "AutoReGear", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "AutoReGear", category = "Player")
 public class AutoReGear {
     @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
     public double delayParam = 200;
@@ -134,7 +134,7 @@ public class AutoReGear {
             );
         }
         if (containerSlotToClick >= 0 && containerSlotToClick < 27) {
-            InventoryUtility.handleInventoryClick(ravex.mcwrapper.MinecraftWrapper.getWrapper(), (net.minecraft.client.player.LocalPlayer) mc.getPlayer(), containerSlotToClick, 0, InventoryUtility.QUICK_MOVE);
+            InventoryUtility.handleInventoryClick(mc, (net.minecraft.client.player.LocalPlayer) mc.getPlayer(), containerSlotToClick, 0, InventoryUtility.QUICK_MOVE);
             lastActionTime = now;
         }
     }

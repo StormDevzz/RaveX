@@ -9,7 +9,6 @@ import net.minecraft.world.entity.LightningBolt;
 import ravex.utility.misc.EntityUtility;
 import ravex.event.Subscribe;
 import ravex.event.player.DeathEvent;
-import ravex.utility.misc.EntityUtility;
 import net.minecraft.core.particles.ParticleTypes;
 
 import java.util.List;

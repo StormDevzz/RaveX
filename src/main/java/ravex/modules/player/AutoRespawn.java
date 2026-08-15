@@ -7,7 +7,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.network.NetworkUtility;
 import ravex.modules.Modules;
 
-@Module(name = "AutoRespawn", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "AutoRespawn", category = "Player")
 public class AutoRespawn {
     @Parameter(name = "ShowDeathScreen")
     public boolean showDeathScreen = false;

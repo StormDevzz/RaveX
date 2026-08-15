@@ -259,7 +259,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
         boolean hasArt = coverTexture != null && coverId != null;
 
         int bgColor = 0x800C0C0C;
-        int borderColor = ravex.gui.clickgui.ColorUtility.withAlpha(activeColor, 75);
+        int borderColor = ravex.utility.render.ColorUtility.withAlpha(activeColor, 75);
         ravex.utility.render.Render2DUtility.drawRoundedRectWithBorder(graphics, bx, by, pw, ph, 5, bgColor, borderColor, 1);
 
         if (hasArt) {

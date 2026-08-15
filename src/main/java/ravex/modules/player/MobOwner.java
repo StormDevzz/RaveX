@@ -3,7 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.modules.Modules;
-@Module(name = "MobOwner", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "MobOwner", category = "Player")
 public class MobOwner {
     @Parameter(name = "Animals")
     public boolean animals = true;

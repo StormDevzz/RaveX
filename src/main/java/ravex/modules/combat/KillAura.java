@@ -3,15 +3,10 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.modules.Modules;
 import ravex.mcwrapper.MinecraftWrapper;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PotionUtility;
-import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
-import ravex.utility.misc.CameraUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;
@@ -34,9 +29,9 @@ public class KillAura {
 
     @Parameter(name = "Target ESP")
     public boolean targetEsp = true;
-    @Parameter(name = "ESP Mode", modes = {"RaveXV1", "Circle"})
+    @Parameter(name = "ESP Mode", modes = {"RaveXV1", "Circle"}, visible = "targetEsp")
     public String targetEspMode = "Circle";
-    @Parameter(name = "ESP Color", color = true)
+    @Parameter(name = "ESP Color", color = true, visible = "targetEsp")
     public int targetEspColor = 0xFF00FFFF;
 
     @Parameter(name = "Targets", options = {"Players", "Monsters", "Passives", "Invisibles"})
@@ -51,12 +46,15 @@ public class KillAura {
 
     @Parameter(name = "AutoWeapon")
     public boolean autoWeapon = false;
-    public final ModeParameter swapMode = ((ModeParameter) new ModeParameter("SwapMode", "Normal", List.of("Normal", "Silent", "None")).setVisible(() -> autoWeapon));
-    public final BooleanParameter swordsOnly = ((BooleanParameter) new BooleanParameter("SwordsOnly", false).setVisible(() -> autoWeapon));
+    @Parameter(name = "SwapMode", modes = {"Normal", "Silent", "None"}, visible = "autoWeapon")
+    public String swapMode = "Normal";
+    @Parameter(name = "SwordsOnly", visible = "autoWeapon")
+    public boolean swordsOnly = false;
 
     @Parameter(name = "KeepSprint")
     public boolean keepSprint = false;
-    public final NumberParameter keepSprintSpeed = ((NumberParameter) new NumberParameter("KeepSprintSpeed", 100, 0, 100, 5).setVisible(() -> keepSprint));
+    @Parameter(name = "KeepSprintSpeed", min = 0.0, max = 100.0, step = 5.0, visible = "keepSprint")
+    public double keepSprintSpeed = 100.0;
 
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private net.minecraft.world.entity.LivingEntity currentTarget = null;
@@ -191,7 +189,7 @@ public class KillAura {
         if (ka.keepSprint) {
             if (mc.getPlayer().hurtTime > 0) {
                 mc.getPlayer().setSprinting(true);
-                double multiplier = ka.keepSprintSpeed.getValue() / 100.0;
+                double multiplier = ka.keepSprintSpeed / 100.0;
                 if (multiplier < 1.0) {
                     var vel = mc.getPlayer().getDeltaMovement();
                     MoveUtility.setMotion(vel.x * multiplier, vel.y, vel.z * multiplier);
@@ -307,7 +305,7 @@ public class KillAura {
             double bestDmg = -1.0;
             for (int i = 0; i < 9; i++) {
                 var stack = InventoryUtility.getItem(mc.getPlayer(), i);
-                if (swordsOnly.getValue() && !isSword(stack.getItem())) continue;
+                if (swordsOnly && !isSword(stack.getItem())) continue;
                 double dmg = getWeaponDamage(stack);
                 if (dmg > bestDmg) {
                     bestDmg = dmg;

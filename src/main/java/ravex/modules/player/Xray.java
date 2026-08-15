@@ -7,7 +7,7 @@ import ravex.utility.misc.OreUtility;
 import java.util.HashSet;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
-@Module(name = "Xray", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "Xray", category = "Player")
 public class Xray {
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         MinecraftWrapper.getWrapper().setScreen(ravex.gui.browser.BlockBrowserScreen.forXray(MinecraftWrapper.getWrapper().getCurrentScreen()));

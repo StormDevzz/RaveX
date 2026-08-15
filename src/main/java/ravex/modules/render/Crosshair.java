@@ -14,7 +14,7 @@ public class Crosshair {
     public String mode = "Normal";
     @Parameter(name = "Color", color = true)
     public int color = 0xFFFFFFFF;
-    @Parameter(name = "DotColor", color = true)
+    @Parameter(name = "DotColor", color = true, visible = "dot")
     public int dotColor = 0xFFFF3333;
     @Parameter(name = "Size", min = 2.0, max = 10.0, step = 0.5)
     public double size = 4.0;
@@ -98,7 +98,7 @@ public class Crosshair {
         int cy = h / 2;
 
         int col = color;
-        int lockColor = 0xFFFF3333;
+        int lockColor = dotColor;
         int currentColor = lerpColor(col, lockColor, targetProgress);
 
         if (hitFlashProgress > 0.01f) {

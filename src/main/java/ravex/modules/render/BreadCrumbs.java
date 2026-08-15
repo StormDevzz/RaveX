@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
-import ravex.utility.misc.EntityUtility;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 

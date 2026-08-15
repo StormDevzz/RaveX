@@ -9,7 +9,6 @@ import net.minecraft.world.entity.animal.equine.Llama;
 import net.minecraft.world.entity.npc.villager.Villager;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
-import ravex.utility.misc.EntityUtility;
 import ravex.modules.Modules;
 
 @Module(name = "AntiAttack", category = "Misc")

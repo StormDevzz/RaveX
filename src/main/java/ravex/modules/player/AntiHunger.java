@@ -10,7 +10,7 @@ import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-@Module(name = "AntiHunger", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "AntiHunger", category = "Player")
 public class AntiHunger {
     @Parameter(name = "Mode", modes = {"NCP", "NCPStrict", "UNCP"})
     public String mode = "NCP";

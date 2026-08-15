@@ -33,7 +33,7 @@ public class Scaffold {
     public boolean render = true;
     @Parameter(name = "Animate")
     public boolean animate = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int highlightColor = 0xFFFF33CC;
     public static net.minecraft.world.phys.Vec3 highlightPos = null;
     public static float renderAlpha = 0.0f;
@@ -82,8 +82,8 @@ public class Scaffold {
         p.setXRot(exact[1]);
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, slot);
-        BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), SwingUtility.hitResult(hitVec, pendingFace, pendingNeighbor));
-        BlockUtility.swing(ravex.mcwrapper.MinecraftWrapper.getWrapper());
+        BlockUtility.useItemOn(mc, SwingUtility.hitResult(hitVec, pendingFace, pendingNeighbor));
+        BlockUtility.swing(mc);
         if (slot != prevSlot) InventoryUtility.selectSlot(p, prevSlot);
         hasPending = false;
     }
@@ -204,9 +204,8 @@ public class Scaffold {
 
     @Nullable
     private NeighborResult findNeighbor(int tx, int ty, int tz, boolean grim) {
-        var eye = MinecraftWrapper.getWrapper().getPlayer() != null
-            ? MinecraftWrapper.getWrapper().getPlayer().getEyePosition()
-            : null;
+        var player = MinecraftWrapper.getWrapper().getPlayer();
+        var eye = player != null ? player.getEyePosition() : null;
         var bestNeighbor = (net.minecraft.core.BlockPos) null;
         var bestFace = net.minecraft.core.Direction.UP;
         double bestDist = Double.MAX_VALUE;

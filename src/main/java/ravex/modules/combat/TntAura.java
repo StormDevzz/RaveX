@@ -47,7 +47,7 @@ public class TntAura {
     public double maxRate = 2.0;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "Color", color = true)
+    @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0xFFFF4400;
     private enum State { TRAPPING, PLACING_TNT, IGNITING, WAITING }
     private State currentState = State.TRAPPING;

@@ -4,7 +4,7 @@ import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-@Module(name = "ViewLock", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "ViewLock", category = "Player")
 public class ViewLock {
     @Parameter(name = "LockYaw")
     public boolean lockYaw = true;

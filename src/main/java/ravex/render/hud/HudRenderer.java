@@ -43,11 +43,7 @@ public final class HudRenderer {
         var mc = MinecraftWrapper.getWrapper();
 
         if (Modules.enabled(Ambient.class)) {
-            int rVal = (int) ModuleManager.get(Ambient.class).r;
-            int gVal = (int) ModuleManager.get(Ambient.class).g;
-            int bVal = (int) ModuleManager.get(Ambient.class).b;
-            int aVal = (int) ModuleManager.get(Ambient.class).a;
-            int color = ((aVal & 0xFF) << 24) | ((rVal & 0xFF) << 16) | ((gVal & 0xFF) << 8) | (bVal & 0xFF);
+            int color = ModuleManager.get(Ambient.class).color;
             context.fill(0, 0, context.guiWidth(), context.guiHeight(), color);
         }
 
@@ -495,7 +491,7 @@ public final class HudRenderer {
             int borderCol = 0;
             if (drawNametags) {
                 drawBorder = true;
-                int activeColor = ravex.gui.clickgui.ColorUtility.getActiveColor();
+                int activeColor = ravex.utility.render.ColorUtility.getActiveColor();
                 borderCol = ravex.utility.render.ColorUtility.withAlpha(activeColor, 120);
             } else if (hasOwner) {
                 drawBorder = ModuleManager.get(MobOwner.class).background;

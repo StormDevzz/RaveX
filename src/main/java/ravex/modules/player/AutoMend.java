@@ -8,7 +8,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
-@Module(name = "AutoMend", category = "net.minecraft.world.entity.player.Player")
+@Module(name = "AutoMend", category = "Player")
 public class AutoMend {
     @Parameter(name = "Threshold", min = 10.0, max = 95.0, step = 5.0)
     public double threshold = 50.0;

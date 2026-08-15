@@ -6,9 +6,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 
 import ravex.modules.client.Hud;
-import ravex.parameter.DependencyParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.Render2DUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -29,9 +26,8 @@ private static final EquipmentSlot[] SLOTS = {
 
     @Parameter(name = "ColorMode", modes = {"Dynamic", "Custom"})
     public String colorMode = "Dynamic";
-    public final DependencyParameter<Integer, ColorParameter> customColor = new DependencyParameter<>(
-        new ColorParameter("CustomColor", 0xFF44FF88), new ModeParameter("ColorMode", "Dynamic", java.util.List.of("Dynamic", "Custom")), "Custom"
-    );
+    @Parameter(name = "CustomColor", color = true, visible = "colorMode=Custom")
+    public int customColor = 0xFF44FF88;
 
     private ArmorHud() {
         super("ArmorHud", 30, 30, 80, 20);
@@ -73,7 +69,7 @@ private static final EquipmentSlot[] SLOTS = {
                 if (stack.isDamageableItem()) {
                     float pct = (float) (stack.getMaxDamage() - stack.getDamageValue()) / stack.getMaxDamage();
                     int barColor = colorMode.equals("Custom")
-                        ? customColor.getValue()
+                        ? customColor
                         : ravex.utility.render.ColorUtility.interpolate(0xFFFF3333, 0xFF33FF33, pct);
 
                     int barY = cellY + 20;

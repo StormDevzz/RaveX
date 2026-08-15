@@ -169,7 +169,8 @@ public class LanguageUtility {
         en.put("desc_FastStairs", "Climb fast");
         en.put("desc_NoFall", "Safe fall");
         en.put("desc_ElytraPlusPlus", "Elytra fly");
-        en.put("desc_Flight", "Creative fly");
+        en.put("desc_Flight", "Flip flop nga");
+        en.put("desc_Disabler", "Disable everything");
         en.put("desc_Replenish", "Refill items");
 
 
@@ -419,7 +420,8 @@ public class LanguageUtility {
         ru.put("desc_FastStairs", "Быстрые ступеньки");
         ru.put("desc_NoFall", "Без урона от падения");
         ru.put("desc_ElytraPlusPlus", "Элитра полёт");
-        ru.put("desc_Flight", "Креативный полёт");
+        ru.put("desc_Flight", "Полёт в разных режимах");
+        ru.put("desc_Disabler", "Вырубает просто все нахуй");
         ru.put("desc_Replenish", "Пополнять предметы");
 
 
