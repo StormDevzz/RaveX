@@ -2,6 +2,7 @@
 #include "../../autocrystal/include/entity_tracker.hpp"
 #include "../../autocrystal/include/effects.hpp"
 #include "../../autocrystal/include/damage.hpp"
+#include "block_hash.hpp"
 #include <cmath>
 #include <algorithm>
 #include <limits>
@@ -44,7 +45,7 @@ static int getFaceIndex(const Vec3& neighbor, const Vec3& candidate) {
 }
 
 
-static double calcRawAnchorDamage(const Vec3& explosionPos, const Vec3& entityPos, const std::vector<Vec3>& blocks) {
+static double calcRawAnchorDamage(const Vec3& explosionPos, const Vec3& entityPos, const BlockSet& blocks) {
     Vec3 center = {entityPos.x, entityPos.y + 0.9, entityPos.z};
     double distance = explosionPos.distanceTo(center);
     double maxDistance = ANCHOR_EXPLOSION_POWER * 2.0;
@@ -64,7 +65,7 @@ static double calcAnchorDamage(
     double      entityHealth,
     double      entityAbsorption,
     const EntityStats& stats,
-    const std::vector<Vec3>& blocks
+    const BlockSet& blocks
 ) {
     double rawDmg = calcRawAnchorDamage(explosionPos, entityPos, blocks);
     double finalDmg = EffectsCalc::getFinalDamage(rawDmg, stats);
@@ -96,6 +97,8 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
     bestResult.valid = false;
     bestResult.score = -std::numeric_limits<double>::infinity();
 
+    BlockSet solidBlockSet(solidBlocks.begin(), solidBlocks.end());
+
     Vec3 predictedTargetPos = EntityTracker::predictPosition(
         targetPos, targetStats.motionX, targetStats.motionY, targetStats.motionZ, predictTicks
     );
@@ -108,14 +111,7 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
     int endZ = (int)std::floor(predictedTargetPos.z) + 3;
 
     auto isSolid = [&](const Vec3& pos) -> bool {
-        for (const auto& sb : solidBlocks) {
-            if ((int)std::floor(sb.x) == (int)std::floor(pos.x) &&
-                (int)std::floor(sb.y) == (int)std::floor(pos.y) &&
-                (int)std::floor(sb.z) == (int)std::floor(pos.z)) {
-                return true;
-            }
-        }
-        return false;
+        return solidBlockSet.find(pos) != solidBlockSet.end();
     };
 
     const Vec3 offsets[6] = {
@@ -135,6 +131,8 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
         if (targetStats.leggingsDurability > 0 && targetStats.leggingsDurability < armorDurabilityThreshold) armorWeak = true;
         if (targetStats.bootsDurability > 0 && targetStats.bootsDurability < armorDurabilityThreshold) armorWeak = true;
     }
+
+    std::vector<Vec3> tempBlocks = solidBlocks;
 
     for (int x = startX; x <= endX; x++) {
         for (int y = startY; y <= endY; y++) {
@@ -177,16 +175,17 @@ AnchorAuraResult AnchorAuraMath::findBestAnchorPlace(
                 if (predictedTargetPos.distanceTo(anchorExplosionPos) > targetRange) continue;
 
 
-                std::vector<Vec3> tempBlocks = solidBlocks;
-                tempBlocks.push_back(c);
+                solidBlockSet.insert(c);
 
                 double targetDmg = calcAnchorDamage(
-                    anchorExplosionPos, predictedTargetPos, targetHealth, targetAbsorption, targetStats, tempBlocks
+                    anchorExplosionPos, predictedTargetPos, targetHealth, targetAbsorption, targetStats, solidBlockSet
                 );
 
                 double selfDmg = calcAnchorDamage(
-                    anchorExplosionPos, playerPos, playerHealth, playerAbsorption, playerStats, tempBlocks
+                    anchorExplosionPos, playerPos, playerHealth, playerAbsorption, playerStats, solidBlockSet
                 );
+
+                solidBlockSet.erase(c);
 
                 if (targetDmg < minTargetDamage) continue;
                 if (selfDmg > maxSelfDamage) continue;

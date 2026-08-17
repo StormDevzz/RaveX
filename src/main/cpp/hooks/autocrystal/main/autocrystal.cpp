@@ -4,16 +4,19 @@
 #include "effects.hpp"
 #include "entity_tracker.hpp"
 #include "conditions.hpp"
+#include "block_hash.hpp"
 
 #include <cmath>
 #include <vector>
 #include <algorithm>
 #include <sstream>
 #include <limits>
+#include <cstring>
+#include <omp.h>
 
 namespace ravex {
 
-static bool isPosVisible(const Vec3& eyePos, const Vec3& targetPos, const std::vector<Vec3>& blocks, bool ignoreTargetBlock = false, const Vec3& targetBlock = {}) {
+static bool isPosVisible(const Vec3& eyePos, const Vec3& targetPos, const BlockSet& blocks, bool ignoreTargetBlock = false, const Vec3& targetBlock = {}) {
     Vec3 dir = targetPos - eyePos;
     double len = dir.length();
     if (len < 0.001) return true;
@@ -32,10 +35,9 @@ static bool isPosVisible(const Vec3& eyePos, const Vec3& targetPos, const std::v
             continue;
         }
 
-        for (const Vec3& block : blocks) {
-            if ((int)block.x == bx && (int)block.y == by && (int)block.z == bz) {
-                return false;
-            }
+        Vec3 lookup((double)bx, (double)by, (double)bz);
+        if (blocks.find(lookup) != blocks.end()) {
+            return false;
         }
     }
     return true;
@@ -55,14 +57,8 @@ double AutoCrystalMath::calcExplosionDamage(
 }
 
 bool AutoCrystalMath::isValidBase(const Vec3& pos, const std::vector<Vec3>& blocks) {
-    for (const Vec3& b : blocks) {
-        if ((int)b.x == (int)pos.x &&
-            (int)b.y == (int)pos.y &&
-            (int)b.z == (int)pos.z) {
-            return true;
-        }
-    }
-    return false;
+    BlockSet blockSet(blocks.begin(), blocks.end());
+    return blockSet.find(pos) != blockSet.end();
 }
 
 bool AutoCrystalMath::isOccupied(const Vec3& crystalPos, const std::vector<CrystalEntity>& crystals) {
@@ -114,7 +110,19 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
 
     double targetEffHp = EntityTracker::getEffectiveHealth(targetHealth, targetAbsorption);
 
-    for (const Vec3& block : blocks) {
+    BlockSet blockSet(blocks.begin(), blocks.end());
+
+    const int numBlocks = static_cast<int>(blocks.size());
+    std::vector<double> blockScores(numBlocks);
+    std::vector<Vec3> blockPoses(numBlocks);
+    std::vector<Vec3> crystalPoses(numBlocks);
+    std::vector<double> targetDamages(numBlocks);
+    std::vector<double> selfDamages(numBlocks);
+    std::vector<char> blockValid(numBlocks, 0);
+
+    #pragma omp parallel for schedule(dynamic)
+    for (int bi = 0; bi < numBlocks; bi++) {
+        const Vec3& block = blocks[bi];
         if (excludePos && (int)block.x == (int)posToExclude.x && (int)block.y == (int)posToExclude.y && (int)block.z == (int)posToExclude.z) {
             continue;
         }
@@ -123,7 +131,7 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
 
         Vec3 blockCenter = {block.x + 0.5, block.y + 0.5, block.z + 0.5};
         Vec3 eyePos = {playerPos.x, playerPos.y + 1.62, playerPos.z};
-        bool visible = isPosVisible(eyePos, blockCenter, blocks, true, block);
+        bool visible = isPosVisible(eyePos, blockCenter, blockSet, true, block);
         if (config.grimAC && !visible) {
             continue;
         }
@@ -133,18 +141,11 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
         double dist = distanceToCenter(playerPos, block);
         if (dist > maxRange) continue;
 
-        bool spaceBlocked = false;
         Vec3 above1 = {block.x, block.y + 1.0, block.z};
         Vec3 above2 = {block.x, block.y + 2.0, block.z};
-        for (const Vec3& b : blocks) {
-            if ((int)b.x == (int)above1.x && (int)b.y == (int)above1.y && (int)b.z == (int)above1.z) {
-                spaceBlocked = true; break;
-            }
-            if (!config.placeAirPlace) {
-                if ((int)b.x == (int)above2.x && (int)b.y == (int)above2.y && (int)b.z == (int)above2.z) {
-                    spaceBlocked = true; break;
-                }
-            }
+        bool spaceBlocked = blockSet.find(above1) != blockSet.end();
+        if (!spaceBlocked && !config.placeAirPlace) {
+            spaceBlocked = blockSet.find(above2) != blockSet.end();
         }
         if (spaceBlocked) continue;
 
@@ -204,12 +205,21 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
             score = selfDmg * 100.0 + targetDmg;
         }
 
-        if (score > best.score) {
-            best.score        = score;
-            best.blockPos     = block;
-            best.crystalPos   = crystalPos;
-            best.targetDamage = targetDmg;
-            best.selfDamage   = selfDmg;
+        blockScores[bi] = score;
+        blockPoses[bi] = block;
+        crystalPoses[bi] = crystalPos;
+        targetDamages[bi] = targetDmg;
+        selfDamages[bi] = selfDmg;
+        blockValid[bi] = 1;
+    }
+
+    for (int bi = 0; bi < numBlocks; bi++) {
+        if (blockValid[bi] && blockScores[bi] > best.score) {
+            best.score        = blockScores[bi];
+            best.blockPos     = blockPoses[bi];
+            best.crystalPos   = crystalPoses[bi];
+            best.targetDamage = targetDamages[bi];
+            best.selfDamage   = selfDamages[bi];
             best.valid        = true;
         }
     }
@@ -250,8 +260,10 @@ bool AutoCrystalMath::findBestBreak(
 
     double targetEffHp = EntityTracker::getEffectiveHealth(targetHealth, targetAbsorption);
 
+    BlockSet blockSet(blocks.begin(), blocks.end());
+
     for (const CrystalEntity& crystal : crystals) {
-        bool visible = isPosVisible(eyePos, crystal.pos, blocks);
+        bool visible = isPosVisible(eyePos, crystal.pos, blockSet);
         double maxRange = visible ? config.breakRange : config.breakWallRange;
 
         double dist = eyePos.distanceTo(crystal.pos);
