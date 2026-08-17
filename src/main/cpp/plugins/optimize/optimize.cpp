@@ -4,6 +4,9 @@
 #include <chrono>
 #include <cmath>
 #include <algorithm>
+#include <cstring>
+#include <vector>
+#include <omp.h>
 
 #ifdef _WIN32
 #include "optimize_windows.hpp"
@@ -120,6 +123,9 @@ int NameTagsOptimizer::optimizeNameTags(
     double lookY = playerViewVec[1];
     double lookZ = playerViewVec[2];
 
+    std::vector<char> valid(count, 0);
+
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < count; ++i) {
 
         double bx_w = positions[i * 9 + 0];
@@ -277,7 +283,7 @@ int NameTagsOptimizer::optimizeNameTags(
         }
 
 
-        int idx = renderedCount * 16;
+        int idx = i * 16;
         outLayouts[idx + 0] = scale;
         outLayouts[idx + 1] = totalWidth;
         outLayouts[idx + 2] = totalHeight;
@@ -295,10 +301,19 @@ int NameTagsOptimizer::optimizeNameTags(
         outLayouts[idx + 14] = 0.0;
         outLayouts[idx + 15] = 0.0;
 
+        outIndices[i] = i;
 
-        outIndices[renderedCount] = i;
+        valid[i] = 1;
+    }
 
-        renderedCount++;
+    for (int i = 0; i < count; ++i) {
+        if (valid[i]) {
+            if (renderedCount != i) {
+                std::memcpy(outLayouts + renderedCount * 16, outLayouts + i * 16, 16 * sizeof(double));
+                outIndices[renderedCount] = i;
+            }
+            renderedCount++;
+        }
     }
 
     return renderedCount;

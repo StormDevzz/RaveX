@@ -14,14 +14,15 @@ static std::vector<Vec3> parseBlockData(JNIEnv* env, jdoubleArray arr) {
     jsize len = env->GetArrayLength(arr);
     if (len < 3) return result;
 
-    jdouble* data = env->GetDoubleArrayElements(arr, nullptr);
+    jdouble* data = (jdouble*)env->GetPrimitiveArrayCritical(arr, nullptr);
     if (!data) return result;
 
+    result.reserve(len / 3);
     for (jsize i = 0; i + 2 < len; i += 3) {
         result.push_back({data[i], data[i+1], data[i+2]});
     }
 
-    env->ReleaseDoubleArrayElements(arr, data, JNI_ABORT);
+    env->ReleasePrimitiveArrayCritical(arr, data, JNI_ABORT);
     return result;
 }
 
@@ -31,9 +32,10 @@ static std::vector<CrystalEntity> parseCrystalData(JNIEnv* env, jdoubleArray arr
     jsize len = env->GetArrayLength(arr);
     if (len < 4) return result;
 
-    jdouble* data = env->GetDoubleArrayElements(arr, nullptr);
+    jdouble* data = (jdouble*)env->GetPrimitiveArrayCritical(arr, nullptr);
     if (!data) return result;
 
+    result.reserve(len / 4);
     for (jsize i = 0; i + 3 < len; i += 4) {
         CrystalEntity e;
         e.entityId    = static_cast<int>(data[i]);
@@ -44,7 +46,7 @@ static std::vector<CrystalEntity> parseCrystalData(JNIEnv* env, jdoubleArray arr
         result.push_back(e);
     }
 
-    env->ReleaseDoubleArrayElements(arr, data, JNI_ABORT);
+    env->ReleasePrimitiveArrayCritical(arr, data, JNI_ABORT);
     return result;
 }
 
@@ -54,7 +56,7 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     jsize len = env->GetArrayLength(arr);
     if (len < 15) return s;
 
-    jdouble* data = env->GetDoubleArrayElements(arr, nullptr);
+    jdouble* data = (jdouble*)env->GetPrimitiveArrayCritical(arr, nullptr);
     if (!data) return s;
 
     s.armorValue           = data[0];
@@ -73,7 +75,7 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     s.motionZ              = data[13];
     s.totemCount           = data[14];
 
-    env->ReleaseDoubleArrayElements(arr, data, JNI_ABORT);
+    env->ReleasePrimitiveArrayCritical(arr, data, JNI_ABORT);
     return s;
 }
 
