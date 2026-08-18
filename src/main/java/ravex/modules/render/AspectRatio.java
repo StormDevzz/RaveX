@@ -1,7 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import java.util.List;
 import ravex.modules.Modules;
 @Module(name = "AspectRatio", category = "Render")
 public class AspectRatio {

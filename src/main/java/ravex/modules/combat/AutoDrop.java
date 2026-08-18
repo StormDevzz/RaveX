@@ -1,18 +1,16 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.rotation.AimUtility;
-import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.FallingBlock;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.misc.CombatUtility;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -67,7 +65,7 @@ public class AutoDrop {
             InventoryUtility.silentSelectSlot(mc.getPlayer(), slot);
         }
         net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(placePos);
-        rotateTo(mc, center);
+        CombatUtility.rotateTo(mc, center, 180.0f, 0.0f, silentRotation);
         String rot = rotate;
         if ((rot.equals("Strict") || rot.equals("NCPStrict")) && !isRotationAligned(mc, center)) return;
         net.minecraft.core.BlockPos neighbor;
@@ -119,22 +117,6 @@ public class AutoDrop {
             if (type.equals("Both") && (block instanceof FallingBlock || block instanceof net.minecraft.world.level.block.AnvilBlock)) return i;
         }
         return -1;
-    }
-    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotate;
-        if (mode.equals("None")) return;
-        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
-        float currentYaw = mc.getPlayer().getYRot();
-        float currentPitch = mc.getPlayer().getXRot();
-        if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
-        currentYaw = silentRotation.lastYaw;
-        currentPitch = silentRotation.lastPitch;
-        float maxSpeed = 180.0f;
-        float[] limited = AimUtility.limitAngles(currentYaw, angles[0], currentPitch, angles[1], maxSpeed);
-        float finalYaw = limited[0], finalPitch = limited[1];
-        silentRotation.set(finalYaw, finalPitch);
-        silentRotation.lastYaw = finalYaw;
-        silentRotation.lastPitch = finalPitch;
     }
     private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         return silentRotation.isRotationAligned(mc, target, 10.0f);

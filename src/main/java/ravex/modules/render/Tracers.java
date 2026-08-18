@@ -9,8 +9,6 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
-import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.PhysicUtility;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;

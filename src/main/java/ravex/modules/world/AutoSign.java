@@ -1,7 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.parameter.StringParameter;
 @Module(name = "AutoSign", category = "World")
 public class AutoSign {
     @Parameter(name = "Line1")

@@ -1,23 +1,19 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.rotation.AimUtility;
-import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.utility.misc.PotionUtility;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
-import net.minecraft.world.phys.AABB;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.utility.misc.CombatUtility;
 
 
 
@@ -185,8 +181,8 @@ public class AutoCrystal {
         double tAbs = EntityUtility.getAbsorption(target);
         double[] blockData  = collectValidBlocks(mc, playerPos);
         double[] crystalData = collectCrystals(mc, playerPos);
-        double[] pStats = getEntityStats(mc.getPlayer());
-        double[] tStats = getEntityStats(target);
+        double[] pStats = CombatUtility.getEntityStats(mc.getPlayer());
+        double[] tStats = CombatUtility.getEntityStats(target);
         boolean grimAC = rotate.equals("Grim") || placeMode.equals("Grim");
         boolean ncpBypass = rotate.equals("NCP") || rotate.equals("NCPStrict") || placeMode.equals("NCPStrict");
         double[] result;
@@ -253,7 +249,7 @@ public class AutoCrystal {
             rotationTarget = new net.minecraft.world.phys.Vec3(result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
         }
         if (rotationTarget != null) {
-            rotateTo(mc, rotationTarget);
+            CombatUtility.rotateTo(mc, rotationTarget, (float) rotateSpeed, (float) rotateRandomize, silentRotation);
         }
         boolean isStrict = rotate.equals("Grim") || rotate.equals("NCPStrict");
         boolean aligned = true;
@@ -474,26 +470,6 @@ public class AutoCrystal {
         }
         return false;
     }
-    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotate;
-        if (mode.equals("None")) return;
-        float[] targetAngles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
-        float currentYaw = mc.getPlayer().getYRot();
-        float currentPitch = mc.getPlayer().getXRot();
-        if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
-        currentYaw = silentRotation.lastYaw;
-        currentPitch = silentRotation.lastPitch;
-        float maxSpeed = (float) rotateSpeed;
-        float[] limited = AimUtility.limitAngles(currentYaw, targetAngles[0], currentPitch, targetAngles[1], maxSpeed);
-        float finalYaw = limited[0], finalPitch = limited[1];
-        if (rotateRandomize > 0.0) {
-            float[] rnd = AimUtility.randomize(finalYaw, finalPitch, (float) rotateRandomize);
-            finalYaw = rnd[0]; finalPitch = rnd[1];
-        }
-        silentRotation.set(finalYaw, finalPitch);
-        silentRotation.lastYaw = finalYaw;
-        silentRotation.lastPitch = finalPitch;
-    }
     private long currentPlaceDelay = 0;
     private long currentBreakDelay = 0;
     private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
@@ -555,72 +531,6 @@ public class AutoCrystal {
     }
     public static boolean isNativeAvailable() {
         return NATIVE.isLoaded();
-    }
-
-
-    private double[] getEntityStats(net.minecraft.world.entity.LivingEntity player) {
-        int protectionEpf = 0;
-        int blastProtectionEpf = 0;
-        net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
-            net.minecraft.world.entity.EquipmentSlot.FEET,
-            net.minecraft.world.entity.EquipmentSlot.LEGS,
-            net.minecraft.world.entity.EquipmentSlot.CHEST,
-            net.minecraft.world.entity.EquipmentSlot.HEAD
-        };
-        for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            var armor = player.getItemBySlot(slot);
-            if (armor.isEmpty()) continue;
-            var enchants = InventoryUtility.getEnchantments(armor);
-            if (enchants != null) {
-                for (var enchantment : enchants.keySet()) {
-                    String id = enchantment.getRegisteredName().toLowerCase();
-                    int level = enchants.getLevel(enchantment);
-                    if (id.contains("blast_protection")) {
-                        blastProtectionEpf += level * 2;
-                    } else if (id.equals("minecraft:protection") || id.endsWith(":protection")) {
-                        protectionEpf += level;
-                    }
-                }
-            }
-        }
-        int totems = 0;
-        if (InventoryUtility.isTotem(player.getMainHandItem())) totems++;
-        if (InventoryUtility.isTotem(player.getOffhandItem())) totems++;
-        if (player instanceof net.minecraft.world.entity.player.Player p) {
-            totems += InventoryUtility.countItem(p, "totem_of_undying");
-        }
-        double[] stats = new double[15];
-        stats[0] = player.getArmorValue();
-        stats[1] = PotionUtility.getArmorToughness(player);
-        stats[2] = blastProtectionEpf;
-        stats[3] = protectionEpf;
-        stats[4] = PotionUtility.getResistanceAmplifier(player);
-        stats[5] = PotionUtility.getWeaknessAmplifier(player);
-        stats[6] = PotionUtility.getStrengthAmplifier(player);
-        int idx = 7;
-        for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            var armor = player.getItemBySlot(slot);
-            if (armor.isEmpty()) {
-                stats[idx++] = 0.0;
-            } else if (!armor.isDamageableItem()) {
-                stats[idx++] = 100.0;
-            } else {
-                double dur = (1.0 - (double) armor.getDamageValue() / armor.getMaxDamage()) * 100.0;
-                stats[idx++] = dur;
-            }
-        }
-        net.minecraft.world.phys.Vec3 motion = player.getDeltaMovement();
-        if (motion != null) {
-            stats[11] = motion.x;
-            stats[12] = motion.y;
-            stats[13] = motion.z;
-        } else {
-            stats[11] = 0.0;
-            stats[12] = 0.0;
-            stats[13] = 0.0;
-        }
-        stats[14] = totems;
-        return stats;
     }
 
 

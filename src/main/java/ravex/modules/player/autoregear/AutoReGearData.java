@@ -1,7 +1,6 @@
 package ravex.modules.player.autoregear;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 public class AutoReGearData {
     public static final AutoReGearData INSTANCE = new AutoReGearData();
     private final Map<String, Integer> selectedItems = new LinkedHashMap<>();

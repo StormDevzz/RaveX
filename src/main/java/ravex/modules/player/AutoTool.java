@@ -1,10 +1,8 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.ToolUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "AutoTool", category = "Player")

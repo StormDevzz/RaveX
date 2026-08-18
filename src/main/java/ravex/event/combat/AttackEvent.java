@@ -2,7 +2,6 @@ package ravex.event.combat;
 
 import ravex.event.CancellableEvent;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 
 public class AttackEvent extends CancellableEvent {
     private final Entity target;

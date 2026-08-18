@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.food.FoodUtility;
 import net.minecraft.network.chat.Component;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AutoEat", category = "Misc")
 public class AutoEat {

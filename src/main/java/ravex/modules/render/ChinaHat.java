@@ -1,8 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.PhysicUtility;
 import org.joml.Matrix4f;
 import ravex.utility.render.Render3DUtility;
 import ravex.mcwrapper.MinecraftWrapper;

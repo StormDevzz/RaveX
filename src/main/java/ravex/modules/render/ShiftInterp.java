@@ -1,7 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.EntityUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 

@@ -2,7 +2,6 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.movement.MoveUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "FastStairs", category = "Movement")
 public class FastStairs {

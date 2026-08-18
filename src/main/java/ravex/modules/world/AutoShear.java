@@ -4,7 +4,6 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;
-import java.util.List;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 

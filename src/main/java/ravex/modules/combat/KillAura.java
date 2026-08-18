@@ -2,15 +2,14 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.modules.Modules;
+import ravex.utility.misc.CombatUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PotionUtility;
-import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;
-import ravex.utility.player.SwingUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.ArrayList;
@@ -305,8 +304,8 @@ public class KillAura {
             double bestDmg = -1.0;
             for (int i = 0; i < 9; i++) {
                 var stack = InventoryUtility.getItem(mc.getPlayer(), i);
-                if (swordsOnly && !isSword(stack.getItem())) continue;
-                double dmg = getWeaponDamage(stack);
+                if (swordsOnly && !InventoryUtility.isSwordItem(stack)) continue;
+                double dmg = CombatUtility.getWeaponDamage(stack);
                 if (dmg > bestDmg) {
                     bestDmg = dmg;
                     bestSlot = i;
@@ -322,32 +321,6 @@ public class KillAura {
         }
         EntityUtility.attack(mc, target);
         EntityUtility.swingHand(mc);
-    }
-
-    private boolean isSword(net.minecraft.world.item.Item item) {
-        return item == net.minecraft.world.item.Items.WOODEN_SWORD ||
-               item == net.minecraft.world.item.Items.STONE_SWORD ||
-               item == net.minecraft.world.item.Items.IRON_SWORD ||
-               item == net.minecraft.world.item.Items.GOLDEN_SWORD ||
-               item == net.minecraft.world.item.Items.DIAMOND_SWORD ||
-               item == net.minecraft.world.item.Items.NETHERITE_SWORD;
-    }
-
-    private double getWeaponDamage(net.minecraft.world.item.ItemStack stack) {
-        if (stack.isEmpty()) return 0.0;
-        String name = stack.getItem().toString().toLowerCase();
-        double dmg = 0.0;
-        if (name.contains("netherite_sword")) dmg = 8.0;
-        else if (name.contains("diamond_sword")) dmg = 7.0;
-        else if (name.contains("netherite_axe")) dmg = 7.0;
-        else if (name.contains("mace")) dmg = 6.5;
-        else if (name.contains("diamond_axe")) dmg = 6.0;
-        else if (name.contains("iron_sword")) dmg = 6.0;
-        else if (name.contains("iron_axe")) dmg = 5.0;
-        else if (name.contains("stone_sword")) dmg = 5.0;
-        else if (name.contains("stone_axe")) dmg = 4.0;
-        else if (name.contains("golden_sword") || name.contains("wooden_sword")) dmg = 4.0;
-        return dmg;
     }
 
     private float[] calculateAngles(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target) {

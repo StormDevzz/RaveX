@@ -1,12 +1,10 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.PhysicUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.movement.MoveUtility;
 import ravex.event.Subscribe;
 import ravex.event.movement.VelocityEvent;
-import java.util.List;
 import java.util.Random;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;

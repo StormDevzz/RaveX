@@ -1,7 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
@@ -9,12 +8,12 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import ravex.utility.misc.PotionUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 import ravex.modules.player.PacketMine;
+import ravex.utility.misc.CombatUtility;
 
 
 
@@ -142,9 +141,9 @@ public class Breaker {
             double[] candData = flatten(candidates);
             double[] result = nativeCalculateBreaker(
                     mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
-                    mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), getEntityStats(mc.getPlayer()),
+                    mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), CombatUtility.getEntityStats(mc.getPlayer()),
                     target.getX(), target.getY(), target.getZ(),
-                    target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
+                    target.getHealth(), target.getAbsorptionAmount(), CombatUtility.getEntityStats(target),
                     solidData,
                     candData,
                     range,
@@ -247,72 +246,6 @@ public class Breaker {
         float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
         mc.getPlayer().setYRot(angles[0]);
         mc.getPlayer().setXRot(angles[1]);
-    }
-
-    private double[] getEntityStats(net.minecraft.world.entity.player.Player player) {
-        int protectionEpf = 0;
-        int blastProtectionEpf = 0;
-        net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
-                net.minecraft.world.entity.EquipmentSlot.FEET,
-                net.minecraft.world.entity.EquipmentSlot.LEGS,
-                net.minecraft.world.entity.EquipmentSlot.CHEST,
-                net.minecraft.world.entity.EquipmentSlot.HEAD
-        };
-        for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            var armor = player.getItemBySlot(slot);
-            if (armor.isEmpty())
-                continue;
-            var enchants = InventoryUtility.getEnchantments(armor);
-            if (enchants != null) {
-                for (var enchantment : enchants.keySet()) {
-                    String id = enchantment.getRegisteredName().toLowerCase();
-                    int level = enchants.getLevel(enchantment);
-                    if (id.contains("blast_protection")) {
-                        blastProtectionEpf += level * 2;
-                    } else if (id.equals("minecraft:protection") || id.endsWith(":protection")) {
-                        protectionEpf += level;
-                    }
-                }
-            }
-        }
-        int totems = 0;
-        if (InventoryUtility.isHolding(player, "totem_of_undying")) totems++;
-        if (InventoryUtility.isOffhand(player, "totem_of_undying")) totems++;
-        for (int i = 0; i < InventoryUtility.getContainerSize(player); i++) {
-            if (InventoryUtility.isItem(InventoryUtility.getItem(player, i), "totem_of_undying")) totems++;
-        }
-        double[] stats = new double[15];
-        stats[0] = player.getArmorValue();
-        stats[1] = PotionUtility.getArmorToughness(player);
-        stats[2] = blastProtectionEpf;
-        stats[3] = protectionEpf;
-        stats[4] = PotionUtility.getResistanceAmplifier(player);
-        stats[5] = PotionUtility.getWeaknessAmplifier(player);
-        stats[6] = PotionUtility.getStrengthAmplifier(player);
-        int idx = 7;
-        for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            var armor = player.getItemBySlot(slot);
-            if (armor.isEmpty()) {
-                stats[idx++] = 0.0;
-            } else if (!armor.isDamageableItem()) {
-                stats[idx++] = 100.0;
-            } else {
-                double dur = (1.0 - (double) armor.getDamageValue() / armor.getMaxDamage()) * 100.0;
-                stats[idx++] = dur;
-            }
-        }
-        net.minecraft.world.phys.Vec3 motion = player.getDeltaMovement();
-        if (motion != null) {
-            stats[11] = motion.x;
-            stats[12] = motion.y;
-            stats[13] = motion.z;
-        } else {
-            stats[11] = 0.0;
-            stats[12] = 0.0;
-            stats[13] = 0.0;
-        }
-        stats[14] = totems;
-        return stats;
     }
 
     private static native double[] nativeCalculateBreaker(

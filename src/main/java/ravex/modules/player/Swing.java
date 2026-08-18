@@ -4,7 +4,6 @@ import ravex.modules.annotations.Parameter;
 import com.google.gson.Gson;
 
 import java.lang.reflect.Field;
-import java.util.List;
 @Module(name = "Swing", category = "Player")
 public class Swing {
     @Parameter(name = "Mode", modes = {"1.8", "1.12.2", "Custom"})

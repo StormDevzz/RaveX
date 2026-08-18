@@ -3,7 +3,6 @@ package ravex.utility.player.rotation;
 import net.minecraft.client.Camera;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import com.mojang.math.Axis;
 import org.joml.Matrix4f;

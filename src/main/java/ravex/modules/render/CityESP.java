@@ -1,12 +1,7 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.misc.EntityUtility;
-
 import ravex.modules.combat.KillAura;
-import java.util.ArrayList;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 

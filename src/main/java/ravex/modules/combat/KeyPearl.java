@@ -1,9 +1,7 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.player.SwingUtility;
 import ravex.utility.player.InventoryUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "KeyPearl", category = "Combat")

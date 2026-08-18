@@ -1,10 +1,8 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
 import ravex.utility.movement.VoidUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "AntiVoid", category = "Movement")

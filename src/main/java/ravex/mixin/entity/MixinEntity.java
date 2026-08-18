@@ -76,7 +76,7 @@ public abstract class MixinEntity {
             return;
         }
 
-        if (Modules.enabled(FreeLook.class) && "Camera".equals(Modules.get(FreeLook.class).mode)) {
+        if (Modules.enabled(FreeLook.class) && Modules.get(FreeLook.class).isCameraMode()) {
             Modules.get(FreeLook.class).turn(yRot * 0.15, xRot * 0.15);
             ci.cancel();
         }

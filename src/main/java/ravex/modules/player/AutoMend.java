@@ -5,7 +5,6 @@ import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.EquipmentSlot;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "AutoMend", category = "Player")

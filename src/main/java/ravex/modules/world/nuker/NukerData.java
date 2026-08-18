@@ -2,7 +2,6 @@ package ravex.modules.world.nuker;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
-import ravex.utility.misc.block.BlockUtility;
 import java.util.LinkedHashSet;
 import java.util.Set;
 public class NukerData {

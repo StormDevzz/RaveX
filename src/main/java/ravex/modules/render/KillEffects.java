@@ -11,7 +11,6 @@ import ravex.event.Subscribe;
 import ravex.event.player.DeathEvent;
 import net.minecraft.core.particles.ParticleTypes;
 
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "KillEffects", category = "Render")

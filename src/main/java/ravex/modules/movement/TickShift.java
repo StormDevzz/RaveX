@@ -1,12 +1,9 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
-import java.util.List;
 import java.util.Random;
 import ravex.mcwrapper.MinecraftWrapper;
-import ravex.utility.player.PlayerUtility;
 
 @Module(name = "TickShift", category = "Movement")
 public class TickShift {

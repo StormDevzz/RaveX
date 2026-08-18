@@ -7,6 +7,7 @@ import ravex.utility.network.NetworkUtility;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.misc.CombatUtility;
 
 @Module(name = "Trigger", category = "Combat")
 public class Trigger {
@@ -110,7 +111,7 @@ public class Trigger {
             double bestDmg = -1.0;
             for (int i = 0; i < 9; i++) {
                 var stack = InventoryUtility.getItem(mc.getPlayer(), i);
-                double dmg = getWeaponDamage(stack);
+                double dmg = CombatUtility.getWeaponDamage(stack);
                 if (dmg > bestDmg) {
                     bestDmg = dmg;
                     bestSlot = i;
@@ -136,23 +137,5 @@ public class Trigger {
             InventoryUtility.attackEntity(mc, target, "Server");
         }
     }
-
-    private double getWeaponDamage(net.minecraft.world.item.ItemStack stack) {
-        if (stack.isEmpty()) return 0.0;
-        String name = stack.getItem().toString().toLowerCase();
-        double dmg = 0.0;
-        if (name.contains("netherite_sword")) dmg = 8.0;
-        else if (name.contains("diamond_sword")) dmg = 7.0;
-        else if (name.contains("netherite_axe")) dmg = 7.0;
-        else if (name.contains("mace")) dmg = 6.5;
-        else if (name.contains("diamond_axe")) dmg = 6.0;
-        else if (name.contains("iron_sword")) dmg = 6.0;
-        else if (name.contains("iron_axe")) dmg = 5.0;
-        else if (name.contains("stone_sword")) dmg = 5.0;
-        else if (name.contains("stone_axe")) dmg = 4.0;
-        else if (name.contains("golden_sword") || name.contains("wooden_sword")) dmg = 4.0;
-        return dmg;
-    }
-
 
 }

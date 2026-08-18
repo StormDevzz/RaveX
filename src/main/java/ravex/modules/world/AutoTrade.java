@@ -7,7 +7,6 @@ import net.minecraft.world.item.trading.MerchantOffers;
 
 import ravex.utility.misc.EntityUtility;
 import java.util.Comparator;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.InventoryUtility;
 @Module(name = "AutoTrade", category = "World")

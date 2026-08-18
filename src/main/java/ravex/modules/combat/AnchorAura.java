@@ -2,25 +2,16 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.rotation.AimUtility;
-import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import ravex.utility.misc.PotionUtility;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.level.block.RespawnAnchorBlock;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.misc.CombatUtility;
 
 
 
@@ -128,26 +119,26 @@ public class AnchorAura {
                 if (glowstoneSlot == -1)
                     return;
                 net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(existingAnchor);
-                rotateTo(mc, hitVec);
+                CombatUtility.rotateTo(mc, hitVec, 180.0f, 0.0f, silentRotation);
                 performUse(mc, glowstoneSlot, existingAnchor, net.minecraft.core.Direction.UP, hitVec);
             } else {
                 int triggerSlot = findNonGlowstoneSlot(mc);
                 if (triggerSlot == -1)
                     return;
                 net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(existingAnchor);
-                rotateTo(mc, hitVec);
+                CombatUtility.rotateTo(mc, hitVec, 180.0f, 0.0f, silentRotation);
                 performUse(mc, triggerSlot, existingAnchor, net.minecraft.core.Direction.UP, hitVec);
             }
             return;
         }
-        double[] solidBlockData = collectSolidBlocks(mc);
+        double[] solidBlockData = CombatUtility.collectSolidBlocks(mc, (int) Math.ceil(range) + 2);
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeCalculateAnchorAura(
                     mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
-                    mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), getEntityStats(mc.getPlayer()),
+                    mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), CombatUtility.getEntityStats(mc.getPlayer()),
                     target.getX(), target.getY(), target.getZ(),
-                    target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
+                    target.getHealth(), target.getAbsorptionAmount(), CombatUtility.getEntityStats(target),
                     solidBlockData,
                     range,
                     targetRange,
@@ -186,7 +177,7 @@ public class AnchorAura {
         net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
         net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighborPos)
                 .add(PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
-        rotateTo(mc, hitVec);
+        CombatUtility.rotateTo(mc, hitVec, 180.0f, 0.0f, silentRotation);
         performUse(mc, anchorSlot, neighborPos, face, hitVec);
     }
 
@@ -211,12 +202,12 @@ public class AnchorAura {
 
     private void calculateExpectedDamages(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, net.minecraft.core.BlockPos anchorPos) {
         if (NATIVE.isLoaded()) {
-            double[] solidBlockData = collectSolidBlocks(mc);
+            double[] solidBlockData = CombatUtility.collectSolidBlocks(mc, (int) Math.ceil(range) + 2);
             double[] result = nativeCalculateAnchorAura(
                     mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
-                    mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), getEntityStats(mc.getPlayer()),
+                    mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), CombatUtility.getEntityStats(mc.getPlayer()),
                     target.getX(), target.getY(), target.getZ(),
-                    target.getHealth(), target.getAbsorptionAmount(), getEntityStats(target),
+                    target.getHealth(), target.getAbsorptionAmount(), CombatUtility.getEntityStats(target),
                     solidBlockData,
                     range,
                     targetRange,
@@ -298,54 +289,6 @@ public class AnchorAura {
         return -1;
     }
 
-    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotate;
-        if (mode.equals("None"))
-            return;
-        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
-        float currentYaw = mc.getPlayer().getYRot();
-        float currentPitch = mc.getPlayer().getXRot();
-        if (!silentRotation.initialized) { silentRotation.init(currentYaw, currentPitch); }
-        currentYaw = silentRotation.lastYaw;
-        currentPitch = silentRotation.lastPitch;
-        float maxSpeed = 180.0f;
-        float[] limited = AimUtility.limitAngles(currentYaw, angles[0], currentPitch, angles[1], maxSpeed);
-        float finalYaw = limited[0], finalPitch = limited[1];
-        silentRotation.set(finalYaw, finalPitch);
-        silentRotation.lastYaw = finalYaw;
-        silentRotation.lastPitch = finalPitch;
-    }
-
-    private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
-        return silentRotation.isRotationAligned(mc, target, 12.0F);
-    }
-
-    private double[] collectSolidBlocks(MinecraftWrapper mc) {
-        List<Double> data = new ArrayList<>();
-        net.minecraft.core.BlockPos playerPos = mc.getPlayer().blockPosition();
-        int r = (int) Math.ceil(range) + 2;
-        for (int dx = -r; dx <= r; dx++) {
-            for (int dy = -4; dy <= 4; dy++) {
-                for (int dz = -r; dz <= r; dz++) {
-                    net.minecraft.core.BlockPos pos = playerPos.offset(dx, dy, dz);
-                    if (mc.getLevel().isLoaded(pos)) {
-                        net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
-                        if (!state.isAir() && !state.liquid()) {
-                            data.add((double) pos.getX());
-                            data.add((double) pos.getY());
-                            data.add((double) pos.getZ());
-                        }
-                    }
-                }
-            }
-        }
-        double[] arr = new double[data.size()];
-        for (int i = 0; i < arr.length; i++) {
-            arr[i] = data.get(i);
-        }
-        return arr;
-    }
-
     private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
         double bestMetric = Double.MAX_VALUE;
@@ -383,74 +326,6 @@ public class AnchorAura {
             }
         }
         return closest;
-    }
-
-    private double[] getEntityStats(net.minecraft.world.entity.LivingEntity player) {
-        int protectionEpf = 0;
-        int blastProtectionEpf = 0;
-        net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
-                net.minecraft.world.entity.EquipmentSlot.FEET,
-                net.minecraft.world.entity.EquipmentSlot.LEGS,
-                net.minecraft.world.entity.EquipmentSlot.CHEST,
-                net.minecraft.world.entity.EquipmentSlot.HEAD
-        };
-        for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            var armor = player.getItemBySlot(slot);
-            if (armor.isEmpty())
-                continue;
-            var enchants = InventoryUtility.getEnchantments(armor);
-            if (enchants != null) {
-                for (var enchantment : enchants.keySet()) {
-                    String id = enchantment.getRegisteredName().toLowerCase();
-                    int level = enchants.getLevel(enchantment);
-                    if (id.contains("blast_protection")) {
-                        blastProtectionEpf += level * 2;
-                    } else if (id.equals("minecraft:protection") || id.endsWith(":protection")) {
-                        protectionEpf += level;
-                    }
-                }
-            }
-        }
-        int totems = 0;
-        if (InventoryUtility.isTotem(player.getMainHandItem()))
-            totems++;
-        if (InventoryUtility.isTotem(player.getOffhandItem()))
-            totems++;
-        if (player instanceof net.minecraft.world.entity.player.Player p) {
-            totems += InventoryUtility.countItem(p, "totem_of_undying");
-        }
-        double[] stats = new double[15];
-        stats[0] = player.getArmorValue();
-        stats[1] = PotionUtility.getArmorToughness(player);
-        stats[2] = blastProtectionEpf;
-        stats[3] = protectionEpf;
-        stats[4] = PotionUtility.getResistanceAmplifier(player);
-        stats[5] = PotionUtility.getWeaknessAmplifier(player);
-        stats[6] = PotionUtility.getStrengthAmplifier(player);
-        int idx = 7;
-        for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
-            var armor = player.getItemBySlot(slot);
-            if (armor.isEmpty()) {
-                stats[idx++] = 0.0;
-            } else if (!armor.isDamageableItem()) {
-                stats[idx++] = 100.0;
-            } else {
-                double dur = (1.0 - (double) armor.getDamageValue() / armor.getMaxDamage()) * 100.0;
-                stats[idx++] = dur;
-            }
-        }
-        net.minecraft.world.phys.Vec3 motion = player.getDeltaMovement();
-        if (motion != null) {
-            stats[11] = motion.x;
-            stats[12] = motion.y;
-            stats[13] = motion.z;
-        } else {
-            stats[11] = 0.0;
-            stats[12] = 0.0;
-            stats[13] = 0.0;
-        }
-        stats[14] = totems;
-        return stats;
     }
 
     private double[] javaFallbackCalculate(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlocksData) {

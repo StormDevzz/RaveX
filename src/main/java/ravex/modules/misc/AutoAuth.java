@@ -3,7 +3,6 @@ import ravex.utility.network.NetworkUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 
-import ravex.parameter.StringParameter;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AutoAuth", category = "Misc")
 public class AutoAuth {

@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.Arrays;
 
 public class Shadowsocks {
     private static final int SALT_LEN = 16;

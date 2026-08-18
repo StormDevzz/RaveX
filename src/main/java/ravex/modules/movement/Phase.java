@@ -9,7 +9,6 @@ import ravex.event.network.PacketEvent;
 import ravex.utility.movement.MoveUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "Phase", category = "Movement")

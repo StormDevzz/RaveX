@@ -2,7 +2,6 @@ package ravex.modules.misc;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.chat.Component;
-import ravex.utility.misc.EntityUtility;
 import ravex.event.Subscribe;
 import ravex.event.combat.TotemPopEvent;
 import java.util.HashMap;

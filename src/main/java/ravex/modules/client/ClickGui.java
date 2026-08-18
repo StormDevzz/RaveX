@@ -1,7 +1,6 @@
 package ravex.modules.client;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import java.util.List;
 
 @Module(name = "ClickGui", category = "Client", enabled = true)
 public class ClickGui {

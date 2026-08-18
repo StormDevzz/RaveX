@@ -3,12 +3,9 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.ActionParameter;
 import ravex.RaveX;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.rotation.AimUtility;
-import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.misc.CombatUtility;
 import ravex.modules.Modules;
 
 
@@ -194,7 +192,7 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
             net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
             net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighborPos).add(PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
-            rotateTo(mc, hitVec);
+            CombatUtility.rotateToNCPVanillaLegit(mc, hitVec, rotate, silentRotation);
             if (speedMode.equals("Legit") && !isRotationAligned(mc, hitVec)) {
                 break;
             }
@@ -234,33 +232,6 @@ public static final SelfTrap INSTANCE = new SelfTrap();
             if (autoDisable && simulatedBlocks.isEmpty()) {
                 Modules.setEnabled(SelfTrap.class, false);
             }
-        }
-    }
-    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotate;
-        if (mode.equals("None")) return;
-        float[] angles = RotationUtility.anglesTo(mc.getPlayer(), target);
-        float currentYaw = mc.getPlayer().getYRot();
-        float currentPitch = mc.getPlayer().getXRot();
-        if (mode.equals("NCP")) {
-            if (!silentRotation.initialized) {
-                silentRotation.init(currentYaw, currentPitch);
-            }
-            currentYaw = silentRotation.lastYaw;
-            currentPitch = silentRotation.lastPitch;
-            float[] limited = AimUtility.limitAngles(currentYaw, RotationUtility.fixAngle(angles[0]), currentPitch, RotationUtility.fixAngle(angles[1]), 180.0f);
-            silentRotation.set(limited[0], limited[1]);
-            silentRotation.lastYaw = limited[0];
-            silentRotation.lastPitch = limited[1];
-        } else if (mode.equals("Vanilla")) {
-            mc.getPlayer().setYRot(angles[0]);
-            mc.getPlayer().setXRot(angles[1]);
-        } else if (mode.equals("Legit")) {
-            float maxSpeed = 90.0f;
-            float[] limited = AimUtility.limitAngles(currentYaw, angles[0], currentPitch, angles[1], maxSpeed);
-            limited = AimUtility.randomize(limited[0], limited[1], 1.5f);
-            mc.getPlayer().setYRot(limited[0]);
-            mc.getPlayer().setXRot(limited[1]);
         }
     }
     private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {

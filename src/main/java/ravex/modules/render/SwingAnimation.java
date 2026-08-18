@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.util.Mth;
 
-import java.util.List;
 import ravex.modules.Modules;
 
 @Module(name = "SwingAnimation", category = "Render")

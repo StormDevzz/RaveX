@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.chat.Component;
 
-import ravex.parameter.StringParameter;
 import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "MessageAura", category = "Misc")

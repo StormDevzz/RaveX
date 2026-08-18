@@ -1,7 +1,6 @@
 package ravex.modules.world;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.parameter.StringParameter;
 import ravex.utility.player.InventoryUtility;
 import net.minecraft.client.player.RemotePlayer;
 import com.mojang.authlib.GameProfile;

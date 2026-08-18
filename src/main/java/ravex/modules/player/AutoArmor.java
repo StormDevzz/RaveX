@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.ArmorUtility;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.SwingUtility;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.entity.EquipmentSlot;
 import ravex.mcwrapper.MinecraftWrapper;

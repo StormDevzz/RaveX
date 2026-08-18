@@ -8,9 +8,6 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.state.properties.BedPart;
-
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import org.jetbrains.annotations.Nullable;
 

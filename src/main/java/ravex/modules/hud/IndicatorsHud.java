@@ -3,7 +3,6 @@ import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
-import ravex.utility.misc.EntityUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.utility.render.ColorUtility;
 

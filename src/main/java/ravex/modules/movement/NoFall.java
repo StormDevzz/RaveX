@@ -9,7 +9,6 @@ import ravex.utility.network.NetworkUtility;
 import ravex.utility.movement.MoveUtility;
 import ravex.utility.player.PlayerUtility;
 import net.minecraft.network.protocol.Packet;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 

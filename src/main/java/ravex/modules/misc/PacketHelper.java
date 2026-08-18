@@ -6,7 +6,6 @@ import ravex.event.network.PacketEvent;
 
 import net.minecraft.network.protocol.Packet;
 import ravex.utility.network.NetworkUtility;
-import java.util.List;
 import ravex.modules.Modules;
 @Module(name = "PacketHelper", category = "Misc")
 public class PacketHelper {

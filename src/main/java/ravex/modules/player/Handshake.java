@@ -7,11 +7,9 @@ import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.mixin.network.AccessorClientIntentionPacket;
 
-import ravex.parameter.StringParameter;
 import ravex.manager.LuaManager;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.LuaFunction;
-import java.util.List;
 import ravex.modules.Modules;
 @Module(name = "Handshake", category = "Player")
 public class Handshake {

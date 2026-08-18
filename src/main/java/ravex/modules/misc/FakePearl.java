@@ -10,7 +10,6 @@ import ravex.event.network.PacketEvent;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-import ravex.utility.misc.PhysicUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "FakePearl", category = "Misc")

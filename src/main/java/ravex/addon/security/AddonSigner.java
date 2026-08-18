@@ -1,6 +1,5 @@
 package ravex.addon.security;
 
-import ravex.addon.util.AddonException;
 import java.io.*;
 import java.nio.file.*;
 import java.security.*;

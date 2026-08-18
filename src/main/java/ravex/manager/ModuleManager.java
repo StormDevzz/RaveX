@@ -5,17 +5,10 @@ import ravex.modules.ModuleProxy;
 import ravex.modules.Module;
 import ravex.utility.system.AnnotationScannerUtility;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.security.CodeSource;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import org.jetbrains.annotations.Nullable;
 
 public class ModuleManager {

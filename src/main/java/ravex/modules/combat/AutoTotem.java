@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 
 

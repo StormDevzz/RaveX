@@ -1,7 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import java.util.List;
 import java.util.Random;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.movement.MoveUtility;

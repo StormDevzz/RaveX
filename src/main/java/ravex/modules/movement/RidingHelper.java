@@ -1,9 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.PhysicUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "RidingHelper", category = "Movement")
 public class RidingHelper {

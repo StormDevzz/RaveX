@@ -10,7 +10,7 @@ public class ViewLock {
     public boolean lockYaw = true;
     @Parameter(name = "LockPitch")
     public boolean lockPitch = true;
-    @Parameter(name = "Mode", modes = {"Freeze", "Smooth", "net.minecraft.core.Direction"})
+    @Parameter(name = "Mode", modes = {"Freeze", "Smooth", "Direction"})
     public String mode = "Freeze";
     @Parameter(name = "SmoothSpeed", min = 0.05, max = 1.0, step = 0.05)
     public double smoothSpeed = 0.3;
@@ -75,6 +75,6 @@ public class ViewLock {
     }
 
     public boolean isDirectionMode() {
-        return Modules.enabled(ViewLock.class) && "net.minecraft.core.Direction".equals(mode);
+        return Modules.enabled(ViewLock.class) && "Direction".equals(mode);
     }
 }

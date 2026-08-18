@@ -2,7 +2,6 @@ package ravex.manager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
 import ravex.gui.profile.Profile;
 import ravex.manager.ModuleManager;
@@ -17,7 +16,6 @@ import ravex.parameter.StringParameter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

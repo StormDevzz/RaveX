@@ -7,7 +7,6 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 
 import ravex.utility.player.InventoryUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import org.jetbrains.annotations.Nullable;
 @Module(name = "ECFarmer", category = "World")

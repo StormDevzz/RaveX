@@ -6,7 +6,6 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.movement.MoveUtility;
 import ravex.utility.player.ElytraUtility;
 import ravex.utility.player.InventoryUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "ElytraHelper", category = "Player")

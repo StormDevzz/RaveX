@@ -2,7 +2,6 @@ package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.world.level.ChunkPos;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "Borders", category = "Render")

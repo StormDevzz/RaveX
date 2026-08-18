@@ -1,6 +1,5 @@
 package ravex.utility.player.rotation;
 
-import net.minecraft.world.phys.Vec3;
 
 public class AimUtility {
     public static float limitSpeed(float current, float target, float maxSpeed) {

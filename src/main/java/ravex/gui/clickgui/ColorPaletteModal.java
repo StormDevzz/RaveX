@@ -4,7 +4,6 @@ import ravex.utility.render.ColorUtility;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
 import ravex.parameter.ColorParameter;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.PaletteTextureUtility;

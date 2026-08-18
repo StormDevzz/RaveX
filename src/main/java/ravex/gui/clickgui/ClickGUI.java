@@ -18,7 +18,6 @@ import ravex.utility.render.animate.AnimationUtility;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.stream.Collectors;
 import ravex.modules.Modules;
 
 public class ClickGUI extends Screen {

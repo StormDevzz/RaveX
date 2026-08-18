@@ -3,7 +3,6 @@ import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 
-import ravex.modules.client.Hud;
 
 @HudModule("ChatHud")
 public class ChatHud extends ravex.modules.Module {

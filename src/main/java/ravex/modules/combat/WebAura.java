@@ -4,11 +4,10 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
-import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.misc.CombatUtility;
 
 
 @Module(name = "WebAura", category = "Combat")
@@ -65,7 +64,7 @@ public class WebAura {
             }
         }
         net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(targetPos);
-        rotateTo(mc, hitVec);
+        CombatUtility.rotateToNCPVanillaLegit(mc, hitVec, rotate, silentRotation);
 
         int originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         String swap = swapMode;
@@ -92,37 +91,6 @@ public class WebAura {
             InventoryUtility.selectSlot(mc.getPlayer(), originalSlot);
         }
         lastPlaceTime = now;
-    }
-    private void rotateTo(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
-        String mode = rotate;
-        if (mode.equals("None")) return;
-        float[] angles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
-        float currentYaw = mc.getPlayer().getYRot();
-        float currentPitch = mc.getPlayer().getXRot();
-        if (mode.equals("NCP")) {
-            if (!silentRotation.initialized) {
-                silentRotation.init(currentYaw, currentPitch);
-            }
-            currentYaw = silentRotation.lastYaw;
-            currentPitch = silentRotation.lastPitch;
-            float[] limited = AimUtility.limitAngles(currentYaw, RotationUtility.fixAngle(angles[0]), currentPitch, RotationUtility.fixAngle(angles[1]), 180.0f);
-            silentRotation.set(limited[0], limited[1]);
-            silentRotation.lastYaw = limited[0];
-            silentRotation.lastPitch = limited[1];
-        } else if (mode.equals("Vanilla")) {
-            mc.getPlayer().setYRot(angles[0]);
-            mc.getPlayer().setXRot(angles[1]);
-        } else if (mode.equals("Legit")) {
-            float maxSpeed = 90.0f;
-            float[] limited = AimUtility.limitAngles(currentYaw, angles[0], currentPitch, angles[1], maxSpeed);
-            limited = AimUtility.randomize(limited[0], limited[1], 1.5f);
-            mc.getPlayer().setYRot(limited[0]);
-            mc.getPlayer().setXRot(limited[1]);
-        }
-    }
-    private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
-        if (rotate.equals("None")) return true;
-        return silentRotation.isRotationAligned(mc, target, 10.0f);
     }
     private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
         net.minecraft.world.entity.LivingEntity closest = null;

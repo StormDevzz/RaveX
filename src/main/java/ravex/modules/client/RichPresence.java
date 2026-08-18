@@ -1,7 +1,6 @@
 package ravex.modules.client;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.parameter.StringParameter;
 import ravex.manager.LuaManager;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;

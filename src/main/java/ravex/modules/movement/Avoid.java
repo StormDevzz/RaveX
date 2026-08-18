@@ -2,7 +2,6 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.world.level.block.Block;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.modules.Modules;
 @Module(name = "Avoid", category = "Movement")
 public class Avoid {

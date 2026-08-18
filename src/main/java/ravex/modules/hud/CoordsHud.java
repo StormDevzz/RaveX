@@ -6,7 +6,6 @@ import net.minecraft.resources.Identifier;
 import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
-import ravex.parameter.BooleanParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.utility.player.PlayerUtility;

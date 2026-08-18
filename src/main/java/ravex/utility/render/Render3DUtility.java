@@ -3,7 +3,6 @@ package ravex.utility.render;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
@@ -15,21 +14,15 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import ravex.mixin.render.AccessorRenderType;
 import ravex.utility.player.rotation.RotationUtility;
 
-import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.List;
-import java.util.Optional;
 
 public class Render3DUtility {
     private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(512 * 1024);

@@ -1,5 +1,4 @@
 package ravex.cmd.core;
-import ravex.manager.ModuleManager;
 public abstract class Cmd {
     public static boolean process(String message) {
         return CmdReg.INSTANCE.process0(message);

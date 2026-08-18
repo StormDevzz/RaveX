@@ -10,7 +10,6 @@ import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
 import ravex.utility.movement.MoveUtility;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import org.jetbrains.annotations.Nullable;
 @Module(name = "Scaffold", category = "World")

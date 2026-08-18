@@ -4,10 +4,8 @@ import ravex.utility.misc.ScreenUtility;
 import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.resources.Identifier;
 
-import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.item.ItemStack;
 import ravex.utility.render.ColorUtility;
 

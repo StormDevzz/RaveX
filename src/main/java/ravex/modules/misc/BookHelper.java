@@ -6,7 +6,6 @@ import net.minecraft.network.protocol.game.ServerboundEditBookPacket;
 import net.minecraft.server.network.Filterable;
 import net.minecraft.world.item.component.WrittenBookContent;
 
-import ravex.parameter.StringParameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

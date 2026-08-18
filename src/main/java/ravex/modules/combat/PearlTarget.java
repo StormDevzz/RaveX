@@ -6,7 +6,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
 import org.joml.Matrix4f;
 
@@ -22,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.misc.CombatUtility;
 import ravex.modules.Modules;
 import org.jetbrains.annotations.Nullable;
 @Module(name = "PearlTarget", category = "Combat")
@@ -321,7 +321,7 @@ public class PearlTarget {
         String weaponModeVal = weaponMode;
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(mc.getPlayer(), i);
-            double dmg = getWeaponDamage(stack);
+            double dmg = CombatUtility.getWeaponDamage(stack);
             if (dmg <= 0) continue;
             String name = stack.getItem().toString().toLowerCase();
             boolean isAxe = name.contains("_axe");
@@ -334,22 +334,6 @@ public class PearlTarget {
             }
         }
         return bestSlot;
-    }
-    private double getWeaponDamage(net.minecraft.world.item.ItemStack stack) {
-        if (stack.isEmpty()) return 0.0;
-        String name = stack.getItem().toString().toLowerCase();
-        if (name.contains("netherite_sword")) return 8.0;
-        if (name.contains("diamond_sword")) return 7.0;
-        if (name.contains("netherite_axe")) return 7.0;
-        if (name.contains("mace")) return 6.5;
-        if (name.contains("diamond_axe")) return 6.0;
-        if (name.contains("iron_sword")) return 6.0;
-        if (name.contains("iron_axe")) return 5.0;
-        if (name.contains("stone_sword")) return 5.0;
-        if (name.contains("stone_axe")) return 4.5;
-        if (name.contains("golden_sword") || name.contains("wooden_sword")) return 4.0;
-        if (name.contains("golden_axe") || name.contains("wooden_axe")) return 4.0;
-        return 0.0;
     }
     @Nullable
     private net.minecraft.world.entity.player.Player findBestTarget(MinecraftWrapper mc, List<net.minecraft.world.entity.player.Player> players) {

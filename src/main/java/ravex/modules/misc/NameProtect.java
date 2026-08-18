@@ -2,7 +2,6 @@ package ravex.modules.misc;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.chat.Component;
-import ravex.parameter.StringParameter;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "NameProtect", category = "Misc")
 public class NameProtect {

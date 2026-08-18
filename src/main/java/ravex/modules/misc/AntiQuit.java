@@ -7,7 +7,6 @@ import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.network.chat.Component;
 import com.mojang.blaze3d.platform.Window;
 import org.lwjgl.glfw.GLFW;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "AntiQuit", category = "Misc")

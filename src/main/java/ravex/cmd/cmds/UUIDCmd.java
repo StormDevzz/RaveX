@@ -1,7 +1,6 @@
 package ravex.cmd.cmds;
 import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
-import java.util.Locale;
 import ravex.manager.ModuleManager;
 import ravex.mcwrapper.MinecraftWrapper;
 public class UUIDCmd extends Cmd {

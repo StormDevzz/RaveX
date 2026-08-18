@@ -8,7 +8,6 @@ import ravex.gui.clickgui.ClickGUI;
 import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.utility.render.Render2DUtility;
-import ravex.utility.render.animate.AnimationUtility;
 import ravex.modules.client.ClickGui;
 import ravex.utility.render.FontRenderUtility;
 import java.awt.*;
