@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -8,8 +8,6 @@ import ravex.utility.player.PlayerUtility;
 import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.Render2DUtility;
@@ -17,7 +15,7 @@ import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-@Module(name = "IndicatorsHud", category = "HUD")
+@HudModule("IndicatorsHud")
 public class IndicatorsHud extends ravex.modules.Module {
     @Parameter(name = "HealthColor", color = true)
     public int healthColor = 0xFFFF4455;
@@ -32,10 +30,6 @@ public class IndicatorsHud extends ravex.modules.Module {
     @Parameter(name = "Shadow")
     public boolean shadow = true;
 
-    public int x;
-    public int y;
-    public int width;
-    public int height;
 private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
     private long lastRealTime  = 0;
@@ -46,27 +40,17 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
     private float animHealth = 1f, animArmor = 1f, animTPS = 1f, animSpeed = 0f, animKB = 0f;
 
     private int getGaugeColor(int index) {
-        String[] names = {"HealthColor", "ArmorColor", "TPSColor", "SpeedColor", "KBColor"};
-        for (var p : getParameters()) {
-            if (p instanceof ColorParameter cp && cp.getName().equals(names[index])) return cp.getValue();
-        }
-        int[] def = {0xFFFF4455, 0xFF44AAFF, 0xFF44FF88, 0xFFFFCC33, 0xFFCC44FF};
-        return def[index];
-    }
-    private boolean getShadow() {
-        for (var p : getParameters()) {
-            if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) return bp.getValue();
-        }
-        return true;
+        int[] colors = {this.healthColor, this.armorColor, this.tPSColor, this.speedColor, this.kBColor};
+        return colors[index];
     }
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
-        net.minecraft.world.entity.player.Player player = mc.getPlayer();
+        var player = mc.getPlayer();
         updateTPS(mc);
         updateKnockback(player);
-        boolean shadow = getShadow();
+        boolean shadow = this.shadow;
         float health = PlayerUtility.getHealth(player) / PlayerUtility.getMaxHealth(player);
         float armor  = Math.min(1, PlayerUtility.getArmorValue(player) / 20.0f);
         float tps    = smoothedTPS / 20.0f;
@@ -99,9 +83,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
         }
         int pw = 4 + 9 + labelMax + 4 + valueMax + 4 + barW + 4 + IS + 4;
         int ph = 6 + 5 * lineH;
-        width = pw;
-        height = ph;
-        int bx = x, by = y;
+        setWidth(pw);
+        setHeight(ph);
+        int bx = getX(), by = getY();
         HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
         int cx = bx + 4;
@@ -120,9 +104,9 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
             int availW = (bx + pw - 4 - IS - 4) - barX;
             if (availW < 0) availW = 0;
             int fillW = Math.min(barW, availW);
-            graphics.fill(barX, barY, barX + fillW, barY + barH, 0x22FFFFFF);
+            Render2DUtility.drawRect(graphics, barX, barY, fillW, barH, 0x22FFFFFF);
             int fillPct = (int) (values[i] * fillW);
-            if (fillPct > 0) graphics.fill(barX, barY, barX + fillPct, barY + barH, col);
+            if (fillPct > 0) Render2DUtility.drawRect(graphics, barX, barY, fillPct, barH, col);
             cy += lineH;
         }
     }
@@ -148,33 +132,5 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
             smoothKB = smoothKB * 0.85f;
         }
         prevVelX = vx; prevVelZ = vz;
-    }
-
-
-
-
-
-
-    
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }

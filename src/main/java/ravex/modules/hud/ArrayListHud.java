@@ -1,12 +1,9 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 
 import ravex.modules.client.Hud;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
 import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.HudRendererUtility;
@@ -17,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import ravex.modules.Modules;
-@Module(name = "ArrayListHud", category = "HUD")
+@HudModule("ArrayListHud")
 public class ArrayListHud extends ravex.modules.Module {
     @Parameter(name = "Shadow")
     public boolean shadow = true;
@@ -25,11 +22,6 @@ public class ArrayListHud extends ravex.modules.Module {
     public String _case = "Normal";
     @Parameter(name = "AnimationSpeed", min = 0.0, max = 12.0, step = 0.5)
     public double animationSpeed = 4.0;
-
-    public int x;
-    public int y;
-    public int width;
-    public int height;
 
     private static class EntryAnim {
         final AnimationUtility.SpringAnimation spring;
@@ -60,14 +52,9 @@ public class ArrayListHud extends ravex.modules.Module {
     }
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
-        boolean shadow = true;
-        String caseMode = "Normal";
-        double animSpeed = 4.0;
-        for (var p : getParameters()) {
-            if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) shadow = bp.getValue();
-            if (p instanceof ModeParameter mp && mp.getName().equals("Case")) caseMode = mp.getValue();
-            if (p instanceof NumberParameter np && np.getName().equals("AnimationSpeed")) animSpeed = np.getValue();
-        }
+        boolean shadow = this.shadow;
+        String caseMode = this._case;
+        double animSpeed = this.animationSpeed;
         List<ravex.modules.Module> allModules = ravex.manager.ModuleManager.INSTANCE.getClickGuiModules();
 
         float delta = Math.min(16f, AnimationUtility.deltaTime() * 50f);
@@ -138,7 +125,7 @@ public class ArrayListHud extends ravex.modules.Module {
         if (activeNames.isEmpty()) return;
 
         float panelProg = AnimationUtility.Easing.CUBIC_OUT.apply(Math.min(1f, panelAlpha * 2f));
-        int bx = x, by = y;
+        int bx = getX(), by = getY();
         int lh = 12;
         int maxTextW = 10;
         for (String n : activeNames) {
@@ -154,8 +141,8 @@ public class ArrayListHud extends ravex.modules.Module {
         }
         int ph = Math.round(totalH * panelProg);
 
-        width = pw;
-        height = ph;
+        setWidth(pw);
+        setHeight(ph);
 
         HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
 
@@ -196,26 +183,5 @@ public class ArrayListHud extends ravex.modules.Module {
             }
         }
         return false;
-    }
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }

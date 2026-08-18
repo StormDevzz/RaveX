@@ -1,32 +1,24 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuSampler;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.Identifier;
 import ravex.RaveX;
 
 import ravex.modules.client.Hud;
-import ravex.parameter.ColorParameter;
+import ravex.utility.render.Render2DUtility;
+
 import java.io.InputStream;
-import java.lang.reflect.Field;
-import net.minecraft.resources.Identifier;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-@Module(name = "WatermarkHud", category = "HUD")
+@HudModule("WatermarkHud")
 public class WatermarkHud extends ravex.modules.Module {
     @Parameter(name = "Color", color = true)
     public int color = 0xFF1E88E5;
 
-    public int x;
-    public int y;
-    public int width;
-    public int height;
 private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", "textures/ravexx");
     private static final int LOGO_W = 305;
     private static final int LOGO_H = 349;
@@ -42,16 +34,7 @@ private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", 
             }
             NativeImage image = NativeImage.read(stream);
             DynamicTexture tex = new DynamicTexture(() -> "ravexx", image);
-            try {
-                GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-                for (Field f : AbstractTexture.class.getDeclaredFields()) {
-                    if (GpuSampler.class.isAssignableFrom(f.getType())) {
-                        f.setAccessible(true);
-                        f.set(tex, sampler);
-                        break;
-                    }
-                }
-            } catch (Exception ignored) {}
+            Render2DUtility.setLinearSampler(tex);
             MinecraftWrapper.getWrapper().getTextureManager().register(LOGO, tex);
             logoLoaded = true;
         } catch (Exception e) {
@@ -64,18 +47,15 @@ private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", 
 
         if (!logoLoaded) ensureLogo();
 
-        int ac = 0xFF1E88E5;
-        for (var p : getParameters()) {
-            if (p instanceof ColorParameter cp && cp.getName().equals("Color")) ac = cp.getValue();
-        }
+        int ac = this.color;
 
-        int bx = x, by = y;
+        int bx = getX(), by = getY();
         long now = System.currentTimeMillis();
         float aspect = (float) LOGO_W / LOGO_H;
         int logoH = 22;
         int logoW = (int) (logoH * aspect);
-        width = logoW;
-        height = logoH;
+        setWidth(logoW);
+        setHeight(logoH);
 
         int cx = bx + logoW / 2;
         int cy = by + logoH / 2;
@@ -87,33 +67,5 @@ private static final Identifier LOGO = Identifier.fromNamespaceAndPath("ravex", 
         pose.translate(-cx, -cy);
         graphics.blit(LOGO, bx, by + 1, bx + logoW, by + 1 + logoH, 0.0f, 1.0f, 0.0f, 1.0f);
         pose.popMatrix();
-    }
-
-
-
-
-
-
-    
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }

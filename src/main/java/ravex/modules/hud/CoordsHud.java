@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
@@ -9,10 +9,10 @@ import ravex.modules.client.Hud;
 import ravex.parameter.BooleanParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
-import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.player.PlayerUtility;
 import ravex.modules.Modules;
 
-@Module(name = "CoordsHud", category = "HUD")
+@HudModule("CoordsHud")
 public class CoordsHud extends ravex.modules.Module {
     @Parameter(name = "Shadow")
     public boolean shadow = true;
@@ -25,33 +25,25 @@ public class CoordsHud extends ravex.modules.Module {
     @Parameter(name = "ZColor", color = true)
     public int zColor = 0xFF44AAFF;
 
-    public int x;
-    public int y;
-    public int width;
-    public int height;
 private static final Identifier ICON = TextureLoaderUtility.HUD_COORDS_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
-        var player = MinecraftWrapper.getWrapper().getPlayer();
+        var player = PlayerUtility.getPlayer();
         if (player == null) return;
         int ac = ColorUtility.getActiveColor();
-        boolean shadow = true;
-        boolean colored = true;
-        for (var p : getParameters()) {
-            if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) shadow = bp.getValue();
-            if (p instanceof BooleanParameter bp && bp.getName().equals("ColoredLabels")) colored = bp.getValue();
-        }
-        int bx = x, by = y;
+        boolean shadow = this.shadow;
+        boolean colored = this.coloredLabels;
+        int bx = getX(), by = getY();
         String xStr = String.format("%.1f", player.getX());
         String yStr = String.format("%.1f", player.getY());
         String zStr = String.format("%.1f", player.getZ());
         String full = (colored ? "X " : "") + xStr + (colored ? " Y " : " / ") + yStr + (colored ? " Z " : " / ") + zStr;
         int pw = 4 + HudRendererUtility.textWidth(full) + 4 + IS + 4;
         int ph = 14;
-        width = pw;
-        height = ph;
+        setWidth(pw);
+        setHeight(ph);
         HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         int cx = bx + 4;
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ac);
@@ -70,33 +62,5 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_COORDS_WHITE;
         } else {
             HudRendererUtility.drawText(graphics, full, cx, by + 2, 0xFFD0D0E0, shadow);
         }
-    }
-
-
-
-
-
-
-    
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }

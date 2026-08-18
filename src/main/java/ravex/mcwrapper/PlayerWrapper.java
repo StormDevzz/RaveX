@@ -6,20 +6,25 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import ravex.utility.network.NetworkUtility;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PlayerWrapper {
     private final LocalPlayer player;
 
-    public PlayerWrapper(LocalPlayer player) {
+    public PlayerWrapper(@NotNull LocalPlayer player) {
         this.player = player;
     }
 
+    @NotNull
     public LocalPlayer getRaw() { return player; }
 
+    @NotNull
     public String getName() {
         return player.getName().getString();
     }
 
+    @NotNull
     public Vec3 getPosition() {
         return player.position();
     }
@@ -45,17 +50,25 @@ public class PlayerWrapper {
 
     public double getFallDistance() { return player.fallDistance; }
 
+    @NotNull
     public ItemStack getMainHand() { return player.getMainHandItem(); }
+    @NotNull
     public ItemStack getOffHand() { return player.getOffhandItem(); }
 
+    @NotNull
     public ItemStack getHelmet() { return player.getItemBySlot(EquipmentSlot.HEAD); }
+    @NotNull
     public ItemStack getChestplate() { return player.getItemBySlot(EquipmentSlot.CHEST); }
+    @NotNull
     public ItemStack getLeggings() { return player.getItemBySlot(EquipmentSlot.LEGS); }
+    @NotNull
     public ItemStack getBoots() { return player.getItemBySlot(EquipmentSlot.FEET); }
 
+    @NotNull
     public Inventory getInventory() { return player.getInventory(); }
 
     public int getSelectedSlot() { return player.getInventory().getSelectedSlot(); }
+    @NotNull
     public ItemStack getSelectedItem() {
         return player.getInventory().getSelectedSlot() >= 0
             ? player.getInventory().getItem(player.getInventory().getSelectedSlot())
@@ -63,6 +76,7 @@ public class PlayerWrapper {
     }
 
     public boolean isUsingItem() { return player.isUsingItem(); }
+    @NotNull
     public ItemStack getUsingItem() { return player.getUseItem(); }
 
     public float getSwingProgress(float partialTick) {
@@ -72,7 +86,7 @@ public class PlayerWrapper {
     public int getHurtTime() { return player.hurtTime; }
     public int getInvulnerableTime() { return player.invulnerableTime; }
 
-    public void sendChatMessage(String message) {
+    public void sendChatMessage(@NotNull String message) {
         NetworkUtility.sendChat(message);
     }
 
@@ -85,10 +99,13 @@ public class PlayerWrapper {
     public void setYaw(float yaw) { player.setYRot(yaw); }
     public void setPitch(float pitch) { player.setXRot(pitch); }
 
+    @NotNull
     public Vec3 getVelocity() { return player.getDeltaMovement(); }
-    public void setVelocity(Vec3 velocity) { player.setDeltaMovement(velocity); }
+    public void setVelocity(@NotNull Vec3 velocity) { player.setDeltaMovement(velocity); }
 
+    @Nullable
     public Object getInput() { return player.input; }
 
+    @NotNull
     public net.minecraft.core.BlockPos getBlockPosition() { return player.blockPosition(); }
 }

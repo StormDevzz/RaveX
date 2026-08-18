@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -19,12 +19,8 @@ import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-@Module(name = "CurrencyHud", category = "HUD")
+@HudModule("CurrencyHud")
 public class CurrencyHud extends ravex.modules.Module {
-    public int x;
-    public int y;
-    public int width;
-    public int height;
 private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
     @Parameter(name = "BTC/USD")
@@ -93,7 +89,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
     private long lastTickMs = 0;
     private CurrencyHud() {
         super("CurrencyHud", 100, 27, 100, 20);
-        this.x = 10; this.y = 300; this.width = 110; this.height = 50;
+        setX(10); setY(300); setWidth(110); setHeight(50);
     }
     private static class DisplayPair {
         String label;
@@ -145,16 +141,16 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
         if (usd_czk) active.add(new DisplayPair("USD/CZK", String.format("%.2f CZK", usdToCzk)));
         if (usd_ron) active.add(new DisplayPair("USD/RON", String.format("%.2f RON", usdToRon)));
         if (active.isEmpty()) {
-            width = 80;
-            height = 14;
+            setWidth(80);
+            setHeight(14);
             return;
         }
         int pw = 130;
         int rowH = 11;
         int ph = 18 + active.size() * rowH + 4;
-        width = pw;
-        height = ph;
-        int bx = x, by = y;
+        setWidth(pw);
+        setHeight(ph);
+        int bx = getX(), by = getY();
         HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         ravex.utility.render.FontRenderUtility.drawString(graphics, "CurrencyRates", bx + 4, by + 4, ColorUtility.getActiveColor(), false);
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + 4, ColorUtility.getActiveColor());
@@ -217,33 +213,5 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_CURRENCY_WHITE;
             } catch (Throwable ignored) {
             }
         }).start();
-    }
-
-
-
-
-
-
-    
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }

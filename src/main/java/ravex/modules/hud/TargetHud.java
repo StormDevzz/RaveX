@@ -1,7 +1,7 @@
 package ravex.modules.hud;
 import ravex.utility.misc.ScreenUtility;
 
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -20,12 +20,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 import org.jetbrains.annotations.Nullable;
 
-@Module(name = "TargetHud", category = "HUD")
+@HudModule("TargetHud")
 public class TargetHud extends ravex.modules.Module {
-    public int x;
-    public int y;
-    public int width;
-    public int height;
     @Parameter(name = "MainHand")
     public boolean showMainHand = true;
     @Parameter(name = "Armor")
@@ -77,7 +73,7 @@ public class TargetHud extends ravex.modules.Module {
 
     private TargetHud() {
         super("TargetHud", 350, 50, 180, 50);
-        this.x = 10; this.y = 400; this.width = 175; this.height = 46;
+        setX(10); setY(400); setWidth(175); setHeight(46);
     }
 
     @Nullable
@@ -157,10 +153,10 @@ public class TargetHud extends ravex.modules.Module {
             return;
         }
 
-        int bx = x;
-        int by = y;
-        int w = width;
-        int h = height;
+        int bx = getX();
+        int by = getY();
+        int w = getWidth();
+        int h = getHeight();
 
         float scale = 0.92f + 0.08f * hudAlpha;
         graphics.pose().pushMatrix();
@@ -336,33 +332,5 @@ public class TargetHud extends ravex.modules.Module {
         int b = (int)(b1 + (b2 - b1) * ratio);
 
         return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
-
-
-
-
-
-    
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }

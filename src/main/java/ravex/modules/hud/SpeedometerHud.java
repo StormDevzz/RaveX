@@ -1,48 +1,35 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.utility.render.ColorUtility;
 
 import ravex.modules.client.Hud;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ModeParameter;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
-import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.player.PlayerUtility;
 import ravex.modules.Modules;
 
-@Module(name = "SpeedometerHud", category = "HUD")
+@HudModule("SpeedometerHud")
 public class SpeedometerHud extends ravex.modules.Module {
     @Parameter(name = "Unit", modes = {"BPS", "KMH"})
     public String unit = "BPS";
     @Parameter(name = "Shadow")
     public boolean shadow = true;
 
-    public int x;
-    public int y;
-    public int width;
-    public int height;
 private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", "hud_white/speedometer");
-
-
-
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
-        var mc = MinecraftWrapper.getWrapper();
-        if (mc.getPlayer() == null) return;
+        var player = PlayerUtility.getPlayer();
+        if (player == null) return;
 
-        String unitMode = "BPS";
-        boolean shadow = true;
-        for (var p : getParameters()) {
-            if (p instanceof ModeParameter mp && mp.getName().equals("Unit")) unitMode = mp.getValue();
-            if (p instanceof BooleanParameter bp && bp.getName().equals("Shadow")) shadow = bp.getValue();
-        }
+        String unitMode = this.unit;
+        boolean shadow = this.shadow;
 
-        double dX = mc.getPlayer().getX() - mc.getPlayer().xo;
-        double dZ = mc.getPlayer().getZ() - mc.getPlayer().zo;
+        double dX = player.getX() - player.xo;
+        double dZ = player.getZ() - player.zo;
         double speedBps = Math.sqrt(dX * dX + dZ * dZ) * 20.0;
         double displaySpeed = unitMode.equals("KMH") ? speedBps * 3.6 : speedBps;
 
@@ -55,12 +42,12 @@ private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", 
         int pw = 4 + tw + 4 + IS + 4;
         int ph = 14;
 
-        width = pw;
-        height = ph;
+        setWidth(pw);
+        setHeight(ph);
 
         TextureLoaderUtility.getHudIconWhite("speedometer");
 
-        int bx = x, by = y;
+        int bx = getX(), by = getY();
         HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
 
         int ix = bx + 4;
@@ -69,29 +56,5 @@ private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", 
         HudRendererUtility.drawText(graphics, labelStr, ix, by + 2, 0xFF8080A0, false);
 
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, activeColor);
-    }
-
-
-    
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }

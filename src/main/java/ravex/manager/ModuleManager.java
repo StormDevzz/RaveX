@@ -49,6 +49,29 @@ public class ModuleManager {
                 throw new RuntimeException("Failed to register " + clazz.getName(), e);
             }
         }
+
+        List<Class<?>> hudAnnotated = AnnotationScannerUtility.findAnnotatedClasses("ravex.modules", ravex.modules.annotations.HudModule.class);
+        for (Class<?> clazz : hudAnnotated) {
+            try {
+                var ann = clazz.getDeclaredAnnotation(ravex.modules.annotations.HudModule.class);
+                if (ann == null) continue;
+                var ctor = clazz.getDeclaredConstructor();
+                ctor.setAccessible(true);
+                Object instance = ctor.newInstance();
+                Module module;
+                if (instance instanceof Module) {
+                    module = (Module) instance;
+                } else {
+                    module = new ModuleProxy(instance);
+                }
+                byClass.put(clazz, module);
+                module.setCategory("HUD");
+                module.setHud(true);
+                modules.add(module);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to register " + clazz.getName(), e);
+            }
+        }
     }
 
     public List<Module> getClickGuiModules() {

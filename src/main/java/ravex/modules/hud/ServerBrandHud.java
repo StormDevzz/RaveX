@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.utility.render.ColorUtility;
@@ -12,12 +12,8 @@ import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-@Module(name = "ServerBrandHud", category = "HUD")
+@HudModule("ServerBrandHud")
 public class ServerBrandHud extends ravex.modules.Module {
-    public int x;
-    public int y;
-    public int width;
-    public int height;
 private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_jni");
@@ -26,7 +22,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
     }
     private ServerBrandHud() {
         super("ServerBrandHud", 3, 70, 150, 20);
-        this.x = 10; this.y = 200; this.width = 100; this.height = 26;
+        setX(10); setY(200); setWidth(100); setHeight(26);
     }
     public static native String nativeFormatBrand(String rawBrand);
     public void render(GuiGraphics graphics, float partialTicks) {
@@ -54,39 +50,11 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
         int tw = ravex.utility.render.FontRenderUtility.getStringWidth(labelText);
         int pw = Math.max(100, 4 + tw + 4 + IS + 4);
         int ph = 26;
-        width = pw;
-        height = ph;
-        int bx = x, by = y;
+        setWidth(pw);
+        setHeight(ph);
+        int bx = getX(), by = getY();
         HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
         ravex.utility.render.FontRenderUtility.drawString(graphics, labelText, bx + 4, by + 8, 0xFFFFFFFF, false);
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
-    }
-
-
-
-
-
-
-    
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }

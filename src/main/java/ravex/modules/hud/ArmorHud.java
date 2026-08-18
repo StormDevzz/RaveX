@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -11,12 +11,8 @@ import ravex.utility.render.Render2DUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-@Module(name = "ArmorHud", category = "HUD")
+@HudModule("ArmorHud")
 public class ArmorHud extends ravex.modules.Module {
-    public int x;
-    public int y;
-    public int width;
-    public int height;
 private static final EquipmentSlot[] SLOTS = {
         EquipmentSlot.HEAD,
         EquipmentSlot.CHEST,
@@ -31,11 +27,8 @@ private static final EquipmentSlot[] SLOTS = {
 
     private ArmorHud() {
         super("ArmorHud", 30, 30, 80, 20);
-        this.x = 10; this.y = 260; this.width = 92; this.height = 29;
+        setX(10); setY(260); setWidth(92); setHeight(29);
     }
-
-
-
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
@@ -47,10 +40,10 @@ private static final EquipmentSlot[] SLOTS = {
         int cellGap = 4;
         int cellSize = 18;
 
-        width = pw;
-        height = ph;
+        setWidth(pw);
+        setHeight(ph);
 
-        int bx = x, by = y;
+        int bx = getX(), by = getY();
         HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
 
         for (int i = 0; i < 4; i++) {
@@ -78,29 +71,5 @@ private static final EquipmentSlot[] SLOTS = {
                 }
             }
         }
-    }
-
-
-    
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }

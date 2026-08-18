@@ -1,5 +1,5 @@
 package ravex.modules.hud;
-import ravex.modules.annotations.Module;
+import ravex.modules.annotations.HudModule;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -11,11 +11,10 @@ import ravex.modules.client.Hud;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 
-import net.minecraft.client.renderer.texture.AbstractTexture;
+import ravex.utility.render.Render2DUtility;
 import ravex.utility.system.SystemUtility;
 
 import java.io.ByteArrayInputStream;
-import java.lang.reflect.Field;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,12 +22,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 import org.jetbrains.annotations.Nullable;
 
-@Module(name = "MediaHud", category = "HUD")
+@HudModule("MediaHud")
 public class MediaHud extends ravex.modules.Module {
-    public int x;
-    public int y;
-    public int width;
-    public int height;
 private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
 
@@ -50,7 +45,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
 
     private MediaHud() {
         super("MediaHud", 2, 100, 200, 60);
-        this.x = 10; this.y = 310; this.width = 180; this.height = 20;
+        setX(10); setY(310); setWidth(180); setHeight(20);
     }
     protected void onEnable() {
         startPolling();
@@ -171,19 +166,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
             coverId = texId;
             MinecraftWrapper.getWrapper().getTextureManager().register(texId, coverTexture);
 
-            try {
-                com.mojang.blaze3d.textures.GpuSampler linearSampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
-                    .getClampToEdge(com.mojang.blaze3d.textures.FilterMode.LINEAR);
-                for (Field f : AbstractTexture.class.getDeclaredFields()) {
-                    if (com.mojang.blaze3d.textures.GpuSampler.class.isAssignableFrom(f.getType())) {
-                        f.setAccessible(true);
-                        f.set(coverTexture, linearSampler);
-                        break;
-                    }
-                }
-            } catch (Throwable t) {
-                RaveX.LOGGER.warn("[MediaHud] Failed to set bilinear filter: {}", t.getMessage());
-            }
+            Render2DUtility.setLinearSampler(coverTexture);
 
             return true;
         } catch (Throwable t) {
@@ -241,13 +224,13 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
         if (title.isEmpty()) return;
 
         int activeColor = ColorUtility.getActiveColor();
-        int bx = x;
-        int by = y;
+        int bx = getX();
+        int by = getY();
         int pw = 160;
         int ph = 42;
 
-        width = pw;
-        height = ph;
+        setWidth(pw);
+        setHeight(ph);
 
         long pos = cachedPosition;
         if (cachedPlaying && cachedLength > 0) {
@@ -297,38 +280,10 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_MEDIA_WHITE;
             int barW = pw - 2;
             int filled = (int) (barW * progress);
 
-            graphics.fill(bx + 1, by + ph - 2, bx + pw - 1, by + ph - 1, 0x15FFFFFF);
+            ravex.utility.render.Render2DUtility.drawRect(graphics, bx + 1, by + ph - 2, pw - 2, 1, 0x15FFFFFF);
             if (filled > 0) {
-                graphics.fill(bx + 1, by + ph - 2, bx + 1 + filled, by + ph - 1, activeColor);
+                ravex.utility.render.Render2DUtility.drawRect(graphics, bx + 1, by + ph - 2, filled, 1, activeColor);
             }
         }
-    }
-
-
-
-
-
-
-    
-
-    @Override
-    public int getX() { return x; }
-    @Override
-    public void setX(int x) { this.x = x; }
-    @Override
-    public int getY() { return y; }
-    @Override
-    public void setY(int y) { this.y = y; }
-    @Override
-    public int getWidth() { return width; }
-    @Override
-    public void setWidth(int w) { this.width = w; }
-    @Override
-    public int getHeight() { return height; }
-    @Override
-    public void setHeight(int h) { this.height = h; }
-
-    public boolean isHud() {
-        return hud;
     }
 }
