@@ -27,9 +27,6 @@ public class Burrow {
     @Parameter(name = "Delay", min = 0, max = 5, step = 1)
     public double delay = 0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_burrow");
-    static {
-        NATIVE.load();
-    }
     private int tickCounter = 0;
     private boolean hasPlaced = false;
     public void onTick() {

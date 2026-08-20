@@ -73,9 +73,6 @@ public class BasePlace {
     private long lastPlaceTime = 0;
     private static net.minecraft.core.BlockPos simulatedPlacementBlock = null;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_baseplace");
-    static {
-        NATIVE.load();
-    }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }

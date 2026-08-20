@@ -1,5 +1,4 @@
 package ravex.modules.movement;
-import ravex.event.EventBusHolder;
 import ravex.event.network.PacketEvent;
 import ravex.event.Subscribe;
 import ravex.modules.annotations.Module;
@@ -58,13 +57,11 @@ public class BoatFly {
     public void onEnable() {
         vehiclePackets.clear();
         currentScale = 1.0f;
-        EventBusHolder.get().subscribe(this);
         if (autoMount) mountToNearestBoat();
     }
     public void onDisable() {
         vehiclePackets.clear();
         currentScale = 1.0f;
-        EventBusHolder.get().unsubscribe(this);
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() != null) {
             mc.getPlayer().setNoGravity(false);

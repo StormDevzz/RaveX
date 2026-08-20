@@ -55,9 +55,6 @@ public class Trap {
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     public static final List<net.minecraft.core.BlockPos> trapBlocks = new ArrayList<>();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_trap");
-    static {
-        NATIVE.load();
-    }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }

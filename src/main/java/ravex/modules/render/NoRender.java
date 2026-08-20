@@ -30,12 +30,6 @@ public class NoRender {
     @Parameter(name = "InventoryBackground")
     public boolean inventoryBackground = false;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_norender");
-    static {
-        try {
-            NativeLoader.load();
-        } catch (Throwable ignored) {}
-        NATIVE.load();
-    }
 
     public static native boolean nativeShouldCull(double x, double y, double z, double camX, double camY, double camZ, double maxDist);
     public static native int nativeOptimizeBudget(int activeCount, int currentFps, int minFps);

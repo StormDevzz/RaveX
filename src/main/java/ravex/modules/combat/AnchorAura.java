@@ -68,9 +68,6 @@ public class AnchorAura {
     private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private long lastActionTime = 0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_anchoraura");
-    static {
-        NATIVE.load();
-    }
 
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;

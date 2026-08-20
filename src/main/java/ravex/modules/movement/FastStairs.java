@@ -1,4 +1,5 @@
 package ravex.modules.movement;
+import ravex.utility.player.PlayerUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.movement.MoveUtility;
@@ -21,10 +22,10 @@ public class FastStairs {
         var player = mc.getPlayer();
         if (player == null || mc.getLevel() == null) return;
         if (player.onClimbable()) {
-            double currentY = mc.getPlayerDeltaMovement().y;
+            double currentY = PlayerUtility.getDeltaMovement().y;
             if (currentY > 0 && (mc.isForwardKeyDown() || mc.isBackKeyDown() || mc.isLeftKeyDown() || mc.isRightKeyDown())) {
                 double newY = calculateClimbSpeed(mode, currentY, speed);
-                MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, newY, mc.getPlayerDeltaMovement().z);
+                MoveUtility.setMotion(PlayerUtility.getDeltaMovement().x, newY, PlayerUtility.getDeltaMovement().z);
             }
         }
     }

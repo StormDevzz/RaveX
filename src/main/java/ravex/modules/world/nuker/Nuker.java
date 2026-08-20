@@ -41,9 +41,6 @@ public class Nuker {
     private long lastBreakTime = 0;
     private net.minecraft.core.BlockPos currentMiningTarget = null;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_nuker");
-    static {
-        NATIVE.load();
-    }
     public static native int[] nativeFindBlocks(
         double px, double py, double pz,
         double range,

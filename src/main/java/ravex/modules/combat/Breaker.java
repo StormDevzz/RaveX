@@ -44,9 +44,6 @@ public class Breaker {
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     public static net.minecraft.core.BlockPos currentMiningBlock = null;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_breaker");
-    static {
-        NATIVE.load();
-    }
     public void onDisable() {
         var mc = MinecraftWrapper.getWrapper();
         if (currentMiningBlock != null && mc.getGameMode() != null && !syncPacketMine) {

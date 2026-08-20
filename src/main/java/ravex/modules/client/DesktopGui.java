@@ -1,6 +1,5 @@
 package ravex.modules.client;
 import ravex.modules.annotations.Module;
-import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;
 import ravex.event.combat.ModuleToggleEvent;
 
@@ -12,9 +11,6 @@ import ravex.modules.Modules;
 @Module(name = "DesktopGui", category = "Client")
 public class DesktopGui {
 private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_desktopgui");
-    static {
-        NATIVE.load();
-    }
     public void onEnable() {
         var mc = MinecraftWrapper.getWrapper();
         if (!NATIVE.isLoaded()) {
@@ -25,7 +21,6 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
             Modules.setEnabled(DesktopGui.class, false);
             return;
         }
-        EventBusHolder.get().subscribe(this);
         List<ravex.modules.Module> modules = ravex.manager.ModuleManager.INSTANCE.getModules();
         String[] names = new String[modules.size()];
         boolean[] states = new boolean[modules.size()];
@@ -36,7 +31,6 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         openDesktopGui(names, states);
     }
     public void onDisable() {
-        EventBusHolder.get().unsubscribe(this);
         if (NATIVE.isLoaded()) {
             closeDesktopGui();
         }

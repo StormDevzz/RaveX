@@ -44,9 +44,6 @@ public class NewChunks {
     private final Set<ChunkPos> old112Chunks = new HashSet<>();
     private final Set<ChunkPos> analyzedChunks = new HashSet<>();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_chunkexploit");
-    static {
-        NATIVE.load();
-    }
     private static native int nativeAnalyzeChunk(String[] blockNames, int[] blockYs);
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();

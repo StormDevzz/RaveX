@@ -7,7 +7,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ravex.di.Injector;
 import ravex.di.ServiceLocator;
 import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;
@@ -237,9 +236,6 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         ServiceLocator.register(ShaderManager.class, ShaderManager.INSTANCE);
         ServiceLocator.register(NotificationManager.class, new NotificationManager());
         ServiceLocator.register(CrystalManager.class, CrystalManager.INSTANCE);
-
-
-        Injector.injectAll();
 
         LOGGER.info("[RaveX] Services registered");
     }

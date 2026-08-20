@@ -6,12 +6,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import ravex.gui.profile.Profile;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.NumberParameter;
+import ravex.parameter.ActionParameter;
 import ravex.parameter.Parameter;
-import ravex.parameter.StringParameter;
 
 import java.io.File;
 import java.io.FileReader;
@@ -78,11 +74,8 @@ public class ProfileManager {
 
             Map<String, Object> modParams = new HashMap<>();
             for (Parameter<?> p : m.getParameters()) {
-                if (p instanceof BooleanParameter bp) modParams.put(p.getName(), bp.getValue());
-                else if (p instanceof NumberParameter np) modParams.put(p.getName(), np.getValue());
-                else if (p instanceof ModeParameter mp) modParams.put(p.getName(), mp.getValue());
-                else if (p instanceof ColorParameter cp) modParams.put(p.getName(), cp.getValue());
-                else if (p instanceof StringParameter sp) modParams.put(p.getName(), sp.getValue());
+                if (p instanceof ActionParameter) continue;
+                modParams.put(p.getName(), p.getValue());
             }
             params.put(m.getName(), modParams);
         }
@@ -112,13 +105,8 @@ public class ProfileManager {
                         }
                     }
                     if (!savedParams.containsKey(pName)) continue;
-                    Object val = savedParams.get(pName);
-                    if (p instanceof BooleanParameter bp && val instanceof Boolean bv) bp.setValue(bv);
-                    else if (p instanceof NumberParameter np && val instanceof Double dv) np.setValue(dv);
-                    else if (p instanceof ModeParameter mp && val instanceof String sv) mp.setValue(sv);
-                    else if (p instanceof StringParameter sp && val instanceof String sv) sp.setValue(sv);
-                    else if (p instanceof ColorParameter cp && val instanceof Double dv) cp.setValue(dv.intValue());
-                    else if (p instanceof ColorParameter cp && val instanceof Integer iv) cp.setValue(iv);
+                    if (p instanceof ActionParameter) continue;
+                    p.setValueFromObject(savedParams.get(pName));
                 }
             }
         }

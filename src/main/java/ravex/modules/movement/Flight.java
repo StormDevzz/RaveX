@@ -2,7 +2,6 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.RaveX;
-import ravex.event.EventBusHolder;
 import ravex.event.Subscribe;
 import ravex.event.client.TickEvent;
 import ravex.event.network.PacketEvent;
@@ -49,7 +48,6 @@ public class Flight {
         gotDamage = false;
         damageTicks = 0;
         shouldStop = false;
-        EventBusHolder.get().subscribe(this);
         if ("VerusDamage".equals(mode)) {
             var mc = MinecraftWrapper.getWrapper();
             var player = mc.getPlayer();
@@ -86,7 +84,6 @@ public class Flight {
         gotDamage = false;
         damageTicks = 0;
         shouldStop = false;
-        EventBusHolder.get().unsubscribe(this);
     }
 
     @Subscribe

@@ -17,9 +17,6 @@ public class ServerBrandHud extends ravex.modules.Module {
 private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_jni");
-    static {
-        NATIVE.load();
-    }
     private ServerBrandHud() {
         super("ServerBrandHud", 3, 70, 150, 20);
         setX(10); setY(200); setWidth(100); setHeight(26);

@@ -61,9 +61,6 @@ public static final SelfTrap INSTANCE = new SelfTrap();
     private long lastPlaceTime = 0;
     private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_selftrap");
-    static {
-        NATIVE.load();
-    }
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }

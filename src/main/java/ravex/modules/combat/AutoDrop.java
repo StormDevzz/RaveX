@@ -38,9 +38,6 @@ public class AutoDrop {
     @Parameter(name = "Delay", min = 1, max = 10, step = 1)
     public double placeDelay = 2;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autodrop");
-    static {
-        NATIVE.load();
-    }
     private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private int tickCounter = 0;
     private int originalSlot = -1;

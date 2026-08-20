@@ -1,4 +1,5 @@
 package ravex.modules.movement;
+import ravex.utility.player.PlayerUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.Random;
@@ -28,9 +29,9 @@ public class Spider {
         if (player == null || mc.getLevel() == null) return;
         if (!"UNCP".equals(mode)) return;
 
-        if (mc.isPlayerHorizontalCollision() && mc.isForwardKeyDown()) {
-            if (mc.isPlayerOnGround()) {
-                MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, uncpMotion, mc.getPlayerDeltaMovement().z);
+        if (PlayerUtility.isHorizontalCollision() && mc.isForwardKeyDown()) {
+            if (PlayerUtility.isOnGround()) {
+                MoveUtility.setMotion(PlayerUtility.getDeltaMovement().x, uncpMotion, PlayerUtility.getDeltaMovement().z);
                 uncpTicks = 0;
             }
 
@@ -43,7 +44,7 @@ public class Spider {
             );
 
             if (uncpTicks % uncpDelay == 0) {
-                MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, uncpMotion, mc.getPlayerDeltaMovement().z);
+                MoveUtility.setMotion(PlayerUtility.getDeltaMovement().x, uncpMotion, PlayerUtility.getDeltaMovement().z);
             }
         }
     }

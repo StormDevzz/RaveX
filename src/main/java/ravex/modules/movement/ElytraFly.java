@@ -35,9 +35,6 @@ public class ElytraFly {
     @Parameter(name = "FallBypass")
     public boolean fallBypass = true;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_elytraplusplus");
-    static {
-        NATIVE.load();
-    }
     public static native void nativeCalculateVelocity(
         String mode, double hSpeed, double vSpeed, double glide,
         double yaw, double pitch, boolean jump, boolean sneak,

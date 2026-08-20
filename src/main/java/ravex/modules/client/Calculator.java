@@ -8,9 +8,6 @@ import ravex.modules.Modules;
 @Module(name = "Calculator", category = "Client")
 public class Calculator {
 private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_calculator");
-    static {
-        NATIVE.load();
-    }
     public void onEnable() {
         if (!NATIVE.isLoaded()) {
             var mc = MinecraftWrapper.getWrapper();

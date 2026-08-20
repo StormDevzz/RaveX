@@ -1,4 +1,5 @@
 package ravex.modules.movement;
+import ravex.utility.player.PlayerUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.movement.MoveUtility;
@@ -19,11 +20,11 @@ public class LongJump {
         var player = mc.getPlayer();
         if (player == null) return;
 
-        if (mc.isPlayerOnGround()) {
+        if (PlayerUtility.isOnGround()) {
             jumped = false;
         } else if (!jumped) {
             double speed = boost;
-            var motion = mc.getPlayerDeltaMovement();
+            var motion = PlayerUtility.getDeltaMovement();
             MoveUtility.setMotion(motion.x * speed, motion.y + 0.05, motion.z * speed);
             jumped = true;
         }

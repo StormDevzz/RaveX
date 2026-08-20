@@ -22,9 +22,6 @@ public class AutoReGear {
         );
     });
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autoregear");
-    static {
-        NATIVE.load();
-    }
     public static native int nativeCalculateRegear(
         String[] containerItemIds,
         int[] containerCounts,

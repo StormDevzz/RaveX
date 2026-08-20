@@ -18,9 +18,6 @@ public class Phase {
     @Parameter(name = "Distance", min = 0.5, max = 4.0, step = 0.1)
     public double distance = 2.0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_phase");
-    static {
-        NATIVE.load();
-    }
 
     @Subscribe
     public void onPacket(PacketEvent event) {

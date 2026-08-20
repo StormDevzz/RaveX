@@ -1,4 +1,5 @@
 package ravex.modules.movement;
+import ravex.utility.player.PlayerUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import java.util.Random;
@@ -35,14 +36,14 @@ public class HighJump {
         String modeVal = mode;
 
         if ("Vanilla".equals(modeVal)) {
-            if (mc.isJumpKeyDown() && mc.isPlayerOnGround()) {
-                MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, height, mc.getPlayerDeltaMovement().z);
+            if (mc.isJumpKeyDown() && PlayerUtility.isOnGround()) {
+                MoveUtility.setMotion(PlayerUtility.getDeltaMovement().x, height, PlayerUtility.getDeltaMovement().z);
             }
             return;
         }
 
         if ("GrimShulker".equals(modeVal)) {
-            if (mc.isJumpKeyDown() && mc.isPlayerOnGround()) {
+            if (mc.isJumpKeyDown() && PlayerUtility.isOnGround()) {
                 int shulkerSlot = findShulkerBox();
                 if (shulkerSlot != -1) {
                     int oldSlot = InventoryUtility.getSelectedSlot(player);
@@ -59,7 +60,7 @@ public class HighJump {
                         net.minecraft.core.Direction.UP, shulkerPos, false
                     );
                     NetworkUtility.sendUseItemOn(net.minecraft.world.InteractionHand.MAIN_HAND, openHit);
-                    MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, height, mc.getPlayerDeltaMovement().z);
+                    MoveUtility.setMotion(PlayerUtility.getDeltaMovement().x, height, PlayerUtility.getDeltaMovement().z);
                     InventoryUtility.selectSlot(player, oldSlot);
                 }
             }
@@ -81,8 +82,8 @@ public class HighJump {
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();
         if (player == null) return;
-        if (mc.isPlayerOnGround() && mc.isJumpKeyDown()) {
-            MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, 0.42, mc.getPlayerDeltaMovement().z);
+        if (PlayerUtility.isOnGround() && mc.isJumpKeyDown()) {
+            MoveUtility.setMotion(PlayerUtility.getDeltaMovement().x, 0.42, PlayerUtility.getDeltaMovement().z);
             ncpJumping = true;
             ncpJumpTicks = 0;
             ncpStartY = player.getY();
@@ -92,7 +93,7 @@ public class HighJump {
         ncpJumpTicks++;
 
         double currentHeight = player.getY() - ncpStartY;
-        if (currentHeight >= height || !mc.isJumpKeyDown() || mc.isPlayerOnGround()) {
+        if (currentHeight >= height || !mc.isJumpKeyDown() || PlayerUtility.isOnGround()) {
             ncpJumping = false;
             return;
         }
@@ -106,9 +107,9 @@ public class HighJump {
 
         if (ncpJumpTicks % ncpDelay == 0) {
             MoveUtility.setMotion(
-                mc.getPlayerDeltaMovement().x,
-                Math.min(0.42, mc.getPlayerDeltaMovement().y + 0.08),
-                mc.getPlayerDeltaMovement().z
+                PlayerUtility.getDeltaMovement().x,
+                Math.min(0.42, PlayerUtility.getDeltaMovement().y + 0.08),
+                PlayerUtility.getDeltaMovement().z
             );
         }
     }
@@ -117,8 +118,8 @@ public class HighJump {
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();
         if (player == null) return;
-        if (mc.isPlayerOnGround() && mc.isJumpKeyDown()) {
-            MoveUtility.setMotion(mc.getPlayerDeltaMovement().x, 0.42, mc.getPlayerDeltaMovement().z);
+        if (PlayerUtility.isOnGround() && mc.isJumpKeyDown()) {
+            MoveUtility.setMotion(PlayerUtility.getDeltaMovement().x, 0.42, PlayerUtility.getDeltaMovement().z);
             uncpJumping = true;
             uncpStartY = player.getY();
             uncpTicks = 0;
@@ -144,13 +145,13 @@ public class HighJump {
 
         if (uncpTicks % uncpDelay == 0) {
             MoveUtility.setMotion(
-                mc.getPlayerDeltaMovement().x,
+                PlayerUtility.getDeltaMovement().x,
                 0.42,
-                mc.getPlayerDeltaMovement().z
+                PlayerUtility.getDeltaMovement().z
             );
         }
 
-        if (mc.isPlayerOnGround() && mc.getPlayerDeltaMovement().y <= 0.0) {
+        if (PlayerUtility.isOnGround() && PlayerUtility.getDeltaMovement().y <= 0.0) {
             uncpJumping = false;
         }
     }

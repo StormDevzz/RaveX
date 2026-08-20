@@ -25,9 +25,6 @@ public class AntiBot {
     @Parameter(name = "MovementCheck")
     public boolean checkMovement = true;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_antibot");
-    static {
-        NATIVE.load();
-    }
     private final List<net.minecraft.world.entity.Entity> botList = new ArrayList<>();
     private long lastCleanup = 0;
 

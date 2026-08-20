@@ -19,9 +19,6 @@ public class MiddleClick {
     private boolean pressed, heldBlockAction;
     private int holdTicks;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_fastexp");
-    static {
-        NATIVE.load();
-    }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;

@@ -17,9 +17,6 @@ public class BowAim {
     public String rotate = "Silent";
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_bowaim");
-    static {
-        NATIVE.load();
-    }
     public void onDisable() {
         silentRotation.hasRotation = false;
     }

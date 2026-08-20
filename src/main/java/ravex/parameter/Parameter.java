@@ -80,6 +80,25 @@ public abstract class Parameter<T> {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
+    public boolean setValueFromObject(Object raw) {
+        try {
+            if (raw instanceof Number num) {
+                Object cur = getValue();
+                if (cur instanceof Integer || cur instanceof Long || cur instanceof Short || cur instanceof Byte) {
+                    setValue((T) Integer.valueOf(num.intValue()));
+                } else {
+                    setValue((T) Double.valueOf(num.doubleValue()));
+                }
+            } else {
+                setValue((T) raw);
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private Parameter<?> parent = null;
 
     public Parameter<T> visibleIfExpanded(Parameter<?> parent) {

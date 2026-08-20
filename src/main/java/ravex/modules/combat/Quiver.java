@@ -28,9 +28,6 @@ public class Quiver {
     private float savedClientYaw = 0.0f;
     private float savedClientPitch = 0.0f;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_quiver");
-    static {
-        NATIVE.load();
-    }
     public void onDisable() {
         var mc = MinecraftWrapper.getWrapper();
         if (state == 1 && mc.getPlayer() != null && mc.getGameMode() != null) {

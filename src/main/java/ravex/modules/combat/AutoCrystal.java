@@ -114,9 +114,6 @@ public class AutoCrystal {
     private long lastBreakTime = 0;
     private int  lastBreakId   = -1;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autocrystal");
-    static {
-        NATIVE.load();
-    }
     private static native double[] nativeTick(
             double pX, double pY, double pZ,
             double pHp, double pAbs,

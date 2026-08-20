@@ -6,13 +6,8 @@ import ravex.event.EventBusHolder;
 import ravex.event.combat.ModuleToggleEvent;
 
 import ravex.event.client.SoundEvent;
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.MultiSelectParameter;
-import ravex.parameter.NumberParameter;
 import ravex.parameter.Parameter;
-import ravex.parameter.StringParameter;
+import ravex.parameter.ParameterFactory;
 import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Contract;
@@ -178,135 +173,11 @@ public abstract class Module {
         return parameters;
     }
     protected void scanParameterFields() {
-        Class<?> clazz = getClass();
-        while (clazz != Module.class && clazz != null) {
-            for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
-                if (Parameter.class.isAssignableFrom(field.getType())) {
-                    field.setAccessible(true);
-                    try {
-                        Parameter<?> param = (Parameter<?>) field.get(this);
-                        if (param != null && !parameters.contains(param)) {
-                            parameters.add(param);
-                        }
-                    } catch (IllegalAccessException ignored) {}
-                } else if (field.isAnnotationPresent(ravex.modules.annotations.Parameter.class)) {
-                    field.setAccessible(true);
-                    ravex.modules.annotations.Parameter ann = field.getAnnotation(ravex.modules.annotations.Parameter.class);
-                    Parameter<?> param = createParameterFromAnnotation(field, ann);
-                    if (param != null && !parameters.contains(param)) {
-                        param.bind(field, this);
-                        parameters.add(param);
-                    }
-                }
-            }
-            clazz = clazz.getSuperclass();
+        for (Parameter<?> p : ParameterFactory.scan(this, Module.class)) {
+            parameters.add(p);
         }
     }
 
-    private Parameter<?> createParameterFromAnnotation(java.lang.reflect.Field field, ravex.modules.annotations.Parameter ann) {
-        Class<?> type = field.getType();
-        String name = ann.name();
-        Parameter<?> param = null;
-        if (type == boolean.class || type == Boolean.class) {
-            try {
-                param = new BooleanParameter(name, field.getBoolean(this));
-            } catch (IllegalAccessException e) {
-                param = new BooleanParameter(name, false);
-            }
-        } else if (ann.color() && (type == int.class || type == Integer.class)) {
-            try {
-                param = new ColorParameter(name, field.getInt(this));
-            } catch (IllegalAccessException e) {
-                param = new ColorParameter(name, 0xFFFFFFFF);
-            }
-        } else if (type == int.class || type == Integer.class) {
-            try {
-                param = new NumberParameter(name, field.getInt(this), ann.min(), ann.max(), ann.step());
-            } catch (IllegalAccessException e) {
-                param = new NumberParameter(name, 0, ann.min(), ann.max(), ann.step());
-            }
-        } else if (type == double.class || type == Double.class) {
-            try {
-                param = new NumberParameter(name, field.getDouble(this), ann.min(), ann.max(), ann.step());
-            } catch (IllegalAccessException e) {
-                param = new NumberParameter(name, 0.0, ann.min(), ann.max(), ann.step());
-            }
-        } else if (type == float.class || type == Float.class) {
-            try {
-                param = new NumberParameter(name, field.getFloat(this), ann.min(), ann.max(), ann.step());
-            } catch (IllegalAccessException e) {
-                param = new NumberParameter(name, 0.0, ann.min(), ann.max(), ann.step());
-            }
-        } else if (type == String.class) {
-            String[] modes = ann.modes();
-            if (modes.length > 0) {
-                String defaultValue;
-                try {
-                    defaultValue = (String) field.get(this);
-                } catch (IllegalAccessException e) {
-                    defaultValue = modes[0];
-                }
-                param = new ModeParameter(name, defaultValue, java.util.Arrays.asList(modes));
-            } else {
-                try {
-                    param = new StringParameter(name, (String) field.get(this));
-                } catch (IllegalAccessException e) {
-                    param = new StringParameter(name, "");
-                }
-            }
-        } else if (java.util.List.class.isAssignableFrom(type)) {
-            String[] options = ann.options().length > 0 ? ann.options() : ann.modes();
-            if (options.length > 0) {
-                try {
-                    @SuppressWarnings("unchecked")
-                    java.util.List<String> val = (java.util.List<String>) field.get(this);
-                    param = new MultiSelectParameter(name, val != null ? val : new java.util.ArrayList<>(), java.util.Arrays.asList(options));
-                } catch (IllegalAccessException e) {
-                    param = new MultiSelectParameter(name, new java.util.ArrayList<>(), java.util.Arrays.asList(options));
-                }
-            }
-        }
-        if (param != null) {
-            applyVisibleCondition(param, ann.visible());
-        }
-        return param;
-    }
-
-    private void applyVisibleCondition(Parameter<?> param, String visibleExpr) {
-        if (visibleExpr == null || visibleExpr.isEmpty()) return;
-        int eqIdx = visibleExpr.indexOf('=');
-        String fieldName;
-        if (eqIdx >= 0) {
-            fieldName = visibleExpr.substring(0, eqIdx).trim();
-            String expectedValue = visibleExpr.substring(eqIdx + 1).trim();
-            try {
-                java.lang.reflect.Field depField = getClass().getDeclaredField(fieldName);
-                depField.setAccessible(true);
-                Object self = this;
-                param.setVisible(() -> {
-                    try {
-                        return expectedValue.equals(depField.get(self));
-                    } catch (IllegalAccessException e) {
-                        return false;
-                    }
-                });
-            } catch (NoSuchFieldException ignored) {}
-        } else {
-            fieldName = visibleExpr.trim();
-            try {
-                java.lang.reflect.Field depField = getClass().getDeclaredField(fieldName);
-                depField.setAccessible(true);
-                Object self = this;
-                param.setVisible(() -> {
-                    try {
-                        return depField.getBoolean(self);
-                    } catch (IllegalAccessException e) {
-                        return false;
-                    }
-                });
-            } catch (NoSuchFieldException ignored) {}
-        }
-    }
     protected void addParameter(Parameter<?> p) {
         parameters.add(p);
     }
@@ -316,11 +187,14 @@ public abstract class Module {
     protected void ensureNativeLoaded() {
         if (hud) return;
         try {
-            java.lang.reflect.Field f = getClass().getDeclaredField("NATIVE");
+            Class<?> target = this instanceof ModuleProxy proxy
+                ? proxy.getComponent().getClass()
+                : getClass();
+            java.lang.reflect.Field f = target.getDeclaredField("NATIVE");
             f.setAccessible(true);
             Object lib = f.get(null);
-            if (lib instanceof ravex.utility.nativelib.NativeLibraryUtility) {
-                ((ravex.utility.nativelib.NativeLibraryUtility) lib).load();
+            if (lib instanceof ravex.utility.nativelib.NativeLibraryUtility nat) {
+                nat.load();
             }
         } catch (Exception ignored) {}
     }

@@ -62,7 +62,7 @@ public class NoSlow {
             }
 
             int interval = (int) matrixSwapInterval;
-            boolean isMoving = mc.getPlayerDeltaMovement().horizontalDistanceSqr() > 0.0001;
+            boolean isMoving = PlayerUtility.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
 
             matrixSwapTicks++;
             if (matrixSwapTicks >= interval) {
@@ -73,8 +73,8 @@ public class NoSlow {
 
             if (isMoving) {
                 double scale = matrixVelocityScale;
-                var motion = mc.getPlayerDeltaMovement();
-                mc.setPlayerDeltaMovement(motion.x * scale, motion.y, motion.z * scale);
+                var motion = PlayerUtility.getDeltaMovement();
+                PlayerUtility.setDeltaMovement(motion.x * scale, motion.y, motion.z * scale);
             }
             return;
         }

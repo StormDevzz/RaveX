@@ -57,9 +57,6 @@ public class TntAura {
     public static final List<net.minecraft.core.BlockPos> renderBlocks = new ArrayList<>();
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_tntaura");
-    static {
-        NATIVE.load();
-    }
     private static native double[] nativeCalculateCage(
         double playerX, double playerY, double playerZ,
         double targetX, double targetY, double targetZ,

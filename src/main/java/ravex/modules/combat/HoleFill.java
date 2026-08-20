@@ -29,9 +29,6 @@ public class HoleFill {
     public int color = 0x3F00FF00;
     public static List<Long> holePositions = new ArrayList<>();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_holefill");
-    static {
-        NATIVE.load();
-    }
     private enum State { IDLE, SEARCH, PLACING, DONE }
     private State state = State.IDLE;
     private List<Long> holes = new ArrayList<>();

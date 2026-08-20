@@ -29,9 +29,6 @@ public class ECFarmer {
     private static int targetX, targetY, targetZ;
     private static boolean hasRenderTarget;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_ecfarmer");
-    static {
-        NATIVE.load();
-    }
 
     @Nullable
     public static net.minecraft.core.BlockPos getCurrentTarget() {

@@ -1,4 +1,5 @@
 package ravex.modules.movement;
+import ravex.utility.player.PlayerUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.network.NetworkUtility;
@@ -53,7 +54,7 @@ public class Velocity {
                     double oz = (random.nextDouble() - 0.5) * 0.01;
                     NetworkUtility.sendMoveRelative(
                         player.getX() + ox, player.getY(), player.getZ() + oz,
-                        mc.isPlayerOnGround(), mc.isPlayerHorizontalCollision()
+                        PlayerUtility.isOnGround(), PlayerUtility.isHorizontalCollision()
                     );
                 }
             }
@@ -64,7 +65,7 @@ public class Velocity {
                 if (player != null) {
                     NetworkUtility.sendMoveRelative(
                         player.getX(), player.getY(), player.getZ(),
-                        mc.isPlayerOnGround(), mc.isPlayerHorizontalCollision()
+                        PlayerUtility.isOnGround(), PlayerUtility.isHorizontalCollision()
                     );
                 }
             }
@@ -110,7 +111,7 @@ public class Velocity {
                 double oz = (random.nextDouble() - 0.5) * 0.011 + 0.001;
                 NetworkUtility.sendMoveRelative(
                     player.getX() + ox, player.getY(), player.getZ() + oz,
-                    mc.isPlayerOnGround(), mc.isPlayerHorizontalCollision()
+                    PlayerUtility.isOnGround(), PlayerUtility.isHorizontalCollision()
                 );
             }
         }

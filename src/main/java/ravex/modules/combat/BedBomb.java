@@ -33,9 +33,6 @@ public class BedBomb {
     private net.minecraft.core.BlockPos placePos = null;
     private long lastActionTime = 0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_bedbomb");
-    static {
-        NATIVE.load();
-    }
     public void onEnable() {
         state = State.IDLE;
         bedPos = null;

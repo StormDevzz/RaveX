@@ -23,9 +23,6 @@ public class FakePearl {
     @Parameter(name = "Sound")
     public boolean sound = true;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_fakepearl");
-    static {
-        NATIVE.load();
-    }
 
     @Subscribe
     public void onPacket(PacketEvent event) {

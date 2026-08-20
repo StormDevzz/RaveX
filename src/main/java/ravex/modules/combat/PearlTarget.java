@@ -118,9 +118,6 @@ public class PearlTarget {
     public net.minecraft.world.phys.Vec3 renderPearlPos = null;
     public net.minecraft.world.phys.Vec3 renderLandingPos = null;
     public net.minecraft.world.phys.Vec3 renderTargetPos = null;
-    static {
-        NATIVE.load();
-    }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;

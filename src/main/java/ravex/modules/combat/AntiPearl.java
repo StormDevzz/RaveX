@@ -21,9 +21,6 @@ public class AntiPearl {
     @Parameter(name = "Predict")
     public boolean predict = true;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_antipearl");
-    static {
-        NATIVE.load();
-    }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;

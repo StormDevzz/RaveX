@@ -46,9 +46,6 @@ public class PacketMine {
     public String grimMode = "Strict";
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_packetmine");
-    static {
-        NATIVE.load();
-    }
     public static class MiningBlock {
         public net.minecraft.core.BlockPos pos;
         public long startTime;

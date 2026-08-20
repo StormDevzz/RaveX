@@ -1,4 +1,5 @@
 package ravex.modules.movement;
+import ravex.utility.player.PlayerUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PotionUtility;
@@ -16,9 +17,9 @@ public class Step {
         if (player == null) return;
         PotionUtility.setStepHeight(player, height);
         String modeVal = mode;
-        boolean hc = mc.isPlayerHorizontalCollision();
+        boolean hc = PlayerUtility.isHorizontalCollision();
         if (modeVal.equalsIgnoreCase("Packet")) {
-            if (hc && mc.isPlayerOnGround()) {
+            if (hc && PlayerUtility.isOnGround()) {
                 double x = player.getX();
                 double y = player.getY();
                 double z = player.getZ();
@@ -26,7 +27,7 @@ public class Step {
                 NetworkUtility.sendMoveRelative(x, y + 0.7531999805212, z, false, hc);
             }
         } else if (modeVal.equalsIgnoreCase("Grim")) {
-            if (hc && mc.isPlayerOnGround()) {
+            if (hc && PlayerUtility.isOnGround()) {
                 double x = player.getX();
                 double y = player.getY();
                 double z = player.getZ();

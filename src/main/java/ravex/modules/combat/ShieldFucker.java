@@ -36,9 +36,6 @@ public class ShieldFucker {
     public String rotate = "Silent";
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_shieldfucker");
-    static {
-        NATIVE.load();
-    }
 
 
     public static class BreakAction {

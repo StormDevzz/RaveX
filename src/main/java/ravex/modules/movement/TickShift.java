@@ -1,4 +1,5 @@
 package ravex.modules.movement;
+import ravex.utility.player.PlayerUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.movement.MoveUtility;
@@ -63,7 +64,7 @@ public class TickShift {
                 releaseCounter = 0;
             }
             if (boostTicks == 0) return;
-            var motion = mc.getPlayerDeltaMovement();
+            var motion = PlayerUtility.getDeltaMovement();
             double mult = grimSpeed;
             MoveUtility.setMotion(motion.x * mult, motion.y, motion.z * mult);
             return;
@@ -83,7 +84,7 @@ public class TickShift {
             idleTicks = 0;
         }
         if (boostTicks == 0) return;
-        var motion = mc.getPlayerDeltaMovement();
+        var motion = PlayerUtility.getDeltaMovement();
         String m = mode;
         if (m.equals("Motion")) {
             double mult = speed;

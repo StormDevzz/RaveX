@@ -34,9 +34,6 @@ public class AntiReGear {
     private net.minecraft.core.BlockPos currentMiningTarget = null;
     private long lastBreakTime = 0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_antiregear");
-    static {
-        NATIVE.load();
-    }
     public static native int nativeCalculateTarget(
         double playerX, double playerY, double playerZ,
         int[] blockX, int[] blockY, int[] blockZ,

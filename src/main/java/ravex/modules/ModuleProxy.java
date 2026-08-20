@@ -1,20 +1,12 @@
 package ravex.modules;
 
-import ravex.modules.Module;
-
-import ravex.parameter.BooleanParameter;
-import ravex.parameter.ColorParameter;
-import ravex.parameter.ModeParameter;
-import ravex.parameter.MultiSelectParameter;
-import ravex.parameter.NumberParameter;
+import ravex.event.EventBusHolder;
 import ravex.parameter.Parameter;
-import ravex.parameter.StringParameter;
+import ravex.parameter.ParameterFactory;
 import net.minecraft.client.gui.GuiGraphics;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public final class ModuleProxy extends Module {
@@ -53,107 +45,8 @@ public final class ModuleProxy extends Module {
     }
 
     private void scanParameters() {
-        Class<?> cl = compClass;
-        while (cl != null && cl != Object.class) {
-            for (Field f : cl.getDeclaredFields()) {
-                if (Parameter.class.isAssignableFrom(f.getType())) {
-                    f.setAccessible(true);
-                    try {
-                        Parameter<?> p = (Parameter<?>) f.get(component);
-                        if (p != null) addParameter(p);
-                    } catch (IllegalAccessException ignored) {}
-                } else if (f.isAnnotationPresent(ravex.modules.annotations.Parameter.class)) {
-                    f.setAccessible(true);
-                    Parameter<?> p = createParameterFromAnnotation(f);
-                    if (p != null) {
-                        p.bind(f, component);
-                        addParameter(p);
-                    }
-                }
-            }
-            cl = cl.getSuperclass();
-        }
-    }
-
-    private Parameter<?> createParameterFromAnnotation(Field field) {
-        ravex.modules.annotations.Parameter ann = field.getAnnotation(ravex.modules.annotations.Parameter.class);
-        if (ann == null) return null;
-        Class<?> type = field.getType();
-        String name = ann.name();
-        Parameter<?> param = null;
-        try {
-            if (type == boolean.class || type == Boolean.class) {
-                if (ann.maybe()) {
-                    try { field.setBoolean(component, true); } catch (IllegalAccessException ignored) {}
-                    param = new BooleanParameter(name, true);
-                } else {
-                    param = new BooleanParameter(name, field.getBoolean(component));
-                }
-            } else if (ann.color() && (type == int.class || type == Integer.class)) {
-                param = new ColorParameter(name, field.getInt(component));
-            } else if (type == int.class || type == Integer.class) {
-                param = new NumberParameter(name, field.getInt(component), ann.min(), ann.max(), ann.step());
-            } else if (type == double.class || type == Double.class) {
-                param = new NumberParameter(name, field.getDouble(component), ann.min(), ann.max(), ann.step());
-            } else if (type == float.class || type == Float.class) {
-                param = new NumberParameter(name, field.getFloat(component), ann.min(), ann.max(), ann.step());
-            } else if (type == String.class) {
-                String[] modes = ann.modes();
-                String value = (String) field.get(component);
-                if (modes.length > 0) {
-                    param = new ModeParameter(name, value, Arrays.asList(modes));
-                } else {
-                    param = new StringParameter(name, value);
-                }
-            } else if (List.class.isAssignableFrom(type)) {
-                String[] opts = ann.options().length > 0 ? ann.options() : ann.modes();
-                if (opts.length > 0) {
-                    @SuppressWarnings("unchecked")
-                    List<String> selected = (List<String>) field.get(component);
-                    param = new MultiSelectParameter(name, selected, Arrays.asList(opts));
-                }
-            }
-        } catch (IllegalAccessException ignored) {}
-
-        if (param != null) {
-            applyVisibleCondition(param, ann.visible());
-        }
-        return param;
-    }
-
-    private void applyVisibleCondition(Parameter<?> param, String visibleExpr) {
-        if (visibleExpr == null || visibleExpr.isEmpty()) return;
-        int eqIdx = visibleExpr.indexOf('=');
-        String fieldName;
-        if (eqIdx >= 0) {
-            fieldName = visibleExpr.substring(0, eqIdx).trim();
-            String expectedValue = visibleExpr.substring(eqIdx + 1).trim();
-            try {
-                Field depField = compClass.getDeclaredField(fieldName);
-                depField.setAccessible(true);
-                Object comp = component;
-                param.setVisible(() -> {
-                    try {
-                        return expectedValue.equals(depField.get(comp));
-                    } catch (IllegalAccessException e) {
-                        return false;
-                    }
-                });
-            } catch (NoSuchFieldException ignored) {}
-        } else {
-            fieldName = visibleExpr.trim();
-            try {
-                Field depField = compClass.getDeclaredField(fieldName);
-                depField.setAccessible(true);
-                Object comp = component;
-                param.setVisible(() -> {
-                    try {
-                        return depField.getBoolean(comp);
-                    } catch (IllegalAccessException e) {
-                        return false;
-                    }
-                });
-            } catch (NoSuchFieldException ignored) {}
+        for (Parameter<?> p : ParameterFactory.scan(component, Object.class)) {
+            addParameter(p);
         }
     }
 
@@ -233,11 +126,13 @@ public final class ModuleProxy extends Module {
 
     @Override
     protected void onEnable() {
+        EventBusHolder.get().subscribe(component);
         invokeMethods(enableMethods);
     }
 
     @Override
     protected void onDisable() {
+        EventBusHolder.get().unsubscribe(component);
         invokeMethods(disableMethods);
     }
 
