@@ -112,7 +112,8 @@ public class NativeLoader {
     );
 
     private static boolean isNativeBlockedByGlibc() {
-        if (isWindows()) return false;
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (!osName.contains("linux")) return false;
         try {
             Process p = new ProcessBuilder("ldd", "--version").redirectErrorStream(true).start();
             try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
@@ -133,29 +134,30 @@ public class NativeLoader {
         return isWindows() ? "ravex_jni.dll" : "libravex_jni.so";
     }
 
-    private static String getTempPrefix() {
-        return isWindows() ? "ravex_jni" : "libravex_jni";
-    }
-
-    private static String getTempSuffix() {
-        return isWindows() ? ".dll" : ".so";
-    }
-
     private static File getCacheDir() {
         String home = System.getProperty("user.home");
         return new File(home + "/.ravex/natives");
     }
 
     private static synchronized void ensureJawtLoaded() {
-        if (jawtLoaded || isWindows()) return;
+        if (jawtLoaded) return;
         String javaHome = System.getProperty("java.home");
         if (javaHome == null) return;
-        File jawt = new File(javaHome + "/lib/libjawt.so");
-        if (jawt.exists()) {
-            try {
-                System.load(jawt.getAbsolutePath());
-                jawtLoaded = true;
-            } catch (Throwable ignored) {}
+        String[] jawtPaths;
+        if (isWindows()) {
+            jawtPaths = new String[]{javaHome + "/bin/jawt.dll"};
+        } else {
+            jawtPaths = new String[]{javaHome + "/lib/libjawt.so", javaHome + "/lib/amd64/libjawt.so"};
+        }
+        for (String jawtPath : jawtPaths) {
+            File jawt = new File(jawtPath);
+            if (jawt.exists()) {
+                try {
+                    System.load(jawt.getAbsolutePath());
+                    jawtLoaded = true;
+                    return;
+                } catch (Throwable ignored) {}
+            }
         }
     }
 
@@ -225,105 +227,73 @@ public class NativeLoader {
         }
     }
 
-    private static void extractResourceToDir(File dir, String resourcePath, String fileName) {
-        File outFile = new File(dir, fileName);
-        String resolvedPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
-        try (InputStream in = NativeLoader.class.getResourceAsStream(resolvedPath)) {
-            if (in == null) return;
+    private static boolean writeResourceToFile(String resourcePath, File outFile) {
+        try (InputStream in = NativeLoader.class.getResourceAsStream(resourcePath)) {
+            if (in == null) return false;
             try (FileOutputStream out = new FileOutputStream(outFile)) {
                 byte[] buf = new byte[8192];
                 int read;
                 while ((read = in.read(buf)) != -1) out.write(buf, 0, read);
             }
-            outFile.setExecutable(true);
-        } catch (Throwable ignored) {}
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
-    private static void extractAllNatives(File dir) {
-        String prefix = "assets/ravex/natives/";
-        String suffix = isWindows() ? ".dll" : ".so";
-
+    private static boolean writeJarEntryToFile(String entryName, File outFile) {
         try {
-            java.net.URL jarUrl = NativeLoader.class.getProtectionDomain().getCodeSource().getLocation();
-            if (jarUrl != null) {
-                String jarPath = jarUrl.getPath();
-                if (jarPath != null && jarPath.endsWith(".jar")) {
-                    try (JarFile jar = new JarFile(new File(jarPath))) {
-                        Enumeration<JarEntry> entries = jar.entries();
-                        while (entries.hasMoreElements()) {
-                            JarEntry entry = entries.nextElement();
-                            String name = entry.getName();
-                            if (name.startsWith(prefix) && name.endsWith(suffix) && !entry.isDirectory()) {
-                                String fileName = name.substring(prefix.length());
-                                File outFile = new File(dir, fileName);
-                                if (outFile.exists() && outFile.length() == entry.getSize()) continue;
-                                try (InputStream in = jar.getInputStream(entry);
-                                     FileOutputStream out = new FileOutputStream(outFile)) {
-                                    byte[] buf = new byte[8192];
-                                    int read;
-                                    while ((read = in.read(buf)) != -1) out.write(buf, 0, read);
-                                }
-                                outFile.setExecutable(true);
-                            }
-                        }
-                        return;
-                    }
+            URL jarUrl = NativeLoader.class.getProtectionDomain().getCodeSource().getLocation();
+            if (jarUrl == null) return false;
+            String jarPath = jarUrl.getPath();
+            if (jarPath == null || !jarPath.endsWith(".jar")) return false;
+            try (JarFile jar = new JarFile(new File(jarPath))) {
+                JarEntry entry = jar.getJarEntry(entryName);
+                if (entry == null || entry.isDirectory()) return false;
+                try (InputStream in = jar.getInputStream(entry);
+                     FileOutputStream out = new FileOutputStream(outFile)) {
+                    byte[] buf = new byte[8192];
+                    int read;
+                    while ((read = in.read(buf)) != -1) out.write(buf, 0, read);
                 }
+                return true;
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
-    private static void loadJniDependencies(File dir) {
-        if (isWindows()) return;
-        String[] deps = {"libravex_optimize.so", "libravex_manager.so", "libravex_github_tools.so"};
+    private static File extractFromJar(File dir, String fileName) {
+        String entryName = "assets/ravex/natives/" + fileName;
+        File outFile = new File(dir, fileName);
+        if (writeResourceToFile("/" + entryName, outFile) || writeJarEntryToFile(entryName, outFile)) {
+            String expectedHash = NATIVE_MANIFEST.get(fileName);
+            if (expectedHash != null && verifySha256(outFile, expectedHash)) {
+                outFile.setExecutable(true);
+                return outFile;
+            }
+        }
+        if (outFile.exists()) outFile.delete();
+        return null;
+    }
+
+    private static void preloadDependencies(File dir) {
+        String[] deps = {"optimize", "manager", "github_tools"};
         for (String dep : deps) {
-            File f = new File(dir, dep);
-            if (f.exists()) {
+            String fileName = isWindows() ? "ravex_" + dep + ".dll" : "libravex_" + dep + ".so";
+            File f = new File(dir, fileName);
+            if (!f.exists()) f = obtainLibrary(dep);
+            if (f != null) {
                 try {
                     System.load(f.getAbsolutePath());
                 } catch (Throwable t) {
-                    System.err.println("[RaveX] Failed to pre-load dependency " + dep + ": " + t.getMessage());
+                    System.err.println("[RaveX] Failed to pre-load " + dep + ": " + t.getMessage());
                 }
             }
         }
     }
 
-    private static final Set<String> KNOWN_LIBS = Set.of(
-        "libravex_optimize.so", "libravex_manager.so", "libravex_github_tools.so",
-        "libravex_jni.so", "libravex_mediaquery.so",
-        "libravex_autocrystal.so", "libravex_trap.so", "libravex_nametags.so",
-        "libravex_fakepearl.so", "libravex_selftrap.so", "libravex_autoclicker.so",
-        "libravex_antibot.so", "libravex_autodrop.so", "libravex_burrow.so",
-        "libravex_animations.so", "libravex_autoregear.so", "libravex_antiregear.so",
-        "libravex_tntaura.so", "libravex_elytraplusplus.so", "libravex_desktopgui.so",
-        "libravex_calculator.so", "libravex_pearltarget.so", "libravex_antipearl.so",
-        "libravex_bedbomb.so", "libravex_ecfarmer.so", "libravex_shieldfucker.so",
-        "libravex_chunkexploit.so", "libravex_addon.so", "libravex_loader.so",
-        "libravex_fastexp.so", "libravex_nativesc.so", "libravex_fileprot.so",
-        "libravex_baseplace.so", "libravex_anchoraura.so", "libravex_breaker.so",
-        "libravex_bowaim.so", "libravex_quiver.so", "libravex_nuker.so",
-        "libravex_holefill.so", "libravex_packetmine.so", "libravex_phase.so",
-        "libravex_nopacktkick.so", "libravex_antiquit.so", "libravex_safewalk.so",
-        "libravex_selffill.so", "libravex_noslow.so", "libravex_dc.so",
-        "libravex_shaders_native.so"
-    );
-
-    private static final Set<String> BROKEN_LIBS = Set.of("libravex_autocrystal.so");
-
-    private static void preloadAllLibraries(File dir) {
-        if (isWindows()) return;
-        for (String lib : KNOWN_LIBS) {
-            if (BROKEN_LIBS.contains(lib)) continue;
-            File f = new File(dir, lib);
-            if (f.exists()) {
-                try {
-                    System.load(f.getAbsolutePath());
-                } catch (Throwable t) {
-                    System.err.println("[RaveX] Failed to pre-load " + lib + ": " + t.getMessage());
-                }
-            }
-        }
-    }
+    private static final Set<String> BROKEN_LIBS = Set.of("libravex_autocrystal.so", "ravex_autocrystal.dll");
 
     private static File obtainLibrary(String name) {
         boolean isWin = isWindows();
@@ -335,31 +305,11 @@ public class NativeLoader {
         File cacheDir = getCacheDir();
         if (!cacheDir.exists()) cacheDir.mkdirs();
 
+        File extracted = extractFromJar(cacheDir, fileName);
+        if (extracted != null) return extracted;
+
         File dest = new File(cacheDir, fileName);
         if (downloadFromGitHub(fileName, dest)) return dest;
-
-        extractAllNatives(cacheDir);
-        cached = getCachedFile(fileName);
-        if (cached != null) return cached;
-
-        try {
-            InputStream in = NativeLoader.class.getResourceAsStream("/assets/ravex/natives/" + fileName);
-            if (in != null) {
-                String prefix = isWin ? name : "lib" + name;
-                String suffix = isWin ? ".dll" : ".so";
-                File tempFile = File.createTempFile(prefix, suffix);
-                tempFile.deleteOnExit();
-                try (FileOutputStream out = new FileOutputStream(tempFile)) {
-                    byte[] buf = new byte[8192];
-                    int read;
-                    while ((read = in.read(buf)) != -1) out.write(buf, 0, read);
-                }
-                String expectedHash = NATIVE_MANIFEST.get(fileName);
-                if (expectedHash != null && verifySha256(tempFile, expectedHash)) {
-                    return tempFile;
-                }
-            }
-        } catch (Throwable ignored) {}
 
         return null;
     }
@@ -380,20 +330,8 @@ public class NativeLoader {
         } catch (UnsatisfiedLinkError ignored) {}
 
         try {
-            if (!isWindows()) {
-                ensureJawtLoaded();
-                String[] deps = {"optimize", "manager", "github_tools"};
-                for (String dep : deps) {
-                    File depFile = obtainLibrary(dep);
-                    if (depFile != null) {
-                        try {
-                            System.load(depFile.getAbsolutePath());
-                        } catch (Throwable t) {
-                            System.err.println("[RaveX] Failed to pre-load " + dep + ": " + t.getMessage());
-                        }
-                    }
-                }
-            }
+            ensureJawtLoaded();
+            preloadDependencies(getCacheDir());
 
             File jniFile = obtainLibrary("ravex_jni");
             if (jniFile != null) {

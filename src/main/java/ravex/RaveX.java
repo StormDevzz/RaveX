@@ -173,11 +173,11 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         NativeLayer nativeLayer = ServiceLocator.resolve(NativeLayer.class);
         nativeLayer.load();
         nativeLayer.checkNatives();
+        NativeLibraryUtility.enableLoading();
         GuiOptimizerUtility.optimize();
 
         ModuleManager moduleManager = ServiceLocator.resolve(ModuleManager.class);
         moduleManager.init();
-        NativeLibraryUtility.enableLoading();
         LOGGER.info("Registered {} modules", moduleManager.getModules().size());
 
         try {
