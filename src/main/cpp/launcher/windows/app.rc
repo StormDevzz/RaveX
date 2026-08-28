@@ -1,0 +1,61 @@
+#include <windows.h>
+#include "resource.h"
+101 ICON "kickx.ico"
+IDR_ICON_FIELD_NAME PNG "icons/field_name.png"
+IDR_ICON_FIELD_VERSION PNG "icons/field_version.png"
+IDR_ICON_FIELD_LOADER PNG "icons/field_loader.png"
+IDR_ICON_FIELD_LOADERVER PNG "icons/field_loaderver.png"
+IDR_ICON_FIELD_RAM PNG "icons/field_ram.png"
+IDR_ICON_FIELD_JVM PNG "icons/field_jvm.png"
+IDR_ICON_FIELD_JAVA PNG "icons/field_java.png"
+IDR_ICON_MODS PNG "icons/mods.png"
+IDR_ICON_PACKAGE PNG "icons/package.png"
+IDR_ICON_SERVERS PNG "icons/servers.png"
+IDR_ICON_LOGS PNG "icons/logs.png"
+IDR_ICON_WIN10 PNG "icons/win10.png"
+IDR_ICON_LOADER_VANILLA PNG "icons/loader_vanilla.png"
+IDR_ICON_LOADER_FABRIC PNG "icons/loader_fabric.png"
+IDR_ICON_LOADER_FORGE PNG "icons/loader_forge.png"
+IDR_ICON_LOADER_QUILT PNG "icons/loader_quilt.png"
+IDR_ICON_ACCOUNTS PNG "icons/accounts.png"
+IDR_ICON_ADD PNG "icons/add.png"
+IDR_ICON_EDIT PNG "icons/edit.png"
+IDR_ICON_DELETE PNG "icons/delete.png"
+IDR_ICON_FOLDER PNG "icons/folder.png"
+IDR_ICON_SEARCH PNG "icons/search.png"
+IDR_ICON_DOWNLOAD PNG "icons/download.png"
+IDR_ICON_PLAY PNG "icons/play.png"
+IDR_ICON_SETTINGS PNG "icons/settings.png"
+IDR_ICON_UPDATE PNG "icons/update.png"
+IDR_ICON_CONSOLE PNG "icons/console.png"
+IDR_ICON_MICROSOFT PNG "icons/microsoft.png"
+IDR_ICON_OFFLINE PNG "icons/offline.png"
+1 24 "app.manifest"
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "RaveX"
+            VALUE "FileDescription", "KickX Launcher"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "kickx_launcher"
+            VALUE "LegalCopyright", "Copyright (C) RaveX 2026"
+            VALUE "OriginalFilename", "kickx_launcher.exe"
+            VALUE "ProductName", "KickX Launcher"
+            VALUE "ProductVersion", "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

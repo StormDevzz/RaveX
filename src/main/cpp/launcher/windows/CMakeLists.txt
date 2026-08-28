@@ -1,13 +1,93 @@
 cmake_minimum_required(VERSION 3.16)
 
-add_executable(ravex_launcher
-    main.cpp
-)
-
-target_include_directories(ravex_launcher PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-if(WIN32)
-    set_target_properties(ravex_launcher PROPERTIES SUFFIX ".exe")
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    project(kickx_launcher LANGUAGES CXX)
 endif()
+
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+string(TIMESTAMP RAVEX_BUILD "%Y%m%d" UTC)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/build_info.h.in" "${CMAKE_CURRENT_BINARY_DIR}/build_info.h" @ONLY)
+
+add_executable(kickx_launcher WIN32
+    main.cpp
+    core/paths.cpp
+    core/util.cpp
+    core/sha256.cpp
+    core/config.cpp
+    core/theme.cpp
+    core/lang.cpp
+    net/http.cpp
+    net/json.cpp
+    game/mojang.cpp
+    game/ravex.cpp
+    game/fabric.cpp
+    game/launch.cpp
+    game/java.cpp
+    game/accounts.cpp
+    ui/main_window.cpp
+    ui/console_window.cpp
+    ui/instance_editor.cpp
+    ui/account_dialog.cpp
+    ui/splash_window.cpp
+    ui/settings_dialog.cpp
+    ui/color_dialog.cpp
+    ui/theme_dialog.cpp
+    ui/glow.cpp
+    app.rc
+)
+
+target_include_directories(kickx_launcher PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_compile_features(kickx_launcher PRIVATE cxx_std_23)
+
+if(MSVC)
+    target_compile_options(kickx_launcher PRIVATE /utf-8 /std:c++23)
+elseif(MINGW)
+    target_compile_options(kickx_launcher PRIVATE -std=c++23)
+    target_link_options(kickx_launcher PRIVATE -static -static-libgcc -static-libstdc++)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpspecs OUTPUT_VARIABLE RAVEX_SPECS)
+    string(REPLACE "%{!shared:%:if-exists(default-manifest.o%s)}" "" RAVEX_SPECS "${RAVEX_SPECS}")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ravex.specs" "${RAVEX_SPECS}")
+    target_link_options(kickx_launcher PRIVATE "-specs=${CMAKE_CURRENT_BINARY_DIR}/ravex.specs")
+endif()
+
+target_link_libraries(kickx_launcher PRIVATE winhttp bcrypt shell32 comctl32 comdlg32 user32 gdi32 gdiplus dwmapi uxtheme windowscodecs)
+add_custom_command(TARGET kickx_launcher POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/flags" "$<TARGET_FILE_DIR:kickx_launcher>/flags")
+add_custom_command(TARGET kickx_launcher POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/icons" "$<TARGET_FILE_DIR:kickx_launcher>/icons")
+
+add_executable(KickXSetup WIN32
+    setup/main.cpp
+    setup/setup_window.cpp
+    ui/glow.cpp
+    core/paths.cpp
+    core/util.cpp
+    core/sha256.cpp
+    core/config.cpp
+    core/theme.cpp
+    core/lang.cpp
+    net/http.cpp
+    net/json.cpp
+    game/mojang.cpp
+    game/ravex.cpp
+    game/fabric.cpp
+    game/launch.cpp
+    game/java.cpp
+    game/accounts.cpp
+    app.rc
+)
+target_include_directories(KickXSetup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_features(KickXSetup PRIVATE cxx_std_23)
+if(MSVC)
+    target_compile_options(KickXSetup PRIVATE /utf-8 /std:c++23)
+elseif(MINGW)
+    target_compile_options(KickXSetup PRIVATE -std=c++23)
+    target_link_options(KickXSetup PRIVATE -static -static-libgcc -static-libstdc++)
+    target_link_options(KickXSetup PRIVATE "-specs=${CMAKE_CURRENT_BINARY_DIR}/ravex.specs")
+endif()
+target_link_libraries(KickXSetup PRIVATE winhttp bcrypt shell32 comctl32 comdlg32 user32 gdi32 gdiplus dwmapi uxtheme windowscodecs)
+add_custom_command(TARGET KickXSetup POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/flags" "$<TARGET_FILE_DIR:KickXSetup>/flags")
+add_custom_command(TARGET KickXSetup POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/icons" "$<TARGET_FILE_DIR:KickXSetup>/icons")
