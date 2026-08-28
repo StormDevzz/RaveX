@@ -39,12 +39,15 @@ constexpr int IDC_EDIT_JVM = 1105;
 constexpr int IDC_COMBO_LOADER = 1106;
 constexpr int IDC_OPEN_FOLDER = 1107;
 constexpr int IDC_EDIT_NOTES = 1108;
-constexpr int IDC_EDIT_JAVA = 1109;
-constexpr int IDC_BROWSE_JAVA = 1110;
-constexpr int IDC_CHK_BUNDLED = 1111;
-constexpr int IDC_CHK_OFFLINE = 1112;
-constexpr int IDC_DUPLICATE = 1113;
-constexpr int IDC_COMBO_LOADER_VER = 1114;
+constexpr int IDC_NOTES_FRAME = 1109;
+constexpr int IDC_NOTES_COUNTER = 1110;
+constexpr int IDC_NOTES_HINT = 1111;
+constexpr int IDC_EDIT_JAVA = 1112;
+constexpr int IDC_BROWSE_JAVA = 1113;
+constexpr int IDC_CHK_BUNDLED = 1114;
+constexpr int IDC_CHK_OFFLINE = 1115;
+constexpr int IDC_DUPLICATE = 1116;
+constexpr int IDC_COMBO_LOADER_VER = 1117;
 constexpr int IDC_MODS_PLATFORM = 2100;
 constexpr int IDC_MODS_TYPE = 2101;
 constexpr int IDC_MODS_SEARCH = 2102;
@@ -410,6 +413,11 @@ struct EditorData {
     HWND iconJvm = nullptr;
     HWND iconJava = nullptr;
     HWND editNotes = nullptr;
+    HWND notesFrame = nullptr;
+    HWND notesTitleIcon = nullptr;
+    HWND notesTitle = nullptr;
+    HWND notesHint = nullptr;
+    HWND notesCounter = nullptr;
     HWND editJava = nullptr;
     HWND btnBrowse = nullptr;
     HWND chkBundle = nullptr;
@@ -925,10 +933,29 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 SendMessageW(data->listServers, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(item.c_str()));
             }
 
-            HWND lblNotes = CreateWindowExW(0, L"STATIC", trI("notes_label","Notes").c_str(), WS_CHILD | WS_VISIBLE, 24, 92, 820, 18, hwnd, nullptr, inst, nullptr);
-            data->editNotes = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL, 24, 112, 820, 542, hwnd, reinterpret_cast<HMENU>(IDC_EDIT_NOTES), inst, nullptr);
+            HWND notesIco = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_ICON, 24, 92, 20, 20, hwnd, nullptr, inst, nullptr);
+            HICON hNotesIco = loadLauncherIcon(IDR_ICON_NOTES, L"notes", 20);
+            if (hNotesIco) { SendMessageW(notesIco, STM_SETIMAGE, IMAGE_ICON, reinterpret_cast<LPARAM>(hNotesIco)); data->fieldIcons.push_back(hNotesIco); }
+            data->notesTitleIcon = notesIco;
+            HWND lblNotesTitle = CreateWindowExW(0, L"STATIC", trI("notes_label","Notes").c_str(), WS_CHILD | WS_VISIBLE, 50, 92, 300, 22, hwnd, nullptr, inst, nullptr);
+            data->notesTitle = lblNotesTitle;
+            HWND lblNotesHint = CreateWindowExW(0, L"STATIC", trI("notes_hint","Personal notes for this instance — saved with it").c_str(), WS_CHILD | WS_VISIBLE, 50, 112, 500, 16, hwnd, reinterpret_cast<HMENU>(IDC_NOTES_HINT), inst, nullptr);
+            data->notesHint = lblNotesHint;
+            HWND notesFrame = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 24, 134, 820, 470, hwnd, reinterpret_cast<HMENU>(IDC_NOTES_FRAME), inst, nullptr);
+            data->notesFrame = notesFrame;
+            data->editNotes = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL | ES_WANTRETURN, 28, 138, 812, 462, hwnd, reinterpret_cast<HMENU>(IDC_EDIT_NOTES), inst, nullptr);
             SetWindowTextW(data->editNotes, fromUtf8(data->cfg.notes).c_str());
-            data->notesCtrls.push_back(lblNotes); data->notesCtrls.push_back(data->editNotes);
+            SendMessageW(data->editNotes, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(trI("notes_placeholder","Write your notes here... Supports multiple lines.").c_str()));
+            HWND notesCnt = CreateWindowExW(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | SS_RIGHT, 24, 608, 820, 16, hwnd, reinterpret_cast<HMENU>(IDC_NOTES_COUNTER), inst, nullptr);
+            data->notesCounter = notesCnt;
+            {
+                int len = GetWindowTextLengthW(data->editNotes);
+                std::wstring prefix = trI("characters","Characters");
+                std::wstring txt = prefix + L": " + std::to_wstring(len) + L" / 2000";
+                SetWindowTextW(notesCnt, txt.c_str());
+            }
+            data->notesCtrls.push_back(notesIco); data->notesCtrls.push_back(lblNotesTitle); data->notesCtrls.push_back(lblNotesHint);
+            data->notesCtrls.push_back(notesFrame); data->notesCtrls.push_back(data->editNotes); data->notesCtrls.push_back(notesCnt);
 
             data->listLogs = CreateWindowExW(0, L"LISTBOX", nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY, 24, 92, 420, 500, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_LIST), inst, nullptr);
             data->editLogView = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL, 460, 92, 400, 500, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_VIEW), inst, nullptr);
@@ -948,6 +975,9 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             for (HWND w : data->notesCtrls) if (w) SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             for (HWND w : data->logsCtrls) if (w) SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             SendMessageW(header, WM_SETFONT, reinterpret_cast<WPARAM>(data->titleFont), TRUE);
+            if (data->notesHint) SendMessageW(data->notesHint, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
+            if (data->notesCounter) SendMessageW(data->notesCounter, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
+            if (data->notesTitle) SendMessageW(data->notesTitle, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
 
             subclassWheel(data->editName); subclassWheel(data->editRam); subclassWheel(data->editJvm);
             subclassWheel(data->editJava); subclassWheel(data->comboVer);
@@ -1035,6 +1065,20 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     HBRUSH abr = CreateSolidBrush(RGB(255,255,255));
                     FillRect(dc, &ul, abr); DeleteObject(abr);
                 }
+                return TRUE;
+            }
+            if (id == IDC_NOTES_FRAME && data) {
+                HDC dc = ds->hDC; RECT rc = ds->rcItem;
+                HBRUSH bgBr = CreateSolidBrush(data->theme.panel);
+                FillRect(dc, &rc, bgBr); DeleteObject(bgBr);
+                Gdiplus::Graphics g(dc); g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+                Gdiplus::Color penCol(60, 255, 255, 255); Gdiplus::Pen pen(penCol, 1.0f);
+                pen.SetLineJoin(Gdiplus::LineJoinRound);
+                Gdiplus::GraphicsPath path; int r=12; path.AddArc(rc.left, rc.top, r, r, 180, 90); path.AddArc(rc.right - r, rc.top, r, r, 270, 90); path.AddArc(rc.right - r, rc.bottom - r, r, r, 0, 90); path.AddArc(rc.left, rc.bottom - r, r, r, 90, 90); path.CloseFigure();
+                g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+                Gdiplus::SolidBrush br(Gdiplus::Color(GetRValue(data->theme.panel), GetGValue(data->theme.panel), GetBValue(data->theme.panel)));
+                g.FillPath(&br, &path);
+                g.DrawPath(&pen, &path);
                 return TRUE;
             }
             if (id == IDC_MODS_LIST && data) {
@@ -1239,6 +1283,13 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 if (idx == 1 && data->modResults.empty() && SendMessageW(data->listMods, LB_GETCOUNT, 0, 0) == 0) {
                     PostMessageW(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MODS_GO, BN_CLICKED), 0);
                 }
+                return 0;
+            }
+            if (id == IDC_EDIT_NOTES && code == EN_CHANGE) {
+                int len = GetWindowTextLengthW(data->editNotes);
+                std::wstring prefix = trI("characters","Characters");
+                std::wstring txt = prefix + L": " + std::to_wstring(len) + L" / 2000";
+                SetWindowTextW(data->notesCounter, txt.c_str());
                 return 0;
             }
             if (id == IDC_CHK_BUNDLED) {
@@ -1533,7 +1584,10 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
         case WM_CTLCOLORSTATIC:
         case WM_CTLCOLORBTN: {
             HDC dc = reinterpret_cast<HDC>(wParam);
+            HWND ctrl = reinterpret_cast<HWND>(lParam);
             if (!data) { SetBkColor(dc, kBg); SetTextColor(dc, RGB(255,255,255)); return reinterpret_cast<LRESULT>(GetStockObject(BLACK_BRUSH)); }
+            if (ctrl == data->notesHint || ctrl == data->notesCounter) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(150,150,150)); return reinterpret_cast<LRESULT>(data->bgBrush); }
+            if (ctrl == data->notesTitle) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, data->theme.text); return reinterpret_cast<LRESULT>(data->bgBrush); }
             SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(255,255,255));
             return reinterpret_cast<LRESULT>(data->bgBrush);
         }
@@ -1546,7 +1600,9 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
         case WM_CTLCOLOREDIT:
         case WM_CTLCOLORLISTBOX: {
             HDC dc = reinterpret_cast<HDC>(wParam);
+            HWND ctrl = reinterpret_cast<HWND>(lParam);
             if (!data) { SetBkColor(dc, kPanel); SetTextColor(dc, RGB(255,255,255)); return reinterpret_cast<LRESULT>(GetStockObject(BLACK_BRUSH)); }
+            if (ctrl == data->editNotes) { SetBkColor(dc, data->theme.panel); SetTextColor(dc, RGB(255,255,255)); return reinterpret_cast<LRESULT>(data->panelBrush); }
             SetBkColor(dc, data->theme.panel); SetTextColor(dc, RGB(255,255,255));
             return reinterpret_cast<LRESULT>(data->panelBrush);
         }

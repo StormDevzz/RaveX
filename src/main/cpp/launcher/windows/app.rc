@@ -30,6 +30,7 @@ IDR_ICON_UPDATE PNG "icons/update.png"
 IDR_ICON_CONSOLE PNG "icons/console.png"
 IDR_ICON_MICROSOFT PNG "icons/microsoft.png"
 IDR_ICON_OFFLINE PNG "icons/offline.png"
+IDR_ICON_NOTES PNG "icons/notes.png"
 1 24 "app.manifest"
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION 1,0,0,0
