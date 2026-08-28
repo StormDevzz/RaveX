@@ -50,7 +50,7 @@ struct OfflineData {
     HWND edit = nullptr;
     HWND status = nullptr;
     HFONT font = nullptr;
-    HFONT small = nullptr;
+    HFONT smallFont = nullptr;
     GlowData glow;
     HWND okBtn = nullptr;
     HWND cancelBtn = nullptr;
@@ -73,7 +73,7 @@ LRESULT CALLBACK OfflineProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
             d = reinterpret_cast<OfflineData*>(cs->lpCreateParams);
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(d));
             d->font = makeFont(-14, FW_NORMAL);
-            d->small = makeFont(-11, FW_NORMAL);
+            d->smallFont = makeFont(-11, FW_NORMAL);
             d->bgBrush = CreateSolidBrush(kBg);
             HINSTANCE inst = cs->hInstance;
             auto tr=[&](const char* k,const char* fb){const char* v=lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
@@ -96,7 +96,7 @@ LRESULT CALLBACK OfflineProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
                                              WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
                                              300, 122, 80, 30, hwnd, reinterpret_cast<HMENU>(IDCANCEL), inst, nullptr);
             for (HWND c : {d->edit, d->okBtn, d->cancelBtn}) SendMessageW(c, WM_SETFONT, reinterpret_cast<WPARAM>(d->font), TRUE);
-            SendMessageW(d->status, WM_SETFONT, reinterpret_cast<WPARAM>(d->small), TRUE);
+            SendMessageW(d->status, WM_SETFONT, reinterpret_cast<WPARAM>(d->smallFont), TRUE);
             glowCreate(hwnd, &d->glow);
             glowSetButtons(&d->glow, {d->okBtn, d->cancelBtn});
             SetTimer(hwnd, 99, 16, nullptr);
@@ -186,7 +186,7 @@ LRESULT CALLBACK OfflineProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
         case WM_DESTROY:
             KillTimer(hwnd, 99);
             glowDestroy(&d->glow);
-            if (d) { DeleteObject(d->font); DeleteObject(d->small); if(d->bgBrush) DeleteObject(d->bgBrush); d->closed = true; }
+            if (d) { DeleteObject(d->font); DeleteObject(d->smallFont); if(d->bgBrush) DeleteObject(d->bgBrush); d->closed = true; }
             return 0;
         default: return DefWindowProcW(hwnd, msg, wParam, lParam);
     }
@@ -215,7 +215,7 @@ struct MsData {
     HWND hCopy = nullptr;
     HFONT font = nullptr;
     HFONT codeFont = nullptr;
-    HFONT small = nullptr;
+    HFONT smallFont = nullptr;
     HBITMAP hQrBmp = nullptr;
     ULONG_PTR gdiToken = 0;
     bool cancelled = false;
@@ -411,7 +411,7 @@ LRESULT CALLBACK MsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             d->hwnd = hwnd;
             Gdiplus::GdiplusStartupInput si; Gdiplus::GdiplusStartup(&d->gdiToken, &si, nullptr);
             d->font = makeFont(-13);
-            d->small = makeFont(-11);
+            d->smallFont = makeFont(-11);
             d->codeFont = makeMono(-28);
             d->bgBrush = CreateSolidBrush(kBg);
             HINSTANCE inst = cs->hInstance;
@@ -424,10 +424,10 @@ LRESULT CALLBACK MsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             d->hCopy = CreateWindowExW(0, L"BUTTON", tr2("copy_code","Copy Code").c_str(), WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW, 70, 385, 110, 28, hwnd, reinterpret_cast<HMENU>(2001), inst, nullptr);
             d->hCancel = CreateWindowExW(0, L"BUTTON", tr2("cancel","Cancel").c_str(), WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW, 220, 385, 110, 28, hwnd, reinterpret_cast<HMENU>(IDCANCEL), inst, nullptr);
             for (HWND c : {d->hCode, d->hStatus}) SendMessageW(c, WM_SETFONT, reinterpret_cast<WPARAM>(d->codeFont), TRUE);
-            SendMessageW(d->hLink, WM_SETFONT, reinterpret_cast<WPARAM>(d->small), TRUE);
+            SendMessageW(d->hLink, WM_SETFONT, reinterpret_cast<WPARAM>(d->smallFont), TRUE);
             SendMessageW(d->hCopy, WM_SETFONT, reinterpret_cast<WPARAM>(d->font), TRUE);
             SendMessageW(d->hCancel, WM_SETFONT, reinterpret_cast<WPARAM>(d->font), TRUE);
-            SendMessageW(d->hStatus, WM_SETFONT, reinterpret_cast<WPARAM>(d->small), TRUE);
+            SendMessageW(d->hStatus, WM_SETFONT, reinterpret_cast<WPARAM>(d->smallFont), TRUE);
             glowCreate(hwnd, &d->glow);
             glowSetButtons(&d->glow, {d->hCopy, d->hCancel});
             SetTimer(hwnd, 99, 16, nullptr);
@@ -526,7 +526,7 @@ LRESULT CALLBACK MsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             glowDestroy(&d->glow);
             if(d->hQrBmp) DeleteObject(d->hQrBmp);
             if(d->gdiToken) Gdiplus::GdiplusShutdown(d->gdiToken);
-            DeleteObject(d->font); DeleteObject(d->codeFont); DeleteObject(d->small);
+            DeleteObject(d->font); DeleteObject(d->codeFont); DeleteObject(d->smallFont);
             if(d->bgBrush) DeleteObject(d->bgBrush);
             d->closed=true; return 0;
         default: return DefWindowProcW(hwnd, msg, wParam, lParam);

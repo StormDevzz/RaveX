@@ -33,7 +33,7 @@ struct ThemeData {
     HWND accentBtn = nullptr;
     HWND preview = nullptr;
     HFONT font = nullptr;
-    HFONT small = nullptr;
+    HFONT smallFont = nullptr;
     COLORREF custColors[16] = {};
 };
 
@@ -91,7 +91,7 @@ LRESULT CALLBACK ThemeProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             d = reinterpret_cast<ThemeData*>(cs->lpCreateParams);
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(d));
             d->font = makeFont(-13);
-            d->small = makeFont(-11);
+            d->smallFont = makeFont(-11);
             HINSTANCE inst = cs->hInstance;
             CreateWindowExW(0, L"STATIC", L"Theme", WS_CHILD|WS_VISIBLE|SS_LEFT, 20, 16, 80, 18, hwnd, nullptr, inst, nullptr);
             d->combo = CreateWindowExW(0, L"COMBOBOX", nullptr, WS_CHILD|WS_VISIBLE|WS_VSCROLL|CBS_DROPDOWNLIST, 100, 14, 220, 200, hwnd, reinterpret_cast<HMENU>(IDC_THEME_COMBO), inst, nullptr);
@@ -196,7 +196,7 @@ LRESULT CALLBACK ThemeProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             FillRect(dc,&rc,b); DeleteObject(b); return 1;
         }
         case WM_CLOSE: d->closed=true; DestroyWindow(hwnd); return 0;
-        case WM_DESTROY: DeleteObject(d->font); DeleteObject(d->small); d->closed=true; return 0;
+        case WM_DESTROY: DeleteObject(d->font); DeleteObject(d->smallFont); d->closed=true; return 0;
         default: return DefWindowProcW(hwnd,msg,wParam,lParam);
     }
 }

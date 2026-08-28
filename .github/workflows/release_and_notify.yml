@@ -35,7 +35,7 @@ jobs:
 
       - name: Build C++ Natives (CMake + MSVC)
         run: |
-          cmake -S src\main\cpp -B build\native -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+          cmake -S src\main\cpp -B build\native -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DBUILD_LAUNCHER=OFF
           cmake --build build\native --config Release --parallel
       - name: Copy DLLs to natives folder
         shell: pwsh
@@ -87,7 +87,7 @@ jobs:
 
       - name: Build C++ Natives (CMake + GCC)
         run: |
-          cmake -S src/main/cpp -B build/native -DCMAKE_BUILD_TYPE=Release
+          cmake -S src/main/cpp -B build/native -DCMAKE_BUILD_TYPE=Release -DBUILD_LAUNCHER=OFF
           cmake --build build/native --config Release -j$(nproc)
 
       - name: Copy .so files to natives folder
@@ -599,6 +599,103 @@ jobs:
             echo "Error: Discord Webhook rejected the request with status code $HTTP_STATUS"
             exit 1
           fi
+
+  notify-fallback:
+    if: always() && github.event_name == 'push'
+    needs: [build-windows, build-linux, build-macos, build-launcher-windows, build-launcher-linux, test, build-and-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if fallback notification needed
+        id: check
+        run: |
+          FAILED=""
+          if [ "${{ needs.build-windows.result }}" == "failure" ]; then FAILED="$FAILED build-windows"; fi
+          if [ "${{ needs.build-linux.result }}" == "failure" ]; then FAILED="$FAILED build-linux"; fi
+          if [ "${{ needs.build-macos.result }}" == "failure" ]; then FAILED="$FAILED build-macos"; fi
+          if [ "${{ needs.build-launcher-windows.result }}" == "failure" ]; then FAILED="$FAILED build-launcher-windows"; fi
+          if [ "${{ needs.build-launcher-linux.result }}" == "failure" ]; then FAILED="$FAILED build-launcher-linux"; fi
+          if [ "${{ needs.test.result }}" == "failure" ]; then FAILED="$FAILED test"; fi
+          if [ "${{ needs.build-and-release.result }}" == "failure" ]; then FAILED="$FAILED build-and-release"; fi
+          # If build-and-release was skipped but any build failed, we need to notify
+          if [ -n "$FAILED" ]; then
+            echo "should_notify=true" >> $GITHUB_OUTPUT
+            echo "failed_jobs=$FAILED" >> $GITHUB_OUTPUT
+            echo "Fallback needed, failed:$FAILED"
+          elif [ "${{ needs.build-and-release.result }}" == "skipped" ]; then
+            # Skipped but no explicit failure -> still notify as partial (e.g. cancelled)
+            echo "should_notify=true" >> $GITHUB_OUTPUT
+            echo "failed_jobs=skipped" >> $GITHUB_OUTPUT
+            echo "Fallback needed, build-and-release skipped"
+          else
+            echo "should_notify=false" >> $GITHUB_OUTPUT
+            echo "No fallback needed, all succeeded and already notified"
+          fi
+
+      - name: Send Telegram fallback on failure
+        if: steps.check.outputs.should_notify == 'true'
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          BRANCH: ${{ github.ref_name }}
+          PUSHER: ${{ github.event.head_commit.author.name }}
+          REPO: ${{ github.repository }}
+          COMPARE_URL: ${{ github.event.compare }}
+          HEAD_COMMIT_MSG: ${{ github.event.head_commit.message }}
+          FAILED_JOBS: ${{ steps.check.outputs.failed_jobs }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          if [ -z "$TG_TOKEN" ] || [ -z "$CHANNEL_ID" ]; then
+            echo "TG_TOKEN or CHANNEL_ID not set, skipping"
+            exit 0
+          fi
+          COMMIT_MSG=$(echo "$HEAD_COMMIT_MSG" | head -n 1)
+          if [ -z "$COMPARE_URL" ] || [ "$COMPARE_URL" = "null" ]; then
+            COMPARE_URL="https://github.com/$REPO"
+          fi
+          TEXT=$(printf '%s\n%s\n\n%s\n\n%s\n\n%s\n%s' \
+            "[$REPO] Push to $BRANCH — FAILED" \
+            "Author: $PUSHER" \
+            "Message: $COMMIT_MSG" \
+            "Build: FAILED (jobs:$FAILED_JOBS)" \
+            "Compare: $COMPARE_URL" \
+            "Logs: https://github.com/$REPO/actions/runs/$RUN_ID")
+          echo "Sending Telegram fallback..."
+          curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" --data-urlencode "chat_id=${CHANNEL_ID}" --data-urlencode "text=${TEXT}" -d "disable_web_page_preview=true" | tail -n 5
+
+      - name: Send Discord fallback on failure
+        if: steps.check.outputs.should_notify == 'true'
+        env:
+          WEBHOOK_URL: ${{ secrets.GIT_LOG }}
+          COMPARE_URL: ${{ github.event.compare }}
+          BRANCH: ${{ github.ref_name }}
+          PUSHER: ${{ github.event.head_commit.author.name }}
+          PUSHER_USERNAME: ${{ github.event.head_commit.author.username }}
+          RUN_ID: ${{ github.run_id }}
+          HEAD_COMMIT_ID: ${{ github.event.head_commit.id }}
+          HEAD_COMMIT_URL: ${{ github.event.head_commit.url }}
+          HEAD_COMMIT_MSG: ${{ github.event.head_commit.message }}
+          HEAD_COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
+          FAILED_JOBS: ${{ steps.check.outputs.failed_jobs }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "GIT_LOG not set, skipping"
+            exit 0
+          fi
+          REPO="${{ github.repository }}"
+          if [ -z "$COMPARE_URL" ] || [ "$COMPARE_URL" = "null" ] || [ "$COMPARE_URL" = "" ]; then COMPARE_URL="https://github.com/$REPO"; fi
+          if [ -z "$PUSHER_USERNAME" ] || [ "$PUSHER_USERNAME" = "null" ] || [ "$PUSHER_USERNAME" = "" ]; then PUSHER_USERNAME="$PUSHER"; fi
+          PUSHER_URL="https://github.com/$PUSHER_USERNAME"
+          PUSHER_ICON="https://github.com/${PUSHER_USERNAME}.png"
+          if [ -z "$BRANCH" ] || [ "$BRANCH" = "null" ] || [ "$BRANCH" = "" ]; then BRANCH="main"; fi
+          COMMITS_JSON='${{ toJson(github.event.commits) }}'
+          if [ "$COMMITS_JSON" = "null" ] || [ -z "$COMMITS_JSON" ] || [ "$COMMITS_JSON" = "[]" ]; then
+            if [ -n "$HEAD_COMMIT_ID" ]; then SHORT_ID="${HEAD_COMMIT_ID:0:7}"; SAFE_MSG=$(echo "$HEAD_COMMIT_MSG" | head -n 1); if [ -z "$HEAD_COMMIT_URL" ] || [ "$HEAD_COMMIT_URL" = "null" ] || [ "$HEAD_COMMIT_URL" = "" ]; then HEAD_COMMIT_URL="https://github.com/$REPO/commit/$HEAD_COMMIT_ID"; fi; COMMIT_LIST="- [\`$SHORT_ID\`]($HEAD_COMMIT_URL) $SAFE_MSG - **$HEAD_COMMIT_AUTHOR**"; COMMIT_COUNT=1; else COMMIT_LIST="No commit details"; COMMIT_COUNT=0; fi
+          else COMMIT_LIST=$(echo "$COMMITS_JSON" | jq -r '.[] | "- [`" + .id[0:7] + "`](" + .url + ") " + (.message | split("\n")[0]) + " - **" + .author.name + "**"' 2>/dev/null || echo "No new commits."); COMMIT_COUNT=$(echo "$COMMITS_JSON" | jq 'length'); fi
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          RUN_URL="https://github.com/$REPO/actions/runs/$RUN_ID"
+          PAYLOAD=$(jq -n --arg title "Push to $BRANCH FAILED ($COMMIT_COUNT Commits) — $FAILED_JOBS" --arg url "$COMPARE_URL" --arg desc "$COMMIT_LIST" --arg repo "$REPO" --arg pusher "$PUSHER" --arg pusher_url "$PUSHER_URL" --arg pusher_icon "$PUSHER_ICON" --arg status "FAILED (jobs:$FAILED_JOBS)" --arg artifact "Build failed, no artifact" --arg release "SKIPPED (Build Failed)" --arg run_url "$RUN_URL" --arg timestamp "$TIMESTAMP" --argjson color 16724787 '{embeds: [{title: $title, url: $url, description: $desc, color: $color, fields: [{name: "Repository", value: $repo, inline: true}, {name: "Pusher", value: ("[" + $pusher + "](" + $pusher_url + ")"), inline: true}, {name: "Compilation Status", value: $status, inline: true}, {name: "Release Management", value: $release, inline: false}, {name: "Build Artifact", value: $artifact, inline: false}, {name: "GitHub Actions Run Logs", value: ("[View Workflow Run Logs](" + $run_url + ")"), inline: false}], author: {name: $pusher, url: $pusher_url, icon_url: $pusher_icon}, footer: {text: "RaveX Logs & Build CI"}, timestamp: $timestamp}]}')
+          echo "Sending Discord fallback..."
+          curl -s -w "\nHTTP_STATUS:%{http_code}" -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL" | tail -n 5
 
   issues-notify:
     if: github.event_name == 'issues'

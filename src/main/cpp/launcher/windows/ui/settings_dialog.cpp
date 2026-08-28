@@ -6,6 +6,7 @@
 #include "ui/include/glow.hpp"
 #include "ui/include/color_dialog.hpp"
 #include "build_info.h"
+#include <cstring>
 #include <windows.h>
 #include <dwmapi.h>
 #include <commctrl.h>
@@ -59,7 +60,7 @@ struct SettingsData {
     HWND hSysInfo = nullptr;
     HWND hBuild = nullptr;
     HFONT font = nullptr;
-    HFONT small = nullptr;
+    HFONT smallFont = nullptr;
     HBRUSH bgBrush = nullptr;
     ULONG_PTR gdiToken = 0;
     GlowData glow;
@@ -214,7 +215,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             data->hwnd = hwnd;
             Gdiplus::GdiplusStartupInput si; Gdiplus::GdiplusStartup(&data->gdiToken, &si, nullptr);
             data->font = makeSettingsFont(-13);
-            data->small = makeSettingsFont(-11);
+            data->smallFont = makeSettingsFont(-11);
             data->cur = getThemeForConfig(data->cfg.theme, data->cfg.customBg, data->cfg.customPanel, data->cfg.customText, data->cfg.customAccent);
             data->bgBrush = CreateSolidBrush(data->cur.bg);
             data->selected = data->cfg.theme;
@@ -474,7 +475,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             glowDestroy(&data->glow);
             for (HBITMAP hb : data->flagBmps) if (hb) DeleteObject(hb);
             if (data->font) DeleteObject(data->font);
-            if (data->small) DeleteObject(data->small);
+            if (data->smallFont) DeleteObject(data->smallFont);
             if (data->bgBrush) DeleteObject(data->bgBrush);
             if (data->gdiToken) Gdiplus::GdiplusShutdown(data->gdiToken);
             data->closed = true; return 0;
