@@ -104,6 +104,78 @@ jobs:
           name: ravex-natives-linux
           path: src/main/resources/assets/ravex/natives/*.so
 
+  build-launcher-windows:
+    if: github.event_name == 'push'
+    runs-on: windows-2022
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC (x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Build KickX Launcher (Windows - CMake + MSVC)
+        run: |
+          cmake -S src/main/cpp/launcher/windows -B build/launcher-windows -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/launcher-windows --config Release --parallel
+
+      - name: Package Windows Launcher
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "dist/launcher-windows" | Out-Null
+          Copy-Item -Path "build/launcher-windows/Release/kickx_launcher.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
+          Copy-Item -Path "build/launcher-windows/Release/KickXSetup.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
+          # Fallback for single-config generators
+          Copy-Item -Path "build/launcher-windows/kickx_launcher.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
+          Copy-Item -Path "build/launcher-windows/KickXSetup.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
+          if (Test-Path "build/launcher-windows/Release/flags") { Copy-Item -Path "build/launcher-windows/Release/flags" -Destination "dist/launcher-windows/flags" -Recurse -Force }
+          elseif (Test-Path "build/launcher-windows/flags") { Copy-Item -Path "build/launcher-windows/flags" -Destination "dist/launcher-windows/flags" -Recurse -Force }
+          elseif (Test-Path "src/main/cpp/launcher/windows/flags") { Copy-Item -Path "src/main/cpp/launcher/windows/flags" -Destination "dist/launcher-windows/flags" -Recurse -Force }
+          if (Test-Path "build/launcher-windows/Release/icons") { Copy-Item -Path "build/launcher-windows/Release/icons" -Destination "dist/launcher-windows/icons" -Recurse -Force }
+          elseif (Test-Path "build/launcher-windows/icons") { Copy-Item -Path "build/launcher-windows/icons" -Destination "dist/launcher-windows/icons" -Recurse -Force }
+          elseif (Test-Path "src/main/cpp/launcher/windows/icons") { Copy-Item -Path "src/main/cpp/launcher/windows/icons" -Destination "dist/launcher-windows/icons" -Recurse -Force }
+          Get-ChildItem -Path "dist/launcher-windows" -Recurse | ForEach-Object { Write-Host $_.FullName }
+
+      - name: Upload Windows Launcher artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kickx-launcher-windows
+          path: dist/launcher-windows/
+
+  build-launcher-linux:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Launcher Dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake g++ pkg-config libgtk-3-dev curl libcurl4-openssl-dev
+
+      - name: Build KickX Launcher (Linux - CMake + GCC)
+        run: |
+          cmake -S src/main/cpp/launcher/linux -B build/launcher-linux -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/launcher-linux --config Release -j$(nproc)
+          ls -lh build/launcher-linux/kickx_launcher || ls -lh build/launcher-linux/
+          file build/launcher-linux/kickx_launcher || true
+
+      - name: Package Linux Launcher
+        run: |
+          mkdir -p dist/launcher-linux
+          cp -v build/launcher-linux/kickx_launcher dist/launcher-linux/ || cp -v build/launcher-linux/kickx_launcher dist/launcher-linux/kickx-launcher-linux
+          chmod +x dist/launcher-linux/kickx_launcher* || true
+          ls -lh dist/launcher-linux/
+
+      - name: Upload Linux Launcher artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kickx-launcher-linux
+          path: dist/launcher-linux/
+
   build-macos:
     if: github.event_name == 'push'
     runs-on: macos-latest
@@ -150,7 +222,7 @@ jobs:
 
   build-and-release:
     if: github.event_name == 'push'
-    needs: [build-windows, build-linux, build-macos, test]
+    needs: [build-windows, build-linux, build-macos, build-launcher-windows, build-launcher-linux, test]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -172,6 +244,18 @@ jobs:
         with:
           name: ravex-natives-linux
           path: src/main/resources/assets/ravex/natives/
+
+      - name: Download Windows Launcher artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: kickx-launcher-windows
+          path: dist/launcher-windows/
+
+      - name: Download Linux Launcher artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: kickx-launcher-linux
+          path: dist/launcher-linux/
 
       # Step 3: Setup Java
       - name: Setup Java
@@ -239,6 +323,32 @@ jobs:
           fi
           
           echo "Version: $VERSION, Tag: $TAG, Jar: $JAR"
+
+          # Prepare launcher artifacts for release
+          echo "Preparing launcher artifacts..."
+          LAUNCHER_FILES=""
+          if [ -d "dist/launcher-windows" ] && [ -n "$(ls -A dist/launcher-windows 2>/dev/null)" ]; then
+            echo "Packaging Windows launcher..."
+            (cd dist/launcher-windows && zip -r ../KickX-Launcher-Windows-${VERSION}.zip . >/dev/null 2>&1) || (cd dist/launcher-windows && zip -r ../KickX-Launcher-Windows.zip . >/dev/null 2>&1) || true
+            if [ -f "dist/KickX-Launcher-Windows-${VERSION}.zip" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Windows-${VERSION}.zip"; echo "Windows: KickX-Launcher-Windows-${VERSION}.zip"; 
+            elif [ -f "dist/KickX-Launcher-Windows.zip" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Windows.zip"; echo "Windows: KickX-Launcher-Windows.zip";
+            else LAUNCHER_FILES="$LAUNCHER_FILES dist/launcher-windows/*"; echo "Windows: raw files"; fi
+          else
+            echo "No Windows launcher artifacts found"
+          fi
+          if [ -f "dist/launcher-linux/kickx_launcher" ]; then
+            echo "Packaging Linux launcher..."
+            cp -v dist/launcher-linux/kickx_launcher dist/kickx-launcher-linux 2>/dev/null || true
+            chmod +x dist/kickx-launcher-linux 2>/dev/null || true
+            tar -czf dist/KickX-Launcher-Linux-${VERSION}.tar.gz -C dist kickx-launcher-linux >/dev/null 2>&1 || tar -czf dist/KickX-Launcher-Linux.tar.gz -C dist/launcher-linux . >/dev/null 2>&1 || true
+            if [ -f "dist/KickX-Launcher-Linux-${VERSION}.tar.gz" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Linux-${VERSION}.tar.gz"; echo "Linux: KickX-Launcher-Linux-${VERSION}.tar.gz";
+            elif [ -f "dist/KickX-Launcher-Linux.tar.gz" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Linux.tar.gz"; echo "Linux: KickX-Launcher-Linux.tar.gz";
+            else LAUNCHER_FILES="$LAUNCHER_FILES dist/launcher-linux/kickx_launcher"; echo "Linux: raw binary"; fi
+          else
+            echo "No Linux launcher artifacts found"
+          fi
+          echo "Launcher files:$LAUNCHER_FILES"
+          echo "launcher_files=$LAUNCHER_FILES" >> $GITHUB_OUTPUT
           
           # Delete existing release & tag to clean up previous versions
           DELETE_STATUS="skipped"
@@ -252,9 +362,10 @@ jobs:
           fi
           echo "delete_status=$DELETE_STATUS" >> $GITHUB_OUTPUT
           
-          # Create new release with compile artifact attached
-          echo "Creating new release..."
-          if gh release create "$TAG" "$JAR" --title "RaveX $VERSION" --notes "RaveX $VERSION" --latest; then
+          # Create new release with compile artifact + launchers attached
+          echo "Creating new release with launchers..."
+          echo "Files: $JAR $LAUNCHER_FILES"
+          if gh release create "$TAG" "$JAR" $LAUNCHER_FILES --title "RaveX $VERSION" --notes "RaveX $VERSION — mod + KickX launchers (Windows/Linux)" --latest; then
             echo "release_status=created" >> $GITHUB_OUTPUT
             echo "release_tag=$TAG" >> $GITHUB_OUTPUT
             echo "release_version=$VERSION" >> $GITHUB_OUTPUT
