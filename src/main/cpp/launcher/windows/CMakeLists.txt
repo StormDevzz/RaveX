@@ -6,6 +6,10 @@ endif()
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+if(WIN32)
+    add_compile_definitions(NOMINMAX _USE_MATH_DEFINES)
+endif()
+
 string(TIMESTAMP RAVEX_BUILD "%Y%m%d" UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/build_info.h.in" "${CMAKE_CURRENT_BINARY_DIR}/build_info.h" @ONLY)
 
@@ -45,7 +49,7 @@ target_include_directories(kickx_launcher PRIVATE
 target_compile_features(kickx_launcher PRIVATE cxx_std_23)
 
 if(MSVC)
-    target_compile_options(kickx_launcher PRIVATE /utf-8 /std:c++23)
+    target_compile_options(kickx_launcher PRIVATE /utf-8)
 elseif(MINGW)
     target_compile_options(kickx_launcher PRIVATE -std=c++23)
     target_link_options(kickx_launcher PRIVATE -static -static-libgcc -static-libstdc++)
@@ -85,7 +89,7 @@ add_executable(KickXSetup WIN32
 target_include_directories(KickXSetup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_features(KickXSetup PRIVATE cxx_std_23)
 if(MSVC)
-    target_compile_options(KickXSetup PRIVATE /utf-8 /std:c++23)
+    target_compile_options(KickXSetup PRIVATE /utf-8)
 elseif(MINGW)
     target_compile_options(KickXSetup PRIVATE -std=c++23)
     target_link_options(KickXSetup PRIVATE -static -static-libgcc -static-libstdc++)
