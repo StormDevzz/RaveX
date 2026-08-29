@@ -1,6 +1,7 @@
 #include "core/include/lang.hpp"
 
 #include <cstring>
+#include <string>
 
 namespace ravex {
 
@@ -1855,6 +1856,116 @@ const LangEntry kEntries[] = {
     {"characters", "ky", "Белгилер"},
     {"characters", "tg", "Аломатҳо"},
 
+    {"search_instances", "de", "Instanzen suchen..."},
+    {"search_instances", "ru", "Поиск сборок..."},
+    {"search_instances", "uk", "Пошук збірок..."},
+    {"search_instances", "kk", "Жинақтарды іздеу..."},
+    {"search_instances", "zh", "搜索实例..."},
+    {"search_instances", "fr", "Rechercher des instances..."},
+    {"search_instances", "es", "Buscar instancias..."},
+    {"search_instances", "pt", "Pesquisar instâncias..."},
+    {"search_instances", "it", "Cerca istanze..."},
+    {"search_instances", "sr", "Претражи инстанце..."},
+    {"search_instances", "bg", "Търсене на инстанции..."},
+    {"search_instances", "ro", "Caută instanțe..."},
+    {"search_instances", "cs", "Hledat instance..."},
+    {"search_instances", "en-us", "Search instances..."},
+    {"search_instances", "en-gb", "Search instances..."},
+    {"search_instances", "ka", "ინსტანციების ძებნა..."},
+    {"search_instances", "hy", "Որոնել օրինակներ..."},
+    {"search_instances", "az", "Nümunələri axtar..."},
+    {"search_instances", "uz", "Namunalarni qidirish..."},
+    {"search_instances", "ky", "Инстанцияларды издөө..."},
+    {"search_instances", "tg", "Ҷустуҷӯи инстансияҳо..."},
+
+    {"sort_name_az", "de", "Name A-Z"},
+    {"sort_name_az", "ru", "Имя А-Я"},
+    {"sort_name_az", "uk", "Ім'я А-Я"},
+    {"sort_name_az", "kk", "Аты А-Я"},
+    {"sort_name_az", "zh", "名称 A-Z"},
+    {"sort_name_az", "fr", "Nom A-Z"},
+    {"sort_name_az", "es", "Nombre A-Z"},
+    {"sort_name_az", "pt", "Nome A-Z"},
+    {"sort_name_az", "it", "Nome A-Z"},
+    {"sort_name_az", "sr", "Име А-Ш"},
+    {"sort_name_az", "bg", "Име А-Я"},
+    {"sort_name_az", "ro", "Nume A-Z"},
+    {"sort_name_az", "cs", "Název A-Z"},
+    {"sort_name_az", "en-us", "Name A-Z"},
+    {"sort_name_az", "en-gb", "Name A-Z"},
+    {"sort_name_az", "ka", "სახელი A-Z"},
+    {"sort_name_az", "hy", "Անուն A-Z"},
+    {"sort_name_az", "az", "Ad A-Z"},
+    {"sort_name_az", "uz", "Nom A-Z"},
+    {"sort_name_az", "ky", "Аты А-Я"},
+    {"sort_name_az", "tg", "Ном А-Я"},
+
+    {"sort_name_za", "de", "Name Z-A"},
+    {"sort_name_za", "ru", "Имя Я-А"},
+    {"sort_name_za", "uk", "Ім'я Я-А"},
+    {"sort_name_za", "kk", "Аты Я-А"},
+    {"sort_name_za", "zh", "名称 Z-A"},
+    {"sort_name_za", "fr", "Nom Z-A"},
+    {"sort_name_za", "es", "Nombre Z-A"},
+    {"sort_name_za", "pt", "Nome Z-A"},
+    {"sort_name_za", "it", "Nome Z-A"},
+    {"sort_name_za", "sr", "Име Ш-А"},
+    {"sort_name_za", "bg", "Име Я-А"},
+    {"sort_name_za", "ro", "Nume Z-A"},
+    {"sort_name_za", "cs", "Název Z-A"},
+    {"sort_name_za", "en-us", "Name Z-A"},
+    {"sort_name_za", "en-gb", "Name Z-A"},
+    {"sort_name_za", "ka", "სახელი Z-A"},
+    {"sort_name_za", "hy", "Անուն Z-A"},
+    {"sort_name_za", "az", "Ad Z-A"},
+    {"sort_name_za", "uz", "Nom Z-A"},
+    {"sort_name_za", "ky", "Аты Я-А"},
+    {"sort_name_za", "tg", "Ном Я-А"},
+
+    {"sort_version", "de", "Version"},
+    {"sort_version", "ru", "Версия"},
+    {"sort_version", "uk", "Версія"},
+    {"sort_version", "kk", "Нұсқа"},
+    {"sort_version", "zh", "版本"},
+    {"sort_version", "fr", "Version"},
+    {"sort_version", "es", "Versión"},
+    {"sort_version", "pt", "Versão"},
+    {"sort_version", "it", "Versione"},
+    {"sort_version", "sr", "Верзија"},
+    {"sort_version", "bg", "Версия"},
+    {"sort_version", "ro", "Versiune"},
+    {"sort_version", "cs", "Verze"},
+    {"sort_version", "en-us", "Version"},
+    {"sort_version", "en-gb", "Version"},
+    {"sort_version", "ka", "ვერსია"},
+    {"sort_version", "hy", "Տարբերակ"},
+    {"sort_version", "az", "Versiya"},
+    {"sort_version", "uz", "Versiya"},
+    {"sort_version", "ky", "Версия"},
+    {"sort_version", "tg", "Версия"},
+
+    {"sort_date", "de", "Datum"},
+    {"sort_date", "ru", "Дата"},
+    {"sort_date", "uk", "Дата"},
+    {"sort_date", "kk", "Күні"},
+    {"sort_date", "zh", "日期"},
+    {"sort_date", "fr", "Date"},
+    {"sort_date", "es", "Fecha"},
+    {"sort_date", "pt", "Data"},
+    {"sort_date", "it", "Data"},
+    {"sort_date", "sr", "Датум"},
+    {"sort_date", "bg", "Дата"},
+    {"sort_date", "ro", "Dată"},
+    {"sort_date", "cs", "Datum"},
+    {"sort_date", "en-us", "Date"},
+    {"sort_date", "en-gb", "Date"},
+    {"sort_date", "ka", "თარიღი"},
+    {"sort_date", "hy", "Ամսաթիվ"},
+    {"sort_date", "az", "Tarix"},
+    {"sort_date", "uz", "Sana"},
+    {"sort_date", "ky", "Датасы"},
+    {"sort_date", "tg", "Сана"},
+
     {"palette", "de", "Palette (für Custom)"},
     {"palette", "ru", "Палитра (для Custom)"},
     {"palette", "uk", "Палітра (для Custom)"},
@@ -2671,15 +2782,15 @@ const char* findValue(const char* key, const char* code) {
 
 }
 
-static const char* g_currentLang = "en-us";
+static std::string g_currentLang = "en-us";
 
-const char* currentLanguage() { return g_currentLang; }
+const char* currentLanguage() { return g_currentLang.c_str(); }
 
-void setCurrentLanguage(const char* code) { g_currentLang = code; }
+void setCurrentLanguage(const char* code) { g_currentLang = code ? code : "en-us"; }
 
 const char* lang(const char* key) {
     if (!key) return "";
-    if (const char* value = findValue(key, g_currentLang)) return value;
+    if (const char* value = findValue(key, g_currentLang.c_str())) return value;
     if (const char* value = findValue(key, "en-us")) return value;
     return key;
 }

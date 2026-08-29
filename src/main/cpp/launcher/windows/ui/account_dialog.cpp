@@ -37,8 +37,8 @@ HFONT makeFont(int h = -13, int w = FW_NORMAL) {
     return f;
 }
 
-HFONT makeMono(int h = -22) {
-    return CreateFontW(h, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+HFONT makeMono(int h = -16) {
+    return CreateFontW(h, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
                        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
                        DEFAULT_PITCH | FF_DONTCARE, L"Consolas");
 }
@@ -72,12 +72,16 @@ LRESULT CALLBACK OfflineProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
             CREATESTRUCTW* cs = reinterpret_cast<CREATESTRUCTW*>(lParam);
             d = reinterpret_cast<OfflineData*>(cs->lpCreateParams);
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(d));
-            d->font = makeFont(-14, FW_NORMAL);
+            d->font = makeFont(-13, FW_NORMAL);
             d->smallFont = makeFont(-11, FW_NORMAL);
             d->bgBrush = CreateSolidBrush(kBg);
             HINSTANCE inst = cs->hInstance;
+            {
+                LauncherConfig lc = loadLauncherConfig();
+                setCurrentLanguage(lc.language.c_str());
+            }
             auto tr=[&](const char* k,const char* fb){const char* v=lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
-            CreateWindowExW(0, L"STATIC", tr("offline_title","Offline Account").c_str(),
+            CreateWindowExW(0, L"STATIC", tr("offline_title","Create Offline Account").c_str(),
                             WS_CHILD | WS_VISIBLE | SS_LEFT,
                             20, 16, 360, 22, hwnd, nullptr, inst, nullptr);
             CreateWindowExW(0, L"STATIC", tr("offline_hint","Enter username (3-16 chars, A-Z, 0-9, _)").c_str(),
@@ -322,7 +326,11 @@ void msWorker(MsData* d) {
         if (elapsed >= (ULONGLONG)expiresIn) { d->error=std::string(lang("device_code_expired")); PostMessageW(d->hwnd, WM_MS_DONE, 0, 0); return; }
         std::string tokenBody = "grant_type=urn:ietf:params:oauth:grant-type:device_code&client_id=" + clientId + "&device_code=" + mshelper::urlEncode2(deviceCode);
         std::string tokenResp = ravex::net::httpPost("https://login.microsoftonline.com/consumers/oauth2/v2.0/token", tokenBody, "application/x-www-form-urlencoded", &err);
-        if (tokenResp.empty()) { d->error=err.empty()?"Token request failed":err; PostMessageW(d->hwnd, WM_MS_DONE, 0, 0); return; }
+        if (tokenResp.empty()) {
+            if (err.find("authorization_pending") != std::string::npos) { for(int i=0;i<pollInterval*10 && !d->cancelled;++i) Sleep(100); continue; }
+            if (err.find("slow_down") != std::string::npos) { pollInterval+=5; for(int i=0;i<pollInterval*10 && !d->cancelled;++i) Sleep(100); continue; }
+            d->error=err.empty()?std::string(lang("token_error")):std::string(lang("token_error"))+": "+err; PostMessageW(d->hwnd, WM_MS_DONE, 0, 0); return;
+        }
         std::string errCode; mshelper::getString(tokenResp,"error",errCode);
         if (errCode.empty()) {
             if(!mshelper::getString(tokenResp,"access_token",accessToken)||accessToken.empty()){ d->error="Invalid token response"; PostMessageW(d->hwnd, WM_MS_DONE, 0, 0); return; }
@@ -412,9 +420,13 @@ LRESULT CALLBACK MsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             Gdiplus::GdiplusStartupInput si; Gdiplus::GdiplusStartup(&d->gdiToken, &si, nullptr);
             d->font = makeFont(-13);
             d->smallFont = makeFont(-11);
-            d->codeFont = makeMono(-28);
+            d->codeFont = makeMono(-18);
             d->bgBrush = CreateSolidBrush(kBg);
             HINSTANCE inst = cs->hInstance;
+            {
+                LauncherConfig lc = loadLauncherConfig();
+                setCurrentLanguage(lc.language.c_str());
+            }
             auto tr2=[&](const char* k,const char* fb){const char* v=lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
             CreateWindowExW(0, L"STATIC", tr2("ms_title","Microsoft Login").c_str(), WS_CHILD|WS_VISIBLE|SS_LEFT, 20, 16, 360, 22, hwnd, nullptr, inst, nullptr);
             d->hQr = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD|WS_VISIBLE|SS_OWNERDRAW|WS_BORDER, 94, 42, 220, 220, hwnd, nullptr, inst, nullptr);
@@ -555,8 +567,12 @@ bool showOfflineAccountDialog(HWND parent, std::string& outName) {
     if (y < wr.top) y = wr.top + 16;
     if (x + dw > wr.right) x = wr.right - dw - 16;
     if (y + dh > wr.bottom) y = wr.bottom - dh - 16;
+    {
+        LauncherConfig lc = loadLauncherConfig();
+        setCurrentLanguage(lc.language.c_str());
+    }
     auto trTitle=[&](const char* k,const char* fb){const char* v=lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
-    HWND hwnd=CreateWindowExW(0, L"KickxOfflineDlg", trTitle("offline_title","Add Offline Account").c_str(), WS_POPUP|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MAXIMIZEBOX, x, y, dw, dh, parent, nullptr, inst, &d);
+    HWND hwnd=CreateWindowExW(0, L"KickxOfflineDlg", trTitle("offline_title","Create Offline Account").c_str(), WS_POPUP|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MAXIMIZEBOX, x, y, dw, dh, parent, nullptr, inst, &d);
     if(!hwnd) return false;
     {
         LauncherConfig ccfg = loadLauncherConfig();
@@ -594,8 +610,12 @@ bool showMicrosoftAccountDialog(HWND parent, ravex::Account* out, std::string* e
     if (y2 < wr2.top) y2 = wr2.top + 16;
     if (x2 + dw2 > wr2.right) x2 = wr2.right - dw2 - 16;
     if (y2 + dh2 > wr2.bottom) y2 = wr2.bottom - dh2 - 16;
+    {
+        LauncherConfig lc = loadLauncherConfig();
+        setCurrentLanguage(lc.language.c_str());
+    }
     auto trMs=[&](const char* k,const char* fb){const char* v=lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
-    HWND hwnd=CreateWindowExW(0, L"KickxMsDlg", (trMs("ms_title","Microsoft Login") + L" - Scan QR").c_str(), WS_POPUP|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MAXIMIZEBOX, x2, y2, dw2, dh2, parent, nullptr, inst, &d);
+    HWND hwnd=CreateWindowExW(0, L"KickxMsDlg", trMs("ms_title","Microsoft Login").c_str(), WS_POPUP|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MAXIMIZEBOX, x2, y2, dw2, dh2, parent, nullptr, inst, &d);
     if(!hwnd) return false;
     {
         LauncherConfig ccfg = loadLauncherConfig();

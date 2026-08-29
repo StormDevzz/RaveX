@@ -716,6 +716,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             icc.dwICC = ICC_WIN95_CLASSES | ICC_COOL_CLASSES | ICC_USEREX_CLASSES | ICC_PROGRESS_CLASS | ICC_TAB_CLASSES;
             InitCommonControlsEx(&icc);
             LauncherConfig lcfg = loadLauncherConfig();
+            setCurrentLanguage(lcfg.language.c_str());
             data->theme = getThemeForConfig(lcfg.theme, lcfg.customBg, lcfg.customPanel, lcfg.customText, lcfg.customAccent);
             data->bgBrush = CreateSolidBrush(data->theme.bg);
             data->panelBrush = CreateSolidBrush(data->theme.panel);
@@ -723,8 +724,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             data->font = makeFont();
             data->smallFont = CreateFontW(-11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI Variable");
             if (!data->smallFont) data->smallFont = CreateFontW(-11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI");
-            data->titleFont = CreateFontW(-18, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI Variable");
-            if (!data->titleFont) data->titleFont = CreateFontW(-18, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI");
+            data->titleFont = makeFont();
             HINSTANCE inst = cs->hInstance;
 
             int dpi = 96;
@@ -1683,6 +1683,10 @@ bool showInstanceEditor(HWND parent, ravex::InstanceCfg& cfg, bool isNew) {
     data.cfg = cfg;
     data.versions = {cfg.mcVersion.empty() ? std::string("1.21.11") : cfg.mcVersion};
     if (data.versions.empty()) data.versions.push_back("1.21.11");
+    {
+        LauncherConfig lc = loadLauncherConfig();
+        setCurrentLanguage(lc.language.c_str());
+    }
     auto trT=[&](const char* k,const char* fb){const char* v=ravex::lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
     std::wstring title = isNew ? trT("new_instance","New Instance") : trT("edit_instance","Edit Instance");
     if (!inst) inst = GetModuleHandleW(nullptr);

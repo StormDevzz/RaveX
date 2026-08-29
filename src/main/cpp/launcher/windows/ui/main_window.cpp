@@ -10,6 +10,8 @@
 #include <cwchar>
 #include <cstdlib>
 #include <cmath>
+#include <cctype>
+#include <algorithm>
 #include <initializer_list>
 #include <unordered_map>
 #include <string>
@@ -51,6 +53,9 @@ constexpr int IDC_ADD_MS = 1013;
 constexpr int IDC_SETTINGS = 1014;
 constexpr int IDC_WINLABEL = 1015;
 constexpr int IDC_ACCOUNTS_ICON = 1016;
+constexpr int IDC_SEARCH_INST = 1017;
+constexpr int IDC_SORT_INST = 1018;
+constexpr int IDC_SKIN_PREVIEW = 1019;
 
 constexpr UINT WM_APP_STATUS = WM_APP + 1;
 constexpr UINT WM_APP_PROGRESS = WM_APP + 2;
@@ -59,6 +64,7 @@ constexpr UINT WM_APP_CONSOLE_LINE = WM_APP + 4;
 constexpr UINT WM_APP_ACCOUNT_DONE = WM_APP + 5;
 constexpr UINT WM_APP_GAME_RUNNING = WM_APP + 6;
 constexpr UINT WM_APP_GAME_EXITED = WM_APP + 7;
+constexpr UINT WM_APP_SKIN_DONE = WM_APP + 20;
 
 struct JobDone {
     enum class Kind { Update, Launch };
@@ -96,6 +102,13 @@ struct MainData {
     HWND hSettings = nullptr;
     HWND hAccountsIcon = nullptr;
     HWND hWinLabel = nullptr;
+    HWND hSearch = nullptr;
+    HWND hSort = nullptr;
+    HWND hSkin = nullptr;
+    Gdiplus::Bitmap* skinBmp = nullptr;
+    HICON skinIcon = nullptr;
+    std::wstring searchFilter;
+    int sortMode = 0;
     std::unordered_map<HWND, Gdiplus::Bitmap*> btnBmp;
     std::vector<HWND> ownerBtns;
     std::vector<Gdiplus::Bitmap*> iconBmps;
@@ -105,6 +118,7 @@ struct MainData {
     GlowData glow;
     LauncherConfig cfg;
     std::vector<InstanceCfg> instances;
+    std::vector<InstanceCfg> filteredInstances;
     bool busy = false;
     bool cancelled = false;
     bool gameRunning = false;
@@ -114,6 +128,8 @@ struct MainData {
 MainData g_main;
 game::GameProcess g_gameProc;
 bool g_killRequested = false;
+
+void updateSkinPreview();
 
 bool promptForText(HWND parent, const std::wstring& title, std::wstring& out);
 
@@ -198,6 +214,7 @@ void refreshAccounts() {
         EnableWindow(g_main.hLaunch, FALSE);
         InvalidateRect(g_main.hAccounts, nullptr, TRUE);
         UpdateWindow(g_main.hAccounts);
+        updateSkinPreview();
         return;
     }
     EnableWindow(g_main.hAccounts, TRUE);
@@ -218,25 +235,99 @@ void refreshAccounts() {
     SendMessageW(g_main.hAccounts, CB_SETITEMHEIGHT, -1, 24);
     InvalidateRect(g_main.hAccounts, nullptr, TRUE);
     UpdateWindow(g_main.hAccounts);
+    updateSkinPreview();
 }
 
 void refreshInstances() {
     g_main.instances = listInstances();
+    std::wstring filter = g_main.searchFilter;
+    std::string filter8 = toUtf8(filter);
+    std::transform(filter8.begin(), filter8.end(), filter8.begin(), ::tolower);
+    g_main.filteredInstances.clear();
+    for (auto &inst : g_main.instances) {
+        if (!filter8.empty()) {
+            std::string hay = inst.name + " " + inst.mcVersion + " " + inst.loader;
+            std::string low = hay;
+            std::transform(low.begin(), low.end(), low.begin(), ::tolower);
+            if (low.find(filter8) == std::string::npos) continue;
+        }
+        g_main.filteredInstances.push_back(inst);
+    }
+    auto verCompare = [](const std::string& a, const std::string& b){
+        std::vector<int> pa, pb;
+        std::string cur;
+        for(char c: a){ if(c=='.'){ if(!cur.empty()){pa.push_back(std::stoi(cur)); cur.clear();}} else if(isdigit((unsigned char)c)) cur+=c; else {if(!cur.empty()){pa.push_back(std::stoi(cur)); cur.clear();} break;}} if(!cur.empty()) pa.push_back(std::stoi(cur));
+        cur.clear();
+        for(char c: b){ if(c=='.'){ if(!cur.empty()){pb.push_back(std::stoi(cur)); cur.clear();}} else if(isdigit((unsigned char)c)) cur+=c; else {if(!cur.empty()){pb.push_back(std::stoi(cur)); cur.clear();} break;}} if(!cur.empty()) pb.push_back(std::stoi(cur));
+        size_t n=std::max(pa.size(), pb.size());
+        for(size_t i=0;i<n;++i){ int av=i<pa.size()?pa[i]:0; int bv=i<pb.size()?pb[i]:0; if(av!=bv) return av<bv; } return false;
+    };
+    if (g_main.sortMode == 0) {
+        std::sort(g_main.filteredInstances.begin(), g_main.filteredInstances.end(), [](auto &a, auto &b){ std::string la=a.name, lb=b.name; std::transform(la.begin(), la.end(), la.begin(), ::tolower); std::transform(lb.begin(), lb.end(), lb.begin(), ::tolower); return la<lb; });
+    } else if (g_main.sortMode == 1) {
+        std::sort(g_main.filteredInstances.begin(), g_main.filteredInstances.end(), [](auto &a, auto &b){ std::string la=a.name, lb=b.name; std::transform(la.begin(), la.end(), la.begin(), ::tolower); std::transform(lb.begin(), lb.end(), lb.begin(), ::tolower); return la>lb; });
+    } else if (g_main.sortMode == 2) {
+        std::sort(g_main.filteredInstances.begin(), g_main.filteredInstances.end(), [&](auto &a, auto &b){ return verCompare(b.mcVersion, a.mcVersion); });
+    } else if (g_main.sortMode == 3) {
+        auto getTime = [](const InstanceCfg& c){ std::wstring dir = instanceDir(fromUtf8(c.name)); WIN32_FILE_ATTRIBUTE_DATA fad{}; if(GetFileAttributesExW(dir.c_str(), GetFileExInfoStandard, &fad)){ ULARGE_INTEGER t; t.LowPart=fad.ftLastWriteTime.dwLowDateTime; t.HighPart=fad.ftLastWriteTime.dwHighDateTime; return t.QuadPart; } return (ULONGLONG)0; };
+        std::sort(g_main.filteredInstances.begin(), g_main.filteredInstances.end(), [&](auto &a, auto &b){ return getTime(a) > getTime(b); });
+    }
     SendMessageW(g_main.hList, LB_RESETCONTENT, 0, 0);
-    for (const InstanceCfg& inst : g_main.instances) {
+    for (const InstanceCfg& inst : g_main.filteredInstances) {
         std::string label = inst.name;
         if (!inst.mcVersion.empty()) label += " [" + inst.mcVersion + "]";
         if (!inst.loader.empty() && inst.loader != "vanilla") label += " (" + inst.loader + ")";
         std::wstring wlabel = fromUtf8(label);
         SendMessageW(g_main.hList, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(wlabel.c_str()));
     }
-    if (!g_main.instances.empty()) SendMessageW(g_main.hList, LB_SETCURSEL, 0, 0);
+    if (!g_main.filteredInstances.empty()) SendMessageW(g_main.hList, LB_SETCURSEL, 0, 0);
 }
 
 int selectedInstanceIndex() {
     int idx = static_cast<int>(SendMessageW(g_main.hList, LB_GETCURSEL, 0, 0));
-    if (idx < 0 || idx >= static_cast<int>(g_main.instances.size())) return -1;
+    if (idx < 0 || idx >= static_cast<int>(g_main.filteredInstances.size())) return -1;
     return idx;
+}
+InstanceCfg* selectedInstance() {
+    int idx = selectedInstanceIndex();
+    if (idx < 0) return nullptr;
+    return &g_main.filteredInstances[idx];
+}
+
+void updateSkinPreview() {
+    if (!g_main.hSkin) return;
+    if (g_main.skinBmp) { delete g_main.skinBmp; g_main.skinBmp = nullptr; }
+    if (g_main.skinIcon) { DestroyIcon(g_main.skinIcon); g_main.skinIcon = nullptr; }
+    if (g_main.cfg.accounts.empty() || g_main.cfg.activeAccount < 0 || g_main.cfg.activeAccount >= (int)g_main.cfg.accounts.size()) {
+        InvalidateRect(g_main.hSkin, nullptr, TRUE);
+        return;
+    }
+    Account acc = g_main.cfg.accounts[g_main.cfg.activeAccount];
+    if (acc.type != "microsoft" || acc.uuid.empty()) {
+        InvalidateRect(g_main.hSkin, nullptr, TRUE);
+        return;
+    }
+    std::string uuid = acc.uuid;
+    uuid.erase(std::remove(uuid.begin(), uuid.end(), '-'), uuid.end());
+    std::string url = "https://crafatar.com/avatars/" + uuid + "?size=64&overlay";
+    std::thread([url](){
+        std::wstring tmp = joinPath(joinPath(ravexDir(), L"cache"), L"skin_tmp.png");
+        createDirs(joinPath(ravexDir(), L"cache"));
+        bool ok = net::downloadFile(url, tmp, {}, nullptr, nullptr);
+        if (!ok) {
+            PostMessageW(g_main.hwnd, WM_APP_SKIN_DONE, 0, 0);
+            return;
+        }
+        Gdiplus::Bitmap* src = Gdiplus::Bitmap::FromFile(tmp.c_str());
+        if (!src || src->GetLastStatus() != Gdiplus::Ok) { delete src; PostMessageW(g_main.hwnd, WM_APP_SKIN_DONE, 0, 0); return; }
+        Gdiplus::Bitmap* dst = new Gdiplus::Bitmap(64, 64, PixelFormat32bppARGB);
+        Gdiplus::Graphics g(dst);
+        g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+        g.Clear(Gdiplus::Color(0,0,0,0));
+        g.DrawImage(src, Gdiplus::Rect(0,0,64,64), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
+        delete src;
+        PostMessageW(g_main.hwnd, WM_APP_SKIN_DONE, 0, reinterpret_cast<LPARAM>(dst));
+    }).detach();
 }
 
 void setBusy(bool busy) {
@@ -503,7 +594,7 @@ void onLaunch() {
         setStatus(std::string(lang("no_account_selected")));
         return;
     }
-    InstanceCfg inst = g_main.instances[idx];
+    InstanceCfg inst = g_main.filteredInstances[idx];
     Account account = g_main.cfg.accounts[accIdx];
     std::wstring logDir = joinPath(instanceDir(fromUtf8(inst.name)), L"logs");
     createDirs(logDir);
@@ -558,11 +649,11 @@ void onEditInstance() {
         setStatus(std::string(lang("select_instance_first")));
         return;
     }
-    InstanceCfg cfg = g_main.instances[idx];
+    InstanceCfg cfg = g_main.filteredInstances[idx];
     if (!showInstanceEditor(g_main.hwnd, cfg, false)) return;
-    std::wstring oldDir = instanceDir(fromUtf8(g_main.instances[idx].name));
+    std::wstring oldDir = instanceDir(fromUtf8(g_main.filteredInstances[idx].name));
     std::wstring newDir = instanceDir(fromUtf8(cfg.name));
-    if (cfg.name != g_main.instances[idx].name) {
+    if (cfg.name != g_main.filteredInstances[idx].name) {
         if (fileExists(joinPath(newDir, L"instance.cfg"))) {
             MessageBoxW(g_main.hwnd, fromUtf8(lang("instance_exists")).c_str(), L"KickX Launcher",
                         MB_ICONWARNING | MB_OK);
@@ -578,11 +669,11 @@ void onEditInstance() {
 void onDeleteInstance() {
     if (g_main.busy) return;
     int idx = static_cast<int>(SendMessageW(g_main.hList, LB_GETCURSEL, 0, 0));
-    if (idx < 0 || idx >= static_cast<int>(g_main.instances.size())) {
+    if (idx < 0 || idx >= static_cast<int>(g_main.filteredInstances.size())) {
         setStatus(std::string(lang("select_instance_first")));
         return;
     }
-    InstanceCfg inst = g_main.instances[idx];
+    InstanceCfg inst = g_main.filteredInstances[idx];
     std::wstring dir = instanceDir(fromUtf8(inst.name));
     std::wstring msg = fromUtf8(lang("delete_confirm")) + L" \"" + fromUtf8(inst.name) + L"\"" + fromUtf8(lang("delete_confirm_files"));
     if (MessageBoxW(g_main.hwnd, msg.c_str(), L"KickX Launcher", MB_ICONWARNING | MB_YESNO) != IDYES) return;
@@ -622,7 +713,9 @@ void doLayout() {
     int pad = 16;
     int btnW = 128;
     int listRight = w - pad - btnW - 12;
-    int listTop = 28;
+    int searchH = 28;
+    int searchTop = 28;
+    int listTop = searchTop + searchH + 8;
     int accountsY = h - 162;
     if (accountsY < listTop + 140) accountsY = listTop + 140;
     int listH = accountsY - listTop - 12;
@@ -630,11 +723,13 @@ void doLayout() {
     int statusY = accountsY + 36;
     int progressY = statusY + 30;
     int bottomY = h - 44;
-    HDWP dwp = BeginDeferWindowPos(15);
+    HDWP dwp = BeginDeferWindowPos(17);
     if (dwp) {
         auto place = [&](HWND hwnd, int x, int y, int cw, int ch) {
             DeferWindowPos(dwp, hwnd, nullptr, x, y, cw, ch, SWP_NOZORDER);
         };
+        place(g_main.hSearch, pad, searchTop, listRight - pad - 160 - 8, searchH);
+        place(g_main.hSort, listRight - 160, searchTop, 160, 200);
         place(g_main.hList, pad, listTop, listRight - pad, listH);
         place(g_main.hAdd, w - pad - btnW, listTop, btnW, 34);
         place(g_main.hEdit, w - pad - btnW, listTop + 44, btnW, 34);
@@ -643,6 +738,7 @@ void doLayout() {
         place(g_main.hAccounts, pad, accountsY, 200, 220);
         place(g_main.hOffline, pad + 232, accountsY, 140, 28);
         place(g_main.hMs, pad + 380, accountsY, 170, 28);
+        place(g_main.hSkin, w - pad - 72, accountsY - 8, 72, 72);
         place(g_main.hStatus, pad, statusY, w - pad * 2, 24);
         place(g_main.hProgress, pad, progressY, w - pad * 2, 18);
         place(g_main.hLaunch, pad, bottomY, 130, 36);
@@ -669,6 +765,20 @@ void onCreate(HWND hwnd) {
                                    WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                                    0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_INSTANCES),
                                    GetModuleHandleW(nullptr), nullptr);
+    g_main.hSearch = CreateWindowExW(0, L"EDIT", L"",
+                                     WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+                                     0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_SEARCH_INST),
+                                     GetModuleHandleW(nullptr), nullptr);
+    SendMessageW(g_main.hSearch, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(fromUtf8(lang("search_instances")).c_str()));
+    g_main.hSort = CreateWindowExW(0, L"COMBOBOX", nullptr,
+                                   WS_CHILD | WS_VISIBLE | WS_VSCROLL | CBS_DROPDOWNLIST,
+                                   0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_SORT_INST),
+                                   GetModuleHandleW(nullptr), nullptr);
+    SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_name_az")).c_str()));
+    SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_name_za")).c_str()));
+    SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_version")).c_str()));
+    SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_date")).c_str()));
+    SendMessageW(g_main.hSort, CB_SETCURSEL, 0, 0);
     g_main.hAdd = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("add")).c_str(),
                                    WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
                                    0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_ADD_INST),
@@ -723,7 +833,11 @@ void onCreate(HWND hwnd) {
                                        WS_CHILD | WS_VISIBLE | SS_OWNERDRAW,
                                        0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_WINLABEL),
                                        GetModuleHandleW(nullptr), nullptr);
-    for (HWND child : {g_main.hList, g_main.hAccounts, g_main.hStatus, g_main.hProgress, g_main.hOffline, g_main.hMs, g_main.hLaunch, g_main.hUpdate, g_main.hConsoleBtn, g_main.hWinLabel}) {
+    g_main.hSkin = CreateWindowExW(0, L"STATIC", nullptr,
+                                   WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | WS_BORDER,
+                                   0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_SKIN_PREVIEW),
+                                   GetModuleHandleW(nullptr), nullptr);
+    for (HWND child : {g_main.hList, g_main.hSearch, g_main.hSort, g_main.hAccounts, g_main.hStatus, g_main.hProgress, g_main.hOffline, g_main.hMs, g_main.hLaunch, g_main.hUpdate, g_main.hConsoleBtn, g_main.hWinLabel, g_main.hSkin}) {
         SendMessageW(child, WM_SETFONT, reinterpret_cast<WPARAM>(g_main.font), TRUE);
     }
     for (HWND child : {g_main.hAdd, g_main.hEdit, g_main.hDel, g_main.hSettings}) {
@@ -928,6 +1042,16 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         SetWindowTextW(g_main.hWinLabel, fromUtf8(lang("for_windows")).c_str());
                         std::wstring mainTitle = L"KickX Launcher v1.1 - " + fromUtf8(lang("for_windows"));
                         SetWindowTextW(g_main.hwnd, mainTitle.c_str());
+                        SendMessageW(g_main.hSearch, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(fromUtf8(lang("search_instances")).c_str()));
+                        {
+                            int cur = static_cast<int>(SendMessageW(g_main.hSort, CB_GETCURSEL, 0, 0));
+                            SendMessageW(g_main.hSort, CB_RESETCONTENT, 0, 0);
+                            SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_name_az")).c_str()));
+                            SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_name_za")).c_str()));
+                            SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_version")).c_str()));
+                            SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_date")).c_str()));
+                            if (cur >=0 && cur <4) SendMessageW(g_main.hSort, CB_SETCURSEL, cur, 0); else SendMessageW(g_main.hSort, CB_SETCURSEL, g_main.sortMode, 0);
+                        }
                         RedrawWindow(g_main.hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_UPDATENOW | RDW_FRAME);
                         refreshInstances();
                         refreshAccounts();
@@ -945,7 +1069,19 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 int sel = static_cast<int>(SendMessageW(g_main.hAccounts, CB_GETCURSEL, 0, 0));
                 if (sel >= 0 && sel < static_cast<int>(g_main.cfg.accounts.size())) {
                     g_main.cfg.activeAccount = sel;
+                    saveLauncherConfig(g_main.cfg);
+                    updateSkinPreview();
                 }
+            }
+            if (HIWORD(wParam) == EN_CHANGE && LOWORD(wParam) == IDC_SEARCH_INST) {
+                int len = GetWindowTextLengthW(g_main.hSearch);
+                std::wstring txt; txt.resize(len+1); GetWindowTextW(g_main.hSearch, txt.data(), len+1); if(len>0) txt.resize(len); else txt.clear();
+                g_main.searchFilter = txt;
+                refreshInstances();
+            }
+            if (HIWORD(wParam) == CBN_SELCHANGE && LOWORD(wParam) == IDC_SORT_INST) {
+                g_main.sortMode = static_cast<int>(SendMessageW(g_main.hSort, CB_GETCURSEL, 0, 0));
+                refreshInstances();
             }
             return 0;
         case WM_MEASUREITEM: {
@@ -1047,6 +1183,31 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 SelectObject(dc,oldF);
                 return TRUE;
             }
+            if(id==IDC_SKIN_PREVIEW){
+                HDC dc=ds->hDC; RECT rc=ds->rcItem;
+                HBRUSH bgBr=CreateSolidBrush(g_main.theme.panel); FillRect(dc,&rc,bgBr); DeleteObject(bgBr);
+                if(g_main.skinBmp){
+                    Gdiplus::Graphics g(dc);
+                    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+                    g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+                    int pad=4;
+                    Gdiplus::Rect dst(rc.left+pad, rc.top+pad, rc.right-rc.left-pad*2, rc.bottom-rc.top-pad*2);
+                    g.DrawImage(g_main.skinBmp, dst);
+                } else {
+                    SetBkMode(dc, TRANSPARENT);
+                    SetTextColor(dc, RGB(150,150,150));
+                    HFONT oldF=(HFONT)SelectObject(dc, g_main.font);
+                    RECT tr=rc; tr.top+= (rc.bottom-rc.top)/2 - 8;
+                    DrawTextW(dc, L"Skin", -1, &tr, DT_CENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
+                    SelectObject(dc, oldF);
+                }
+                HPEN pen=CreatePen(PS_SOLID, 1, RGB(60,60,60));
+                HPEN oldP=(HPEN)SelectObject(dc, pen);
+                HBRUSH oldB=(HBRUSH)SelectObject(dc, GetStockObject(NULL_BRUSH));
+                Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
+                SelectObject(dc, oldP); SelectObject(dc, oldB); DeleteObject(pen);
+                return TRUE;
+            }
             return FALSE;
         }
         case WM_CTLCOLORSTATIC:
@@ -1112,6 +1273,14 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             closeConsole();
             setStatus(std::string(lang("game_exited")));
             return 0;
+        case WM_APP_SKIN_DONE: {
+            if (lParam) {
+                if (g_main.skinBmp) delete g_main.skinBmp;
+                g_main.skinBmp = reinterpret_cast<Gdiplus::Bitmap*>(lParam);
+            }
+            if (g_main.hSkin) { InvalidateRect(g_main.hSkin, nullptr, TRUE); UpdateWindow(g_main.hSkin); }
+            return 0;
+        }
         case WM_MOUSEMOVE:
             moveGlowToCursor();
             return 0;
@@ -1122,6 +1291,8 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if(g_main.acctIcon) DestroyIcon(g_main.acctIcon);
             delete g_main.acctIconBmp;
             delete g_main.winLabelBmp;
+            if(g_main.skinIcon) DestroyIcon(g_main.skinIcon);
+            delete g_main.skinBmp;
             glowDestroy(&g_main.glow);
             for(auto& p : g_main.btnBmp) if(p.second) delete p.second;
             g_main.btnBmp.clear();
