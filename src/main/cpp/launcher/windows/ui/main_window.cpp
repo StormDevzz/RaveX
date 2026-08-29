@@ -1354,39 +1354,75 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             DWORD code = info ? info->exitCode : 0;
             std::wstring logPath = info ? info->logPath : L"";
             std::wstring gameDir = info ? info->gameDir : L"";
+            // small delay to let crash report flush
+            Sleep(500);
             bool crashed = false;
             std::wstring crashPath = findLatestCrashReport(gameDir);
+            if (crashPath.empty()) {
+                // also check global .minecraft
+                std::wstring globalMc = joinPath(joinPath(ravexDir(), L"..\\.minecraft"), L"crash-reports");
+                WIN32_FIND_DATAW fd2; HANDLE h2 = FindFirstFileW(joinPath(globalMc, L"crash-*.txt").c_str(), &fd2);
+                if (h2 != INVALID_HANDLE_VALUE) {
+                    std::wstring latest2; FILETIME latestTime2{};
+                    do {
+                        std::wstring cur2 = joinPath(globalMc, fd2.cFileName);
+                        if (CompareFileTime(&fd2.ftLastWriteTime, &latestTime2) > 0) { latestTime2 = fd2.ftLastWriteTime; latest2 = cur2; }
+                    } while (FindNextFileW(h2, &fd2));
+                    FindClose(h2);
+                    if (!latest2.empty()) {
+                        FILETIME nowFt2; GetSystemTimeAsFileTime(&nowFt2);
+                        ULARGE_INTEGER now2, file2; now2.LowPart=nowFt2.dwLowDateTime; now2.HighPart=nowFt2.dwHighDateTime; file2.LowPart=latestTime2.dwLowDateTime; file2.HighPart=latestTime2.dwHighDateTime;
+                        if (now2.QuadPart - file2.QuadPart <= 3000000000ULL * 5) crashPath = latest2;
+                    }
+                }
+            }
             std::string reason;
             if (!crashPath.empty()) {
                 reason = readCrashReason(crashPath);
                 crashed = true;
-            } else if (code != 0) {
+            }
+            if (!crashed && code != 0 && !g_killRequested) {
                 crashed = true;
                 reason = "Exit code " + std::to_string(code);
-                if (!logPath.empty() && fileExists(logPath)) {
-                    std::string logText;
-                    if (readFile(logPath, logText)) {
-                        size_t pos = logText.rfind("Exception");
-                        if (pos == std::string::npos) pos = logText.rfind("Caused by");
-                        if (pos == std::string::npos) pos = logText.rfind("ERROR");
-                        if (pos != std::string::npos) reason = logText.substr(pos, 600);
-                        else if (logText.size() > 600) reason = logText.substr(logText.size()-600);
-                        else reason = logText;
+            }
+            // always check logs for Exception even if code==0
+            if (!crashed) {
+                auto checkLogForCrash = [&](const std::wstring& p, std::string& out){
+                    if (p.empty() || !fileExists(p)) return false;
+                    std::string txt;
+                    if (!readFile(p, txt)) return false;
+                    size_t pos = txt.rfind("Exception");
+                    if (pos == std::string::npos) pos = txt.rfind("Caused by");
+                    if (pos == std::string::npos) pos = txt.rfind("FAILED");
+                    if (pos == std::string::npos) pos = txt.rfind("Error");
+                    if (pos == std::string::npos) pos = txt.rfind("crash");
+                    if (pos != std::string::npos) { out = txt.substr(pos, 800); if(out.size()>800) out.resize(800); return true; }
+                    // check for quick exit without log
+                    if (txt.size() > 0 && txt.find("KnotClient") != std::string::npos && txt.size() < 2000) { out = txt.substr(txt.size()>600?txt.size()-600:0); return false; }
+                    return false;
+                };
+                std::string logReason;
+                if (checkLogForCrash(logPath, logReason)) { crashed = true; reason = logReason; }
+                else {
+                    std::wstring mcLog = joinPath(joinPath(gameDir, L"logs"), L"latest.log");
+                    if (checkLogForCrash(mcLog, logReason)) { crashed = true; reason = logReason; crashPath = mcLog; }
+                    else {
+                        std::wstring globalLog = joinPath(joinPath(joinPath(ravexDir(), L"..\\.minecraft"), L"logs"), L"latest.log");
+                        if (checkLogForCrash(globalLog, logReason)) { crashed = true; reason = logReason; if(crashPath.empty()) crashPath = globalLog; }
                     }
                 }
-                // also check Minecraft latest.log
-                std::wstring mcLog = joinPath(joinPath(gameDir, L"logs"), L"latest.log");
-                if (reason.find("Exception") == std::string::npos && fileExists(mcLog)) {
-                    std::string mcText;
-                    if (readFile(mcLog, mcText)) {
-                        size_t p = mcText.rfind("Exception");
-                        if (p != std::string::npos) reason = mcText.substr(p, 600);
-                    }
+                // if still not crashed but exitCode !=0, treat as crash
+                if (!crashed && code != 0 && !g_killRequested) { crashed = true; if(reason.empty()) reason = "Exit code " + std::to_string(code); }
+            } else if (!reason.empty() && reason.find("Exception") == std::string::npos && !logPath.empty()) {
+                // enrich reason from log
+                std::string logText;
+                if (readFile(logPath, logText)) {
+                    size_t pos = logText.rfind("Exception");
+                    if (pos != std::string::npos) reason += "\n\n" + logText.substr(pos, 400);
                 }
             }
             if (crashed) {
                 setStatus(std::string(lang("game_crashed")));
-                // keep console open for inspection
                 showCrashDialog(hwnd, (int)code, crashPath, logPath, reason);
             } else {
                 closeConsole();
