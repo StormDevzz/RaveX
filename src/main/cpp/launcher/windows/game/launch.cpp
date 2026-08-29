@@ -29,8 +29,7 @@ std::wstring versionDir(const std::string& version, bool fabric) {
 
 std::wstring clientJarPath(const std::string& version, bool fabric) {
     std::wstring ver = fromUtf8(version);
-    if (fabric) ver += L"-fabric";
-    return joinPath(versionDir(version, fabric), ver + L".jar");
+    return joinPath(versionDir(version, false), ver + L".jar");
 }
 
 void collectLibrariesRecursive(const std::wstring& dir, std::wstring& classpath) {
@@ -94,6 +93,13 @@ bool GameProcess::isRunning() const {
     DWORD exitCode = 0;
     if (!GetExitCodeProcess(impl->hProcess, &exitCode)) return false;
     return exitCode == STILL_ACTIVE;
+}
+
+DWORD GameProcess::getExitCode() const {
+    if (!impl || !impl->hProcess) return 0;
+    DWORD code = 0;
+    if (GetExitCodeProcess(impl->hProcess, &code)) return code;
+    return 0;
 }
 
 void GameProcess::kill() {

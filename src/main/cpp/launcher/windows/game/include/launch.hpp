@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <string>
+#include <windows.h>
 
 namespace ravex::game {
 
@@ -25,6 +26,7 @@ struct GameProcess {
     bool isRunning() const;
     void kill();
     void close();
+    DWORD getExitCode() const;
 };
 
 bool launchMinecraft(const LaunchParams& params, std::string* error,

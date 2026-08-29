@@ -37,6 +37,7 @@ add_executable(kickx_launcher WIN32
     ui/settings_dialog.cpp
     ui/color_dialog.cpp
     ui/theme_dialog.cpp
+    ui/crash_dialog.cpp
     ui/glow.cpp
     app.rc
 )

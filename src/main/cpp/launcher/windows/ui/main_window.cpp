@@ -35,6 +35,7 @@
 #include "ui/include/instance_editor.hpp"
 #include "ui/include/account_dialog.hpp"
 #include "ui/include/settings_dialog.hpp"
+#include "ui/include/crash_dialog.hpp"
 #include "ui/include/glow.hpp"
 
 namespace ravex::ui {
@@ -78,6 +79,13 @@ struct AccountDone {
     bool ok;
     std::string error;
     Account account;
+};
+
+struct GameExitInfo {
+    DWORD exitCode = 0;
+    std::wstring logPath;
+    std::wstring gameDir;
+    std::wstring instanceName;
 };
 
 struct MainData {
@@ -330,6 +338,60 @@ void updateSkinPreview() {
     }).detach();
 }
 
+std::wstring findLatestCrashReport(const std::wstring& gameDir) {
+    std::wstring dir = joinPath(gameDir, L"crash-reports");
+    WIN32_FIND_DATAW fd;
+    HANDLE h = FindFirstFileW(joinPath(dir, L"crash-*.txt").c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE) return L"";
+    std::wstring latest;
+    FILETIME latestTime{};
+    do {
+        std::wstring cur = joinPath(dir, fd.cFileName);
+        // check if modified within last 5 minutes
+        if (CompareFileTime(&fd.ftLastWriteTime, &latestTime) > 0) {
+            latestTime = fd.ftLastWriteTime;
+            latest = cur;
+        }
+    } while (FindNextFileW(h, &fd));
+    FindClose(h);
+    if (latest.empty()) return L"";
+    // check if recent (within 5 min) else ignore old crashes
+    FILETIME nowFt;
+    GetSystemTimeAsFileTime(&nowFt);
+    ULARGE_INTEGER now, file;
+    now.LowPart = nowFt.dwLowDateTime; now.HighPart = nowFt.dwHighDateTime;
+    file.LowPart = latestTime.dwLowDateTime; file.HighPart = latestTime.dwHighDateTime;
+    // 5 minutes = 5*60*1e7 = 3000000000 (100ns)
+    if (now.QuadPart - file.QuadPart > 3000000000ULL * 5) return L"";
+    return latest;
+}
+
+std::string readCrashReason(const std::wstring& crashPath, int maxLines = 20) {
+    if (crashPath.empty() || !fileExists(crashPath)) return "";
+    std::string text;
+    if (!readFile(crashPath, text)) return "";
+    std::string out;
+    size_t pos = 0;
+    int lines = 0;
+    while (pos < text.size() && lines < maxLines) {
+        size_t nl = text.find('\n', pos);
+        std::string line = (nl == std::string::npos) ? text.substr(pos) : text.substr(pos, nl - pos);
+        // trim \r
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (!line.empty()) {
+            if (!out.empty()) out += "\n";
+            out += line;
+            lines++;
+            // stop after Description line and a few more
+            if (line.find("Description:") != std::string::npos && lines > 5) break;
+        }
+        if (nl == std::string::npos) break;
+        pos = nl + 1;
+    }
+    if (out.size() > 600) out = out.substr(0, 600) + "...";
+    return out;
+}
+
 void setBusy(bool busy) {
     g_main.busy = busy;
     bool hasAccount = !g_main.cfg.accounts.empty();
@@ -467,7 +529,7 @@ static bool isOnline() {
     return !r.empty();
 }
 
-void workerLaunch(const InstanceCfg& inst, const Account& account) {
+void workerLaunch(const InstanceCfg& inst, const Account& account, std::wstring logPath) {
     logTelemetry("launch start name=" + inst.name + " mc=" + inst.mcVersion + " loader=" + inst.loader);
     g_main.cancelled = false;
     g_killRequested = false;
@@ -475,7 +537,9 @@ void workerLaunch(const InstanceCfg& inst, const Account& account) {
     bool fabric = (inst.loader == "fabric");
     int javaVersion = game::requiredJavaVersion(inst.mcVersion);
     std::wstring javaExe;
-    bool installed = game::isMinecraftInstalled(inst.mcVersion);
+    bool vanillaInstalled = game::isMinecraftInstalled(inst.mcVersion);
+    bool fabricInstalled = !fabric || game::isFabricInstalled(inst.mcVersion);
+    bool installed = vanillaInstalled && fabricInstalled;
     if (!inst.useBundledJava && !inst.javaPath.empty()) {
         javaExe = fromUtf8(inst.javaPath);
         if (!fileExists(javaExe)) {
@@ -498,7 +562,9 @@ void workerLaunch(const InstanceCfg& inst, const Account& account) {
         javaExe = javaPathOut;
     }
     std::string assetIndexId;
-    if (!installed) {
+    bool needVanilla = !vanillaInstalled;
+    bool needFabric = fabric && !fabricInstalled;
+    if (needVanilla) {
         postStatus(std::string(lang("checking_mc")) + inst.mcVersion + "...");
         PostMessageW(g_main.hwnd, WM_APP_PROGRESS, 0, -1);
         if (!game::ensureMinecraft(inst.mcVersion, &error, postProgress, &g_main.cancelled, &assetIndexId)) {
@@ -512,18 +578,18 @@ void workerLaunch(const InstanceCfg& inst, const Account& account) {
             cur.assetIndexId = assetIndexId;
             saveInstance(idir, cur);
         }
-        if (fabric) {
-            postStatus(std::string(lang("checking_fabric")) + inst.mcVersion + "...");
-            PostMessageW(g_main.hwnd, WM_APP_PROGRESS, 0, -1);
-            if (!game::ensureFabric(inst.mcVersion, inst.loaderVersion, &error, postProgress, &g_main.cancelled)) {
-                logTelemetry("ensureFabric fail " + error);
-                postJobDone(new JobDone{JobDone::Kind::Launch, false, error, ""});
-                return;
-            }
-        }
     } else {
         assetIndexId = inst.assetIndexId;
         if (assetIndexId.empty()) assetIndexId = game::getFallbackAssetIndexId(inst.mcVersion);
+    }
+    if (needFabric) {
+        postStatus(std::string(lang("checking_fabric")) + inst.mcVersion + "...");
+        PostMessageW(g_main.hwnd, WM_APP_PROGRESS, 0, -1);
+        if (!game::ensureFabric(inst.mcVersion, inst.loaderVersion, &error, postProgress, &g_main.cancelled)) {
+            logTelemetry("ensureFabric fail " + error);
+            postJobDone(new JobDone{JobDone::Kind::Launch, false, error, ""});
+            return;
+        }
     }
     logTelemetry("launch assetIndex=" + assetIndexId + " installed=" + std::string(installed ? "1" : "0"));
     postStatus(std::string(lang("checking_integrity")));
@@ -566,9 +632,15 @@ void workerLaunch(const InstanceCfg& inst, const Account& account) {
     while (g_gameProc.isRunning() && !g_killRequested) Sleep(400);
     if (g_killRequested) g_gameProc.kill();
     while (g_gameProc.isRunning()) Sleep(100);
+    DWORD exitCode = g_gameProc.getExitCode();
     g_gameProc.close();
-    logTelemetry("game exited");
-    PostMessageW(g_main.hwnd, WM_APP_GAME_EXITED, 0, 0);
+    logTelemetry("game exited code=" + std::to_string(exitCode));
+    GameExitInfo* info = new GameExitInfo();
+    info->exitCode = exitCode;
+    info->logPath = logPath;
+    info->gameDir = params.gameDir;
+    info->instanceName = fromUtf8(inst.name);
+    PostMessageW(g_main.hwnd, WM_APP_GAME_EXITED, 0, reinterpret_cast<LPARAM>(info));
 }
 
 void workerOffline(const std::string& name) {
@@ -607,7 +679,7 @@ void onLaunch() {
         g_killRequested = true;
     }, logFile, g_main.cfg.saveLogs);
     setBusy(true);
-    std::thread(workerLaunch, inst, account).detach();
+    std::thread(workerLaunch, inst, account, logFile).detach();
 }
 
 void onUpdate() {
@@ -638,6 +710,10 @@ void onAddInstance() {
     }
     createDirs(joinPath(dir, L"mods"));
     saveInstance(dir, cfg);
+    if (cfg.loader == "fabric" && !cfg.mcVersion.empty()) {
+        InstanceCfg copy = cfg;
+        std::thread([copy](){ std::string err; game::ensureMinecraft(copy.mcVersion, &err, nullptr, nullptr, nullptr); game::ensureFabric(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr); }).detach();
+    }
     refreshInstances();
     setStatus(std::string(lang("instance_created")) + cfg.name);
 }
@@ -662,6 +738,10 @@ void onEditInstance() {
         if (fileExists(oldDir)) MoveFileW(oldDir.c_str(), newDir.c_str());
     }
     saveInstance(newDir, cfg);
+    if (cfg.loader == "fabric" && !cfg.mcVersion.empty()) {
+        InstanceCfg copy = cfg;
+        std::thread([copy](){ std::string err; game::ensureMinecraft(copy.mcVersion, &err, nullptr, nullptr, nullptr); game::ensureFabric(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr); }).detach();
+    }
     refreshInstances();
     setStatus(std::string(lang("instance_saved")) + cfg.name);
 }
@@ -1266,13 +1346,55 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             g_main.gameRunning = true;
             EnableWindow(g_main.hLaunch, FALSE);
             return 0;
-        case WM_APP_GAME_EXITED:
+        case WM_APP_GAME_EXITED: {
+            GameExitInfo* info = reinterpret_cast<GameExitInfo*>(lParam);
             g_main.gameRunning = false;
             setBusy(false);
             refreshAccounts();
-            closeConsole();
-            setStatus(std::string(lang("game_exited")));
+            DWORD code = info ? info->exitCode : 0;
+            std::wstring logPath = info ? info->logPath : L"";
+            std::wstring gameDir = info ? info->gameDir : L"";
+            bool crashed = false;
+            std::wstring crashPath = findLatestCrashReport(gameDir);
+            std::string reason;
+            if (!crashPath.empty()) {
+                reason = readCrashReason(crashPath);
+                crashed = true;
+            } else if (code != 0) {
+                crashed = true;
+                reason = "Exit code " + std::to_string(code);
+                if (!logPath.empty() && fileExists(logPath)) {
+                    std::string logText;
+                    if (readFile(logPath, logText)) {
+                        size_t pos = logText.rfind("Exception");
+                        if (pos == std::string::npos) pos = logText.rfind("Caused by");
+                        if (pos == std::string::npos) pos = logText.rfind("ERROR");
+                        if (pos != std::string::npos) reason = logText.substr(pos, 600);
+                        else if (logText.size() > 600) reason = logText.substr(logText.size()-600);
+                        else reason = logText;
+                    }
+                }
+                // also check Minecraft latest.log
+                std::wstring mcLog = joinPath(joinPath(gameDir, L"logs"), L"latest.log");
+                if (reason.find("Exception") == std::string::npos && fileExists(mcLog)) {
+                    std::string mcText;
+                    if (readFile(mcLog, mcText)) {
+                        size_t p = mcText.rfind("Exception");
+                        if (p != std::string::npos) reason = mcText.substr(p, 600);
+                    }
+                }
+            }
+            if (crashed) {
+                setStatus(std::string(lang("game_crashed")));
+                // keep console open for inspection
+                showCrashDialog(hwnd, (int)code, crashPath, logPath, reason);
+            } else {
+                closeConsole();
+                setStatus(std::string(lang("game_exited")));
+            }
+            if (info) delete info;
             return 0;
+        }
         case WM_APP_SKIN_DONE: {
             if (lParam) {
                 if (g_main.skinBmp) delete g_main.skinBmp;

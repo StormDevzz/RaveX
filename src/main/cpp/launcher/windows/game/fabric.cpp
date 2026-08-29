@@ -41,7 +41,7 @@ std::wstring fabricJson(const std::string& mcVersion) {
 }
 
 bool isFabricInstalled(const std::string& mcVersion) {
-    return fileExists(fabricJar(mcVersion));
+    return fileExists(fabricJson(mcVersion));
 }
 
 bool ensureFabric(const std::string& mcVersion, const std::string& loaderVersion, std::string* error,
@@ -105,6 +105,40 @@ bool ensureFabric(const std::string& mcVersion, const std::string& loaderVersion
     profileJson += "  ]\n}";
 
     writeFileAtomic(fabricJson(mcVersion), profileJson);
+    auto ensureLib = [&](const std::string& mavenCoord){
+        std::string p = mavenCoord;
+        std::string url;
+        std::string path;
+        size_t c1 = p.find(':');
+        size_t c2 = p.find(':', c1+1);
+        if (c1==std::string::npos || c2==std::string::npos) return true;
+        std::string group = p.substr(0,c1);
+        std::string artifact = p.substr(c1+1, c2-c1-1);
+        std::string ver = p.substr(c2+1);
+        std::string groupPath = group;
+        for(char &c: groupPath) if(c=='.') c='/';
+        url = "https://maven.fabricmc.net/" + groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar";
+        std::wstring dest = joinPath(joinPath(gameDir(), L"libraries"), fromUtf8(groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar"));
+        // handle windows path separators: groupPath already has /, joinPath will handle
+        if (fileExists(dest)) return true;
+        createDirs(dest.substr(0, dest.find_last_of(L"\\/")));
+        std::string err2;
+        bool ok = net::downloadFile(url, dest, progress, cancelled, &err2);
+        if (!ok && error) *error = err2;
+        return ok;
+    };
+    if (!ensureLib("net.fabricmc:fabric-loader:" + resolvedLoader)) return false;
+    if (!ensureLib("net.fabricmc:sponge-mixin:0.8.2+build.24")) return false;
+    if (!ensureLib("net.fabricmc:fabric-language-kotlin:1.10.0+kotlin.1.8.21")) return false;
+    if (!mappingsVersion.empty()) {
+        std::string url = "https://maven.fabricmc.net/net/fabricmc/yarn/" + mappingsVersion + "/yarn-" + mappingsVersion + "-v2.jar";
+        std::wstring dest = joinPath(joinPath(gameDir(), L"libraries"), fromUtf8("net/fabricmc/yarn/" + mappingsVersion + "/yarn-" + mappingsVersion + "-v2.jar"));
+        if (!fileExists(dest)) {
+            createDirs(dest.substr(0, dest.find_last_of(L"\\/")));
+            std::string err2;
+            if (!net::downloadFile(url, dest, progress, cancelled, &err2)) return false;
+        }
+    }
     return true;
 }
 
