@@ -31,7 +31,7 @@ struct CrashData {
     HWND hOpenLog = nullptr;
     HWND hClose = nullptr;
     HFONT font = nullptr;
-    HFONT small = nullptr;
+    HFONT smallFont = nullptr;
     HBRUSH bgBrush = nullptr;
     GlowData glow;
 };
@@ -43,7 +43,7 @@ LRESULT CALLBACK CrashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             d = reinterpret_cast<CrashData*>(cs->lpCreateParams);
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(d));
             d->font = makeFontCrash(-13, FW_NORMAL);
-            d->small = makeFontCrash(-11, FW_NORMAL);
+            d->smallFont = makeFontCrash(-11, FW_NORMAL);
             d->bgBrush = CreateSolidBrush(kBg);
             HINSTANCE inst = cs->hInstance;
             auto tr=[&](const char* k,const char* fb){const char* v=lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
@@ -61,7 +61,7 @@ LRESULT CALLBACK CrashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             d->hOpenLog = CreateWindowExW(0, L"BUTTON", tr("open_log","Open log").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 170, 300, 100, 28, hwnd, reinterpret_cast<HMENU>(1002), inst, nullptr);
             d->hClose = CreateWindowExW(0, L"BUTTON", tr("close","Close").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 340, 300, 140, 28, hwnd, reinterpret_cast<HMENU>(IDCANCEL), inst, nullptr);
             for (HWND c : {d->hReason, d->hOpenCrash, d->hOpenLog, d->hClose}) SendMessageW(c, WM_SETFONT, reinterpret_cast<WPARAM>(d->font), TRUE);
-            for (HWND c : {d->hCrashPath, d->hLogPath}) SendMessageW(c, WM_SETFONT, reinterpret_cast<WPARAM>(d->small), TRUE);
+            for (HWND c : {d->hCrashPath, d->hLogPath}) SendMessageW(c, WM_SETFONT, reinterpret_cast<WPARAM>(d->smallFont), TRUE);
             EnableWindow(d->hOpenCrash, d->crashPath.empty() ? FALSE : TRUE);
             EnableWindow(d->hOpenLog, d->logPath.empty() ? FALSE : TRUE);
             glowCreate(hwnd, &d->glow);
@@ -114,7 +114,7 @@ LRESULT CALLBACK CrashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (LOWORD(wParam)==IDCANCEL) { d->closed=true; DestroyWindow(hwnd); return 0; }
             return 0;
         case WM_CLOSE: d->closed=true; DestroyWindow(hwnd); return 0;
-        case WM_DESTROY: KillTimer(hwnd,99); glowDestroy(&d->glow); if(d) { DeleteObject(d->font); DeleteObject(d->small); if(d->bgBrush) DeleteObject(d->bgBrush); d->closed=true; } return 0;
+        case WM_DESTROY: KillTimer(hwnd,99); glowDestroy(&d->glow); if(d) { DeleteObject(d->font); DeleteObject(d->smallFont); if(d->bgBrush) DeleteObject(d->bgBrush); d->closed=true; } return 0;
         default: return DefWindowProcW(hwnd,msg,wParam,lParam);
     }
 }
