@@ -62,10 +62,17 @@ constexpr int IDC_SERV_ADDR = 2203;
 constexpr int IDC_SERV_ADD = 2204;
 constexpr int IDC_SERV_DEL = 2205;
 constexpr int IDC_SERV_OPEN = 2206;
+constexpr int IDC_SERV_FRAME = 2207;
+constexpr int IDC_SERV_TITLE = 2208;
+constexpr int IDC_SERV_HINT = 2209;
 constexpr int IDC_LOGS_LIST = 2301;
 constexpr int IDC_LOGS_VIEW = 2302;
 constexpr int IDC_LOGS_OPEN = 2303;
 constexpr int IDC_LOGS_REFRESH = 2304;
+constexpr int IDC_LOGS_FRAME = 2305;
+constexpr int IDC_LOGS_VIEW_FRAME = 2306;
+constexpr int IDC_LOGS_HINT = 2307;
+constexpr int IDC_LOGS_TITLE = 2308;
 constexpr UINT WM_APP_MODS = WM_APP + 50;
 
 constexpr COLORREF kBg = RGB(28, 28, 30);
@@ -83,6 +90,7 @@ struct ModInfo {
 HICON loadHIconEd(const std::wstring& path, int target);
 std::wstring iconPathEd(const std::wstring& name);
 void ensureGdiplus();
+void tintWhiteInst(Gdiplus::Bitmap* bmp);
 HICON loadViaWICForData(void* data, DWORD size, int target);
 HICON loadHIconFromRes(int resId, int target);
 HICON loadLauncherIcon(int resId, const std::wstring& name, int target) {
@@ -113,6 +121,7 @@ HICON loadHIconFromRes(int resId, int target) {
         Gdiplus::Graphics g(dst);
         g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
         g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
+        tintWhiteInst(dst);
         dst->GetHICON(&out);
         delete dst;
     }
@@ -141,6 +150,17 @@ void ensureGdiplus() {
         g_gdiInit = true;
     }
 }
+void tintWhiteInst(Gdiplus::Bitmap* bmp) {
+    if (!bmp) return;
+    Gdiplus::Rect rc(0,0,bmp->GetWidth(),bmp->GetHeight());
+    Gdiplus::BitmapData d;
+    if (bmp->LockBits(&rc, Gdiplus::ImageLockModeRead|Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &d)!=Gdiplus::Ok) return;
+    for (UINT y=0;y<d.Height;++y) {
+        BYTE* row=(BYTE*)d.Scan0+y*d.Stride;
+        for (UINT x=0;x<d.Width;++x) if (row[x*4+3]) { row[x*4+0]=255; row[x*4+1]=255; row[x*4+2]=255; }
+    }
+    bmp->UnlockBits(&d);
+}
 HICON loadViaWIC(const std::wstring& path, int target) {
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     IWICImagingFactory* factory = nullptr;
@@ -167,6 +187,7 @@ HICON loadViaWIC(const std::wstring& path, int target) {
                         g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
                         g.Clear(Gdiplus::Color(0,0,0,0));
                         g.DrawImage(bmp, Gdiplus::Rect(0,0,target,target), 0,0,w,h, Gdiplus::UnitPixel);
+                        tintWhiteInst(dst);
                         dst->GetHICON(&out);
                         delete dst;
                     }
@@ -209,6 +230,7 @@ HICON loadViaWICForData(void* data, DWORD size, int target) {
                             g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
                             g.Clear(Gdiplus::Color(0,0,0,0));
                             g.DrawImage(bmp, Gdiplus::Rect(0,0,target,target), 0,0,w,h, Gdiplus::UnitPixel);
+                            tintWhiteInst(dst);
                             dst->GetHICON(&out);
                             delete dst;
                         }
@@ -243,6 +265,7 @@ HICON loadIconUrl(const std::string& url, int target) {
             g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
             g.Clear(Gdiplus::Color(0,0,0,0));
             g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
+            tintWhiteInst(dst);
             dst->GetHICON(&out);
             delete dst; delete src;
         } else {
@@ -264,6 +287,7 @@ HICON loadIconUrlCached(const std::string& url, int target) {
             Gdiplus::Graphics g(dst);
             g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
             g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
+            tintWhiteInst(dst);
             dst->GetHICON(&out);
             delete dst; delete src;
             if (out) return out;
@@ -285,6 +309,7 @@ HICON loadIconUrlCached(const std::string& url, int target) {
         Gdiplus::Graphics g(dst);
         g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
         g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
+        tintWhiteInst(dst);
         dst->GetHICON(&out);
         delete dst; delete src;
         if (out) return out;
@@ -352,6 +377,7 @@ HICON loadHIconEd(const std::wstring& path, int target) {
     g.Clear(Gdiplus::Color(0,0,0,0));
     g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
     delete src;
+    tintWhiteInst(dst);
     HICON out = nullptr;
     dst->GetHICON(&out);
     delete dst;
@@ -421,6 +447,7 @@ struct EditorData {
     HWND editJava = nullptr;
     HWND btnBrowse = nullptr;
     HWND chkBundle = nullptr;
+    HICON loaderIcons[4] = {};
     std::vector<HICON> fieldIcons;
     HWND btnFolder = nullptr;
     HWND btnDuplicate = nullptr;
@@ -438,12 +465,21 @@ struct EditorData {
     HWND btnModsShowInstalled = nullptr;
     HWND hModDetails = nullptr;
     HWND listServers = nullptr;
+    HWND servFrame = nullptr;
+    HWND servTitleIcon = nullptr;
+    HWND servTitle = nullptr;
+    HWND servHint = nullptr;
     HWND editServName = nullptr;
     HWND editServAddr = nullptr;
     HWND btnServAdd = nullptr;
     HWND btnServDel = nullptr;
     HWND btnServOpen = nullptr;
     HWND listLogs = nullptr;
+    HWND logsFrame = nullptr;
+    HWND logViewFrame = nullptr;
+    HWND logsTitleIcon = nullptr;
+    HWND logsTitle = nullptr;
+    HWND logsHint = nullptr;
     HWND editLogView = nullptr;
     HWND btnLogsOpen = nullptr;
     HWND btnLogsRefresh = nullptr;
@@ -796,11 +832,16 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 else SetWindowTextW(data->comboVer, cur.c_str());
             } else if (!data->versions.empty()) SendMessageW(data->comboVer, CB_SETCURSEL, 0, 0);
             if (data->versions.empty()) SetWindowTextW(data->comboVer, fromUtf8(data->cfg.mcVersion).c_str());
-            data->comboLoader = CreateWindowExW(0, L"COMBOBOX", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST | WS_VSCROLL, 460, 228, 400, 240, hwnd, reinterpret_cast<HMENU>(IDC_COMBO_LOADER), inst, nullptr);
+            data->comboLoader = CreateWindowExW(0, L"COMBOBOX", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL, 460, 228, 400, 240, hwnd, reinterpret_cast<HMENU>(IDC_COMBO_LOADER), inst, nullptr);
+            SendMessageW(data->comboLoader, CB_SETITEMHEIGHT, -1, 26);
             SendMessageW(data->comboLoader, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(trI("vanilla","Vanilla").c_str()));
             SendMessageW(data->comboLoader, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(trI("fabric","Fabric").c_str()));
             SendMessageW(data->comboLoader, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(trI("forge","Forge").c_str()));
             SendMessageW(data->comboLoader, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(trI("quilt","Quilt").c_str()));
+            data->loaderIcons[0] = loadHIconEd(iconPathEd(L"loader_vanilla"), 20);
+            data->loaderIcons[1] = loadHIconEd(iconPathEd(L"loader_fabric"), 20);
+            data->loaderIcons[2] = loadHIconEd(iconPathEd(L"loader_forge"), 20);
+            data->loaderIcons[3] = loadHIconEd(iconPathEd(L"loader_quilt"), 20);
             {
                 int sel = 0;
                 if (data->cfg.loader == "fabric") sel = 1;
@@ -915,18 +956,31 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             data->modsCtrls.push_back(data->btnModsGo); data->modsCtrls.push_back(data->listMods);
             data->modsCtrls.push_back(data->btnModsInstall); data->modsCtrls.push_back(data->btnModsOpen); data->modsCtrls.push_back(data->btnModsShowInstalled); data->modsCtrls.push_back(data->hModDetails);
 
-            data->listServers = CreateWindowExW(0, L"LISTBOX", nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY, 24, 92, 500, 500, hwnd, reinterpret_cast<HMENU>(IDC_SERV_LIST), inst, nullptr);
-            HWND lblServName = CreateWindowExW(0, L"STATIC", trI("name","Name").c_str(), WS_CHILD | WS_VISIBLE, 560, 92, 300, 22, hwnd, nullptr, inst, nullptr);
-            data->editServName = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 560, 116, 300, 30, hwnd, reinterpret_cast<HMENU>(IDC_SERV_NAME), inst, nullptr);
-            HWND lblServAddr = CreateWindowExW(0, L"STATIC", trI("address","Address (ip:port)").c_str(), WS_CHILD | WS_VISIBLE, 560, 160, 300, 22, hwnd, nullptr, inst, nullptr);
-            data->editServAddr = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 560, 184, 300, 30, hwnd, reinterpret_cast<HMENU>(IDC_SERV_ADDR), inst, nullptr);
-            data->btnServAdd = CreateWindowExW(0, L"BUTTON", trI("add_server","Add").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP, 560, 224, 140, 32, hwnd, reinterpret_cast<HMENU>(IDC_SERV_ADD), inst, nullptr);
-            data->btnServDel = CreateWindowExW(0, L"BUTTON", trI("remove_server","Remove").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP, 712, 224, 140, 32, hwnd, reinterpret_cast<HMENU>(IDC_SERV_DEL), inst, nullptr);
-            data->btnServOpen = CreateWindowExW(0, L"BUTTON", trI("open_folder","Open Folder").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP, 560, 300, 300, 32, hwnd, reinterpret_cast<HMENU>(IDC_SERV_OPEN), inst, nullptr);
-            data->serversCtrls.push_back(data->listServers); data->serversCtrls.push_back(lblServName);
-            data->serversCtrls.push_back(data->editServName); data->serversCtrls.push_back(lblServAddr);
-            data->serversCtrls.push_back(data->editServAddr); data->serversCtrls.push_back(data->btnServAdd);
-            data->serversCtrls.push_back(data->btnServDel); data->serversCtrls.push_back(data->btnServOpen);
+            HWND servIco = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_ICON, 24, 92, 20, 20, hwnd, nullptr, inst, nullptr);
+            HICON hServIco = loadLauncherIcon(IDR_ICON_SERVERS, L"servers", 20);
+            if (hServIco) { SendMessageW(servIco, STM_SETIMAGE, IMAGE_ICON, reinterpret_cast<LPARAM>(hServIco)); data->fieldIcons.push_back(hServIco); }
+            data->servTitleIcon = servIco;
+            HWND lblServTitle = CreateWindowExW(0, L"STATIC", trI("servers","Servers").c_str(), WS_CHILD | WS_VISIBLE, 50, 92, 300, 22, hwnd, nullptr, inst, nullptr);
+            data->servTitle = lblServTitle;
+            HWND lblServHint = CreateWindowExW(0, L"STATIC", trI("servers_hint","Manage servers for this instance - saved in servers.json").c_str(), WS_CHILD | WS_VISIBLE, 50, 112, 500, 16, hwnd, reinterpret_cast<HMENU>(IDC_SERV_HINT), inst, nullptr);
+            data->servHint = lblServHint;
+            HWND servFrame = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 24, 134, 820, 300, hwnd, reinterpret_cast<HMENU>(IDC_SERV_FRAME), inst, nullptr);
+            data->servFrame = servFrame;
+            data->listServers = CreateWindowExW(0, L"LISTBOX", nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY, 28, 138, 812, 292, hwnd, reinterpret_cast<HMENU>(IDC_SERV_LIST), inst, nullptr);
+            HWND lblServName = CreateWindowExW(0, L"STATIC", trI("name","Name").c_str(), WS_CHILD | WS_VISIBLE, 24, 452, 300, 22, hwnd, nullptr, inst, nullptr);
+            data->editServName = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 24, 476, 380, 34, hwnd, reinterpret_cast<HMENU>(IDC_SERV_NAME), inst, nullptr);
+            SendMessageW(data->editServName, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(trI("name","Name").c_str()));
+            HWND lblServAddr = CreateWindowExW(0, L"STATIC", trI("address","Address (ip:port)").c_str(), WS_CHILD | WS_VISIBLE, 460, 452, 300, 22, hwnd, nullptr, inst, nullptr);
+            data->editServAddr = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 460, 476, 380, 34, hwnd, reinterpret_cast<HMENU>(IDC_SERV_ADDR), inst, nullptr);
+            SendMessageW(data->editServAddr, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(L"mc.example.com:25565"));
+            data->btnServAdd = CreateWindowExW(0, L"BUTTON", trI("add_server","Add").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 24, 524, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_SERV_ADD), inst, nullptr);
+            data->btnServDel = CreateWindowExW(0, L"BUTTON", trI("remove_server","Remove").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 190, 524, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_SERV_DEL), inst, nullptr);
+            data->btnServOpen = CreateWindowExW(0, L"BUTTON", trI("open_folder","Open Folder").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 690, 524, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_SERV_OPEN), inst, nullptr);
+            data->serversCtrls.push_back(servIco); data->serversCtrls.push_back(lblServTitle); data->serversCtrls.push_back(lblServHint);
+            data->serversCtrls.push_back(servFrame); data->serversCtrls.push_back(data->listServers);
+            data->serversCtrls.push_back(lblServName); data->serversCtrls.push_back(data->editServName);
+            data->serversCtrls.push_back(lblServAddr); data->serversCtrls.push_back(data->editServAddr);
+            data->serversCtrls.push_back(data->btnServAdd); data->serversCtrls.push_back(data->btnServDel); data->serversCtrls.push_back(data->btnServOpen);
             data->servers = loadServers(instanceDir(fromUtf8(data->cfg.name)));
             for (const Server& s : data->servers) {
                 std::wstring item = fromUtf8(s.name.empty() ? s.address : s.name + " (" + s.address + ")");
@@ -957,10 +1011,25 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             data->notesCtrls.push_back(notesIco); data->notesCtrls.push_back(lblNotesTitle); data->notesCtrls.push_back(lblNotesHint);
             data->notesCtrls.push_back(notesFrame); data->notesCtrls.push_back(data->editNotes); data->notesCtrls.push_back(notesCnt);
 
-            data->listLogs = CreateWindowExW(0, L"LISTBOX", nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY, 24, 92, 420, 500, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_LIST), inst, nullptr);
-            data->editLogView = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL, 460, 92, 400, 500, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_VIEW), inst, nullptr);
-            data->btnLogsOpen = CreateWindowExW(0, L"BUTTON", trI("open_folder","Open Folder").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP, 24, 608, 160, 32, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_OPEN), inst, nullptr);
-            data->btnLogsRefresh = CreateWindowExW(0, L"BUTTON", trI("refresh","Refresh").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP, 200, 608, 160, 32, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_REFRESH), inst, nullptr);
+            HWND logsIco = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_ICON, 24, 92, 20, 20, hwnd, nullptr, inst, nullptr);
+            HICON hLogsIco = loadLauncherIcon(IDR_ICON_LOGS, L"logs", 20);
+            if (hLogsIco) { SendMessageW(logsIco, STM_SETIMAGE, IMAGE_ICON, reinterpret_cast<LPARAM>(hLogsIco)); data->fieldIcons.push_back(hLogsIco); }
+            data->logsTitleIcon = logsIco;
+            HWND lblLogsTitle = CreateWindowExW(0, L"STATIC", trI("logs","Logs").c_str(), WS_CHILD | WS_VISIBLE, 50, 92, 300, 22, hwnd, nullptr, inst, nullptr);
+            data->logsTitle = lblLogsTitle;
+            HWND lblLogsHint = CreateWindowExW(0, L"STATIC", trI("logs_hint","View instance logs - select file to preview").c_str(), WS_CHILD | WS_VISIBLE, 50, 112, 500, 16, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_HINT), inst, nullptr);
+            data->logsHint = lblLogsHint;
+            HWND logsFrame = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 24, 134, 400, 470, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_FRAME), inst, nullptr);
+            data->logsFrame = logsFrame;
+            HWND logViewFrame = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 440, 134, 420, 470, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_VIEW_FRAME), inst, nullptr);
+            data->logViewFrame = logViewFrame;
+            data->listLogs = CreateWindowExW(0, L"LISTBOX", nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY, 28, 138, 392, 462, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_LIST), inst, nullptr);
+            data->editLogView = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL, 444, 138, 412, 462, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_VIEW), inst, nullptr);
+            SendMessageW(data->editLogView, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(6, 6));
+            data->btnLogsOpen = CreateWindowExW(0, L"BUTTON", trI("open_folder","Open Folder").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 24, 620, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_OPEN), inst, nullptr);
+            data->btnLogsRefresh = CreateWindowExW(0, L"BUTTON", trI("refresh","Refresh").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 190, 620, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_LOGS_REFRESH), inst, nullptr);
+            data->logsCtrls.push_back(logsIco); data->logsCtrls.push_back(lblLogsTitle); data->logsCtrls.push_back(lblLogsHint);
+            data->logsCtrls.push_back(logsFrame); data->logsCtrls.push_back(logViewFrame);
             data->logsCtrls.push_back(data->listLogs); data->logsCtrls.push_back(data->editLogView);
             data->logsCtrls.push_back(data->btnLogsOpen); data->logsCtrls.push_back(data->btnLogsRefresh);
             data->logFiles = loadLogFiles(instanceDir(fromUtf8(data->cfg.name)));
@@ -978,6 +1047,12 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (data->notesHint) SendMessageW(data->notesHint, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
             if (data->notesCounter) SendMessageW(data->notesCounter, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
             if (data->notesTitle) SendMessageW(data->notesTitle, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
+            if (data->servHint) SendMessageW(data->servHint, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
+            if (data->servTitle) SendMessageW(data->servTitle, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
+            if (data->logsHint) SendMessageW(data->logsHint, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
+            if (data->logsTitle) SendMessageW(data->logsTitle, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
+            SendMessageW(data->editServName, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(6, 6));
+            SendMessageW(data->editServAddr, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(6, 6));
 
             subclassWheel(data->editName); subclassWheel(data->editRam); subclassWheel(data->editJvm);
             subclassWheel(data->editJava); subclassWheel(data->comboVer);
@@ -1067,7 +1142,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 return TRUE;
             }
-            if (id == IDC_NOTES_FRAME && data) {
+            if ((id == IDC_NOTES_FRAME || id == IDC_SERV_FRAME || id == IDC_LOGS_FRAME || id == IDC_LOGS_VIEW_FRAME) && data) {
                 HDC dc = ds->hDC; RECT rc = ds->rcItem;
                 HBRUSH bgBr = CreateSolidBrush(data->theme.panel);
                 FillRect(dc, &rc, bgBr); DeleteObject(bgBr);
@@ -1121,6 +1196,41 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                     SelectObject(dc, oldS);
                 }
                 if (ds->itemState & ODS_FOCUS) DrawFocusRect(dc, &rc);
+                return TRUE;
+            }
+            if (id == IDC_COMBO_LOADER && data) {
+                HDC dc = ds->hDC;
+                RECT rc = ds->rcItem;
+                bool sel = (ds->itemState & ODS_SELECTED) != 0;
+                bool focus = (ds->itemState & ODS_FOCUS) != 0;
+                COLORREF bg = sel ? data->theme.accent : data->theme.panel;
+                COLORREF fg = RGB(255, 255, 255);
+                HBRUSH bgBr = CreateSolidBrush(bg);
+                FillRect(dc, &rc, bgBr);
+                DeleteObject(bgBr);
+                int idx = (int)ds->itemID;
+                if (idx >= 0 && idx < 4) {
+                    int pad = 8;
+                    int iconSz = 20;
+                    if (data->loaderIcons[idx]) {
+                        int iy = rc.top + (rc.bottom - rc.top - iconSz) / 2;
+                        DrawIconEx(dc, rc.left + pad, iy, data->loaderIcons[idx], iconSz, iconSz, 0, nullptr, DI_NORMAL);
+                    }
+                    RECT tr = rc;
+                    tr.left = rc.left + pad + iconSz + 6;
+                    tr.right -= pad;
+                    SetBkMode(dc, TRANSPARENT);
+                    SetTextColor(dc, fg);
+                    HFONT oldF = (HFONT)SelectObject(dc, data->font);
+                    const wchar_t* names[] = {L"Vanilla", L"Fabric", L"Forge", L"Quilt"};
+                    const char* keys[] = {"vanilla", "fabric", "forge", "quilt"};
+                    const char* fallbacks[] = {"Vanilla", "Fabric", "Forge", "Quilt"};
+                    const char* v = ravex::lang(keys[idx]);
+                    std::wstring wname = fromUtf8((!v || strcmp(v, keys[idx]) == 0) ? fallbacks[idx] : v);
+                    DrawTextW(dc, wname.c_str(), -1, &tr, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
+                    SelectObject(dc, oldF);
+                }
+                if (focus) DrawFocusRect(dc, &rc);
                 return TRUE;
             }
             if ((id == IDOK || id == IDCANCEL || id == IDC_OPEN_FOLDER || id == IDC_DUPLICATE || id == IDC_BROWSE_JAVA || id == IDC_MODS_GO || id == IDC_MODS_INSTALL || id == IDC_MODS_OPEN || id == IDC_MODS_SHOWINSTALLED || id == IDC_SERV_ADD || id == IDC_SERV_DEL || id == IDC_SERV_OPEN || id == IDC_LOGS_OPEN || id == IDC_LOGS_REFRESH) && data) {
@@ -1177,6 +1287,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
         case WM_MEASUREITEM: {
             MEASUREITEMSTRUCT* m = reinterpret_cast<MEASUREITEMSTRUCT*>(lParam);
             if (m->CtlID == IDC_MODS_LIST) { m->itemHeight = MulDiv(44, 96, 96); if (HMODULE u = GetModuleHandleW(L"user32.dll")) { auto fn = reinterpret_cast<UINT(WINAPI*)(HWND)>(GetProcAddress(u, "GetDpiForWindow")); if (fn) m->itemHeight = MulDiv(44, (int)fn(hwnd), 96); } return TRUE; }
+            if (m->CtlID == IDC_COMBO_LOADER) { m->itemHeight = 26; return TRUE; }
             return FALSE;
         }
         case WM_NOTIFY: {
@@ -1586,8 +1697,8 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
             HDC dc = reinterpret_cast<HDC>(wParam);
             HWND ctrl = reinterpret_cast<HWND>(lParam);
             if (!data) { SetBkColor(dc, kBg); SetTextColor(dc, RGB(255,255,255)); return reinterpret_cast<LRESULT>(GetStockObject(BLACK_BRUSH)); }
-            if (ctrl == data->notesHint || ctrl == data->notesCounter) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(150,150,150)); return reinterpret_cast<LRESULT>(data->bgBrush); }
-            if (ctrl == data->notesTitle) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, data->theme.text); return reinterpret_cast<LRESULT>(data->bgBrush); }
+            if (ctrl == data->notesHint || ctrl == data->notesCounter || ctrl == data->servHint || ctrl == data->logsHint) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(150,150,150)); return reinterpret_cast<LRESULT>(data->bgBrush); }
+            if (ctrl == data->notesTitle || ctrl == data->servTitle || ctrl == data->logsTitle) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, data->theme.text); return reinterpret_cast<LRESULT>(data->bgBrush); }
             SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(255,255,255));
             return reinterpret_cast<LRESULT>(data->bgBrush);
         }
@@ -1624,6 +1735,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
             if (data && data->panelBrush) DeleteObject(data->panelBrush);
             if (data) for (HICON ic : data->tabIcons) if (ic) DestroyIcon(ic);
             if (data) for (HICON ic : data->fieldIcons) if (ic) DestroyIcon(ic);
+            if (data) for (int i = 0; i < 4; ++i) if (data->loaderIcons[i]) DestroyIcon(data->loaderIcons[i]);
             if (data) for (ModInfo& m : data->modResults) if (m.hIcon) { DestroyIcon(m.hIcon); m.hIcon = nullptr; }
             if (data && data->smallFont) DeleteObject(data->smallFont);
             return 0;

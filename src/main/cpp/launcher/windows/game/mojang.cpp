@@ -189,30 +189,64 @@ bool downloadAssetIndex(const ravex::json::Value& versionData, std::string& inde
     }
     const ravex::json::Value& idx = versionData.at("assetIndex");
     if (idx.has("id")) indexId = idx.at("id").asString();
+    if (indexId.empty()) {
+        if (error) *error = "Empty asset index id";
+        return false;
+    }
     std::wstring idxPath = joinPath(assetsDir(), L"indexes");
     createDirs(idxPath);
     std::wstring idxFile = joinPath(idxPath, fromUtf8(indexId) + L".json");
-    if (fileExists(idxFile)) return true;
+    if (fileExists(idxFile)) {
+        WIN32_FILE_ATTRIBUTE_DATA fad{};
+        if (GetFileAttributesExW(idxFile.c_str(), GetFileExInfoStandard, &fad)) {
+            ULONGLONG sz = (static_cast<ULONGLONG>(fad.nFileSizeHigh) << 32) | fad.nFileSizeLow;
+            if (sz > 512) return true;
+            DeleteFileW(idxFile.c_str());
+        } else return true;
+    }
     std::string url;
     if (idx.has("url")) url = idx.at("url").asString();
     if (url.empty()) {
-        *error = "No asset index URL";
+        if (error) *error = "No asset index URL";
         return false;
     }
-    return net::downloadFile(url, idxFile, progress, cancelled, error);
+    if (!net::downloadFile(url, idxFile, progress, cancelled, error)) return false;
+    WIN32_FILE_ATTRIBUTE_DATA fad{};
+    if (!GetFileAttributesExW(idxFile.c_str(), GetFileExInfoStandard, &fad)) {
+        if (error) *error = "Asset index download failed";
+        return false;
+    }
+    ULONGLONG sz = (static_cast<ULONGLONG>(fad.nFileSizeHigh) << 32) | fad.nFileSizeLow;
+    if (sz < 512) {
+        if (error) *error = "Asset index too small";
+        DeleteFileW(idxFile.c_str());
+        return false;
+    }
+    return true;
 }
 
 bool downloadAssets(const std::string& indexId, const std::function<void(const net::Progress&)>& progress,
                     const bool* cancelled, std::string* error) {
     std::wstring idxFile = joinPath(joinPath(assetsDir(), L"indexes"), fromUtf8(indexId) + L".json");
     std::string text;
-    if (!readFile(idxFile, text)) return true;
+    if (!readFile(idxFile, text)) {
+        if (error) *error = "Asset index not found: " + indexId;
+        return false;
+    }
     ravex::json::Value root = ravex::json::Value::parse(text);
-    if (root.isNull() || !root.has("objects")) return true;
+    if (root.isNull() || !root.has("objects")) {
+        if (error) *error = "Invalid asset index: " + indexId;
+        return false;
+    }
     const ravex::json::Value& objects = root.at("objects");
     std::vector<std::string> keys = objects.keys();
+    if (keys.empty()) {
+        if (error) *error = "Empty asset index: " + indexId;
+        return false;
+    }
     std::wstring objectsDir = assetsDir();
     std::vector<std::pair<std::string, std::wstring>> jobs;
+    size_t existing = 0;
     for (std::size_t i = 0; i < keys.size(); ++i) {
         if (cancelled && *cancelled) { *error = "Cancelled"; return false; }
         const ravex::json::Value& obj = objects.at(keys[i]);
@@ -222,12 +256,36 @@ bool downloadAssets(const std::string& indexId, const std::function<void(const n
         std::string prefix = hash.substr(0, 2);
         std::wstring assetDir = joinPath(joinPath(objectsDir, L"objects"), fromUtf8(prefix));
         std::wstring assetFile = joinPath(assetDir, fromUtf8(hash));
-        if (fileExists(assetFile)) continue;
+        if (fileExists(assetFile)) {
+            WIN32_FILE_ATTRIBUTE_DATA fad{};
+            if (GetFileAttributesExW(assetFile.c_str(), GetFileExInfoStandard, &fad)) {
+                ULONGLONG sz = (static_cast<ULONGLONG>(fad.nFileSizeHigh) << 32) | fad.nFileSizeLow;
+                if (sz > 0) { ++existing; continue; }
+                DeleteFileW(assetFile.c_str());
+            } else { ++existing; continue; }
+        }
         createDirs(assetDir);
         std::string url = "https://resources.download.minecraft.net/" + prefix + "/" + hash;
         jobs.emplace_back(url, assetFile);
     }
-    return parallelDownload(jobs, progress, cancelled, error);
+    if (jobs.empty()) return true;
+    if (!parallelDownload(jobs, progress, cancelled, error)) return false;
+    size_t missing = 0;
+    for (auto& j : jobs) {
+        if (!fileExists(j.second)) ++missing;
+        else {
+            WIN32_FILE_ATTRIBUTE_DATA fad{};
+            if (GetFileAttributesExW(j.second.c_str(), GetFileExInfoStandard, &fad)) {
+                ULONGLONG sz = (static_cast<ULONGLONG>(fad.nFileSizeHigh) << 32) | fad.nFileSizeLow;
+                if (sz == 0) { DeleteFileW(j.second.c_str()); ++missing; }
+            }
+        }
+    }
+    if (missing > 0) {
+        if (error) *error = "Assets incomplete: " + std::to_string(missing) + "/" + std::to_string(jobs.size()) + " failed";
+        return false;
+    }
+    return true;
 }
 
 }
@@ -286,14 +344,47 @@ bool quickIntegrityCheck(const std::string& version, const std::string& assetInd
     std::wstring p = profile;
     std::wstring jar = joinPath(joinPath(joinPath(joinPath(p, L".minecraft"), L"versions"), fromUtf8(version)), fromUtf8(version) + L".jar");
     if (!fileExists(jar)) { if (error) *error = "Client jar missing"; return false; }
-    WIN32_FILE_ATTRIBUTE_DATA fad;
-    if (GetFileAttributesExW(jar.c_str(), GetFileExInfoStandard, &fad) && fad.nFileSizeLow == 0 && fad.nFileSizeHigh == 0) { if (error) *error = "Client jar empty"; return false; }
+    WIN32_FILE_ATTRIBUTE_DATA fad{};
+    if (GetFileAttributesExW(jar.c_str(), GetFileExInfoStandard, &fad)) {
+        ULONGLONG sz = (static_cast<ULONGLONG>(fad.nFileSizeHigh) << 32) | fad.nFileSizeLow;
+        if (sz < 1024 * 10) { if (error) *error = "Client jar too small/empty"; return false; }
+    }
     std::wstring libs = joinPath(joinPath(p, L".minecraft"), L"libraries");
     if (!fileExists(libs)) { if (error) *error = "Libraries missing"; return false; }
+    WIN32_FIND_DATAW fd{};
+    HANDLE hLib = FindFirstFileW(joinPath(libs, L"*").c_str(), &fd);
+    if (hLib == INVALID_HANDLE_VALUE) { if (error) *error = "Libraries empty"; return false; }
+    FindClose(hLib);
     std::string idx = assetIndexId.empty() ? getFallbackAssetIndexId(version) : assetIndexId;
     std::wstring idxFile = joinPath(joinPath(joinPath(joinPath(p, L".minecraft"), L"assets"), L"indexes"), fromUtf8(idx) + L".json");
     if (!fileExists(idxFile)) { if (error) *error = "Asset index missing " + idx; return false; }
-    if (GetFileAttributesExW(idxFile.c_str(), GetFileExInfoStandard, &fad) && fad.nFileSizeLow == 0 && fad.nFileSizeHigh == 0) { if (error) *error = "Asset index empty"; return false; }
+    if (GetFileAttributesExW(idxFile.c_str(), GetFileExInfoStandard, &fad)) {
+        ULONGLONG sz = (static_cast<ULONGLONG>(fad.nFileSizeHigh) << 32) | fad.nFileSizeLow;
+        if (sz < 512) { if (error) *error = "Asset index empty"; return false; }
+    }
+    std::string text;
+    if (!readFile(idxFile, text)) { if (error) *error = "Cannot read asset index"; return false; }
+    ravex::json::Value root = ravex::json::Value::parse(text);
+    if (root.isNull() || !root.has("objects")) { if (error) *error = "Invalid asset index json"; return false; }
+    const ravex::json::Value& objects = root.at("objects");
+    auto keys = objects.keys();
+    if (keys.empty()) { if (error) *error = "Asset index has no objects"; return false; }
+    size_t toSample = std::min<size_t>(30, keys.size());
+    size_t missing = 0;
+    for (size_t i = 0; i < toSample; ++i) {
+        size_t idxSample = (keys.size() * i) / toSample;
+        const ravex::json::Value& obj = objects.at(keys[idxSample]);
+        if (!obj.has("hash")) continue;
+        std::string hash = obj.at("hash").asString();
+        if (hash.size() < 2) continue;
+        std::wstring f = joinPath(joinPath(joinPath(joinPath(p, L".minecraft"), L"assets"), L"objects"), fromUtf8(hash.substr(0,2) + "/" + hash));
+        std::wstring f2 = joinPath(joinPath(joinPath(joinPath(joinPath(p, L".minecraft"), L"assets"), L"objects"), fromUtf8(hash.substr(0,2))), fromUtf8(hash));
+        if (!fileExists(f) && !fileExists(f2)) ++missing;
+    }
+    if (missing > toSample / 3) {
+        if (error) *error = "Assets incomplete: sample missing " + std::to_string(missing) + "/" + std::to_string(toSample);
+        return false;
+    }
     return true;
 }
 

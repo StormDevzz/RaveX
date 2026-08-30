@@ -67,6 +67,7 @@ endif()
 add_custom_command(TARGET kickx_launcher POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/flags" "$<TARGET_FILE_DIR:kickx_launcher>/flags")
 add_custom_command(TARGET kickx_launcher POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/icons" "$<TARGET_FILE_DIR:kickx_launcher>/icons")
 
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/embedded_launcher.rc" CONTENT "#include \"resource.h\"\nIDR_EMBEDDED_LAUNCHER RCDATA \"$<TARGET_FILE:kickx_launcher>\"\n" CONDITION 1)
 add_executable(KickXSetup WIN32
     setup/main.cpp
     setup/setup_window.cpp
@@ -86,7 +87,9 @@ add_executable(KickXSetup WIN32
     game/java.cpp
     game/accounts.cpp
     app.rc
+    "${CMAKE_CURRENT_BINARY_DIR}/embedded_launcher.rc"
 )
+add_dependencies(KickXSetup kickx_launcher)
 target_include_directories(KickXSetup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_features(KickXSetup PRIVATE cxx_std_23)
 if(MSVC)

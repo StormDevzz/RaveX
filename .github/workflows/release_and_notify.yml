@@ -125,17 +125,9 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "dist/launcher-windows" | Out-Null
-          Copy-Item -Path "build/launcher-windows/Release/kickx_launcher.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
           Copy-Item -Path "build/launcher-windows/Release/KickXSetup.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
-          # Fallback for single-config generators
-          Copy-Item -Path "build/launcher-windows/kickx_launcher.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
           Copy-Item -Path "build/launcher-windows/KickXSetup.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
-          if (Test-Path "build/launcher-windows/Release/flags") { Copy-Item -Path "build/launcher-windows/Release/flags" -Destination "dist/launcher-windows/flags" -Recurse -Force }
-          elseif (Test-Path "build/launcher-windows/flags") { Copy-Item -Path "build/launcher-windows/flags" -Destination "dist/launcher-windows/flags" -Recurse -Force }
-          elseif (Test-Path "src/main/cpp/launcher/windows/flags") { Copy-Item -Path "src/main/cpp/launcher/windows/flags" -Destination "dist/launcher-windows/flags" -Recurse -Force }
-          if (Test-Path "build/launcher-windows/Release/icons") { Copy-Item -Path "build/launcher-windows/Release/icons" -Destination "dist/launcher-windows/icons" -Recurse -Force }
-          elseif (Test-Path "build/launcher-windows/icons") { Copy-Item -Path "build/launcher-windows/icons" -Destination "dist/launcher-windows/icons" -Recurse -Force }
-          elseif (Test-Path "src/main/cpp/launcher/windows/icons") { Copy-Item -Path "src/main/cpp/launcher/windows/icons" -Destination "dist/launcher-windows/icons" -Recurse -Force }
+          Copy-Item -Path "src/main/cpp/launcher/windows/README.md" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
           Get-ChildItem -Path "dist/launcher-windows" -Recurse | ForEach-Object { Write-Host $_.FullName }
 
       - name: Upload Windows Launcher artifact

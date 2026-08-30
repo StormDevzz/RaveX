@@ -431,7 +431,7 @@ LRESULT CALLBACK MsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             CreateWindowExW(0, L"STATIC", tr2("ms_title","Microsoft Login").c_str(), WS_CHILD|WS_VISIBLE|SS_LEFT, 20, 16, 360, 22, hwnd, nullptr, inst, nullptr);
             d->hQr = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD|WS_VISIBLE|SS_OWNERDRAW|WS_BORDER, 94, 42, 220, 220, hwnd, nullptr, inst, nullptr);
             d->hCode = CreateWindowExW(0, L"STATIC", L"--------", WS_CHILD|WS_VISIBLE|SS_CENTER, 20, 270, 360, 36, hwnd, nullptr, inst, nullptr);
-            d->hLink = CreateWindowExW(0, L"STATIC", L"https://microsoft.com/link", WS_CHILD|WS_VISIBLE|SS_CENTER, 20, 308, 360, 18, hwnd, nullptr, inst, nullptr);
+            d->hLink = CreateWindowExW(0, L"STATIC", L"https://microsoft.com/link", WS_CHILD|WS_VISIBLE|SS_CENTER|SS_NOTIFY, 20, 308, 360, 18, hwnd, reinterpret_cast<HMENU>(2002), inst, nullptr);
             d->hStatus = CreateWindowExW(0, L"STATIC", fromUtf8(lang("requesting_device_code")).c_str(), WS_CHILD|WS_VISIBLE|SS_CENTER, 20, 332, 360, 48, hwnd, nullptr, inst, nullptr);
             d->hCopy = CreateWindowExW(0, L"BUTTON", tr2("copy_code","Copy Code").c_str(), WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW, 70, 385, 110, 28, hwnd, reinterpret_cast<HMENU>(2001), inst, nullptr);
             d->hCancel = CreateWindowExW(0, L"BUTTON", tr2("cancel","Cancel").c_str(), WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW, 220, 385, 110, 28, hwnd, reinterpret_cast<HMENU>(IDCANCEL), inst, nullptr);
@@ -482,10 +482,21 @@ LRESULT CALLBACK MsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             return FALSE;
         }
+        case WM_SETCURSOR: {
+            if (LOWORD(lParam) == HTCLIENT) {
+                POINT pt; GetCursorPos(&pt); ScreenToClient(hwnd, &pt);
+                if (ChildWindowFromPoint(hwnd, pt) == d->hLink) {
+                    SetCursor(LoadCursorW(nullptr, MAKEINTRESOURCEW(32649)));
+                    return TRUE;
+                }
+            }
+            return DefWindowProcW(hwnd, msg, wParam, lParam);
+        }
         case WM_CTLCOLORSTATIC: {
             HDC dc = reinterpret_cast<HDC>(wParam);
             HWND ctrl = reinterpret_cast<HWND>(lParam);
             if (ctrl == d->hCode) SetTextColor(dc, kAccent);
+            else if (ctrl == d->hLink) SetTextColor(dc, kAccent);
             else SetTextColor(dc, RGB(255,255,255));
             SetBkColor(dc, kBg);
             return reinterpret_cast<LRESULT>(d->bgBrush ? d->bgBrush : GetStockObject(BLACK_BRUSH));
@@ -504,6 +515,7 @@ LRESULT CALLBACK MsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 return 0;
             }
+            if (LOWORD(wParam)==2002) { if(!d->verificationUri.empty()) ShellExecuteW(hwnd, L"open", fromUtf8(d->verificationUri).c_str(), nullptr, nullptr, SW_SHOWNORMAL); return 0; }
             if (LOWORD(wParam)==IDCANCEL) { d->cancelled=true; d->closed=true; DestroyWindow(hwnd); return 0; }
             return 0;
         case WM_MS_CODE: {

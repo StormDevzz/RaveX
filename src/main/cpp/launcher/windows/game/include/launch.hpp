@@ -13,7 +13,7 @@ struct LaunchParams {
     std::wstring gameDir;
     int ramMb = 4096;
     std::string jvmArgs;
-    bool fabric = false;
+    std::string loader;
     std::wstring javaExe;
     bool offline = false;
     std::string assetIndexId;

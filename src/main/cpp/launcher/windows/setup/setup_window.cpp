@@ -67,17 +67,13 @@ struct SetupData {
 };
 SetupData g_setup;
 HFONT makeSetupFont() {
-    HFONT f = CreateFontW(-14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Manrope");
-    if (!f || GetTextFaceW(CreateCompatibleDC(nullptr), 1, nullptr) == 0) {
-        f = CreateFontW(-14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI Variable");
-        if (!f) f = CreateFontW(-14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI");
-    }
+    HFONT f = CreateFontW(-13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI");
+    if (!f) f = CreateFontW(-13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI Variable");
     return f;
 }
 HFONT makeTitleFont() {
-    HFONT f = CreateFontW(-20, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Manrope");
-    if (!f) f = CreateFontW(-20, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI Variable");
-    if (!f) f = CreateFontW(-20, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI");
+    HFONT f = CreateFontW(-19, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI");
+    if (!f) f = CreateFontW(-19, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI Variable");
     return f;
 }
 void updateLangTexts() {
@@ -120,7 +116,7 @@ void drawSpinner(HDC hdc, int cx, int cy, float phase) {
         float py = cy + sinf(a) * R;
         float fade = 1.0f - (float)i / dots; fade = fade*fade;
         BYTE alpha = (BYTE)(90 + fade*165);
-        Gdiplus::SolidBrush br(Gdiplus::Color(alpha, 90, 140, 255));
+        Gdiplus::SolidBrush br(Gdiplus::Color(alpha, 0, 120, 212));
         g.FillEllipse(&br, px-4.0f, py-4.0f, 8.0f, 8.0f);
     }
 }
@@ -187,6 +183,7 @@ void createShortcut(const std::wstring& target, const std::wstring& linkPath, co
         psl->SetPath(target.c_str());
         psl->SetDescription(desc.c_str());
         psl->SetWorkingDirectory(joinPath(target.substr(0, target.find_last_of(L"\\/")), L"").c_str());
+        psl->SetIconLocation(target.c_str(), 0);
         IPersistFile* ppf = nullptr;
         if (SUCCEEDED(psl->QueryInterface(IID_PPV_ARGS(&ppf)))) {
             ppf->Save(linkPath.c_str(), TRUE);
@@ -194,6 +191,40 @@ void createShortcut(const std::wstring& target, const std::wstring& linkPath, co
         }
         psl->Release();
     }
+}
+bool isValidLauncherBinary(const std::wstring& path) {
+    if (!fileExists(path)) return false;
+    HANDLE h = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (h == INVALID_HANDLE_VALUE) return false;
+    BYTE hdr[2] = {0};
+    DWORD r = 0;
+    bool ok = ReadFile(h, hdr, 2, &r, nullptr) && r == 2 && hdr[0] == 'M' && hdr[1] == 'Z';
+    LARGE_INTEGER sz{};
+    if (ok && GetFileSizeEx(h, &sz) && sz.QuadPart < 1024 * 100) ok = false;
+    CloseHandle(h);
+    if (!ok) return false;
+    std::string narrow = toUtf8(path);
+    if (narrow.find("KickXSetup") != std::string::npos) return false;
+    return true;
+}
+bool extractEmbeddedLauncher(const std::wstring& dst) {
+    HMODULE hMod = GetModuleHandleW(nullptr);
+    HRSRC hRes = FindResourceW(hMod, MAKEINTRESOURCEW(5000), MAKEINTRESOURCEW(10));
+    if (!hRes) hRes = FindResourceW(nullptr, MAKEINTRESOURCEW(5000), MAKEINTRESOURCEW(10));
+    if (!hRes) return false;
+    HGLOBAL hData = LoadResource(hMod ? hMod : GetModuleHandleW(nullptr), hRes);
+    if (!hData) return false;
+    void* data = LockResource(hData);
+    DWORD size = SizeofResource(hMod ? hMod : GetModuleHandleW(nullptr), hRes);
+    if (!data || size < 1024 * 100) return false;
+    if (size >= 2 && static_cast<BYTE*>(data)[0] != 'M' && static_cast<BYTE*>(data)[1] != 'Z') return false;
+    HANDLE hFile = CreateFileW(dst.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
+    DWORD written = 0;
+    bool ok = WriteFile(hFile, data, size, &written, nullptr) && written == size;
+    CloseHandle(hFile);
+    if (!ok) { DeleteFileW(dst.c_str()); return false; }
+    return isValidLauncherBinary(dst);
 }
 void workerSetup() {
     g_setup.busy = true;
@@ -206,12 +237,33 @@ void workerSetup() {
     createDirs(installDir);
     wchar_t exePath[MAX_PATH]; GetModuleFileNameW(nullptr, exePath, MAX_PATH);
     std::wstring srcDir = exePath; size_t p = srcDir.find_last_of(L"\\/"); if (p != std::wstring::npos) srcDir = srcDir.substr(0, p);
-    auto copyFileTo = [&](const std::wstring& src, const std::wstring& dst){ CopyFileW(src.c_str(), dst.c_str(), FALSE); };
     std::wstring dstLauncher = joinPath(installDir, L"kickx_launcher.exe");
-    copyFileTo(joinPath(srcDir, L"kickx_launcher.exe"), dstLauncher);
-    if (!fileExists(dstLauncher)) copyFileTo(exePath, dstLauncher);
+    std::wstring srcLauncher = joinPath(srcDir, L"kickx_launcher.exe");
+    bool launcherCopied = false;
+    if (fileExists(srcLauncher)) {
+        launcherCopied = CopyFileW(srcLauncher.c_str(), dstLauncher.c_str(), FALSE) != 0;
+        if (launcherCopied && isValidLauncherBinary(dstLauncher)) appendDetail("Launcher copied from package: " + toUtf8(srcLauncher));
+        else if (launcherCopied) { DeleteFileW(dstLauncher.c_str()); launcherCopied = false; }
+    }
+    if (!launcherCopied || !isValidLauncherBinary(dstLauncher)) {
+        appendDetail("Side-by-side launcher not found, trying embedded resource...");
+        if (extractEmbeddedLauncher(dstLauncher)) {
+            launcherCopied = true;
+            appendDetail("Launcher extracted from embedded resource (" + std::to_string(GetFileAttributesW(dstLauncher.c_str()) != INVALID_FILE_ATTRIBUTES ? 1 : 0) + ")");
+        }
+    }
+    if (!launcherCopied || !isValidLauncherBinary(dstLauncher)) {
+        if (launcherCopied) DeleteFileW(dstLauncher.c_str());
+        setStatusDetail(std::string(lang("setup_launcher_missing")) + " " + toUtf8(srcLauncher));
+        appendDetail("ERROR: kickx_launcher.exe not found next to installer. Expected at: " + toUtf8(srcLauncher));
+        appendDetail("Please extract the ZIP fully (both KickXSetup.exe and kickx_launcher.exe) and run setup from extracted folder.");
+        MessageBoxW(g_setup.hwnd, fromUtf8(std::string(lang("setup_launcher_missing")) + "\n" + toUtf8(srcLauncher) + "\n\n" + lang("setup_extract_hint")).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONERROR);
+        EnableWindow(g_setup.hInstall, TRUE);
+        g_setup.busy = false;
+        return;
+    }
     std::wstring dstSetup = joinPath(installDir, L"KickXSetup.exe");
-    copyFileTo(exePath, dstSetup);
+    CopyFileW(exePath, dstSetup.c_str(), FALSE);
     std::wstring srcIcons = joinPath(srcDir, L"icons");
     std::wstring dstIcons = joinPath(installDir, L"icons");
     if (fileExists(srcIcons)) { createDirs(dstIcons); }
@@ -248,25 +300,40 @@ void workerSetup() {
     Sleep(300);
     setStatusDetail(std::string(lang("setup_checking_mc")) + " " + version + "...");
     std::string assetId;
-    if (!ravex::game::ensureMinecraft(version, &err, postProgress, nullptr, &assetId)) {
-        setStatusDetail(std::string(lang("setup_checking_mc")) + " fail: " + err);
-        EnableWindow(g_setup.hInstall, TRUE);
-        g_setup.busy = false;
-        return;
-    }
-    Sleep(400);
-    setStatusDetail(lang("setup_verifying_mc"));
-    Sleep(600);
-    {
+    bool mcOk = false;
+    for (int attempt = 1; attempt <= 3; ++attempt) {
+        err.clear();
+        if (attempt > 1) {
+            appendDetail("Retrying Minecraft download, attempt " + std::to_string(attempt) + "/3 ...");
+            setStatusDetail(std::string(lang("setup_checking_mc")) + " " + version + " (retry " + std::to_string(attempt) + ")...");
+            Sleep(1200);
+        }
+        if (!ravex::game::ensureMinecraft(version, &err, postProgress, nullptr, &assetId)) {
+            setStatusDetail(std::string(lang("setup_checking_mc")) + " fail: " + err);
+            appendDetail("ensureMinecraft attempt " + std::to_string(attempt) + " failed: " + err);
+            if (attempt == 3) { EnableWindow(g_setup.hInstall, TRUE); g_setup.busy = false; return; }
+            continue;
+        }
+        Sleep(400);
+        setStatusDetail(lang("setup_verifying_mc"));
+        Sleep(600);
         std::string verr;
         if (!ravex::game::quickIntegrityCheck(version, assetId, &verr)) {
-            appendDetail("Integrity: " + verr);
-            Sleep(400);
-        } else {
-            appendDetail("Integrity OK");
-            Sleep(300);
+            appendDetail("Integrity attempt " + std::to_string(attempt) + " failed: " + verr);
+            if (attempt == 3) {
+                setStatusDetail(std::string(lang("setup_verifying_mc")) + " fail: " + verr);
+                EnableWindow(g_setup.hInstall, TRUE);
+                g_setup.busy = false;
+                return;
+            }
+            continue;
         }
+        appendDetail("Integrity OK (attempt " + std::to_string(attempt) + ")");
+        Sleep(300);
+        mcOk = true;
+        break;
     }
+    if (!mcOk) { EnableWindow(g_setup.hInstall, TRUE); g_setup.busy = false; return; }
     setStatusDetail(lang("setup_preparing"));
     Sleep(400);
     std::wstring instDir = joinPath(joinPath(kickxDir(), L"instances"), L"Default");
@@ -314,6 +381,12 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_CREATE: {
             g_setup.hwnd = hwnd;
             g_setup.theme = getTheme("dark");
+            g_setup.theme.bg = RGB(18,18,18);
+            g_setup.theme.panel = RGB(30,30,30);
+            g_setup.theme.text = RGB(240,240,240);
+            g_setup.theme.accent = RGB(0,120,212);
+            g_setup.theme.buttonBg = RGB(45,45,47);
+            g_setup.theme.isDark = true;
             g_setup.bgBrush = CreateSolidBrush(g_setup.theme.bg);
             g_setup.font = makeSetupFont();
             g_setup.titleFont = makeTitleFont();
@@ -387,8 +460,8 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 if (pv) {
                     BYTE* px=(BYTE*)pv;
                     for(int y=0;y<60;++y) for(int x=0;x<60;++x){
-                        float dx=x-30, dy=y-30; float dist=sqrtf(dx*dx+dy*dy); float t=dist/26.0f; if(t>1) t=1; float s=1-t; float a=s*s*s*90;
-                        BYTE al=(BYTE)(a>255?255:a); float f=al/255.0f; int o=(y*60+x)*4; px[o+0]= (BYTE)(255*f); px[o+1]=(BYTE)(255*f); px[o+2]=(BYTE)(255*f); px[o+3]=al;
+                        float dx=x-30, dy=y-30; float dist=sqrtf(dx*dx+dy*dy); float t=dist/26.0f; if(t>1) t=1; float s=1-t; float a=s*s*s*60;
+                        BYTE al=(BYTE)(a>255?255:a); float f=al/255.0f; int o=(y*60+x)*4; px[o+0]= (BYTE)(140*f); px[o+1]=(BYTE)(180*f); px[o+2]=(BYTE)(255*f); px[o+3]=al;
                     }
                     DeleteObject(g_setup.glow.bmp);
                     g_setup.glow.bmp = whiteBmp;
@@ -454,19 +527,19 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 Gdiplus::Graphics g(dc);
                 g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
                 g.SetTextRenderingHint(Gdiplus::TextRenderingHintClearTypeGridFit);
-                Gdiplus::Color fill = chk ? Gdiplus::Color(255, GetRValue(g_setup.theme.accent), GetGValue(g_setup.theme.accent), GetBValue(g_setup.theme.accent)) : Gdiplus::Color(255,45,45,47);
-                Gdiplus::Color border = chk ? Gdiplus::Color(255, GetRValue(g_setup.theme.accent), GetGValue(g_setup.theme.accent), GetBValue(g_setup.theme.accent)) : Gdiplus::Color(255,110,110,115);
+                Gdiplus::Color fill = chk ? Gdiplus::Color(255, 0,120,212) : Gdiplus::Color(255,45,45,47);
+                Gdiplus::Color border = chk ? Gdiplus::Color(255, 0,120,212) : Gdiplus::Color(255,110,110,115);
                 Gdiplus::SolidBrush br(fill);
-                Gdiplus::Pen pen(border, 1.0f);
+                Gdiplus::Pen pen(border, 1.5f);
                 Gdiplus::GraphicsPath path;
-                path.AddArc(bx, by, 6, 6, 180, 90); path.AddArc(bx+box-6, by, 6, 6, 270, 90); path.AddArc(bx+box-6, by+box-6, 6, 6, 0, 90); path.AddArc(bx, by+box-6, 6, 6, 90, 90); path.CloseFigure();
+                path.AddArc(bx, by, 3, 3, 180, 90); path.AddArc(bx+box-3, by, 3, 3, 270, 90); path.AddArc(bx+box-3, by+box-3, 3, 3, 0, 90); path.AddArc(bx, by+box-3, 3, 3, 90, 90); path.CloseFigure();
                 g.FillPath(&br, &path); g.DrawPath(&pen, &path);
                 if (chk) {
-                    Gdiplus::Pen cpen(Gdiplus::Color(255,255,255,255), 2.0f);
+                    Gdiplus::Pen cpen(Gdiplus::Color(255,255,255,255), 1.8f);
                     cpen.SetLineCap(Gdiplus::LineCapRound, Gdiplus::LineCapRound, Gdiplus::DashCapFlat);
-                    g.DrawLine(&cpen, bx+4, by+9, bx+8, by+13); g.DrawLine(&cpen, bx+8, by+13, bx+14, by+5);
+                    g.DrawLine(&cpen, bx+5, by+9, bx+8, by+12); g.DrawLine(&cpen, bx+8, by+12, bx+13, by+6);
                 }
-                Gdiplus::SolidBrush tbrush(Gdiplus::Color(255,255,255,255));
+                Gdiplus::SolidBrush tbrush(Gdiplus::Color(255,240,240,240));
                 Gdiplus::Font f(dc, g_setup.font);
                 RECT tr = {bx+box+10, rc.top, rc.right, rc.bottom};
                 Gdiplus::RectF rf((Gdiplus::REAL)tr.left, (Gdiplus::REAL)tr.top, (Gdiplus::REAL)(tr.right-tr.left), (Gdiplus::REAL)(tr.bottom-tr.top));
@@ -479,14 +552,14 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         case WM_CTLCOLORSTATIC: {
             HDC dc = (HDC)wParam;
-            SetTextColor(dc, RGB(255,255,255));
+            SetTextColor(dc, g_setup.theme.text);
             SetBkColor(dc, g_setup.theme.bg);
             SetBkMode(dc, TRANSPARENT);
             return (LRESULT)g_setup.bgBrush;
         }
         case WM_CTLCOLORBTN: {
             HDC dc = (HDC)wParam;
-            SetTextColor(dc, RGB(255,255,255));
+            SetTextColor(dc, g_setup.theme.text);
             SetBkColor(dc, g_setup.theme.bg);
             SetBkMode(dc, TRANSPARENT);
             return (LRESULT)g_setup.bgBrush;
@@ -494,8 +567,9 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_CTLCOLOREDIT:
         case WM_CTLCOLORLISTBOX: {
             HDC dc = (HDC)wParam;
-            SetTextColor(dc, RGB(255,255,255));
+            SetTextColor(dc, g_setup.theme.text);
             SetBkColor(dc, g_setup.theme.panel);
+            SetBkMode(dc, OPAQUE);
             return (LRESULT)g_setup.bgBrush;
         }
         case WM_TIMER: {

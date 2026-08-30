@@ -195,6 +195,21 @@ std::wstring iconPath(const std::wstring& name) {
     return s + L"icons\\" + name + L".png";
 }
 
+void tintWhite(Gdiplus::Bitmap* bmp) {
+    if (!bmp) return;
+    Gdiplus::Rect rc(0,0,bmp->GetWidth(),bmp->GetHeight());
+    Gdiplus::BitmapData d;
+    if (bmp->LockBits(&rc, Gdiplus::ImageLockModeRead|Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &d)!=Gdiplus::Ok) return;
+    for (UINT y=0;y<d.Height;++y) {
+        BYTE* row=(BYTE*)d.Scan0+y*d.Stride;
+        for (UINT x=0;x<d.Width;++x) {
+            BYTE a=row[x*4+3];
+            if (!a) continue;
+            row[x*4+0]=255; row[x*4+1]=255; row[x*4+2]=255;
+        }
+    }
+    bmp->UnlockBits(&d);
+}
 Gdiplus::Bitmap* loadIconBmp(const std::wstring& path, int target) {
     Gdiplus::Bitmap* src = Gdiplus::Bitmap::FromFile(path.c_str());
     if (!src || src->GetLastStatus() != Gdiplus::Ok) { delete src; return nullptr; }
@@ -207,6 +222,7 @@ Gdiplus::Bitmap* loadIconBmp(const std::wstring& path, int target) {
     g.Clear(Gdiplus::Color(0,0,0,0));
     g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
     delete src;
+    tintWhite(dst);
     return dst;
 }
 
@@ -307,14 +323,17 @@ void updateSkinPreview() {
     if (g_main.skinBmp) { delete g_main.skinBmp; g_main.skinBmp = nullptr; }
     if (g_main.skinIcon) { DestroyIcon(g_main.skinIcon); g_main.skinIcon = nullptr; }
     if (g_main.cfg.accounts.empty() || g_main.cfg.activeAccount < 0 || g_main.cfg.activeAccount >= (int)g_main.cfg.accounts.size()) {
+        ShowWindow(g_main.hSkin, SW_HIDE);
         InvalidateRect(g_main.hSkin, nullptr, TRUE);
         return;
     }
     Account acc = g_main.cfg.accounts[g_main.cfg.activeAccount];
     if (acc.type != "microsoft" || acc.uuid.empty()) {
+        ShowWindow(g_main.hSkin, SW_HIDE);
         InvalidateRect(g_main.hSkin, nullptr, TRUE);
         return;
     }
+    ShowWindow(g_main.hSkin, SW_SHOW);
     std::string uuid = acc.uuid;
     uuid.erase(std::remove(uuid.begin(), uuid.end(), '-'), uuid.end());
     std::string url = "https://crafatar.com/avatars/" + uuid + "?size=64&overlay";
@@ -535,11 +554,14 @@ void workerLaunch(const InstanceCfg& inst, const Account& account, std::wstring 
     g_killRequested = false;
     std::string error;
     bool fabric = (inst.loader == "fabric");
+    bool forge = (inst.loader == "forge");
+    bool quilt = (inst.loader == "quilt");
+    bool hasLoader = fabric || forge || quilt;
     int javaVersion = game::requiredJavaVersion(inst.mcVersion);
     std::wstring javaExe;
     bool vanillaInstalled = game::isMinecraftInstalled(inst.mcVersion);
-    bool fabricInstalled = !fabric || game::isFabricInstalled(inst.mcVersion);
-    bool installed = vanillaInstalled && fabricInstalled;
+    bool loaderInstalled = !hasLoader || (fabric && game::isFabricInstalled(inst.mcVersion)) || (forge && game::isForgeInstalled(inst.mcVersion)) || (quilt && game::isQuiltInstalled(inst.mcVersion));
+    bool installed = vanillaInstalled && loaderInstalled;
     if (!inst.useBundledJava && !inst.javaPath.empty()) {
         javaExe = fromUtf8(inst.javaPath);
         if (!fileExists(javaExe)) {
@@ -563,7 +585,9 @@ void workerLaunch(const InstanceCfg& inst, const Account& account, std::wstring 
     }
     std::string assetIndexId;
     bool needVanilla = !vanillaInstalled;
-    bool needFabric = fabric && !fabricInstalled;
+    bool needFabric = fabric && !game::isFabricInstalled(inst.mcVersion);
+    bool needForge = forge && !game::isForgeInstalled(inst.mcVersion);
+    bool needQuilt = quilt && !game::isQuiltInstalled(inst.mcVersion);
     if (needVanilla) {
         postStatus(std::string(lang("checking_mc")) + inst.mcVersion + "...");
         PostMessageW(g_main.hwnd, WM_APP_PROGRESS, 0, -1);
@@ -591,6 +615,24 @@ void workerLaunch(const InstanceCfg& inst, const Account& account, std::wstring 
             return;
         }
     }
+    if (needForge) {
+        postStatus(std::string("Checking Forge " + inst.mcVersion + "..."));
+        PostMessageW(g_main.hwnd, WM_APP_PROGRESS, 0, -1);
+        if (!game::ensureForge(inst.mcVersion, inst.loaderVersion, &error, postProgress, &g_main.cancelled)) {
+            logTelemetry("ensureForge fail " + error);
+            postJobDone(new JobDone{JobDone::Kind::Launch, false, error, ""});
+            return;
+        }
+    }
+    if (needQuilt) {
+        postStatus(std::string("Checking Quilt " + inst.mcVersion + "..."));
+        PostMessageW(g_main.hwnd, WM_APP_PROGRESS, 0, -1);
+        if (!game::ensureQuilt(inst.mcVersion, inst.loaderVersion, &error, postProgress, &g_main.cancelled)) {
+            logTelemetry("ensureQuilt fail " + error);
+            postJobDone(new JobDone{JobDone::Kind::Launch, false, error, ""});
+            return;
+        }
+    }
     logTelemetry("launch assetIndex=" + assetIndexId + " installed=" + std::string(installed ? "1" : "0"));
     postStatus(std::string(lang("checking_integrity")));
     if (!game::quickIntegrityCheck(inst.mcVersion, assetIndexId, &error)) {
@@ -607,7 +649,7 @@ void workerLaunch(const InstanceCfg& inst, const Account& account, std::wstring 
     params.gameDir = instanceDir(fromUtf8(inst.name));
     params.ramMb = inst.ramMb;
     params.jvmArgs = inst.jvmArgs;
-    params.fabric = fabric;
+    params.loader = inst.loader;
     params.javaExe = javaExe;
     params.offline = inst.offlineMode;
     params.assetIndexId = assetIndexId;
@@ -710,9 +752,15 @@ void onAddInstance() {
     }
     createDirs(joinPath(dir, L"mods"));
     saveInstance(dir, cfg);
-    if (cfg.loader == "fabric" && !cfg.mcVersion.empty()) {
+    if (!cfg.mcVersion.empty() && cfg.loader != "vanilla") {
         InstanceCfg copy = cfg;
-        std::thread([copy](){ std::string err; game::ensureMinecraft(copy.mcVersion, &err, nullptr, nullptr, nullptr); game::ensureFabric(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr); }).detach();
+        std::thread([copy](){
+            std::string err;
+            game::ensureMinecraft(copy.mcVersion, &err, nullptr, nullptr, nullptr);
+            if (copy.loader == "fabric") game::ensureFabric(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr);
+            else if (copy.loader == "forge") game::ensureForge(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr);
+            else if (copy.loader == "quilt") game::ensureQuilt(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr);
+        }).detach();
     }
     refreshInstances();
     setStatus(std::string(lang("instance_created")) + cfg.name);
@@ -738,9 +786,15 @@ void onEditInstance() {
         if (fileExists(oldDir)) MoveFileW(oldDir.c_str(), newDir.c_str());
     }
     saveInstance(newDir, cfg);
-    if (cfg.loader == "fabric" && !cfg.mcVersion.empty()) {
+    if (!cfg.mcVersion.empty() && cfg.loader != "vanilla") {
         InstanceCfg copy = cfg;
-        std::thread([copy](){ std::string err; game::ensureMinecraft(copy.mcVersion, &err, nullptr, nullptr, nullptr); game::ensureFabric(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr); }).detach();
+        std::thread([copy](){
+            std::string err;
+            game::ensureMinecraft(copy.mcVersion, &err, nullptr, nullptr, nullptr);
+            if (copy.loader == "fabric") game::ensureFabric(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr);
+            else if (copy.loader == "forge") game::ensureForge(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr);
+            else if (copy.loader == "quilt") game::ensureQuilt(copy.mcVersion, copy.loaderVersion, &err, nullptr, nullptr);
+        }).detach();
     }
     refreshInstances();
     setStatus(std::string(lang("instance_saved")) + cfg.name);

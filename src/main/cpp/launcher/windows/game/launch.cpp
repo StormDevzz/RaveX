@@ -21,15 +21,17 @@ std::wstring gameDir() {
     return joinPath(profile, L".minecraft");
 }
 
-std::wstring versionDir(const std::string& version, bool fabric) {
+std::wstring versionDir(const std::string& version, const std::string& loader) {
     std::wstring ver = fromUtf8(version);
-    if (fabric) ver += L"-fabric";
+    if (loader == "fabric") ver += L"-fabric";
+    else if (loader == "forge") ver += L"-forge";
+    else if (loader == "quilt") ver += L"-quilt";
     return joinPath(joinPath(gameDir(), L"versions"), ver);
 }
 
-std::wstring clientJarPath(const std::string& version, bool fabric) {
+std::wstring clientJarPath(const std::string& version, const std::string& loader) {
     std::wstring ver = fromUtf8(version);
-    return joinPath(versionDir(version, false), ver + L".jar");
+    return joinPath(versionDir(version, ""), ver + L".jar");
 }
 
 void collectLibrariesRecursive(const std::wstring& dir, std::wstring& classpath) {
@@ -151,12 +153,12 @@ bool launchMinecraft(const LaunchParams& params, std::string* error,
         *error = "No version specified";
         return false;
     }
-    std::wstring jar = clientJarPath(params.mcVersion, params.fabric);
+    std::wstring jar = clientJarPath(params.mcVersion, params.loader);
     if (!fileExists(jar)) {
         *error = "Client jar not found: " + toUtf8(jar);
         return false;
     }
-    std::wstring vDir = versionDir(params.mcVersion, params.fabric);
+    std::wstring vDir = versionDir(params.mcVersion, params.loader);
     std::wstring natives = ravex::nativesDir();
     std::wstring gDir = params.gameDir.empty() ? gameDir() : params.gameDir;
     std::wstring mcGameDir = gameDir();
@@ -170,8 +172,12 @@ bool launchMinecraft(const LaunchParams& params, std::string* error,
     cmd += L" -Xmx" + std::to_wstring(params.ramMb) + L"M";
     cmd += L" -Djava.library.path=\"" + natives + L"\"";
     cmd += L" -cp \"" + classpath + L"\"";
-    if (params.fabric) {
+    if (params.loader == "fabric") {
         cmd += L" net.fabricmc.loader.impl.launch.knot.KnotClient";
+    } else if (params.loader == "forge") {
+        cmd += L" net.minecraftforge.fml.relauncher.ServerLaunchWrapper";
+    } else if (params.loader == "quilt") {
+        cmd += L" org.quiltmc.loader.impl.launch.knot.KnotClient";
     } else {
         cmd += L" net.minecraft.client.main.Main";
     }
