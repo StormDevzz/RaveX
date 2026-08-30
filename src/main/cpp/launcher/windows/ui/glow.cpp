@@ -3,10 +3,10 @@
 namespace ravex::ui {
 void glowCreate(HWND parent, GlowData* data) {
     if (data->bmp) DeleteObject(data->bmp);
-    const int sz = 60;
+    const int sz = 160;
     const int cx = sz / 2;
     const int cy = sz / 2;
-    const float radius = 26.0f;
+    const float radius = 75.0f;
     void* pvBits = nullptr;
     BITMAPINFO bi{};
     bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -71,17 +71,25 @@ void glowSetButtons(GlowData* data, const std::vector<HWND>& btns) {
 }
 void glowUpdate(GlowData* data) {
     if (!data->hGlow || !data->bmp) return;
+    if (!data->enabled) {
+        if (data->active) { ShowWindow(data->hGlow, SW_HIDE); data->active = false; }
+        data->hasPos = false;
+        return;
+    }
     POINT pt;
     GetCursorPos(&pt);
     HWND hit = WindowFromPoint(pt);
     bool isBtn = false;
     for (HWND b : data->buttons) if (b == hit) { isBtn = true; break; }
     if (!isBtn) {
-        if (data->active) { ShowWindow(data->hGlow, SW_HIDE); data->active = false; }
+        if (data->active) {
+            ShowWindow(data->hGlow, SW_HIDE); data->active = false;
+            for (HWND b : data->buttons) InvalidateRect(b, nullptr, FALSE);
+        }
         data->hasPos = false;
         return;
     }
-    const int sz = 60;
+    const int sz = 160;
     int tx = pt.x - sz / 2;
     int ty = pt.y - sz / 2;
     if (!data->hasPos) { data->curX = tx; data->curY = ty; data->hasPos = true; }
@@ -102,17 +110,25 @@ void glowUpdate(GlowData* data) {
 }
 void glowUpdateAnywhere(HWND parent, GlowData* data) {
     if (!data->hGlow || !data->bmp) return;
+    if (!data->enabled) {
+        if (data->active) { ShowWindow(data->hGlow, SW_HIDE); data->active = false; }
+        data->hasPos = false;
+        return;
+    }
     POINT pt;
     GetCursorPos(&pt);
     RECT rc;
     GetWindowRect(parent, &rc);
     bool over = PtInRect(&rc, pt);
     if (!over) {
-        if (data->active) { ShowWindow(data->hGlow, SW_HIDE); data->active = false; }
+        if (data->active) {
+            ShowWindow(data->hGlow, SW_HIDE); data->active = false;
+            for (HWND b : data->buttons) InvalidateRect(b, nullptr, FALSE);
+        }
         data->hasPos = false;
         return;
     }
-    const int sz = 60;
+    const int sz = 160;
     int tx = pt.x - sz / 2;
     int ty = pt.y - sz / 2;
     if (!data->hasPos) { data->curX = tx; data->curY = ty; data->hasPos = true; }

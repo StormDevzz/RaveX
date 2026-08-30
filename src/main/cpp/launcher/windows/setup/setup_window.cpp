@@ -453,15 +453,15 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (g_setup.glow.bmp) {
                 BITMAP bm{}; GetObjectW(g_setup.glow.bmp, sizeof(bm), &bm);
                 HDC hdcScreen = GetDC(nullptr);
-                BITMAPINFO bi{}; bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER); bi.bmiHeader.biWidth = 60; bi.bmiHeader.biHeight = -60; bi.bmiHeader.biPlanes=1; bi.bmiHeader.biBitCount=32; bi.bmiHeader.biCompression=BI_RGB;
+                BITMAPINFO bi{}; bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER); bi.bmiHeader.biWidth = 160; bi.bmiHeader.biHeight = -160; bi.bmiHeader.biPlanes=1; bi.bmiHeader.biBitCount=32; bi.bmiHeader.biCompression=BI_RGB;
                 void* pv = nullptr;
                 HBITMAP whiteBmp = CreateDIBSection(hdcScreen, &bi, DIB_RGB_COLORS, &pv, nullptr, 0);
                 ReleaseDC(nullptr, hdcScreen);
                 if (pv) {
                     BYTE* px=(BYTE*)pv;
-                    for(int y=0;y<60;++y) for(int x=0;x<60;++x){
-                        float dx=x-30, dy=y-30; float dist=sqrtf(dx*dx+dy*dy); float t=dist/26.0f; if(t>1) t=1; float s=1-t; float a=s*s*s*60;
-                        BYTE al=(BYTE)(a>255?255:a); float f=al/255.0f; int o=(y*60+x)*4; px[o+0]= (BYTE)(140*f); px[o+1]=(BYTE)(180*f); px[o+2]=(BYTE)(255*f); px[o+3]=al;
+                    for(int y=0;y<160;++y) for(int x=0;x<160;++x){
+                        float dx=x-80, dy=y-80; float dist=sqrtf(dx*dx+dy*dy); float t=dist/75.0f; if(t>1) t=1; float s=1-t; float a=s*s*s*60;
+                        BYTE al=(BYTE)(a>255?255:a); float f=al/255.0f; int o=(y*160+x)*4; px[o+0]= (BYTE)(140*f); px[o+1]=(BYTE)(180*f); px[o+2]=(BYTE)(255*f); px[o+3]=al;
                     }
                     DeleteObject(g_setup.glow.bmp);
                     g_setup.glow.bmp = whiteBmp;
@@ -728,6 +728,8 @@ void createUninstallRegistry(const std::wstring& installDir) {
             RegSetValueExW(hk,L"Publisher",0,REG_SZ,(BYTE*)publisher.c_str(), (DWORD)((publisher.size()+1)*2));
             RegSetValueExW(hk,L"DisplayVersion",0,REG_SZ,(BYTE*)L"1.1", 8);
             RegSetValueExW(hk,L"EstimatedSize",0,REG_DWORD,(BYTE*)&est, sizeof(est));
+            std::wstring displayIcon = joinPath(installDir, L"kickx_launcher.exe") + L",0";
+            RegSetValueExW(hk,L"DisplayIcon",0,REG_SZ,(BYTE*)displayIcon.c_str(), (DWORD)((displayIcon.size()+1)*2));
             {
                 std::wstring urlAbout = L"https://github.com/StormDevzz";
                 std::wstring helpLink = L"https://github.com/StormDevzz";

@@ -161,6 +161,7 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             g_splash.font = makeSplashFont(-14, FW_NORMAL);
             g_splash.titleFont = makeSplashFont(-22, FW_SEMIBOLD);
             if (g_splash.theme.bg == 0) g_splash.theme = getTheme("dark");
+            if (g_splash.bgBrush) DeleteObject(g_splash.bgBrush);
             g_splash.bgBrush = CreateSolidBrush(g_splash.theme.bg);
             std::wstring logoPath = iconPathSplash(L"win10");
             if (fileExists(logoPath)) {
@@ -194,6 +195,8 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
+            if (!g_splash.bgBrush) g_splash.bgBrush = CreateSolidBrush(g_splash.theme.bg);
+            if (g_splash.bgBrush) FillRect(hdc, &ps.rcPaint, g_splash.bgBrush);
             SetBkMode(hdc, TRANSPARENT);
             drawSpinner(hdc, SPINNER_CX, SPINNER_CY, g_splash.animPhase);
             if (g_splash.winLogo && g_splash.winLogo->GetLastStatus() == Gdiplus::Ok) {
@@ -228,6 +231,14 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             KillTimer(hwnd, TIMER_SPINNER);
             KillTimer(hwnd, TIMER_PHRASE);
             DestroyWindow(hwnd);
+            return 0;
+        }
+        case WM_SYSCOMMAND: {
+            if ((wParam & 0xFFF0) == SC_CLOSE) { ExitProcess(0); return 0; }
+            return DefWindowProcW(hwnd, msg, wParam, lParam);
+        }
+        case WM_CLOSE: {
+            ExitProcess(0);
             return 0;
         }
         case WM_DESTROY: {
@@ -272,10 +283,10 @@ bool runSplashWindow(HINSTANCE hInstance) {
     int sx = wr.left + ((wr.right - wr.left) - sw) / 2;
     int sy = wr.top + ((wr.bottom - wr.top) - sh) / 2;
     HWND hwnd = CreateWindowExW(WS_EX_TOPMOST, L"KickXSplash", L"KickX Launcher",
-        WS_POPUP | WS_CAPTION | WS_VISIBLE, sx, sy, sw, sh, nullptr, nullptr, hInstance, nullptr);
+        WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE, sx, sy, sw, sh, nullptr, nullptr, hInstance, nullptr);
     if (!hwnd) return true;
     RECT cr{0, 0, sw, sh};
-    AdjustWindowRectEx(&cr, WS_POPUP | WS_CAPTION, FALSE, WS_EX_TOPMOST);
+    AdjustWindowRectEx(&cr, WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, FALSE, WS_EX_TOPMOST);
     int dw = cr.right - cr.left;
     int dh = cr.bottom - cr.top;
     SetWindowPos(hwnd, nullptr, sx, sy, dw, dh, SWP_NOZORDER);

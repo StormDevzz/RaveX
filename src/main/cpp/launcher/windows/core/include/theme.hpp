@@ -10,12 +10,14 @@ struct ThemeColors {
     COLORREF text = RGB(225, 225, 225);
     COLORREF accent = RGB(90, 140, 255);
     COLORREF buttonBg = RGB(90, 140, 255);
+    COLORREF glow = RGB(200, 225, 255);
+    bool glowEnabled = true;
     int colorAlpha = 255;
     bool isDark = true;
 };
 
 ThemeColors getTheme(const std::string& name);
-ThemeColors getThemeForConfig(const std::string& themeName, COLORREF customBg, COLORREF customPanel, COLORREF customText, COLORREF customAccent, COLORREF customButton = 0, int customAlpha = 255);
+ThemeColors getThemeForConfig(const std::string& themeName, COLORREF customBg, COLORREF customPanel, COLORREF customText, COLORREF customAccent, COLORREF customButton = 0, int customAlpha = 255, COLORREF customGlow = 0, bool glowEnabled = true);
 const char* themeDisplayName(const std::string& name);
 int themeCount();
 const char* themeNameByIndex(int index);

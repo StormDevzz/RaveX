@@ -442,13 +442,13 @@ void createGlowBitmap() {
     g_main.glow.parent = g_main.hwnd;
     if (g_main.glow.bmp) {
         HDC hdcScreen = GetDC(nullptr);
-        BITMAPINFO bi{}; bi.bmiHeader.biSize=sizeof(BITMAPINFOHEADER); bi.bmiHeader.biWidth=60; bi.bmiHeader.biHeight=-60; bi.bmiHeader.biPlanes=1; bi.bmiHeader.biBitCount=32; bi.bmiHeader.biCompression=BI_RGB;
+        BITMAPINFO bi{}; bi.bmiHeader.biSize=sizeof(BITMAPINFOHEADER); bi.bmiHeader.biWidth=160; bi.bmiHeader.biHeight=-160; bi.bmiHeader.biPlanes=1; bi.bmiHeader.biBitCount=32; bi.bmiHeader.biCompression=BI_RGB;
         void* pv=nullptr;
         HBITMAP wb = CreateDIBSection(hdcScreen,&bi,DIB_RGB_COLORS,&pv,nullptr,0);
         ReleaseDC(nullptr,hdcScreen);
         if (pv) {
             BYTE* px=(BYTE*)pv;
-            for(int y=0;y<60;++y) for(int x=0;x<60;++x){ float dx=x-30,dy=y-30; float d=sqrtf(dx*dx+dy*dy); float t=d/26.0f; if(t>1) t=1; float s=1-t; float a=s*s*s*90; BYTE al=(BYTE)(a>255?255:a); float f=al/255.0f; int o=(y*60+x)*4; px[o+0]=(BYTE)(255*f); px[o+1]=(BYTE)(255*f); px[o+2]=(BYTE)(255*f); px[o+3]=al; }
+            for(int y=0;y<160;++y) for(int x=0;x<160;++x){ float dx=x-80,dy=y-80; float d=sqrtf(dx*dx+dy*dy); float t=d/75.0f; if(t>1) t=1; float s=1-t; float a=s*s*s*90; BYTE al=(BYTE)(a>255?255:a); float f=al/255.0f; int o=(y*160+x)*4; px[o+0]=(BYTE)(200*f); px[o+1]=(BYTE)(225*f); px[o+2]=(BYTE)(255*f); px[o+3]=al; }
             DeleteObject(g_main.glow.bmp);
             g_main.glow.bmp=wb;
         }
@@ -458,8 +458,136 @@ bool isGlowButton(HWND hwnd) {
     for (HWND b : g_main.glow.buttons) if (b == hwnd) return true;
     return false;
 }
+extern HWND g_hoveredBtn;
+LRESULT CALLBACK searchEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (msg == WM_NCPAINT) return 0;
+    if (msg == WM_PAINT) {
+        WNDPROC orig = reinterpret_cast<WNDPROC>(GetPropW(hwnd, L"origSearchProc"));
+        LRESULT res = orig ? CallWindowProcW(orig, hwnd, msg, wParam, lParam) : DefWindowProcW(hwnd, msg, wParam, lParam);
+        if (!g_main.theme.glowEnabled) return res;
+        HDC hdc = GetWindowDC(hwnd);
+        if (hdc) {
+            RECT wr; GetWindowRect(hwnd, &wr);
+            int w = wr.right - wr.left, h = wr.bottom - wr.top;
+            POINT pt; GetCursorPos(&pt);
+            float rfx = float(pt.x - wr.left), rfy = float(pt.y - wr.top);
+            float rbw = float(w), rbh = float(h);
+            float nx = (rfx < 0) ? 0 : ((rfx > rbw) ? rbw : rfx);
+            float ny = (rfy < 0) ? 0 : ((rfy > rbh) ? rbh : rfy);
+            float dx = rfx - nx, dy = rfy - ny;
+            float d = sqrtf(dx*dx + dy*dy);
+            bool isHover = (g_hoveredBtn == hwnd);
+            BYTE glowR = GetRValue(g_main.theme.glow), glowG = GetGValue(g_main.theme.glow), glowB = GetBValue(g_main.theme.glow);
+            float cfx = (rfx < 1) ? 1 : ((rfx > rbw - 1) ? rbw - 1 : rfx);
+            float cfy = (rfy < 1) ? 1 : ((rfy > rbh - 1) ? rbh - 1 : rfy);
+            Gdiplus::Graphics g(hdc);
+            g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+            Gdiplus::GraphicsPath path; path.AddArc(0,0,8,8,180,90); path.AddArc(w-8,0,8,8,270,90); path.AddArc(w-8,h-8,8,8,0,90); path.AddArc(0,h-8,8,8,90,90); path.CloseFigure();
+            const float innerRadius = 280.0f;
+            if (d < innerRadius) {
+                float it = 1 - d / innerRadius; it *= it;
+                BYTE bgA = BYTE(it * (isHover ? 55 : 22));
+                if (bgA > 0) {
+                    Gdiplus::PathGradientBrush bgGrad(&path);
+                    bgGrad.SetCenterPoint(Gdiplus::PointF(cfx, cfy));
+                    bgGrad.SetCenterColor(Gdiplus::Color(bgA, glowR, glowG, glowB));
+                    int cnt2 = 1; Gdiplus::Color sur2(0, glowR, glowG, glowB);
+                    bgGrad.SetSurroundColors(&sur2, &cnt2);
+                    bgGrad.SetFocusScales(0.18f, 0.18f);
+                    g.FillPath(&bgGrad, &path);
+                }
+            }
+            if (d < 160) {
+                float t = 1 - d / 160; float borderT = t * t;
+                BYTE a = BYTE(40 + borderT * (isHover ? 190 : 120));
+                for (int pass = 0; pass < 2; ++pass) {
+                    Gdiplus::GraphicsPath border; float off = (pass==0)?1.0f:0.0f; float r = (pass==0)?6.0f:7.0f;
+                    border.AddArc(off,off,r,r,180,90); border.AddArc(w-off-r,off,r,r,270,90); border.AddArc(w-off-r,h-off-r,r,r,0,90); border.AddArc(off,h-off-r,r,r,90,90); border.CloseFigure();
+                    Gdiplus::PathGradientBrush grad(&border);
+                    grad.SetCenterPoint(Gdiplus::PointF(cfx, cfy));
+                    grad.SetCenterColor(Gdiplus::Color(pass==0?BYTE(a*3/4):a, glowR, glowG, glowB));
+                    int cnt=1; Gdiplus::Color sur(0,glowR,glowG,glowB);
+                    grad.SetSurroundColors(&sur,&cnt);
+                    grad.SetFocusScales(0.3f,0.3f);
+                    float pw = (pass==0)?2.0f:(isHover?1.4f:0.8f);
+                    Gdiplus::Pen pen(&grad, pw); pen.SetLineJoin(Gdiplus::LineJoinRound);
+                    g.DrawPath(&pen, &border);
+                }
+            }
+            ReleaseDC(hwnd, hdc);
+        }
+        return res;
+    }
+    WNDPROC orig = reinterpret_cast<WNDPROC>(GetPropW(hwnd, L"origSearchProc"));
+    return orig ? CallWindowProcW(orig, hwnd, msg, wParam, lParam) : DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+LRESULT CALLBACK comboNoBorderProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (msg == WM_NCPAINT) return 0;
+    if (msg == WM_PAINT) {
+        WNDPROC orig = reinterpret_cast<WNDPROC>(GetPropW(hwnd, L"origComboProc"));
+        LRESULT res = orig ? CallWindowProcW(orig, hwnd, msg, wParam, lParam) : DefWindowProcW(hwnd, msg, wParam, lParam);
+        HDC hdc = GetWindowDC(hwnd);
+        if (hdc) {
+            RECT rc; GetWindowRect(hwnd, &rc);
+            MapWindowPoints(HWND_DESKTOP, hwnd, reinterpret_cast<LPPOINT>(&rc), 2);
+            HBRUSH br = CreateSolidBrush(g_main.theme.isDark ? RGB(0,0,0) : g_main.theme.panel);
+            int arrowW = 20;
+            RECT arrowRc = {rc.right - arrowW - 2, rc.top + 1, rc.right - 1, rc.bottom - 1};
+            FillRect(hdc, &arrowRc, br);
+            RECT borderRc = {0, 0, rc.right - rc.left, rc.bottom - rc.top};
+            FrameRect(hdc, &borderRc, br);
+            InflateRect(&borderRc, -1, -1);
+            FrameRect(hdc, &borderRc, br);
+            DeleteObject(br);
+            ReleaseDC(hwnd, hdc);
+        }
+        return res;
+    }
+    WNDPROC orig = reinterpret_cast<WNDPROC>(GetPropW(hwnd, L"origComboProc"));
+    return orig ? CallWindowProcW(orig, hwnd, msg, wParam, lParam) : DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+void clipComboBorder(HWND hwnd) {
+    RECT rc; GetWindowRect(hwnd, &rc);
+    int w = rc.right - rc.left; int h = rc.bottom - rc.top;
+    if (w <= 4 || h <= 4) return;
+    HRGN rgn = CreateRectRgn(2, 2, w - 2, h - 2);
+    SetWindowRgn(hwnd, rgn, TRUE);
+}
+HWND g_hoveredBtn = nullptr;
+POINT g_lastPt = { -10000, -10000 };
 void moveGlowToCursor() {
+    g_main.glow.enabled = g_main.theme.glowEnabled;
     glowUpdateAnywhere(g_main.hwnd, &g_main.glow);
+    POINT pt; GetCursorPos(&pt);
+    if (pt.x == g_lastPt.x && pt.y == g_lastPt.y) return;
+    g_lastPt = pt;
+    HWND hit = WindowFromPoint(pt);
+    HWND newHover = nullptr;
+    for (HWND b : g_main.glow.buttons) if (b == hit) { newHover = b; break; }
+    if (newHover != g_hoveredBtn) {
+        HWND old = g_hoveredBtn;
+        g_hoveredBtn = newHover;
+        if (old) InvalidateRect(old, nullptr, FALSE);
+        if (newHover) InvalidateRect(newHover, nullptr, FALSE);
+    } else if (g_hoveredBtn) {
+        InvalidateRect(g_hoveredBtn, nullptr, FALSE);
+    }
+    if (g_main.glow.enabled && g_main.glow.active) {
+        for (HWND b : g_main.glow.buttons) {
+            if (b == g_hoveredBtn) continue;
+            RECT brc; GetWindowRect(b, &brc);
+            float fx = float(pt.x) - float(brc.left);
+            float fy = float(pt.y) - float(brc.top);
+            float bw = float(brc.right - brc.left);
+            float bh = float(brc.bottom - brc.top);
+            float nx = (fx < 0.0f) ? 0.0f : ((fx > bw) ? bw : fx);
+            float ny = (fy < 0.0f) ? 0.0f : ((fy > bh) ? bh : fy);
+            float dx = fx - nx;
+            float dy = fy - ny;
+            float d = sqrtf(dx*dx + dy*dy);
+            if (d < 280) InvalidateRect(b, nullptr, FALSE);
+        }
+    }
 }
 
 void postStatus(const std::string& text) {
@@ -896,18 +1024,19 @@ void onCreate(HWND hwnd) {
     if (!g_main.font) g_main.font = makeFont();
     if (!g_main.iconFont) g_main.iconFont = makeIconFont();
     g_main.hList = CreateWindowExW(0, L"LISTBOX", nullptr,
-                                   WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
+                                   WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                                    0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_INSTANCES),
                                    GetModuleHandleW(nullptr), nullptr);
     g_main.hSearch = CreateWindowExW(0, L"EDIT", L"",
-                                     WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+                                     WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
                                      0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_SEARCH_INST),
                                      GetModuleHandleW(nullptr), nullptr);
     SendMessageW(g_main.hSearch, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(fromUtf8(lang("search_instances")).c_str()));
     g_main.hSort = CreateWindowExW(0, L"COMBOBOX", nullptr,
-                                   WS_CHILD | WS_VISIBLE | WS_VSCROLL | CBS_DROPDOWNLIST,
+                                   WS_CHILD | WS_VISIBLE | WS_VSCROLL | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS,
                                    0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_SORT_INST),
                                    GetModuleHandleW(nullptr), nullptr);
+    SendMessageW(g_main.hSort, WM_SETFONT, reinterpret_cast<WPARAM>(g_main.font), TRUE);
     SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_name_az")).c_str()));
     SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_name_za")).c_str()));
     SendMessageW(g_main.hSort, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(lang("sort_version")).c_str()));
@@ -968,17 +1097,75 @@ void onCreate(HWND hwnd) {
                                        0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_WINLABEL),
                                        GetModuleHandleW(nullptr), nullptr);
     g_main.hSkin = CreateWindowExW(0, L"STATIC", nullptr,
-                                   WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | WS_BORDER,
+                                   WS_CHILD | WS_VISIBLE | SS_OWNERDRAW,
                                    0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_SKIN_PREVIEW),
                                    GetModuleHandleW(nullptr), nullptr);
+    SetWindowTheme(g_main.hList, L"", L"");
+    SetWindowTheme(g_main.hSearch, L"", L"");
+    SetWindowTheme(g_main.hSkin, L"", L"");
+    SetWindowTheme(g_main.hAccounts, L"", L"");
+    SetWindowTheme(g_main.hSort, L"", L"");
+    for (HWND hw2 : {g_main.hAccounts, g_main.hSort}) {
+        SetWindowTheme(hw2, L"", L"");
+        COMBOBOXINFO cbi{}; cbi.cbSize = sizeof(cbi);
+        if (GetComboBoxInfo(hw2, &cbi)) {
+            if (cbi.hwndList) {
+                SetWindowTheme(cbi.hwndList, L"", L"");
+                LONG_PTR ls = GetWindowLongPtrW(cbi.hwndList, GWL_STYLE);
+                ls &= ~WS_BORDER;
+                SetWindowLongPtrW(cbi.hwndList, GWL_STYLE, ls);
+                LONG_PTR ex = GetWindowLongPtrW(cbi.hwndList, GWL_EXSTYLE);
+                ex &= ~(WS_EX_CLIENTEDGE | WS_EX_DLGMODALFRAME | WS_EX_STATICEDGE);
+                SetWindowLongPtrW(cbi.hwndList, GWL_EXSTYLE, ex);
+                SetWindowPos(cbi.hwndList, nullptr, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
+                {
+                    int ncrpDisabled = 2;
+                    DwmSetWindowAttribute(cbi.hwndList, 2, &ncrpDisabled, sizeof(ncrpDisabled));
+                }
+            }
+        }
+        WNDPROC orig = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(hw2, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(comboNoBorderProc)));
+        SetPropW(hw2, L"origComboProc", reinterpret_cast<HANDLE>(orig));
+        {
+            int ncrpDisabled = 2;
+            DwmSetWindowAttribute(hw2, 2, &ncrpDisabled, sizeof(ncrpDisabled));
+        }
+    }
+    for (HWND hw : {g_main.hAccounts, g_main.hSort, g_main.hList, g_main.hSearch}) {
+        LONG_PTR s = GetWindowLongPtrW(hw, GWL_STYLE);
+        s &= ~WS_BORDER;
+        SetWindowLongPtrW(hw, GWL_STYLE, s);
+        LONG_PTR ex = GetWindowLongPtrW(hw, GWL_EXSTYLE);
+        ex &= ~(WS_EX_CLIENTEDGE | WS_EX_DLGMODALFRAME | WS_EX_STATICEDGE);
+        SetWindowLongPtrW(hw, GWL_EXSTYLE, ex);
+        SetWindowPos(hw, nullptr, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
+    }
+    {
+        WNDPROC origS = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(g_main.hSearch, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(searchEditProc)));
+        SetPropW(g_main.hSearch, L"origSearchProc", reinterpret_cast<HANDLE>(origS));
+        int ncrpDisabled = 2; DwmSetWindowAttribute(g_main.hSearch, 2, &ncrpDisabled, sizeof(ncrpDisabled));
+    }
     for (HWND child : {g_main.hList, g_main.hSearch, g_main.hSort, g_main.hAccounts, g_main.hStatus, g_main.hProgress, g_main.hOffline, g_main.hMs, g_main.hLaunch, g_main.hUpdate, g_main.hConsoleBtn, g_main.hWinLabel, g_main.hSkin}) {
         SendMessageW(child, WM_SETFONT, reinterpret_cast<WPARAM>(g_main.font), TRUE);
     }
     for (HWND child : {g_main.hAdd, g_main.hEdit, g_main.hDel, g_main.hSettings}) {
         SendMessageW(child, WM_SETFONT, reinterpret_cast<WPARAM>(g_main.iconFont), TRUE);
+        SetWindowTheme(child, L"", L"");
+    }
+    for (HWND child : {g_main.hLaunch, g_main.hUpdate, g_main.hConsoleBtn, g_main.hOffline, g_main.hMs}) {
+        SetWindowTheme(child, L"", L"");
     }
     doLayout();
-    g_main.theme = getThemeForConfig(g_main.cfg.theme, g_main.cfg.customBg, g_main.cfg.customPanel, g_main.cfg.customText, g_main.cfg.customAccent, g_main.cfg.customButton, g_main.cfg.customAlpha);
+    g_main.theme = getThemeForConfig(g_main.cfg.theme, g_main.cfg.customBg, g_main.cfg.customPanel, g_main.cfg.customText, g_main.cfg.customAccent, g_main.cfg.customButton, g_main.cfg.customAlpha, g_main.cfg.customGlow, g_main.cfg.glowEnabled);
+    if (g_main.theme.isDark) {
+        g_main.theme.bg = RGB(0,0,0);
+        g_main.theme.panel = RGB(15,15,15);
+        g_main.theme.text = RGB(225,225,225);
+        if (g_main.bgBrush) DeleteObject(g_main.bgBrush);
+        g_main.bgBrush = CreateSolidBrush(g_main.theme.bg);
+        if (g_main.panelBrush) DeleteObject(g_main.panelBrush);
+        g_main.panelBrush = CreateSolidBrush(g_main.theme.panel);
+    }
     applyWindowTheme(hwnd, g_main.theme);
     setBtnIcon(g_main.hLaunch, L"play");
     setBtnIcon(g_main.hUpdate, L"update");
@@ -995,7 +1182,7 @@ void onCreate(HWND hwnd) {
     g_main.glow.hGlow = nullptr;
     g_main.glow.bmp = nullptr;
     createGlowBitmap();
-    glowSetButtons(&g_main.glow, {g_main.hLaunch, g_main.hUpdate, g_main.hConsoleBtn, g_main.hAdd, g_main.hEdit, g_main.hDel, g_main.hSettings, g_main.hOffline, g_main.hMs});
+    glowSetButtons(&g_main.glow, {g_main.hLaunch, g_main.hUpdate, g_main.hConsoleBtn, g_main.hAdd, g_main.hEdit, g_main.hDel, g_main.hSettings, g_main.hOffline, g_main.hMs, g_main.hAccounts, g_main.hSort, g_main.hSearch});
     SetTimer(g_main.hwnd, 2, 16, nullptr);
     setBusy(false);
     {
@@ -1159,7 +1346,12 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     if (showSettingsDialog(g_main.hwnd)) {
                         g_main.cfg = loadLauncherConfig();
                         setCurrentLanguage(g_main.cfg.language.c_str());
-                        g_main.theme = getThemeForConfig(g_main.cfg.theme, g_main.cfg.customBg, g_main.cfg.customPanel, g_main.cfg.customText, g_main.cfg.customAccent, g_main.cfg.customButton, g_main.cfg.customAlpha);
+                        g_main.theme = getThemeForConfig(g_main.cfg.theme, g_main.cfg.customBg, g_main.cfg.customPanel, g_main.cfg.customText, g_main.cfg.customAccent, g_main.cfg.customButton, g_main.cfg.customAlpha, g_main.cfg.customGlow, g_main.cfg.glowEnabled);
+                        if (g_main.theme.isDark) {
+                            g_main.theme.bg = RGB(0,0,0);
+                            g_main.theme.panel = RGB(15,15,15);
+                            g_main.theme.text = RGB(225,225,225);
+                        }
                         if (g_main.bgBrush) DeleteObject(g_main.bgBrush);
                         g_main.bgBrush = CreateSolidBrush(g_main.theme.bg);
                         if (g_main.panelBrush) DeleteObject(g_main.panelBrush);
@@ -1221,7 +1413,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_MEASUREITEM: {
             if (!lParam) return FALSE;
             MEASUREITEMSTRUCT* mis = reinterpret_cast<MEASUREITEMSTRUCT*>(lParam);
-            if (mis->CtlID == IDC_ACCOUNTS) { mis->itemHeight = 24; return TRUE; }
+            if (mis->CtlID == IDC_ACCOUNTS || mis->CtlID == IDC_SORT_INST) { mis->itemHeight = 24; return TRUE; }
             return FALSE;
         }
         case WM_DRAWITEM: {
@@ -1232,18 +1424,93 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             bool isMainBtn = (id==IDC_ADD_INST||id==IDC_EDIT_INST||id==IDC_DEL_INST||id==IDC_SETTINGS||id==IDC_ADD_OFFLINE||id==IDC_ADD_MS||id==IDC_LAUNCH||id==IDC_UPDATE||id==IDC_CONSOLE);
             if(isMainBtn){
                 HDC dc=ds->hDC; RECT rc=ds->rcItem;
-                bool isPrimary = (id==IDC_LAUNCH);
                 bool isSmallIcon = (id==IDC_ADD_INST||id==IDC_EDIT_INST||id==IDC_DEL_INST||id==IDC_SETTINGS);
-                COLORREF bg = isPrimary ? g_main.theme.accent : RGB(45,45,47);
-                COLORREF fg = RGB(255,255,255);
-                if(ds->itemState & ODS_DISABLED){ bg=RGB(60,60,60); fg=RGB(130,130,130); }
-                else if(ds->itemState & ODS_SELECTED){ bg=isPrimary?RGB(70,120,235):RGB(60,60,62); }
-                else if(ds->itemState & ODS_HOTLIGHT){ bg=isPrimary?RGB(100,150,255):RGB(55,55,57); }
-                Gdiplus::Graphics g(dc); g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
-                HBRUSH bgFill=CreateSolidBrush(bg); FillRect(dc,&rc,bgFill); DeleteObject(bgFill);
+                HWND btnWnd = ds->hwndItem;
+                bool isHover = (g_hoveredBtn == btnWnd);
+                bool isPressed = (ds->itemState & ODS_SELECTED) != 0;
+                bool isDisabled = (ds->itemState & ODS_DISABLED) != 0;
+                bool isDark = g_main.theme.isDark;
+                COLORREF bg = isDark ? RGB(0,0,0) : g_main.theme.panel;
+                COLORREF fg = isDark ? RGB(255,255,255) : g_main.theme.text;
+                if(isDisabled){ bg=isDark?RGB(20,20,20):RGB(200,200,200); fg=isDark?RGB(100,100,100):RGB(120,120,120); }
+                else if(isPressed){ bg=isDark?RGB(28,28,28):RGB(0,100,180); fg=RGB(255,255,255); }
+                else if(isHover){ bg=isDark?RGB(18,18,18):g_main.theme.accent; fg=RGB(255,255,255); }
+                int bw = rc.right - rc.left; int bh = rc.bottom - rc.top;
+                if (bw <= 0 || bh <= 0) return TRUE;
+                RECT prc = rc;
+                if (isPressed) { prc.left += 2; prc.top += 1; prc.right -= 2; prc.bottom -= 1; }
+                HDC memDC = CreateCompatibleDC(dc);
+                if (!memDC) return TRUE;
+                HBITMAP memBmp = CreateCompatibleBitmap(dc, bw, bh);
+                if (!memBmp) { DeleteDC(memDC); return TRUE; }
+                HGDIOBJ oldBmp = SelectObject(memDC, memBmp);
+                RECT mrc = {0,0,bw,bh};
+                HBRUSH bgFill=CreateSolidBrush(g_main.theme.bg); FillRect(memDC,&mrc,bgFill); DeleteObject(bgFill);
+                Gdiplus::Graphics g(memDC);
+                g.TranslateTransform((Gdiplus::REAL)-rc.left, (Gdiplus::REAL)-rc.top);
+                Gdiplus::GraphicsPath path; path.AddArc(prc.left,prc.top,8,8,180,90); path.AddArc(prc.right-8,prc.top,8,8,270,90); path.AddArc(prc.right-8,prc.bottom-8,8,8,0,90); path.AddArc(prc.left,prc.bottom-8,8,8,90,90); path.CloseFigure();
                 Gdiplus::Color gc(GetRValue(bg),GetGValue(bg),GetBValue(bg)); Gdiplus::SolidBrush br(gc);
-                Gdiplus::GraphicsPath path; path.AddArc(rc.left,rc.top,8,8,180,90); path.AddArc(rc.right-8,rc.top,8,8,270,90); path.AddArc(rc.right-8,rc.bottom-8,8,8,0,90); path.AddArc(rc.left,rc.bottom-8,8,8,90,90); path.CloseFigure();
+                g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
                 g.FillPath(&br,&path);
+                if (g_main.theme.glowEnabled) {
+                    POINT cur; GetCursorPos(&cur);
+                    RECT brc; GetWindowRect(btnWnd, &brc);
+                    float fx = float(cur.x - brc.left);
+                    float fy = float(cur.y - brc.top);
+                    float rbw = float(brc.right - brc.left);
+                    float rbh = float(brc.bottom - brc.top);
+                    float nx = (fx < 0.0f) ? 0.0f : ((fx > rbw) ? rbw : fx);
+                    float ny = (fy < 0.0f) ? 0.0f : ((fy > rbh) ? rbh : fy);
+                    float dx = fx - nx;
+                    float dy = fy - ny;
+                    float d = sqrtf(dx*dx + dy*dy);
+                    BYTE glowR = GetRValue(g_main.theme.glow);
+                    BYTE glowG = GetGValue(g_main.theme.glow);
+                    BYTE glowB = GetBValue(g_main.theme.glow);
+                    float cfx = (fx < 1.0f) ? 1.0f : ((fx > rbw - 1.0f) ? rbw - 1.0f : fx);
+                    float cfy = (fy < 1.0f) ? 1.0f : ((fy > rbh - 1.0f) ? rbh - 1.0f : fy);
+                    const float innerRadius = 280.0f;
+                    if (d < innerRadius) {
+                        float it = 1.0f - d / innerRadius;
+                        it = it * it;
+                        BYTE bgA = BYTE(it * (isPressed ? 18 : (isHover ? 85 : 32)));
+                        if (bgA > 0) {
+                            Gdiplus::PathGradientBrush bgGrad(&path);
+                            bgGrad.SetCenterPoint(Gdiplus::PointF(cfx, cfy));
+                            bgGrad.SetCenterColor(Gdiplus::Color(bgA, glowR, glowG, glowB));
+                            int cnt2 = 1; Gdiplus::Color sur2(0, glowR, glowG, glowB);
+                            bgGrad.SetSurroundColors(&sur2, &cnt2);
+                            bgGrad.SetFocusScales(0.18f, 0.18f);
+                            g.FillPath(&bgGrad, &path);
+                        }
+                    }
+                    if (d < 160) {
+                        float t = 1.0f - d / 160.0f;
+                        float borderT = t * t;
+                        BYTE a = BYTE(40 + borderT * (isHover ? 190 : 120));
+                        for (int pass = 0; pass < 2; ++pass) {
+                            Gdiplus::GraphicsPath border;
+                            float off = (pass == 0) ? 1.0f : 0.0f;
+                            float r = (pass == 0) ? 6.0f : 7.0f;
+                            border.AddArc((Gdiplus::REAL)prc.left+off,(Gdiplus::REAL)prc.top+off,r,r,180,90);
+                            border.AddArc((Gdiplus::REAL)prc.right-off-r,(Gdiplus::REAL)prc.top+off,r,r,270,90);
+                            border.AddArc((Gdiplus::REAL)prc.right-off-r,(Gdiplus::REAL)prc.bottom-off-r,r,r,0,90);
+                            border.AddArc((Gdiplus::REAL)prc.left+off,(Gdiplus::REAL)prc.bottom-off-r,r,r,90,90);
+                            border.CloseFigure();
+                            Gdiplus::PathGradientBrush grad(&border);
+                            grad.SetCenterPoint(Gdiplus::PointF(cfx, cfy));
+                            grad.SetCenterColor(Gdiplus::Color(pass == 0 ? BYTE(a * 3 / 4) : a, glowR, glowG, glowB));
+                            int cnt = 1; Gdiplus::Color sur(0, glowR, glowG, glowB);
+                            grad.SetSurroundColors(&sur, &cnt);
+                            grad.SetFocusScales(0.3f, 0.3f);
+                            float pw = (pass == 0) ? 2.0f : (isHover ? 1.4f : 0.8f);
+                            Gdiplus::Pen pen(&grad, pw);
+                            pen.SetLineJoin(Gdiplus::LineJoinRound);
+                            g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+                            g.DrawPath(&pen, &border);
+                        }
+                    }
+                }
                 HWND btn=ds->hwndItem;
                 Gdiplus::Bitmap* bmp=nullptr;
                 auto it=g_main.btnBmp.find(btn);
@@ -1260,39 +1527,117 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 wchar_t txt[64]; GetWindowTextW(btn,txt,64);
                 if(wcslen(txt)>0 && g_main.font){
                     Gdiplus::SolidBrush tbr(Gdiplus::Color(GetRValue(fg),GetGValue(fg),GetBValue(fg)));
-                    Gdiplus::Font f(dc,g_main.font);
+                    Gdiplus::Font f(memDC,g_main.font);
                     Gdiplus::StringFormat fmt; fmt.SetAlignment(isSmallIcon?Gdiplus::StringAlignmentCenter:Gdiplus::StringAlignmentNear); fmt.SetLineAlignment(Gdiplus::StringAlignmentCenter); fmt.SetTrimming(Gdiplus::StringTrimmingEllipsisCharacter);
                     Gdiplus::RectF rf((Gdiplus::REAL)textLeft,(Gdiplus::REAL)rc.top,(Gdiplus::REAL)(rc.right-textLeft-4),(Gdiplus::REAL)(rc.bottom-rc.top));
                     if(isSmallIcon) rf=Gdiplus::RectF((Gdiplus::REAL)rc.left,(Gdiplus::REAL)rc.top,(Gdiplus::REAL)(rc.right-rc.left),(Gdiplus::REAL)(rc.bottom-rc.top));
-                    g.SetTextRenderingHint(Gdiplus::TextRenderingHintClearTypeGridFit);
+                    g.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
                     g.DrawString(txt,-1,&f,rf,&fmt,&tbr);
                 }
+                BitBlt(dc, rc.left, rc.top, bw, bh, memDC, 0, 0, SRCCOPY);
+                SelectObject(memDC, oldBmp);
+                DeleteObject(memBmp);
+                DeleteDC(memDC);
                 return TRUE;
             }
             if(id==IDC_ACCOUNTS){
                 HDC dc=ds->hDC; RECT rc=ds->rcItem;
                 bool isEdit=(ds->itemState & ODS_COMBOBOXEDIT)!=0;
-                COLORREF bg=g_main.theme.panel;
-                HBRUSH br=CreateSolidBrush(bg); FillRect(dc,&rc,br); DeleteObject(br);
-                SetBkColor(dc,bg); SetTextColor(dc,RGB(255,255,255));
+                HWND cbWnd = ds->hwndItem;
+                bool isHover = (g_hoveredBtn == cbWnd);
+                bool isPressed = (ds->itemState & ODS_SELECTED) != 0 || (cbWnd && SendMessageW(cbWnd, CB_GETDROPPEDSTATE, 0, 0));
+                bool isDisabled = (ds->itemState & ODS_DISABLED) != 0;
+                bool isDark = g_main.theme.isDark;
+                COLORREF bg = isDark ? RGB(0,0,0) : g_main.theme.panel;
+                COLORREF fg = isDark ? RGB(255,255,255) : g_main.theme.text;
+                if(isDisabled){ bg=isDark?RGB(20,20,20):RGB(200,200,200); fg=isDark?RGB(100,100,100):RGB(120,120,120); }
+                else if(isPressed || isHover){ fg=RGB(255,255,255); }
+                int bw = rc.right - rc.left; int bh = rc.bottom - rc.top;
+                if (bw <= 0 || bh <= 0) return TRUE;
+                RECT prc = rc; if (isPressed) { prc.left+=2; prc.top+=1; prc.right-=2; prc.bottom-=1; }
+                HDC memDC = CreateCompatibleDC(dc); if (!memDC) return TRUE;
+                HBITMAP memBmp = CreateCompatibleBitmap(dc, bw, bh); if (!memBmp) { DeleteDC(memDC); return TRUE; }
+                HGDIOBJ oldBmp = SelectObject(memDC, memBmp);
+                RECT mrc={0,0,bw,bh}; HBRUSH bgFill=CreateSolidBrush(g_main.theme.bg); FillRect(memDC,&mrc,bgFill); DeleteObject(bgFill);
+                Gdiplus::Graphics g(memDC); g.TranslateTransform((Gdiplus::REAL)-rc.left,(Gdiplus::REAL)-rc.top);
+                Gdiplus::GraphicsPath path; path.AddArc(prc.left,prc.top,8,8,180,90); path.AddArc(prc.right-8,prc.top,8,8,270,90); path.AddArc(prc.right-8,prc.bottom-8,8,8,0,90); path.AddArc(prc.left,prc.bottom-8,8,8,90,90); path.CloseFigure();
+                Gdiplus::Color gc(GetRValue(bg),GetGValue(bg),GetBValue(bg)); Gdiplus::SolidBrush br2(gc); g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias); g.FillPath(&br2,&path);
+                if (g_main.theme.glowEnabled) {
+                    POINT cur; GetCursorPos(&cur); RECT brc; GetWindowRect(cbWnd,&brc);
+                    float fx=float(cur.x-brc.left), fy=float(cur.y-brc.top), rbw=float(brc.right-brc.left), rbh=float(brc.bottom-brc.top);
+                    float nx=(fx<0)?0:((fx>rbw)?rbw:fx), ny=(fy<0)?0:((fy>rbh)?rbh:fy);
+                    float dx=fx-nx, dy=fy-ny, d=sqrtf(dx*dx+dy*dy);
+                    BYTE glowR=GetRValue(g_main.theme.glow), glowG=GetGValue(g_main.theme.glow), glowB=GetBValue(g_main.theme.glow);
+                    float cfx=(fx<1)?1:((fx>rbw-1)?rbw-1:fx), cfy=(fy<1)?1:((fy>rbh-1)?rbh-1:fy);
+                    const float innerRadius=280.0f;
+                    if(d<innerRadius){ float it=1-d/innerRadius; it*=it; BYTE bgA=BYTE(it*(isPressed?18:(isHover?85:32))); if(bgA>0){ Gdiplus::PathGradientBrush bgGrad(&path); bgGrad.SetCenterPoint(Gdiplus::PointF(cfx,cfy)); bgGrad.SetCenterColor(Gdiplus::Color(bgA,glowR,glowG,glowB)); int cnt2=1; Gdiplus::Color sur2(0,glowR,glowG,glowB); bgGrad.SetSurroundColors(&sur2,&cnt2); bgGrad.SetFocusScales(0.18f,0.18f); g.FillPath(&bgGrad,&path); } }
+                    if(d<160){ float t=1-d/160; float borderT=t*t; BYTE a=BYTE(40+borderT*(isHover?190:120)); for(int pass=0;pass<2;++pass){ Gdiplus::GraphicsPath border; float off=(pass==0)?1.0f:0.0f; float r=(pass==0)?6.0f:7.0f; border.AddArc((Gdiplus::REAL)prc.left+off,(Gdiplus::REAL)prc.top+off,r,r,180,90); border.AddArc((Gdiplus::REAL)prc.right-off-r,(Gdiplus::REAL)prc.top+off,r,r,270,90); border.AddArc((Gdiplus::REAL)prc.right-off-r,(Gdiplus::REAL)prc.bottom-off-r,r,r,0,90); border.AddArc((Gdiplus::REAL)prc.left+off,(Gdiplus::REAL)prc.bottom-off-r,r,r,90,90); border.CloseFigure(); Gdiplus::PathGradientBrush grad(&border); grad.SetCenterPoint(Gdiplus::PointF(cfx,cfy)); grad.SetCenterColor(Gdiplus::Color(pass==0?BYTE(a*3/4):a,glowR,glowG,glowB)); int cnt=1; Gdiplus::Color sur(0,glowR,glowG,glowB); grad.SetSurroundColors(&sur,&cnt); grad.SetFocusScales(0.3f,0.3f); float pw=(pass==0)?2.0f:(isHover?1.4f:0.8f); Gdiplus::Pen pen(&grad,pw); pen.SetLineJoin(Gdiplus::LineJoinRound); g.DrawPath(&pen,&border); } }
+                }
                 int iconSz=16, pad=6;
                 int ix=rc.left+pad, iy=rc.top+(rc.bottom-rc.top-iconSz)/2;
-                if(g_main.acctIcon){
-                    DrawIconEx(dc,ix,iy,g_main.acctIcon,iconSz,iconSz,0,nullptr,DI_NORMAL);
-                }
-                RECT tr=rc; tr.left=ix+iconSz+pad; tr.right-=pad;
+                if(g_main.acctIcon){ Gdiplus::Graphics gg(memDC); gg.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic); }
+                if(g_main.acctIcon) DrawIconEx(memDC,ix,iy,g_main.acctIcon,iconSz,iconSz,0,nullptr,DI_NORMAL);
+                RECT tr={rc.left+ix+iconSz+2 - rc.left,0,0,0}; tr.left=ix+iconSz+pad; tr.top=rc.top; tr.right=rc.right-pad; tr.bottom=rc.bottom;
                 wchar_t buf[256]={};
-                if(isEdit){ if(ds->hwndItem) GetWindowTextW(ds->hwndItem,buf,256); }
-                else if(ds->itemID!=(UINT)-1 && ds->hwndItem){ int len=(int)SendMessageW(ds->hwndItem,CB_GETLBTEXTLEN,ds->itemID,0); if(len>0 && len<256){ SendMessageW(ds->hwndItem,CB_GETLBTEXT,ds->itemID,reinterpret_cast<LPARAM>(buf)); } else if(len==0){ SendMessageW(ds->hwndItem,CB_GETLBTEXT,ds->itemID,reinterpret_cast<LPARAM>(buf)); } }
+                if(isEdit){ if(cbWnd) GetWindowTextW(cbWnd,buf,256); }
+                else if(ds->itemID!=(UINT)-1 && cbWnd){ int len=(int)SendMessageW(cbWnd,CB_GETLBTEXTLEN,ds->itemID,0); if(len>=0 && len<256) SendMessageW(cbWnd,CB_GETLBTEXT,ds->itemID,reinterpret_cast<LPARAM>(buf)); }
                 if(buf[0] && g_main.font){
-                    HFONT oldF=(HFONT)SelectObject(dc,g_main.font);
-                    SetBkMode(dc,TRANSPARENT);
-                    DrawTextW(dc,buf,-1,&tr,DT_SINGLELINE|DT_VCENTER|DT_LEFT|DT_END_ELLIPSIS);
-                    SelectObject(dc,oldF);
+                    Gdiplus::SolidBrush tbr(Gdiplus::Color(GetRValue(fg),GetGValue(fg),GetBValue(fg)));
+                    Gdiplus::Font f(memDC,g_main.font);
+                    Gdiplus::StringFormat fmt; fmt.SetAlignment(Gdiplus::StringAlignmentNear); fmt.SetLineAlignment(Gdiplus::StringAlignmentCenter); fmt.SetTrimming(Gdiplus::StringTrimmingEllipsisCharacter);
+                    Gdiplus::RectF rf((Gdiplus::REAL)tr.left,(Gdiplus::REAL)tr.top,(Gdiplus::REAL)(tr.right-tr.left),(Gdiplus::REAL)(tr.bottom-tr.top));
+                    g.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias); g.DrawString(buf,-1,&f,rf,&fmt,&tbr);
                 }
-                if(isEdit && (ds->itemState & ODS_FOCUS)){
-                    RECT fr=rc; fr.left+=iconSz+pad*2; DrawFocusRect(dc,&fr);
+                BitBlt(dc,rc.left,rc.top,bw,bh,memDC,0,0,SRCCOPY);
+                SelectObject(memDC,oldBmp); DeleteObject(memBmp); DeleteDC(memDC);
+                return TRUE;
+            }
+            if(id==IDC_SORT_INST){
+                HDC dc=ds->hDC; RECT rc=ds->rcItem;
+                bool isEdit=(ds->itemState & ODS_COMBOBOXEDIT)!=0;
+                HWND cbWnd = ds->hwndItem;
+                bool isHover = (g_hoveredBtn == cbWnd);
+                bool isPressed = (ds->itemState & ODS_SELECTED) != 0 || (cbWnd && SendMessageW(cbWnd, CB_GETDROPPEDSTATE, 0, 0));
+                bool isDisabled = (ds->itemState & ODS_DISABLED) != 0;
+                bool isDark = g_main.theme.isDark;
+                COLORREF bg = isDark ? RGB(0,0,0) : g_main.theme.panel;
+                COLORREF fg = isDark ? RGB(255,255,255) : g_main.theme.text;
+                if(isDisabled){ bg=isDark?RGB(20,20,20):RGB(200,200,200); fg=isDark?RGB(100,100,100):RGB(120,120,120); }
+                else if(isPressed || isHover){ fg=RGB(255,255,255); }
+                int bw = rc.right - rc.left; int bh = rc.bottom - rc.top;
+                if (bw <= 0 || bh <= 0) return TRUE;
+                RECT prc2 = rc; if (isPressed) { prc2.left+=2; prc2.top+=1; prc2.right-=2; prc2.bottom-=1; }
+                HDC memDC = CreateCompatibleDC(dc); if (!memDC) return TRUE;
+                HBITMAP memBmp = CreateCompatibleBitmap(dc, bw, bh); if (!memBmp) { DeleteDC(memDC); return TRUE; }
+                HGDIOBJ oldBmp = SelectObject(memDC, memBmp);
+                RECT mrc={0,0,bw,bh}; HBRUSH bgFill=CreateSolidBrush(g_main.theme.bg); FillRect(memDC,&mrc,bgFill); DeleteObject(bgFill);
+                Gdiplus::Graphics g(memDC); g.TranslateTransform((Gdiplus::REAL)-rc.left,(Gdiplus::REAL)-rc.top);
+                Gdiplus::GraphicsPath path; path.AddArc(prc2.left,prc2.top,8,8,180,90); path.AddArc(prc2.right-8,prc2.top,8,8,270,90); path.AddArc(prc2.right-8,prc2.bottom-8,8,8,0,90); path.AddArc(prc2.left,prc2.bottom-8,8,8,90,90); path.CloseFigure();
+                Gdiplus::Color gc(GetRValue(bg),GetGValue(bg),GetBValue(bg)); Gdiplus::SolidBrush br2(gc); g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias); g.FillPath(&br2,&path);
+                if (g_main.theme.glowEnabled) {
+                    POINT cur; GetCursorPos(&cur); RECT brc; GetWindowRect(cbWnd,&brc);
+                    float fx=float(cur.x-brc.left), fy=float(cur.y-brc.top), rbw=float(brc.right-brc.left), rbh=float(brc.bottom-brc.top);
+                    float nx=(fx<0)?0:((fx>rbw)?rbw:fx), ny=(fy<0)?0:((fy>rbh)?rbh:fy);
+                    float dx=fx-nx, dy=fy-ny, d=sqrtf(dx*dx+dy*dy);
+                    BYTE glowR=GetRValue(g_main.theme.glow), glowG=GetGValue(g_main.theme.glow), glowB=GetBValue(g_main.theme.glow);
+                    float cfx=(fx<1)?1:((fx>rbw-1)?rbw-1:fx), cfy=(fy<1)?1:((fy>rbh-1)?rbh-1:fy);
+                    const float innerRadius=280.0f;
+                    if(d<innerRadius){ float it=1-d/innerRadius; it*=it; BYTE bgA=BYTE(it*(isPressed?18:(isHover?85:32))); if(bgA>0){ Gdiplus::PathGradientBrush bgGrad(&path); bgGrad.SetCenterPoint(Gdiplus::PointF(cfx,cfy)); bgGrad.SetCenterColor(Gdiplus::Color(bgA,glowR,glowG,glowB)); int cnt2=1; Gdiplus::Color sur2(0,glowR,glowG,glowB); bgGrad.SetSurroundColors(&sur2,&cnt2); bgGrad.SetFocusScales(0.18f,0.18f); g.FillPath(&bgGrad,&path); } }
+                    if(d<160){ float t=1-d/160; float borderT=t*t; BYTE a=BYTE(40+borderT*(isHover?190:120)); for(int pass=0;pass<2;++pass){ Gdiplus::GraphicsPath border; float off=(pass==0)?1.0f:0.0f; float r=(pass==0)?6.0f:7.0f; border.AddArc((Gdiplus::REAL)prc2.left+off,(Gdiplus::REAL)prc2.top+off,r,r,180,90); border.AddArc((Gdiplus::REAL)prc2.right-off-r,(Gdiplus::REAL)prc2.top+off,r,r,270,90); border.AddArc((Gdiplus::REAL)prc2.right-off-r,(Gdiplus::REAL)prc2.bottom-off-r,r,r,0,90); border.AddArc((Gdiplus::REAL)prc2.left+off,(Gdiplus::REAL)prc2.bottom-off-r,r,r,90,90); border.CloseFigure(); Gdiplus::PathGradientBrush grad(&border); grad.SetCenterPoint(Gdiplus::PointF(cfx,cfy)); grad.SetCenterColor(Gdiplus::Color(pass==0?BYTE(a*3/4):a,glowR,glowG,glowB)); int cnt=1; Gdiplus::Color sur(0,glowR,glowG,glowB); grad.SetSurroundColors(&sur,&cnt); grad.SetFocusScales(0.3f,0.3f); float pw=(pass==0)?2.0f:(isHover?1.4f:0.8f); Gdiplus::Pen pen(&grad,pw); pen.SetLineJoin(Gdiplus::LineJoinRound); g.DrawPath(&pen,&border); } }
                 }
+                RECT tr={prc2.left+6,prc2.top,prc2.right-6,prc2.bottom};
+                wchar_t buf[256]={};
+                if(isEdit){ if(cbWnd) GetWindowTextW(cbWnd,buf,256); }
+                else if(ds->itemID!=(UINT)-1 && cbWnd){ int len=(int)SendMessageW(cbWnd,CB_GETLBTEXTLEN,ds->itemID,0); if(len>=0 && len<256) SendMessageW(cbWnd,CB_GETLBTEXT,ds->itemID,reinterpret_cast<LPARAM>(buf)); }
+                if(buf[0] && g_main.font){
+                    Gdiplus::SolidBrush tbr(Gdiplus::Color(GetRValue(fg),GetGValue(fg),GetBValue(fg)));
+                    Gdiplus::Font f(memDC,g_main.font);
+                    Gdiplus::StringFormat fmt; fmt.SetAlignment(Gdiplus::StringAlignmentNear); fmt.SetLineAlignment(Gdiplus::StringAlignmentCenter); fmt.SetTrimming(Gdiplus::StringTrimmingEllipsisCharacter);
+                    Gdiplus::RectF rf((Gdiplus::REAL)tr.left,(Gdiplus::REAL)tr.top,(Gdiplus::REAL)(tr.right-tr.left),(Gdiplus::REAL)(tr.bottom-tr.top));
+                    g.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias); g.DrawString(buf,-1,&f,rf,&fmt,&tbr);
+                }
+                BitBlt(dc,rc.left,rc.top,bw,bh,memDC,0,0,SRCCOPY);
+                SelectObject(memDC,oldBmp); DeleteObject(memBmp); DeleteDC(memDC);
                 return TRUE;
             }
             if(id==IDC_WINLABEL){
@@ -1335,11 +1680,6 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     DrawTextW(dc, L"Skin", -1, &tr, DT_CENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
                     SelectObject(dc, oldF);
                 }
-                HPEN pen=CreatePen(PS_SOLID, 1, RGB(60,60,60));
-                HPEN oldP=(HPEN)SelectObject(dc, pen);
-                HBRUSH oldB=(HBRUSH)SelectObject(dc, GetStockObject(NULL_BRUSH));
-                Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
-                SelectObject(dc, oldP); SelectObject(dc, oldB); DeleteObject(pen);
                 return TRUE;
             }
             return FALSE;
@@ -1349,9 +1689,11 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             HDC dc = reinterpret_cast<HDC>(wParam);
             HWND ctrl = reinterpret_cast<HWND>(lParam);
             if (ctrl == g_main.hAccounts) {
-                SetBkColor(dc, g_main.theme.panel);
-                SetTextColor(dc, RGB(255,255,255));
-                return reinterpret_cast<LRESULT>(g_main.panelBrush);
+                COLORREF c = g_main.theme.isDark ? g_main.theme.bg : g_main.theme.panel;
+                HBRUSH br = g_main.theme.isDark ? g_main.bgBrush : g_main.panelBrush;
+                SetBkColor(dc, c);
+                SetTextColor(dc, g_main.theme.isDark ? RGB(180,180,180) : g_main.theme.text);
+                return reinterpret_cast<LRESULT>(br);
             }
             SetBkColor(dc, g_main.theme.bg);
             SetTextColor(dc, RGB(255,255,255));
@@ -1360,6 +1702,14 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_CTLCOLORLISTBOX:
         case WM_CTLCOLOREDIT: {
             HDC dc = reinterpret_cast<HDC>(wParam);
+            HWND ctrl = reinterpret_cast<HWND>(lParam);
+            bool isCombo = (ctrl == g_main.hAccounts || ctrl == g_main.hSort
+                || GetParent(ctrl) == g_main.hAccounts || GetParent(ctrl) == g_main.hSort);
+            if (isCombo && g_main.theme.isDark) {
+                SetBkColor(dc, g_main.theme.bg);
+                SetTextColor(dc, RGB(180,180,180));
+                return reinterpret_cast<LRESULT>(g_main.bgBrush);
+            }
             SetBkColor(dc, g_main.theme.panel);
             SetTextColor(dc, RGB(255,255,255));
             return reinterpret_cast<LRESULT>(g_main.panelBrush);
@@ -1493,9 +1843,19 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (g_main.hSkin) { InvalidateRect(g_main.hSkin, nullptr, TRUE); UpdateWindow(g_main.hSkin); }
             return 0;
         }
-        case WM_MOUSEMOVE:
+        case WM_MOUSEMOVE: {
+            TRACKMOUSEEVENT tme{sizeof(tme), TME_LEAVE, hwnd, 0};
+            TrackMouseEvent(&tme);
             moveGlowToCursor();
             return 0;
+        }
+        case WM_MOUSELEAVE: {
+            if (g_hoveredBtn) { InvalidateRect(g_hoveredBtn, nullptr, FALSE); g_hoveredBtn = nullptr; }
+            for (HWND b : g_main.glow.buttons) InvalidateRect(b, nullptr, FALSE);
+            g_lastPt = {-10000, -10000};
+            moveGlowToCursor();
+            return 0;
+        }
         case WM_CLOSE:
             DestroyWindow(hwnd);
             return 0;
@@ -1660,7 +2020,7 @@ int runMainWindow(HINSTANCE hInstance) {
     setCurrentLanguage(g_main.cfg.language.c_str());
     g_main.font = makeFont();
     g_main.iconFont = nullptr;
-    g_main.theme = getThemeForConfig(g_main.cfg.theme, g_main.cfg.customBg, g_main.cfg.customPanel, g_main.cfg.customText, g_main.cfg.customAccent, g_main.cfg.customButton, g_main.cfg.customAlpha);
+    g_main.theme = getThemeForConfig(g_main.cfg.theme, g_main.cfg.customBg, g_main.cfg.customPanel, g_main.cfg.customText, g_main.cfg.customAccent, g_main.cfg.customButton, g_main.cfg.customAlpha, g_main.cfg.customGlow, g_main.cfg.glowEnabled);
     g_main.bgBrush = CreateSolidBrush(g_main.theme.bg);
     g_main.panelBrush = CreateSolidBrush(g_main.theme.panel);
 
@@ -1702,6 +2062,11 @@ int runMainWindow(HINSTANCE hInstance) {
         DeleteObject(g_main.bgBrush);
         DeleteObject(g_main.panelBrush);
         return 1;
+    }
+
+    {
+        BOOL darkMode = TRUE;
+        DwmSetWindowAttribute(hwnd, 20, &darkMode, sizeof(darkMode));
     }
 
     ShowWindow(hwnd, SW_SHOW);

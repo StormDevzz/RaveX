@@ -39,6 +39,8 @@ struct LauncherConfig {
     uint32_t customText = 0xE1E1E1;
     uint32_t customAccent = 0x5A8CFF;
     uint32_t customButton = 0x5A8CFF;
+    uint32_t customGlow = 0xC8E1FF;
+    bool glowEnabled = true;
     int customAlpha = 255;
     std::vector<Account> accounts;
     int activeAccount = -1;

@@ -67,14 +67,15 @@ endif()
 add_custom_command(TARGET kickx_launcher POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/flags" "$<TARGET_FILE_DIR:kickx_launcher>/flags")
 add_custom_command(TARGET kickx_launcher POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/icons" "$<TARGET_FILE_DIR:kickx_launcher>/icons")
 
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/embedded_launcher.rc" "#include \"resource.h\"\nIDR_EMBEDDED_LAUNCHER RCDATA \"kickx_launcher_embedded.exe\"\n")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/embedded_launcher.rc" "#include \"resource.h\"\nIDR_EMBEDDED_LAUNCHER RCDATA \"CMakeFiles/kickx_launcher_embedded.exe\"\n")
 add_custom_command(
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/kickx_launcher_embedded.exe"
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:kickx_launcher>" "${CMAKE_CURRENT_BINARY_DIR}/kickx_launcher_embedded.exe"
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/kickx_launcher_embedded.exe"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:kickx_launcher>" "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/kickx_launcher_embedded.exe"
     DEPENDS kickx_launcher
     VERBATIM
 )
-add_custom_target(embedded_launcher_copy DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/kickx_launcher_embedded.exe")
+add_custom_target(embedded_launcher_copy DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/kickx_launcher_embedded.exe")
 add_executable(KickXSetup WIN32
     setup/main.cpp
     setup/setup_window.cpp

@@ -12,6 +12,7 @@ struct GlowData {
     int curX = 0;
     int curY = 0;
     bool hasPos = false;
+    bool enabled = true;
 };
 void glowCreate(HWND parent, GlowData* data);
 void glowDestroy(GlowData* data);

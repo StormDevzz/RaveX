@@ -324,6 +324,12 @@ LauncherConfig loadLauncherConfig() {
     if (const Json* j = root.find("customAlpha")) {
         if (j->kind == Json::Kind::Number) cfg.customAlpha = static_cast<int>(j->numValue);
     }
+    if (const Json* j = root.find("customGlow")) {
+        if (j->kind == Json::Kind::Number) cfg.customGlow = static_cast<uint32_t>(j->numValue);
+    }
+    if (const Json* j = root.find("glowEnabled")) {
+        if (j->kind == Json::Kind::Bool) cfg.glowEnabled = j->boolValue;
+    }
     if (const Json* j = root.find("saveLogs")) {
         if (j->kind == Json::Kind::Bool) cfg.saveLogs = j->boolValue;
     }
@@ -382,7 +388,10 @@ void saveLauncherConfig(const LauncherConfig& cfg) {
     out += "  \"customText\": " + std::to_string(cfg.customText) + ",\n";
     out += "  \"customAccent\": " + std::to_string(cfg.customAccent) + ",\n";
     out += "  \"customButton\": " + std::to_string(cfg.customButton) + ",\n";
-    out += "  \"customAlpha\": " + std::to_string(cfg.customAlpha) + ",\n";
+    out += "  \"customGlow\": " + std::to_string(cfg.customGlow) + ",\n";
+    out += "  \"glowEnabled\": ";
+    out += cfg.glowEnabled ? "true" : "false";
+    out += ",\n  \"customAlpha\": " + std::to_string(cfg.customAlpha) + ",\n";
     out += "  \"saveLogs\": ";
     out += cfg.saveLogs ? "true" : "false";
     out += ",\n  \"telemetryEnabled\": ";
