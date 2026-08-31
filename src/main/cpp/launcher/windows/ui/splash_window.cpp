@@ -22,10 +22,16 @@ constexpr UINT_PTR TIMER_SPINNER = 1;
 constexpr UINT_PTR TIMER_PHRASE = 2;
 constexpr UINT SPINNER_INTERVAL_MS = 16;
 constexpr UINT PHRASE_INTERVAL_MS = 2200;
-constexpr int SPINNER_RADIUS = 26;
+constexpr int SPINNER_RADIUS = 18;
 constexpr int SPINNER_CX = 260;
 constexpr int SPINNER_CY = 92;
-constexpr int SPINNER_DOTS = 12;
+constexpr int SPINNER_DOTS = 5;
+constexpr float SPINNER_DOT_DELAY = 0.24f;
+constexpr float SPINNER_DOT_RADIUS = 2.5f;
+constexpr float SPINNER_FADE_IN = 0.05f;
+constexpr float SPINNER_FADE_OUT = 0.03f;
+constexpr float SPINNER_PI = 3.14159265f;
+constexpr int SPINNER_LUT_SIZE = 256;
 const char* kPhraseKeys[] = {
     "splash_preparing",
     "splash_loading",
@@ -42,7 +48,7 @@ struct SplashData {
     ThemeColors theme;
     bool done = false;
     float animPhase = 0.0f;
-    float dotPhase[SPINNER_DOTS] = {0.0f};
+    float lut[SPINNER_LUT_SIZE] = {};
     int phraseIndex = 0;
     Gdiplus::Bitmap* winLogo = nullptr;
 };
@@ -76,30 +82,58 @@ void rotatePhrase() {
     const char* text = lang(kPhraseKeys[g_splash.phraseIndex]);
     SetWindowTextW(g_splash.hStatus, fromUtf8(text).c_str());
 }
+void initSpinnerLUT() {
+    for (int i = 0; i < SPINNER_LUT_SIZE; ++i) {
+        float t = (float)i / (SPINNER_LUT_SIZE - 1);
+        float angle;
+        if (t < 0.07f) {
+            float p = t / 0.07f; p = p * p * (3.0f - 2.0f * p);
+            angle = 225.0f + (345.0f - 225.0f) * p;
+        } else if (t < 0.30f) {
+            float p = (t - 0.07f) / (0.30f - 0.07f);
+            angle = 345.0f + (455.0f - 345.0f) * p;
+        } else if (t < 0.39f) {
+            float p = (t - 0.30f) / (0.39f - 0.30f); p = p * p * (3.0f - 2.0f * p);
+            angle = 455.0f + (690.0f - 455.0f) * p;
+        } else if (t < 0.70f) {
+            float p = (t - 0.39f) / (0.70f - 0.39f);
+            angle = 690.0f + (815.0f - 690.0f) * p;
+        } else if (t < 0.75f) {
+            float p = (t - 0.70f) / (0.75f - 0.70f); p = p * p * (3.0f - 2.0f * p);
+            angle = 815.0f + (945.0f - 815.0f) * p;
+        } else {
+            angle = 945.0f;
+        }
+        g_splash.lut[i] = angle * SPINNER_PI / 180.0f;
+    }
+}
+float evalSpinnerLUT(float t) {
+    if (t <= 0) return g_splash.lut[0];
+    if (t >= 1.0f) return g_splash.lut[SPINNER_LUT_SIZE - 1];
+    float fi = t * (SPINNER_LUT_SIZE - 1);
+    int idx = (int)fi;
+    float frac = fi - idx;
+    if (idx >= SPINNER_LUT_SIZE - 1) return g_splash.lut[SPINNER_LUT_SIZE - 1];
+    return g_splash.lut[idx] + (g_splash.lut[idx + 1] - g_splash.lut[idx]) * frac;
+}
 void drawSpinner(HDC hdc, int cx, int cy, float phase) {
     Gdiplus::Graphics g(hdc);
     g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
-    const float step = 2.0f * 3.14159265f / SPINNER_DOTS;
-    const float baseR = 4.2f;
     for (int i = 0; i < SPINNER_DOTS; ++i) {
-        float a = step * static_cast<float>(i) + phase;
-        float px = static_cast<float>(cx) + std::cos(a) * SPINNER_RADIUS;
-        float py = static_cast<float>(cy) + std::sin(a) * SPINNER_RADIUS;
-        float fade = 1.0f - static_cast<float>(i) / SPINNER_DOTS;
-        fade = fade * fade;
-        BYTE alpha = static_cast<BYTE>(90 + fade * 165);
-        float pulse = std::sin(phase * 2.2f + g_splash.dotPhase[i]);
-        float t = (pulse + 1.0f) * 0.5f;
-        t = t * t * (3.0f - 2.0f * t);
-        BYTE tc = g_splash.theme.isDark ? 255 : 0;
-        BYTE c = g_splash.theme.isDark ? static_cast<BYTE>(255.0f * (1.0f - t)) : static_cast<BYTE>(tc + t * (18 - tc));
-        if (!g_splash.theme.isDark) c = static_cast<BYTE>(18 + t * 40);
-        float rr = baseR * (1.0f + 0.35f * pulse);
-        BYTE cr = GetRValue(g_splash.theme.text), cg = GetGValue(g_splash.theme.text), cb = GetBValue(g_splash.theme.text);
-        BYTE fr = BYTE(c * cr / 255), fg = BYTE(c * cg / 255), fb = BYTE(c * cb / 255);
-        if (g_splash.theme.isDark) { fr = c; fg = c; fb = c; }
-        Gdiplus::SolidBrush brush(Gdiplus::Color(alpha, fr, fg, fb));
-        g.FillEllipse(&brush, px - rr, py - rr, rr * 2.0f, rr * 2.0f);
+        float dotPhase = fmod(phase - i * SPINNER_DOT_DELAY, 4.8f);
+        if (dotPhase < 0) dotPhase += 4.8f;
+        float t = dotPhase / 4.8f;
+        if (t >= 0.76f) continue;
+        float alpha = 1.0f;
+        if (t < SPINNER_FADE_IN) alpha = t / SPINNER_FADE_IN;
+        else if (t > 0.76f - SPINNER_FADE_OUT) alpha = (0.76f - t) / SPINNER_FADE_OUT;
+        float angleRad = evalSpinnerLUT(t);
+        float px = static_cast<float>(cx) + sinf(angleRad) * SPINNER_RADIUS;
+        float py = static_cast<float>(cy) - cosf(angleRad) * SPINNER_RADIUS;
+        BYTE a = static_cast<BYTE>(alpha * 255);
+        BYTE tc = g_splash.theme.isDark ? 255 : 40;
+        Gdiplus::SolidBrush brush(Gdiplus::Color(a, tc, tc, tc));
+        g.FillEllipse(&brush, px - SPINNER_DOT_RADIUS, py - SPINNER_DOT_RADIUS, SPINNER_DOT_RADIUS * 2.0f, SPINNER_DOT_RADIUS * 2.0f);
     }
 }
 void splashWorker() {
@@ -159,10 +193,7 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
         case WM_CREATE: {
             g_splash.hwnd = hwnd;
-            srand(static_cast<unsigned>(GetTickCount()));
-            for (int i = 0; i < SPINNER_DOTS; ++i) {
-                g_splash.dotPhase[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 6.2831853f;
-            }
+            initSpinnerLUT();
             g_splash.font = makeSplashFont(-14, FW_NORMAL);
             g_splash.titleFont = makeSplashFont(-22, FW_SEMIBOLD);
             if (g_splash.theme.bg == 0) g_splash.theme = getTheme("dark");
@@ -185,13 +216,13 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         case WM_TIMER: {
             if (wParam == TIMER_SPINNER) {
-                g_splash.animPhase += 0.08f;
-                if (g_splash.animPhase > 100.0f) g_splash.animPhase -= 100.0f;
+                g_splash.animPhase += 0.024f;
+                if (g_splash.animPhase > 4.8f) g_splash.animPhase -= 4.8f;
                 RECT rc;
                 GetClientRect(hwnd, &rc);
-                rc.top = 50;
-                rc.bottom = 150;
-                InvalidateRect(hwnd, &rc, TRUE);
+                rc.top = SPINNER_CY - SPINNER_RADIUS - 10;
+                rc.bottom = SPINNER_CY + SPINNER_RADIUS + 10;
+                InvalidateRect(hwnd, &rc, FALSE);
             } else if (wParam == TIMER_PHRASE) {
                 rotatePhrase();
             }

@@ -3,31 +3,14 @@
 #include "core/include/util.hpp"
 #include "net/include/http.hpp"
 #include "net/include/json.hpp"
-#include <shlobj.h>
+#include <windows.h>
 
 namespace ravex::game {
 
 namespace {
 
-std::wstring gameDir() {
-    PWSTR known = nullptr;
-    std::wstring profile;
-    if (SHGetKnownFolderPath(FOLDERID_Profile, KF_FLAG_DEFAULT, nullptr, &known) == S_OK) {
-        profile = known;
-    }
-    if (known) CoTaskMemFree(known);
-    if (profile.empty()) {
-        DWORD size = GetEnvironmentVariableW(L"USERPROFILE", nullptr, 0);
-        if (size > 0) {
-            profile.resize(size - 1);
-            GetEnvironmentVariableW(L"USERPROFILE", profile.data(), size);
-        }
-    }
-    return joinPath(profile, L".minecraft");
-}
-
 std::wstring fabricVersionDir(const std::string& mcVersion) {
-    return joinPath(joinPath(gameDir(), L"versions"), fromUtf8(mcVersion) + L"-fabric");
+    return joinPath(joinPath(minecraftDir(), L"versions"), fromUtf8(mcVersion) + L"-fabric");
 }
 
 std::wstring fabricJar(const std::string& mcVersion) {
@@ -39,7 +22,7 @@ std::wstring fabricJson(const std::string& mcVersion) {
 }
 
 std::wstring forgeVersionDir(const std::string& mcVersion) {
-    return joinPath(joinPath(gameDir(), L"versions"), fromUtf8(mcVersion) + L"-forge");
+    return joinPath(joinPath(minecraftDir(), L"versions"), fromUtf8(mcVersion) + L"-forge");
 }
 
 std::wstring forgeJson(const std::string& mcVersion) {
@@ -47,7 +30,7 @@ std::wstring forgeJson(const std::string& mcVersion) {
 }
 
 std::wstring quiltVersionDir(const std::string& mcVersion) {
-    return joinPath(joinPath(gameDir(), L"versions"), fromUtf8(mcVersion) + L"-quilt");
+    return joinPath(joinPath(minecraftDir(), L"versions"), fromUtf8(mcVersion) + L"-quilt");
 }
 
 std::wstring quiltJson(const std::string& mcVersion) {
@@ -134,7 +117,7 @@ bool ensureFabric(const std::string& mcVersion, const std::string& loaderVersion
         std::string groupPath = group;
         for(char &c: groupPath) if(c=='.') c='/';
         url = "https://maven.fabricmc.net/" + groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar";
-        std::wstring dest = joinPath(joinPath(gameDir(), L"libraries"), fromUtf8(groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar"));
+        std::wstring dest = joinPath(joinPath(minecraftDir(), L"libraries"), fromUtf8(groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar"));
         // handle windows path separators: groupPath already has /, joinPath will handle
         if (fileExists(dest)) return true;
         createDirs(dest.substr(0, dest.find_last_of(L"\\/")));
@@ -148,7 +131,7 @@ bool ensureFabric(const std::string& mcVersion, const std::string& loaderVersion
     if (!ensureLib("net.fabricmc:fabric-language-kotlin:1.10.0+kotlin.1.8.21")) return false;
     if (!mappingsVersion.empty()) {
         std::string url = "https://maven.fabricmc.net/net/fabricmc/yarn/" + mappingsVersion + "/yarn-" + mappingsVersion + "-v2.jar";
-        std::wstring dest = joinPath(joinPath(gameDir(), L"libraries"), fromUtf8("net/fabricmc/yarn/" + mappingsVersion + "/yarn-" + mappingsVersion + "-v2.jar"));
+        std::wstring dest = joinPath(joinPath(minecraftDir(), L"libraries"), fromUtf8("net/fabricmc/yarn/" + mappingsVersion + "/yarn-" + mappingsVersion + "-v2.jar"));
         if (!fileExists(dest)) {
             createDirs(dest.substr(0, dest.find_last_of(L"\\/")));
             std::string err2;
@@ -288,7 +271,7 @@ bool ensureForge(const std::string& mcVersion, const std::string& loaderVersion,
         std::string groupPath = group;
         for (char& c : groupPath) if (c == '.') c = '/';
         std::string url = mavenUrl + groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar";
-        std::wstring dest = joinPath(joinPath(gameDir(), L"libraries"), fromUtf8(groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar"));
+        std::wstring dest = joinPath(joinPath(minecraftDir(), L"libraries"), fromUtf8(groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar"));
         if (fileExists(dest)) return true;
         createDirs(dest.substr(0, dest.find_last_of(L"\\/")));
         std::string err2;
@@ -367,7 +350,7 @@ bool ensureQuilt(const std::string& mcVersion, const std::string& loaderVersion,
         std::string groupPath = group;
         for (char& c : groupPath) if (c == '.') c = '/';
         std::string url = "https://maven.quiltmc.org/repository/release/" + groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar";
-        std::wstring dest = joinPath(joinPath(gameDir(), L"libraries"), fromUtf8(groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar"));
+        std::wstring dest = joinPath(joinPath(minecraftDir(), L"libraries"), fromUtf8(groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar"));
         if (fileExists(dest)) return true;
         createDirs(dest.substr(0, dest.find_last_of(L"\\/")));
         std::string err2;

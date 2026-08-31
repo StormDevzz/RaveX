@@ -1,6 +1,7 @@
 #include "core/include/config.hpp"
 #include "core/include/paths.hpp"
 #include "core/include/util.hpp"
+#include "net/include/json.hpp"
 #include <windows.h>
 #include <cstdio>
 #include <utility>
@@ -8,220 +9,6 @@
 namespace ravex {
 
 namespace {
-
-struct Json {
-    enum class Kind { Null, Bool, Number, String, Array, Object };
-    Kind kind = Kind::Null;
-    bool boolValue = false;
-    double numValue = 0.0;
-    std::string strValue;
-    std::vector<Json> items;
-    std::vector<std::pair<std::string, Json>> members;
-
-    const Json* find(const std::string& key) const {
-        if (kind != Kind::Object) return nullptr;
-        for (const auto& kv : members) {
-            if (kv.first == key) return &kv.second;
-        }
-        return nullptr;
-    }
-};
-
-class JsonParser {
-public:
-    explicit JsonParser(const std::string& text) : text_(text) {}
-
-    bool parse(Json& out) {
-        skipWs();
-        if (!parseValue(out)) return false;
-        skipWs();
-        return pos_ == text_.size();
-    }
-
-private:
-    const std::string& text_;
-    std::size_t pos_ = 0;
-
-    void skipWs() {
-        while (pos_ < text_.size()) {
-            char c = text_[pos_];
-            if (c != ' ' && c != '\t' && c != '\n' && c != '\r') break;
-            ++pos_;
-        }
-    }
-
-    bool parseValue(Json& out) {
-        skipWs();
-        if (pos_ >= text_.size()) return false;
-        char c = text_[pos_];
-        if (c == '{') return parseObject(out);
-        if (c == '[') return parseArray(out);
-        if (c == '"') {
-            std::string s;
-            if (!parseString(s)) return false;
-            out.kind = Json::Kind::String;
-            out.strValue = std::move(s);
-            return true;
-        }
-        if (c == 't') {
-            if (text_.compare(pos_, 4, "true") != 0) return false;
-            pos_ += 4;
-            out.kind = Json::Kind::Bool;
-            out.boolValue = true;
-            return true;
-        }
-        if (c == 'f') {
-            if (text_.compare(pos_, 5, "false") != 0) return false;
-            pos_ += 5;
-            out.kind = Json::Kind::Bool;
-            out.boolValue = false;
-            return true;
-        }
-        if (c == 'n') {
-            if (text_.compare(pos_, 4, "null") != 0) return false;
-            pos_ += 4;
-            out.kind = Json::Kind::Null;
-            return true;
-        }
-        if (c == '-' || (c >= '0' && c <= '9')) return parseNumber(out);
-        return false;
-    }
-
-    bool parseString(std::string& out) {
-        if (text_[pos_] != '"') return false;
-        ++pos_;
-        out.clear();
-        while (pos_ < text_.size()) {
-            char c = text_[pos_];
-            if (c == '"') {
-                ++pos_;
-                return true;
-            }
-            if (c == '\\') {
-                ++pos_;
-                if (pos_ >= text_.size()) return false;
-                char e = text_[pos_];
-                switch (e) {
-                    case '"': out.push_back('"'); break;
-                    case '\\': out.push_back('\\'); break;
-                    case '/': out.push_back('/'); break;
-                    case 'b': out.push_back('\b'); break;
-                    case 'f': out.push_back('\f'); break;
-                    case 'n': out.push_back('\n'); break;
-                    case 'r': out.push_back('\r'); break;
-                    case 't': out.push_back('\t'); break;
-                    case 'u': {
-                        if (pos_ + 4 >= text_.size()) return false;
-                        unsigned int cp = 0;
-                        for (int i = 1; i <= 4; ++i) {
-                            char h = text_[pos_ + static_cast<std::size_t>(i)];
-                            cp <<= 4;
-                            if (h >= '0' && h <= '9') cp |= static_cast<unsigned int>(h - '0');
-                            else if (h >= 'a' && h <= 'f') cp |= static_cast<unsigned int>(h - 'a' + 10);
-                            else if (h >= 'A' && h <= 'F') cp |= static_cast<unsigned int>(h - 'A' + 10);
-                            else return false;
-                        }
-                        pos_ += 4;
-                        if (cp < 0x80) out.push_back(static_cast<char>(cp));
-                        else if (cp < 0x800) {
-                            out.push_back(static_cast<char>(0xC0 | (cp >> 6)));
-                            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
-                        } else {
-                            out.push_back(static_cast<char>(0xE0 | (cp >> 12)));
-                            out.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
-                            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
-                        }
-                        break;
-                    }
-                    default:
-                        return false;
-                }
-                ++pos_;
-            } else {
-                out.push_back(c);
-                ++pos_;
-            }
-        }
-        return false;
-    }
-
-    bool parseNumber(Json& out) {
-        std::size_t start = pos_;
-        if (pos_ < text_.size() && text_[pos_] == '-') ++pos_;
-        while (pos_ < text_.size() && text_[pos_] >= '0' && text_[pos_] <= '9') ++pos_;
-        if (pos_ < text_.size() && text_[pos_] == '.') {
-            ++pos_;
-            while (pos_ < text_.size() && text_[pos_] >= '0' && text_[pos_] <= '9') ++pos_;
-        }
-        if (pos_ < text_.size() && (text_[pos_] == 'e' || text_[pos_] == 'E')) {
-            ++pos_;
-            if (pos_ < text_.size() && (text_[pos_] == '+' || text_[pos_] == '-')) ++pos_;
-            while (pos_ < text_.size() && text_[pos_] >= '0' && text_[pos_] <= '9') ++pos_;
-        }
-        if (pos_ == start) return false;
-        out.kind = Json::Kind::Number;
-        out.numValue = std::stod(text_.substr(start, pos_ - start));
-        return true;
-    }
-
-    bool parseObject(Json& out) {
-        ++pos_;
-        out.kind = Json::Kind::Object;
-        skipWs();
-        if (pos_ < text_.size() && text_[pos_] == '}') {
-            ++pos_;
-            return true;
-        }
-        while (true) {
-            skipWs();
-            std::string key;
-            if (!parseString(key)) return false;
-            skipWs();
-            if (pos_ >= text_.size() || text_[pos_] != ':') return false;
-            ++pos_;
-            Json value;
-            if (!parseValue(value)) return false;
-            out.members.emplace_back(std::move(key), std::move(value));
-            skipWs();
-            if (pos_ >= text_.size()) return false;
-            if (text_[pos_] == ',') {
-                ++pos_;
-                continue;
-            }
-            if (text_[pos_] == '}') {
-                ++pos_;
-                return true;
-            }
-            return false;
-        }
-    }
-
-    bool parseArray(Json& out) {
-        ++pos_;
-        out.kind = Json::Kind::Array;
-        skipWs();
-        if (pos_ < text_.size() && text_[pos_] == ']') {
-            ++pos_;
-            return true;
-        }
-        while (true) {
-            Json value;
-            if (!parseValue(value)) return false;
-            out.items.push_back(std::move(value));
-            skipWs();
-            if (pos_ >= text_.size()) return false;
-            if (text_[pos_] == ',') {
-                ++pos_;
-                continue;
-            }
-            if (text_[pos_] == ']') {
-                ++pos_;
-                return true;
-            }
-            return false;
-        }
-    }
-};
 
 std::string jsonEscape(const std::string& s) {
     std::string out;
@@ -274,90 +61,69 @@ void deleteTree(const std::wstring& path) {
     RemoveDirectoryW(path.c_str());
 }
 
+using json::Value;
+
+void readBool(const Value& v, const char* key, bool& out) {
+    if (v.has(key) && v.at(key).type() == Value::Type::Bool) out = v.at(key).asBool();
+}
+
+void readNum(const Value& v, const char* key, int& out) {
+    if (v.has(key) && v.at(key).type() == Value::Type::Number) out = static_cast<int>(v.at(key).asNumber());
+}
+
+void readNumU(const Value& v, const char* key, uint32_t& out) {
+    if (v.has(key) && v.at(key).type() == Value::Type::Number) out = static_cast<uint32_t>(v.at(key).asNumber());
+}
+
+void readStr(const Value& v, const char* key, std::string& out) {
+    if (v.has(key) && v.at(key).type() == Value::Type::String) out = v.at(key).asString();
+}
+
 }
 
 LauncherConfig loadLauncherConfig() {
     LauncherConfig cfg;
     std::string text;
     if (!readFile(launcherConfigPath(), text)) return cfg;
-    Json root;
-    if (!JsonParser(text).parse(root)) return cfg;
-    if (const Json* j = root.find("javaPath")) {
-        if (const std::string* v = j->kind == Json::Kind::String ? &j->strValue : nullptr) cfg.javaPath = *v;
+    Value root = Value::parse(text);
+    if (root.isNull()) return cfg;
+    readStr(root, "javaPath", cfg.javaPath);
+    readBool(root, "checkUpdatesOnStart", cfg.checkUpdatesOnStart);
+    readBool(root, "showSnapshots", cfg.showSnapshots);
+    readBool(root, "showBeta", cfg.showBeta);
+    readBool(root, "showAlpha", cfg.showAlpha);
+    readNum(root, "activeAccount", cfg.activeAccount);
+    readStr(root, "theme", cfg.theme);
+    readStr(root, "language", cfg.language);
+    readNumU(root, "customBg", cfg.customBg);
+    readNumU(root, "customPanel", cfg.customPanel);
+    readNumU(root, "customText", cfg.customText);
+    readNumU(root, "customAccent", cfg.customAccent);
+    readNumU(root, "customButton", cfg.customButton);
+    readNum(root, "customAlpha", cfg.customAlpha);
+    readNumU(root, "customGlow", cfg.customGlow);
+    readBool(root, "glowEnabled", cfg.glowEnabled);
+    readBool(root, "customDarkIcons", cfg.customDarkIcons);
+    readBool(root, "autoStart", cfg.autoStart);
+    readBool(root, "saveLogs", cfg.saveLogs);
+    readBool(root, "telemetryEnabled", cfg.telemetryEnabled);
+    if (root.has("installHistory") && root.at("installHistory").type() == Value::Type::Array) {
+        const Value& arr = root.at("installHistory");
+        for (std::size_t i = 0; i < arr.size(); ++i) {
+            if (arr.at(i).type() == Value::Type::String) cfg.installHistory.push_back(arr.at(i).asString());
+        }
     }
-    if (const Json* j = root.find("checkUpdatesOnStart")) {
-        if (j->kind == Json::Kind::Bool) cfg.checkUpdatesOnStart = j->boolValue;
-    }
-    if (const Json* j = root.find("showSnapshots")) {
-        if (j->kind == Json::Kind::Bool) cfg.showSnapshots = j->boolValue;
-    }
-    if (const Json* j = root.find("showBeta")) {
-        if (j->kind == Json::Kind::Bool) cfg.showBeta = j->boolValue;
-    }
-    if (const Json* j = root.find("showAlpha")) {
-        if (j->kind == Json::Kind::Bool) cfg.showAlpha = j->boolValue;
-    }
-    if (const Json* j = root.find("activeAccount")) {
-        if (j->kind == Json::Kind::Number) cfg.activeAccount = static_cast<int>(j->numValue);
-    }
-    if (const Json* j = root.find("theme")) {
-        if (j->kind == Json::Kind::String) cfg.theme = j->strValue;
-    }
-    if (const Json* j = root.find("language")) {
-        if (j->kind == Json::Kind::String) cfg.language = j->strValue;
-    }
-    if (const Json* j = root.find("customBg")) {
-        if (j->kind == Json::Kind::Number) cfg.customBg = static_cast<uint32_t>(j->numValue);
-    }
-    if (const Json* j = root.find("customPanel")) {
-        if (j->kind == Json::Kind::Number) cfg.customPanel = static_cast<uint32_t>(j->numValue);
-    }
-    if (const Json* j = root.find("customText")) {
-        if (j->kind == Json::Kind::Number) cfg.customText = static_cast<uint32_t>(j->numValue);
-    }
-    if (const Json* j = root.find("customAccent")) {
-        if (j->kind == Json::Kind::Number) cfg.customAccent = static_cast<uint32_t>(j->numValue);
-    }
-    if (const Json* j = root.find("customButton")) {
-        if (j->kind == Json::Kind::Number) cfg.customButton = static_cast<uint32_t>(j->numValue);
-    }
-    if (const Json* j = root.find("customAlpha")) {
-        if (j->kind == Json::Kind::Number) cfg.customAlpha = static_cast<int>(j->numValue);
-    }
-    if (const Json* j = root.find("customGlow")) {
-        if (j->kind == Json::Kind::Number) cfg.customGlow = static_cast<uint32_t>(j->numValue);
-    }
-    if (const Json* j = root.find("glowEnabled")) {
-        if (j->kind == Json::Kind::Bool) cfg.glowEnabled = j->boolValue;
-    }
-    if (const Json* j = root.find("customDarkIcons")) {
-        if (j->kind == Json::Kind::Bool) cfg.customDarkIcons = j->boolValue;
-    }
-    if (const Json* j = root.find("saveLogs")) {
-        if (j->kind == Json::Kind::Bool) cfg.saveLogs = j->boolValue;
-    }
-    if (const Json* j = root.find("telemetryEnabled")) {
-        if (j->kind == Json::Kind::Bool) cfg.telemetryEnabled = j->boolValue;
-    }
-    if (const Json* j = root.find("accounts")) {
-        if (j->kind == Json::Kind::Array) {
-            for (const Json& item : j->items) {
-                if (item.kind != Json::Kind::Object) continue;
-                Account account;
-                if (const Json* f = item.find("name")) {
-                    if (f->kind == Json::Kind::String) account.name = f->strValue;
-                }
-                if (const Json* f = item.find("uuid")) {
-                    if (f->kind == Json::Kind::String) account.uuid = f->strValue;
-                }
-                if (const Json* f = item.find("accessToken")) {
-                    if (f->kind == Json::Kind::String) account.accessToken = f->strValue;
-                }
-                if (const Json* f = item.find("type")) {
-                    if (f->kind == Json::Kind::String) account.type = f->strValue;
-                }
-                cfg.accounts.push_back(std::move(account));
-            }
+    if (root.has("accounts") && root.at("accounts").type() == Value::Type::Array) {
+        const Value& arr = root.at("accounts");
+        for (std::size_t i = 0; i < arr.size(); ++i) {
+            const Value& item = arr.at(i);
+            if (item.type() != Value::Type::Object) continue;
+            Account account;
+            readStr(item, "name", account.name);
+            readStr(item, "uuid", account.uuid);
+            readStr(item, "accessToken", account.accessToken);
+            readStr(item, "type", account.type);
+            cfg.accounts.push_back(std::move(account));
         }
     }
     return cfg;
@@ -396,6 +162,10 @@ void saveLauncherConfig(const LauncherConfig& cfg) {
     out += cfg.glowEnabled ? "true" : "false";
     out += ",\n  \"customDarkIcons\": ";
     out += cfg.customDarkIcons ? "true" : "false";
+    out += ",\n  \"installHistory\": [";
+    for (size_t i=0;i<cfg.installHistory.size();++i) { if(i) out+=","; out+= jsonEscape(cfg.installHistory[i]); }
+    out += "],\n  \"autoStart\": ";
+    out += cfg.autoStart ? "true" : "false";
     out += ",\n  \"customAlpha\": " + std::to_string(cfg.customAlpha) + ",\n";
     out += "  \"saveLogs\": ";
     out += cfg.saveLogs ? "true" : "false";

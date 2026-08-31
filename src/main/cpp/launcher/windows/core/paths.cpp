@@ -31,12 +31,16 @@ std::wstring ravexDir() {
     return joinPath(profileDir(), L".ravex");
 }
 
+std::wstring minecraftDir() {
+    return joinPath(profileDir(), L".minecraft");
+}
+
 std::wstring nativesDir() {
     return joinPath(ravexDir(), L"natives");
 }
 
 std::wstring modsDir() {
-    return joinPath(joinPath(profileDir(), L".minecraft"), L"mods");
+    return joinPath(minecraftDir(), L"mods");
 }
 
 std::wstring instancesDir() {

@@ -15,6 +15,7 @@
 #include <shobjidl.h>
 #include <string>
 #include <thread>
+#include <algorithm>
 namespace ravex::setup {
 namespace {
 constexpr int IDC_STATUS = 2001;
@@ -30,6 +31,10 @@ constexpr int IDC_STARTMENU = 2012;
 constexpr int IDC_DETAILS = 2013;
 constexpr int IDC_LANG = 2014;
 constexpr int IDC_CANCEL_SETUP = 2015;
+constexpr int IDC_DISK_INFO = 2016;
+constexpr int IDC_DISK_BAR = 2017;
+constexpr int IDC_AUTOSTART = 2018;
+constexpr int IDC_AUTOLAUNCH = 2019;
 struct SetupData {
     HWND hwnd = nullptr;
     HWND hTitle = nullptr;
@@ -51,6 +56,12 @@ struct SetupData {
     HWND hLangLabel = nullptr;
     HWND hWinIcon = nullptr;
     HWND hCancelSetup = nullptr;
+    HWND hDiskInfo = nullptr;
+    HWND hDiskBar = nullptr;
+    HWND hAutoStart = nullptr;
+    HWND hAutoLaunch = nullptr;
+    bool autoStartChecked = false;
+    bool autoLaunchChecked = true;
     bool cancelRequested = false;
     bool winIconHovered = false;
     float winIconScale = 1.0f;
@@ -115,18 +126,70 @@ void setStatusDetail(const std::string& s) {
     setStatus(s);
     appendDetail(s);
 }
+static constexpr float kWin10Cycle = 4.8f;
+static constexpr int kWin10Dots = 5;
+static constexpr float kWin10Delay = 0.24f;
+static constexpr float kWin10Radius = 18.0f;
+static constexpr float kWin10DotR = 2.5f;
+static constexpr float kWin10PI = 3.14159265f;
+static constexpr float kWin10FadeIn = 0.05f;
+static constexpr float kWin10FadeOut = 0.03f;
+static constexpr int kWin10LUTSize = 256;
+static float kWin10LUT[kWin10LUTSize];
+void initWin10LUT() {
+    for (int i = 0; i < kWin10LUTSize; ++i) {
+        float t = (float)i / (kWin10LUTSize - 1);
+        float angle;
+        if (t < 0.07f) {
+            float p = t / 0.07f;
+            p = p * p * (3.0f - 2.0f * p);
+            angle = 225.0f + (345.0f - 225.0f) * p;
+        } else if (t < 0.30f) {
+            float p = (t - 0.07f) / (0.30f - 0.07f);
+            angle = 345.0f + (455.0f - 345.0f) * p;
+        } else if (t < 0.39f) {
+            float p = (t - 0.30f) / (0.39f - 0.30f);
+            p = p * p * (3.0f - 2.0f * p);
+            angle = 455.0f + (690.0f - 455.0f) * p;
+        } else if (t < 0.70f) {
+            float p = (t - 0.39f) / (0.70f - 0.39f);
+            angle = 690.0f + (815.0f - 690.0f) * p;
+        } else if (t < 0.75f) {
+            float p = (t - 0.70f) / (0.75f - 0.70f);
+            p = p * p * (3.0f - 2.0f * p);
+            angle = 815.0f + (945.0f - 815.0f) * p;
+        } else {
+            angle = 945.0f;
+        }
+        kWin10LUT[i] = angle * kWin10PI / 180.0f;
+    }
+}
+float win10EvalLUT(float t) {
+    if (t <= 0) return kWin10LUT[0];
+    if (t >= 1.0f) return kWin10LUT[kWin10LUTSize - 1];
+    float fi = t * (kWin10LUTSize - 1);
+    int idx = (int)fi;
+    float frac = fi - idx;
+    if (idx >= kWin10LUTSize - 1) return kWin10LUT[kWin10LUTSize - 1];
+    return kWin10LUT[idx] + (kWin10LUT[idx + 1] - kWin10LUT[idx]) * frac;
+}
 void drawSpinner(HDC hdc, int cx, int cy, float phase) {
     Gdiplus::Graphics g(hdc);
     g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
-    const int dots = 12; const int R = 26; const float step = 6.2831853f / dots;
-    for (int i = 0; i < dots; ++i) {
-        float a = step * i + phase;
-        float px = cx + cosf(a) * R;
-        float py = cy + sinf(a) * R;
-        float fade = 1.0f - (float)i / dots; fade = fade*fade;
-        BYTE alpha = (BYTE)(90 + fade*165);
-        Gdiplus::SolidBrush br(Gdiplus::Color(alpha, 0, 120, 212));
-        g.FillEllipse(&br, px-4.0f, py-4.0f, 8.0f, 8.0f);
+    for (int i = 0; i < kWin10Dots; ++i) {
+        float dotPhase = fmod(phase - i * kWin10Delay, kWin10Cycle);
+        if (dotPhase < 0) dotPhase += kWin10Cycle;
+        float t = dotPhase / kWin10Cycle;
+        if (t >= 0.76f) continue;
+        float alpha = 1.0f;
+        if (t < kWin10FadeIn) alpha = t / kWin10FadeIn;
+        else if (t > 0.76f - kWin10FadeOut) alpha = (0.76f - t) / kWin10FadeOut;
+        float angleRad = win10EvalLUT(t);
+        float px = cx + sinf(angleRad) * kWin10Radius;
+        float py = cy - cosf(angleRad) * kWin10Radius;
+        BYTE a = (BYTE)(alpha * 255);
+        Gdiplus::SolidBrush br(Gdiplus::Color(a, 255, 255, 255));
+        g.FillEllipse(&br, px - kWin10DotR, py - kWin10DotR, kWin10DotR * 2.0f, kWin10DotR * 2.0f);
     }
 }
 void showPageImmediate(int page) {
@@ -136,11 +199,15 @@ void showPageImmediate(int page) {
     ShowWindow(g_setup.hWelcome, page == 1 ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hPath, page == 2 ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hBrowse, page == 2 ? SW_SHOW : SW_HIDE);
+    ShowWindow(g_setup.hDiskInfo, page == 2 ? SW_SHOW : SW_HIDE);
+    ShowWindow(g_setup.hDiskBar, page == 2 ? SW_SHOW : SW_HIDE);
     ShowWindow(GetDlgItem(g_setup.hwnd, 3001), page == 2 ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hStartMenu, page == 3 ? SW_SHOW : SW_HIDE);
     ShowWindow(GetDlgItem(g_setup.hwnd, 3002), page == 3 ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hShortcutDesktop, page == 4 ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hShortcutStart, page == 4 ? SW_SHOW : SW_HIDE);
+    ShowWindow(g_setup.hAutoStart, page == 4 ? SW_SHOW : SW_HIDE);
+    ShowWindow(g_setup.hAutoLaunch, page == 4 ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hSummary, page == 5 ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hStatus, page == 6 ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hProgress, SW_HIDE);
@@ -169,7 +236,7 @@ void doFadeTo(int target) {
     showPageImmediate(target);
     RECT rc; GetClientRect(g_setup.hwnd, &rc);
     int w = rc.right - rc.left;
-    HDWP dwp = BeginDeferWindowPos(10);
+    HDWP dwp = BeginDeferWindowPos(14);
     if (dwp) {
         auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y-22, cw, ch, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOCOPYBITS); };
         placeCard(g_setup.hLangCombo, 20, 74, 300, 200);
@@ -180,6 +247,10 @@ void doFadeTo(int target) {
         placeCard(GetDlgItem(g_setup.hwnd, 3002), 20, 55, w-40, 22);
         placeCard(g_setup.hShortcutDesktop, 20, 65, 260, 28);
         placeCard(g_setup.hShortcutStart, 20, 100, 280, 28);
+        placeCard(g_setup.hAutoStart, 20, 135, 280, 28);
+        placeCard(g_setup.hAutoLaunch, 20, 170, 280, 28);
+        placeCard(g_setup.hDiskInfo, 20, 110, 300, 16);
+        placeCard(g_setup.hDiskBar, 330, 110, 160, 14);
         placeCard(g_setup.hStatus, 0, 98, w, 16);
         placeCard(g_setup.hDetailsBtn, 20, 120, 90, 22);
         placeCard(g_setup.hSummary, 20, 55, w-40, 60);
@@ -268,6 +339,28 @@ bool extractEmbeddedLauncher(const std::wstring& dst) {
     if (!ok) { DeleteFileW(dst.c_str()); return false; }
     return isValidLauncherBinary(dst);
 }
+void updateDiskInfo() {
+    wchar_t pathBuf[MAX_PATH]; GetWindowTextW(g_setup.hPath, pathBuf, MAX_PATH);
+    std::wstring path = pathBuf;
+    if (path.empty() || (path.size() < 2 || path[1] != L':')) {
+        SetWindowTextW(g_setup.hDiskInfo, L"");
+        SendMessageW(g_setup.hDiskBar, PBM_SETPOS, 0, 0);
+        return;
+    }
+    std::wstring root = path.substr(0, 3);
+    ULARGE_INTEGER freeBytes, totalBytes;
+    if (GetDiskFreeSpaceExW(root.c_str(), &freeBytes, &totalBytes, nullptr)) {
+        double freeGB = (double)freeBytes.QuadPart / (1024.0*1024*1024);
+        double totalGB = (double)totalBytes.QuadPart / (1024.0*1024*1024);
+        double usedPct = (totalGB > 0) ? ((totalGB - freeGB) / totalGB * 100.0) : 0;
+        wchar_t buf[128]; swprintf_s(buf, L"%.1f GB / %.1f GB (%.0f%% free)", freeGB, totalGB, 100.0 - usedPct);
+        SetWindowTextW(g_setup.hDiskInfo, buf);
+        SendMessageW(g_setup.hDiskBar, PBM_SETPOS, (WPARAM)(int)(usedPct), 0);
+    } else {
+        SetWindowTextW(g_setup.hDiskInfo, L"");
+        SendMessageW(g_setup.hDiskBar, PBM_SETPOS, 0, 0);
+    }
+}
 void workerSetup() {
     g_setup.busy = true;
     g_setup.cancelRequested = false;
@@ -277,6 +370,16 @@ void workerSetup() {
     wchar_t pathBuf[MAX_PATH]; GetWindowTextW(g_setup.hPath, pathBuf, MAX_PATH);
     std::wstring installDir = pathBuf;
     if (installDir.empty()) { setStatusDetail(lang("setup_select_folder")); EnableWindow(g_setup.hInstall, TRUE); g_setup.busy = false; return; }
+    {
+        LauncherConfig lcSave = loadLauncherConfig();
+        std::string narrowDir = toUtf8(installDir);
+        auto it = std::find(lcSave.installHistory.begin(), lcSave.installHistory.end(), narrowDir);
+        if (it != lcSave.installHistory.end()) lcSave.installHistory.erase(it);
+        lcSave.installHistory.push_back(narrowDir);
+        if (lcSave.installHistory.size() > 5) lcSave.installHistory.erase(lcSave.installHistory.begin(), lcSave.installHistory.begin() + (lcSave.installHistory.size() - 5));
+        lcSave.autoStart = g_setup.autoStartChecked;
+        saveLauncherConfig(lcSave);
+    }
     if (isProtectedPath(installDir) && !isUserAdmin()) {
         std::string msg = std::string(lang("setup_select_folder")) + " - " + lang("setup_admin_required");
         setStatusDetail(msg);
@@ -483,14 +586,26 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_dest")).c_str(), WS_CHILD | WS_VISIBLE, 20, 55, 520, 22, hwnd, (HMENU)3001, inst, nullptr);
             g_setup.hPath = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 20, 80, 380, 24, hwnd, (HMENU)IDC_PATH, inst, nullptr);
             g_setup.hBrowse = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_browse")).c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 410, 80, 90, 24, hwnd, (HMENU)IDC_BROWSE, inst, nullptr);
+            g_setup.hDiskInfo = CreateWindowExW(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 110, 300, 16, hwnd, (HMENU)IDC_DISK_INFO, inst, nullptr);
+            g_setup.hDiskBar = CreateWindowExW(0, PROGRESS_CLASSW, nullptr, WS_CHILD | WS_VISIBLE, 330, 110, 160, 14, hwnd, (HMENU)IDC_DISK_BAR, inst, nullptr);
             CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_start")).c_str(), WS_CHILD | WS_VISIBLE, 20, 55, 520, 22, hwnd, (HMENU)3002, inst, nullptr);
             g_setup.hStartMenu = CreateWindowExW(0, L"EDIT", L"KickX", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 20, 80, 520, 24, hwnd, (HMENU)IDC_STARTMENU, inst, nullptr);
             g_setup.hShortcutDesktop = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_shortcut_desktop")).c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 20, 65, 260, 28, hwnd, (HMENU)IDC_SHORTCUT_DESKTOP, inst, nullptr);
             g_setup.hShortcutStart = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_shortcut_start")).c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 20, 100, 280, 28, hwnd, (HMENU)IDC_SHORTCUT_START, inst, nullptr);
+            g_setup.hAutoStart = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_autostart")).c_str(), WS_CHILD | BS_OWNERDRAW, 20, 135, 280, 28, hwnd, (HMENU)IDC_AUTOSTART, inst, nullptr);
+            g_setup.hAutoLaunch = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_autolaunch")).c_str(), WS_CHILD | BS_OWNERDRAW, 20, 170, 280, 28, hwnd, (HMENU)IDC_AUTOLAUNCH, inst, nullptr);
             g_setup.hSummary = CreateWindowExW(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 36, 500, 60, hwnd, nullptr, inst, nullptr);
             SendMessageW(g_setup.hShortcutDesktop, BM_SETCHECK, BST_CHECKED, 0);
             SendMessageW(g_setup.hShortcutStart, BM_SETCHECK, BST_CHECKED, 0);
             PWSTR pLocal = nullptr; if (SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &pLocal) == S_OK) { std::wstring def = std::wstring(pLocal) + L"\\KickX"; SetWindowTextW(g_setup.hPath, def.c_str()); CoTaskMemFree(pLocal); } else SetWindowTextW(g_setup.hPath, L"C:\\KickX");
+            {
+                LauncherConfig lcHist = loadLauncherConfig();
+                if (!lcHist.installHistory.empty()) {
+                    std::wstring last = fromUtf8(lcHist.installHistory.back());
+                    SetWindowTextW(g_setup.hPath, last.c_str());
+                }
+                g_setup.autoStartChecked = lcHist.autoStart;
+            }
             g_setup.hStatus = CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_ready_install")).c_str(), WS_CHILD | WS_VISIBLE | SS_CENTER, 0, 98, 540, 16, hwnd, nullptr, inst, nullptr);
             g_setup.hProgress = CreateWindowExW(0, PROGRESS_CLASSW, nullptr, WS_CHILD, 20, 120, 500, 16, hwnd, (HMENU)IDC_PROGRESS, inst, nullptr);
             g_setup.hDetailsBtn = CreateWindowExW(0, L"BUTTON", fromUtf8(std::string(lang("setup_details")) + "  \xE2\x96\xBC").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 20, 150, 110, 22, hwnd, (HMENU)IDC_DETAILS, inst, nullptr);
@@ -513,6 +628,9 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             SendMessageW(g_setup.hBrowse, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
             SendMessageW(g_setup.hShortcutDesktop, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
             SendMessageW(g_setup.hShortcutStart, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
+            SendMessageW(g_setup.hAutoStart, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
+            SendMessageW(g_setup.hAutoLaunch, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
+            SendMessageW(g_setup.hDiskInfo, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
             SendMessageW(g_setup.hWelcome, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
             SendMessageW(g_setup.hSummary, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
             SendMessageW(g_setup.hStartMenu, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
@@ -522,8 +640,15 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             SetWindowTheme(g_setup.hStartMenu, L"", L"");
             SetWindowTheme(g_setup.hDetailsEdit, L"", L"");
             SetWindowTheme(g_setup.hProgress, L"", L"");
+            SetWindowTheme(g_setup.hDiskBar, L"", L"");
             SendMessageW(g_setup.hProgress, PBM_SETBKCOLOR, 0, g_setup.theme.panel);
             SendMessageW(g_setup.hProgress, PBM_SETBARCOLOR, 0, g_setup.theme.accent);
+            SendMessageW(g_setup.hDiskBar, PBM_SETBKCOLOR, 0, g_setup.theme.panel);
+            SendMessageW(g_setup.hDiskBar, PBM_SETBARCOLOR, 0, g_setup.theme.accent);
+            SendMessageW(g_setup.hDiskBar, PBM_SETRANGE32, 0, 100);
+            updateDiskInfo();
+            if (g_setup.autoStartChecked) SendMessageW(g_setup.hAutoStart, BM_SETCHECK, BST_CHECKED, 0);
+            SendMessageW(g_setup.hAutoLaunch, BM_SETCHECK, BST_CHECKED, 0);
             applyWindowTheme(hwnd, g_setup.theme);
             showPageImmediate(0);
             ravex::ui::glowCreate(hwnd, &g_setup.glow);
@@ -548,7 +673,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
             }
             {
-                std::vector<HWND> btns = {g_setup.hNext, g_setup.hBack, g_setup.hInstall, g_setup.hBrowse, g_setup.hDetailsBtn, g_setup.hShortcutDesktop, g_setup.hShortcutStart, g_setup.hPath, g_setup.hLangCombo, g_setup.hStartMenu, g_setup.hProgress};
+                std::vector<HWND> btns = {g_setup.hNext, g_setup.hBack, g_setup.hInstall, g_setup.hBrowse, g_setup.hDetailsBtn, g_setup.hLangCombo, g_setup.hStartMenu, g_setup.hProgress};
                 ravex::ui::glowSetButtons(&g_setup.glow, btns);
             }
             SetTimer(hwnd, 52, 16, nullptr);
@@ -557,13 +682,41 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_COMMAND: {
             int id = LOWORD(wParam);
             if (id == IDC_BROWSE) {
-                BROWSEINFOW bi{}; bi.hwndOwner = hwnd; bi.lpszTitle = fromUtf8(lang("setup_select_folder")).c_str(); bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
-                LPITEMIDLIST pidl = SHBrowseForFolderW(&bi);
-                if (pidl) { wchar_t path[MAX_PATH]; if (SHGetPathFromIDListW(pidl, path)) SetWindowTextW(g_setup.hPath, path); CoTaskMemFree(pidl); }
+                IFileDialog* pfd = nullptr;
+                if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd)))) {
+                    pfd->SetTitle(fromUtf8(lang("setup_select_folder")).c_str());
+                    DWORD opts = 0;
+                    pfd->GetOptions(&opts);
+                    pfd->SetOptions(opts | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
+                    wchar_t curPath[MAX_PATH]; GetWindowTextW(g_setup.hPath, curPath, MAX_PATH);
+                    IShellItem* psiStart = nullptr;
+                    if (curPath[0]) {
+                        if (SUCCEEDED(SHCreateItemFromParsingName(curPath, nullptr, IID_PPV_ARGS(&psiStart)))) {
+                            pfd->SetFolder(psiStart);
+                            psiStart->Release();
+                        }
+                    }
+                    if (SUCCEEDED(pfd->Show(hwnd))) {
+                        IShellItem* psi = nullptr;
+                        if (SUCCEEDED(pfd->GetResult(&psi))) {
+                            PWSTR pPath = nullptr;
+                            if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH, &pPath))) {
+                                SetWindowTextW(g_setup.hPath, pPath);
+                                CoTaskMemFree(pPath);
+                            }
+                            psi->Release();
+                        }
+                    }
+                    pfd->Release();
+                }
+                updateDiskInfo();
                 return 0;
             }
             if (id == IDC_SHORTCUT_DESKTOP) { g_setup.desktopChecked = !g_setup.desktopChecked; InvalidateRect(g_setup.hShortcutDesktop, nullptr, TRUE); return 0; }
             if (id == IDC_SHORTCUT_START) { g_setup.startChecked = !g_setup.startChecked; InvalidateRect(g_setup.hShortcutStart, nullptr, TRUE); return 0; }
+            if (id == IDC_AUTOSTART) { g_setup.autoStartChecked = !g_setup.autoStartChecked; InvalidateRect(g_setup.hAutoStart, nullptr, TRUE); return 0; }
+            if (id == IDC_AUTOLAUNCH) { g_setup.autoLaunchChecked = !g_setup.autoLaunchChecked; InvalidateRect(g_setup.hAutoLaunch, nullptr, TRUE); return 0; }
+            if (id == IDC_PATH && HIWORD(wParam) == EN_CHANGE) { updateDiskInfo(); return 0; }
             if (id == IDC_DETAILS) {
                 g_setup.detailsVisible = !g_setup.detailsVisible;
                 ShowWindow(g_setup.hDetailsEdit, g_setup.detailsVisible ? SW_SHOW : SW_HIDE);
@@ -636,9 +789,13 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 SelectObject(memDC, oldBmp); DeleteObject(memBmp); DeleteDC(memDC);
                 return 1;
             }
-            if (ds->CtlID == IDC_SHORTCUT_DESKTOP || ds->CtlID == IDC_SHORTCUT_START) {
+            if (ds->CtlID == IDC_SHORTCUT_DESKTOP || ds->CtlID == IDC_SHORTCUT_START || ds->CtlID == IDC_AUTOSTART || ds->CtlID == IDC_AUTOLAUNCH) {
                 HDC dc = ds->hDC; RECT rc = ds->rcItem;
-                bool chk = (ds->CtlID == IDC_SHORTCUT_DESKTOP) ? g_setup.desktopChecked : g_setup.startChecked;
+                bool chk = false;
+                if (ds->CtlID == IDC_SHORTCUT_DESKTOP) chk = g_setup.desktopChecked;
+                else if (ds->CtlID == IDC_SHORTCUT_START) chk = g_setup.startChecked;
+                else if (ds->CtlID == IDC_AUTOSTART) chk = g_setup.autoStartChecked;
+                else if (ds->CtlID == IDC_AUTOLAUNCH) chk = g_setup.autoLaunchChecked;
                 FillRect(dc, &rc, g_setup.bgBrush);
                 int box = 18; int by = rc.top + (rc.bottom - rc.top - box)/2; int bx = rc.left + 4;
                 Gdiplus::Graphics g(dc);
@@ -656,7 +813,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     cpen.SetLineCap(Gdiplus::LineCapRound, Gdiplus::LineCapRound, Gdiplus::DashCapFlat);
                     g.DrawLine(&cpen, bx+5, by+9, bx+8, by+12); g.DrawLine(&cpen, bx+8, by+12, bx+13, by+6);
                 }
-                Gdiplus::SolidBrush tbrush(Gdiplus::Color(255,240,240,240));
+                Gdiplus::SolidBrush tbrush(Gdiplus::Color(255, GetRValue(g_setup.theme.text), GetGValue(g_setup.theme.text), GetBValue(g_setup.theme.text)));
                 Gdiplus::Font f(dc, g_setup.font);
                 RECT tr = {bx+box+10, rc.top, rc.right, rc.bottom};
                 Gdiplus::RectF rf((Gdiplus::REAL)tr.left, (Gdiplus::REAL)tr.top, (Gdiplus::REAL)(tr.right-tr.left), (Gdiplus::REAL)(tr.bottom-tr.top));
@@ -733,8 +890,8 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         case WM_TIMER: {
             if (wParam == 50 && g_setup.page == 6) {
-                g_setup.spinnerPhase += 0.22f;
-                if (g_setup.spinnerPhase > 6.283f) g_setup.spinnerPhase -= 6.283f;
+                g_setup.spinnerPhase += 0.024f;
+                if (g_setup.spinnerPhase > kWin10Cycle) g_setup.spinnerPhase -= kWin10Cycle;
                 RECT rc; GetClientRect(hwnd, &rc);
                 RECT sr = { (rc.right-60)/2, 120, (rc.right+60)/2, 180 };
                 InvalidateRect(hwnd, &sr, FALSE);
@@ -748,7 +905,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 int w = rc.right - rc.left;
                 int h = rc.bottom - rc.top;
                 int so = g_setup.slideOffset;
-                HDWP dwp = BeginDeferWindowPos(10);
+                HDWP dwp = BeginDeferWindowPos(14);
                 if (dwp) {
                     auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y+so, cw, ch, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOCOPYBITS); };
                     placeCard(g_setup.hLangCombo, 20, 74, 300, 200);
@@ -759,6 +916,10 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     placeCard(GetDlgItem(hwnd, 3002), 20, 55, w-40, 22);
                     placeCard(g_setup.hShortcutDesktop, 20, 65, 260, 28);
                     placeCard(g_setup.hShortcutStart, 20, 100, 280, 28);
+                    placeCard(g_setup.hAutoStart, 20, 135, 280, 28);
+                    placeCard(g_setup.hAutoLaunch, 20, 170, 280, 28);
+                    placeCard(g_setup.hDiskInfo, 20, 110, 300, 16);
+                    placeCard(g_setup.hDiskBar, 330, 110, 160, 14);
                     placeCard(g_setup.hStatus, 0, 98, w, 16);
                     placeCard(g_setup.hDetailsBtn, 20, 120, 90, 22);
                     placeCard(g_setup.hSummary, 20, 55, w-40, 60);
@@ -818,7 +979,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             int w = rc.right - rc.left;
             int h = rc.bottom - rc.top;
             int so = g_setup.slideOffset;
-            HDWP dwp = BeginDeferWindowPos(14);
+            HDWP dwp = BeginDeferWindowPos(18);
             if (dwp) {
                 auto placeFixed = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y, cw, ch, SWP_NOZORDER); };
                 auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y+so, cw, ch, SWP_NOZORDER); };
@@ -832,9 +993,13 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 placeCard(g_setup.hLangLabel, 20, 50, w-40, 22);
                 placeCard(g_setup.hPath, 20, 80, w - 140, 24);
                 placeCard(g_setup.hBrowse, w - 110, 80, 90, 24);
+                placeCard(g_setup.hDiskInfo, 20, 110, 300, 16);
+                placeCard(g_setup.hDiskBar, 330, 110, 160, 14);
                 placeCard(g_setup.hStartMenu, 20, 80, w-40, 24);
                 placeCard(g_setup.hShortcutDesktop, 20, 65, 260, 28);
                 placeCard(g_setup.hShortcutStart, 20, 100, 280, 28);
+                placeCard(g_setup.hAutoStart, 20, 135, 280, 28);
+                placeCard(g_setup.hAutoLaunch, 20, 170, 280, 28);
                 placeCard(g_setup.hStatus, 0, 98, w, 16);
                 placeCard(g_setup.hDetailsBtn, 20, 120, 90, 22);
                 int editTop = g_setup.detailsVisible ? 150 : 176;
@@ -941,6 +1106,7 @@ bool runUninstallWindow(HINSTANCE inst) {
     return true;
 }
 bool runSetupWindow(HINSTANCE inst) {
+    initWin10LUT();
     Gdiplus::GdiplusStartupInput si{}; ULONG_PTR tok = 0; Gdiplus::GdiplusStartup(&tok, &si, nullptr);
     { LauncherConfig lc = loadLauncherConfig(); setCurrentLanguage(lc.language.c_str()); }
     std::wstring existing;

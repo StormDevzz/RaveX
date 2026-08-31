@@ -43,6 +43,8 @@ struct LauncherConfig {
     bool glowEnabled = true;
     bool customDarkIcons = false;
     int customAlpha = 255;
+    std::vector<std::string> installHistory;
+    bool autoStart = false;
     std::vector<Account> accounts;
     int activeAccount = -1;
     bool saveLogs = true;

@@ -13,24 +13,16 @@ namespace ravex::game {
 
 namespace {
 
-std::wstring profileDir() {
-    return joinPath(ravexDir(), L"..");
-}
-
-std::wstring gameDir() {
-    return joinPath(profileDir(), L".minecraft");
-}
-
 std::wstring versionsDir() {
-    return joinPath(gameDir(), L"versions");
+    return joinPath(minecraftDir(), L"versions");
 }
 
 std::wstring librariesDir() {
-    return joinPath(gameDir(), L"libraries");
+    return joinPath(minecraftDir(), L"libraries");
 }
 
 std::wstring assetsDir() {
-    return joinPath(gameDir(), L"assets");
+    return joinPath(minecraftDir(), L"assets");
 }
 
 std::wstring clientJar(const std::string& version) {

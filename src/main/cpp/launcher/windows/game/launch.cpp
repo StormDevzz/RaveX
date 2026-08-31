@@ -2,7 +2,6 @@
 #include "core/include/paths.hpp"
 #include "core/include/util.hpp"
 #include <windows.h>
-#include <shlobj.h>
 #include <string>
 #include <vector>
 #include <functional>
@@ -11,22 +10,12 @@ namespace ravex::game {
 
 namespace {
 
-std::wstring gameDir() {
-    PWSTR known = nullptr;
-    std::wstring profile;
-    if (SHGetKnownFolderPath(FOLDERID_Profile, KF_FLAG_DEFAULT, nullptr, &known) == S_OK) {
-        profile = known;
-        CoTaskMemFree(known);
-    }
-    return joinPath(profile, L".minecraft");
-}
-
 std::wstring versionDir(const std::string& version, const std::string& loader) {
     std::wstring ver = fromUtf8(version);
     if (loader == "fabric") ver += L"-fabric";
     else if (loader == "forge") ver += L"-forge";
     else if (loader == "quilt") ver += L"-quilt";
-    return joinPath(joinPath(gameDir(), L"versions"), ver);
+    return joinPath(joinPath(minecraftDir(), L"versions"), ver);
 }
 
 std::wstring clientJarPath(const std::string& version, const std::string& loader) {
@@ -160,8 +149,8 @@ bool launchMinecraft(const LaunchParams& params, std::string* error,
     }
     std::wstring vDir = versionDir(params.mcVersion, params.loader);
     std::wstring natives = ravex::nativesDir();
-    std::wstring gDir = params.gameDir.empty() ? gameDir() : params.gameDir;
-    std::wstring mcGameDir = gameDir();
+    std::wstring gDir = params.gameDir.empty() ? minecraftDir() : params.gameDir;
+    std::wstring mcGameDir = minecraftDir();
 
     std::wstring classpath = jar;
     collectLibrariesRecursive(joinPath(mcGameDir, L"libraries"), classpath);

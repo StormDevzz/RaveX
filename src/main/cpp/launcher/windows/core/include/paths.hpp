@@ -5,6 +5,7 @@ namespace ravex {
 
 std::wstring kickxDir();
 std::wstring ravexDir();
+std::wstring minecraftDir();
 std::wstring nativesDir();
 std::wstring modsDir();
 std::wstring instancesDir();
