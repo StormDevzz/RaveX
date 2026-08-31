@@ -10,7 +10,7 @@ if(WIN32)
     add_compile_definitions(NOMINMAX _USE_MATH_DEFINES)
 endif()
 
-string(TIMESTAMP RAVEX_BUILD "%Y%m%d" UTC)
+string(TIMESTAMP RAVEX_BUILD "%Y%m%d")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/build_info.h.in" "${CMAKE_CURRENT_BINARY_DIR}/build_info.h" @ONLY)
 
 add_executable(kickx_launcher WIN32

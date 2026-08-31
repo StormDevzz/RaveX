@@ -32,6 +32,7 @@ constexpr int IDC_CHK_LOGS = 2113;
 constexpr int IDC_SYS_INFO = 2114;
 constexpr int IDC_CHK_GLOW = 2115;
 constexpr int IDC_GLOW_BTN = 2116;
+constexpr int IDC_CHK_DARK_ICONS = 2117;
 struct SettingsData {
     bool closed = false;
     bool ok = false;
@@ -53,6 +54,8 @@ struct SettingsData {
     HWND hGlowChk = nullptr;
     bool cGlow = false;
     HWND hGlowBtn = nullptr;
+    HWND hDarkIconsChk = nullptr;
+    bool cDarkIcons = false;
     HWND hLangCombo = nullptr;
     HWND hThemeCombo = nullptr;
     HWND hBgBtn = nullptr;
@@ -172,6 +175,7 @@ static COLORREF contrastText(COLORREF bg) {
 
 void updateThemeState(SettingsData* d) {
     bool isCustom = d->selected == "custom";
+    bool isLight = d->selected == "light";
     EnableWindow(d->hBgBtn, isCustom);
     EnableWindow(d->hPanelBtn, isCustom);
     EnableWindow(d->hTextBtn, isCustom);
@@ -179,8 +183,10 @@ void updateThemeState(SettingsData* d) {
     EnableWindow(d->hButtonBtn, isCustom);
     EnableWindow(d->hGlowChk, isCustom);
     EnableWindow(d->hGlowBtn, isCustom && d->cGlow);
+    EnableWindow(d->hDarkIconsChk, isCustom);
     if (d->hGlowChk) InvalidateRect(d->hGlowChk, nullptr, TRUE);
     if (d->hGlowBtn) InvalidateRect(d->hGlowBtn, nullptr, TRUE);
+    if (d->hDarkIconsChk) InvalidateRect(d->hDarkIconsChk, nullptr, TRUE);
     if (isCustom) {
         d->cur.bg = d->cfg.customBg;
         d->cur.panel = d->cfg.customPanel;
@@ -239,6 +245,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             data->cAlpha = data->cfg.showAlpha;
             data->cLogs = data->cfg.saveLogs;
             data->cGlow = data->cfg.glowEnabled;
+            data->cDarkIcons = data->cfg.customDarkIcons;
             data->hUpdate = CreateWindowExW(0, L"BUTTON", tr("check_update_on_start","Check for updates on start").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 16, 44, 400, 22, hwnd, reinterpret_cast<HMENU>(IDC_CHK_UPDATE), inst, nullptr);
             data->hSnap = CreateWindowExW(0, L"BUTTON", tr("show_snapshots","Show snapshots").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 16, 72, 400, 22, hwnd, reinterpret_cast<HMENU>(IDC_CHK_SNAP), inst, nullptr);
             data->hBeta = CreateWindowExW(0, L"BUTTON", tr("show_beta","Show beta versions").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 16, 100, 400, 22, hwnd, reinterpret_cast<HMENU>(IDC_CHK_BETA), inst, nullptr);
@@ -276,17 +283,18 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             data->hTextBtn = CreateWindowExW(0, L"BUTTON", tr("text_label","Text").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 16, 314, 195, 28, hwnd, reinterpret_cast<HMENU>(IDC_TEXT_BTN), inst, nullptr);
             data->hAccentBtn = CreateWindowExW(0, L"BUTTON", tr("accent_label","Accent").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 225, 314, 195, 28, hwnd, reinterpret_cast<HMENU>(IDC_ACCENT_BTN), inst, nullptr);
             data->hButtonBtn = CreateWindowExW(0, L"BUTTON", tr("button_label","Button").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 16, 350, 195, 28, hwnd, reinterpret_cast<HMENU>(IDC_BUTTON_BTN), inst, nullptr);
-            data->hGlowChk = CreateWindowExW(0, L"BUTTON", tr("glow_enable","Enable hover glow").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 16, 386, 400, 22, hwnd, reinterpret_cast<HMENU>(IDC_CHK_GLOW), inst, nullptr);
-            CreateWindowExW(0, L"STATIC", tr("glow_color","Glow color").c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 414, 90, 20, hwnd, nullptr, inst, nullptr);
-            data->hGlowBtn = CreateWindowExW(0, L"BUTTON", tr("glow_color","Glow color").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 110, 412, 195, 28, hwnd, reinterpret_cast<HMENU>(IDC_GLOW_BTN), inst, nullptr);
-            data->hPreview = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | WS_BORDER, 16, 448, 404, 90, hwnd, reinterpret_cast<HMENU>(IDC_PREVIEW), inst, nullptr);
-            data->hSysHeader = CreateWindowExW(0, L"STATIC", fromUtf8(lang("system_info")).c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 550, 400, 16, hwnd, nullptr, inst, nullptr);
-            data->hSysInfo = CreateWindowExW(0, L"STATIC", getSystemInfoText().c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 570, 404, 100, hwnd, reinterpret_cast<HMENU>(IDC_SYS_INFO), inst, nullptr);
+            data->hDarkIconsChk = CreateWindowExW(0, L"BUTTON", tr("dark_icons","Dark icons").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 16, 386, 400, 22, hwnd, reinterpret_cast<HMENU>(IDC_CHK_DARK_ICONS), inst, nullptr);
+            data->hGlowChk = CreateWindowExW(0, L"BUTTON", tr("glow_enable","Enable hover glow").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 16, 408, 400, 22, hwnd, reinterpret_cast<HMENU>(IDC_CHK_GLOW), inst, nullptr);
+            CreateWindowExW(0, L"STATIC", tr("glow_color","Glow color").c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 434, 90, 20, hwnd, nullptr, inst, nullptr);
+            data->hGlowBtn = CreateWindowExW(0, L"BUTTON", tr("glow_color","Glow color").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 110, 432, 195, 28, hwnd, reinterpret_cast<HMENU>(IDC_GLOW_BTN), inst, nullptr);
+            data->hPreview = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | WS_BORDER, 16, 468, 404, 90, hwnd, reinterpret_cast<HMENU>(IDC_PREVIEW), inst, nullptr);
+            data->hSysHeader = CreateWindowExW(0, L"STATIC", fromUtf8(lang("system_info")).c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 570, 400, 16, hwnd, nullptr, inst, nullptr);
+            data->hSysInfo = CreateWindowExW(0, L"STATIC", getSystemInfoText().c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 590, 404, 100, hwnd, reinterpret_cast<HMENU>(IDC_SYS_INFO), inst, nullptr);
             std::wstring buildText = fromUtf8(lang("build")) + L": " + fromUtf8(RAVEX_BUILD);
-            data->hBuild = CreateWindowExW(0, L"STATIC", buildText.c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 680, 200, 16, hwnd, nullptr, inst, nullptr);
-            data->hSave = CreateWindowExW(0, L"BUTTON", tr("save","Save").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 260, 700, 68, 28, hwnd, reinterpret_cast<HMENU>(IDOK), inst, nullptr);
-            data->hCancel = CreateWindowExW(0, L"BUTTON", tr("cancel","Cancel").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 340, 700, 68, 28, hwnd, reinterpret_cast<HMENU>(IDCANCEL), inst, nullptr);
-            for (HWND c : {data->hUpdate, data->hSnap, data->hBeta, data->hAlpha, data->hLogs, data->hGlowChk, data->hLangCombo, data->hThemeCombo, data->hSave, data->hCancel, data->hSysHeader, data->hSysInfo, data->hBuild}) SendMessageW(c, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
+            data->hBuild = CreateWindowExW(0, L"STATIC", buildText.c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 700, 200, 16, hwnd, nullptr, inst, nullptr);
+            data->hSave = CreateWindowExW(0, L"BUTTON", tr("save","Save").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 260, 720, 68, 28, hwnd, reinterpret_cast<HMENU>(IDOK), inst, nullptr);
+            data->hCancel = CreateWindowExW(0, L"BUTTON", tr("cancel","Cancel").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 340, 720, 68, 28, hwnd, reinterpret_cast<HMENU>(IDCANCEL), inst, nullptr);
+            for (HWND c : {data->hUpdate, data->hSnap, data->hBeta, data->hAlpha, data->hLogs, data->hGlowChk, data->hDarkIconsChk, data->hLangCombo, data->hThemeCombo, data->hSave, data->hCancel, data->hSysHeader, data->hSysInfo, data->hBuild}) SendMessageW(c, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             for (HWND b : {data->hSave, data->hCancel, data->hBgBtn, data->hPanelBtn, data->hTextBtn, data->hAccentBtn, data->hButtonBtn, data->hGlowBtn}) SetWindowTheme(b, L"", nullptr);
             SetWindowTheme(data->hThemeCombo, L"Explorer", nullptr);
             glowCreate(hwnd, &data->glow);
@@ -386,9 +394,9 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 SelectObject(dc, old);
                 return TRUE;
             }
-            if (ds->CtlID == IDC_CHK_UPDATE || ds->CtlID == IDC_CHK_SNAP || ds->CtlID == IDC_CHK_BETA || ds->CtlID == IDC_CHK_ALPHA || ds->CtlID == IDC_CHK_LOGS || ds->CtlID == IDC_CHK_GLOW) {
+            if (ds->CtlID == IDC_CHK_UPDATE || ds->CtlID == IDC_CHK_SNAP || ds->CtlID == IDC_CHK_BETA || ds->CtlID == IDC_CHK_ALPHA || ds->CtlID == IDC_CHK_LOGS || ds->CtlID == IDC_CHK_GLOW || ds->CtlID == IDC_CHK_DARK_ICONS) {
                 HDC dc = ds->hDC; RECT rc = ds->rcItem;
-                bool chk = (ds->CtlID == IDC_CHK_UPDATE) ? data->cUpdate : (ds->CtlID == IDC_CHK_SNAP) ? data->cSnap : (ds->CtlID == IDC_CHK_BETA) ? data->cBeta : (ds->CtlID == IDC_CHK_ALPHA) ? data->cAlpha : (ds->CtlID == IDC_CHK_GLOW) ? data->cGlow : data->cLogs;
+                bool chk = (ds->CtlID == IDC_CHK_UPDATE) ? data->cUpdate : (ds->CtlID == IDC_CHK_SNAP) ? data->cSnap : (ds->CtlID == IDC_CHK_BETA) ? data->cBeta : (ds->CtlID == IDC_CHK_ALPHA) ? data->cAlpha : (ds->CtlID == IDC_CHK_GLOW) ? (data->selected == "custom" ? data->cGlow : data->cur.glowEnabled) : (ds->CtlID == IDC_CHK_DARK_ICONS) ? data->cDarkIcons : data->cLogs;
                 auto tr = [&](const char* key, const char* fallback){ const char* v=lang(key); if(!v||strcmp(v,key)==0) v=fallback; return fromUtf8(v); };
                 std::wstring wlabel;
                 if (ds->CtlID == IDC_CHK_UPDATE) wlabel = tr("check_update_on_start", "Check for updates on start");
@@ -396,6 +404,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 else if (ds->CtlID == IDC_CHK_BETA) wlabel = tr("show_beta", "Show beta versions");
                 else if (ds->CtlID == IDC_CHK_ALPHA) wlabel = tr("show_alpha", "Show alpha versions");
                 else if (ds->CtlID == IDC_CHK_GLOW) wlabel = tr("glow_enable", "Enable hover glow");
+                else if (ds->CtlID == IDC_CHK_DARK_ICONS) wlabel = tr("dark_icons", "Dark icons");
                 else wlabel = tr("save_logs", "Save game logs");
                 const wchar_t* label = wlabel.c_str();
                 HBRUSH bg = CreateSolidBrush(data->cur.bg); FillRect(dc, &rc, bg); DeleteObject(bg);
@@ -413,7 +422,8 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     Gdiplus::Pen cpen(Gdiplus::Color(255,255,255,255), 2.0f); cpen.SetLineCap(Gdiplus::LineCapRound,Gdiplus::LineCapRound,Gdiplus::DashCapFlat);
                     g.DrawLine(&cpen, bx+4, by+8, bx+7, by+12); g.DrawLine(&cpen, bx+7, by+12, bx+13, by+4);
                 }
-                Gdiplus::SolidBrush tbr(Gdiplus::Color(255,255,255,255));
+                COLORREF tc = contrastText(data->cur.bg);
+                Gdiplus::SolidBrush tbr(Gdiplus::Color(GetRValue(tc), GetGValue(tc), GetBValue(tc)));
                 Gdiplus::Font f(dc, data->font);
                 Gdiplus::RectF rf((Gdiplus::REAL)(bx+box+8), (Gdiplus::REAL)rc.top, (Gdiplus::REAL)(rc.right - (bx+box+8)), (Gdiplus::REAL)(rc.bottom - rc.top));
                 Gdiplus::StringFormat fmt; fmt.SetAlignment(Gdiplus::StringAlignmentNear); fmt.SetLineAlignment(Gdiplus::StringAlignmentCenter); fmt.SetTrimming(Gdiplus::StringTrimmingEllipsisCharacter); fmt.SetFormatFlags(Gdiplus::StringFormatFlagsNoWrap);
@@ -450,7 +460,8 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (LOWORD(wParam) == IDC_CHK_BETA) { data->cBeta = !data->cBeta; InvalidateRect(data->hBeta, nullptr, TRUE); return 0; }
             if (LOWORD(wParam) == IDC_CHK_ALPHA) { data->cAlpha = !data->cAlpha; InvalidateRect(data->hAlpha, nullptr, TRUE); return 0; }
             if (LOWORD(wParam) == IDC_CHK_LOGS) { data->cLogs = !data->cLogs; InvalidateRect(data->hLogs, nullptr, TRUE); return 0; }
-            if (LOWORD(wParam) == IDC_CHK_GLOW) { data->cGlow = !data->cGlow; InvalidateRect(data->hGlowChk, nullptr, TRUE); return 0; }
+            if (LOWORD(wParam) == IDC_CHK_GLOW) { if (data->selected != "custom") return 0; data->cGlow = !data->cGlow; InvalidateRect(data->hGlowChk, nullptr, TRUE); InvalidateRect(data->hGlowBtn, nullptr, TRUE); EnableWindow(data->hGlowBtn, data->cGlow); return 0; }
+            if (LOWORD(wParam) == IDC_CHK_DARK_ICONS) { if (data->selected != "custom") return 0; data->cDarkIcons = !data->cDarkIcons; InvalidateRect(data->hDarkIconsChk, nullptr, TRUE); return 0; }
             if (LOWORD(wParam) == IDC_BG_BTN) { COLORREF c = pickColor(hwnd, data->cfg.customBg, &data->cfg.customAlpha); data->cfg.customBg = c; data->cur.bg = c; if(data->bgBrush) DeleteObject(data->bgBrush); data->bgBrush = CreateSolidBrush(c); InvalidateRect(hwnd, nullptr, TRUE); for(HWND b : {data->hBgBtn, data->hPanelBtn, data->hTextBtn, data->hAccentBtn, data->hButtonBtn, data->hPreview}) if(b) InvalidateRect(b, nullptr, TRUE); return 0; }
             if (LOWORD(wParam) == IDC_PANEL_BTN) { COLORREF c = pickColor(hwnd, data->cfg.customPanel, &data->cfg.customAlpha); data->cfg.customPanel = c; data->cur.panel = c; InvalidateRect(data->hPreview, nullptr, TRUE); InvalidateRect(data->hPanelBtn, nullptr, TRUE); return 0; }
             if (LOWORD(wParam) == IDC_TEXT_BTN) { COLORREF c = pickColor(hwnd, data->cfg.customText, &data->cfg.customAlpha); data->cfg.customText = c; data->cur.text = c; InvalidateRect(data->hPreview, nullptr, TRUE); InvalidateRect(data->hTextBtn, nullptr, TRUE); return 0; }
@@ -467,7 +478,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (langIdx >=0) { int real = (int)SendMessageW(data->hLangCombo, CB_GETITEMDATA, langIdx, 0); if (real>=0 && real < ravex::langCount()) data->cfg.language = ravex::langCodeByIndex(real); }
                 int tSel = (int)SendMessageW(data->hThemeCombo, CB_GETCURSEL, 0, 0);
                 if (tSel==0) data->cfg.theme="dark"; else if(tSel==1) data->cfg.theme="light"; else if(tSel==2) data->cfg.theme="midnight"; else if(tSel==3) data->cfg.theme="ocean"; else if(tSel==4) data->cfg.theme="forest"; else data->cfg.theme="custom";
-                data->cfg.customBg = data->cur.bg; data->cfg.customPanel = data->cur.panel; data->cfg.customText = data->cur.text; data->cfg.customAccent = data->cur.accent; data->cfg.customButton = data->cur.buttonBg; data->cfg.customGlow = data->cur.glow; data->cfg.glowEnabled = data->cGlow; data->cfg.customAlpha = data->cur.colorAlpha;
+                data->cfg.customBg = data->cur.bg; data->cfg.customPanel = data->cur.panel; data->cfg.customText = data->cur.text; data->cfg.customAccent = data->cur.accent; data->cfg.customButton = data->cur.buttonBg; data->cfg.customGlow = data->cur.glow; data->cfg.glowEnabled = data->cGlow; data->cfg.customDarkIcons = data->cDarkIcons; data->cfg.customAlpha = data->cur.colorAlpha;
                 data->ok = true; data->closed = true; DestroyWindow(hwnd); return 0;
             }
             if (LOWORD(wParam) == IDCANCEL) { data->closed = true; DestroyWindow(hwnd); return 0; }
@@ -512,7 +523,7 @@ bool showSettingsDialog(HWND parent) {
     static bool reg = false;
     if (!reg) { WNDCLASSEXW wc{}; wc.cbSize=sizeof(wc); wc.lpfnWndProc=SettingsProc; wc.hInstance=inst; wc.hIcon=LoadIconW(inst, MAKEINTRESOURCEW(101)); if(!wc.hIcon) wc.hIcon=LoadIconW(nullptr, MAKEINTRESOURCEW(32512)); wc.hIconSm=wc.hIcon; wc.hCursor=LoadCursorW(nullptr, MAKEINTRESOURCEW(32512)); wc.lpszClassName=L"KickXSettings"; RegisterClassExW(&wc); reg=true; }
     RECT pr{}; GetWindowRect(parent, &pr); int pw=pr.right-pr.left; int ph=pr.bottom-pr.top;
-    RECT cr{0,0,440,740}; AdjustWindowRectEx(&cr, WS_POPUP|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MAXIMIZEBOX, FALSE, 0);
+    RECT cr{0,0,440,760}; AdjustWindowRectEx(&cr, WS_POPUP|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MAXIMIZEBOX, FALSE, 0);
     int dw=cr.right-cr.left; int dh=cr.bottom-cr.top;
     int x=pr.left+(pw-dw)/2; int y=pr.top+(ph-dh)/2;
     HMONITOR mon=MonitorFromWindow(parent, MONITOR_DEFAULTTONEAREST); MONITORINFO mi{}; mi.cbSize=sizeof(mi); GetMonitorInfoW(mon,&mi); RECT wr=mi.rcWork;

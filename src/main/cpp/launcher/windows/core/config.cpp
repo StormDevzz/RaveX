@@ -330,6 +330,9 @@ LauncherConfig loadLauncherConfig() {
     if (const Json* j = root.find("glowEnabled")) {
         if (j->kind == Json::Kind::Bool) cfg.glowEnabled = j->boolValue;
     }
+    if (const Json* j = root.find("customDarkIcons")) {
+        if (j->kind == Json::Kind::Bool) cfg.customDarkIcons = j->boolValue;
+    }
     if (const Json* j = root.find("saveLogs")) {
         if (j->kind == Json::Kind::Bool) cfg.saveLogs = j->boolValue;
     }
@@ -391,6 +394,8 @@ void saveLauncherConfig(const LauncherConfig& cfg) {
     out += "  \"customGlow\": " + std::to_string(cfg.customGlow) + ",\n";
     out += "  \"glowEnabled\": ";
     out += cfg.glowEnabled ? "true" : "false";
+    out += ",\n  \"customDarkIcons\": ";
+    out += cfg.customDarkIcons ? "true" : "false";
     out += ",\n  \"customAlpha\": " + std::to_string(cfg.customAlpha) + ",\n";
     out += "  \"saveLogs\": ";
     out += cfg.saveLogs ? "true" : "false";

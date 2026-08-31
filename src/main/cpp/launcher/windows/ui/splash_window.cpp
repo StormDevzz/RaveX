@@ -91,9 +91,14 @@ void drawSpinner(HDC hdc, int cx, int cy, float phase) {
         float pulse = std::sin(phase * 2.2f + g_splash.dotPhase[i]);
         float t = (pulse + 1.0f) * 0.5f;
         t = t * t * (3.0f - 2.0f * t);
-        BYTE c = static_cast<BYTE>(255.0f * (1.0f - t));
+        BYTE tc = g_splash.theme.isDark ? 255 : 0;
+        BYTE c = g_splash.theme.isDark ? static_cast<BYTE>(255.0f * (1.0f - t)) : static_cast<BYTE>(tc + t * (18 - tc));
+        if (!g_splash.theme.isDark) c = static_cast<BYTE>(18 + t * 40);
         float rr = baseR * (1.0f + 0.35f * pulse);
-        Gdiplus::SolidBrush brush(Gdiplus::Color(alpha, c, c, c));
+        BYTE cr = GetRValue(g_splash.theme.text), cg = GetGValue(g_splash.theme.text), cb = GetBValue(g_splash.theme.text);
+        BYTE fr = BYTE(c * cr / 255), fg = BYTE(c * cg / 255), fb = BYTE(c * cb / 255);
+        if (g_splash.theme.isDark) { fr = c; fg = c; fb = c; }
+        Gdiplus::SolidBrush brush(Gdiplus::Color(alpha, fr, fg, fb));
         g.FillEllipse(&brush, px - rr, py - rr, rr * 2.0f, rr * 2.0f);
     }
 }
@@ -209,17 +214,12 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         case WM_CTLCOLORSTATIC: {
             HDC dc = reinterpret_cast<HDC>(wParam);
-            SetTextColor(dc, RGB(255,255,255));
+            SetTextColor(dc, g_splash.theme.text);
             SetBkColor(dc, g_splash.theme.bg);
             return reinterpret_cast<LRESULT>(g_splash.bgBrush);
         }
-        case WM_ERASEBKGND: {
-            HDC dc = reinterpret_cast<HDC>(wParam);
-            RECT rc;
-            GetClientRect(hwnd, &rc);
-            FillRect(dc, &rc, g_splash.bgBrush);
+        case WM_ERASEBKGND:
             return 1;
-        }
         case WM_SPLASH_STATUS: {
             std::string* p = reinterpret_cast<std::string*>(lParam);
             SetWindowTextW(g_splash.hStatus, fromUtf8(*p).c_str());

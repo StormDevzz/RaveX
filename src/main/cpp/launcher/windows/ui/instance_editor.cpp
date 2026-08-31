@@ -150,8 +150,11 @@ void ensureGdiplus() {
         g_gdiInit = true;
     }
 }
+void tintDarkInst(Gdiplus::Bitmap*);
+bool useDarkIconsInst();
 void tintWhiteInst(Gdiplus::Bitmap* bmp) {
     if (!bmp) return;
+    if (useDarkIconsInst()) { tintDarkInst(bmp); return; }
     Gdiplus::Rect rc(0,0,bmp->GetWidth(),bmp->GetHeight());
     Gdiplus::BitmapData d;
     if (bmp->LockBits(&rc, Gdiplus::ImageLockModeRead|Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &d)!=Gdiplus::Ok) return;
@@ -160,6 +163,23 @@ void tintWhiteInst(Gdiplus::Bitmap* bmp) {
         for (UINT x=0;x<d.Width;++x) if (row[x*4+3]) { row[x*4+0]=255; row[x*4+1]=255; row[x*4+2]=255; }
     }
     bmp->UnlockBits(&d);
+}
+void tintDarkInst(Gdiplus::Bitmap* bmp) {
+    if (!bmp) return;
+    Gdiplus::Rect rc(0,0,bmp->GetWidth(),bmp->GetHeight());
+    Gdiplus::BitmapData d;
+    if (bmp->LockBits(&rc, Gdiplus::ImageLockModeRead|Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &d)!=Gdiplus::Ok) return;
+    for (UINT y=0;y<d.Height;++y) {
+        BYTE* row=(BYTE*)d.Scan0+y*d.Stride;
+        for (UINT x=0;x<d.Width;++x) if (row[x*4+3]) { row[x*4+0]=18; row[x*4+1]=18; row[x*4+2]=18; }
+    }
+    bmp->UnlockBits(&d);
+}
+bool useDarkIconsInst() {
+    LauncherConfig cfg = loadLauncherConfig();
+    ThemeColors th = getThemeForConfig(cfg.theme, cfg.customBg, cfg.customPanel, cfg.customText, cfg.customAccent, cfg.customButton, cfg.customAlpha, cfg.customGlow, cfg.glowEnabled);
+    if (cfg.theme == "custom") return cfg.customDarkIcons;
+    return !th.isDark;
 }
 HICON loadViaWIC(const std::wstring& path, int target) {
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);

@@ -23,7 +23,7 @@ static constexpr int kThemeCount = 5;
 
 ThemeColors getTheme(const std::string& name) {
     if (name == "dark") return ThemeColors{RGB(18, 18, 18), RGB(30, 30, 30), RGB(240, 240, 240), RGB(90, 140, 255), RGB(45, 45, 47), RGB(200, 225, 255), true, 255, true};
-    if (name == "light") return ThemeColors{RGB(242, 242, 242), RGB(255, 255, 255), RGB(32, 32, 32), RGB(0, 120, 212), RGB(0, 120, 212), RGB(30, 30, 30), false, 255, false};
+    if (name == "light") return ThemeColors{RGB(232, 232, 235), RGB(248, 248, 250), RGB(18, 18, 20), RGB(0, 104, 216), RGB(0, 104, 216), RGB(30, 30, 30), false, 255, false};
     if (name == "midnight") return ThemeColors{RGB(10, 14, 28), RGB(18, 24, 48), RGB(210, 220, 255), RGB(120, 80, 255), RGB(120, 80, 255), RGB(160, 180, 255), true, 255, true};
     if (name == "ocean") return ThemeColors{RGB(15, 25, 40), RGB(22, 38, 60), RGB(200, 220, 240), RGB(40, 160, 220), RGB(40, 160, 220), RGB(120, 200, 255), true, 255, true};
     if (name == "forest") return ThemeColors{RGB(18, 30, 18), RGB(28, 48, 28), RGB(210, 230, 210), RGB(80, 180, 80), RGB(80, 180, 80), RGB(120, 220, 120), true, 255, true};

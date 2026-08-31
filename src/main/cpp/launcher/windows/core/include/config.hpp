@@ -41,6 +41,7 @@ struct LauncherConfig {
     uint32_t customButton = 0x5A8CFF;
     uint32_t customGlow = 0xC8E1FF;
     bool glowEnabled = true;
+    bool customDarkIcons = false;
     int customAlpha = 255;
     std::vector<Account> accounts;
     int activeAccount = -1;

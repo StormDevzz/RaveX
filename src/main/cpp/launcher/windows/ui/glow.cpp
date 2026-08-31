@@ -3,10 +3,10 @@
 namespace ravex::ui {
 void glowCreate(HWND parent, GlowData* data) {
     if (data->bmp) DeleteObject(data->bmp);
-    const int sz = 160;
+    const int sz = 220;
     const int cx = sz / 2;
     const int cy = sz / 2;
-    const float radius = 75.0f;
+    const float radius = 105.0f;
     void* pvBits = nullptr;
     BITMAPINFO bi{};
     bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -89,7 +89,7 @@ void glowUpdate(GlowData* data) {
         data->hasPos = false;
         return;
     }
-    const int sz = 160;
+    const int sz = 220;
     int tx = pt.x - sz / 2;
     int ty = pt.y - sz / 2;
     if (!data->hasPos) { data->curX = tx; data->curY = ty; data->hasPos = true; }
@@ -128,7 +128,7 @@ void glowUpdateAnywhere(HWND parent, GlowData* data) {
         data->hasPos = false;
         return;
     }
-    const int sz = 160;
+    const int sz = 220;
     int tx = pt.x - sz / 2;
     int ty = pt.y - sz / 2;
     if (!data->hasPos) { data->curX = tx; data->curY = ty; data->hasPos = true; }

@@ -29,6 +29,7 @@ constexpr int IDC_BACK = 2010;
 constexpr int IDC_STARTMENU = 2012;
 constexpr int IDC_DETAILS = 2013;
 constexpr int IDC_LANG = 2014;
+constexpr int IDC_CANCEL_SETUP = 2015;
 struct SetupData {
     HWND hwnd = nullptr;
     HWND hTitle = nullptr;
@@ -48,6 +49,13 @@ struct SetupData {
     HWND hSummary = nullptr;
     HWND hLangCombo = nullptr;
     HWND hLangLabel = nullptr;
+    HWND hWinIcon = nullptr;
+    HWND hCancelSetup = nullptr;
+    bool cancelRequested = false;
+    bool winIconHovered = false;
+    float winIconScale = 1.0f;
+    float winIconTarget = 1.0f;
+    Gdiplus::Bitmap* winIconBmp = nullptr;
     HFONT font = nullptr;
     HFONT titleFont = nullptr;
     HBRUSH bgBrush = nullptr;
@@ -77,6 +85,7 @@ HFONT makeTitleFont() {
     return f;
 }
 void updateLangTexts() {
+    SetWindowTextW(g_setup.hwnd, fromUtf8(lang("setup_title")).c_str());
     SetWindowTextW(g_setup.hTitle, fromUtf8(lang("setup_title")).c_str());
     std::wstring welcome = fromUtf8(std::string(lang("setup_welcome")) + "\r\n" + lang("setup_welcome2"));
     SetWindowTextW(g_setup.hWelcome, welcome.c_str());
@@ -140,6 +149,8 @@ void showPageImmediate(int page) {
     ShowWindow(g_setup.hInstall, page == 5 ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hNext, (page >= 0 && page < 5) ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hBack, (page > 0 && page < 6) ? SW_SHOW : SW_HIDE);
+    ShowWindow(g_setup.hCancelSetup, (page == 6 && g_setup.busy) ? SW_SHOW : SW_HIDE);
+    ShowWindow(g_setup.hWinIcon, SW_SHOW);
     if (page == 5) {
         wchar_t path[MAX_PATH]; GetWindowTextW(g_setup.hPath, path, MAX_PATH);
         wchar_t menu[MAX_PATH]; GetWindowTextW(g_setup.hStartMenu, menu, MAX_PATH);
@@ -152,13 +163,15 @@ void showPageImmediate(int page) {
 }
 void doFadeTo(int target) {
     if (target == g_setup.page) return;
-    g_setup.slideOffset = -28;
+    g_setup.slideOffset = -22;
+    g_setup.fadeAlpha = 0.0f;
+    g_setup.fadeDir = 1;
     showPageImmediate(target);
     RECT rc; GetClientRect(g_setup.hwnd, &rc);
     int w = rc.right - rc.left;
     HDWP dwp = BeginDeferWindowPos(10);
     if (dwp) {
-        auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y-28, cw, ch, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOCOPYBITS); };
+        auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y-22, cw, ch, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOCOPYBITS); };
         placeCard(g_setup.hLangCombo, 20, 74, 300, 200);
         placeCard(g_setup.hLangLabel, 20, 50, w-40, 22);
         placeCard(g_setup.hPath, 20, 80, w - 140, 24);
@@ -191,6 +204,35 @@ void createShortcut(const std::wstring& target, const std::wstring& linkPath, co
         }
         psl->Release();
     }
+}
+bool isUserAdmin() {
+    BOOL admin = FALSE;
+    PSID grp = nullptr;
+    SID_IDENTIFIER_AUTHORITY auth = SECURITY_NT_AUTHORITY;
+    if (AllocateAndInitializeSid(&auth, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0,0,0,0,0,0, &grp)) {
+        CheckTokenMembership(nullptr, grp, &admin);
+        FreeSid(grp);
+    }
+    return admin != FALSE;
+}
+bool isProtectedPath(const std::wstring& p) {
+    std::wstring l = p;
+    for (auto &c : l) c = towlower(c);
+    return l.find(L"\\program files") != std::wstring::npos || l.find(L"\\windows\\") != std::wstring::npos;
+}
+bool validateInstallPath(const std::wstring& p, std::string& err) {
+    if (p.empty()) { err = lang("setup_select_folder"); return false; }
+    if (p.size() > 240) { err = "Path too long"; return false; }
+    const std::wstring invalid = L"<>\"|?*";
+    for (size_t i=0;i<p.size();++i) { wchar_t c=p[i]; if (c==L':' && i==1) continue; if (invalid.find(c) != std::wstring::npos) { err = "Invalid characters in path"; return false; } if (c==L':' && i!=1) { err = "Invalid characters in path"; return false; } }
+    if (p.size() >= 2 && p[1] != L':' && p[0] != L'\\') { err = "Invalid path"; return false; }
+    ULARGE_INTEGER freeBytes; ULARGE_INTEGER total;
+    std::wstring root = p.substr(0, p.find_first_of(L"\\/")+1);
+    if (p.size() >= 2 && p[1]==L':') root = p.substr(0,3);
+    if (GetDiskFreeSpaceExW(root.c_str(), &freeBytes, &total, nullptr)) {
+        if (freeBytes.QuadPart < 500 * 1024 * 1024) { err = "Not enough disk space (need 500MB)"; return false; }
+    }
+    return true;
 }
 bool isValidLauncherBinary(const std::wstring& path) {
     if (!fileExists(path)) return false;
@@ -228,13 +270,24 @@ bool extractEmbeddedLauncher(const std::wstring& dst) {
 }
 void workerSetup() {
     g_setup.busy = true;
+    g_setup.cancelRequested = false;
     g_setup.detailsLog.clear();
     if (g_setup.hDetailsEdit) SetWindowTextW(g_setup.hDetailsEdit, L"");
     EnableWindow(g_setup.hInstall, FALSE);
     wchar_t pathBuf[MAX_PATH]; GetWindowTextW(g_setup.hPath, pathBuf, MAX_PATH);
     std::wstring installDir = pathBuf;
     if (installDir.empty()) { setStatusDetail(lang("setup_select_folder")); EnableWindow(g_setup.hInstall, TRUE); g_setup.busy = false; return; }
+    if (isProtectedPath(installDir) && !isUserAdmin()) {
+        std::string msg = std::string(lang("setup_select_folder")) + " - " + lang("setup_admin_required");
+        setStatusDetail(msg);
+        appendDetail("ERROR: Admin required for: " + toUtf8(installDir));
+        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
+        MessageBoxW(g_setup.hwnd, fromUtf8(msg + "\n" + lang("setup_admin_hint")).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONWARNING);
+        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
+        EnableWindow(g_setup.hInstall, TRUE); g_setup.busy = false; return;
+    }
     createDirs(installDir);
+    if (g_setup.cancelRequested) { g_setup.busy=false; return; }
     wchar_t exePath[MAX_PATH]; GetModuleFileNameW(nullptr, exePath, MAX_PATH);
     std::wstring srcDir = exePath; size_t p = srcDir.find_last_of(L"\\/"); if (p != std::wstring::npos) srcDir = srcDir.substr(0, p);
     std::wstring dstLauncher = joinPath(installDir, L"kickx_launcher.exe");
@@ -257,7 +310,9 @@ void workerSetup() {
         setStatusDetail(std::string(lang("setup_launcher_missing")) + " " + toUtf8(srcLauncher));
         appendDetail("ERROR: kickx_launcher.exe not found next to installer. Expected at: " + toUtf8(srcLauncher));
         appendDetail("Please extract the ZIP fully (both KickXSetup.exe and kickx_launcher.exe) and run setup from extracted folder.");
+        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
         MessageBoxW(g_setup.hwnd, fromUtf8(std::string(lang("setup_launcher_missing")) + "\n" + toUtf8(srcLauncher) + "\n\n" + lang("setup_extract_hint")).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONERROR);
+        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
         EnableWindow(g_setup.hInstall, TRUE);
         g_setup.busy = false;
         return;
@@ -285,9 +340,11 @@ void workerSetup() {
         }
     };
         setStatusDetail(std::string(lang("setup_checking_java")) + " 21...");
+    if (g_setup.cancelRequested) { g_setup.busy=false; return; }
     std::wstring javaPath;
     if (!ravex::game::ensureJava(21, javaPath, &err, [](const std::string& s){ PostMessageW(g_setup.hwnd, WM_APP + 10, 0, (LPARAM)new std::string(s)); }, nullptr)) {
         setStatusDetail(std::string(lang("setup_checking_java")) + " fail: " + err);
+        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
         EnableWindow(g_setup.hInstall, TRUE);
         g_setup.busy = false;
         return;
@@ -308,6 +365,7 @@ void workerSetup() {
             setStatusDetail(std::string(lang("setup_checking_mc")) + " " + version + " (retry " + std::to_string(attempt) + ")...");
             Sleep(1200);
         }
+        if (g_setup.cancelRequested) { g_setup.busy=false; return; }
         if (!ravex::game::ensureMinecraft(version, &err, postProgress, nullptr, &assetId)) {
             setStatusDetail(std::string(lang("setup_checking_mc")) + " fail: " + err);
             appendDetail("ensureMinecraft attempt " + std::to_string(attempt) + " failed: " + err);
@@ -322,7 +380,8 @@ void workerSetup() {
             appendDetail("Integrity attempt " + std::to_string(attempt) + " failed: " + verr);
             if (attempt == 3) {
                 setStatusDetail(std::string(lang("setup_verifying_mc")) + " fail: " + verr);
-                EnableWindow(g_setup.hInstall, TRUE);
+                PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
+        EnableWindow(g_setup.hInstall, TRUE);
                 g_setup.busy = false;
                 return;
             }
@@ -380,18 +439,33 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
         case WM_CREATE: {
             g_setup.hwnd = hwnd;
-            g_setup.theme = getTheme("dark");
-            g_setup.theme.bg = RGB(18,18,18);
-            g_setup.theme.panel = RGB(30,30,30);
-            g_setup.theme.text = RGB(240,240,240);
-            g_setup.theme.accent = RGB(0,120,212);
-            g_setup.theme.buttonBg = RGB(45,45,47);
-            g_setup.theme.isDark = true;
+            {
+                LauncherConfig lc0 = loadLauncherConfig();
+                g_setup.theme = getThemeForConfig(lc0.theme, lc0.customBg, lc0.customPanel, lc0.customText, lc0.customAccent, lc0.customButton, lc0.customAlpha, lc0.customGlow, lc0.glowEnabled);
+                if (g_setup.theme.isDark && lc0.theme != "custom") { g_setup.theme.bg = RGB(18,18,18); g_setup.theme.panel = RGB(30,30,30); }
+                if (!g_setup.theme.isDark) { g_setup.theme.bg = RGB(232,232,235); g_setup.theme.panel = RGB(248,248,250); g_setup.theme.text = RGB(18,18,20); }
+                if (g_setup.theme.isDark) g_setup.theme.glow = RGB(255,255,255);
+            }
             g_setup.bgBrush = CreateSolidBrush(g_setup.theme.bg);
             g_setup.font = makeSetupFont();
             g_setup.titleFont = makeTitleFont();
             HINSTANCE inst = (HINSTANCE)GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
                     g_setup.hTitle = CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_title")).c_str(), WS_CHILD | WS_VISIBLE | SS_CENTER, 0, 10, 560, 26, hwnd, nullptr, inst, nullptr);
+            g_setup.hWinIcon = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 12, 320, 44, 44, hwnd, nullptr, inst, nullptr);
+            {
+                wchar_t exe[MAX_PATH]; GetModuleFileNameW(nullptr, exe, MAX_PATH);
+                std::wstring exeDir = exe; size_t pp = exeDir.find_last_of(L"\\/"); if (pp != std::wstring::npos) exeDir = exeDir.substr(0, pp);
+                std::wstring cand = exeDir + L"\\icons\\win10.png";
+                if (!fileExists(cand)) cand = exeDir + L"\\..\\src\\main\\cpp\\launcher\\windows\\icons\\win10.png";
+                if (fileExists(cand)) g_setup.winIconBmp = Gdiplus::Bitmap::FromFile(cand.c_str());
+                if (g_setup.winIconBmp && !g_setup.theme.isDark) {
+                    Gdiplus::Rect rc(0,0,g_setup.winIconBmp->GetWidth(), g_setup.winIconBmp->GetHeight());
+                    Gdiplus::BitmapData d; if (g_setup.winIconBmp->LockBits(&rc, Gdiplus::ImageLockModeRead|Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &d)==Gdiplus::Ok) {
+                        for (UINT y=0;y<d.Height;++y){ BYTE* row=(BYTE*)d.Scan0+y*d.Stride; for(UINT x=0;x<d.Width;++x) if(row[x*4+3]){ row[x*4+0]=18; row[x*4+1]=18; row[x*4+2]=18; } }
+                        g_setup.winIconBmp->UnlockBits(&d);
+                    }
+                }
+            }
             g_setup.hLangLabel = CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_lang")).c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 50, 500, 22, hwnd, nullptr, inst, nullptr);
             g_setup.hLangCombo = CreateWindowExW(0, L"COMBOBOX", nullptr, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL, 20, 74, 300, 200, hwnd, (HMENU)IDC_LANG, inst, nullptr);
             for (int i = 0; i < langCount(); ++i) {
@@ -408,7 +482,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             g_setup.hWelcome = CreateWindowExW(0, L"STATIC", fromUtf8(std::string(lang("setup_welcome")) + "\r\n" + lang("setup_welcome2")).c_str(), WS_CHILD | WS_VISIBLE | SS_CENTER, 20, 55, 520, 40, hwnd, nullptr, inst, nullptr);
             CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_dest")).c_str(), WS_CHILD | WS_VISIBLE, 20, 55, 520, 22, hwnd, (HMENU)3001, inst, nullptr);
             g_setup.hPath = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 20, 80, 380, 24, hwnd, (HMENU)IDC_PATH, inst, nullptr);
-            g_setup.hBrowse = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_browse")).c_str(), WS_CHILD | WS_VISIBLE, 410, 80, 90, 24, hwnd, (HMENU)IDC_BROWSE, inst, nullptr);
+            g_setup.hBrowse = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_browse")).c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 410, 80, 90, 24, hwnd, (HMENU)IDC_BROWSE, inst, nullptr);
             CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_start")).c_str(), WS_CHILD | WS_VISIBLE, 20, 55, 520, 22, hwnd, (HMENU)3002, inst, nullptr);
             g_setup.hStartMenu = CreateWindowExW(0, L"EDIT", L"KickX", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 20, 80, 520, 24, hwnd, (HMENU)IDC_STARTMENU, inst, nullptr);
             g_setup.hShortcutDesktop = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_shortcut_desktop")).c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 20, 65, 260, 28, hwnd, (HMENU)IDC_SHORTCUT_DESKTOP, inst, nullptr);
@@ -419,11 +493,12 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             PWSTR pLocal = nullptr; if (SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &pLocal) == S_OK) { std::wstring def = std::wstring(pLocal) + L"\\KickX"; SetWindowTextW(g_setup.hPath, def.c_str()); CoTaskMemFree(pLocal); } else SetWindowTextW(g_setup.hPath, L"C:\\KickX");
             g_setup.hStatus = CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_ready_install")).c_str(), WS_CHILD | WS_VISIBLE | SS_CENTER, 0, 98, 540, 16, hwnd, nullptr, inst, nullptr);
             g_setup.hProgress = CreateWindowExW(0, PROGRESS_CLASSW, nullptr, WS_CHILD, 20, 120, 500, 16, hwnd, (HMENU)IDC_PROGRESS, inst, nullptr);
-            g_setup.hDetailsBtn = CreateWindowExW(0, L"BUTTON", fromUtf8(std::string(lang("setup_details")) + "  \xE2\x96\xBC").c_str(), WS_CHILD | WS_VISIBLE, 20, 150, 110, 22, hwnd, (HMENU)IDC_DETAILS, inst, nullptr);
+            g_setup.hDetailsBtn = CreateWindowExW(0, L"BUTTON", fromUtf8(std::string(lang("setup_details")) + "  \xE2\x96\xBC").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 20, 150, 110, 22, hwnd, (HMENU)IDC_DETAILS, inst, nullptr);
             g_setup.hDetailsEdit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VSCROLL | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL, 20, 176, 540, 120, hwnd, nullptr, inst, nullptr);
-            g_setup.hInstall = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_install")).c_str(), WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 160, 180, 100, 32, hwnd, (HMENU)IDC_INSTALL, inst, nullptr);
-            g_setup.hNext = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_next")).c_str(), WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 380, 200, 80, 28, hwnd, (HMENU)IDC_NEXT, inst, nullptr);
-            g_setup.hBack = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_back")).c_str(), WS_CHILD | WS_VISIBLE, 280, 200, 80, 28, hwnd, (HMENU)IDC_BACK, inst, nullptr);
+            g_setup.hInstall = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_install")).c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 160, 180, 100, 32, hwnd, (HMENU)IDC_INSTALL, inst, nullptr);
+            g_setup.hNext = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_next")).c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 380, 200, 80, 28, hwnd, (HMENU)IDC_NEXT, inst, nullptr);
+            g_setup.hBack = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("setup_back")).c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 280, 200, 80, 28, hwnd, (HMENU)IDC_BACK, inst, nullptr);
+            g_setup.hCancelSetup = CreateWindowExW(0, L"BUTTON", fromUtf8(lang("cancel")).c_str(), WS_CHILD | BS_OWNERDRAW, 280, 200, 80, 28, hwnd, (HMENU)IDC_CANCEL_SETUP, inst, nullptr);
             SendMessageW(g_setup.hTitle, WM_SETFONT, (WPARAM)g_setup.titleFont, TRUE);
             SendMessageW(g_setup.hLangLabel, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
             SendMessageW(g_setup.hLangCombo, WM_SETFONT, (WPARAM)g_setup.font, TRUE);
@@ -446,10 +521,15 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             SetWindowTheme(g_setup.hPath, L"", L"");
             SetWindowTheme(g_setup.hStartMenu, L"", L"");
             SetWindowTheme(g_setup.hDetailsEdit, L"", L"");
+            SetWindowTheme(g_setup.hProgress, L"", L"");
+            SendMessageW(g_setup.hProgress, PBM_SETBKCOLOR, 0, g_setup.theme.panel);
+            SendMessageW(g_setup.hProgress, PBM_SETBARCOLOR, 0, g_setup.theme.accent);
+            applyWindowTheme(hwnd, g_setup.theme);
             showPageImmediate(0);
             ravex::ui::glowCreate(hwnd, &g_setup.glow);
             g_setup.glow.anywhere = true;
             g_setup.glow.parent = hwnd;
+            g_setup.glow.enabled = g_setup.theme.glowEnabled;
             if (g_setup.glow.bmp) {
                 BITMAP bm{}; GetObjectW(g_setup.glow.bmp, sizeof(bm), &bm);
                 HDC hdcScreen = GetDC(nullptr);
@@ -460,15 +540,15 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 if (pv) {
                     BYTE* px=(BYTE*)pv;
                     for(int y=0;y<160;++y) for(int x=0;x<160;++x){
-                        float dx=x-80, dy=y-80; float dist=sqrtf(dx*dx+dy*dy); float t=dist/75.0f; if(t>1) t=1; float s=1-t; float a=s*s*s*60;
-                        BYTE al=(BYTE)(a>255?255:a); float f=al/255.0f; int o=(y*160+x)*4; px[o+0]= (BYTE)(140*f); px[o+1]=(BYTE)(180*f); px[o+2]=(BYTE)(255*f); px[o+3]=al;
+                        float dx=x-80, dy=y-80; float dist=sqrtf(dx*dx+dy*dy); float t=dist/75.0f; if(t>1) t=1; float s=1-t; float a=s*s*s*90;
+                        BYTE al=(BYTE)(a>255?255:a); float f=al/255.0f; int o=(y*160+x)*4; px[o+0]= (BYTE)(255*f); px[o+1]=(BYTE)(255*f); px[o+2]=(BYTE)(255*f); px[o+3]=al;
                     }
                     DeleteObject(g_setup.glow.bmp);
                     g_setup.glow.bmp = whiteBmp;
                 }
             }
             {
-                std::vector<HWND> btns = {g_setup.hNext, g_setup.hBack, g_setup.hInstall, g_setup.hBrowse, g_setup.hDetailsBtn, g_setup.hShortcutDesktop, g_setup.hShortcutStart};
+                std::vector<HWND> btns = {g_setup.hNext, g_setup.hBack, g_setup.hInstall, g_setup.hBrowse, g_setup.hDetailsBtn, g_setup.hShortcutDesktop, g_setup.hShortcutStart, g_setup.hPath, g_setup.hLangCombo, g_setup.hStartMenu, g_setup.hProgress};
                 ravex::ui::glowSetButtons(&g_setup.glow, btns);
             }
             SetTimer(hwnd, 52, 16, nullptr);
@@ -503,6 +583,13 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 return 0;
             }
             if (id == IDC_NEXT) {
+                if (g_setup.page == 2) {
+                    wchar_t pbuf[MAX_PATH]; GetWindowTextW(g_setup.hPath, pbuf, MAX_PATH);
+                    std::string verr; if (!validateInstallPath(pbuf, verr)) {
+                        MessageBoxW(hwnd, fromUtf8(verr).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONWARNING);
+                        return 0;
+                    }
+                }
                 if (g_setup.page < 5) showPage(g_setup.page + 1);
                 return 0;
             }
@@ -510,7 +597,18 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 if (g_setup.page > 0) showPage(g_setup.page - 1);
                 return 0;
             }
+            if (id == IDC_CANCEL_SETUP) {
+                if (g_setup.busy) { g_setup.cancelRequested = true; g_setup.busy = false; }
+                showPage(5);
+                return 0;
+            }
             if (id == IDC_INSTALL && !g_setup.busy) {
+                wchar_t pbuf[MAX_PATH]; GetWindowTextW(g_setup.hPath, pbuf, MAX_PATH);
+                std::string verr; if (!validateInstallPath(pbuf, verr)) {
+                    MessageBoxW(hwnd, fromUtf8(verr).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONWARNING);
+                    return 0;
+                }
+                g_setup.cancelRequested = false;
                 showPage(6);
                 std::thread(workerSetup).detach();
                 return 0;
@@ -519,6 +617,25 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         case WM_DRAWITEM: {
             DRAWITEMSTRUCT* ds = (DRAWITEMSTRUCT*)lParam;
+            if (ds->hwndItem == g_setup.hWinIcon) {
+                HDC dc = ds->hDC; RECT rc = ds->rcItem;
+                int bw = rc.right-rc.left, bh = rc.bottom-rc.top; if (bw<=0||bh<=0) return 1;
+                HDC memDC = CreateCompatibleDC(dc); HBITMAP memBmp = CreateCompatibleBitmap(dc, bw, bh);
+                if (!memDC || !memBmp) { if(memDC) DeleteDC(memDC); if(memBmp) DeleteObject(memBmp); return 1; }
+                HGDIOBJ oldBmp = SelectObject(memDC, memBmp);
+                RECT mrc{0,0,bw,bh}; HBRUSH bgBr = CreateSolidBrush(g_setup.theme.bg); FillRect(memDC, &mrc, bgBr); DeleteObject(bgBr);
+                if (g_setup.winIconBmp && g_setup.winIconBmp->GetLastStatus() == Gdiplus::Ok) {
+                    int base = 28;
+                    float sc = g_setup.winIconScale;
+                    int sw = int(base*sc), sh = int(base*sc);
+                    int dx = (bw - sw)/2, dy = (bh - sh)/2;
+                    Gdiplus::Graphics g(memDC); g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic); g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality); g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+                    g.DrawImage(g_setup.winIconBmp, Gdiplus::Rect(dx, dy, sw, sh));
+                }
+                BitBlt(dc, rc.left, rc.top, bw, bh, memDC, 0,0, SRCCOPY);
+                SelectObject(memDC, oldBmp); DeleteObject(memBmp); DeleteDC(memDC);
+                return 1;
+            }
             if (ds->CtlID == IDC_SHORTCUT_DESKTOP || ds->CtlID == IDC_SHORTCUT_START) {
                 HDC dc = ds->hDC; RECT rc = ds->rcItem;
                 bool chk = (ds->CtlID == IDC_SHORTCUT_DESKTOP) ? g_setup.desktopChecked : g_setup.startChecked;
@@ -546,6 +663,48 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 Gdiplus::StringFormat fmt; fmt.SetAlignment(Gdiplus::StringAlignmentNear); fmt.SetLineAlignment(Gdiplus::StringAlignmentCenter);
                 wchar_t txt[128]; GetWindowTextW(ds->hwndItem, txt, 128);
                 g.DrawString(txt, -1, &f, rf, &fmt, &tbrush);
+                return 1;
+            }
+            if (ds->CtlID == IDC_BROWSE || ds->CtlID == IDC_NEXT || ds->CtlID == IDC_BACK || ds->CtlID == IDC_INSTALL || ds->CtlID == IDC_DETAILS || ds->CtlID == IDC_CANCEL_SETUP) {
+                HDC dc = ds->hDC; RECT rc = ds->rcItem;
+                bool isPressed = (ds->itemState & ODS_SELECTED) != 0;
+                bool isDisabled = (ds->itemState & ODS_DISABLED) != 0;
+                POINT cur; GetCursorPos(&cur); RECT wr; GetWindowRect(ds->hwndItem, &wr);
+                bool isHover = PtInRect(&wr, cur);
+                bool isDark = g_setup.theme.isDark;
+                COLORREF bg = isDark ? RGB(0,0,0) : RGB(248,248,250);
+                COLORREF fg = isDark ? RGB(240,240,240) : RGB(18,18,20);
+                if (isDisabled) { bg = isDark ? RGB(20,20,20) : RGB(220,220,220); fg = isDark ? RGB(100,100,100) : RGB(150,150,150); }
+                else if (isPressed) { bg = isDark ? RGB(18,18,18) : RGB(220,220,230); }
+                else if (isHover) { bg = isDark ? RGB(18,18,18) : RGB(235,235,238); fg = isDark ? RGB(255,255,255) : RGB(18,18,20); }
+                int bw = rc.right - rc.left, bh = rc.bottom - rc.top; if (bw <=0 || bh <=0) return 1;
+                RECT prc = rc; if (isPressed) { prc.left+=2; prc.top+=1; prc.right-=2; prc.bottom-=1; }
+                HDC memDC = CreateCompatibleDC(dc); HBITMAP memBmp = CreateCompatibleBitmap(dc, bw, bh);
+                if (!memDC || !memBmp) { if(memDC) DeleteDC(memDC); if(memBmp) DeleteObject(memBmp); return 1; }
+                HGDIOBJ oldBmp = SelectObject(memDC, memBmp);
+                RECT mrc{0,0,bw,bh}; HBRUSH bgBr = CreateSolidBrush(g_setup.theme.bg); FillRect(memDC, &mrc, bgBr); DeleteObject(bgBr);
+                Gdiplus::Graphics g(memDC); g.TranslateTransform((Gdiplus::REAL)-rc.left, (Gdiplus::REAL)-rc.top);
+                Gdiplus::GraphicsPath path; path.AddArc(prc.left,prc.top,8,8,180,90); path.AddArc(prc.right-8,prc.top,8,8,270,90); path.AddArc(prc.right-8,prc.bottom-8,8,8,0,90); path.AddArc(prc.left,prc.bottom-8,8,8,90,90); path.CloseFigure();
+                Gdiplus::SolidBrush br(Gdiplus::Color(GetRValue(bg), GetGValue(bg), GetBValue(bg))); g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias); g.FillPath(&br, &path);
+                if (g_setup.theme.glowEnabled) {
+                    float fx=float(cur.x-wr.left), fy=float(cur.y-wr.top), rbw=float(wr.right-wr.left), rbh=float(wr.bottom-wr.top);
+                    float nx=(fx<0)?0:((fx>rbw)?rbw:fx), ny=(fy<0)?0:((fy>rbh)?rbh:fy);
+                    float dx=fx-nx, dy=fy-ny, d=sqrtf(dx*dx+dy*dy);
+                    BYTE glowR=GetRValue(g_setup.theme.glow), glowG=GetGValue(g_setup.theme.glow), glowB=GetBValue(g_setup.theme.glow);
+                    float cfx=(fx<1)?1:((fx>rbw-1)?rbw-1:fx), cfy=(fy<1)?1:((fy>rbh-1)?rbh-1:fy);
+                    if (isPressed) { d=0; cfx=rbw*0.5f; cfy=rbh*0.5f; }
+                    const float innerRadius=280.0f;
+                    if (d < innerRadius) { float it=1-d/innerRadius; it*=it; BYTE bgA=BYTE(it*(isPressed?32:(isHover?95:45))); if(bgA>0){ Gdiplus::PathGradientBrush bgGrad(&path); bgGrad.SetCenterPoint(Gdiplus::PointF(cfx,cfy)); bgGrad.SetCenterColor(Gdiplus::Color(bgA,glowR,glowG,glowB)); int cnt2=1; Gdiplus::Color sur2(0,glowR,glowG,glowB); bgGrad.SetSurroundColors(&sur2,&cnt2); bgGrad.SetFocusScales(0.18f,0.18f); g.FillPath(&bgGrad,&path); } }
+                    if (d < 160) { float t=1-d/160; float bt=t*t; BYTE a=BYTE(40+bt*(isHover?190:120)); for(int pass=0;pass<2;++pass){ Gdiplus::GraphicsPath border; float off=(pass==0)?1.0f:0.0f; float r=(pass==0)?6.0f:7.0f; border.AddArc((Gdiplus::REAL)prc.left+off,(Gdiplus::REAL)prc.top+off,r,r,180,90); border.AddArc((Gdiplus::REAL)prc.right-off-r,(Gdiplus::REAL)prc.top+off,r,r,270,90); border.AddArc((Gdiplus::REAL)prc.right-off-r,(Gdiplus::REAL)prc.bottom-off-r,r,r,0,90); border.AddArc((Gdiplus::REAL)prc.left+off,(Gdiplus::REAL)prc.bottom-off-r,r,r,90,90); border.CloseFigure(); Gdiplus::PathGradientBrush grad(&border); grad.SetCenterPoint(Gdiplus::PointF(cfx,cfy)); grad.SetCenterColor(Gdiplus::Color(pass==0?BYTE(a*3/4):a,glowR,glowG,glowB)); int cnt=1; Gdiplus::Color sur(0,glowR,glowG,glowB); grad.SetSurroundColors(&sur,&cnt); grad.SetFocusScales(0.3f,0.3f); float pw=(pass==0)?2.0f:(isHover?1.4f:0.8f); Gdiplus::Pen pen(&grad,pw); pen.SetLineJoin(Gdiplus::LineJoinRound); g.DrawPath(&pen,&border); } }
+                }
+                wchar_t txt[128]; GetWindowTextW(ds->hwndItem, txt, 128);
+                Gdiplus::SolidBrush tbr(Gdiplus::Color(GetRValue(fg),GetGValue(fg),GetBValue(fg)));
+                Gdiplus::Font f(memDC, g_setup.font);
+                Gdiplus::StringFormat fmt; fmt.SetAlignment(Gdiplus::StringAlignmentCenter); fmt.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+                Gdiplus::RectF rf((Gdiplus::REAL)prc.left,(Gdiplus::REAL)prc.top,(Gdiplus::REAL)(prc.right-prc.left),(Gdiplus::REAL)(prc.bottom-prc.top));
+                g.SetTextRenderingHint(Gdiplus::TextRenderingHintClearTypeGridFit); g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality); g.DrawString(txt,-1,&f,rf,&fmt,&tbr);
+                BitBlt(dc, rc.left, rc.top, bw, bh, memDC, 0,0, SRCCOPY);
+                SelectObject(memDC, oldBmp); DeleteObject(memBmp); DeleteDC(memDC);
                 return 1;
             }
             return 0;
@@ -582,8 +741,9 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 return 0;
             }
             if (wParam == 51) {
-                g_setup.slideOffset += 6;
-                if (g_setup.slideOffset >= 0) { g_setup.slideOffset = 0; KillTimer(hwnd, 51); }
+                g_setup.slideOffset += (0 - g_setup.slideOffset) * 0.32f;
+                g_setup.fadeAlpha += 0.12f; if (g_setup.fadeAlpha > 1.0f) g_setup.fadeAlpha = 1.0f;
+                if (g_setup.slideOffset > -0.5f && g_setup.fadeAlpha >= 0.99f) { g_setup.slideOffset = 0; g_setup.fadeAlpha = 1.0f; KillTimer(hwnd, 51); }
                 RECT rc; GetClientRect(hwnd, &rc);
                 int w = rc.right - rc.left;
                 int h = rc.bottom - rc.top;
@@ -609,7 +769,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 InvalidateRect(hwnd, &card, FALSE);
                 return 0;
             }
-            if (wParam == 52) { ravex::ui::glowUpdateAnywhere(hwnd, &g_setup.glow); return 0; }
+            if (wParam == 52) { ravex::ui::glowUpdateAnywhere(hwnd, &g_setup.glow); for (HWND b : g_setup.glow.buttons) if(b) InvalidateRect(b, nullptr, FALSE); if (fabs(g_setup.winIconScale - g_setup.winIconTarget) > 0.01f) { g_setup.winIconScale += (g_setup.winIconTarget - g_setup.winIconScale) * 0.18f; InvalidateRect(g_setup.hWinIcon, nullptr, FALSE); } else if (g_setup.winIconScale != g_setup.winIconTarget) { g_setup.winIconScale = g_setup.winIconTarget; InvalidateRect(g_setup.hWinIcon, nullptr, FALSE); } return 0; }
             return 0;
         }
         case WM_PAINT: {
@@ -624,7 +784,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             return DefWindowProcW(hwnd, msg, wParam, lParam);
         }
-        case WM_MOUSEMOVE: { ravex::ui::glowUpdateAnywhere(hwnd, &g_setup.glow); return 0; }
+        case WM_MOUSEMOVE: { ravex::ui::glowUpdateAnywhere(hwnd, &g_setup.glow); for (HWND b : g_setup.glow.buttons) if (b) InvalidateRect(b, nullptr, FALSE); POINT curPt; GetCursorPos(&curPt); RECT wR; GetWindowRect(g_setup.hWinIcon, &wR); bool wHov = PtInRect(&wR, curPt); if (wHov != g_setup.winIconHovered) { g_setup.winIconHovered = wHov; g_setup.winIconTarget = wHov ? 1.22f : 1.0f; } return 0; }
         case WM_APP + 10: {
             std::string* p = (std::string*)lParam;
             setStatus(*p); appendDetail(*p); delete p; return 0;
@@ -637,6 +797,14 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             MessageBoxW(hwnd, msg.c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONINFORMATION); }
             delete p;
             DestroyWindow(hwnd);
+            return 0;
+        }
+        case WM_APP + 12: {
+            g_setup.detailsVisible = true;
+            ShowWindow(g_setup.hDetailsEdit, SW_SHOW);
+            RECT rc; GetClientRect(hwnd, &rc);
+            SendMessageW(hwnd, WM_SIZE, 0, MAKELPARAM(rc.right, rc.bottom));
+            InvalidateRect(hwnd, nullptr, TRUE);
             return 0;
         }
         case WM_GETMINMAXINFO: {
@@ -655,9 +823,11 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 auto placeFixed = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y, cw, ch, SWP_NOZORDER); };
                 auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y+so, cw, ch, SWP_NOZORDER); };
                 placeFixed(g_setup.hTitle, 0, 10, w, 26);
+                placeFixed(g_setup.hWinIcon, 12, h - 52, 44, 44);
                 placeFixed(g_setup.hNext, w - 100, h - 50, 80, 28);
                 placeFixed(g_setup.hBack, w - 190, h - 50, 80, 28);
                 placeFixed(g_setup.hInstall, w/2 - 50, h - 50, 100, 32);
+                placeFixed(g_setup.hCancelSetup, w/2 - 50, h - 50, 100, 32);
                 placeCard(g_setup.hLangCombo, 20, 74, 300, 200);
                 placeCard(g_setup.hLangLabel, 20, 50, w-40, 22);
                 placeCard(g_setup.hPath, 20, 80, w - 140, 24);
@@ -688,6 +858,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (g_setup.font) DeleteObject(g_setup.font);
             if (g_setup.titleFont) DeleteObject(g_setup.titleFont);
             if (g_setup.bgBrush) DeleteObject(g_setup.bgBrush);
+            if (g_setup.winIconBmp) delete g_setup.winIconBmp;
             PostQuitMessage(0);
             return 0;
         }
