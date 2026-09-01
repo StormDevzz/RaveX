@@ -18,6 +18,7 @@
 #include <commdlg.h>
 #include <commctrl.h>
 #include <uxtheme.h>
+#include <algorithm>
 #include <windows.h>
 #include <windowsx.h>
 #include <gdiplus.h>
