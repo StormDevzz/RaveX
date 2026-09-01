@@ -9,4 +9,6 @@ bool ensureJava(int version, std::wstring& outPath, std::string* error,
                 const std::function<void(const std::string&)>& status,
                 const bool* cancelled);
 
+std::string getBundledJavaVersion();
+
 }

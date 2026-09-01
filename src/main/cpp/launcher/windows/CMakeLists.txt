@@ -10,7 +10,7 @@ if(WIN32)
     add_compile_definitions(NOMINMAX _USE_MATH_DEFINES)
 endif()
 
-string(TIMESTAMP RAVEX_BUILD "%Y%m%d")
+string(TIMESTAMP RAVEX_BUILD "%d.%m.%Y")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/build_info.h.in" "${CMAKE_CURRENT_BINARY_DIR}/build_info.h" @ONLY)
 
 add_executable(kickx_launcher WIN32
@@ -29,6 +29,9 @@ add_executable(kickx_launcher WIN32
     game/launch.cpp
     game/java.cpp
     game/accounts.cpp
+    game/serverping.cpp
+    game/modupdates.cpp
+    game/modpackimport.cpp
     ui/main_window.cpp
     ui/console_window.cpp
     ui/instance_editor.cpp
@@ -60,12 +63,11 @@ elseif(MINGW)
     target_link_options(kickx_launcher PRIVATE "-specs=${CMAKE_CURRENT_BINARY_DIR}/ravex.specs")
 endif()
 
-target_link_libraries(kickx_launcher PRIVATE winhttp bcrypt shell32 comctl32 comdlg32 user32 gdi32 gdiplus dwmapi uxtheme windowscodecs)
+target_link_libraries(kickx_launcher PRIVATE winhttp bcrypt shell32 comctl32 comdlg32 user32 gdi32 gdiplus dwmapi uxtheme windowscodecs ws2_32 msimg32 ole32)
 if(MSVC)
     target_link_options(kickx_launcher PRIVATE "/MANIFEST:NO")
 endif()
-add_custom_command(TARGET kickx_launcher POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/flags" "$<TARGET_FILE_DIR:kickx_launcher>/flags")
-add_custom_command(TARGET kickx_launcher POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/icons" "$<TARGET_FILE_DIR:kickx_launcher>/icons")
+add_custom_command(TARGET kickx_launcher POST_BUILD COMMAND powershell -NoProfile -Command "robocopy '${CMAKE_CURRENT_SOURCE_DIR}/flags' '$<TARGET_FILE_DIR:kickx_launcher>/flags' /E /NFL /NJH /NJS /R:1 /W:0; robocopy '${CMAKE_CURRENT_SOURCE_DIR}/icons' '$<TARGET_FILE_DIR:kickx_launcher>/icons' /E /NFL /NJH /NJS /R:1 /W:0; exit 0")
 
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/embedded_launcher.rc" "#include \"resource.h\"\nIDR_EMBEDDED_LAUNCHER RCDATA \"CMakeFiles/kickx_launcher_embedded.exe\"\n")
 add_custom_command(
@@ -107,9 +109,9 @@ elseif(MINGW)
     target_link_options(KickXSetup PRIVATE -static -static-libgcc -static-libstdc++)
     target_link_options(KickXSetup PRIVATE "-specs=${CMAKE_CURRENT_BINARY_DIR}/ravex.specs")
 endif()
-target_link_libraries(KickXSetup PRIVATE winhttp bcrypt shell32 comctl32 comdlg32 user32 gdi32 gdiplus dwmapi uxtheme windowscodecs)
+target_link_libraries(KickXSetup PRIVATE winhttp bcrypt shell32 comctl32 comdlg32 user32 gdi32 gdiplus dwmapi uxtheme windowscodecs ws2_32 msimg32 ole32)
 if(MSVC)
     target_link_options(KickXSetup PRIVATE "/MANIFEST:NO")
 endif()
 add_custom_command(TARGET KickXSetup POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/flags" "$<TARGET_FILE_DIR:KickXSetup>/flags")
-add_custom_command(TARGET KickXSetup POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/icons" "$<TARGET_FILE_DIR:KickXSetup>/icons")
+add_custom_command(TARGET KickXSetup POST_BUILD COMMAND powershell -NoProfile -Command "robocopy '${CMAKE_CURRENT_SOURCE_DIR}/icons' '$<TARGET_FILE_DIR:KickXSetup>/icons' /E /NFL /NJH /NJS /R:1 /W:0; exit 0")

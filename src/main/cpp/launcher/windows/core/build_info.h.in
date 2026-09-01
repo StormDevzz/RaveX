@@ -1,3 +1,3 @@
 #pragma once
 #define RAVEX_BUILD "@RAVEX_BUILD@"
-#define RAVEX_VERSION "1.1"
+#define RAVEX_VERSION "1.1.4"

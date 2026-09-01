@@ -83,6 +83,8 @@ struct SetupData {
     std::wstring detailsLog;
     int page = 0;
     int nextPage = 0;
+    ITaskbarList3* taskbar = nullptr;
+    bool taskbarReady = false;
 };
 SetupData g_setup;
 HFONT makeSetupFont() {
@@ -226,38 +228,14 @@ void showPageImmediate(int page) {
     }
     if (page == 6) SetTimer(g_setup.hwnd, 50, 16, nullptr); else KillTimer(g_setup.hwnd, 50);
     EnableWindow(g_setup.hNext, TRUE);
+    RECT wrc; GetClientRect(g_setup.hwnd, &wrc);
+    RECT stepRc = {0, 0, wrc.right, 90};
+    InvalidateRect(g_setup.hwnd, &stepRc, TRUE);
     InvalidateRect(g_setup.hwnd, nullptr, TRUE);
 }
 void doFadeTo(int target) {
     if (target == g_setup.page) return;
-    g_setup.slideOffset = -22;
-    g_setup.fadeAlpha = 0.0f;
-    g_setup.fadeDir = 1;
     showPageImmediate(target);
-    RECT rc; GetClientRect(g_setup.hwnd, &rc);
-    int w = rc.right - rc.left;
-    HDWP dwp = BeginDeferWindowPos(14);
-    if (dwp) {
-        auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y-22, cw, ch, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOCOPYBITS); };
-        placeCard(g_setup.hLangCombo, 20, 74, 300, 200);
-        placeCard(g_setup.hLangLabel, 20, 50, w-40, 22);
-        placeCard(g_setup.hPath, 20, 80, w - 140, 24);
-        placeCard(GetDlgItem(g_setup.hwnd, 3001), 20, 55, w-40, 22);
-        placeCard(g_setup.hStartMenu, 20, 80, w-40, 24);
-        placeCard(GetDlgItem(g_setup.hwnd, 3002), 20, 55, w-40, 22);
-        placeCard(g_setup.hShortcutDesktop, 20, 65, 260, 28);
-        placeCard(g_setup.hShortcutStart, 20, 100, 280, 28);
-        placeCard(g_setup.hAutoStart, 20, 135, 280, 28);
-        placeCard(g_setup.hAutoLaunch, 20, 170, 280, 28);
-        placeCard(g_setup.hDiskInfo, 20, 110, 300, 16);
-        placeCard(g_setup.hDiskBar, 330, 110, 160, 14);
-        placeCard(g_setup.hStatus, 0, 98, w, 16);
-        placeCard(g_setup.hDetailsBtn, 20, 120, 90, 22);
-        placeCard(g_setup.hSummary, 20, 55, w-40, 60);
-        placeCard(g_setup.hWelcome, 20, 55, w-40, 40);
-        EndDeferWindowPos(dwp);
-    }
-    SetTimer(g_setup.hwnd, 51, 16, nullptr);
 }
 void showPage(int page) { doFadeTo(page); }
 void createShortcut(const std::wstring& target, const std::wstring& linkPath, const std::wstring& desc) {
@@ -439,6 +417,9 @@ void workerSetup() {
                 int pct = int(p.downloaded * 100 / p.total);
                 std::string msg = std::string(lang("setup_downloading")) + " " + name + " (" + std::to_string(pct) + "%)";
                 PostMessageW(g_setup.hwnd, WM_APP + 10, 0, (LPARAM)new std::string(msg));
+                if (g_setup.taskbar && g_setup.taskbarReady) {
+                    g_setup.taskbar->SetProgressValue(g_setup.hwnd, pct, 100);
+                }
             }
         }
     };
@@ -539,6 +520,16 @@ void workerSetup() {
     PostMessageW(g_setup.hwnd, WM_APP + 11, 0, (LPARAM)new std::wstring(installDir));
 }
 LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    static UINT s_taskbarMsg = 0;
+    if (!s_taskbarMsg && msg != WM_CREATE) s_taskbarMsg = RegisterWindowMessageW(L"TaskbarButtonCreated");
+    if (s_taskbarMsg && msg == s_taskbarMsg) {
+        if (!g_setup.taskbar) {
+            CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&g_setup.taskbar));
+            if (g_setup.taskbar) g_setup.taskbar->HrInit();
+        }
+        g_setup.taskbarReady = true;
+        return 0;
+    }
     switch (msg) {
         case WM_CREATE: {
             g_setup.hwnd = hwnd;
@@ -897,63 +888,116 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 InvalidateRect(hwnd, &sr, FALSE);
                 return 0;
             }
-            if (wParam == 51) {
-                g_setup.slideOffset += (0 - g_setup.slideOffset) * 0.32f;
-                g_setup.fadeAlpha += 0.12f; if (g_setup.fadeAlpha > 1.0f) g_setup.fadeAlpha = 1.0f;
-                if (g_setup.slideOffset > -0.5f && g_setup.fadeAlpha >= 0.99f) { g_setup.slideOffset = 0; g_setup.fadeAlpha = 1.0f; KillTimer(hwnd, 51); }
-                RECT rc; GetClientRect(hwnd, &rc);
-                int w = rc.right - rc.left;
-                int h = rc.bottom - rc.top;
-                int so = g_setup.slideOffset;
-                HDWP dwp = BeginDeferWindowPos(14);
-                if (dwp) {
-                    auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y+so, cw, ch, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOCOPYBITS); };
-                    placeCard(g_setup.hLangCombo, 20, 74, 300, 200);
-                    placeCard(g_setup.hLangLabel, 20, 50, w-40, 22);
-                    placeCard(g_setup.hPath, 20, 80, w - 140, 24);
-                    placeCard(GetDlgItem(hwnd, 3001), 20, 55, w-40, 22);
-                    placeCard(g_setup.hStartMenu, 20, 80, w-40, 24);
-                    placeCard(GetDlgItem(hwnd, 3002), 20, 55, w-40, 22);
-                    placeCard(g_setup.hShortcutDesktop, 20, 65, 260, 28);
-                    placeCard(g_setup.hShortcutStart, 20, 100, 280, 28);
-                    placeCard(g_setup.hAutoStart, 20, 135, 280, 28);
-                    placeCard(g_setup.hAutoLaunch, 20, 170, 280, 28);
-                    placeCard(g_setup.hDiskInfo, 20, 110, 300, 16);
-                    placeCard(g_setup.hDiskBar, 330, 110, 160, 14);
-                    placeCard(g_setup.hStatus, 0, 98, w, 16);
-                    placeCard(g_setup.hDetailsBtn, 20, 120, 90, 22);
-                    placeCard(g_setup.hSummary, 20, 55, w-40, 60);
-                    placeCard(g_setup.hWelcome, 20, 55, w-40, 40);
-                    EndDeferWindowPos(dwp);
+            if (wParam == 52) { ravex::ui::glowUpdateAnywhere(hwnd, &g_setup.glow); for (HWND b : g_setup.glow.buttons) if(b) InvalidateRect(b, nullptr, FALSE); if (fabs(g_setup.winIconScale - g_setup.winIconTarget) > 0.01f) { g_setup.winIconScale += (g_setup.winIconTarget - g_setup.winIconScale) * 0.18f; InvalidateRect(g_setup.hWinIcon, nullptr, FALSE); } else if (g_setup.winIconScale != g_setup.winIconTarget) { g_setup.winIconScale = g_setup.winIconTarget; InvalidateRect(g_setup.hWinIcon, nullptr, FALSE); } return 0; }
+            if (wParam == 99) {
+                KillTimer(hwnd, 99);
+                if (g_setup.taskbar && g_setup.taskbarReady) {
+                    g_setup.taskbar->SetProgressState(hwnd, TBPF_NOPROGRESS);
                 }
-                RECT card = {0, 35, w, h-55};
-                InvalidateRect(hwnd, &card, FALSE);
                 return 0;
             }
-            if (wParam == 52) { ravex::ui::glowUpdateAnywhere(hwnd, &g_setup.glow); for (HWND b : g_setup.glow.buttons) if(b) InvalidateRect(b, nullptr, FALSE); if (fabs(g_setup.winIconScale - g_setup.winIconTarget) > 0.01f) { g_setup.winIconScale += (g_setup.winIconTarget - g_setup.winIconScale) * 0.18f; InvalidateRect(g_setup.hWinIcon, nullptr, FALSE); } else if (g_setup.winIconScale != g_setup.winIconTarget) { g_setup.winIconScale = g_setup.winIconTarget; InvalidateRect(g_setup.hWinIcon, nullptr, FALSE); } return 0; }
             return 0;
         }
         case WM_PAINT: {
+            PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
+            FillRect(hdc, &ps.rcPaint, g_setup.bgBrush);
+            RECT rc; GetClientRect(hwnd, &rc);
+            int w = rc.right - rc.left;
             if (g_setup.page == 6) {
-                PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
-                FillRect(hdc, &ps.rcPaint, g_setup.bgBrush);
-                RECT rc; GetClientRect(hwnd, &rc);
-                int cx = rc.right/2; int cy = 150;
+                int cx = w/2; int cy = 150;
                 drawSpinner(hdc, cx, cy, g_setup.spinnerPhase);
-                EndPaint(hwnd, &ps);
-                return 0;
             }
-            return DefWindowProcW(hwnd, msg, wParam, lParam);
+            if (g_setup.page < 6) {
+                int steps = 6;
+                int dotR = 10;
+                int gap = 56;
+                int totalW = (steps - 1) * gap;
+                int startX = (w - totalW) / 2;
+                int dotY = 52;
+                Gdiplus::Graphics g(hdc);
+                g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+                g.SetTextRenderingHint(Gdiplus::TextRenderingHintClearTypeGridFit);
+                g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
+                g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+                g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+                for (int i = 0; i < steps; ++i) {
+                    int cx = startX + i * gap;
+                    bool completed = (i < g_setup.page);
+                    bool current = (i == g_setup.page);
+                    if (i < steps - 1) {
+                        Gdiplus::Color lineCol;
+                        if (i < g_setup.page) lineCol = Gdiplus::Color(220, GetRValue(g_setup.theme.accent), GetGValue(g_setup.theme.accent), GetBValue(g_setup.theme.accent));
+                        else lineCol = Gdiplus::Color(80, GetRValue(g_setup.theme.text), GetGValue(g_setup.theme.text), GetBValue(g_setup.theme.text));
+                        Gdiplus::Pen linePen(lineCol, 2.0f);
+                        g.DrawLine(&linePen, (float)(cx + dotR + 3), (float)dotY, (float)(cx + gap - dotR - 3), (float)dotY);
+                    }
+                    if (current) {
+                        Gdiplus::Color glowCol(50, GetRValue(g_setup.theme.accent), GetGValue(g_setup.theme.accent), GetBValue(g_setup.theme.accent));
+                        Gdiplus::SolidBrush glowBr(glowCol);
+                        g.FillEllipse(&glowBr, cx - dotR - 5, dotY - dotR - 5, (dotR + 5) * 2, (dotR + 5) * 2);
+                    }
+                    Gdiplus::Color fillCol;
+                    if (completed || current) {
+                        fillCol = Gdiplus::Color(255, GetRValue(g_setup.theme.accent), GetGValue(g_setup.theme.accent), GetBValue(g_setup.theme.accent));
+                    } else {
+                        fillCol = Gdiplus::Color(255, GetRValue(g_setup.theme.panel), GetGValue(g_setup.theme.panel), GetBValue(g_setup.theme.panel));
+                    }
+                    Gdiplus::SolidBrush br(fillCol);
+                    g.FillEllipse(&br, cx - dotR, dotY - dotR, dotR * 2, dotR * 2);
+                    if (current) {
+                        Gdiplus::Pen pen(Gdiplus::Color(255, GetRValue(g_setup.theme.text), GetGValue(g_setup.theme.text), GetBValue(g_setup.theme.text)), 2.0f);
+                        g.DrawEllipse(&pen, cx - dotR - 2, dotY - dotR - 2, dotR * 2 + 4, dotR * 2 + 4);
+                    }
+                    if (completed) {
+                        Gdiplus::Pen cpen(Gdiplus::Color(255, 255, 255, 255), 2.0f);
+                        cpen.SetLineCap(Gdiplus::LineCapRound, Gdiplus::LineCapRound, Gdiplus::DashCapFlat);
+                        g.DrawLine(&cpen, (float)(cx - 4), (float)dotY, (float)(cx - 1), (float)(dotY + 3));
+                        g.DrawLine(&cpen, (float)(cx - 1), (float)(dotY + 3), (float)(cx + 5), (float)(dotY - 4));
+                    } else {
+                        wchar_t num[4]; _swprintf(num, L"%d", i + 1);
+                        Gdiplus::Font font(L"Segoe UI", 11.0f, Gdiplus::FontStyleBold, Gdiplus::UnitPixel);
+                        Gdiplus::SolidBrush textBr(Gdiplus::Color(255, GetRValue(g_setup.theme.text), GetGValue(g_setup.theme.text), GetBValue(g_setup.theme.text)));
+                        Gdiplus::RectF layoutRect((float)(cx - dotR), (float)(dotY - dotR), (float)(dotR * 2), (float)(dotR * 2));
+                        Gdiplus::StringFormat sf; sf.SetAlignment(Gdiplus::StringAlignmentCenter); sf.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+                        g.DrawString(num, -1, &font, layoutRect, &sf, &textBr);
+                    }
+                    const char* stepKeys[] = {"setup_step_lang","setup_step_welcome","setup_step_folder","setup_step_menu","setup_step_ready","setup_step_install"};
+                    const char* stepFallback[] = {"Language","Welcome","Folder","Menu","Ready","Install"};
+                    const char* sk = stepKeys[i];
+                    const char* sv = ravex::lang(sk);
+                    if (!sv || strcmp(sv, sk) == 0) sv = stepFallback[i];
+                    wchar_t wlabel[64];
+                    MultiByteToWideChar(CP_UTF8, 0, sv, -1, wlabel, 64);
+                    Gdiplus::Font labelFont(L"Segoe UI", 9.0f, Gdiplus::FontStyleRegular, Gdiplus::UnitPixel);
+                    Gdiplus::Color labelCol = current || completed
+                        ? Gdiplus::Color(255, GetRValue(g_setup.theme.text), GetGValue(g_setup.theme.text), GetBValue(g_setup.theme.text))
+                        : Gdiplus::Color(140, GetRValue(g_setup.theme.text), GetGValue(g_setup.theme.text), GetBValue(g_setup.theme.text));
+                    Gdiplus::SolidBrush labelBr(labelCol);
+                    Gdiplus::RectF labelRect((float)(cx - 35), (float)(dotY + dotR + 5), 70.0f, 20.0f);
+                    Gdiplus::StringFormat lsf; lsf.SetAlignment(Gdiplus::StringAlignmentCenter);
+                    g.DrawString(wlabel, -1, &labelFont, labelRect, &lsf, &labelBr);
+                }
+            }
+            EndPaint(hwnd, &ps);
+            return 0;
         }
         case WM_MOUSEMOVE: { ravex::ui::glowUpdateAnywhere(hwnd, &g_setup.glow); for (HWND b : g_setup.glow.buttons) if (b) InvalidateRect(b, nullptr, FALSE); POINT curPt; GetCursorPos(&curPt); RECT wR; GetWindowRect(g_setup.hWinIcon, &wR); bool wHov = PtInRect(&wR, curPt); if (wHov != g_setup.winIconHovered) { g_setup.winIconHovered = wHov; g_setup.winIconTarget = wHov ? 1.22f : 1.0f; } return 0; }
         case WM_APP + 10: {
             std::string* p = (std::string*)lParam;
-            setStatus(*p); appendDetail(*p); delete p; return 0;
+            setStatus(*p); appendDetail(*p); delete p;
+            if (g_setup.taskbar && g_setup.taskbarReady) {
+                g_setup.taskbar->SetProgressState(hwnd, TBPF_INDETERMINATE);
+            }
+            return 0;
         }
         case WM_APP + 11: {
             std::wstring* p = (std::wstring*)lParam;
             KillTimer(hwnd, 50);
             g_setup.busy = false;
+            if (g_setup.taskbar && g_setup.taskbarReady) {
+                g_setup.taskbar->SetProgressState(hwnd, TBPF_PAUSED);
+                SetTimer(hwnd, 99, 5000, nullptr);
+            }
             { std::wstring msg = fromUtf8(lang("setup_installed_msg")); size_t pos = msg.find(L"{path}"); if(pos != std::wstring::npos) msg.replace(pos, 6, *p);
             MessageBoxW(hwnd, msg.c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONINFORMATION); }
             delete p;
@@ -978,11 +1022,10 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             RECT rc; GetClientRect(hwnd, &rc);
             int w = rc.right - rc.left;
             int h = rc.bottom - rc.top;
-            int so = g_setup.slideOffset;
             HDWP dwp = BeginDeferWindowPos(18);
             if (dwp) {
                 auto placeFixed = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y, cw, ch, SWP_NOZORDER); };
-                auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y+so, cw, ch, SWP_NOZORDER); };
+                auto placeCard = [&](HWND hw, int x, int y, int cw, int ch){ DeferWindowPos(dwp, hw, nullptr, x, y+40, cw, ch, SWP_NOZORDER); };
                 placeFixed(g_setup.hTitle, 0, 10, w, 26);
                 placeFixed(g_setup.hWinIcon, 12, h - 52, 44, 44);
                 placeFixed(g_setup.hNext, w - 100, h - 50, 80, 28);
@@ -1018,7 +1061,8 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             HDC dc = (HDC)wParam; RECT rc; GetClientRect(hwnd, &rc); FillRect(dc, &rc, g_setup.bgBrush); return 1;
         }
         case WM_DESTROY: {
-            KillTimer(hwnd, 50); KillTimer(hwnd, 51); KillTimer(hwnd, 52);
+            KillTimer(hwnd, 50); KillTimer(hwnd, 51); KillTimer(hwnd, 52); KillTimer(hwnd, 99);
+            if (g_setup.taskbar) { g_setup.taskbar->Release(); g_setup.taskbar = nullptr; }
             ravex::ui::glowDestroy(&g_setup.glow);
             if (g_setup.font) DeleteObject(g_setup.font);
             if (g_setup.titleFont) DeleteObject(g_setup.titleFont);
@@ -1122,6 +1166,9 @@ bool runSetupWindow(HINSTANCE inst) {
     RegisterClassExW(&wc);
     HWND hwnd = CreateWindowExW(0, L"KickXSetup", fromUtf8(lang("setup_title")).c_str(), WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, CW_USEDEFAULT, CW_USEDEFAULT, 600, 400, nullptr, nullptr, inst, nullptr);
     if (!hwnd) { Gdiplus::GdiplusShutdown(tok); return false; }
+    UINT tbMsg = RegisterWindowMessageW(L"TaskbarButtonCreated");
+    ChangeWindowMessageFilterEx(hwnd, tbMsg, MSGFLT_ALLOW, nullptr);
+    g_setup.taskbarReady = false;
     ShowWindow(hwnd, SW_SHOW); UpdateWindow(hwnd);
     MSG msg;
     while (GetMessageW(&msg, nullptr, 0, 0)) { TranslateMessage(&msg); DispatchMessageW(&msg); }

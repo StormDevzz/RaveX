@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <shellapi.h>
+#include <objbase.h>
 #include <string>
 #include "setup/include/setup_window.hpp"
 bool isAdmin() {
@@ -30,6 +31,7 @@ bool isUninstallCmd() {
 }
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) SetProcessDPIAware();
     if (!isAdmin() && !isUninstallCmd()) {
         wchar_t exe[MAX_PATH]; GetModuleFileNameW(nullptr, exe, MAX_PATH);

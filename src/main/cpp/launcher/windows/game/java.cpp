@@ -160,4 +160,64 @@ bool ensureJava(int version, std::wstring& outPath, std::string* error,
     return true;
 }
 
+std::string getBundledJavaVersion() {
+    for (int v : {21, 17, 16}) {
+        std::wstring cachedPath = joinPath(joinPath(javaDir(), fromUtf8(std::to_string(v))), L"bin\\java.exe");
+        if (fileExistsSimple(cachedPath)) {
+            STARTUPINFOW si{}; si.cb = sizeof(si); si.dwFlags = STARTF_USESHOWWINDOW; si.wShowWindow = SW_HIDE;
+            PROCESS_INFORMATION pi{};
+            std::wstring cmd = L"\"" + cachedPath + L"\" -version";
+            std::vector<wchar_t> cmdBuf(cmd.begin(), cmd.end()); cmdBuf.push_back(L'\0');
+            HANDLE hRead, hWrite;
+            SECURITY_ATTRIBUTES sa{}; sa.nLength = sizeof(sa); sa.bInheritHandle = TRUE;
+            if (!CreatePipe(&hRead, &hWrite, &sa, 0)) return "Java " + std::to_string(v);
+            SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, 0);
+            si.hStdOutput = hWrite; si.hStdError = hWrite;
+            if (CreateProcessW(nullptr, cmdBuf.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi)) {
+                CloseHandle(hWrite);
+                char buf[512]{}; DWORD read = 0;
+                ReadFile(hRead, buf, sizeof(buf) - 1, &read, nullptr);
+                CloseHandle(hRead); CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+                std::string output(buf);
+                size_t pos = output.find('"');
+                if (pos != std::string::npos) {
+                    size_t end = output.find('"', pos + 1);
+                    if (end != std::string::npos) return output.substr(pos + 1, end - pos - 1);
+                }
+                return "Java " + std::to_string(v);
+            }
+            CloseHandle(hWrite); CloseHandle(hRead);
+            return "Java " + std::to_string(v);
+        }
+    }
+    std::wstring sysPath;
+    if (findSystemJava(21, sysPath) || findSystemJava(17, sysPath)) {
+        STARTUPINFOW si{}; si.cb = sizeof(si); si.dwFlags = STARTF_USESHOWWINDOW; si.wShowWindow = SW_HIDE;
+        PROCESS_INFORMATION pi{};
+        std::wstring cmd = L"\"" + sysPath + L"\" -version";
+        std::vector<wchar_t> cmdBuf(cmd.begin(), cmd.end()); cmdBuf.push_back(L'\0');
+        HANDLE hRead, hWrite;
+        SECURITY_ATTRIBUTES sa{}; sa.nLength = sizeof(sa); sa.bInheritHandle = TRUE;
+        if (CreatePipe(&hRead, &hWrite, &sa, 0)) {
+            SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, 0);
+            si.hStdOutput = hWrite; si.hStdError = hWrite;
+            if (CreateProcessW(nullptr, cmdBuf.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi)) {
+                CloseHandle(hWrite);
+                char buf[512]{}; DWORD read = 0;
+                ReadFile(hRead, buf, sizeof(buf) - 1, &read, nullptr);
+                CloseHandle(hRead); CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+                std::string output(buf);
+                size_t pos = output.find('"');
+                if (pos != std::string::npos) {
+                    size_t end = output.find('"', pos + 1);
+                    if (end != std::string::npos) return output.substr(pos + 1, end - pos - 1);
+                }
+                return "Java (system)";
+            }
+            CloseHandle(hWrite); CloseHandle(hRead);
+        }
+    }
+    return "";
+}
+
 }

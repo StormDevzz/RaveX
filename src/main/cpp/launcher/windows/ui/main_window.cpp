@@ -6,6 +6,7 @@
 #include <uxtheme.h>
 #include <commdlg.h>
 #include <shellapi.h>
+#include <shobjidl.h>
 #include <gdiplus.h>
 #include <cwchar>
 #include <cstdlib>
@@ -125,12 +126,17 @@ struct MainData {
     Gdiplus::Bitmap* winLabelBmp = nullptr;
     GlowData glow;
     LauncherConfig cfg;
+    float launchPulsePhase = 0.0f;
+    float listScrollTarget = 0.0f;
+    float listScrollCurrent = 0.0f;
     std::vector<InstanceCfg> instances;
     std::vector<InstanceCfg> filteredInstances;
     bool busy = false;
     bool cancelled = false;
     bool gameRunning = false;
     HWND hoveredBtn = nullptr;
+    ITaskbarList3* taskbar = nullptr;
+    bool taskbarReady = false;
 };
 
 MainData g_main;
@@ -316,6 +322,8 @@ void refreshInstances() {
         std::sort(g_main.filteredInstances.begin(), g_main.filteredInstances.end(), [&](auto &a, auto &b){ return getTime(a) > getTime(b); });
     }
     SendMessageW(g_main.hList, LB_RESETCONTENT, 0, 0);
+    g_main.listScrollTarget = 0;
+    g_main.listScrollCurrent = 0;
     for (const InstanceCfg& inst : g_main.filteredInstances) {
         std::string label = inst.name;
         if (!inst.mcVersion.empty()) label += " [" + inst.mcVersion + "]";
@@ -442,6 +450,11 @@ void setBusy(bool busy) {
     EnableWindow(g_main.hOffline, !busy);
     EnableWindow(g_main.hMs, !busy);
     EnableWindow(g_main.hSettings, !busy);
+    if (!busy && hasAccount && !g_main.gameRunning) {
+        SetTimer(g_main.hwnd, 3, 16, nullptr);
+    } else {
+        KillTimer(g_main.hwnd, 3);
+    }
     (void)busy;
     if (busy) {
         showProgress(true);
@@ -561,6 +574,7 @@ LRESULT CALLBACK searchEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     WNDPROC orig = reinterpret_cast<WNDPROC>(GetPropW(hwnd, L"origSearchProc"));
     return orig ? CallWindowProcW(orig, hwnd, msg, wParam, lParam) : DefWindowProcW(hwnd, msg, wParam, lParam);
 }
+WNDPROC g_origComboProc = nullptr;
 LRESULT CALLBACK comboNoBorderProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_ERASEBKGND) { HDC hdc = reinterpret_cast<HDC>(wParam); RECT rc; GetClientRect(hwnd, &rc); HBRUSH br = CreateSolidBrush(g_main.theme.isDark ? RGB(0,0,0) : g_main.theme.panel); FillRect(hdc, &rc, br); DeleteObject(br); return 1; }
     if (msg == WM_NCHITTEST) {
@@ -594,6 +608,24 @@ LRESULT CALLBACK comboNoBorderProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
     }
     WNDPROC orig = reinterpret_cast<WNDPROC>(GetPropW(hwnd, L"origComboProc"));
     return orig ? CallWindowProcW(orig, hwnd, msg, wParam, lParam) : DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+WNDPROC g_origListProc = nullptr;
+LRESULT CALLBACK listSmoothScrollProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (msg == WM_MOUSEWHEEL) {
+        int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+        int count = (int)SendMessageW(hwnd, LB_GETCOUNT, 0, 0);
+        int top = (int)SendMessageW(hwnd, LB_GETTOPINDEX, 0, 0);
+        int visible = 8;
+        int step = (delta / WHEEL_DELTA) * 3;
+        int target = top - step;
+        if (target < 0) target = 0;
+        if (target > count - visible) target = count - visible;
+        if (target < 0) target = 0;
+        g_main.listScrollTarget = (float)target;
+        SetTimer(g_main.hwnd, 4, 16, nullptr);
+        return 0;
+    }
+    return CallWindowProcW(g_origListProc, hwnd, msg, wParam, lParam);
 }
 void clipComboBorder(HWND hwnd) {
     RECT rc; GetWindowRect(hwnd, &rc);
@@ -1076,6 +1108,7 @@ void onCreate(HWND hwnd) {
                                    WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                                    0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_INSTANCES),
                                    GetModuleHandleW(nullptr), nullptr);
+    g_origListProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(g_main.hList, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(listSmoothScrollProc)));
     g_main.hSearch = CreateWindowExW(0, L"EDIT", L"",
                                      WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
                                      0, 0, 10, 10, hwnd, reinterpret_cast<HMENU>(IDC_SEARCH_INST),
@@ -1256,13 +1289,22 @@ void onJobDone(JobDone* done) {
                 break;
             case JobDone::Kind::Launch:
                 setStatus(std::string(lang("game_launched")));
+                if (g_main.cfg.closeOnLaunch) SetTimer(g_main.hwnd, 7, 2000, nullptr);
                 break;
+        }
+        if (g_main.taskbar && g_main.taskbarReady) {
+            g_main.taskbar->SetProgressState(g_main.hwnd, TBPF_PAUSED);
+            SetTimer(g_main.hwnd, 5, 5000, nullptr);
         }
     } else {
         if (g_main.cancelled) {
             setStatus(std::string(lang("cancelled")));
         } else {
             setStatus(std::string(lang("error_prefix")) + (done->error.empty() ? std::string("unknown") : done->error));
+        }
+        if (g_main.taskbar && g_main.taskbarReady) {
+            g_main.taskbar->SetProgressState(g_main.hwnd, TBPF_ERROR);
+            SetTimer(g_main.hwnd, 5, 3000, nullptr);
         }
     }
     delete done;
@@ -1340,6 +1382,16 @@ void setBtnIcon(HWND btn, const std::wstring& name) {
 }
 
 LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    static UINT s_taskbarMsg = 0;
+    if (!s_taskbarMsg && msg != WM_CREATE) s_taskbarMsg = RegisterWindowMessageW(L"TaskbarButtonCreated");
+    if (s_taskbarMsg && msg == s_taskbarMsg) {
+        if (!g_main.taskbar) {
+            CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&g_main.taskbar));
+            if (g_main.taskbar) g_main.taskbar->HrInit();
+        }
+        g_main.taskbarReady = true;
+        return 0;
+    }
     switch (msg) {
         case WM_CREATE:
             onCreate(hwnd);
@@ -1356,6 +1408,37 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_TIMER:
             if (wParam == 2) {
                 moveGlowToCursor();
+                return 0;
+            }
+            if (wParam == 3 && !g_main.busy) {
+                g_main.launchPulsePhase += 0.04f;
+                if (g_main.launchPulsePhase > 6.28318f) g_main.launchPulsePhase -= 6.28318f;
+                if (g_main.hLaunch) InvalidateRect(g_main.hLaunch, nullptr, FALSE);
+                return 0;
+            }
+            if (wParam == 4) {
+                float diff = g_main.listScrollTarget - g_main.listScrollCurrent;
+                if (fabsf(diff) < 0.5f) {
+                    g_main.listScrollCurrent = g_main.listScrollTarget;
+                    KillTimer(g_main.hwnd, 4);
+                } else {
+                    g_main.listScrollCurrent += diff * 0.25f;
+                }
+                int topIdx = (int)(g_main.listScrollCurrent + 0.5f);
+                if (topIdx < 0) topIdx = 0;
+                SendMessageW(g_main.hList, LB_SETTOPINDEX, topIdx, 0);
+                return 0;
+            }
+            if (wParam == 5) {
+                KillTimer(g_main.hwnd, 5);
+                if (g_main.taskbar && g_main.taskbarReady) {
+                    g_main.taskbar->SetProgressState(g_main.hwnd, TBPF_NOPROGRESS);
+                }
+                return 0;
+            }
+            if (wParam == 7) {
+                KillTimer(g_main.hwnd, 7);
+                PostQuitMessage(0);
                 return 0;
             }
             if (wParam == 1 && g_main.busy) {
@@ -1499,6 +1582,16 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 if(isDisabled){ bg=isDark?RGB(20,20,20):RGB(200,200,200); fg=isDark?RGB(100,100,100):RGB(120,120,120); }
                 else if(isPressed){ bg=isDark?RGB(28,28,28):RGB(0,100,180); fg=RGB(255,255,255); }
                 else if(isHover){ bg=isDark?RGB(18,18,18):g_main.theme.accent; fg=RGB(255,255,255); }
+                else if(id==IDC_LAUNCH && !isDisabled && !g_main.busy && !g_main.gameRunning){
+                    float pulse = (sinf(g_main.launchPulsePhase) + 1.0f) * 0.5f;
+                    BYTE aR = GetRValue(g_main.theme.accent), aG = GetGValue(g_main.theme.accent), aB = GetBValue(g_main.theme.accent);
+                    BYTE bR = isDark ? 0 : GetRValue(g_main.theme.panel);
+                    BYTE bG = isDark ? 0 : GetGValue(g_main.theme.panel);
+                    BYTE bB = isDark ? 0 : GetBValue(g_main.theme.panel);
+                    float mix = 0.15f + pulse * 0.35f;
+                    bg = RGB((BYTE)(bR + (aR - bR) * mix), (BYTE)(bG + (aG - bG) * mix), (BYTE)(bB + (aB - bB) * mix));
+                    fg = RGB(255, 255, 255);
+                }
                 int bw = rc.right - rc.left; int bh = rc.bottom - rc.top;
                 if (bw <= 0 || bh <= 0) return TRUE;
                 RECT prc = rc;
@@ -1796,9 +1889,15 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_APP_PROGRESS:
             if (lParam < 0) {
                 SendMessageW(g_main.hProgress, PBM_SETMARQUEE, TRUE, 0);
+                if (g_main.taskbar && g_main.taskbarReady) {
+                    g_main.taskbar->SetProgressState(hwnd, TBPF_INDETERMINATE);
+                }
             } else {
                 SendMessageW(g_main.hProgress, PBM_SETMARQUEE, FALSE, 0);
                 SendMessageW(g_main.hProgress, PBM_SETPOS, lParam, 0);
+                if (g_main.taskbar && g_main.taskbarReady) {
+                    g_main.taskbar->SetProgressValue(hwnd, lParam, 100);
+                }
             }
             return 0;
         case WM_APP_JOB_DONE:
@@ -1940,6 +2039,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if(g_main.iconFont) { DeleteObject(g_main.iconFont); g_main.iconFont = nullptr; }
             if(g_main.bgBrush) { DeleteObject(g_main.bgBrush); g_main.bgBrush = nullptr; }
             if(g_main.panelBrush) { DeleteObject(g_main.panelBrush); g_main.panelBrush = nullptr; }
+            if(g_main.taskbar) { g_main.taskbar->Release(); g_main.taskbar = nullptr; }
             PostQuitMessage(0);
             return 0;
         default:

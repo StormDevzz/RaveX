@@ -49,6 +49,8 @@ struct LauncherConfig {
     int activeAccount = -1;
     bool saveLogs = true;
     bool telemetryEnabled = true;
+    bool closeOnLaunch = false;
+    int downloadThreads = 6;
 };
 
 LauncherConfig loadLauncherConfig();

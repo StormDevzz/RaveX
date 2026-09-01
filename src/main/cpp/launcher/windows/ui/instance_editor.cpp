@@ -7,6 +7,10 @@
 #include "ui/include/glow.hpp"
 #include <cstring>
 #include "game/include/fabric.hpp"
+#include "game/include/java.hpp"
+#include "game/include/serverping.hpp"
+#include "game/include/modupdates.hpp"
+#include "game/include/modpackimport.hpp"
 #include "net/include/http.hpp"
 #include "net/include/json.hpp"
 #include "resource.h"
@@ -25,6 +29,7 @@
 #include <mutex>
 #include <atomic>
 #include <wincodec.h>
+#include <fstream>
 
 namespace ravex::ui {
 
@@ -73,7 +78,24 @@ constexpr int IDC_LOGS_FRAME = 2305;
 constexpr int IDC_LOGS_VIEW_FRAME = 2306;
 constexpr int IDC_LOGS_HINT = 2307;
 constexpr int IDC_LOGS_TITLE = 2308;
+constexpr int IDC_WORLD_LIST = 2401;
+constexpr int IDC_WORLD_BACKUP = 2402;
+constexpr int IDC_WORLD_DELETE = 2403;
+constexpr int IDC_WORLD_FRAME = 2404;
+constexpr int IDC_WORLD_TITLE = 2405;
+constexpr int IDC_WORLD_HINT = 2406;
+constexpr int IDC_WORLD_OPEN = 2407;
+constexpr int IDC_WORLD_SIZE = 2408;
+constexpr int IDC_WORLD_DATE = 2409;
+constexpr int IDC_WORLD_ICON = 2410;
+constexpr int IDC_SERV_PING = 2210;
+constexpr int IDC_MODS_CHECKUPD = 2108;
+constexpr int IDC_MODS_UPDATEALL = 2109;
 constexpr UINT WM_APP_MODS = WM_APP + 50;
+constexpr UINT WM_APP_PING = WM_APP + 51;
+constexpr UINT WM_APP_WORLD = WM_APP + 52;
+constexpr UINT WM_APP_UPDATE = WM_APP + 53;
+constexpr UINT JVM_TIP_TIMER = 200;
 
 constexpr COLORREF kBg = RGB(28, 28, 30);
 constexpr COLORREF kPanel = RGB(40, 40, 42);
@@ -194,20 +216,88 @@ HICON loadViaWIC(const std::wstring& path, int target) {
             frame->GetSize(&w, &h);
             IWICFormatConverter* conv = nullptr;
             if (SUCCEEDED(factory->CreateFormatConverter(&conv))) {
-                if (SUCCEEDED(conv->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom))) {
+                if (SUCCEEDED(conv->Initialize(frame, GUID_WICPixelFormat32bppRGBA, WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom))) {
                     ensureGdiplus();
                     Gdiplus::Bitmap* bmp = new Gdiplus::Bitmap(w, h, PixelFormat32bppARGB);
-                    Gdiplus::BitmapData data;
+                    Gdiplus::BitmapData bdata;
                     Gdiplus::Rect rc(0, 0, w, h);
-                    if (bmp->LockBits(&rc, Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &data) == Gdiplus::Ok) {
-                        conv->CopyPixels(nullptr, data.Stride, data.Stride * h, (BYTE*)data.Scan0);
-                        bmp->UnlockBits(&data);
+                    if (bmp->LockBits(&rc, Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &bdata) == Gdiplus::Ok) {
+                        conv->CopyPixels(nullptr, bdata.Stride, bdata.Stride * h, (BYTE*)bdata.Scan0);
+                        BYTE* pixels = (BYTE*)bdata.Scan0;
+                        for (UINT y = 0; y < h; ++y) {
+                            BYTE* row = pixels + y * bdata.Stride;
+                            for (UINT x = 0; x < w; ++x) {
+                                BYTE r = row[x * 4 + 0];
+                                BYTE g = row[x * 4 + 1];
+                                BYTE b = row[x * 4 + 2];
+                                BYTE a = row[x * 4 + 3];
+                                row[x * 4 + 0] = a;
+                                row[x * 4 + 1] = r;
+                                row[x * 4 + 2] = g;
+                                row[x * 4 + 3] = b;
+                            }
+                        }
+                        bmp->UnlockBits(&bdata);
                         Gdiplus::Bitmap* dst = new Gdiplus::Bitmap(target, target, PixelFormat32bppARGB);
                         Gdiplus::Graphics g(dst);
                         g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
                         g.Clear(Gdiplus::Color(0,0,0,0));
                         g.DrawImage(bmp, Gdiplus::Rect(0,0,target,target), 0,0,w,h, Gdiplus::UnitPixel);
                         tintWhiteInst(dst);
+                        dst->GetHICON(&out);
+                        delete dst;
+                    }
+                    delete bmp;
+                }
+                conv->Release();
+            }
+            frame->Release();
+        }
+        decoder->Release();
+    }
+    factory->Release();
+    return out;
+}
+HICON loadViaWICColor(const std::wstring& path, int target) {
+    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    IWICImagingFactory* factory = nullptr;
+    if (FAILED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)))) return nullptr;
+    IWICBitmapDecoder* decoder = nullptr;
+    HICON out = nullptr;
+    if (SUCCEEDED(factory->CreateDecoderFromFilename(path.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder))) {
+        IWICBitmapFrameDecode* frame = nullptr;
+        if (SUCCEEDED(decoder->GetFrame(0, &frame))) {
+            UINT w, h;
+            frame->GetSize(&w, &h);
+            IWICFormatConverter* conv = nullptr;
+            if (SUCCEEDED(factory->CreateFormatConverter(&conv))) {
+                if (SUCCEEDED(conv->Initialize(frame, GUID_WICPixelFormat32bppRGBA, WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom))) {
+                    ensureGdiplus();
+                    Gdiplus::Bitmap* bmp = new Gdiplus::Bitmap(w, h, PixelFormat32bppARGB);
+                    Gdiplus::BitmapData bdata;
+                    Gdiplus::Rect rc(0, 0, w, h);
+                    if (bmp->LockBits(&rc, Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &bdata) == Gdiplus::Ok) {
+                        conv->CopyPixels(nullptr, bdata.Stride, bdata.Stride * h, (BYTE*)bdata.Scan0);
+                        BYTE* pixels = (BYTE*)bdata.Scan0;
+                        for (UINT y = 0; y < h; ++y) {
+                            BYTE* row = pixels + y * bdata.Stride;
+                            for (UINT x = 0; x < w; ++x) {
+                                BYTE r = row[x * 4 + 0];
+                                BYTE g = row[x * 4 + 1];
+                                BYTE b = row[x * 4 + 2];
+                                BYTE a = row[x * 4 + 3];
+                                row[x * 4 + 0] = a;
+                                row[x * 4 + 1] = r;
+                                row[x * 4 + 2] = g;
+                                row[x * 4 + 3] = b;
+                            }
+                        }
+                        bmp->UnlockBits(&bdata);
+                        Gdiplus::Bitmap* dst = new Gdiplus::Bitmap(target, target, PixelFormat32bppARGB);
+                        Gdiplus::Graphics g2(dst);
+                        g2.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+                        g2.Clear(Gdiplus::Color(0,0,0,0));
+                        g2.DrawImage(bmp, Gdiplus::Rect(0,0,target,target), 0,0,w,h, Gdiplus::UnitPixel);
                         dst->GetHICON(&out);
                         delete dst;
                     }
@@ -306,14 +396,14 @@ HICON loadIconUrlCached(const std::string& url, int target) {
             Gdiplus::Bitmap* dst = new Gdiplus::Bitmap(target, target, PixelFormat32bppARGB);
             Gdiplus::Graphics g(dst);
             g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+            g.Clear(Gdiplus::Color(0,0,0,0));
             g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
-            tintWhiteInst(dst);
             dst->GetHICON(&out);
             delete dst; delete src;
             if (out) return out;
         } else {
             if (src) delete src;
-            out = loadViaWIC(cache, target);
+            out = loadViaWICColor(cache, target);
             if (out) return out;
         }
     }
@@ -328,14 +418,14 @@ HICON loadIconUrlCached(const std::string& url, int target) {
         Gdiplus::Bitmap* dst = new Gdiplus::Bitmap(target, target, PixelFormat32bppARGB);
         Gdiplus::Graphics g(dst);
         g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+        g.Clear(Gdiplus::Color(0,0,0,0));
         g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
-        tintWhiteInst(dst);
         dst->GetHICON(&out);
         delete dst; delete src;
         if (out) return out;
     } else {
         if (src) delete src;
-        out = loadViaWIC(cache, target);
+        out = loadViaWICColor(cache, target);
         if (out) return out;
     }
     if (!out) {
@@ -365,6 +455,17 @@ void parallelLoadIcons(std::vector<ModInfo>& res, int target) {
 struct Server {
     std::string name;
     std::string address;
+    game::ServerInfo ping;
+    bool pinged = false;
+};
+
+struct WorldInfo {
+    std::wstring name;
+    std::wstring path;
+    std::wstring iconPath;
+    long long sizeBytes = 0;
+    FILETIME lastPlayed = {};
+    bool hasIcon = false;
 };
 
 std::wstring iconPathEd(const std::wstring& name) {
@@ -511,6 +612,23 @@ struct EditorData {
     std::vector<ModInfo> modResults;
     std::vector<Server> servers;
     std::vector<std::wstring> logFiles;
+    std::vector<WorldInfo> worlds;
+    HWND listWorlds = nullptr;
+    HWND worldFrame = nullptr;
+    HWND worldTitleIcon = nullptr;
+    HWND worldTitle = nullptr;
+    HWND worldHint = nullptr;
+    HWND btnWorldBackup = nullptr;
+    HWND btnWorldDelete = nullptr;
+    HWND btnWorldOpen = nullptr;
+    HWND worldSizeLabel = nullptr;
+    HWND worldDateLabel = nullptr;
+    HWND btnServPing = nullptr;
+    HWND btnModsCheckUpd = nullptr;
+    HWND btnModsUpdateAll = nullptr;
+    HWND hWorldIcon = nullptr;
+    std::vector<game::ModUpdateInfo> modUpdates;
+    std::vector<HWND> worldsCtrls;
 };
 
 HFONT makeFont() {
@@ -564,6 +682,22 @@ void subclassWheel(HWND child) {
     SetPropW(child, L"wheelOldProc", reinterpret_cast<HANDLE>(old));
     SetWindowLongPtrW(child, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wheelRedirectProc));
 }
+WNDPROC g_origModsListProc = nullptr;
+LRESULT CALLBACK modsListScrollProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (msg == WM_MOUSEWHEEL) {
+        int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+        int count = (int)SendMessageW(hwnd, LB_GETCOUNT, 0, 0);
+        int top = (int)SendMessageW(hwnd, LB_GETTOPINDEX, 0, 0);
+        int step = (delta > 0) ? -3 : 3;
+        int target = top + step;
+        if (target < 0) target = 0;
+        if (target >= count) target = count - 1;
+        if (target < 0) target = 0;
+        SendMessageW(hwnd, LB_SETTOPINDEX, target, 0);
+        return 0;
+    }
+    return CallWindowProcW(g_origModsListProc, hwnd, msg, wParam, lParam);
+}
 
 void updateModsInstallButton(EditorData* data) {
     if (!data || !data->btnModsInstall || !data->comboLoader || !data->comboModsType) return;
@@ -612,7 +746,7 @@ std::vector<ModInfo> curseforgeSearch(const std::string& query, const std::strin
     std::string cfType = "mc-mods";
     if (type == "resourcepack") cfType = "texture-packs";
     else if (type == "shader") cfType = "shaders";
-    std::string url = "https://api.curseforge.com/v1/mods/search?gameId=432&searchFilter=" + urlEncode(query) + "&classId=6&sortField=2&sortOrder=desc&pageSize=25";
+    std::string url = "https://api.curseforge.com/v1/mods/search?gameId=432&searchFilter=" + urlEncode(query) + "&classId=6&sortField=2&sortOrder=desc&pageSize=100";
     if (!mc.empty()) url += "&gameVersion=" + urlEncode(mc);
     std::string body = net::httpGet(url, nullptr);
     if (body.empty()) {
@@ -641,7 +775,7 @@ std::vector<ModInfo> modrinthSearch(const std::string& query, const std::string&
     facets += "]";
     std::string idx = query.empty() ? "downloads" : "relevance";
     std::string url = "https://api.modrinth.com/v2/search?query=" + urlEncode(query) +
-                      "&limit=25&index=" + idx + "&facets=" + urlEncode(facets);
+                      "&limit=100&index=" + idx + "&facets=" + urlEncode(facets);
     std::string body = net::httpGet(url, nullptr);
     if (body.empty()) return out;
     ravex::json::Value root = ravex::json::Value::parse(body);
@@ -737,6 +871,62 @@ std::vector<std::wstring> loadLogFiles(const std::wstring& dir) {
     return out;
 }
 
+std::vector<WorldInfo> loadWorlds(const std::wstring& dir) {
+    std::vector<WorldInfo> out;
+    std::wstring saves = joinPath(dir, L"saves");
+    if (!fileExists(saves)) return out;
+    std::wstring pat = joinPath(saves, L"*");
+    WIN32_FIND_DATAW fd;
+    HANDLE h = FindFirstFileW(pat.c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE) return out;
+    do {
+        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
+        std::wstring name = fd.cFileName;
+        if (name == L"." || name == L"..") continue;
+        WorldInfo w;
+        w.name = name;
+        w.path = joinPath(saves, name);
+        w.iconPath = joinPath(w.path, L"icon.png");
+        w.hasIcon = fileExists(w.iconPath);
+        w.lastPlayed = fd.ftLastWriteTime;
+        std::wstring levelDat = joinPath(w.path, L"level.dat");
+        if (fileExists(levelDat)) {
+            WIN32_FILE_ATTRIBUTE_DATA fad;
+            if (GetFileAttributesExW(levelDat.c_str(), GetFileExInfoStandard, &fad)) {
+                LARGE_INTEGER li;
+                li.LowPart = fad.nFileSizeLow;
+                li.HighPart = fad.nFileSizeHigh;
+                w.sizeBytes = li.QuadPart;
+            }
+        }
+        out.push_back(std::move(w));
+    } while (FindNextFileW(h, &fd));
+    FindClose(h);
+    std::sort(out.begin(), out.end(), [](const WorldInfo& a, const WorldInfo& b) {
+        if (a.lastPlayed.dwHighDateTime != b.lastPlayed.dwHighDateTime)
+            return a.lastPlayed.dwHighDateTime > b.lastPlayed.dwHighDateTime;
+        return a.lastPlayed.dwLowDateTime > b.lastPlayed.dwLowDateTime;
+    });
+    return out;
+}
+
+std::wstring formatSize(long long bytes) {
+    wchar_t buf[64];
+    if (bytes < 1024) { swprintf(buf, 64, L"%lld B", bytes); }
+    else if (bytes < 1048576) { swprintf(buf, 64, L"%.1f KB", bytes / 1024.0); }
+    else if (bytes < 1073741824) { swprintf(buf, 64, L"%.1f MB", bytes / 1048576.0); }
+    else { swprintf(buf, 64, L"%.2f GB", bytes / 1073741824.0); }
+    return buf;
+}
+
+std::wstring formatFileTime(FILETIME ft) {
+    SYSTEMTIME st;
+    if (!FileTimeToSystemTime(&ft, &st)) return L"--";
+    wchar_t buf[64];
+    swprintf(buf, 64, L"%04d-%02d-%02d %02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+    return buf;
+}
+
 void applyTab(EditorData* d, int idx) {
     auto show = [idx](std::vector<HWND>& grp, int tab) {
         for (HWND w : grp) if (w) ShowWindow(w, idx == tab ? SW_SHOW : SW_HIDE);
@@ -758,6 +948,7 @@ void applyTab(EditorData* d, int idx) {
     show(d->serversCtrls, 2);
     show(d->notesCtrls, 3);
     show(d->logsCtrls, 4);
+    show(d->worldsCtrls, 5);
 }
 
 LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -794,17 +985,17 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             auto sc = [&](int v){ return MulDiv(v, dpi, 96); };
             {
                 auto tr = [&](const char* k, const char* fb){ const char* v=ravex::lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v); };
-                std::wstring wnames[5] = {tr("general","General"), tr("mods","Mods"), tr("servers","Servers"), tr("notes","Notes"), tr("logs","Logs")};
-                const wchar_t* names[] = {wnames[0].c_str(), wnames[1].c_str(), wnames[2].c_str(), wnames[3].c_str(), wnames[4].c_str()};
-                const wchar_t* iconNames[] = {L"settings", L"mods", L"servers", L"notes", L"logs"};
+                std::wstring wnames[6] = {tr("general","General"), tr("mods","Mods"), tr("servers","Servers"), tr("notes","Notes"), tr("logs","Logs"), tr("worlds","Worlds")};
+                const wchar_t* names[] = {wnames[0].c_str(), wnames[1].c_str(), wnames[2].c_str(), wnames[3].c_str(), wnames[4].c_str(), wnames[5].c_str()};
+                const wchar_t* iconNames[] = {L"settings", L"mods", L"servers", L"notes", L"logs", L"worlds"};
                 int s = sc(16);
                 int totalW = sc(948);
                 int gap = sc(6);
                 int btnH = sc(36);
-                int btnW = (totalW - gap * 4) / 5;
-                for (int i = 0; i < 5; ++i) {
+                int btnW = (totalW - gap * 5) / 6;
+                for (int i = 0; i < 6; ++i) {
                     int x = 16 + i * (btnW + gap);
-                    if (i == 4) btnW = totalW - (x - 16) - 0;
+                    if (i == 5) btnW = totalW - (x - 16) - 0;
                     HWND b = CreateWindowExW(0, L"BUTTON", names[i], WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | BS_OWNERDRAW, x, 56, btnW, btnH, hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_TAB + i)), inst, nullptr);
                     SendMessageW(b, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
                     data->tabBtns.push_back(b);
@@ -812,6 +1003,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     if (!fileExists(p) && i == 1) p = iconPathEd(L"mods");
                     if (!fileExists(p) && i == 3) p = iconPathEd(L"edit");
                     if (!fileExists(p) && i == 4) p = iconPathEd(L"update");
+                    if (!fileExists(p) && i == 5) p = iconPathEd(L"worlds");
                     HICON hIc = fileExists(p) ? loadHIconEd(p, s) : nullptr;
                     data->tabIcons.push_back(hIc);
                 }
@@ -927,7 +1119,16 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             HWND lblJvm = CreateWindowExW(0, L"STATIC", trI("jvm_args","JVM Arguments").c_str(), WS_CHILD | WS_VISIBLE, 44, 414, 800, 22, hwnd, nullptr, inst, nullptr);
             data->editJvm = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 24, 438, 820, 34, hwnd, reinterpret_cast<HMENU>(IDC_EDIT_JVM), inst, nullptr);
             SetWindowTextW(data->editJvm, fromUtf8(data->cfg.jvmArgs).c_str());
+            {
+                const char* tips[] = {"jvm_tip_1","jvm_tip_2","jvm_tip_3","jvm_tip_4","jvm_tip_5"};
+                int tipIdx = static_cast<int>(GetTickCount64() / 300000) % 5;
+                const char* tv = ravex::lang(tips[tipIdx]);
+                if (!tv || strcmp(tv, tips[tipIdx]) == 0) tv = "-Xmx4G -Xms2G";
+                std::wstring wtip = fromUtf8(tv);
+                SendMessageW(data->editJvm, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(wtip.c_str()));
+            }
             data->generalCtrls.push_back(iconJvm); data->generalCtrls.push_back(lblJvm); data->generalCtrls.push_back(data->editJvm);
+            SetTimer(hwnd, JVM_TIP_TIMER, 300000, nullptr);
 
             HWND iconJava = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_ICON, 24, 490, 16, 16, hwnd, nullptr, inst, nullptr);
             HICON hIconJava = loadLauncherIcon(IDR_ICON_FIELD_JAVA, L"field_java", 16);
@@ -963,18 +1164,22 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             SendMessageW(data->comboModsType, CB_SETCURSEL, 0, 0);
             HWND lblSearch = CreateWindowExW(0, L"STATIC", trI("search","Search").c_str(), WS_CHILD | WS_VISIBLE, 336, 92, 340, 22, hwnd, nullptr, inst, nullptr);
             data->editModsSearch = CreateWindowExW(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 336, 116, 340, 30, hwnd, reinterpret_cast<HMENU>(IDC_MODS_SEARCH), inst, nullptr);
-            data->btnModsGo = CreateWindowExW(0, L"BUTTON", trI("search","Search").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP, 690, 116, 100, 30, hwnd, reinterpret_cast<HMENU>(IDC_MODS_GO), inst, nullptr);
+            data->btnModsGo = CreateWindowExW(0, L"BUTTON", trI("search","Search").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 690, 116, 100, 30, hwnd, reinterpret_cast<HMENU>(IDC_MODS_GO), inst, nullptr);
             data->listMods = CreateWindowExW(0, L"LISTBOX", nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_OWNERDRAWFIXED, 24, 158, 820, 360, hwnd, reinterpret_cast<HMENU>(IDC_MODS_LIST), inst, nullptr);
-            data->btnModsInstall = CreateWindowExW(0, L"BUTTON", trI("install","Install").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP, 24, 540, 160, 34, hwnd, reinterpret_cast<HMENU>(IDC_MODS_INSTALL), inst, nullptr);
-            data->btnModsOpen = CreateWindowExW(0, L"BUTTON", trI("open_mods_folder","Open Mods Folder").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP, 200, 540, 180, 34, hwnd, reinterpret_cast<HMENU>(IDC_MODS_OPEN), inst, nullptr);
-            data->btnModsShowInstalled = CreateWindowExW(0, L"BUTTON", trI("installed","Installed").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP, 400, 540, 140, 34, hwnd, reinterpret_cast<HMENU>(IDC_MODS_SHOWINSTALLED), inst, nullptr);
+            data->btnModsInstall = CreateWindowExW(0, L"BUTTON", trI("install","Install").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 24, 540, 160, 34, hwnd, reinterpret_cast<HMENU>(IDC_MODS_INSTALL), inst, nullptr);
+            data->btnModsOpen = CreateWindowExW(0, L"BUTTON", trI("open_mods_folder","Open Mods Folder").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 200, 540, 180, 34, hwnd, reinterpret_cast<HMENU>(IDC_MODS_OPEN), inst, nullptr);
+            data->btnModsShowInstalled = CreateWindowExW(0, L"BUTTON", trI("installed","Installed").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 400, 540, 140, 34, hwnd, reinterpret_cast<HMENU>(IDC_MODS_SHOWINSTALLED), inst, nullptr);
             data->hModDetails = CreateWindowExW(0, L"STATIC", trI("select_mod_details","Select a mod to see details").c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, 24, 580, 820, 60, hwnd, nullptr, inst, nullptr);
             SendMessageW(data->hModDetails, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
+            data->btnModsCheckUpd = CreateWindowExW(0, L"BUTTON", trI("check_updates","Check for Updates").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 560, 540, 140, 34, hwnd, reinterpret_cast<HMENU>(IDC_MODS_CHECKUPD), inst, nullptr);
+            data->btnModsUpdateAll = CreateWindowExW(0, L"BUTTON", trI("update_all","Update All").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 710, 540, 130, 34, hwnd, reinterpret_cast<HMENU>(IDC_MODS_UPDATEALL), inst, nullptr);
+            EnableWindow(data->btnModsUpdateAll, FALSE);
             data->modsCtrls.push_back(lblPlatform); data->modsCtrls.push_back(data->comboModsPlatform);
             data->modsCtrls.push_back(lblType); data->modsCtrls.push_back(data->comboModsType);
             data->modsCtrls.push_back(lblSearch); data->modsCtrls.push_back(data->editModsSearch);
             data->modsCtrls.push_back(data->btnModsGo); data->modsCtrls.push_back(data->listMods);
             data->modsCtrls.push_back(data->btnModsInstall); data->modsCtrls.push_back(data->btnModsOpen); data->modsCtrls.push_back(data->btnModsShowInstalled); data->modsCtrls.push_back(data->hModDetails);
+            data->modsCtrls.push_back(data->btnModsCheckUpd); data->modsCtrls.push_back(data->btnModsUpdateAll);
 
             HWND servIco = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_ICON, 24, 92, 20, 20, hwnd, nullptr, inst, nullptr);
             HICON hServIco = loadLauncherIcon(IDR_ICON_SERVERS, L"servers", 20);
@@ -996,11 +1201,13 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             data->btnServAdd = CreateWindowExW(0, L"BUTTON", trI("add_server","Add").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 24, 524, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_SERV_ADD), inst, nullptr);
             data->btnServDel = CreateWindowExW(0, L"BUTTON", trI("remove_server","Remove").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 190, 524, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_SERV_DEL), inst, nullptr);
             data->btnServOpen = CreateWindowExW(0, L"BUTTON", trI("open_folder","Open Folder").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 690, 524, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_SERV_OPEN), inst, nullptr);
+            data->btnServPing = CreateWindowExW(0, L"BUTTON", trI("ping","Ping").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 360, 524, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_SERV_PING), inst, nullptr);
             data->serversCtrls.push_back(servIco); data->serversCtrls.push_back(lblServTitle); data->serversCtrls.push_back(lblServHint);
             data->serversCtrls.push_back(servFrame); data->serversCtrls.push_back(data->listServers);
             data->serversCtrls.push_back(lblServName); data->serversCtrls.push_back(data->editServName);
             data->serversCtrls.push_back(lblServAddr); data->serversCtrls.push_back(data->editServAddr);
             data->serversCtrls.push_back(data->btnServAdd); data->serversCtrls.push_back(data->btnServDel); data->serversCtrls.push_back(data->btnServOpen);
+            data->serversCtrls.push_back(data->btnServPing);
             data->servers = loadServers(instanceDir(fromUtf8(data->cfg.name)));
             for (const Server& s : data->servers) {
                 std::wstring item = fromUtf8(s.name.empty() ? s.address : s.name + " (" + s.address + ")");
@@ -1058,11 +1265,36 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 SendMessageW(data->listLogs, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(name.c_str()));
             }
 
+            HWND worldsIco = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_ICON, 24, 92, 20, 20, hwnd, nullptr, inst, nullptr);
+            HICON hWorldsIco = loadLauncherIcon(IDR_ICON_MODS, L"worlds", 20);
+            if (hWorldsIco) { SendMessageW(worldsIco, STM_SETIMAGE, IMAGE_ICON, reinterpret_cast<LPARAM>(hWorldsIco)); data->fieldIcons.push_back(hWorldsIco); }
+            data->worldTitleIcon = worldsIco;
+            HWND lblWorldsTitle = CreateWindowExW(0, L"STATIC", trI("worlds","Worlds").c_str(), WS_CHILD | WS_VISIBLE, 50, 92, 300, 22, hwnd, nullptr, inst, nullptr);
+            data->worldTitle = lblWorldsTitle;
+            HWND lblWorldsHint = CreateWindowExW(0, L"STATIC", trI("worlds_hint","Worlds saved in this instance").c_str(), WS_CHILD | WS_VISIBLE, 50, 112, 500, 16, hwnd, reinterpret_cast<HMENU>(IDC_WORLD_HINT), inst, nullptr);
+            data->worldHint = lblWorldsHint;
+            HWND worldsFrame = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 24, 134, 820, 470, hwnd, reinterpret_cast<HMENU>(IDC_WORLD_FRAME), inst, nullptr);
+            data->worldFrame = worldsFrame;
+            data->listWorlds = CreateWindowExW(0, L"LISTBOX", nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY, 28, 138, 812, 462, hwnd, reinterpret_cast<HMENU>(IDC_WORLD_LIST), inst, nullptr);
+            data->btnWorldBackup = CreateWindowExW(0, L"BUTTON", trI("world_backup","Backup").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 24, 620, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_WORLD_BACKUP), inst, nullptr);
+            data->btnWorldDelete = CreateWindowExW(0, L"BUTTON", trI("world_delete","Delete").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 190, 620, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_WORLD_DELETE), inst, nullptr);
+            data->btnWorldOpen = CreateWindowExW(0, L"BUTTON", trI("open_folder","Open Folder").c_str(), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW, 690, 620, 150, 36, hwnd, reinterpret_cast<HMENU>(IDC_WORLD_OPEN), inst, nullptr);
+            data->worldsCtrls.push_back(worldsIco); data->worldsCtrls.push_back(lblWorldsTitle); data->worldsCtrls.push_back(lblWorldsHint);
+            data->worldsCtrls.push_back(worldsFrame); data->worldsCtrls.push_back(data->listWorlds);
+            data->worldsCtrls.push_back(data->btnWorldBackup); data->worldsCtrls.push_back(data->btnWorldDelete); data->worldsCtrls.push_back(data->btnWorldOpen);
+            data->worlds = loadWorlds(instanceDir(fromUtf8(data->cfg.name)));
+            for (size_t i = 0; i < data->worlds.size(); ++i) {
+                const WorldInfo& w = data->worlds[i];
+                std::wstring item = w.name;
+                SendMessageW(data->listWorlds, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(item.c_str()));
+            }
+
             for (HWND w : data->generalCtrls) if (w) SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             for (HWND w : data->modsCtrls) if (w) SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             for (HWND w : data->serversCtrls) if (w) SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             for (HWND w : data->notesCtrls) if (w) SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             for (HWND w : data->logsCtrls) if (w) SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
+            for (HWND w : data->worldsCtrls) if (w) SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             SendMessageW(header, WM_SETFONT, reinterpret_cast<WPARAM>(data->titleFont), TRUE);
             if (data->notesHint) SendMessageW(data->notesHint, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
             if (data->notesCounter) SendMessageW(data->notesCounter, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
@@ -1071,6 +1303,8 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (data->servTitle) SendMessageW(data->servTitle, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             if (data->logsHint) SendMessageW(data->logsHint, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
             if (data->logsTitle) SendMessageW(data->logsTitle, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
+            if (data->worldHint) SendMessageW(data->worldHint, WM_SETFONT, reinterpret_cast<WPARAM>(data->smallFont), TRUE);
+            if (data->worldTitle) SendMessageW(data->worldTitle, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
             SendMessageW(data->editServName, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(6, 6));
             SendMessageW(data->editServAddr, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(6, 6));
 
@@ -1078,6 +1312,9 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             subclassWheel(data->editJava); subclassWheel(data->comboVer);
             subclassWheel(data->comboLoader); subclassWheel(data->comboLoaderVer);
             subclassWheel(data->editModsSearch); subclassWheel(data->editServName); subclassWheel(data->editServAddr);
+            if (data->listMods) {
+                g_origModsListProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(data->listMods, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(modsListScrollProc)));
+            }
 
             setBtnIconEd(data->btnBrowse, L"folder");
             setBtnIconEd(data->btnFolder, L"folder");
@@ -1090,9 +1327,15 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             setBtnIconEd(data->btnServAdd, L"add");
             setBtnIconEd(data->btnServDel, L"delete");
             setBtnIconEd(data->btnServOpen, L"folder");
+            setBtnIconEd(data->btnServPing, L"search");
             setBtnIconEd(data->btnLogsOpen, L"folder");
             setBtnIconEd(data->btnLogsRefresh, L"update");
-            for (HWND b : {data->btnBrowse, data->btnFolder, data->btnDuplicate, data->btnOk, data->btnCancel, data->btnModsGo, data->btnModsInstall, data->btnModsOpen, data->btnServAdd, data->btnServDel, data->btnServOpen, data->btnLogsOpen, data->btnLogsRefresh}) if (b) {
+            setBtnIconEd(data->btnWorldBackup, L"download");
+            setBtnIconEd(data->btnWorldDelete, L"delete");
+            setBtnIconEd(data->btnWorldOpen, L"folder");
+            setBtnIconEd(data->btnModsCheckUpd, L"update");
+            setBtnIconEd(data->btnModsUpdateAll, L"download");
+            for (HWND b : {data->btnBrowse, data->btnFolder, data->btnDuplicate, data->btnOk, data->btnCancel, data->btnModsGo, data->btnModsInstall, data->btnModsOpen, data->btnServAdd, data->btnServDel, data->btnServOpen, data->btnServPing, data->btnLogsOpen, data->btnLogsRefresh, data->btnWorldBackup, data->btnWorldDelete, data->btnWorldOpen, data->btnModsCheckUpd, data->btnModsUpdateAll}) if (b) {
                 SetWindowTheme(b, L"Explorer", nullptr);
                 LONG_PTR st = GetWindowLongPtrW(b, GWL_STYLE);
                 st |= BS_FLAT;
@@ -1106,7 +1349,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
 
             glowCreate(hwnd, &data->glow);
-            glowSetButtons(&data->glow, {data->btnBrowse, data->btnFolder, data->btnDuplicate, data->btnOk, data->btnCancel, data->btnModsGo, data->btnModsInstall, data->btnModsOpen, data->btnServAdd, data->btnServDel, data->btnServOpen, data->btnLogsOpen, data->btnLogsRefresh});
+            glowSetButtons(&data->glow, {data->btnBrowse, data->btnFolder, data->btnDuplicate, data->btnOk, data->btnCancel, data->btnModsGo, data->btnModsInstall, data->btnModsOpen, data->btnServAdd, data->btnServDel, data->btnServOpen, data->btnServPing, data->btnLogsOpen, data->btnLogsRefresh, data->btnWorldBackup, data->btnWorldDelete, data->btnWorldOpen, data->btnModsCheckUpd, data->btnModsUpdateAll});
             applyTab(data, 0);
             SetTimer(hwnd, 99, 16, nullptr);
             SetFocus(data->editName);
@@ -1115,7 +1358,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_DRAWITEM: {
             DRAWITEMSTRUCT* ds = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
             int id = static_cast<int>(ds->CtlID);
-            if (id >= IDC_TAB && id < IDC_TAB + 5 && data) {
+            if (id >= IDC_TAB && id < IDC_TAB + 6 && data) {
                 int idx = id - IDC_TAB;
                 bool sel = (data->curTab == idx);
                 bool isPrev = (data->prevTab == idx && data->tabFade > 0);
@@ -1152,7 +1395,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 SetTextColor(dc, fg);
                 HFONT oldF = (HFONT)SelectObject(dc, data->font);
                 auto trTab = [&](const char* k,const char* fb){const char* v=ravex::lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
-                std::wstring tabNames2[] = {trTab("general","General"), trTab("mods","Mods"), trTab("servers","Servers"), trTab("notes","Notes"), trTab("logs","Logs")};
+                std::wstring tabNames2[] = {trTab("general","General"), trTab("mods","Mods"), trTab("servers","Servers"), trTab("notes","Notes"), trTab("logs","Logs"), trTab("worlds","Worlds")};
                 DrawTextW(dc, tabNames2[idx].c_str(), -1, &tr, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
                 SelectObject(dc, oldF);
                 if (sel) {
@@ -1162,7 +1405,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 return TRUE;
             }
-            if ((id == IDC_NOTES_FRAME || id == IDC_SERV_FRAME || id == IDC_LOGS_FRAME || id == IDC_LOGS_VIEW_FRAME) && data) {
+            if ((id == IDC_NOTES_FRAME || id == IDC_SERV_FRAME || id == IDC_LOGS_FRAME || id == IDC_LOGS_VIEW_FRAME || id == IDC_WORLD_FRAME) && data) {
                 HDC dc = ds->hDC; RECT rc = ds->rcItem;
                 HBRUSH bgBr = CreateSolidBrush(data->theme.panel);
                 FillRect(dc, &rc, bgBr); DeleteObject(bgBr);
@@ -1218,6 +1461,38 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 if (ds->itemState & ODS_FOCUS) DrawFocusRect(dc, &rc);
                 return TRUE;
             }
+            if (id == IDC_WORLD_LIST && data) {
+                DRAWITEMSTRUCT* wds = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
+                HDC dc = wds->hDC; RECT rc = wds->rcItem;
+                int dpi = 96;
+                if (HMODULE u = GetModuleHandleW(L"user32.dll")) {
+                    auto fn = reinterpret_cast<UINT(WINAPI*)(HWND)>(GetProcAddress(u, "GetDpiForWindow"));
+                    if (fn) dpi = (int)fn(hwnd);
+                }
+                if (dpi < 96) dpi = 96;
+                auto scW = [&](int v){ return MulDiv(v, dpi, 96); };
+                bool wsel = (wds->itemState & ODS_SELECTED) != 0;
+                HBRUSH wbr = CreateSolidBrush(wsel ? data->theme.accent : data->theme.bg);
+                FillRect(dc, &rc, wbr); DeleteObject(wbr);
+                int widx = (int)wds->itemID;
+                if (widx >= 0 && widx < (int)data->worlds.size()) {
+                    const WorldInfo& w = data->worlds[widx];
+                    int pad = scW(10);
+                    RECT tr = rc; tr.left = rc.left + pad; tr.right = rc.right - pad; tr.top += scW(4); tr.bottom = rc.top + (rc.bottom - rc.top) / 2;
+                    SetBkMode(dc, TRANSPARENT); SetTextColor(dc, RGB(255,255,255));
+                    HFONT oldF = (HFONT)SelectObject(dc, data->font);
+                    DrawTextW(dc, w.name.c_str(), -1, &tr, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
+                    SelectObject(dc, oldF);
+                    RECT dr = rc; dr.left = tr.left; dr.right = tr.right; dr.top = tr.bottom; dr.bottom = rc.bottom - scW(4);
+                    HFONT oldS = (HFONT)SelectObject(dc, data->smallFont);
+                    SetTextColor(dc, wsel ? RGB(220,220,220) : RGB(150,150,150));
+                    std::wstring info = formatSize(w.sizeBytes) + L"  |  " + formatFileTime(w.lastPlayed);
+                    DrawTextW(dc, info.c_str(), -1, &dr, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
+                    SelectObject(dc, oldS);
+                }
+                if (wds->itemState & ODS_FOCUS) DrawFocusRect(dc, &rc);
+                return TRUE;
+            }
             if (id == IDC_COMBO_LOADER && data) {
                 HDC dc = ds->hDC;
                 RECT rc = ds->rcItem;
@@ -1253,7 +1528,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 if (focus) DrawFocusRect(dc, &rc);
                 return TRUE;
             }
-            if ((id == IDOK || id == IDCANCEL || id == IDC_OPEN_FOLDER || id == IDC_DUPLICATE || id == IDC_BROWSE_JAVA || id == IDC_MODS_GO || id == IDC_MODS_INSTALL || id == IDC_MODS_OPEN || id == IDC_MODS_SHOWINSTALLED || id == IDC_SERV_ADD || id == IDC_SERV_DEL || id == IDC_SERV_OPEN || id == IDC_LOGS_OPEN || id == IDC_LOGS_REFRESH) && data) {
+            if ((id == IDOK || id == IDCANCEL || id == IDC_OPEN_FOLDER || id == IDC_DUPLICATE || id == IDC_BROWSE_JAVA || id == IDC_MODS_GO || id == IDC_MODS_INSTALL || id == IDC_MODS_OPEN || id == IDC_MODS_SHOWINSTALLED || id == IDC_SERV_ADD || id == IDC_SERV_DEL || id == IDC_SERV_OPEN || id == IDC_SERV_PING || id == IDC_LOGS_OPEN || id == IDC_LOGS_REFRESH || id == IDC_WORLD_BACKUP || id == IDC_WORLD_DELETE || id == IDC_WORLD_OPEN || id == IDC_MODS_CHECKUPD || id == IDC_MODS_UPDATEALL) && data) {
                 HDC dc = ds->hDC; RECT rc = ds->rcItem;
                 bool isOk = (id == IDOK);
                 bool isPrimary = isOk || id == IDC_MODS_INSTALL;
@@ -1297,6 +1572,10 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 {
                     const char* v=ravex::lang("use_bundled_java"); if(!v||strcmp(v,"use_bundled_java")==0) v="Use bundled Java";
                     std::wstring wtxt=fromUtf8(v);
+                    if (chk) {
+                        std::string jv = game::getBundledJavaVersion();
+                        if (!jv.empty()) wtxt += L" (" + fromUtf8(jv) + L")";
+                    }
                     DrawTextW(dc, wtxt.c_str(), -1, &tr, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
                 }
                 SelectObject(dc, old);
@@ -1307,6 +1586,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
         case WM_MEASUREITEM: {
             MEASUREITEMSTRUCT* m = reinterpret_cast<MEASUREITEMSTRUCT*>(lParam);
             if (m->CtlID == IDC_MODS_LIST) { m->itemHeight = MulDiv(44, 96, 96); if (HMODULE u = GetModuleHandleW(L"user32.dll")) { auto fn = reinterpret_cast<UINT(WINAPI*)(HWND)>(GetProcAddress(u, "GetDpiForWindow")); if (fn) m->itemHeight = MulDiv(44, (int)fn(hwnd), 96); } return TRUE; }
+            if (m->CtlID == IDC_WORLD_LIST) { m->itemHeight = MulDiv(40, 96, 96); if (HMODULE u = GetModuleHandleW(L"user32.dll")) { auto fn = reinterpret_cast<UINT(WINAPI*)(HWND)>(GetProcAddress(u, "GetDpiForWindow")); if (fn) m->itemHeight = MulDiv(40, (int)fn(hwnd), 96); } return TRUE; }
             if (m->CtlID == IDC_COMBO_LOADER) { m->itemHeight = 26; return TRUE; }
             return FALSE;
         }
@@ -1319,17 +1599,35 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
             }
             return 0;
         }
+        case WM_PAINT: {
+            PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
+            EndPaint(hwnd, &ps);
+            return 0;
+        }
         case WM_TIMER:
             if (wParam == 99) glowUpdate(&data->glow);
             else if (wParam == 100) {
-                if (data->prevTab >=0) {
-                    data->tabFade -= 0.06f;
-                    if (data->tabFade <= 0) { data->tabFade = 0; data->prevTab = -1; KillTimer(hwnd, 100); }
-                    if (data->prevTab >=0 && data->prevTab < (int)data->tabBtns.size() && data->tabBtns[data->prevTab]) InvalidateRect(data->tabBtns[data->prevTab], nullptr, TRUE);
-                    if (data->curTab >=0 && data->curTab < (int)data->tabBtns.size() && data->tabBtns[data->curTab]) InvalidateRect(data->tabBtns[data->curTab], nullptr, TRUE);
-                } else KillTimer(hwnd, 100);
+                bool active = false;
+                if (data->prevTab >= 0) {
+                    data->tabFade -= 0.12f;
+                    if (data->tabFade <= 0) { data->tabFade = 0; data->prevTab = -1; }
+                    if (data->prevTab >= 0) active = true;
+                }
+                if (!active) KillTimer(hwnd, 100);
+                if (data->prevTab >= 0 && data->prevTab < (int)data->tabBtns.size() && data->tabBtns[data->prevTab]) InvalidateRect(data->tabBtns[data->prevTab], nullptr, TRUE);
+                if (data->curTab >= 0 && data->curTab < (int)data->tabBtns.size() && data->tabBtns[data->curTab]) InvalidateRect(data->tabBtns[data->curTab], nullptr, TRUE);
             }
             else if (wParam == 123) { KillTimer(hwnd, 123); PostMessageW(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MODS_GO, BN_CLICKED), 0); }
+            else if (wParam == JVM_TIP_TIMER) {
+                if (data && data->editJvm && GetWindowTextLengthW(data->editJvm) == 0) {
+                    const char* tips[] = {"jvm_tip_1","jvm_tip_2","jvm_tip_3","jvm_tip_4","jvm_tip_5"};
+                    int tipIdx = static_cast<int>(GetTickCount64() / 300000) % 5;
+                    const char* tv = ravex::lang(tips[tipIdx]);
+                    if (!tv || strcmp(tv, tips[tipIdx]) == 0) tv = "-Xmx4G -Xms2G";
+                    std::wstring wtip = fromUtf8(tv);
+                    SendMessageW(data->editJvm, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(wtip.c_str()));
+                }
+            }
             return 0;
         case WM_MOUSEWHEEL: {
             if (data->maxScroll <= 0) return 0;
@@ -1396,11 +1694,59 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
             }
             delete vers; return 0;
         }
+        case WM_APP_PING: {
+            auto* pkt = reinterpret_cast<std::pair<int, game::ServerInfo>*>(lParam);
+            if (data && pkt) {
+                int idx = pkt->first;
+                if (idx >= 0 && idx < static_cast<int>(data->servers.size())) {
+                    data->servers[idx].ping = pkt->second;
+                    data->servers[idx].pinged = true;
+                    std::wstring item = fromUtf8(data->servers[idx].name.empty() ? data->servers[idx].address : data->servers[idx].name + " (" + data->servers[idx].address + ")");
+                    if (pkt->second.online) {
+                        item += L" - " + fromUtf8(pkt->second.version) + L" [" + std::to_wstring(pkt->second.onlinePlayers) + L"/" + std::to_wstring(pkt->second.maxPlayers) + L"] " + std::to_wstring(pkt->second.latencyMs) + L"ms";
+                    } else {
+                        item += L" - " + fromUtf8(lang("server_offline"));
+                    }
+                    SendMessageW(data->listServers, LB_DELETESTRING, idx, 0);
+                    SendMessageW(data->listServers, LB_INSERTSTRING, idx, reinterpret_cast<LPARAM>(item.c_str()));
+                    SendMessageW(data->listServers, LB_SETCURSEL, idx, 0);
+                }
+                delete pkt;
+            }
+            return 0;
+        }
+        case WM_APP_WORLD: {
+            auto* worlds = reinterpret_cast<std::vector<WorldInfo>*>(lParam);
+            if (data && worlds) {
+                data->worlds = *worlds;
+                SendMessageW(data->listWorlds, LB_RESETCONTENT, 0, 0);
+                for (const WorldInfo& w : data->worlds) {
+                    SendMessageW(data->listWorlds, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(w.name.c_str()));
+                }
+                delete worlds;
+            }
+            return 0;
+        }
+        case WM_APP_UPDATE: {
+            auto* updates = reinterpret_cast<std::vector<game::ModUpdateInfo>*>(lParam);
+            if (data && updates) {
+                data->modUpdates = *updates;
+                if (!data->modUpdates.empty()) {
+                    EnableWindow(data->btnModsUpdateAll, TRUE);
+                    std::wstring msg = std::to_wstring(data->modUpdates.size()) + L" " + fromUtf8(lang("updates_available"));
+                    SetWindowTextW(data->hModDetails, msg.c_str());
+                } else {
+                    SetWindowTextW(data->hModDetails, fromUtf8(lang("no_updates")).c_str());
+                }
+                delete updates;
+            }
+            return 0;
+        }
         case WM_COMMAND: {
             int id = LOWORD(wParam);
             int code = HIWORD(wParam);
             auto trI=[&](const char* k,const char* fb){const char* v=ravex::lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
-            if (id >= IDC_TAB && id < IDC_TAB + 5) {
+            if (id >= IDC_TAB && id < IDC_TAB + 6) {
                 int idx = id - IDC_TAB;
                 if (idx != data->curTab) {
                     data->prevTab = data->curTab;
@@ -1671,6 +2017,132 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 }
                 return 0;
             }
+            if (id == IDC_SERV_PING) {
+                int sel = static_cast<int>(SendMessageW(data->listServers, LB_GETCURSEL, 0, 0));
+                if (sel < 0 || sel >= static_cast<int>(data->servers.size())) {
+                    MessageBoxW(hwnd, trI("select_mod_first","Select a server first").c_str(), L"RaveX", MB_ICONWARNING | MB_OK);
+                    return 0;
+                }
+                std::string addr = data->servers[sel].address;
+                HWND hList = data->listServers;
+                int idx = sel;
+                std::wstring pinging = fromUtf8(lang("pinging"));
+                std::wstring curItem;
+                int curlen = static_cast<int>(SendMessageW(hList, LB_GETTEXTLEN, sel, 0));
+                if (curlen > 0) { curItem.resize(curlen + 1); SendMessageW(hList, LB_GETTEXT, sel, reinterpret_cast<LPARAM>(curItem.data())); curItem.resize(curlen); }
+                SendMessageW(hList, LB_DELETESTRING, sel, 0);
+                SendMessageW(hList, LB_INSERTSTRING, sel, reinterpret_cast<LPARAM>((curItem + L" " + pinging).c_str()));
+                SendMessageW(hList, LB_SETCURSEL, sel, 0);
+                std::thread([hList, idx, addr]() {
+                    game::ServerInfo info;
+                    std::string err;
+                    game::pingServer(addr, &info, &err);
+                    if (IsWindow(hList)) {
+                        PostMessageW(GetParent(hList), WM_APP_PING, 0, reinterpret_cast<LPARAM>(new std::pair<int, game::ServerInfo>(idx, info)));
+                    }
+                }).detach();
+                return 0;
+            }
+            if (id == IDC_WORLD_BACKUP) {
+                int sel = static_cast<int>(SendMessageW(data->listWorlds, LB_GETCURSEL, 0, 0));
+                if (sel < 0 || sel >= static_cast<int>(data->worlds.size())) return 0;
+                const WorldInfo& w = data->worlds[sel];
+                std::wstring backupName = w.name + L"_backup_" + std::to_wstring(GetTickCount());
+                std::wstring savesDir = joinPath(instanceDir(fromUtf8(data->cfg.name)), L"saves");
+                std::wstring dstDir = joinPath(savesDir, backupName);
+                createDirs(dstDir);
+                SHFILEOPSTRUCTW op{};
+                op.hwnd = hwnd;
+                op.wFunc = FO_COPY;
+                std::wstring from = w.path; if (!from.empty() && from.back() != L'\\') from += L'\\'; from += L"*";
+                std::wstring pFrom = from + L'\0';
+                std::wstring pTo = dstDir + L'\\'; pTo += L'\0';
+                op.pFrom = pFrom.c_str();
+                op.pTo = pTo.c_str();
+                op.fFlags = FOF_NOCONFIRMATION | FOF_NO_UI | FOF_SILENT;
+                if (SHFileOperationW(&op) == 0) {
+                    MessageBoxW(hwnd, trI("world_backup_done","World backup created").c_str(), L"RaveX", MB_ICONINFORMATION | MB_OK);
+                    std::wstring dir = instanceDir(fromUtf8(data->cfg.name));
+                    std::thread([hwnd, dir]() {
+                        auto* w = new std::vector<WorldInfo>(loadWorlds(dir));
+                        if (IsWindow(hwnd)) PostMessageW(hwnd, WM_APP_WORLD, 0, reinterpret_cast<LPARAM>(w));
+                    }).detach();
+                }
+                return 0;
+            }
+            if (id == IDC_WORLD_DELETE) {
+                int sel = static_cast<int>(SendMessageW(data->listWorlds, LB_GETCURSEL, 0, 0));
+                if (sel < 0 || sel >= static_cast<int>(data->worlds.size())) return 0;
+                if (MessageBoxW(hwnd, trI("world_delete_confirm","Delete this world?").c_str(), trI("world_delete","Delete").c_str(), MB_YESNO | MB_ICONWARNING) == IDYES) {
+                    const WorldInfo& w = data->worlds[sel];
+                    SHFILEOPSTRUCTW delf{};
+                    delf.hwnd = hwnd;
+                    delf.wFunc = FO_DELETE;
+                    std::wstring delFrom = w.path;
+                    if (!delFrom.empty() && delFrom.back() != L'\\') delFrom += L'\\';
+                    delFrom += L"*";
+                    delFrom += L'\0';
+                    delf.pFrom = delFrom.c_str();
+                    delf.fFlags = FOF_NOCONFIRMATION | FOF_NO_UI | FOF_SILENT;
+                    SHFileOperationW(&delf);
+                    data->worlds.erase(data->worlds.begin() + sel);
+                    SendMessageW(data->listWorlds, LB_DELETESTRING, sel, 0);
+                }
+                return 0;
+            }
+            if (id == IDC_WORLD_OPEN) {
+                std::wstring savesDir = joinPath(instanceDir(fromUtf8(data->cfg.name)), L"saves");
+                if (!fileExists(savesDir)) createDirs(savesDir);
+                ShellExecuteW(hwnd, L"open", savesDir.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+                return 0;
+            }
+            if (id == IDC_MODS_CHECKUPD) {
+                std::wstring modsDir = joinPath(instanceDir(fromUtf8(data->cfg.name)), L"mods");
+                std::wstring mv; int ml = GetWindowTextLengthW(data->comboVer); mv.resize(static_cast<std::size_t>(ml+1)); GetWindowTextW(data->comboVer, mv.data(), ml + 1); if (ml>0) mv.resize(ml); else mv.clear();
+                std::string mc8 = toUtf8(mv);
+                HWND hDetails = data->hModDetails;
+                SetWindowTextW(hDetails, fromUtf8(lang("checking_java")).c_str());
+                std::thread([hwnd, modsDir, mc8, hDetails]() {
+                    std::string err;
+                    auto* updates = new std::vector<game::ModUpdateInfo>();
+                    game::checkModUpdates(modsDir, mc8, updates, &err);
+                    if (IsWindow(hwnd)) PostMessageW(hwnd, WM_APP_UPDATE, 0, reinterpret_cast<LPARAM>(updates));
+                }).detach();
+                return 0;
+            }
+            if (id == IDC_MODS_UPDATEALL) {
+                std::wstring modsDir = joinPath(instanceDir(fromUtf8(data->cfg.name)), L"mods");
+                int count = static_cast<int>(data->modUpdates.size());
+                if (count == 0) return 0;
+                HWND hDetails = data->hModDetails;
+                SetWindowTextW(hDetails, (fromUtf8(lang("downloading_mods")) + L" 0/" + std::to_wstring(count)).c_str());
+                EnableWindow(data->btnModsUpdateAll, FALSE);
+                std::thread([hwnd, modsDir, updates = data->modUpdates, hDetails, count]() {
+                    int done = 0;
+                    std::atomic<size_t> idx{0};
+                    std::vector<std::thread> ths;
+                    std::mutex mtx;
+                    const size_t conc = 4;
+                    for (size_t t = 0; t < conc; ++t) {
+                        ths.emplace_back([&]() {
+                            while (true) {
+                                size_t i = idx.fetch_add(1);
+                                if (i >= updates.size()) break;
+                                std::string err;
+                                game::downloadModUpdate(updates[i], modsDir, &err);
+                                int cur = ++done;
+                                if (IsWindow(hDetails)) {
+                                    std::wstring msg = fromUtf8(lang("downloading_mods")) + L" " + std::to_wstring(cur) + L"/" + std::to_wstring(count);
+                                    SetWindowTextW(hDetails, msg.c_str());
+                                }
+                            }
+                        });
+                    }
+                    for (auto& th : ths) th.join();
+                    if (IsWindow(hwnd)) PostMessageW(hwnd, WM_APP_UPDATE, 0, reinterpret_cast<LPARAM>(new std::vector<game::ModUpdateInfo>()));
+                }).detach();
+                return 0;
+            }
             return 0;
         }
         case WM_CONTEXTMENU: {
@@ -1717,8 +2189,8 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
             HDC dc = reinterpret_cast<HDC>(wParam);
             HWND ctrl = reinterpret_cast<HWND>(lParam);
             if (!data) { SetBkColor(dc, kBg); SetTextColor(dc, RGB(255,255,255)); return reinterpret_cast<LRESULT>(GetStockObject(BLACK_BRUSH)); }
-            if (ctrl == data->notesHint || ctrl == data->notesCounter || ctrl == data->servHint || ctrl == data->logsHint) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(150,150,150)); return reinterpret_cast<LRESULT>(data->bgBrush); }
-            if (ctrl == data->notesTitle || ctrl == data->servTitle || ctrl == data->logsTitle) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, data->theme.text); return reinterpret_cast<LRESULT>(data->bgBrush); }
+            if (ctrl == data->notesHint || ctrl == data->notesCounter || ctrl == data->servHint || ctrl == data->logsHint || ctrl == data->worldHint) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(150,150,150)); return reinterpret_cast<LRESULT>(data->bgBrush); }
+            if (ctrl == data->notesTitle || ctrl == data->servTitle || ctrl == data->logsTitle || ctrl == data->worldTitle) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, data->theme.text); return reinterpret_cast<LRESULT>(data->bgBrush); }
             SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(255,255,255));
             return reinterpret_cast<LRESULT>(data->bgBrush);
         }
@@ -1748,6 +2220,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
             if (data) data->closed = true;
             KillTimer(hwnd, 99);
             KillTimer(hwnd, 101);
+            KillTimer(hwnd, JVM_TIP_TIMER);
             glowDestroy(&data->glow);
             DeleteObject(data->font);
             if (data->titleFont) DeleteObject(data->titleFont);

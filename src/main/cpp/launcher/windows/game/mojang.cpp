@@ -1,6 +1,7 @@
 #include "game/include/mojang.hpp"
 #include "core/include/paths.hpp"
 #include "core/include/util.hpp"
+#include "core/include/config.hpp"
 #include "net/include/http.hpp"
 #include "net/include/json.hpp"
 #include <windows.h>
@@ -110,13 +111,12 @@ bool downloadClientJar(const ravex::json::Value& versionData, const std::string&
 }
 
 bool parallelDownload(const std::vector<std::pair<std::string, std::wstring>>& jobs,
-                      const std::function<void(const net::Progress&)>& progress, const bool* cancelled, std::string* error) {
+                      const std::function<void(const net::Progress&)>& progress, const bool* cancelled, std::string* error, int conc = 6) {
     if (jobs.empty()) return true;
     std::atomic<size_t> idx{0};
     std::atomic<bool> failed{false};
     std::mutex mtx;
     std::string firstErr;
-    const size_t conc = 6;
     std::vector<std::thread> ths;
     for (size_t t = 0; t < conc; ++t) {
         ths.emplace_back([&]() {
@@ -170,7 +170,7 @@ bool downloadLibraries(const ravex::json::Value& versionData,
         createDirs(dir);
         jobs.emplace_back(url, dest);
     }
-    return parallelDownload(jobs, progress, cancelled, error);
+    return parallelDownload(jobs, progress, cancelled, error, loadLauncherConfig().downloadThreads);
 }
 
 bool downloadAssetIndex(const ravex::json::Value& versionData, std::string& indexId,
@@ -261,7 +261,7 @@ bool downloadAssets(const std::string& indexId, const std::function<void(const n
         jobs.emplace_back(url, assetFile);
     }
     if (jobs.empty()) return true;
-    if (!parallelDownload(jobs, progress, cancelled, error)) return false;
+    if (!parallelDownload(jobs, progress, cancelled, error, loadLauncherConfig().downloadThreads)) return false;
     size_t missing = 0;
     for (auto& j : jobs) {
         if (!fileExists(j.second)) ++missing;

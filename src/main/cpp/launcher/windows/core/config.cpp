@@ -5,6 +5,8 @@
 #include <windows.h>
 #include <cstdio>
 #include <utility>
+#include <chrono>
+#include <mutex>
 
 namespace ravex {
 
@@ -63,6 +65,15 @@ void deleteTree(const std::wstring& path) {
 
 using json::Value;
 
+struct InstanceCache {
+    std::vector<InstanceCfg> instances;
+    std::chrono::steady_clock::time_point lastScan{};
+    std::wstring lastDir;
+    std::mutex mutex;
+};
+
+InstanceCache g_instanceCache;
+
 void readBool(const Value& v, const char* key, bool& out) {
     if (v.has(key) && v.at(key).type() == Value::Type::Bool) out = v.at(key).asBool();
 }
@@ -107,6 +118,10 @@ LauncherConfig loadLauncherConfig() {
     readBool(root, "autoStart", cfg.autoStart);
     readBool(root, "saveLogs", cfg.saveLogs);
     readBool(root, "telemetryEnabled", cfg.telemetryEnabled);
+    readBool(root, "closeOnLaunch", cfg.closeOnLaunch);
+    readNum(root, "downloadThreads", cfg.downloadThreads);
+    if (cfg.downloadThreads < 1) cfg.downloadThreads = 1;
+    if (cfg.downloadThreads > 12) cfg.downloadThreads = 12;
     if (root.has("installHistory") && root.at("installHistory").type() == Value::Type::Array) {
         const Value& arr = root.at("installHistory");
         for (std::size_t i = 0; i < arr.size(); ++i) {
@@ -171,29 +186,79 @@ void saveLauncherConfig(const LauncherConfig& cfg) {
     out += cfg.saveLogs ? "true" : "false";
     out += ",\n  \"telemetryEnabled\": ";
     out += cfg.telemetryEnabled ? "true" : "false";
+    out += ",\n  \"closeOnLaunch\": ";
+    out += cfg.closeOnLaunch ? "true" : "false";
+    out += ",\n  \"downloadThreads\": " + std::to_string(cfg.downloadThreads);
     out += "\n}\n";
     createDirs(kickxDir());
     writeFileAtomic(launcherConfigPath(), out);
 }
 
 std::vector<InstanceCfg> listInstances() {
-    std::vector<InstanceCfg> out;
+    std::lock_guard<std::mutex> lk(g_instanceCache.mutex);
     std::wstring dir = instancesDir();
-    std::wstring pattern = joinPath(dir, L"*");
+    bool needsRescan = (g_instanceCache.lastDir != dir);
+    if (!needsRescan) {
+        WIN32_FIND_DATAW fd;
+        std::wstring pattern = joinPath(dir, L"*");
+        HANDLE hFind = FindFirstFileW(pattern.c_str(), &fd);
+        if (hFind == INVALID_HANDLE_VALUE) {
+            needsRescan = true;
+        } else {
+            FILETIME latestWrite = fd.ftLastWriteTime;
+            do {
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                    if (std::wstring(fd.cFileName) != L"." && std::wstring(fd.cFileName) != L"..") {
+                        std::wstring instDir = joinPath(dir, fd.cFileName);
+                        WIN32_FIND_DATAW fd2;
+                        HANDLE h2 = FindFirstFileW(joinPath(instDir, L"*").c_str(), &fd2);
+                        if (h2 != INVALID_HANDLE_VALUE) {
+                            do {
+                                if (CompareFileTime(&fd2.ftLastWriteTime, &latestWrite) > 0)
+                                    latestWrite = fd2.ftLastWriteTime;
+                            } while (FindNextFileW(h2, &fd2));
+                            FindClose(h2);
+                        }
+                    }
+                }
+            } while (FindNextFileW(hFind, &fd));
+            FindClose(hFind);
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - g_instanceCache.lastScan).count();
+            if (elapsed < 2000 && !needsRescan) {
+                return g_instanceCache.instances;
+            }
+            FILETIME cacheFt;
+            auto cacheTp = g_instanceCache.lastScan.time_since_epoch();
+            auto cacheMs = std::chrono::duration_cast<std::chrono::milliseconds>(cacheTp).count();
+            LARGE_INTEGER li; li.QuadPart = cacheMs * 10000LL + 116444736000000000LL;
+            cacheFt.dwLowDateTime = li.LowPart;
+            cacheFt.dwHighDateTime = li.HighPart;
+            if (CompareFileTime(&latestWrite, &cacheFt) <= 0) {
+                return g_instanceCache.instances;
+            }
+        }
+    }
+    std::vector<InstanceCfg> out;
     WIN32_FIND_DATAW fd;
+    std::wstring pattern = joinPath(dir, L"*");
     HANDLE hFind = FindFirstFileW(pattern.c_str(), &fd);
-    if (hFind == INVALID_HANDLE_VALUE) return out;
-    do {
-        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
-        std::wstring name = fd.cFileName;
-        if (name == L"." || name == L"..") continue;
-        std::wstring instDir = joinPath(dir, name);
-        if (!fileExists(joinPath(instDir, L"instance.cfg"))) continue;
-        InstanceCfg cfg = loadInstance(instDir);
-        if (!cfg.name.empty()) out.push_back(std::move(cfg));
-    } while (FindNextFileW(hFind, &fd));
-    FindClose(hFind);
-    return out;
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
+            std::wstring name = fd.cFileName;
+            if (name == L"." || name == L"..") continue;
+            std::wstring instDir = joinPath(dir, name);
+            if (!fileExists(joinPath(instDir, L"instance.cfg"))) continue;
+            InstanceCfg cfg = loadInstance(instDir);
+            if (!cfg.name.empty()) out.push_back(std::move(cfg));
+        } while (FindNextFileW(hFind, &fd));
+        FindClose(hFind);
+    }
+    g_instanceCache.instances = out;
+    g_instanceCache.lastScan = std::chrono::steady_clock::now();
+    g_instanceCache.lastDir = dir;
+    return g_instanceCache.instances;
 }
 
 InstanceCfg loadInstance(const std::wstring& dir) {

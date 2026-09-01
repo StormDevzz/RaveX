@@ -17,9 +17,9 @@
 
 namespace ravex {
 
-static const char* kThemeNames[] = { "dark", "light", "midnight", "ocean", "forest" };
-static const char* kThemeDisplay[] = { "Dark", "Light", "Midnight", "Ocean", "Forest" };
-static constexpr int kThemeCount = 5;
+static const char* kThemeNames[] = { "dark", "light" };
+static const char* kThemeDisplay[] = { "Dark", "Light" };
+static constexpr int kThemeCount = 2;
 
 ThemeColors getTheme(const std::string& name) {
     if (name == "dark") return ThemeColors{RGB(18, 18, 18), RGB(30, 30, 30), RGB(240, 240, 240), RGB(90, 140, 255), RGB(45, 45, 47), RGB(200, 225, 255), true, 255, true};
