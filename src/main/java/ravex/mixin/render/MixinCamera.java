@@ -68,11 +68,26 @@ public abstract class MixinCamera {
             );
 
 
-            float startingDist = Modules.enabled(ViewClip.class) ? (float) Modules.get(ViewClip.class).cameraDistance : 4.0f;
+            FreeLook flMod = Modules.get(FreeLook.class);
+            float startingDist;
+            if (flMod != null && flMod.zoom) {
+                startingDist = flMod.getCameraDistance();
+            } else if (Modules.enabled(ViewClip.class)) {
+                startingDist = (float) Modules.get(ViewClip.class).cameraDistance;
+            } else {
+                startingDist = 4.0f;
+            }
             float zoom = getMaxZoom(startingDist);
             net.minecraft.world.phys.Vec3 targetPos = eyePos.subtract(dirVec.scale(zoom));
             this.setPosition(targetPos);
             this.setRotation(yaw, pitch);
+        } else if (Modules.enabled(ravex.modules.world.Scaffold.class)
+                && Modules.get(ravex.modules.world.Scaffold.class).noRotate
+                && ravex.modules.world.Scaffold.capturingView) {
+            this.setRotation(ravex.modules.world.Scaffold.viewYaw, ravex.modules.world.Scaffold.viewPitch);
+        } else if (Modules.enabled(ravex.modules.world.ECFarmer.class)
+                && ravex.modules.world.ECFarmer.capturingView) {
+            this.setRotation(ravex.modules.world.ECFarmer.viewYaw, ravex.modules.world.ECFarmer.viewPitch);
         }
 
     }

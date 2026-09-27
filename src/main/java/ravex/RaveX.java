@@ -18,7 +18,6 @@ import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.nativelayer.NativeLayer;
 import ravex.nativelayer.NativeLayerImpl;
-import ravex.utility.misc.GuiOptimizerUtility;
 import ravex.utility.misc.GithubUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.utility.sound.SoundEventDispatcherUtility;
@@ -36,7 +35,8 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         .getVersion()
         .getFriendlyString();
 
-    private static boolean rightShiftWasDown = false;
+    private static boolean clickGuiWasDown = false;
+    private static boolean onboardingTried = false;
     private static Process loaderProcess = null;
     private static boolean loaderProcessClosed = false;
 
@@ -156,6 +156,12 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
     private static final boolean[] keysState = new boolean[512];
     private static boolean texturesPreloaded = false;
 
+    public static void suppressKey(int key) {
+        if (key > 0 && key < keysState.length) {
+            keysState[key] = true;
+        }
+    }
+
     @Override
     public void onInitializeClient() {
         try {
@@ -174,7 +180,6 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         nativeLayer.load();
         nativeLayer.checkNatives();
         NativeLibraryUtility.enableLoading();
-        GuiOptimizerUtility.optimize();
 
         ModuleManager moduleManager = ServiceLocator.resolve(ModuleManager.class);
         moduleManager.init();
@@ -262,24 +267,52 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         MinecraftWrapper mc = MinecraftWrapper.getWrapper();
         if (mc.getWindow() == null) return;
 
+        if (!onboardingTried && !ravex.gui.onboarding.OnboardingScreen.isCompleted()) {
+            if (ScreenUtility.isTitleScreen(mc) && !(mc.getCurrentScreen() instanceof ravex.gui.onboarding.OnboardingScreen)) {
+                onboardingTried = true;
+                mc.setScreen(new ravex.gui.onboarding.OnboardingScreen());
+            }
+        }
+
         com.mojang.blaze3d.platform.Window window = mc.getWindow();
 
-        boolean isDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
-        if (isDown && !rightShiftWasDown) {
+        int clickGuiBind = org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT;
+        try {
+            ravex.modules.Module clickGuiModule = ModuleManager.delegate(ravex.modules.client.ClickGui.class);
+            if (clickGuiModule != null) {
+                int configured = clickGuiModule.getKeyBind();
+                if (configured != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN)
+                    clickGuiBind = configured;
+                else
+                    clickGuiModule.setKeyBind(clickGuiBind);
+            }
+        } catch (Exception ignored) {}
+        boolean isDown = clickGuiBind > 0 && com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, clickGuiBind);
+        if (isDown && !clickGuiWasDown) {
             if (mc.getCurrentScreen() instanceof ClickGUI) {
-                ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper());
-            } else {
+                if (mc.getPlayer() == null)
+                    ScreenUtility.setToTitle(ravex.mcwrapper.MinecraftWrapper.getWrapper());
+                else
+                    ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper());
+            } else if (mc.getCurrentScreen() == null || ScreenUtility.isTitleScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper())) {
                 mc.setScreen(new ClickGUI());
             }
         }
-        rightShiftWasDown = isDown;
+        clickGuiWasDown = isDown;
 
+        boolean bindingUi = ravex.gui.clickgui.ClickGUI.bindingModuleButton != null
+                || ravex.gui.clickgui.ClickGUI.activeKeybindElement != null;
+        boolean screenOpen = mc.getCurrentScreen() != null;
         for (Module m : ServiceLocator.resolve(ModuleManager.class).getModules()) {
+            if (m instanceof ravex.modules.ModuleProxy proxy && proxy.getComponent() instanceof ravex.modules.client.ClickGui)
+                continue;
+            if (m.getName().equals("ClickGui"))
+                continue;
             int bind = m.getKeyBind();
             if (bind > 0 && bind < keysState.length) {
                 boolean isKeyBindDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, bind);
                 if (isKeyBindDown && !keysState[bind]) {
-                    if (!m.consumesKeyBindPress() && (mc.getCurrentScreen() == null || mc.getCurrentScreen() instanceof ClickGUI)) {
+                    if (!bindingUi && !screenOpen && !m.consumesKeyBindPress()) {
                         m.toggle();
                     }
                 }

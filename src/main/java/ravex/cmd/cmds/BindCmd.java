@@ -13,18 +13,18 @@ public class BindCmd extends Cmd {
     @Override
     public void execute(String[] args) {
         String pref = ModuleManager.get(Commands.class).prefix;
-        if (args.length < 2) { CmdReg.print("§c[RaveX] Usage: " + pref + "bind <module/list/clear> [key]"); return; }
+        if (args.length < 2) { CmdReg.print("§9[§bRaveX§9] §cUsage: " + pref + "bind <module/list/clear> [key]"); return; }
         String sub = args[1].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "list": {
                 boolean any = false;
                 for (Module m : ModuleManager.INSTANCE.getModules()) {
                     if (m.getKeyBind() != -1) {
-                        if (!any) { CmdReg.print("§7Bound modules:"); any = true; }
+                        if (!any) { CmdReg.print("§9[§bRaveX§9] §7Bound modules:"); any = true; }
                         CmdReg.print(" §e" + m.getName() + " §7→ §e" + glfwNameFromKey(m.getKeyBind()));
                     }
                 }
-                if (!any) CmdReg.print("§e[RaveX] No modules are bound.");
+                if (!any) CmdReg.print("§9[§bRaveX§9] §eNo modules are bound.");
                 break;
             }
             case "clear": {
@@ -32,21 +32,21 @@ public class BindCmd extends Cmd {
                 for (Module m : ModuleManager.INSTANCE.getModules()) {
                     if (m.getKeyBind() != -1) { m.setKeyBind(-1); count++; }
                 }
-                CmdReg.print("§a[RaveX] Cleared §e" + count + " §abind(s).");
+                CmdReg.print("§9[§bRaveX§9] §aCleared §e" + count + " §abind(s).");
                 break;
             }
             default: {
                 Module m = ModuleManager.INSTANCE.getByName(args[1]);
-                if (m == null) { CmdReg.print("§c[RaveX] Module not found: §e" + args[1]); return; }
-                if (args.length < 3) { CmdReg.print("§c[RaveX] Usage: " + pref + "bind <module> <key>"); return; }
+                if (m == null) { CmdReg.print("§9[§bRaveX§9] §cModule not found: §e" + args[1]); return; }
+                if (args.length < 3) { CmdReg.print("§9[§bRaveX§9] §cUsage: " + pref + "bind <module> <key>"); return; }
                 String keyName = args[2].toUpperCase(Locale.ROOT);
                 int glfwKey = glfwKeyFromName(keyName);
                 if (glfwKey == GLFW.GLFW_KEY_UNKNOWN) {
-                    CmdReg.print("§c[RaveX] Unknown key: §e" + keyName + "  §7(use A-Z, F1-F12, etc.)");
+                    CmdReg.print("§9[§bRaveX§9] §cUnknown key: §e" + keyName + "  §7(use A-Z, F1-F12, etc.)");
                     return;
                 }
                 m.setKeyBind(glfwKey);
-                CmdReg.print("§a[RaveX] Bound §e" + m.getName() + " §7→ §e" + keyName);
+                CmdReg.print("§9[§bRaveX§9] §aBound §e" + m.getName() + " §7→ §e" + keyName);
             }
         }
     }

@@ -18,14 +18,6 @@ public class BedBomb {
     public double range = 4.5;
     @Parameter(name = "TargetRange", min = 1.0, max = 12.0, step = 0.5)
     public double targetRange = 6.0;
-    @Parameter(name = "Rotate")
-    public boolean rotate = true;
-    @Parameter(name = "AutoSwitch")
-    public boolean autoSwitch = true;
-    @Parameter(name = "Color", color = true, visible = "render")
-    public int color = 0x3FFF4444;
-    @Parameter(name = "Render")
-    public boolean render = true;
     public static net.minecraft.core.BlockPos currentTarget = null;
     private enum State { IDLE, FIND_TARGET, PLACING, WAITING, DETONATE }
     private State state = State.IDLE;

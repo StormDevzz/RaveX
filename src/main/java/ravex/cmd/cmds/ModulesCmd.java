@@ -19,9 +19,9 @@ public class ModulesCmd extends Cmd {
             }
         }
         if (count == 0) {
-            CmdReg.print("§7[RaveX] No modules are enabled.");
+            CmdReg.print("§9[§bRaveX§9] §7No modules are enabled.");
         } else {
-            CmdReg.print("§5[RaveX] §7Active (§e" + count + "§7): " + sb);
+            CmdReg.print("§9[§bRaveX§9] §7Active (§e" + count + "§7): " + sb);
         }
     }
 }

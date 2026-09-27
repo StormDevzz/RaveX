@@ -1,15 +1,17 @@
 package ravex.modules.hud;
+
 import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.utility.render.ColorUtility;
-
 import ravex.modules.client.Hud;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.modules.Modules;
+import ravex.gui.hudeditor.HudEditorScreen;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @HudModule("SpeedometerHud")
 public class SpeedometerHud extends ravex.modules.Module {
@@ -18,20 +20,32 @@ public class SpeedometerHud extends ravex.modules.Module {
     @Parameter(name = "Shadow")
     public boolean shadow = true;
 
-private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", "hud_white/speedometer");
+    private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", "hud_white/speedometer");
+
+    public SpeedometerHud() {
+        super("SpeedometerHud", 10, 70, 70, 14);
+        setX(10);
+        setY(70);
+        setWidth(70);
+        setHeight(14);
+    }
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
         var player = PlayerUtility.getPlayer();
-        if (player == null) return;
+        boolean inEditor = MinecraftWrapper.getWrapper().getScreen() instanceof HudEditorScreen;
+        if (player == null && !inEditor) return;
 
         String unitMode = this.unit;
         boolean shadow = this.shadow;
 
-        double dX = player.getX() - player.xo;
-        double dZ = player.getZ() - player.zo;
-        double speedBps = Math.sqrt(dX * dX + dZ * dZ) * 20.0;
-        double displaySpeed = unitMode.equals("KMH") ? speedBps * 3.6 : speedBps;
+        double displaySpeed = 0.0;
+        if (player != null) {
+            double dX = player.getX() - player.xo;
+            double dZ = player.getZ() - player.zo;
+            double speedBps = Math.sqrt(dX * dX + dZ * dZ) * 20.0;
+            displaySpeed = unitMode.equals("KMH") ? speedBps * 3.6 : speedBps;
+        }
 
         int activeColor = ColorUtility.getActiveColor();
         String valStr = String.format("%.1f", displaySpeed);

@@ -22,6 +22,7 @@ Thumbs.db
 *.tmp
 *.disabled
 libs/*.jar
+dist/
 src/main/java/ravex/telemetry/BuildConfig.java
 src/main/resources/assets/ravex/security/private.der
 

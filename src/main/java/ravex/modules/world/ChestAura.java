@@ -7,6 +7,7 @@ import ravex.utility.misc.block.BlockUtility;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.client.ClientAlertUtility;
 @Module(name = "ChestAura", category = "World")
 public class ChestAura {
     @Parameter(name = "Range", min = 2.0, max = 6.0, step = 0.1)
@@ -21,10 +22,10 @@ public class ChestAura {
     public double fadeSpeed = 1.0;
     @Parameter(name = "Filled")
     public boolean filled = true;
-    @Parameter(name = "AutoSwap")
-    public boolean autoSwap = true;
-    @Parameter(name = "Silent")
-    public boolean silent = true;
+    @Parameter(name = "Swap", modes = {"None", "Normal", "Silent"})
+    public String swapMode = "Silent";
+    @Parameter(name = "AutoDisable")
+    public boolean autoDisable = false;
     public static class PlacedChest {
         public final long packedPos;
         public final long placeTime;
@@ -61,7 +62,11 @@ public class ChestAura {
                 break;
             }
         }
-        if (chestSlot == -1) return;
+        if (chestSlot == -1) {
+            sendMsg(ravex.utility.misc.LanguageUtility.t("NoChestsInHotbar"));
+            ravex.modules.Modules.setEnabled(ChestAura.class, false);
+            return;
+        }
         double r = range;
         var playerPos = p.blockPosition();
         long targetPacked = 0;
@@ -113,20 +118,21 @@ public class ChestAura {
         if (hasTarget) {
             int tx = BlockUtility.unpackX(targetPacked), ty = BlockUtility.unpackY(targetPacked), tz = BlockUtility.unpackZ(targetPacked);
             int prevSlot = InventoryUtility.getSelectedSlot(p);
-            if (autoSwap && chestSlot != prevSlot) {
-                InventoryUtility.selectSlot(p, chestSlot);
-            }
+            if ("None".equals(swapMode) && chestSlot != prevSlot) return;
+            InventoryUtility.swapToSlot(p, chestSlot, swapMode);
             var below = BlockUtility.pos(tx, BlockUtility.belowY(ty), tz);
             BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), new net.minecraft.world.phys.BlockHitResult(
                 PhysicUtility.centerOf(below).add(0, 0.5, 0),
                 net.minecraft.core.Direction.UP, below, false));
             ravex.utility.player.SwingUtility.swingMainHand(p);
-            if (autoSwap && silent && chestSlot != prevSlot) {
-                InventoryUtility.selectSlot(p, prevSlot);
-            }
+            InventoryUtility.swapBackSlot(p, prevSlot, swapMode);
             placedChests.add(new PlacedChest(targetPacked, now));
             delayTimer = (int) delay;
+            if (autoDisable) ravex.modules.Modules.setEnabled(ChestAura.class, false);
         }
+    }
+    private void sendMsg(String msg) {
+        ClientAlertUtility.alert("§8[§2ChestAura§8] §7" + msg);
     }
 
 

@@ -9,7 +9,7 @@ import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.Nullable;
 
 public class MinecraftWrapper {
-    private final Minecraft mc;
+    private Minecraft mc;
 
     private static MinecraftWrapper wrapperInstance;
 
@@ -18,6 +18,13 @@ public class MinecraftWrapper {
             wrapperInstance = new MinecraftWrapper();
         }
         return wrapperInstance;
+    }
+
+    private Minecraft mc() {
+        if (mc == null) {
+            mc = Minecraft.getInstance();
+        }
+        return mc;
     }
 
     public static Minecraft getInstance() {
@@ -30,172 +37,177 @@ public class MinecraftWrapper {
 
     @Nullable
     public GameModeWrapper getGameMode() {
-        return mc.gameMode != null ? new GameModeWrapper(mc.gameMode) : null;
+        return mc().gameMode != null ? new GameModeWrapper(mc().gameMode) : null;
     }
 
-    public Minecraft getRaw() { return mc; }
+    public Minecraft getRaw() { return mc(); }
 
     public boolean isAvailable() {
-        return mc != null;
+        return mc() != null;
     }
 
     @Nullable
     public LocalPlayer getPlayer() {
-        return mc.player;
+        return mc().player;
     }
 
     @Nullable
     public ClientLevel getLevel() {
-        return mc.level;
+        return mc().level;
     }
 
     public boolean hasWorld() {
-        return mc.level != null;
+        return mc().level != null;
     }
 
     public boolean hasPlayer() {
-        return mc.player != null;
+        return mc().player != null;
     }
 
     public boolean isInGame() {
-        return mc.player != null && mc.level != null;
+        return mc().player != null && mc().level != null;
     }
 
     public int getScreenWidth() {
-        return mc.getWindow() != null ? mc.getWindow().getGuiScaledWidth() : 0;
+        return mc().getWindow() != null ? mc().getWindow().getGuiScaledWidth() : 0;
     }
 
     public int getScreenHeight() {
-        return mc.getWindow() != null ? mc.getWindow().getGuiScaledHeight() : 0;
+        return mc().getWindow() != null ? mc().getWindow().getGuiScaledHeight() : 0;
     }
 
     public boolean isOnSameThread() {
-        return mc.isSameThread();
+        return mc().isSameThread();
     }
 
     public void execute(Runnable runnable) {
-        mc.execute(runnable);
+        mc().execute(runnable);
     }
 
     public void setScreen(net.minecraft.client.gui.screens.Screen screen) {
-        mc.setScreen(screen);
+        mc().setScreen(screen);
     }
 
     @Nullable
     public net.minecraft.client.gui.screens.Screen getCurrentScreen() {
-        return mc.screen;
+        return mc().screen;
+    }
+
+    @Nullable
+    public net.minecraft.client.gui.screens.Screen getScreen() {
+        return mc().screen;
     }
 
     public boolean isScreenOpened() {
-        return mc.screen != null;
+        return mc().screen != null;
     }
 
     public net.minecraft.client.Options getOptions() {
-        return mc.options;
+        return mc().options;
     }
 
     public net.minecraft.client.gui.Font getFont() {
-        return mc.font;
+        return mc().font;
     }
 
     public net.minecraft.client.renderer.entity.ItemRenderer getItemRenderer() {
-        return mc.getItemRenderer();
+        return mc().getItemRenderer();
     }
 
     public net.minecraft.client.renderer.texture.TextureManager getTextureManager() {
-        return mc.getTextureManager();
+        return mc().getTextureManager();
     }
 
     public Object getSoundManager() {
-        return mc.getSoundManager();
+        return mc().getSoundManager();
     }
 
     @Nullable
     public net.minecraft.client.multiplayer.ClientPacketListener getConnection() {
-        return mc.getConnection();
+        return mc().getConnection();
     }
 
     public Window getWindow() {
-        return mc.getWindow();
+        return mc().getWindow();
     }
 
     public long getWindowHandle() {
-        return mc.getWindow() != null ? mc.getWindow().handle() : 0;
+        return mc().getWindow() != null ? mc().getWindow().handle() : 0;
     }
 
     public int getFps() {
-        return mc.getFps();
+        return mc().getFps();
     }
 
     public boolean isInSingleplayer() {
-        return mc.isLocalServer();
+        return mc().isLocalServer();
     }
 
     public boolean isInMultiplayer() {
-        return mc.getConnection() != null && !mc.isLocalServer();
+        return mc().getConnection() != null && !mc().isLocalServer();
     }
 
     @Nullable
     public MinecraftServer getSingleplayerServer() {
-        return mc.getSingleplayerServer();
+        return mc().getSingleplayerServer();
     }
 
     @Nullable
     public net.minecraft.world.phys.HitResult getHitResult() {
-        return mc.hitResult;
+        return mc().hitResult;
     }
 
     public net.minecraft.client.renderer.LevelRenderer getLevelRenderer() {
-        return mc.levelRenderer;
+        return mc().levelRenderer;
     }
 
     @Nullable
     public Entity getCrosshairPickEntity() {
-        return mc.crosshairPickEntity;
+        return mc().crosshairPickEntity;
     }
 
     public net.minecraft.client.renderer.GameRenderer getGameRenderer() {
-        return mc.gameRenderer;
+        return mc().gameRenderer;
     }
 
     @Nullable
     public net.minecraft.client.multiplayer.ServerData getCurrentServer() {
-        return mc.getCurrentServer();
+        return mc().getCurrentServer();
     }
 
     public boolean isKeyDown(int key) {
-        return mc.options.keyMappings[key].isDown();
+        return mc().options.keyMappings[key].isDown();
     }
 
     public boolean isJumpKeyDown() {
-        return mc.options.keyJump.isDown();
+        return mc().options.keyJump.isDown();
     }
 
     public boolean isForwardKeyDown() {
-        return mc.options.keyUp.isDown();
+        return mc().options.keyUp.isDown();
     }
 
     public boolean isBackKeyDown() {
-        return mc.options.keyDown.isDown();
+        return mc().options.keyDown.isDown();
     }
 
     public boolean isLeftKeyDown() {
-        return mc.options.keyLeft.isDown();
+        return mc().options.keyLeft.isDown();
     }
 
     public boolean isRightKeyDown() {
-        return mc.options.keyRight.isDown();
+        return mc().options.keyRight.isDown();
     }
 
     public boolean isSneakKeyDown() {
-        return mc.options.keyShift.isDown();
+        return mc().options.keyShift.isDown();
     }
 
     public boolean isUseKeyDown() {
-        return mc.options.keyUse.isDown();
+        return mc().options.keyUse.isDown();
     }
 
     public boolean isAttackKeyDown() {
-        return mc.options.keyAttack.isDown();
+        return mc().options.keyAttack.isDown();
     }
 }

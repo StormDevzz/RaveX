@@ -79,6 +79,25 @@ public abstract class MixinEntity {
         if (Modules.enabled(FreeLook.class) && Modules.get(FreeLook.class).isCameraMode()) {
             Modules.get(FreeLook.class).turn(yRot * 0.15, xRot * 0.15);
             ci.cancel();
+            return;
+        }
+
+        if (Modules.enabled(ravex.modules.world.Scaffold.class)
+                && Modules.get(ravex.modules.world.Scaffold.class).noRotate
+                && ravex.modules.world.Scaffold.capturingView) {
+            ravex.modules.world.Scaffold.viewYaw += (float) (yRot * 0.15);
+            ravex.modules.world.Scaffold.viewPitch += (float) (xRot * 0.15);
+            ravex.modules.world.Scaffold.viewPitch = Math.max(-90f, Math.min(90f, ravex.modules.world.Scaffold.viewPitch));
+            ci.cancel();
+            return;
+        }
+
+        if (Modules.enabled(ravex.modules.world.ECFarmer.class)
+                && ravex.modules.world.ECFarmer.capturingView) {
+            ravex.modules.world.ECFarmer.viewYaw += (float) (yRot * 0.15);
+            ravex.modules.world.ECFarmer.viewPitch += (float) (xRot * 0.15);
+            ravex.modules.world.ECFarmer.viewPitch = Math.max(-90f, Math.min(90f, ravex.modules.world.ECFarmer.viewPitch));
+            ci.cancel();
         }
     }
 

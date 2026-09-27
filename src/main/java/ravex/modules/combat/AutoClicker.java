@@ -21,8 +21,6 @@ public class AutoClicker {
     public boolean onlyOnTarget = true;
     @Parameter(name = "Randomize")
     public boolean randomize = true;
-    @Parameter(name = "BreakBlocks")
-    public boolean breakBlocks = false;
     @Parameter(name = "Jitter", min = 0.0, max = 2.0, step = 0.1)
     public double jitterStrength = 0.0;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autoclicker");

@@ -33,7 +33,7 @@ public class CmdReg {
         String name = args[0].toLowerCase();
         Cmd cmd = commands.get(name);
         if (cmd == null) {
-            print("§c[RaveX] Unknown command. Type §e" + pref + "help §cfor a list of commands.");
+            print("§9[§bRaveX§9] §cUnknown command. Type §e" + pref + "help §cfor a list of commands.");
             return true;
         }
         cmd.execute(args);
@@ -69,6 +69,7 @@ public class CmdReg {
         INSTANCE.register(new ravex.cmd.cmds.ModulesCmd());
         INSTANCE.register(new ravex.cmd.cmds.CoordsCmd());
         INSTANCE.register(new ravex.cmd.cmds.WaypointCmd());
+        INSTANCE.register(new ravex.cmd.cmds.GpsCmd());
         INSTANCE.register(new ravex.cmd.cmds.FriendCmd());
         INSTANCE.register(new ravex.cmd.cmds.PluginsCmd());
         INSTANCE.register(new ravex.cmd.cmds.ClearCmd());

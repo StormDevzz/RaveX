@@ -6,46 +6,47 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
+import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import ravex.event.Subscribe;
+import ravex.event.network.PacketEvent;
+import org.joml.Matrix4f;
+import net.minecraft.client.Camera;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.utility.network.NetworkUtility;
+import ravex.utility.render.Render3DUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 import ravex.utility.misc.CombatUtility;
 
-
-
-
-
-
 @Module(name = "AutoCrystal", category = "Combat")
 public class AutoCrystal {
     @Parameter(name = "PlaceRange", min = 1.0, max = 6.0, step = 0.1)
-    public double placeRange = 4.5;
+    public double placeRange = 5.0;
     @Parameter(name = "BreakRange", min = 1.0, max = 6.0, step = 0.1)
-    public double breakRange = 4.5;
+    public double breakRange = 5.0;
     @Parameter(name = "PlaceDelay", min = 0, max = 500, step = 10)
-    public double placeDelay = 100;
+    public double placeDelay = 0;
     @Parameter(name = "BreakDelay", min = 0, max = 500, step = 10)
-    public double breakDelay = 50;
+    public double breakDelay = 0;
     @Parameter(name = "MinDamage", min = 1.0, max = 20.0, step = 0.5)
-    public double minDamage = 4.0;
+    public double minDamage = 3.0;
     @Parameter(name = "MaxSelfDmg", min = 1.0, max = 20.0, step = 0.5)
-    public double maxSelfDmg = 8.0;
+    public double maxSelfDmg = 9.0;
     @Parameter(name = "AntiSuicide")
     public boolean antiSuicide = true;
-    @Parameter(name = "AntiSuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
-    public double antiSuicideMinHp = 6.0;
-    @Parameter(name = "RotateMode", modes = {"Grim", "NCP", "NCPStrict", "None"})
-    public String rotate = "Grim";
-    @Parameter(name = "SwapMode", modes = {"Grim", "NCP", "NCPStrict", "None"})
-    public String swapMode = "Grim";
-    @Parameter(name = "SwapDelay", min = 0.0, max = 500.0, step = 10.0)
-    public double swapDelay = 0.0;
-    @Parameter(name = "OnlyRender")
-    public boolean onlyInRender = false;
+    @Parameter(name = "SuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
+    public double antiSuicideMinHp = 4.0;
+    @Parameter(name = "RotateMode", modes = {"None", "Grim", "Strict"})
+    public String rotate = "None";
+    @Parameter(name = "SwapMode", modes = {"Silent", "Strict", "None"})
+    public String swapMode = "Silent";
     @Parameter(name = "Target", modes = {"Closest", "LowestHP", "HighestDamage"})
     public String targetMode = "Closest";
     @Parameter(name = "TargetType", modes = {"Players", "Monsters", "Passives", "All"})
@@ -59,22 +60,28 @@ public class AutoCrystal {
     @Parameter(name = "ArmorPercent", min = 1.0, max = 50.0, step = 1.0)
     public double armorPercent = 15.0;
     @Parameter(name = "PredictTicks", min = 0.0, max = 4.0, step = 0.1)
-    public double predictTicks = 1.0;
+    public double predictTicks = 2.0;
+    @Parameter(name = "SpawnBreak")
+    public boolean spawnBreak = true;
+    @Parameter(name = "TargetESP")
+    public boolean targetEsp = true;
+    @Parameter(name = "TargetESPMode", modes = {"Circle", "Square", "RaveXV1"})
+    public String targetEspMode = "Circle";
+    @Parameter(name = "TargetESPColor", color = true)
+    public int targetEspColor = 0xFFFF2255;
     @Parameter(name = "TotemDetection")
     public boolean totemDetection = true;
-    @Parameter(name = "TotemMinDamage", min = 0.5, max = 10.0, step = 0.5)
-    public double totemMinDamage = 1.5;
-    @Parameter(name = "TotemSelfMinHP", min = 2.0, max = 20.0, step = 0.5)
-    public double totemSelfMinHp = 8.0;
     @Parameter(name = "PlaceMode", modes = {"Strict", "NCPStrict", "Grim"})
     public String placeMode = "Grim";
     @Parameter(name = "RotateSpeed", min = 10.0, max = 180.0, step = 5.0)
     public double rotateSpeed = 180.0;
     @Parameter(name = "RotateRandomize", min = 0.0, max = 3.0, step = 0.1)
     public double rotateRandomize = 0.0;
-    @Parameter(name = "AntiSuicideBreak")
+    @Parameter(name = "VisualRotate")
+    public boolean visualRotate = true;
+    @Parameter(name = "SafeBreak")
     public boolean antiSuicideCheckBreaking = true;
-    @Parameter(name = "AntiSuicideIgnoreTotem")
+    @Parameter(name = "TotemBypass")
     public boolean antiSuicideIgnoreWithTotem = false;
     @Parameter(name = "TotemCheckTarget")
     public boolean totemCheckTarget = true;
@@ -104,9 +111,10 @@ public class AutoCrystal {
     public boolean suicide = false;
     @Parameter(name = "KBPrediction")
     public boolean kbPrediction = true;
-    @Parameter(name = "CollateralPopList")
+    @Parameter(name = "CollateralPop")
     public boolean collateralPop = true;
     public static net.minecraft.core.BlockPos currentPlacementBlock = null;
+    public static net.minecraft.world.phys.Vec3 currentRotationTarget = null;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
     public static int currentTargetTotems = 0;
@@ -144,16 +152,67 @@ public class AutoCrystal {
             double[] blockData
     );
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
+    public LivingEntity currentTarget = null;
+    private static float scanProgress = 0f;
+    private static float prevScanProgress = 0f;
+    private static float slowRotation = 0f;
+    private static float prevSlowRotation = 0f;
+    private static float circleStep = 0f;
+    private static float prevCircleStep = 0f;
+    private static float squareAngle = 0f;
+    private static float prevSquareAngle = 0f;
+    private static float squareSpeed = 0f;
+    private static boolean squareFlipSpeed = false;
     private int originalSlot = -1;
+    private int crystalSlot = -1;
     private double[] cachedBlockData = null;
     private long lastBlockScanTime = 0;
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
+    public void onEnable() {
+        NATIVE.load();
+        lastPlaceTime = 0;
+        lastBreakTime = 0;
+        lastBreakId = -1;
+        originalSlot = -1;
+        crystalSlot = -1;
+        silentRotation.reset();
+        currentTarget = null;
+        currentPlacementBlock = null;
+        currentRotationTarget = null;
+    }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
+        if (!NATIVE.isLoaded()) {
+            NATIVE.load();
+        }
         silentRotation.hasRotation = false;
+
+        prevScanProgress = scanProgress;
+        scanProgress += 0.05f;
+        if (scanProgress >= 2.0f) {
+            scanProgress -= 2.0f;
+            prevScanProgress -= 2.0f;
+        }
+
+        prevSlowRotation = slowRotation;
+        slowRotation += 2.0f;
+        if (slowRotation >= 360.0f) {
+            slowRotation -= 360.0f;
+            prevSlowRotation -= 360.0f;
+        }
+
+        prevCircleStep = circleStep;
+        circleStep += 0.15f;
+
+        prevSquareAngle = squareAngle;
+        squareAngle += squareSpeed;
+        if (squareSpeed > 25) squareFlipSpeed = true;
+        if (squareSpeed < -25) squareFlipSpeed = false;
+        squareSpeed = squareFlipSpeed ? squareSpeed - 0.5f : squareSpeed + 0.5f;
+
         if (totemPopSwap) {
             double selfHp = EntityUtility.getHealthWithAbsorption(mc.getPlayer());
             if (selfHp <= totemPopHp) {
@@ -165,7 +224,8 @@ public class AutoCrystal {
                 }
             }
         }
-        net.minecraft.world.entity.LivingEntity target = findTarget(mc);
+        LivingEntity target = findTarget(mc);
+        currentTarget = target;
         if (target == null) {
             currentPlacementBlock = null;
             return;
@@ -174,14 +234,27 @@ public class AutoCrystal {
         double pHp  = EntityUtility.getHealth(mc.getPlayer());
         double pAbs = EntityUtility.getAbsorption(mc.getPlayer());
         net.minecraft.world.phys.Vec3 targetPos = target.position();
+        double vx = target.getX() - target.xOld;
+        double vy = target.getY() - target.yOld;
+        double vz = target.getZ() - target.zOld;
+        if (vx == 0 && vy == 0 && vz == 0 && target.getDeltaMovement() != null) {
+            vx = target.getDeltaMovement().x;
+            vy = target.getDeltaMovement().y;
+            vz = target.getDeltaMovement().z;
+        }
+        net.minecraft.world.phys.Vec3 targetVelocity = new net.minecraft.world.phys.Vec3(vx, vy, vz);
+        net.minecraft.world.phys.Vec3 predictedTargetPos = targetPos.add(targetVelocity.scale(predictTicks));
         double tHp  = EntityUtility.getHealth(target);
         double tAbs = EntityUtility.getAbsorption(target);
         double[] blockData  = collectValidBlocks(mc, playerPos);
         double[] crystalData = collectCrystals(mc, playerPos);
         double[] pStats = CombatUtility.getEntityStats(mc.getPlayer());
         double[] tStats = CombatUtility.getEntityStats(target);
+        tStats[11] = vx;
+        tStats[12] = vy;
+        tStats[13] = vz;
         boolean grimAC = rotate.equals("Grim") || placeMode.equals("Grim");
-        boolean ncpBypass = rotate.equals("NCP") || rotate.equals("NCPStrict") || placeMode.equals("NCPStrict");
+        boolean ncpBypass = rotate.equals("Strict") || placeMode.equals("Strict");
         double[] result;
         if (NATIVE.isLoaded()) {
             result = nativeTick(
@@ -206,7 +279,7 @@ public class AutoCrystal {
         } else {
             result = javaFallbackTick(
                     playerPos, pHp, pAbs,
-                    targetPos, tHp, tAbs,
+                    predictedTargetPos, tHp, tAbs,
                     blockData, crystalData
             );
         }
@@ -239,46 +312,52 @@ public class AutoCrystal {
             int entityId = (int) result[7];
             net.minecraft.world.entity.Entity crystal = mc.getLevel().getEntity(entityId);
             if (crystal instanceof EndCrystal) {
-                rotationTarget = crystal.position();
+                rotationTarget = crystal.position().add(0, 1.0, 0);
             }
         }
         if (rotationTarget == null && shouldPlace) {
             rotationTarget = new net.minecraft.world.phys.Vec3(result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
         }
-        if (rotationTarget != null) {
-            CombatUtility.rotateTo(mc, rotationTarget, (float) rotateSpeed, (float) rotateRandomize, silentRotation);
+        if (rotationTarget != null && !rotate.equals("None")) {
+            currentRotationTarget = rotationTarget;
+            performRotation(mc, rotationTarget);
+        } else {
+            currentRotationTarget = null;
         }
-        boolean isStrict = rotate.equals("Grim") || rotate.equals("NCPStrict");
+        boolean isStrict = rotate.equals("Strict") || placeMode.equals("Strict");
         boolean aligned = true;
         if (isStrict && rotationTarget != null) {
             aligned = isRotationAligned(mc, rotationTarget);
         }
+        int maxActions = isStrict ? 1 : 12;
         int actionsThisTick = 0;
+        long minStrictDelay = 65L;
+        long effectiveBreakDelay = isStrict ? Math.max((long) breakDelay, minStrictDelay) : (long) breakDelay;
+        long effectivePlaceDelay = isStrict ? Math.max((long) placeDelay, minStrictDelay) : (long) placeDelay;
+
         if (shouldBreak && aligned) {
-            if (now - lastBreakTime >= currentBreakDelay) {
+            if (now - lastBreakTime >= effectiveBreakDelay) {
                 int entityId = (int) result[7];
-                if (entityId != lastBreakId) {
-                    net.minecraft.world.entity.Entity crystal = mc.getLevel().getEntity(entityId);
-                    if (crystal instanceof EndCrystal) {
-                        EntityUtility.attack(mc, crystal);
-                        EntityUtility.swingHand(mc);
-                        lastBreakTime = now;
-                        lastBreakId   = entityId;
-                        actionsThisTick++;
-                        currentBreakDelay = (long) breakDelay;
-                    }
+                net.minecraft.world.entity.Entity crystal = mc.getLevel().getEntity(entityId);
+                if (crystal instanceof EndCrystal && crystal.isAlive() && !crystal.isRemoved()) {
+                    EntityUtility.attack(mc, crystal);
+                    EntityUtility.swingHand(mc);
+                    lastBreakTime = now;
+                    lastBreakId   = entityId;
+                    actionsThisTick++;
+                    currentBreakDelay = effectiveBreakDelay;
                 }
             }
         }
         boolean checkPlaceDelay = true;
-        if (target != null) {
+        if (target != null && !isStrict) {
             double targetEffHp = EntityUtility.getHealthWithAbsorption(target);
             if (targetEffHp <= placeUnderHp) {
                 checkPlaceDelay = false;
             }
         }
-        if (shouldPlace && aligned && actionsThisTick < 2) {
-            if (!checkPlaceDelay || now - lastPlaceTime >= currentPlaceDelay) {
+        if (shouldPlace && aligned && actionsThisTick < maxActions) {
+            if (!checkPlaceDelay || now - lastPlaceTime >= effectivePlaceDelay) {
                 net.minecraft.core.BlockPos placePos = new net.minecraft.core.BlockPos(
                         (int) result[1], (int) result[2], (int) result[3]);
                 boolean hasItem = switchToCrystal(mc);
@@ -287,21 +366,31 @@ public class AutoCrystal {
                             result[1] + 0.5, result[2] + 1.0, result[3] + 0.5);
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
                     net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, placePos, false);
-                    mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-                    SwingUtility.swing(mc.getPlayer(), mc.getPlayer().getUsedItemHand());
-                    if (swapSwitchBack && originalSlot != -1) {
-                        if (mc.getPlayer().connection != null) {
-                            NetworkUtility.sendSetCarriedItem(originalSlot);
+                    net.minecraft.world.InteractionHand hand = getPlacementHand(mc);
+                    int prevSelected = mc.getPlayer().getInventory().getSelectedSlot();
+                    if (swapMode.equals("Silent") && hand == net.minecraft.world.InteractionHand.MAIN_HAND && crystalSlot != -1) {
+                        mc.getPlayer().getInventory().setSelectedSlot(crystalSlot);
+                    }
+                    mc.getGameMode().useItemOn(mc.getPlayer(), hand, hitResult);
+                    if (swapMode.equals("Silent") && hand == net.minecraft.world.InteractionHand.MAIN_HAND && crystalSlot != -1) {
+                        mc.getPlayer().getInventory().setSelectedSlot(prevSelected);
+                    }
+                    SwingUtility.swing(mc.getPlayer(), hand);
+                    if (hand == net.minecraft.world.InteractionHand.MAIN_HAND && swapSwitchBack && originalSlot != -1) {
+                        if (!swapMode.equals("Strict")) {
+                            if (mc.getPlayer().connection != null) {
+                                NetworkUtility.sendSetCarriedItem(originalSlot);
+                            }
+                            originalSlot = -1;
                         }
-                        originalSlot = -1;
                     }
                     lastPlaceTime = now;
                     actionsThisTick++;
-                    currentPlaceDelay = (long) placeDelay;
+                    currentPlaceDelay = effectivePlaceDelay;
                 }
             }
         }
-        boolean shouldPlace2 = placeMultiPlace && result.length >= 16 && result[12] > 0.5;
+        boolean shouldPlace2 = !isStrict && placeMultiPlace && result.length >= 16 && result[12] > 0.5;
         if (shouldPlace2 && antiSuicide) {
             boolean ignoreSuicide2 = antiSuicideIgnoreWithTotem && pStats[14] > 0.0;
             if (!ignoreSuicide2) {
@@ -311,8 +400,8 @@ public class AutoCrystal {
                 }
             }
         }
-        if (shouldPlace2 && aligned && actionsThisTick < 2) {
-            if (!checkPlaceDelay || now - lastPlaceTime >= currentPlaceDelay) {
+        if (shouldPlace2 && aligned && actionsThisTick < maxActions) {
+            if (!checkPlaceDelay || now - lastPlaceTime >= effectivePlaceDelay) {
                 net.minecraft.core.BlockPos placePos2 = new net.minecraft.core.BlockPos((int) result[13], (int) result[14], (int) result[15]);
                 boolean hasItem = switchToCrystal(mc);
                 if (hasItem) {
@@ -320,20 +409,80 @@ public class AutoCrystal {
                             result[13] + 0.5, result[14] + 1.0, result[15] + 0.5);
                     net.minecraft.core.Direction face = net.minecraft.core.Direction.UP;
                     net.minecraft.world.phys.BlockHitResult hitResult2 = new net.minecraft.world.phys.BlockHitResult(hitVec2, face, placePos2, false);
-                    mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult2);
-                    SwingUtility.swing(mc.getPlayer(), mc.getPlayer().getUsedItemHand());
-                    if (swapSwitchBack && originalSlot != -1) {
-                        if (mc.getPlayer().connection != null) {
-                            NetworkUtility.sendSetCarriedItem(originalSlot);
+                    net.minecraft.world.InteractionHand hand2 = getPlacementHand(mc);
+                    int prevSelected2 = mc.getPlayer().getInventory().getSelectedSlot();
+                    if (swapMode.equals("Silent") && hand2 == net.minecraft.world.InteractionHand.MAIN_HAND && crystalSlot != -1) {
+                        mc.getPlayer().getInventory().setSelectedSlot(crystalSlot);
+                    }
+                    mc.getGameMode().useItemOn(mc.getPlayer(), hand2, hitResult2);
+                    if (swapMode.equals("Silent") && hand2 == net.minecraft.world.InteractionHand.MAIN_HAND && crystalSlot != -1) {
+                        mc.getPlayer().getInventory().setSelectedSlot(prevSelected2);
+                    }
+                    SwingUtility.swing(mc.getPlayer(), hand2);
+                    if (hand2 == net.minecraft.world.InteractionHand.MAIN_HAND && swapSwitchBack && originalSlot != -1) {
+                        if (!swapMode.equals("Strict")) {
+                            if (mc.getPlayer().connection != null) {
+                                NetworkUtility.sendSetCarriedItem(originalSlot);
+                            }
+                            originalSlot = -1;
                         }
-                        originalSlot = -1;
                     }
                     lastPlaceTime = now;
                     actionsThisTick++;
-                    currentPlaceDelay = (long) placeDelay;
+                    currentPlaceDelay = effectivePlaceDelay;
                 }
             }
         }
+    }
+    private void performRotation(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
+        float[] targetAngles = RotationUtility.anglesTo(mc.getPlayer().getEyePosition(), target);
+        float currentYaw = silentRotation.initialized ? silentRotation.lastYaw : mc.getPlayer().getYRot();
+        float currentPitch = silentRotation.initialized ? silentRotation.lastPitch : mc.getPlayer().getXRot();
+        if (!silentRotation.initialized) {
+            silentRotation.init(currentYaw, currentPitch);
+        }
+
+        float finalYaw;
+        float finalPitch;
+
+        if (rotate.equals("Strict")) {
+            float gcd = RotationUtility.getGCD() * 0.15f;
+            float maxSpeed = Math.min((float) rotateSpeed, 50.0f);
+            float dYaw = RotationUtility.diffYaw(currentYaw, targetAngles[0]);
+            float dPitch = RotationUtility.diffPitch(currentPitch, targetAngles[1]);
+
+            float stepYaw = Math.abs(dYaw) > maxSpeed ? Math.signum(dYaw) * maxSpeed : dYaw * 0.72f;
+            float stepPitch = Math.abs(dPitch) > maxSpeed ? Math.signum(dPitch) * maxSpeed : dPitch * 0.72f;
+
+            if (rotateRandomize > 0.0) {
+                stepYaw += (float) ((Math.random() - 0.5) * rotateRandomize * 0.25);
+                stepPitch += (float) ((Math.random() - 0.5) * rotateRandomize * 0.25);
+            }
+
+            if (gcd > 0) {
+                stepYaw = Math.round(stepYaw / gcd) * gcd;
+                stepPitch = Math.round(stepPitch / gcd) * gcd;
+            }
+
+            finalYaw = currentYaw + stepYaw;
+            finalPitch = RotationUtility.clampPitch(currentPitch + stepPitch);
+        } else {
+            float[] limited = AimUtility.limitAngles(currentYaw, targetAngles[0], currentPitch, targetAngles[1], (float) rotateSpeed);
+            finalYaw = limited[0];
+            finalPitch = limited[1];
+            if (rotateRandomize > 0.0) {
+                float[] rnd = AimUtility.randomize(finalYaw, finalPitch, rotateRandomize);
+                finalYaw = rnd[0];
+                finalPitch = rnd[1];
+            }
+        }
+
+        silentRotation.set(finalYaw, finalPitch);
+        silentRotation.lastYaw = finalYaw;
+        silentRotation.lastPitch = finalPitch;
+
+        mc.getPlayer().yHeadRot = finalYaw;
+        mc.getPlayer().yBodyRot = finalYaw;
     }
     private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
         net.minecraft.world.entity.LivingEntity closest = null;
@@ -352,7 +501,11 @@ public class AutoCrystal {
             } else if (typeFilter.equals("Passives")) {
                 if (EntityUtility.isPlayer(le) || EntityUtility.isHostile(le)) continue;
             }
-            double dist = EntityUtility.distanceToPlayer(le);
+            double vx = le.getX() - le.xOld;
+            double vy = le.getY() - le.yOld;
+            double vz = le.getZ() - le.zOld;
+            net.minecraft.world.phys.Vec3 predPos = le.position().add(vx * predictTicks, vy * predictTicks, vz * predictTicks);
+            double dist = mc.getPlayer().position().distanceTo(predPos);
             if (dist > maxDist) continue;
             double metric = switch (mode) {
                 case "Closest"        -> dist;
@@ -382,8 +535,12 @@ public class AutoCrystal {
                     net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                     if (state.is(net.minecraft.world.level.block.Blocks.OBSIDIAN) || state.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
                         net.minecraft.world.level.block.state.BlockState above = mc.getLevel().getBlockState(pos.above());
-                        net.minecraft.world.level.block.state.BlockState above2 = mc.getLevel().getBlockState(pos.above(2));
-                        if (above.isAir() && above2.isAir()) {
+                        boolean validSpace = above.isAir();
+                        if (validSpace && placeMode.equals("Strict")) {
+                            net.minecraft.world.level.block.state.BlockState above2 = mc.getLevel().getBlockState(pos.above(2));
+                            validSpace = above2.isAir();
+                        }
+                        if (validSpace) {
                             data.add((double) pos.getX());
                             data.add((double) pos.getY());
                             data.add((double) pos.getZ());
@@ -440,7 +597,14 @@ public class AutoCrystal {
         return arr;
     }
     private boolean switchToCrystal(MinecraftWrapper mc) {
-        if (InventoryUtility.isHolding(mc.getPlayer(), "end_crystal")) return true;
+        if (InventoryUtility.isOffhand(mc.getPlayer(), "end_crystal")) {
+            crystalSlot = -1;
+            return true;
+        }
+        if (InventoryUtility.isHolding(mc.getPlayer(), "end_crystal")) {
+            crystalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+            return true;
+        }
         String mode = swapMode;
         if (mode.equals("None")) return false;
         if (swapNoGap && mc.getPlayer().isUsingItem()) {
@@ -452,7 +616,12 @@ public class AutoCrystal {
         int slot = InventoryUtility.findHotbarSlot(mc.getPlayer(), "end_crystal");
         if (slot != -1) {
             originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-            InventoryUtility.silentSelectSlot(mc.getPlayer(), slot);
+            crystalSlot = slot;
+            if (mode.equals("Strict")) {
+                InventoryUtility.selectSlot(mc.getPlayer(), slot);
+            } else {
+                InventoryUtility.silentSelectSlot(mc.getPlayer(), slot);
+            }
             return true;
         }
         if (swapInventory) {
@@ -461,17 +630,30 @@ public class AutoCrystal {
                 int targetHotbarSlot = 0;
                 InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, targetHotbarSlot, InventoryUtility.SWAP);
                 originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-                InventoryUtility.silentSelectSlot(mc.getPlayer(), targetHotbarSlot);
+                crystalSlot = targetHotbarSlot;
+                if (mode.equals("Strict")) {
+                    InventoryUtility.selectSlot(mc.getPlayer(), targetHotbarSlot);
+                } else {
+                    InventoryUtility.silentSelectSlot(mc.getPlayer(), targetHotbarSlot);
+                }
                 return true;
             }
         }
+        crystalSlot = -1;
         return false;
+    }
+    private net.minecraft.world.InteractionHand getPlacementHand(MinecraftWrapper mc) {
+        if (InventoryUtility.isOffhand(mc.getPlayer(), "end_crystal")) {
+            return net.minecraft.world.InteractionHand.OFF_HAND;
+        }
+        return net.minecraft.world.InteractionHand.MAIN_HAND;
     }
     private long currentPlaceDelay = 0;
     private long currentBreakDelay = 0;
     private boolean isRotationAligned(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         if (rotate.equals("None")) return true;
-        return silentRotation.isRotationAligned(mc, target, 10.0f);
+        float tolerance = rotate.equals("Strict") ? 30.0f : 45.0f;
+        return silentRotation.isRotationAligned(mc, target, tolerance);
     }
     private double calcQuickDamage(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target) {
         net.minecraft.world.phys.Vec3 playerPos = mc.getPlayer().position();
@@ -524,11 +706,135 @@ public class AutoCrystal {
             result[10] = bestPos.z;
             result[11] = bestBreakDmg;
         }
+
+        double bestPlaceDmg = 0;
+        int bestBx = 0, bestBy = 0, bestBz = 0;
+        for (int i = 0; i < blockData.length; i += 3) {
+            double bx = blockData[i];
+            double by = blockData[i + 1];
+            double bz = blockData[i + 2];
+            net.minecraft.world.phys.Vec3 crystalPos = new net.minecraft.world.phys.Vec3(bx + 0.5, by + 1.0, bz + 0.5);
+            double tdist = crystalPos.distanceTo(targetPos);
+            double sdist = crystalPos.distanceTo(playerPos);
+            if (tdist > 12 || sdist > 12) continue;
+            double tImpact = Math.max(0, (1.0 - tdist / 12.0));
+            double sImpact = Math.max(0, (1.0 - sdist / 12.0));
+            double tDmg = (tImpact * tImpact + tImpact) / 2.0 * 84.0 + 1.0;
+            double sDmg = (sImpact * sImpact + sImpact) / 2.0 * 84.0 + 1.0;
+            if (tDmg < minDamage) continue;
+            if (!suicide) {
+                if (sDmg > maxSelfDmg) continue;
+                if (antiSuicide && pHp + pAbs - sDmg <= 0) continue;
+            }
+            double score = suicide ? (sDmg * 100.0 + tDmg) : tDmg;
+            if (score > bestPlaceDmg) {
+                bestPlaceDmg = score;
+                bestBx = (int) bx;
+                bestBy = (int) by;
+                bestBz = (int) bz;
+            }
+        }
+        if (bestPlaceDmg > 0) {
+            result[0] = 1.0;
+            result[1] = bestBx;
+            result[2] = bestBy;
+            result[3] = bestBz;
+            result[4] = bestPlaceDmg;
+            result[5] = 0.0;
+        }
         return result;
     }
     public static boolean isNativeAvailable() {
         return NATIVE.isLoaded();
     }
 
+    public LivingEntity getCurrentTarget() {
+        return currentTarget;
+    }
 
+    public void onDisable() {
+        silentRotation.reset();
+        currentTarget = null;
+        currentPlacementBlock = null;
+        currentRotationTarget = null;
+        originalSlot = -1;
+        crystalSlot = -1;
+    }
+
+    @Subscribe
+    public void onPacket(PacketEvent event) {
+        if (!event.isReceive()) return;
+        if (!spawnBreak) return;
+        if (!(event.getPacket() instanceof ClientboundAddEntityPacket packet)) return;
+        if (packet.getType() != EntityType.END_CRYSTAL) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        double distSq = mc.getPlayer().distanceToSqr(packet.getX(), packet.getY(), packet.getZ());
+        if (distSq > breakRange * breakRange) return;
+        boolean isStrict = rotate.equals("Strict") || placeMode.equals("Strict");
+        if (isStrict) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastBreakTime < (long) breakDelay) return;
+
+        var existing = mc.getLevel().getEntity(packet.getId());
+        net.minecraft.world.entity.Entity crystal = existing != null ? existing : new EndCrystal(EntityType.END_CRYSTAL, mc.getLevel());
+        if (existing == null) {
+            crystal.setId(packet.getId());
+            crystal.setPos(packet.getX(), packet.getY(), packet.getZ());
+        }
+
+        if (rotate.equals("Grim")) {
+            net.minecraft.world.phys.Vec3 rotPos = new net.minecraft.world.phys.Vec3(packet.getX(), packet.getY() + 1.0, packet.getZ());
+            performRotation(mc, rotPos);
+            NetworkUtility.sendRot(silentRotation.yaw, silentRotation.pitch, mc.getPlayer().onGround(), mc.getPlayer().horizontalCollision);
+        }
+
+        NetworkUtility.sendInteractAttack(crystal, false);
+        NetworkUtility.sendSwing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        lastBreakTime = now;
+        lastBreakId = packet.getId();
+    }
+
+    public void render(Matrix4f modelViewMatrix, Camera camera, float tickDelta) {
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return;
+
+        var target = currentTarget;
+        if (target == null || EntityUtility.isDead(target)) return;
+
+        if (targetEspMode.equals("RaveXV1")) {
+            float progressVal = prevScanProgress + (scanProgress - prevScanProgress) * tickDelta;
+            float rotation = prevSlowRotation + (slowRotation - prevSlowRotation) * tickDelta;
+            Render3DUtility.renderRaveXESP(
+                modelViewMatrix,
+                camera,
+                target,
+                targetEspColor,
+                progressVal,
+                rotation,
+                tickDelta
+            );
+        } else if (targetEspMode.equals("Circle")) {
+            Render3DUtility.renderCircleESP(
+                modelViewMatrix,
+                camera,
+                target,
+                targetEspColor,
+                circleStep,
+                prevCircleStep,
+                tickDelta
+            );
+        } else if (targetEspMode.equals("Square")) {
+            float squareRot = prevSquareAngle + (squareAngle - prevSquareAngle) * tickDelta;
+            Render3DUtility.renderSquareESP(
+                modelViewMatrix,
+                camera,
+                target,
+                targetEspColor,
+                squareRot,
+                tickDelta
+            );
+        }
+    }
 }

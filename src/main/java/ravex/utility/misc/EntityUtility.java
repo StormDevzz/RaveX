@@ -13,6 +13,9 @@ import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.InventoryUtility;
+import net.minecraft.world.phys.Vec3;
+import java.util.HashMap;
+import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
 public class EntityUtility {
@@ -89,6 +92,12 @@ public class EntityUtility {
 
     public static boolean isArmorStand(LivingEntity entity) {
         return entity instanceof ArmorStand;
+    }
+
+    public static boolean isSkeletonTarget(Entity entity) {
+        LivingEntity living = asLivingEntity(entity);
+        if (living == null || isDead(living) || isArmorStand(living)) return false;
+        return isPlayer(living);
     }
 
     public static boolean isWearingArmor(LivingEntity entity) {
@@ -229,6 +238,32 @@ public class EntityUtility {
             }
         } catch (Exception ignored) {}
         return null;
+    }
+
+    private static final Map<Integer, double[]> smoothPositions = new HashMap<>();
+
+    public static Vec3 smoothPos(Entity entity, Vec3 desired) {
+        long now = System.nanoTime();
+        double[] entry = smoothPositions.get(entity.getId());
+        if (entry == null) {
+            smoothPositions.put(entity.getId(), new double[]{desired.x, desired.y, desired.z, now});
+            return desired;
+        }
+        double dt = (now - entry[3]) / 1.0E9;
+        entry[3] = now;
+        if (dt < 0.0005) dt = 0.0005;
+        if (dt > 0.1) dt = 0.1;
+        double alpha = 1.0 - Math.exp(-dt * 14.0);
+        entry[0] += (desired.x - entry[0]) * alpha;
+        entry[1] += (desired.y - entry[1]) * alpha;
+        entry[2] += (desired.z - entry[2]) * alpha;
+        if (smoothPositions.size() > 256) {
+            var it = smoothPositions.entrySet().iterator();
+            while (it.hasNext()) {
+                if (now - it.next().getValue()[3] > 5.0E9) it.remove();
+            }
+        }
+        return new Vec3(entry[0], entry[1], entry[2]);
     }
 
 }

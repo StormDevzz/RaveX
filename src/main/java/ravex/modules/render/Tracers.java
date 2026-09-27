@@ -1,25 +1,33 @@
 package ravex.modules.render;
-import ravex.modules.annotations.Module;
-import ravex.modules.annotations.Parameter;
+
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuSampler;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
-
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.List;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
+import ravex.RaveX;
+import ravex.cmd.cmds.GpsCmd;
+import ravex.cmd.core.CmdReg;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.modules.annotations.Module;
+import ravex.modules.annotations.Parameter;
+import ravex.utility.render.ColorUtility;
+import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.Render2DUtility;
 
 @Module(name = "Tracers", category = "Render")
 public class Tracers {
-    @Parameter(name = "Mode", modes = {"Default", "Arrows"})
+    @Parameter(name = "Mode", modes = {"Default", "ArrowOld", "ArrowNew"})
     public String mode = "Default";
+    @Parameter(name = "ColorMode", modes = {"Custom", "Rainbow", "Astolfo", "Client"}, visible = "mode=ArrowNew")
+    public String colorMode = "Custom";
     @Parameter(name = "Players")
     public boolean players = true;
     @Parameter(name = "Monsters")
@@ -30,10 +38,8 @@ public class Tracers {
     public boolean items = false;
     @Parameter(name = "Distance", min = 10.0, max = 300.0, step = 10.0)
     public double maxDistance = 100.0;
-    @Parameter(name = "Width", min = 0.1, max = 5.0, step = 0.1)
-    public double lineWidth = 1.0;
-    @Parameter(name = "ArrowSize", min = 8.0, max = 48.0, step = 2.0)
-    public double arrowSize = 20.0;
+    @Parameter(name = "ArrowSize", min = 6.0, max = 36.0, step = 1.0)
+    public double arrowSize = 14.0;
     @Parameter(name = "ArrowMargin", min = 0.0, max = 30.0, step = 1.0)
     public double arrowMargin = 4.0;
     @Parameter(name = "PlayerColor", color = true, visible = "players")
@@ -54,42 +60,36 @@ public class Tracers {
                 if (stream != null) {
                     NativeImage image = NativeImage.read(stream);
                     DynamicTexture tex = new DynamicTexture(() -> "tracers_arrow", image);
-                    try {
-                        GpuSampler sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
-                                .getClampToEdge(FilterMode.LINEAR);
-                        for (Field f : AbstractTexture.class.getDeclaredFields()) {
-                            if (GpuSampler.class.isAssignableFrom(f.getType())) {
-                                f.setAccessible(true);
-                                f.set(tex, sampler);
-                                break;
-                            }
-                        }
-                    } catch (Exception ignored) {
-                    }
+                    Render2DUtility.setLinearSampler(tex);
                     arrowTexture = Identifier.fromNamespaceAndPath("ravex", "tracers_arrow");
                     MinecraftWrapper.getWrapper().getTextureManager().register(arrowTexture, tex);
                     arrowLoaded = true;
                 }
             } catch (Exception e) {
-                ravex.RaveX.LOGGER.warn("[Tracers] Failed to load arrow texture: {}", e.getMessage());
+                RaveX.LOGGER.warn("[Tracers] Failed to load arrow texture: {}", e.getMessage());
                 arrowLoaded = true;
             }
         }
         return arrowTexture;
     }
 
-    private static final java.util.HashMap<Integer, Float> arrowAngles = new java.util.HashMap<>();
+    private static final HashMap<Integer, Float> arrowAngles = new HashMap<>();
+    private static float gpsCurrentAngle = 0f;
+    private static boolean gpsAngleInitialized = false;
 
-    public static void renderArrows(GuiGraphics context, List<net.minecraft.world.entity.Entity> entities, List<Integer> colors,
-            float pt, net.minecraft.world.phys.Vec3 cameraPos, net.minecraft.world.phys.Vec3 cameraLook,
+    public static void renderArrows(GuiGraphics context, List<Entity> entities, List<Integer> colors,
+            float pt, Vec3 cameraPos, Vec3 cameraLook,
             double guiWidth, double guiHeight) {
-        Identifier tex = getArrowTexture();
-        if (tex == null)
+        Tracers t = Modules.get(Tracers.class);
+        if (!Modules.enabled(Tracers.class) || (!t.mode.equals("ArrowOld") && !t.mode.equals("ArrowNew")))
             return;
 
-        Tracers t = Modules.get(Tracers.class);
-        if (!Modules.enabled(Tracers.class) || !t.mode.equals("Arrows"))
-            return;
+        boolean useNewArrow = t.mode.equals("ArrowNew");
+        Identifier tex = null;
+        if (!useNewArrow) {
+            tex = getArrowTexture();
+            if (tex == null) return;
+        }
 
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null)
@@ -100,13 +100,71 @@ public class Tracers {
         float radius = size * 0.7f + margin;
         float smoothSpeed = 0.12f;
         float minGap = 0.25f;
-        int count = Math.min(entities.size(), colors.size());
-        if (count == 0)
-            return;
 
         double cx = guiWidth / 2.0;
         double cy = guiHeight / 2.0;
         float playerYawRad = (float) Math.toRadians(mc.getPlayer().getYRot());
+
+        if (useNewArrow && GpsCmd.getGpsTarget() != null) {
+            BlockPos gpsPos = GpsCmd.getGpsTarget();
+            double gdx = gpsPos.getX() + 0.5 - cameraPos.x;
+            double gdz = gpsPos.getZ() + 0.5 - cameraPos.z;
+            double gLen = Math.sqrt(gdx * gdx + gdz * gdz);
+            if (gLen < 5.0) {
+                GpsCmd.setGpsTarget(null);
+                gpsAngleInitialized = false;
+                CmdReg.print("§a[GPS] You have reached your destination!");
+            } else {
+                float targetAngle = -(float) Math.atan2(gdx, gdz) - playerYawRad;
+                while (targetAngle > Math.PI) targetAngle -= 2 * Math.PI;
+                while (targetAngle < -Math.PI) targetAngle += 2 * Math.PI;
+
+                if (!gpsAngleInitialized) {
+                    gpsCurrentAngle = targetAngle;
+                    gpsAngleInitialized = true;
+                } else {
+                    float diff = targetAngle - gpsCurrentAngle;
+                    while (diff > Math.PI) diff -= 2 * Math.PI;
+                    while (diff < -Math.PI) diff += 2 * Math.PI;
+                    float step = Math.abs(diff) > 1.8f ? 0.6f : 0.35f;
+                    gpsCurrentAngle += diff * step;
+                }
+
+                float gpsRadius = radius + size + 8.0f;
+                float px = (float) (cx + Math.cos(gpsCurrentAngle - Math.PI / 2) * gpsRadius);
+                float py = (float) (cy + Math.sin(gpsCurrentAngle - Math.PI / 2) * gpsRadius);
+
+                int gpsColor = ColorUtility.getActiveColor();
+                if (!t.colorMode.equals("Custom")) {
+                    float deg = (float) Math.toDegrees(gpsCurrentAngle);
+                    gpsColor = switch (t.colorMode) {
+                        case "Rainbow" -> ColorUtility.rainbow(3000, (int) (deg * 4), 1.0f, 1.0f, 1.0f);
+                        case "Astolfo" -> ColorUtility.astolfo(3000, (int) (deg * 4), 0.7f, 1.0f, 1.0f);
+                        case "Client" -> ColorUtility.getActiveColor();
+                        default -> gpsColor;
+                    };
+                }
+
+                Render2DUtility.drawSharpArrow(context, px, py, gpsCurrentAngle, size, gpsColor);
+
+                String label = "gps (" + (int) gLen + "m)";
+                int tw = FontRenderUtility.getStringWidth(label);
+                float tx = (float) (cx + Math.cos(gpsCurrentAngle - Math.PI / 2) * (gpsRadius + size * 0.7f));
+                float ty = (float) (cy + Math.sin(gpsCurrentAngle - Math.PI / 2) * (gpsRadius + size * 0.7f));
+                var pose = context.pose();
+                pose.pushMatrix();
+                pose.translate(tx, ty);
+                pose.scale(0.65f, 0.65f);
+                FontRenderUtility.drawString(context, label, -tw / 2, -4, 0xFFFFFFFF, true);
+                pose.popMatrix();
+            }
+        } else {
+            gpsAngleInitialized = false;
+        }
+
+        int count = Math.min(entities.size(), colors.size());
+        if (count == 0)
+            return;
 
         float[] targetAngles = new float[count];
         int[] ids = new int[count];
@@ -115,24 +173,23 @@ public class Tracers {
         int validCount = 0;
 
         for (int i = 0; i < count; i++) {
-            net.minecraft.world.entity.Entity target = entities.get(i);
+            Entity target = entities.get(i);
             int color = colors.get(i);
             colorArr[i] = color;
             if ((color >> 24 & 0xFF) == 0)
                 continue;
 
-            net.minecraft.world.phys.Vec3 basePos = target.getPosition(pt);
+            Vec3 basePos = target.getPosition(pt);
             double dx = basePos.x - cameraPos.x;
             double dz = basePos.z - cameraPos.z;
             double len = Math.sqrt(dx * dx + dz * dz);
 
             ids[i] = target.getId();
 
-            if (len < 0.01) {
-                Integer id = target.getId();
-                if (!arrowAngles.containsKey(id))
-                    continue;
-                targetAngles[i] = arrowAngles.get(id);
+            if (len < 0.20) {
+                int id = target.getId();
+                float prev = arrowAngles.getOrDefault(id, 0.0f);
+                targetAngles[i] = prev;
                 valid[i] = true;
                 validCount++;
                 continue;
@@ -201,26 +258,36 @@ public class Tracers {
                     diff -= 2 * Math.PI;
                 while (diff < -Math.PI)
                     diff += 2 * Math.PI;
-                currentAngle += diff * smoothSpeed;
+                float stepSpeed = Math.abs(diff) > 1.8f ? 0.6f : 0.25f;
+                currentAngle += diff * stepSpeed;
             }
             arrowAngles.put(id, currentAngle);
 
             float px = (float) (cx + Math.cos(currentAngle - Math.PI / 2) * radius);
             float py = (float) (cy + Math.sin(currentAngle - Math.PI / 2) * radius);
 
-            context.pose().pushMatrix();
-            context.pose().translate(px, py);
-            context.pose().rotate(currentAngle);
-            float hs = size / 2f;
-            context.blit(RenderPipelines.GUI_TEXTURED, tex,
-                    (int) -hs, (int) -hs, 0f, 0f,
-                    (int) size, (int) size, (int) size, (int) size, color);
-            context.pose().popMatrix();
+            if (useNewArrow) {
+                int finalColor = color;
+                if (!t.colorMode.equals("Custom")) {
+                    float deg = (float) Math.toDegrees(currentAngle);
+                    finalColor = switch (t.colorMode) {
+                        case "Rainbow" -> ColorUtility.rainbow(3000, (int) (deg * 4), 1.0f, 1.0f, 1.0f);
+                        case "Astolfo" -> ColorUtility.astolfo(3000, (int) (deg * 4), 0.7f, 1.0f, 1.0f);
+                        case "Client" -> ColorUtility.getActiveColor();
+                        default -> color;
+                    };
+                }
+                Render2DUtility.drawSharpArrow(context, px, py, currentAngle, size, finalColor);
+            } else {
+                context.pose().pushMatrix();
+                context.pose().translate(px, py);
+                context.pose().rotate(currentAngle);
+                float hs = size / 2f;
+                context.blit(RenderPipelines.GUI_TEXTURED, tex,
+                        (int) -hs, (int) -hs, 0f, 0f,
+                        (int) size, (int) size, (int) size, (int) size, color);
+                context.pose().popMatrix();
+            }
         }
     }
-
-
-
-
-
 }

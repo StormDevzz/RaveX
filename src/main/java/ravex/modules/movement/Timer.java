@@ -11,9 +11,6 @@ public class Timer {
     public double pulseInterval = 8.0;
     @Parameter(name = "PulseDuration", min = 1.0, max = 10.0, step = 1.0, visible = "mode=Verus")
     public double pulseDuration = 2.0;
-    @Parameter(name = "StrafeFix")
-    public boolean strafeFix = true;
-
     private int tick = 0;
     private double currentSpeed;
 

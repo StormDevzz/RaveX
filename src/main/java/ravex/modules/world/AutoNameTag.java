@@ -1,11 +1,18 @@
 package ravex.modules.world;
 import ravex.modules.annotations.Module;
+import ravex.modules.annotations.Parameter;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AutoNameTag", category = "World")
 public class AutoNameTag {
+@Parameter(name = "Delay", min = 0, max = 2000, step = 50)
+public double delay = 0;
+private long lastUseTime;
+public void onEnable() {
+        lastUseTime = 0;
+    }
 public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         var p = mc.getPlayer();
@@ -34,6 +41,9 @@ public void onTick() {
             }
         }
         if (target == null) return;
+        long now = System.currentTimeMillis();
+        if (now - lastUseTime < delay) return;
+        lastUseTime = now;
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, tagSlot);
         EntityUtility.interact(mc, target);

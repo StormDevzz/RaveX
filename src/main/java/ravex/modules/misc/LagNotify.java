@@ -37,14 +37,14 @@ public class LagNotify {
             if (isLagging && !wasLagging) {
                 String tps = String.format("%.1f", smoothedTPS);
                 ravex.manager.NotificationManager.add(
-                        "Server lag: " + tps + " TPS", 0xFFFFCC33, 3000);
+                        ravex.utility.misc.LanguageUtility.t("lag_notify", tps), 0xFFFFCC33, 3000);
                 if (sound) {
                     EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.FAILURE));
                 }
             } else if (!isLagging && wasLagging) {
                 String tps = String.format("%.1f", smoothedTPS);
                 ravex.manager.NotificationManager.add(
-                        "Server recovered: " + tps + " TPS", 0xFF44FF88, 2500);
+                        ravex.utility.misc.LanguageUtility.t("lag_recovered", tps), 0xFF44FF88, 2500);
             }
             wasLagging = isLagging;
         }

@@ -1,11 +1,11 @@
 package ravex.modules.hud;
+
 import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.utility.player.PlayerUtility;
 import ravex.utility.render.ColorUtility;
-
 import ravex.modules.client.Hud;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.HudRendererUtility;
@@ -13,6 +13,7 @@ import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.gui.hudeditor.HudEditorScreen;
 
 @HudModule("IndicatorsHud")
 public class IndicatorsHud extends ravex.modules.Module {
@@ -29,7 +30,7 @@ public class IndicatorsHud extends ravex.modules.Module {
     @Parameter(name = "Shadow")
     public boolean shadow = true;
 
-private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE;
+    private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE;
     private static final int IS = HudRendererUtility.getIconSize();
     private long lastRealTime  = 0;
     private long lastGameTick  = -1;
@@ -38,23 +39,39 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
     private float smoothKB = 0;
     private float animHealth = 1f, animArmor = 1f, animTPS = 1f, animSpeed = 0f, animKB = 0f;
 
+    public IndicatorsHud() {
+        super("IndicatorsHud", 10, 100, 160, 61);
+        setX(10);
+        setY(100);
+        setWidth(160);
+        setHeight(61);
+    }
+
     private int getGaugeColor(int index) {
         int[] colors = {this.healthColor, this.armorColor, this.tPSColor, this.speedColor, this.kBColor};
         return colors[index];
     }
+
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getWrapper();
-        if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        boolean inEditor = mc.getScreen() instanceof HudEditorScreen;
+        if ((mc.getPlayer() == null || mc.getLevel() == null) && !inEditor) return;
+
         var player = mc.getPlayer();
-        updateTPS(mc);
-        updateKnockback(player);
+        if (mc.getLevel() != null) {
+            updateTPS(mc);
+        }
+        if (player != null) {
+            updateKnockback(player);
+        }
+
         boolean shadow = this.shadow;
-        float health = PlayerUtility.getHealth(player) / PlayerUtility.getMaxHealth(player);
-        float armor  = Math.min(1, PlayerUtility.getArmorValue(player) / 20.0f);
+        float health = player != null ? PlayerUtility.getHealth(player) / PlayerUtility.getMaxHealth(player) : 1f;
+        float armor  = player != null ? Math.min(1, PlayerUtility.getArmorValue(player) / 20.0f) : 1f;
         float tps    = smoothedTPS / 20.0f;
-        float speed  = (float) Math.min(1, Math.sqrt(player.getDeltaMovement().x * player.getDeltaMovement().x +
-                                                       player.getDeltaMovement().z * player.getDeltaMovement().z) / 0.3);
+        float speed  = player != null ? (float) Math.min(1, Math.sqrt(player.getDeltaMovement().x * player.getDeltaMovement().x +
+                                                       player.getDeltaMovement().z * player.getDeltaMovement().z) / 0.3) : 0f;
         float kb     = Math.max(0, Math.min(1, smoothKB / 0.4f));
         float smooth = 0.3f;
         animHealth += (health - animHealth) * smooth;
@@ -63,13 +80,26 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
         animSpeed  += (speed - animSpeed) * smooth;
         animKB     += (kb - animKB) * smooth;
         float[] values = { animHealth, animArmor, animTPS, animSpeed, animKB };
-        String[][] data = {
-            {"Health", (int)(PlayerUtility.getHealth(player)) + "/" + (int)(PlayerUtility.getMaxHealth(player))},
-            {"Armor",  String.valueOf(PlayerUtility.getArmorValue(player))},
-            {"TPS",    String.format("%.1f", smoothedTPS)},
-            {"Speed",  String.format("%.0f", speed * 0.3 * 20)},
-            {"KB",     player.hurtTime > 0 ? String.format("%.2f", smoothKB) : "0.00"}
-        };
+
+        String[][] data;
+        if (player != null) {
+            data = new String[][]{
+                {"Health", (int)(PlayerUtility.getHealth(player)) + "/" + (int)(PlayerUtility.getMaxHealth(player))},
+                {"Armor",  String.valueOf(PlayerUtility.getArmorValue(player))},
+                {"TPS",    String.format("%.1f", smoothedTPS)},
+                {"Speed",  String.format("%.0f", speed * 0.3 * 20)},
+                {"KB",     player.hurtTime > 0 ? String.format("%.2f", smoothKB) : "0.00"}
+            };
+        } else {
+            data = new String[][]{
+                {"Health", "20/20"},
+                {"Armor",  "20"},
+                {"TPS",    "20.0"},
+                {"Speed",  "0"},
+                {"KB",     "0.00"}
+            };
+        }
+
         int lineH = 11;
         int dotR = 3;
         int barW = 50;
@@ -109,6 +139,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
             cy += lineH;
         }
     }
+
     private void updateTPS(MinecraftWrapper mc) {
         long now = System.currentTimeMillis();
         long gameTick = mc.getLevel().getGameTime();
@@ -121,6 +152,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_INDICATORS_WHITE
             lastGameTick = gameTick; lastRealTime = now;
         }
     }
+
     private void updateKnockback(net.minecraft.world.entity.player.Player player) {
         float vx = (float) player.getDeltaMovement().x;
         float vz = (float) player.getDeltaMovement().z;

@@ -15,5 +15,6 @@ public class MixinPerspectiveProjectionMatrixBuffer {
     @Inject(method = "getBuffer", at = @At("HEAD"))
     private void onGetBuffer(Matrix4f matrix, CallbackInfoReturnable<GpuBufferSlice> cir) {
         ShaderManager.INSTANCE.setProjectionMatrix(matrix);
+        ShaderManager.INSTANCE.setWorldProjectionMatrix(matrix);
     }
 }

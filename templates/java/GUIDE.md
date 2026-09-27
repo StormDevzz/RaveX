@@ -87,25 +87,26 @@ templates/java/
 package ravex.addon.template;
 
 import ravex.addon.Addon;
-import ravex.addon.AddonContext;
-import ravex.addon.AddonInfo;
+import ravex.addon.core.AddonContext;
+import ravex.addon.core.AddonInfo;
 
 public class MainAddon implements Addon {
+    private AddonContext context;
 
     @Override
     public void onLoad(AddonContext context) {
-        // Initialization
+        this.context = context;
+        context.registerModule(new DemoModule(this));
     }
 
     @Override
     public void onUnload() {
-        // Cleanup
     }
 
     @Override
-    public AddonInfo getAddonInfo() {
+    public AddonInfo getInfo() {
         return new AddonInfo("MainAddon", "Description",
-            "1.4.3", "Author", "ravex.addon.template.MainAddon");
+            "1.0.0", "Author", "ravex.addon.template.MainAddon");
     }
 }
 ```
@@ -138,27 +139,50 @@ System.load(nativeDir + getPathSep()
 ### Basic structure
 
 ```java
-public class DemoModule extends AddonModule {
+package ravex.addon.template;
 
-    public DemoModule() {
-        super("DemoModule", "Demo", AddonModuleInfo.Category.CUSTOM);
+import ravex.addon.Addon;
+import ravex.addon.module.AddonModule;
+import ravex.modules.annotations.Parameter;
+import ravex.utility.player.PlayerUtility;
+
+public class DemoModule extends AddonModule {
+    @Parameter(name = "FeatureEnabled")
+    public boolean featureEnabled = true;
+
+    @Parameter(name = "Speed", min = 0.1, max = 5.0, step = 0.1)
+    public double speed = 1.5;
+
+    @Parameter(name = "Mode", modes = {"Basic", "Advanced"})
+    public String mode = "Basic";
+
+    public DemoModule(Addon parent) {
+        super("DemoModule", "Custom", parent);
     }
 
     @Override
-    public void onEnable() { }
+    public void onEnable() {
+    }
+
     @Override
-    public void onDisable() { }
+    public void onDisable() {
+    }
+
     @Override
-    public void onTick() { }
+    public void onTick() {
+        if (!featureEnabled) {
+            return;
+        }
+        if (PlayerUtility.getPlayer() == null) {
+            return;
+        }
+    }
 }
 ```
 
-### Parameters (auto-displayed in RaveX GUI)
+### Parameters
 
-```java
-private final BooleanParameter enabled = new BooleanParameter("enabled", true);
-private final NumberParameter  speed   = new NumberParameter("speed", 1.0, 0.1, 5.0);
-```
+Settings are `@Parameter` annotations on primitive fields. `Module` creates the wrappers via `ParameterFactory`.
 
 ### Platform branches in onTick
 
@@ -166,9 +190,9 @@ private final NumberParameter  speed   = new NumberParameter("speed", 1.0, 0.1, 
 @Override
 public void onTick() {
     if (MainAddon.isWindows()) {
-        tickWindows();   // Windows-specific logic
+        tickWindows();
     } else {
-        tickLinux();     // Linux-specific logic
+        tickLinux();
     }
 }
 ```
@@ -294,7 +318,7 @@ javac -cp ../../build/libs/RaveX.jar \
     src/ravex/addon/template/*.java
 cp src/META-INF/MANIFEST.MF build/classes/META-INF/
 cd build/classes
-jar cfm ../MainAddon.jar META-INF/MANIFEST.MF ravex/*.class
+jar cfm ../MainAddon.jar META-INF/MANIFEST.MF .
 ```
 
 ### Installation
@@ -314,7 +338,7 @@ Copy the JAR to the addons folder:
 
 | Interface | Methods | Purpose |
 |-----------|---------|---------|
-| `Addon` | `onLoad`, `onUnload`, `getAddonInfo` | Main addon class |
+| `Addon` | `onLoad`, `onUnload`, `getInfo` | Main addon class |
 | `AddonModule` | `onEnable`, `onDisable`, `onTick` | Module (functionality) |
 | `AddonListener` | `onEvent` | Event listener |
 
@@ -322,18 +346,13 @@ Copy the JAR to the addons folder:
 
 | Class | Methods | Purpose |
 |-------|---------|---------|
-| `AddonContext` | `getLogger`, `getAddonName`, `getDataDir` | Context |
-| `AddonModuleManager` | `registerModule`, `unregisterModule`, `getLogger` | Module registry |
+| `AddonContext` | `getLogger`, `getInfo`, `registerModule` | Context |
+| `AddonLoader` | `loadAddon` | JAR loading via manifest |
 | `AddonInfo` | (constructor) | Metadata |
 
 ### Module parameters
 
-| Class | Type | Example |
-|-------|------|---------|
-| `BooleanParameter` | `boolean` | `new BooleanParameter("enabled", true)` |
-| `NumberParameter` | `double` | `new NumberParameter("speed", 1.0, 0.1, 5.0)` |
-| `StringParameter` | `String` | `new StringParameter("mode", "default")` |
-| `ColorParameter` | `int` (0xRRGGBB) | `new ColorParameter("color", 0x00FF00)` |
+Settings are `@Parameter` on primitives (`boolean`, `double`, `int`, `String`). Wrappers in `ravex.parameter` are created automatically.
 
 ---
 
@@ -341,15 +360,10 @@ Copy the JAR to the addons folder:
 
 ### ❓ My addon doesn't load
 
-1. Check `MANIFEST.MF` — is `Addon-Main-Class` correct?
-2. Check Minecraft console (`.minecraft/logs/latest.log`)
-3. Try running manually: `javac -cp RaveX.jar MainAddon.java`
-
-### ❓ Native library not loading
-
-1. Architecture mismatch: 64-bit Java needs 64-bit DLL
-2. Wrong path: `%USERPROFILE%\.minecraft\ravex\addons\native\MyAddon.dll`
-3. Missing dependencies: use Dependency Walker (Windows) or `ldd` (Linux)
+1. Check `MANIFEST.MF` — `Addon-Main-Class` must match the real class
+2. Check that the class implements `ravex.addon.Addon` with `getInfo`
+3. Check Minecraft console (`.minecraft/logs/latest.log`)
+4. Check signature: `<name>.jar.ravex-sig` must sit next to the JAR
 
 ### ❓ Need more performance offload heavy computation to C++
 

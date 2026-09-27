@@ -26,6 +26,8 @@ public double x, y, z;
     public boolean entityInteract = true;
     @Parameter(name = "NoSwing")
     public boolean noSwing = false;
+    @Parameter(name = "ScrollSpeed")
+    public boolean scrollSpeed = false;
     public void onEnable() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() != null) {
@@ -64,6 +66,11 @@ public double x, y, z;
         this.yaw += (float) yRot;
         this.pitch += (float) xRot;
         this.pitch = Math.max(-90.0f, Math.min(90.0f, this.pitch));
+    }
+    public void adjustSpeedScroll(double yOffset) {
+        if (!scrollSpeed) return;
+        if (yOffset > 0) speed = Math.min(5.0, speed + 0.1);
+        else if (yOffset < 0) speed = Math.max(0.1, speed - 0.1);
     }
     @Subscribe
     public void onTick(TickEvent.Client event) {

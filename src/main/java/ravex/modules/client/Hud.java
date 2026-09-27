@@ -10,12 +10,8 @@ public class Hud {
     public double editorOpacity = 120;
     @Parameter(name = "EditorBackground")
     public boolean editorBackground = false;
-    @Parameter(name = "EditorBlur")
-    public boolean editorBlur = true;
     @Parameter(name = "Drag")
     public boolean dragEnabled = false;
-    @Parameter(name = "PanelColor", color = true)
-    public int panelColor = 0x00000000;
     @Parameter(name = "ShowCounter")
     public boolean showCounter = true;
 

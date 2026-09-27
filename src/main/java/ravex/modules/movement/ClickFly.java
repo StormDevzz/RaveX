@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
-import ravex.utility.network.NetworkUtility;
 import net.minecraft.world.phys.HitResult;
 import ravex.mcwrapper.MinecraftWrapper;
 
@@ -25,18 +24,27 @@ public class ClickFly {
     private net.minecraft.world.phys.Vec3 target = null;
     private boolean flying = false;
     private long lastClick = 0;
+    private long stuckSince = 0;
+    private double lastDist = Double.NaN;
     public void onEnable() {
         target = null;
         flying = false;
+        lastClick = 0;
+        resetProgress();
     }
     public void onDisable() {
         target = null;
         flying = false;
+        resetProgress();
     }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
-        if (mc.getOptions().keyUse.isDown()) {
+        boolean moving = MoveUtility.isMoving();
+        if (flying && moving) {
+            abort();
+        }
+        if (mc.getOptions().keyUse.isDown() && !moving) {
             long now = System.currentTimeMillis();
             if (now - lastClick > 300) {
                 lastClick = now;
@@ -44,6 +52,7 @@ public class ClickFly {
                 if (newTarget != null) {
                     target = newTarget;
                     flying = true;
+                    resetProgress();
                 }
             }
         }
@@ -53,6 +62,23 @@ public class ClickFly {
         } else {
             flyStep(mc);
         }
+    }
+    private void abort() {
+        target = null;
+        flying = false;
+        resetProgress();
+    }
+    private void resetProgress() {
+        lastDist = Double.NaN;
+        stuckSince = 0;
+    }
+    private boolean isStuck(double dist) {
+        long now = System.currentTimeMillis();
+        if (Double.isNaN(lastDist) || dist < lastDist - 0.05) {
+            stuckSince = now;
+        }
+        lastDist = dist;
+        return now - stuckSince > 1500;
     }
     private net.minecraft.world.phys.Vec3 getTarget(MinecraftWrapper mc) {
         HitResult hit = mc.getHitResult();
@@ -80,15 +106,20 @@ public class ClickFly {
         if (dist < 1.5) {
             if (autoLand) {
                 MoveUtility.setMotion(0, 0, 0);
-                flying = false;
-                target = null;
             }
+            abort();
+            return;
+        }
+        if (isStuck(dist)) {
+            if (autoLand) {
+                MoveUtility.setMotion(0, 0, 0);
+            }
+            abort();
             return;
         }
         net.minecraft.world.phys.Vec3 dir = diff.normalize();
         double spd = speed;
         MoveUtility.setMotion(dir.x * spd, dir.y * spd, dir.z * spd);
-        NetworkUtility.sendMoveRelative(pos.x + dir.x * spd, pos.y + dir.y * spd, pos.z + dir.z * spd, false, p.horizontalCollision);
     }
     private void tpStep(MinecraftWrapper mc) {
         var p = mc.getPlayer();
@@ -96,18 +127,17 @@ public class ClickFly {
         net.minecraft.world.phys.Vec3 diff = target.subtract(pos);
         double dist = diff.length();
         if (dist < 1.5) {
-            flying = false;
-            target = null;
+            abort();
+            return;
+        }
+        if (isStuck(dist)) {
+            abort();
             return;
         }
         net.minecraft.world.phys.Vec3 dir = diff.normalize();
         double spd = speed;
         double step = Math.min(spd, dist);
         net.minecraft.world.phys.Vec3 next = pos.add(dir.x * step, dir.y * step, dir.z * step);
-        NetworkUtility.sendMoveRelative(next.x, next.y, next.z, true, p.horizontalCollision);
         p.setPos(next.x, next.y, next.z);
     }
-
-
-
 }

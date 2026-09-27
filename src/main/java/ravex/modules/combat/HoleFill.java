@@ -3,6 +3,7 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.network.chat.Component;
 import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.client.ClientAlertUtility;
 
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
@@ -86,7 +87,7 @@ public class HoleFill {
         if (holes.size() > max) holes = holes.subList(0, max);
         holePositions.clear();
         holePositions.addAll(holes);
-        sendMsg(mc, "Found " + holes.size() + " hole(s)");
+        sendMsg(mc, ravex.utility.misc.LanguageUtility.t("holefill_found", holes.size()));
         state = State.PLACING;
     }
     private void searchNative(MinecraftWrapper mc, double range) {
@@ -154,7 +155,7 @@ public class HoleFill {
         if (now - lastActionTime < (long) delay) return;
         lastActionTime = now;
         if (holeIndex >= holes.size()) {
-            sendMsg(mc, "Filled " + totalPlaced + " block(s)");
+            sendMsg(mc, ravex.utility.misc.LanguageUtility.t("holefill_filled", totalPlaced));
             state = State.DONE;
             return;
         }
@@ -165,7 +166,7 @@ public class HoleFill {
         }
         int slot = findBlockSlot(mc);
         if (slot == -1) {
-            sendMsg(mc, "Not enough blocks, disabling");
+            sendMsg(mc, ravex.utility.misc.LanguageUtility.t("holefill_notenough"));
             Modules.setEnabled(HoleFill.class, false);
             return;
         }
@@ -188,9 +189,7 @@ public class HoleFill {
         return -1;
     }
     private void sendMsg(MinecraftWrapper mc, String msg) {
-        if (mc.getPlayer() != null) {
-            mc.getPlayer().displayClientMessage(Component.literal("§8[§5HoleFill§8] §7" + msg), false);
-        }
+        ClientAlertUtility.alert("§8[§5HoleFill§8] §7" + msg);
     }
     private static native int[] nativeFindHoles(
         double px, double py, double pz, double range, int maxResults);

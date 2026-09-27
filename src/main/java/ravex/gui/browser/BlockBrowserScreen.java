@@ -188,7 +188,7 @@ public class BlockBrowserScreen extends Screen {
 
         Render2DUtility.drawRound(g, gx, gy, gw, gh, 6, 0xFF06060A);
 
-        g.enableScissor(gx, gy, gx + gw, gy + gh);
+        Render2DUtility.pushScissor(g, gx, gy, gw, gh);
 
         hoveredStack = ItemStack.EMPTY;
         int sr = (int) scrollAnim;
@@ -236,7 +236,7 @@ public class BlockBrowserScreen extends Screen {
         }
         SearchBrowserScreen.setAtlasFilter(FilterMode.NEAREST);
 
-        g.disableScissor();
+        Render2DUtility.popScissor(g);
 
         if (maxScroll > 0) {
             float ratio = (float) cell * rows / gh;

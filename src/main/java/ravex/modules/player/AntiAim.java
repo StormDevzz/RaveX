@@ -30,6 +30,7 @@ public class AntiAim {
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private float spinYaw = 0;
     private long ticks = 0;
+    private boolean visualActive = false;
 
     public static float getSilentYaw() {
         return silentRotation.yaw;
@@ -84,9 +85,26 @@ public class AntiAim {
 
         if (silent) {
             silentRotation.set(targetYaw, targetPitch);
+            player.yBodyRot = targetYaw;
+            player.yHeadRot = targetYaw;
+            visualActive = true;
         } else {
+            if (visualActive) {
+                player.yBodyRot = player.getYRot();
+                player.yHeadRot = player.getYRot();
+                visualActive = false;
+            }
             player.setYRot(targetYaw);
             player.setXRot(targetPitch);
         }
+    }
+
+    public void onDisable() {
+        var player = MinecraftWrapper.getWrapper().getPlayer();
+        if (player != null && visualActive) {
+            player.yBodyRot = player.getYRot();
+            player.yHeadRot = player.getYRot();
+        }
+        visualActive = false;
     }
 }

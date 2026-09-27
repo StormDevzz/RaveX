@@ -15,8 +15,8 @@ import ravex.modules.Modules;
 public class Handshake {
     @Parameter(name = "Mode", modes = {"Basic", "Forge", "Lunar", "Custom"})
     public String mode = "Basic";
-    @Parameter(name = "Suffix")
-    public String hostSuffix = "\u0000LUNAR\u0000";
+    @Parameter(name = "Suffix", visible = "mode=Custom")
+    public String hostSuffix = "ravex149";
     @Parameter(name = "Protocol", min = 47.0, max = 1000.0, step = 1.0)
     public double protocol = 767.0;
 

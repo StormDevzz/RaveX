@@ -9,7 +9,7 @@ import ravex.modules.Modules;
 
 @Module(name = "SwingAnimation", category = "Render")
 public class SwingAnimation {
-    @Parameter(name = "Mode", modes = {"Default", "Swipe", "Akrien", "Rich"})
+    @Parameter(name = "Mode", modes = {"Default", "Swipe", "Akrien", "Rich", "WexSide"})
     public String mode = "Akrien";
     @Parameter(name = "Speed", min = 0.1, max = 5.0, step = 0.1)
     public double speed = 1.0;
@@ -26,7 +26,7 @@ public class SwingAnimation {
             poseStack.translate(g * -0.1F, g * 0.28F, g * 0.2F);
             poseStack.mulPose(Axis.XP.rotationDegrees(g * -85.0F));
         } else {
-            // idle — обычная позиция
+            // idle - обычная позиция
             poseStack.translate(0.56F, -0.52F + equipProgress * -0.6F, -0.72F);
         }
     }
@@ -49,6 +49,15 @@ public class SwingAnimation {
         poseStack.mulPose(Axis.YP.rotationDegrees(30f));
         poseStack.mulPose(Axis.ZP.rotationDegrees(g * -20f));
         poseStack.mulPose(Axis.XP.rotationDegrees(g * -75f));
+    }
+
+    public void applyWexSide(PoseStack poseStack, float swingProgress) {
+        float anim = Mth.sin(swingProgress * (float) Math.PI);
+        poseStack.translate(0.56F, -0.52F, -0.72F);
+        poseStack.translate(0.2F, 0.2F, -0.15F * anim - 0.15F);
+        poseStack.mulPose(Axis.XP.rotationDegrees(-120f));
+        poseStack.mulPose(Axis.YP.rotationDegrees(-anim * 90f + 30f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(90f));
     }
 
     public void applyDefault(PoseStack poseStack, float swingProgress, float equipProgress, boolean rightHand) {

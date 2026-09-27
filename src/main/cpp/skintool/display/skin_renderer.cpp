@@ -56,10 +56,8 @@ void SkinRenderer::initializeGL() {
 
     mCam = new Camera;
     mProg = makeProgram();
-    if (!mProg) return;
 
     mModel = new SkinModel;
-    if (!mModel->build()) return;
 
     mTex = new SkinTexture;
     mTex->load(mSkinPath);

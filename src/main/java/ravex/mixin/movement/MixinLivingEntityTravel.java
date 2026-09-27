@@ -39,6 +39,8 @@ public class MixinLivingEntityTravel {
 
         if ((Object) this != mc.player) return;
         if (!Modules.enabled(KillAura.class) || !KillAura.hasSilentRotations()) return;
+        KillAura ka = Modules.get(KillAura.class);
+        if (ka == null || !ka.freeLook) return;
 
         LocalPlayer player = mc.player;
         ravexTravelSavedYaw   = player.getYRot();

@@ -8,9 +8,9 @@ import ravex.RaveX;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@Module(name = "ElytraFly", category = "Movement")
+@Module(name = "Elytra++", category = "Movement")
 public class ElytraFly {
-    @Parameter(name = "Mode", modes = {"Vanilla", "Control", "NCP", "Fireworks"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "Control", "NCP", "Fireworks", "OldGrim"})
     public String mode = "Vanilla";
     @Parameter(name = "H-Speed", min = 0.1, max = 5.0, step = 0.1)
     public double hSpeed = 1.5;
@@ -18,10 +18,12 @@ public class ElytraFly {
     public double vSpeed = 1.0;
     @Parameter(name = "Glide", min = 0.001, max = 0.1, step = 0.001)
     public double glide = 0.005;
-    @Parameter(name = "FireworkDelay", min = 1.0, max = 30.0, step = 1.0, visible = "mode=Fireworks")
+    @Parameter(name = "FireworkDelay", min = 1.0, max = 30.0, step = 1.0)
     public double fireworkDelay = 10.0;
-    @Parameter(name = "FireworkBoost", min = 0.5, max = 5.0, step = 0.1, visible = "mode=Fireworks")
-    public double fireworkBoost = 1.0;
+    @Parameter(name = "GrimRotate")
+    public boolean grimRotate = true;
+    @Parameter(name = "GrimExtender")
+    public boolean grimExtender = true;
     @Parameter(name = "AutoTakeoff")
     public boolean autoTakeoff = true;
     @Parameter(name = "SpeedControl")
@@ -32,8 +34,6 @@ public class ElytraFly {
     public double acceleration = 0.15;
     @Parameter(name = "Timer", min = 0.5, max = 3.0, step = 0.1)
     public double timer = 1.0;
-    @Parameter(name = "FallBypass")
-    public boolean fallBypass = true;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_elytraplusplus");
     public static native void nativeCalculateVelocity(
         String mode, double hSpeed, double vSpeed, double glide,
@@ -46,6 +46,11 @@ public class ElytraFly {
     );
     private int fwTimer = 0;
     private double accelMul = 0.0;
+    private double grimAccel = 0.0;
+    private double grimAccelY = 0.0;
+    private net.minecraft.world.phys.Vec3 grimZone = null;
+    private long grimStartTime = 0L;
+    private int elytraTicks = 0;
     public net.minecraft.world.phys.Vec3 applyTimerAndAccel(net.minecraft.world.phys.Vec3 vel) {
         double t = timer;
         if (t != 1.0) {
@@ -143,6 +148,11 @@ public class ElytraFly {
                 velY = jump ? vSpeed : (sneak ? -vSpeed : -glide);
                 velZ = (Math.cos(rad) * fwd + Math.sin(rad) * str) * hSpeed;
             }
+            case "OldGrim" -> {
+                velX = (-Math.sin(rad) * fwd + Math.cos(rad) * str) * hSpeed;
+                velY = jump ? vSpeed : (sneak ? -vSpeed : -glide);
+                velZ = (Math.cos(rad) * fwd + Math.sin(rad) * str) * hSpeed;
+            }
             default -> {
                 velX = 0; velY = 0; velZ = 0;
             }
@@ -188,6 +198,9 @@ public class ElytraFly {
             case "Fireworks" -> {
                 return new double[]{mx * 0.99, my * 0.99, mz * 0.99};
             }
+            case "OldGrim" -> {
+                return new double[]{mx * 0.99, my * 0.99, mz * 0.99};
+            }
         }
         return new double[]{mx, my, mz};
     }
@@ -195,9 +208,22 @@ public class ElytraFly {
         RaveX.LOGGER.info("[Elytra++] Enabled with mode: {}", mode);
         fwTimer = 0;
         accelMul = 0.0;
+        grimAccel = 0.0;
+        grimAccelY = 0.0;
+        elytraTicks = 0;
+        grimStartTime = System.currentTimeMillis();
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() != null)
+            grimZone = mc.getPlayer().position();
+        else
+            grimZone = null;
     }
     public void onDisable() {
         fwTimer = 0;
+        grimAccel = 0.0;
+        grimAccelY = 0.0;
+        elytraTicks = 0;
+        grimZone = null;
     }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
@@ -208,7 +234,11 @@ public class ElytraFly {
                 mc.getPlayer().jumpFromGround();
             }
         }
-        if (!mc.getPlayer().isFallFlying()) return;
+        if (!mc.getPlayer().isFallFlying()) {
+            elytraTicks = 0;
+            return;
+        }
+        elytraTicks++;
         double yaw = mc.getPlayer().getYRot();
         double pitch = mc.getPlayer().getXRot();
         boolean space = mc.getOptions().keyJump.isDown();
@@ -218,6 +248,10 @@ public class ElytraFly {
         if (mc.getOptions().keyDown.isDown()) forward--;
         if (mc.getOptions().keyLeft.isDown()) strafe++;
         if (mc.getOptions().keyRight.isDown()) strafe--;
+        if ("OldGrim".equals(mode)) {
+            tickOldGrim(mc, space, shift, forward, strafe, yaw, pitch);
+            return;
+        }
         if (speedControl) {
             String curMode = mode;
             if (curMode.equals("Control") || curMode.equals("Fireworks")) {
@@ -255,6 +289,68 @@ public class ElytraFly {
         }
     }
 
+
+    private void tickOldGrim(MinecraftWrapper mc, boolean space, boolean shift, float forward, float strafe, double yaw, double pitch) {
+        var player = mc.getPlayer();
+        if (player == null) return;
+        if (player.horizontalCollision || player.verticalCollision) {
+            grimAccel = 0.0;
+            grimAccelY = 0.0;
+        }
+        if (grimRotate && (forward != 0 || strafe != 0)) {
+            double offset = 0.0;
+            if (forward > 0) {
+                offset = -strafe * 45.0;
+            } else if (forward < 0) {
+                offset = 180.0 + strafe * 45.0;
+            } else {
+                offset = -strafe * 90.0;
+            }
+            player.setYRot((float) (yaw + offset));
+            yaw = player.getYRot();
+        }
+        if (elytraTicks < 4) {
+            player.setXRot(-45f);
+        } else if (space && forward == 0 && strafe == 0) {
+            player.setXRot(-90f);
+        } else if (space) {
+            player.setXRot(-45f);
+        } else if (shift) {
+            player.setXRot(45f);
+        }
+        double ramp = Math.min((grimAccel += 9.0) / 100.0, 1.0);
+        double rampY = Math.min((grimAccelY += 9.0) / 100.0, 1.0);
+        if (!MoveUtility.isMoving() && !space && !shift)
+            grimAccel = 0.0;
+        double rad = Math.toRadians(player.getYRot());
+        double targetX = (-Math.sin(rad) * forward + Math.cos(rad) * strafe) * hSpeed * ramp;
+        double targetZ = (Math.cos(rad) * forward + Math.sin(rad) * strafe) * hSpeed * ramp;
+        double targetY;
+        if (space) {
+            targetY = vSpeed * rampY;
+        } else if (shift) {
+            targetY = -vSpeed * rampY;
+        } else {
+            targetY = (player.tickCount % 2 == 0 ? 0.08 : -0.08);
+        }
+        net.minecraft.world.phys.Vec3 vel = new net.minecraft.world.phys.Vec3(targetX, targetY, targetZ);
+        vel = applyTimerAndAccel(vel);
+        MoveUtility.setMotion(vel);
+        player.move(MoverType.SELF, vel);
+        fwTimer++;
+        if (fwTimer >= (int) fireworkDelay) {
+            if (grimExtender && grimZone != null && System.currentTimeMillis() - grimStartTime < 50000L) {
+                double dx = player.getX() - grimZone.x;
+                double dz = player.getZ() - grimZone.z;
+                if (dx * dx + dz * dz < 7000.0)
+                    return;
+            }
+            useFirework(mc);
+            fwTimer = 0;
+            grimZone = player.position();
+            grimStartTime = System.currentTimeMillis();
+        }
+    }
 
     private void useFirework(MinecraftWrapper mc) {
         int slot = -1;

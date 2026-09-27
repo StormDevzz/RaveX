@@ -12,6 +12,7 @@ import java.util.Optional;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.network.NetworkUtility;
+import ravex.utility.client.ClientAlertUtility;
 import ravex.modules.Modules;
 @Module(name = "BookHelper", category = "Misc")
 public class BookHelper {
@@ -44,10 +45,7 @@ public class BookHelper {
         int slot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         var stack = mc.getPlayer().getMainHandItem();
         if (stack.isEmpty()) {
-            mc.getPlayer().displayClientMessage(
-                Component.literal("§7[§cRaveX§7] §eHold a book in main hand"),
-                false
-            );
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_hold"));
             return;
         }
         String title = newTitle;
@@ -69,23 +67,13 @@ public class BookHelper {
                     content.resolved()
                 );
                 InventoryUtility.setWrittenBookContent(stack, modified);
-                mc.getPlayer().displayClientMessage(
-                    Component.literal("§7[§cRaveX§7] §aBook updated: title=§f" + titleFilterable.raw()
-                        + " §aauthor=§f" + newAuthorStr),
-                    false
-                );
+                ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_updated", titleFilterable.raw(), newAuthorStr));
             } else {
-                mc.getPlayer().displayClientMessage(
-                    Component.literal("§7[§cRaveX§7] §eCould not read book data"),
-                    false
-                );
+                ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_noread"));
             }
         } else if (InventoryUtility.isWritableBook(stack)) {
             if (title.isEmpty()) {
-                mc.getPlayer().displayClientMessage(
-                    Component.literal("§7[§cRaveX§7] §eProvide a title to sign the book"),
-                    false
-                );
+                ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_notitle"));
                 return;
             }
             List<String> existingPages = new ArrayList<>();
@@ -97,15 +85,9 @@ public class BookHelper {
             }
             if (title.length() > 32) title = title.substring(0, 32);
             NetworkUtility.sendPacket(new ServerboundEditBookPacket(slot, existingPages, Optional.of(title)));
-            mc.getPlayer().displayClientMessage(
-                Component.literal("§7[§cRaveX§7] §aBook signed with title=§f" + title),
-                false
-            );
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_signed", title));
         } else {
-            mc.getPlayer().displayClientMessage(
-                Component.literal("§7[§cRaveX§7] §eHold a writable or written book in main hand"),
-                false
-            );
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_hold_writable"));
         }
     }
 
@@ -113,10 +95,7 @@ public class BookHelper {
         int slot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         var stack = mc.getPlayer().getMainHandItem();
         if (!InventoryUtility.isWritableBook(stack)) {
-            mc.getPlayer().displayClientMessage(
-                Component.literal("§7[§cRaveX§7] §eHold a writable book in main hand"),
-                false
-            );
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_hold_empty"));
             return;
         }
         String pattern = fillPattern;
@@ -137,10 +116,7 @@ public class BookHelper {
             if (title.length() > 32) title = title.substring(0, 32);
             NetworkUtility.sendPacket(new ServerboundEditBookPacket(slot, pages, Optional.of(title)));
         }
-        mc.getPlayer().displayClientMessage(
-            Component.literal("§7[§cRaveX§7] §aBook filled with §f" + count + " §apages"),
-            false
-        );
+        ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_filled", count));
     }
 
 

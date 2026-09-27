@@ -32,6 +32,13 @@ public abstract class MixinNoSlowDown {
             cir.setReturnValue(false);
             return;
         }
+        /*
+        if ("ReallyWorld".equals(mode)) {
+            if (ns.isRWGrace() || ns.isRWResetPhase()) return;
+            cir.setReturnValue(false);
+            return;
+        }
+        */
         cir.setReturnValue(false);
     }
 
@@ -51,6 +58,12 @@ public abstract class MixinNoSlowDown {
         }
         if ("GrimAlternative".equals(mode)) return ns.isSlowPhase();
         if ("GrimV3".equals(mode)) return false;
+        /*
+        if ("ReallyWorld".equals(mode)) {
+            if (ns.isRWGrace() || ns.isRWResetPhase()) return true;
+            return false;
+        }
+        */
         return false;
     }
 

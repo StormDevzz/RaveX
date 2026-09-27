@@ -1,11 +1,11 @@
 package ravex.utility.nativelib;
 
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -13,8 +13,10 @@ public class NativeLoader {
     private static boolean loaded = false;
     private static boolean nativeAvailable = false;
     private static boolean jawtLoaded = false;
+    private static boolean summaryPrinted = false;
 
-    private static final String REMOTE_BASE = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/assets/ravex/natives/";
+    private static final Map<String, String> loadSuccesses = new ConcurrentHashMap<>();
+    private static final Map<String, String> loadFailures = new ConcurrentHashMap<>();
 
     private static final Map<String, String> NATIVE_MANIFEST = Map.ofEntries(
         Map.entry("libravex_addon.so", "1b04210a926b218f81f302137e58d5b3178f55a0f1902976a01e16ec3b6968ae"),
@@ -87,9 +89,11 @@ public class NativeLoader {
         Map.entry("ravex_fakepearl.dll", "f6014784e32e1705c5777d49793cf881aa1271098d76ffb768adcab6c867b036"),
         Map.entry("ravex_fastexp.dll", "84837a6a54c305efd356c23ff859dd957217518ff81f8b4239caffb8a9131658"),
         Map.entry("ravex_fileprot.dll", "1beee2476c04e13397b06c09f62a1f5789c1a15d07162537b66e8f7c34c56546"),
+        Map.entry("ravex_font.dll", "8051aabdd2562d553def30903608681491b184e6d1cbe5b7bd9dfdc391b6ffbc"),
         Map.entry("ravex_github_tools.dll", "1d2071c34b756ec15276dd5ec84863eeeba85f66cba689368ddf67e1728c4549"),
         Map.entry("ravex_holefill.dll", "67a00256558828bf3608dc9316d46a2eecf816815a8b8aa2f3835d2d0f38142d"),
         Map.entry("ravex_jni.dll", "1ac6230fc6a2657f8f6986981f5f51fd4d45eed0a34abb5044b795d5aa279395"),
+        Map.entry("ravex_killaura.dll", "b1356c89f03a7ec79fb06179e750722b49aee7216873bd1ee8450a2bb4317fe8"),
         Map.entry("ravex_loader.dll", "84f9b122fa98ab81bcb2cc498dc4f3e29f56d7b683108dd3f6f1af9ecb2fd092"),
         Map.entry("ravex_manager.dll", "422a5feddd4bda16c960e00ad35b5ca5721c44afd8d8d6709b9138ad4062dd88"),
         Map.entry("ravex_mediaquery.dll", "9d2a3f7f87984df1d2e6250536d16d97302b15cbb5a9265b10c79b868e6b9835"),
@@ -192,41 +196,6 @@ public class NativeLoader {
         return null;
     }
 
-    private static boolean downloadFromGitHub(String fileName, File dest) {
-        String urlStr = REMOTE_BASE + fileName;
-        String expectedHash = NATIVE_MANIFEST.get(fileName);
-        if (expectedHash == null) return false;
-
-        try {
-            HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(30000);
-            int responseCode = conn.getResponseCode();
-            if (responseCode != 200) return false;
-
-            File destDir = dest.getParentFile();
-            if (destDir != null && !destDir.exists()) destDir.mkdirs();
-
-            try (InputStream in = conn.getInputStream();
-                 FileOutputStream out = new FileOutputStream(dest)) {
-                byte[] buf = new byte[8192];
-                int read;
-                while ((read = in.read(buf)) != -1) out.write(buf, 0, read);
-            }
-
-            boolean verified = verifySha256(dest, expectedHash);
-            if (!verified) {
-                dest.delete();
-                return false;
-            }
-            dest.setExecutable(true);
-            return true;
-        } catch (Throwable ignored) {
-            if (dest.exists()) dest.delete();
-            return false;
-        }
-    }
-
     private static boolean writeResourceToFile(String resourcePath, File outFile) {
         try (InputStream in = NativeLoader.class.getResourceAsStream(resourcePath)) {
             if (in == null) return false;
@@ -286,14 +255,17 @@ public class NativeLoader {
             if (f != null) {
                 try {
                     System.load(f.getAbsolutePath());
+                    loadSuccesses.put(dep, "dependency");
                 } catch (Throwable t) {
-                    System.err.println("[RaveX] Failed to pre-load " + dep + ": " + t.getMessage());
+                    loadFailures.put(dep, "load error: " + t.getMessage());
                 }
+            } else {
+                loadFailures.put(dep, "file not found in JAR");
             }
         }
     }
 
-    private static final Set<String> BROKEN_LIBS = Set.of("libravex_autocrystal.so", "ravex_autocrystal.dll");
+    private static final Set<String> BROKEN_LIBS = Set.of();
 
     private static File obtainLibrary(String name) {
         boolean isWin = isWindows();
@@ -308,9 +280,6 @@ public class NativeLoader {
         File extracted = extractFromJar(cacheDir, fileName);
         if (extracted != null) return extracted;
 
-        File dest = new File(cacheDir, fileName);
-        if (downloadFromGitHub(fileName, dest)) return dest;
-
         return null;
     }
 
@@ -319,13 +288,16 @@ public class NativeLoader {
         loaded = true;
 
         if (isNativeBlockedByGlibc()) {
-            System.err.println("[RaveX] Glibc 2.43+ detected — native libs disabled to avoid dlopen crash. If you see this, please report it on our Discord: https://discord.gg/n9HPbgN7S");
+            loadFailures.put("ravex_jni", "glibc 2.43+ detected, dlopen unsafe");
+            System.err.println("[RaveX] Glibc 2.43+ detected - native libs disabled to avoid dlopen crash. If you see this, please report it on our Discord: https://discord.gg/n9HPbgN7S");
             return;
         }
 
         try {
             System.loadLibrary("ravex_jni");
             nativeAvailable = true;
+            loadSuccesses.put("ravex_jni", "system path");
+            NativeLibraryUtility.enableLoading();
             return;
         } catch (UnsatisfiedLinkError ignored) {}
 
@@ -337,23 +309,32 @@ public class NativeLoader {
             if (jniFile != null) {
                 System.load(jniFile.getAbsolutePath());
                 nativeAvailable = true;
+                loadSuccesses.put("ravex_jni", "extracted");
+                NativeLibraryUtility.enableLoading();
                 return;
             }
 
-            System.err.println("[RaveX] JNI native library could not be loaded/downloaded: " + getLibName() + ". If you see this, please report it on our Discord: https://discord.gg/n9HPbgN7S");
+            loadFailures.put("ravex_jni", "could not be extracted from JAR");
+            System.err.println("[RaveX] JNI native library could not be loaded: " + getLibName() + ". If you see this, please report it on our Discord: https://discord.gg/n9HPbgN7S");
         } catch (Throwable ex) {
+            loadFailures.put("ravex_jni", ex.getMessage());
             System.err.println("[RaveX] WARNING: Failed to dynamically load native library: " + ex.getMessage() + ". If you see this, please report it on our Discord: https://discord.gg/n9HPbgN7S");
         }
     }
 
     public static synchronized boolean loadLibrary(String name) {
+        if (loadSuccesses.containsKey(name)) return true;
+        if (loadFailures.containsKey(name)) return false;
+
         try {
             System.loadLibrary(name);
+            loadSuccesses.put(name, "system path");
             return true;
         } catch (UnsatisfiedLinkError ignored) {}
 
         String libFileName = (isWindows() ? "" : "lib") + name + (isWindows() ? ".dll" : ".so");
         if (BROKEN_LIBS.contains(libFileName)) {
+            loadFailures.put(name, "disabled due to system compatibility");
             System.err.println("[RaveX] Native library " + name + " disabled due to system compatibility. If you see this, please report it on our Discord: https://discord.gg/n9HPbgN7S");
             return false;
         }
@@ -364,12 +345,17 @@ public class NativeLoader {
             if (libFile != null) {
                 try {
                     System.load(libFile.getAbsolutePath());
+                    loadSuccesses.put(name, "extracted");
                     return true;
                 } catch (UnsatisfiedLinkError e) {
+                    loadFailures.put(name, "load error: " + e.getMessage());
                     System.err.println("[RaveX] Native library " + name + " unavailable: " + e.getMessage() + ". If you see this, please report it on our Discord: https://discord.gg/n9HPbgN7S");
                 }
+            } else {
+                loadFailures.put(name, "file not found in JAR");
             }
         } catch (Throwable ex) {
+            loadFailures.put(name, ex.getMessage());
             System.err.println("[RaveX] Failed to load native library " + name + ": " + ex.getMessage() + ". If you see this, please report it on our Discord: https://discord.gg/n9HPbgN7S");
         }
         return false;
@@ -377,5 +363,49 @@ public class NativeLoader {
 
     public static boolean isNativeAvailable() {
         return nativeAvailable;
+    }
+
+    public static int getLoadedCount() {
+        return loadSuccesses.size();
+    }
+
+    public static int getFailedCount() {
+        return loadFailures.size();
+    }
+
+    public static int getTotalCount() {
+        return loadSuccesses.size() + loadFailures.size();
+    }
+
+    public static synchronized void printLoadSummary() {
+        if (summaryPrinted) return;
+        summaryPrinted = true;
+
+        int ok = loadSuccesses.size();
+        int fail = loadFailures.size();
+        int total = ok + fail;
+        String os = System.getProperty("os.name", "unknown");
+
+        ravex.RaveX.LOGGER.info("[Natives] OS: {} | JNI available: {} | Libraries loaded: {}/{}", os, nativeAvailable, ok, total);
+
+        if (!loadSuccesses.isEmpty()) {
+            for (Map.Entry<String, String> e : loadSuccesses.entrySet()) {
+                ravex.RaveX.LOGGER.info("[Natives]   OK: {} ({})", e.getKey(), e.getValue());
+            }
+        }
+
+        if (!loadFailures.isEmpty()) {
+            for (Map.Entry<String, String> e : loadFailures.entrySet()) {
+                ravex.RaveX.LOGGER.warn("[Natives]   FAIL: {} - {}", e.getKey(), e.getValue());
+            }
+        }
+
+        if (total == 0) {
+            ravex.RaveX.LOGGER.warn("[Natives] No native libraries were loaded. Native features will be unavailable.");
+        } else if (fail == 0) {
+            ravex.RaveX.LOGGER.info("[Natives] All {} native library(ies) loaded successfully.", ok);
+        } else {
+            ravex.RaveX.LOGGER.warn("[Natives] {}/{} native library(ies) failed to load. Some features may be unavailable.", fail, total);
+        }
     }
 }

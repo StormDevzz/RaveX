@@ -37,12 +37,17 @@ public class LayoutManager {
             double cy = height / 2.0;
             JsonObject root = new JsonObject();
             for (Map.Entry<String, CategoryPanel> e : panels.entrySet()) {
+                CategoryPanel p = e.getValue();
                 JsonObject pos = new JsonObject();
-                double rx = (e.getValue().getX() - cx) / width + 0.5;
-                double ry = (e.getValue().getY() - cy) / height + 0.5;
+                double rx = (p.getX() - cx) / width + 0.5;
+                double ry = (p.getY() - cy) / height + 0.5;
                 pos.addProperty("rx", rx);
                 pos.addProperty("ry", ry);
+                pos.addProperty("x", p.getX());
+                pos.addProperty("y", p.getY());
+                pos.addProperty("custom", p.isCustomPosition());
                 root.add(e.getKey(), pos);
+                root.add(e.getKey().toLowerCase(), pos);
             }
             try (FileWriter w = new FileWriter(layoutFile)) {
                 gson.toJson(root, w);
@@ -53,7 +58,6 @@ public class LayoutManager {
     }
 
     public void save(Map<String, CategoryPanel> panels) {
-
         int sw = MinecraftWrapper.getWrapper().getWindow().getGuiScaledWidth();
         int sh = MinecraftWrapper.getWrapper().getWindow().getGuiScaledHeight();
         if (sw <= 0) sw = 960;
@@ -76,18 +80,22 @@ public class LayoutManager {
             JsonObject root = JsonParser.parseReader(r).getAsJsonObject();
             for (String cat : ALL_CATEGORIES) {
                 String key = cat.toLowerCase();
-                if (root.has(key)) {
-                    JsonObject pos = root.getAsJsonObject(key);
-                    double rx = 0.0;
-                    double ry = 0.0;
-                    if (pos.has("rx") && pos.has("ry")) {
-                        rx = pos.get("rx").getAsDouble();
-                        ry = pos.get("ry").getAsDouble();
-                    } else if (pos.has("x") && pos.has("y")) {
-                        rx = pos.get("x").getAsDouble();
-                        ry = pos.get("y").getAsDouble();
+                JsonObject pos = root.has(cat) ? root.getAsJsonObject(cat) : (root.has(key) ? root.getAsJsonObject(key) : null);
+                if (pos != null) {
+                    if (pos.has("custom") && !pos.get("custom").getAsBoolean()) {
+                        continue;
                     }
-                    result.put(cat, new double[]{rx, ry});
+                    if (pos.has("x") && pos.has("y")) {
+                        result.put(cat, new double[]{pos.get("x").getAsDouble(), pos.get("y").getAsDouble()});
+                    } else if (pos.has("rx") && pos.has("ry")) {
+                        int sw = MinecraftWrapper.getWrapper().getWindow().getGuiScaledWidth();
+                        int sh = MinecraftWrapper.getWrapper().getWindow().getGuiScaledHeight();
+                        if (sw <= 0) sw = 960;
+                        if (sh <= 0) sh = 540;
+                        double rx = pos.get("rx").getAsDouble();
+                        double ry = pos.get("ry").getAsDouble();
+                        result.put(cat, new double[]{(rx - 0.5) * sw + sw / 2.0, (ry - 0.5) * sh + sh / 2.0});
+                    }
                 }
             }
         } catch (Exception e) {

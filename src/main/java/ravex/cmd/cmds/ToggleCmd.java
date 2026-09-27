@@ -9,10 +9,10 @@ public class ToggleCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        if (args.length < 2) { CmdReg.print("§c[RaveX] Usage: .toggle <module>"); return; }
+        if (args.length < 2) { CmdReg.print("§9[§bRaveX§9] §cUsage: .toggle <module>"); return; }
         Module m = ModuleManager.INSTANCE.getByName(args[1]);
-        if (m == null) { CmdReg.print("§c[RaveX] Module not found: §e" + args[1]); return; }
+        if (m == null) { CmdReg.print("§9[§bRaveX§9] §cModule not found: §e" + args[1]); return; }
         m.toggle();
-        CmdReg.print("§a[RaveX] §e" + m.getName() + " §7→ " + (m.getEnabled() ? "§aON" : "§cOFF"));
+        CmdReg.print("§9[§bRaveX§9] §e" + m.getName() + " §7→ " + (m.getEnabled() ? "§aON" : "§cOFF"));
     }
 }

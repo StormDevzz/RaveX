@@ -6,22 +6,16 @@ import ravex.modules.Modules;
 
 @Module(name = "ShiftInterp", category = "Render")
 public class ShiftInterp {
-    @Parameter(name = "Target", modes = {"All", "Others", "Self"})
-    public String target = "All";
+    @Parameter(name = "Target", modes = {"Players", "Self"})
+    public String target = "Players";
 
     public boolean shouldCrouch(net.minecraft.world.entity.Entity entity) {
         if (!Modules.enabled(ShiftInterp.class)) return false;
         if (!(entity instanceof net.minecraft.world.entity.player.Player)) return false;
         var mc = MinecraftWrapper.getWrapper();
         boolean isSelf = (entity == mc.getPlayer());
-        String t = target;
-        if (t.equals("Self")) {
-            return isSelf;
-        } else if (t.equals("Others")) {
-            return !isSelf;
-        } else {
-            return true;
-        }
+        if (target.equals("Self")) return isSelf;
+        return true;
     }
 
 

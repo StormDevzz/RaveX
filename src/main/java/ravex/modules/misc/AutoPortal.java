@@ -7,8 +7,9 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.utility.client.ClientAlertUtility;
 import org.jetbrains.annotations.Nullable;
-@Module(name = "AutoPortal", category = "Misc")
+@Module(name = "AutoPortal", category = "World")
 public class AutoPortal {
     @Parameter(name = "Range", min = 2.0, max = 12.0, step = 0.5)
     public double range = 6.0;
@@ -150,7 +151,7 @@ public class AutoPortal {
         }
         int slot = findObsidianSlot(mc);
         if (slot == -1) {
-            sendMsg(mc, "Not enough obsidian, disabling");
+            sendMsg(mc, ravex.utility.misc.LanguageUtility.t("autoportal_obsidian"));
             Modules.setEnabled(AutoPortal.class, false);
             return;
         }
@@ -194,7 +195,7 @@ public class AutoPortal {
         }
         int slot = findObsidianSlot(mc);
         if (slot == -1) {
-            sendMsg(mc, "Not enough obsidian, disabling");
+            sendMsg(mc, ravex.utility.misc.LanguageUtility.t("autoportal_obsidian"));
             Modules.setEnabled(AutoPortal.class, false);
             return;
         }
@@ -220,7 +221,7 @@ public class AutoPortal {
             }
         }
         if (!allPlaced) {
-            sendMsg(mc, "Some frame blocks missing, skipping lighting");
+            sendMsg(mc, ravex.utility.misc.LanguageUtility.t("autoportal_frame"));
             state = State.DONE;
             return;
         }
@@ -259,9 +260,7 @@ public class AutoPortal {
         }
     }
     private void sendMsg(MinecraftWrapper mc, String msg) {
-        if (mc.getPlayer() != null) {
-            mc.getPlayer().displayClientMessage(Component.literal("§8[§5AutoPortal§8] §7" + msg), false);
-        }
+        ClientAlertUtility.alert("§8[§5AutoPortal§8] §7" + msg);
     }
     private static double[] findBestPortalPos(
         double playerX, double playerY, double playerZ,

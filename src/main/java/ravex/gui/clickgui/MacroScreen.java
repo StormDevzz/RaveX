@@ -38,7 +38,7 @@ public class MacroScreen extends Screen {
     private static final Type[] ACTION_TYPE_VALUES = {Type.TOGGLE_MODULE, Type.SEND_CHAT, Type.EXECUTE_COMMAND, Type.DELAY};
 
     public MacroScreen(Screen parent) {
-        super(Component.literal("Macro Editor"));
+        super(Component.literal(ravex.utility.misc.LanguageUtility.t("macro_title")));
         this.parent = parent;
     }
 
@@ -53,15 +53,14 @@ public class MacroScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        graphics.fillGradient(0, 0, this.width, this.height, 0xDD0A0A14, 0xDD10101F);
+        SubScreenStyle.background(graphics, this.width, this.height);
 
         int activeColor = ColorUtility.getActiveColor();
 
-        FontRenderUtility.drawString(graphics, "Macro Editor", 20, 12, 0xFFFFFFFF, true);
-        FontRenderUtility.drawString(graphics, "Add macros with keybinds that execute multiple actions", 20, 24, 0xFF8F8FA0, false);
+        SubScreenStyle.header(graphics, this.width, ravex.utility.misc.LanguageUtility.t("macro_title"), ravex.utility.misc.LanguageUtility.t("macro_subtitle"), activeColor);
 
         if (statusTimer > 0 && !statusMessage.isEmpty()) {
-            FontRenderUtility.drawString(graphics, statusMessage, 20, 38, 0xFFAAFFAA, false);
+            SubScreenStyle.statusPill(graphics, this.width, statusMessage, activeColor);
         }
 
         int listX = 20;
@@ -69,27 +68,26 @@ public class MacroScreen extends Screen {
         int listW = 250;
         int itemH = 20;
 
-        graphics.fill(listX, listY, listX + listW, this.height - 50, 0x44000000);
+        SubScreenStyle.card(graphics, listX, listY, listW, this.height - 50 - listY, activeColor);
 
-        int y = listY + 4 - scrollOffset;
+        int y = listY + 8 - scrollOffset;
         for (int i = 0; i < macros.size(); i++) {
             Macro m = macros.get(i);
             boolean hovered = mouseX >= listX && mouseX <= listX + listW && mouseY >= y && mouseY <= y + itemH;
-            int bg = i == selectedIndex ? 0xFF202035 : (hovered ? 0xFF181828 : 0xFF0D0D14);
-            graphics.fill(listX + 2, y, listX + listW - 2, y + itemH, bg);
+            SubScreenStyle.row(graphics, listX + 4, y, listW - 8, itemH - 2, i == selectedIndex, hovered, activeColor);
 
             String keyName = m.getKeyBind() > 0 ? " [" + getKeyName(m.getKeyBind()) + "]" : "";
-            FontRenderUtility.drawString(graphics, m.getName() + keyName, listX + 6, y + 5, 0xFFD0D0E0, false);
+            FontRenderUtility.drawString(graphics, m.getName() + keyName, listX + 10, y + 5, 0xFFD0D0E0, false);
 
             int actionCount = m.getActions().size();
             String countStr = actionCount + " action" + (actionCount != 1 ? "s" : "");
             int cw = FontRenderUtility.getStringWidth(countStr);
-            FontRenderUtility.drawString(graphics, countStr, listX + listW - cw - 8, y + 5, 0xFF707080, false);
+            FontRenderUtility.drawString(graphics, countStr, listX + listW - cw - 12, y + 5, 0xFF707080, false);
 
             y += itemH;
         }
         if (macros.isEmpty()) {
-            FontRenderUtility.drawString(graphics, "No macros yet. Click \"Create\" to add one.", listX + 6, listY + 8, 0xFF505060, false);
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("macro_empty"), listX + 10, listY + 8, 0xFF505060, false);
         }
 
         if (creatingNew) {
@@ -104,23 +102,24 @@ public class MacroScreen extends Screen {
     }
 
     private void renderCreateDialog(GuiGraphics graphics, int mouseX, int mouseY) {
+        int activeColor = ColorUtility.getActiveColor();
         int dlgX = this.width / 2 - 100;
         int dlgY = this.height / 2 - 60;
         int dlgW = 200;
         int dlgH = 120;
 
-        graphics.fill(0, 0, this.width, this.height, 0x88000000);
-        graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + dlgH, 0xF510101A);
-        graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + 1, ColorUtility.getActiveColor());
+        SubScreenStyle.modalBackdrop(graphics, this.width, this.height);
+        SubScreenStyle.modal(graphics, dlgX, dlgY, dlgW, dlgH, activeColor);
 
-        FontRenderUtility.drawString(graphics, "New Macro", dlgX + 10, dlgY + 10, 0xFFFFFFFF, true);
-        FontRenderUtility.drawString(graphics, "Name:", dlgX + 10, dlgY + 32, 0xFF9E9EB0, false);
+        FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("macro_new"), dlgX + 10, dlgY + 10, 0xFFFFFFFF, true);
+        SubScreenStyle.titleAccent(graphics, dlgX + 10, dlgY + 22, ravex.utility.misc.LanguageUtility.t("macro_new"), activeColor);
+        FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("macro_name"), dlgX + 10, dlgY + 32, 0xFF9E9EB0, false);
 
         int inputX = dlgX + 10;
         int inputY = dlgY + 46;
         int inputW = dlgW - 20;
         int inputH = 16;
-        graphics.fill(inputX, inputY, inputX + inputW, inputY + inputH, 0xFF1A1A28);
+        SubScreenStyle.input(graphics, inputX, inputY, inputW, inputH, activeColor);
         FontRenderUtility.drawString(graphics, newName.isEmpty() ? "MyMacro" : newName, inputX + 4, inputY + 3, newName.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
 
         int btnY = dlgY + 70;
@@ -128,62 +127,70 @@ public class MacroScreen extends Screen {
         int btnH = 14;
 
         boolean okHovered = mouseX >= dlgX + 20 && mouseX <= dlgX + 20 + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
-        graphics.fill(dlgX + 20, btnY, dlgX + 20 + btnW, btnY + btnH, okHovered ? ColorUtility.getActiveColor() : 0xFF202035);
-        FontRenderUtility.drawString(graphics, "Create", dlgX + 20 + (btnW - FontRenderUtility.getStringWidth("Create")) / 2, btnY + 3, 0xFFFFFFFF, false);
+        SubScreenStyle.button(graphics, dlgX + 20, btnY, btnW, btnH, okHovered, true, activeColor);
+        String crv = ravex.utility.misc.LanguageUtility.t("macro_create");
+        FontRenderUtility.drawString(graphics, crv, dlgX + 20 + (btnW - FontRenderUtility.getStringWidth(crv)) / 2, btnY + 3, 0xFFFFFFFF, false);
 
         boolean cancelHovered = mouseX >= dlgX + dlgW - 20 - btnW && mouseX <= dlgX + dlgW - 20 && mouseY >= btnY && mouseY <= btnY + btnH;
-        graphics.fill(dlgX + dlgW - 20 - btnW, btnY, dlgX + dlgW - 20, btnY + btnH, cancelHovered ? 0xFF303035 : 0xFF14141E);
-        FontRenderUtility.drawString(graphics, "Cancel", dlgX + dlgW - 20 - btnW + (btnW - FontRenderUtility.getStringWidth("Cancel")) / 2, btnY + 3, 0xFFD0D0E0, false);
+        SubScreenStyle.button(graphics, dlgX + dlgW - 20 - btnW, btnY, btnW, btnH, cancelHovered, false, activeColor);
+        String ccv = ravex.utility.misc.LanguageUtility.t("cfg_cancel");
+        FontRenderUtility.drawString(graphics, ccv, dlgX + dlgW - 20 - btnW + (btnW - FontRenderUtility.getStringWidth(ccv)) / 2, btnY + 3, 0xFFD0D0E0, false);
     }
 
     private void renderActionEditor(GuiGraphics graphics, int mouseX, int mouseY) {
         if (editingIndex < 0 || editingIndex >= macros.size()) return;
         Macro m = macros.get(editingIndex);
+        int activeColor = ColorUtility.getActiveColor();
 
         int edX = this.width / 2 - 40;
         int edY = 50;
         int edW = this.width / 2 + 20;
         int edH = this.height - 100;
 
-        graphics.fill(edX, edY, edX + edW, edY + edH, 0xF510101A);
-        graphics.fill(edX, edY, edX + edW, edY + 1, ColorUtility.getActiveColor());
+        SubScreenStyle.modal(graphics, edX, edY, edW, edH, activeColor);
 
-        FontRenderUtility.drawString(graphics, "Editing: " + m.getName(), edX + 10, edY + 8, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("macro_editing") + m.getName(), edX + 10, edY + 8, 0xFFFFFFFF, true);
 
         int actionY = edY + 28;
         for (int i = 0; i < m.getActions().size(); i++) {
             MacroAction a = m.getActions().get(i);
             boolean hovered = mouseX >= edX + 4 && mouseX <= edX + edW - 30 && mouseY >= actionY && mouseY <= actionY + 14;
-            graphics.fill(edX + 4, actionY, edX + edW - 30, actionY + 14, hovered ? 0xFF202035 : 0xFF14141E);
+            ravex.utility.render.Render2DUtility.drawRound(graphics, edX + 4, actionY, edW - 34, 14, 4, hovered ? ColorUtility.withAlpha(activeColor, 55) : 0xB014141E);
             FontRenderUtility.drawString(graphics, i + 1 + ". " + a.getDisplayString(), edX + 8, actionY + 3, 0xFFB0B0C0, false);
 
             boolean delHov = mouseX >= edX + edW - 26 && mouseX <= edX + edW - 6 && mouseY >= actionY + 1 && mouseY <= actionY + 13;
-            graphics.fill(edX + edW - 26, actionY + 1, edX + edW - 6, actionY + 13, delHov ? 0xFF553333 : 0xFF1A1A28);
+            ravex.utility.render.Render2DUtility.drawRound(graphics, edX + edW - 26, actionY + 1, 20, 12, 3, delHov ? 0xAA553333 : 0xB01A1A28);
             FontRenderUtility.drawString(graphics, "X", edX + edW - 18, actionY + 3, 0xFFFF6666, false);
 
             actionY += 16;
         }
 
         int addY = actionY + 6;
-        FontRenderUtility.drawString(graphics, "Add Action:", edX + 8, addY, 0xFF9E9EB0, false);
+        FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("macro_add_action_label"), edX + 8, addY, 0xFF9E9EB0, false);
         int addInputY = addY + 14;
 
-        String typeLabel = "Type: " + ACTION_TYPES[actionTypeIndex];
+        String actionTypeLabel = switch (actionTypeIndex) {
+            case 0 -> ravex.utility.misc.LanguageUtility.t("macro_toggle");
+            case 1 -> ravex.utility.misc.LanguageUtility.t("macro_chat");
+            case 2 -> ravex.utility.misc.LanguageUtility.t("macro_cmd");
+            default -> ravex.utility.misc.LanguageUtility.t("macro_delay");
+        };
+        String typeLabel = ravex.utility.misc.LanguageUtility.t("macro_type") + actionTypeLabel;
         FontRenderUtility.drawString(graphics, typeLabel, edX + 8, addInputY, 0xFFD0D0E0, false);
 
         int inputY = addInputY + 14;
         int inputW = edW - 20;
-        graphics.fill(edX + 6, inputY, edX + 6 + inputW, inputY + 16, 0xFF1A1A28);
-        FontRenderUtility.drawString(graphics, actionInput.isEmpty() ? "Enter value..." : actionInput, edX + 10, inputY + 3, actionInput.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
+        SubScreenStyle.input(graphics, edX + 6, inputY, inputW, 16, activeColor);
+        FontRenderUtility.drawString(graphics, actionInput.isEmpty() ? ravex.utility.misc.LanguageUtility.t("macro_enter_value") : actionInput, edX + 10, inputY + 3, actionInput.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
 
         int addBtnY = inputY + 22;
         boolean addHov = mouseX >= edX + 10 && mouseX <= edX + 90 && mouseY >= addBtnY && mouseY <= addBtnY + 14;
-        graphics.fill(edX + 10, addBtnY, edX + 90, addBtnY + 14, addHov ? ColorUtility.getActiveColor() : 0xFF202035);
-        FontRenderUtility.drawString(graphics, "Add Action", edX + 18, addBtnY + 3, 0xFFFFFFFF, false);
+        SubScreenStyle.button(graphics, edX + 10, addBtnY, 80, 14, addHov, true, activeColor);
+        FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("macro_add_action"), edX + 18, addBtnY + 3, 0xFFFFFFFF, false);
 
         boolean doneHov = mouseX >= edX + edW - 80 && mouseX <= edX + edW - 10 && mouseY >= addBtnY && mouseY <= addBtnY + 14;
-        graphics.fill(edX + edW - 80, addBtnY, edX + edW - 10, addBtnY + 14, doneHov ? 0xFF303035 : 0xFF14141E);
-        FontRenderUtility.drawString(graphics, "Done", edX + edW - 60, addBtnY + 3, 0xFFD0D0E0, false);
+        SubScreenStyle.button(graphics, edX + edW - 80, addBtnY, 70, 14, doneHov, false, activeColor);
+        FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("macro_done"), edX + edW - 60, addBtnY + 3, 0xFFD0D0E0, false);
     }
 
     private void renderToolbar(GuiGraphics graphics, int mouseX, int mouseY, int activeColor) {
@@ -191,28 +198,30 @@ public class MacroScreen extends Screen {
         int btnW = 80;
         int btnH = 20;
 
-        int[] btnLabels = {-1, -1, -1, -1};
-        String[] texts = {"Create", "Edit", "Delete", "Back"};
+        String[] texts = {ravex.utility.misc.LanguageUtility.t("macro_create"), ravex.utility.misc.LanguageUtility.t("macro_edit"), ravex.utility.misc.LanguageUtility.t("cfg_delete"), ravex.utility.misc.LanguageUtility.t("cfg_back")};
+
+        int actionsX = this.width - 90;
+        int pillEnd = (selectedIndex >= 0 && selectedIndex < macros.size()) ? actionsX + btnW + 8 : 20 + 3 * (btnW + 8) + btnW + 8;
+        SubScreenStyle.toolbarPill(graphics, 12, tbY - 6, pillEnd - 12, btnH + 12);
 
         for (int i = 0; i < 4; i++) {
             int bx = 20 + i * (btnW + 8);
             boolean hovered = mouseX >= bx && mouseX <= bx + btnW && mouseY >= tbY && mouseY <= tbY + btnH;
-            int bg = hovered ? (i == 0 ? activeColor : 0xFF202035) : (i == 0 ? 0xFF252540 : 0xFF0D0D14);
-            graphics.fill(bx, tbY, bx + btnW, tbY + btnH, bg);
-            FontRenderUtility.drawString(graphics, texts[i], bx + (btnW - FontRenderUtility.getStringWidth(texts[i])) / 2, tbY + 6, 0xFFD0D0E0, false);
+            SubScreenStyle.button(graphics, bx, tbY, btnW, btnH, hovered, i == 0, activeColor);
+            FontRenderUtility.drawString(graphics, texts[i], bx + (btnW - FontRenderUtility.getStringWidth(texts[i])) / 2, tbY + 6, 0xFFFFFFFF, false);
         }
 
         if (selectedIndex >= 0 && selectedIndex < macros.size()) {
             Macro m = macros.get(selectedIndex);
-            String keyText = "Bind: " + (m.getKeyBind() > 0 ? getKeyName(m.getKeyBind()) : "None");
+            String keyText = ravex.utility.misc.LanguageUtility.t("macro_bind") + (m.getKeyBind() > 0 ? getKeyName(m.getKeyBind()) : ravex.utility.misc.LanguageUtility.t("macro_none"));
             int kx = this.width - 220;
             boolean bindHovered = mouseX >= kx && mouseX <= kx + 120 && mouseY >= tbY && mouseY <= tbY + btnH;
-            graphics.fill(kx, tbY, kx + 120, tbY + btnH, bindHovered || bindingKey ? activeColor : 0xFF14141E);
-            FontRenderUtility.drawString(graphics, bindingKey ? "Press a key..." : keyText, kx + 8, tbY + 6, 0xFFFFFFFF, false);
+            SubScreenStyle.button(graphics, kx, tbY, 120, btnH, bindHovered || bindingKey, bindingKey || bindHovered, activeColor);
+            FontRenderUtility.drawString(graphics, bindingKey ? ravex.utility.misc.LanguageUtility.t("macro_press_key") : keyText, kx + 8, tbY + 6, 0xFFFFFFFF, false);
 
-            boolean actionsHovered = mouseX >= this.width - 90 && mouseX <= this.width - 20 && mouseY >= tbY && mouseY <= tbY + btnH;
-            graphics.fill(this.width - 90, tbY, this.width - 20, tbY + btnH, actionsHovered ? 0xFF303050 : 0xFF14141E);
-            FontRenderUtility.drawString(graphics, "Actions", this.width - 80, tbY + 6, 0xFFD0D0E0, false);
+            boolean actionsHovered = mouseX >= actionsX && mouseX <= actionsX + 70 && mouseY >= tbY && mouseY <= tbY + btnH;
+            SubScreenStyle.button(graphics, actionsX, tbY, 70, btnH, actionsHovered, false, activeColor);
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("macro_actions"), actionsX + 10, tbY + 6, 0xFFFFFFFF, false);
         }
     }
 
@@ -250,7 +259,7 @@ public class MacroScreen extends Screen {
                         if (selectedIndex >= 0 && selectedIndex < macros.size()) {
                             MacroManager.INSTANCE.removeMacro(macros.remove(selectedIndex));
                             selectedIndex = -1;
-                            statusMessage = "Macro deleted";
+                            statusMessage = ravex.utility.misc.LanguageUtility.t("macro_deleted");
                             statusTimer = 60;
                         }
                         return true;
@@ -281,7 +290,7 @@ public class MacroScreen extends Screen {
         int listW = 250;
         int itemH = 20;
 
-        int y = listY + 4 - scrollOffset;
+        int y = listY + 8 - scrollOffset;
         for (int i = 0; i < macros.size(); i++) {
             if (mx >= listX && mx <= listX + listW && my >= y && my <= y + itemH) {
                 selectedIndex = i;
@@ -310,7 +319,7 @@ public class MacroScreen extends Screen {
             MacroManager.INSTANCE.addMacro(m);
             creatingNew = false;
             selectedIndex = macros.size() - 1;
-            statusMessage = "Macro \"" + name + "\" created";
+            statusMessage = ravex.utility.misc.LanguageUtility.t("macro_created", name);
             statusTimer = 60;
             return true;
         }

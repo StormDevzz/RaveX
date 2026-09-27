@@ -1,71 +1,84 @@
 package ravex.modules.render;
+
+import org.lwjgl.glfw.GLFW;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.mcwrapper.MinecraftWrapper;
-import ravex.modules.Modules;
+import ravex.parameter.KeybindParameter;
 
 @Module(name = "Zoom", category = "Render")
 public class Zoom {
-    @Parameter(name = "Smooth")
-    public boolean smooth = true;
-    @Parameter(name = "SmoothSpeed", min = 0.05, max = 0.5, step = 0.05)
-    public double smoothSpeed = 0.15;
-    @Parameter(name = "DefaultZoom", min = 5, max = 90, step = 5)
-    public double defaultZoom = 30;
-    @Parameter(name = "Scroll")
-    public boolean scroll = true;
+    public ravex.parameter.Parameter<Integer> bind = new KeybindParameter("Bind", GLFW.GLFW_KEY_UNKNOWN);
+
+    @Parameter(name = "Speed", min = 5, max = 50, step = 1)
+    public double speed = 18;
+
+    @Parameter(name = "Fov", min = 5, max = 90, step = 1)
+    public double fov = 30;
+
     @Parameter(name = "ScrollStep", min = 1, max = 20, step = 1)
     public double scrollStep = 5;
-    @Parameter(name = "MinFov", min = 1, max = 30, step = 1)
-    public double minFov = 5;
-    @Parameter(name = "MaxFov", min = 30, max = 120, step = 5)
-    public double maxFov = 90;
+
     private double currentFov;
-    private double targetFov;
-    private double savedFov;
+    private long lastMs;
+    private boolean animating = false;
+
     public void onEnable() {
-        var mc = MinecraftWrapper.getWrapper();
-        if (mc.getOptions() != null) {
-            savedFov = mc.getOptions().fov().get();
-            targetFov = defaultZoom;
-            currentFov = savedFov;
-        }
+        lastMs = 0;
+        animating = false;
     }
+
     public void onDisable() {
+        lastMs = 0;
+        animating = false;
+    }
+
+    public boolean isHeld() {
         var mc = MinecraftWrapper.getWrapper();
-        if (mc.getOptions() != null && savedFov > 0) {
-            mc.getOptions().fov().set((int) savedFov);
-            currentFov = savedFov;
-            targetFov = savedFov;
-            savedFov = 0;
+        int key = bind.getValue() == null ? 0 : bind.getValue();
+        if (key <= 0) return false;
+        if (mc.getCurrentScreen() != null) return false;
+        return GLFW.glfwGetKey(mc.getWindowHandle(), key) == GLFW.GLFW_PRESS;
+    }
+
+    public float applyFov(float original, boolean primary) {
+        long now = System.currentTimeMillis();
+        if (lastMs == 0) {
+            lastMs = now;
+            currentFov = original;
+        }
+        if (!primary) {
+            return original;
+        }
+        double dt = (now - lastMs) / 1000.0;
+        lastMs = now;
+        if (dt > 0.1) dt = 0.1;
+        if (dt < 0.0) dt = 0.0;
+        boolean held = isHeld();
+        if (held) {
+            animating = true;
+        }
+        if (!animating) {
+            currentFov = original;
+            return original;
+        }
+        double target = held ? fov : original;
+        double alpha = 1.0 - Math.exp(-dt * speed);
+        currentFov += (target - currentFov) * alpha;
+        if (Math.abs(target - currentFov) < 0.05) currentFov = target;
+        if (!held && Math.abs(currentFov - original) < 0.05) {
+            animating = false;
+            currentFov = original;
+            return original;
+        }
+        return (float) currentFov;
+    }
+
+    public void adjustScroll(double yOffset) {
+        if (yOffset > 0) {
+            fov = Math.max(5, fov - scrollStep);
+        } else if (yOffset < 0) {
+            fov = Math.min(90, fov + scrollStep);
         }
     }
-    public void onTick() {
-        var mc = MinecraftWrapper.getWrapper();
-        if (mc.getPlayer() == null) return;
-        if (smooth) {
-            double spd = smoothSpeed;
-            currentFov += (targetFov - currentFov) * spd;
-            if (Math.abs(currentFov - targetFov) < 0.1) currentFov = targetFov;
-        } else {
-            currentFov = targetFov;
-        }
-        mc.getOptions().fov().set((int) currentFov);
-    }
-    public void onScroll(int delta) {
-        if (!scroll || !Modules.enabled(Zoom.class)) return;
-        if (delta > 0) {
-            targetFov = Math.max(minFov, targetFov - scrollStep);
-        } else {
-            targetFov = Math.min(maxFov, targetFov + scrollStep);
-        }
-    }
-    public double getCurrentFov() {
-        return currentFov;
-    }
-
-
-
-
-
 }

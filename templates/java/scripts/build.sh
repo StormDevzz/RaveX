@@ -42,12 +42,12 @@ find "$SRC_DIR" -name "*.java" > "$BUILD_DIR/sources.txt"
 javac -cp "$RAVEX_JAR" -d "$BUILD_DIR/classes" @"$BUILD_DIR/sources.txt"
 
 # Copy manifest
+mkdir -p "$BUILD_DIR/classes/META-INF"
 cp "$SRC_DIR/META-INF/MANIFEST.MF" "$BUILD_DIR/classes/META-INF/MANIFEST.MF"
 
 # Package JAR
 cd "$BUILD_DIR/classes"
-jar cfm "$OUTPUT_JAR" META-INF/MANIFEST.MF ravex/*.class 2>/dev/null
-jar uf "$OUTPUT_JAR" META-INF/MANIFEST.MF META-INF/ 2>/dev/null
+jar cfm "$OUTPUT_JAR" META-INF/MANIFEST.MF .
 cd "$TEMPLATES_DIR"
 
 echo ""

@@ -25,11 +25,11 @@ public class MacroAction {
 
     public String getDisplayString() {
         switch (type) {
-            case TOGGLE_MODULE: return "Toggle: " + data;
-            case SEND_CHAT:     return "Chat: " + (data.length() > 20 ? data.substring(0, 18) + ".." : data);
-            case EXECUTE_COMMAND: return "Cmd: " + (data.length() > 20 ? data.substring(0, 18) + ".." : data);
-            case DELAY:         return "Delay: " + data + "ms";
-            default:            return "Unknown";
+            case TOGGLE_MODULE: return ravex.utility.misc.LanguageUtility.t("act_toggle") + data;
+            case SEND_CHAT:     return ravex.utility.misc.LanguageUtility.t("act_chat") + (data.length() > 20 ? data.substring(0, 18) + ".." : data);
+            case EXECUTE_COMMAND: return ravex.utility.misc.LanguageUtility.t("act_cmd") + (data.length() > 20 ? data.substring(0, 18) + ".." : data);
+            case DELAY:         return ravex.utility.misc.LanguageUtility.t("act_delay") + data + "ms";
+            default:            return ravex.utility.misc.LanguageUtility.t("act_unknown");
         }
     }
 }

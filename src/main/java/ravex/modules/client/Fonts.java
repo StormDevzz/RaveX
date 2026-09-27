@@ -8,7 +8,7 @@ import ravex.modules.Modules;
 public class Fonts {
     @Parameter(name = "Enabled")
     public boolean p_enabled = true;
-    @Parameter(name = "Font", modes = {"Comfortaa", "SFMedium", "SFBold", "Vanilla"})
+    @Parameter(name = "Font", modes = {"SFBold", "SFMedium", "Comfortaa", "Inter", "InterBold", "Vanilla"})
     public String fontType = "SFBold";
     @Parameter(name = "FontSize", min = 0.5, max = 3.0, step = 0.1)
     public double fontSize = 1.0;

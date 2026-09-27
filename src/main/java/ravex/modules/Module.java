@@ -37,6 +37,27 @@ public abstract class Module {
     private float displayX;
     private float displayY;
     private boolean animInitialized = false;
+    private boolean hudPositionCustomized = false;
+    private float hudAlpha = 0f;
+    private float hudScale = 1f;
+    private float userScale = 1.0f;
+    private final ravex.utility.render.animate.AnimationUtility.SpringAnimation hudSpring = new ravex.utility.render.animate.AnimationUtility.SpringAnimation(0f);
+    public boolean isHudPositionCustomized() { return hudPositionCustomized; }
+    public void setHudPositionCustomized(boolean v) { this.hudPositionCustomized = v; }
+    public float getHudAlpha() { return hudAlpha; }
+    public float getHudScale() { return hudScale; }
+    public float getUserScale() { return userScale; }
+    public void setUserScale(float v) { this.userScale = v; }
+    public float getHudAnimProgress() { return hudSpring.getValue(); }
+    public void centerOnScreen() {
+        try {
+            var window = ravex.mcwrapper.MinecraftWrapper.getWrapper().getWindow();
+            int sw = window != null ? window.getGuiScaledWidth() : 960;
+            int sh = window != null ? window.getGuiScaledHeight() : 540;
+            setX(Math.max(0, (sw - getWidth()) / 2));
+            setY(Math.max(0, (sh - getHeight()) / 2));
+        } catch (Exception ignored) {}
+    }
     @Contract(pure = true)
     public float getGearAngle() { return gearAngle; }
     @Contract(pure = true)
@@ -73,6 +94,7 @@ public abstract class Module {
         this.width = width;
         this.height = height;
         this.gearLastTick = System.currentTimeMillis();
+        this.hudSpring.stiffness(100f).damping(10f).mass(1f);
     }
     @Contract(pure = true)
     public boolean isHud() { return hud; }
@@ -110,15 +132,26 @@ public abstract class Module {
     }
     @Contract(pure = true)
     protected boolean hasToggleSound() {
-        return !hud;
+        return true;
     }
     public void setEnabled(boolean enabled) {
         if (enabled) ensureNativeLoaded();
         if (hud) {
             if (this.enabled != enabled) {
                 this.enabled = enabled;
-                if (enabled) onEnable();
-                else onDisable();
+                hudSpring.setTarget(enabled ? 1f : 0f);
+                var bus = EventBusHolder.get();
+                if (enabled) {
+                    this.hudAlpha = 0f;
+                    this.hudScale = 0.88f;
+                    if (!hudPositionCustomized) centerOnScreen();
+                    onEnable();
+                    bus.post(new SoundEvent(SoundEvent.Type.ENABLE));
+                } else {
+                    onDisable();
+                    bus.post(new SoundEvent(SoundEvent.Type.DISABLE));
+                }
+                bus.post(new ModuleToggleEvent(this, enabled));
             }
             return;
         }
@@ -213,6 +246,16 @@ public abstract class Module {
         displayY += (targetY - displayY) * speed;
         if (Math.abs(targetX - displayX) < 0.3f) displayX = targetX;
         if (Math.abs(targetY - displayY) < 0.3f) displayY = targetY;
+
+        if (hud) {
+            float delta = Math.min(50f, ravex.utility.render.animate.AnimationUtility.deltaTime());
+            hudSpring.setTarget(enabled ? 1f : 0f);
+            hudSpring.update(delta);
+            float springVal = Math.max(0f, Math.min(1f, hudSpring.getValue()));
+            float cubicVal = ravex.utility.render.animate.AnimationUtility.Easing.CUBIC_OUT.apply(springVal);
+            hudAlpha = cubicVal;
+            hudScale = 0.85f + 0.15f * cubicVal;
+        }
     }
     @Contract(pure = true)
     public float getDisplayX() { return displayX; }

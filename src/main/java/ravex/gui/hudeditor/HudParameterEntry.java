@@ -8,6 +8,8 @@ import ravex.utility.render.ColorUtility;
 import ravex.parameter.*;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
+import ravex.event.EventBusHolder;
+import ravex.event.client.SoundEvent;
 
 public class HudParameterEntry {
     private final Parameter<?> param;
@@ -49,7 +51,7 @@ public class HudParameterEntry {
             Render2DUtility.drawRound(g, x, y, width, 16, 3,
                 ColorUtility.withAlpha(accentColor, (int)(15 * (alpha / 255f))));
         }
-        String label = param.getName();
+        String label = ravex.utility.misc.LanguageUtility.paramName(param.getName());
         FontRenderUtility.drawString(g, label, x + 6, y + 4,
             ColorUtility.withAlpha(0xFFB0B0C0, alpha), true);
 
@@ -177,6 +179,7 @@ public class HudParameterEntry {
         if (btn == 0) {
             if (param instanceof BooleanParameter bp) {
                 bp.setValue(!bp.getValue());
+                EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.TOGGLE));
                 return true;
             } else if (param instanceof ColorParameter cp) {
                 ColorPaletteModal palette = new ColorPaletteModal(cp);
@@ -198,10 +201,12 @@ public class HudParameterEntry {
                     double step = np.getStep();
                     newValue = Math.round(newValue / step) * step;
                     np.setValue(newValue);
+                    EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.SLIDE));
                 } else {
                     double v = np.getValue() + np.getStep();
                     if (v > np.getMax()) v = np.getMin();
                     np.setValue(v);
+                    EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.SLIDE));
                 }
                 return true;
             } else if (param instanceof ModeParameter mp) {
@@ -210,6 +215,7 @@ public class HudParameterEntry {
                     for (String m : mp.getModes()) {
                         if (mouseY >= modeY && mouseY <= modeY + 14) {
                             mp.setValue(m);
+                            EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.TOGGLE));
                             return true;
                         }
                         modeY += 14;
@@ -219,6 +225,7 @@ public class HudParameterEntry {
                     int idx = modes.indexOf(mp.getValue());
                     idx = (idx + 1) % modes.size();
                     mp.setValue(modes.get(idx));
+                    EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.TOGGLE));
                     return true;
                 }
             }

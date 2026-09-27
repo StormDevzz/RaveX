@@ -260,6 +260,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Sync native manifest hashes
+        run: python3 scripts/sync_native_manifest.py
+
       # Step 5: Compile/Build RaveX and capture metrics
       - name: Compile RaveX
         id: compile
@@ -357,7 +360,7 @@ jobs:
           # Create new release with compile artifact + launchers attached
           echo "Creating new release with launchers..."
           echo "Files: $JAR $LAUNCHER_FILES"
-          if gh release create "$TAG" "$JAR" $LAUNCHER_FILES --title "RaveX $VERSION" --notes "RaveX $VERSION — mod + KickX launchers (Windows/Linux)" --latest; then
+          if gh release create "$TAG" "$JAR" $LAUNCHER_FILES --title "RaveX $VERSION" --notes-file .github/RELEASE_NOTES.md --latest; then
             echo "release_status=created" >> $GITHUB_OUTPUT
             echo "release_tag=$TAG" >> $GITHUB_OUTPUT
             echo "release_version=$VERSION" >> $GITHUB_OUTPUT

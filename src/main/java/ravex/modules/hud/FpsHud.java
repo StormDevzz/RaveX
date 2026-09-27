@@ -1,10 +1,10 @@
 package ravex.modules.hud;
+
 import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.utility.render.ColorUtility;
-
 import ravex.modules.client.Hud;
 import ravex.utility.render.HudRendererUtility;
 import ravex.utility.render.TextureLoaderUtility;
@@ -22,7 +22,15 @@ public class FpsHud extends ravex.modules.Module {
     @Parameter(name = "Shadow")
     public boolean shadow = true;
 
-private static final Identifier ICON = TextureLoaderUtility.HUD_FPS_WHITE;
+    private static final Identifier ICON = TextureLoaderUtility.HUD_FPS_WHITE;
+
+    public FpsHud() {
+        super("FpsHud", 10, 30, 60, 14);
+        setX(10);
+        setY(30);
+        setWidth(60);
+        setHeight(14);
+    }
 
     public void render(GuiGraphics graphics, float partialTicks) {
         if (!Modules.enabled(Hud.class)) return;

@@ -61,6 +61,7 @@ add_subdirectory(hooks/autoregear)
 add_subdirectory(hooks/antiregear)
 # add_subdirectory(hooks/holeesp)  # теперь нету (обьединен в модуль ESP)
 add_subdirectory(hooks/tntaura)
+add_subdirectory(hooks/killaura)
 # add_subdirectory(hooks/witherroseaura)  # теперь нету
 add_subdirectory(hooks/elytraplusplus)
 add_subdirectory(hooks/desktopgui) #смехуятина
@@ -74,6 +75,7 @@ add_subdirectory(hooks/shieldfucker)
 # add_subdirectory(hooks/portalbuild)  # теперь на джаве и переименован в AutoPortal
 add_subdirectory(hooks/chunkexploit)
 add_subdirectory(addon)
+add_subdirectory(font)
 add_subdirectory(loader)
 add_subdirectory(plugins/fastexp)
 add_subdirectory(plugins/optimize)

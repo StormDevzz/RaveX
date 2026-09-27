@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.misc.FastItem;
 import ravex.modules.misc.StashFinder;
 import ravex.modules.player.ChestHelper;
@@ -22,6 +23,13 @@ public class MixinAbstractContainerScreen {
 
     private int lastHoveredSlot = -1;
     private long fastItemLastMove = 0;
+
+    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+    private void onMouseClickedHead(net.minecraft.client.input.MouseButtonEvent event, boolean handled, CallbackInfoReturnable<Boolean> cir) {
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
+        if (Modules.get(ChestHelper.class).onMouseClicked(screen, (int) event.x(), (int) event.y()))
+            cir.setReturnValue(true);
+    }
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderTail(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
@@ -45,7 +53,6 @@ public class MixinAbstractContainerScreen {
         if (Modules.enabled(FastItem.class)) {
             var mc = MinecraftWrapper.getInstance();
             if (mc.player == null || mc.gameMode == null) return;
-            if (screen instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen) return;
             long handle = GLFW.glfwGetCurrentContext();
             if (handle == 0) return;
             boolean shift = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
@@ -74,7 +81,12 @@ public class MixinAbstractContainerScreen {
             if (slot.index == lastHoveredSlot && delay > 0) return;
             lastHoveredSlot = slot.index;
             fastItemLastMove = now;
-            InventoryUtility.quickMoveSlot(ravex.mcwrapper.MinecraftWrapper.getWrapper(), screen.getMenu().containerId, slot.index);
+            if (screen instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen) {
+                if (slot.container == AccessorCreativeModeInventoryScreen.getContainer()) return;
+                ((AccessorContainerScreen)screen).invokeSlotClicked(slot, 0, slot.index, InventoryUtility.QUICK_MOVE);
+            } else {
+                InventoryUtility.quickMoveSlot(ravex.mcwrapper.MinecraftWrapper.getWrapper(), screen.getMenu().containerId, slot.index);
+            }
         }
     }
 }

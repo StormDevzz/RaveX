@@ -32,7 +32,7 @@ public class ConfigsScreen extends Screen {
     private int statusTimer = 0;
 
     public ConfigsScreen(Screen parent) {
-        super(Component.literal("RaveX Configurations"));
+        super(Component.literal(ravex.utility.misc.LanguageUtility.t("cfg_title")));
         this.parent = parent;
     }
 
@@ -56,15 +56,11 @@ public class ConfigsScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 
-        graphics.fillGradient(0, 0, this.width, this.height, 0xEA06060E, 0xEA0C0C1A);
+        SubScreenStyle.background(graphics, this.width, this.height);
 
         int activeColor = ColorUtility.getActiveColor();
 
-
-        graphics.fill(0, 0, this.width, 38, 0xCC08081A);
-        graphics.fill(0, 37, this.width, 38, activeColor);
-        FontRenderUtility.drawString(graphics, "Configurations", 18, 8, 0xFFFFFFFF, true);
-        FontRenderUtility.drawString(graphics, "Manage saved client presets", 18, 21, 0xFF7070A0, false);
+        SubScreenStyle.header(graphics, this.width, ravex.utility.misc.LanguageUtility.t("cfg_title"), ravex.utility.misc.LanguageUtility.t("cfg_subtitle"), activeColor);
 
         int centerX = this.width / 2;
 
@@ -75,10 +71,9 @@ public class ConfigsScreen extends Screen {
         int listH = this.height - 90;
         int itemH = 26;
 
-        graphics.fill(listX, listY, listX + listW, listY + listH, 0xBB08081A);
-        graphics.fill(listX, listY, listX + listW, listY + 1, ColorUtility.withAlpha(activeColor, 80));
+        SubScreenStyle.card(graphics, listX, listY, listW, listH, activeColor);
 
-        FontRenderUtility.drawString(graphics, "§7Saved Presets  §8[" + configs.size() + "]", listX + 6, listY + 5, 0xFF9090B0, false);
+        FontRenderUtility.drawString(graphics, "§7" + ravex.utility.misc.LanguageUtility.t("cfg_saved") + "  §8[" + configs.size() + "]", listX + 6, listY + 5, 0xFF9090B0, false);
 
 
         int visibleItemsStart = 12;
@@ -92,13 +87,7 @@ public class ConfigsScreen extends Screen {
             boolean hovered = mouseX >= listX && mouseX <= listX + listW && mouseY >= ly && mouseY <= ly + itemH;
             boolean selected = i == selectedIndex;
 
-            int bg = selected ? ColorUtility.withAlpha(activeColor, 50) :
-                     hovered ? 0xCC141422 : 0x00000000;
-            graphics.fill(listX, ly, listX + listW, ly + itemH - 1, bg);
-
-            if (selected) {
-                graphics.fill(listX, ly, listX + 2, ly + itemH - 1, activeColor);
-            }
+            SubScreenStyle.row(graphics, listX + 3, ly + 1, listW - 6, itemH - 2, selected, hovered, activeColor);
 
 
             int textColor = selected ? 0xFFFFFFFF : (hovered ? 0xFFD0D0E8 : 0xFF909090);
@@ -106,10 +95,10 @@ public class ConfigsScreen extends Screen {
 
 
             if (cfg.equalsIgnoreCase("default")) {
-                String badge = "AUTO";
+                String badge = ravex.utility.misc.LanguageUtility.t("cfg_auto");
                 int bw = FontRenderUtility.getStringWidth(badge) + 6;
                 int bx = listX + listW - bw - 6;
-                graphics.fill(bx, ly + 6, bx + bw, ly + itemH - 7, 0x55AA88FF);
+                ravex.utility.render.Render2DUtility.drawRound(graphics, bx, ly + 6, bw, itemH - 13, 3, 0x55AA88FF);
                 FontRenderUtility.drawString(graphics, badge, bx + 3, ly + 8, 0xFFCCBBFF, false);
             }
 
@@ -117,8 +106,8 @@ public class ConfigsScreen extends Screen {
         }
 
         if (configs.isEmpty()) {
-            FontRenderUtility.drawString(graphics, "No presets saved yet.", listX + 10, listY + 24, 0xFF404060, false);
-            FontRenderUtility.drawString(graphics, "Click \"Save New\" below.", listX + 10, listY + 36, 0xFF404060, false);
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("cfg_empty"), listX + 10, listY + 24, 0xFF404060, false);
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("cfg_empty_hint"), listX + 10, listY + 36, 0xFF404060, false);
         }
 
 
@@ -127,8 +116,7 @@ public class ConfigsScreen extends Screen {
         int rightY = 48;
         int rightH = this.height - 90;
 
-        graphics.fill(rightX, rightY, rightX + rightW, rightY + rightH, 0xBB08081A);
-        graphics.fill(rightX, rightY, rightX + rightW, rightY + 1, ColorUtility.withAlpha(activeColor, 80));
+        SubScreenStyle.card(graphics, rightX, rightY, rightW, rightH, activeColor);
 
 
         var mc = MinecraftWrapper.getWrapper();
@@ -144,20 +132,19 @@ public class ConfigsScreen extends Screen {
 
             String playerName = mc.getPlayer().getName().getString();
             int nameW = FontRenderUtility.getStringWidth(playerName);
-            graphics.fill(rightX + (rightW - nameW - 12) / 2, rightY + 100,
-                          rightX + (rightW + nameW + 12) / 2, rightY + 114,
-                          0x88000010);
+            ravex.utility.render.Render2DUtility.drawRound(graphics, rightX + (rightW - nameW - 12) / 2, rightY + 100,
+                          nameW + 12, 14, 4, 0x88000010);
             FontRenderUtility.drawString(graphics, playerName,
                 rightX + (rightW - nameW) / 2, rightY + 102, activeColor, true);
 
 
             var skinType = mc.getPlayer().getSkin().model();
-            String modelName = skinType.name().equals("slim") ? "Alex model" : "Steve model";
+            String modelName = skinType.name().equals("slim") ? ravex.utility.misc.LanguageUtility.t("cfg_model_slim") : ravex.utility.misc.LanguageUtility.t("cfg_model_wide");
             int mnW = FontRenderUtility.getStringWidth(modelName);
             FontRenderUtility.drawString(graphics, modelName,
                 rightX + (rightW - mnW) / 2, rightY + 113, 0xFF505070, false);
         } else {
-            FontRenderUtility.drawString(graphics, "Not in a world", rightX + 8, rightY + 20, 0xFF505070, false);
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("cfg_not_in_world"), rightX + 8, rightY + 20, 0xFF505070, false);
         }
 
 
@@ -166,22 +153,25 @@ public class ConfigsScreen extends Screen {
 
         if (selectedIndex >= 0 && selectedIndex < configs.size()) {
             String selCfg = configs.get(selectedIndex);
-            FontRenderUtility.drawString(graphics, "Selected:", rightX + 8, rightY + 130, 0xFF707090, false);
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("cfg_selected"), rightX + 8, rightY + 130, 0xFF707090, false);
             FontRenderUtility.drawString(graphics, selCfg, rightX + 8, rightY + 141, 0xFFD0D0FF, true);
         } else {
-            FontRenderUtility.drawString(graphics, "No preset selected", rightX + 8, rightY + 130, 0xFF404060, false);
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("cfg_no_selected"), rightX + 8, rightY + 130, 0xFF404060, false);
         }
 
 
         if (statusTimer > 0 && !status.isEmpty()) {
-            graphics.fill(rightX + 6, rightY + 155, rightX + rightW - 6, rightY + 167, 0x44001100);
+            ravex.utility.render.Render2DUtility.drawRound(graphics, rightX + 6, rightY + 155, rightW - 12, 12, 4, 0x44001100);
             FontRenderUtility.drawString(graphics, status, rightX + 8, rightY + 157, 0xFFAAFFAA, false);
         }
 
 
         int toolbarY = this.height - 40;
-        graphics.fill(0, toolbarY, this.width, toolbarY + 1, ColorUtility.withAlpha(activeColor, 60));
-        graphics.fill(0, toolbarY + 1, this.width, this.height, 0xBB06060F);
+        int tbBtnW = 80;
+        int tbGap = 6;
+        int tbTotalW = 4 * tbBtnW + 3 * tbGap;
+        int tbStartX = (this.width - tbTotalW) / 2;
+        SubScreenStyle.toolbarPill(graphics, tbStartX - 12, toolbarY + 4, tbTotalW + 24, 32);
 
         renderToolbar(graphics, mouseX, mouseY, activeColor, toolbarY);
 
@@ -200,7 +190,7 @@ public class ConfigsScreen extends Screen {
         int gap = 6;
 
 
-        String[] labels = {"Load", "Save New", "Delete", "Back"};
+        String[] labels = {ravex.utility.misc.LanguageUtility.t("cfg_load"), ravex.utility.misc.LanguageUtility.t("cfg_save_new"), ravex.utility.misc.LanguageUtility.t("cfg_delete"), ravex.utility.misc.LanguageUtility.t("cfg_back")};
         int[] xPositions = new int[labels.length];
         int totalBtns = labels.length;
         int totalW = totalBtns * btnW + (totalBtns - 1) * gap;
@@ -213,41 +203,35 @@ public class ConfigsScreen extends Screen {
             int bx = xPositions[i];
             boolean hov = mouseX >= bx && mouseX <= bx + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
             boolean isAction = i < 2;
-            int bg = hov ? (isAction ? activeColor : 0xFF202038) : (isAction ? 0xFF16162A : 0xFF0C0C1A);
-            graphics.fill(bx, btnY, bx + btnW, btnY + btnH, bg);
-            if (hov) graphics.fill(bx, btnY + btnH - 1, bx + btnW, btnY + btnH, activeColor);
+            SubScreenStyle.button(graphics, bx, btnY, btnW, btnH, hov, isAction, activeColor);
 
             int textW = FontRenderUtility.getStringWidth(labels[i]);
-            FontRenderUtility.drawString(graphics, labels[i], bx + (btnW - textW) / 2, btnY + 6, 0xFFD0D0E8, false);
+            FontRenderUtility.drawString(graphics, labels[i], bx + (btnW - textW) / 2, btnY + 6, 0xFFFFFFFF, false);
         }
     }
 
     private void renderNewDialog(GuiGraphics graphics, int mouseX, int mouseY, int activeColor) {
 
-        graphics.fill(0, 0, this.width, this.height, 0x99000000);
+        SubScreenStyle.modalBackdrop(graphics, this.width, this.height);
 
         int dlgW = 240;
         int dlgH = 110;
         int dlgX = (this.width - dlgW) / 2;
         int dlgY = (this.height - dlgH) / 2;
 
+        SubScreenStyle.modal(graphics, dlgX, dlgY, dlgW, dlgH, activeColor);
 
-        graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + dlgH, 0xF50C0C1C);
-        graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + 1, activeColor);
-        graphics.fill(dlgX, dlgY, dlgX + 1, dlgY + dlgH, ColorUtility.withAlpha(activeColor, 80));
-        graphics.fill(dlgX + dlgW - 1, dlgY, dlgX + dlgW, dlgY + dlgH, ColorUtility.withAlpha(activeColor, 80));
-
-        FontRenderUtility.drawString(graphics, "Save Preset As:", dlgX + 12, dlgY + 12, 0xFFFFFFFF, true);
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("cfg_save_as"), dlgX + 12, dlgY + 12, 0xFFFFFFFF, true);
+            SubScreenStyle.titleAccent(graphics, dlgX + 12, dlgY + 24, ravex.utility.misc.LanguageUtility.t("cfg_save_as"), activeColor);
 
 
         int inputX = dlgX + 12;
         int inputY = dlgY + 32;
         int inputW = dlgW - 24;
         int inputH = 18;
-        graphics.fill(inputX, inputY, inputX + inputW, inputY + inputH, 0xFF181830);
-        graphics.fill(inputX, inputY + inputH - 1, inputX + inputW, inputY + inputH, activeColor);
+        SubScreenStyle.input(graphics, inputX, inputY, inputW, inputH, activeColor);
 
-        String display = newName.isEmpty() ? "Preset name..." : newName + "│";
+        String display = newName.isEmpty() ? ravex.utility.misc.LanguageUtility.t("cfg_name_hint") : newName + "│";
         int textCol = newName.isEmpty() ? 0xFF404060 : 0xFFD0D0F0;
         FontRenderUtility.drawString(graphics, display, inputX + 5, inputY + 4, textCol, false);
 
@@ -259,13 +243,15 @@ public class ConfigsScreen extends Screen {
         boolean saveHov = mouseX >= dlgX + 10 && mouseX <= dlgX + 10 + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
         boolean cancelHov = mouseX >= dlgX + dlgW - 10 - btnW && mouseX <= dlgX + dlgW - 10 && mouseY >= btnY && mouseY <= btnY + btnH;
 
-        graphics.fill(dlgX + 10, btnY, dlgX + 10 + btnW, btnY + btnH, saveHov ? activeColor : 0xFF14142A);
-        FontRenderUtility.drawString(graphics, "Save",
-            dlgX + 10 + (btnW - FontRenderUtility.getStringWidth("Save")) / 2, btnY + 5, 0xFFFFFFFF, false);
+        SubScreenStyle.button(graphics, dlgX + 10, btnY, btnW, btnH, saveHov, true, activeColor);
+        String dlgSave = ravex.utility.misc.LanguageUtility.t("cfg_save");
+        FontRenderUtility.drawString(graphics, dlgSave,
+            dlgX + 10 + (btnW - FontRenderUtility.getStringWidth(dlgSave)) / 2, btnY + 5, 0xFFFFFFFF, false);
 
-        graphics.fill(dlgX + dlgW - 10 - btnW, btnY, dlgX + dlgW - 10, btnY + btnH, cancelHov ? 0xFF303040 : 0xFF181820);
-        FontRenderUtility.drawString(graphics, "Cancel",
-            dlgX + dlgW - 10 - btnW + (btnW - FontRenderUtility.getStringWidth("Cancel")) / 2, btnY + 5, 0xFFD0D0D0, false);
+        SubScreenStyle.button(graphics, dlgX + dlgW - 10 - btnW, btnY, btnW, btnH, cancelHov, false, activeColor);
+        String dlgCancel = ravex.utility.misc.LanguageUtility.t("cfg_cancel");
+        FontRenderUtility.drawString(graphics, dlgCancel,
+            dlgX + dlgW - 10 - btnW + (btnW - FontRenderUtility.getStringWidth(dlgCancel)) / 2, btnY + 5, 0xFFD0D0D0, false);
     }
 
 

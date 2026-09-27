@@ -87,29 +87,30 @@ templates/java/
 package ravex.addon.template;
 
 import ravex.addon.Addon;
-import ravex.addon.AddonContext;
-import ravex.addon.AddonInfo;
+import ravex.addon.core.AddonContext;
+import ravex.addon.core.AddonInfo;
 
 public class MainAddon implements Addon {
+    private AddonContext context;
 
     @Override
     public void onLoad(AddonContext context) {
-        // Инициализация
+        this.context = context;
+        context.registerModule(new DemoModule(this));
     }
 
     @Override
     public void onUnload() {
-        // Очистка
     }
 
     @Override
-    public AddonInfo getAddonInfo() {
+    public AddonInfo getInfo() {
         return new AddonInfo(
-            "MainAddon",        // Имя
-            "Description",      // Описание
-            "1.4.3",           // Версия
-            "Author",          // Автор
-            "ravex.addon.template.MainAddon"  // Главный класс
+            "MainAddon",
+            "Description",
+            "1.0.0",
+            "Author",
+            "ravex.addon.template.MainAddon"
         );
     }
 }
@@ -161,30 +162,63 @@ private void loadNativeLibrary() {
 ### Базовая структура
 
 ```java
-public class DemoModule extends AddonModule {
+package ravex.addon.template;
 
-    public DemoModule() {
-        super("DemoModule", "Демо", AddonModuleInfo.Category.CUSTOM);
+import ravex.addon.Addon;
+import ravex.addon.module.AddonModule;
+import ravex.modules.annotations.Parameter;
+import ravex.utility.player.PlayerUtility;
+
+public class DemoModule extends AddonModule {
+    @Parameter(name = "FeatureEnabled")
+    public boolean featureEnabled = true;
+
+    @Parameter(name = "Speed", min = 0.1, max = 5.0, step = 0.1)
+    public double speed = 1.5;
+
+    @Parameter(name = "Mode", modes = {"Basic", "Advanced"})
+    public String mode = "Basic";
+
+    public DemoModule(Addon parent) {
+        super("DemoModule", "Custom", parent);
     }
 
     @Override
-    public void onEnable() { /* Включение */ }
+    public void onEnable() {
+    }
+
     @Override
-    public void onDisable() { /* Выключение */ }
+    public void onDisable() {
+    }
+
     @Override
-    public void onTick() { /* Каждый тик */ }
+    public void onTick() {
+        if (!featureEnabled) {
+            return;
+        }
+        if (PlayerUtility.getPlayer() == null) {
+            return;
+        }
+    }
 }
 ```
 
 ### Параметры
 
-Параметры автоматически отображаются в GUI RaveX:
+Настройки объявляются аннотацией `@Parameter` на примитивных полях. `Module` сам создаёт объекты параметров через `ParameterFactory`:
 
 ```java
-private final BooleanParameter enabled = new BooleanParameter("enabled", true);
-private final NumberParameter  speed   = new NumberParameter("speed", 1.0, 0.1, 5.0);
-private final StringParameter  mode    = new StringParameter("mode", "default");
-private final ColorParameter   color   = new ColorParameter("color", 0x00FF00);
+@Parameter(name = "FeatureEnabled")
+public boolean featureEnabled = true;
+
+@Parameter(name = "Speed", min = 0.1, max = 5.0, step = 0.1)
+public double speed = 1.5;
+
+@Parameter(name = "Mode", modes = {"Basic", "Advanced"})
+public String mode = "Basic";
+
+@Parameter(name = "Color", color = true)
+public int color = 0xFF00FF00;
 ```
 
 ### Платформенные ветки в onTick
@@ -193,9 +227,9 @@ private final ColorParameter   color   = new ColorParameter("color", 0x00FF00);
 @Override
 public void onTick() {
     if (MainAddon.isWindows()) {
-        tickWindows();   // Windows-специфичная логика
+        tickWindows();
     } else {
-        tickLinux();     // Linux-специфичная логика
+        tickLinux();
     }
 }
 ```
@@ -224,14 +258,8 @@ Addon-Main-Class: ravex.addon.template.MainAddon
 
 ```java
 String os = System.getProperty("os.name").toLowerCase();
-
-if (os.contains("win")) {
-    // Windows
-} else if (os.contains("nix") || os.contains("nux")) {
-    // Linux
-} else if (os.contains("mac")) {
-    // macOS
-}
+boolean windows = os.contains("win");
+boolean linux = os.contains("nix") || os.contains("nux");
 ```
 
 ### Пути к файлам
@@ -363,11 +391,12 @@ javac -cp ../../build/libs/RaveX.jar \
     src/ravex/addon/template/DemoModule.java
 
 # 3. Скопировать манифест
+mkdir -p build/classes/META-INF
 cp src/META-INF/MANIFEST.MF build/classes/META-INF/
 
 # 4. Упаковать JAR
 cd build/classes
-jar cfm ../MainAddon.jar META-INF/MANIFEST.MF ravex/*.class
+jar cfm ../MainAddon.jar META-INF/MANIFEST.MF .
 ```
 
 ### Установка
@@ -387,7 +416,7 @@ jar cfm ../MainAddon.jar META-INF/MANIFEST.MF ravex/*.class
 
 | Интерфейс | Методы | Назначение |
 |-----------|--------|------------|
-| `Addon` | `onLoad`, `onUnload`, `getAddonInfo` | Главный класс аддона |
+| `Addon` | `onLoad`, `onUnload`, `getInfo` | Главный класс аддона |
 | `AddonModule` | `onEnable`, `onDisable`, `onTick` | Модуль (функциональность) |
 | `AddonListener` | `onEvent` | Слушатель событий |
 
@@ -395,18 +424,13 @@ jar cfm ../MainAddon.jar META-INF/MANIFEST.MF ravex/*.class
 
 | Класс | Методы | Назначение |
 |-------|--------|------------|
-| `AddonContext` | `getLogger`, `getAddonName`, `getDataDir` | Контекст аддона |
-| `AddonModuleManager` | `registerModule`, `unregisterModule`, `getLogger` | Регистрация модулей |
+| `AddonContext` | `getLogger`, `getInfo`, `registerModule` | Контекст аддона |
 | `AddonInfo` | (конструктор с name, description, version, author, mainClass) | Метаданные |
+| `AddonLoader` | `loadAddon` | Загрузка JAR по манифесту |
 
 ### Параметры модуля
 
-| Класс | Тип | Пример |
-|-------|-----|--------|
-| `BooleanParameter` | `boolean` | `new BooleanParameter("enabled", true)` |
-| `NumberParameter` | `double` | `new NumberParameter("speed", 1.0, 0.1, 5.0)` |
-| `StringParameter` | `String` | `new StringParameter("mode", "default")` |
-| `ColorParameter` | `int` (0xRRGGBB) | `new ColorParameter("color", 0x00FF00)` |
+Настройки — это `@Parameter` на примитивах (`boolean`, `double`, `int`, `String`). Обёртки из `ravex.parameter` создаются автоматически.
 
 ---
 
@@ -414,21 +438,15 @@ jar cfm ../MainAddon.jar META-INF/MANIFEST.MF ravex/*.class
 
 ### ❓ Мой аддон не загружается
 
-1. Проверь `MANIFEST.MF` — правильный ли `Addon-Main-Class`?
-2. Проверь консоль Minecraft (`.minecraft/logs/latest.log`)
-3. Попробуй `java -jar MyAddon.jar` — ошибка компиляции?
-
-### ❓ Не загружается нативная библиотека
-
-1. Проверь архитектуру: 64-битная Java требует 64-битную DLL
-2. Проверь путь: `C:/Users/.../.minecraft/ravex/addons/native/MyAddon.dll`
-3. Проверь зависимости: `Dependency Walker` (Windows) или `ldd` (Linux)
+1. Проверь `MANIFEST.MF` — `Addon-Main-Class` должен совпадать с реальным классом
+2. Проверь, что класс реализует `ravex.addon.Addon` и имеет метод `getInfo`
+3. Проверь консоль Minecraft (`.minecraft/logs/latest.log`)
+4. Проверь подпись: рядом с JAR должен лежать файл `<имя>.jar.ravex-sig`
 
 ### ❓ Как отлаживать?
 
 ```java
-getLogger().info("value = " + value);       // В лог RaveX
-System.out.println("value = " + value);     // В stdout (консоль лаунчера)
+context.getLogger().info("value = " + value);
 ```
 
 ### ❓ Hot-reload?

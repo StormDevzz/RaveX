@@ -22,6 +22,7 @@ public class SoundUtility {
     private static final Identifier SCROLL_ID         = id("scroll");
     private static final Identifier TOGGLE_ID          = id("toggle");
     private static final Identifier SLIDE_ID           = id("slide");
+    private static final Identifier DONE_ID            = id("done");
 
     public static SoundEvent ENABLE;
     public static SoundEvent DISABLE;
@@ -34,6 +35,7 @@ public class SoundUtility {
     public static SoundEvent SCROLL;
     public static SoundEvent TOGGLE;
     public static SoundEvent SLIDE;
+    public static SoundEvent DONE;
 
     private static Identifier id(String name) {
         return Identifier.fromNamespaceAndPath("ravex", name);
@@ -54,6 +56,7 @@ public class SoundUtility {
         SCROLL        = Registry.register(BuiltInRegistries.SOUND_EVENT, SCROLL_ID,        SoundEvent.createVariableRangeEvent(SCROLL_ID));
         TOGGLE        = Registry.register(BuiltInRegistries.SOUND_EVENT, TOGGLE_ID,        SoundEvent.createVariableRangeEvent(TOGGLE_ID));
         SLIDE         = Registry.register(BuiltInRegistries.SOUND_EVENT, SLIDE_ID,         SoundEvent.createVariableRangeEvent(SLIDE_ID));
+        DONE          = Registry.register(BuiltInRegistries.SOUND_EVENT, DONE_ID,          SoundEvent.createVariableRangeEvent(DONE_ID));
     }
 
 
@@ -71,6 +74,7 @@ public class SoundUtility {
     public static void playScroll()        { play(SCROLL,         0.5f); }
     public static void playToggle()        { play(TOGGLE,         0.6f); }
     public static void playSlide()         { play(SLIDE,          0.4f); }
+    public static void playDone(float volume) { play(DONE, volume); }
 
 
     private static void play(SoundEvent soundEvent, float volume) {
@@ -79,12 +83,12 @@ public class SoundUtility {
             return;
         }
 
-        if (!Modules.enabled(ravex.modules.render.Sounds.class)) {
+        if (!Modules.enabled(ravex.modules.client.Sounds.class)) {
             return;
         }
 
 
-        ravex.modules.render.Sounds sounds = Modules.get(ravex.modules.render.Sounds.class);
+        ravex.modules.client.Sounds sounds = Modules.get(ravex.modules.client.Sounds.class);
         float multiplier = (sounds != null) ? (float) sounds.volume : 1.0f;
         float finalVolume = volume * multiplier;
         if (finalVolume <= 0.0f) return;

@@ -9,9 +9,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import ravex.utility.render.ColorUtility;
 
-import ravex.modules.client.Hud;
+import ravex.modules.combat.AutoCrystal;
 import ravex.modules.combat.KillAura;
 import ravex.modules.combat.Trigger;
+import ravex.modules.client.Hud;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -20,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 @HudModule("TargetHud")
 public class TargetHud extends ravex.modules.Module {
+    @Parameter(name = "Style", modes = {"Classic", "Sexy"})
+    public String style = "Classic";
     @Parameter(name = "MainHand")
     public boolean showMainHand = true;
     @Parameter(name = "Armor")
@@ -28,7 +31,7 @@ public class TargetHud extends ravex.modules.Module {
     public boolean showOnHover = true;
     @Parameter(name = "Health", modes = {"HP", "%"})
     public String healthDisplay = "HP";
-    @Parameter(name = "ColoredHealthText")
+    @Parameter(name = "ColoredHPText")
     public boolean coloredHealthText = false;
     @Parameter(name = "LowHPColor", color = true)
     public int lowHpColor = 0xFFFF3333;
@@ -78,6 +81,10 @@ public class TargetHud extends ravex.modules.Module {
     private net.minecraft.world.entity.LivingEntity getTarget(MinecraftWrapper mc) {
         if (Modules.enabled(KillAura.class)) {
             net.minecraft.world.entity.LivingEntity target = Modules.get(KillAura.class).getCurrentTarget();
+            if (target != null && target.isAlive()) return target;
+        }
+        if (Modules.enabled(AutoCrystal.class)) {
+            net.minecraft.world.entity.LivingEntity target = Modules.get(AutoCrystal.class).getCurrentTarget();
             if (target != null && target.isAlive()) return target;
         }
         if (Modules.enabled(Trigger.class)) {
@@ -156,6 +163,11 @@ public class TargetHud extends ravex.modules.Module {
         int w = getWidth();
         int h = getHeight();
 
+        if ("Sexy".equals(style)) {
+            renderSexy(graphics, targetEntity, bx, by, delta);
+            return;
+        }
+
         float scale = 0.92f + 0.08f * hudAlpha;
         graphics.pose().pushMatrix();
         float centerX = bx + w / 2f;
@@ -165,9 +177,9 @@ public class TargetHud extends ravex.modules.Module {
         graphics.pose().translate(-centerX, -centerY);
 
         int bgAlpha = (int)(170 * hudAlpha);
-        int bgColor = (bgAlpha << 24) | 0x0A0A0E;
+        int bgColor = ColorUtility.setAlpha(0x0A0A0E, bgAlpha);
         Render2DUtility.drawPixelPerfectRound(graphics, bx, by, w, h, 6, bgColor);
-        Render2DUtility.drawRoundBorder(graphics, bx, by, w, h, 6, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), (int)(120 * hudAlpha)));
+        Render2DUtility.drawPixelPerfectRoundBorder(graphics, bx, by, w, h, 6, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), (int)(120 * hudAlpha)));
 
         if (targetEntity != null) {
             if (targetEntity.getId() != lastEntityId) {
@@ -189,7 +201,7 @@ public class TargetHud extends ravex.modules.Module {
 
         float hurtProgress = Math.max(targetHurtAnim, targetEntity != null ? targetEntity.hurtTime / 10f : 0f);
         float headScale = 1.0f - 0.15f * hurtProgress;
-        int headTint = lerpColor(0xFFFFFFFF, 0xFFFF4444, hurtProgress);
+        int headTint = ColorUtility.interpolate(0xFFFFFFFF, 0xFFFF4444, hurtProgress);
 
         int hSize = 32;
         int hx = bx + 6;
@@ -250,7 +262,7 @@ public class TargetHud extends ravex.modules.Module {
             case "HP" -> String.format("%.0f / %.0f", hp, maxHp);
             default -> maxHp > 0 ? String.format("%d%%", (int)(hp / maxHp * 100)) : "0%";
         };
-        int hpTextColor = coloredHealthText ? lerpColor(lowHpColor, highHpColor, maxHp > 0 ? hp / maxHp : 1f) : 0xFFFFFFFF;
+        int hpTextColor = coloredHealthText ? ColorUtility.interpolate(lowHpColor, highHpColor, maxHp > 0 ? hp / maxHp : 1f) : 0xFFFFFFFF;
         FontRenderUtility.drawString(graphics, hpText, nx, by + 21, ColorUtility.withAlpha(hpTextColor, (int)(255 * hudAlpha)), true);
 
         int gridX = bx + w - 55;
@@ -262,7 +274,7 @@ public class TargetHud extends ravex.modules.Module {
 
         int fillHpW = (int) (barW * animatedHpPercent);
         if (fillHpW > 0) {
-            int hpColor = lerpColor(lowHpColor, highHpColor, hp / maxHp);
+            int hpColor = ColorUtility.interpolate(lowHpColor, highHpColor, hp / maxHp);
             Render2DUtility.drawRound(graphics, barX, barY, fillHpW, 3, 1, ColorUtility.withAlpha(hpColor, (int)(255 * hudAlpha)));
         }
 
@@ -285,8 +297,8 @@ public class TargetHud extends ravex.modules.Module {
                 int cellX = gridX + cIndex * (cellSize + cellGap);
                 int cellY = by + 7 + rIndex * (cellSize + cellGap);
 
-                Render2DUtility.drawPixelPerfectRound(graphics, cellX, cellY, cellSize, cellSize, 3, ColorUtility.withAlpha(0x000000, (int)(120 * hudAlpha)));
-                Render2DUtility.drawRoundBorder(graphics, cellX, cellY, cellSize, cellSize, 3, 1, ColorUtility.withAlpha(0x000000, (int)(60 * hudAlpha)));
+        Render2DUtility.drawPixelPerfectRound(graphics, cellX, cellY, cellSize, cellSize, 3, ColorUtility.withAlpha(0x000000, (int)(120 * hudAlpha)));
+        Render2DUtility.drawPixelPerfectRoundBorder(graphics, cellX, cellY, cellSize, cellSize, 3, 1, ColorUtility.withAlpha(0x000000, (int)(60 * hudAlpha)));
 
                 boolean shouldShow = (slot == net.minecraft.world.entity.EquipmentSlot.MAINHAND && showMainHand)
                         || (slot == net.minecraft.world.entity.EquipmentSlot.OFFHAND && showMainHand)
@@ -311,24 +323,92 @@ public class TargetHud extends ravex.modules.Module {
         graphics.pose().popMatrix();
     }
 
-    private static int lerpColor(int from, int to, float ratio) {
-        if (ratio <= 0f) return from;
-        if (ratio >= 1f) return to;
-        int a1 = (from >> 24) & 0xFF;
-        int r1 = (from >> 16) & 0xFF;
-        int g1 = (from >> 8) & 0xFF;
-        int b1 = from & 0xFF;
+    private void renderSexy(GuiGraphics graphics, net.minecraft.world.entity.LivingEntity target, int bx, int by, float delta) {
+        var mc = MinecraftWrapper.getWrapper();
+        int pw = 140;
+        int ph = 48;
+        int bgAlpha = (int) (200 * hudAlpha);
+        Render2DUtility.drawPixelPerfectRound(graphics, bx, by, pw, ph, 8, ColorUtility.setAlpha(0x0A0A0E, bgAlpha));
+        Render2DUtility.drawPixelPerfectRoundBorder(graphics, bx, by, pw, ph, 8, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), (int) (140 * hudAlpha)));
+        if (target == null) return;
 
-        int a2 = (to >> 24) & 0xFF;
-        int r2 = (to >> 16) & 0xFF;
-        int g2 = (to >> 8) & 0xFF;
-        int b2 = to & 0xFF;
+        float hp = target.getHealth();
+        float maxHp = target.getMaxHealth();
+        if (maxHp <= 0f) maxHp = 20f;
+        float hpFraction = Math.max(0f, Math.min(1f, hp / maxHp));
+        if (animatedHpPercent < 0f) animatedHpPercent = hpFraction;
+        else animatedHpPercent += (hpFraction - animatedHpPercent) * Math.min(1f, delta * 8f);
 
-        int a = (int)(a1 + (a2 - a1) * ratio);
-        int r = (int)(r1 + (r2 - r1) * ratio);
-        int g = (int)(g1 + (g2 - g1) * ratio);
-        int b = (int)(b1 + (b2 - b1) * ratio);
+        float hurtProgress = Math.max(targetHurtAnim, target.hurtTime / 10f);
+        float headScale = 1f - 0.12f * hurtProgress;
+        int headTint = ColorUtility.interpolate(0xFFFFFFFF, 0xFFFF4444, hurtProgress);
 
-        return (a << 24) | (r << 16) | (g << 8) | b;
+        int hSize = 34;
+        int hx = bx + 6;
+        int hy = by + 7;
+        graphics.pose().pushMatrix();
+        float headCX = hx + hSize / 2f;
+        float headCY = hy + hSize / 2f;
+        graphics.pose().translate(headCX, headCY);
+        graphics.pose().scale(headScale, headScale);
+        graphics.pose().translate(-headCX, -headCY);
+        if (target instanceof net.minecraft.client.player.AbstractClientPlayer clientPlayer) {
+            Identifier skinTex = clientPlayer.getSkin().body().texturePath();
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, skinTex, hx, hy, 8f, 8f, hSize, hSize, 8, 8, 64, 64, ColorUtility.withAlpha(headTint, (int) (255 * hudAlpha)));
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, skinTex, hx, hy, 40f, 8f, hSize, hSize, 8, 8, 64, 64, ColorUtility.withAlpha(headTint, (int) (255 * hudAlpha)));
+        } else {
+            Identifier mobTex = getMobTexture(target);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, mobTex, hx, hy, 8f, 8f, hSize, hSize, 8, 8, 64, 64, ColorUtility.withAlpha(headTint, (int) (255 * hudAlpha)));
+        }
+        graphics.pose().popMatrix();
+
+        FontRenderUtility.drawString(graphics, target.getName().getString(), bx + 46, by + 7, ColorUtility.withAlpha(0xFFFFFFFF, (int) (255 * hudAlpha)), true);
+
+        if (target instanceof net.minecraft.world.entity.player.Player) {
+            net.minecraft.world.entity.EquipmentSlot[] row = {
+                net.minecraft.world.entity.EquipmentSlot.MAINHAND,
+                net.minecraft.world.entity.EquipmentSlot.HEAD,
+                net.minecraft.world.entity.EquipmentSlot.CHEST,
+                net.minecraft.world.entity.EquipmentSlot.LEGS,
+                net.minecraft.world.entity.EquipmentSlot.FEET,
+                net.minecraft.world.entity.EquipmentSlot.OFFHAND
+            };
+            float ix = bx + 46;
+            for (net.minecraft.world.entity.EquipmentSlot slot : row) {
+                boolean show = (slot == net.minecraft.world.entity.EquipmentSlot.MAINHAND || slot == net.minecraft.world.entity.EquipmentSlot.OFFHAND) ? showMainHand : showArmor;
+                if (show) {
+                    ItemStack item = target.getItemBySlot(slot);
+                    if (!item.isEmpty()) {
+                        graphics.pose().pushMatrix();
+                        graphics.pose().translate(ix, by + 18);
+                        graphics.pose().scale(0.75f, 0.75f);
+                        graphics.renderItem(item, 0, 0);
+                        graphics.renderItemDecorations(mc.getFont(), item, 0, 0);
+                        graphics.pose().popMatrix();
+                    }
+                }
+                ix += 13;
+            }
+        }
+
+        int barX = bx + 46;
+        int barW = 88;
+        int barY = by + 34;
+        int barH = 9;
+        Render2DUtility.drawRound(graphics, barX, barY, barW, barH, 3, ColorUtility.withAlpha(0xFF14141E, (int) (255 * hudAlpha)));
+        int fillW = (int) (barW * Math.max(0f, Math.min(1f, animatedHpPercent)));
+        if (fillW > 0) {
+            int hpColor = ColorUtility.interpolate(lowHpColor, highHpColor, hpFraction);
+            Render2DUtility.drawRound(graphics, barX, barY, fillW, barH, 3, ColorUtility.withAlpha(hpColor, (int) (255 * hudAlpha)));
+        }
+        String hpText = switch (healthDisplay) {
+            case "HP" -> String.format("%.0f", hp);
+            default -> String.format("%d%%", (int) (hpFraction * 100));
+        };
+        float numScale = 0.8f;
+        int tw = (int) (FontRenderUtility.getStringWidth(hpText) * numScale);
+        FontRenderUtility.drawScaled(graphics, FontRenderUtility.getCurrentFontType(), hpText,
+            barX + (barW - tw) / 2, barY + 1, numScale,
+            ColorUtility.withAlpha(0xFFFFFFFF, (int) (255 * hudAlpha)), true);
     }
 }

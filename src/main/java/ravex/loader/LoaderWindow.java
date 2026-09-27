@@ -14,7 +14,6 @@ public class LoaderWindow extends JFrame implements LoaderCallback {
     private static final Color TEXT_COLOR = new Color(0xe2, 0xe2, 0xe8);
     private static final Color TEXT_MUTED = new Color(0x65, 0x65, 0x75);
 
-    private String version = "1.4.8 Recode";
     private final String osName = detectOS();
     private String status = "Initializing...";
     private int percent = 0;
@@ -97,7 +96,7 @@ public class LoaderWindow extends JFrame implements LoaderCallback {
         setBackground(BG_DARK);
 
         try {
-            java.io.InputStream is = LoaderWindow.class.getResourceAsStream("/assets/ravex/textures/ravexclean.png");
+            java.io.InputStream is = LoaderWindow.class.getResourceAsStream("/assets/ravex/textures/ravexv2.png");
             if (is != null) {
                 logoImage = javax.imageio.ImageIO.read(is);
                 setIconImage(logoImage);
@@ -163,11 +162,6 @@ public class LoaderWindow extends JFrame implements LoaderCallback {
             repaint();
         });
         animTimer.start();
-    }
-
-    public void setVersion(String v) {
-        this.version = v;
-        repaint();
     }
 
     public void updateStatus(String text, int pct) {
@@ -246,7 +240,7 @@ public class LoaderWindow extends JFrame implements LoaderCallback {
 
 
         g.setFont(new Font("SansSerif", Font.BOLD, 10));
-        String sub = "LOADER v" + version.toUpperCase() + "  \u2022  " + osName;
+        String sub = "LOADER  \u2022  " + osName;
         g.setColor(TEXT_MUTED);
         g.drawString(sub, 150, 78);
 

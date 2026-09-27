@@ -76,8 +76,10 @@ public class SilentRotationUtility {
         var _mc = mc.getRaw();
         if (_mc.player == null) return false;
         float[] targetAngles = RotationUtility.anglesTo(_mc.player.getEyePosition(), target);
-        float yawDiff = Math.abs(RotationUtility.normalizeYaw(targetAngles[0] - _mc.player.getYRot()));
-        float pitchDiff = Math.abs(targetAngles[1] - _mc.player.getXRot());
+        float currentYaw = hasRotation ? this.yaw : _mc.player.getYRot();
+        float currentPitch = hasRotation ? this.pitch : _mc.player.getXRot();
+        float yawDiff = Math.abs(RotationUtility.normalizeYaw(targetAngles[0] - currentYaw));
+        float pitchDiff = Math.abs(targetAngles[1] - currentPitch);
         return yawDiff <= tolerance && pitchDiff <= tolerance;
     }
 }

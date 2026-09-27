@@ -18,8 +18,6 @@ public class Burrow {
     public String block = "Obsidian";
     @Parameter(name = "AutoCenter")
     public boolean autoCenter = true;
-    @Parameter(name = "Rotate")
-    public boolean rotate = true;
     @Parameter(name = "Instant")
     public boolean instant = true;
     @Parameter(name = "Height", min = 0.2, max = 1.0, step = 0.01)

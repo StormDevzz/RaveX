@@ -25,9 +25,6 @@ import java.util.List;
 public class AutoReGearScreen extends Screen {
 
     private static final int ITEM_SIZE   = 20;
-    private static final int COLS        = 8;
-    private static final int ROWS        = 6;
-    private static final int PAGE_SIZE   = COLS * ROWS;
 
     private final Screen parent;
     private final List<Item> allItems = new ArrayList<>();
@@ -35,15 +32,13 @@ public class AutoReGearScreen extends Screen {
 
     private String searchQuery  = "";
     private boolean searchFocus = false;
-    private int currentPage = 0;
+    private float gridScroll = 0;
     private float selectedScroll = 0;
     private String hoveredTooltip = null;
     private int tooltipX, tooltipY;
     private long openTime = -1;
 
     private boolean quitHovered  = false;
-    private boolean prevHovered  = false;
-    private boolean nextHovered  = false;
 
     private String editingItemId = null;
     private String editingText = "";
@@ -61,7 +56,7 @@ public class AutoReGearScreen extends Screen {
     }
 
     public AutoReGearScreen(Screen parent) {
-        super(Component.literal("AutoReGear Kit Configuration"));
+        super(Component.literal(ravex.utility.misc.LanguageUtility.t("arg_subtitle")));
         this.parent = parent;
 
         for (Item item : BuiltInRegistries.ITEM) {
@@ -87,8 +82,7 @@ public class AutoReGearScreen extends Screen {
                 }
             }
         }
-        int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
-        if (currentPage > maxPage) currentPage = maxPage;
+        gridScroll = 0;
     }
 
     @Override
@@ -107,7 +101,7 @@ public class AutoReGearScreen extends Screen {
         int H = this.height;
 
         int bgA = (int)(progress * 0x99);
-        g.fill(0, 0, W, H, (bgA << 24) | 0x05050E);
+        g.fill(0, 0, W, H, ColorUtility.setAlpha(0x05050E, bgA));
 
         int panelW = 680;
         int panelH = 420;
@@ -129,14 +123,14 @@ public class AutoReGearScreen extends Screen {
 
         hoveredTooltip = null;
 
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xF0101020);
-        Render2DUtility.drawBorder(g, panelX, panelY, panelW, panelH, 1, 0xFF2A1A4A);
+        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xF0121218);
+        Render2DUtility.drawBorder(g, panelX, panelY, panelW, panelH, 1, 0xFF33333F);
 
         int headerH = 28;
-        g.fill(panelX, panelY, panelX + panelW, panelY + headerH, 0xFF160E30);
+        g.fill(panelX, panelY, panelX + panelW, panelY + headerH, 0xFF1A1A22);
         g.fill(panelX, panelY + headerH - 1, panelX + panelW, panelY + headerH, ColorUtility.getActiveColor());
-        FontRenderUtility.drawString(g, "✦ AutoReGear Kit Editor", panelX + 10, panelY + 6, ColorUtility.getActiveColor(), true);
-        FontRenderUtility.drawString(g, "ESC / Back", panelX + panelW - 72, panelY + 8, 0xFF606080, false);
+        FontRenderUtility.drawString(g, ravex.utility.misc.LanguageUtility.t("arg_title"), panelX + 10, panelY + 6, ColorUtility.getActiveColor(), true);
+        FontRenderUtility.drawString(g, ravex.utility.misc.LanguageUtility.t("arg_back"), panelX + panelW - 72, panelY + 8, 0xFF606080, false);
 
         int leftW  = (panelW / 2) - 6;
         int rightW = panelW - leftW - 18;
@@ -146,36 +140,39 @@ public class AutoReGearScreen extends Screen {
         int contentH = panelH - headerH - 50;
 
 
-        g.fill(leftX, contentY, leftX + leftW, contentY + contentH, 0xFF0C0920);
-        Render2DUtility.drawBorder(g, leftX, contentY, leftW, contentH, 1, 0xFF281844);
+        g.fill(leftX, contentY, leftX + leftW, contentY + contentH, 0xFF121218);
+        Render2DUtility.drawBorder(g, leftX, contentY, leftW, contentH, 1, 0xFF2E2E3A);
 
         int colHeaderH = 18;
-        g.fill(leftX, contentY, leftX + leftW, contentY + colHeaderH, 0xFF180E38);
+        g.fill(leftX, contentY, leftX + leftW, contentY + colHeaderH, 0xFF1A1A22);
         FontRenderUtility.drawString(g, "§7All Items §8(" + filteredItems.size() + ")", leftX + 5, contentY + 3, 0xFFAAAAAA, false);
 
         int searchY = contentY + colHeaderH + 2;
         int searchH = 14;
         int searchW = leftW - 8;
-        g.fill(leftX + 4, searchY, leftX + 4 + searchW, searchY + searchH, searchFocus ? 0xFF1A1040 : 0xFF120B30);
-        Render2DUtility.drawBorder(g, leftX + 4, searchY, searchW, searchH, 1, searchFocus ? ColorUtility.getActiveColor() : 0xFF2A1850);
+        g.fill(leftX + 4, searchY, leftX + 4 + searchW, searchY + searchH, searchFocus ? 0xFF20202A : 0xFF16161C);
+        Render2DUtility.drawBorder(g, leftX + 4, searchY, searchW, searchH, 1, searchFocus ? ColorUtility.getActiveColor() : 0xFF3A3A46);
         String searchDisplay = searchQuery.isEmpty() && !searchFocus ? "§8Search..." : searchQuery + (searchFocus ? "§8|" : "");
         FontRenderUtility.drawString(g, searchDisplay, leftX + 7, searchY + 2, 0xFFCCCCCC, false);
 
         int gridY = searchY + searchH + 3;
         int gridH = contentH - colHeaderH - searchH - 8;
         int gridX = leftX + 4;
+        int gridW = leftW - 8;
+        int cols = Math.max(8, gridW / ITEM_SIZE);
 
-        int startIdx = currentPage * PAGE_SIZE;
-        int endIdx   = Math.min(startIdx + PAGE_SIZE, filteredItems.size());
+        int totalRows = (filteredItems.size() + cols - 1) / cols;
+        int maxGridScroll = Math.max(0, totalRows * ITEM_SIZE - gridH);
+        gridScroll = Math.max(0, Math.min(maxGridScroll, gridScroll));
 
-        g.enableScissor(leftX, gridY, leftX + leftW, gridY + gridH);
+        Render2DUtility.pushScissor(g, leftX, gridY, leftW, gridH);
 
-        for (int i = startIdx; i < endIdx; i++) {
-            int localIdx = i - startIdx;
-            int col = localIdx % COLS;
-            int row = localIdx / COLS;
+        for (int i = 0; i < filteredItems.size(); i++) {
+            int col = i % cols;
+            int row = i / cols;
             int ix = gridX + col * ITEM_SIZE;
-            int iy = gridY + row * ITEM_SIZE;
+            int iy = gridY + row * ITEM_SIZE - (int) gridScroll;
+            if (iy + ITEM_SIZE < gridY || iy > gridY + gridH) continue;
 
             Item item = filteredItems.get(i);
             ItemStack stack = new ItemStack(item);
@@ -186,7 +183,7 @@ public class AutoReGearScreen extends Screen {
             boolean hov = mx >= ix && mx <= ix + ITEM_SIZE - 1 && my >= iy && my <= iy + ITEM_SIZE - 1;
 
             if (hov) {
-                g.fill(ix, iy, ix + ITEM_SIZE, iy + ITEM_SIZE, 0xFF2A2040);
+                g.fill(ix, iy, ix + ITEM_SIZE, iy + ITEM_SIZE, 0xFF2A2C38);
                 hoveredTooltip = new ItemStack(item).getHoverName().getString() + "\n§8" + itemId + "\n§eClick to toggle in kit";
                 tooltipX = mx; tooltipY = my;
             } else if (sel) {
@@ -196,41 +193,32 @@ public class AutoReGearScreen extends Screen {
             g.renderItem(stack, ix + 2, iy + 2);
 
             if (sel) {
-                FontRenderUtility.drawString(g, "§a✔", ix + ITEM_SIZE - 7, iy, 0xFF44FF88, false);
+                Render2DUtility.drawBorder(g, ix, iy, ITEM_SIZE, ITEM_SIZE, 1, 0xFF44FF88);
             }
         }
 
-        g.disableScissor();
+        Render2DUtility.popScissor(g);
+
+        if (maxGridScroll > 0) {
+            int barH = Math.max(20, gridH * gridH / (totalRows * ITEM_SIZE));
+            int barY = gridY + (int) ((gridH - barH) * (gridScroll / maxGridScroll));
+            int barX = leftX + leftW - 4;
+            g.fill(barX, gridY, barX + 2, gridY + gridH, 0xFF1E1E26);
+            g.fill(barX, barY, barX + 2, barY + barH, ColorUtility.getActiveColor());
+        }
 
 
-        int pageY = gridY + gridH + 2;
-        int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
-        String pageStr = "Page " + (currentPage + 1) + " / " + (maxPage + 1);
+        g.fill(rightX, contentY, rightX + rightW, contentY + contentH, 0xFF121218);
+        Render2DUtility.drawBorder(g, rightX, contentY, rightW, contentH, 1, 0xFF2E2E3A);
 
-        prevHovered = mx >= leftX + 4 && mx <= leftX + 26 && my >= pageY && my <= pageY + 12;
-        nextHovered = mx >= leftX + leftW - 26 && mx <= leftX + leftW - 4 && my >= pageY && my <= pageY + 12;
-
-        g.fill(leftX + 4, pageY, leftX + 26, pageY + 12, prevHovered ? 0xFF2A2050 : 0xFF180E38);
-        FontRenderUtility.drawString(g, "◀", leftX + 10, pageY + 1, currentPage > 0 ? 0xFFCCCCCC : 0xFF444466, false);
-
-        int ptw = FontRenderUtility.getStringWidth(pageStr);
-        FontRenderUtility.drawString(g, pageStr, leftX + leftW / 2 - ptw / 2, pageY + 1, 0xFF9090B0, false);
-
-        g.fill(leftX + leftW - 26, pageY, leftX + leftW - 4, pageY + 12, nextHovered ? 0xFF2A2050 : 0xFF180E38);
-        FontRenderUtility.drawString(g, "▶", leftX + leftW - 22, pageY + 1, currentPage < maxPage ? 0xFFCCCCCC : 0xFF444466, false);
-
-
-        g.fill(rightX, contentY, rightX + rightW, contentY + contentH, 0xFF0C0920);
-        Render2DUtility.drawBorder(g, rightX, contentY, rightW, contentH, 1, 0xFF281844);
-
-        g.fill(rightX, contentY, rightX + rightW, contentY + colHeaderH, 0xFF180E38);
+        g.fill(rightX, contentY, rightX + rightW, contentY + colHeaderH, 0xFF1A1A22);
         int selCount = AutoReGearData.INSTANCE.getSelectedItems().size();
         FontRenderUtility.drawString(g, "§dKit Items §7(" + selCount + ")", rightX + 5, contentY + 3,
             selCount > 0 ? ColorUtility.getActiveColor() : 0xFF777777, false);
 
         int selContentY = contentY + colHeaderH + 3;
         int selContentH = contentH - colHeaderH - 6;
-        g.enableScissor(rightX, selContentY, rightX + rightW, selContentY + selContentH);
+        Render2DUtility.pushScissor(g, rightX, selContentY, rightW, selContentH);
 
         var selectedSet = AutoReGearData.INSTANCE.getSelectedItems().keySet();
         String[] selectedArr = selectedSet.toArray(new String[0]);
@@ -253,7 +241,7 @@ public class AutoReGearScreen extends Screen {
 
             boolean rowHov = mx >= rightX + 3 && mx <= rightX + rightW - 3 && my >= sy && my <= sy + 16;
             if (rowHov) {
-                g.fill(rightX + 3, sy, rightX + rightW - 3, sy + 16, 0xFF2A2040);
+                g.fill(rightX + 3, sy, rightX + rightW - 3, sy + 16, 0xFF23232C);
                 hoveredTooltip = "§eLeft-click: +8 Target Count\n§cRight-click: -8 Target Count\n"
                                  + "§bScroll over count: +/-1 count\n"
                                  + "§aMiddle-click: type count manually\n"
@@ -268,7 +256,7 @@ public class AutoReGearScreen extends Screen {
             if (itemId.equals(editingItemId)) {
                 String amountStr = editingText + (System.currentTimeMillis() % 1000 < 500 ? "|" : "");
                 int amW = FontRenderUtility.getStringWidth(amountStr);
-                g.fill(rightX + rightW - 85, sy + 1, rightX + rightW - 20, sy + 15, 0xFF151030);
+                g.fill(rightX + rightW - 85, sy + 1, rightX + rightW - 20, sy + 15, 0xFF16161C);
                 Render2DUtility.drawBorder(g, rightX + rightW - 85, sy + 1, 65, 14, 1, ColorUtility.getActiveColor());
                 FontRenderUtility.drawString(g, amountStr, rightX + rightW - 25 - amW, sy + 3, 0xFFFFFFFF, false);
             } else {
@@ -278,12 +266,12 @@ public class AutoReGearScreen extends Screen {
             }
 
 
-            FontRenderUtility.drawString(g, "§c✕", rightX + rightW - 14, sy + 3, 0xFFFF4455, false);
+            FontRenderUtility.drawString(g, "x", rightX + rightW - 14, sy + 3, 0xFFFF4455, false);
 
             sy += 18;
         }
 
-        g.disableScissor();
+        Render2DUtility.popScissor(g);
 
 
         int btnY   = panelY + panelH - 36;
@@ -292,10 +280,11 @@ public class AutoReGearScreen extends Screen {
         int quitX  = panelX + (panelW - quitW) / 2;
 
         quitHovered = mx >= quitX && mx <= quitX + quitW && my >= btnY && my <= btnY + btnH;
-        g.fill(quitX, btnY, quitX + quitW, btnY + btnH, quitHovered ? 0xFF2C1854 : 0xFF1A0E38);
-        Render2DUtility.drawBorder(g, quitX, btnY, quitW, btnH, 1, quitHovered ? ColorUtility.getActiveColor() : 0xFF3A2060);
-        int qtw = FontRenderUtility.getStringWidth("Save & Close");
-        FontRenderUtility.drawString(g, "Save & Close", quitX + quitW / 2 - qtw / 2, btnY + 4, 0xFFFFFFFF, true);
+        g.fill(quitX, btnY, quitX + quitW, btnY + btnH, quitHovered ? 0xFF2A2A35 : 0xFF1C1C24);
+        Render2DUtility.drawBorder(g, quitX, btnY, quitW, btnH, 1, quitHovered ? ColorUtility.getActiveColor() : 0xFF3A3A46);
+        String scv = ravex.utility.misc.LanguageUtility.t("arg_save_close");
+        int qtw = FontRenderUtility.getStringWidth(scv);
+        FontRenderUtility.drawString(g, scv, quitX + quitW / 2 - qtw / 2, btnY + 4, 0xFFFFFFFF, true);
 
         pose.popMatrix();
 
@@ -320,8 +309,8 @@ public class AutoReGearScreen extends Screen {
         if (tx + tw > this.width) tx = this.width - tw - 4;
         if (ty < 2) ty = my + 12;
 
-        g.fill(tx - 1, ty - 1, tx + tw + 1, ty + th + 1, 0xCC1A0E30);
-        g.fill(tx, ty, tx + tw, ty + th, 0xEE0E0920);
+        g.fill(tx - 1, ty - 1, tx + tw + 1, ty + th + 1, 0xCC23232C);
+        g.fill(tx, ty, tx + tw, ty + th, 0xEE121216);
         Render2DUtility.drawBorder(g, tx, ty, tw, th, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), 160));
 
         int ly = ty + 3;
@@ -378,26 +367,15 @@ public class AutoReGearScreen extends Screen {
 
         int gridY = searchY + searchH + 3;
         int gridH = contentH - colHeaderH - searchH - 8;
-        int pageY = gridY + gridH + 2;
-        if (my >= pageY && my <= pageY + 12) {
-            if (mx >= leftX + 4 && mx <= leftX + 26 && currentPage > 0) {
-                currentPage--;
-                return true;
-            }
-            int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
-            if (mx >= leftX + leftW - 26 && mx <= leftX + leftW - 4 && currentPage < maxPage) {
-                currentPage++;
-                return true;
-            }
-        }
-
 
         int gridX = leftX + 4;
+        int gridW = leftW - 8;
+        int cols = Math.max(8, gridW / ITEM_SIZE);
         if (mx >= leftX && mx <= leftX + leftW && my >= gridY && my <= gridY + gridH) {
             int col = (mx - gridX) / ITEM_SIZE;
-            int row = (my - gridY) / ITEM_SIZE;
-            int idx = currentPage * PAGE_SIZE + row * COLS + col;
-            if (col >= 0 && col < COLS && row >= 0 && row < ROWS && idx < filteredItems.size()) {
+            int row = (my - gridY + (int) gridScroll) / ITEM_SIZE;
+            int idx = row * cols + col;
+            if (col >= 0 && col < cols && row >= 0 && idx < filteredItems.size()) {
                 saveEditingTargetCount();
                 Item item = filteredItems.get(idx);
                 Identifier rl = BuiltInRegistries.ITEM.getKey(item);
@@ -479,10 +457,21 @@ public class AutoReGearScreen extends Screen {
         int contentH = panelH - headerH - 50;
         int leftW    = (panelW / 2) - 6;
         int rightW   = panelW - leftW - 18;
+        int leftX    = panelX + 6;
         int rightX   = panelX + leftW + 12;
         int colHeaderH = 18;
         int selContentY = contentY + colHeaderH + 3;
         int selContentH = contentH - colHeaderH - 6;
+
+        int gridTopY = contentY + colHeaderH + 2 + 14 + 3;
+        int gridBotH = contentH - colHeaderH - 14 - 8;
+        if (mouseX >= leftX && mouseX <= leftX + leftW && mouseY >= gridTopY && mouseY <= gridTopY + gridBotH) {
+            int gridCols = Math.max(8, (leftW - 8) / ITEM_SIZE);
+            int gridRows = (filteredItems.size() + gridCols - 1) / gridCols;
+            int maxScroll = Math.max(0, gridRows * ITEM_SIZE - gridBotH);
+            gridScroll = Math.max(0, Math.min(maxScroll, gridScroll - (float) (vAmt * 40)));
+            return true;
+        }
 
         if (mouseX >= rightX && mouseX <= rightX + rightW && mouseY >= selContentY && mouseY <= selContentY + selContentH) {
 
@@ -538,10 +527,9 @@ public class AutoReGearScreen extends Screen {
             }
         }
         if (searchFocus) {
-            if (key == GLFW.GLFW_KEY_BACKSPACE && !searchQuery.isEmpty()) {
-                searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
-                currentPage = 0;
-                rebuildFiltered();
+              if (key == GLFW.GLFW_KEY_BACKSPACE && !searchQuery.isEmpty()) {
+                  searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
+                  rebuildFiltered();
                 return true;
             }
             if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_ESCAPE) {
@@ -565,10 +553,9 @@ public class AutoReGearScreen extends Screen {
         }
         if (searchFocus) {
             int codepoint = event.codepoint();
-            if (codepoint >= 32 && codepoint < 127) {
-                searchQuery += (char)codepoint;
-                currentPage = 0;
-                rebuildFiltered();
+              if (codepoint >= 32 && codepoint < 127) {
+                  searchQuery += (char)codepoint;
+                  rebuildFiltered();
                 return true;
             }
         }

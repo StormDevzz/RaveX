@@ -18,8 +18,8 @@ build.bat --install       % Windows: build + install
 
 | File | Description |
 |------|-------------|
-| [MainAddon.java](src/ravex/addon/template/MainAddon.java) | Main addon: platform detection, native lib loading, module registration |
-| [DemoModule.java](src/ravex/addon/template/DemoModule.java) | Module with BooleanParameter, NumberParameter, platform branches |
+| [MainAddon.java](src/ravex/addon/template/MainAddon.java) | Main addon: lifecycle, module registration |
+| [DemoModule.java](src/ravex/addon/template/DemoModule.java) | Module with `@Parameter` settings |
 | [MANIFEST.MF](src/META-INF/MANIFEST.MF) | JAR manifest with Addon-Main-Class |
 
 ## Documentation

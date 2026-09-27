@@ -12,6 +12,6 @@ public class PluginsCmd extends Cmd {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null) return;
         NetworkUtility.sendChat("/plugins");
-        CmdReg.print("§7[RaveX] Sent §e/plugins §7to server — check server response in chat.");
+        CmdReg.print("§9[§bRaveX§9] §7Sent §e/plugins §7to server - check server response in chat.");
     }
 }

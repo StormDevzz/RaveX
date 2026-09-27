@@ -13,7 +13,7 @@ public class VClipCmd extends Cmd {
         double dist = 1.0;
         if (args.length > 1) {
             try { dist = Double.parseDouble(args[1]); } catch (NumberFormatException e) {
-                CmdReg.print("§c[RaveX] Invalid number: §e" + args[1]);
+                CmdReg.print("§9[§bRaveX§9] §cInvalid number: §e" + args[1]);
                 return;
             }
         }

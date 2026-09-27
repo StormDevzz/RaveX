@@ -14,11 +14,14 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import ravex.mixin.render.AccessorRenderType;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.player.rotation.RotationUtility;
 
 import java.util.function.Consumer;
@@ -36,28 +39,46 @@ public class Render3DUtility {
     private static final RenderType FILL_TYPE = RenderTypes.debugFilledBox();
     private static final RenderType LINE_TYPE = RenderTypes.lines();
 
-    private static final RenderType FILL_NO_DEPTH;
-    private static final RenderType LINE_NO_DEPTH;
-    private static final RenderType LINE_ADDITIVE;
-    private static final RenderType LINE_ADDITIVE_NO_DEPTH;
+    private static RenderType FILL_NO_DEPTH;
+    private static RenderType LINE_NO_DEPTH;
+    private static RenderType LINE_ADDITIVE;
+    private static RenderType LINE_ADDITIVE_NO_DEPTH;
     private static RenderType SOULS_ADDITIVE;
+    private static RenderType SQUARE_ESP_TYPE;
+    private static Identifier SQUARE_ESP_TEX;
+    private static long lastCustomTypeRetry = 0;
 
     private static final ByteBufferBuilder ESP_ALLOCATOR = new ByteBufferBuilder(256 * 1024);
 
     static {
-        RenderType f = null, l = null, la = null, lan = null;
-        try {
-            f = buildNoDepthType(RenderPipelines.DEBUG_FILLED_BOX, "ravex_fill_nodepth");
-            l = buildNoDepthType(RenderPipelines.LINES, "ravex_line_nodepth");
-            la = buildAdditiveType(RenderPipelines.LINES, "ravex_line_additive");
-            lan = buildAdditiveNoDepthType(RenderPipelines.LINES, "ravex_line_additive_nodepth");
-        } catch (Exception e) {
+        ensureCustomTypes();
+    }
 
+    public static void ensureCustomTypes() {
+        if (FILL_NO_DEPTH != null && LINE_NO_DEPTH != null && LINE_ADDITIVE != null && LINE_ADDITIVE_NO_DEPTH != null) return;
+        long now = System.currentTimeMillis();
+        if (now - lastCustomTypeRetry < 5000) return;
+        lastCustomTypeRetry = now;
+        if (FILL_NO_DEPTH == null) {
+            try {
+                FILL_NO_DEPTH = buildNoDepthType(RenderPipelines.DEBUG_FILLED_BOX, "ravex_fill_nodepth");
+            } catch (Exception ignored) {}
         }
-        FILL_NO_DEPTH = f;
-        LINE_NO_DEPTH = l;
-        LINE_ADDITIVE = la;
-        LINE_ADDITIVE_NO_DEPTH = lan;
+        if (LINE_NO_DEPTH == null) {
+            try {
+                LINE_NO_DEPTH = buildNoDepthType(RenderPipelines.LINES, "ravex_line_nodepth");
+            } catch (Exception ignored) {}
+        }
+        if (LINE_ADDITIVE == null) {
+            try {
+                LINE_ADDITIVE = buildAdditiveType(RenderPipelines.LINES, "ravex_line_additive");
+            } catch (Exception ignored) {}
+        }
+        if (LINE_ADDITIVE_NO_DEPTH == null) {
+            try {
+                LINE_ADDITIVE_NO_DEPTH = buildAdditiveNoDepthType(RenderPipelines.LINES, "ravex_line_additive_nodepth");
+            } catch (Exception ignored) {}
+        }
     }
 
     private static RenderType buildAdditiveNoDepthType(RenderPipeline source, String name) {
@@ -68,7 +89,13 @@ public class Render3DUtility {
     }
 
     private static boolean hasNoDepth() {
+        ensureCustomTypes();
         return FILL_NO_DEPTH != null && LINE_NO_DEPTH != null;
+    }
+
+    public static RenderType getNoDepthLinesType() {
+        ensureCustomTypes();
+        return LINE_NO_DEPTH != null ? LINE_NO_DEPTH : RenderTypes.lines();
     }
 
     private static RenderType buildNoDepthType(RenderPipeline source, String name) {
@@ -79,6 +106,49 @@ public class Render3DUtility {
     private static RenderType buildAdditiveType(RenderPipeline source, String name) {
         return cloneWithOverride(source, name,
             b -> b.withBlend(BlendFunction.ADDITIVE));
+    }
+
+    private static RenderType getSquareESPType(Identifier tex) {
+        if (SQUARE_ESP_TYPE != null && SQUARE_ESP_TEX == tex) return SQUARE_ESP_TYPE;
+        try {
+            RenderPipeline source = RenderPipelines.ENTITY_TRANSLUCENT;
+            RenderPipeline.Builder builder = RenderPipeline.builder()
+                .withLocation(Identifier.withDefaultNamespace("ravex_square_esp"))
+                .withVertexShader(source.getVertexShader())
+                .withFragmentShader(source.getFragmentShader())
+                .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
+                .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+                .withDepthWrite(false)
+                .withCull(false)
+                .withBlend(BlendFunction.ADDITIVE)
+                .withDepthBias(source.getDepthBiasScaleFactor(), source.getDepthBiasConstant())
+                .withPolygonMode(source.getPolygonMode())
+                .withColorLogic(source.getColorLogic())
+                .withColorWrite(source.isWriteColor(), source.isWriteAlpha());
+            source.getBlendFunction().ifPresentOrElse(
+                b -> {},
+                () -> builder.withoutBlend()
+            );
+            for (String s : source.getSamplers()) {
+                builder.withSampler(s);
+            }
+            for (RenderPipeline.UniformDescription u : source.getUniforms()) {
+                builder.withUniform(u.name(), u.type());
+            }
+            RenderPipeline built = builder.build();
+            RenderSetup setup = RenderSetup.builder(built)
+                .withTexture("Sampler0", tex)
+                .useLightmap()
+                .useOverlay()
+                .sortOnUpload()
+                .createRenderSetup();
+            SQUARE_ESP_TYPE = AccessorRenderType.invokeCreate("ravex_square_esp", setup);
+            SQUARE_ESP_TEX = tex;
+        } catch (Exception e) {
+            SQUARE_ESP_TYPE = RenderTypes.entityTranslucent(tex);
+            SQUARE_ESP_TEX = tex;
+        }
+        return SQUARE_ESP_TYPE;
     }
 
     private static RenderType cloneWithOverride(RenderPipeline source, String name,
@@ -135,6 +205,7 @@ public class Render3DUtility {
     private static boolean lineAdditiveNoDepthUsed = false;
 
     public static void beginFrame() {
+        ensureCustomTypes();
         FILL_ALLOCATOR.clear();
         fillBuilder = new BufferBuilder(FILL_ALLOCATOR, FILL_TYPE.mode(), FILL_TYPE.format());
         if (FILL_NO_DEPTH != null) {
@@ -208,6 +279,20 @@ public class Render3DUtility {
             fillUsed = true;
         }
         BlockRendererUtility.renderFilledBoxQuads(buf, matrix, size, r, g, b, a);
+    }
+
+    public static void batchFlatBandQuad(Matrix4f matrix,
+            float x1, float y1, float z1, float x2, float y2, float z2,
+            float x3, float y3, float z3, float x4, float y4, float z4,
+            float r, float g, float b, float a) {
+        if (fillBuilder == null) return;
+        fillUsed = true;
+        int ir = (int) (r * 255f);
+        int ig = (int) (g * 255f);
+        int ib = (int) (b * 255f);
+        int ia = (int) (a * 255f);
+        BlockRendererUtility.renderFlatBandQuad(fillBuilder, matrix,
+            x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, ir, ig, ib, ia);
     }
 
     public static void batchWireframe(Matrix4f matrix, double size, float r, float g, float b, float a) {
@@ -341,6 +426,18 @@ public class Render3DUtility {
 
 
 
+
+    public static void renderFlatRingBand(Matrix4f matrix, double cx, double cy, double cz,
+            float rInner, float rOuter, int segs, int[] innerColors, int[] outerColors) {
+        if (segs < 3 || rOuter <= 0.001f || rInner < 0f) return;
+        if (innerColors == null || outerColors == null || innerColors.length < segs + 1 || outerColors.length < segs + 1) return;
+        if (rInner > rOuter) return;
+        RenderType type = FILL_TYPE;
+        BufferBuilder builder = new BufferBuilder(ALLOCATOR, type.mode(), type.format());
+        BlockRendererUtility.renderFlatRingBand(builder, matrix, cx, cy, cz, rInner, rOuter, segs, innerColors, outerColors);
+        MeshData mesh = builder.buildOrThrow();
+        type.draw(mesh);
+    }
 
     public static void renderFilledBox(Matrix4f matrix, double size, float r, float g, float b, float a) {
         renderFilledBox(matrix, size, r, g, b, a, false);
@@ -610,5 +707,47 @@ public class Render3DUtility {
             lineBuilder.addVertex(matrix, (float)(tPosX + cos2), (float)yTop, (float)(tPosZ + sin2)).setColor(ir, ig, ib, 230).setNormal(nx, 0, nz).setLineWidth(4.0f);
         }
         lineType.draw(lineBuilder.buildOrThrow());
+    }
+
+    public static void renderSquareESP(Matrix4f modelViewMatrix, Camera camera, Entity target, int color, float rotation, float tickDelta) {
+        Vec3 lerped = new Vec3(
+            target.xo + (target.getX() - target.xo) * tickDelta,
+            target.yo + (target.getY() - target.yo) * tickDelta,
+            target.zo + (target.getZ() - target.zo) * tickDelta);
+        Vec3 smoothed = EntityUtility.smoothPos(target, lerped);
+        double tPosX = smoothed.x - camera.position().x;
+        double tPosY = smoothed.y - camera.position().y;
+        double tPosZ = smoothed.z - camera.position().z;
+
+        float size = Math.max(target.getBbWidth() * 1.3f, target.getBbHeight() * 0.65f);
+        float half = size / 2.0f;
+        float centerY = (float) tPosY + target.getBbHeight() / 2.0f;
+
+        int ir = ColorUtility.getRed(color);
+        int ig = ColorUtility.getGreen(color);
+        int ib = ColorUtility.getBlue(color);
+        int ia = ColorUtility.getAlpha(color);
+        if (ia == 0) ia = 255;
+
+        Identifier tex = TextureLoaderUtility.getCaptureAlphaTexture();
+        if (tex == null) tex = TextureLoaderUtility.CAPTURE;
+        RenderType renderType = getSquareESPType(tex);
+
+        int overlay = OverlayTexture.NO_OVERLAY;
+        int light = 0xF000F0;
+
+        Matrix4f matrix = new Matrix4f(modelViewMatrix);
+        matrix.translate((float) tPosX, centerY, (float) tPosZ);
+        matrix.rotate(camera.rotation());
+        matrix.rotateZ((float) Math.toRadians(rotation));
+        matrix.translate(-half, -half, 0.0f);
+
+        ESP_ALLOCATOR.clear();
+        BufferBuilder builder = new BufferBuilder(ESP_ALLOCATOR, renderType.mode(), renderType.format());
+        builder.addVertex(matrix, 0, size, 0).setUv(0f, 1f).setColor(ir, ig, ib, ia).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(matrix, size, size, 0).setUv(1f, 1f).setColor(ir, ig, ib, ia).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(matrix, size, 0, 0).setUv(1f, 0f).setColor(ir, ig, ib, ia).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(matrix, 0, 0, 0).setUv(0f, 0f).setColor(ir, ig, ib, ia).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        renderType.draw(builder.buildOrThrow());
     }
 }

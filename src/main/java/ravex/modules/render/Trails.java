@@ -39,7 +39,7 @@ public class Trails {
     public boolean fireballs = true;
     @Parameter(name = "WindCharges")
     public boolean windCharges = true;
-    @Parameter(name = "OtherProjectiles")
+    @Parameter(name = "OtherProj")
     public boolean other = false;
     @Parameter(name = "Self")
     public boolean self = true;

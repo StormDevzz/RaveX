@@ -39,10 +39,7 @@ public class RaveXLoader {
             extraArgs = new String[]{"runClient"};
         }
 
-        String version = readVersion("gradle.properties");
-
         window = new LoaderWindow();
-        window.setVersion(version);
         window.setVisible(true);
 
         window.updateStatus("Initializing loader...", 0);
@@ -51,7 +48,6 @@ public class RaveXLoader {
             try {
                 window.updateStatus("Loading components...", 2);
                 nativeAvailable = NativeBridge.load();
-                new AssetDownloader().downloadRequiredAssets();
                 runFullWorkflow(command, extraArgs);
             } catch (Exception e) {
                 window.setError(e.getMessage());
@@ -66,14 +62,11 @@ public class RaveXLoader {
         nativeAvailable = false;
 
         window = new LoaderWindow();
-        window.setVersion("1.0");
         window.setVisible(true);
         window.updateStatus("Initializing client optimization...", 0);
 
         new Thread(() -> {
             try {
-                AssetDownloader downloader = new AssetDownloader();
-                downloader.downloadRequiredAssets();
                 runOptimizationOnly();
             } catch (Exception ignored) {}
         }).start();
@@ -99,7 +92,6 @@ public class RaveXLoader {
 
     private static void runStandaloneOptimizer() {
         window = new LoaderWindow();
-        window.setVersion("1.0");
         window.setVisible(true);
         window.updateStatus("Initializing Standalone Optimizer...", 0);
 
@@ -176,7 +168,6 @@ public class RaveXLoader {
         }
 
         window = new LoaderWindow();
-        window.setVersion(version);
         window.setVisible(true);
         window.updateStatus("Initializing client optimization...", 0);
 
@@ -184,7 +175,6 @@ public class RaveXLoader {
             try {
                 window.updateStatus("Loading components...", 2);
                 nativeAvailable = NativeBridge.load();
-                new AssetDownloader().downloadRequiredAssets();
                 String osDetails = getDetailedOSName();
                 SystemOptimizer optimizer = new SystemOptimizer(nativeAvailable);
                 optimizer.runChecks(window, osDetails);
@@ -240,19 +230,6 @@ public class RaveXLoader {
                 window.updateStatus(status, progress);
             } catch (Throwable ignored) {}
         }
-    }
-
-    private static String readVersion(String path) {
-        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith("mod_version")) {
-                    int eq = line.indexOf('=');
-                    if (eq != -1) return line.substring(eq + 1).trim();
-                }
-            }
-        } catch (Exception ignored) {}
-        return "1.0";
     }
 
     private static void sleep(long ms) {

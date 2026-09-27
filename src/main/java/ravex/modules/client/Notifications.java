@@ -24,6 +24,8 @@ import ravex.modules.Modules;
 public class Notifications {
     @Parameter(name = "Mode", modes = {"Text", "Toast"})
     public String mode = "Toast";
+    @Parameter(name = "ClientAlerts", modes = {"Text", "Toast"})
+    public String clientAlerts = "Text";
     @Parameter(name = "VisualRange", modes = {"Off", "Text", "Toast"})
     public String visualRange = "Toast";
     @Parameter(name = "ItemCollection", modes = {"Off", "Toast", "Text"})
@@ -213,14 +215,14 @@ public class Notifications {
             NotificationManager.addToast(module.getName(), color, enabled, Modules.get(Notifications.class).toastOpacity, (int) Modules.get(Notifications.class).toastSize);
             return;
         }
-        String action = enabled ? "Enabled" : "Disabled";
+        String action = enabled ? ravex.utility.misc.LanguageUtility.t("enabled") : ravex.utility.misc.LanguageUtility.t("disabled");
         if (mc.getPlayer() != null) {
             Component message = Component.literal("[")
                 .withStyle(style -> style.withColor(0x7F7F7F))
                 .append(Component.literal("RaveX").withStyle(style -> style.withColor(color)))
-                .append(Component.literal("] ravex.modules.Module ").withStyle(style -> style.withColor(color)))
+                .append(Component.literal("] ").withStyle(style -> style.withColor(color)))
                 .append(Component.literal(module.getName()).withStyle(style -> style.withColor(color)))
-                .append(Component.literal(" has been ").withStyle(style -> style.withColor(0x7F7F7F)))
+                .append(Component.literal(" " + ravex.utility.misc.LanguageUtility.t("has_been") + " ").withStyle(style -> style.withColor(0x7F7F7F)))
                 .append(Component.literal(action).withStyle(style -> style.withColor(color)))
                 .append(Component.literal(".").withStyle(style -> style.withColor(0x7F7F7F)));
             mc.getPlayer().displayClientMessage(message, false);

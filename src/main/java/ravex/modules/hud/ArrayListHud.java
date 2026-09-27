@@ -92,7 +92,7 @@ public class ArrayListHud extends ravex.modules.Module {
             }
 
             anim.spring.update(delta);
-            anim.opacity = anim.spring.getValue();
+            anim.opacity = Math.max(0f, Math.min(1f, anim.spring.getValue()));
             idx++;
         }
 
@@ -110,7 +110,7 @@ public class ArrayListHud extends ravex.modules.Module {
         }
         panelOpacity.update(delta);
 
-        float panelAlpha = panelOpacity.getValue();
+        float panelAlpha = Math.max(0f, Math.min(1f, panelOpacity.getValue()));
         if (panelAlpha < 0.01f && !anyEnabled) return;
 
         List<String> activeNames = new ArrayList<>();
@@ -167,7 +167,7 @@ public class ArrayListHud extends ravex.modules.Module {
                 float angle = angleBase + (idx * 8f + ci) * 0.35f;
                 float blend = (float) Math.sin(angle) * 0.5f + 0.5f;
                 int chColor = ColorUtility.interpolate(0xFFFFFFFF, 0xFF0055EE, blend);
-                HudRendererUtility.drawText(graphics, ch, charX, cy + offsetY, (chColor & 0xFFFFFF) | (itemAlpha << 24), shadow);
+                HudRendererUtility.drawText(graphics, ch, charX, cy + offsetY, ColorUtility.setAlpha(chColor, itemAlpha), shadow);
                 charX += FontRenderUtility.getStringWidth(ch);
             }
 

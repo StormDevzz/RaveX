@@ -24,10 +24,6 @@ public class WebAura {
     public String targetMode = "Closest";
     @Parameter(name = "TargetType", modes = {"Players", "Monsters", "Passives", "All"})
     public String targetType = "Players";
-    @Parameter(name = "Render")
-    public boolean render = true;
-    @Parameter(name = "Color", color = true, visible = "render")
-    public int color = 0xFFFFFFFF;
     private long lastPlaceTime = 0;
     private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
 

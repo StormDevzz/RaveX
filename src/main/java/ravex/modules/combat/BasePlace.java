@@ -14,11 +14,9 @@ import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 import ravex.utility.misc.CombatUtility;
-
-
-
-
-
+import ravex.utility.client.ClientAlertUtility;
+import ravex.utility.misc.LanguageUtility;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 
 @Module(name = "BasePlace", category = "Combat")
 public class BasePlace {
@@ -38,7 +36,7 @@ public class BasePlace {
     public double selfDamageWeight = 1.2;
     @Parameter(name = "AntiSuicide")
     public boolean antiSuicide = true;
-    @Parameter(name = "AntiSuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
+    @Parameter(name = "SuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
     public double antiSuicideMinHp = 6.0;
     @Parameter(name = "PredictTicks", min = 0.0, max = 4.0, step = 0.1)
     public double predictTicks = 1.0;
@@ -58,7 +56,7 @@ public class BasePlace {
     public boolean swapInventory = true;
     @Parameter(name = "AutoCrystalSync")
     public boolean autoCrystalSync = true;
-    @Parameter(name = "SyncPredictTicks", min = 1.0, max = 10.0, step = 1.0)
+    @Parameter(name = "SyncPredict", min = 1.0, max = 10.0, step = 1.0)
     public double syncPredictTicks = 5.0;
     @Parameter(name = "Render")
     public boolean render = true;
@@ -68,7 +66,7 @@ public class BasePlace {
     public static long lastPlacedTime = 0;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
-    private final java.util.Map<net.minecraft.core.BlockPos, Long> placedPositions = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<net.minecraft.core.BlockPos, Long> placedPositions = new java.util.concurrent.ConcurrentHashMap<>();
     private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private long lastPlaceTime = 0;
     private static net.minecraft.core.BlockPos simulatedPlacementBlock = null;
@@ -85,7 +83,11 @@ public class BasePlace {
     public static net.minecraft.core.BlockPos getSimulatedPlacementBlock() {
         return simulatedPlacementBlock;
     }
+    public static java.util.Map<net.minecraft.core.BlockPos, Long> getRecentPlacedBlocks() {
+        return placedPositions;
+    }
     public void onEnable() {
+        NATIVE.load();
         lastPlaceTime = 0;
         silentRotation.reset();
         lastPlacedBase = null;
@@ -101,6 +103,9 @@ public class BasePlace {
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
+        if (!NATIVE.isLoaded()) {
+            NATIVE.load();
+        }
         silentRotation.hasRotation = false;
         if (autoCrystalSync) {
             AutoCrystal ac = Modules.get(AutoCrystal.class);
@@ -108,12 +113,15 @@ public class BasePlace {
                 simulatedPlacementBlock = null;
                 return;
             }
-            if (AutoCrystal.currentPlacementBlock != null) {
+            if (AutoCrystal.currentPlacementBlock != null && AutoCrystal.currentTargetDamage >= ac.minDamage) {
                 simulatedPlacementBlock = null;
                 return;
             }
             if (!playerHasCrystals(mc)) {
                 simulatedPlacementBlock = null;
+                return;
+            }
+            if (System.currentTimeMillis() - lastPlacedTime < 350) {
                 return;
             }
             String acPlaceMode = ac.placeMode;
@@ -127,6 +135,13 @@ public class BasePlace {
         if (target == null) {
             simulatedPlacementBlock = null;
             return;
+        }
+        if (autoCrystalSync) {
+            AutoCrystal ac = Modules.get(AutoCrystal.class);
+            if (hasDamagingCrystalNearby(mc, target, ac.minDamage)) {
+                simulatedPlacementBlock = null;
+                return;
+            }
         }
         double[] solidBlockData = CombatUtility.collectSolidBlocks(mc, (int) Math.ceil(range) + 2);
         boolean airPlaceMode = airPlace;
@@ -195,16 +210,34 @@ public class BasePlace {
             originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
             InventoryUtility.silentSelectSlot(mc.getPlayer(), blockSlot);
         }
+        int prevSelected = mc.getPlayer().getInventory().getSelectedSlot();
+        mc.getPlayer().getInventory().setSelectedSlot(blockSlot);
         net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
         mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+        mc.getPlayer().getInventory().setSelectedSlot(prevSelected);
         SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
         placedPositions.put(targetBlock, now);
         lastPlaceTime = now;
         lastPlacedBase = targetBlock;
         lastPlacedTime = now;
+        ClientAlertUtility.alert(LanguageUtility.t("baseplace_placed", targetBlock.getX(), targetBlock.getY(), targetBlock.getZ()), 0xFF55FF55);
         if (swapSwitchBack && originalSlot != -1 && !swap.equals("None")) {
             InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
         }
+    }
+    private boolean hasDamagingCrystalNearby(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, double minDmg) {
+        if (target == null) return false;
+        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
+            if (e instanceof EndCrystal crystal && crystal.isAlive() && !crystal.isRemoved()) {
+                double dist = crystal.position().distanceTo(target.position());
+                if (dist <= 6.0) {
+                    double impact = Math.max(0, (1.0 - dist / 12.0));
+                    double dmg = (impact * impact + impact) / 2.0 * 84.0 + 1.0;
+                    if (dmg >= minDmg) return true;
+                }
+            }
+        }
+        return false;
     }
     private boolean playerHasCrystals(MinecraftWrapper mc) {
         if (InventoryUtility.isHolding(mc.getPlayer(), "end_crystal")) return true;

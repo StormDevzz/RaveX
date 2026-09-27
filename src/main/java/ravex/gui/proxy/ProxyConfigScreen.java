@@ -144,7 +144,6 @@ public class ProxyConfigScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         graphics.fillGradient(0, 0, this.width, this.height, 0xEA06060E, 0xEA0C0C1A);
 
-        Font font = MinecraftWrapper.getWrapper().getFont();
         int cx = width / 2;
 
         graphics.fill(0, 0, width, 38, 0xCC08081A);
@@ -152,19 +151,19 @@ public class ProxyConfigScreen extends Screen {
         FontRenderUtility.drawString(graphics, "Proxy Configuration", 18, 10, 0xFFFFFFFF, true);
         FontRenderUtility.drawString(graphics, "Configure your proxy connection", 18, 23, 0xFF7070A0, false);
 
-        graphics.drawString(font, "Host", cx - 90, 68, 0xFF909090, true);
-        graphics.drawString(font, "Port", cx - 90, 103, 0xFF909090, true);
+        FontRenderUtility.drawString(graphics, "Host", cx - 90, 68, 0xFF909090, true);
+        FontRenderUtility.drawString(graphics, "Port", cx - 90, 103, 0xFF909090, true);
 
         if (authEnabled) {
-            graphics.drawString(font, "Username", cx - 90, 153, 0xFF909090, true);
-            graphics.drawString(font, "Password", cx - 90, 188, 0xFF909090, true);
+            FontRenderUtility.drawString(graphics, "Username", cx - 90, 153, 0xFF909090, true);
+            FontRenderUtility.drawString(graphics, "Password", cx - 90, 188, 0xFF909090, true);
         }
 
         if (statusTimer > 0) {
-            graphics.drawString(font, statusMessage, cx - 90, 260, 0xFFAAFFAA, true);
+            FontRenderUtility.drawString(graphics, statusMessage, cx - 90, 260, 0xFFAAFFAA, true);
         }
 
-        graphics.drawString(font, "© RaveX Client", 8, height - 12, 0xFF404060, true);
+        FontRenderUtility.drawString(graphics, "© RaveX Client", 8, height - 12, 0xFF404060, true);
 
         super.render(graphics, mouseX, mouseY, partialTicks);
     }

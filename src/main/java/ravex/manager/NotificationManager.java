@@ -1,17 +1,15 @@
 package ravex.manager;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuSampler;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import ravex.utility.notification.NotificationUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
-import java.lang.reflect.Field;
+import ravex.utility.render.Render2DUtility;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NotificationManager {
@@ -23,6 +21,8 @@ public class NotificationManager {
     private static final int LINE_HEIGHT = 10;
     private static final int GAP = 4;
     private static final int ACCENT_HEIGHT = 1;
+    private static final int PANEL_RADIUS = 4;
+    private static final int TOAST_RADIUS = 4;
 
     private static final int TOAST_MARGIN = 4;
     private static final int TOAST_ICON_SIZE = 24;
@@ -35,13 +35,21 @@ public class NotificationManager {
 
     private static Identifier enableIcon;
     private static Identifier disableIcon;
+    private static Identifier infoIcon;
     private static boolean texturesLoaded = false;
+
+    public enum ToastType {
+        ENABLE,
+        DISABLE,
+        INFO
+    }
 
     private static void ensureTextures() {
         if (texturesLoaded) return;
         try {
             enableIcon = loadTexture("enable");
             disableIcon = loadTexture("disable");
+            infoIcon = loadTexture("info");
             texturesLoaded = true;
         } catch (Exception e) {
             ravex.RaveX.LOGGER.warn("[Notifications] Failed to load toast icons: {}", e.getMessage());
@@ -53,19 +61,13 @@ public class NotificationManager {
         try (java.io.InputStream stream = NotificationManager.class.getResourceAsStream("/assets/ravex/textures/" + name + ".png")) {
             if (stream != null) {
                 NativeImage image = NativeImage.read(stream);
+                if ("info".equals(name)) {
+                    tintOrange(image);
+                }
                 NativeImage scaled = downscaleTo(image, 128);
                 if (scaled != image) image.close();
                 DynamicTexture tex = new DynamicTexture(() -> "toast_" + name, scaled);
-                try {
-                    GpuSampler sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-                    for (Field f : AbstractTexture.class.getDeclaredFields()) {
-                        if (GpuSampler.class.isAssignableFrom(f.getType())) {
-                            f.setAccessible(true);
-                            f.set(tex, sampler);
-                            break;
-                        }
-                    }
-                } catch (Exception ignored) {}
+                Render2DUtility.setLinearSampler(tex);
                 Identifier id = Identifier.fromNamespaceAndPath("ravex", "toast_" + name);
                 MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
                 return id;
@@ -74,6 +76,28 @@ public class NotificationManager {
             ravex.RaveX.LOGGER.warn("[Notifications] Failed to load texture {}: {}", name, e.getMessage());
         }
         return null;
+    }
+
+    private static void tintOrange(NativeImage image) {
+        int oR = 0xFF, oG = 0x8C, oB = 0x00;
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int rgba = image.getPixel(x, y);
+                int a = (rgba >> 24) & 0xFF;
+                if (a == 0) continue;
+                int r = (rgba >> 16) & 0xFF;
+                int g = (rgba >> 8) & 0xFF;
+                int b = rgba & 0xFF;
+                int brightness = (r + g + b) / 3;
+                if (brightness < 80) {
+                    float t = brightness / 80f;
+                    int nr = (int) (oR * (1f - t) + 255 * t);
+                    int ng = (int) (oG * (1f - t) + 255 * t);
+                    int nb = (int) (oB * (1f - t) + 255 * t);
+                    image.setPixel(x, y, (a << 24) | (nr << 16) | (ng << 8) | nb);
+                }
+            }
+        }
     }
 
     private static NativeImage downscaleTo(NativeImage image, int maxDim) {
@@ -169,6 +193,17 @@ public class NotificationManager {
         }
     }
 
+    public static void addToast(String text, int color, ToastType type, double opacity, int iconSize) {
+        toasts.add(new ToastEntry(text, color, type, opacity, iconSize));
+        if (toasts.size() > 6) {
+            toasts.remove(0);
+        }
+    }
+
+    public static void addToast(String text, int color, ToastType type) {
+        addToast(text, color, type, 0.85, 14);
+    }
+
     public static void addToast(String text, int color, boolean enabled, double opacity, int iconSize) {
         toasts.add(new ToastEntry(text, color, enabled, opacity, iconSize));
         if (toasts.size() > 6) {
@@ -208,20 +243,18 @@ public class NotificationManager {
             int panelH = LINE_HEIGHT + PANEL_PADDING_Y * 2;
             int panelX = (screenW - panelW) / 2;
 
-            int bgColor = (int)(0xBB * alpha) << 24;
+            int bgColor = ColorUtility.withAlpha(0x000000, (int)(0xBB * alpha));
             if (bgColor == 0) continue;
 
-            int accentColor = n.color;
-            int accentAlpha = (int)(0xFF * alpha) << 24;
-            accentColor = (accentColor & 0x00FFFFFF) | accentAlpha;
+            int accentColor = ColorUtility.setAlpha(n.color, (int)(0xFF * alpha));
 
-            graphics.fill(panelX, currentY, panelX + panelW, currentY + panelH, bgColor);
-            graphics.fill(panelX, currentY, panelX + panelW, currentY + ACCENT_HEIGHT, accentColor);
+            Render2DUtility.drawRound(graphics, panelX, currentY, panelW, panelH, PANEL_RADIUS, bgColor);
+            Render2DUtility.drawRound(graphics, panelX + PANEL_RADIUS, currentY, panelW - PANEL_RADIUS * 2, ACCENT_HEIGHT, ACCENT_HEIGHT, accentColor);
 
-            int textColor = (n.color & 0x00FFFFFF) | ((int)(0xFF * alpha) << 24);
+            int textColor = ColorUtility.setAlpha(n.color, (int)(0xFF * alpha));
             int textX = panelX + PANEL_PADDING_X;
             int textY = currentY + PANEL_PADDING_Y;
-            graphics.drawString(mc.getFont(), n.text, textX, textY, textColor, false);
+            FontRenderUtility.drawString(graphics, n.text, textX, textY, textColor, false);
 
             currentY += panelH + GAP;
         }
@@ -278,18 +311,25 @@ public class NotificationManager {
             int panelY = currentY;
 
             int bgAlpha = (int)(t.opacity * 255f * alpha);
-            int bgColor = bgAlpha << 24;
+            int bgColor = ColorUtility.withAlpha(0x000000, bgAlpha);
             if (bgColor == 0) continue;
 
-            graphics.fill(panelX, panelY, panelX + panelW, panelY + panelH, bgColor);
+            Render2DUtility.drawRound(graphics, panelX, panelY, panelW, panelH, TOAST_RADIUS, bgColor);
 
-            int textColor = (t.color & 0x00FFFFFF) | ((int)(0xFF * alpha) << 24);
+            int textColor = ColorUtility.setAlpha(t.color, (int)(0xFF * alpha));
 
             int iconX = panelX + TOAST_PADDING_X;
             int iconY = panelY + (panelH - iconSize) / 2;
 
-            int iconColor = 0x00FFFFFF | ((int)(0xFF * alpha) << 24);
-            Identifier iconTex = t.enabled ? enableIcon : disableIcon;
+            int iconColor = ColorUtility.withAlpha(0x00FFFFFF, (int)(0xFF * alpha));
+            Identifier iconTex;
+            if (t.type == ToastType.INFO) {
+                iconTex = infoIcon != null ? infoIcon : enableIcon;
+            } else if (t.type == ToastType.ENABLE) {
+                iconTex = enableIcon;
+            } else {
+                iconTex = disableIcon;
+            }
             graphics.blit(RenderPipelines.GUI_TEXTURED, iconTex,
                 iconX, iconY, 0f, 0f, iconSize, iconSize, iconSize, iconSize,
                 iconColor);
@@ -308,18 +348,22 @@ public class NotificationManager {
     private static class ToastEntry {
         final String text;
         final int color;
-        final boolean enabled;
+        final ToastType type;
         final long startTime;
         final double opacity;
         final int iconSize;
 
-        ToastEntry(String text, int color, boolean enabled, double opacity, int iconSize) {
+        ToastEntry(String text, int color, ToastType type, double opacity, int iconSize) {
             this.text = text;
             this.color = color;
-            this.enabled = enabled;
+            this.type = type;
             this.opacity = opacity;
             this.iconSize = iconSize;
             this.startTime = System.currentTimeMillis();
+        }
+
+        ToastEntry(String text, int color, boolean enabled, double opacity, int iconSize) {
+            this(text, color, enabled ? ToastType.ENABLE : ToastType.DISABLE, opacity, iconSize);
         }
     }
 }

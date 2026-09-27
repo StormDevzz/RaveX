@@ -14,6 +14,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 import ravex.modules.player.PacketMine;
 import ravex.utility.misc.CombatUtility;
+import ravex.utility.client.ClientAlertUtility;
 
 
 
@@ -33,7 +34,7 @@ public class Breaker {
     public double selfDamageWeight = 1.2;
     @Parameter(name = "AntiSuicide")
     public boolean antiSuicide = true;
-    @Parameter(name = "AntiSuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
+    @Parameter(name = "SuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
     public double antiSuicideMinHp = 6.0;
     @Parameter(name = "Rotate", modes = {"Silent", "Normal", "None"})
     public String rotate = "Silent";
@@ -64,10 +65,7 @@ public class Breaker {
             boolean packetMineEnabled = Modules.enabled(PacketMine.class);
             if (!packetMineEnabled) {
                 syncPacketMine = false;
-                mc.getPlayer().displayClientMessage(
-                        net.minecraft.network.chat.Component
-                                .literal("§7[§cBreaker§7] §cPacketMine was disabled, Sync PacketMine turned off!"),
-                        false);
+                ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("breaker_sync"), 0xFFFF5555);
             }
         }
         if (!NATIVE.isLoaded())

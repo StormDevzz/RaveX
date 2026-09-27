@@ -12,9 +12,6 @@ import ravex.modules.Modules;
 public class MineAnimation {
     @Parameter(name = "HideHandSwing")
     public boolean hideSwing = true;
-    @Parameter(name = "HideBlockCracks")
-    public boolean hideCracks = true;
-
     @Subscribe
     public void onPacket(PacketEvent event) {
         if (!Modules.enabled(MineAnimation.class) || !event.isSend()) return;

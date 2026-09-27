@@ -6,8 +6,6 @@ import ravex.utility.movement.MoveUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "LongJump", category = "Movement")
 public class LongJump {
-    @Parameter(name = "Mode", modes = {"Vanilla"})
-    public String mode = "Vanilla";
     @Parameter(name = "Boost", min = 1.0, max = 10.0, step = 0.1)
     public double boost = 1.5;
     public static boolean jumped = false;

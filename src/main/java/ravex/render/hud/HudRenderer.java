@@ -14,10 +14,18 @@ import ravex.manager.ModuleManager;
 import ravex.manager.NotificationManager;
 import ravex.manager.ShaderManager;
 import ravex.modules.Module;
-import ravex.modules.render.*;
-import ravex.modules.combat.*;
-import ravex.modules.player.*;
-import ravex.modules.world.*;
+import ravex.modules.render.Ambient;
+import ravex.modules.render.Crosshair;
+import ravex.modules.render.ESP;
+import ravex.modules.render.NameTags;
+import ravex.modules.render.Tracers;
+import ravex.modules.render.Waypoint;
+import ravex.modules.player.MobOwner;
+import ravex.modules.combat.BasePlace;
+import ravex.modules.combat.AnchorAura;
+import ravex.modules.combat.AutoCrystal;
+import ravex.modules.player.PacketMine;
+import ravex.modules.world.PVEUtils;
 import ravex.modules.client.Hud;
 import ravex.utility.misc.GuiOptimizerUtility;
 
@@ -28,6 +36,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector4f;
 
 import ravex.utility.render.Render2DUtility;
+import ravex.utility.render.ColorUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +46,16 @@ import ravex.modules.Modules;
 public final class HudRenderer {
     public static final HudRenderer INSTANCE = new HudRenderer();
 
+    private double acAnimX = 0, acAnimY = 0, acAnimZ = 0;
+    private float acAlpha = 0f;
+    private double aaAnimX = 0, aaAnimY = 0, aaAnimZ = 0;
+    private float aaAlpha = 0f;
+    private double bpAnimX = 0, bpAnimY = 0, bpAnimZ = 0;
+    private float bpAlpha = 0f;
+    private double rotAnimX = 0, rotAnimY = 0, rotAnimZ = 0;
+    private float rotAlpha = 0f;
+    private long lastLabelTime = 0;
+
     private HudRenderer() {}
 
     public void render(GuiGraphics context, DeltaTracker tickCounter) {
@@ -44,7 +63,7 @@ public final class HudRenderer {
 
         if (Modules.enabled(Ambient.class)) {
             int color = ModuleManager.get(Ambient.class).color;
-            context.fill(0, 0, context.guiWidth(), context.guiHeight(), color);
+            Render2DUtility.drawRect(context, 0, 0, context.guiWidth(), context.guiHeight(), color);
         }
 
         if (mc.getLevel() == null || mc.getPlayer() == null) {
@@ -52,7 +71,7 @@ public final class HudRenderer {
             return;
         }
 
-        float pt = tickCounter.getGameTimeDeltaTicks();
+        float pt = tickCounter.getGameTimeDeltaPartialTick(true);
         Vec3 cameraPos = mc.getGameRenderer().getMainCamera().position();
         boolean espEnabled = Modules.enabled(ESP.class);
         boolean nameTagsEnabled = Modules.enabled(NameTags.class);
@@ -71,7 +90,7 @@ public final class HudRenderer {
 
         renderTracers(context, mc, candidates, tracersEnabled, pt, cameraPos, cameraLook, guiWidth, guiHeight);
 
-        renderNameTagsAndESP(context, mc, candidates, cameraPos, cameraLook, pt, guiWidth, guiHeight, espEnabled, nameTagsEnabled, mobOwnerEnabled, playerViewVec);
+        renderNameTagsAndESP(context, mc, candidates, cameraPos, cameraLook, cRotation, pt, guiWidth, guiHeight, espEnabled, nameTagsEnabled, mobOwnerEnabled, playerViewVec);
 
         renderDamageLabels(context, mc, pt, cameraPos, cameraLook, guiWidth, guiHeight);
         renderPacketMine(context, mc);
@@ -98,7 +117,7 @@ public final class HudRenderer {
             if (tracersEnabled) maxDist = Math.max(maxDist, ModuleManager.get(Tracers.class).maxDistance);
             if (dist > maxDist) continue;
 
-            if (firstPerson && dist < 1.2 && !nameTagsEnabled) continue;
+            if (firstPerson && dist < 1.2 && !nameTagsEnabled && !tracersEnabled) continue;
 
             boolean isPlayer = target instanceof Player;
             boolean isMonster = target instanceof LivingEntity le && EntityUtility.isHostile(le);
@@ -154,10 +173,10 @@ public final class HudRenderer {
             }
         }
 
-        if ("Arrows".equals(tracers.mode)) {
+        if ("ArrowOld".equals(tracers.mode) || "ArrowNew".equals(tracers.mode)) {
             Tracers.renderArrows(context, tracerEntities, tracerColors, pt, cameraPos, cameraLook, guiWidth, guiHeight);
         } else {
-            float width = (float) tracers.lineWidth;
+            float width = 1.5f;
             for (int i = 0; i < tracerEntities.size(); i++) {
                 Entity target = tracerEntities.get(i);
                 int color = tracerColors.get(i);
@@ -192,13 +211,13 @@ public final class HudRenderer {
                             if (len > 0) { ex = cx + (dx / len) * (cx - borderPadding); ey = cy + (dy / len) * (cy - borderPadding); }
                         }
                     }
-                    drawTracerLine2D(context, (float) cx, (float) cy, (float) ex, (float) ey, color, width);
+                    Render2DUtility.drawLine(context, (float) cx, (float) cy, (float) ex, (float) ey, width, color);
                 }
             }
         }
     }
 
-    private void renderNameTagsAndESP(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled, Vec3 playerViewVec) {
+    private void renderNameTagsAndESP(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, Quaternionf cRotation, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled, Vec3 playerViewVec) {
 
         boolean nativeSuccess = false;
         int count = candidates.size();
@@ -291,7 +310,7 @@ public final class HudRenderer {
         if (nativeSuccess) {
             renderNativeLayout(context, mc, candidates, renderedCount, outIndices, outLayouts, espEnabled, nameTagsEnabled, mobOwnerEnabled);
         } else {
-            renderFallbackLayout(context, mc, candidates, cameraPos, cameraLook, pt, guiWidth, guiHeight, espEnabled, nameTagsEnabled, mobOwnerEnabled);
+            renderFallbackLayout(context, mc, candidates, cameraPos, cameraLook, cRotation, pt, guiWidth, guiHeight, espEnabled, nameTagsEnabled, mobOwnerEnabled);
         }
     }
 
@@ -315,12 +334,16 @@ public final class HudRenderer {
             double sx_side = outLayouts[k * 16 + 12];
             double dist = outLayouts[k * 16 + 13];
 
-            int bx = (int) sx_base, by = (int) sy_base, hy = (int) sy_head, sx = (int) sx_side;
-            int boxH = Math.abs(by - hy);
-            int halfBoxW = Math.max(2, Math.abs(sx - bx));
+            float bxF = (float) sx_base;
+            float byF = (float) sy_base;
+            float hyF = (float) sy_head;
+            float sxF = (float) sx_side;
+            int boxH = Math.round(Math.abs(byF - hyF));
+            int halfBoxW = Math.max(2, Math.round(Math.abs(sxF - bxF)));
             int boxW = halfBoxW * 2;
-            int boxX = bx - halfBoxW;
-            int y = Math.min(by, hy);
+            int boxX = Math.round(bxF) - halfBoxW;
+            float anchorY = Math.min(byF, hyF);
+            int y = Math.round(anchorY);
 
             boolean isPlayer = target instanceof Player;
             boolean isMonster = target instanceof LivingEntity le && EntityUtility.isHostile(le);
@@ -337,12 +360,13 @@ public final class HudRenderer {
             boolean withinRange = dist <= ModuleManager.get(NameTags.class).range;
             boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && withinRange && Modules.get(NameTags.class).shouldDraw(target);
             if (drawNametags || hasOwner) {
-                renderNametag(context, mc, target, bx, y, scale, totalW, totalH, armorRowY, mainRowY, ownerRowY, textYOff, mainRowW, armorRowW, drawNametags, hasOwner, ownerName);
+                renderNametag(context, mc, target, bxF, anchorY, scale, totalW, totalH, armorRowY, mainRowY, ownerRowY, textYOff, mainRowW, armorRowW, drawNametags, hasOwner, ownerName);
             }
         }
     }
 
-    private void renderFallbackLayout(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled) {
+    private void renderFallbackLayout(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, Quaternionf cRotation, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled) {
+        Matrix4f worldProj = ravex.manager.ShaderManager.INSTANCE.getWorldProjectionMatrix();
         for (Entity target : candidates) {
             boolean isPlayer = target instanceof Player;
             boolean isMonster = target instanceof LivingEntity le && EntityUtility.isHostile(le);
@@ -350,15 +374,15 @@ public final class HudRenderer {
             boolean isItem = target instanceof net.minecraft.world.entity.item.ItemEntity;
 
             Vec3 basePos = target.getPosition(pt);
-            double dist = mc.getPlayer().distanceTo(target);
+            double dist = mc.getPlayer().getPosition(pt).distanceTo(basePos);
             float bbHeight = target.getBbHeight();
             float bbWidth = target.getBbWidth();
             Vec3 headPos = basePos.add(0, bbHeight, 0);
             Vec3 sidePos = basePos.add(bbWidth / 2.0f, bbHeight / 2.0f, 0);
 
-            Vec3 baseProj = mc.getGameRenderer().projectPointToScreen(basePos);
-            Vec3 headProj = mc.getGameRenderer().projectPointToScreen(headPos);
-            Vec3 sideProj = mc.getGameRenderer().projectPointToScreen(sidePos);
+            Vec3 baseProj = projectWorld(worldProj, basePos, cRotation, cameraPos, mc);
+            Vec3 headProj = projectWorld(worldProj, headPos, cRotation, cameraPos, mc);
+            Vec3 sideProj = projectWorld(worldProj, sidePos, cRotation, cameraPos, mc);
             if (baseProj == null || headProj == null || sideProj == null) continue;
 
             Vec3 dir = (new Vec3(basePos.x - cameraPos.x, basePos.y - cameraPos.y, basePos.z - cameraPos.z)).normalize();
@@ -373,12 +397,16 @@ public final class HudRenderer {
             if ((sx_base < 0 || sx_base > guiWidth || sy_base < 0 || sy_base > guiHeight) &&
                 (sx_head < 0 || sx_head > guiWidth || sy_head < 0 || sy_head > guiHeight)) continue;
 
-            int bx = (int) sx_base, by = (int) sy_base, hy = (int) sy_head, sx = (int) sx_side;
-            int boxH = Math.abs(by - hy);
-            int halfBoxW = Math.max(2, Math.abs(sx - bx));
+            float bxF = (float) sx_base;
+            float byF = (float) sy_base;
+            float hyF = (float) sy_head;
+            float sxF = (float) sx_side;
+            int boxH = Math.round(Math.abs(byF - hyF));
+            int halfBoxW = Math.max(2, Math.round(Math.abs(sxF - bxF)));
             int boxW = halfBoxW * 2;
-            int boxX = bx - halfBoxW;
-            int y = Math.min(by, hy);
+            int boxX = Math.round(bxF) - halfBoxW;
+            float anchorY = Math.min(byF, hyF);
+            int y = Math.round(anchorY);
 
             String ownerName = (mobOwnerEnabled && target instanceof LivingEntity living) ? MobOwner.getOwnerName(living) : null;
             boolean hasOwner = ownerName != null;
@@ -422,9 +450,20 @@ public final class HudRenderer {
                 double armorRowY = layout[3], mainRowY = layout[4], ownerRowY = layout[5];
                 double textYOff = layout[6], mainRowW = layout[7], armorRowW = layout[8];
 
-                renderNametagAt(context, mc, bx, y, scale, totalW, totalH, armorRowY, mainRowY, ownerRowY, textYOff, mainRowW, armorRowW, drawNametags, hasOwner, livingTarget, ownerName, tagText, tw, ow, showArmor, showHands, armorCount, hasMainHand, hasOffHand);
+                renderNametagAt(context, mc, bxF, anchorY, scale, totalW, totalH, armorRowY, mainRowY, ownerRowY, textYOff, mainRowW, armorRowW, drawNametags, hasOwner, livingTarget, ownerName, tagText, tw, ow, showArmor, showHands, armorCount, hasMainHand, hasOffHand);
             }
         }
+    }
+
+    private Vec3 projectWorld(Matrix4f worldProj, Vec3 pos, Quaternionf cRotation, Vec3 cameraPos, MinecraftWrapper mc) {
+        if (worldProj == null) {
+            return mc.getGameRenderer().projectPointToScreen(pos);
+        }
+        Quaternionf conjugate = new Quaternionf(cRotation).conjugate();
+        Matrix4f matrix = new Matrix4f(worldProj).mul(new Matrix4f().rotation(conjugate));
+        Vec3 rel = pos.subtract(cameraPos);
+        org.joml.Vector3f projected = matrix.transformProject(new org.joml.Vector3f((float) rel.x, (float) rel.y, (float) rel.z));
+        return new Vec3(projected.x, projected.y, projected.z);
     }
 
     private void renderESPBox(GuiGraphics context, MinecraftWrapper mc, Entity target, int boxX, int y, int boxW, int boxH, boolean isPlayer, boolean isMonster, boolean isAnimal, boolean isItem) {
@@ -436,19 +475,11 @@ public final class HudRenderer {
             : ModuleManager.get(ESP.class).frameColor)));
 
         if ("Box2D".equals(mode)) {
-            context.fill(boxX, y, boxX + boxW, y + 1, espColor);
-            context.fill(boxX, y + boxH, boxX + boxW, y + boxH + 1, espColor);
-            context.fill(boxX, y, boxX + 1, y + boxH, espColor);
-            context.fill(boxX + boxW - 1, y, boxX + boxW, y + boxH, espColor);
-            int ca = 4;
-            context.fill(boxX, y, boxX + ca, y + 1, espColor);
-            context.fill(boxX + boxW - ca, y, boxX + boxW, y + 1, espColor);
-            context.fill(boxX, y + boxH, boxX + ca, y + boxH + 1, espColor);
-            context.fill(boxX + boxW - ca, y + boxH, boxX + boxW, y + boxH + 1, espColor);
+            Render2DUtility.drawBorder(context, boxX, y, boxW, boxH, 1, espColor);
         }
     }
 
-    private void renderNametag(GuiGraphics context, MinecraftWrapper mc, Entity target, int bx, int y, double scale, double totalW, double totalH, double armorRowY, double mainRowY, double ownerRowY, double textYOff, double mainRowW, double armorRowW, boolean drawNametags, boolean hasOwner, String ownerName) {
+    private void renderNametag(GuiGraphics context, MinecraftWrapper mc, Entity target, float bx, float y, double scale, double totalW, double totalH, double armorRowY, double mainRowY, double ownerRowY, double textYOff, double mainRowW, double armorRowW, boolean drawNametags, boolean hasOwner, String ownerName) {
         LivingEntity livingTarget = (LivingEntity) target;
         String displayName = livingTarget.getDisplayName().getString();
         int health = (int) Math.ceil(livingTarget.getHealth());
@@ -470,9 +501,9 @@ public final class HudRenderer {
         renderNametagAt(context, mc, bx, y, scale, totalW, totalH, armorRowY, mainRowY, ownerRowY, textYOff, mainRowW, armorRowW, drawNametags, hasOwner, livingTarget, ownerName, tagText, tw, ow, showArmor, showHands, armorCount, hasMainHand, hasOffHand);
     }
 
-    private void renderNametagAt(GuiGraphics context, MinecraftWrapper mc, int bx, int y, double scale, double totalW, double totalH, double armorRowY, double mainRowY, double ownerRowY, double textYOff, double mainRowW, double armorRowW, boolean drawNametags, boolean hasOwner, LivingEntity livingTarget, String ownerName, String tagText, double tw, double ow, boolean showArmor, boolean showHands, int armorCount, boolean hasMainHand, boolean hasOffHand) {
+    private void renderNametagAt(GuiGraphics context, MinecraftWrapper mc, float bx, float y, double scale, double totalW, double totalH, double armorRowY, double mainRowY, double ownerRowY, double textYOff, double mainRowW, double armorRowW, boolean drawNametags, boolean hasOwner, LivingEntity livingTarget, String ownerName, String tagText, double tw, double ow, boolean showArmor, boolean showHands, int armorCount, boolean hasMainHand, boolean hasOffHand) {
         context.pose().pushMatrix();
-        context.pose().translate((float) bx, (float) y);
+        context.pose().translate(bx, y);
         context.pose().scale((float) scale, (float) scale);
 
         boolean bgEnabled = drawNametags ? ModuleManager.get(NameTags.class).background : (hasOwner && ModuleManager.get(MobOwner.class).background);
@@ -604,23 +635,30 @@ public final class HudRenderer {
     }
 
     private void renderDamageLabels(GuiGraphics context, MinecraftWrapper mc, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
+        long now = System.currentTimeMillis();
+        if (lastLabelTime == 0) lastLabelTime = now;
+        float delta = (now - lastLabelTime) / 1000f;
+        lastLabelTime = now;
+        if (delta > 0.1f) delta = 0.016f;
 
         BasePlace bp = Modules.get(BasePlace.class);
-        if (Modules.enabled(BasePlace.class) && BasePlace.getSimulatedPlacementBlock() != null) {
-            renderDamageLabel(context, mc, BasePlace.getSimulatedPlacementBlock(), "Dmg: %.1f | Self: %.1f", BasePlace.currentTargetDamage, BasePlace.currentSelfDamage, 0xFF00FF00, pt, cameraPos, cameraLook, guiWidth, guiHeight);
+        boolean bpActive = Modules.enabled(BasePlace.class) && BasePlace.getSimulatedPlacementBlock() != null;
+        if (bpActive) {
+            BlockPos p = BasePlace.getSimulatedPlacementBlock();
+            double tx = p.getX() + 0.5, ty = p.getY() + 1.2, tz = p.getZ() + 0.5;
+            if (bpAlpha <= 0.01f) {
+                bpAnimX = tx; bpAnimY = ty; bpAnimZ = tz;
+            } else {
+                bpAnimX += (tx - bpAnimX) * Math.min(1.0, delta * 12.0);
+                bpAnimY += (ty - bpAnimY) * Math.min(1.0, delta * 12.0);
+                bpAnimZ += (tz - bpAnimZ) * Math.min(1.0, delta * 12.0);
+            }
+            bpAlpha = Math.min(1.0f, bpAlpha + delta * 6.0f);
+        } else {
+            bpAlpha = Math.max(0.0f, bpAlpha - delta * 6.0f);
         }
-
-
-        AnchorAura aa = Modules.get(AnchorAura.class);
-        if (Modules.enabled(AnchorAura.class) && AnchorAura.simulatedPlacementBlock != null) {
-            renderDamageLabel(context, mc, AnchorAura.simulatedPlacementBlock, "Dmg: %.1f | Self: %.1f", AnchorAura.currentTargetDamage, AnchorAura.currentSelfDamage, 0xFF00FFFF, pt, cameraPos, cameraLook, guiWidth, guiHeight);
-        }
-
-
-        AutoCrystal ac = Modules.get(AutoCrystal.class);
-        if (Modules.enabled(AutoCrystal.class) && ac.renderDamage && AutoCrystal.currentPlacementBlock != null) {
-            BlockPos p = AutoCrystal.currentPlacementBlock;
-            Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
+        if (bpAlpha > 0.01f) {
+            Vec3 pos3d = new Vec3(bpAnimX, bpAnimY, bpAnimZ);
             Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
             if (proj != null) {
                 Vec3 dir = pos3d.subtract(cameraPos).normalize();
@@ -628,14 +666,99 @@ public final class HudRenderer {
                 if (dir.dot(look) > 0.0) {
                     double sx = (proj.x + 1.0) / 2.0 * guiWidth;
                     double sy = (1.0 - proj.y) / 2.0 * guiHeight;
-                    int x = (int) sx, y = (int) sy;
-                    String dmgText = String.format("Target: %.1f | Self: %.1f", AutoCrystal.currentTargetDamage, AutoCrystal.currentSelfDamage);
-                    String totemsText = String.format("Totems: %d", AutoCrystal.currentTargetTotems);
-                    renderLabelBox(context, mc, x, y, dmgText, totemsText, 0xFF00DDFF);
+                    renderModernDamageCard(context, mc, (int) sx, (int) sy, bpAlpha, "BASE", "§a", BasePlace.currentTargetDamage, BasePlace.currentSelfDamage, 0, 0xFF00FF88);
                 }
             }
         }
 
+        AnchorAura aa = Modules.get(AnchorAura.class);
+        boolean aaActive = Modules.enabled(AnchorAura.class) && AnchorAura.simulatedPlacementBlock != null;
+        if (aaActive) {
+            BlockPos p = AnchorAura.simulatedPlacementBlock;
+            double tx = p.getX() + 0.5, ty = p.getY() + 1.2, tz = p.getZ() + 0.5;
+            if (aaAlpha <= 0.01f) {
+                aaAnimX = tx; aaAnimY = ty; aaAnimZ = tz;
+            } else {
+                aaAnimX += (tx - aaAnimX) * Math.min(1.0, delta * 12.0);
+                aaAnimY += (ty - aaAnimY) * Math.min(1.0, delta * 12.0);
+                aaAnimZ += (tz - aaAnimZ) * Math.min(1.0, delta * 12.0);
+            }
+            aaAlpha = Math.min(1.0f, aaAlpha + delta * 6.0f);
+        } else {
+            aaAlpha = Math.max(0.0f, aaAlpha - delta * 6.0f);
+        }
+        if (aaAlpha > 0.01f) {
+            Vec3 pos3d = new Vec3(aaAnimX, aaAnimY, aaAnimZ);
+            Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
+            if (proj != null) {
+                Vec3 dir = pos3d.subtract(cameraPos).normalize();
+                Vec3 look = mc.getPlayer().getViewVector(pt);
+                if (dir.dot(look) > 0.0) {
+                    double sx = (proj.x + 1.0) / 2.0 * guiWidth;
+                    double sy = (1.0 - proj.y) / 2.0 * guiHeight;
+                    renderModernDamageCard(context, mc, (int) sx, (int) sy, aaAlpha, "ANCHOR", "§d", AnchorAura.currentTargetDamage, AnchorAura.currentSelfDamage, 0, 0xFFFF00CC);
+                }
+            }
+        }
+
+        AutoCrystal ac = Modules.get(AutoCrystal.class);
+        boolean acActive = Modules.enabled(AutoCrystal.class) && ac.renderDamage && AutoCrystal.currentPlacementBlock != null;
+        if (acActive) {
+            BlockPos p = AutoCrystal.currentPlacementBlock;
+            double tx = p.getX() + 0.5, ty = p.getY() + 1.2, tz = p.getZ() + 0.5;
+            if (acAlpha <= 0.01f) {
+                acAnimX = tx; acAnimY = ty; acAnimZ = tz;
+            } else {
+                acAnimX += (tx - acAnimX) * Math.min(1.0, delta * 12.0);
+                acAnimY += (ty - acAnimY) * Math.min(1.0, delta * 12.0);
+                acAnimZ += (tz - acAnimZ) * Math.min(1.0, delta * 12.0);
+            }
+            acAlpha = Math.min(1.0f, acAlpha + delta * 6.0f);
+        } else {
+            acAlpha = Math.max(0.0f, acAlpha - delta * 6.0f);
+        }
+        if (acAlpha > 0.01f) {
+            Vec3 pos3d = new Vec3(acAnimX, acAnimY, acAnimZ);
+            Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
+            if (proj != null) {
+                Vec3 dir = pos3d.subtract(cameraPos).normalize();
+                Vec3 look = mc.getPlayer().getViewVector(pt);
+                if (dir.dot(look) > 0.0) {
+                    double sx = (proj.x + 1.0) / 2.0 * guiWidth;
+                    double sy = (1.0 - proj.y) / 2.0 * guiHeight;
+                    renderModernDamageCard(context, mc, (int) sx, (int) sy, acAlpha, "CRYSTAL", "§b", AutoCrystal.currentTargetDamage, AutoCrystal.currentSelfDamage, AutoCrystal.currentTargetTotems, 0xFF00DDFF);
+                }
+            }
+        }
+
+        AutoCrystal acModule = Modules.get(AutoCrystal.class);
+        boolean rotActive = Modules.enabled(AutoCrystal.class) && acModule.visualRotate && AutoCrystal.currentRotationTarget != null;
+        if (rotActive) {
+            Vec3 target = AutoCrystal.currentRotationTarget;
+            if (rotAlpha <= 0.01f) {
+                rotAnimX = target.x; rotAnimY = target.y; rotAnimZ = target.z;
+            } else {
+                rotAnimX += (target.x - rotAnimX) * Math.min(1.0, delta * 16.0);
+                rotAnimY += (target.y - rotAnimY) * Math.min(1.0, delta * 16.0);
+                rotAnimZ += (target.z - rotAnimZ) * Math.min(1.0, delta * 16.0);
+            }
+            rotAlpha = Math.min(1.0f, rotAlpha + delta * 8.0f);
+        } else {
+            rotAlpha = Math.max(0.0f, rotAlpha - delta * 8.0f);
+        }
+        if (rotAlpha > 0.01f) {
+            Vec3 pos3d = new Vec3(rotAnimX, rotAnimY, rotAnimZ);
+            Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
+            if (proj != null) {
+                Vec3 dir = pos3d.subtract(cameraPos).normalize();
+                Vec3 look = mc.getPlayer().getViewVector(pt);
+                if (dir.dot(look) > 0.0) {
+                    double sx = (proj.x + 1.0) / 2.0 * guiWidth;
+                    double sy = (1.0 - proj.y) / 2.0 * guiHeight;
+                    renderRotationReticle(context, (float) sx, (float) sy, rotAlpha);
+                }
+            }
+        }
 
         PVEUtils asm = Modules.get(PVEUtils.class);
         if (Modules.enabled(PVEUtils.class) && asm.mode.equals("AutoSmelt") && asm.smeltRender && PVEUtils.smeltTarget != null) {
@@ -657,11 +780,10 @@ public final class HudRenderer {
                         else if (!input.isEmpty()) statusText = "§7Smelting: §f" + input.getHoverName().getString() + " §7(" + (int)(furnace.getBurnProgress() * 100) + "%)";
                         else statusText = "§7Idle";
                     } else statusText = "§7Furnace";
-                    context.drawString(mc.getFont(), statusText, x - mc.getFont().width(statusText) / 2, y - 4, 0xFFFFFFFF, true);
+                    FontRenderUtility.drawString(context, statusText, x - mc.getFont().width(statusText) / 2, y - 4, 0xFFFFFFFF, true);
                 }
             }
         }
-
 
         if (Modules.enabled(PVEUtils.class) && asm.mode.equals("AutoBrew") && asm.brewRender) {
             BlockPos p = PVEUtils.getBrewTarget();
@@ -685,7 +807,7 @@ public final class HudRenderer {
                             else statusText = "§7Idle";
                             String fuelText = "§7Fuel: " + fuel;
                             String total = statusText + " | " + fuelText;
-                            context.drawString(mc.getFont(), total, x - mc.getFont().width(total) / 2, y - 4, 0xFFFFFFFF, true);
+                            FontRenderUtility.drawString(context, total, x - mc.getFont().width(total) / 2, y - 4, 0xFFFFFFFF, true);
                         }
                     }
                 }
@@ -693,34 +815,67 @@ public final class HudRenderer {
         }
     }
 
-    private void renderDamageLabel(GuiGraphics context, MinecraftWrapper mc, BlockPos p, String format, double targetDmg, double selfDmg, int borderColor, float pt, Vec3 cameraPos, Vec3 cameraLook, int guiWidth, int guiHeight) {
-        Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.2, p.getZ() + 0.5);
-        Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
-        if (proj != null) {
-            Vec3 dir = pos3d.subtract(cameraPos).normalize();
-            Vec3 look = mc.getPlayer().getViewVector(pt);
-            if (dir.dot(look) > 0.0) {
-                double sx = (proj.x + 1.0) / 2.0 * guiWidth;
-                double sy = (1.0 - proj.y) / 2.0 * guiHeight;
-                int x = (int) sx, y = (int) sy;
-                String text = String.format(format, targetDmg, selfDmg);
-                int w = mc.getFont().width(text);
-                context.fill(x - w / 2 - 4, y - 5, x + w / 2 + 4, y + 5, 0xAA000000);
-                context.fill(x - w / 2 - 4, y - 5, x + w / 2 + 4, y - 4, borderColor);
-                context.drawString(mc.getFont(), text, x - w / 2, y - 4, 0xFFFFFFFF, false);
-            }
-        }
+    private void renderModernDamageCard(GuiGraphics context, MinecraftWrapper mc, int x, int y, float alpha, String title, String colorPrefix, double targetDmg, double selfDmg, int totems, int accentColor) {
+        if (alpha <= 0.01f) return;
+
+        String line1 = colorPrefix + title + " §8• §a" + String.format("%.1f", targetDmg) + " §7dmg";
+        String line2 = "§7Self: §c" + String.format("%.1f", selfDmg) + (totems > 0 ? " §8• §e" + totems + " §7pop" : "");
+
+        int w1 = FontRenderUtility.getStringWidth(line1);
+        int w2 = FontRenderUtility.getStringWidth(line2);
+        int maxTextWidth = Math.max(w1, w2);
+        int fontH = FontRenderUtility.getFontHeight();
+        if (fontH < 9) fontH = 9;
+
+        int padX = 8;
+        int padY = 5;
+        int lineGap = 3;
+
+        int w = maxTextWidth + padX * 2;
+        int h = fontH * 2 + lineGap + padY * 2;
+
+        float scale = 0.90f + 0.10f * alpha;
+        context.pose().pushMatrix();
+        context.pose().translate((float) x, (float) y);
+        context.pose().scale(scale, scale);
+        context.pose().translate((float) -x, (float) -y);
+
+        int left = x - w / 2;
+        int top = y - h / 2;
+
+        int bgAlpha = (int) (185 * alpha);
+        int bgColor = ColorUtility.setAlpha(0x0C0D14, bgAlpha);
+        int borderColor = ColorUtility.withAlpha(accentColor, (int) (140 * alpha));
+
+        Render2DUtility.drawRoundedRectWithBorder(context, left, top, w, h, 4, bgColor, borderColor, 1);
+
+        int textAlpha = (int) (255 * alpha);
+        int textSubAlpha = (int) (220 * alpha);
+
+        int line1Y = top + padY;
+        int line2Y = top + padY + fontH + lineGap;
+
+        FontRenderUtility.drawString(context, line1, left + padX, line1Y, ColorUtility.withAlpha(0xFFFFFFFF, textAlpha), false);
+        FontRenderUtility.drawString(context, line2, left + padX, line2Y, ColorUtility.withAlpha(0xFFFFFFFF, textSubAlpha), false);
+
+        context.pose().popMatrix();
     }
 
-    private void renderLabelBox(GuiGraphics context, MinecraftWrapper mc, int x, int y, String line1, String line2, int borderColor) {
-        int w1 = mc.getFont().width(line1);
-        int w2 = mc.getFont().width(line2);
-        int w = Math.max(w1, w2);
-        int left = x - w / 2 - 4, top = y - 10, right = x + w / 2 + 4, bottom = y + 10;
-        context.fill(left, top, right, bottom, 0xAA000000);
-        context.fill(left, top, right, top + 1, borderColor);
-        context.drawString(mc.getFont(), line1, x - w1 / 2, y - 8, 0xFFFFFFFF, false);
-        context.drawString(mc.getFont(), line2, x - w2 / 2, y + 1, 0xFFFFCC00, false);
+    private void renderRotationReticle(GuiGraphics context, float x, float y, float alpha) {
+        if (alpha <= 0.01f) return;
+        int ix = Math.round(x);
+        int iy = Math.round(y);
+        int ringColor = ColorUtility.withAlpha(0xFF00DDFF, (int) (160 * alpha));
+        int dotColor = ColorUtility.withAlpha(0xFFFFFFFF, (int) (240 * alpha));
+        int tickColor = ColorUtility.withAlpha(0xFF00DDFF, (int) (220 * alpha));
+
+        Render2DUtility.drawRoundBorder(context, ix - 5, iy - 5, 10, 10, 3, 1, ringColor);
+        context.fill(ix - 1, iy - 1, ix + 1, iy + 1, dotColor);
+
+        context.fill(ix - 8, iy, ix - 5, iy + 1, tickColor);
+        context.fill(ix + 6, iy, ix + 9, iy + 1, tickColor);
+        context.fill(ix, iy - 8, ix + 1, iy - 5, tickColor);
+        context.fill(ix, iy + 6, ix + 1, iy + 9, tickColor);
     }
 
     private void renderPacketMine(GuiGraphics context, MinecraftWrapper mc) {
@@ -740,7 +895,7 @@ public final class HudRenderer {
                     int pct = mb.done ? 100 : (int)((float)elapsed / Math.max(1, mb.breakAt) * 100);
                     pct = Math.min(100, pct);
                     String text = mb.done ? "Done" : pct + "%";
-                    context.drawString(mc.getFont(), text, x - mc.getFont().width(text) / 2, y - 4, 0xFFFFFFFF, true);
+                    FontRenderUtility.drawString(context, text, x - mc.getFont().width(text) / 2, y - 4, 0xFFFFFFFF, true);
                 }
             }
         }
@@ -770,7 +925,7 @@ public final class HudRenderer {
                     context.pose().pushMatrix();
                     context.pose().translate(ix, iy);
                     context.fill(-tw / 2 - pad, -th / 2 - pad, tw / 2 + pad, th / 2 + pad, 0xAA000000);
-                    context.drawString(mc.getFont(), text, -tw / 2, -th / 2, wpColor, false);
+                    FontRenderUtility.drawString(context, text, -tw / 2, -th / 2, wpColor, false);
                     context.pose().popMatrix();
                 }
             }
@@ -778,11 +933,8 @@ public final class HudRenderer {
     }
 
     private void renderHud(GuiGraphics context, DeltaTracker tickCounter) {
-        List<Module> enabledModules = new ArrayList<>();
-        for (Module hud : ModuleManager.INSTANCE.getHudModules()) {
-            if (hud.getEnabled()) enabledModules.add(hud);
-        }
-        GuiOptimizerUtility.optimizeHudAnimations(enabledModules);
+        List<Module> hudModules = ModuleManager.INSTANCE.getHudModules();
+        GuiOptimizerUtility.optimizeHudAnimations(hudModules);
 
         Module dragHud = Hud.draggingHud;
         if (dragHud != null) {
@@ -797,24 +949,37 @@ public final class HudRenderer {
             dragHud.setY(ny);
             dragHud.setDisplayX(nx);
             dragHud.setDisplayY(ny);
+            dragHud.setHudPositionCustomized(true);
         }
 
-        for (Module hud : enabledModules) {
+        for (Module hud : hudModules) {
+            float animProgress = hud.getHudAnimProgress();
+            if (!hud.getEnabled() && animProgress < 0.005f) continue;
+
+            float userScale = hud.getUserScale();
+            float entryScale = hud.getHudScale();
+            float entryAlpha = hud.getHudAlpha();
+
+            int cx = hud.getX() + Math.round(hud.getWidth() * userScale / 2f);
+            int cy = hud.getY() + Math.round(hud.getHeight() * userScale / 2f);
+
+            var pose = context.pose();
+            pose.pushMatrix();
+            pose.translate(hud.getX(), hud.getY());
+            pose.scale(userScale, userScale);
+            pose.translate(-hud.getX(), -hud.getY());
+
+            if (entryScale < 0.999f || entryScale > 1.001f) {
+                float slideY = (1f - entryAlpha) * 12f;
+                pose.translate(cx, cy - slideY);
+                pose.scale(entryScale, entryScale);
+                pose.translate(-cx, -cy + slideY);
+            }
+
             try { hud.render(context, tickCounter.getGameTimeDeltaTicks()); } catch (Throwable ignored) {}
-        }
-    }
 
-    private void drawTracerLine2D(GuiGraphics context, float x1, float y1, float x2, float y2, int color, float width) {
-        float dx = x2 - x1, dy = y2 - y1;
-        float len = (float) Math.sqrt(dx * dx + dy * dy);
-        float angle = (float) Math.atan2(dy, dx);
-        context.pose().pushMatrix();
-        context.pose().translate(x1, y1);
-        context.pose().rotate(angle);
-        context.pose().scale(1.0f, width);
-        context.pose().translate(0.0f, -0.5f);
-        context.fill(0, 0, (int) len, 1, color);
-        context.pose().popMatrix();
+            pose.popMatrix();
+        }
     }
 
     private Vec3 projectPointToScreenUnbobbed(Vec3 pos) {

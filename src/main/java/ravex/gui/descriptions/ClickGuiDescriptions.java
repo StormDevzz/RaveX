@@ -7,7 +7,7 @@ public class ClickGuiDescriptions {
     private static final Map<String, String> DESCRIPTIONS = new HashMap<>();
 
     static {
-        DESCRIPTIONS.put("KillAura", "Fucks all retardz");
+        DESCRIPTIONS.put("KillAura", "Attack enemies");
         DESCRIPTIONS.put("ESP", "See through walls, holes, tunnels & void");
         DESCRIPTIONS.put("AutoTool", "Swap best tool");
         DESCRIPTIONS.put("AntiAfk", "No idle kick");
@@ -25,6 +25,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("AimAssist", "Aim helper");
         DESCRIPTIONS.put("NameTags", "Show names");
         DESCRIPTIONS.put("Tracers", "Draw lines");
+        DESCRIPTIONS.put("ChinaHat", "Cone hat on heads");
         DESCRIPTIONS.put("Trigger", "Attack on hover");
         DESCRIPTIONS.put("MaceSwap", "Swap to mace");
         DESCRIPTIONS.put("Hud", "Screen overlay");

@@ -40,6 +40,7 @@ public class TextureLoaderUtility {
     public static final Identifier CIRCLE_WHITE = id("circle_white");
     public static final Identifier TRACK = id("track_white");
     public static final Identifier SWITCHER = id("switcher");
+    public static final Identifier ARROW = id("arrow");
     private static final Identifier FALLBACK = id("misc");
     private static final Map<String, Identifier> CAT_IDS = new HashMap<>();
     private static final Map<String, Identifier> CAT_WHITE_IDS = new HashMap<>();
@@ -60,6 +61,7 @@ public class TextureLoaderUtility {
     public static final Identifier TERRYDAVIS = Identifier.fromNamespaceAndPath(NS, "img/terrydavis");
     public static final Identifier MARKER = Identifier.fromNamespaceAndPath(NS, "wp_marker");
     public static final Identifier CAPTURE = Identifier.fromNamespaceAndPath(NS, "capture");
+    public static final Identifier CAPTURE_ALPHA = Identifier.fromNamespaceAndPath(NS, "capture_alpha");
     public static final Identifier FIREFLY = Identifier.fromNamespaceAndPath(NS, "firefly");
     public static final Identifier SOLID_CIRCLE = Identifier.fromNamespaceAndPath(NS, "solid_circle");
     public static final Identifier ENABLE = Identifier.fromNamespaceAndPath(NS, "enable");
@@ -392,6 +394,34 @@ public class TextureLoaderUtility {
             }
         }
         return CIRCLE_WHITE;
+    }
+
+    @Nullable public static Identifier getCaptureAlphaTexture() {
+        if (!loaded.containsKey(CAPTURE_ALPHA)) {
+            if (!ensureLoaded(CAPTURE, "capture")) return null;
+            try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(CLASSPATH_PREFIX + "capture.png")) {
+                if (stream == null) return null;
+                NativeImage image = NativeImage.read(stream);
+                for (int y = 0; y < image.getHeight(); y++) {
+                    for (int x = 0; x < image.getWidth(); x++) {
+                        int rgba = image.getPixel(x, y);
+                        int r = rgba & 0xFF;
+                        int g = (rgba >> 8) & 0xFF;
+                        int b = (rgba >> 16) & 0xFF;
+                        int brightness = (r + g + b) / 3;
+                        int a = brightness < 10 ? 0 : Math.min(255, brightness * 2);
+                        image.setPixel(x, y, (a << 24) | (b << 16) | (g << 8) | r);
+                    }
+                }
+                AbstractTexture tex = createLinearTexture(image);
+                MinecraftWrapper.getWrapper().getTextureManager().register(CAPTURE_ALPHA, tex);
+                loaded.put(CAPTURE_ALPHA, tex);
+            } catch (Exception e) {
+                RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load capture alpha: {}", e.getMessage());
+                return null;
+            }
+        }
+        return CAPTURE_ALPHA;
     }
 
     public static Identifier getTrackWhiteTexture() {

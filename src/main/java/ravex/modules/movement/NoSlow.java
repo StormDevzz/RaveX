@@ -9,7 +9,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "NoSlow", category = "Movement")
 public class NoSlow {
-    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3", "FunSky"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "NCP", "Grim", "GrimStrict", "Matrix", "GrimAlternative", "GrimV3", "FunSky", "ReallyWorld"})
     public String mode = "Grim";
     @Parameter(name = "Items")
     public boolean items = true;
@@ -41,11 +41,27 @@ public class NoSlow {
     @Parameter(name = "InputScale", min = 0.5, max = 2.0, step = 0.05, visible = "mode=Matrix")
     public double matrixInputScale = 1.0;
 
+    /*
+    @Parameter(name = "RWForward", min = 0.2, max = 1.0, step = 0.05, visible = "mode=ReallyWorld")
+    public double rwForward = 0.55;
+    @Parameter(name = "RWStrafe", min = 0.2, max = 1.0, step = 0.05, visible = "mode=ReallyWorld")
+    public double rwStrafe = 0.55;
+    @Parameter(name = "RWOffhandPacket", visible = "mode=ReallyWorld")
+    public boolean rwOffhandPacket = true;
+    @Parameter(name = "RWGrace", min = 1, max = 10, step = 1, visible = "mode=ReallyWorld")
+    public int rwGrace = 3;
+    @Parameter(name = "RWPacketInterval", min = 1, max = 10, step = 1, visible = "mode=ReallyWorld")
+    public int rwPacketInterval = 2;
+    @Parameter(name = "RWResetInterval", min = 2, max = 20, step = 1, visible = "mode=ReallyWorld")
+    public int rwResetInterval = 5;
+    */
+
     private int matrixSwapTicks = 0;
     private int altTicks = 0;
     private boolean altSlowPhase = false;
     private int v3Ticks = 0;
     private int funSkyTicks = 0;
+    // private int rwTicks = 0;
 
     @Subscribe
     public void onTick(TickEvent.Client event) {
@@ -127,7 +143,30 @@ public class NoSlow {
             if (v3Ticks >= grace + interval) {
                 v3Ticks = grace;
             }
+            return;
         }
+
+        /*
+        if ("ReallyWorld".equals(modeVal)) {
+            if (!PlayerUtility.isUsingItem(player)) {
+                rwTicks = 0;
+                return;
+            }
+            rwTicks++;
+
+            if (rwTicks <= rwGrace) return;
+
+            if (rwOffhandPacket && rwTicks % rwPacketInterval == 0) {
+                var offhand = player.getOffhandItem();
+                if (offhand.isEmpty()) {
+                    NetworkUtility.sendUseItem(
+                        net.minecraft.world.InteractionHand.OFF_HAND,
+                        player.getYRot(), player.getXRot()
+                    );
+                }
+            }
+        }
+        */
     }
 
     public static float getBlockFriction(String blockId, float defaultFriction) {
@@ -167,4 +206,29 @@ public class NoSlow {
     public float getMatrixInputScale() {
         return (float) matrixInputScale;
     }
+
+    /*
+    public boolean isReallyWorldActive() {
+        return Modules.enabled(NoSlow.class) && "ReallyWorld".equals(mode);
+    }
+
+    public boolean isRWGrace() {
+        if (!"ReallyWorld".equals(mode)) return false;
+        return rwTicks <= rwGrace;
+    }
+
+    public boolean isRWResetPhase() {
+        if (!"ReallyWorld".equals(mode)) return false;
+        if (rwTicks <= rwGrace) return false;
+        return rwTicks % rwResetInterval == 0;
+    }
+
+    public float getRWForward() {
+        return (float) rwForward;
+    }
+
+    public float getRWStrafe() {
+        return (float) rwStrafe;
+    }
+    */
 }

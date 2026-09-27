@@ -2,7 +2,6 @@ package ravex.modules.misc;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.food.FoodUtility;
-import net.minecraft.network.chat.Component;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AutoEat", category = "Misc")
 public class AutoEat {
@@ -10,41 +9,35 @@ public class AutoEat {
     public double threshold = 15.0;
     @Parameter(name = "BestFood")
     public boolean priority = true;
-    @Parameter(name = "Notify")
-    public boolean notify = false;
-    @Parameter(name = "Mode", modes = {"Normal", "Silent", "Vanilla"})
-    public String mode = "Normal";
+    @Parameter(name = "Gapple")
+    public boolean gapple = true;
+    @Parameter(name = "MinHealth", min = 1.0, max = 20.0, step = 0.5, visible = "gapple")
+    public double minHealth = 10.0;
+    @Parameter(name = "Swap", modes = {"None", "Normal", "Silent"})
+    public String swapMode = "Normal";
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();
         if (player == null || mc.getLevel() == null) return;
-        float hunger = player.getFoodData().getFoodLevel();
-        if ("Vanilla".equals(mode)) {
-            mc.getOptions().keyUse.setDown(hunger < threshold);
-            return;
-        }
+        FoodUtility.INSTANCE.setSwapMode(swapMode);
         if (FoodUtility.INSTANCE.isEating()) {
-            FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
-            if (result == FoodUtility.Result.FINISHED && notify) {
-                player.displayClientMessage(
-                    Component.literal("§7[§cAutoEat§7] §aDone eating"), false);
-            }
+            FoodUtility.INSTANCE.tryEat(priority);
             return;
         }
-        if (hunger >= threshold) return;
-        FoodUtility.Result result = FoodUtility.INSTANCE.tryEat();
-        if (result == FoodUtility.Result.STARTED && notify) {
-            player.displayClientMessage(
-                Component.literal("§7[§cAutoEat§7] §aEating (" + (int)hunger + " hunger)"),
-                false);
+        if (player.isUsingItem()) return;
+        if (gapple && player.getHealth() <= (float) minHealth) {
+            FoodUtility.Data apple = FoodUtility.findEnchantedApple();
+            if (apple == null) apple = FoodUtility.findApple("Golden");
+            if (apple != null) {
+                FoodUtility.INSTANCE.tryEatData(apple);
+                return;
+            }
         }
+        float hunger = player.getFoodData().getFoodLevel();
+        if (hunger >= threshold) return;
+        FoodUtility.INSTANCE.tryEat(priority);
     }
     public void onDisable() {
-        if ("Vanilla".equals(mode)) {
-            var mc = MinecraftWrapper.getWrapper();
-            var options = mc.getOptions();
-            if (options != null) options.keyUse.setDown(false);
-        }
         FoodUtility.INSTANCE.reset();
     }
 }

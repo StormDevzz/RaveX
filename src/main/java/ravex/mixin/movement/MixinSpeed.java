@@ -104,42 +104,23 @@ public abstract class MixinSpeed {
                 applySpeedLimit(player, globalLimit);
             }
             case "Strafe" -> {
-                if (!Modules.get(Speed.class).strafeJump) return;
-
                 float forward = getForward();
                 float strafe = getStrafe();
                 if (forward == 0 && strafe == 0) return;
 
-                if (player.onGround()) {
-                    double speedVal = baseSpeed * 0.12;
-                    double yaw = getMoveYaw(player);
-                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
-                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+                double yaw = getMoveYaw(player);
+                double inputX = -Math.sin(yaw) * forward + Math.cos(yaw) * strafe;
+                double inputZ = Math.cos(yaw) * forward + Math.sin(yaw) * strafe;
+                double inputLen = Math.sqrt(inputX * inputX + inputZ * inputZ);
+                if (inputLen < 1.0E-4) return;
+                inputX /= inputLen;
+                inputZ /= inputLen;
 
-                    double currentHorizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
-                    double newHorizontal = Math.sqrt(velX * velX + velZ * velZ);
+                double currentHorizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
+                double target = baseSpeed * (player.onGround() ? 0.16 : 0.12);
+                double sharp = Math.max(currentHorizontal, target);
 
-                    if (newHorizontal > currentHorizontal) {
-                        player.setDeltaMovement(velX, motion.y, velZ);
-                    }
-                } else {
-                    double speedVal = baseSpeed * 0.08;
-                    double yaw = getMoveYaw(player);
-                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
-                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
-
-                    double currentHorizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
-                    double newHorizontal = Math.sqrt(velX * velX + velZ * velZ);
-
-                    if (newHorizontal > currentHorizontal) {
-                        double ratio = Math.min(1.0, currentHorizontal / Math.max(0.01, newHorizontal));
-                        player.setDeltaMovement(
-                            motion.x + velX * (1 - ratio) * 0.35,
-                            motion.y,
-                            motion.z + velZ * (1 - ratio) * 0.35
-                        );
-                    }
-                }
+                player.setDeltaMovement(inputX * sharp, motion.y, inputZ * sharp);
                 applySpeedLimit(player, globalLimit);
             }
             case "NCP" -> {
@@ -155,7 +136,7 @@ public abstract class MixinSpeed {
 
                     player.setDeltaMovement(velX, motion.y, velZ);
                     if (isJumping()) {
-                        player.setDeltaMovement(player.getDeltaMovement().x, 0.42, player.getDeltaMovement().z);
+                        player.setDeltaMovement(player.getDeltaMovement().x, Modules.get(Speed.class).ncpJump, player.getDeltaMovement().z);
                     }
                 } else if (player.getDeltaMovement().y < 0) {
                     double speedVal = baseSpeed * 0.06;
@@ -186,7 +167,7 @@ public abstract class MixinSpeed {
 
                     player.setDeltaMovement(velX, motion.y, velZ);
                     if (isJumping()) {
-                        player.setDeltaMovement(player.getDeltaMovement().x, 0.40, player.getDeltaMovement().z);
+                        player.setDeltaMovement(player.getDeltaMovement().x, Modules.get(Speed.class).strictJump, player.getDeltaMovement().z);
                     }
                 } else if (player.getDeltaMovement().y < 0) {
                     double speedVal = baseSpeed * 0.04;

@@ -8,7 +8,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "MessageAura", category = "Misc")
 public class MessageAura {
     @Parameter(name = "Message")
-    public String message = "Hello from RaveX!";
+    public String message = "sup retard :D";
     @Parameter(name = "Interval", min = 1.0, max = 60.0, step = 0.5)
     public double interval = 5.0;
 

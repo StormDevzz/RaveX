@@ -9,6 +9,6 @@ public class TimeCmd extends Cmd {
     public void execute(String[] args) {
         java.time.LocalTime time = java.time.LocalTime.now();
         String timeStr = String.format("%02d:%02d:%02d", time.getHour(), time.getMinute(), time.getSecond());
-        CmdReg.print("§5[RaveX] §7Local time: §e" + timeStr);
+        CmdReg.print("§9[§bRaveX§9] §7Local time: §e" + timeStr);
     }
 }

@@ -1,11 +1,18 @@
 package ravex.utility.shaders.nativec;
 
-import ravex.utility.nativelib.NativeLibraryUtility;
-
 public final class ShaderNative {
     private static boolean available = false;
 
     public static boolean isAvailable() { return available; }
+
+    public static synchronized void init() {
+        if (available) return;
+        try {
+            available = Math.abs(nVec3Length(3f, 4f, 5f) - 5f) < 0.0001f;
+        } catch (UnsatisfiedLinkError e) {
+            available = false;
+        }
+    }
 
 
     public static native float nVec3Length(float x, float y, float z);

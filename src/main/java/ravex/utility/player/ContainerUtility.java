@@ -10,6 +10,9 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import java.util.ArrayList;
 import java.util.List;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.render.ColorUtility;
+import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.Render2DUtility;
 
 public class ContainerUtility {
     public static boolean isChestLike(AbstractContainerMenu menu) {
@@ -70,17 +73,59 @@ public class ContainerUtility {
     public static void drawChestButton(GuiGraphics graphics, String label, int x, int y, boolean hovered) {
         int topCol = hovered ? 0xFFBEBEBE : 0xFFA0A0A0, botCol = hovered ? 0xFF6E6E6E : 0xFF505050, bgCol = hovered ? 0xFF8C8C8C : 0xFF6C6C6C;
         graphics.fill(x, y, x + CHEST_BTN_W, y + CHEST_BTN_H, bgCol);
-        graphics.fill(x, y, x + CHEST_BTN_W, y + 1, topCol);
-        graphics.fill(x, y, x + 1, y + CHEST_BTN_H, topCol);
-        graphics.fill(x, y + CHEST_BTN_H - 1, x + CHEST_BTN_W, y + CHEST_BTN_H, botCol);
-        graphics.fill(x + CHEST_BTN_W - 1, y, x + CHEST_BTN_W, y + CHEST_BTN_H, botCol);
+        Render2DUtility.drawBorder(graphics, x, y, CHEST_BTN_W, CHEST_BTN_H, 1, botCol);
+        graphics.fill(x, y, x + 1, y + CHEST_BTN_H - 1, topCol);
+        graphics.fill(x, y, x + CHEST_BTN_W - 1, y + 1, topCol);
         var font = MinecraftWrapper.getWrapper().getFont();
         int tw = font.width(label);
-        graphics.drawString(font, label, x + (CHEST_BTN_W - tw) / 2, y + (CHEST_BTN_H - 8) / 2, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, label, x + (CHEST_BTN_W - tw) / 2, y + (CHEST_BTN_H - 8) / 2, 0xFFFFFFFF, true);
     }
 
     public static boolean isMouseOverButton(int mouseX, int mouseY, int x, int y) {
         return mouseX >= x && mouseX <= x + CHEST_BTN_W && mouseY >= y && mouseY <= y + CHEST_BTN_H;
+    }
+
+    public static int buttonBaseColor(String action) {
+        return switch (action) {
+            case "STEAL" -> 0xFF2E9E5B;
+            case "DUMP" -> 0xFFE08A2D;
+            case "FILL" -> 0xFF3D8BFD;
+            case "DROP" -> 0xFFE05252;
+            default -> 0xFF6C6C6C;
+        };
+    }
+
+    private static int shadeButtonColor(int argb, float factor) {
+        int a = (argb >>> 24) & 0xFF;
+        int r = Math.min(255, (int) (((argb >>> 16) & 0xFF) * factor));
+        int g = Math.min(255, (int) (((argb >>> 8) & 0xFF) * factor));
+        int b = Math.min(255, (int) ((argb & 0xFF) * factor));
+        return ColorUtility.setAlpha((r << 16) | (g << 8) | b, a);
+    }
+    public static void drawChestButtonNew(GuiGraphics graphics, String label, String action, int x, int y, boolean hovered, boolean pressed) {
+        int base = buttonBaseColor(action);
+        int bgAlpha = pressed ? 255 : hovered ? 225 : 160;
+        int bg = ColorUtility.withAlpha(base, bgAlpha);
+        if (hovered || pressed)
+            Render2DUtility.drawGaussianShadow(graphics, x - 2, y - 2, CHEST_BTN_W + 4, CHEST_BTN_H + 4, 8, ColorUtility.withAlpha(base, pressed ? 200 : 120));
+        Render2DUtility.drawRound(graphics, x, y, CHEST_BTN_W, CHEST_BTN_H, 4, bg);
+        Render2DUtility.drawRound(graphics, x, y, CHEST_BTN_W, 7, 4, ColorUtility.withAlpha(0xFFFFFFFF, pressed ? 20 : 45));
+        Render2DUtility.drawRoundBorder(graphics, x, y, CHEST_BTN_W, CHEST_BTN_H, 4, 1, ColorUtility.withAlpha(base, pressed ? 255 : 130));
+        var font = MinecraftWrapper.getWrapper().getFont();
+        int tw = font.width(label);
+        int labelCol = pressed ? 0xFFE8E8E8 : 0xFFFFFFFF;
+        FontRenderUtility.drawString(graphics, label, x + (CHEST_BTN_W - tw) / 2, y + (CHEST_BTN_H - 8) / 2 + (pressed ? 1 : 0), labelCol, true);
+    }
+
+    public static void drawChestButtonCustom(GuiGraphics graphics, String label, int color, int x, int y, boolean hovered, boolean pressed) {
+        int bg = pressed ? shadeButtonColor(color, 0.7f) : hovered ? shadeButtonColor(color, 1.18f) : color;
+        int edge = shadeButtonColor(color, pressed ? 0.5f : 0.65f);
+        graphics.fill(x, y, x + CHEST_BTN_W, y + CHEST_BTN_H, bg);
+        Render2DUtility.drawBorder(graphics, x, y, CHEST_BTN_W, CHEST_BTN_H, 1, edge);
+        graphics.fill(x + 1, y, x + CHEST_BTN_W - 1, y + 1, shadeButtonColor(color, hovered && !pressed ? 1.35f : 1.0f));
+        var font = MinecraftWrapper.getWrapper().getFont();
+        int tw = font.width(label);
+        FontRenderUtility.drawString(graphics, label, x + (CHEST_BTN_W - tw) / 2, y + (CHEST_BTN_H - 8) / 2 + (pressed ? 1 : 0), 0xFFFFFFFF, true);
     }
 
     public static void fillFromContainer(MinecraftWrapper mc, LocalPlayer player, AbstractContainerMenu menu) {

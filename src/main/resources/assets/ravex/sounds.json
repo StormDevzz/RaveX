@@ -42,5 +42,9 @@
   "slide": {
     "category": "master",
     "sounds": [ "ravex:other/keyrelease" ]
+  },
+  "done": {
+    "category": "master",
+    "sounds": [ "ravex:done" ]
   }
 }

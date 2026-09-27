@@ -9,7 +9,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 
 public class SystemUtility {
 
@@ -20,8 +28,8 @@ public class SystemUtility {
     ));
 
     private static final Set<String> MEDIA_BLOCKED = new HashSet<>(Arrays.asList(
-        "tdesktop", "telegram", "discord", "firefox", "chromium", "brave",
-        "opera", "edge", "thunderbird", "slack", "teams", "signal",
+        "tdesktop", "telegram", "discord",
+        "thunderbird", "slack", "teams", "signal",
         "whatsapp", "skype"
     ));
 
@@ -34,9 +42,9 @@ public class SystemUtility {
         return OS;
     }
 
-    private static boolean isLinux() { return getOs().contains("linux"); }
-    private static boolean isWindows() { return getOs().contains("windows"); }
-    private static boolean isMac() { return getOs().contains("mac"); }
+    public static boolean isLinux() { return getOs().contains("linux"); }
+    public static boolean isWindows() { return getOs().contains("windows"); }
+    public static boolean isMac() { return getOs().contains("mac"); }
 
     private static List<String> exec(List<String> command) {
         List<String> result = new ArrayList<>();
@@ -44,14 +52,22 @@ public class SystemUtility {
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);
             Process p = pb.start();
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    result.add(line);
-                }
+            Thread readerThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        result.add(line);
+                    }
+                } catch (Throwable ignored) {}
+            }, "exec-reader");
+            readerThread.setDaemon(true);
+            readerThread.start();
+            boolean finished = p.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
+            if (!finished) {
+                p.destroyForcibly();
+                readerThread.interrupt();
             }
-            p.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
         } catch (Throwable t) {
             RaveX.LOGGER.warn("[SystemUtility] exec failed: {} {}", command.get(0), t.getMessage());
         }
@@ -379,33 +395,280 @@ public class SystemUtility {
         }
     }
 
+    private static final String[] BROWSER_SERVICES = {
+        "soundcloud", "youtube", "yandex", "deezer", "bandcamp",
+        "pandora", "tidal", "apple music", "amazon music", "mixcloud",
+        "beatport", "audiomack", "spotify", "last.fm"
+    };
+
+    private static final String[] BARE_SERVICE_NAMES = {
+        "youtube", "soundcloud", "youtube music", "spotify",
+        "deezer", "bandcamp", "pandora", "tidal", "new tab"
+    };
+
+    private static final String[] BROWSER_EXE_SUFFIXES = {
+        " - Brave", " - Google Chrome", " - Mozilla Firefox",
+        " - Microsoft Edge", " - Opera", " - Vivaldi"
+    };
+
+    private static String querySmtcWindows() {
+        try {
+            String script = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8;\n"
+                + "try {\n"
+                + "[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager,Windows,ContentType=WindowsRuntime] | Out-Null;\n"
+                + "[Windows.Storage.Streams.IRandomAccessStream,Windows,ContentType=WindowsRuntime] | Out-Null;\n"
+                + "Add-Type -AssemblyName System.Runtime.WindowsRuntime;\n"
+                + "$asTask = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1' } | Select-Object -First 1;\n"
+                + "function Await-Op($op, $type) { return $asTask.MakeGenericMethod($type).Invoke($null, @($op)).GetAwaiter().GetResult() };\n"
+                + "$mgr = Await-Op ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]);\n"
+                + "$s = $mgr.GetCurrentSession();\n"
+                + "$sessions = $mgr.GetSessions();\n"
+                + "if (!$s -or $s.GetPlaybackInfo().PlaybackStatus -ne 'Playing') {\n"
+                + "foreach ($candidate in $sessions) {\n"
+                + "if ($candidate.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $s = $candidate; break }\n"
+                + "}\n"
+                + "if (!$s -and $sessions.Count -gt 0) { $s = $sessions[0] }\n"
+                + "}\n"
+                + "if ($null -ne $s) {\n"
+                + "$props = Await-Op ($s.TryGetMediaPropertiesAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties]);\n"
+                + "$pos = 0; $len = 0;\n"
+                + "try {\n"
+                + "$t = $s.GetTimelineProperties();\n"
+                + "if ($null -ne $t) {\n"
+                + "$pos = [long]($t.Position.Ticks / 10);\n"
+                + "$len = [long]($t.EndTime.Ticks / 10);\n"
+                + "}\n"
+                + "} catch { };\n"
+                + "$artPath = '';\n"
+                + "try {\n"
+                + "if ($null -ne $props.Thumbnail) {\n"
+                + "$streamOp = $props.Thumbnail.OpenReadAsync();\n"
+                + "$stream = Await-Op $streamOp ([Windows.Storage.Streams.IRandomAccessStreamWithContentType]);\n"
+                + "$asStream = [System.IO.WindowsRuntimeStreamExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsStream' -and $_.GetParameters().Count -eq 1 } | Select-Object -First 1;\n"
+                + "$netStream = $asStream.Invoke($null, @($stream));\n"
+                + "$tempFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'ravex_smtc_art.jpg');\n"
+                + "$fs = [System.IO.File]::Create($tempFile);\n"
+                + "$netStream.CopyTo($fs);\n"
+                + "$fs.Close();\n"
+                + "$artPath = 'file:///' + $tempFile.Replace('\\', '/');\n"
+                + "}\n"
+                + "} catch { };\n"
+                + "$app = $s.SourceAppUserModelId;\n"
+                + "if ($app) {\n"
+                + "$app = [System.IO.Path]::GetFileNameWithoutExtension($app);\n"
+                + "if ($app.Length -gt 0) { $app = [char]::ToUpper($app[0]) + $app.Substring(1) }\n"
+                + "} else { $app = '' };\n"
+                + "$info = $s.GetPlaybackInfo();\n"
+                + "$status = if ($info.PlaybackStatus -eq 'Playing') { 'Playing' } else { 'Paused' };\n"
+                + "Write-Output ($status + '|' + $props.Title.Trim() + '|' + $props.Artist.Trim() + '|' + $artPath + '|' + $app + '|' + $pos + '|' + $len);\n"
+                + "}\n"
+                + "} catch { }\n";
+
+            String encoded = Base64.getEncoder().encodeToString(script.getBytes(StandardCharsets.UTF_16LE));
+            List<String> lines = exec(Arrays.asList("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encoded));
+            String last = "";
+            for (String line : lines) {
+                if (line != null && line.contains("|") && !line.startsWith("<") && !line.startsWith("#")) {
+                    last = line.trim();
+                }
+            }
+            if (last.isEmpty()) return "";
+            String[] parts = last.split("\\|", -1);
+            if (parts.length < 3) return "";
+            String title = parts[1].trim();
+            if (title.isEmpty()) return "";
+            String artist = parts[2].trim();
+            String artUrl = parts.length >= 4 ? parts[3].trim() : "";
+            String app = parts.length >= 5 ? parts[4].trim() : "";
+            String pos = parts.length >= 6 ? parts[5].trim() : "0";
+            String len = parts.length >= 7 ? parts[6].trim() : "0";
+            String status = "Playing".equalsIgnoreCase(parts[0].trim()) ? "Playing" : "Paused";
+            return status + "|" + title + "|" + artist + "|" + artUrl + "|" + app + "|" + pos + "|" + len;
+        } catch (Throwable t) {
+            return "";
+        }
+    }
+
+    private static List<String[]> queryWindowEntriesPowerShell() {
+        List<String[]> entries = new ArrayList<>();
+        try {
+            String script = "Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { $_.ProcessName + '|' + $_.MainWindowTitle }";
+            List<String> lines = exec(Arrays.asList("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script));
+            for (String line : lines) {
+                if (line == null) continue;
+                int sep = line.indexOf('|');
+                if (sep <= 0 || sep >= line.length() - 1) continue;
+                String img = line.substring(0, sep).trim().toLowerCase(Locale.ROOT);
+                String title = line.substring(sep + 1).trim();
+                if (img.isEmpty() || title.isEmpty() || "N/A".equalsIgnoreCase(title)) continue;
+                entries.add(new String[]{img, title});
+            }
+        } catch (Throwable t) {
+        }
+        return entries;
+    }
+
+    private static List<String[]> queryWindowEntriesTasklist() {
+        List<String[]> entries = new ArrayList<>();
+        try {
+            List<String> lines = exec(Arrays.asList("cmd.exe", "/c", "chcp 65001 >nul & tasklist /v /fi \"STATUS eq RUNNING\" /fo csv"));
+            for (String line : lines) {
+                if (!line.startsWith("\"") || !line.contains("\",\"")) continue;
+                String[] cols = line.split("\",\"");
+                if (cols.length < 9) continue;
+                String img = cols[0].replace("\"", "").trim().toLowerCase(Locale.ROOT);
+                String title = cols[8].replace("\"", "").trim();
+                if (title.isEmpty() || "N/A".equalsIgnoreCase(title) || "OleMainThreadWndName".equals(title)) continue;
+                entries.add(new String[]{img, title});
+            }
+        } catch (Throwable t) {
+        }
+        return entries;
+    }
+
     private static String queryWindows() {
         try {
-            List<String> out = exec(Arrays.asList(
-                "powershell", "-NoProfile", "-Command",
-                "try { " +
-                "$m = Get-CimInstance -Namespace 'Root/Media/Control' -Class 'SystemMediaTransportControls' 2>$null; " +
-                "if ($m) { $status='Stopped'; " +
-                "if ($m.PlaybackStatus -eq 3) { $status='Playing' } " +
-                "elseif ($m.PlaybackStatus -eq 4) { $status='Paused' }; " +
-                "Write-Output $status; " +
-                "Write-Output $m.Title; " +
-                "Write-Output $m.Artist; " +
-                "Write-Output $m.Thumbnail; " +
-                "Write-Output ($m.Position.Ticks / 10); " +
-                "Write-Output ($m.MediaDuration.Ticks / 10) } } catch {}"
-            ));
-            if (out.size() >= 2) {
-                return String.join("|", out.get(0), out.get(1),
-                    out.size() > 2 ? out.get(2) : "",
-                    out.size() > 3 ? out.get(3) : "", "",
-                    out.size() > 4 ? out.get(4) : "0",
-                    out.size() > 5 ? out.get(5) : "0");
+            String smtc = querySmtcWindows();
+            if (!smtc.isEmpty()) return smtc;
+
+            List<String[]> entries = queryWindowEntriesPowerShell();
+            if (entries.isEmpty()) entries = queryWindowEntriesTasklist();
+
+            String bestBrowserCandidate = null;
+            int bestBrowserPriority = Integer.MAX_VALUE;
+
+            for (String[] entry : entries) {
+                String img = entry[0];
+                String title = entry[1];
+
+                if (img.contains("spotify")) {
+                    String result = parseSpotifyTitle(title);
+                    if (result != null) return result;
+                }
+
+                if (img.contains("vlc")) {
+                    String t = title.replace(" - VLC media player", "").trim();
+                    return splitArtistTitle(t, "Playing");
+                }
+
+                if (img.contains("aimp")) {
+                    String t = title.replace(" - AIMP", "").trim();
+                    return splitArtistTitle(t, "Playing");
+                }
+
+                if (img.contains("musicbee")) {
+                    String t = title.replace(" - MusicBee", "").trim();
+                    return splitArtistTitle(t, "Playing");
+                }
+
+                if (img.contains("foobar2000")) {
+                    String t = title.replace(" [foobar2000]", "").trim();
+                    return splitArtistTitle(t, "Playing");
+                }
+
+                if (img.contains("winamp")) {
+                    String t = title.replace(" - Winamp", "").trim();
+                    return splitArtistTitle(t, "Playing");
+                }
+
+                if (img.contains("jmetersofter") || img.contains("aimp")) {
+                    return splitArtistTitle(title, "Playing");
+                }
+
+                if (isBrowserProcess(img)) {
+                    int priority = matchBrowserMedia(title);
+                    if (priority >= 0 && priority < bestBrowserPriority) {
+                        String parsed = cleanBrowserTitle(title);
+                        if (parsed != null && !parsed.isEmpty()) {
+                            bestBrowserPriority = priority;
+                            bestBrowserCandidate = parsed;
+                        }
+                    }
+                }
             }
+
+            if (bestBrowserCandidate != null) return bestBrowserCandidate;
         } catch (Throwable t) {
             RaveX.LOGGER.warn("[SystemUtility] Windows query failed", t);
         }
         return "";
+    }
+
+    private static boolean isBrowserProcess(String img) {
+        return img.contains("brave") || img.contains("chrome") || img.contains("msedge") ||
+               img.contains("firefox") || img.contains("opera") || img.contains("vivaldi") ||
+               img.contains("waterfox") || img.contains("palemoon") || img.contains("seamonkey");
+    }
+
+    private static String stripExeSuffix(String title) {
+        for (String suffix : BROWSER_EXE_SUFFIXES) {
+            if (title.endsWith(suffix)) {
+                return title.substring(0, title.length() - suffix.length()).trim();
+            }
+        }
+        return title;
+    }
+
+    private static boolean isBareServiceName(String title) {
+        String lower = title.toLowerCase(Locale.ROOT).trim();
+        for (String name : BARE_SERVICE_NAMES) {
+            if (lower.equals(name)) return true;
+        }
+        return false;
+    }
+
+    private static int matchBrowserMedia(String title) {
+        String clean = stripExeSuffix(title);
+        if (clean.isEmpty() || isBareServiceName(clean)) return -1;
+        String lower = clean.toLowerCase(Locale.ROOT);
+        for (int i = 0; i < BROWSER_SERVICES.length; i++) {
+            if (lower.contains(BROWSER_SERVICES[i])) return i;
+        }
+        return -1;
+    }
+
+    @Nullable private static String cleanBrowserTitle(String title) {
+        String clean = stripExeSuffix(title);
+        if (clean.isEmpty() || isBareServiceName(clean)) return null;
+        int pipe = clean.indexOf(" | Listen");
+        if (pipe >= 0) clean = clean.substring(0, pipe).trim();
+        pipe = clean.indexOf(" | SoundCloud");
+        if (pipe >= 0) clean = clean.substring(0, pipe).trim();
+        if (clean.startsWith("Stream ")) clean = clean.substring(7).trim();
+        int by = clean.lastIndexOf(" by ");
+        if (by > 0 && by < clean.length() - 4) {
+            String track = clean.substring(0, by).trim();
+            String artist = clean.substring(by + 4).trim();
+            if (!track.isEmpty() && !artist.isEmpty()) {
+                return "Playing|" + track + "|" + artist + "|||0|0";
+            }
+        }
+        return splitArtistTitle(clean, "Playing");
+    }
+
+    @Nullable private static String parseSpotifyTitle(String title) {
+        if (title.equals("Spotify") || title.equals("Spotify Premium") || title.equals("Spotify Free")) {
+            return "Paused|Spotify||||0|0";
+        }
+        if (title.startsWith("Spotify - ")) {
+            return "Paused|" + title.substring(10).trim() + "||||0|0";
+        }
+        if (title.contains(" - ")) {
+            return splitArtistTitle(title, "Playing");
+        }
+        if (!title.toLowerCase(Locale.ROOT).startsWith("spotify")) {
+            return splitArtistTitle(title, "Playing");
+        }
+        return null;
+    }
+
+    private static String splitArtistTitle(String raw, String status) {
+        if (raw.isEmpty()) return "";
+        if (raw.contains(" - ")) {
+            String[] p = raw.split(" - ", 2);
+            return status + "|" + p[1].trim() + "|" + p[0].trim() + "|||0|0";
+        }
+        return status + "|" + raw + "||||0|0";
     }
 
     private static String queryMacOs() {
@@ -435,7 +698,6 @@ public class SystemUtility {
                     }
                 }
             } catch (Throwable t) {
-                // try next app
             }
         }
         return "";
@@ -444,7 +706,17 @@ public class SystemUtility {
     @Nullable public static byte[] downloadArt(String url) {
         if (url == null || url.isEmpty()) return null;
         try {
-            if (url.startsWith("file://")) {
+            if (url.startsWith("file:///")) {
+                Path path = Paths.get(url.substring(8));
+                if (Files.exists(path)) {
+                    return Files.readAllBytes(path);
+                }
+                try {
+                    path = Paths.get(java.net.URI.create(url));
+                    if (Files.exists(path)) return Files.readAllBytes(path);
+                } catch (Throwable ignored) {}
+                return null;
+            } else if (url.startsWith("file://")) {
                 Path path = Paths.get(java.net.URI.create(url));
                 if (Files.exists(path)) {
                     return Files.readAllBytes(path);

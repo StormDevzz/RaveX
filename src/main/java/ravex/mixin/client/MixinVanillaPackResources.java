@@ -55,34 +55,6 @@ public class MixinVanillaPackResources {
             }
         }
 
-        java.io.File parent = cacheFile.getParentFile();
-        if (!parent.exists()) {
-            parent.mkdirs();
-        }
-        String remoteUrl = "https://raw.githubusercontent.com/StormDevzz/RaveX/main/assets/" + cacheFile.getName();
-        try {
-            java.net.URL url = new java.net.URL(remoteUrl);
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(8000);
-            conn.setReadTimeout(8000);
-            if (conn.getResponseCode() == 200) {
-                java.io.File tempDownload = new java.io.File(parent, cacheFile.getName() + ".tmp");
-                try (InputStream inStream = conn.getInputStream();
-                     java.io.FileOutputStream outStream = new java.io.FileOutputStream(tempDownload)) {
-                    byte[] buffer = new byte[8192];
-                    int bytesRead;
-                    while ((bytesRead = inStream.read(buffer)) != -1) {
-                        outStream.write(buffer, 0, bytesRead);
-                    }
-                }
-                if (!tempDownload.renameTo(cacheFile)) {
-                    java.nio.file.Files.copy(tempDownload.toPath(), cacheFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    tempDownload.delete();
-                }
-                return new java.io.FileInputStream(cacheFile);
-            }
-        } catch (Throwable ignored) {}
-
         throw new java.io.FileNotFoundException("Resource not found: " + path);
     }
 

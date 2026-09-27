@@ -9,7 +9,7 @@ import ravex.modules.Modules;
 
 @Module(name = "AutoRespawn", category = "Player")
 public class AutoRespawn {
-    @Parameter(name = "ShowDeathScreen")
+    @Parameter(name = "DeathScreen")
     public boolean showDeathScreen = false;
     private long deathTime = 0;
     private boolean dead = false;

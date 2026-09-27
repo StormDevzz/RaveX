@@ -49,9 +49,12 @@ public class ConfigManager {
                 JsonObject paramsObj = new JsonObject();
                 for (Parameter<?> p : m.getParameters()) {
                     if (p instanceof ravex.parameter.ActionParameter) continue;
-                    paramsObj.addProperty(p.getName(), String.valueOf(p.getValue()));
                     if (p instanceof ravex.parameter.ColorParameter cp) {
+                        paramsObj.addProperty(p.getName(), String.valueOf(cp.getStoredValue()));
                         paramsObj.addProperty(p.getName() + "_themeSync", cp.isThemeSync());
+                        paramsObj.addProperty(p.getName() + "_rainbow", cp.isRainbow());
+                    } else {
+                        paramsObj.addProperty(p.getName(), String.valueOf(p.getValue()));
                     }
                 }
                 modObj.add("parameters", paramsObj);
@@ -70,11 +73,18 @@ public class ConfigManager {
                 hudObj.addProperty("enabled", hm.getEnabled());
                 hudObj.addProperty("x", hm.getTargetX());
                 hudObj.addProperty("y", hm.getTargetY());
+                hudObj.addProperty("scale", hm.getUserScale());
 
                 JsonObject paramsObj = new JsonObject();
                 for (Parameter<?> p : hm.getParameters()) {
                     if (p instanceof ravex.parameter.ActionParameter) continue;
-                    paramsObj.addProperty(p.getName(), String.valueOf(p.getValue()));
+                    if (p instanceof ravex.parameter.ColorParameter cp) {
+                        paramsObj.addProperty(p.getName(), String.valueOf(cp.getStoredValue()));
+                        paramsObj.addProperty(p.getName() + "_themeSync", cp.isThemeSync());
+                        paramsObj.addProperty(p.getName() + "_rainbow", cp.isRainbow());
+                    } else {
+                        paramsObj.addProperty(p.getName(), String.valueOf(p.getValue()));
+                    }
                 }
                 hudObj.add("parameters", paramsObj);
                 hudRoot.add(hm.getName(), hudObj);
@@ -128,19 +138,7 @@ public class ConfigManager {
                                 setParameterValueRaw(p, valStr);
                             }
                             if (p instanceof ravex.parameter.ColorParameter cp) {
-                                String syncKey = p.getName() + "_themeSync";
-                                String actualSyncKey = syncKey;
-                                if (!paramsObj.has(syncKey)) {
-                                    for (String k : paramsObj.keySet()) {
-                                        if (k.replace(" ", "").equals(syncKey)) {
-                                            actualSyncKey = k;
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (paramsObj.has(actualSyncKey)) {
-                                    cp.setThemeSync(paramsObj.get(actualSyncKey).getAsBoolean());
-                                }
+                                loadColorExtras(paramsObj, cp);
                             }
                         }
                     }
@@ -161,9 +159,14 @@ public class ConfigManager {
                         }
                         if (hudObj.has("x")) {
                             hm.setX(hudObj.get("x").getAsInt());
+                            hm.setHudPositionCustomized(true);
                         }
                         if (hudObj.has("y")) {
                             hm.setY(hudObj.get("y").getAsInt());
+                            hm.setHudPositionCustomized(true);
+                        }
+                        if (hudObj.has("scale")) {
+                            hm.setUserScale(hudObj.get("scale").getAsFloat());
                         }
 
                         if (hudObj.has("parameters")) {
@@ -182,6 +185,9 @@ public class ConfigManager {
                                     String valStr = paramsObj.get(key).getAsString();
                                     setParameterValueRaw(p, valStr);
                                 }
+                                if (p instanceof ravex.parameter.ColorParameter cp) {
+                                    loadColorExtras(paramsObj, cp);
+                                }
                             }
                         }
                     }
@@ -191,6 +197,31 @@ public class ConfigManager {
         } catch (Exception e) {
             ravex.RaveX.LOGGER.error("[ConfigManager] Failed to load config: " + name, e);
             return false;
+        }
+    }
+
+    private void loadColorExtras(JsonObject paramsObj, ravex.parameter.ColorParameter cp) {
+        Boolean themeSync = readJsonBool(paramsObj, cp.getName() + "_themeSync");
+        if (themeSync != null) cp.setThemeSync(themeSync);
+        Boolean rainbow = readJsonBool(paramsObj, cp.getName() + "_rainbow");
+        if (rainbow != null) cp.setRainbow(rainbow);
+    }
+
+    private Boolean readJsonBool(JsonObject obj, String key) {
+        String actualKey = key;
+        if (!obj.has(key)) {
+            for (String k : obj.keySet()) {
+                if (k.replace(" ", "").equals(key)) {
+                    actualKey = k;
+                    break;
+                }
+            }
+        }
+        if (!obj.has(actualKey)) return null;
+        try {
+            return obj.get(actualKey).getAsBoolean();
+        } catch (Throwable t) {
+            return null;
         }
     }
 

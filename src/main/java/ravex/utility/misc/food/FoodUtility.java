@@ -70,8 +70,13 @@ public class FoodUtility {
     private int eatTicks = 0;
     private int originalSlot = -1;
     private Data currentFood = null;
+    private String swapMode = "Normal";
 
     private FoodUtility() {}
+
+    public void setSwapMode(String mode) {
+        if (mode != null) swapMode = mode;
+    }
 
     public static boolean isFood(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
@@ -175,10 +180,24 @@ public class FoodUtility {
     }
 
     public Result tryEat() {
+        return tryEat(true);
+    }
+
+    public Result tryEatData(Data food) {
         MinecraftWrapper mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null) return Result.FAIL;
         if (isEating()) return continueEating(mc);
-        Data best = findBestFoodForHunger(mc.getPlayer().getFoodData().getFoodLevel());
+        if (food == null) return Result.NO_FOOD;
+        return startEating(food, mc);
+    }
+
+    public Result tryEat(boolean bestFood) {
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null) return Result.FAIL;
+        if (isEating()) return continueEating(mc);
+        Data best = bestFood
+            ? findBestFoodForHunger(mc.getPlayer().getFoodData().getFoodLevel())
+            : findFirstFood();
         if (best == null) return Result.NO_FOOD;
         return startEating(best, mc);
     }
@@ -193,7 +212,8 @@ public class FoodUtility {
     private Result startEating(Data food, MinecraftWrapper mc) {
         originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
         if (originalSlot != food.getSlot()) {
-            InventoryUtility.selectSlot(mc.getPlayer(), food.getSlot());
+            if ("None".equals(swapMode)) return Result.FAIL;
+            InventoryUtility.swapToSlot(mc.getPlayer(), food.getSlot(), swapMode);
         }
         mc.getGameMode().useItem(mc.getPlayer(), InteractionHand.MAIN_HAND);
         eating = true;
@@ -215,7 +235,7 @@ public class FoodUtility {
         eatTicks = 0;
         currentFood = null;
         if (originalSlot != -1) {
-            InventoryUtility.selectSlot(mc.getPlayer(), originalSlot);
+            InventoryUtility.swapBackSlot(mc.getPlayer(), originalSlot, swapMode);
             originalSlot = -1;
         }
     }

@@ -23,7 +23,12 @@ import ravex.modules.Modules;
 public class ModuleButton {
     public static final Set<Module> expandedModules = new HashSet<>();
     private static long lastGearTick = System.currentTimeMillis();
+    private static float frameDt = 1f / 60f;
     private static final int MAX_INLINE_HEIGHT = 800;
+
+    public static float getFrameDt() {
+        return frameDt;
+    }
 
     private float inlineScrollTarget = 0f;
     private float inlineScrollAnim = 0f;
@@ -31,14 +36,26 @@ public class ModuleButton {
     private boolean matchesSearch = true;
 
     public static void tickAllGears() {
-        float speed = (float) ModuleManager.get(ClickGui.class).gearRotationSpeed;
-        if (speed <= 0 || expandedModules.isEmpty()) return;
         long now = System.currentTimeMillis();
         float dt = Math.min(100f, now - lastGearTick) / 1000f;
         lastGearTick = now;
-        for (Module m : expandedModules) {
+        frameDt = dt;
+        float speed = (float) ModuleManager.get(ClickGui.class).gearRotationSpeed;
+        if (speed > 0) {
+            for (Module m : expandedModules) {
+                float cur = m.getGearAngle();
+                m.setGearAngle(cur + speed * dt, now);
+            }
+        }
+        float decay = (float) Math.exp(-dt * 12f);
+        for (Module m : ravex.manager.ModuleManager.INSTANCE.getModules()) {
+            if (expandedModules.contains(m)) continue;
             float cur = m.getGearAngle();
-            m.setGearAngle(cur + speed * dt, now);
+            if (Math.abs(cur) > 0.01f) {
+                float newAngle = cur * decay;
+                if (Math.abs(newAngle) < 0.01f) newAngle = 0f;
+                m.setGearAngle(newAngle, now);
+            }
         }
     }
 
@@ -48,26 +65,56 @@ public class ModuleButton {
     private float enableAnim = 0.0f;
     private boolean expanded = false;
     private float expandAnim = 0.0f;
+    private float closingGearAngle = 0f;
     private float hoverGlow = 0.0f;
-    private float expandFlash = 0f;
+    private float bindAnim = 0.0f;
+    private float bindingShowAnim = 0.0f;
+    private long flashStartMs = -1L;
+    private float flashPeak = 1f;
+    private static final long FLASH_DURATION_MS = 600L;
+
+    private float updateFlash() {
+        if (flashStartMs < 0L) return 0f;
+        long elapsed = System.currentTimeMillis() - flashStartMs;
+        if (elapsed >= FLASH_DURATION_MS) {
+            flashStartMs = -1L;
+            return 0f;
+        }
+        float t = elapsed / (float) FLASH_DURATION_MS;
+        return flashPeak * (1f - AnimationUtility.Easing.CUBIC_OUT.apply(t));
+    }
+
+    void triggerFlash(float peak) {
+        flashPeak = peak;
+        flashStartMs = System.currentTimeMillis();
+    }
     private static double circleX = 0;
     private static double circleY = 0;
     private boolean lastHovered = false;
     private boolean wasEnabled = false;
-    private float enablePulseAlpha = 0f;
-    private float enablePulseRadius = 0f;
-    private float pulseX = 0f;
-    private float pulseY = 0f;
+    private float sheenProgress = 1.0f;
+    private static final float SHEEN_SPEED = 0.05f;
 
     public ModuleButton(Module module) {
         this.module = module;
         wasEnabled = module.getEnabled();
+        if (module.getKeyBind() != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
+            bindAnim = 1.0f;
+        }
         for (Parameter<?> p : module.getParameters()) {
             parameterElements.add(new ParameterElement(p));
         }
     }
 
     public boolean isExpanded() { return expanded || expandAnim > 0.001f; }
+
+    public void collapse() {
+        expanded = false;
+        closingGearAngle = 0f;
+        inlineScrollTarget = 0f;
+        inlineScrollAnim = 0f;
+        expandedModules.remove(module);
+    }
 
     public float getSearchReveal() { return searchReveal; }
 
@@ -87,7 +134,7 @@ public class ModuleButton {
                 h += pe.getHeight();
             }
         }
-        return (int) ((Math.min(h, MAX_INLINE_HEIGHT) + 4) * expandAnim);
+        return (int) ((Math.min(h, MAX_INLINE_HEIGHT) + 4) * AnimationUtility.Easing.CUBIC_OUT.apply(expandAnim));
     }
 
     public boolean onInlineScroll(double mouseX, double mouseY, double amount, int x, int y, int width) {
@@ -150,17 +197,10 @@ public class ModuleButton {
             enableAnim = Math.max(targetAnim, enableAnim - 0.35f);
         }
 
-        if (module.getEnabled() && !wasEnabled) {
-            enablePulseAlpha = 200f;
-            enablePulseRadius = 0f;
-            pulseX = mouseX;
-            pulseY = mouseY;
+        if (module.getEnabled() != wasEnabled) {
+            sheenProgress = 0.0f;
         }
         wasEnabled = module.getEnabled();
-        if (enablePulseAlpha > 0.5f) {
-            enablePulseRadius += Math.max(2f, width * 0.025f);
-            enablePulseAlpha *= 0.92f;
-        }
 
         int activeColor = ColorUtility.getActiveColor();
         int btnAlpha = (int) ModuleManager.get(ClickGui.class).buttonOpacity;
@@ -170,39 +210,48 @@ public class ModuleButton {
         int mergedBg = disabledBg;
         if (enableAnim > 0.01f) {
             int enableAlpha = (int) (enableAnim * Math.min(255, btnAlpha * 3));
-            mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(activeColor, enableAlpha));
+            mergedBg = ColorUtility.overlay(mergedBg, ColorUtility.withAlpha(activeColor, enableAlpha));
         }
         if (hoverProgress > 0.01f && enableAnim < 0.01f) {
             int hoverAlpha = (int) (hoverProgress * Math.min(30, btnAlpha / 2));
-            mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
+            mergedBg = ColorUtility.overlay(mergedBg, ColorUtility.withAlpha(0xFFFFFFFF, hoverAlpha));
         }
-        if (expandFlash > 0.01f) {
-            int flashAlpha = (int) (expandFlash * Math.min(40, btnAlpha / 3));
-            mergedBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(activeColor, flashAlpha));
-        }
-
-        Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, mergedBg);
-
-        if (expandFlash > 0.01f) {
-            int glowAlpha = (int) (expandFlash * 60);
-            int glowAlphaTop = (int) (expandFlash * 25);
-            int glowColor = ColorUtility.withAlpha(activeColor, glowAlpha);
-            int glowColorTop = ColorUtility.withAlpha(activeColor, glowAlphaTop);
-            float barW = width - 16;
-            float barH = 4f;
-            Render2DUtility.drawGlow(graphics, x + 8, currentY + btnH - barH, barW, barH, 6f, glowColor);
-            Render2DUtility.drawGlow(graphics, x + 8, currentY, barW, barH, 6f, glowColorTop);
-            expandFlash = Math.max(0f, expandFlash - 0.02f);
+        float flash = updateFlash();
+        if (flash > 0.003f) {
+            int flashAlpha = (int) (flash * Math.min(40, btnAlpha / 3));
+            mergedBg = ColorUtility.overlay(mergedBg, ColorUtility.withAlpha(activeColor, flashAlpha));
         }
 
-        if (enablePulseAlpha > 0.5f) {
-            float pr = enablePulseRadius;
-            int pulseAlpha = Math.min(200, (int) enablePulseAlpha);
-            Render2DUtility.drawPulseRing(graphics,
-                pulseX,
-                pulseY,
-                pr, 3f,
-                ColorUtility.withAlpha(activeColor, pulseAlpha));
+        Render2DUtility.drawRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, mergedBg);
+
+        if (sheenProgress < 1.0f) {
+            sheenProgress = Math.min(1.0f, sheenProgress + SHEEN_SPEED);
+            float bandW = width * 0.35f;
+            float travel = width + bandW * 2f;
+            float bandX = x - bandW + sheenProgress * travel;
+            float fade = 1.0f - sheenProgress * sheenProgress;
+            int sheenAlpha = (int) (fade * 70);
+            if (sheenAlpha > 0) {
+                int lead = ColorUtility.withAlpha(0xFFFFFFFF, sheenAlpha);
+                int trail = ColorUtility.withAlpha(activeColor, 0);
+                Render2DUtility.pushScissor(graphics, x + 2, currentY, width - 4, btnH);
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(x + width / 2f, currentY + btnH / 2f);
+                graphics.pose().rotate(-0.35f);
+                float bw = bandW;
+                float bh = (float) btnH * 3f;
+                float localX = bandX - (x + width / 2f);
+                graphics.fillGradient(
+                    (int) localX, (int) (-bh / 2f),
+                    (int) (localX + bw), (int) (bh / 2f),
+                    trail, lead);
+                graphics.fillGradient(
+                    (int) (localX + bw), (int) (-bh / 2f),
+                    (int) (localX + bw * 2f), (int) (bh / 2f),
+                    lead, trail);
+                graphics.pose().popMatrix();
+                Render2DUtility.popScissor(graphics);
+            }
         }
 
         if (hovered) {
@@ -215,42 +264,78 @@ public class ModuleButton {
         if (hoverGlow > 0.01f) {
             int alpha = (int) (hoverGlow * 120);
             int whiteGlow = ColorUtility.withAlpha(0xFFFFFFFF, alpha);
-            graphics.enableScissor(x + 2, currentY, x + width - 2, currentY + btnH);
+            Render2DUtility.pushScissor(graphics, x + 2, currentY, width - 4, btnH);
             Render2DUtility.drawGaussianShadow(graphics, (float) mouseX - 8, (float) mouseY - 8, 16, 16, 11, whiteGlow);
-            graphics.disableScissor();
+            Render2DUtility.popScissor(graphics);
         }
 
         if (searchQuery != null && !searchQuery.isEmpty()
-            && module.getName().toLowerCase().contains(searchQuery.toLowerCase())) {
-            int searchBg = blendSrcOver(mergedBg, ColorUtility.withAlpha(activeColor, 30));
-            Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, searchBg);
+            && ravex.utility.misc.SearchUtility.matches(module.getName() + " " + ravex.utility.misc.LanguageUtility.moduleName(module.getName()), searchQuery)) {
+            int searchBg = ColorUtility.overlay(mergedBg, ColorUtility.withAlpha(activeColor, 30));
+            Render2DUtility.drawRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, searchBg);
         }
 
-        int baseColor = lerpColor(0xFFB0B0C0, activeColor, enableAnim);
+        int baseColor = ColorUtility.interpolate(0xFFB0B0C0, activeColor, enableAnim);
         int textColor = hovered ? 0xFFFFFFFF : baseColor;
 
-        String displayName = module.getName();
-        if (ClickGUI.bindingModuleButton == this) {
-            displayName = "[Binding...]";
-        } else if (module.getKeyBind() != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
+        String displayName = ravex.utility.misc.LanguageUtility.moduleName(module.getName());
+        boolean binding = ClickGUI.bindingModuleButton == this;
+        String bindSuffix = "";
+        if (!binding && module.getKeyBind() != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
             String keyName = org.lwjgl.glfw.GLFW.glfwGetKeyName(module.getKeyBind(), 0);
             if (keyName == null) {
                 if (module.getKeyBind() == org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT) keyName = "RShift";
                 else if (module.getKeyBind() == org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT) keyName = "LShift";
                 else if (module.getKeyBind() == org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE) keyName = "Space";
-                else keyName = "Key " + module.getKeyBind();
+                else keyName = ravex.utility.misc.LanguageUtility.t("mb_key") + module.getKeyBind();
             } else {
                 keyName = keyName.toUpperCase();
             }
-            displayName += " [" + keyName + "]";
+            bindSuffix = " [" + keyName + "]";
+        }
+
+        float bindTarget = bindSuffix.isEmpty() ? 0.0f : 1.0f;
+        if (bindAnim < bindTarget) {
+            bindAnim = Math.min(bindTarget, bindAnim + 0.14f);
+        } else if (bindAnim > bindTarget) {
+            bindAnim = Math.max(bindTarget, bindAnim - 0.14f);
+        }
+
+        float bindingTarget = binding ? 1.0f : 0.0f;
+        if (bindingShowAnim < bindingTarget) {
+            bindingShowAnim = Math.min(bindingTarget, bindingShowAnim + 0.16f);
+        } else if (bindingShowAnim > bindingTarget) {
+            bindingShowAnim = Math.max(bindingTarget, bindingShowAnim - 0.12f);
         }
 
         int textY = currentY + (btnH - FontRenderUtility.getFontHeight()) / 2 + 1;
+        int textX = x + (int) ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX;
 
-        if (searchQuery != null && !searchQuery.isEmpty() && !module.getName().isEmpty()) {
-            renderHighlightedName(graphics, displayName, x + (int) ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX, textY, textColor, searchQuery);
-        } else {
-            FontRenderUtility.drawString(graphics, displayName, x + (int) ModuleManager.get(ravex.modules.client.Settings.class).moduleTextX, textY, textColor, true);
+        float bindingEase = AnimationUtility.Easing.CUBIC_OUT.apply(bindingShowAnim);
+        float nameAlpha = 1f - bindingEase;
+        if (nameAlpha > 0.01f) {
+            int nameColor = ColorUtility.withAlpha(textColor, (int) (nameAlpha * 255));
+            if (searchQuery != null && !searchQuery.isEmpty() && !module.getName().isEmpty()) {
+                renderHighlightedName(graphics, displayName, textX, textY, nameColor, searchQuery);
+            } else {
+                FontRenderUtility.drawString(graphics, displayName, textX, textY, nameColor, true);
+            }
+
+            float bindEase = AnimationUtility.Easing.CUBIC_OUT.apply(bindAnim);
+            float bindAlpha = bindEase * ClickGUI.bindReveal * nameAlpha;
+            if (!bindSuffix.isEmpty() && bindAlpha > 0.01f) {
+                int suffixX = textX + FontRenderUtility.getStringWidth(displayName)
+                    + (int) ((1f - bindEase) * 4f + (1f - ClickGUI.bindReveal) * 4f);
+                int bindColor = ColorUtility.withAlpha(textColor, (int) (bindAlpha * 255));
+                FontRenderUtility.drawString(graphics, bindSuffix, suffixX, textY, bindColor, true);
+            }
+        }
+
+        if (bindingEase > 0.01f) {
+            float labelAlpha = bindingEase * ClickGUI.bindReveal;
+            if (labelAlpha > 0.01f) {
+                renderBindingLabel(graphics, x, width, textY, textColor, labelAlpha);
+            }
         }
 
         boolean hasParams = !module.getParameters().isEmpty();
@@ -261,12 +346,12 @@ public class ModuleButton {
                 int iconSize = 10;
                 int iconX = x + width - iconSize - 8;
                 int iconY = currentY + (btnH - iconSize) / 2;
-                boolean rotating = expanded;
-                float angle = module.getGearAngle();
+                float openProgress = AnimationUtility.Easing.CUBIC_OUT.apply(expandAnim);
+                float angle = openProgress * 90f + module.getGearAngle();
                 var pose = graphics.pose();
                 pose.pushMatrix();
                 pose.translate(iconX + iconSize / 2f, iconY + iconSize / 2f);
-                if (rotating) {
+                if (Math.abs(angle) > 0.01f) {
                     pose.rotate(angle * (float)Math.PI / 180f);
                 }
                 pose.translate(-(iconX + iconSize / 2f), -(iconY + iconSize / 2f));
@@ -290,10 +375,10 @@ public class ModuleButton {
 
         if (hasParams) {
             float targetExpand = expanded ? 1.0f : 0.0f;
-            if (expandAnim < targetExpand) {
-                expandAnim = Math.min(targetExpand, expandAnim + 0.10f);
-            } else if (expandAnim > targetExpand) {
-                expandAnim = Math.max(targetExpand, expandAnim - 0.15f);
+            float expandStep = 1f - (float) Math.exp(-getFrameDt() * 9f);
+            expandAnim += (targetExpand - expandAnim) * expandStep;
+            if (Math.abs(targetExpand - expandAnim) < 0.005f) {
+                expandAnim = targetExpand;
             }
             if (expandAnim > 0.01f) {
                 int paramAreaH = 0;
@@ -305,7 +390,7 @@ public class ModuleButton {
                 }
                 int actualH = getExpandedHeight(width);
                 int bgCol = ColorUtility.withAlpha(0x0A0A14, Math.max(btnAlpha / 2, 24));
-                Render2DUtility.drawPixelPerfectRound(graphics, x + 3, currentY, width - 6, actualH, Math.max(4, btnRadius - 2), bgCol);
+                Render2DUtility.drawRound(graphics, x + 3, currentY, width - 6, actualH, Math.max(4, btnRadius - 2), bgCol);
 
                 int accentH = (int) (actualH * AnimationUtility.Easing.CUBIC_OUT.apply(expandAnim));
                 if (accentH > 1) {
@@ -318,7 +403,7 @@ public class ModuleButton {
                 int pY = currentY + 2 - scrollOffset;
                 int visTop = currentY + 2;
                 int visBot = currentY + actualH - 2;
-                graphics.enableScissor(x + 3, currentY, x + width - 3, currentY + actualH);
+                Render2DUtility.pushScissor(graphics, x + 3, currentY, width - 6, actualH);
                 for (ParameterElement pe : parameterElements) {
                     if (!pe.getParameter().isVisible() && pe.getExpandAnimProgress() < 0.001f) continue;
                     int pHeight = pe.getHeight();
@@ -344,90 +429,77 @@ public class ModuleButton {
                     graphics.fill(sbX, thumbY, sbX + 2, thumbY + thumbH, ColorUtility.withAlpha(0xFFFFFFFF, 40));
                 }
 
-                graphics.disableScissor();
+                Render2DUtility.popScissor(graphics);
                 currentY += actualH;
             }
         } else {
-            expandAnim = Math.max(0.0f, expandAnim - 0.10f);
+            expandAnim += (0.0f - expandAnim) * (1f - (float) Math.exp(-getFrameDt() * 9f));
+            if (expandAnim < 0.005f) expandAnim = 0.0f;
         }
 
         boolean searching = searchQuery != null && !searchQuery.isEmpty();
         float revealH = (!searching || matchesSearch) ? 1.0f : searchReveal;
         if (revealH < 0.99f) {
             int fadeAlpha = (int)((1.0f - revealH) * 200);
-            Render2DUtility.drawPixelPerfectRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min((int) ModuleManager.get(ClickGui.class).cornerRadius, btnH / 2), (fadeAlpha << 24) | 0x050510);
+            Render2DUtility.drawRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min((int) ModuleManager.get(ClickGui.class).cornerRadius, btnH / 2), (fadeAlpha << 24) | 0x050510);
         }
         currentYOut[0] = currentYOut[0] + (int)((currentY - currentYOut[0]) * revealH);
     }
 
-    private void renderHighlightedName(GuiGraphics graphics, String text, int x, int y, int baseColor, String query) {
-        String lower = text.toLowerCase();
-        String qLower = query.toLowerCase();
-        int queryLen = qLower.length();
-        int fontH = FontRenderUtility.getFontHeight();
+    private void renderBindingLabel(GuiGraphics graphics, int x, int width, int y, int textColor, float alpha) {
+        String base = ravex.utility.misc.LanguageUtility.t("mb_binding");
+        String dot = ".";
+        int baseW = FontRenderUtility.getStringWidth(base);
+        int dotW = FontRenderUtility.getStringWidth(dot);
+        int gap = 2;
+        int spaceBeforeDots = 2;
+        int totalW = baseW + spaceBeforeDots + dotW * 3 + gap * 2;
+        int startX = x + (width - totalW) / 2;
 
-        int currentX = x;
-        int i = 0;
-        while (i < text.length()) {
-            int matchIdx = lower.indexOf(qLower, i);
-            if (matchIdx == -1) {
-                FontRenderUtility.drawString(graphics, text.substring(i), currentX, y, baseColor, true);
-                break;
-            }
+        int baseColor = ColorUtility.withAlpha(textColor, (int) (alpha * 255));
+        FontRenderUtility.drawString(graphics, base, startX, y, baseColor, true);
 
-            if (matchIdx > i) {
-                String before = text.substring(i, matchIdx);
-                FontRenderUtility.drawString(graphics, before, currentX, y, baseColor, true);
-                currentX += FontRenderUtility.getStringWidth(before);
-            }
-
-            String matched = text.substring(matchIdx, Math.min(matchIdx + queryLen, text.length()));
-            graphics.fill(currentX - 1, y - 1, currentX + FontRenderUtility.getStringWidth(matched) + 1, y + fontH + 1, 0x44FFAA00);
-            FontRenderUtility.drawString(graphics, matched, currentX, y, 0xFFFFFF80, true);
-            currentX += FontRenderUtility.getStringWidth(matched);
-
-            i = matchIdx + queryLen;
+        long now = System.currentTimeMillis();
+        int dotsX = startX + baseW + spaceBeforeDots;
+        for (int i = 0; i < 3; i++) {
+            double phase = now * 0.008 - i * 0.85;
+            float wave = (float) (0.5 + 0.5 * Math.sin(phase));
+            float eased = AnimationUtility.Easing.CUBIC_OUT.apply(wave);
+            float dotAlpha = alpha * (0.2f + 0.8f * eased);
+            int dotColor = ColorUtility.withAlpha(textColor, (int) (dotAlpha * 255));
+            int dx = dotsX + i * (dotW + gap);
+            int dy = y + (eased > 0.5f ? 0 : 1);
+            FontRenderUtility.drawString(graphics, dot, dx, dy, dotColor, true);
         }
     }
 
-    private static int blendSrcOver(int dst, int src) {
-        int sa = (src >> 24) & 0xFF;
-        if (sa == 0) return dst;
-        if (sa >= 254) return src;
-        int da = (dst >> 24) & 0xFF;
-        if (da == 0) return src;
-        int sr = (src >> 16) & 0xFF;
-        int sg = (src >> 8) & 0xFF;
-        int sb = src & 0xFF;
-        int dr = (dst >> 16) & 0xFF;
-        int dg = (dst >> 8) & 0xFF;
-        int db = dst & 0xFF;
-        float a = sa / 255f;
-        float invA = 1f - a;
-        int r = (int) (sr * a + dr * invA);
-        int g = (int) (sg * a + dg * invA);
-        int b = (int) (sb * a + db * invA);
-        int na = (int) (sa + da * invA);
-        return (Math.min(255, na) << 24) | (Math.min(255, r) << 16) | (Math.min(255, g) << 8) | Math.min(255, b);
-    }
+    private void renderHighlightedName(GuiGraphics graphics, String text, int x, int y, int baseColor, String query) {
+        int fontH = FontRenderUtility.getFontHeight();
+        int[] match = ravex.utility.misc.SearchUtility.findMatch(text, query);
+        if (match == null) {
+            FontRenderUtility.drawString(graphics, text, x, y, baseColor, true);
+            return;
+        }
+        int matchIdx = match[0];
+        int queryLen = match[1];
+        if (matchIdx < 0) matchIdx = 0;
+        if (matchIdx + queryLen > text.length()) queryLen = Math.max(0, text.length() - matchIdx);
 
-    private static int lerpColor(int bg, int fg, float alpha) {
-        int aBg = (bg >> 24) & 0xFF;
-        int rBg = (bg >> 16) & 0xFF;
-        int gBg = (bg >> 8) & 0xFF;
-        int bBg = bg & 0xFF;
+        int currentX = x;
+        if (matchIdx > 0) {
+            String before = text.substring(0, matchIdx);
+            FontRenderUtility.drawString(graphics, before, currentX, y, baseColor, true);
+            currentX += FontRenderUtility.getStringWidth(before);
+        }
 
-        int aFg = (fg >> 24) & 0xFF;
-        int rFg = (fg >> 16) & 0xFF;
-        int gFg = (fg >> 8) & 0xFF;
-        int bFg = fg & 0xFF;
+        String matched = text.substring(matchIdx, matchIdx + queryLen);
+        graphics.fill(currentX - 1, y - 1, currentX + FontRenderUtility.getStringWidth(matched) + 1, y + fontH + 1, 0x44FFAA00);
+        FontRenderUtility.drawString(graphics, matched, currentX, y, 0xFFFFFF80, true);
+        currentX += FontRenderUtility.getStringWidth(matched);
 
-        int r = (int)(rBg * (1 - alpha) + rFg * alpha);
-        int g = (int)(gBg * (1 - alpha) + gFg * alpha);
-        int b = (int)(bBg * (1 - alpha) + bFg * alpha);
-        int a = (int)(aBg * (1 - alpha) + aFg * alpha);
-
-        return (a << 24) | (r << 16) | (g << 8) | b;
+        if (matchIdx + queryLen < text.length()) {
+            FontRenderUtility.drawString(graphics, text.substring(matchIdx + queryLen), currentX, y, baseColor, true);
+        }
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int width, int[] currentYOut, net.minecraft.client.Minecraft mc) {
@@ -441,21 +513,29 @@ public class ModuleButton {
         if (mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + totalH) {
             if (mouseY <= currentY + btnH) {
                 if (button == 0) {
+                    sheenProgress = 0.0f;
                     module.toggle();
                 } else if (button == 1 && !module.getParameters().isEmpty()) {
                     expanded = !expanded;
                     if (expanded) {
                         expandedModules.add(module);
                         inlineScrollTarget = 0;
-                        expandFlash = 1.4f;
+                        inlineScrollAnim = 0;
+                        triggerFlash(1f);
                         EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.SETTINGS_OPEN, 0.6f));
                     } else {
                         expandedModules.remove(module);
-                        module.setGearAngle(0f, System.currentTimeMillis());
+                        closingGearAngle = 0f;
+                        triggerFlash(0.55f);
                         EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.SETTINGS_CLOSE, 0.6f));
                     }
                 } else if (button == 2) {
+                    if (ClickGUI.bindingModuleButton != null && ClickGUI.bindingModuleButton != this) {
+                        ClickGUI.bindingModuleButton = null;
+                    }
                     ClickGUI.bindingModuleButton = this;
+                    bindAnim = 0f;
+                    bindingShowAnim = 0f;
                 }
             } else if (expanded) {
                 int scrollOffset = Math.round(inlineScrollAnim);

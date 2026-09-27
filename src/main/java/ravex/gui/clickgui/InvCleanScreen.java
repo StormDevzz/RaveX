@@ -66,7 +66,7 @@ public class InvCleanScreen extends Screen {
     private long cleanClickTime = -1;
 
     public InvCleanScreen(Screen parent) {
-        super(Component.literal("Inventory Cleaner"));
+        super(Component.literal(ravex.utility.misc.LanguageUtility.t("ic_title")));
         this.parent = parent;
 
 
@@ -116,7 +116,7 @@ public class InvCleanScreen extends Screen {
 
 
         int bgA = (int)(progress * 0x99);
-        g.fill(0, 0, W, H, (bgA << 24) | 0x05050E);
+        g.fill(0, 0, W, H, ColorUtility.setAlpha(0x05050E, bgA));
 
 
         int panelW = 680;
@@ -148,7 +148,7 @@ public class InvCleanScreen extends Screen {
         g.fill(panelX, panelY, panelX + panelW, panelY + headerH, 0xFF160E30);
         g.fill(panelX, panelY + headerH - 1, panelX + panelW, panelY + headerH, ColorUtility.getActiveColor());
         FontRenderUtility.drawString(g, "✦ Inventory Cleaner", panelX + 10, panelY + 6, ColorUtility.getActiveColor(), true);
-        FontRenderUtility.drawString(g, "ESC / Quit", panelX + panelW - 72, panelY + 8, 0xFF606080, false);
+        FontRenderUtility.drawString(g, ravex.utility.misc.LanguageUtility.t("ic_back"), panelX + panelW - 72, panelY + 8, 0xFF606080, false);
 
 
         int leftW  = (panelW / 2) - 6;
@@ -187,7 +187,7 @@ public class InvCleanScreen extends Screen {
         int startIdx = currentPage * PAGE_SIZE;
         int endIdx   = Math.min(startIdx + PAGE_SIZE, filteredItems.size());
 
-        g.enableScissor(leftX, gridY, leftX + leftW, gridY + gridH);
+        Render2DUtility.pushScissor(g, leftX, gridY, leftW, gridH);
 
         for (int i = startIdx; i < endIdx; i++) {
             int localIdx = i - startIdx;
@@ -222,12 +222,12 @@ public class InvCleanScreen extends Screen {
             }
         }
 
-        g.disableScissor();
+        Render2DUtility.popScissor(g);
 
 
         int pageY = gridY + gridH + 2;
         int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
-        String pageStr = "Page " + (currentPage + 1) + " / " + (maxPage + 1);
+        String pageStr = ravex.utility.misc.LanguageUtility.t("ic_page", currentPage + 1, maxPage + 1);
 
         prevHovered = mx >= leftX + 4 && mx <= leftX + 26 && my >= pageY && my <= pageY + 12;
         nextHovered = mx >= leftX + leftW - 26 && mx <= leftX + leftW - 4 && my >= pageY && my <= pageY + 12;
@@ -257,7 +257,7 @@ public class InvCleanScreen extends Screen {
 
         int selContentY = contentY + colHeaderH + 3;
         int selContentH = contentH - colHeaderH - 6;
-        g.enableScissor(rightX, selContentY, rightX + rightW, selContentY + selContentH);
+        Render2DUtility.pushScissor(g, rightX, selContentY, rightW, selContentH);
 
         var selectedSet = InvCleanData.INSTANCE.getSelectedItems();
         String[] selectedArr = selectedSet.toArray(new String[0]);
@@ -292,7 +292,7 @@ public class InvCleanScreen extends Screen {
             sy += 18;
         }
 
-        g.disableScissor();
+        Render2DUtility.popScissor(g);
 
 
         int btnY   = panelY + panelH - 36;
@@ -316,8 +316,9 @@ public class InvCleanScreen extends Screen {
         quitHovered = mx >= quitX && mx <= quitX + quitW && my >= btnY && my <= btnY + btnH;
         g.fill(quitX, btnY, quitX + quitW, btnY + btnH, quitHovered ? 0xFF3A1010 : 0xFF1A0E38);
         Render2DUtility.drawBorder(g, quitX, btnY, quitW, btnH, 1, quitHovered ? 0xFFFF4455 : 0xFF3A2060);
-        int qtw = FontRenderUtility.getStringWidth("Quit");
-        FontRenderUtility.drawString(g, "Quit", quitX + quitW / 2 - qtw / 2, btnY + 4, quitHovered ? 0xFFFF8888 : 0xFFCCCCCC, false);
+        String qtv = ravex.utility.misc.LanguageUtility.t("ic_quit");
+        int qtw = FontRenderUtility.getStringWidth(qtv);
+        FontRenderUtility.drawString(g, qtv, quitX + quitW / 2 - qtw / 2, btnY + 4, quitHovered ? 0xFFFF8888 : 0xFFCCCCCC, false);
 
         pose.popMatrix();
 

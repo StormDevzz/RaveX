@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.movement.SafeWalk;
+import ravex.utility.misc.block.BlockUtility;
 import ravex.modules.Modules;
 
 @Mixin(KeyMapping.class)
@@ -20,9 +21,8 @@ public class MixinKeyMapping {
         if (!((KeyMapping)(Object)this).equals(mc.options.keyShift)) return;
         if (!Modules.enabled(SafeWalk.class)) return;
         if (!mc.player.onGround()) return;
-        if (mc.level.getBlockState(
-            BlockPos.containing(mc.player.getX(), mc.player.getY() - 1, mc.player.getZ())
-        ).isAir()) {
+        BlockPos below = BlockPos.containing(mc.player.getX(), mc.player.getY() - 1, mc.player.getZ());
+        if (!BlockUtility.isSolid(mc.level, below)) {
             cir.setReturnValue(true);
         }
     }

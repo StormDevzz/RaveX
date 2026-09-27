@@ -9,7 +9,7 @@ public class SayCmd extends Cmd {
     }
     @Override
     public void execute(String[] args) {
-        if (args.length < 2) { CmdReg.print("§c[RaveX] Usage: .say <message>"); return; }
+        if (args.length < 2) { CmdReg.print("§9[§bRaveX§9] §cUsage: .say <message>"); return; }
         String msg = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() != null) NetworkUtility.sendChat(msg);

@@ -31,15 +31,10 @@ public class ViewModel {
     public double offRotZ = 0.0;
     @Parameter(name = "OffScale", min = 0.1, max = 3.0, step = 0.05)
     public double offScale = 1.0;
-    @Parameter(name = "SwingSpeed", min = 0.1, max = 3.0, step = 0.05)
-    public double swingSpeed = 1.0;
     @Parameter(name = "HideMain")
     public boolean hideMainHand = false;
     @Parameter(name = "HideOff")
     public boolean hideOffHand = false;
-    @Parameter(name = "NoSwing")
-    public boolean noSwing = false;
-
 
 
 

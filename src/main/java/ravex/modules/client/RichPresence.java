@@ -70,7 +70,7 @@ public class RichPresence {
             details = "Menu";
             state = "InMainMenu";
         } else {
-            details = "RaveX — " + mc.getPlayer().getGameProfile().name();
+            details = "RaveX - " + mc.getPlayer().getGameProfile().name();
             StringBuilder stateBuilder = new StringBuilder();
             if (showHP) {
                 int hp = (int) Math.ceil(PlayerUtility.getHealth(mc.getPlayer()));

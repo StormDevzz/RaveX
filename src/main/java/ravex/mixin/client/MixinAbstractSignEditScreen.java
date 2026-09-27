@@ -23,10 +23,11 @@ public abstract class MixinAbstractSignEditScreen {
         if (Modules.enabled(AutoSign.class)) {
             var mc = MinecraftWrapper.getInstance();
             if (mc.player != null && mc.getConnection() != null && sign != null) {
-                String l1 = Modules.get(AutoSign.class).line1;
-                String l2 = Modules.get(AutoSign.class).line2;
-                String l3 = Modules.get(AutoSign.class).line3;
-                String l4 = Modules.get(AutoSign.class).line4;
+                AutoSign autoSign = Modules.get(AutoSign.class);
+                String l1 = autoSign.line1;
+                String l2 = autoSign.line2;
+                String l3 = autoSign.line3;
+                String l4 = autoSign.line4;
 
                 mc.getConnection().send(new ServerboundSignUpdatePacket(
                     sign.getBlockPos(),
@@ -34,8 +35,11 @@ public abstract class MixinAbstractSignEditScreen {
                     l1, l2, l3, l4
                 ));
 
-
-                mc.execute(() -> ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper()));
+                if (autoSign.isAdvanced()) {
+                    autoSign.closeSignScreen();
+                } else {
+                    mc.execute(() -> ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper()));
+                }
             }
         }
     }

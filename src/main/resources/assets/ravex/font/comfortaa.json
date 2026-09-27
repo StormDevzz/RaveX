@@ -5,6 +5,10 @@
       "file": "ravex:comfortaa.ttf",
       "size": 11.0,
       "oversample": 8.0
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:default"
     }
   ]
 }

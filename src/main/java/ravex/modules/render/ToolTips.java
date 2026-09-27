@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 @Module(name = "ToolTips", category = "Render")
 public class ToolTips {
-    @Parameter(name = "ShowID")
-    public boolean showId = false;
     @Parameter(name = "ShowShulker")
     public boolean showShulker = true;
     @Parameter(name = "ShowFood")

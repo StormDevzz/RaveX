@@ -1,6 +1,7 @@
 package ravex.mixin.render;
 import ravex.manager.ModuleManager;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.renderer.LevelRenderer;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.phys.Vec3;
@@ -11,10 +12,12 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import ravex.modules.combat.AnchorAura;
 import ravex.modules.combat.AutoCrystal;
@@ -36,6 +39,7 @@ import ravex.modules.render.Borders;
 import ravex.modules.render.BreadCrumbs;
 
 import ravex.modules.render.CityESP;
+import ravex.modules.render.Skeleton;
 import ravex.modules.render.ESP;
 import ravex.modules.render.Particles;
 import ravex.modules.render.Search;
@@ -56,8 +60,22 @@ import ravex.modules.Modules;
 
 @Mixin(LevelRenderer.class)
 public class MixinLevelRenderer {
+    @Shadow
+    private RenderTarget entityOutlineTarget;
+
     private static final Matrix4f REUSABLE_MATRIX = new Matrix4f();
     private static long lastAnimTime = 0;
+
+    @Inject(
+        method = "entityOutlineTarget",
+        at = @At("RETURN"),
+        cancellable = true
+    )
+    private void onEntityOutlineTarget(CallbackInfoReturnable<RenderTarget> cir) {
+        if (cir.getReturnValue() == null && entityOutlineTarget != null) {
+            cir.setReturnValue(entityOutlineTarget);
+        }
+    }
 
 
     private static double apX = 0, apY = 0, apZ = 0;
@@ -92,6 +110,14 @@ public class MixinLevelRenderer {
 
     @Inject(
         method = "renderLevel",
+        at = @At("HEAD")
+    )
+    private void onRenderLevelHead(CallbackInfo ci) {
+        if (Modules.enabled(Skeleton.class)) Skeleton.beginFrame();
+    }
+
+    @Inject(
+        method = "renderLevel",
         at = @At("TAIL")
     )
     private void onRenderLevel(
@@ -107,10 +133,10 @@ public class MixinLevelRenderer {
         boolean bool2,
         CallbackInfo ci
     ) {
-        renderHighlights(camera, modelViewMatrix);
+        renderHighlights(camera, modelViewMatrix, deltaTracker.getGameTimeDeltaPartialTick(false));
     }
 
-    private void renderHighlights(net.minecraft.client.Camera camera, org.joml.Matrix4f modelViewMatrix) {
+    private void renderHighlights(net.minecraft.client.Camera camera, org.joml.Matrix4f modelViewMatrix, float partialTick) {
         Vec3 camPos = camera.position();
         var mc = MinecraftWrapper.getInstance();
         if (mc.level == null || mc.player == null) return;
@@ -127,8 +153,22 @@ public class MixinLevelRenderer {
 
 
         if (Modules.enabled(BlockOutline.class)) {
-            HitResult hit = mc.hitResult;
-            if (hit != null && hit.getType() == HitResult.Type.BLOCK) {
+              HitResult hit = mc.hitResult;
+              if (Modules.enabled(ravex.modules.render.FreeCam.class) && mc.level != null && mc.player != null) {
+                  ravex.modules.render.FreeCam fc = Modules.get(ravex.modules.render.FreeCam.class);
+                  if (fc != null) {
+                      try {
+                          Vec3 eye = new Vec3(fc.x, fc.y, fc.z);
+                          double reach = mc.player.blockInteractionRange();
+                          Vec3 look = Vec3.directionFromRotation(fc.pitch, fc.yaw);
+                          hit = mc.level.clip(new net.minecraft.world.level.ClipContext(
+                              eye, eye.add(look.scale(reach)),
+                              net.minecraft.world.level.ClipContext.Block.OUTLINE,
+                              net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player));
+                      } catch (Exception ignored) {}
+                  }
+              }
+              if (hit != null && hit.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockHit = (BlockHitResult) hit;
                 BlockPos pos = blockHit.getBlockPos();
                 double tx = pos.getX();
@@ -164,15 +204,17 @@ public class MixinLevelRenderer {
             }
 
             if (boAlpha > 0.0f) {
-                int color = Modules.get(BlockOutline.class).color;
+                BlockOutline boMod = Modules.get(BlockOutline.class);
+                int color = boMod.resolveColor();
                 float r = ((color >> 16) & 0xFF) / 255.0f;
                 float g = ((color >> 8) & 0xFF) / 255.0f;
                 float b = (color & 0xFF) / 255.0f;
                 float baseAlpha = ((color >> 24) & 0xFF) / 255.0f;
                 float a = baseAlpha * boAlpha;
-                boolean filled = Modules.get(BlockOutline.class).filled;
-                float lineWidth = 2.0f;
-                String outlineMode = Modules.get(BlockOutline.class).mode;
+                boolean filled = boMod.filled;
+                float thickness = (float) boMod.thickness;
+                float rightBias = (float) boMod.rightBias;
+                String outlineMode = boMod.mode;
 
                 try {
                     float bx = (float)(boX - camPos.x);
@@ -187,26 +229,28 @@ public class MixinLevelRenderer {
                         if (filled) {
                             Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, r, g, b, a * 0.25f, true);
                         }
-                        Render3DUtility.batchWireframe(REUSABLE_MATRIX, 1.002, r, g, b, a, 1.0f, true);
+                        float lw = Math.max(0.5f, thickness * 0.7f);
+                        Render3DUtility.batchWireframe(REUSABLE_MATRIX, 1.001, r, g, b, a, lw, true);
                     } else {
-                        // Thick mode using solid boxes
                         if (filled) {
                             modelViewMatrix.translate(bx, by, bz, REUSABLE_MATRIX);
                             Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, r, g, b, a * 0.25f, true);
                         }
-                        float edgeWidth = lineWidth * 0.02f;
-                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, bz, sx, by, bz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, by, bz, sx, by, sz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, by, sz, bx, by, sz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, sz, bx, by, bz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, sy, bz, sx, sy, bz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, sy, bz, sx, sy, sz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, sy, sz, bx, sy, sz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, sy, sz, bx, sy, bz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, bz, bx, sy, bz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, by, bz, sx, sy, bz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, by, sz, sx, sy, sz, edgeWidth, r, g, b, a, true);
-                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, sz, bx, sy, sz, edgeWidth, r, g, b, a, true);
+                        float base = thickness * 0.012f;
+                        float leftW = Math.max(0.004f, base * (1.0f - rightBias * 0.35f));
+                        float rightW = Math.max(0.004f, base * (1.0f + rightBias * 0.65f));
+                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, bz, bx, by, sz, leftW, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, sy, bz, bx, sy, sz, leftW, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, bz, bx, sy, bz, leftW, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, sz, bx, sy, sz, leftW, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, by, bz, sx, by, sz, rightW, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, sy, bz, sx, sy, sz, rightW, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, by, bz, sx, sy, bz, rightW, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, sx, by, sz, sx, sy, sz, rightW, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, bz, sx, by, bz, base, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, sz, sx, by, sz, base, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, sy, bz, sx, sy, bz, base, r, g, b, a, true);
+                        Render3DUtility.batchAxisLine(modelViewMatrix, bx, sy, sz, sx, sy, sz, base, r, g, b, a, true);
                     }
                 } catch (Exception ignored) {}
             }
@@ -277,12 +321,12 @@ public class MixinLevelRenderer {
 
 
         Scaffold sc = Modules.get(Scaffold.class);
-        if (Modules.enabled(Scaffold.class) && sc.render) {
-            var currPos = sc.getCurrentPos();
-            if (currPos == null) {} else {
-            double tx = currPos.getX();
-            double ty = currPos.getY();
-            double tz = currPos.getZ();
+        boolean scActive = Modules.enabled(Scaffold.class) && sc.render;
+        var scPos = scActive ? sc.getCurrentPos() : null;
+        if (scPos != null) {
+            double tx = scPos.getX();
+            double ty = scPos.getY();
+            double tz = scPos.getZ();
             if (sc.animate) {
                 if (!scInitialized) {
                     scX = tx; scY = ty; scZ = tz;
@@ -302,9 +346,9 @@ public class MixinLevelRenderer {
             ravex.modules.world.Scaffold.highlightPos = new Vec3(scX, scY, scZ);
             ravex.modules.world.Scaffold.renderAlpha = scAlpha;
             ravex.modules.world.Scaffold.renderSize = scSize;
-            } } else {
-            scAlpha += (0.0f - scAlpha) * factor;
-            scSize += (0.0 - scSize) * factor;
+        } else {
+            scAlpha += (0.0f - scAlpha) * factor * 0.5f;
+            scSize += (0.0 - scSize) * factor * 0.5f;
             if (scAlpha < 0.01f) {
                 scAlpha = 0.0f;
                 scSize = 0.0;
@@ -318,14 +362,14 @@ public class MixinLevelRenderer {
         }
 
         if (Modules.enabled(Scaffold.class)) {
-            renderBlockHighlight(
+            renderScaffoldHighlight(
                 ravex.modules.world.Scaffold.highlightPos,
                 ravex.modules.world.Scaffold.renderAlpha,
                 ravex.modules.world.Scaffold.renderSize,
                 ravex.modules.world.Scaffold.renderR,
                 ravex.modules.world.Scaffold.renderG,
                 ravex.modules.world.Scaffold.renderB,
-                camPos, modelViewMatrix
+                now, camPos, modelViewMatrix
             );
         }
 
@@ -365,6 +409,32 @@ public class MixinLevelRenderer {
             }
         }
 
+
+        if (Modules.enabled(ravex.modules.world.AutoWither.class)) {
+            ravex.modules.world.AutoWither aw = Modules.get(ravex.modules.world.AutoWither.class);
+            if (aw != null && aw.render && aw.hasRenderBase()) {
+                int awColor = aw.color;
+                float awR = ((awColor >> 16) & 0xFF) / 255.0f;
+                float awG = ((awColor >> 8) & 0xFF) / 255.0f;
+                float awB = (awColor & 0xFF) / 255.0f;
+                Matrix4f awMat = new Matrix4f();
+                int awNext = aw.getBuildIndex();
+                for (int awI = 0; awI < ravex.modules.world.AutoWither.RENDER_OFFSETS.length; awI++) {
+                    int[] awOff = ravex.modules.world.AutoWither.RENDER_OFFSETS[awI];
+                    try {
+                        modelViewMatrix.translate(
+                            (float)(aw.getBaseX() + awOff[0] - camPos.x),
+                            (float)(aw.getBaseY() + awOff[1] - camPos.y),
+                            (float)(aw.getBaseZ() + awOff[2] - camPos.z),
+                            awMat
+                        );
+                        boolean awIsNext = awI == awNext;
+                        Render3DUtility.batchFilledBox(awMat, 1.002, awR, awG, awB, awIsNext ? 0.35f : 0.15f);
+                        Render3DUtility.batchWireframe(awMat, 1.002, awR, awG, awB, awIsNext ? 1.0f : 0.6f);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
 
         if (Modules.enabled(Surround.class)) {
             synchronized (Surround.surroundBlocks) {
@@ -447,27 +517,50 @@ public class MixinLevelRenderer {
 
 
         BasePlace basePlace = Modules.get(BasePlace.class);
-        if (Modules.enabled(BasePlace.class) && basePlace.render && ravex.modules.combat.BasePlace.getSimulatedPlacementBlock() != null) {
+        if (Modules.enabled(BasePlace.class) && basePlace.render) {
+            int c = basePlace.color;
+            float r = ((c >> 16) & 0xFF) / 255.0f;
+            float g = ((c >> 8) & 0xFF) / 255.0f;
+            float b = (c & 0xFF) / 255.0f;
+            float a = ((c >> 24) & 0xFF) / 255.0f;
+            if (a <= 0.01f) a = 0.5f;
+
             BlockPos pos = ravex.modules.combat.BasePlace.getSimulatedPlacementBlock();
-            try {
-                modelViewMatrix.translate(
-                    (float)(pos.getX() - camPos.x),
-                    (float)(pos.getY() - camPos.y),
-                    (float)(pos.getZ() - camPos.z),
-                    REUSABLE_MATRIX
-                );
+            if (pos != null) {
+                try {
+                    modelViewMatrix.translate(
+                        (float)(pos.getX() - camPos.x),
+                        (float)(pos.getY() - camPos.y),
+                        (float)(pos.getZ() - camPos.z),
+                        REUSABLE_MATRIX
+                    );
 
-                int c = basePlace.color;
-                float r = ((c >> 16) & 0xFF) / 255.0f;
-                float g = ((c >> 8) & 0xFF) / 255.0f;
-                float b = (c & 0xFF) / 255.0f;
-                float a = ((c >> 24) & 0xFF) / 255.0f;
+                    double size = 1.002;
+                    Render3DUtility.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
+                    Render3DUtility.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
+                    Render3DUtility.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
+                } catch (Exception ignored) {}
+            }
 
-                double size = 1.002;
-                Render3DUtility.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
-                Render3DUtility.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
-                Render3DUtility.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
-            } catch (Exception ignored) {}
+            for (java.util.Map.Entry<BlockPos, Long> entry : ravex.modules.combat.BasePlace.getRecentPlacedBlocks().entrySet()) {
+                BlockPos placedPos = entry.getKey();
+                if (placedPos == null || placedPos.equals(pos)) continue;
+                long elapsed = now - entry.getValue();
+                if (elapsed > 1500) continue;
+                float fade = 1.0f - (elapsed / 1500.0f);
+                try {
+                    modelViewMatrix.translate(
+                        (float)(placedPos.getX() - camPos.x),
+                        (float)(placedPos.getY() - camPos.y),
+                        (float)(placedPos.getZ() - camPos.z),
+                        REUSABLE_MATRIX
+                    );
+
+                    double size = 1.002;
+                    Render3DUtility.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f * fade);
+                    Render3DUtility.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f * fade);
+                } catch (Exception ignored) {}
+            }
         }
 
 
@@ -555,6 +648,17 @@ public class MixinLevelRenderer {
 
         if (Modules.enabled(Particles.class)) {
             ravex.modules.render.Particles.renderParticles(modelViewMatrix, camPos);
+        }
+
+
+        if (ravex.modules.render.JumpCircles.shouldRender()) {
+            ravex.modules.render.JumpCircles.renderCircles(modelViewMatrix, camPos);
+        }
+
+        if (Modules.enabled(ravex.modules.render.ChinaHat.class)) {
+            try {
+                ravex.modules.render.ChinaHat.render(modelViewMatrix, camPos, partialTick);
+            } catch (Exception ignored) {}
         }
 
 
@@ -719,16 +823,74 @@ public class MixinLevelRenderer {
         if (Modules.enabled(ECFarmer.class) && ec.render) {
             BlockPos p = ravex.modules.world.ECFarmer.getCurrentTarget();
             if (p != null) try {
-                modelViewMatrix.translate((float)(p.getX() - camPos.x), (float)(p.getY() - camPos.y), (float)(p.getZ() - camPos.z), REUSABLE_MATRIX);
+                long ecNow = System.currentTimeMillis();
+                long brStart = ravex.modules.world.ECFarmer.breakAnimStart;
+                long plStart = ravex.modules.world.ECFarmer.placeAnimStart;
+                long plEnd = ravex.modules.world.ECFarmer.placeAnimEnd;
+                boolean breaking = brStart > 0;
+                boolean placing = plEnd > plStart && ecNow < plEnd;
+                float prog = 0f;
+                float scale = 1.0f;
+                float extraA = 1.0f;
+                if (breaking) {
+                    prog = Math.min(1f, ravex.modules.world.ECFarmer.breakingProgress);
+                    scale = 1.0f + 0.07f * prog;
+                    extraA = 0.8f + 0.2f * prog;
+                } else if (placing) {
+                    float dur = Math.max(1f, plEnd - plStart);
+                    float t = Math.min(1f, (ecNow - plStart) / dur);
+                    float ease = 1f - (float) Math.pow(1.0 - t, 3.0);
+                    float overshoot = (float) Math.sin(t * Math.PI) * 0.18f;
+                    scale = 0.35f + 0.65f * ease + overshoot;
+                    extraA = 0.25f + 0.75f * ease;
+                    prog = t;
+                } else {
+                    float breathe = (float) (0.5 + 0.5 * Math.sin(ecNow * 0.004));
+                    extraA = 0.7f + 0.3f * breathe;
+                    scale = 1.0f + 0.02f * breathe;
+                }
                 int c = ec.color;
                 float r = ((c >> 16) & 0xFF) / 255.0f;
                 float g = ((c >> 8) & 0xFF) / 255.0f;
                 float b = (c & 0xFF) / 255.0f;
                 float a = ((c >> 24) & 0xFF) / 255.0f;
-                double size = 1.002;
-                Render3DUtility.batchFilledBox(REUSABLE_MATRIX, size, r, g, b, a * 0.25f);
-                Render3DUtility.batchWireframe(REUSABLE_MATRIX, size, r, g, b, a * 0.95f);
-                Render3DUtility.batchWireframe(REUSABLE_MATRIX, size * 1.03, r, g, b, a * 0.2f);
+                float cx = (float)(p.getX() + 0.5 - camPos.x);
+                float cy = (float)(p.getY() + 0.5 - camPos.y);
+                float cz = (float)(p.getZ() + 0.5 - camPos.z);
+                modelViewMatrix.translate(cx - scale * 0.5f, cy - scale * 0.5f, cz - scale * 0.5f, REUSABLE_MATRIX);
+                Render3DUtility.batchFilledBox(REUSABLE_MATRIX, scale, r, g, b, a * 0.2f * extraA);
+                Render3DUtility.batchWireframe(REUSABLE_MATRIX, scale, r, g, b, a * 0.95f * extraA);
+                Render3DUtility.batchWireframe(REUSABLE_MATRIX, scale * 1.03f, r, g, b, a * 0.25f * extraA);
+                if (breaking && prog > 0.02f) {
+                    float pr = 1.0f;
+                    float pg = 0.4f;
+                    float pb = 0.05f;
+                    float pulse = 0.65f + 0.35f * (float) Math.sin(ecNow * 0.012);
+                    float crackSize = scale * (0.35f + 0.65f * prog);
+                    modelViewMatrix.translate(cx - crackSize * 0.5f, cy - crackSize * 0.5f, cz - crackSize * 0.5f, REUSABLE_MATRIX);
+                    Render3DUtility.batchFilledBox(REUSABLE_MATRIX, crackSize, pr, pg, pb, 0.4f * prog * pulse);
+                    Render3DUtility.batchWireframe(REUSABLE_MATRIX, crackSize, pr, pg, pb, 0.85f * prog * pulse);
+                    float ringS = scale * (1.06f + 0.1f * prog);
+                    modelViewMatrix.translate(cx - ringS * 0.5f, cy - ringS * 0.5f, cz - ringS * 0.5f, REUSABLE_MATRIX);
+                    Render3DUtility.batchWireframe(REUSABLE_MATRIX, ringS, pr, pg, pb, 0.5f * prog * pulse);
+                }
+                if (placing) {
+                    float t = prog;
+                    float ring1 = scale * (1.05f + 0.55f * t);
+                    modelViewMatrix.translate(cx - ring1 * 0.5f, cy - ring1 * 0.5f, cz - ring1 * 0.5f, REUSABLE_MATRIX);
+                    Render3DUtility.batchWireframe(REUSABLE_MATRIX, ring1, r, g, b, a * 0.7f * (1.0f - t));
+                    if (t > 0.25f) {
+                        float ring2Scale = (t - 0.25f) / 0.75f;
+                        float ring2 = scale * (1.05f + 0.55f * ring2Scale);
+                        modelViewMatrix.translate(cx - ring2 * 0.5f, cy - ring2 * 0.5f, cz - ring2 * 0.5f, REUSABLE_MATRIX);
+                        Render3DUtility.batchWireframe(REUSABLE_MATRIX, ring2, r, g, b, a * 0.45f * (1.0f - ring2Scale));
+                    }
+                    if (t < 0.55f) {
+                        float flash = 1.0f - t / 0.55f;
+                        modelViewMatrix.translate(cx - scale * 0.5f, cy - scale * 0.5f, cz - scale * 0.5f, REUSABLE_MATRIX);
+                        Render3DUtility.batchFilledBox(REUSABLE_MATRIX, scale, 1.0f, 1.0f, 1.0f, 0.35f * flash);
+                    }
+                }
             } catch (Exception ignored) {}
         }
 
@@ -794,7 +956,7 @@ public class MixinLevelRenderer {
                         int bx = (cx + dx) << 4;
                         int bz = (cz + dz) << 4;
                         try {
-                            renderChunkBorderLines(modelViewMatrix, bx, bz, lr, lg, lb, la, camPos);
+                            renderChunkBorderLines(modelViewMatrix, bx, bz, lr, lg, lb, la, camPos, lw * 0.04f);
                         } catch (Exception ignored) {}
                     }
                 }
@@ -811,8 +973,9 @@ public class MixinLevelRenderer {
                     int cz = mc.player.chunkPosition().z;
                     int bx = cx << 4;
                     int bz = cz << 4;
+                    float feetY = (float) mc.player.position().y;
                     try {
-                        renderChunkBorderLines(modelViewMatrix, bx, bz, cr, cg, cb, ca, camPos);
+                        renderCurrentChunkHighlight(modelViewMatrix, bx, bz, feetY, cr, cg, cb, ca, camPos, lw * 0.04f);
                     } catch (Exception ignored) {}
                 }
             }
@@ -1069,6 +1232,18 @@ public class MixinLevelRenderer {
             } catch (Exception ignored) {}
         }
 
+        if (Modules.enabled(AutoCrystal.class) && Modules.get(AutoCrystal.class).targetEsp) {
+            try {
+                Modules.get(AutoCrystal.class).render(modelViewMatrix, camera, mc.getDeltaTracker().getGameTimeDeltaTicks());
+            } catch (Exception ignored) {}
+        }
+
+        if (Modules.enabled(Skeleton.class)) {
+            try {
+                Modules.get(Skeleton.class).renderWorld(modelViewMatrix);
+            } catch (Exception ignored) {}
+        }
+
         Render3DUtility.endFrame();
     }
 
@@ -1092,11 +1267,31 @@ public class MixinLevelRenderer {
         } catch (Exception ignored) {}
     }
 
-    private void renderChunkBorderLines(Matrix4f modelViewMatrix, int bx, int bz, float r, float g, float b, float a, Vec3 camPos) {
+    private void renderScaffoldHighlight(Vec3 highlightPos, float alpha, double size, float r, float g, float b, long nowMs, Vec3 camPos, Matrix4f modelViewMatrix) {
+        if (highlightPos == null || alpha <= 0.01f) return;
+
+        try {
+            modelViewMatrix.translate(
+                    (float)(highlightPos.x - camPos.x),
+                    (float)(highlightPos.y - camPos.y),
+                    (float)(highlightPos.z - camPos.z),
+                    REUSABLE_MATRIX
+                );
+
+            double s = Math.max(0.2, size);
+            float pulse = 0.7f + 0.3f * (float) Math.sin(nowMs * 0.0035);
+
+            Render3DUtility.batchFilledBox(REUSABLE_MATRIX, s, r, g, b, alpha * 0.14f, true);
+            Render3DUtility.batchWireframe(REUSABLE_MATRIX, s * 0.985, r, g, b, alpha * 0.28f, 1.0f, true);
+            Render3DUtility.batchWireframe(REUSABLE_MATRIX, s * 1.004, r, g, b, alpha * 0.95f, 1.6f, true);
+            Render3DUtility.batchWireframe(REUSABLE_MATRIX, s * 1.05, r, g, b, alpha * 0.4f * pulse, 1.0f, true);
+        } catch (Exception ignored) {}
+    }
+
+    private void renderChunkBorderLines(Matrix4f modelViewMatrix, int bx, int bz, float r, float g, float b, float a, Vec3 camPos, float th) {
         float cx = (float)camPos.x;
         float cy = (float)camPos.y;
         float cz = (float)camPos.z;
-        float th = 0.06f;
 
 
 
@@ -1117,5 +1312,34 @@ public class MixinLevelRenderer {
             Render3DUtility.batchAxisLine(modelViewMatrix, bx + 16 - cx, yOff, bz + 16 - cz, bx - cx, yOff, bz + 16 - cz, th, r, g, b, ha, true);
             Render3DUtility.batchAxisLine(modelViewMatrix, bx - cx, yOff, bz + 16 - cz, bx - cx, yOff, bz - cz, th, r, g, b, ha, true);
         }
+    }
+
+    private void renderCurrentChunkHighlight(Matrix4f modelViewMatrix, int bx, int bz, float feetY, float r, float g, float b, float a, Vec3 camPos, float th) {
+        float cx = (float)camPos.x;
+        float cy = (float)camPos.y;
+        float cz = (float)camPos.z;
+        float x0 = bx - cx;
+        float x1 = bx + 16 - cx;
+        float z0 = bz - cz;
+        float z1 = bz + 16 - cz;
+        float yb = feetY - cy + 0.02f;
+        float yt = yb + 6f;
+        float vertA = Math.min(1f, a * 1.6f);
+        float topA = a * 0.7f;
+
+        Render3DUtility.batchAxisLine(modelViewMatrix, x0, yb, z0, x0, yt, z0, th, r, g, b, vertA, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x1, yb, z0, x1, yt, z0, th, r, g, b, vertA, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x0, yb, z1, x0, yt, z1, th, r, g, b, vertA, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x1, yb, z1, x1, yt, z1, th, r, g, b, vertA, true);
+
+        Render3DUtility.batchAxisLine(modelViewMatrix, x0, yb, z0, x1, yb, z0, th, r, g, b, a, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x1, yb, z0, x1, yb, z1, th, r, g, b, a, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x1, yb, z1, x0, yb, z1, th, r, g, b, a, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x0, yb, z1, x0, yb, z0, th, r, g, b, a, true);
+
+        Render3DUtility.batchAxisLine(modelViewMatrix, x0, yt, z0, x1, yt, z0, th, r, g, b, topA, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x1, yt, z0, x1, yt, z1, th, r, g, b, topA, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x1, yt, z1, x0, yt, z1, th, r, g, b, topA, true);
+        Render3DUtility.batchAxisLine(modelViewMatrix, x0, yt, z1, x0, yt, z0, th, r, g, b, topA, true);
     }
 }

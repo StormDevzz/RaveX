@@ -1,6 +1,8 @@
 package ravex.modules.misc;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.event.Subscribe;
+import ravex.event.combat.TotemPopEvent;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -15,6 +17,23 @@ public class AutoLog {
     public boolean onPlayerNearby = false;
     @Parameter(name = "Range", min = 4.0, max = 64.0, step = 1.0)
     public double playerRange = 16.0;
+    @Parameter(name = "OnTotemPop")
+    public boolean onTotemPop = true;
+    @Parameter(name = "MaxTotemPops", min = 1.0, max = 10.0, step = 1.0, visible = "onTotemPop")
+    public double maxTotemPops = 1.0;
+    private int totemPops = 0;
+    public void onEnable() {
+        totemPops = 0;
+    }
+    @Subscribe
+    public void onTotemPop(TotemPopEvent event) {
+        if (!Modules.enabled(AutoLog.class) || !onTotemPop) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (event.getPlayer() != mc.getPlayer()) return;
+        totemPops++;
+        if (totemPops >= (int) maxTotemPops)
+            disconnect("TotemPopped(" + totemPops + ")");
+    }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();

@@ -42,12 +42,6 @@ public class TntAura {
     public String targetMode = "Closest";
     @Parameter(name = "TargetType", modes = {"Players", "Monsters", "All"})
     public String targetType = "Players";
-    @Parameter(name = "MaxRate", min = 1.0, max = 5.0, step = 1.0)
-    public double maxRate = 2.0;
-    @Parameter(name = "Render")
-    public boolean render = true;
-    @Parameter(name = "Color", color = true, visible = "render")
-    public int color = 0xFFFF4400;
     private enum State { TRAPPING, PLACING_TNT, IGNITING, WAITING }
     private State currentState = State.TRAPPING;
     private long lastActionTime = 0;

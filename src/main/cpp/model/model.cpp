@@ -86,52 +86,6 @@ ExportResult saveToMemory(const ModelData& model, ModelFormat fmt, const ExportS
     return h->saveFn(model, opts);
 }
 
-ModelData convert(const ModelData& input, const ConvertOptions& opts) {
-    if (!input.valid()) throw Error(ErrorCode::InvalidArgument);
-    ModelData out = input;
-
-    if (opts.flattenHierarchy) {
-        math::Mat4 global;
-        for (auto& mesh : out.meshes) {
-            for (auto& v : mesh.vertices)
-                v.pos = global.transform(v.pos);
-        }
-        out.bones.clear();
-    }
-
-    if (opts.mergeMeshes && out.meshes.size() > 1) {
-        auto merged = utils::mergeMeshes(out.meshes);
-        out.meshes.clear();
-        out.meshes.push_back(merged);
-    }
-
-    if (opts.deduplicateVerts) {
-
-    }
-
-    return out;
-}
-
-ModelData optimize(const ModelData& input) {
-    ModelData out = input;
-    for (auto& mesh : out.meshes) {
-        if (!mesh.hasNormals && mesh.vertices.size() >= 3) {
-            for (size_t i = 0; i < mesh.faces.size(); ++i) {
-                auto& f = mesh.faces[i];
-                auto& v0 = mesh.vertices[f.verts[0]];
-                auto& v1 = mesh.vertices[f.verts[1]];
-                auto& v2 = mesh.vertices[f.verts[2]];
-                auto n = math::norm(math::cross(
-                    math::sub(v1.pos, v0.pos),
-                    math::sub(v2.pos, v0.pos)));
-                v0.normal = n; v1.normal = n; v2.normal = n;
-            }
-            mesh.hasNormals = true;
-        }
-    }
-    return out;
-}
-
 bool isFormatSupported(const std::string& ext) {
     return utils::isFormatSupported(ext);
 }

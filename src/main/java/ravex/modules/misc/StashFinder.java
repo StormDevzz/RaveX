@@ -13,8 +13,6 @@ import ravex.modules.Modules;
 public class StashFinder {
     @Parameter(name = "Range", min = 16.0, max = 256.0, step = 8.0)
     public double range = 64.0;
-    @Parameter(name = "Render")
-    public boolean render = true;
     @Parameter(name = "ChatLog")
     public boolean logToChat = true;
     private final List<StashEntry> stashes = new ArrayList<>();

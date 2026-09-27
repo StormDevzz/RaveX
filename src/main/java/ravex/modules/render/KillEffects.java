@@ -54,18 +54,20 @@ public class KillEffects {
         bolt.setPos(x, y, z);
         bolt.setVisualOnly(true);
         level.addEntity(bolt);
+        java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
         level.playLocalSound(x, y, z,
             SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER,
-            10000.0F, 0.8F + level.random.nextFloat() * 0.2F, false);
+            10000.0F, 0.8F + rnd.nextFloat() * 0.2F, false);
         level.playLocalSound(x, y, z,
             SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER,
-            2.0F, 0.5F + level.random.nextFloat() * 0.2F, false);
+            2.0F, 0.5F + rnd.nextFloat() * 0.2F, false);
     }
     private void spawnFireParticles(ClientLevel level, double x, double y, double z) {
+        java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
         for (int i = 0; i < 20; i++) {
-            double dx = (level.random.nextDouble() - 0.5) * 2.0;
-            double dy = level.random.nextDouble() * 2.0;
-            double dz = (level.random.nextDouble() - 0.5) * 2.0;
+            double dx = (rnd.nextDouble() - 0.5) * 2.0;
+            double dy = rnd.nextDouble() * 2.0;
+            double dz = (rnd.nextDouble() - 0.5) * 2.0;
             level.addParticle(ParticleTypes.FLAME,
                 x + dx, y + dy, z + dz,
                 dx * 0.1, dy * 0.1, dz * 0.1);

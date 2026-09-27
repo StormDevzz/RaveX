@@ -23,6 +23,8 @@ public class ModuleManager {
             try {
                 var ann = clazz.getDeclaredAnnotation(ravex.modules.annotations.Module.class);
                 if (ann == null) continue;
+                if (clazz.getName().equals("ravex.modules.client.Baritone")
+                        && !ravex.integrations.baritone.BaritoneIntegration.isBaritonePresent()) continue;
                 String cat = ann.category();
                 var ctor = clazz.getDeclaredConstructor();
                 ctor.setAccessible(true);
@@ -65,6 +67,10 @@ public class ModuleManager {
                 throw new RuntimeException("Failed to register " + clazz.getName(), e);
             }
         }
+
+        Module clickGui = byClass.get(ravex.modules.client.ClickGui.class);
+        if (clickGui != null && clickGui.getKeyBind() == org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN)
+            clickGui.setKeyBind(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
     }
 
     public List<Module> getClickGuiModules() {

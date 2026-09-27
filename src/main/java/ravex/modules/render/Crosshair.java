@@ -6,6 +6,7 @@ import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 
 import ravex.utility.render.ColorUtility;
+import ravex.utility.render.Render2DUtility;
 import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "Crosshair", category = "Render")
@@ -26,6 +27,8 @@ public class Crosshair {
     public boolean dot = true;
     @Parameter(name = "Dynamic")
     public boolean dynamic = true;
+    @Parameter(name = "TargetEffect")
+    public boolean targetEffect = true;
     @Parameter(name = "HitEffect", min = 0.0, max = 16.0, step = 0.5)
     public double hitEffect = 6.0;
     @Parameter(name = "HitDuration", min = 50.0, max = 500.0, step = 25.0)
@@ -79,7 +82,7 @@ public class Crosshair {
             hitSpread = 0;
         }
 
-        boolean hasTarget = mc.getCrosshairPickEntity() != null && mc.getCrosshairPickEntity().isAlive();
+        boolean hasTarget = targetEffect && mc.getCrosshairPickEntity() != null && mc.getCrosshairPickEntity().isAlive();
         if (hasTarget) {
             targetProgress = Math.min(1.0f, targetProgress + delta * 6.0f);
         } else {
@@ -99,10 +102,10 @@ public class Crosshair {
 
         int col = color;
         int lockColor = dotColor;
-        int currentColor = lerpColor(col, lockColor, targetProgress);
+        int currentColor = ColorUtility.interpolate(col, lockColor, targetProgress);
 
         if (hitFlashProgress > 0.01f) {
-            currentColor = blendSrcOver(currentColor, ColorUtility.withAlpha(0xFFFFFFFF, (int)(180 * hitFlashProgress)));
+            currentColor = ColorUtility.overlay(currentColor, ColorUtility.withAlpha(0xFFFFFFFF, (int)(180 * hitFlashProgress)));
         }
 
         float baseSize = (float) size * hitScale;
@@ -145,17 +148,28 @@ public class Crosshair {
 
     private void renderNormal(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
         float end = gap + size;
-        float half = thick / 2.0f;
+        float len = end - gap;
+        if (len <= 0f || thick <= 0f) return;
         g.pose().pushMatrix();
         g.pose().translate(cx, cy);
         if (spin != 0) {
             g.pose().rotate(spin);
         }
-        g.fill((int) -end, (int) -half, (int) -gap, (int) Math.ceil(half), color);
-        g.fill((int) gap, (int) -half, (int) end, (int) Math.ceil(half), color);
-        g.fill((int) -half, (int) -end, (int) Math.ceil(half), (int) -gap, color);
-        g.fill((int) -half, (int) gap, (int) Math.ceil(half), (int) end, color);
+        net.minecraft.resources.Identifier barTex = Render2DUtility.getSmoothBar();
+        int w = Math.max(1, Math.round(len));
+        int h = Math.max(1, Math.round(thick));
+        float mid = (gap + end) * 0.5f;
+        blitBar(g, barTex, -mid, 0f, w, h, color);
+        blitBar(g, barTex, mid, 0f, w, h, color);
+        blitBar(g, barTex, 0f, -mid, h, w, color);
+        blitBar(g, barTex, 0f, mid, h, w, color);
         g.pose().popMatrix();
+    }
+
+    private void blitBar(GuiGraphics g, net.minecraft.resources.Identifier tex, float x, float y, int w, int h, int color) {
+        int px = Math.round(x - w * 0.5f);
+        int py = Math.round(y - h * 0.5f);
+        g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, tex, px, py, 0f, 0f, w, h, w, h, color);
     }
 
     private void renderCircle(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
@@ -174,82 +188,17 @@ public class Crosshair {
 
     private void renderTriangle(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
         float radius = gap + size;
-        float tipY = -radius;
-        float botY = radius * 0.6f;
-        float leftX = -radius * 0.8f;
-        float rightX = radius * 0.8f;
+        if (radius <= 0f || thick <= 0f) return;
+        float thicknessRatio = thick / radius;
+        net.minecraft.resources.Identifier triTex = Render2DUtility.getSmoothTriangle(thicknessRatio);
+        int d = Math.max(2, Math.round(radius * 2f));
 
         g.pose().pushMatrix();
         g.pose().translate(cx, cy);
         if (spin != 0) {
             g.pose().rotate(spin);
         }
-        drawThickLine(g, 0, tipY, leftX, botY, thick, color);
-        drawThickLine(g, leftX, botY, rightX, botY, thick, color);
-        drawThickLine(g, rightX, botY, 0, tipY, thick, color);
+        g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, triTex, -d / 2, -d / 2, 0f, 0f, d, d, d, d, color);
         g.pose().popMatrix();
     }
-
-    private void drawThickLine(GuiGraphics g, float x1, float y1, float x2, float y2, float thickness, int color) {
-        float dx = x2 - x1;
-        float dy = y2 - y1;
-        float len = (float) Math.sqrt(dx * dx + dy * dy);
-        if (len < 0.5f) return;
-        float angle = (float) Math.atan2(dy, dx);
-        g.pose().pushMatrix();
-        g.pose().translate(x1, y1);
-        g.pose().rotate(angle);
-        g.pose().scale(1.0f, thickness);
-        g.pose().translate(0.0f, -0.5f);
-        g.fill(0, 0, (int) Math.ceil(len), 1, color);
-        g.pose().popMatrix();
-    }
-
-    private static int lerpColor(int from, int to, float ratio) {
-        if (ratio <= 0f) return from;
-        if (ratio >= 1f) return to;
-        int a1 = (from >> 24) & 0xFF;
-        int r1 = (from >> 16) & 0xFF;
-        int g1 = (from >> 8) & 0xFF;
-        int b1 = from & 0xFF;
-
-        int a2 = (to >> 24) & 0xFF;
-        int r2 = (to >> 16) & 0xFF;
-        int g2 = (to >> 8) & 0xFF;
-        int b2 = to & 0xFF;
-
-        int a = (int)(a1 + (a2 - a1) * ratio);
-        int r = (int)(r1 + (r2 - r1) * ratio);
-        int g = (int)(g1 + (g2 - g1) * ratio);
-        int b = (int)(b1 + (b2 - b1) * ratio);
-
-        return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
-    private static int blendSrcOver(int dst, int src) {
-        int sa = (src >> 24) & 0xFF;
-        if (sa == 255) return src;
-        if (sa == 0) return dst;
-        int da = (dst >> 24) & 0xFF;
-        int dr = (dst >> 16) & 0xFF;
-        int dg = (dst >> 8) & 0xFF;
-        int db = dst & 0xFF;
-
-        int sr = (src >> 16) & 0xFF;
-        int sg = (src >> 8) & 0xFF;
-        int sb = src & 0xFF;
-
-        int a = sa + da * (255 - sa) / 255;
-        int r = (sr * sa + dr * da * (255 - sa) / 255) / (a == 0 ? 1 : a);
-        int g = (sg * sa + dg * da * (255 - sa) / 255) / (a == 0 ? 1 : a);
-        int b = (sb * sa + db * da * (255 - sa) / 255) / (a == 0 ? 1 : a);
-
-        return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
-
-
-
-
-
 }

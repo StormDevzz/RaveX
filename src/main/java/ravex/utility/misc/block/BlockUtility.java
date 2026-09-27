@@ -7,6 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -28,6 +29,7 @@ public class BlockUtility {
         public InteractionHand hand = InteractionHand.MAIN_HAND;
         public SilentRotationUtility silentRotation = null;
         public Direction face = Direction.UP;
+        public String swapMode = "Normal";
     }
 
     public static class PlaceConfig {
@@ -36,6 +38,7 @@ public class BlockUtility {
         public boolean restoreSlot = true;
         public InteractionHand hand = InteractionHand.MAIN_HAND;
         public SilentRotationUtility silentRotation = null;
+        public String swapMode = "Normal";
     }
 
     public static boolean breakBlock(MinecraftWrapper mc, BlockPos pos) {
@@ -49,14 +52,14 @@ public class BlockUtility {
         BlockState state = _mc.level.getBlockState(pos);
         int prev = InventoryUtility.getSelectedSlot(_mc.player);
         int toolSlot = ToolUtility.findBestToolSlot(_mc.player, state);
-        if (toolSlot != -1) InventoryUtility.selectSlot(_mc.player, toolSlot);
+        if (toolSlot != -1) InventoryUtility.swapToSlot(_mc.player, toolSlot, cfg.swapMode);
         if (cfg.rotate && cfg.silentRotation != null) {
             cfg.silentRotation.setAnglesTo(mc, pos.getCenter());
             cfg.silentRotation.hasRotation = true;
         }
         _mc.gameMode.startDestroyBlock(pos, cfg.face);
         if (cfg.swing) SwingUtility.swing(_mc.player, cfg.hand);
-        if (toolSlot != -1) InventoryUtility.selectSlot(_mc.player, prev);
+        if (toolSlot != -1) InventoryUtility.swapBackSlot(_mc.player, prev, cfg.swapMode);
         return true;
     }
 
@@ -84,7 +87,7 @@ public class BlockUtility {
         if (_mc.player == null || _mc.level == null || _mc.gameMode == null) return -1;
         BlockState state = _mc.level.getBlockState(pos);
         int toolSlot = ToolUtility.findBestToolSlot(_mc.player, state);
-        if (toolSlot != -1) InventoryUtility.selectSlot(_mc.player, toolSlot);
+        if (toolSlot != -1) InventoryUtility.swapToSlot(_mc.player, toolSlot, cfg.swapMode);
         if (cfg.rotate && cfg.silentRotation != null) {
             cfg.silentRotation.setAnglesTo(mc, pos.getCenter());
             cfg.silentRotation.hasRotation = true;
@@ -168,10 +171,11 @@ public class BlockUtility {
     public static boolean placeBlock(MinecraftWrapper mc, BlockPos target, int slot, PlaceConfig cfg) {
         var _mc = mc.getRaw();
         int prev = InventoryUtility.getSelectedSlot(_mc.player);
-        InventoryUtility.selectSlot(_mc.player, slot);
+        if ("None".equals(cfg.swapMode) && prev != slot) return false;
+        InventoryUtility.swapToSlot(_mc.player, slot, cfg.swapMode);
         BlockHitResult hit = findPlaceTarget(mc, target);
         if (hit == null) {
-            if (cfg.restoreSlot) InventoryUtility.selectSlot(_mc.player, prev);
+            if (cfg.restoreSlot) InventoryUtility.swapBackSlot(_mc.player, prev, cfg.swapMode);
             return false;
         }
         if (cfg.rotate && cfg.silentRotation != null) {
@@ -181,7 +185,7 @@ public class BlockUtility {
         }
         _mc.gameMode.useItemOn(_mc.player, cfg.hand, hit);
         if (cfg.swing) SwingUtility.swing(_mc.player, cfg.hand);
-        if (cfg.restoreSlot) InventoryUtility.selectSlot(_mc.player, prev);
+        if (cfg.restoreSlot) InventoryUtility.swapBackSlot(_mc.player, prev, cfg.swapMode);
         return true;
     }
 
@@ -249,15 +253,15 @@ public class BlockUtility {
         return isBlock(level.getBlockState(pos), name);
     }
 
-    public static void useItemOn(MinecraftWrapper mc, BlockHitResult hit) {
-        var _mc = mc.getRaw();
-        useItemOn(mc, hit, InteractionHand.MAIN_HAND);
+    public static InteractionResult useItemOn(MinecraftWrapper mc, BlockHitResult hit) {
+        return useItemOn(mc, hit, InteractionHand.MAIN_HAND);
     }
 
-    public static void useItemOn(MinecraftWrapper mc, BlockHitResult hit, InteractionHand hand) {
+    public static InteractionResult useItemOn(MinecraftWrapper mc, BlockHitResult hit, InteractionHand hand) {
         var _mc = mc.getRaw();
         if (_mc.player != null && _mc.gameMode != null)
-            _mc.gameMode.useItemOn(_mc.player, hand, hit);
+            return _mc.gameMode.useItemOn(_mc.player, hand, hit);
+        return null;
     }
 
     public static void swing(MinecraftWrapper mc) {

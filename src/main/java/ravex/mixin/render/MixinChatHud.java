@@ -21,10 +21,16 @@ public abstract class MixinChatHud {
         if (!Modules.enabled(ChatHud.class)) return;
         if (ravex$transformed.get()) return;
         ravex$transformed.set(true);
+        ChatHud chatHud = Modules.get(ChatHud.class);
         var pose = graphics.pose();
         pose.pushMatrix();
-        pose.translate(Modules.get(ChatHud.class).getX(), Modules.get(ChatHud.class).getY());
-        float s = (float) Modules.get(ChatHud.class).scale;
+
+        int defaultBaseY = graphics.guiHeight() - 40 - chatHud.getHeight();
+        float dx = (float) chatHud.getX();
+        float dy = (float) (chatHud.getY() - defaultBaseY);
+        pose.translate(dx, dy);
+
+        float s = (float) chatHud.scale;
         pose.scale(s, s);
     }
 

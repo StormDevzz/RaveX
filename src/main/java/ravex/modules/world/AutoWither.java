@@ -5,14 +5,22 @@ import net.minecraft.network.chat.Component;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.GameModeUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.utility.client.ClientAlertUtility;
 @Module(name = "AutoWither", category = "World")
 public class AutoWither {
     @Parameter(name = "Count", min = 1.0, max = 12.0, step = 1.0)
     public double count = 1.0;
+    @Parameter(name = "Swap", modes = {"None", "Normal", "Silent"})
+    public String swapMode = "Normal";
     @Parameter(name = "AutoDisable")
     public boolean autoDisable = true;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true, visible = "render")
+    public int color = 0xFF8800FF;
     private enum State { IDLE, BUILDING, RETRY, DONE }
     private State state = State.IDLE;
     private int baseX, baseY, baseZ;
@@ -23,10 +31,19 @@ public class AutoWither {
     private boolean hasFailed;
     private long lastActionTime = 0;
     private int buildsCompleted = 0;
+    private boolean positionNotified = false;
     private static final int[][] BLOCK_OFFSETS = {
         {1, 0, 0}, {0, 1, 0}, {1, 1, 0}, {2, 1, 0}, {0, 2, 0}, {2, 2, 0}, {1, 2, 0},
     };
+    public static final int[][] RENDER_OFFSETS = BLOCK_OFFSETS;
     private static final int SOUL_SAND_COUNT = 4;
+    public boolean hasRenderBase() {
+        return hasBase && (state == State.BUILDING || state == State.RETRY);
+    }
+    public int getBaseX() { return baseX; }
+    public int getBaseY() { return baseY; }
+    public int getBaseZ() { return baseZ; }
+    public int getBuildIndex() { return buildIndex; }
     public void onEnable() {
         state = State.IDLE;
         hasBase = false;
@@ -34,6 +51,7 @@ public class AutoWither {
         retries = 0;
         hasFailed = false;
         buildsCompleted = 0;
+        positionNotified = false;
     }
     public void onDisable() {
         state = State.IDLE;
@@ -43,6 +61,11 @@ public class AutoWither {
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
+        if (GameModeUtility.isLocalSpectator()) {
+            sendMsg(mc, ravex.utility.misc.LanguageUtility.t("CannotPlaceBlocksInSpectator"));
+            Modules.setEnabled(AutoWither.class, false);
+            return;
+        }
         long now = System.currentTimeMillis();
         switch (state) {
             case IDLE -> findPosition(mc);
@@ -63,8 +86,8 @@ public class AutoWither {
             for (int y = ppY + 3; y >= ppY - 10; y--) {
                 if (y < mc.getLevel().getMinY()) break;
                 if (y - 1 < mc.getLevel().getMinY()) break;
-                if (BlockUtility.isSolid(mc.getLevel(), cx, y - 1, y - 1)
-                    && BlockUtility.isAir(mc.getLevel(), cx, y, cz)) {
+                if (BlockUtility.isSolid(mc.getLevel(), cx, y - 1, cz)
+                    && isFreeCell(BlockUtility.getState(mc.getLevel(), cx, y, cz))) {
                     groundY = y;
                     break;
                 }
@@ -74,8 +97,7 @@ public class AutoWither {
             for (int[] off : BLOCK_OFFSETS) {
                 int ox = cx + off[0], oy = groundY + off[1], oz = cz + off[2];
                 var st = BlockUtility.getState(mc.getLevel(), ox, oy, oz);
-                if (!st.isAir() && !BlockUtility.isBlock(st, "soul_sand") && !BlockUtility.isBlock(st, "soul_soil")
-                    && !BlockUtility.isBlock(st, "wither_skeleton_skull") && !BlockUtility.isBlock(st, "wither_skeleton_wall_skull")) {
+                if (!isFreeCell(st)) {
                     clear = false;
                     break;
                 }
@@ -93,14 +115,13 @@ public class AutoWither {
             int fz = ppZ + (int) Math.round(look.z);
             int groundY = ppY + 1;
             if (groundY - 1 >= mc.getLevel().getMinY()
-                && BlockUtility.isAir(mc.getLevel(), fx, ppY + 1, fz)
+                && isFreeCell(BlockUtility.getState(mc.getLevel(), fx, ppY + 1, fz))
                 && BlockUtility.isSolid(mc.getLevel(), fx, groundY - 1, fz)) {
                 boolean clear = true;
                 for (int[] off : BLOCK_OFFSETS) {
                     int ox = fx + off[0], oy = (ppY + 1) + off[1], oz = fz + off[2];
                     var st = BlockUtility.getState(mc.getLevel(), ox, oy, oz);
-                    if (!st.isAir() && !BlockUtility.isBlock(st, "soul_sand") && !BlockUtility.isBlock(st, "soul_soil")
-                        && !BlockUtility.isBlock(st, "wither_skeleton_skull") && !BlockUtility.isBlock(st, "wither_skeleton_wall_skull")) {
+                    if (!isFreeCell(st)) {
                         clear = false;
                         break;
                     }
@@ -115,11 +136,14 @@ public class AutoWither {
                 }
             }
         }
-        sendMsg(mc, "NoSuitablePositionFound");
+        if (!positionNotified) {
+            sendMsg(mc, ravex.utility.misc.LanguageUtility.t("NoSuitablePositionFound"));
+            positionNotified = true;
+        }
         Modules.setEnabled(AutoWither.class, false);
     }
     private void tryPlaceNext(MinecraftWrapper mc, long now) {
-        if (now - lastActionTime < 50) return;
+        if (now - lastActionTime < 25) return;
         lastActionTime = now;
         if (!hasBase) { state = State.IDLE; return; }
         if (buildIndex >= BLOCK_OFFSETS.length) {
@@ -137,15 +161,14 @@ public class AutoWither {
         }
         int slot = findItemSlot(mc);
         if (slot == -1) {
-            sendMsg(mc, getMissingMsg());
-            Modules.setEnabled(AutoWither.class, false);
+            handleMissingBlocks(mc);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
-        InventoryUtility.selectSlot(mc.getPlayer(), slot);
+        if (!swapTo(mc, slot)) return;
         var hit = BlockUtility.findPlaceTarget(mc, BlockUtility.pos(tx, ty, tz));
         if (hit == null) {
-            InventoryUtility.selectSlot(mc.getPlayer(), prev);
+            swapBack(mc, prev);
             failX = tx; failY = ty; failZ = tz;
             hasFailed = true;
             retries = 0;
@@ -154,12 +177,13 @@ public class AutoWither {
         }
         BlockUtility.useItemOn(mc, hit);
         BlockUtility.swing(mc);
+        swapBack(mc, prev);
         lastActionTime = now;
         retries = 0;
         buildIndex++;
     }
     private void retryPlace(MinecraftWrapper mc, long now) {
-        if (now - lastActionTime < 100) return;
+        if (now - lastActionTime < 50) return;
         lastActionTime = now;
         if (!hasFailed) { state = State.BUILDING; return; }
         retries++;
@@ -181,19 +205,19 @@ public class AutoWither {
         }
         int slot = findItemSlot(mc);
         if (slot == -1) {
-            sendMsg(mc, getMissingMsg());
-            Modules.setEnabled(AutoWither.class, false);
+            handleMissingBlocks(mc);
             return;
         }
         int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
-        InventoryUtility.selectSlot(mc.getPlayer(), slot);
+        if (!swapTo(mc, slot)) return;
         var hit = BlockUtility.findPlaceTarget(mc, BlockUtility.pos(failX, failY, failZ));
         if (hit == null) {
-            InventoryUtility.selectSlot(mc.getPlayer(), prev);
+            swapBack(mc, prev);
             return;
         }
         BlockUtility.useItemOn(mc, hit);
         BlockUtility.swing(mc);
+        swapBack(mc, prev);
     }
     private void doDone(MinecraftWrapper mc) {
         buildsCompleted++;
@@ -217,6 +241,10 @@ public class AutoWither {
             || BlockUtility.isBlock(state, "soul_soil")
             || BlockUtility.isBlock(state, "wither_skeleton_skull")
             || BlockUtility.isBlock(state, "wither_skeleton_wall_skull");
+    }
+    private static boolean isFreeCell(net.minecraft.world.level.block.state.BlockState state) {
+        if (isAirOrWitherBlock(state)) return true;
+        return !state.liquid() && state.canBeReplaced();
     }
     private int findItemSlot(MinecraftWrapper mc) {
         boolean needSand = buildIndex < SOUL_SAND_COUNT;
@@ -245,15 +273,32 @@ public class AutoWither {
         }
         return -1;
     }
+    private boolean swapTo(MinecraftWrapper mc, int slot) {
+        int cur = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        if (cur == slot) return true;
+        if ("None".equals(swapMode)) return false;
+        InventoryUtility.swapToSlot(mc.getPlayer(), slot, swapMode);
+        return true;
+    }
+    private void swapBack(MinecraftWrapper mc, int prev) {
+        if (!"Silent".equals(swapMode)) return;
+        InventoryUtility.swapBackSlot(mc.getPlayer(), prev, swapMode);
+    }
     private String getMissingMsg() {
         return buildIndex < SOUL_SAND_COUNT
-            ? "NotEnoughSoulSand/soil"
-            : "NotEnoughWitherSkeletonSkulls";
+            ? ravex.utility.misc.LanguageUtility.t("NotEnoughSoulSand")
+            : ravex.utility.misc.LanguageUtility.t("NotEnoughWitherSkeletonSkulls");
+    }
+    private void handleMissingBlocks(MinecraftWrapper mc) {
+        if (GameModeUtility.isLocalSpectator()) {
+            sendMsg(mc, ravex.utility.misc.LanguageUtility.t("CannotPlaceBlocksInSpectator"));
+        } else if (!GameModeUtility.isLocalCreative() && !GameModeUtility.isLocalAdventure()) {
+            sendMsg(mc, getMissingMsg());
+        }
+        Modules.setEnabled(AutoWither.class, false);
     }
     private void sendMsg(MinecraftWrapper mc, String msg) {
-        if (mc.getPlayer() != null) {
-            mc.getPlayer().displayClientMessage(Component.literal("§8[§5AutoWither§8] §7" + msg), false);
-        }
+        ClientAlertUtility.alert("§8[§5AutoWither§8] §7" + msg);
     }
 
 

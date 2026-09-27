@@ -22,22 +22,131 @@ static std::string getWindowTitle(HWND hwnd) {
     return out;
 }
 
-static bool isMediaPlayer(const std::string& cls) {
-    std::string lower;
-    lower.reserve(cls.size());
-    for (char c : cls) lower.push_back(std::tolower(c));
-    return lower.find("spotify") != std::string::npos ||
-           lower.find("vlc") != std::string::npos ||
-           lower.find("wmplayer") != std::string::npos ||
-           lower.find("chrome") != std::string::npos ||
-           lower.find("firefox") != std::string::npos ||
-           lower.find("opera") != std::string::npos ||
-           lower.find("music") != std::string::npos;
+static std::string getProcessExe(HWND hwnd) {
+    DWORD pid = 0;
+    GetWindowThreadProcessId(hwnd, &pid);
+    if (!pid) return {};
+    HANDLE proc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!proc) return {};
+    char path[MAX_PATH];
+    DWORD size = MAX_PATH;
+    std::string exe;
+    if (QueryFullProcessImageNameA(proc, 0, path, &size)) {
+        exe = path;
+        size_t sep = exe.find_last_of("\\/");
+        if (sep != std::string::npos) exe = exe.substr(sep + 1);
+        for (char& c : exe) c = std::tolower((unsigned char)c);
+    }
+    CloseHandle(proc);
+    return exe;
+}
+
+static std::string stripBrowserSuffix(std::string title) {
+    static const char* suffixes[] = {
+        " - Brave", " - Google Chrome", " - Mozilla Firefox",
+        " - Microsoft Edge", " - Opera", " - Vivaldi", nullptr
+    };
+    for (int i = 0; suffixes[i]; i++) {
+        std::string s = suffixes[i];
+        if (title.size() > s.size() && title.compare(title.size() - s.size(), s.size(), s) == 0) {
+            title.erase(title.size() - s.size());
+            break;
+        }
+    }
+    return title;
+}
+
+static std::string toLowerCopy(std::string s) {
+    for (char& c : s) c = std::tolower((unsigned char)c);
+    return s;
+}
+
+static bool isBareServiceName(const std::string& title) {
+    static const char* names[] = {
+        "youtube", "soundcloud", "youtube music", "spotify",
+        "deezer", "bandcamp", "pandora", "tidal", "new tab", nullptr
+    };
+    std::string lower = toLowerCopy(title);
+    for (int i = 0; names[i]; i++) {
+        if (lower == names[i]) return true;
+    }
+    return false;
+}
+
+static bool hasMediaSuffix(const std::string& title) {
+    std::string lower = toLowerCopy(title);
+    static const char* services[] = {
+        "soundcloud", "youtube", "yandex", "deezer", "bandcamp",
+        "pandora", "tidal", "apple music", "amazon music", "mixcloud",
+        "beatport", "audiomack", "spotify", "vk ", "mymusic", nullptr
+    };
+    for (int i = 0; services[i]; i++) {
+        if (lower.find(services[i]) != std::string::npos) return true;
+    }
+    return false;
+}
+
+static bool isAllowedMediaSource(const std::string& exe, const std::string& title) {
+    if (exe == "spotify.exe" || exe == "vlc.exe" || exe == "wmplayer.exe" ||
+        exe == "aimp.exe" || exe == "musicbee.exe" || exe == "foobar2000.exe" ||
+        exe == "winamp.exe") {
+        return true;
+    }
+    if (exe == "chrome.exe" || exe == "msedge.exe" || exe == "firefox.exe" ||
+        exe == "opera.exe" || exe == "brave.exe" || exe == "vivaldi.exe") {
+        std::string clean = stripBrowserSuffix(title);
+        if (clean.empty() || isBareServiceName(clean)) return false;
+        return hasMediaSuffix(clean);
+    }
+    return false;
+}
+
+static void splitBrowserTitle(const std::string& rawTitle, std::string& artist, std::string& title) {
+    std::string clean = stripBrowserSuffix(rawTitle);
+    size_t pipe = clean.find(" | Listen");
+    if (pipe != std::string::npos) clean = clean.substr(0, pipe);
+    pipe = clean.find(" | SoundCloud");
+    if (pipe != std::string::npos) clean = clean.substr(0, pipe);
+    const std::string streamPrefix = "Stream ";
+    if (clean.compare(0, streamPrefix.size(), streamPrefix) == 0) {
+        clean = clean.substr(streamPrefix.size());
+    }
+    size_t by = clean.rfind(" by ");
+    if (by != std::string::npos) {
+        title = clean.substr(0, by);
+        artist = clean.substr(by + 4);
+        return;
+    }
+    size_t sep = clean.find(" - ");
+    if (sep != std::string::npos) {
+        artist = clean.substr(0, sep);
+        title = clean.substr(sep + 3);
+        return;
+    }
+    title = clean;
+    artist.clear();
 }
 
 MediaInfo queryNowPlaying() {
     MediaInfo info{};
     info.valid = false;
+
+    HWND hwnd = nullptr;
+    while ((hwnd = FindWindowExA(nullptr, hwnd, "Chrome_WidgetWin_0", nullptr)) != nullptr) {
+        if (IsWindowVisible(hwnd)) {
+            std::string title = getWindowTitle(hwnd);
+            if (!title.empty() && title != "Spotify" && title != "Spotify Free" && title != "Spotify Premium" &&
+                isAllowedMediaSource(getProcessExe(hwnd), title)) {
+                std::string clean = stripBrowserSuffix(title);
+                if (clean.empty() || isBareServiceName(clean)) continue;
+                splitBrowserTitle(title, info.artist, info.title);
+                if (info.title.empty()) continue;
+                info.status = "Playing";
+                info.valid = true;
+                return info;
+            }
+        }
+    }
 
     const char* targets[] = {
         "Spotify",
@@ -46,36 +155,24 @@ MediaInfo queryNowPlaying() {
         "YouTube Music",
         nullptr
     };
-
-    HWND fg = GetForegroundWindow();
-    if (fg) {
-        char cls[256] = {};
-        GetClassNameA(fg, cls, sizeof(cls));
-        if (isMediaPlayer(cls)) {
-            info.title = getWindowTitle(fg);
-            info.status = "Playing";
-            info.valid = true;
-            return info;
-        }
-    }
-
     for (int i = 0; targets[i]; i++) {
-        HWND hwnd = FindWindowA(nullptr, targets[i]);
-        if (hwnd && IsWindowVisible(hwnd)) {
-            info.title = getWindowTitle(hwnd);
-            info.status = "Playing";
+        HWND h = FindWindowA(nullptr, targets[i]);
+        if (h && IsWindowVisible(h)) {
+            info.title = getWindowTitle(h);
+            info.status = "Paused";
             info.valid = true;
             return info;
         }
     }
 
-    HWND shell = GetShellWindow();
-    if (shell) {
-        HWND hwnd = nullptr;
-        while ((hwnd = FindWindowExA(nullptr, hwnd, "MediaPlayer", nullptr)) != nullptr ||
-               (hwnd = FindWindowExA(nullptr, hwnd, "Chrome_WidgetWin_1", nullptr)) != nullptr) {
-            if (IsWindowVisible(hwnd) && GetWindowTextLengthW(hwnd) > 0) {
-                info.title = getWindowTitle(hwnd);
+    HWND browserHwnd = nullptr;
+    while ((browserHwnd = FindWindowExA(nullptr, browserHwnd, "Chrome_WidgetWin_1", nullptr)) != nullptr) {
+        if (IsWindowVisible(browserHwnd)) {
+            std::string t = getWindowTitle(browserHwnd);
+            std::string clean = stripBrowserSuffix(t);
+            if (!clean.empty() && !isBareServiceName(clean) && hasMediaSuffix(clean)) {
+                splitBrowserTitle(t, info.artist, info.title);
+                if (info.title.empty()) continue;
                 info.status = "Playing";
                 info.valid = true;
                 return info;

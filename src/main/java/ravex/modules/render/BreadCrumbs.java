@@ -5,6 +5,7 @@ import ravex.utility.misc.EntityUtility;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import ravex.utility.render.ColorUtility;
 import ravex.utility.render.Render3DUtility;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,9 +55,10 @@ public static final Map<Integer, List<net.minecraft.world.phys.Vec3>> trails = n
     }
     public static void renderTrails(Matrix4f modelViewMatrix, net.minecraft.world.phys.Vec3 camPos) {
         int color = Modules.get(BreadCrumbs.class).color;
-        float cr = ((color >> 16) & 0xFF) / 255.0f;
-        float cg = ((color >> 8) & 0xFF) / 255.0f;
-        float cb = (color & 0xFF) / 255.0f;
+        float[] rgba = ColorUtility.toFloat(color);
+        float cr = rgba[0];
+        float cg = rgba[1];
+        float cb = rgba[2];
         float lineWidth = (float) Modules.get(BreadCrumbs.class).width;
         for (Map.Entry<Integer, List<net.minecraft.world.phys.Vec3>> entry : trails.entrySet()) {
             List<net.minecraft.world.phys.Vec3> trail = entry.getValue();

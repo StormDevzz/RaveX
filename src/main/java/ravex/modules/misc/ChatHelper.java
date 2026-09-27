@@ -58,8 +58,6 @@ public class ChatHelper {
     public String announceMode = "Periodic";
     @Parameter(name = "Interval", min = 10, max = 300, step = 10, visible = "mode=Announcer")
     public double interval = 10;
-    @Parameter(name = "FirstJoinOnly", visible = "mode=Welcomer")
-    public boolean onlyFirstJoin = true;
     @Parameter(name = "EZOnlyPlayers", visible = "mode=AutoEZ")
     public boolean ezOnlyPlayers = true;
     @Parameter(name = "EZDelay", min = 0.0, max = 3000.0, step = 100.0, visible = "mode=AutoEZ")
@@ -100,8 +98,6 @@ public class ChatHelper {
     public String timestampFormat = "HH:mm";
     @Parameter(name = "ChatHistory", min = 100.0, max = 10000.0, step = 100.0)
     public double chatHistorySize = 1000.0;
-    @Parameter(name = "CopyOnClick")
-    public boolean copyOnClick = false;
     private static final String LOG_DIR = "RaveX/coordlogs";
     private String currentFile = null;
     private static final long ALERT_COOLDOWN_MS = 30000;
@@ -410,7 +406,8 @@ public class ChatHelper {
                 int curDmg = stack.getDamageValue();
                 double pct = (double) (maxDmg - curDmg) / maxDmg * 100.0;
                 if (pct < thresh) {
-                    doAlert("Own " + names[i], "Your " + names[i] + " is at " + String.format("%.0f", pct) + "% durability!");
+                    doAlert(ravex.utility.misc.LanguageUtility.t("durability_own_short", names[i]),
+                            ravex.utility.misc.LanguageUtility.t("durability_own", names[i], String.format("%.0f", pct)));
                 }
             }
         }
@@ -428,7 +425,7 @@ public class ChatHelper {
                     if (pct < thresh) {
                         String entityName = living.getName().getString();
                         doAlert("Enemy " + names[i] + "@" + entityName,
-                                entityName + "'s " + names[i] + " is at " + String.format("%.0f", pct) + "% durability!");
+                                ravex.utility.misc.LanguageUtility.t("durability_enemy", entityName, names[i], String.format("%.0f", pct)));
                     }
                 }
             }

@@ -51,12 +51,12 @@ if %ERRORLEVEL% neq 0 (
 )
 
 REM Копируем MANIFEST и ресурсы
+if not exist "%BUILD_DIR%\classes\META-INF" mkdir "%BUILD_DIR%\classes\META-INF"
 copy "%SRC_DIR%\META-INF\MANIFEST.MF" "%BUILD_DIR%\classes\META-INF\MANIFEST.MF" >nul
 
 REM Упаковка в JAR
 cd "%BUILD_DIR%\classes"
-jar cfm "%OUTPUT_JAR%" META-INF\MANIFEST.MF ravex\*.class 2>nul
-jar uf "%OUTPUT_JAR%" META-INF\MANIFEST.MF META-INF\ 2>nul
+jar cfm "%OUTPUT_JAR%" META-INF\MANIFEST.MF .
 cd "%TEMPLATES_DIR%"
 
 echo.

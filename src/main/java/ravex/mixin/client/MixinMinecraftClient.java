@@ -13,7 +13,6 @@ import ravex.RaveX;
 import ravex.modules.misc.AntiQuit;
 import ravex.modules.render.ESP;
 import ravex.modules.render.FreeCam;
-import ravex.modules.world.Scaffold;
 import ravex.modules.Modules;
 
 @Mixin(Minecraft.class)
@@ -24,7 +23,6 @@ public abstract class MixinMinecraftClient {
     @Inject(method = "tick", at = @At("HEAD"))
     private void onTickHead(CallbackInfo ci) {
         ravex.modules.combat.KillAura.onPreTick();
-        Scaffold.onPreTick();
     }
 
     @Inject(method = "tick", at = @At("TAIL"))

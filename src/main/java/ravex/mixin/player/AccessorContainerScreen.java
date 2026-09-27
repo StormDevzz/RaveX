@@ -1,6 +1,7 @@
 package ravex.mixin.player;
 
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -25,4 +26,7 @@ public interface AccessorContainerScreen {
 
     @Invoker("getHoveredSlot")
     Slot invokeGetHoveredSlot(double mouseX, double mouseY);
+
+    @Invoker("slotClicked")
+    void invokeSlotClicked(Slot slot, int buttonId, int slotId, ClickType clickType);
 }

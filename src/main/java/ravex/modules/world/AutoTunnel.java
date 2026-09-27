@@ -18,6 +18,8 @@ public class AutoTunnel {
     public double width = 2;
     @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
     public double delay = 200;
+    @Parameter(name = "Swap", modes = {"None", "Normal", "Silent"})
+    public String swapMode = "Normal";
     @Parameter(name = "FillLava")
     public boolean fillLava = true;
     @Parameter(name = "AutoWalk")
@@ -77,7 +79,9 @@ public class AutoTunnel {
             hasMiningTarget = true;
             targetX = bx; targetY = by; targetZ = bz;
             hasTarget = true;
-            BlockUtility.breakBlock(mc, BlockUtility.pos(bx, by, bz));
+            BlockUtility.BreakConfig breakCfg = new BlockUtility.BreakConfig();
+            breakCfg.swapMode = swapMode;
+            BlockUtility.breakBlock(mc, BlockUtility.pos(bx, by, bz), breakCfg);
             lastActionTime = now;
             return;
         }
@@ -102,7 +106,9 @@ public class AutoTunnel {
             }
         }
         if (fillSlot == -1) return;
-        BlockUtility.placeBlock(mc, BlockUtility.pos(x, y, z), fillSlot);
+        BlockUtility.PlaceConfig placeCfg = new BlockUtility.PlaceConfig();
+        placeCfg.swapMode = swapMode;
+        BlockUtility.placeBlock(mc, BlockUtility.pos(x, y, z), fillSlot, placeCfg);
     }
     private List<Long> getTunnelBlocks(MinecraftWrapper mc) {
         List<Long> result = new ArrayList<>();

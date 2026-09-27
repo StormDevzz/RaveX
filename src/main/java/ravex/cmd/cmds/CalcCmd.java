@@ -8,7 +8,7 @@ public class CalcCmd extends Cmd {
     @Override
     public void execute(String[] args) {
         if (args.length < 2) {
-            CmdReg.print("§c[RaveX] Usage: .calc <expression>   e.g. .calc 3*(4+2)/6");
+            CmdReg.print("§9[§bRaveX§9] §cUsage: .calc <expression>   e.g. .calc 3*(4+2)/6");
             return;
         }
         String expr = String.join("", java.util.Arrays.copyOfRange(args, 1, args.length)).replace(",", ".");
@@ -17,9 +17,9 @@ public class CalcCmd extends Cmd {
             String resultStr = (result == Math.floor(result) && !Double.isInfinite(result))
                 ? String.valueOf((long) result)
                 : String.format("%.6f", result).replaceAll("0+$", "").replaceAll("\\.$", "");
-            CmdReg.print("§a[RaveX] §e" + expr + " §7= §a" + resultStr);
+            CmdReg.print("§9[§bRaveX§9] §e" + expr + " §7= §a" + resultStr);
         } catch (Exception e) {
-            CmdReg.print("§c[RaveX] Invalid expression: §e" + expr);
+            CmdReg.print("§9[§bRaveX§9] §cInvalid expression: §e" + expr);
         }
     }
     private double evalExpr(String expr, int[] pos) {

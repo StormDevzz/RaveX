@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.utility.client.ClientAlertUtility;
 @Module(name = "Quiver", category = "Combat")
 public class Quiver {
     @Parameter(name = "ArrowType", modes = {"Healing", "Speed", "Strength", "FireResistance"})
@@ -82,19 +83,13 @@ public class Quiver {
         }
         int bowSlot = findBowSlot(mc);
         if (bowSlot == -1) {
-            mc.getPlayer().displayClientMessage(
-                net.minecraft.network.chat.Component.literal("§7[§cQuiver§7] §cNo bow found in hotbar! Disabling..."),
-                false
-            );
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("quiver_nobow"), 0xFFFF5555);
             Modules.setEnabled(Quiver.class, false);
             return;
         }
         int bestArrowIndex = findBestArrowIndex(mc);
         if (bestArrowIndex == -1) {
-            mc.getPlayer().displayClientMessage(
-                net.minecraft.network.chat.Component.literal("§7[§cQuiver§7] §cNo arrows of type " + arrowType + " found! Disabling..."),
-                false
-            );
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("quiver_noarrows", arrowType), 0xFFFF5555);
             Modules.setEnabled(Quiver.class, false);
             return;
         }

@@ -35,10 +35,6 @@ public class AutoCart {
     public boolean repeat = false;
     @Parameter(name = "RepeatDelay", min = 5, max = 100, step = 5)
     public double repeatDelay = 20;
-    @Parameter(name = "Render")
-    public boolean render = true;
-    @Parameter(name = "Color", color = true, visible = "render")
-    public int color = 0x3FFF4444;
     public static net.minecraft.core.BlockPos targetRenderPos = null;
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private boolean wasUsingBow = false;

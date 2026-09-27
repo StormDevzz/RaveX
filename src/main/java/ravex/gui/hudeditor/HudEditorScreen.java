@@ -8,6 +8,7 @@ import net.minecraft.client.input.KeyEvent;
 import org.lwjgl.glfw.GLFW;
 import ravex.gui.clickgui.ColorPaletteModal;
 import ravex.utility.render.ColorUtility;
+import ravex.utility.render.Render2DUtility;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
@@ -31,7 +32,7 @@ public class HudEditorScreen extends Screen {
     ColorPaletteModal activeColorPalette = null;
     ColorParameter activeColorParameter = null;
     public HudEditorScreen(Screen parentScreen) {
-        super(Component.literal("RaveX HUD Editor"));
+        super(Component.literal(ravex.utility.misc.LanguageUtility.t("hud_editor_title")));
         this.parentScreen = parentScreen;
         this.initTime = System.currentTimeMillis();
         panel.rebuildEntries();
@@ -78,14 +79,21 @@ public class HudEditorScreen extends Screen {
             ny = Math.max(0, Math.min(this.height - draggingHud.getHeight(), ny));
             draggingHud.setX(nx);
             draggingHud.setY(ny);
-            draggingHud.setDisplayX(nx);
-            draggingHud.setDisplayY(ny);
+            float follow = 0.5f;
+            float dx = draggingHud.getDisplayX() + (nx - draggingHud.getDisplayX()) * follow;
+            float dy = draggingHud.getDisplayY() + (ny - draggingHud.getDisplayY()) * follow;
+            if (Math.abs(dx - nx) < 0.4f) dx = nx;
+            if (Math.abs(dy - ny) < 0.4f) dy = ny;
+            draggingHud.setDisplayX(dx);
+            draggingHud.setDisplayY(dy);
+            draggingHud.setHudPositionCustomized(true);
         }
         List<Module> hudMods = ModuleManager.INSTANCE.getHudModules();
         for (Module hm : hudMods) {
             if (!hm.getEnabled()) continue;
             int x1 = hm.getX(), y1 = hm.getY();
-            int x2 = x1 + hm.getWidth(), y2 = y1 + hm.getHeight();
+            int x2 = x1 + Math.round(hm.getWidth() * hm.getUserScale());
+            int y2 = y1 + Math.round(hm.getHeight() * hm.getUserScale());
             boolean hov = mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2;
             boolean dragging = (hm == draggingHud);
             float hp = hoverProgress.getOrDefault(hm, 0f);
@@ -93,7 +101,15 @@ public class HudEditorScreen extends Screen {
             hp += (target - hp) * 0.2f;
             if (Math.abs(hp - target) < 0.005f) hp = target;
             hoverProgress.put(hm, hp);
+
+            var pose = graphics.pose();
+            pose.pushMatrix();
+            pose.translate(x1, y1);
+            pose.scale(hm.getUserScale(), hm.getUserScale());
+            pose.translate(-x1, -y1);
             try { hm.render(graphics, 0f); } catch (Throwable ignored) {}
+            pose.popMatrix();
+
             if (hp > 0.01f) {
                 int glowAlpha = (int) (hp * 35);
                 graphics.fill(x1 - 1, y1 - 1, x2 + 1, y2 + 1,
@@ -123,16 +139,14 @@ public class HudEditorScreen extends Screen {
                 }
             }
             int pad = 2;
-            graphics.fill(x1 - pad, y1 - pad, x2 + pad, y1 - pad + 1, borderCol);
-            graphics.fill(x1 - pad, y2 + pad - 1, x2 + pad, y2 + pad, borderCol);
-            graphics.fill(x1 - pad, y1 - pad, x1 - pad + 1, y2 + pad, borderCol);
-            graphics.fill(x2 + pad - 1, y1 - pad, x2 + pad, y2 + pad, borderCol);
+            Render2DUtility.drawBorder(graphics, x1 - pad, y1 - pad, (x2 + pad) - (x1 - pad), (y2 + pad) - (y1 - pad), 1, borderCol);
             int cSize = 4;
             graphics.fill(x1 - pad, y1 - pad, x1 - pad + cSize, y1 - pad + 1, accentColor);
             graphics.fill(x1 - pad, y1 - pad, x1 - pad + 1, y1 - pad + cSize, accentColor);
             graphics.fill(x2 + pad - cSize, y2 + pad - 1, x2 + pad, y2 + pad, accentColor);
             graphics.fill(x2 + pad - 1, y2 + pad - cSize, x2 + pad, y2 + pad, accentColor);
-            String tag = hm.getName();
+            String name = ravex.utility.misc.LanguageUtility.moduleName(hm.getName());
+            String tag = name.endsWith("Hud") ? name.substring(0, name.length() - 3) : name;
             int tagX = x1, tagY = y1 - pad - 11;
             if (tagY < 0) tagY = y2 + pad + 2;
             FontRenderUtility.drawString(graphics, tag, tagX + 1, tagY + 1, 0xBB000000, false);
@@ -142,6 +156,15 @@ public class HudEditorScreen extends Screen {
         if (activeColorPalette != null) {
             activeColorPalette.render(graphics, mouseX, mouseY, this.width, this.height);
         }
+
+        String hint = ravex.utility.misc.LanguageUtility.t("hud_editor_scale_hint");
+        int hw = FontRenderUtility.getStringWidth(hint);
+        int hx = (this.width - hw) / 2;
+        int hy = this.height - 15;
+        graphics.fill(hx - 8, hy - 2, hx + hw + 8, hy + 11, 0xA0080810);
+        Render2DUtility.drawRoundBorder(graphics, hx - 8, hy - 2, hw + 16, 13, 3, 1, ColorUtility.withAlpha(accentColor, 120));
+        FontRenderUtility.drawString(graphics, hint, hx, hy, 0xFFE0E0F0, true);
+
         super.render(graphics, mouseX, mouseY, partialTicks);
     }
     @Override
@@ -161,8 +184,10 @@ public class HudEditorScreen extends Screen {
         List<Module> huds = ModuleManager.INSTANCE.getHudModules();
         if (btn == 1) {
             for (Module hm : huds) {
-                if (mx >= hm.getX() && mx <= hm.getX() + hm.getWidth() &&
-                    my >= hm.getY() && my <= hm.getY() + hm.getHeight()) {
+                int x1 = hm.getX(), y1 = hm.getY();
+                int x2 = x1 + Math.round(hm.getWidth() * hm.getUserScale());
+                int y2 = y1 + Math.round(hm.getHeight() * hm.getUserScale());
+                if (mx >= x1 && mx <= x2 && my >= y1 && my <= y2) {
                     panel.toggleExpanded(hm);
                     return true;
                 }
@@ -171,11 +196,14 @@ public class HudEditorScreen extends Screen {
         if (btn == 0) {
             for (Module hm : huds) {
                 if (!hm.getEnabled()) continue;
-                if (mx >= hm.getX() && mx <= hm.getX() + hm.getWidth() &&
-                    my >= hm.getY() && my <= hm.getY() + hm.getHeight()) {
+                int x1 = hm.getX(), y1 = hm.getY();
+                int x2 = x1 + Math.round(hm.getWidth() * hm.getUserScale());
+                int y2 = y1 + Math.round(hm.getHeight() * hm.getUserScale());
+                if (mx >= x1 && mx <= x2 && my >= y1 && my <= y2) {
                     draggingHud = hm;
                     dragOffsetX = mx - hm.getX();
                     dragOffsetY = my - hm.getY();
+                    ravex.utility.misc.CursorUtility.setHand();
                     return true;
                 }
             }
@@ -185,8 +213,10 @@ public class HudEditorScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         if (event.button() == 0) {
+            boolean wasDragging = draggingHud != null || panel.isPanelDragging();
             draggingHud = null;
             panel.mouseReleased();
+            if (wasDragging) ravex.utility.misc.CursorUtility.reset();
         }
         return super.mouseReleased(event);
     }
@@ -201,6 +231,21 @@ public class HudEditorScreen extends Screen {
             if (verticalAmount < 0) panel.scroll(-1, panel.getEntryCount());
             else if (verticalAmount > 0) panel.scroll(1, panel.getEntryCount());
             return true;
+        }
+        for (Module hm : ModuleManager.INSTANCE.getHudModules()) {
+            if (!hm.getEnabled()) continue;
+            int x1 = hm.getX(), y1 = hm.getY();
+            int x2 = x1 + Math.round(hm.getWidth() * hm.getUserScale());
+            int y2 = y1 + Math.round(hm.getHeight() * hm.getUserScale());
+            if (mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2) {
+                float step = 0.05f;
+                float currentScale = hm.getUserScale();
+                float newScale = verticalAmount > 0 ? currentScale + step : currentScale - step;
+                newScale = Math.round(newScale * 20f) / 20f;
+                newScale = Math.max(0.4f, Math.min(2.5f, newScale));
+                hm.setUserScale(newScale);
+                return true;
+            }
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }

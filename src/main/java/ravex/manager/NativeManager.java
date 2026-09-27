@@ -20,6 +20,7 @@ public class NativeManager {
 
         try {
             NativeLoader.load();
+            NativeLoader.printLoadSummary();
             if (NativeLoader.isNativeAvailable()) {
                 nativeCheckNatives();
                 nativeAvailable = true;

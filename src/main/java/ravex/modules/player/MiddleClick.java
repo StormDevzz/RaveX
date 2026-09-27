@@ -22,6 +22,13 @@ public class MiddleClick {
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
+        if (mc.isScreenOpened()) {
+            if (pressed && NATIVE.isLoaded()) nativeStopFastXp();
+            pressed = false;
+            heldBlockAction = false;
+            holdTicks = 0;
+            return;
+        }
         boolean held = GLFW.glfwGetMouseButton(mc.getWindow().handle(), GLFW.GLFW_MOUSE_BUTTON_3) == GLFW.GLFW_PRESS;
         if (held) {
             if (!pressed) {

@@ -161,6 +161,16 @@ public class InventoryUtility {
             NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
     }
 
+    public static void swapToSlot(@NotNull net.minecraft.world.entity.player.Player player, int slot, @NotNull String swapMode) {
+        if ("Silent".equals(swapMode) && player instanceof LocalPlayer local) silentSelectSlot(local, slot);
+        else if ("Normal".equals(swapMode)) selectSlot(player, slot);
+    }
+
+    public static void swapBackSlot(@NotNull net.minecraft.world.entity.player.Player player, int prevSlot, @NotNull String swapMode) {
+        if (prevSlot < 0) return;
+        swapToSlot(player, prevSlot, swapMode);
+    }
+
     public static void swapToOffhand(@NotNull MinecraftWrapper mc, @NotNull LocalPlayer player, int inventorySlot) {
         var _mc = mc.getRaw();
         int containerSlot = inventorySlotToContainerSlot(inventorySlot);

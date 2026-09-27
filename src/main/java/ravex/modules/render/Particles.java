@@ -17,7 +17,7 @@ private static String lastTrigger = "";
     @Parameter(name = "Shape", modes = {"Square", "Circle", "Triangle", "All"})
     public String shape = "All";
     @Parameter(name = "Trigger", modes = {"Always", "Walking", "Attack", "Mine", "Attack&Mine"})
-    public String trigger = "Always";
+    public String trigger = "Walking";
     @Parameter(name = "ThroughWalls")
     public boolean throughWalls = true;
     @Parameter(name = "Amount", min = 5, max = 200, step = 5)

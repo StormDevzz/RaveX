@@ -1,6 +1,7 @@
 package ravex.mixin.render;
 
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -12,6 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.modules.render.Shaders;
 import ravex.modules.render.NameTags;
+import ravex.modules.render.ShiftInterp;
+import ravex.modules.render.Skeleton;
+import ravex.modules.render.SmallUser;
 import ravex.modules.Modules;
 
 @Mixin(LivingEntityRenderer.class)
@@ -26,6 +30,18 @@ public class MixinLivingEntityRenderer {
     }
 
     @Inject(
+        method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V",
+        at = @At("TAIL")
+    )
+    private void onExtractRenderState(net.minecraft.world.entity.LivingEntity entity, LivingEntityRenderState state, float partialTick, CallbackInfo ci) {
+        if (!Modules.enabled(ravex.modules.player.AntiAim.class)) return;
+        if (entity != ravex.utility.player.PlayerUtility.getPlayer()) return;
+        ravex.modules.player.AntiAim aa = Modules.get(ravex.modules.player.AntiAim.class);
+        if (aa == null || !aa.silent) return;
+        state.xRot = ravex.modules.player.AntiAim.getSilentPitch();
+    }
+
+    @Inject(
         method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V",
         at = @At("HEAD")
     )
@@ -33,6 +49,16 @@ public class MixinLivingEntityRenderer {
         boolean isPlayer = state.getClass().getSimpleName().contains("Player");
         if (isPlayer) {
             Shaders.RENDERING_PLAYER.set(true);
+        }
+        if (!(state instanceof HumanoidRenderState humanoid)) return;
+        boolean needScale = Modules.enabled(SmallUser.class);
+        boolean needCrouch = Modules.enabled(ShiftInterp.class);
+        if (!needScale && !needCrouch) return;
+        net.minecraft.world.entity.LivingEntity entity = Skeleton.getEntityBeingRendered(poseStack);
+        if (!(entity instanceof net.minecraft.world.entity.player.Player player)) return;
+        if (needCrouch) {
+            ShiftInterp si = Modules.get(ShiftInterp.class);
+            if (si != null && si.shouldCrouch(player)) humanoid.isCrouching = true;
         }
     }
 

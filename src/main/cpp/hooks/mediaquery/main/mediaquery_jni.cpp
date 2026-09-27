@@ -49,4 +49,19 @@ Java_ravex_modules_hud_NowPlayingHud_nativeIsAvailable(JNIEnv*, jclass) {
 #endif
 }
 
+JNIEXPORT jstring JNICALL
+Java_ravex_modules_hud_MediaHud_nativeGetNowPlaying(JNIEnv* env, jclass cls) {
+    return Java_ravex_modules_hud_NowPlayingHud_nativeGetNowPlaying(env, cls);
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_ravex_modules_hud_MediaHud_nativeDownloadArt(JNIEnv* env, jclass cls, jstring url) {
+    return Java_ravex_modules_hud_NowPlayingHud_nativeDownloadArt(env, cls, url);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_ravex_modules_hud_MediaHud_nativeIsAvailable(JNIEnv* env, jclass cls) {
+    return Java_ravex_modules_hud_NowPlayingHud_nativeIsAvailable(env, cls);
+}
+
 }

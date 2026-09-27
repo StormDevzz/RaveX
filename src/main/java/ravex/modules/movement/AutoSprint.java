@@ -8,6 +8,7 @@ public class AutoSprint {
     @Parameter(name = "Mode", modes = {"Legit", "Rage"})
     public String mode = "Rage";
     public void onTick() {
+        if (ravex.modules.combat.KillAura.shouldBlockSprint()) return;
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();
         if (player == null) return;

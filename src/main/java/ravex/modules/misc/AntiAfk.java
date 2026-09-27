@@ -1,75 +1,84 @@
 package ravex.modules.misc;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.network.chat.Component;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AntiAfk", category = "Misc")
 public class AntiAfk {
-    @Parameter(name = "Interval", min = 5.0, max = 60.0, step = 1.0)
-    public double interval = 12.0;
-    @Parameter(name = "MouseMove")
-    public boolean mouseMove = true;
-    @Parameter(name = "KeyPress")
-    public boolean keyPress = true;
-    @Parameter(name = "LookAround")
-    public boolean lookAround = true;
+    @Parameter(name = "Spin")
+    public boolean spin = true;
+    @Parameter(name = "SpinSpeed", min = 5.0, max = 180.0, step = 5.0, visible = "spin")
+    public double spinSpeed = 45.0;
+    @Parameter(name = "SpinDelay", min = 50, max = 1000, step = 50, visible = "spin")
+    public double spinDelay = 50;
     @Parameter(name = "Jump")
     public boolean jump = true;
-    @Parameter(name = "Rotation", min = 10.0, max = 180.0, step = 5.0)
+    @Parameter(name = "JumpDelay", min = 1000, max = 60000, step = 500, visible = "jump")
+    public double jumpDelay = 12000;
+    @Parameter(name = "Sneak")
+    public boolean sneak = false;
+    @Parameter(name = "SneakDelay", min = 1000, max = 60000, step = 500, visible = "sneak")
+    public double sneakDelay = 12000;
+    @Parameter(name = "LookAround")
+    public boolean lookAround = true;
+    @Parameter(name = "LookDelay", min = 1000, max = 60000, step = 500, visible = "lookAround")
+    public double lookDelay = 12000;
+    @Parameter(name = "Rotation", min = 10.0, max = 180.0, step = 5.0, visible = "lookAround")
     public double rotationRange = 45.0;
-    @Parameter(name = "DebugLog")
-    public boolean debugLog = false;
+    private long lastSpinAt = 0;
+    private long nextJumpAt = 0;
+    private long nextSneakAt = 0;
+    private long nextLookAt = 0;
+    private long sneakUntil = 0;
 
-    static {
-        ravex.utility.nativelib.NativeLoader.load();
-    }
     public void onEnable() {
-        try {
-            int intervalMs = (int)(interval * 1000.0);
-            int jitterMs   = (int)(intervalMs * 0.3);
-            int rotRange   = (int) rotationRange;
-            boolean ok = nativeStart(intervalMs, jitterMs,
-                mouseMove, false,
-                keyPress, lookAround,
-                jump, rotRange);
-            var mc = MinecraftWrapper.getWrapper();
-            if (ok) {
-                if (debugLog && mc.getPlayer() != null) {
-                    mc.getPlayer().displayClientMessage(
-                        Component.literal("§7[§cRaveX§7] §aAntiAFK started (native)"), false);
-                }
-            } else {
-                startFallback();
-            }
-        } catch (UnsatisfiedLinkError e) {
-            startFallback();
-        }
+        long now = System.currentTimeMillis();
+        lastSpinAt = now;
+        nextJumpAt = now;
+        nextSneakAt = now;
+        nextLookAt = now;
+        sneakUntil = 0;
     }
+
     public void onDisable() {
-        try {
-            nativeStop();
-        } catch (UnsatisfiedLinkError ignored) {}
         var mc = MinecraftWrapper.getWrapper();
-        if (debugLog && mc.getPlayer() != null) {
-            mc.getPlayer().displayClientMessage(
-                Component.literal("§7[§cRaveX§7] §cAntiAFK stopped"), false);
+        if (mc.getOptions() != null) mc.getOptions().keyShift.setDown(false);
+    }
+
+    private long jittered(long delayMs) {
+        long jittered = delayMs + (long) ((Math.random() - 0.5) * delayMs * 0.6);
+        return Math.max(50L, jittered);
+    }
+
+    public void onTick() {
+        var mc = MinecraftWrapper.getWrapper();
+        var player = mc.getPlayer();
+        if (player == null || mc.getLevel() == null) return;
+        long now = System.currentTimeMillis();
+        if (spin && now - lastSpinAt >= (long) spinDelay) {
+            double elapsedSec = Math.min(1.0, (now - lastSpinAt) / 1000.0);
+            player.setYRot(player.getYRot() + (float) (spinSpeed * elapsedSec));
+            lastSpinAt = now;
+        }
+        if (sneakUntil != 0 && now >= sneakUntil) {
+            mc.getOptions().keyShift.setDown(false);
+            sneakUntil = 0;
+        }
+        if (lookAround && now >= nextLookAt) {
+            player.setYRot(player.getYRot() + (float) ((Math.random() * 2.0 - 1.0) * rotationRange));
+            float pitch = player.getXRot() + (float) ((Math.random() * 2.0 - 1.0) * rotationRange * 0.5);
+            if (pitch > 90f) pitch = 90f;
+            if (pitch < -90f) pitch = -90f;
+            player.setXRot(pitch);
+            nextLookAt = now + jittered((long) lookDelay);
+        }
+        if (jump && now >= nextJumpAt) {
+            if (player.onGround()) player.jumpFromGround();
+            nextJumpAt = now + jittered((long) jumpDelay);
+        }
+        if (sneak && now >= nextSneakAt) {
+            mc.getOptions().keyShift.setDown(true);
+            sneakUntil = now + 400 + (long) (Math.random() * 400);
+            nextSneakAt = now + jittered((long) sneakDelay);
         }
     }
-    private void startFallback() {
-        var mc = MinecraftWrapper.getWrapper();
-        if (debugLog && mc.getPlayer() != null) {
-            mc.getPlayer().displayClientMessage(
-                Component.literal("§7[§cRaveX§7] §eAntiAFK fallback (Java)"), false);
-        }
-    }
-    private native boolean nativeStart(int intervalMs, int maxJitterMs,
-        boolean mouseMove, boolean mouseClick, boolean keyPress,
-        boolean lookAround, boolean jumpSim, int rotationRange);
-    private native void    nativeStop();
-    private native boolean nativeIsRunning();
-    private native boolean nativePerformAction();
-
-
-
-
 }

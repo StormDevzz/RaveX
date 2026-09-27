@@ -40,7 +40,9 @@ public final class ParameterFactory {
         Parameter<?> param = null;
         try {
             if (type == boolean.class || type == Boolean.class) {
-                if (ann.maybe()) {
+                if (ann.group()) {
+                    param = new GroupParameter(name, field.getBoolean(owner));
+                } else if (ann.maybe()) {
                     try { field.setBoolean(owner, true); } catch (IllegalAccessException ignored) {}
                     param = new BooleanParameter(name, true);
                 } else {
@@ -80,35 +82,91 @@ public final class ParameterFactory {
 
     public static void applyVisibleCondition(Parameter<?> param, String visibleExpr, Object owner) {
         if (visibleExpr == null || visibleExpr.isEmpty()) return;
-        int eqIdx = visibleExpr.indexOf('=');
+        String[] orParts = visibleExpr.split("\\|\\|");
+        List<List<java.util.function.Supplier<Boolean>>> orGroups = new ArrayList<>();
+        for (String orPart : orParts) {
+            String[] andParts = orPart.split("&&");
+            List<java.util.function.Supplier<Boolean>> group = new ArrayList<>();
+            for (String part : andParts) {
+                java.util.function.Supplier<Boolean> cond = buildVisibleCondition(part.trim(), owner);
+                if (cond == null) return;
+                group.add(cond);
+            }
+            orGroups.add(group);
+        }
+        param.setVisible(() -> {
+            for (List<java.util.function.Supplier<Boolean>> group : orGroups) {
+                boolean all = true;
+                for (java.util.function.Supplier<Boolean> cond : group) {
+                    if (!Boolean.TRUE.equals(cond.get())) {
+                        all = false;
+                        break;
+                    }
+                }
+                if (all) return true;
+            }
+            return false;
+        });
+    }
+
+    private static java.util.function.Supplier<Boolean> buildVisibleCondition(String expr, Object owner) {
+        if (expr.isEmpty()) return null;
+        int neqIdx = expr.indexOf("!=");
+        int eqIdx = expr.indexOf('=');
         String fieldName;
-        if (eqIdx >= 0) {
-            fieldName = visibleExpr.substring(0, eqIdx).trim();
-            String expectedValue = visibleExpr.substring(eqIdx + 1).trim();
+        if (neqIdx >= 0) {
+            fieldName = expr.substring(0, neqIdx).trim();
+            String expectedValue = expr.substring(neqIdx + 2).trim();
             try {
                 Field depField = owner.getClass().getDeclaredField(fieldName);
                 depField.setAccessible(true);
-                param.setVisible(() -> {
+                return () -> {
+                    try {
+                        return !expectedValue.equals(depField.get(owner));
+                    } catch (IllegalAccessException e) {
+                        return false;
+                    }
+                };
+            } catch (NoSuchFieldException ignored) {
+                return null;
+            }
+        } else if (eqIdx >= 0) {
+            fieldName = expr.substring(0, eqIdx).trim();
+            String expectedValue = expr.substring(eqIdx + 1).trim();
+            try {
+                Field depField = owner.getClass().getDeclaredField(fieldName);
+                depField.setAccessible(true);
+                return () -> {
                     try {
                         return expectedValue.equals(depField.get(owner));
                     } catch (IllegalAccessException e) {
                         return false;
                     }
-                });
-            } catch (NoSuchFieldException ignored) {}
+                };
+            } catch (NoSuchFieldException ignored) {
+                return null;
+            }
         } else {
-            fieldName = visibleExpr.trim();
+            fieldName = expr.trim();
+            boolean negate = fieldName.startsWith("!");
+            if (negate) {
+                fieldName = fieldName.substring(1).trim();
+            }
+            boolean neg = negate;
             try {
                 Field depField = owner.getClass().getDeclaredField(fieldName);
                 depField.setAccessible(true);
-                param.setVisible(() -> {
+                return () -> {
                     try {
-                        return depField.getBoolean(owner);
+                        boolean value = depField.getBoolean(owner);
+                        return neg != value;
                     } catch (IllegalAccessException e) {
                         return false;
                     }
-                });
-            } catch (NoSuchFieldException ignored) {}
+                };
+            } catch (NoSuchFieldException ignored) {
+                return null;
+            }
         }
     }
 }

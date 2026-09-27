@@ -36,20 +36,18 @@ public class AnchorAura {
     public double selfDamageWeight = 1.2;
     @Parameter(name = "AntiSuicide")
     public boolean antiSuicide = true;
-    @Parameter(name = "AntiSuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
+    @Parameter(name = "SuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
     public double antiSuicideMinHp = 6.0;
     @Parameter(name = "PredictTicks", min = 0.0, max = 4.0, step = 0.1)
     public double predictTicks = 1.0;
     @Parameter(name = "ConsiderDurability")
     public boolean alwaysConsiderDurability = true;
-    @Parameter(name = "DurabilityThreshold", min = 1.0, max = 100.0, step = 5.0)
+    @Parameter(name = "DurabilityLimit", min = 1.0, max = 100.0, step = 5.0)
     public double armorDurabilityThreshold = 20.0;
     @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
     public double placeDelay = 100.0;
     @Parameter(name = "AirPlace")
     public boolean airPlace = false;
-    @Parameter(name = "AirPlaceBypass", modes = {"NCP", "Grim", "None"})
-    public String airPlaceBypass = "None";
     @Parameter(name = "Rotate", modes = {"Grim", "NCP", "NCPStrict", "None"})
     public String rotate = "Grim";
     @Parameter(name = "Swap", modes = {"Grim", "NCP", "NCPStrict", "None"})

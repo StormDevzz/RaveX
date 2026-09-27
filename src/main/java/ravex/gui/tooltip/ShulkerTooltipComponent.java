@@ -4,7 +4,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import ravex.utility.render.ColorUtility;
 import ravex.utility.render.Render2DUtility;
 
 import java.util.List;
@@ -32,17 +31,6 @@ public class ShulkerTooltipComponent implements ClientTooltipComponent {
 
     @Override
     public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics guiGraphics) {
-        int w = getWidth(font);
-        int h = getHeight(font);
-
-        int bgColor = 0xAA0B0B12;
-        int accentColor = ColorUtility.getActiveColor();
-        int borderColor = ColorUtility.withAlpha(accentColor, 100);
-
-        Render2DUtility.drawRound(guiGraphics, x - 4, y - 4, w + 8, h + 8, 4, bgColor);
-        Render2DUtility.drawRoundBorder(guiGraphics, x - 4, y - 4, w + 8, h + 8, 4, 1, borderColor);
-
-
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int index = row * 9 + col;

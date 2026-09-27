@@ -14,8 +14,6 @@ import ravex.mcwrapper.MinecraftWrapper;
 public class AntiPearl {
     @Parameter(name = "Range", min = 1.0, max = 16.0, step = 0.5)
     public double range = 8.0;
-    @Parameter(name = "AutoAttack")
-    public boolean autoAttack = true;
     @Parameter(name = "Warn")
     public boolean autoWarn = true;
     @Parameter(name = "Predict")
@@ -43,21 +41,13 @@ public class AntiPearl {
                 double distToMe = landing.distanceTo(mc.getPlayer().position());
                 double impactTicks = result[3];
                 if (autoWarn && distToMe < 3.0) {
-                    mc.getPlayer().displayClientMessage(
-                        net.minecraft.network.chat.Component.literal(
-                            "§7[§cRaveX§7] §ePearl incoming! §f" + String.format("%.1f", distToMe) + "mAway"
-                        ), true
-                    );
+                    ravex.utility.client.ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("antpearl_dist", String.format("%.1f", distToMe)));
                 }
             } else if (predict) {
                 net.minecraft.world.phys.Vec3 landing = pearlPosAtTicks(pos, vel, 30);
                 double distToMe = landing.distanceTo(mc.getPlayer().position());
                 if (autoWarn && distToMe < 3.0) {
-                    mc.getPlayer().displayClientMessage(
-                        net.minecraft.network.chat.Component.literal(
-                            "§7[§cRaveX§7] §ePearl incoming!"
-                        ), true
-                    );
+                    ravex.utility.client.ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("antpearl"));
                 }
             }
         }

@@ -1,9 +1,6 @@
 package ravex.utility.misc;
 
-import ravex.utility.nativelib.NativeLoader;
-
 public class GuiOptimizerUtility {
-    public static native void nativeOptimizeGui();
 
     public static native int nativeOptimizeNameTags(
         double[] cameraPos,
@@ -44,22 +41,6 @@ public class GuiOptimizerUtility {
         int guiHeight,
         double[] outPoints
     );
-
-    static {
-        NativeLoader.load();
-    }
-
-    private static boolean optimized = false;
-
-    public static void optimize() {
-        try {
-            if (NativeLoader.isNativeAvailable()) {
-                nativeOptimizeGui();
-            }
-        } catch (Throwable t) {
-            System.err.println("[RaveX] Failed to run native GUI optimization: " + t.getMessage());
-        }
-    }
 
     public static void optimizeHudAnimations(java.util.List<ravex.modules.Module> modules) {
         if (modules == null || modules.isEmpty()) return;

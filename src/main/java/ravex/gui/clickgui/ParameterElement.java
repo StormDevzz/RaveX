@@ -8,8 +8,10 @@ import net.minecraft.resources.Identifier;
 import ravex.parameter.Parameter;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
+import ravex.utility.render.animate.AnimationUtility;
 import ravex.parameter.BooleanParameter;
 import ravex.parameter.ColorParameter;
+import ravex.parameter.GroupParameter;
 import ravex.parameter.KeybindParameter;
 import ravex.parameter.ModeParameter;
 import ravex.parameter.NumberParameter;
@@ -27,6 +29,7 @@ public class ParameterElement {
     private float expandAnimProgress = 0f;
     private float dropdownAnimProgress = 0f;
     private float sliderKnobAnim = 0f;
+    private float bindListenAnim = 0f;
     private boolean isEditingNumber = false;
     private String numberInputText = "";
     private long lastAnimTime = 0;
@@ -97,6 +100,23 @@ public class ParameterElement {
                 toggleAnimProgress = targetToggle;
             }
         }
+
+        boolean bindListening = ClickGUI.activeKeybindElement == this && parameter instanceof KeybindParameter;
+        float targetBind = bindListening ? 1.0f : 0.0f;
+        if (smoothOption) {
+            float speed = (optionSmoothness / 100f) * (delta / 16f);
+            if (bindListenAnim < targetBind) {
+                bindListenAnim = Math.min(targetBind, bindListenAnim + speed);
+            } else if (bindListenAnim > targetBind) {
+                bindListenAnim = Math.max(targetBind, bindListenAnim - speed);
+            }
+        } else {
+            bindListenAnim = targetBind;
+        }
+
+        if (parameter instanceof GroupParameter gp) {
+            gp.updateChevron(smoothOption ? (optionSmoothness / 100f) * (delta / 16f) * 4f : 1f);
+        }
     }
 
     public int getHeight() {
@@ -116,11 +136,38 @@ public class ParameterElement {
         return (int) (totalH * expandAnimProgress);
     }
 
+    private static int drawNameFit(GuiGraphics graphics, String name, int x, int y, int maxW, int color) {
+        if (maxW <= 4) return 0;
+        name = ravex.utility.misc.LanguageUtility.paramName(name);
+        if (FontRenderUtility.getStringWidth(name) > maxW) {
+            FontRenderUtility.FontType ft = FontRenderUtility.getCurrentFontType();
+            FontRenderUtility.FitText fit = FontRenderUtility.fitText(ft, name, maxW);
+            FontRenderUtility.drawScaled(graphics, ft, fit.text, x, y, fit.scale, color, true);
+            return fit.width;
+        }
+        FontRenderUtility.drawString(graphics, name, x, y, color, true);
+        return FontRenderUtility.getStringWidth(name);
+    }
+
+    private static int drawValueFit(GuiGraphics graphics, String value, int rightEdge, int y, int minX, int color) {
+        FontRenderUtility.FontType ft = FontRenderUtility.getCurrentFontType();
+        int w = FontRenderUtility.getStringWidth(value);
+        int vx = rightEdge - w;
+        if (vx < minX) {
+            FontRenderUtility.FitText fit = FontRenderUtility.fitText(ft, value, rightEdge - minX);
+            vx = rightEdge - fit.width;
+            FontRenderUtility.drawScaled(graphics, ft, fit.text, vx, y, fit.scale, color, true);
+        } else {
+            FontRenderUtility.drawString(graphics, value, vx, y, color, true);
+        }
+        return vx;
+    }
+
     public void render(GuiGraphics graphics, int x, int y, int width, int height, int mouseX, int mouseY) {
         updateAnimations();
         if (height <= 0) return;
 
-        graphics.enableScissor(x, y, x + width, y + height);
+        Render2DUtility.pushScissor(graphics, x, y, width, height);
 
         int activeColor = ColorUtility.getActiveColor();
         boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
@@ -130,25 +177,38 @@ public class ParameterElement {
 
         boolean switchless = ModuleManager.get(ravex.modules.client.ClickGui.class).switchless;
 
-        if (parameter instanceof BooleanParameter bp) {
+        if (parameter instanceof GroupParameter gp) {
+            int baseCol = ColorUtility.interpolate(0xFF808090, 0xFFE0E0F0, toggleAnimProgress);
+            int textCol = hovered ? 0xFFFFFFFF : baseCol;
+            drawNameFit(graphics, gp.getName(), x + 8, y + 7, width - 28, textCol);
+
+            float chevCx = x + width - 13f;
+            float chevCy = y + height / 2f;
+            float angle = gp.getChevronAngle();
+            int chevCol = hovered ? ColorUtility.interpolate(0xFFA0A0B0, activeColor, toggleAnimProgress)
+                                  : ColorUtility.interpolate(0xFF707080, activeColor, toggleAnimProgress);
+
+            Render2DUtility.drawChevron(graphics, chevCx, chevCy, 11f, angle, chevCol);
+
+        } else if (parameter instanceof BooleanParameter bp) {
             if (switchless) {
                 if (toggleAnimProgress > 0.01f) {
                     int glowAlpha = (int) (toggleAnimProgress * 0x18);
                     graphics.fill(x, y, x + width, y + height, ColorUtility.withAlpha(activeColor, glowAlpha));
                 }
-                int baseCol = lerpColor(0xFFA0A0B0, activeColor, toggleAnimProgress);
-                int textCol = hovered ? lerpColor(0xFFD0D0E0, 0xFFFFFFFF, toggleAnimProgress) : baseCol;
-                FontRenderUtility.drawString(graphics, bp.getName(), x + 8, y + 7, textCol, true);
+                int baseCol = ColorUtility.interpolate(0xFFA0A0B0, activeColor, toggleAnimProgress);
+                int textCol = hovered ? ColorUtility.interpolate(0xFFD0D0E0, 0xFFFFFFFF, toggleAnimProgress) : baseCol;
+                drawNameFit(graphics, bp.getName(), x + 8, y + 7, width - 16, textCol);
             } else {
-                int textCol = lerpColor(0xFF9090A0, 0xFFD0D0E0, toggleAnimProgress);
-                FontRenderUtility.drawString(graphics, bp.getName(), x + 8, y + 7, textCol, true);
+                int textCol = ColorUtility.interpolate(0xFF9090A0, 0xFFD0D0E0, toggleAnimProgress);
+                drawNameFit(graphics, bp.getName(), x + 8, y + 7, width - 16 - 22 - 8, textCol);
 
                 int swW = 22;
                 int swH = 11;
                 int swX = x + width - swW - 8;
                 int swY = y + (height - swH) / 2;
 
-                int trackColor = lerpColor(0xFF2A2A3A, activeColor, toggleAnimProgress);
+                int trackColor = ColorUtility.interpolate(0xFF2A2A3A, activeColor, toggleAnimProgress);
                 graphics.pose().pushMatrix();
                 graphics.pose().translate((float) swX, (float) swY);
                 Render2DUtility.drawRound(graphics, 0, 0, swW, swH, swH / 2, trackColor);
@@ -167,7 +227,9 @@ public class ParameterElement {
             }
 
         } else if (parameter instanceof ModeParameter mp) {
-            FontRenderUtility.drawString(graphics, mp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+            boolean expanded = dropdownAnimProgress > 0.5f;
+            int nameMax = expanded ? width - 16 : width - 16 - 44;
+            int nameW = drawNameFit(graphics, mp.getName(), x + 8, y + 7, nameMax, 0xFFC0C0D0);
 
             if (dropdownAnimProgress > 0.01f) {
                 int modeY = y + 22;
@@ -184,23 +246,45 @@ public class ParameterElement {
                     }
 
                     int mCol = isCurrent ? activeColor : 0xFF808090;
-                    if (mHovered) mCol = 0xFFFFFFFF;
+                    if (mHovered) {
+                        mCol = 0xFFFFFFFF;
+                        String modeDesc = ravex.utility.misc.LanguageUtility.getModeDescription(mp.getName(), m);
+                        if (modeDesc != null) {
+                            ClickGUI.hoveredDescription = modeDesc;
+                        }
+                    }
 
-                    FontRenderUtility.drawString(graphics, m, x + 14, modeY + 5, mCol, true);
+                    drawNameFit(graphics, m, x + 14, modeY + 5, width - 14 - 8, mCol);
                     modeY += 18;
                 }
             } else {
                 String modeVal = mp.getValue();
+                boolean mHovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + 22;
+                if (mHovered) {
+                    String modeDesc = ravex.utility.misc.LanguageUtility.getModeDescription(mp.getName(), modeVal);
+                    if (modeDesc != null) {
+                        ClickGUI.hoveredDescription = modeDesc;
+                    }
+                }
+
+                int ltW = FontRenderUtility.getStringWidth("<");
+                int gtW = FontRenderUtility.getStringWidth(">");
+                int minValX = x + 8 + nameW + 6 + ltW + 3;
+                int valRight = x + width - 8 - gtW - 2;
                 int mw = FontRenderUtility.getStringWidth(modeVal);
                 int valX = x + width - mw - 8;
-                FontRenderUtility.drawString(graphics, modeVal, valX, y + 7, activeColor, true);
+                if (valX < minValX) {
+                    valX = drawValueFit(graphics, modeVal, valRight, y + 7, minValX, activeColor);
+                } else {
+                    FontRenderUtility.drawString(graphics, modeVal, valX, y + 7, activeColor, true);
+                }
 
-                FontRenderUtility.drawString(graphics, "<", valX - FontRenderUtility.getStringWidth("<") - 3, y + 7, ColorUtility.withAlpha(activeColor, 100), true);
+                FontRenderUtility.drawString(graphics, "<", valX - ltW - 3, y + 7, ColorUtility.withAlpha(activeColor, 100), true);
                 FontRenderUtility.drawString(graphics, ">", x + width - 8, y + 7, ColorUtility.withAlpha(activeColor, 100), true);
             }
 
         } else if (parameter instanceof MultiSelectParameter msp) {
-            FontRenderUtility.drawString(graphics, msp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+            drawNameFit(graphics, msp.getName(), x + 8, y + 7, width - 16, 0xFFC0C0D0);
 
             if (dropdownAnimProgress > 0.01f) {
                 int modeY = y + 22;
@@ -219,7 +303,7 @@ public class ParameterElement {
                     int mCol = isSel ? activeColor : 0xFF808090;
                     if (mHovered) mCol = 0xFFFFFFFF;
 
-                    FontRenderUtility.drawString(graphics, opt, x + 14, modeY + 5, mCol, true);
+                    drawNameFit(graphics, opt, x + 14, modeY + 5, width - 14 - 8, mCol);
                     modeY += 18;
                 }
             }
@@ -230,7 +314,7 @@ public class ParameterElement {
             double val = np.getValue();
             double progress = (val - min) / (max - min);
 
-            FontRenderUtility.drawString(graphics, np.getName(), x + 8, y + 5, 0xFFC0C0D0, true);
+            int npNameW = drawNameFit(graphics, np.getName(), x + 8, y + 5, width - 16 - 44, 0xFFC0C0D0);
 
             String valStr;
             int extraCursor = 0;
@@ -243,8 +327,7 @@ public class ParameterElement {
             } else {
                 valStr = String.format("%.1f", val);
             }
-            int valW = FontRenderUtility.getStringWidth(valStr);
-            FontRenderUtility.drawString(graphics, valStr, x + width - valW - 8, y + 5, activeColor, true);
+            drawValueFit(graphics, valStr, x + width - 8, y + 5, x + 8 + npNameW + 6, activeColor);
             if (extraCursor > 0) {
                 int cursorX = x + width - 8;
                 float cursorBlink = (float)(Math.sin(System.currentTimeMillis() * 0.003f) * 0.5f + 0.5f);
@@ -311,40 +394,45 @@ public class ParameterElement {
             graphics.pose().popMatrix();
 
         } else if (parameter instanceof ColorParameter cp) {
-            FontRenderUtility.drawString(graphics, cp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+            drawNameFit(graphics, cp.getName(), x + 8, y + 7, width - 16 - 10 - 8, 0xFFC0C0D0);
 
             int chipX = x + width - 24;
             int chipY = y + 6;
             int chipSize = 10;
             int argb = cp.getValue();
+            float alpha01 = ((argb >>> 24) & 0xFF) / 255f;
 
-            int glowColor = ColorUtility.withAlpha(argb, 120);
+            int glowColor = ColorUtility.withAlpha(argb, (int) (40 + 120 * alpha01));
             Render2DUtility.drawGaussianShadow(graphics, chipX - 2, chipY - 2, chipSize + 4, chipSize + 4, 8, glowColor);
 
-            int chipRadius = chipSize / 2;
-            Render2DUtility.drawRoundBorder(graphics, chipX - 1, chipY - 1, chipSize + 2, chipSize + 2, chipRadius, 1, ColorUtility.withAlpha(activeColor, 40));
-
-            Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, 0xFF888888);
-            graphics.enableScissor(chipX + chipSize / 2, chipY, chipX + chipSize, chipY + chipSize);
-            Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, 0xFF444444);
-            graphics.enableScissor(chipX, chipY + chipSize / 2, chipX + chipSize, chipY + chipSize);
-            Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, 0xFF444444);
-            graphics.disableScissor();
-            graphics.disableScissor();
-            Render2DUtility.drawRound(graphics, chipX, chipY, chipSize, chipSize, chipRadius, argb);
+            if (alpha01 < 0.98f) {
+                int cell = 2;
+                for (int cy = 0; cy < chipSize; cy += cell) {
+                    for (int cx = 0; cx < chipSize; cx += cell) {
+                        boolean light = ((cx / cell) + (cy / cell)) % 2 == 0;
+                        int chk = light ? 0xFFB0B0BC : 0xFF70707C;
+                        int px0 = chipX + cx;
+                        int py0 = chipY + cy;
+                        int px1 = Math.min(px0 + cell, chipX + chipSize);
+                        int py1 = Math.min(py0 + cell, chipY + chipSize);
+                        graphics.fill(px0, py0, px1, py1, chk);
+                    }
+                }
+            }
+            graphics.fill(chipX, chipY, chipX + chipSize, chipY + chipSize, argb);
+            int borderCol = hovered ? ColorUtility.withAlpha(activeColor, 160) : ColorUtility.withAlpha(activeColor, 45);
+            Render2DUtility.drawBorder(graphics, chipX - 1, chipY - 1, chipSize + 2, chipSize + 2, 1, borderCol);
 
         } else if (parameter instanceof ravex.parameter.ActionParameter ap) {
-            FontRenderUtility.drawString(graphics, ap.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+            int apNameW = drawNameFit(graphics, ap.getName(), x + 8, y + 7, width - 16 - 70, 0xFFC0C0D0);
             String text = "Configure >";
-            int tw = FontRenderUtility.getStringWidth(text);
-            FontRenderUtility.drawString(graphics, text, x + width - tw - 8, y + 7, activeColor, true);
+            drawValueFit(graphics, text, x + width - 8, y + 7, x + 8 + apNameW + 6, activeColor);
 
         } else if (parameter instanceof ravex.parameter.StringParameter sp) {
-            FontRenderUtility.drawString(graphics, sp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+            int spNameW = drawNameFit(graphics, sp.getName(), x + 8, y + 7, width - 16 - 44, 0xFFC0C0D0);
             boolean isFocused = ClickGUI.activeStringParameterElement != null && ClickGUI.activeStringParameterElement.getParameter() == sp;
             String text = sp.getValue();
-            int tw = FontRenderUtility.getStringWidth(text);
-            FontRenderUtility.drawString(graphics, text, x + width - tw - 8, y + 7, activeColor, true);
+            drawValueFit(graphics, text, x + width - 8, y + 7, x + 8 + spNameW + 6, activeColor);
             if (isFocused) {
                 float cursorBlink = (float)(Math.sin(System.currentTimeMillis() * 0.003f) * 0.5f + 0.5f);
                 int cursorAlpha = (int)(80 + 175 * cursorBlink * cursorBlink * cursorBlink);
@@ -353,29 +441,48 @@ public class ParameterElement {
             }
 
         } else if (parameter instanceof KeybindParameter kp) {
-            FontRenderUtility.drawString(graphics, kp.getName(), x + 8, y + 7, 0xFFC0C0D0, true);
+            int kpNameW = drawNameFit(graphics, kp.getName(), x + 8, y + 7, width - 16 - 60, 0xFFC0C0D0);
             boolean isListening = ClickGUI.activeKeybindElement != null && ClickGUI.activeKeybindElement.getParameter() == kp;
             String keyText = isListening ? "..." : KeybindParameter.getKeyName(kp.getValue());
-            int tw = FontRenderUtility.getStringWidth(keyText);
-            int keyCol = isListening ? 0xFF00FF00 : activeColor;
-            FontRenderUtility.drawString(graphics, keyText, x + width - tw - 8, y + 7, keyCol, true);
+            float bAnim = bindListenAnim;
+            int rightEdge = x + width - 8;
+            int keyCol = ColorUtility.interpolate(activeColor, 0xFF00FF00, bAnim);
+            if (bAnim > 0.01f) {
+                int textW = FontRenderUtility.getStringWidth(keyText);
+                int pillW = textW + 10;
+                int pillH = FontRenderUtility.getFontHeight() + 6;
+                int pillX = rightEdge - pillW;
+                int pillY = y + (22 - pillH) / 2;
+                float pulse = 0.5f + 0.5f * (float) Math.sin(System.currentTimeMillis() * 0.004);
+                int pillA = (int) ((30 + 50 * pulse) * bAnim);
+                int pillBorderA = (int) ((60 + 70 * pulse) * bAnim);
+                Render2DUtility.drawPixelPerfectRound(graphics, pillX, pillY, pillW, pillH, pillH / 2, ColorUtility.withAlpha(0xFF00381A, pillA));
+                Render2DUtility.drawPixelPerfectRoundBorder(graphics, pillX, pillY, pillW, pillH, pillH / 2, 1, ColorUtility.withAlpha(0xFF00FF66, pillBorderA));
+            }
+            if (isListening) {
+                int dotW = FontRenderUtility.getStringWidth(".");
+                int gap = 2;
+                int totalW = dotW * 3 + gap * 2;
+                int dotsX = rightEdge - totalW;
+                long now = System.currentTimeMillis();
+                for (int i = 0; i < 3; i++) {
+                    double phase = now * 0.008 - i * 0.85;
+                    float wave = (float) (0.5 + 0.5 * Math.sin(phase));
+                    float eased = AnimationUtility.Easing.CUBIC_OUT.apply(wave);
+                    int dotA = (int) ((0.2f + 0.8f * eased) * 255 * bAnim);
+                    int dx = dotsX + i * (dotW + gap);
+                    int dy = y + 7 + (eased > 0.5f ? 0 : 1);
+                    FontRenderUtility.drawString(graphics, ".", dx, dy, ColorUtility.withAlpha(0xFF00FF00, dotA), true);
+                }
+            } else {
+                drawValueFit(graphics, keyText, rightEdge, y + 7, x + 8 + kpNameW + 6, keyCol);
+            }
 
         } else {
-            String text = parameter.getName() + ": " + parameter.getValue();
-            if (text.length() > 18) {
-                text = text.substring(0, 16) + "..";
-            }
-            FontRenderUtility.drawString(graphics, text, x + 8, y + 7, 0xFFC0C0D0, true);
+            String text = ravex.utility.misc.LanguageUtility.paramName(parameter.getName()) + ": " + parameter.getValue();
+            drawNameFit(graphics, text, x + 8, y + 7, width - 16, 0xFFC0C0D0);
         }
-        graphics.disableScissor();
-    }
-
-    private static int lerpColor(int from, int to, float t) {
-        int a = (int)(((from >> 24) & 0xFF) * (1 - t) + ((to >> 24) & 0xFF) * t);
-        int r = (int)(((from >> 16) & 0xFF) * (1 - t) + ((to >> 16) & 0xFF) * t);
-        int g = (int)(((from >> 8) & 0xFF) * (1 - t) + ((to >> 8) & 0xFF) * t);
-        int b = (int)((from & 0xFF) * (1 - t) + (to & 0xFF) * t);
-        return (a << 24) | (r << 16) | (g << 8) | b;
+        Render2DUtility.popScissor(graphics);
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int y, int width, int height) {
@@ -443,13 +550,22 @@ public class ParameterElement {
             }
 
             if (button == 1) {
+        if (parameter instanceof GroupParameter gp) {
+                    gp.setValue(!gp.getValue());
+                    playSound();
+                    return true;
+                }
                 parameter.setExpanded(!parameter.isExpanded());
                 if (!(parameter instanceof ravex.parameter.StringParameter)) {
                     playSound();
                 }
                 return true;
             }
-            if (parameter instanceof BooleanParameter bp) {
+            if (parameter instanceof GroupParameter gp) {
+                gp.setValue(!gp.getValue());
+                playSound();
+                return true;
+            } else if (parameter instanceof BooleanParameter bp) {
                 bp.setValue(!bp.getValue());
                 playSound();
                 return true;

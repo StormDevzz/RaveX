@@ -12,9 +12,9 @@ public class SoundEventDispatcherUtility {
         net.minecraft.sounds.SoundEvent mcSound = resolveSound(event.getType());
         if (mcSound == null) return;
 
-        if (!Modules.enabled(ravex.modules.render.Sounds.class)) return;
+        if (!Modules.enabled(ravex.modules.client.Sounds.class)) return;
 
-        ravex.modules.render.Sounds sounds = Modules.get(ravex.modules.render.Sounds.class);
+        ravex.modules.client.Sounds sounds = Modules.get(ravex.modules.client.Sounds.class);
         float multiplier = (sounds != null) ? (float) sounds.volume : 1.0f;
         float finalVolume = event.getVolume() * multiplier;
         if (finalVolume <= 0.0f) return;

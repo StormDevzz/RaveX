@@ -32,6 +32,10 @@ public class MixinClientPacketListener {
 
     @Inject(method = "handleAnimate", at = @At("HEAD"), cancellable = true)
     private void onHandleAnimate(net.minecraft.network.protocol.game.ClientboundAnimatePacket packet, CallbackInfo ci) {
+        if (packet.getAction() == net.minecraft.network.protocol.game.ClientboundAnimatePacket.CRITICAL_HIT
+                || packet.getAction() == net.minecraft.network.protocol.game.ClientboundAnimatePacket.MAGIC_CRITICAL_HIT) {
+            ravex.modules.combat.KillAura.onCritSound(System.currentTimeMillis());
+        }
         net.minecraft.client.Minecraft mc = MinecraftWrapper.getInstance();
         if (mc.player != null && packet.getId() == mc.player.getId()) {
             if (packet.getAction() == 0 || packet.getAction() == 3) {

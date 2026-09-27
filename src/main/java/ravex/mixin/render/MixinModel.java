@@ -50,31 +50,6 @@ public class MixinModel {
         at = @At("HEAD")
     )
     private void onRenderHead(PoseStack poseStack, VertexConsumer consumer, int light, int overlay, int tint, CallbackInfo ci) {
-        if (Modules.enabled(Skeleton.class)) {
-            Model self = (Model)(Object)this;
-            if (self instanceof net.minecraft.client.model.HumanoidModel) {
-                net.minecraft.world.entity.LivingEntity entity = ravex.modules.render.Skeleton.getEntityBeingRendered(poseStack);
-                if (entity != null) {
-                    boolean isPlayer = entity instanceof net.minecraft.world.entity.player.Player;
-                    boolean shouldRender = false;
-                    if (isPlayer && Modules.get(Skeleton.class).players) {
-                        shouldRender = true;
-                    } else if (!isPlayer && Modules.get(Skeleton.class).mobs) {
-                        shouldRender = true;
-                    }
-                    if (shouldRender) {
-                        try {
-                            net.minecraft.client.model.HumanoidModel<?> humanoidModel = (net.minecraft.client.model.HumanoidModel<?>) self;
-                            int colorVal = Modules.get(Skeleton.class).color;
-                            float lineWidth = (float) Modules.get(Skeleton.class).lineWidth;
-                            boolean throughWalls = Modules.get(Skeleton.class).throughWalls;
-                            ravex.modules.render.Skeleton.renderSkeleton(poseStack, humanoidModel, colorVal, lineWidth, throughWalls);
-                        } catch (Exception ignored) {}
-                    }
-                }
-            }
-        }
-
         if (Modules.enabled(Shaders.class) && Modules.get(Shaders.class).throughWalls) {
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();
@@ -92,6 +67,24 @@ public class MixinModel {
         at = @At("RETURN")
     )
     private void onRenderReturn(PoseStack poseStack, VertexConsumer consumer, int light, int overlay, int tint, CallbackInfo ci) {
+        if (Modules.enabled(Skeleton.class)) {
+            Model self = (Model)(Object)this;
+            try {
+                int colorVal = Modules.get(Skeleton.class).color;
+                float lineWidth = (float) Modules.get(Skeleton.class).lineWidth;
+                boolean throughWalls = Modules.get(Skeleton.class).throughWalls;
+                if (self instanceof net.minecraft.client.model.HumanoidModel) {
+                    net.minecraft.world.entity.LivingEntity entity = ravex.modules.render.Skeleton.getEntityBeingRendered(poseStack);
+                    if (entity != null && ravex.modules.render.Skeleton.shouldRender(entity)) {
+                        net.minecraft.client.model.HumanoidModel<?> humanoidModel = (net.minecraft.client.model.HumanoidModel<?>) self;
+                        boolean dick = Modules.get(Skeleton.class).dick;
+                        boolean glow = Modules.get(Skeleton.class).glow;
+                        ravex.modules.render.Skeleton.drawHumanoid(poseStack, humanoidModel, entity.getId(), colorVal, lineWidth, throughWalls, dick, glow);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
         if (Modules.enabled(Shaders.class) && Modules.get(Shaders.class).throughWalls) {
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();

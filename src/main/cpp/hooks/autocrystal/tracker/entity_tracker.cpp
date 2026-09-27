@@ -24,9 +24,10 @@ Vec3 EntityTracker::predictPosition(const Vec3& currentPos, double motionX, doub
         predY += vy;
         predZ += vz;
 
-        vx *= friction;
-        vy = (vy - gravity) * friction;
-        vz *= friction;
+        double currentFriction = (std::abs(vy) < 0.05) ? 0.65 : 0.91;
+        vx *= currentFriction;
+        vy = (vy - 0.08) * 0.98;
+        vz *= currentFriction;
     }
 
 

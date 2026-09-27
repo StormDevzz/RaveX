@@ -25,6 +25,10 @@ public abstract class Parameter<T> {
         return boundField != null && boundOwner != null;
     }
 
+    public boolean isBoundTo(Object owner, String fieldName) {
+        return isBound() && boundOwner == owner && boundField.getName().equals(fieldName);
+    }
+
     public boolean isExpanded() {
         return expanded;
     }

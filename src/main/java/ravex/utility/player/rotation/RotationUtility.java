@@ -13,8 +13,7 @@ public class RotationUtility {
     }
 
     public static void alignBillboard(Matrix4f matrix, Camera camera) {
-        matrix.rotate(Axis.YP.rotationDegrees(-camera.yRot()));
-        matrix.rotate(Axis.XP.rotationDegrees(camera.xRot()));
+        matrix.rotate(camera.rotation());
     }
 
     public static float yawTo(Vec3 from, Vec3 to) {

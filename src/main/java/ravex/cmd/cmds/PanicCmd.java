@@ -13,6 +13,6 @@ public class PanicCmd extends Cmd {
         for (Module m : ModuleManager.INSTANCE.getModules()) {
             if (m.getEnabled()) { m.setEnabled(false); count++; }
         }
-        CmdReg.print("§c[RaveX] §ePanic! §cDisabled §e" + count + " §cmodules.");
+        CmdReg.print("§9[§bRaveX§9] §ePanic! §cDisabled §e" + count + " §cmodules.");
     }
 }

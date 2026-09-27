@@ -27,7 +27,7 @@ public class ProfilesScreen extends Screen {
     private int statusTimer;
 
     public ProfilesScreen(Screen parent) {
-        super(Component.literal("Profile Manager"));
+        super(Component.literal(ravex.utility.misc.LanguageUtility.t("prof_title")));
         this.parent = parent;
     }
 
@@ -42,15 +42,14 @@ public class ProfilesScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        graphics.fillGradient(0, 0, this.width, this.height, 0xDD0A0A14, 0xDD10101F);
+        SubScreenStyle.background(graphics, this.width, this.height);
 
         int activeColor = ColorUtility.getActiveColor();
 
-        FontRenderUtility.drawString(graphics, "Profile Manager", 20, 12, 0xFFFFFFFF, true);
-        FontRenderUtility.drawString(graphics, "Save and load module configurations", 20, 24, 0xFF8F8FA0, false);
+        SubScreenStyle.header(graphics, this.width, ravex.utility.misc.LanguageUtility.t("prof_title"), ravex.utility.misc.LanguageUtility.t("prof_subtitle"), activeColor);
 
         if (statusTimer > 0 && !statusMessage.isEmpty()) {
-            FontRenderUtility.drawString(graphics, statusMessage, 20, 38, 0xFFAAFFAA, false);
+            SubScreenStyle.statusPill(graphics, this.width, statusMessage, activeColor);
         }
 
         int listX = 20;
@@ -58,26 +57,25 @@ public class ProfilesScreen extends Screen {
         int listW = 250;
         int itemH = 24;
 
-        graphics.fill(listX, listY, listX + listW, this.height - 50, 0x44000000);
+        SubScreenStyle.card(graphics, listX, listY, listW, this.height - 50 - listY, activeColor);
 
-        int y = listY + 4 - scrollOffset;
+        int y = listY + 8 - scrollOffset;
         for (int i = 0; i < profiles.size(); i++) {
             Profile p = profiles.get(i);
             boolean hovered = mouseX >= listX && mouseX <= listX + listW && mouseY >= y && mouseY <= y + itemH;
-            int bg = i == selectedIndex ? 0xFF202035 : (hovered ? 0xFF181828 : 0xFF0D0D14);
-            graphics.fill(listX + 2, y, listX + listW - 2, y + itemH, bg);
+            SubScreenStyle.row(graphics, listX + 4, y, listW - 8, itemH - 2, i == selectedIndex, hovered, activeColor);
 
-            FontRenderUtility.drawString(graphics, p.getName(), listX + 6, y + 4, 0xFFD0D0E0, false);
+            FontRenderUtility.drawString(graphics, p.getName(), listX + 10, y + 4, 0xFFD0D0E0, false);
 
             int modCount = p.getModuleStates().size();
             String info = modCount + " modules";
             int iw = FontRenderUtility.getStringWidth(info);
-            FontRenderUtility.drawString(graphics, info, listX + listW - iw - 8, y + 4, 0xFF707080, false);
+            FontRenderUtility.drawString(graphics, info, listX + listW - iw - 12, y + 4, 0xFF707080, false);
 
             y += itemH;
         }
         if (profiles.isEmpty()) {
-            FontRenderUtility.drawString(graphics, "No profiles yet. Capture current config to create one.", listX + 6, listY + 8, 0xFF505060, false);
+            FontRenderUtility.drawString(graphics, "No profiles yet. Capture current config to create one.", listX + 10, listY + 8, 0xFF505060, false);
         }
 
         if (creatingNew) {
@@ -95,18 +93,18 @@ public class ProfilesScreen extends Screen {
         int dlgW = 200;
         int dlgH = 120;
 
-        graphics.fill(0, 0, this.width, this.height, 0x88000000);
-        graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + dlgH, 0xF510101A);
-        graphics.fill(dlgX, dlgY, dlgX + dlgW, dlgY + 1, activeColor);
+        SubScreenStyle.modalBackdrop(graphics, this.width, this.height);
+        SubScreenStyle.modal(graphics, dlgX, dlgY, dlgW, dlgH, activeColor);
 
-        FontRenderUtility.drawString(graphics, "Save Profile As:", dlgX + 10, dlgY + 10, 0xFFFFFFFF, true);
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("prof_save_as"), dlgX + 10, dlgY + 10, 0xFFFFFFFF, true);
+            SubScreenStyle.titleAccent(graphics, dlgX + 10, dlgY + 22, ravex.utility.misc.LanguageUtility.t("prof_save_as"), activeColor);
 
         int inputX = dlgX + 10;
         int inputY = dlgY + 32;
         int inputW = dlgW - 20;
         int inputH = 16;
-        graphics.fill(inputX, inputY, inputX + inputW, inputY + inputH, 0xFF1A1A28);
-        String display = newName.isEmpty() ? "Profile name..." : newName;
+        SubScreenStyle.input(graphics, inputX, inputY, inputW, inputH, activeColor);
+            String display = newName.isEmpty() ? ravex.utility.misc.LanguageUtility.t("prof_name_hint") : newName;
         FontRenderUtility.drawString(graphics, display, inputX + 4, inputY + 3, newName.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
 
         int btnY = dlgY + 60;
@@ -114,12 +112,14 @@ public class ProfilesScreen extends Screen {
         int btnH = 14;
 
         boolean saveHov = mouseX >= dlgX + 15 && mouseX <= dlgX + 15 + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
-        graphics.fill(dlgX + 15, btnY, dlgX + 15 + btnW, btnY + btnH, saveHov ? activeColor : 0xFF202035);
-        FontRenderUtility.drawString(graphics, "Save", dlgX + 15 + (btnW - FontRenderUtility.getStringWidth("Save")) / 2, btnY + 3, 0xFFFFFFFF, false);
+        SubScreenStyle.button(graphics, dlgX + 15, btnY, btnW, btnH, saveHov, true, activeColor);
+            String psv = ravex.utility.misc.LanguageUtility.t("prof_save");
+            FontRenderUtility.drawString(graphics, psv, dlgX + 15 + (btnW - FontRenderUtility.getStringWidth(psv)) / 2, btnY + 3, 0xFFFFFFFF, false);
 
         boolean cancelHov = mouseX >= dlgX + dlgW - 15 - btnW && mouseX <= dlgX + dlgW - 15 && mouseY >= btnY && mouseY <= btnY + btnH;
-        graphics.fill(dlgX + dlgW - 15 - btnW, btnY, dlgX + dlgW - 15, btnY + btnH, cancelHov ? 0xFF303035 : 0xFF14141E);
-        FontRenderUtility.drawString(graphics, "Cancel", dlgX + dlgW - 15 - btnW + (btnW - FontRenderUtility.getStringWidth("Cancel")) / 2, btnY + 3, 0xFFD0D0E0, false);
+        SubScreenStyle.button(graphics, dlgX + dlgW - 15 - btnW, btnY, btnW, btnH, cancelHov, false, activeColor);
+            String pcv = ravex.utility.misc.LanguageUtility.t("cfg_cancel");
+            FontRenderUtility.drawString(graphics, pcv, dlgX + dlgW - 15 - btnW + (btnW - FontRenderUtility.getStringWidth(pcv)) / 2, btnY + 3, 0xFFD0D0E0, false);
     }
 
     private static class ToolbarButton {
@@ -140,25 +140,27 @@ public class ProfilesScreen extends Screen {
         int btnH = 20;
 
         List<ToolbarButton> buttons = List.of(
-            new ToolbarButton(20, "Capture", 0),
-            new ToolbarButton(20 + btnW + 8, "Apply", 1),
-            new ToolbarButton(20 + (btnW + 8) * 2, "Delete", 2),
-            new ToolbarButton(20 + (btnW + 8) * 3, "Refresh", 3)
+            new ToolbarButton(20, ravex.utility.misc.LanguageUtility.t("prof_capture"), 0),
+            new ToolbarButton(20 + btnW + 8, ravex.utility.misc.LanguageUtility.t("prof_apply"), 1),
+            new ToolbarButton(20 + (btnW + 8) * 2, ravex.utility.misc.LanguageUtility.t("cfg_delete"), 2),
+            new ToolbarButton(20 + (btnW + 8) * 3, ravex.utility.misc.LanguageUtility.t("prof_refresh"), 3)
         );
+
+        int backX = this.width - 100;
+        SubScreenStyle.toolbarPill(graphics, 12, tbY - 6, backX + btnW + 8 - 12, btnH + 12);
 
         for (ToolbarButton b : buttons) {
             int bx = b.x;
             boolean hovered = mouseX >= bx && mouseX <= bx + btnW && mouseY >= tbY && mouseY <= tbY + btnH;
             boolean isPrimary = b.id == 0 || b.id == 1;
-            int bg = hovered ? (isPrimary ? activeColor : 0xFF202035) : (isPrimary ? 0xFF252540 : 0xFF0D0D14);
-            graphics.fill(bx, tbY, bx + btnW, tbY + btnH, bg);
-            FontRenderUtility.drawString(graphics, b.label, bx + (btnW - FontRenderUtility.getStringWidth(b.label)) / 2, tbY + 6, 0xFFD0D0E0, false);
+            SubScreenStyle.button(graphics, bx, tbY, btnW, btnH, hovered, isPrimary, activeColor);
+            FontRenderUtility.drawString(graphics, b.label, bx + (btnW - FontRenderUtility.getStringWidth(b.label)) / 2, tbY + 6, 0xFFFFFFFF, false);
         }
 
-        int backX = this.width - 100;
         boolean backHov = mouseX >= backX && mouseX <= backX + btnW && mouseY >= tbY && mouseY <= tbY + btnH;
-        graphics.fill(backX, tbY, backX + btnW, tbY + btnH, backHov ? 0xFF303035 : 0xFF0D0D14);
-        FontRenderUtility.drawString(graphics, "Back", backX + (btnW - FontRenderUtility.getStringWidth("Back")) / 2, tbY + 6, 0xFFD0D0E0, false);
+        SubScreenStyle.button(graphics, backX, tbY, btnW, btnH, backHov, false, activeColor);
+        String bkv = ravex.utility.misc.LanguageUtility.t("cfg_back");
+        FontRenderUtility.drawString(graphics, bkv, backX + (btnW - FontRenderUtility.getStringWidth(bkv)) / 2, tbY + 6, 0xFFD0D0E0, false);
     }
 
     @Override
@@ -183,7 +185,7 @@ public class ProfilesScreen extends Screen {
         if (mx >= 20 + btnW + 8 && mx <= 20 + (btnW + 8) * 2 && my >= tbY && my <= tbY + btnH) {
             if (selectedIndex >= 0 && selectedIndex < profiles.size()) {
                 ProfileManager.INSTANCE.applyProfile(profiles.get(selectedIndex));
-                statusMessage = "Profile \"" + profiles.get(selectedIndex).getName() + "\" applied";
+                statusMessage = ravex.utility.misc.LanguageUtility.t("prof_applied", profiles.get(selectedIndex).getName());
                 statusTimer = 60;
             }
             return true;
@@ -195,7 +197,7 @@ public class ProfilesScreen extends Screen {
                 ProfileManager.INSTANCE.deleteProfile(profiles.get(selectedIndex));
                 profiles.remove(selectedIndex);
                 selectedIndex = -1;
-                statusMessage = "Profile \"" + name + "\" deleted";
+                statusMessage = ravex.utility.misc.LanguageUtility.t("prof_deleted", name);
                 statusTimer = 60;
             }
             return true;
@@ -204,7 +206,7 @@ public class ProfilesScreen extends Screen {
         if (mx >= 20 + (btnW + 8) * 3 && mx <= 20 + (btnW + 8) * 4 && my >= tbY && my <= tbY + btnH) {
             profiles.clear();
             profiles.addAll(ProfileManager.INSTANCE.getProfiles());
-            statusMessage = "Refreshed";
+            statusMessage = ravex.utility.misc.LanguageUtility.t("prof_refreshed");
             statusTimer = 40;
             return true;
         }
@@ -219,7 +221,7 @@ public class ProfilesScreen extends Screen {
         int listW = 250;
         int itemH = 24;
 
-        int y = listY + 4 - scrollOffset;
+        int y = listY + 8 - scrollOffset;
         for (int i = 0; i < profiles.size(); i++) {
             if (mx >= listX && mx <= listX + listW && my >= y && my <= y + itemH) {
                 selectedIndex = i;
@@ -247,7 +249,7 @@ public class ProfilesScreen extends Screen {
             profiles.add(p);
             creatingNew = false;
             selectedIndex = profiles.size() - 1;
-            statusMessage = "Profile \"" + name + "\" saved";
+            statusMessage = ravex.utility.misc.LanguageUtility.t("prof_saved", name);
             statusTimer = 60;
             return true;
         }
@@ -274,7 +276,7 @@ public class ProfilesScreen extends Screen {
                 profiles.add(p);
                 creatingNew = false;
                 selectedIndex = profiles.size() - 1;
-                statusMessage = "Profile \"" + name + "\" saved";
+                statusMessage = ravex.utility.misc.LanguageUtility.t("prof_saved", name);
                 statusTimer = 60;
             }
             return true;

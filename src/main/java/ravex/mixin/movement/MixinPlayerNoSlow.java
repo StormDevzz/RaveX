@@ -20,6 +20,7 @@ public abstract class MixinPlayerNoSlow {
         // GrimV3 input scaling
         if (ns.isV3Active()) {
             Player player = (Player)(Object)this;
+            if (!player.isUsingItem()) return;
             float forward = ns.getV3Forward();
             float strafe = ns.getV3Strafe();
 
@@ -33,9 +34,23 @@ public abstract class MixinPlayerNoSlow {
             return;
         }
 
+        /*
+        // ReallyWorld: reduced slowdown with offhand packet desync
+        if (ns.isReallyWorldActive()) {
+            Player player = (Player)(Object)this;
+            if (!ns.isRWGrace() && !ns.isRWResetPhase() && player.isUsingItem()) {
+                float forward = ns.getRWForward();
+                float strafe = ns.getRWStrafe();
+                player.xxa *= strafe;
+                player.zza *= forward;
+            }
+            return;
+        }
+        */
         // Matrix input scaling: boost input to compensate for item use slowdown
         if (ns.isMatrixActive() && MinecraftWrapper.getInstance().player != null) {
             Player player = (Player)(Object)this;
+            if (!player.isUsingItem()) return;
             float mul = ns.getMatrixInputScale();
             if (mul != 1.0f) {
                 player.xxa *= mul;

@@ -8,12 +8,13 @@ import ravex.utility.player.ElytraUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.utility.client.ClientAlertUtility;
 @Module(name = "ElytraHelper", category = "Player")
 public class ElytraHelper {
     @Parameter(name = "Mode", modes = {"Swap", "Replace", "Auto"})
     public String mode = "Swap";
-    @Parameter(name = "SwapMode", modes = {"Positive1", "Positive2", "Positive3"})
-    public String swapMode = "Positive1";
+    @Parameter(name = "SwapMode", modes = {"Instant", "Safe", "Legit"})
+    public String swapMode = "Instant";
     @Parameter(name = "MinDurability", min = 1.0, max = 50.0, step = 1.0)
     public double minDurability = 10.0;
     @Parameter(name = "PreferBetter")
@@ -47,19 +48,19 @@ public class ElytraHelper {
         boolean hasElytra = ElytraUtility.isElytraEquipped(p);
         int foundSlot = hasElytra ? ElytraUtility.findChestplateSlot(p) : ElytraUtility.findElytraSlot(p);
         if (foundSlot == -1) {
-            p.displayClientMessage(net.minecraft.network.chat.Component.literal("§7[§5ElytraHelper§7] §cNo replacement chest item found!"), false);
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("elytrahelper_chest"), 0xFFFF5555);
             Modules.setEnabled(ElytraHelper.class, false); return;
         }
         targetInvSlot = foundSlot;
         state = 0;
         lastActionTime = System.currentTimeMillis();
         String cm = swapMode;
-        if ("Positive1".equals(cm)) {
+        if ("Instant".equals(cm)) {
             InventoryUtility.clickSlot(mc, p, foundSlot, 0, InventoryUtility.PICKUP);
             InventoryUtility.clickChestSlot(mc, p, 6, InventoryUtility.PICKUP);
             InventoryUtility.clickSlot(mc, p, foundSlot, 0, InventoryUtility.PICKUP);
             Modules.setEnabled(ElytraHelper.class, false);
-        } else if ("Positive3".equals(cm)) {
+        } else if ("Legit".equals(cm)) {
             InventoryUtility.openInventoryScreen(p);
         }
     }
@@ -94,13 +95,13 @@ public class ElytraHelper {
         }
     }
     private void tickSwap(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
-        if ("Positive1".equals(swapMode)) return;
+        if ("Instant".equals(swapMode)) return;
         long now = System.currentTimeMillis();
         if (now - lastActionTime < 100) return;
         if (state == 0) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, InventoryUtility.PICKUP); state = 1; lastActionTime = now; }
         else if (state == 1) { InventoryUtility.clickChestSlot(mc, p, 6, InventoryUtility.PICKUP); state = 2; lastActionTime = now; }
         else if (state == 2) { InventoryUtility.clickSlot(mc, p, targetInvSlot, 0, InventoryUtility.PICKUP); state = 3; lastActionTime = now; }
-        else if (state == 3) { if ("Positive3".equals(swapMode)) ScreenUtility.closeScreen(mc); Modules.setEnabled(ElytraHelper.class, false); }
+        else if (state == 3) { if ("Legit".equals(swapMode)) ScreenUtility.closeScreen(mc); Modules.setEnabled(ElytraHelper.class, false); }
     }
     private void tickReplace(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
         if (!ElytraUtility.isElytraEquipped(p)) return;

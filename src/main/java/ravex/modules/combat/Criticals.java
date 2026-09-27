@@ -10,14 +10,12 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "Criticals", category = "Combat")
 public class Criticals {
-    @Parameter(name = "Mode", modes = {"Legit", "Packet", "Grim", "MiniJump", "Watchdog"})
+    @Parameter(name = "Mode", modes = {"Legit", "Packet", "Grim", "MiniJump"})
     public String mode = "Packet";
     @Parameter(name = "AutoAttack")
     public boolean autoAttack = true;
     @Parameter(name = "StopOnWater")
     public boolean stopOnWater = true;
-    @Parameter(name = "PauseAura")
-    public boolean pauseAura = false;
     private enum Sequence { NONE, JUMPING, LANDING }
     private Sequence seq = Sequence.NONE;
     private int seqTicks = 0;
@@ -46,7 +44,8 @@ public class Criticals {
                 net.minecraft.world.entity.LivingEntity lt = EntityUtility.asLivingEntity(target);
                 if (lt != null && EntityUtility.isAlive(lt) && target != player
                     && player.getAttackStrengthScale(0.0f) >= 0.85f) {
-                    NetworkUtility.sendInteractAttack(target, PlayerUtility.isSneaking(player));
+                    if (!ravex.modules.world.FakePlayer.applyFakeHit(lt))
+                        NetworkUtility.sendInteractAttack(target, PlayerUtility.isSneaking(player));
                     SwingUtility.swing(player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
@@ -87,12 +86,6 @@ public class Criticals {
                 NetworkUtility.sendMoveRelative(x, y - 0.02, z, false, false);
                 NetworkUtility.sendMoveRelative(x, y + 0.001, z, false, false);
                 NetworkUtility.sendMoveRelative(x, y - 0.0625, z, false, false);
-                seq = Sequence.LANDING;
-            }
-            case "Watchdog" -> {
-                NetworkUtility.sendMoveRelative(x, y + 0.0001, z, false, false);
-                NetworkUtility.sendMoveRelative(x, y + 0.0001, z, false, false);
-                NetworkUtility.sendMoveRelative(x, y - 0.1, z, false, false);
                 seq = Sequence.LANDING;
             }
         }

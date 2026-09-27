@@ -36,20 +36,14 @@ public class PearlTarget {
     public double switchDelay = 500.0;
     @Parameter(name = "Speed", min = 0.5, max = 5.0, step = 0.1)
     public double speed = 1.8;
-    @Parameter(name = "SpeedSneak", min = 0.1, max = 2.0, step = 0.1)
-    public double speedSneak = 0.6;
     @Parameter(name = "Strafe")
     public boolean strafe = true;
     @Parameter(name = "Jump")
     public boolean jump = true;
-    @Parameter(name = "JumpHeight", min = 0.3, max = 0.6, step = 0.01)
-    public double jumpHeight = 0.42;
     @Parameter(name = "PredictTicks", min = 20.0, max = 300.0, step = 10.0)
     public double predictTicks = 100.0;
     @Parameter(name = "ChaseTime", min = 500.0, max = 10000.0, step = 100.0)
     public double chaseTime = 3000.0;
-    @Parameter(name = "StopDistance", min = 1.0, max = 6.0, step = 0.5)
-    public double stopDistance = 3.5;
     @Parameter(name = "Sprint")
     public boolean sprint = true;
     @Parameter(name = "AutoWeapon")
@@ -94,10 +88,6 @@ public class PearlTarget {
     public boolean renderLine = true;
     @Parameter(name = "RenderLanding")
     public boolean renderLanding = true;
-    @Parameter(name = "RenderTrail")
-    public boolean renderTrail = true;
-    @Parameter(name = "RenderInfo")
-    public boolean renderInfo = true;
     @Parameter(name = "ThroughWalls")
     public boolean renderThroughWalls = false;
     @Parameter(name = "PredictionLine")

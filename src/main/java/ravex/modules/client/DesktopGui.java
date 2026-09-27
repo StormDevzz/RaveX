@@ -8,16 +8,14 @@ import java.util.List;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.utility.client.ClientAlertUtility;
 @Module(name = "DesktopGui", category = "Client")
 public class DesktopGui {
 private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_desktopgui");
     public void onEnable() {
         var mc = MinecraftWrapper.getWrapper();
         if (!NATIVE.isLoaded()) {
-            if (mc.getPlayer() != null) {
-                mc.getPlayer().displayClientMessage(
-                    net.minecraft.network.chat.Component.literal("§7[§5DesktopGui§7] §cNative library not found!"), false);
-            }
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("desktopgui_nolib"), 0xFFFF5555);
             Modules.setEnabled(DesktopGui.class, false);
             return;
         }

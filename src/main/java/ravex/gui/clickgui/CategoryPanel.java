@@ -10,6 +10,7 @@ import ravex.manager.ModuleManager;
 import ravex.utility.render.Render2DUtility;
 import ravex.modules.client.ClickGui;
 import ravex.utility.render.FontRenderUtility;
+import ravex.utility.render.animate.AnimationUtility;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,12 +28,19 @@ public class CategoryPanel {
     private double vy = 0;
 
     private boolean dragging = false;
+    private boolean customPosition = false;
     private double dragOffsetX = 0;
     private double dragOffsetY = 0;
+    private float dragGlow = 0f;
 
     private final List<ModuleButton> allButtons = new ArrayList<>();
     private float headerAnim = 0f;
     private double scrollOffset = 0.0;
+    private int lastEnabledCount = -1;
+    private int oldEnabledCount = 0;
+    private float countTransitionProgress = 1.0f;
+    private boolean countDirectionUp = true;
+    private float smoothBadgeWidth = -1f;
 
     public CategoryPanel(String category, int x, int y) {
         this.category = category;
@@ -51,6 +59,14 @@ public class CategoryPanel {
     public String getCategory() { return category; }
     public int getX() { return (int) x; }
     public int getY() { return (int) y; }
+    public boolean isCustomPosition() { return customPosition; }
+    public void setCustomPosition(boolean customPosition) { this.customPosition = customPosition; }
+
+    public void resetExpansion() {
+        for (ModuleButton b : allButtons) {
+            b.collapse();
+        }
+    }
 
     public void setX(int x) {
         this.x = x;
@@ -73,14 +89,14 @@ public class CategoryPanel {
 
             if (!isMouseDown) {
                 dragging = false;
+                ravex.utility.misc.CursorUtility.reset();
             } else {
                 targetX = mouseX - dragOffsetX;
                 targetY = mouseY - dragOffsetY;
+                customPosition = true;
             }
         }
-        double dragLerp = ModuleManager.get(ClickGui.class).smoothScroll
-            ? (ModuleManager.get(ClickGui.class).scrollSmoothness / 100.0)
-            : 1.0;
+        double dragLerp = 0.12;
 
         if (Math.abs(targetX - x) > 0.05) {
             x += (targetX - x) * dragLerp;
@@ -102,7 +118,7 @@ public class CategoryPanel {
         boolean hasSearch = searchQuery != null && !searchQuery.isEmpty();
         for (ModuleButton btn : allButtons) {
             if (!btn.getModule().isVisible()) continue;
-            boolean matches = !hasSearch || btn.getModule().getName().toLowerCase().contains(searchQuery.toLowerCase());
+            boolean matches = !hasSearch || ravex.utility.misc.SearchUtility.matches(btn.getModule().getName() + " " + ravex.utility.misc.LanguageUtility.moduleName(btn.getModule().getName()), searchQuery);
             btn.updateSearchReveal(matches, hasSearch);
         }
 
@@ -150,6 +166,19 @@ public class CategoryPanel {
             Render2DUtility.drawRound(graphics, ix - 1, iy - 1, width + 2, panelH + 2, r, borderColor);
         }
 
+        float dragTarget = dragging ? 1f : 0f;
+        dragGlow += (dragTarget - dragGlow) * 0.18f;
+        if (Math.abs(dragTarget - dragGlow) < 0.01f) dragGlow = dragTarget;
+        if (dragGlow > 0.01f) {
+            float eased = dragGlow * dragGlow * (3f - 2f * dragGlow);
+            int coreAlpha = (int) (150 * eased);
+            int midAlpha = (int) (70 * eased);
+            int haloAlpha = (int) (28 * eased);
+            Render2DUtility.drawRoundBorder(graphics, ix - 3, iy - 3, width + 6, panelH + 6, r + 2, 1, ColorUtility.setAlpha(0xFFFFFF, haloAlpha));
+            Render2DUtility.drawRoundBorder(graphics, ix - 2, iy - 2, width + 4, panelH + 4, r + 1, 1, ColorUtility.setAlpha(0xFFFFFF, midAlpha));
+            Render2DUtility.drawRoundBorder(graphics, ix - 1, iy - 1, width + 2, panelH + 2, r, 1, ColorUtility.setAlpha(0xFFFFFF, coreAlpha));
+        }
+
         Identifier catTexWhite = ravex.utility.render.TextureLoaderUtility.getCategoryTextureWhite(category);
         if (catTexWhite != null) {
             int iconSize = 14;
@@ -158,7 +187,7 @@ public class CategoryPanel {
             graphics.blit(catTexWhite, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
         }
 
-        String header = category;
+        String header = ravex.utility.misc.LanguageUtility.categoryName(category);
         int headerY = iy + (18 - FontRenderUtility.getFontHeight()) / 2 + 1;
         FontRenderUtility.drawString(graphics, header,
             ix + 23, headerY, 0xFFFFFFFF, true);
@@ -169,26 +198,77 @@ public class CategoryPanel {
                 if (b.getModule().getEnabled()) enabled++;
             }
             int total = visible.size();
-            String countText = enabled + "/" + total;
-            int cw = FontRenderUtility.getStringWidth(countText);
+            if (lastEnabledCount == -1) {
+                lastEnabledCount = enabled;
+                oldEnabledCount = enabled;
+                countTransitionProgress = 1.0f;
+            } else if (enabled != lastEnabledCount) {
+                if (countTransitionProgress < 1.0f) {
+                    oldEnabledCount = Math.round(oldEnabledCount + (lastEnabledCount - oldEnabledCount) * AnimationUtility.Easing.CUBIC_OUT.apply(countTransitionProgress));
+                } else {
+                    oldEnabledCount = lastEnabledCount;
+                }
+                countDirectionUp = enabled > oldEnabledCount;
+                lastEnabledCount = enabled;
+                countTransitionProgress = 0.0f;
+            }
+
+            if (countTransitionProgress < 1.0f) {
+                countTransitionProgress = Math.min(1.0f, countTransitionProgress + 0.12f);
+            }
+
+            float eased = AnimationUtility.Easing.CUBIC_OUT.apply(countTransitionProgress);
+            String totalPart = "/" + total;
+            String curEnabledStr = String.valueOf(enabled);
+            String oldEnabledStr = String.valueOf(oldEnabledCount);
+            int curNumW = FontRenderUtility.getStringWidth(curEnabledStr);
+            int oldNumW = FontRenderUtility.getStringWidth(oldEnabledStr);
+            float targetNumW = curNumW + (oldNumW - curNumW) * (1.0f - eased);
+            int totalPartW = FontRenderUtility.getStringWidth(totalPart);
+            float targetCw = targetNumW + totalPartW;
+            if (smoothBadgeWidth < 0f) {
+                smoothBadgeWidth = targetCw;
+            } else {
+                smoothBadgeWidth += (targetCw - smoothBadgeWidth) * 0.25f;
+            }
+
             int pad = 4;
-            int badgeX = ix + width - cw - pad - 8;
+            int badgeW = Math.round(smoothBadgeWidth) + pad * 2;
+            int badgeX = ix + width - badgeW - 8;
             int badgeY = iy + 4;
             int badgeH = 14;
-            Render2DUtility.drawRound(graphics, badgeX, badgeY, cw + pad * 2, badgeH, 4, 0x22000000);
-            FontRenderUtility.drawString(graphics, countText,
-                badgeX + pad, badgeY + (badgeH - FontRenderUtility.getFontHeight()) / 2 + 1,
-                enabled == total ? 0xFFA0E0A0 : 0xFFE0E0E0, true);
+            Render2DUtility.drawRound(graphics, badgeX, badgeY, badgeW, badgeH, 4, 0x22000000);
+
+            Render2DUtility.pushScissor(graphics, badgeX, badgeY, badgeW, badgeH);
+            int baseY = badgeY + (badgeH - FontRenderUtility.getFontHeight()) / 2 + 1;
+            int color = enabled == total ? 0xFFA0E0A0 : 0xFFE0E0E0;
+
+            int numX = badgeX + pad;
+            int totalX = numX + Math.round(targetNumW);
+            FontRenderUtility.drawString(graphics, totalPart, totalX, baseY, color, true);
+
+            if (countTransitionProgress < 1.0f && !curEnabledStr.equals(oldEnabledStr)) {
+                float slideDist = badgeH * 0.85f;
+                float oldY = countDirectionUp ? (baseY - eased * slideDist) : (baseY + eased * slideDist);
+                float newY = countDirectionUp ? (baseY + (1.0f - eased) * slideDist) : (baseY - (1.0f - eased) * slideDist);
+                int oldAlpha = (int) ((1.0f - eased) * 255);
+                int newAlpha = (int) (eased * 255);
+                FontRenderUtility.drawString(graphics, oldEnabledStr, numX, (int) oldY, ColorUtility.withAlpha(color, oldAlpha), true);
+                FontRenderUtility.drawString(graphics, curEnabledStr, numX, (int) newY, ColorUtility.withAlpha(color, newAlpha), true);
+            } else {
+                FontRenderUtility.drawString(graphics, curEnabledStr, numX, baseY, color, true);
+            }
+            Render2DUtility.popScissor(graphics);
         }
 
         if (totalH > viewportH || scrollOffset != 0) {
-            graphics.enableScissor(ix, listTop, ix + width, panelBot);
+            Render2DUtility.pushScissor(graphics, ix, listTop, width, panelBot - listTop);
         }
         int[] renderYOut = { listTop + (int) Math.round(scrollOffset) };
         for (ModuleButton btn : visible)
             btn.render(graphics, ix, iy, width, mouseX, mouseY, renderYOut, searchQuery, listTop, panelBot);
         if (totalH > viewportH || scrollOffset != 0) {
-            graphics.disableScissor();
+            Render2DUtility.popScissor(graphics);
         }
     }
 
@@ -198,7 +278,7 @@ public class CategoryPanel {
 
     public int getMatchCount(String query) {
         return (int) allButtons.stream()
-            .filter(b -> b.getModule().getName().toLowerCase().contains(query.toLowerCase()))
+            .filter(b -> ravex.utility.misc.SearchUtility.matches(b.getModule().getName() + " " + ravex.utility.misc.LanguageUtility.moduleName(b.getModule().getName()), query))
             .count();
     }
 
@@ -215,8 +295,10 @@ public class CategoryPanel {
 
         if (button == 0 && mouseX >= ix && mouseX <= ix + width && mouseY >= iy && mouseY <= iy + 18) {
             dragging = true;
+            customPosition = true;
             dragOffsetX = mouseX - x;
             dragOffsetY = mouseY - y;
+            ravex.utility.misc.CursorUtility.setHand();
             return true;
         }
 

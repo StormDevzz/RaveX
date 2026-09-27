@@ -27,7 +27,7 @@ public class NoRender {
     public boolean fog = true;
     @Parameter(name = "Fire")
     public boolean fire = true;
-    @Parameter(name = "InventoryBackground")
+    @Parameter(name = "InvBackground")
     public boolean inventoryBackground = false;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_norender");
 

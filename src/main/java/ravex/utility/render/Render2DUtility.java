@@ -15,9 +15,11 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
 import java.lang.reflect.Field;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryStack;
+
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Render2DUtility {
@@ -27,37 +29,28 @@ public class Render2DUtility {
     private static final Map<String, Identifier> ROUND_RECT_OUTLINE_CACHE = new HashMap<>();
     private static final Map<Integer, int[]> CORNER_EDGES = new HashMap<>();
     private static final Map<String, Identifier> SMOOTH_RING_CACHE = new HashMap<>();
+    private static final Map<String, Identifier> SMOOTH_TRI_CACHE = new HashMap<>();
+    private static Identifier smoothBarTex = null;
 
     private static final int SHADOW_SIZE = 32;
     private static final Map<String, Identifier> SHADOW_CACHE = new HashMap<>();
 
-    private static final Deque<int[]> SCISSOR_STACK = new ArrayDeque<>();
+    private static int SCISSOR_DEPTH = 0;
 
     public static void pushScissor(GuiGraphics graphics, int x, int y, int width, int height) {
-        if (SCISSOR_STACK.isEmpty()) {
-            graphics.enableScissor(x, y, x + width, y + height);
-        } else {
-            int[] parent = SCISSOR_STACK.peek();
-            int nx = Math.max(parent[0], x);
-            int ny = Math.max(parent[1], y);
-            int nw = Math.min(parent[0] + parent[2], x + width) - nx;
-            int nh = Math.min(parent[1] + parent[3], y + height) - ny;
-            if (nw > 0 && nh > 0) {
-                graphics.enableScissor(nx, ny, nx + nw, ny + nh);
-            }
-        }
-        SCISSOR_STACK.push(new int[]{x, y, width, height});
+        graphics.enableScissor(x, y, x + Math.max(0, width), y + Math.max(0, height));
+        SCISSOR_DEPTH++;
     }
 
     public static void popScissor(GuiGraphics graphics) {
-        if (!SCISSOR_STACK.isEmpty()) {
-            SCISSOR_STACK.pop();
+        if (SCISSOR_DEPTH <= 0) {
+            return;
         }
-        if (SCISSOR_STACK.isEmpty()) {
+        SCISSOR_DEPTH--;
+        try {
             graphics.disableScissor();
-        } else {
-            int[] parent = SCISSOR_STACK.peek();
-            graphics.enableScissor(parent[0], parent[1], parent[0] + parent[2], parent[1] + parent[3]);
+        } catch (IllegalStateException e) {
+            SCISSOR_DEPTH = 0;
         }
     }
 
@@ -76,14 +69,13 @@ public class Render2DUtility {
         if (rrtHdTex == null) {
             int size = 128;
             NativeImage img = new NativeImage(size, size, false);
-            int ss = 4;
             float cx = size / 2f;
             float cy = size / 2f;
             float rVal = size / 2f - 0.5f;
             float r2 = rVal * rVal;
             for (int y = 0; y < size; y++) {
                 for (int x = 0; x < size; x++) {
-                    int a = calcCornerAA(x, y, cx, cy, ss, r2);
+                    int a = calcCornerAA(x, y, cx, cy, 0, r2);
                     img.setPixel(x, y, (a << 24) | 0x00FFFFFF);
                 }
             }
@@ -164,19 +156,91 @@ public class Render2DUtility {
     }
 
     private static int calcCornerAA(int x, int y, float cx, float cy, int ss, float r2) {
-        int total = 0;
-        for (int sy = 0; sy < ss; sy++) {
-            float py = y + (sy + 0.5f) / ss - cy;
-            float py2 = py * py;
-            for (int sx = 0; sx < ss; sx++) {
-                float px = x + (sx + 0.5f) / ss - cx;
-                if (px * px + py2 <= r2) total++;
-            }
-        }
-        return Math.min(255, total * 255 / (ss * ss));
+        float dx = x + 0.5f - cx;
+        float dy = y + 0.5f - cy;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+        float r = (float) Math.sqrt(r2);
+        float alpha = (r + 0.5f) - dist;
+        if (alpha <= 0f) return 0;
+        if (alpha >= 1f) return 255;
+        return Math.round(alpha * 255);
     }
 
     private static Identifier smoothCircleTex = null;
+
+    private static Identifier chevronTex = null;
+
+    public static Identifier getChevron() {
+        if (chevronTex == null) {
+            int size = 128;
+            NativeImage img = new NativeImage(size, size, false);
+            float cx = size / 2f;
+            float cy = size / 2f;
+            float halfW = size * 0.16f;
+            float halfH = size * 0.26f;
+            float tipX = cx + halfW;
+            float tipY = cy;
+            float upX = cx - halfW;
+            float upY = cy - halfH;
+            float dnX = cx - halfW;
+            float dnY = cy + halfH;
+            float thickness = size * 0.08f;
+            float hw = thickness / 2f;
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    float px = x + 0.5f;
+                    float py = y + 0.5f;
+                    float d1 = distToSeg(px, py, upX, upY, tipX, tipY);
+                    float d2 = distToSeg(px, py, dnX, dnY, tipX, tipY);
+                    float d = Math.min(d1, d2);
+                    float delta = d - hw;
+                    float alpha;
+                    if (delta <= -0.75f) {
+                        alpha = 1f;
+                    } else if (delta >= 0.75f) {
+                        alpha = 0f;
+                    } else {
+                        alpha = 0.5f - delta / 1.5f;
+                    }
+                    int a = (int) (alpha * 255);
+                    img.setPixel(x, y, (a << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture tex = new DynamicTexture(() -> "chevron", img);
+            setLinearSampler(tex);
+            chevronTex = Identifier.fromNamespaceAndPath("ravex", "chevron_gen");
+            MinecraftWrapper.getWrapper().getTextureManager().register(chevronTex, tex);
+        }
+        return chevronTex;
+    }
+
+    public static void drawChevron(GuiGraphics graphics, float cx, float cy, float size, float angleDeg, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0) return;
+        var pose = graphics.pose();
+        pose.pushMatrix();
+        pose.translate(cx, cy);
+        if (Math.abs(angleDeg) > 0.01f) {
+            pose.rotate((float) Math.toRadians(angleDeg));
+        }
+        pose.translate(-size / 2f, -size / 2f);
+        int isz = Math.round(size);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, getChevron(), 0, 0, 0f, 0f, isz, isz, isz, isz, color);
+        pose.popMatrix();
+    }
+
+    private static float distToSeg(float px, float py, float ax, float ay, float bx, float by) {
+        float dx = bx - ax;
+        float dy = by - ay;
+        float lenSq = dx * dx + dy * dy;
+        if (lenSq < 0.001f) return (float) Math.sqrt((px - ax) * (px - ax) + (py - ay) * (py - ay));
+        float t = Math.max(0f, Math.min(1f, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+        float projX = ax + t * dx;
+        float projY = ay + t * dy;
+        float ex = px - projX;
+        float ey = py - projY;
+        return (float) Math.sqrt(ex * ex + ey * ey);
+    }
 
     public static Identifier getSmoothCircle() {
         if (smoothCircleTex == null) {
@@ -225,6 +289,79 @@ public class Render2DUtility {
             MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
             return id;
         });
+    }
+
+    public static Identifier getSmoothTriangle(float thicknessRatio) {
+        String key = String.format("%.2f", thicknessRatio);
+        return SMOOTH_TRI_CACHE.computeIfAbsent(key, k -> {
+            int size = 128;
+            NativeImage img = new NativeImage(size, size, false);
+            int ss = 8;
+            float tipX = size * 0.5f;
+            float tipY = 0f;
+            float leftX = size * 0.1f;
+            float leftY = size * 0.8f;
+            float rightX = size * 0.9f;
+            float rightY = size * 0.8f;
+            float maxDist = Math.max(1f, thicknessRatio * size * 0.5f);
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    int a = calcTriangleOutlineAA(x, y, ss, tipX, tipY, leftX, leftY, rightX, rightY, maxDist);
+                    img.setPixel(x, y, (a << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture tex = new DynamicTexture(() -> "smooth_tri_" + key, img);
+            setLinearSampler(tex);
+            Identifier id = Identifier.fromNamespaceAndPath("ravex", "smooth_tri_" + key);
+            MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
+            return id;
+        });
+    }
+
+    private static int calcTriangleOutlineAA(int px, int py, int ss,
+            float ax, float ay, float bx, float by, float cx, float cy, float maxDist) {
+        int total = 0;
+        for (int sy = 0; sy < ss; sy++) {
+            float fy = py + (sy + 0.5f) / ss;
+            for (int sx = 0; sx < ss; sx++) {
+                float fx = px + (sx + 0.5f) / ss;
+                if (!pointInTriangle(fx, fy, ax, ay, bx, by, cx, cy)) continue;
+                float d = Math.min(
+                        distToSeg(fx, fy, ax, ay, bx, by),
+                        Math.min(distToSeg(fx, fy, bx, by, cx, cy),
+                                distToSeg(fx, fy, cx, cy, ax, ay)));
+                if (d <= maxDist) total++;
+            }
+        }
+        return Math.min(255, total * 255 / (ss * ss));
+    }
+
+    public static Identifier getSmoothBar() {
+        if (smoothBarTex == null) {
+            int w = 64;
+            int h = 16;
+            NativeImage img = new NativeImage(w, h, false);
+            int ss = 4;
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    int cov = 0;
+                    for (int sy = 0; sy < ss; sy++) {
+                        float fy = y + (sy + 0.5f) / ss;
+                        for (int sx = 0; sx < ss; sx++) {
+                            float fx = x + (sx + 0.5f) / ss;
+                            if (fx > 0.5f && fx < w - 0.5f && fy > 0.5f && fy < h - 0.5f) cov++;
+                        }
+                    }
+                    int a = Math.min(255, cov * 255 / (ss * ss));
+                    img.setPixel(x, y, (a << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture tex = new DynamicTexture(() -> "smooth_bar", img);
+            setLinearSampler(tex);
+            smoothBarTex = Identifier.fromNamespaceAndPath("ravex", "smooth_bar");
+            MinecraftWrapper.getWrapper().getTextureManager().register(smoothBarTex, tex);
+        }
+        return smoothBarTex;
     }
 
     public static void setLinearSampler(AbstractTexture tex) {
@@ -418,22 +555,26 @@ public class Render2DUtility {
             drawBorder(graphics, x, y, width, height, thickness, color);
             return;
         }
+        int ss = 4;
         String key = width + "_" + height + "_" + radius + "_" + thickness;
         Identifier tex = SMOOTH_BORDER_CACHE.get(key);
         if (tex == null) {
-            NativeImage img = new NativeImage(width, height, true);
-            float r = radius;
-            float half = thickness / 2f;
-            for (int py = 0; py < height; py++) {
-                for (int px = 0; px < width; px++) {
+            int sw = width * ss;
+            int sh = height * ss;
+            NativeImage img = new NativeImage(sw, sh, true);
+            float r = radius * ss;
+            float half = thickness * ss / 2f;
+            float plateau = Math.max(0f, half - 1f);
+            for (int py = 0; py < sh; py++) {
+                for (int px = 0; px < sw; px++) {
                     float fx = px + 0.5f;
                     float fy = py + 0.5f;
-                    float cx = Math.max(r, Math.min(width - r, fx));
-                    float cy = Math.max(r, Math.min(height - r, fy));
+                    float cx = Math.max(r, Math.min(sw - r, fx));
+                    float cy = Math.max(r, Math.min(sh - r, fy));
                     float dx = fx - cx;
                     float dy = fy - cy;
-                    float dist = (float) Math.sqrt(dx * dx + dy * dy) - r;
-                    float alpha = Math.max(0, Math.min(1, 1.0f - Math.abs(dist) / half));
+                    float dist = (float) Math.sqrt(dx * dx + dy * dy) - r + half;
+                    float alpha = Math.max(0, Math.min(1, 1.0f - Math.max(0f, Math.abs(dist) - plateau)));
                     int aa = Math.round(alpha * 255);
                     img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
                 }
@@ -444,7 +585,55 @@ public class Render2DUtility {
             MinecraftWrapper.getWrapper().getTextureManager().register(tex, dt);
             SMOOTH_BORDER_CACHE.put(key, tex);
         }
-        graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, width, height, width, height, color);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, width, height,
+            width * ss, height * ss, width * ss, height * ss, color);
+    }
+
+    private static final Map<String, Identifier> ROUND_FILL_CACHE = new HashMap<>();
+
+    public static void drawRoundQ(GuiGraphics graphics, int x, int y, int width, int height, int radius, int color) {
+        if (width <= 1 || height <= 1 || radius <= 0) {
+            drawRect(graphics, x, y, width, height, color);
+            return;
+        }
+        int maxR = Math.min(width, height) / 2;
+        if (radius > maxR) radius = maxR;
+        if (((color >> 24) & 0xFF) == 0) return;
+        int ss = 4;
+        while (ss > 1 && (long) width * ss * height * ss > 8_000_000L) ss--;
+        String key = width + "_" + height + "_" + radius;
+        Identifier tex = ROUND_FILL_CACHE.get(key);
+        if (tex == null) {
+            int sw = width * ss;
+            int sh = height * ss;
+            NativeImage img = new NativeImage(sw, sh, true);
+            float r = radius * ss;
+            for (int py = 0; py < sh; py++) {
+                float fy = py + 0.5f;
+                float cy = Math.max(r, Math.min(sh - r, fy));
+                float dy = fy - cy;
+                for (int px = 0; px < sw; px++) {
+                    float fx = px + 0.5f;
+                    float cx = Math.max(r, Math.min(sw - r, fx));
+                    float dx = fx - cx;
+                    float dist = (float) Math.sqrt(dx * dx + dy * dy) - r;
+                    float alpha = Math.max(0f, Math.min(1f, 0.5f - dist));
+                    int aa = Math.round(alpha * 255);
+                    img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture dt = new DynamicTexture(() -> "round_fill_" + key, img);
+            setLinearSampler(dt);
+            tex = Identifier.fromNamespaceAndPath("ravex", "round_fill_" + key);
+            MinecraftWrapper.getWrapper().getTextureManager().register(tex, dt);
+            ROUND_FILL_CACHE.put(key, tex);
+        }
+        graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, width, height,
+            width * ss, height * ss, width * ss, height * ss, color);
+    }
+
+    public static void drawRoundQ(GuiGraphics graphics, float x, float y, float w, float h, float r, int color) {
+        drawRoundQ(graphics, (int) x, (int) y, (int) Math.ceil(w), (int) Math.ceil(h), Math.round(r), color);
     }
 
     public static void fillCircle(GuiGraphics graphics, int x, int y, int radius, int color) {
@@ -500,6 +689,100 @@ public class Render2DUtility {
             graphics.pose().popMatrix();
         }
         graphics.pose().popMatrix();
+    }
+
+    private static final Map<String, Identifier> SMOOTH_ARC_CACHE = new HashMap<>();
+
+    public static void drawSmoothArc(GuiGraphics graphics, float cx, float cy, float radius, float thickness, float startAngleDeg, float arcDeg, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0 || arcDeg <= 0 || radius <= 0 || thickness <= 0) return;
+        int outerR = Math.max(2, Math.round(radius));
+        int thick = Math.max(1, Math.round(thickness));
+        int arc = Math.min(360, Math.max(1, Math.round(arcDeg)));
+        Identifier tex = getSmoothArcTexture(outerR, thick, arc);
+        int texSize = outerR * 2 + 8;
+        var pose = graphics.pose();
+        pose.pushMatrix();
+        pose.translate(cx, cy);
+        if (Math.abs(startAngleDeg) > 0.01f) {
+            pose.rotate((float) Math.toRadians(startAngleDeg));
+        }
+        graphics.blit(RenderPipelines.GUI_TEXTURED, tex, -texSize / 2, -texSize / 2, 0f, 0f, texSize, texSize, texSize, texSize, color);
+        pose.popMatrix();
+    }
+
+    private static Identifier getSmoothArcTexture(int outerR, int thickness, int arcDeg) {
+        String key = outerR + "_" + thickness + "_" + arcDeg;
+        return SMOOTH_ARC_CACHE.computeIfAbsent(key, k -> {
+            int padding = 4;
+            int size = outerR * 2 + padding * 2;
+            NativeImage img = new NativeImage(size, size, false);
+            float cx = size / 2f;
+            float cy = size / 2f;
+            float outerRF = outerR;
+            float innerR = Math.max(0, outerR - thickness);
+            float endRad = (float) Math.toRadians(arcDeg);
+            boolean fullCircle = arcDeg >= 360;
+            int ss = 8;
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    int coverage = calcArcCoverageSmooth(x, y, cx, cy, outerRF, innerR, endRad, fullCircle, ss);
+                    img.setPixel(x, y, (coverage << 24) | 0x00FFFFFF);
+                }
+            }
+            DynamicTexture tex = new DynamicTexture(() -> "smooth_arc_" + key, img);
+            setLinearSampler(tex);
+            Identifier id = Identifier.fromNamespaceAndPath("ravex", "smooth_arc_" + key);
+            MinecraftWrapper.getWrapper().getTextureManager().register(id, tex);
+            return id;
+        });
+    }
+
+    private static int calcArcCoverageSmooth(int px, int py, float cx, float cy, float outerR, float innerR, float endAngleRad, boolean fullCircle, int ss) {
+        float total = 0;
+        float outerR2 = outerR * outerR;
+        float innerR2 = innerR * innerR;
+        float invSs = 1.0f / ss;
+        float halfThick = (outerR - innerR) / 2f;
+        float edgeSoftness = Math.max(0.5f, Math.min(1.0f, halfThick * 0.3f));
+        float angleSoftness = 0.04f;
+        for (int sy = 0; sy < ss; sy++) {
+            float fy = py + (sy + 0.5f) * invSs - cy;
+            float fy2 = fy * fy;
+            for (int sx = 0; sx < ss; sx++) {
+                float fx = px + (sx + 0.5f) * invSs - cx;
+                float dist2 = fx * fx + fy2;
+                float dist = (float) Math.sqrt(dist2);
+
+                float innerEdge = Math.max(0, Math.min(1, (dist - innerR + edgeSoftness) / edgeSoftness));
+                float outerEdge = Math.max(0, Math.min(1, (outerR - dist + edgeSoftness) / edgeSoftness));
+                float ringAlpha = innerEdge * outerEdge;
+                if (ringAlpha <= 0) continue;
+
+                if (fullCircle) {
+                    total += ringAlpha;
+                    continue;
+                }
+
+                float angle = (float) Math.atan2(fy, fx);
+                if (angle < 0) angle += 2 * (float) Math.PI;
+
+                float startDist = angle;
+                float endDist = endAngleRad - angle;
+                float arcAlpha;
+                if (angle <= endAngleRad) {
+                    arcAlpha = Math.min(1f, Math.min(startDist, endDist) / angleSoftness + 1.0f);
+                    arcAlpha = Math.min(1f, arcAlpha);
+                } else {
+                    float pastEnd = angle - endAngleRad;
+                    arcAlpha = Math.max(0, 1.0f - pastEnd / angleSoftness);
+                }
+
+                total += ringAlpha * arcAlpha;
+            }
+        }
+        int result = Math.round(total * 255 / (ss * ss));
+        return Math.min(255, Math.max(0, result));
     }
 
     private static void drawTriangle(GuiGraphics graphics, int x1, int y1, int x2, int y2, int x3, int y3, int color) {
@@ -850,51 +1133,180 @@ public class Render2DUtility {
         drawRoundBorder(graphics, x, y, width, height, radius, borderWidth, borderColor);
     }
 
-    private static final Map<String, Identifier> PERFECT_RR_CACHE = new HashMap<>();
+    private static final int RR_PAD = 2;
+    private static final int RR_CACHE_MAX = 64;
+    private static final long RR_RELEASE_DELAY_MS = 3000L;
+    private static final Map<Identifier, Long> RR_PENDING_RELEASE = new HashMap<>();
+    private static final Map<String, Identifier> PERFECT_RR_CACHE = new LinkedHashMap<String, Identifier>(64, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Identifier> eldest) {
+            boolean evict = size() > RR_CACHE_MAX;
+            if (evict) deferPixelPerfectRelease(eldest.getValue());
+            return evict;
+        }
+    };
 
-    private static boolean isInsideRoundedRect(float fx, float fy, float width, float height, float r) {
-        if (fx < 0f || fx > width || fy < 0f || fy > height) return false;
-
-        float left = r;
-        float right = width - r;
-        float top = r;
-        float bottom = height - r;
-
-        if (fx < left && fy < top) {
-            float dx = fx - left;
-            float dy = fy - top;
-            return dx * dx + dy * dy <= r * r;
-        }
-        if (fx > right && fy < top) {
-            float dx = fx - right;
-            float dy = fy - top;
-            return dx * dx + dy * dy <= r * r;
-        }
-        if (fx < left && fy > bottom) {
-            float dx = fx - left;
-            float dy = fy - bottom;
-            return dx * dx + dy * dy <= r * r;
-        }
-        if (fx > right && fy > bottom) {
-            float dx = fx - right;
-            float dy = fy - bottom;
-            return dx * dx + dy * dy <= r * r;
-        }
-        return true;
+    private static void deferPixelPerfectRelease(Identifier id) {
+        if (id == null || RR_PENDING_RELEASE.containsKey(id)) return;
+        RR_PENDING_RELEASE.put(id, System.currentTimeMillis());
     }
 
-    private static int calcRoundedRectPixelAA(int px, int py, float width, float height, float r, int ss) {
-        int total = 0;
-        for (int sy = 0; sy < ss; sy++) {
-            float fy = py + (sy + 0.5f) / ss;
-            for (int sx = 0; sx < ss; sx++) {
-                float fx = px + (sx + 0.5f) / ss;
-                if (isInsideRoundedRect(fx, fy, width, height, r)) {
-                    total++;
+    private static void flushPixelPerfectReleases() {
+        if (RR_PENDING_RELEASE.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        var textureManager = MinecraftWrapper.getWrapper().getTextureManager();
+        RR_PENDING_RELEASE.entrySet().removeIf(entry -> {
+            if (now - entry.getValue() < RR_RELEASE_DELAY_MS) return false;
+            if (PERFECT_RR_CACHE.containsValue(entry.getKey())) return true;
+            try {
+                textureManager.release(entry.getKey());
+            } catch (Throwable ignored) {}
+            return true;
+        });
+    }
+
+    private static final class PixelPerfectSnap {
+        final int devW;
+        final int devH;
+        final int devR;
+        final int devT;
+        final int texW;
+        final int texH;
+        final float tx;
+        final float ty;
+        final float sx;
+        final float sy;
+
+        PixelPerfectSnap(int devW, int devH, int devR, int devT, int texW, int texH,
+                         float tx, float ty, float sx, float sy) {
+            this.devW = devW;
+            this.devH = devH;
+            this.devR = devR;
+            this.devT = devT;
+            this.texW = texW;
+            this.texH = texH;
+            this.tx = tx;
+            this.ty = ty;
+            this.sx = sx;
+            this.sy = sy;
+        }
+    }
+
+    private static float[] guiUnitDeviceScale() {
+        var window = MinecraftWrapper.getWrapper().getWindow();
+        float scale = window.getGuiScale();
+        if (scale <= 0f) scale = 1f;
+        int width = Math.max(1, window.getWidth());
+        int height = Math.max(1, window.getHeight());
+        int fbWidth = 0;
+        int fbHeight = 0;
+        try (var stack = MemoryStack.stackPush()) {
+            var wBuf = stack.mallocInt(1);
+            var hBuf = stack.mallocInt(1);
+            GLFW.glfwGetFramebufferSize(window.handle(), wBuf, hBuf);
+            fbWidth = wBuf.get(0);
+            fbHeight = hBuf.get(0);
+        } catch (Throwable ignored) {}
+        if (fbWidth <= 0 || fbHeight <= 0) {
+            fbWidth = width;
+            fbHeight = height;
+        }
+        return new float[]{fbWidth * scale / width, fbHeight * scale / height};
+    }
+
+    private static PixelPerfectSnap snapPixelPerfect(GuiGraphics graphics, int x, int y, int width, int height,
+                                                     int radius, int thickness) {
+        var pose = graphics.pose();
+        float a = pose.m00;
+        float b = pose.m20;
+        float c = pose.m11;
+        float d = pose.m21;
+        if (a <= 0f || c <= 0f || Math.abs(pose.m10) > 1e-3f || Math.abs(pose.m01) > 1e-3f) {
+            a = 1f;
+            b = 0f;
+            c = 1f;
+            d = 0f;
+        }
+        float[] base = guiUnitDeviceScale();
+        float baseX = base[0];
+        float baseY = base[1];
+        float kx = baseX * a;
+        float ky = baseY * c;
+        int left = Math.round(baseX * (a * x + b));
+        int top = Math.round(baseY * (c * y + d));
+        int right = Math.round(baseX * (a * (x + width) + b));
+        int bottom = Math.round(baseY * (c * (y + height) + d));
+        int devW = Math.max(1, Math.abs(right - left));
+        int devH = Math.max(1, Math.abs(bottom - top));
+        int devR = Math.max(0, Math.round(radius * kx));
+        int devT = Math.max(1, Math.round(thickness * Math.min(kx, ky)));
+        int texW = devW + RR_PAD * 2;
+        int texH = devH + RR_PAD * 2;
+        float sx = texW / (width * kx);
+        float sy = texH / (height * ky);
+        float tx = ((left - RR_PAD) / baseX - b) / a - sx * x;
+        float ty = ((top - RR_PAD) / baseY - d) / c - sy * y;
+        return new PixelPerfectSnap(devW, devH, devR, devT, texW, texH, tx, ty, sx, sy);
+    }
+
+    private static int roundedRectCoverage(float fx, float fy, float width, float height, float r) {
+        if (width <= 0f || height <= 0f) return 0;
+        float alpha = 0.5f - roundedRectSdf(fx + 0.5f, fy + 0.5f, width, height, r);
+        if (alpha <= 0f) return 0;
+        if (alpha >= 1f) return 255;
+        return Math.round(alpha * 255);
+    }
+
+    private static Identifier registerPixelPerfect(String key, PixelPerfectSnap snap, boolean border) {
+        int texW = snap.texW;
+        int texH = snap.texH;
+        NativeImage img = new NativeImage(texW, texH, true);
+        float r = snap.devR;
+        float innerW = snap.devW - snap.devT * 2f;
+        float innerH = snap.devH - snap.devT * 2f;
+        float innerR = Math.max(0f, r - snap.devT);
+        for (int py = 0; py < texH; py++) {
+            float fy = py - RR_PAD;
+            for (int px = 0; px < texW; px++) {
+                float fx = px - RR_PAD;
+                int aa;
+                if (border) {
+                    int outer = roundedRectCoverage(fx, fy, snap.devW, snap.devH, r);
+                    int inner = roundedRectCoverage(fx - snap.devT, fy - snap.devT, innerW, innerH, innerR);
+                    aa = Math.max(0, outer - inner);
+                } else {
+                    aa = roundedRectCoverage(fx, fy, snap.devW, snap.devH, r);
                 }
+                img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
             }
         }
-        return Math.min(255, total * 255 / (ss * ss));
+        DynamicTexture dt = new DynamicTexture(() -> (border ? "perfect_rrb_" : "perfect_rr_") + key, img);
+        setLinearSampler(dt);
+        Identifier id = Identifier.fromNamespaceAndPath("ravex", (border ? "perfect_rrb_" : "perfect_rr_") + key);
+        MinecraftWrapper.getWrapper().getTextureManager().register(id, dt);
+        PERFECT_RR_CACHE.put(key, id);
+        return id;
+    }
+
+    private static void blitPixelPerfect(GuiGraphics graphics, Identifier tex, PixelPerfectSnap snap,
+                                         int x, int y, int width, int height, int color) {
+        var pose = graphics.pose();
+        pose.pushMatrix();
+        pose.translate(snap.tx, snap.ty);
+        pose.scale(snap.sx, snap.sy);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, width, height, snap.texW, snap.texH, snap.texW, snap.texH, color);
+        pose.popMatrix();
+    }
+
+    private static float roundedRectSdf(float fx, float fy, float width, float height, float r) {
+        float b = Math.min(r, Math.min(width, height) * 0.5f);
+        float qx = Math.abs(fx - width * 0.5f) - (width * 0.5f - b);
+        float qy = Math.abs(fy - height * 0.5f) - (height * 0.5f - b);
+        float ox = Math.max(qx, 0f);
+        float oy = Math.max(qy, 0f);
+        float outside = (float) Math.sqrt(ox * ox + oy * oy);
+        float inside = Math.min(Math.max(qx, qy), 0f);
+        return outside + inside - b;
     }
 
     public static void drawPixelPerfectRound(GuiGraphics graphics, int x, int y, int width, int height, int radius, int color) {
@@ -906,26 +1318,35 @@ public class Render2DUtility {
         int a = (color >> 24) & 0xFF;
         if (a == 0) return;
 
-        String key = width + "_" + height + "_" + radius;
+        flushPixelPerfectReleases();
+        PixelPerfectSnap snap = snapPixelPerfect(graphics, x, y, width, height, radius, 1);
+        String key = "f_" + snap.devW + "_" + snap.devH + "_" + snap.devR;
         Identifier tex = PERFECT_RR_CACHE.get(key);
-        if (tex == null) {
-            NativeImage img = new NativeImage(width, height, true);
-            float r = radius;
-            int ss = 4;
-            for (int py = 0; py < height; py++) {
-                for (int px = 0; px < width; px++) {
-                    int aa = calcRoundedRectPixelAA(px, py, width, height, r, ss);
-                    img.setPixel(px, py, (aa << 24) | 0x00FFFFFF);
-                }
-            }
-            DynamicTexture dt = new DynamicTexture(() -> "perfect_rr_" + key, img);
-            setLinearSampler(dt);
-            tex = Identifier.fromNamespaceAndPath("ravex", "perfect_rr_" + key);
-            MinecraftWrapper.getWrapper().getTextureManager().register(tex, dt);
-            PERFECT_RR_CACHE.put(key, tex);
+        if (tex == null) tex = registerPixelPerfect(key, snap, false);
+        blitPixelPerfect(graphics, tex, snap, x, y, width, height, color);
+    }
+
+    public static void drawPixelPerfectRoundBorder(GuiGraphics graphics, int x, int y, int width, int height, int radius, int thickness, int color) {
+        if (width <= 1 || height <= 1 || thickness <= 0) return;
+        int a = (color >> 24) & 0xFF;
+        if (a == 0) return;
+        int maxR = Math.min(width, height) / 2;
+        if (radius > maxR) radius = maxR;
+        if (radius <= 0) {
+            drawBorder(graphics, x, y, width, height, thickness, color);
+            return;
+        }
+        if (thickness * 2 >= width || thickness * 2 >= height) {
+            drawPixelPerfectRound(graphics, x, y, width, height, radius, color);
+            return;
         }
 
-        graphics.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0f, 0f, width, height, width, height, color);
+        flushPixelPerfectReleases();
+        PixelPerfectSnap snap = snapPixelPerfect(graphics, x, y, width, height, radius, thickness);
+        String key = "b_" + snap.devW + "_" + snap.devH + "_" + snap.devR + "_" + snap.devT;
+        Identifier tex = PERFECT_RR_CACHE.get(key);
+        if (tex == null) tex = registerPixelPerfect(key, snap, true);
+        blitPixelPerfect(graphics, tex, snap, x, y, width, height, color);
     }
 
     public static void drawCheckmark(GuiGraphics graphics, int x, int y, int size, int color) {
@@ -1029,5 +1450,100 @@ public class Render2DUtility {
 
     public static float fastAnimation(float current, float target, float speed) {
         return current + (target - current) * Math.min(1, speed * 0.05f);
+    }
+
+    private static Identifier sharpArrowTex = null;
+
+    public static Identifier getSharpArrowTexture() {
+        if (sharpArrowTex == null) {
+            int size = 128;
+            NativeImage img = new NativeImage(size, size, true);
+            float cx = size / 2.0f;
+            float cy = size / 2.0f;
+            float h = size * 0.68f;
+            float halfW = h * 0.38f;
+            float tipX = cx, tipY = cy - h * 0.5f;
+            float leftX = cx - halfW, leftY = cy + h * 0.5f;
+            float rightX = cx + halfW, rightY = cy + h * 0.5f;
+            float notchX = cx, notchY = cy + h * 0.18f;
+
+            int ss = 6;
+            float invSs = 1.0f / ss;
+
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    int cov = 0;
+                    for (int sy = 0; sy < ss; sy++) {
+                        float fy = y + (sy + 0.5f) * invSs;
+                        for (int sx = 0; sx < ss; sx++) {
+                            float fx = x + (sx + 0.5f) * invSs;
+                            if (pointInTriangle(fx, fy, tipX, tipY, leftX, leftY, notchX, notchY)
+                                    || pointInTriangle(fx, fy, tipX, tipY, notchX, notchY, rightX, rightY)) {
+                                cov++;
+                            }
+                        }
+                    }
+                    int alpha = (int) (Math.min(1.0f, (float) cov / (ss * ss)) * 255);
+                    img.setPixel(x, y, (alpha << 24) | 0x00FFFFFF);
+                }
+            }
+
+            for (int y = 0; y < size; y++) {
+                img.setPixel(0, y, 0);
+                img.setPixel(1, y, 0);
+                img.setPixel(size - 2, y, 0);
+                img.setPixel(size - 1, y, 0);
+            }
+            for (int x = 0; x < size; x++) {
+                img.setPixel(x, 0, 0);
+                img.setPixel(x, 1, 0);
+                img.setPixel(x, size - 2, 0);
+                img.setPixel(x, size - 1, 0);
+            }
+
+            DynamicTexture tex = new DynamicTexture(() -> "sharp_arrow_th", img);
+            setLinearSampler(tex);
+            sharpArrowTex = Identifier.fromNamespaceAndPath("ravex", "sharp_arrow_th");
+            MinecraftWrapper.getWrapper().getTextureManager().register(sharpArrowTex, tex);
+        }
+        return sharpArrowTex;
+    }
+
+    public static void drawSmoothCircle(GuiGraphics graphics, float cx, float cy, float radius, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0 || radius <= 0) return;
+        int d = Math.round(radius * 2f);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, getSmoothCircle(), (int) (cx - radius), (int) (cy - radius), 0f, 0f, d, d, d, d, color);
+    }
+
+    public static void drawSmoothRing(GuiGraphics graphics, float cx, float cy, float radius, float thicknessRatio, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0 || radius <= 0) return;
+        int d = Math.round(radius * 2f);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, getSmoothRing(thicknessRatio), (int) (cx - radius), (int) (cy - radius), 0f, 0f, d, d, d, d, color);
+    }
+
+    private static boolean pointInTriangle(float px, float py, float ax, float ay, float bx, float by, float cx, float cy) {
+        float d1 = (px - bx) * (ay - by) - (ax - bx) * (py - by);
+        float d2 = (px - cx) * (by - cy) - (bx - cx) * (py - cy);
+        float d3 = (px - ax) * (cy - ay) - (cx - ax) * (py - ay);
+        boolean hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+        boolean hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+        return !(hasNeg && hasPos);
+    }
+
+    public static void drawSharpArrow(GuiGraphics graphics, float cx, float cy, float angle, float size, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0) return;
+        var pose = graphics.pose();
+        pose.pushMatrix();
+        pose.translate(cx, cy);
+        if (Math.abs(angle) > 0.001f) {
+            pose.rotate(angle);
+        }
+        pose.translate(-size / 2f, -size / 2f);
+        int isz = Math.round(size);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, getSharpArrowTexture(), 0, 0, 0f, 0f, isz, isz, isz, isz, color);
+        pose.popMatrix();
     }
 }

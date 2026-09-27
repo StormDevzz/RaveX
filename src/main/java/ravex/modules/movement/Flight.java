@@ -14,7 +14,7 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 
 @Module(name = "Flight", category = "Movement")
 public class Flight {
-    @Parameter(name = "Mode", modes = {"Vanilla", "Creative", "NCP", "Minemen", "Jetpack", "VerusFlat", "VerusDamage"})
+    @Parameter(name = "Mode", modes = {"Vanilla", "Creative", "NCP", "Jetpack", "VerusFlat", "VerusDamage"})
     public String mode = "Vanilla";
     @Parameter(name = "Speed", min = 0.5, max = 20.0, step = 0.1)
     public double speed = 2.0;
@@ -26,12 +26,6 @@ public class Flight {
     public double timer = 1.0;
     @Parameter(name = "Acceleration", min = 0.1, max = 5.0, step = 0.1)
     public double acceleration = 1.0;
-    @Parameter(name = "AutoSneak")
-    public boolean autoSneak = false;
-    @Parameter(name = "DamageBoost")
-    public boolean damageBoost = false;
-    @Parameter(name = "DamageMultiplier", min = 1.0, max = 5.0, step = 0.1)
-    public double damageMultiplier = 1.5;
     private static final boolean nativeAvailable = false;
     private boolean gotDamage = false;
     private int damageTicks = 0;
@@ -174,7 +168,6 @@ public class Flight {
                 velY = jump ? vSpeed : (sneak ? -vSpeed : -glide);
                 break;
             case "NCP":
-            case "Minemen":
                 velY = jump ? vSpeed : (sneak ? -vSpeed : -glide);
                 break;
 

@@ -9,13 +9,8 @@ import ravex.utility.network.NetworkUtility;
 import ravex.modules.Modules;
 @Module(name = "PacketHelper", category = "Misc")
 public class PacketHelper {
-    @Parameter(name = "Mode", modes = {"Logging", "Filter", "Cancel"})
-    public String mode = "Logging";
-
     @Parameter(name = "Logging")
     public boolean loggingEnabled = false;
-    @Parameter(name = "Filter")
-    public boolean filterEnabled = false;
     @Parameter(name = "Cancel")
     public boolean cancelEnabled = false;
 
@@ -25,18 +20,6 @@ public class PacketHelper {
     public boolean logIncoming = false;
     @Parameter(name = "LogToChat")
     public boolean logToChat = true;
-
-    @Parameter(name = "RateLimit", min = 10, max = 500, step = 5)
-    public double rateLimit = 80;
-    @Parameter(name = "Burst", min = 5, max = 50, step = 1)
-    public double burst = 15;
-
-    @Parameter(name = "FilterMove")
-    public boolean filterMove = true;
-    @Parameter(name = "FilterInteract")
-    public boolean filterInteract = false;
-    @Parameter(name = "FilterChat")
-    public boolean filterChat = false;
 
     @Parameter(name = "CancelMove")
     public boolean cancelMove = false;

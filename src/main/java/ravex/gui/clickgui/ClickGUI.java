@@ -16,7 +16,10 @@ import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.animate.AnimationUtility;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import ravex.manager.LayoutManager;
 
 import ravex.modules.Modules;
 
@@ -30,6 +33,7 @@ public class ClickGUI extends Screen {
     public static ParameterElement activeNumberParameterElement = null;
     public static ParameterElement activeKeybindElement = null;
     public static boolean isDraggingSlider = false;
+    public static float bindReveal = 0f;
 
     public static Identifier getCategoryTexture(String cat) {
         return ravex.utility.render.TextureLoaderUtility.getCategoryTexture(cat);
@@ -58,7 +62,10 @@ public class ClickGUI extends Screen {
     private String searchBeforeEdit = "";
     private int searchCursorCounter = 0;
     private float searchBarOpenAnim = 0f;
+    private float toolbarAnim = 0f;
     private float descPanelAnim = 0f;
+    private float tipsAnim = 0f;
+    private float gearTipAnim = 0f;
 
     private boolean macrosHovered;
     private boolean profilesHovered;
@@ -81,10 +88,8 @@ public class ClickGUI extends Screen {
     private int cachedActiveColor = 0xFF40A9F8;
 
     public ClickGUI() {
-        super(Component.literal("RaveX ClickGUI"));
+        super(Component.literal(ravex.utility.misc.LanguageUtility.t("gui_title")));
         this.initTime = System.currentTimeMillis();
-
-        ravex.utility.misc.GuiOptimizerUtility.optimize();
 
         int panelW = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth;
         int spacing = 10;
@@ -111,11 +116,24 @@ public class ClickGUI extends Screen {
         float startY = Math.max(65, (this.height - Math.min(this.height * 0.75f, getMaxPanelHeight())) / 2f);
         this.panelStartY = (int) startY;
 
+        Map<String, double[]> layout = LayoutManager.INSTANCE.load();
+
         for (int i = 0; i < num; i++) {
-            int px = (int) (startX + i * (panelW + spacing));
-            int py = (int) startY;
-            panels.get(i).setX(px);
-            panels.get(i).setY(py);
+            CategoryPanel p = panels.get(i);
+            if (p.isCustomPosition()) {
+                continue;
+            }
+            if (layout.containsKey(p.getCategory())) {
+                double[] pos = layout.get(p.getCategory());
+                p.setX((int) Math.round(pos[0]));
+                p.setY((int) Math.round(pos[1]));
+                p.setCustomPosition(true);
+            } else {
+                int px = (int) (startX + i * (panelW + spacing));
+                int py = (int) startY;
+                p.setX(px);
+                p.setY(py);
+            }
         }
     }
 
@@ -148,6 +166,40 @@ public class ClickGUI extends Screen {
             }
         }
         return currentScale;
+    }
+
+    private int getToolbarHeight() {
+        return (int)(20 * Math.max(0.65f, getResponsiveScale()));
+    }
+
+    private int getToolbarY() {
+        return Math.max(4, panelStartY - getToolbarHeight() - 14);
+    }
+
+    private int getSearchBarHeight() {
+        return 20;
+    }
+
+    private int getSearchBarY() {
+        int openOffset = (int)((1f - searchBarOpenAnim) * -18f);
+        return Math.max(4, getToolbarY() - getSearchBarHeight() - 8) + openOffset;
+    }
+
+    private int[] getToolbarLayout() {
+        float btnScale = Math.max(0.65f, getResponsiveScale());
+        int mgH = (int)(20 * btnScale);
+        int mgGap = (int)(40 * btnScale);
+        String[] labs = { ravex.utility.misc.LanguageUtility.t("gui_macros"), ravex.utility.misc.LanguageUtility.t("gui_profiles"), ravex.utility.misc.LanguageUtility.t("gui_configs"), ravex.utility.misc.LanguageUtility.t("gui_reset"), ravex.utility.misc.LanguageUtility.t("gui_hud") };
+        int textPad = 12;
+        int maxTextW = 0;
+        for (String lab : labs) {
+            maxTextW = Math.max(maxTextW, FontRenderUtility.getStringWidth(lab));
+        }
+        int mgW = Math.max((int)(44 * btnScale), maxTextW + textPad * 2);
+        int totalBtnW = 5 * mgW + 4 * mgGap;
+        int mgX = (this.width - totalBtnW) / 2;
+        int mgY = getToolbarY();
+        return new int[]{ mgX, mgY, mgW, mgH, mgGap };
     }
 
     private float getAdaptiveScale() {
@@ -238,39 +290,52 @@ public class ClickGUI extends Screen {
             }
         }
 
-        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar) {
-            float btnScale = Math.max(0.65f, getResponsiveScale());
-            int mgW = (int)(44 * btnScale);
-            int mgH = (int)(20 * btnScale);
-            int mgGap = (int)(40 * btnScale);
-            int totalBtnW = 5 * mgW + 4 * mgGap;
-            int mgX = (this.width - totalBtnW) / 2;
-            int mgY = Math.max(4, panelStartY - mgH - 6);
+        if (closing) {
+            float tbElapsed = System.currentTimeMillis() - closingStartTime;
+            float tbProgress = Math.min(1f, tbElapsed / 130f);
+            toolbarAnim = 1f - AnimationUtility.Easing.QUINT_IN.apply(tbProgress);
+        } else {
+            float tbTarget = ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar ? 1f : 0f;
+            float tbSpeed = tbTarget > toolbarAnim ? 0.15f : 0.25f;
+            toolbarAnim += (tbTarget - toolbarAnim) * tbSpeed;
+            if (Math.abs(tbTarget - toolbarAnim) < 0.004f) toolbarAnim = tbTarget;
+        }
 
-            macrosHovered      = mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
-            profilesHovered    = mouseX >= mgX + mgW + mgGap && mouseX <= mgX + 2 * mgW + mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
-            configsHovered     = mouseX >= mgX + 2 * (mgW + mgGap) && mouseX <= mgX + 3 * mgW + 2 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
-            resetLayoutHovered = mouseX >= mgX + 3 * (mgW + mgGap) && mouseX <= mgX + 4 * mgW + 3 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
-            hudEditorHovered   = mouseX >= mgX + 4 * (mgW + mgGap) && mouseX <= mgX + 5 * mgW + 4 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+        if (toolbarAnim > 0.01f) {
+            int[] tb = getToolbarLayout();
+            int mgX = tb[0];
+            int mgY = tb[1] + (int) ((1f - toolbarAnim) * -22f);
+            int mgW = tb[2];
+            int mgH = tb[3];
+            int mgGap = tb[4];
+            String[] labArr = { ravex.utility.misc.LanguageUtility.t("gui_macros"), ravex.utility.misc.LanguageUtility.t("gui_profiles"), ravex.utility.misc.LanguageUtility.t("gui_configs"), ravex.utility.misc.LanguageUtility.t("gui_reset"), ravex.utility.misc.LanguageUtility.t("gui_hud") };
+            boolean tbLive = toolbarAnim > 0.97f;
+
+            macrosHovered      = tbLive && mouseX >= mgX && mouseX <= mgX + mgW && mouseY >= mgY && mouseY <= mgY + mgH;
+            profilesHovered    = tbLive && mouseX >= mgX + mgW + mgGap && mouseX <= mgX + 2 * mgW + mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+            configsHovered     = tbLive && mouseX >= mgX + 2 * (mgW + mgGap) && mouseX <= mgX + 3 * mgW + 2 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+            resetLayoutHovered = tbLive && mouseX >= mgX + 3 * (mgW + mgGap) && mouseX <= mgX + 4 * mgW + 3 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
+            hudEditorHovered   = tbLive && mouseX >= mgX + 4 * (mgW + mgGap) && mouseX <= mgX + 5 * mgW + 4 * mgGap && mouseY >= mgY && mouseY <= mgY + mgH;
 
             int[] bxArr   = { mgX, mgX + mgW + mgGap, mgX + 2 * (mgW + mgGap), mgX + 3 * (mgW + mgGap), mgX + 4 * (mgW + mgGap) };
             boolean[] hovArr = { macrosHovered, profilesHovered, configsHovered, resetLayoutHovered, hudEditorHovered };
-            String[] labArr  = { "Macros", "Profiles", "Configs", "Reset", "HUD" };
 
             int btnR = Math.min(8, mgH / 2);
             for (int i = 0; i < 5; i++) {
                 int bx  = bxArr[i];
                 boolean h = hovArr[i];
 
-                Render2DUtility.drawRound(graphics, bx, mgY, mgW, mgH, btnR, h ? ColorUtility.withAlpha(cachedActiveColor, 40) : 0x18000000);
+                int bg = h ? ColorUtility.withAlpha(cachedActiveColor, 40) : 0x18000000;
+                Render2DUtility.drawRound(graphics, bx, mgY, mgW, mgH, btnR, ColorUtility.applyAlpha(bg, toolbarAnim));
                 if (h) {
-                    Render2DUtility.drawRound(graphics, bx, mgY, mgW, mgH, btnR, ColorUtility.withAlpha(cachedActiveColor, 20));
+                    Render2DUtility.drawRound(graphics, bx, mgY, mgW, mgH, btnR, ColorUtility.applyAlpha(ColorUtility.withAlpha(cachedActiveColor, 20), toolbarAnim));
                 }
 
                 int textW = FontRenderUtility.getStringWidth(labArr[i]);
                 int textY = mgY + (mgH - FontRenderUtility.getFontHeight()) / 2;
-                FontRenderUtility.drawString(graphics, labArr[i], bx + (mgW - textW) / 2, textY,
-                        h ? 0xFFFFFFFF : 0xFF808090, false);
+                int textX = bx + (mgW - textW) / 2;
+                FontRenderUtility.drawString(graphics, labArr[i], textX, textY,
+                        ColorUtility.applyAlpha(h ? 0xFFFFFFFF : 0xFF808090, toolbarAnim), false);
             }
         }
 
@@ -278,6 +343,9 @@ public class ClickGUI extends Screen {
 
         float finalScale = getAdaptiveScale();
         if (closing && (System.currentTimeMillis() - closingStartTime >= 150)) {
+            for (ravex.modules.Module m : ravex.manager.ModuleManager.INSTANCE.getModules()) {
+                m.setGearAngle(0f, System.currentTimeMillis());
+            }
             ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper());
             return;
         }
@@ -293,12 +361,16 @@ public class ClickGUI extends Screen {
             float progress = Math.min(1f, elapsed / 120f);
             searchBarOpenAnim = 1f - AnimationUtility.Easing.QUINT_IN.apply(progress);
             descPanelAnim = 1f - AnimationUtility.Easing.QUINT_IN.apply(progress);
+            float bindProgress = Math.min(1f, elapsed / 150f);
+            bindReveal = 1f - AnimationUtility.Easing.QUINT_IN.apply(bindProgress);
         } else {
             float elapsed = System.currentTimeMillis() - initTime;
             float progress = Math.min(1f, elapsed / 400f);
             searchBarOpenAnim = AnimationUtility.Easing.ELASTIC_OUT.apply(progress);
             float dpProgress = Math.min(1f, elapsed / 250f);
             descPanelAnim = dpProgress;
+            float bindProgress = Math.min(1f, Math.max(0f, (elapsed - 150f) / 350f));
+            bindReveal = AnimationUtility.Easing.CUBIC_OUT.apply(bindProgress);
         }
 
         renderSearchBar(graphics, mouseX, mouseY);
@@ -314,6 +386,8 @@ public class ClickGUI extends Screen {
         }
 
         pose.popMatrix();
+
+        renderBeginnerTips(graphics);
 
         if (ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionPanel) {
             activeTooltipText = hoveredDescription != null ? hoveredDescription : "";
@@ -331,18 +405,15 @@ public class ClickGUI extends Screen {
                 tw = Math.min(tw + padX * 2, maxW + padX * 2);
                 int th = lines.size() * lineH;
 
-                int barH = 20;
-                int barY = Math.max(4, panelStartY - (int)(20 * Math.max(0.65f, getResponsiveScale())) - 2 - barH);
-                barY += (int)((1f - searchBarOpenAnim) * -18f);
-
-                int descY = barY + barH + 4;
+                int descY = getToolbarY() + getToolbarHeight() + 8;
+                if (descY + th > this.height - 4) descY = this.height - 4 - th;
                 int descX = (this.width - tw) / 2;
 
                 int da = (int)(descPanelAnim * 255);
 
                 int ly = descY + padY;
                 for (String line : lines) {
-                    FontRenderUtility.drawString(graphics, line, descX + padX, ly, (da << 24) | 0xE0E0E0, true);
+                    FontRenderUtility.drawString(graphics, line, descX + padX, ly, ColorUtility.setAlpha(0xE0E0E0, da), true);
                     ly += lineH;
                 }
             }
@@ -388,7 +459,7 @@ public class ClickGUI extends Screen {
 
                 int ly = ty + padY;
                 for (String line : lines) {
-                    FontRenderUtility.drawString(graphics, line, tx + padX, ly, (ta << 24) | 0xE0E0E0, true);
+                    FontRenderUtility.drawString(graphics, line, tx + padX, ly, ColorUtility.setAlpha(0xE0E0E0, ta), true);
                     ly += lineH;
                 }
             }
@@ -401,49 +472,124 @@ public class ClickGUI extends Screen {
         super.render(graphics, mouseX, mouseY, partialTicks);
     }
 
+    private void renderBeginnerTips(GuiGraphics graphics) {
+        boolean show = ModuleManager.get(ravex.modules.client.ClickGui.class).showTips;
+        float target = (show && !closing) ? 1f : 0f;
+        tipsAnim += (target - tipsAnim) * 0.12f;
+        if (Math.abs(target - tipsAnim) < 0.004f) tipsAnim = target;
+        if (tipsAnim < 0.02f) return;
+
+        boolean showGear = ModuleManager.get(ravex.modules.client.ClickGui.class).showGear;
+        float gearTarget = showGear ? 1f : 0f;
+        gearTipAnim += (gearTarget - gearTipAnim) * 0.12f;
+        if (Math.abs(gearTarget - gearTipAnim) < 0.004f) gearTipAnim = gearTarget;
+
+        String title = ravex.utility.misc.LanguageUtility.t("gui_tips_title");
+        String toggleTip = ravex.utility.misc.LanguageUtility.t("gui_tip_toggle");
+        String settingsTip = ravex.utility.misc.LanguageUtility.t("gui_tip_settings");
+        String bindTip = ravex.utility.misc.LanguageUtility.t("gui_tip_bind");
+        String gearTip = ravex.utility.misc.LanguageUtility.t("gui_tip_gear");
+
+        int lineH = FontRenderUtility.getFontHeight() + 3;
+        int padX = 6;
+        int padY = 6;
+        int titleH = FontRenderUtility.getFontHeight() + 4;
+        int maxW = FontRenderUtility.getStringWidth(title);
+        maxW = Math.max(maxW, FontRenderUtility.getStringWidth(toggleTip));
+        maxW = Math.max(maxW, FontRenderUtility.getStringWidth(settingsTip));
+        maxW = Math.max(maxW, FontRenderUtility.getStringWidth(bindTip));
+        if (gearTipAnim > 0.02f) {
+            maxW = Math.max(maxW, FontRenderUtility.getStringWidth(gearTip));
+        }
+        int panelH = Math.round(padY + titleH + 3 * lineH + lineH * gearTipAnim + padY);
+        int px = 6;
+        int py = this.height - panelH - 6;
+        if (px < 0) px = 0;
+        if (py < 0) py = 0;
+
+        int a = (int)(tipsAnim * 255);
+        int titleCol = ColorUtility.withAlpha(0xFFFFFFFF, a);
+        int textCol = ColorUtility.withAlpha(0xFFE8E8F0, a);
+        int ly = py + padY;
+        FontRenderUtility.drawString(graphics, title, px + padX, ly, titleCol, true);
+        ly += titleH;
+        FontRenderUtility.drawString(graphics, toggleTip, px + padX, ly, textCol, true);
+        ly += lineH;
+        FontRenderUtility.drawString(graphics, settingsTip, px + padX, ly, textCol, true);
+        ly += lineH;
+        FontRenderUtility.drawString(graphics, bindTip, px + padX, ly, textCol, true);
+        ly += lineH;
+        if (gearTipAnim > 0.02f) {
+            int gearA = (int)(tipsAnim * gearTipAnim * 255);
+            int gearCol = ColorUtility.withAlpha(0xFFE8E8F0, gearA);
+            FontRenderUtility.drawString(graphics, gearTip, px + padX, ly, gearCol, true);
+        }
+    }
+
     private void renderSearchBar(GuiGraphics graphics, int mouseX, int mouseY) {
         float openAnim = searchBarOpenAnim;
         if (openAnim <= 0.01f) return;
+        float openA = Math.min(1f, Math.max(0f, openAnim));
 
-        int barH = 20;
-        int barY = Math.max(4, panelStartY - (int)(20 * Math.max(0.65f, getResponsiveScale())) - 2 - barH);
-        barY += (int)((1f - openAnim) * -18f);
+        int barH = getSearchBarHeight();
+        int barY = getSearchBarY();
         int barW = Math.min(200, this.width - 60);
         int barX = (this.width - barW) / 2;
 
         float target = searchFocused ? 1.0f : 0.0f;
-        searchAnimProgress += (target - searchAnimProgress) * 0.12f;
+        searchAnimProgress += (target - searchAnimProgress) * 0.14f;
+        if (Math.abs(target - searchAnimProgress) < 0.004f) searchAnimProgress = target;
+        float focus = searchAnimProgress;
+        float focusEase = focus * focus * (3f - 2f * focus);
         searchCursorCounter++;
 
         int pAlpha = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).panelOpacity;
-        int barBg = ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, (int)((searchFocused ? Math.min(pAlpha + 15, 255) : pAlpha) * openAnim));
-        Render2DUtility.drawRound(graphics, barX, barY, barW, barH, 10, barBg);
+        int active = ColorUtility.getActiveColor();
+        int bgAlpha = (int)(AnimationUtility.lerp(pAlpha, Math.min(pAlpha + 20, 255), focusEase) * openA);
+        int barBg = ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, bgAlpha);
+        Render2DUtility.drawPixelPerfectRound(graphics, barX, barY, barW, barH, 10, barBg);
+
+        int borderA = (int) (AnimationUtility.lerp(70, 255, focusEase) * openA);
+        Render2DUtility.drawPixelPerfectRoundBorder(graphics, barX - 1, barY - 1, barW + 2, barH + 2, 11, 1, ColorUtility.withAlpha(active, borderA));
 
         int iconSize = 14;
         Identifier searchTex = ravex.utility.render.TextureLoaderUtility.getSearchWhiteTexture();
         if (searchTex != null) {
             int iconX = barX + 8;
             int iconY = barY + (barH - iconSize) / 2;
-            graphics.blit(searchTex, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
+            int iconColor = ColorUtility.withAlpha(0xFFFFFF, (int) (AnimationUtility.lerp(140, 255, focusEase) * openA));
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, searchTex,
+                iconX, iconY, 0f, 0f, iconSize, iconSize, iconSize, iconSize, iconColor);
         }
 
         int textOffset = 8 + iconSize + 4;
         String searchText = searchQuery;
         int textY = barY + (barH - FontRenderUtility.getFontHeight()) / 2 + 1;
-        int textColor = lerpColor(0xFF606080, 0xFFD0D0E0, searchAnimProgress);
-        if (searchText.isEmpty() && !searchFocused) {
-            FontRenderUtility.drawString(graphics, "Search...", barX + textOffset, textY, textColor, true);
+        int textColor = ColorUtility.interpolate(0xFF606080, 0xFFD0D0E0, focusEase);
+        int placeholderColor = ColorUtility.withAlpha(0xFF606080, (int) ((1f - focusEase * 0.65f) * 200 * openA));
+        int maxTextW = barW - textOffset - 40;
+        if (searchText.isEmpty()) {
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("gui_search_placeholder"), barX + textOffset, textY, placeholderColor, true);
         } else {
-            FontRenderUtility.drawString(graphics, searchText, barX + textOffset, textY, textColor, true);
+            String clipped = clipToWidth(searchText, maxTextW);
+            FontRenderUtility.drawString(graphics, clipped, barX + textOffset, textY, textColor, true);
             if (searchFocused) {
-                int textW = FontRenderUtility.getStringWidth(searchText);
+                int textW = FontRenderUtility.getStringWidth(clipped);
                 boolean cursorOn = (searchCursorCounter / 30) % 2 == 0;
-                if (cursorOn) {
-                    int cursorAlpha = (int)(0xC8 * openAnim);
-                    graphics.fill(barX + textOffset + textW, textY - 1, barX + textOffset + 2 + textW, textY + FontRenderUtility.getFontHeight() + 1,
-                        (cursorAlpha << 24) | 0xFFFFFF);
-                }
+                float cursorPulse = cursorOn ? 1f : 0.25f;
+                int cursorAlpha = (int) (0xD0 * cursorPulse * openA);
+                graphics.fill(barX + textOffset + textW, textY - 1, barX + textOffset + 2 + textW, textY + FontRenderUtility.getFontHeight() + 1,
+                    ColorUtility.setAlpha(0xFFFFFF, cursorAlpha));
             }
+        }
+
+        int underlinePad = 8;
+        float underlineBase = Math.max(focusEase, searchQuery.isEmpty() ? 0f : 0.35f);
+        float underlineW = (barW - underlinePad * 2) * underlineBase;
+        if (underlineW > 1f) {
+            int underA = (int) (160 * underlineBase * openA);
+            graphics.fill(barX + underlinePad, barY + barH - 2, barX + underlinePad + (int) underlineW, barY + barH - 1,
+                ColorUtility.withAlpha(active, underA));
         }
 
         int resultCount = 0;
@@ -453,27 +599,31 @@ public class ClickGUI extends Screen {
             }
         }
         float resultTarget = (!searchQuery.isEmpty() && resultCount > 0) ? 1.0f : 0.0f;
-        searchResultAnim += (resultTarget - searchResultAnim) * 0.10f;
+        searchResultAnim += (resultTarget - searchResultAnim) * 0.12f;
+        if (Math.abs(resultTarget - searchResultAnim) < 0.004f) searchResultAnim = resultTarget;
         if (searchResultAnim > 0.01f) {
             String countText = String.valueOf(resultCount);
             int cw = FontRenderUtility.getStringWidth(countText);
-            int ra = (int)(searchResultAnim * 180);
-            FontRenderUtility.drawString(graphics, countText, barX + barW - cw - 8, textY, (ra << 24) | 0xA0A0C0, true);
-            if (searchResultAnim > 0.95f) {
-                graphics.fill(barX + barW - cw - 10, textY - 1, barX + barW - cw - 8, textY + FontRenderUtility.getFontHeight() + 1,
-                    ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, (int)(Math.min(pAlpha + 30, 200) * openAnim)));
-            }
+            int ra = (int) (searchResultAnim * 200 * openA);
+            int countColor = ColorUtility.withAlpha(ColorUtility.interpolate(0xFFA0A0C0, ColorUtility.setAlpha(active, 255), searchResultAnim), ra);
+            FontRenderUtility.drawString(graphics, countText, barX + barW - cw - 8, textY, countColor, true);
+            int sepA = (int) (searchResultAnim * 140 * openA);
+            graphics.fill(barX + barW - cw - 11, textY - 1, barX + barW - cw - 9, textY + FontRenderUtility.getFontHeight() + 1,
+                ColorUtility.withAlpha(active, sepA));
         }
     }
 
-    private int lerpColor(int bg, int fg, float alpha) {
-        int aBg = (bg >> 24) & 0xFF, rBg = (bg >> 16) & 0xFF, gBg = (bg >> 8) & 0xFF, bBg = bg & 0xFF;
-        int aFg = (fg >> 24) & 0xFF, rFg = (fg >> 16) & 0xFF, gFg = (fg >> 8) & 0xFF, bFg = fg & 0xFF;
-        int r = (int)(rBg + (rFg - rBg) * alpha);
-        int g = (int)(gBg + (gFg - gBg) * alpha);
-        int b = (int)(bBg + (bFg - bBg) * alpha);
-        int a = (int)(aBg + (aFg - aBg) * alpha);
-        return (a << 24) | (r << 16) | (g << 8) | b;
+    private static String clipToWidth(String s, int maxWidth) {
+        if (s == null || s.isEmpty() || maxWidth <= 0) return s == null ? "" : s;
+        if (FontRenderUtility.getStringWidth(s) <= maxWidth) return s;
+        int ellipsisW = FontRenderUtility.getStringWidth("...");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            String next = sb.toString() + s.charAt(i);
+            if (FontRenderUtility.getStringWidth(next) + ellipsisW > maxWidth) break;
+            sb.append(s.charAt(i));
+        }
+        return sb + "...";
     }
 
     @Override
@@ -491,10 +641,8 @@ public class ClickGUI extends Screen {
 
         int barW = Math.min(200, this.width - 60);
         int barX = (this.width - barW) / 2;
-        float btnScaleM = Math.max(0.65f, getResponsiveScale());
-        int mgHForCalc = (int)(20 * btnScaleM);
-        int barH = 20;
-        int barY = Math.max(4, panelStartY - mgHForCalc - 6 - 4 - barH);
+        int barH = getSearchBarHeight();
+        int barY = getSearchBarY();
 
         if (event.x() >= barX && event.x() <= barX + barW && event.y() >= barY && event.y() <= barY + barH) {
             searchFocused = true;
@@ -505,13 +653,13 @@ public class ClickGUI extends Screen {
             return super.mouseClicked(event, handled);
         }
 
-        if (ModuleManager.get(ravex.modules.client.ClickGui.class).showToolbar) {
-            float btnScale = Math.max(0.65f, getResponsiveScale());
-            int mgW   = (int)(44 * btnScale);
-            int mgH   = (int)(20 * btnScale);
-            int mgGap = (int)(40 * btnScale);
-            int mgX   = (this.width - (5 * mgW + 4 * mgGap)) / 2;
-            int mgY   = Math.max(4, panelStartY - mgH - 6);
+        if (toolbarAnim > 0.97f) {
+            int[] tb = getToolbarLayout();
+            int mgX = tb[0];
+            int mgY = tb[1];
+            int mgW = tb[2];
+            int mgH = tb[3];
+            int mgGap = tb[4];
 
             if (event.x() >= mgX && event.x() <= mgX + mgW && event.y() >= mgY && event.y() <= mgY + mgH) {
                 this.minecraft.setScreen(new MacroScreen(this));
@@ -526,7 +674,10 @@ public class ClickGUI extends Screen {
                 return true;
             }
             if (event.x() >= mgX + 3 * (mgW + mgGap) && event.x() <= mgX + 4 * mgW + 3 * mgGap && event.y() >= mgY && event.y() <= mgY + mgH) {
-                ravex.manager.LayoutManager.INSTANCE.reset();
+                LayoutManager.INSTANCE.reset();
+                for (CategoryPanel p : panels) {
+                    p.setCustomPosition(false);
+                }
                 init();
                 return true;
             }
@@ -564,8 +715,11 @@ public class ClickGUI extends Screen {
         if (bindingModuleButton != null) {
             if (key == GLFW.GLFW_KEY_ESCAPE) {
                 bindingModuleButton.getModule().setKeyBind(GLFW.GLFW_KEY_UNKNOWN);
+                ravex.RaveX.suppressKey(GLFW.GLFW_KEY_ESCAPE);
             } else {
                 bindingModuleButton.getModule().setKeyBind(key);
+                ravex.RaveX.suppressKey(key);
+                bindingModuleButton.triggerFlash(0.45f);
             }
             bindingModuleButton = null;
             return true;
@@ -575,11 +729,12 @@ public class ClickGUI extends Screen {
             ravex.parameter.KeybindParameter kp = (ravex.parameter.KeybindParameter) activeKeybindElement.getParameter();
             if (key == GLFW.GLFW_KEY_ESCAPE) {
                 kp.setValue(org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN);
-                activeKeybindElement = null;
+                ravex.RaveX.suppressKey(GLFW.GLFW_KEY_ESCAPE);
             } else {
                 kp.setValue(key);
-                activeKeybindElement = null;
+                ravex.RaveX.suppressKey(key);
             }
+            activeKeybindElement = null;
             return true;
         }
 
@@ -697,12 +852,27 @@ public class ClickGUI extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
+    public void saveLayout() {
+        Map<String, CategoryPanel> panelMap = new HashMap<>();
+        for (CategoryPanel p : panels) {
+            panelMap.put(p.getCategory(), p);
+        }
+        LayoutManager.INSTANCE.save(panelMap, this.width, this.height, 1.0f);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        saveLayout();
+        return super.mouseReleased(event);
+    }
+
     @Override
     public void onClose() {
         isDraggingSlider = false;
+        saveLayout();
         ModuleButton.expandedModules.clear();
-        for (ravex.modules.Module m : ravex.manager.ModuleManager.INSTANCE.getModules()) {
-            m.setGearAngle(0f, System.currentTimeMillis());
+        for (CategoryPanel p : panels) {
+            p.resetExpansion();
         }
         activeStringParameterElement = null;
         if (activeNumberParameterElement != null) {
@@ -720,12 +890,13 @@ public class ClickGUI extends Screen {
     @Override
     public void removed() {
         isDraggingSlider = false;
+        saveLayout();
         if (activeNumberParameterElement != null) {
             activeNumberParameterElement.applyInput();
             activeNumberParameterElement = null;
         }
-        for (ravex.modules.Module m : ravex.manager.ModuleManager.INSTANCE.getModules()) {
-            m.setGearAngle(0f, System.currentTimeMillis());
+        for (CategoryPanel p : panels) {
+            p.resetExpansion();
         }
         super.removed();
     }
