@@ -8,7 +8,7 @@ const baseVersion = match ? match[1].trim() : 'unknown';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
-    RAVEX_VERSION: baseVersion + ' Recode',
+    RAVEX_VERSION: baseVersion,
     RAVEX_JAR_VERSION: baseVersion,
   },
 }
