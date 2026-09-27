@@ -27,8 +27,8 @@ build.bat --install       % Windows: build + install
 
 ## Documentation
 
-- [GUIDE.md](GUIDE.md) — Full step-by-step tutorial (English, ~300 lines)
-- [GUIDE_RU.md](GUIDE_RU.md) — Полное пошаговое руководство (русский)
+- [GUIDE.md](GUIDE.md) - Full step-by-step tutorial (English, ~300 lines)
+- [GUIDE_RU.md](GUIDE_RU.md) - Полное пошаговое руководство (русский)
 
 ## Structure
 
@@ -46,7 +46,7 @@ templates/cpp/
 └── README.md            This file
 ```
 
-Each example is a **standalone CMake project** — build it independently:
+Each example is a **standalone CMake project** - build it independently:
 
 ```bash
 cd 01_minimal && mkdir build && cd build

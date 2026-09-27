@@ -24,8 +24,8 @@ build.bat --install       % Windows: build + install
 
 ## Documentation
 
-- [GUIDE.md](GUIDE.md) — Full step-by-step tutorial (English)
-- [GUIDE_RU.md](GUIDE_RU.md) — Полное пошаговое руководство (русский)
+- [GUIDE.md](GUIDE.md) - Full step-by-step tutorial (English)
+- [GUIDE_RU.md](GUIDE_RU.md) - Полное пошаговое руководство (русский)
 
 ## Structure
 

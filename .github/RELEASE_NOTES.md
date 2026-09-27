@@ -1,21 +1,21 @@
 # RaveX 1.4.9
 
-- Recode KillAura — legit rotation modes (Tracker/Snap2), new Advanced group with Target ESP, FOV, ShieldBreaker and friends, SmartCrits got AutoJump, sprint handling is packet based now
+- Recode KillAura - legit rotation modes (Tracker/Snap2), new Advanced group with Target ESP, FOV, ShieldBreaker and friends, SmartCrits got AutoJump, sprint handling is packet based now
 - AutoCrystal rework: SpawnBreak, Target ESP, Grim/Strict rotations and swaps, predicts where the target is going
 - Scaffold rework. New Strict mode, faster tower modes, instant placement, BuildSpeed limit, NoRotate, smarter Expand
-- PacketFly rewritten — NCP + Custom modes, Factor, teleport confirmations
+- PacketFly rewritten - NCP + Custom modes, Factor, teleport confirmations
 - Full russian localization, switch it in Settings → Language or right during onboarding
 - First launch shows a short onboarding now (welcome, language pick, done sound), ESC skips it
-- New .gps command (alias .nav) — set a target and Tracers ArrowNew draws a GPS arrow to it, clears on arrival
-- New AkrienRadar HUD — player tracers, compass, glow, color modes
-- New JumpCircles module — circles when you jump or land
-- New MainMenu module — gif or procedural backgrounds on the title screen, drop your own gifs into RaveX/gifs
+- New .gps command (alias .nav) - set a target and Tracers ArrowNew draws a GPS arrow to it, clears on arrival
+- New AkrienRadar HUD - player tracers, compass, glow, color modes
+- New JumpCircles module - circles when you jump or land
+- New MainMenu module - gif or procedural backgrounds on the title screen, drop your own gifs into RaveX/gifs
 - MediaHud actually shows what's playing now (windows smtc), with covers and progress
 - ClickGUI got a toolbar, search that understands russian layout, remembers panel positions, tips
 - HUD editor: scale elements with the mouse wheel, smoother dragging, sounds
 - Watermark, TargetHud, Cooldowns, Indicators all got new styles
 - ElytraFly is called Elytra++ now and has an OldGrim mode
-- HighJump GrimShulker rewritten — it finds and opens the shulker itself, Phase got new modes, Speed got NCPJump/StrictJump
+- HighJump GrimShulker rewritten - it finds and opens the shulker itself, Phase got new modes, Speed got NCPJump/StrictJump
 - FakePlayer takes real damage, pops totems with sound, can auto totem and auto respawn
 - ECFarmer picks the right tool and swaps silently, AutoSign has an Advanced mode with auto place, GhostBlocks can restore blocks you broke
 - Tracers: new arrow modes and size, Crosshair highlights the target, Zoom has a keybind now, ChinaHat filters, Skeleton glow
