@@ -2,6 +2,7 @@
 #include "core/include/paths.hpp"
 #include "core/include/util.hpp"
 #include "core/include/config.hpp"
+#include "core/include/sha256.hpp"
 #include "net/include/http.hpp"
 #include "net/include/json.hpp"
 #include <windows.h>
@@ -84,17 +85,39 @@ bool findVersionUrl(const ravex::json::Value& manifest, const std::string& versi
     return false;
 }
 
-bool fetchVersionJson(const std::string& url, ravex::json::Value& out, std::string* error) {
+bool fetchVersionJson(const std::string& url, const std::string& version, ravex::json::Value& out, std::string* error) {
     std::string text = net::httpGet(url, error);
     if (text.empty()) return false;
     out = ravex::json::Value::parse(text);
-    return !out.isNull();
+    if (out.isNull()) return false;
+    createDirs(joinPath(versionsDir(), fromUtf8(version)));
+    writeFileAtomic(versionJson(version), text);
+    return true;
 }
+
+std::string toLowerHex(std::string s) {
+    for (char& c : s) {
+        if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+    }
+    return s;
+}
+
+bool verifySha1(const std::wstring& path, const std::string& expected) {
+    if (expected.empty()) return true;
+    std::string actual = sha1File(path);
+    if (actual.empty()) return false;
+    return actual == toLowerHex(expected);
+}
+
+struct DlJob {
+    std::string url;
+    std::wstring dest;
+    std::string sha1;
+};
 
 bool downloadClientJar(const ravex::json::Value& versionData, const std::string& version,
                        const std::function<void(const net::Progress&)>& progress, const bool* cancelled, std::string* error) {
     std::wstring jar = clientJar(version);
-    if (fileExists(jar)) return true;
     if (!versionData.has("downloads") || !versionData.at("downloads").has("client")) {
         *error = "No client download in version manifest";
         return false;
@@ -106,11 +129,23 @@ bool downloadClientJar(const ravex::json::Value& versionData, const std::string&
         *error = "No client URL";
         return false;
     }
+    std::string sha1;
+    if (client.has("sha1")) sha1 = client.at("sha1").asString();
+    if (fileExists(jar)) {
+        if (verifySha1(jar, sha1)) return true;
+        DeleteFileW(jar.c_str());
+    }
     createDirs(joinPath(versionsDir(), fromUtf8(version)));
-    return net::downloadFile(url, jar, progress, cancelled, error);
+    for (int attempt = 0; attempt < 2; ++attempt) {
+        if (!net::downloadFile(url, jar, progress, cancelled, error)) return false;
+        if (verifySha1(jar, sha1)) return true;
+        DeleteFileW(jar.c_str());
+    }
+    *error = "Client jar hash mismatch";
+    return false;
 }
 
-bool parallelDownload(const std::vector<std::pair<std::string, std::wstring>>& jobs,
+bool parallelDownload(const std::vector<DlJob>& jobs,
                       const std::function<void(const net::Progress&)>& progress, const bool* cancelled, std::string* error, int conc = 6) {
     if (jobs.empty()) return true;
     std::atomic<size_t> idx{0};
@@ -125,9 +160,18 @@ bool parallelDownload(const std::vector<std::pair<std::string, std::wstring>>& j
                 if (i >= jobs.size()) break;
                 if (cancelled && *cancelled) { failed = true; break; }
                 if (failed.load()) break;
-                const auto& job = jobs[i];
+                const DlJob& job = jobs[i];
                 std::string err;
-                bool ok = net::downloadFile(job.first, job.second, progress, cancelled, &err);
+                bool ok = net::downloadFile(job.url, job.dest, progress, cancelled, &err);
+                if (ok && !job.sha1.empty() && !verifySha1(job.dest, job.sha1)) {
+                    DeleteFileW(job.dest.c_str());
+                    ok = net::downloadFile(job.url, job.dest, progress, cancelled, &err);
+                    if (ok && !verifySha1(job.dest, job.sha1)) {
+                        DeleteFileW(job.dest.c_str());
+                        err = "Hash mismatch: " + toUtf8(job.dest);
+                        ok = false;
+                    }
+                }
                 if (!ok) {
                     std::lock_guard<std::mutex> lk(mtx);
                     if (!failed) firstErr = err;
@@ -149,7 +193,7 @@ bool downloadLibraries(const ravex::json::Value& versionData,
     const ravex::json::Value& libs = versionData.at("libraries");
     std::wstring libsDir = librariesDir();
     createDirs(libsDir);
-    std::vector<std::pair<std::string, std::wstring>> jobs;
+    std::vector<DlJob> jobs;
     for (std::size_t i = 0; i < libs.size(); ++i) {
         if (cancelled && *cancelled) { *error = "Cancelled"; return false; }
         const ravex::json::Value& lib = libs.at(i);
@@ -165,10 +209,15 @@ bool downloadLibraries(const ravex::json::Value& versionData,
             std::string name; if (lib.has("name")) name = lib.at("name").asString();
             dest = joinPath(libsDir, fromUtf8(libraryPath(name)));
         }
-        if (fileExists(dest)) continue;
+        std::string sha1;
+        if (artifact.has("sha1")) sha1 = artifact.at("sha1").asString();
+        if (fileExists(dest)) {
+            if (verifySha1(dest, sha1)) continue;
+            DeleteFileW(dest.c_str());
+        }
         std::wstring dir = dest.substr(0, dest.find_last_of(L"\\/"));
         createDirs(dir);
-        jobs.emplace_back(url, dest);
+        jobs.push_back({url, dest, sha1});
     }
     return parallelDownload(jobs, progress, cancelled, error, loadLauncherConfig().downloadThreads);
 }
@@ -237,7 +286,7 @@ bool downloadAssets(const std::string& indexId, const std::function<void(const n
         return false;
     }
     std::wstring objectsDir = assetsDir();
-    std::vector<std::pair<std::string, std::wstring>> jobs;
+    std::vector<DlJob> jobs;
     size_t existing = 0;
     for (std::size_t i = 0; i < keys.size(); ++i) {
         if (cancelled && *cancelled) { *error = "Cancelled"; return false; }
@@ -258,18 +307,18 @@ bool downloadAssets(const std::string& indexId, const std::function<void(const n
         }
         createDirs(assetDir);
         std::string url = "https://resources.download.minecraft.net/" + prefix + "/" + hash;
-        jobs.emplace_back(url, assetFile);
+        jobs.push_back({url, assetFile, hash});
     }
     if (jobs.empty()) return true;
     if (!parallelDownload(jobs, progress, cancelled, error, loadLauncherConfig().downloadThreads)) return false;
     size_t missing = 0;
     for (auto& j : jobs) {
-        if (!fileExists(j.second)) ++missing;
+        if (!fileExists(j.dest)) ++missing;
         else {
             WIN32_FILE_ATTRIBUTE_DATA fad{};
-            if (GetFileAttributesExW(j.second.c_str(), GetFileExInfoStandard, &fad)) {
+            if (GetFileAttributesExW(j.dest.c_str(), GetFileExInfoStandard, &fad)) {
                 ULONGLONG sz = (static_cast<ULONGLONG>(fad.nFileSizeHigh) << 32) | fad.nFileSizeLow;
-                if (sz == 0) { DeleteFileW(j.second.c_str()); ++missing; }
+                if (sz == 0) { DeleteFileW(j.dest.c_str()); ++missing; }
             }
         }
     }
@@ -296,7 +345,7 @@ bool ensureMinecraft(const std::string& version, std::string* error,
         return false;
     }
     ravex::json::Value versionData;
-    if (!fetchVersionJson(versionUrl, versionData, error)) return false;
+    if (!fetchVersionJson(versionUrl, version, versionData, error)) return false;
     if (!downloadClientJar(versionData, version, progress, cancelled, error)) return false;
     if (!downloadLibraries(versionData, progress, cancelled, error)) return false;
     std::string indexId;
@@ -347,6 +396,50 @@ bool quickIntegrityCheck(const std::string& version, const std::string& assetInd
     HANDLE hLib = FindFirstFileW(joinPath(libs, L"*").c_str(), &fd);
     if (hLib == INVALID_HANDLE_VALUE) { if (error) *error = "Libraries empty"; return false; }
     FindClose(hLib);
+    {
+        std::string vtext;
+        if (readFile(versionJson(version), vtext)) {
+            ravex::json::Value vdata = ravex::json::Value::parse(vtext);
+            if (!vdata.isNull()) {
+                if (vdata.has("downloads") && vdata.at("downloads").has("client")) {
+                    const ravex::json::Value& client = vdata.at("downloads").at("client");
+                    std::string sha1;
+                    if (client.has("sha1")) sha1 = client.at("sha1").asString();
+                    if (!sha1.empty() && !verifySha1(jar, sha1)) {
+                        if (error) *error = "Client jar hash mismatch";
+                        return false;
+                    }
+                }
+                if (vdata.has("libraries")) {
+                    const ravex::json::Value& libArr = vdata.at("libraries");
+                    std::vector<std::wstring> libFiles;
+                    std::vector<std::string> libHashes;
+                    for (std::size_t i = 0; i < libArr.size(); ++i) {
+                        const ravex::json::Value& lib = libArr.at(i);
+                        if (!lib.has("downloads") || !lib.at("downloads").has("artifact")) continue;
+                        const ravex::json::Value& artifact = lib.at("downloads").at("artifact");
+                        std::string pth; std::string sha1;
+                        if (artifact.has("path")) pth = artifact.at("path").asString();
+                        if (artifact.has("sha1")) sha1 = artifact.at("sha1").asString();
+                        if (pth.empty() || sha1.empty()) continue;
+                        std::wstring f = joinPath(libs, fromUtf8(pth));
+                        if (!fileExists(f)) continue;
+                        libFiles.push_back(f);
+                        libHashes.push_back(sha1);
+                    }
+                    size_t libSample = std::min<size_t>(20, libFiles.size());
+                    for (size_t i = 0; i < libSample; ++i) {
+                        size_t k = (libFiles.size() * i) / (libSample ? libSample : 1);
+                        if (!verifySha1(libFiles[k], libHashes[k])) {
+                            DeleteFileW(libFiles[k].c_str());
+                            if (error) *error = "Library hash mismatch: " + toUtf8(libFiles[k]);
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
     std::string idx = assetIndexId.empty() ? getFallbackAssetIndexId(version) : assetIndexId;
     std::wstring idxFile = joinPath(joinPath(joinPath(joinPath(p, L".minecraft"), L"assets"), L"indexes"), fromUtf8(idx) + L".json");
     if (!fileExists(idxFile)) { if (error) *error = "Asset index missing " + idx; return false; }
@@ -372,6 +465,13 @@ bool quickIntegrityCheck(const std::string& version, const std::string& assetInd
         std::wstring f = joinPath(joinPath(joinPath(joinPath(p, L".minecraft"), L"assets"), L"objects"), fromUtf8(hash.substr(0,2) + "/" + hash));
         std::wstring f2 = joinPath(joinPath(joinPath(joinPath(joinPath(p, L".minecraft"), L"assets"), L"objects"), fromUtf8(hash.substr(0,2))), fromUtf8(hash));
         if (!fileExists(f) && !fileExists(f2)) ++missing;
+        else {
+            std::wstring found = fileExists(f) ? f : f2;
+            if (!verifySha1(found, hash)) {
+                DeleteFileW(found.c_str());
+                ++missing;
+            }
+        }
     }
     if (missing > toSample / 3) {
         if (error) *error = "Assets incomplete: sample missing " + std::to_string(missing) + "/" + std::to_string(toSample);

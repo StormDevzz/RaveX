@@ -1,19 +1,58 @@
 #include "game/include/ravex.hpp"
 #include "core/include/paths.hpp"
 #include "core/include/util.hpp"
+#include "core/include/sha256.hpp"
 #include "net/include/http.hpp"
 #include "net/include/json.hpp"
+#include <windows.h>
 
 namespace ravex::game {
 
 namespace {
 
+const char* kReleaseApi = "https://api.github.com/repos/StormDevzz/RaveX/releases/latest";
+
 std::wstring ravexJar() {
     return joinPath(modsDir(), L"RaveX.jar");
 }
 
+std::string sanitizeAssetName(const std::string& name) {
+    std::size_t slash = name.find_last_of("/\\");
+    std::string base = (slash == std::string::npos) ? name : name.substr(slash + 1);
+    if (base.empty()) return {};
+    for (char c : base) {
+        bool ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+                  c == '.' || c == '-' || c == '_';
+        if (!ok) return {};
+    }
+    return base;
+}
+
+void deleteStaleRavexJars(const std::wstring& dir) {
+    WIN32_FIND_DATAW fd;
+    HANDLE h = FindFirstFileW(joinPath(dir, L"*.jar").c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE) return;
+    do {
+        std::wstring name = fd.cFileName;
+        std::wstring lower = name;
+        for (auto& c : lower) c = static_cast<wchar_t>(towlower(c));
+        bool endsJar = lower.size() > 4 && lower.substr(lower.size() - 4) == L".jar";
+        if (endsJar && (lower == L"ravex.jar" || lower.rfind(L"ravex-", 0) == 0)) {
+            DeleteFileW(joinPath(dir, name).c_str());
+        }
+    } while (FindNextFileW(h, &fd));
+    FindClose(h);
+}
+
+std::string toLowerHexStr(std::string s) {
+    for (char& c : s) {
+        if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+    }
+    return s;
+}
+
 std::string getLatestReleaseUrl(std::string* error) {
-    std::string body = net::httpGet("https://api.github.com/repos/3000IQGames/RaveX/releases/latest", error);
+    std::string body = net::httpGet(kReleaseApi, error);
     if (body.empty()) return {};
     ravex::json::Value root = ravex::json::Value::parse(body);
     if (root.isNull()) {
@@ -44,7 +83,7 @@ bool findAssetUrl(const ravex::json::Value& release, const std::string& name, st
 
 bool fetchLatestRelease(ReleaseInfo* out, std::string* error) {
     if (!out) return false;
-    std::string body = net::httpGet("https://api.github.com/repos/3000IQGames/RaveX/releases/latest", error);
+    std::string body = net::httpGet(kReleaseApi, error);
     if (body.empty()) return false;
     ravex::json::Value root = ravex::json::Value::parse(body);
     if (root.isNull()) {
@@ -58,10 +97,14 @@ bool fetchLatestRelease(ReleaseInfo* out, std::string* error) {
         for (std::size_t i = 0; i < assets.size(); ++i) {
             const ravex::json::Value& asset = assets.at(i);
             if (asset.has("name") && asset.has("browser_download_url")) {
-                std::string name = asset.at("name").asString();
+                std::string name = sanitizeAssetName(asset.at("name").asString());
                 if (name.size() > 4 && name.substr(name.size() - 4) == ".jar") {
                     out->url = asset.at("browser_download_url").asString();
                     out->name = name;
+                    if (asset.has("digest")) {
+                        std::string digest = asset.at("digest").asString();
+                        if (digest.rfind("sha256:", 0) == 0) out->sha256 = digest.substr(7);
+                    }
                     break;
                 }
             }
@@ -82,8 +125,27 @@ bool installRavex(const ReleaseInfo& release, std::string* error,
     }
     std::wstring dir = modsDir();
     createDirs(dir);
-    std::wstring dest = joinPath(dir, fromUtf8(release.name.empty() ? release.tag + ".jar" : release.name));
-    return net::downloadFile(release.url, dest, progress, cancelled, error);
+    std::string safe;
+    if (release.name.size() > 4 && release.name.substr(release.name.size() - 4) == ".jar") {
+        safe = sanitizeAssetName(release.name);
+    }
+    if (safe.empty()) {
+        std::string tagSafe = sanitizeAssetName(release.tag);
+        if (!tagSafe.empty()) safe = tagSafe + ".jar";
+    }
+    if (safe.size() < 5) safe = "ravex-update.jar";
+    deleteStaleRavexJars(dir);
+    std::wstring dest = joinPath(dir, fromUtf8(safe));
+    if (!net::downloadFile(release.url, dest, progress, cancelled, error)) return false;
+    if (!release.sha256.empty()) {
+        std::string actual = sha256File(dest);
+        if (actual.empty() || actual != toLowerHexStr(release.sha256)) {
+            DeleteFileW(dest.c_str());
+            *error = "RaveX jar checksum mismatch";
+            return false;
+        }
+    }
+    return true;
 }
 
 }

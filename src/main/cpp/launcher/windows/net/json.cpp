@@ -229,7 +229,11 @@ private:
 }
 
 Value Value::parse(const std::string& text) {
-    return Parser(text).run();
+    try {
+        return Parser(text).run();
+    } catch (...) {
+        return Value{};
+    }
 }
 
 }

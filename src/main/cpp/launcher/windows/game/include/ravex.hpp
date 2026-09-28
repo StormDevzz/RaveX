@@ -8,6 +8,7 @@ struct ReleaseInfo {
     std::string tag;
     std::string name;
     std::string url;
+    std::string sha256;
 };
 
 bool fetchLatestRelease(ReleaseInfo* out, std::string* error);

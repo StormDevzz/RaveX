@@ -1,6 +1,7 @@
 #include "game/include/java.hpp"
 #include "core/include/paths.hpp"
 #include "core/include/util.hpp"
+#include "core/include/sha256.hpp"
 #include "net/include/http.hpp"
 #include "net/include/json.hpp"
 #include <windows.h>
@@ -28,13 +29,76 @@ bool tryJavaPath(const std::wstring& path, std::wstring& out) {
     return false;
 }
 
-bool findSystemJava(int version, std::wstring& out) {
+int parseJavaMajor(const std::string& output) {
+    std::size_t vpos = output.find("version");
+    std::size_t q1 = (vpos == std::string::npos) ? output.find('"') : output.find('"', vpos);
+    if (q1 == std::string::npos) return 0;
+    std::size_t q2 = output.find('"', q1 + 1);
+    if (q2 == std::string::npos) return 0;
+    std::string ver = output.substr(q1 + 1, q2 - q1 - 1);
+    if (ver.size() > 2 && ver[0] == '1' && ver[1] == '.') {
+        std::size_t dot = ver.find('.', 2);
+        ver = ver.substr(2, dot == std::string::npos ? std::string::npos : dot - 2);
+    }
+    int major = 0;
+    for (char c : ver) {
+        if (c < '0' || c > '9') break;
+        major = major * 10 + (c - '0');
+        if (major > 1000) break;
+    }
+    return major;
+}
+
+int queryJavaMajor(const std::wstring& exe) {
+    STARTUPINFOW si{};
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+    si.wShowWindow = SW_HIDE;
+    PROCESS_INFORMATION pi{};
+    std::wstring cmd = L"\"" + exe + L"\" -version";
+    std::vector<wchar_t> cmdBuf(cmd.begin(), cmd.end());
+    cmdBuf.push_back(L'\0');
+    HANDLE hRead = nullptr;
+    HANDLE hWrite = nullptr;
+    SECURITY_ATTRIBUTES sa{};
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+    if (!CreatePipe(&hRead, &hWrite, &sa, 0)) return 0;
+    SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, 0);
+    si.hStdInput = nullptr;
+    si.hStdOutput = hWrite;
+    si.hStdError = hWrite;
+    if (!CreateProcessW(nullptr, cmdBuf.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW,
+                        nullptr, nullptr, &si, &pi)) {
+        CloseHandle(hRead);
+        CloseHandle(hWrite);
+        return 0;
+    }
+    CloseHandle(hWrite);
+    DWORD wait = WaitForSingleObject(pi.hProcess, 8000);
+    if (wait == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 1);
+    std::string output;
+    char chunk[512];
+    DWORD read = 0;
+    while (ReadFile(hRead, chunk, static_cast<DWORD>(sizeof(chunk)), &read, nullptr) && read > 0) {
+        output.append(chunk, read);
+        if (output.size() > 65536) break;
+    }
+    CloseHandle(hRead);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return parseJavaMajor(output);
+}
+
+std::vector<std::wstring> collectJavaCandidates() {
+    std::vector<std::wstring> out;
     DWORD homeSize = GetEnvironmentVariableW(L"JAVA_HOME", nullptr, 0);
     if (homeSize > 0) {
         std::wstring home(homeSize, L'\0');
         GetEnvironmentVariableW(L"JAVA_HOME", home.data(), homeSize);
         home.resize(homeSize - 1);
-        if (tryJavaPath(home, out)) return true;
+        std::wstring exe = joinPath(home, L"bin\\java.exe");
+        if (fileExistsSimple(exe)) out.push_back(exe);
     }
     std::vector<std::wstring> searchPaths = {
         L"C:\\Program Files\\Eclipse Adoptium",
@@ -52,10 +116,53 @@ bool findSystemJava(int version, std::wstring& out) {
             if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
             std::wstring name = fd.cFileName;
             if (name == L"." || name == L"..") continue;
-            std::wstring candidate = joinPath(base, name);
-            if (tryJavaPath(candidate, out)) return true;
+            std::wstring exe = joinPath(joinPath(base, name), L"bin\\java.exe");
+            if (fileExistsSimple(exe)) out.push_back(exe);
         } while (FindNextFileW(hFind, &fd));
         FindClose(hFind);
+    }
+    return out;
+}
+
+bool findCachedJava(int version, std::wstring& out) {
+    std::wstring base = joinPath(javaDir(), fromUtf8(std::to_string(version)));
+    if (tryJavaPath(base, out)) return true;
+    WIN32_FIND_DATAW fd;
+    std::wstring pattern = joinPath(base, L"jdk-*");
+    HANDLE hFind = FindFirstFileW(pattern.c_str(), &fd);
+    if (hFind == INVALID_HANDLE_VALUE) return false;
+    bool found = false;
+    do {
+        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
+        std::wstring candidate = joinPath(base, fd.cFileName);
+        if (tryJavaPath(candidate, out)) {
+            found = true;
+            break;
+        }
+    } while (FindNextFileW(hFind, &fd));
+    FindClose(hFind);
+    return found;
+}
+
+bool findSystemJava(int version, std::wstring& out) {
+    std::vector<std::wstring> candidates = collectJavaCandidates();
+    std::wstring newer;
+    int newerMajor = 0;
+    for (const auto& exe : candidates) {
+        int major = queryJavaMajor(exe);
+        if (major <= 0) continue;
+        if (major == version) {
+            out = exe;
+            return true;
+        }
+        if (major > version && (newer.empty() || major < newerMajor)) {
+            newer = exe;
+            newerMajor = major;
+        }
+    }
+    if (!newer.empty()) {
+        out = newer;
+        return true;
     }
     return false;
 }
@@ -101,6 +208,20 @@ bool downloadJava(int version, const std::function<void(const std::string&)>& st
                                   },
                                   cancelled, &error);
     if (!dlOk) return false;
+    if (pkg.has("checksum")) {
+        std::string expected = pkg.at("checksum").asString();
+        for (char& c : expected) {
+            if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+        }
+        if (!expected.empty()) {
+            std::string actual = sha256File(zipPath);
+            if (actual.empty() || actual != expected) {
+                DeleteFileW(zipPath.c_str());
+                error = "Java archive checksum mismatch";
+                return false;
+            }
+        }
+    }
     status("Extracting Java " + std::to_string(version) + "...");
     std::wstring extractCmd = L"tar -xf \"" + zipPath + L"\" -C \"" + destDir + L"\"";
     STARTUPINFOW si{};
@@ -143,9 +264,11 @@ bool downloadJava(int version, const std::function<void(const std::string&)>& st
 bool ensureJava(int version, std::wstring& outPath, std::string* error,
                 const std::function<void(const std::string&)>& status,
                 const bool* cancelled) {
+    std::string localError;
+    if (!error) error = &localError;
     if (findSystemJava(version, outPath)) return true;
-    std::wstring cachedPath = joinPath(joinPath(javaDir(), fromUtf8(std::to_string(version))), L"bin\\java.exe");
-    if (fileExistsSimple(cachedPath)) {
+    std::wstring cachedPath;
+    if (findCachedJava(version, cachedPath)) {
         outPath = cachedPath;
         return true;
     }
@@ -162,9 +285,9 @@ bool ensureJava(int version, std::wstring& outPath, std::string* error,
 
 std::string getBundledJavaVersion() {
     for (int v : {21, 17, 16}) {
-        std::wstring cachedPath = joinPath(joinPath(javaDir(), fromUtf8(std::to_string(v))), L"bin\\java.exe");
-        if (fileExistsSimple(cachedPath)) {
-            STARTUPINFOW si{}; si.cb = sizeof(si); si.dwFlags = STARTF_USESHOWWINDOW; si.wShowWindow = SW_HIDE;
+        std::wstring cachedPath;
+        if (findCachedJava(v, cachedPath)) {
+            STARTUPINFOW si{}; si.cb = sizeof(si); si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES; si.wShowWindow = SW_HIDE;
             PROCESS_INFORMATION pi{};
             std::wstring cmd = L"\"" + cachedPath + L"\" -version";
             std::vector<wchar_t> cmdBuf(cmd.begin(), cmd.end()); cmdBuf.push_back(L'\0');
@@ -192,7 +315,7 @@ std::string getBundledJavaVersion() {
     }
     std::wstring sysPath;
     if (findSystemJava(21, sysPath) || findSystemJava(17, sysPath)) {
-        STARTUPINFOW si{}; si.cb = sizeof(si); si.dwFlags = STARTF_USESHOWWINDOW; si.wShowWindow = SW_HIDE;
+        STARTUPINFOW si{}; si.cb = sizeof(si); si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES; si.wShowWindow = SW_HIDE;
         PROCESS_INFORMATION pi{};
         std::wstring cmd = L"\"" + sysPath + L"\" -version";
         std::vector<wchar_t> cmdBuf(cmd.begin(), cmd.end()); cmdBuf.push_back(L'\0');

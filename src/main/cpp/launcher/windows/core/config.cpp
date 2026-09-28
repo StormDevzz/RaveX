@@ -3,10 +3,12 @@
 #include "core/include/util.hpp"
 #include "net/include/json.hpp"
 #include <windows.h>
+#include <dpapi.h>
 #include <cstdio>
 #include <utility>
 #include <chrono>
 #include <mutex>
+#include <vector>
 
 namespace ravex {
 
@@ -90,6 +92,84 @@ void readStr(const Value& v, const char* key, std::string& out) {
     if (v.has(key) && v.at(key).type() == Value::Type::String) out = v.at(key).asString();
 }
 
+const char* kSecretPrefix = "enc1:";
+const char* kBase64Digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+std::string base64Encode(const BYTE* data, DWORD len) {
+    std::string out;
+    out.reserve(((len + 2) / 3) * 4);
+    for (DWORD i = 0; i < len; i += 3) {
+        DWORD n = static_cast<DWORD>(data[i]) << 16;
+        if (i + 1 < len) n |= static_cast<DWORD>(data[i + 1]) << 8;
+        if (i + 2 < len) n |= data[i + 2];
+        out.push_back(kBase64Digits[(n >> 18) & 63]);
+        out.push_back(kBase64Digits[(n >> 12) & 63]);
+        out.push_back(i + 1 < len ? kBase64Digits[(n >> 6) & 63] : '=');
+        out.push_back(i + 2 < len ? kBase64Digits[n & 63] : '=');
+    }
+    return out;
+}
+
+int base64Value(char c) {
+    if (c >= 'A' && c <= 'Z') return c - 'A';
+    if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+    if (c >= '0' && c <= '9') return c - '0' + 52;
+    if (c == '+') return 62;
+    if (c == '/') return 63;
+    return -1;
+}
+
+bool base64Decode(const std::string& s, std::vector<BYTE>& out) {
+    if (s.empty() || s.size() % 4 != 0) return false;
+    out.clear();
+    out.reserve(s.size() / 4 * 3);
+    for (std::size_t i = 0; i < s.size(); i += 4) {
+        int v[4];
+        for (int j = 0; j < 4; ++j) {
+            char c = s[i + j];
+            if (c == '=') v[j] = -2;
+            else {
+                v[j] = base64Value(c);
+                if (v[j] < 0) return false;
+            }
+        }
+        if (v[0] < 0 || v[1] < 0) return false;
+        out.push_back(static_cast<BYTE>((v[0] << 2) | (v[1] >> 4)));
+        if (v[2] >= 0) out.push_back(static_cast<BYTE>(((v[1] & 15) << 4) | (v[2] >> 2)));
+        if (v[3] >= 0) {
+            if (v[2] < 0) return false;
+            out.push_back(static_cast<BYTE>(((v[2] & 3) << 6) | v[3]));
+        }
+    }
+    return true;
+}
+
+std::string protectSecret(const std::string& plain) {
+    if (plain.empty()) return plain;
+    DATA_BLOB in;
+    in.pbData = reinterpret_cast<BYTE*>(const_cast<char*>(plain.data()));
+    in.cbData = static_cast<DWORD>(plain.size());
+    DATA_BLOB out{};
+    if (!CryptProtectData(&in, L"KickX Launcher", nullptr, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &out)) return plain;
+    std::string encoded = base64Encode(out.pbData, out.cbData);
+    LocalFree(out.pbData);
+    return std::string(kSecretPrefix) + encoded;
+}
+
+std::string unprotectSecret(const std::string& stored) {
+    if (stored.rfind(kSecretPrefix, 0) != 0) return stored;
+    std::vector<BYTE> blob;
+    if (!base64Decode(stored.substr(std::string(kSecretPrefix).size()), blob) || blob.empty()) return stored;
+    DATA_BLOB in;
+    in.pbData = blob.data();
+    in.cbData = static_cast<DWORD>(blob.size());
+    DATA_BLOB out{};
+    if (!CryptUnprotectData(&in, nullptr, nullptr, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &out)) return stored;
+    std::string result(reinterpret_cast<char*>(out.pbData), out.cbData);
+    LocalFree(out.pbData);
+    return result;
+}
+
 }
 
 LauncherConfig loadLauncherConfig() {
@@ -97,7 +177,11 @@ LauncherConfig loadLauncherConfig() {
     std::string text;
     if (!readFile(launcherConfigPath(), text)) return cfg;
     Value root = Value::parse(text);
-    if (root.isNull()) return cfg;
+    if (root.isNull() || root.type() != Value::Type::Object) {
+        std::wstring badPath = launcherConfigPath() + L".bad";
+        MoveFileExW(launcherConfigPath().c_str(), badPath.c_str(), MOVEFILE_REPLACE_EXISTING);
+        return cfg;
+    }
     readStr(root, "javaPath", cfg.javaPath);
     readBool(root, "checkUpdatesOnStart", cfg.checkUpdatesOnStart);
     readBool(root, "showSnapshots", cfg.showSnapshots);
@@ -137,6 +221,7 @@ LauncherConfig loadLauncherConfig() {
             readStr(item, "name", account.name);
             readStr(item, "uuid", account.uuid);
             readStr(item, "accessToken", account.accessToken);
+            account.accessToken = unprotectSecret(account.accessToken);
             readStr(item, "type", account.type);
             cfg.accounts.push_back(std::move(account));
         }
@@ -161,7 +246,7 @@ void saveLauncherConfig(const LauncherConfig& cfg) {
         const Account& account = cfg.accounts[i];
         out += "\n    {\"name\": " + jsonEscape(account.name) +
                ", \"uuid\": " + jsonEscape(account.uuid) +
-               ", \"accessToken\": " + jsonEscape(account.accessToken) +
+               ", \"accessToken\": " + jsonEscape(protectSecret(account.accessToken)) +
                ", \"type\": " + jsonEscape(account.type) + "}";
     }
     out += "],\n  \"activeAccount\": " + std::to_string(cfg.activeAccount) + ",\n";

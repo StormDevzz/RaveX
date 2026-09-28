@@ -17,8 +17,8 @@ static std::string hexEncode(const unsigned char* data, std::size_t len) {
     return out;
 }
 
-static bool hashInit(BCRYPT_ALG_HANDLE& alg, BCRYPT_HASH_HANDLE& hash) {
-    if (BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0) != 0) return false;
+static bool hashInit(BCRYPT_ALG_HANDLE& alg, BCRYPT_HASH_HANDLE& hash, const wchar_t* algId = BCRYPT_SHA256_ALGORITHM) {
+    if (BCryptOpenAlgorithmProvider(&alg, algId, MS_PRIMITIVE_PROVIDER, 0) != 0) return false;
     if (BCryptCreateHash(alg, &hash, nullptr, 0, nullptr, 0, 0) != 0) {
         BCryptCloseAlgorithmProvider(alg, 0);
         return false;
@@ -26,8 +26,8 @@ static bool hashInit(BCRYPT_ALG_HANDLE& alg, BCRYPT_HASH_HANDLE& hash) {
     return true;
 }
 
-static void hashFinish(BCRYPT_ALG_HANDLE alg, BCRYPT_HASH_HANDLE hash, unsigned char digest[32]) {
-    BCryptFinishHash(hash, digest, 32, 0);
+static void hashFinish(BCRYPT_ALG_HANDLE alg, BCRYPT_HASH_HANDLE hash, unsigned char* digest, DWORD digestLen) {
+    BCryptFinishHash(hash, digest, digestLen, 0);
     BCryptDestroyHash(hash);
     BCryptCloseAlgorithmProvider(alg, 0);
 }
@@ -46,7 +46,7 @@ std::string sha256Data(const void* data, std::size_t len) {
         return std::string();
     }
     unsigned char digest[32] = {};
-    hashFinish(alg, hash, digest);
+    hashFinish(alg, hash, digest, 32);
     return hexEncode(digest, 32);
 }
 
@@ -74,8 +74,36 @@ std::string sha256File(const std::wstring& path) {
         return std::string();
     }
     unsigned char digest[32] = {};
-    hashFinish(alg, hash, digest);
+    hashFinish(alg, hash, digest, 32);
     return hexEncode(digest, 32);
+}
+
+std::string sha1File(const std::wstring& path) {
+    HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (hFile == INVALID_HANDLE_VALUE) return std::string();
+    BCRYPT_ALG_HANDLE alg = nullptr;
+    BCRYPT_HASH_HANDLE hash = nullptr;
+    if (!hashInit(alg, hash, BCRYPT_SHA1_ALGORITHM)) {
+        CloseHandle(hFile);
+        return std::string();
+    }
+    std::vector<unsigned char> buffer(65536);
+    bool ok = true;
+    DWORD read = 0;
+    while (ReadFile(hFile, buffer.data(), static_cast<DWORD>(buffer.size()), &read, nullptr) && read > 0) {
+        if (BCryptHashData(hash, buffer.data(), read, 0) != 0) {
+            ok = false;
+            break;
+        }
+    }
+    CloseHandle(hFile);
+    if (!ok) {
+        hashAbort(alg, hash);
+        return std::string();
+    }
+    unsigned char digest[20] = {};
+    hashFinish(alg, hash, digest, 20);
+    return hexEncode(digest, 20);
 }
 
 }

@@ -66,6 +66,8 @@ std::string readResponse(HINTERNET req) {
 
 std::string doRequest(const wchar_t* method, const std::string& url, const std::string& body,
                       const std::string& contentType, const std::string& bearer, std::string* error) {
+    std::string localError;
+    if (!error) error = &localError;
     UrlParts parts;
     if (!crackUrl(url, parts)) {
         *error = "Invalid URL";
@@ -167,6 +169,8 @@ std::string httpPost(const std::string& url, const std::string& body, const std:
 
 bool downloadFile(const std::string& url, const std::wstring& dest,
                   const std::function<void(const Progress&)>& progress, const bool* cancelled, std::string* error) {
+    std::string localError;
+    if (!error) error = &localError;
     for (int attempt = 0; attempt < 3; ++attempt) {
         if (attempt > 0) {
             if (cancelled && *cancelled) {

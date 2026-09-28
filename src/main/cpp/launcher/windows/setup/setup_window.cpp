@@ -269,6 +269,18 @@ bool isProtectedPath(const std::wstring& p) {
     for (auto &c : l) c = towlower(c);
     return l.find(L"\\program files") != std::wstring::npos || l.find(L"\\windows\\") != std::wstring::npos;
 }
+bool isDirEmpty(const std::wstring& dir) {
+    WIN32_FIND_DATAW fd;
+    HANDLE h = FindFirstFileW(joinPath(dir, L"*").c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE) return true;
+    bool empty = true;
+    do {
+        std::wstring n = fd.cFileName;
+        if (n != L"." && n != L"..") { empty = false; break; }
+    } while (FindNextFileW(h, &fd));
+    FindClose(h);
+    return empty;
+}
 bool validateInstallPath(const std::wstring& p, std::string& err) {
     if (p.empty()) { err = lang("setup_select_folder"); return false; }
     if (p.size() > 240) { err = "Path too long"; return false; }
@@ -280,6 +292,13 @@ bool validateInstallPath(const std::wstring& p, std::string& err) {
     if (p.size() >= 2 && p[1]==L':') root = p.substr(0,3);
     if (GetDiskFreeSpaceExW(root.c_str(), &freeBytes, &total, nullptr)) {
         if (freeBytes.QuadPart < 500 * 1024 * 1024) { err = "Not enough disk space (need 500MB)"; return false; }
+    }
+    std::wstring trimmed = p;
+    while (!trimmed.empty() && (trimmed.back() == L'\\' || trimmed.back() == L'/')) trimmed.pop_back();
+    if (trimmed.size() >= 2 && trimmed.size() <= 3 && trimmed[1] == L':') { err = "Cannot install to a drive root"; return false; }
+    if (fileExists(trimmed)) {
+        bool ourInstall = fileExists(joinPath(trimmed, L"kickx_launcher.exe")) || fileExists(joinPath(trimmed, L"KickXSetup.exe"));
+        if (!ourInstall && !isDirEmpty(trimmed)) { err = "Folder is not empty - select a new folder"; return false; }
     }
     return true;
 }
@@ -407,6 +426,7 @@ void workerSetup() {
     std::wstring srcFlags = joinPath(srcDir, L"flags");
     std::wstring dstFlags = joinPath(installDir, L"flags");
     if (fileExists(srcFlags)) { createDirs(dstFlags); std::wstring from2 = srcFlags + L"\\*\0"; std::wstring to2 = dstFlags + L"\0"; from2.push_back(L'\0'); to2.push_back(L'\0'); op.pFrom = from2.c_str(); op.pTo = to2.c_str(); SHFileOperationW(&op); }
+    writeFileAtomic(joinPath(installDir, L"kickx_manifest.txt"), "kickx_launcher.exe\nKickXSetup.exe\nicons\nflags\n");
     std::string err;
     std::string version = "1.21.11";
     auto postProgress = [](const ravex::net::Progress& p) {
@@ -1127,14 +1147,54 @@ void createUninstallRegistry(const std::wstring& installDir) {
 void removeUninstallRegistry() {
     RegDeleteKeyW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\KickX");
 }
+void deleteOwnEntry(const std::wstring& path) {
+    DWORD attr = GetFileAttributesW(path.c_str());
+    if (attr == INVALID_FILE_ATTRIBUTES) return;
+    if (attr & FILE_ATTRIBUTE_DIRECTORY) {
+        SHFILEOPSTRUCTW op{};
+        op.wFunc = FO_DELETE;
+        std::wstring from = path + L'\0';
+        from.push_back(L'\0');
+        op.pFrom = from.c_str();
+        op.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT;
+        SHFileOperationW(&op);
+    } else {
+        SetFileAttributesW(path.c_str(), FILE_ATTRIBUTE_NORMAL);
+        DeleteFileW(path.c_str());
+    }
+}
 bool performUninstall(const std::wstring& installDir) {
     std::wstring dir = installDir;
     if (dir.empty()) { PWSTR p=nullptr; if(SHGetKnownFolderPath(FOLDERID_LocalAppData,0,nullptr,&p)==S_OK){ dir=std::wstring(p)+L"\\KickX"; CoTaskMemFree(p);} else dir=kickxDir(); }
     PWSTR pDesk=nullptr; if(SHGetKnownFolderPath(FOLDERID_Desktop,0,nullptr,&pDesk)==S_OK){ DeleteFileW((std::wstring(pDesk)+L"\\KickX.lnk").c_str()); CoTaskMemFree(pDesk); }
     PWSTR pStart=nullptr; if(SHGetKnownFolderPath(FOLDERID_StartMenu,0,nullptr,&pStart)==S_OK){ DeleteFileW((std::wstring(pStart)+L"\\KickX\\KickX.lnk").c_str()); RemoveDirectoryW((std::wstring(pStart)+L"\\KickX").c_str()); CoTaskMemFree(pStart); }
-    DeleteFileW(joinPath(dir, L"kickx_launcher.exe").c_str());
-    DeleteFileW(joinPath(dir, L"KickXSetup.exe").c_str());
-    SHFILEOPSTRUCTW op{}; op.wFunc=FO_DELETE; std::wstring pFrom=dir+L'\0'; pFrom.push_back(L'\0'); op.pFrom=pFrom.c_str(); op.fFlags=FOF_NOCONFIRMATION|FOF_NOERRORUI|FOF_SILENT; SHFileOperationW(&op);
+    while (!dir.empty() && (dir.back() == L'\\' || dir.back() == L'/')) dir.pop_back();
+    bool driveRoot = dir.size() >= 2 && dir.size() <= 3 && dir[1] == L':';
+    if (!dir.empty() && !driveRoot && fileExists(dir)) {
+        std::wstring manifestPath = joinPath(dir, L"kickx_manifest.txt");
+        std::string manifestText;
+        if (readFile(manifestPath, manifestText)) {
+            std::size_t pos = 0;
+            while (pos < manifestText.size()) {
+                std::size_t nl = manifestText.find('\n', pos);
+                std::string entry = (nl == std::string::npos) ? manifestText.substr(pos) : manifestText.substr(pos, nl - pos);
+                pos = (nl == std::string::npos) ? manifestText.size() : nl + 1;
+                if (!entry.empty() && entry.back() == '\r') entry.pop_back();
+                if (entry.empty()) continue;
+                bool plain = entry.find('\\') == std::string::npos && entry.find('/') == std::string::npos && entry != "." && entry != "..";
+                if (!plain) continue;
+                deleteOwnEntry(joinPath(dir, fromUtf8(entry)));
+            }
+        } else if (fileExists(joinPath(dir, L"kickx_launcher.exe")) || fileExists(joinPath(dir, L"KickXSetup.exe"))) {
+            deleteOwnEntry(joinPath(dir, L"kickx_launcher.exe"));
+            deleteOwnEntry(joinPath(dir, L"KickXSetup.exe"));
+            deleteOwnEntry(joinPath(dir, L"icons"));
+            deleteOwnEntry(joinPath(dir, L"flags"));
+            deleteOwnEntry(joinPath(dir, L"README.md"));
+        }
+        DeleteFileW(manifestPath.c_str());
+        RemoveDirectoryW(dir.c_str());
+    }
     DeleteFileW(joinPath(kickxDir(), L".setup_done").c_str());
     removeUninstallRegistry();
     return true;
