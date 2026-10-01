@@ -160,7 +160,7 @@ bool download_minecraft_version(LauncherState *state, const std::string& version
 
     std::string cached_ver = readCachedVersion(state->kickx_dir);
     if (cached_ver != version) {
-        queue_progress(state, "Version changed — cleaning old libraries...", 0.07);
+        queue_progress(state, "Version changed - cleaning old libraries...", 0.07);
         system(("rm -rf \"" + state->kickx_dir + "/libraries\" 2>/dev/null").c_str());
         ensureDirectory(state->kickx_dir + "/libraries");
         writeCachedVersion(state->kickx_dir, version);

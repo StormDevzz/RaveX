@@ -39,7 +39,7 @@ end
 
 local function buildDetails()
     if not player.isInGame() then return "Menu" end
-    return "RaveX — " .. player.getName()
+    return "RaveX - " .. player.getName()
 end
 
 

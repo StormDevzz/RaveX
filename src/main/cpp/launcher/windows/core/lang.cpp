@@ -4047,14 +4047,14 @@ const LangEntry kEntries[] = {
     {"servers_hint", "zh", "管理此实例的服务器"},
 
     {"logs_hint", "en-us", "View instance logs - select file to preview"},
-    {"logs_hint", "ru", "Просмотр логов сборки — выберите файл для предпросмотра"},
-    {"logs_hint", "uk", "Перегляд логів збірки — виберіть файл для попереднього перегляду"},
-    {"logs_hint", "de", "Instanz-Protokolle anzeigen — Datei zum Vorschauen wählen"},
-    {"logs_hint", "fr", "Voir les journaux — sélectionnez un fichier pour prévisualiser"},
-    {"logs_hint", "es", "Ver registros de la instancia — seleccione un archivo"},
-    {"logs_hint", "pt", "Ver logs da instância — selecione um arquivo"},
-    {"logs_hint", "it", "Visualizza log dell'istanza — seleziona un file"},
-    {"logs_hint", "zh", "查看实例日志 — 选择文件预览"},
+    {"logs_hint", "ru", "Просмотр логов сборки - выберите файл для предпросмотра"},
+    {"logs_hint", "uk", "Перегляд логів збірки - виберіть файл для попереднього перегляду"},
+    {"logs_hint", "de", "Instanz-Protokolle anzeigen - Datei zum Vorschauen wählen"},
+    {"logs_hint", "fr", "Voir les journaux - sélectionnez un fichier pour prévisualiser"},
+    {"logs_hint", "es", "Ver registros de la instancia - seleccione un archivo"},
+    {"logs_hint", "pt", "Ver logs da instância - selecione um arquivo"},
+    {"logs_hint", "it", "Visualizza log dell'istanza - seleziona un file"},
+    {"logs_hint", "zh", "查看实例日志 - 选择文件预览"},
 
 };
 

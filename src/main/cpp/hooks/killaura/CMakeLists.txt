@@ -10,7 +10,7 @@ if(JNI_FOUND)
     target_include_directories(ravex_killaura PRIVATE ${JNI_INCLUDE_DIRS})
     target_link_libraries(ravex_killaura PRIVATE ${JNI_LIBRARIES})
 else()
-    message(FATAL_ERROR "JNI not found — cannot build ravex_killaura")
+    message(FATAL_ERROR "JNI not found - cannot build ravex_killaura")
 endif()
 
 target_include_directories(ravex_killaura PRIVATE

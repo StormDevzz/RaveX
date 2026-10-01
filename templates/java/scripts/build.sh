@@ -8,7 +8,7 @@ BUILD_DIR="$TEMPLATES_DIR/build"
 OUTPUT_JAR="$BUILD_DIR/MainAddon.jar"
 
 echo "════════════════════════════════════════════"
-echo " RaveX Java Addon — Сборка под Linux"
+echo " RaveX Java Addon - Сборка под Linux"
 echo "════════════════════════════════════════════"
 echo ""
 

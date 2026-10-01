@@ -10,7 +10,7 @@ if(JNI_FOUND)
     target_include_directories(ravex_bedbomb PRIVATE ${JNI_INCLUDE_DIRS})
     target_link_libraries(ravex_bedbomb PRIVATE ${JNI_LIBRARIES})
 else()
-    message(FATAL_ERROR "JNI not found — cannot build ravex_bedbomb")
+    message(FATAL_ERROR "JNI not found - cannot build ravex_bedbomb")
 endif()
 
 target_include_directories(ravex_bedbomb PRIVATE

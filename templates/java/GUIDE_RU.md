@@ -1,4 +1,4 @@
-# RaveX Java Аддоны — Полное руководство
+# RaveX Java Аддоны - Полное руководство
 
 > Версия: 1.0 | Платформы: Windows 10/11, Linux | Язык: Java 17+
 
@@ -8,9 +8,9 @@
 
 1. [Что такое Java-аддон?](#1-что-такое-java-аддон)
 2. [Структура проекта](#2-структура-проекта)
-3. [MainAddon.java — главный класс](#3-mainaddonjava--главный-класс)
-4. [DemoModule.java — модуль](#4-demomodulejava--модуль)
-5. [MANIFEST.MF — манифест JAR](#5-manifestmf--манифест-jar)
+3. [MainAddon.java - главный класс](#3-mainaddonjava---главный-класс)
+4. [DemoModule.java - модуль](#4-demomodulejava---модуль)
+5. [MANIFEST.MF - манифест JAR](#5-manifestmf---манифест-jar)
 6. [Кроссплатформенное программирование](#6-кроссплатформенное-программирование)
 7. [Интеграция с C++ через JNI](#7-интеграция-с-c-через-jni)
 8. [Сборка и установка](#8-сборка-и-установка)
@@ -21,7 +21,7 @@
 
 ## 1. Что такое Java-аддон?
 
-**Java-аддон** — это JAR-файл, который RaveX загружает в рантайме через кастомный ClassLoader.
+**Java-аддон** - это JAR-файл, который RaveX загружает в рантайме через кастомный ClassLoader.
 
 ### Зачем Java, если есть C++?
 
@@ -79,7 +79,7 @@ templates/java/
 
 ---
 
-## 3. MainAddon.java — главный класс
+## 3. MainAddon.java - главный класс
 
 ### Обязательный минимум
 
@@ -157,7 +157,7 @@ private void loadNativeLibrary() {
 
 ---
 
-## 4. DemoModule.java — модуль
+## 4. DemoModule.java - модуль
 
 ### Базовая структура
 
@@ -236,7 +236,7 @@ public void onTick() {
 
 ---
 
-## 5. MANIFEST.MF — манифест JAR
+## 5. MANIFEST.MF - манифест JAR
 
 ```mf
 Addon-Name: MainAddon
@@ -246,7 +246,7 @@ Addon-Main-Class: ravex.addon.template.MainAddon
 ```
 
 **Важно:**
-- `Addon-Main-Class` — полное имя класса, реализующего `Addon`
+- `Addon-Main-Class` - полное имя класса, реализующего `Addon`
 - Файл должен лежать в `META-INF/MANIFEST.MF` внутри JAR
 - Сборщик (`jar cfm`) сам добавляет стандартные поля `Manifest-Version` и `Created-By`
 
@@ -283,7 +283,7 @@ boolean linux = os.contains("nix") || os.contains("nux");
 
 ## 7. Интеграция с C++ через JNI
 
-Мощь RaveX — в связке Java + C++. Java-аддон может загрузить нативную библиотеку и вызывать её функции.
+Мощь RaveX - в связке Java + C++. Java-аддон может загрузить нативную библиотеку и вызывать её функции.
 
 ### Шаг 1: C++ пишет native-функции
 
@@ -430,7 +430,7 @@ jar cfm ../MainAddon.jar META-INF/MANIFEST.MF .
 
 ### Параметры модуля
 
-Настройки — это `@Parameter` на примитивах (`boolean`, `double`, `int`, `String`). Обёртки из `ravex.parameter` создаются автоматически.
+Настройки - это `@Parameter` на примитивах (`boolean`, `double`, `int`, `String`). Обёртки из `ravex.parameter` создаются автоматически.
 
 ---
 
@@ -438,7 +438,7 @@ jar cfm ../MainAddon.jar META-INF/MANIFEST.MF .
 
 ### ❓ Мой аддон не загружается
 
-1. Проверь `MANIFEST.MF` — `Addon-Main-Class` должен совпадать с реальным классом
+1. Проверь `MANIFEST.MF` - `Addon-Main-Class` должен совпадать с реальным классом
 2. Проверь, что класс реализует `ravex.addon.Addon` и имеет метод `getInfo`
 3. Проверь консоль Minecraft (`.minecraft/logs/latest.log`)
 4. Проверь подпись: рядом с JAR должен лежать файл `<имя>.jar.ravex-sig`
@@ -468,8 +468,8 @@ Java-аддоны **не поддерживают** hot-reload. Нужно:
 
 ## Дальнейшие шаги
 
-1. **Собери пример** — `cd scripts && build.bat` (Windows) или `./build.sh` (Linux)
-2. **Изучи `MainAddon.java`** — пойми жизненный цикл
-3. **Добавь свои модули** — по образу `DemoModule.java`
-4. **Интегрируй с C++** — загрузи нативную библиотеку через `System.load()`
-5. **Посмотри примеры C++** — в `templates/cpp/` для продвинутых задач
+1. **Собери пример** - `cd scripts && build.bat` (Windows) или `./build.sh` (Linux)
+2. **Изучи `MainAddon.java`** - пойми жизненный цикл
+3. **Добавь свои модули** - по образу `DemoModule.java`
+4. **Интегрируй с C++** - загрузи нативную библиотеку через `System.load()`
+5. **Посмотри примеры C++** - в `templates/cpp/` для продвинутых задач

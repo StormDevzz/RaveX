@@ -10,7 +10,7 @@ if(JNI_FOUND)
     target_include_directories(ravex_nametags PRIVATE ${JNI_INCLUDE_DIRS})
     target_link_libraries(ravex_nametags PRIVATE ${JNI_LIBRARIES})
 else()
-    message(FATAL_ERROR "JNI not found — cannot build ravex_nametags")
+    message(FATAL_ERROR "JNI not found - cannot build ravex_nametags")
 endif()
 
 target_include_directories(ravex_nametags PRIVATE

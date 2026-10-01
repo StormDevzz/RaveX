@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 echo ════════════════════════════════════════════
-echo  RaveX C++ Addon — Сборка под Windows
+echo  RaveX C++ Addon - Сборка под Windows
 echo ════════════════════════════════════════════
 echo.
 

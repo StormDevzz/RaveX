@@ -9,7 +9,7 @@
 SkinWindow::SkinWindow(const std::string& skinPath, QWidget* parent)
     : QMainWindow(parent)
 {
-    setWindowTitle("Skintool — Minecraft Skin Viewer");
+    setWindowTitle("Skintool - Minecraft Skin Viewer");
     resize(1000, 750);
 
     auto* central = new QWidget(this);

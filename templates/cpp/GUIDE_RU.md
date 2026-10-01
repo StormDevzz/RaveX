@@ -1,4 +1,4 @@
-# RaveX Нативные C++ Аддоны — Полное руководство
+# RaveX Нативные C++ Аддоны - Полное руководство
 
 > Версия: 1.0 | Платформы: Windows 10/11, Linux | Язык: C++23
 
@@ -21,7 +21,7 @@
 
 ## 1. Что такое нативный аддон?
 
-**Нативный аддон** — это динамическая библиотека (`.dll` на Windows, `.so` на Linux), которую RaveX загружает в рантайме через `LoadLibrary` / `dlopen`.
+**Нативный аддон** - это динамическая библиотека (`.dll` на Windows, `.so` на Linux), которую RaveX загружает в рантайме через `LoadLibrary` / `dlopen`.
 
 ### Зачем нужен C++, если есть Java?
 
@@ -75,7 +75,7 @@ templates/cpp/
 
 ### Принцип: каждый пример самодостаточен
 
-Каждый каталог `01_minimal`, `02_features` и т.д. — это **полноценный CMake-проект**:
+Каждый каталог `01_minimal`, `02_features` и т.д. - это **полноценный CMake-проект**:
 
 ```bash
 cd 02_features
@@ -140,16 +140,16 @@ extern "C" {
 2. Вызывает `LoadLibrary` / `dlopen`
 3. Ищет символ `createAddon` через `GetProcAddress` / `dlsym`
 4. Создаёт экземпляр аддона
-5. Вызывает `onLoad(ctx)` — аддон готов к работе
+5. Вызывает `onLoad(ctx)` - аддон готов к работе
 6. При выгрузке: вызывает `onUnload()`, потом `destroyAddon()`
 
 ### Ключевые моменты
 
-- **ADDON_API** — макрос из `platform.hpp`:
+- **ADDON_API** - макрос из `platform.hpp`:
   - Windows: `__declspec(dllexport)`
   - Linux: `__attribute__((visibility("default")))`
 - Без этого макроса Linux не экспортирует символы (из-за `-fvisibility=hidden`)
-- Названия `createAddon` и `destroyAddon` **обязательны** — RaveX ищет именно их
+- Названия `createAddon` и `destroyAddon` **обязательны** - RaveX ищет именно их
 
 ---
 
@@ -187,7 +187,7 @@ target_include_directories(FeatureAddon PRIVATE
 
 ### Разбор файлов
 
-#### `main.cpp` — логика аддона
+#### `main.cpp` - логика аддона
 
 Файл разделён на 3 логические части:
 
@@ -239,7 +239,7 @@ Java_ravex_addon_feature_FeatureAddon_nativeLog(JNIEnv* env, jclass, jstring msg
 }
 ```
 
-#### `platform.hpp` — кроссплатформенные макросы
+#### `platform.hpp` - кроссплатформенные макросы
 
 Единый заголовок, который скрывает различия платформ. Примеры:
 
@@ -251,9 +251,9 @@ ADDON_LOAD_LIB("mylib.dll")   // LoadLibraryA() на Win, dlopen() на Linux
 ADDON_GET_SYM(handle, "fn")   // GetProcAddress() на Win, dlsym() на Linux
 ```
 
-Полный список макросов — в файле `02_features/platform.hpp`.
+Полный список макросов - в файле `02_features/platform.hpp`.
 
-#### `JniBridge.hpp/cpp` — мост между Java и C++
+#### `JniBridge.hpp/cpp` - мост между Java и C++
 
 ```cpp
 // В Java:
@@ -294,7 +294,7 @@ Java_ravex_addon_jni_JniBridge_nativeGetPlatformInfo(JNIEnv* env, jclass) {
 |--------|--------|
 | Тип окна | Layered Window (`WS_EX_LAYERED`) |
 | Прозрачность | `SetLayeredWindowAttributes` + `ULW_ALPHA` |
-| Кликабельность | `WS_EX_TRANSPARENT` — пропускает клики мыши |
+| Кликабельность | `WS_EX_TRANSPARENT` - пропускает клики мыши |
 | Поверх всего | `HWND_TOPMOST` |
 | Рендеринг | GDI double-buffering в `m_memDc` |
 | Акрил/блур | `DwmEnableBlurBehindWindow` (Win10+) |
@@ -307,7 +307,7 @@ beginFrame()
 
 endFrame()
   → Вызов renderCallback(custom rendering)
-  → UpdateLayeredWindow() — альфа-блендинг на экран
+  → UpdateLayeredWindow() - альфа-блендинг на экран
 ```
 
 ### Linux: X11 Overlay
@@ -332,7 +332,7 @@ XFlush(d);
 
 ### Запуск оверлея из аддона
 
-Оверлей работает в **отдельном потоке** — иначе он заблокирует основной поток аддона:
+Оверлей работает в **отдельном потоке** - иначе он заблокирует основной поток аддона:
 
 ```cpp
 void onLoad(AddonContext* ctx) override {
@@ -400,7 +400,7 @@ manager.rollback();                   // 4. Откат (если нужно)
 | Semver | `Version::compare` | `Version::compare` |
 | Скачивание | `WinHttpReadData` в цикле | `SSL_read` / `recv` |
 
-Библиотека **не требует внешних зависимостей** на Windows (WinHTTP — часть ОС).
+Библиотека **не требует внешних зависимостей** на Windows (WinHTTP - часть ОС).
 На Linux требует `libssl-dev` (OpenSSL).
 
 ---
@@ -515,7 +515,7 @@ void fireEvent(const char* data) {
 }
 ```
 
-### JniBridge.hpp — готовые хелперы
+### JniBridge.hpp - готовые хелперы
 
 В `02_features/JniBridge.hpp` уже есть всё необходимое:
 
@@ -607,7 +607,7 @@ cmake --build . --config Release
 | `AddonMeta.h` | `class AddonMeta` | Метаданные аддона |
 | `SystemUtils.h` | `getMinecraftDir`, `getAddonsDir` | Файловые утилиты |
 
-### platform.hpp — кроссплатформенные макросы
+### platform.hpp - кроссплатформенные макросы
 
 | Макрос | Windows | Linux |
 |--------|---------|-------|
@@ -639,8 +639,8 @@ cmake --build . --config Release
 
 ## Следующие шаги
 
-1. **Начни с `01_minimal`** — пойми минимальную структуру
-2. **Изучи `02_features`** — посмотри на platform.hpp и JNI
-3. **Поэкспериментируй с `03_overlay`** — если нужен рендеринг
-4. **Используй `04_github`** — если нужно авто-обновление
-5. **Читай `src/main/cpp/addon/include/`** — полный API для твоего аддона
+1. **Начни с `01_minimal`** - пойми минимальную структуру
+2. **Изучи `02_features`** - посмотри на platform.hpp и JNI
+3. **Поэкспериментируй с `03_overlay`** - если нужен рендеринг
+4. **Используй `04_github`** - если нужно авто-обновление
+5. **Читай `src/main/cpp/addon/include/`** - полный API для твоего аддона

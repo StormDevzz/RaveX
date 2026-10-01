@@ -15,7 +15,7 @@ if(JNI_FOUND)
     target_include_directories(ravex_ecfarmer PRIVATE ${JNI_INCLUDE_DIRS})
     target_link_libraries(ravex_ecfarmer PRIVATE ${JNI_LIBRARIES})
 else()
-    message(FATAL_ERROR "JNI not found — cannot build ravex_ecfarmer")
+    message(FATAL_ERROR "JNI not found - cannot build ravex_ecfarmer")
 endif()
 
 target_include_directories(ravex_ecfarmer PRIVATE

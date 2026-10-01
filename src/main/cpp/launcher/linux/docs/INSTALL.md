@@ -41,16 +41,16 @@ cd src/main/cpp/launcher/linux
 ```
 
 Лаунчер создаёт:
-- `~/.kickxxx/` — кеш, библиотеки, ассеты, версии Minecraft
-- `~/.ravex/` — файлы клиента, нативы
+- `~/.kickxxx/` - кеш, библиотеки, ассеты, версии Minecraft
+- `~/.ravex/` - файлы клиента, нативы
 
 ## Структура папок
 
 ```
 ~/.kickxxx/
-├── versions/         — версии Minecraft
-├── libraries/        — библиотеки
-├── assets/           — ассеты
-├── instances/        — игровые инстанции
-└── background.jpg    — фоновое изображение
+├── versions/         - версии Minecraft
+├── libraries/        - библиотеки
+├── assets/           - ассеты
+├── instances/        - игровые инстанции
+└── background.jpg    - фоновое изображение
 ```

@@ -648,7 +648,7 @@ jobs:
             COMPARE_URL="https://github.com/$REPO"
           fi
           TEXT=$(printf '%s\n%s\n\n%s\n\n%s\n\n%s\n%s' \
-            "[$REPO] Push to $BRANCH — FAILED" \
+            "[$REPO] Push to $BRANCH - FAILED" \
             "Author: $PUSHER" \
             "Message: $COMMIT_MSG" \
             "Build: FAILED (jobs:$FAILED_JOBS)" \
@@ -688,7 +688,7 @@ jobs:
           else COMMIT_LIST=$(echo "$COMMITS_JSON" | jq -r '.[] | "- [`" + .id[0:7] + "`](" + .url + ") " + (.message | split("\n")[0]) + " - **" + .author.name + "**"' 2>/dev/null || echo "No new commits."); COMMIT_COUNT=$(echo "$COMMITS_JSON" | jq 'length'); fi
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           RUN_URL="https://github.com/$REPO/actions/runs/$RUN_ID"
-          PAYLOAD=$(jq -n --arg title "Push to $BRANCH FAILED ($COMMIT_COUNT Commits) — $FAILED_JOBS" --arg url "$COMPARE_URL" --arg desc "$COMMIT_LIST" --arg repo "$REPO" --arg pusher "$PUSHER" --arg pusher_url "$PUSHER_URL" --arg pusher_icon "$PUSHER_ICON" --arg status "FAILED (jobs:$FAILED_JOBS)" --arg artifact "Build failed, no artifact" --arg release "SKIPPED (Build Failed)" --arg run_url "$RUN_URL" --arg timestamp "$TIMESTAMP" --argjson color 16724787 '{embeds: [{title: $title, url: $url, description: $desc, color: $color, fields: [{name: "Repository", value: $repo, inline: true}, {name: "Pusher", value: ("[" + $pusher + "](" + $pusher_url + ")"), inline: true}, {name: "Compilation Status", value: $status, inline: true}, {name: "Release Management", value: $release, inline: false}, {name: "Build Artifact", value: $artifact, inline: false}, {name: "GitHub Actions Run Logs", value: ("[View Workflow Run Logs](" + $run_url + ")"), inline: false}], author: {name: $pusher, url: $pusher_url, icon_url: $pusher_icon}, footer: {text: "RaveX Logs & Build CI"}, timestamp: $timestamp}]}')
+          PAYLOAD=$(jq -n --arg title "Push to $BRANCH FAILED ($COMMIT_COUNT Commits) - $FAILED_JOBS" --arg url "$COMPARE_URL" --arg desc "$COMMIT_LIST" --arg repo "$REPO" --arg pusher "$PUSHER" --arg pusher_url "$PUSHER_URL" --arg pusher_icon "$PUSHER_ICON" --arg status "FAILED (jobs:$FAILED_JOBS)" --arg artifact "Build failed, no artifact" --arg release "SKIPPED (Build Failed)" --arg run_url "$RUN_URL" --arg timestamp "$TIMESTAMP" --argjson color 16724787 '{embeds: [{title: $title, url: $url, description: $desc, color: $color, fields: [{name: "Repository", value: $repo, inline: true}, {name: "Pusher", value: ("[" + $pusher + "](" + $pusher_url + ")"), inline: true}, {name: "Compilation Status", value: $status, inline: true}, {name: "Release Management", value: $release, inline: false}, {name: "Build Artifact", value: $artifact, inline: false}, {name: "GitHub Actions Run Logs", value: ("[View Workflow Run Logs](" + $run_url + ")"), inline: false}], author: {name: $pusher, url: $pusher_url, icon_url: $pusher_icon}, footer: {text: "RaveX Logs & Build CI"}, timestamp: $timestamp}]}')
           echo "Sending Discord fallback..."
           curl -s -w "\nHTTP_STATUS:%{http_code}" -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL" | tail -n 5
 

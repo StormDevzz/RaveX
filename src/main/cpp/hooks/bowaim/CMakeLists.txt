@@ -10,7 +10,7 @@ if(JNI_FOUND)
     target_include_directories(ravex_bowaim PRIVATE ${JNI_INCLUDE_DIRS})
     target_link_libraries(ravex_bowaim PRIVATE ${JNI_LIBRARIES})
 else()
-    message(FATAL_ERROR "JNI not found — cannot build ravex_bowaim")
+    message(FATAL_ERROR "JNI not found - cannot build ravex_bowaim")
 endif()
 
 target_include_directories(ravex_bowaim PRIVATE

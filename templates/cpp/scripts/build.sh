@@ -6,7 +6,7 @@ TEMPLATES_DIR="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$TEMPLATES_DIR/build"
 
 echo "════════════════════════════════════════════"
-echo " RaveX C++ Addon — Сборка под Linux"
+echo " RaveX C++ Addon - Сборка под Linux"
 echo "════════════════════════════════════════════"
 echo ""
 

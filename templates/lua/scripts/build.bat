@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 echo ============================================
-echo  RaveX Lua Addon — Deploy
+echo  RaveX Lua Addon - Deploy
 echo ============================================
 echo.
 

@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
-# RU: Библиотека ravex_lua — поддержка Lua-аддонов в RaveX.
+# RU: Библиотека ravex_lua - поддержка Lua-аддонов в RaveX.
 #     Собирается как статическая библиотека. Link в ravex_jni.
-# EN: ravex_lua library — Lua addon support for RaveX.
+# EN: ravex_lua library - Lua addon support for RaveX.
 #     Built as a static library. Link into ravex_jni.
 
 # RU: Ищем Lua (LuaJIT предпочтительнее, fallback на Lua 5.1+).
@@ -20,12 +20,12 @@ else()
     endif()
 endif()
 
-# RU: Если Lua не найден — не крашимся, просто пропускаем.
+# RU: Если Lua не найден - не крашимся, просто пропускаем.
 #     RaveX будет работать без Lua-аддонов.
-# EN: If Lua is not found — don't crash, just skip.
+# EN: If Lua is not found - don't crash, just skip.
 #     RaveX will work without Lua addons.
 if(NOT LUA_FOUND)
-    message(WARNING "Lua not found — Lua addon support will be disabled. "
+    message(WARNING "Lua not found - Lua addon support will be disabled. "
                     "Install liblua5.1-dev or LuaJIT to enable Lua addons.")
     return()
 endif()

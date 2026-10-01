@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 echo ════════════════════════════════════════════
-echo  RaveX Java Addon — Сборка под Windows
+echo  RaveX Java Addon - Сборка под Windows
 echo ════════════════════════════════════════════
 echo.
 
@@ -22,7 +22,7 @@ if not exist "!RAVEX_JAR!" (
     popd
 )
 
-REM Если JAR всё ещё не найден — ищем в build/libs
+REM Если JAR всё ещё не найден - ищем в build/libs
 if not exist "!RAVEX_JAR!" (
     for %%j in ("%TEMPLATES_DIR%\..\..\build\libs\*.jar") do (
         set "RAVEX_JAR=%%j"

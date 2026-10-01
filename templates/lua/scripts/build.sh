@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATES_DIR="$(dirname "$SCRIPT_DIR")"
 
 echo "============================================"
-echo " RaveX Lua Addon — Deploy"
+echo " RaveX Lua Addon - Deploy"
 echo "============================================"
 echo ""
 

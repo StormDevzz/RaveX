@@ -10,7 +10,7 @@ if(JNI_FOUND)
     target_include_directories(ravex_trap PRIVATE ${JNI_INCLUDE_DIRS})
     target_link_libraries(ravex_trap PRIVATE ${JNI_LIBRARIES})
 else()
-    message(FATAL_ERROR "JNI not found — cannot build ravex_trap")
+    message(FATAL_ERROR "JNI not found - cannot build ravex_trap")
 endif()
 
 target_include_directories(ravex_trap PRIVATE

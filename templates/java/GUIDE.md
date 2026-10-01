@@ -1,4 +1,4 @@
-# RaveX Java Addons — Complete Guide
+# RaveX Java Addons - Complete Guide
 
 > Version: 1.0 | Platforms: Windows 10/11, Linux | Language: Java 17+
 
@@ -8,9 +8,9 @@
 
 1. [What is a Java Addon?](#1-what-is-a-java-addon)
 2. [Project Structure](#2-project-structure)
-3. [MainAddon.java — Main Class](#3-mainaddonjava--main-class)
-4. [DemoModule.java — Module](#4-demomodulejava--module)
-5. [MANIFEST.MF — JAR Manifest](#5-manifestmf--jar-manifest)
+3. [MainAddon.java - Main Class](#3-mainaddonjava---main-class)
+4. [DemoModule.java - Module](#4-demomodulejava---module)
+5. [MANIFEST.MF - JAR Manifest](#5-manifestmf---jar-manifest)
 6. [Cross-Platform Programming](#6-cross-platform-programming)
 7. [C++ Integration via JNI](#7-c-integration-via-jni)
 8. [Building & Installing](#8-building--installing)
@@ -79,7 +79,7 @@ templates/java/
 
 ---
 
-## 3. MainAddon.java — Main Class
+## 3. MainAddon.java - Main Class
 
 ### Minimum required
 
@@ -134,7 +134,7 @@ System.load(nativeDir + getPathSep()
 
 ---
 
-## 4. DemoModule.java — Module
+## 4. DemoModule.java - Module
 
 ### Basic structure
 
@@ -199,7 +199,7 @@ public void onTick() {
 
 ---
 
-## 5. MANIFEST.MF — JAR Manifest
+## 5. MANIFEST.MF - JAR Manifest
 
 ```mf
 Addon-Name: MainAddon
@@ -209,7 +209,7 @@ Addon-Main-Class: ravex.addon.template.MainAddon
 ```
 
 **Important:**
-- `Addon-Main-Class` — fully qualified class name implementing `Addon`
+- `Addon-Main-Class` - fully qualified class name implementing `Addon`
 - File must be at `META-INF/MANIFEST.MF` inside the JAR
 
 ---
@@ -360,7 +360,7 @@ Settings are `@Parameter` on primitives (`boolean`, `double`, `int`, `String`). 
 
 ### ❓ My addon doesn't load
 
-1. Check `MANIFEST.MF` — `Addon-Main-Class` must match the real class
+1. Check `MANIFEST.MF` - `Addon-Main-Class` must match the real class
 2. Check that the class implements `ravex.addon.Addon` with `getInfo`
 3. Check Minecraft console (`.minecraft/logs/latest.log`)
 4. Check signature: `<name>.jar.ravex-sig` must sit next to the JAR
@@ -373,8 +373,8 @@ See `templates/cpp/02_features/` for the JNI bridge setup.
 
 ## Next Steps
 
-1. **Build the example** — `cd scripts && build.bat` or `./build.sh`
-2. **Study `MainAddon.java`** — understand the lifecycle
-3. **Add your own modules** — follow `DemoModule.java`
-4. **Integrate with C++** — load native libs via `System.load()`
-5. **See C++ examples** — in `templates/cpp/` for advanced features
+1. **Build the example** - `cd scripts && build.bat` or `./build.sh`
+2. **Study `MainAddon.java`** - understand the lifecycle
+3. **Add your own modules** - follow `DemoModule.java`
+4. **Integrate with C++** - load native libs via `System.load()`
+5. **See C++ examples** - in `templates/cpp/` for advanced features

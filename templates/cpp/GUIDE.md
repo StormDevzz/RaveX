@@ -1,4 +1,4 @@
-# RaveX Native C++ Addons — Complete Guide
+# RaveX Native C++ Addons - Complete Guide
 
 > Version: 1.0 | Platforms: Windows 10/11, Linux | Language: C++23
 
@@ -140,7 +140,7 @@ extern "C" {
 2. Calls `LoadLibrary` / `dlopen`
 3. Looks up `createAddon` via `GetProcAddress` / `dlsym`
 4. Creates the addon instance
-5. Calls `onLoad(ctx)` — addon is ready
+5. Calls `onLoad(ctx)` - addon is ready
 6. On unload: calls `onUnload()`, then `destroyAddon()`
 
 ### Key points
@@ -176,7 +176,7 @@ target_include_directories(FeatureAddon PRIVATE
 
 ### File breakdown
 
-#### `main.cpp` — addon logic in 3 parts
+#### `main.cpp` - addon logic in 3 parts
 
 **Part 1: Platform utilities**
 ```cpp
@@ -222,7 +222,7 @@ Java_ravex_addon_feature_FeatureAddon_nativeLog(JNIEnv* env, jclass, jstring msg
 }
 ```
 
-#### `platform.hpp` — cross-platform macros
+#### `platform.hpp` - cross-platform macros
 
 A single header that hides platform differences:
 
@@ -235,7 +235,7 @@ ADDON_LOAD_LIB("mylib.dll")   // LoadLibraryA on Win, dlopen on Linux
 
 See `02_features/platform.hpp` for the complete list.
 
-#### `JniBridge.hpp/cpp` — Java ↔ C++ bridge
+#### `JniBridge.hpp/cpp` - Java ↔ C++ bridge
 
 ```cpp
 // In Java:
@@ -274,7 +274,7 @@ beginFrame()
 
 endFrame()
   → Call renderCallback
-  → UpdateLayeredWindow() — alpha blend to screen
+  → UpdateLayeredWindow() - alpha blend to screen
 ```
 
 ### Linux: X11 Overlay
@@ -553,8 +553,8 @@ Scripts do this automatically with `--install`.
 
 ## Next Steps
 
-1. **Start with `01_minimal`** — understand the minimal structure
-2. **Study `02_features`** — explore platform.hpp and JNI
-3. **Experiment with `03_overlay`** — if you need rendering
-4. **Use `04_github`** — if you need auto-updates
-5. **Read `src/main/cpp/addon/include/`** — full API for your addon
+1. **Start with `01_minimal`** - understand the minimal structure
+2. **Study `02_features`** - explore platform.hpp and JNI
+3. **Experiment with `03_overlay`** - if you need rendering
+4. **Use `04_github`** - if you need auto-updates
+5. **Read `src/main/cpp/addon/include/`** - full API for your addon

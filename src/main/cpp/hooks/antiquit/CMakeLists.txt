@@ -10,7 +10,7 @@ if(JNI_FOUND)
     target_include_directories(ravex_antiquit PRIVATE ${JNI_INCLUDE_DIRS})
     target_link_libraries(ravex_antiquit PRIVATE ${JNI_LIBRARIES})
 else()
-    message(FATAL_ERROR "JNI not found — cannot build ravex_antiquit")
+    message(FATAL_ERROR "JNI not found - cannot build ravex_antiquit")
 endif()
 
 target_include_directories(ravex_antiquit PRIVATE

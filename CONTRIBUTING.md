@@ -45,7 +45,7 @@ src/
 - **No comments in code.** Code must be self-documenting. No `//`, `/* */`, `#`, or docstrings. This rule is absolute.
 - Follow existing patterns - look at neighboring files before writing new ones
 - Keybindings are set only via **middle-click** on the module button in the ClickGUI
-- **Prefer utility/wrapper classes over direct Minecraft imports.** The project provides extensive ready-to-use utilities in `ravex.utility.*` and wrappers in `ravex.mcwrapper.*`. These handle null safety, consistency, and reduce boilerplate. Use `PlayerUtility.getPlayer()` instead of `Minecraft.getInstance().player`, `NetworkUtility.sendPacket()` instead of `Minecraft.getInstance().getConnection().send()`, `MinecraftWrapper` instead of `Minecraft.getInstance()`, and so on. Before writing raw Minecraft API calls, check if a utility already exists — common operations (movement, rotation, rendering, inventory, sound, chat, entities) are already wrapped. This keeps the codebase maintainable, avoids repeated null checks, and centralizes version-specific changes.
+- **Prefer utility/wrapper classes over direct Minecraft imports.** The project provides extensive ready-to-use utilities in `ravex.utility.*` and wrappers in `ravex.mcwrapper.*`. These handle null safety, consistency, and reduce boilerplate. Use `PlayerUtility.getPlayer()` instead of `Minecraft.getInstance().player`, `NetworkUtility.sendPacket()` instead of `Minecraft.getInstance().getConnection().send()`, `MinecraftWrapper` instead of `Minecraft.getInstance()`, and so on. Before writing raw Minecraft API calls, check if a utility already exists - common operations (movement, rotation, rendering, inventory, sound, chat, entities) are already wrapped. This keeps the codebase maintainable, avoids repeated null checks, and centralizes version-specific changes.
 - **Declare settings with `@Parameter` annotations on primitive fields.** Do NOT create `BooleanParameter`, `ModeParameter`, `NumberParameter`, `ColorParameter` objects directly. Instead, annotate primitive fields with `@Parameter(name = "...", ...)`. Supported field types: `boolean`, `String`, `double`, `int`. The annotation supports `min`, `max`, `step` (for numeric), `modes` (for String → ModeParameter), `color` (for int → ColorParameter), and `options` (for `List<String>` → MultiSelectParameter). The `Module` base class automatically creates the appropriate `Parameter<?>` wrapper objects at runtime. Example:
   ```java
   @Parameter(name = "Speed", min = 0.1, max = 10.0, step = 0.5)
@@ -57,7 +57,7 @@ src/
   @Parameter(name = "Color", color = true)
   public int color = 0xFF00FF00;
   ```
-  For classes implementing `ModuleAccess` (which do not extend `Module`), the same `@Parameter` annotation system works — just ensure the annotation is present and the field is accessible. The ClickGUI and settings panels discover parameters via the `getParameters()` method inherited from `Module` or through reflection-based scanning.
+  For classes implementing `ModuleAccess` (which do not extend `Module`), the same `@Parameter` annotation system works - just ensure the annotation is present and the field is accessible. The ClickGUI and settings panels discover parameters via the `getParameters()` method inherited from `Module` or through reflection-based scanning.
 
 ### C++ (Native Code)
 
@@ -131,7 +131,7 @@ For changes to native code:
 1. Ensure compatibility across supported platforms (Linux x86_64 primary)
 2. JNI functions must follow the `Java_ravex_*` naming convention
 3. Test native builds separately before integrating
-4. **Always verify native compilation** — run the CMake build in `src/main/cpp/` before merging. Native compilation errors are not caught by `./gradlew build` alone.
+4. **Always verify native compilation** - run the CMake build in `src/main/cpp/` before merging. Native compilation errors are not caught by `./gradlew build` alone.
 
 ## Reporting Issues
 
@@ -143,9 +143,9 @@ For changes to native code:
 
 When using AI coding assistants (such as ChatGPT, Claude, Copilot, etc.) to contribute to RaveX:
 
-- **Feed the rules first.** Provide the AI with the relevant sections of this CONTRIBUTING.md — especially the Java Code Style rules about using utility/wrapper classes over direct Minecraft imports.
+- **Feed the rules first.** Provide the AI with the relevant sections of this CONTRIBUTING.md - especially the Java Code Style rules about using utility/wrapper classes over direct Minecraft imports.
 - **Verify utility usage.** AI models often default to `Minecraft.getInstance().player` and other raw API calls. Remind the AI to use `PlayerUtility.getPlayer()`, `NetworkUtility.sendPacket()`, `MinecraftWrapper` etc. Check the finished code for unnecessary direct Minecraft imports.
-- **Stick to existing patterns.** Tell the AI to look at neighboring files for reference before generating new code — modules, managers, mixins all follow specific templates.
+- **Stick to existing patterns.** Tell the AI to look at neighboring files for reference before generating new code - modules, managers, mixins all follow specific templates.
 - **No comments rule applies.** AI models love adding `//` comments. Strip them out. Code must be self-documenting.
 - **Review everything.** AI-generated code still needs human review. Build the project (`./gradlew build`) before committing.
 

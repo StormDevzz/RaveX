@@ -1221,7 +1221,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             data->notesTitleIcon = notesIco;
             HWND lblNotesTitle = CreateWindowExW(0, L"STATIC", trI("notes_label","Notes").c_str(), WS_CHILD | WS_VISIBLE, 50, 92, 300, 22, hwnd, nullptr, inst, nullptr);
             data->notesTitle = lblNotesTitle;
-            HWND lblNotesHint = CreateWindowExW(0, L"STATIC", trI("notes_hint","Personal notes for this instance — saved with it").c_str(), WS_CHILD | WS_VISIBLE, 50, 112, 500, 16, hwnd, reinterpret_cast<HMENU>(IDC_NOTES_HINT), inst, nullptr);
+            HWND lblNotesHint = CreateWindowExW(0, L"STATIC", trI("notes_hint","Personal notes for this instance - saved with it").c_str(), WS_CHILD | WS_VISIBLE, 50, 112, 500, 16, hwnd, reinterpret_cast<HMENU>(IDC_NOTES_HINT), inst, nullptr);
             data->notesHint = lblNotesHint;
             HWND notesFrame = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 24, 134, 820, 470, hwnd, reinterpret_cast<HMENU>(IDC_NOTES_FRAME), inst, nullptr);
             data->notesFrame = notesFrame;

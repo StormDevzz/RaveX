@@ -33,7 +33,7 @@ tr:hover{background:#313244}
 .footer{color:#6c7086;text-align:center;margin-top:30px}
 </style>
 </head><body>
-<h1>mcprotvis — Minecraft Protocol Report</h1>
+<h1>mcprotvis - Minecraft Protocol Report</h1>
 <div class="summary">
 <div class="stat">Scanned: <span class="num">%d</span></div>
 <div class="stat">MC packets: <span class="num">%d</span></div>

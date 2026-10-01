@@ -1,11 +1,11 @@
 # RaveX AI Agent Guidelines
 
-You are an AI coding assistant contributing to **RaveX** — a Fabric Minecraft 1.21.11 utility client mod.
+You are an AI coding assistant contributing to **RaveX** - a Fabric Minecraft 1.21.11 utility client mod.
 
 ## Critical rules
 
 1. **No comments.** Never add `//`, `/* */`, `#`, or docstrings. Code must be self-documenting.
-2. **No direct Minecraft imports when a utility exists.** Do NOT use `Minecraft.getInstance().player` — use `PlayerUtility.getPlayer()`. Do NOT use `Minecraft.getInstance().getConnection().send(...)` — use `NetworkUtility.sendPacket()`. Use `MinecraftWrapper` instead of raw `Minecraft.getInstance()`. Always check `ravex.utility.*` and `ravex.mcwrapper.*` first.
+2. **No direct Minecraft imports when a utility exists.** Do NOT use `Minecraft.getInstance().player` - use `PlayerUtility.getPlayer()`. Do NOT use `Minecraft.getInstance().getConnection().send(...)` - use `NetworkUtility.sendPacket()`. Use `MinecraftWrapper` instead of raw `Minecraft.getInstance()`. Always check `ravex.utility.*` and `ravex.mcwrapper.*` first.
 3. **Look at neighboring files before writing new ones.** Match existing patterns for modules, mixins, managers, parameters, events.
 4. **No wildcard imports.** Use explicit single-type imports.
 5. **Package root:** `ravex.*`. Modules go in `ravex.modules.*`, utilities in `ravex.utility.*`, mixins in `ravex.mixin.*`.

@@ -1,4 +1,4 @@
-# RaveX Lua Addons — Complete Guide
+# RaveX Lua Addons - Complete Guide
 
 > Version: 1.0 | Platforms: Windows 10/11, Linux | Language: LuaJIT 2.1 / Lua 5.1
 
@@ -15,7 +15,7 @@
 
 ## 1. What is a Lua Addon?
 
-A **Lua addon** is a `.lua` script that RaveX loads at runtime via its embedded Lua engine. Unlike Java addons (JAR) or C++ addons (DLL/SO), Lua addons require no compilation — just write the script and drop it in the addons folder.
+A **Lua addon** is a `.lua` script that RaveX loads at runtime via its embedded Lua engine. Unlike Java addons (JAR) or C++ addons (DLL/SO), Lua addons require no compilation - just write the script and drop it in the addons folder.
 
 ### Lua vs Java vs C++
 
@@ -66,7 +66,7 @@ A **Lua addon** is a `.lua` script that RaveX loads at runtime via its embedded 
    - Creates a sandboxed Lua environment
    - Loads and executes the script
    - Calls `getName()` and `getVersion()` for metadata
-   - Calls `onLoad(ctx)` — addon is now active
+   - Calls `onLoad(ctx)` - addon is now active
 4. During gameplay:
    - Calls `onTick()` each game tick
    - Calls `onEvent(eventName)` when events occur

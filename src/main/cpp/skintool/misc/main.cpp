@@ -4,7 +4,7 @@
 #include "../include/skin_window.hpp"
 
 static void printHelp() {
-    printf("\n=== Skintool — Minecraft Skin Viewer ===\n");
+    printf("\n=== Skintool - Minecraft Skin Viewer ===\n");
     printf("Usage: skintool [skin.png]\n");
     printf("Controls:\n");
     printf("  Left-drag  : Orbit camera\n");
