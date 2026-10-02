@@ -42,7 +42,6 @@ src/
 
 - Use **Mojang mappings** (official names), not Yarn or intermediary
 - Package root: `ravex.*`
-- **No comments in code.** Code must be self-documenting. No `//`, `/* */`, `#`, or docstrings. This rule is absolute.
 - Follow existing patterns - look at neighboring files before writing new ones
 - Keybindings are set only via **middle-click** on the module button in the ClickGUI
 - **Prefer utility/wrapper classes over direct Minecraft imports.** The project provides extensive ready-to-use utilities in `ravex.utility.*` and wrappers in `ravex.mcwrapper.*`. These handle null safety, consistency, and reduce boilerplate. Use `PlayerUtility.getPlayer()` instead of `Minecraft.getInstance().player`, `NetworkUtility.sendPacket()` instead of `Minecraft.getInstance().getConnection().send()`, `MinecraftWrapper` instead of `Minecraft.getInstance()`, and so on. Before writing raw Minecraft API calls, check if a utility already exists - common operations (movement, rotation, rendering, inventory, sound, chat, entities) are already wrapped. This keeps the codebase maintainable, avoids repeated null checks, and centralizes version-specific changes.
@@ -146,7 +145,6 @@ When using AI coding assistants (such as ChatGPT, Claude, Copilot, etc.) to cont
 - **Feed the rules first.** Provide the AI with the relevant sections of this CONTRIBUTING.md - especially the Java Code Style rules about using utility/wrapper classes over direct Minecraft imports.
 - **Verify utility usage.** AI models often default to `Minecraft.getInstance().player` and other raw API calls. Remind the AI to use `PlayerUtility.getPlayer()`, `NetworkUtility.sendPacket()`, `MinecraftWrapper` etc. Check the finished code for unnecessary direct Minecraft imports.
 - **Stick to existing patterns.** Tell the AI to look at neighboring files for reference before generating new code - modules, managers, mixins all follow specific templates.
-- **No comments rule applies.** AI models love adding `//` comments. Strip them out. Code must be self-documenting.
 - **Review everything.** AI-generated code still needs human review. Build the project (`./gradlew build`) before committing.
 
 ## Community
