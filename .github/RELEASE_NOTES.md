@@ -4,7 +4,7 @@
 
 Fresh build from October 10, 2026. Settings show it as "Build: 20261010".
 
-All the improvements below are for the Windows launcher only. The Linux launcher is a separate build and stays at its old version.
+All the improvements below are for the Windows launcher only. The Linux launcher is a separate build: its last version is 1.3 and it is no longer developed.
 
 Launcher
 - Mod search is much faster now: the full mod list appears instantly, icons stream in after it in parallel and failed downloads are retried automatically
@@ -33,6 +33,6 @@ Setup and release
 - Launcher archives are named after the launcher version
 - Launcher loads on Windows 7 SP1 x64 and is fully compatible with Windows 10 / 11
 
-RaveX client is unchanged since 1.4.9, and the Linux launcher is unchanged as well. All the work this time went into the Windows launcher.
+RaveX client is unchanged since 1.4.9. The Linux launcher ended at its final version 1.3 and will not receive further updates. All the work this time went into the Windows launcher.
 
 KickX Launcher v1.2.1 for Windows (build 20261010)
