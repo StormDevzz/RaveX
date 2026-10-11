@@ -377,24 +377,14 @@ jobs:
           cp .github/RELEASE_NOTES.md dist/RELEASE_NOTES_FULL.md
           {
             echo ""
-            echo "## 🔐 File verification / Проверка файлов"
+            echo "## File verification"
             echo ""
             echo "Every release automatically ships a \`SHA256SUMS.txt\` - compare the hash of your downloaded file against it:"
             echo ""
             echo "* Windows (PowerShell): \`Get-FileHash .\\<file> -Algorithm SHA256\`"
             echo "* Linux: \`sha256sum -c SHA256SUMS.txt\`"
             echo ""
-            echo "Each VirusTotal link opens the scan page for that exact file by its SHA-256 (KickX launcher and RaveX client)."
-            echo ""
-            echo "Каждый релиз автоматически содержит \`SHA256SUMS.txt\` — сверьте хеш скачанного файла с этим списком:"
-            echo ""
-            echo "* Windows (PowerShell): \`Get-FileHash .\\<file> -Algorithm SHA256\`"
-            echo "* Linux: \`sha256sum -c SHA256SUMS.txt\`"
-            echo ""
-            echo "Ссылка VirusTotal ведёт на страницу сканирования файла по его SHA-256 (KickX лаунчер и клиент RaveX)."
-            echo ""
-            echo "| File / Файл | SHA-256 | VirusTotal |"
-            echo "|---|---|---|"
+            echo "You can also double check any release file on VirusTotal yourself: open https://www.virustotal.com, upload the downloaded file or paste its SHA-256 hash, and read the community scan results."
           } >> dist/RELEASE_NOTES_FULL.md
 
           : > dist/SHA256SUMS.txt
@@ -402,7 +392,6 @@ jobs:
             h=$(sha256sum "$f" | cut -d' ' -f1)
             b=$(basename "$f")
             printf '%s  %s\n' "$h" "$b" >> dist/SHA256SUMS.txt
-            echo "| \`$b\` | \`$h\` | [virustotal.com](https://www.virustotal.com/gui/file/$h) |" >> dist/RELEASE_NOTES_FULL.md
             echo "  $b  $h"
           done
 
