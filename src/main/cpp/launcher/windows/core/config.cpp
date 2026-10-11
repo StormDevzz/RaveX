@@ -174,6 +174,7 @@ std::string unprotectSecret(const std::string& stored) {
 
 LauncherConfig loadLauncherConfig() {
     LauncherConfig cfg;
+    setThemeIconSubdir(themeIconSubdirFor(cfg.theme));  // reset to defaults on every (re)load
     std::string text;
     if (!readFile(launcherConfigPath(), text)) return cfg;
     Value root = Value::parse(text);
@@ -204,6 +205,7 @@ LauncherConfig loadLauncherConfig() {
     readBool(root, "telemetryEnabled", cfg.telemetryEnabled);
     readBool(root, "closeOnLaunch", cfg.closeOnLaunch);
     readNum(root, "downloadThreads", cfg.downloadThreads);
+    readStr(root, "skipUpdateTag", cfg.skipUpdateTag);
     if (cfg.downloadThreads < 1) cfg.downloadThreads = 1;
     if (cfg.downloadThreads > 12) cfg.downloadThreads = 12;
     if (root.has("installHistory") && root.at("installHistory").type() == Value::Type::Array) {
@@ -226,6 +228,7 @@ LauncherConfig loadLauncherConfig() {
             cfg.accounts.push_back(std::move(account));
         }
     }
+    setThemeIconSubdir(themeIconSubdirFor(cfg.theme));
     return cfg;
 }
 
@@ -274,6 +277,7 @@ void saveLauncherConfig(const LauncherConfig& cfg) {
     out += ",\n  \"closeOnLaunch\": ";
     out += cfg.closeOnLaunch ? "true" : "false";
     out += ",\n  \"downloadThreads\": " + std::to_string(cfg.downloadThreads);
+    out += ",\n  \"skipUpdateTag\": " + jsonEscape(cfg.skipUpdateTag);
     out += "\n}\n";
     createDirs(kickxDir());
     writeFileAtomic(launcherConfigPath(), out);

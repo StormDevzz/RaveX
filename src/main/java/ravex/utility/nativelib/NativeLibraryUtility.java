@@ -1,6 +1,5 @@
 package ravex.utility.nativelib;
 
-import ravex.utility.nativelib.NativeLoader;
 
 public class NativeLibraryUtility {
     private static volatile boolean loadingEnabled = false;

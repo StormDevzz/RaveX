@@ -1,7 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.nativelib.NativeLoader;
 import ravex.utility.nativelib.NativeLibraryUtility;
 @Module(name = "NoRender", category = "Render")
 public class NoRender {

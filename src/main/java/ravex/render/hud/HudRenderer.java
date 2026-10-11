@@ -30,7 +30,6 @@ import ravex.modules.client.Hud;
 import ravex.utility.misc.GuiOptimizerUtility;
 
 import ravex.utility.render.FontRenderUtility;
-import ravex.utility.render.HudRendererUtility;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector4f;

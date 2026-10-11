@@ -63,4 +63,24 @@ std::wstring javaPath() {
     return L"java.exe";
 }
 
+static std::wstring g_themeIconSubdir;
+
+void setThemeIconSubdir(const std::wstring& sub) {
+    g_themeIconSubdir = sub;
+}
+
+const std::wstring& themeIconSubdir() {
+    return g_themeIconSubdir;
+}
+
+std::wstring themeIconSubdirFor(const std::string& themeName) {
+    if (themeName == "win95") return L"win95\\";
+    if (themeName == "vista") return L"vista\\";
+    return L"";
+}
+
+bool isThemedIconPath(const std::wstring& path) {
+    return !g_themeIconSubdir.empty() && path.find(g_themeIconSubdir) != std::wstring::npos;
+}
+
 }

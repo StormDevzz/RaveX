@@ -4,7 +4,6 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "SmallUser", category = "Render")
 public class SmallUser {

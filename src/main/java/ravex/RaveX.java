@@ -18,7 +18,6 @@ import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.nativelayer.NativeLayer;
 import ravex.nativelayer.NativeLayerImpl;
-import ravex.utility.misc.GithubUtility;
 import ravex.utility.render.TextureLoaderUtility;
 import ravex.utility.sound.SoundEventDispatcherUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -37,6 +36,7 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
     private static boolean clickGuiWasDown = false;
     private static boolean onboardingTried = false;
+    private static boolean updateToastShown = false;
     private static Process loaderProcess = null;
     private static boolean loaderProcessClosed = false;
 
@@ -217,7 +217,12 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
             }
         }));
 
-        new Thread(GithubUtility::checkUpdates).start();
+        Thread updater = new Thread(() -> {
+            ChangelogManager.INSTANCE.loadLocal();
+            UpdateManager.INSTANCE.checkInBackground();
+        }, "RaveX-Updater");
+        updater.setDaemon(true);
+        updater.start();
 
         var bus = EventBusHolder.get();
         bus.subscribe(new SoundEventDispatcherUtility());
@@ -241,6 +246,8 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         ServiceLocator.register(ShaderManager.class, ShaderManager.INSTANCE);
         ServiceLocator.register(NotificationManager.class, new NotificationManager());
         ServiceLocator.register(CrystalManager.class, CrystalManager.INSTANCE);
+        ServiceLocator.register(UpdateManager.class, UpdateManager.INSTANCE);
+        ServiceLocator.register(ChangelogManager.class, ChangelogManager.INSTANCE);
 
         LOGGER.info("[RaveX] Services registered");
     }
@@ -263,6 +270,16 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         EventBusHolder.get().post(new TickEvent.Client());
         ravex.addon.core.CAddonManager.onTick();
         ServiceLocator.resolve(ModuleManager.class).onTick();
+
+        if (!updateToastShown && UpdateManager.INSTANCE.getState() == UpdateManager.State.AVAILABLE) {
+            updateToastShown = true;
+            String version = UpdateManager.INSTANCE.getLatestVersion();
+            NotificationManager.addToast(
+                ravex.utility.misc.LanguageUtility.t("upd_toast",
+                        version == null ? "?" : version),
+                0xFF40A9F8,
+                NotificationManager.ToastType.INFO);
+        }
 
         MinecraftWrapper mc = MinecraftWrapper.getWrapper();
         if (mc.getWindow() == null) return;

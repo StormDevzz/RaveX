@@ -9,7 +9,6 @@ import org.lwjgl.glfw.GLFW;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.macro.Macro;
 import ravex.macro.MacroAction;
-import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 
 import java.io.File;

@@ -29,6 +29,8 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <memory>
+#include <webp/decode.h>
 #include <wincodec.h>
 #include <fstream>
 
@@ -96,6 +98,8 @@ constexpr UINT WM_APP_MODS = WM_APP + 50;
 constexpr UINT WM_APP_PING = WM_APP + 51;
 constexpr UINT WM_APP_WORLD = WM_APP + 52;
 constexpr UINT WM_APP_UPDATE = WM_APP + 53;
+constexpr UINT WM_APP_LOADER_VERS = WM_APP + 54;
+constexpr UINT WM_APP_MODS_ICON = WM_APP + 55;
 constexpr UINT JVM_TIP_TIMER = 200;
 
 constexpr COLORREF kBg = RGB(28, 28, 30);
@@ -110,6 +114,28 @@ struct ModInfo {
     HICON hIcon = nullptr;
 };
 
+// result of an asynchronous mod search; token lets the UI drop stale answers
+// when the user kept typing (debounced searches can finish out of order).
+struct ModsSearchResult {
+    int token = 0;
+    std::vector<ModInfo> res;
+};
+
+// one finished icon delivered from the loader threads to the UI thread as soon
+// as it is ready - the list itself is already on screen by then.
+struct ModIconResult {
+    int token = 0;
+    size_t idx = 0;
+    HICON icon = nullptr;
+};
+
+// result of an asynchronous loader-version fetch (fabric/forge/quilt maven APIs).
+struct LoaderVersResult {
+    int token = 0;
+    std::string keep;  // version to re-select, may be empty
+    std::vector<std::string> vers;
+};
+
 HICON loadHIconEd(const std::wstring& path, int target);
 std::wstring iconPathEd(const std::wstring& name);
 void ensureGdiplus();
@@ -117,6 +143,14 @@ void tintWhiteInst(Gdiplus::Bitmap* bmp);
 HICON loadViaWICForData(void* data, DWORD size, int target);
 HICON loadHIconFromRes(int resId, int target);
 HICON loadLauncherIcon(int resId, const std::wstring& name, int target) {
+    // A theme-specific icon set (icons\win95\ / icons\vista\) overrides the
+    // embedded default resource for the active theme.
+    if (!themeIconSubdir().empty()) {
+        std::wstring themed = iconPathEd(name);
+        if (isThemedIconPath(themed) && fileExists(themed)) {
+            if (HICON h = loadHIconEd(themed, target)) return h;
+        }
+    }
     HICON h = loadHIconFromRes(resId, target);
     if (h) return h;
     return loadHIconEd(iconPathEd(name), target);
@@ -376,7 +410,8 @@ HICON loadIconUrl(const std::string& url, int target) {
             g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
             g.Clear(Gdiplus::Color(0,0,0,0));
             g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
-            tintWhiteInst(dst);
+            // themed icon sets keep their colors - no tinting.
+            if (!isThemedIconPath(path)) tintWhiteInst(dst);
             dst->GetHICON(&out);
             delete dst; delete src;
         } else {
@@ -386,6 +421,71 @@ HICON loadIconUrl(const std::string& url, int target) {
         DeleteFileW(path.c_str()); return out;
     } catch (...) { return nullptr; }
 }
+// loadwebp icon decoder: modrinth serves its icons as webp nowadays (cdn
+// .../<hash>_96.webp). neither gdi+ nor wic decodes webp on many systems
+// (wic webp codec missing: wincodec err 88982f8b measured on win10 19044),
+// so use libwebp directly. returns nullptr when the file is not webp.
+HICON loadWebpIcon(const std::wstring& path, int target) {
+    HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (hFile == INVALID_HANDLE_VALUE) return nullptr;
+    LARGE_INTEGER sz{};
+    if (!GetFileSizeEx(hFile, &sz) || sz.QuadPart <= 0 || sz.QuadPart > 32LL * 1024 * 1024) { CloseHandle(hFile); return nullptr; }
+    std::vector<BYTE> data(static_cast<size_t>(sz.QuadPart));
+    DWORD read = 0;
+    BOOL okRead = ReadFile(hFile, data.data(), static_cast<DWORD>(data.size()), &read, nullptr);
+    CloseHandle(hFile);
+    if (!okRead || read != data.size()) return nullptr;
+    int w = 0, h = 0;
+    if (!WebPGetInfo(data.data(), data.size(), &w, &h) || w <= 0 || h <= 0) return nullptr;
+    uint8_t* rgba = WebPDecodeRGBA(data.data(), data.size(), &w, &h);
+    if (!rgba) return nullptr;
+    HICON out = nullptr;
+    ensureGdiplus();
+    Gdiplus::Bitmap bmp(w, h, PixelFormat32bppARGB);
+    Gdiplus::BitmapData bd;
+    Gdiplus::Rect rc(0, 0, w, h);
+    if (bmp.LockBits(&rc, Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &bd) == Gdiplus::Ok) {
+        for (int y = 0; y < h; ++y) {
+            BYTE* dstRow = static_cast<BYTE*>(bd.Scan0) + y * bd.Stride;
+            const BYTE* srcRow = rgba + static_cast<size_t>(y) * w * 4;
+            for (int x = 0; x < w; ++x) {
+                dstRow[x*4+0] = srcRow[x*4+2];  // webp rgba -> gdi+ bgra
+                dstRow[x*4+1] = srcRow[x*4+1];
+                dstRow[x*4+2] = srcRow[x*4+0];
+                dstRow[x*4+3] = srcRow[x*4+3];
+            }
+        }
+        bmp.UnlockBits(&bd);
+        Gdiplus::Bitmap* dst = new Gdiplus::Bitmap(target, target, PixelFormat32bppARGB);
+        Gdiplus::Graphics g(dst);
+        g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+        g.Clear(Gdiplus::Color(0,0,0,0));
+        g.DrawImage(&bmp, Gdiplus::Rect(0,0,target,target), 0,0,w,h, Gdiplus::UnitPixel);
+        dst->GetHICON(&out);
+        delete dst;
+    }
+    WebPFree(rgba);
+    return out;
+}
+
+// modrinth stores icons under a hash name with no extension
+// (https://cdn.modrinth.com/data/<id>/<sha1>) and those URLs flap on their
+// CDN (measured: 404 x6 for an icon that downloaded fine minutes earlier).
+// every project also exposes <id>/icon.png which usually survives - use it as
+// the automatic fallback when the hash URL fails.
+std::string iconFallbackUrl(const std::string& url) {
+    size_t slash = url.find_last_of('/');
+    if (slash == std::string::npos || slash + 1 >= url.size()) return {};
+    std::string file = url.substr(slash + 1);
+    if (file.find('.') != std::string::npos) return {};   // has an extension already
+    if (file.size() < 32) return {};
+    for (char c : file) {
+        bool hex = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+        if (!hex) return {};
+    }
+    return url.substr(0, slash + 1) + "icon.png";
+}
+
 HICON loadIconUrlCached(const std::string& url, int target) {
     if (url.empty()) return nullptr;
     std::wstring cache = iconCachePath(url);
@@ -404,13 +504,19 @@ HICON loadIconUrlCached(const std::string& url, int target) {
             if (out) return out;
         } else {
             if (src) delete src;
+            out = loadWebpIcon(cache, target);  // modrinth icons are webp
+            if (out) return out;
             out = loadViaWICColor(cache, target);
             if (out) return out;
         }
     }
-    if (!net::downloadFile(url, cache, {}, nullptr, nullptr)) {
-        HICON fb = loadLauncherIcon(IDR_ICON_PACKAGE, L"package", target);
-        return fb;
+    if (!net::downloadFileFast(url, cache)) {
+        // hash URL flapped -> try the project's canonical icon.png before giving up.
+        std::string alt = iconFallbackUrl(url);
+        if (alt.empty() || !net::downloadFileFast(alt, cache)) {
+            DeleteFileW(cache.c_str());
+            return nullptr;   // the retry wave will try again later
+        }
     }
     ensureGdiplus();
     HICON out = nullptr;
@@ -426,31 +532,96 @@ HICON loadIconUrlCached(const std::string& url, int target) {
         if (out) return out;
     } else {
         if (src) delete src;
+        out = loadWebpIcon(cache, target);  // modrinth icons are webp
+        if (out) return out;
         out = loadViaWICColor(cache, target);
         if (out) return out;
     }
     if (!out) {
         DeleteFileW(cache.c_str());
-        out = loadLauncherIcon(IDR_ICON_PACKAGE, L"package", target);
+        return nullptr;   // undecodable payload -> let the retry wave try again
     }
     return out;
 }
-void parallelLoadIcons(std::vector<ModInfo>& res, int target) {
-    if (res.empty()) return;
-    std::atomic<size_t> idx{0};
-    std::vector<std::thread> ths;
-    int conc = 6;
-    if ((int)res.size() < conc) conc = (int)res.size();
-    for (int t = 0; t < conc; ++t) {
-        ths.emplace_back([&]() {
-            while (true) {
-                size_t i = idx.fetch_add(1);
-                if (i >= res.size()) break;
-                try { res[i].hIcon = loadIconUrlCached(res[i].iconUrl, target); } catch (...) { res[i].hIcon = nullptr; }
-            }
-        });
+// streaming icon loader: results are ALREADY on screen when this runs, so each
+// icon is delivered to the UI thread the moment it finishes and only its own
+// row is repainted. Parallel fetches share one WinHTTP session (single TLS
+// handshake + keep-alive) so the link - not the CPU - is the bottleneck.
+//
+// modrinth's hash-named icon files flap on their CDN (we measured 404 on6/6
+// attempts for icons that worked minutes earlier), so instead of Prism's
+// "remember the failure" policy we re-run ONLY the failures in extra waves
+// with a pause - a flapping edge node recovers, and the icons still appear.
+struct IconStreamState {
+    std::vector<std::string> urls;      // original list, index == row index
+    std::vector<size_t> queue;          // indices of the CURRENT wave
+    std::atomic<size_t> qidx{0};
+    std::atomic<int> live{0};           // workers still running this wave
+    std::vector<size_t> failed;         // rows whose icon is still missing
+    std::mutex mtx;
+    int pass = 0;                       //0 = first wave, up to 2 retry waves
+    HWND wnd = nullptr;
+    int token = 0;
+};
+static void startIconWave(const std::shared_ptr<IconStreamState>& st);
+
+static void onIconWaveFinished(const std::shared_ptr<IconStreamState>& st) {
+    std::vector<size_t> retry;
+    {
+        std::lock_guard<std::mutex> lk(st->mtx);
+        retry = st->failed;
+        st->failed.clear();
     }
-    for (auto& th : ths) th.join();
+    if (retry.empty() || st->pass >= 2) return;
+    ++st->pass;
+    Sleep(1200);                        // give the CDN edge time to recover
+    if (!IsWindow(st->wnd)) return;
+    st->queue = std::move(retry);
+    st->qidx.store(0);
+    startIconWave(st);
+}
+
+static void startIconWave(const std::shared_ptr<IconStreamState>& st) {
+    int n = (int)st->queue.size();
+    if (n == 0) { onIconWaveFinished(st); return; }
+    // scale with the machine: 2 sockets per core, floor16, cap32.
+    unsigned hw = std::thread::hardware_concurrency();
+    int conc = static_cast<int>(std::min<size_t>(32, std::max<size_t>(16, static_cast<size_t>(hw) * 2)));
+    if (n < conc) conc = n;
+    st->live.store(conc);
+    for (int t = 0; t < conc; ++t) {
+        std::thread([st]() {
+            while (true) {
+                size_t k = st->qidx.fetch_add(1);
+                if (k >= st->queue.size()) break;
+                size_t i = st->queue[k];   // original row index
+                HICON ic = nullptr;
+                try { ic = loadIconUrlCached(st->urls[i], 32); } catch (...) { ic = nullptr; }
+                if (!ic) {
+                    std::lock_guard<std::mutex> lk(st->mtx);
+                    st->failed.push_back(i);   // remember for the next wave
+                    continue;
+                }
+                ModIconResult* p = new ModIconResult{st->token, i, ic};
+                if (!IsWindow(st->wnd) || !PostMessageW(st->wnd, WM_APP_MODS_ICON, 0, reinterpret_cast<LPARAM>(p))) {
+                    if (p->icon) DestroyIcon(p->icon);
+                    delete p;
+                }
+            }
+            if (--st->live == 0) onIconWaveFinished(st);
+        }).detach();
+    }
+}
+
+void streamLoadIcons(HWND wnd, int token, std::vector<std::string> urls) {
+    if (urls.empty() || !wnd) return;
+    auto st = std::make_shared<IconStreamState>();
+    st->urls = std::move(urls);
+    st->wnd = wnd;
+    st->token = token;
+    st->queue.resize(st->urls.size());
+    for (size_t i = 0; i < st->urls.size(); ++i) st->queue[i] = i;
+    startIconWave(st);
 }
 
 struct Server {
@@ -472,6 +643,10 @@ struct WorldInfo {
 std::wstring iconPathEd(const std::wstring& name) {
     wchar_t buf[MAX_PATH]; GetModuleFileNameW(nullptr, buf, MAX_PATH);
     std::wstring s = buf; size_t p = s.find_last_of(L"\\/"); if (p != std::wstring::npos) s = s.substr(0, p + 1);
+    if (!themeIconSubdir().empty()) {
+        std::wstring themed = s + L"icons\\" + themeIconSubdir() + name + L".png";
+        if (fileExists(themed)) return themed;
+    }
     std::wstring cand = s + L"icons\\" + name + L".png";
     if (fileExists(cand)) return cand;
     std::wstring cur = s;
@@ -499,7 +674,8 @@ HICON loadHIconEd(const std::wstring& path, int target) {
     g.Clear(Gdiplus::Color(0,0,0,0));
     g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
     delete src;
-    tintWhiteInst(dst);
+    // themed icon sets keep their colors - no tinting.
+    if (!isThemedIconPath(path)) tintWhiteInst(dst);
     HICON out = nullptr;
     dst->GetHICON(&out);
     delete dst;
@@ -541,6 +717,9 @@ struct EditorData {
     HFONT titleFont = nullptr;
     HFONT smallFont = nullptr;
     std::vector<std::string> versions;
+    // monotonic tokens: only the newest async request may touch the UI.
+    int loaderVerToken = 0;
+    int modsSearchToken = 0;
     GlowData glow;
     int scrollPos = 0;
     int maxScroll = 0;
@@ -720,23 +899,51 @@ void reloadLoaderVersions(EditorData* data) {
         std::wstring mv;
         int l = GetWindowTextLengthW(data->comboVer);
         if (l > 0) { mv.resize(static_cast<std::size_t>(l+1)); GetWindowTextW(data->comboVer, mv.data(), l + 1); if (l>0) mv.resize(l); else mv.clear(); }
-        SendMessageW(data->comboLoaderVer, CB_RESETCONTENT, 0, 0);
         if (loader == "vanilla") {
+            ++data->loaderVerToken;  // drop any in-flight fetch
             if (data->lblLoaderVer) ShowWindow(data->lblLoaderVer, SW_HIDE);
             if (data->iconLoaderVer) ShowWindow(data->iconLoaderVer, SW_HIDE);
             ShowWindow(data->comboLoaderVer, SW_HIDE);
-        } else {
-            if (data->lblLoaderVer) ShowWindow(data->lblLoaderVer, SW_SHOW);
-            if (data->iconLoaderVer) ShowWindow(data->iconLoaderVer, SW_SHOW);
-            ShowWindow(data->comboLoaderVer, SW_SHOW);
-            std::vector<std::string> vers;
-            if (loader == "fabric") vers = game::fetchFabricLoaderVersions(toUtf8(mv));
-            else if (loader == "forge") vers = game::fetchForgeLoaderVersions(toUtf8(mv));
-            else if (loader == "quilt") vers = game::fetchQuiltLoaderVersions(toUtf8(mv));
-            for (const std::string& v : vers) SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(v).c_str()));
-            if (vers.empty()) { const char* _lk=ravex::lang("latest"); SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>((_lk&&strcmp(_lk,"latest")!=0?fromUtf8(_lk):fromUtf8("Latest")).c_str())); }
+            SendMessageW(data->comboLoaderVer, CB_RESETCONTENT, 0, 0);
+            updateModsInstallButton(data);
+            return;
+        }
+        if (data->lblLoaderVer) ShowWindow(data->lblLoaderVer, SW_SHOW);
+        if (data->iconLoaderVer) ShowWindow(data->iconLoaderVer, SW_SHOW);
+        ShowWindow(data->comboLoaderVer, SW_SHOW);
+        // version to re-select once the list arrives.
+        std::string keep;
+        {
+            int kl = GetWindowTextLengthW(data->comboLoaderVer);
+            if (kl > 0) {
+                std::wstring kw; kw.resize(static_cast<std::size_t>(kl + 1));
+                GetWindowTextW(data->comboLoaderVer, kw.data(), kl + 1);
+                if (kl > 0) kw.resize(kl);
+                keep = toUtf8(kw);
+            }
+        }
+        if (keep.empty()) keep = data->cfg.loaderVersion;
+        int token = ++data->loaderVerToken;
+        // instant placeholder so the UI never waits for the maven APIs.
+        SendMessageW(data->comboLoaderVer, CB_RESETCONTENT, 0, 0);
+        {
+            const char* _lk = ravex::lang("latest");
+            SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>((_lk && strcmp(_lk, "latest") != 0 ? fromUtf8(_lk) : fromUtf8("Latest")).c_str()));
             SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0);
         }
+        HWND dlg = GetAncestor(data->comboLoaderVer, GA_ROOT);
+        std::string mc = toUtf8(mv);
+        std::thread([dlg, token, loader, mc, keep]() {
+            LoaderVersResult* out = new LoaderVersResult();
+            out->token = token;
+            out->keep = keep;
+            try {
+                if (loader == "fabric") out->vers = game::fetchFabricLoaderVersions(mc);
+                else if (loader == "forge") out->vers = game::fetchForgeLoaderVersions(mc);
+                else if (loader == "quilt") out->vers = game::fetchQuiltLoaderVersions(mc);
+            } catch (...) {}
+            if (!dlg || !PostMessageW(dlg, WM_APP_LOADER_VERS, 0, reinterpret_cast<LPARAM>(out))) delete out;
+        }).detach();
         updateModsInstallButton(data);
     } catch (...) {}
 }
@@ -755,7 +962,11 @@ std::vector<ModInfo> curseforgeSearch(const std::string& query, const std::strin
         return modrinthSearch(query, mc, type);
     }
     ravex::json::Value root = ravex::json::Value::parse(body);
-    if (root.isNull() || !root.has("data")) return out;
+    if (root.isNull() || !root.has("data")) {
+        // no API key / error body: fall back to Modrinth immediately instead of
+        // returning an empty list after a pointless round-trip.
+        return modrinthSearch(query, mc, type);
+    }
     const ravex::json::Value& arr = root.at("data");
     for (size_t i = 0; i < arr.size(); ++i) {
         const ravex::json::Value& h = arr.at(i);
@@ -1010,6 +1221,10 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 data->curTab = 0;
             }
+            // prefetch the default (trending) mod list in the background: by the
+            // time the user opens the Mods tab, results - and most icons - are
+            // already there, so nothing has to wait for a click.
+            PostMessageW(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MODS_GO, BN_CLICKED), 0);
 
             auto tr2=[&](const char* k,const char* fb){const char* v=ravex::lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
             auto trI=[&](const char* k,const char* fb){const char* v=ravex::lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
@@ -1073,32 +1288,11 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             data->lblLoaderVer = CreateWindowExW(0, L"STATIC", trI("loader_version","Loader Version").c_str(), WS_CHILD | WS_VISIBLE, 480, 340, 380, 22, hwnd, nullptr, inst, nullptr);
             HWND lblLoaderVer = data->lblLoaderVer;
             data->comboLoaderVer = CreateWindowExW(0, L"COMBOBOX", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST | WS_VSCROLL, 480, 364, 380, 200, hwnd, reinterpret_cast<HMENU>(IDC_COMBO_LOADER_VER), inst, nullptr);
-            if (data->cfg.loader == "fabric") {
-                std::vector<std::string> vers = game::fetchFabricLoaderVersions(data->cfg.mcVersion);
-                for (const std::string& v : vers) SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(v).c_str()));
-                if (vers.empty()) { SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(trI("latest","Latest").c_str())); SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0); }
-                else if (!data->cfg.loaderVersion.empty()) {
-                    LRESULT idx = SendMessageW(data->comboLoaderVer, CB_FINDSTRINGEXACT, static_cast<WPARAM>(-1), reinterpret_cast<LPARAM>(fromUtf8(data->cfg.loaderVersion).c_str()));
-                    if (idx != CB_ERR) SendMessageW(data->comboLoaderVer, CB_SETCURSEL, idx, 0); else SetWindowTextW(data->comboLoaderVer, fromUtf8(data->cfg.loaderVersion).c_str());
-                } else SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0);
-            } else if (data->cfg.loader == "forge") {
-                std::vector<std::string> vers = game::fetchForgeLoaderVersions(data->cfg.mcVersion);
-                for (const std::string& v : vers) SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(v).c_str()));
-                if (vers.empty()) { SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(trI("latest","Latest").c_str())); SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0); }
-                else if (!data->cfg.loaderVersion.empty()) {
-                    LRESULT idx = SendMessageW(data->comboLoaderVer, CB_FINDSTRINGEXACT, static_cast<WPARAM>(-1), reinterpret_cast<LPARAM>(fromUtf8(data->cfg.loaderVersion).c_str()));
-                    if (idx != CB_ERR) SendMessageW(data->comboLoaderVer, CB_SETCURSEL, idx, 0); else SetWindowTextW(data->comboLoaderVer, fromUtf8(data->cfg.loaderVersion).c_str());
-                } else SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0);
-            } else if (data->cfg.loader == "quilt") {
-                std::vector<std::string> vers = game::fetchQuiltLoaderVersions(data->cfg.mcVersion);
-                for (const std::string& v : vers) SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(v).c_str()));
-                if (vers.empty()) { SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(trI("latest","Latest").c_str())); SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0); }
-                else if (!data->cfg.loaderVersion.empty()) {
-                    LRESULT idx = SendMessageW(data->comboLoaderVer, CB_FINDSTRINGEXACT, static_cast<WPARAM>(-1), reinterpret_cast<LPARAM>(fromUtf8(data->cfg.loaderVersion).c_str()));
-                    if (idx != CB_ERR) SendMessageW(data->comboLoaderVer, CB_SETCURSEL, idx, 0); else SetWindowTextW(data->comboLoaderVer, fromUtf8(data->cfg.loaderVersion).c_str());
-                } else SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0);
-            } else { SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(trI("latest","Latest").c_str())); SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0); }
             if (data->cfg.loader == "vanilla") { ShowWindow(lblLoaderVer, SW_HIDE); ShowWindow(data->comboLoaderVer, SW_HIDE); ShowWindow(iconLoaderVer, SW_HIDE); }
+            else { ShowWindow(lblLoaderVer, SW_SHOW); ShowWindow(data->comboLoaderVer, SW_SHOW); ShowWindow(iconLoaderVer, SW_SHOW); }
+            // loader version list is loaded asynchronously: doing the maven API
+            // calls inline used to freeze the whole editor while it was opening.
+            reloadLoaderVersions(data);
             data->generalCtrls.push_back(iconLoaderVer); data->generalCtrls.push_back(lblLoaderVer); data->generalCtrls.push_back(data->comboLoaderVer);
 
             HWND iconRam = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_ICON, 24, 342, 16, 16, hwnd, nullptr, inst, nullptr);
@@ -1267,7 +1461,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
 
             HWND worldsIco = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_ICON, 24, 92, 20, 20, hwnd, nullptr, inst, nullptr);
-            HICON hWorldsIco = loadLauncherIcon(IDR_ICON_MODS, L"worlds", 20);
+            HICON hWorldsIco = loadLauncherIcon(IDR_ICON_WORLDS, L"worlds", 20);
             if (hWorldsIco) { SendMessageW(worldsIco, STM_SETIMAGE, IMAGE_ICON, reinterpret_cast<LPARAM>(hWorldsIco)); data->fieldIcons.push_back(hWorldsIco); }
             data->worldTitleIcon = worldsIco;
             HWND lblWorldsTitle = CreateWindowExW(0, L"STATIC", trI("worlds","Worlds").c_str(), WS_CHILD | WS_VISIBLE, 50, 92, 300, 22, hwnd, nullptr, inst, nullptr);
@@ -1441,12 +1635,15 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     int iy = rc.top + (rc.bottom - rc.top - iconSz) / 2;
 if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullptr, DI_NORMAL);
                 else {
-                    std::wstring fallbackPath = iconPathEd(L"mods");
-                    if (fileExists(fallbackPath)) {
-                        HICON hFallback = loadHIconEd(fallbackPath, iconSz);
-                        if (hFallback) DrawIconEx(dc, rc.left + pad, iy, hFallback, iconSz, iconSz, 0, nullptr, DI_NORMAL);
-                        DestroyIcon(hFallback);
-                    } else { HBRUSH pb = CreateSolidBrush(data->theme.panel); Rectangle(dc, rc.left + pad, iy, rc.left + pad + iconSz, iy + iconSz); DeleteObject(pb); }
+                    // decode the placeholder ONCE - doing it on every paint made
+                    // scrolling choppy while icons were still downloading.
+                    static HICON s_phIcon = nullptr;
+                    if (!s_phIcon) {
+                        std::wstring fallbackPath = iconPathEd(L"mods");
+                        if (fileExists(fallbackPath)) s_phIcon = loadHIconEd(fallbackPath, iconSz);
+                    }
+                    if (s_phIcon) DrawIconEx(dc, rc.left + pad, iy, s_phIcon, iconSz, iconSz, 0, nullptr, DI_NORMAL);
+                    else { HBRUSH pb = CreateSolidBrush(data->theme.panel); Rectangle(dc, rc.left + pad, iy, rc.left + pad + iconSz, iy + iconSz); DeleteObject(pb); }
                 }
                     RECT tr = rc; tr.left = rc.left + pad + iconSz + sc(10); tr.right -= sc(8); tr.top += sc(4); tr.bottom = rc.top + (rc.bottom - rc.top) / 2;
                     SetBkMode(dc, TRANSPARENT); SetTextColor(dc, sel ? RGB(255,255,255) : RGB(255,255,255));
@@ -1537,11 +1734,22 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 COLORREF fg = isPrimary ? RGB(255,255,255) : data->theme.text;
                 if (ds->itemState & ODS_DISABLED) { bg = RGB(54,54,58); fg = RGB(130,130,130); }
                 else if (ds->itemState & ODS_SELECTED) bg = isPrimary ? RGB(70,120,235) : RGB(60,60,62);
+                if (data->theme.classic) {
+                    // windows 95: navy primary / silver secondary, grayed when disabled
+                    if (ds->itemState & ODS_DISABLED) { bg = RGB(192,192,192); fg = RGB(120,120,120); }
+                    else if (ds->itemState & ODS_SELECTED) bg = isPrimary ? RGB(0,0,128) : RGB(160,160,160);
+                }
                 Gdiplus::Graphics g(dc); g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
                 HBRUSH bgFill=CreateSolidBrush(bg); FillRect(dc,&rc,bgFill); DeleteObject(bgFill);
                 Gdiplus::Color gc(GetRValue(bg),GetGValue(bg),GetBValue(bg)); Gdiplus::SolidBrush br(gc);
-                Gdiplus::GraphicsPath path; path.AddArc(rc.left, rc.top, 8,8,180,90); path.AddArc(rc.right-8, rc.top, 8,8,270,90); path.AddArc(rc.right-8, rc.bottom-8, 8,8,0,90); path.AddArc(rc.left, rc.bottom-8, 8,8,90,90); path.CloseFigure();
-                g.FillPath(&br, &path);
+                if (data->theme.classic) {
+                    paintThemedBox(g, Gdiplus::RectF((Gdiplus::REAL)rc.left, (Gdiplus::REAL)rc.top,
+                                   (Gdiplus::REAL)(rc.right - rc.left), (Gdiplus::REAL)(rc.bottom - rc.top)),
+                                   bg, true, (ds->itemState & ODS_SELECTED) != 0);
+                } else {
+                    Gdiplus::GraphicsPath path; path.AddArc(rc.left, rc.top, 8,8,180,90); path.AddArc(rc.right-8, rc.top, 8,8,270,90); path.AddArc(rc.right-8, rc.bottom-8, 8,8,0,90); path.AddArc(rc.left, rc.bottom-8, 8,8,90,90); path.CloseFigure();
+                    g.FillPath(&br, &path);
+                }
                 wchar_t txt[64]; GetWindowTextW(ds->hwndItem, txt, 64);
                 Gdiplus::SolidBrush tbr(Gdiplus::Color(GetRValue(fg),GetGValue(fg),GetBValue(fg)));
                 Gdiplus::Font f(dc, data->font);
@@ -1667,18 +1875,65 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
             return 0;
         }
         case WM_APP_MODS: {
-            std::vector<ModInfo>* res = reinterpret_cast<std::vector<ModInfo>*>(lParam);
+            ModsSearchResult* res = reinterpret_cast<ModsSearchResult*>(lParam);
+            if (!res) return 0;
             if (!data || !IsWindow(hwnd)) { delete res; return 0; }
+            if (res->token != data->modsSearchToken) { delete res; return 0; }  // stale answer, a newer search is running
             if (!data->listMods || !IsWindow(data->listMods)) { delete res; return 0; }
             for (ModInfo& m : data->modResults) if (m.hIcon) { DestroyIcon(m.hIcon); m.hIcon = nullptr; }
-            data->modResults = *res;
+            data->modResults = std::move(res->res);
             delete res;
+            // batch the fill: no repaints between the individual LB_ADDSTRINGs.
+            SendMessageW(data->listMods, WM_SETREDRAW, FALSE, 0);
             SendMessageW(data->listMods, LB_RESETCONTENT, 0, 0);
             for (size_t i = 0; i < data->modResults.size(); ++i) {
                 int idx = (int)SendMessageW(data->listMods, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L""));
                 SendMessageW(data->listMods, LB_SETITEMDATA, idx, (LPARAM)i);
             }
+            SendMessageW(data->listMods, WM_SETREDRAW, TRUE, 0);
             InvalidateRect(data->listMods, nullptr, TRUE);
+            return 0;
+        }
+        case WM_APP_MODS_ICON: {
+            ModIconResult* r = reinterpret_cast<ModIconResult*>(lParam);
+            if (!r) return 0;
+            // stale token, out-of-range or dead list: drop the icon safely.
+            if (!data || r->token != data->modsSearchToken || !data->listMods ||
+                r->idx >= data->modResults.size() || !IsWindow(data->listMods)) {
+                if (r->icon) DestroyIcon(r->icon);
+                delete r;
+                return 0;
+            }
+            if (r->icon) {
+                if (data->modResults[r->idx].hIcon) DestroyIcon(data->modResults[r->idx].hIcon);
+                data->modResults[r->idx].hIcon = r->icon;
+                RECT itemRc{};
+                if (SendMessageW(data->listMods, LB_GETITEMRECT, static_cast<WPARAM>(r->idx), reinterpret_cast<LPARAM>(&itemRc))) {
+                    InvalidateRect(data->listMods, &itemRc, FALSE);  // repaint only this row
+                }
+            }
+            delete r;
+            return 0;
+        }
+        case WM_APP_LOADER_VERS: {
+            auto* r = reinterpret_cast<LoaderVersResult*>(lParam);
+            if (!r) return 0;
+            if (data && r->token == data->loaderVerToken && data->comboLoaderVer && IsWindow(data->comboLoaderVer)) {
+                SendMessageW(data->comboLoaderVer, CB_RESETCONTENT, 0, 0);
+                for (const std::string& v : r->vers) SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(fromUtf8(v).c_str()));
+                if (r->vers.empty()) {
+                    const char* _lk = ravex::lang("latest");
+                    std::wstring latestTxt = (_lk && strcmp(_lk, "latest") != 0) ? fromUtf8(_lk) : fromUtf8("Latest");
+                    SendMessageW(data->comboLoaderVer, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(latestTxt.c_str()));
+                    SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0);
+                } else if (!r->keep.empty()) {
+                    LRESULT idx = SendMessageW(data->comboLoaderVer, CB_FINDSTRINGEXACT, static_cast<WPARAM>(-1), reinterpret_cast<LPARAM>(fromUtf8(r->keep).c_str()));
+                    SendMessageW(data->comboLoaderVer, CB_SETCURSEL, (idx != CB_ERR) ? idx : 0, 0);
+                } else {
+                    SendMessageW(data->comboLoaderVer, CB_SETCURSEL, 0, 0);
+                }
+            }
+            delete r;
             return 0;
         }
         case WM_APP + 101: {
@@ -1758,7 +2013,8 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 applyTab(data, idx);
                 for (HWND b : data->tabBtns) if (b) InvalidateRect(b, nullptr, TRUE);
                 InvalidateRect(hwnd, nullptr, TRUE);
-                if (idx == 1 && data->modResults.empty() && SendMessageW(data->listMods, LB_GETCOUNT, 0, 0) == 0) {
+                if (idx == 1 && data->modResults.empty() && SendMessageW(data->listMods, LB_GETCOUNT, 0, 0) == 0
+                    && data->modsSearchToken == 0) {
                     PostMessageW(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MODS_GO, BN_CLICKED), 0);
                 }
                 return 0;
@@ -1889,15 +2145,21 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 std::wstring mv; int ml = GetWindowTextLengthW(data->comboVer); mv.resize(static_cast<std::size_t>(ml+1)); GetWindowTextW(data->comboVer, mv.data(), ml + 1); if (ml>0) mv.resize(ml); else mv.clear();
                 std::string q8 = toUtf8(q); std::string mc8 = toUtf8(mv);
                 HWND par = hwnd;
-                std::thread([par, q8, mc8, type, platSel]() {
+                int token = ++data->modsSearchToken;
+                std::thread([par, q8, mc8, type, platSel, token]() {
                     std::vector<ModInfo> res;
                     try {
                         if (platSel == 1) res = curseforgeSearch(q8, mc8, type);
                         else res = modrinthSearch(q8, mc8, type);
-                        parallelLoadIcons(res, 32);
                     } catch (...) {}
-                    if (!IsWindow(par)) return;
-                    PostMessageW(par, WM_APP_MODS, 0, reinterpret_cast<LPARAM>(new std::vector<ModInfo>(res)));
+                    std::vector<std::string> urls;
+                    urls.reserve(res.size());
+                    for (const ModInfo& m : res) urls.push_back(m.iconUrl);
+                    ModsSearchResult* out = new ModsSearchResult{token, std::move(res)};
+                    // post the list FIRST: it must appear instantly. Icons stream
+                    // in afterwards, one message per finished icon.
+                    if (!IsWindow(par) || !PostMessageW(par, WM_APP_MODS, 0, reinterpret_cast<LPARAM>(out))) { delete out; return; }
+                    streamLoadIcons(par, token, std::move(urls));
                 }).detach();
                 return 0;
             }
@@ -2021,7 +2283,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
             if (id == IDC_SERV_PING) {
                 int sel = static_cast<int>(SendMessageW(data->listServers, LB_GETCURSEL, 0, 0));
                 if (sel < 0 || sel >= static_cast<int>(data->servers.size())) {
-                    MessageBoxW(hwnd, trI("select_mod_first","Select a server first").c_str(), L"RaveX", MB_ICONWARNING | MB_OK);
+                    MessageBoxW(hwnd, trI("select_server_first","Select a server first").c_str(), L"RaveX", MB_ICONWARNING | MB_OK);
                     return 0;
                 }
                 std::string addr = data->servers[sel].address;

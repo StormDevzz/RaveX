@@ -4,11 +4,9 @@ import net.minecraft.client.player.LocalPlayer;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.core.component.DataComponents;
 import ravex.utility.misc.PotionUtility;
-import ravex.utility.player.InventoryUtility;
 
 public class ElytraUtility {
     public static boolean isElytraEquipped(LocalPlayer player) {

@@ -135,6 +135,18 @@ public abstract class MixinTitleScreen extends Screen {
             btn -> MinecraftWrapper.getInstance().setScreen(new ProxyConfigScreen((TitleScreen)(Object)this))
         ).bounds(this.width / 2 + 104, this.height / 4 + 72, 100, 20).build());
 
+        int cornerX = 8;
+        int cornerY = this.height - 56;
+        this.addRenderableWidget(Button.builder(
+            Component.literal(ravex.utility.misc.LanguageUtility.t("cl_button")),
+            btn -> MinecraftWrapper.getInstance().setScreen(new ravex.gui.changelog.ChangelogScreen((TitleScreen)(Object)this))
+        ).bounds(cornerX, cornerY, 110, 20).build());
+
+        this.addRenderableWidget(Button.builder(
+            Component.literal(ravex.utility.misc.LanguageUtility.t("upd_button")),
+            btn -> MinecraftWrapper.getInstance().setScreen(new ravex.gui.update.UpdateScreen((TitleScreen)(Object)this))
+        ).bounds(cornerX, cornerY + 24, 110, 20).build());
+
         for (GuiEventListener child : java.util.List.copyOf(this.children())) {
             if (child instanceof Button button) {
                 String message = button.getMessage().getString();

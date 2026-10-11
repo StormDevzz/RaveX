@@ -32,7 +32,17 @@ bool isUninstallCmd() {
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-    if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) SetProcessDPIAware();
+    {
+        // windows 10 1607+ only API: resolve dynamically to stay loadable on Windows 7/8.1.
+        bool dpiSet = false;
+        if (HMODULE u32 = GetModuleHandleW(L"user32.dll")) {
+            using SetDpiAwarenessContextFn = BOOL(WINAPI*)(HANDLE);
+            auto setCtx = reinterpret_cast<SetDpiAwarenessContextFn>(
+                GetProcAddress(u32, "SetProcessDpiAwarenessContext"));
+            if (setCtx) dpiSet = setCtx(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) != FALSE;
+        }
+        if (!dpiSet) SetProcessDPIAware();
+    }
     if (!isAdmin() && !isUninstallCmd()) {
         wchar_t exe[MAX_PATH]; GetModuleFileNameW(nullptr, exe, MAX_PATH);
         SHELLEXECUTEINFOW sei{}; sei.cbSize=sizeof(sei); sei.lpVerb=L"runas"; sei.lpFile=exe; sei.nShow=SW_SHOWNORMAL;

@@ -1,27 +1,36 @@
-# RaveX 1.4.9
+# RaveX
 
-- Recode KillAura - legit rotation modes (Tracker/Snap2), new Advanced group with Target ESP, FOV, ShieldBreaker and friends, SmartCrits got AutoJump, sprint handling is packet based now
-- AutoCrystal rework: SpawnBreak, Target ESP, Grim/Strict rotations and swaps, predicts where the target is going
-- Scaffold rework. New Strict mode, faster tower modes, instant placement, BuildSpeed limit, NoRotate, smarter Expand
-- PacketFly rewritten - NCP + Custom modes, Factor, teleport confirmations
-- Full russian localization, switch it in Settings → Language or right during onboarding
-- First launch shows a short onboarding now (welcome, language pick, done sound), ESC skips it
-- New .gps command (alias .nav) - set a target and Tracers ArrowNew draws a GPS arrow to it, clears on arrival
-- New AkrienRadar HUD - player tracers, compass, glow, color modes
-- New JumpCircles module - circles when you jump or land
-- New MainMenu module - gif or procedural backgrounds on the title screen, drop your own gifs into RaveX/gifs
-- MediaHud actually shows what's playing now (windows smtc), with covers and progress
-- ClickGUI got a toolbar, search that understands russian layout, remembers panel positions, tips
-- HUD editor: scale elements with the mouse wheel, smoother dragging, sounds
-- Watermark, TargetHud, Cooldowns, Indicators all got new styles
-- ElytraFly is called Elytra++ now and has an OldGrim mode
-- HighJump GrimShulker rewritten - it finds and opens the shulker itself, Phase got new modes, Speed got NCPJump/StrictJump
-- FakePlayer takes real damage, pops totems with sound, can auto totem and auto respawn
-- ECFarmer picks the right tool and swaps silently, AutoSign has an Advanced mode with auto place, GhostBlocks can restore blocks you broke
-- Tracers: new arrow modes and size, Crosshair highlights the target, Zoom has a keybind now, ChinaHat filters, Skeleton glow
-- Added Inter and InterBold fonts, version on the title screen is drawn in 3D
-- Smoother gui rendering, Search no longer stutters, gif menu backgrounds
-- Loader: version text is gone, new logo, no more github downloads, everything sha256 checked
-- New natives ravex_font and ravex_killaura, ci builds them for windows and linux and embeds into the jar
-- Removed the Swing module (use SwingAnimation), Flight Minemen, Criticals Watchdog. BaritoneModule renamed to Baritone, Sounds moved to Client
-- Version 1.4.9
+## KickX Launcher v1.2.1, built October 10, 2026
+
+Fresh build from October 10, 2026. Settings show it as "Build: 20261010".
+
+Launcher
+- Mod search is much faster now: the full mod list appears instantly, icons stream in after it in parallel and failed downloads are retried automatically
+- Mod icons work again: Modrinth switched icons to WEBP and the launcher now decodes that format (libwebp)
+- New "What's New" button: opens the changelog of the latest releases with a direct link to the GitHub release page
+- Settings now show the real launcher build date and version instead of the mod version
+- The launcher can no longer offer an update to a mod version by mistake, only genuine launcher builds pass the check
+- Optional self-update: the launcher checks GitHub releases, downloads the setup and verifies its SHA-256 before running it
+- Splash screen no longer flickers, themes apply live without restarting the launcher
+- Fixed the Ping button message and the Worlds tab icon
+
+Themes
+- Two new themes: Windows 95 and Windows Vista / 7, each with its own icon set, classic buttons and Vista gloss effects
+- The setup wizard can pick colors for the Custom theme and they are shared with the launcher settings
+- Win95 and Vista themes ship themed logos and icons, Dark and Light themes are unchanged
+
+Languages
+- Full localization: every interface string is now translated into all 22 languages
+- Added Hungarian with its flag
+- Before this update half of the interface silently fell back to English on non English / Russian languages
+
+Setup and release
+- Setup wizard polish: no more label flicker, cleaner page transitions, disk icon next to the install path, autostart option
+- Releases now ship SHA256SUMS.txt and VirusTotal links for every file
+- Releases include kickx-version.txt which powers the launcher self-update channel
+- Launcher archives are named after the launcher version
+- Launcher loads on Windows 7 SP1 x64 and is fully compatible with Windows 10 / 11
+
+RaveX client is unchanged since 1.4.9, all the work this time went into the launcher.
+
+KickX Launcher v1.2.1 (build 20261010)

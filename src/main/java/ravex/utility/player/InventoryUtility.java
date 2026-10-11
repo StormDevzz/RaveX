@@ -4,7 +4,6 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.network.NetworkUtility;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.core.registries.BuiltInRegistries;

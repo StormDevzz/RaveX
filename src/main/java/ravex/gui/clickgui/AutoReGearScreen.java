@@ -15,7 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 import ravex.modules.player.autoregear.AutoReGearData;
-import ravex.modules.player.autoregear.AutoReGear;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
 

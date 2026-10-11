@@ -95,8 +95,18 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         MessageBoxW(nullptr, L"Уже есть версия для Linux! Зачем ты пробуешь запустить Windows версию разбойник?", L"RaveX", MB_OK | MB_ICONWARNING);
         return 0;
     }
-    if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
-        SetProcessDPIAware();
+    // SetProcessDpiAwarenessContext exists only on Windows 10 1607+. Resolve it
+    // dynamically so the launcher still *loads* on Windows 7/8.1 (a static import
+    // would fail at process start with "entry point not found").
+    {
+        bool dpiSet = false;
+        if (HMODULE u32 = GetModuleHandleW(L"user32.dll")) {
+            using SetDpiAwarenessContextFn = BOOL(WINAPI*)(HANDLE);
+            auto setCtx = reinterpret_cast<SetDpiAwarenessContextFn>(
+                GetProcAddress(u32, "SetProcessDpiAwarenessContext"));
+            if (setCtx) dpiSet = setCtx(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) != FALSE;
+        }
+        if (!dpiSet) SetProcessDPIAware();
     }
     INITCOMMONCONTROLSEX icc{};
     icc.dwSize = sizeof(icc);

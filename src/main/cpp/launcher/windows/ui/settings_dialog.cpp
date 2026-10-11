@@ -35,6 +35,7 @@ constexpr int IDC_GLOW_BTN = 2116;
 constexpr int IDC_CHK_DARK_ICONS = 2117;
 constexpr int IDC_CHK_CLOSE_ON_LAUNCH = 2118;
 constexpr int IDC_COMBO_DL_THREADS = 2119;
+constexpr int IDC_APPLY_THEME = 2120;
 struct SettingsData {
     bool closed = false;
     bool ok = false;
@@ -72,6 +73,7 @@ struct SettingsData {
     HWND hPreview = nullptr;
     HWND hSysHeader = nullptr;
     HWND hSysInfo = nullptr;
+    HWND hBuild = nullptr;
     HFONT font = nullptr;
     HFONT smallFont = nullptr;
     HBRUSH bgBrush = nullptr;
@@ -79,6 +81,7 @@ struct SettingsData {
     GlowData glow;
     HWND hSave = nullptr;
     HWND hCancel = nullptr;
+    HWND hApply = nullptr;
     HWND hPaletteLabel = nullptr;
     HWND hGlowLabel = nullptr;
 };
@@ -92,8 +95,7 @@ std::wstring getSystemInfoTextForLang(const char* code) {
     typedef LONG (WINAPI* RtlGetVersion_t)(OSVERSIONINFOEXW*);
     if (auto fn=(RtlGetVersion_t)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion")) fn(&os);
     else GetVersionExW((OSVERSIONINFOW*)&os);
-    bool is11 = (os.dwMajorVersion>=10 && os.dwBuildNumber>=22000);
-    std::wstring name = is11 ? L"Windows 11" : L"Windows 10";
+    std::wstring name = L"Windows 10";
     wchar_t ver[128]; swprintf(ver,128,L"%s Build %lu", name.c_str(), os.dwBuildNumber);
     std::wstring out = ver;
     HKEY hk; wchar_t disp[128]={}; DWORD sz=sizeof(disp);
@@ -102,7 +104,7 @@ std::wstring getSystemInfoTextForLang(const char* code) {
         if(disp[0]) { out+= L" "; out+=disp; }
         RegCloseKey(hk);
     }
-    out += is11 ? L" (Windows 11)" : L" (Windows 10)";
+    out += L" (Windows 10)";
     out += L"\r\n";
     MEMORYSTATUSEX mem{}; mem.dwLength=sizeof(mem); GlobalMemoryStatusEx(&mem);
     std::wstring ramLb = tr("sysinfo_ram","RAM");
@@ -209,18 +211,26 @@ void updateThemeState(SettingsData* d) {
     if (d->bgBrush) DeleteObject(d->bgBrush);
     d->bgBrush = CreateSolidBrush(d->cur.bg);
     if (d->hwnd) {
-        int dy = isCustom ? 0 : -208;
+        int dy = isCustom ? 0 : -218;
         int previewY = 524 + dy;
         int sysY1 = 626 + dy;
         int sysY2 = 646 + dy;
-        int buildY = 716;
-        int btnY = 716;
+        // bottom button row must sit INSIDE the current window height - it used
+        // to stay at y=716 while the non-custom window is only 556px tall, which
+        // made Save/Cancel (and now Apply) invisible.
+        int clientH = isCustom ? 796 : 576;   // room for the dedicated build line above the buttons
+        int btnY = clientH - 40;
+        int hBuildY = btnY - 20;
+        int infoH = hBuildY - 6 - sysY2;
+        if (infoH < 40) infoH = 40;
         MoveWindow(d->hPreview, 16, previewY, 404, 90, TRUE);
         MoveWindow(d->hSysHeader, 16, sysY1, 400, 16, TRUE);
-        MoveWindow(d->hSysInfo, 16, sysY2, 404, 100, TRUE);
+        MoveWindow(d->hSysInfo, 16, sysY2, 404, infoH, TRUE);
+        if (d->hBuild) MoveWindow(d->hBuild, 16, hBuildY, 404, 16, TRUE);
+        MoveWindow(d->hApply, 110, btnY, 140, 28, TRUE);
         MoveWindow(d->hSave, 260, btnY, 68, 28, TRUE);
         MoveWindow(d->hCancel, 340, btnY, 68, 28, TRUE);
-        RECT cr{0, 0, 440, isCustom ? 756 : 556};
+        RECT cr{0, 0, 440, isCustom ? 796 : 576};
         AdjustWindowRectEx(&cr, WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MAXIMIZEBOX, FALSE, 0);
         RECT wr; GetWindowRect(d->hwnd, &wr);
         SetWindowPos(d->hwnd, nullptr, 0, 0, cr.right - cr.left, cr.bottom - cr.top, SWP_NOMOVE | SWP_NOZORDER);
@@ -233,6 +243,8 @@ void applyThemeChoice(SettingsData* d) {
     int sel = (int)SendMessageW(d->hThemeCombo, CB_GETCURSEL, 0, 0);
     if (sel == 0) d->selected = "dark";
     else if (sel == 1) d->selected = "light";
+    else if (sel == 2) d->selected = "win95";
+    else if (sel == 3) d->selected = "vista";
     else d->selected = "custom";
     updateThemeState(d);
 }
@@ -292,8 +304,10 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             data->hThemeCombo = CreateWindowExW(0, L"COMBOBOX", nullptr, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL, 110, 278, 310, 200, hwnd, reinterpret_cast<HMENU>(IDC_THEME_COMBO), inst, nullptr);
             SendMessageW(data->hThemeCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(tr("dark","Dark").c_str()));
             SendMessageW(data->hThemeCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(tr("light","Light").c_str()));
+            SendMessageW(data->hThemeCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(tr("win95","Windows 95").c_str()));
+            SendMessageW(data->hThemeCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(tr("vista_theme","Windows Vista / 7").c_str()));
             SendMessageW(data->hThemeCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(tr("custom","Custom").c_str()));
-            int tIdx = 0; if (data->cfg.theme=="light") tIdx=1; else if(data->cfg.theme=="custom") tIdx=2;
+            int tIdx = 0; if (data->cfg.theme=="light") tIdx=1; else if(data->cfg.theme=="win95") tIdx=2; else if(data->cfg.theme=="vista") tIdx=3; else if(data->cfg.theme=="custom") tIdx=4;
             SendMessageW(data->hThemeCombo, CB_SETCURSEL, tIdx, 0);
             data->hPaletteLabel = CreateWindowExW(0, L"STATIC", tr("palette","Palette (for Custom)").c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 312, 400, 16, hwnd, nullptr, inst, nullptr);
             data->hBgBtn = CreateWindowExW(0, L"BUTTON", tr("background","Background").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 16, 334, 195, 28, hwnd, reinterpret_cast<HMENU>(IDC_BG_BTN), inst, nullptr);
@@ -308,13 +322,24 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             data->hPreview = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | WS_BORDER, 16, 524, 404, 90, hwnd, reinterpret_cast<HMENU>(IDC_PREVIEW), inst, nullptr);
             data->hSysHeader = CreateWindowExW(0, L"STATIC", fromUtf8(lang("system_info")).c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 626, 400, 16, hwnd, nullptr, inst, nullptr);
             data->hSysInfo = CreateWindowExW(0, L"STATIC", getSystemInfoText().c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 646, 404, 100, hwnd, reinterpret_cast<HMENU>(IDC_SYS_INFO), inst, nullptr);
+            {
+                // restored from the original launcher implementation: a dedicated
+                // localized build line ("Build: 20261010  ·  v1.1.8") that follows
+                // the selected language.
+                const char* bk = lang("build");
+                if (!bk || strcmp(bk, "build") == 0) bk = "Build";
+                std::wstring buildText = fromUtf8(bk) + L": " + fromUtf8(RAVEX_BUILD) + L"  \x00B7  v" + fromUtf8(RAVEX_VERSION);
+                data->hBuild = CreateWindowExW(0, L"STATIC", buildText.c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 516, 404, 16, hwnd, nullptr, inst, nullptr);
+                SendMessageW(data->hBuild, WM_SETFONT, (WPARAM)data->font, TRUE);
+            }
+            data->hApply = CreateWindowExW(0, L"BUTTON", tr("apply_theme","Apply theme").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 110, 716, 140, 28, hwnd, reinterpret_cast<HMENU>(IDC_APPLY_THEME), inst, nullptr);
             data->hSave = CreateWindowExW(0, L"BUTTON", tr("save","Save").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 260, 716, 68, 28, hwnd, reinterpret_cast<HMENU>(IDOK), inst, nullptr);
             data->hCancel = CreateWindowExW(0, L"BUTTON", tr("cancel","Cancel").c_str(), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 340, 716, 68, 28, hwnd, reinterpret_cast<HMENU>(IDCANCEL), inst, nullptr);
-            for (HWND c : {data->hUpdate, data->hSnap, data->hBeta, data->hAlpha, data->hLogs, data->hGlowChk, data->hDarkIconsChk, data->hCloseOnLaunchChk, data->hLangCombo, data->hThemeCombo, data->hDlThreadsCombo, data->hSave, data->hCancel, data->hSysHeader, data->hSysInfo, data->hPaletteLabel, data->hGlowLabel}) SendMessageW(c, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
-            for (HWND b : {data->hSave, data->hCancel, data->hBgBtn, data->hPanelBtn, data->hTextBtn, data->hAccentBtn, data->hButtonBtn, data->hGlowBtn}) SetWindowTheme(b, L"", nullptr);
+            for (HWND c : {data->hUpdate, data->hSnap, data->hBeta, data->hAlpha, data->hLogs, data->hGlowChk, data->hDarkIconsChk, data->hCloseOnLaunchChk, data->hLangCombo, data->hThemeCombo, data->hDlThreadsCombo, data->hApply, data->hSave, data->hCancel, data->hSysHeader, data->hSysInfo, data->hPaletteLabel, data->hGlowLabel}) SendMessageW(c, WM_SETFONT, reinterpret_cast<WPARAM>(data->font), TRUE);
+            for (HWND b : {data->hApply, data->hSave, data->hCancel, data->hBgBtn, data->hPanelBtn, data->hTextBtn, data->hAccentBtn, data->hButtonBtn, data->hGlowBtn}) SetWindowTheme(b, L"", nullptr);
             SetWindowTheme(data->hThemeCombo, L"Explorer", nullptr);
             glowCreate(hwnd, &data->glow);
-            glowSetButtons(&data->glow, {data->hSave, data->hCancel, data->hBgBtn, data->hPanelBtn, data->hTextBtn, data->hAccentBtn});
+            glowSetButtons(&data->glow, {data->hApply, data->hSave, data->hCancel, data->hBgBtn, data->hPanelBtn, data->hTextBtn, data->hAccentBtn});
             SetTimer(hwnd, 99, 16, nullptr);
             updateThemeState(data);
             return 0;
@@ -333,7 +358,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_DRAWITEM: {
             DRAWITEMSTRUCT* ds = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
             if (!data) return FALSE;
-            if (ds->CtlID == IDOK || ds->CtlID == IDCANCEL) {
+            if (ds->CtlID == IDOK || ds->CtlID == IDCANCEL || ds->CtlID == IDC_APPLY_THEME) {
                 HDC dc = ds->hDC; RECT rc = ds->rcItem;
                 bool dis = (ds->itemState & ODS_DISABLED) != 0;
                 bool sel = (ds->itemState & ODS_SELECTED) != 0;
@@ -341,14 +366,40 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 COLORREF base = data->cur.buttonBg;
                 if (sel) base = RGB(60,60,62); else if (hot) base = RGB(55,55,57);
                 if (dis) base = RGB(54,54,58);
+                if (data->cur.classic) {
+                    // windows 95: silver face, navy when pressed, grayed when disabled
+                    if (dis) base = RGB(192,192,192);
+                    else if (sel || hot) base = data->cur.accent;
+                    else base = data->cur.buttonBg;
+                }
                 Gdiplus::Graphics g(dc); g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
                 HBRUSH bgBr = CreateSolidBrush(base); FillRect(dc, &rc, bgBr); DeleteObject(bgBr);
                 Gdiplus::SolidBrush br(Gdiplus::Color(GetRValue(base),GetGValue(base),GetBValue(base)));
-                Gdiplus::GraphicsPath path; path.AddArc(rc.left,rc.top,8,8,180,90); path.AddArc(rc.right-8,rc.top,8,8,270,90); path.AddArc(rc.right-8,rc.bottom-8,8,8,0,90); path.AddArc(rc.left,rc.bottom-8,8,8,90,90); path.CloseFigure();
-                g.FillPath(&br,&path);
+                if (data->cur.classic) {
+                    paintThemedBox(g, Gdiplus::RectF((Gdiplus::REAL)rc.left, (Gdiplus::REAL)rc.top,
+                                   (Gdiplus::REAL)(rc.right - rc.left), (Gdiplus::REAL)(rc.bottom - rc.top)),
+                                   base, true, sel);
+                } else {
+                    Gdiplus::GraphicsPath path; path.AddArc(rc.left,rc.top,8,8,180,90); path.AddArc(rc.right-8,rc.top,8,8,270,90); path.AddArc(rc.right-8,rc.bottom-8,8,8,0,90); path.AddArc(rc.left,rc.bottom-8,8,8,90,90); path.CloseFigure();
+                    g.FillPath(&br,&path);
+                    if (data->cur.gloss) {
+                        // frutiger Aero glass sheen across the top half of the button.
+                        Gdiplus::GraphicsState gs = g.Save();
+                        g.SetClip(Gdiplus::RectF((Gdiplus::REAL)rc.left, (Gdiplus::REAL)rc.top,
+                                                 (Gdiplus::REAL)(rc.right - rc.left),
+                                                 (Gdiplus::REAL)((rc.bottom - rc.top) / 2)));
+                        Gdiplus::LinearGradientBrush sheen(
+                            Gdiplus::Point(rc.left, rc.top),
+                            Gdiplus::Point(rc.left, (rc.top + rc.bottom) / 2),
+                            Gdiplus::Color(120, 255, 255, 255), Gdiplus::Color(0, 255, 255, 255));
+                        g.FillPath(&sheen, &path);
+                        g.Restore(gs);
+                    }
+                }
                 wchar_t txt[64]; GetWindowTextW(ds->hwndItem, txt, 64);
                 if(wcslen(txt)>0){
-                 Gdiplus::SolidBrush tbr(Gdiplus::Color(255,255,255));
+                 BYTE tc = data->cur.classic ? (dis ? 120 : ((sel || hot) ? 255 : 0)) : 255;
+                 Gdiplus::SolidBrush tbr(Gdiplus::Color(tc,tc,tc));
                  Gdiplus::Font f(dc, data->font);
                  Gdiplus::StringFormat fmt; fmt.SetAlignment(Gdiplus::StringAlignmentCenter); fmt.SetLineAlignment(Gdiplus::StringAlignmentCenter);
                  Gdiplus::RectF rf((Gdiplus::REAL)rc.left,(Gdiplus::REAL)rc.top,(Gdiplus::REAL)(rc.right-rc.left),(Gdiplus::REAL)(rc.bottom-rc.top));
@@ -468,7 +519,9 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_COMMAND:
             if (HIWORD(wParam) == CBN_SELCHANGE && LOWORD(wParam) == IDC_LANG_COMBO) {
                 int idx=(int)SendMessageW(data->hLangCombo, CB_GETCURSEL, 0, 0);
-                if(idx>=0){int real=(int)SendMessageW(data->hLangCombo, CB_GETITEMDATA, idx, 0); if(real>=0&&real<ravex::langCount()){const char* code=ravex::langCodeByIndex(real); SetWindowTextW(data->hSysHeader, fromUtf8(langFor("system_info",code)).c_str()); SetWindowTextW(data->hSysInfo, getSystemInfoTextForLang(code).c_str());}}
+                if(idx>=0){int real=(int)SendMessageW(data->hLangCombo, CB_GETITEMDATA, idx, 0); if(real>=0&&real<ravex::langCount()){const char* code=ravex::langCodeByIndex(real); SetWindowTextW(data->hSysHeader, fromUtf8(langFor("system_info",code)).c_str()); SetWindowTextW(data->hSysInfo, getSystemInfoTextForLang(code).c_str());
+                    const char* bkl = langFor("build", code); if(!bkl||strcmp(bkl,"build")==0) bkl="Build";
+                    if (data->hBuild) SetWindowTextW(data->hBuild, (fromUtf8(bkl) + L": " + fromUtf8(RAVEX_BUILD) + L"  \x00B7  v" + fromUtf8(RAVEX_VERSION)).c_str());}}
                 return 0;
             }
             if (HIWORD(wParam) == CBN_SELCHANGE && LOWORD(wParam) == IDC_THEME_COMBO) { applyThemeChoice(data); return 0; }
@@ -492,6 +545,28 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (LOWORD(wParam) == IDC_ACCENT_BTN) { COLORREF c = pickColor(hwnd, data->cfg.customAccent, &data->cfg.customAlpha); data->cfg.customAccent = c; data->cur.accent = c; InvalidateRect(data->hPreview, nullptr, TRUE); InvalidateRect(data->hAccentBtn, nullptr, TRUE); return 0; }
             if (LOWORD(wParam) == IDC_BUTTON_BTN) { COLORREF c = pickColor(hwnd, data->cfg.customButton ? data->cfg.customButton : data->cfg.customAccent, &data->cfg.customAlpha); data->cfg.customButton = c; data->cur.buttonBg = c; InvalidateRect(data->hButtonBtn, nullptr, TRUE); return 0; }
             if (LOWORD(wParam) == IDC_GLOW_BTN) { COLORREF c = pickColor(hwnd, data->cfg.customGlow, &data->cfg.customAlpha); data->cfg.customGlow = c; data->cur.glow = c; InvalidateRect(data->hGlowBtn, nullptr, TRUE); return 0; }
+            if (LOWORD(wParam) == IDC_APPLY_THEME) {
+                // persist only the theme selection and tell the main window to
+                // re-apply it live - without closing the settings dialog.
+                applyThemeChoice(data);
+                int tSel = (int)SendMessageW(data->hThemeCombo, CB_GETCURSEL, 0, 0);
+                if (tSel == 0) data->cfg.theme = "dark";
+                else if (tSel == 1) data->cfg.theme = "light";
+                else if (tSel == 2) data->cfg.theme = "win95";
+                else if (tSel == 3) data->cfg.theme = "vista";
+                else data->cfg.theme = "custom";
+                if (data->selected == "custom") {
+                    data->cfg.customBg = data->cur.bg; data->cfg.customPanel = data->cur.panel;
+                    data->cfg.customText = data->cur.text; data->cfg.customAccent = data->cur.accent;
+                    data->cfg.customButton = data->cur.buttonBg; data->cfg.customGlow = data->cur.glow;
+                    data->cfg.glowEnabled = data->cGlow; data->cfg.customDarkIcons = data->cDarkIcons;
+                    data->cfg.customAlpha = data->cur.colorAlpha;
+                }
+                saveLauncherConfig(data->cfg);
+                HWND owner = GetWindow(hwnd, GW_OWNER);
+                if (owner) PostMessageW(owner, WM_APP_THEME_APPLIED, 0, 0);
+                return 0;
+            }
             if (LOWORD(wParam) == IDOK) {
                 data->cfg.checkUpdatesOnStart = data->cUpdate;
                 data->cfg.showSnapshots = data->cSnap;
@@ -501,8 +576,12 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 int langIdx = (int)SendMessageW(data->hLangCombo, CB_GETCURSEL, 0, 0);
                 if (langIdx >=0) { int real = (int)SendMessageW(data->hLangCombo, CB_GETITEMDATA, langIdx, 0); if (real>=0 && real < ravex::langCount()) data->cfg.language = ravex::langCodeByIndex(real); }
                 int tSel = (int)SendMessageW(data->hThemeCombo, CB_GETCURSEL, 0, 0);
-                if (tSel==0) data->cfg.theme="dark"; else if(tSel==1) data->cfg.theme="light"; else data->cfg.theme="custom";
-                data->cfg.customBg = data->cur.bg; data->cfg.customPanel = data->cur.panel; data->cfg.customText = data->cur.text; data->cfg.customAccent = data->cur.accent; data->cfg.customButton = data->cur.buttonBg; data->cfg.customGlow = data->cur.glow; data->cfg.glowEnabled = data->cGlow; data->cfg.customDarkIcons = data->cDarkIcons; data->cfg.customAlpha = data->cur.colorAlpha;
+                if (tSel==0) data->cfg.theme="dark"; else if(tSel==1) data->cfg.theme="light"; else if(tSel==2) data->cfg.theme="win95"; else if(tSel==3) data->cfg.theme="vista"; else data->cfg.theme="custom";
+                // only overwrite the Custom palette when Custom is actually
+                // selected - saving Dark/Light used to stomp the user's colors.
+                if (data->selected == "custom") {
+                    data->cfg.customBg = data->cur.bg; data->cfg.customPanel = data->cur.panel; data->cfg.customText = data->cur.text; data->cfg.customAccent = data->cur.accent; data->cfg.customButton = data->cur.buttonBg; data->cfg.customGlow = data->cur.glow; data->cfg.glowEnabled = data->cGlow; data->cfg.customDarkIcons = data->cDarkIcons; data->cfg.customAlpha = data->cur.colorAlpha;
+                }
                 data->cfg.closeOnLaunch = data->cCloseOnLaunch;
                 data->cfg.downloadThreads = data->cDlThreads;
                 data->ok = true; data->closed = true; DestroyWindow(hwnd); return 0;

@@ -31,10 +31,11 @@ IDR_ICON_CONSOLE PNG "icons/console.png"
 IDR_ICON_MICROSOFT PNG "icons/microsoft.png"
 IDR_ICON_OFFLINE PNG "icons/offline.png"
 IDR_ICON_NOTES PNG "icons/notes.png"
+IDR_ICON_WORLDS PNG "icons/worlds.png"
 1 24 "app.manifest"
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 1,0,0,0
-PRODUCTVERSION 1,0,0,0
+FILEVERSION 1,2,1,0
+PRODUCTVERSION 1,2,1,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS 0x40004L
@@ -47,12 +48,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "RaveX"
             VALUE "FileDescription", "KickX Launcher"
-            VALUE "FileVersion", "1.0.0.0"
+            VALUE "FileVersion", "1.2.1.0"
             VALUE "InternalName", "kickx_launcher"
             VALUE "LegalCopyright", "Copyright (C) RaveX 2026"
             VALUE "OriginalFilename", "kickx_launcher.exe"
             VALUE "ProductName", "KickX Launcher"
-            VALUE "ProductVersion", "1.0.0.0"
+            VALUE "ProductVersion", "1.2.1.0"
         END
     END
     BLOCK "VarFileInfo"

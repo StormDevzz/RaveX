@@ -280,4 +280,68 @@ bool downloadFile(const std::string& url, const std::wstring& dest,
     return false;
 }
 
+// burst-mode download for many small files (mod icons):
+//  - ONE long-lived session is shared by every caller: TLS handshake and
+//    keep-alive connections are reused (WinHTTP handles are safe for
+//    independent concurrent requests), instead of a fresh handshake per file;
+//  - the per-server connection limit is raised so parallel fetches can
+//    actually saturate the link (the "Wi-Fi module" gets a real workout);
+//  - up to 3 attempts with a tiny backoff: flaky DNS/Wi-Fi spikes no longer
+//    leave permanent placeholder icons in the list;
+//  - the HTTP status is checked, so an error page is never saved as an icon.
+bool downloadFileFast(const std::string& url, const std::wstring& dest) {
+    static HINTERNET session = []() -> HINTERNET {
+        HINTERNET s = openSession();
+        if (s) {
+            WinHttpSetTimeouts(s, 2500, 4000, 6000, 12000);
+            DWORD n = 64;
+            WinHttpSetOption(s, WINHTTP_OPTION_MAX_CONNS_PER_SERVER, &n, sizeof(n));
+            WinHttpSetOption(s, WINHTTP_OPTION_MAX_CONNS_PER_1_0_SERVER, &n, sizeof(n));
+        }
+        return s;
+    }();
+    if (!session) return false;
+    UrlParts parts;
+    if (!crackUrl(url, parts)) return false;
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        if (attempt) Sleep(100 * attempt);   // tiny backoff between quick retries
+        HINTERNET conn = openConnection(session, parts);
+        if (!conn) continue;
+        HINTERNET req = openRequest(conn, L"GET", parts);
+        if (!req) { WinHttpCloseHandle(conn); continue; }
+        std::wstring headers = L"User-Agent: kickx_launcher/1.0\r\n";
+        bool ok = false;
+        do {
+            if (!WinHttpSendRequest(req, headers.c_str(), static_cast<DWORD>(headers.size()),
+                                    WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) break;
+            if (!WinHttpReceiveResponse(req, nullptr)) break;
+            DWORD status = 0, len = sizeof(status);
+            if (!WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                                     WINHTTP_HEADER_NAME_BY_INDEX, &status, &len, WINHTTP_NO_HEADER_INDEX)) break;
+            if (status < 200 || status >= 300) break;
+            HANDLE hFile = CreateFileW(dest.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+                                       FILE_ATTRIBUTE_NORMAL, nullptr);
+            if (hFile == INVALID_HANDLE_VALUE) break;
+            ok = true;
+            DWORD available = 0;
+            while (true) {
+                available = 0;
+                if (!WinHttpQueryDataAvailable(req, &available)) { ok = false; break; }
+                if (available == 0) break;
+                std::string chunk(available, '\0');
+                DWORD read = 0;
+                if (!WinHttpReadData(req, chunk.data(), available, &read)) { ok = false; break; }
+                DWORD written = 0;
+                if (!WriteFile(hFile, chunk.data(), read, &written, nullptr) || written != read) { ok = false; break; }
+            }
+            CloseHandle(hFile);
+        } while (false);
+        WinHttpCloseHandle(req);
+        WinHttpCloseHandle(conn);
+        if (ok) return true;
+    }
+    DeleteFileW(dest.c_str());
+    return false;
+}
+
 }

@@ -39,6 +39,25 @@ Pre-built JARs are also available in the Releases section.
 
 ### Verification
 
+Every release automatically publishes SHA-256 checksums so anyone can verify what they download:
+
+* Each release contains a **`SHA256SUMS.txt`** asset with hashes of all published files (RaveX JAR, `KickXSetup.exe`, `kickx_launcher.exe`, launcher archives).
+* The release description contains a generated table with **SHA-256 hashes and direct VirusTotal links** for the KickX Launcher and the RaveX client.
+
+Check a downloaded file:
+
+```powershell
+# Windows (PowerShell)
+Get-FileHash .\KickXSetup.exe -Algorithm SHA256
+```
+
+```bash
+# Linux
+sha256sum -c SHA256SUMS.txt
+```
+
+Compare the result with `SHA256SUMS.txt` or with the table in the release description, then open `https://www.virustotal.com/gui/file/<your-hash>` to scan the file with 70+ antivirus engines.
+
 This project is fully open source. Anyone can build the jar from source and verify the client contains no malicious code:
 
 ```bash
@@ -47,7 +66,7 @@ cd RaveX
 ./gradlew build
 ```
 
-The sha-256 hash of your local build will match the official release hash given the same code version. If you don't trust the binary - build it yourself.
+If you don't trust the binary - check its hash against the release, or build it yourself.
 
 ### Installation
 
@@ -104,6 +123,25 @@ RaveX - клиентский мод для Minecraft от организации
 
 ### Верификация
 
+Каждый релиз автоматически публикует SHA-256 хеши, чтобы любой мог проверить свои загрузки:
+
+* В каждом релизе есть ассет **`SHA256SUMS.txt`** с хешами всех опубликованных файлов (JAR RaveX, `KickXSetup.exe`, `kickx_launcher.exe`, архивы лаунчера).
+* В описании релиза генерируется таблица с **SHA-256 хешами и прямыми ссылками на VirusTotal** для KickX лаунчера и клиента RaveX.
+
+Проверка скачанного файла:
+
+```powershell
+# Windows (PowerShell)
+Get-FileHash .\KickXSetup.exe -Algorithm SHA256
+```
+
+```bash
+# Linux
+sha256sum -c SHA256SUMS.txt
+```
+
+Сравни результат с `SHA256SUMS.txt` или с таблицей в описании релиза, а затем открой `https://www.virustotal.com/gui/file/<твой-хеш>` — файл просканируют 70+ антивирусных движков.
+
 Этот проект полностью с открытым исходным кодом. Любой желающий может самостоятельно собрать jar из исходников и убедиться, что клиент не содержит вредоносного кода:
 
 ```bash
@@ -112,7 +150,7 @@ cd RaveX
 ./gradlew build
 ```
 
-sha-256 хеш твоей локальной сборки будет совпадать с хешем официального релиза при условии одинаковой версии кода. Если сомневаешься в бинарнике - собирай сам.
+Если не доверяешь бинарнику - сверь его хеш с релизом или собери сам.
 
 ### Установка
 

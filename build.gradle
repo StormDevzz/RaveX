@@ -96,8 +96,23 @@ jar {
 def mcVersion = property("minecraft_version")
 def loaderVersion = property("loader_version")
 
+// The in-game changelog is rendered from .github/RELEASE_NOTES.md, the same file that
+// feeds the GitHub release body. It is copied into the jar so the changelog also works
+// offline, without keeping a second copy of the notes in the resources folder.
+def changelogNotes = file('.github/RELEASE_NOTES.md')
+
+tasks.register('copyChangelog', Copy) {
+    description = 'Bundles .github/RELEASE_NOTES.md into the jar as /ravex/changelog.md'
+    group = 'build'
+    from(changelogNotes)
+    into(layout.buildDirectory.dir('resources/main/ravex'))
+    rename { 'changelog.md' }
+    onlyIf { changelogNotes.exists() }
+}
+
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    dependsOn 'copyChangelog'
     inputs.properties([
         "version"          : version,
         "minecraft_version": mcVersion,

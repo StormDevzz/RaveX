@@ -10,9 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.render.Shaders;
-import ravex.manager.HandShaderManager;
 import ravex.utility.render.animate.NativeAnimateVertexConsumerUtility;
-import ravex.utility.render.animate.ShaderVertexConsumerUtility;
 import ravex.modules.Modules;
 import ravex.modules.render.Skeleton;
 

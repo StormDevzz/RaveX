@@ -4,10 +4,8 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.manager.ModuleManager;
-import ravex.utility.render.ColorUtility;
 import ravex.event.EventBusHolder;
 import ravex.event.client.SoundEvent;
-import ravex.utility.player.PlayerUtility;
 import ravex.utility.client.ClientAlertUtility;
 
 @Module(name = "AutoWalk", category = "Movement")

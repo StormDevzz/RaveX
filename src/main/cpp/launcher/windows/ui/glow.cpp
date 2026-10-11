@@ -39,8 +39,15 @@ void glowCreate(HWND parent, GlowData* data) {
         }
     }
     if (!data->hGlow) {
-        data->hGlow = CreateWindowExW(WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
-            L"Static", nullptr, WS_POPUP, 0, 0, sz, sz, parent, nullptr, GetModuleHandleW(nullptr), nullptr);
+        // the glow is a global top-most layered popup. Create it only for the main
+        // launcher window, so secondary windows (settings, instance editor, dialogs)
+        // never show a light that floats over them.
+        wchar_t cls[64] = {};
+        if (parent) GetClassNameW(parent, cls, 64);
+        if (wcscmp(cls, L"RavexLauncherMain") == 0) {
+            data->hGlow = CreateWindowExW(WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
+                L"Static", nullptr, WS_POPUP, 0, 0, sz, sz, parent, nullptr, GetModuleHandleW(nullptr), nullptr);
+        }
     }
     if (data->hGlow) {
         HRGN rgn = CreateEllipticRgn(3, 3, sz - 3, sz - 3);
@@ -120,6 +127,13 @@ void glowUpdateAnywhere(HWND parent, GlowData* data) {
     RECT rc;
     GetWindowRect(parent, &rc);
     bool over = PtInRect(&rc, pt);
+    // only when the top-level window actually under the cursor IS the main window:
+    // with a modal dialog open (settings, instance editor) the glow must not show.
+    if (over) {
+        HWND hit = WindowFromPoint(pt);
+        HWND root = hit ? GetAncestor(hit, GA_ROOT) : nullptr;
+        over = (root == parent);
+    }
     if (!over) {
         if (data->active) {
             ShowWindow(data->hGlow, SW_HIDE); data->active = false;

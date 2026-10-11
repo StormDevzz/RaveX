@@ -2,7 +2,6 @@ package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.PlayerUtility;
-import ravex.utility.player.SwingUtility;
 
 import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.player.InventoryUtility;

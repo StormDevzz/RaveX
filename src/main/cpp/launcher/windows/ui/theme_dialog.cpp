@@ -79,6 +79,8 @@ void applyThemeChoice(ThemeData* d) {
     else if (sel == 2) d->selected = "midnight";
     else if (sel == 3) d->selected = "ocean";
     else if (sel == 4) d->selected = "forest";
+    else if (sel == 5) d->selected = "win95";
+    else if (sel == 6) d->selected = "vista";
     else d->selected = "custom";
     updateButtons(d);
 }
@@ -100,13 +102,17 @@ LRESULT CALLBACK ThemeProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             SendMessageW(d->combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Midnight"));
             SendMessageW(d->combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Ocean"));
             SendMessageW(d->combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Forest"));
+            SendMessageW(d->combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Windows 95"));
+            SendMessageW(d->combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Windows Vista / 7"));
             SendMessageW(d->combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Custom"));
             int idx = 0;
             if (d->cfg.theme == "light") idx = 1;
             else if (d->cfg.theme == "midnight") idx = 2;
             else if (d->cfg.theme == "ocean") idx = 3;
             else if (d->cfg.theme == "forest") idx = 4;
-            else if (d->cfg.theme == "custom") idx = 5;
+            else if (d->cfg.theme == "win95") idx = 5;
+            else if (d->cfg.theme == "vista") idx = 6;
+            else if (d->cfg.theme == "custom") idx = 7;
             SendMessageW(d->combo, CB_SETCURSEL, idx, 0);
             d->selected = d->cfg.theme;
             CreateWindowExW(0, L"STATIC", L"Palette - pick colors for Custom", WS_CHILD|WS_VISIBLE|SS_LEFT, 20, 48, 300, 16, hwnd, nullptr, inst, nullptr);

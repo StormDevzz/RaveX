@@ -4,6 +4,7 @@
 #include "core/include/sha256.hpp"
 #include "net/include/http.hpp"
 #include "net/include/json.hpp"
+#include "build_info.h"
 #include <windows.h>
 
 namespace ravex::game {
@@ -49,6 +50,36 @@ std::string toLowerHexStr(std::string s) {
         if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
     }
     return s;
+}
+
+std::string trimWhitespace(const std::string& s) {
+    std::size_t b = s.find_first_not_of(" \t\r\n");
+    if (b == std::string::npos) return {};
+    std::size_t e = s.find_last_not_of(" \t\r\n");
+    return s.substr(b, e - b + 1);
+}
+
+// find "<sha256>  <fileName>" in the content of a SHA256SUMS.txt file.
+std::string lookupSha256InSums(const std::string& sums, const std::string& fileName) {
+    std::size_t pos = 0;
+    while (pos < sums.size()) {
+        std::size_t nl = sums.find('\n', pos);
+        std::string line = (nl == std::string::npos) ? sums.substr(pos) : sums.substr(pos, nl - pos);
+        pos = (nl == std::string::npos) ? sums.size() : nl + 1;
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        std::size_t sp = line.find_first_of(" \t");
+        if (sp == std::string::npos || sp != 64) continue;
+        std::string hash = line.substr(0, sp);
+        bool hex = !hash.empty();
+        for (char c : hash) {
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) { hex = false; break; }
+        }
+        if (!hex) continue;
+        std::size_t nameStart = line.find_first_not_of(" \t", sp);
+        if (nameStart == std::string::npos) continue;
+        if (line.substr(nameStart) == fileName) return toLowerHexStr(hash);
+    }
+    return {};
 }
 
 std::string getLatestReleaseUrl(std::string* error) {
@@ -146,6 +177,91 @@ bool installRavex(const ReleaseInfo& release, std::string* error,
         }
     }
     return true;
+}
+
+bool fetchLauncherUpdate(LauncherUpdate* out, std::string* error) {
+    if (!out) return false;
+    std::string body = net::httpGet(kReleaseApi, error);
+    if (body.empty()) return false;
+    ravex::json::Value root = ravex::json::Value::parse(body);
+    if (root.isNull()) {
+        if (error) *error = "Failed to parse release JSON";
+        return false;
+    }
+    std::string versionUrl;
+    if (!findAssetUrl(root, "kickx-version.txt", versionUrl)) return false;
+    std::string version = trimWhitespace(net::httpGet(versionUrl, error));
+    if (version.empty() || version.size() > 32) return false;
+    // sanity gate: the self-update channel must stay inside launcher versioning.
+    // the game mod grows independently (1.4.9, 1.5.0, ...) - if foreign data ever
+    // lands in kickx-version.txt, a jump like 1.2.1 -> 1.4.9 must be ignored
+    // instead of offering a bogus update.
+    {
+        auto majorMinor = [](const std::string& s, long& maj, long& minor) {
+            std::size_t i = 0;
+            while (i < s.size() && (s[i] < '0' || s[i] > '9')) ++i;
+            maj = 0;
+            while (i < s.size() && s[i] >= '0' && s[i] <= '9') { maj = maj * 10 + (s[i] - '0'); ++i; if (maj > 1000000) break; }
+            while (i < s.size() && (s[i] < '0' || s[i] > '9')) ++i;
+            minor = 0;
+            while (i < s.size() && s[i] >= '0' && s[i] <= '9') { minor = minor * 10 + (s[i] - '0'); ++i; if (minor > 1000000) break; }
+        };
+        if (version.find('.') == std::string::npos) return false;   // no dot - not a launcher version
+        long ourMaj = 0, ourMinor = 0, maj = 0, minor = 0;
+        majorMinor(RAVEX_VERSION, ourMaj, ourMinor);
+        majorMinor(version, maj, minor);
+        // launcher releases only step within one minor (1.1.x -> 1.2.x -> ...):
+        // a different major or a minor jump of 2+ means foreign (mod) version data
+        if (maj != ourMaj || minor < ourMinor - 1 || minor > ourMinor + 1) return false;
+    }
+    out->version = version;
+    findAssetUrl(root, "KickXSetup.exe", out->setupUrl);
+    std::string sumsUrl;
+    if (findAssetUrl(root, "SHA256SUMS.txt", sumsUrl)) {
+        out->setupSha256 = lookupSha256InSums(net::httpGet(sumsUrl, error), "KickXSetup.exe");
+    }
+    return true;
+}
+
+bool fetchChangelog(ChangelogData* out, std::string* error) {
+    if (!out) return false;
+    std::string body = net::httpGet("https://api.github.com/repos/StormDevzz/RaveX/releases?per_page=3", error);
+    if (body.empty()) return false;
+    ravex::json::Value root = ravex::json::Value::parse(body);
+    if (root.isNull() || root.type() != ravex::json::Value::Type::Array) {
+        if (error) *error = "Failed to parse releases";
+        return false;
+    }
+    for (std::size_t i = 0; i < root.size() && i < 3; ++i) {
+        const ravex::json::Value& r = root.at(i);
+        if (r.has("draft") && r.at("draft").asBool()) continue;
+        std::string name = r.has("name") ? r.at("name").asString() : "";
+        std::string date = r.has("published_at") ? r.at("published_at").asString() : "";
+        std::string page = r.has("html_url") ? r.at("html_url").asString() : "";
+        std::string txt = r.has("body") ? r.at("body").asString() : "";
+        if (out->url.empty()) out->url = page;
+        if (out->title.empty()) out->title = name;
+        std::string head = name.empty() ? page : name;
+        if (date.size() >= 10) head += " (" + date.substr(8, 2) + "." + date.substr(5, 2) + "." + date.substr(0, 4) + ")";
+        out->text += "=== " + head + " ===\r\n";
+        out->text += txt;
+        out->text += "\r\n\r\n";
+    }
+    if (out->text.empty()) out->text = "No changelog available";
+    return true;
+}
+
+bool versionGreater(const std::string& a, const std::string& b) {
+    std::size_t ia = 0, ib = 0;
+    while (ia < a.size() || ib < b.size()) {
+        while (ia < a.size() && (a[ia] < '0' || a[ia] > '9')) ++ia;
+        while (ib < b.size() && (b[ib] < '0' || b[ib] > '9')) ++ib;
+        long va = 0, vb = 0;
+        while (ia < a.size() && a[ia] >= '0' && a[ia] <= '9') { va = va * 10 + (a[ia] - '0'); ++ia; if (va > 1000000000L) va = 1000000001L; }
+        while (ib < b.size() && b[ib] >= '0' && b[ib] <= '9') { vb = vb * 10 + (b[ib] - '0'); ++ib; if (vb > 1000000000L) vb = 1000000001L; }
+        if (va != vb) return va > vb;
+    }
+    return false;
 }
 
 }

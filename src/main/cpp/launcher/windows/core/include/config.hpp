@@ -51,6 +51,9 @@ struct LauncherConfig {
     bool telemetryEnabled = true;
     bool closeOnLaunch = false;
     int downloadThreads = 6;
+    // release tag / version the user declined to install; used so the
+    // startup update prompt does not nag again for the same release.
+    std::string skipUpdateTag;
 };
 
 LauncherConfig loadLauncherConfig();

@@ -1,7 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.network.chat.Component;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.client.ClientAlertUtility;
 

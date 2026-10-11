@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import ravex.gui.profile.Profile;
-import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.parameter.ActionParameter;
 import ravex.parameter.Parameter;

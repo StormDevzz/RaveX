@@ -13,7 +13,6 @@ import org.luaj.vm2.lib.ThreeArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
 import net.minecraft.network.chat.Component;
 import ravex.mcwrapper.MinecraftWrapper;
-import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 
 import java.io.*;

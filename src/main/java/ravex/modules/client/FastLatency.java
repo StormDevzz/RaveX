@@ -2,7 +2,6 @@ package ravex.modules.client;
 import ravex.utility.network.NetworkUtility;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;

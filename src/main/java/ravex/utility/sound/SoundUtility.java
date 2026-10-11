@@ -6,7 +6,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import ravex.manager.ModuleManager;
 import ravex.modules.Modules;
 
 public class SoundUtility {

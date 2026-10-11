@@ -1,9 +1,6 @@
 package ravex.modules.combat;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.block.BlockUtility;
-import ravex.utility.player.SwingUtility;
-import net.minecraft.world.item.BowItem;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.PlayerUtility;

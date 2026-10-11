@@ -8,7 +8,6 @@ import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.render.animate.EasingAnimationUtility;
 import ravex.utility.render.animate.SlideAnimationUtility;
-import net.minecraft.world.item.BlockItem;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.network.NetworkUtility;
 import java.util.Random;

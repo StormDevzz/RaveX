@@ -10,8 +10,27 @@ if(WIN32)
     add_compile_definitions(NOMINMAX _USE_MATH_DEFINES)
 endif()
 
-string(TIMESTAMP RAVEX_BUILD "%d.%m.%Y")
+string(TIMESTAMP RAVEX_BUILD "%Y%m%d")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/build_info.h.in" "${CMAKE_CURRENT_BINARY_DIR}/build_info.h" @ONLY)
+
+# webp decoding: modrinth serves its icons as webp nowadays, and neither gdi+
+# nor wic (its webp codec is missing on many systems - verified wincodec
+# err 88982f8b on win10 19044) can decode them. decode-only libwebp is
+# fetched at configure time, no runtime dependencies appear.
+include(FetchContent)
+set(WEBP_BUILD_ANIM_UTILS OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_CWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_DWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_GIF2WEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_IMG2WEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_VWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_WEBPMUX OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_WEBPINFO OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_LIBWEBPMUX OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(libwebp URL "https://github.com/webmproject/libwebp/archive/refs/tags/v1.4.0.tar.gz")
+FetchContent_MakeAvailable(libwebp)
 
 add_executable(kickx_launcher WIN32
     main.cpp
@@ -48,6 +67,7 @@ add_executable(kickx_launcher WIN32
 target_include_directories(kickx_launcher PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
+    ${libwebp_SOURCE_DIR}/src
 )
 
 target_compile_features(kickx_launcher PRIVATE cxx_std_23)
@@ -63,7 +83,7 @@ elseif(MINGW)
     target_link_options(kickx_launcher PRIVATE "-specs=${CMAKE_CURRENT_BINARY_DIR}/ravex.specs")
 endif()
 
-target_link_libraries(kickx_launcher PRIVATE winhttp bcrypt crypt32 shell32 comctl32 comdlg32 user32 gdi32 gdiplus dwmapi uxtheme windowscodecs ws2_32 msimg32 ole32)
+target_link_libraries(kickx_launcher PRIVATE winhttp bcrypt crypt32 shell32 comctl32 comdlg32 user32 gdi32 gdiplus dwmapi uxtheme windowscodecs ws2_32 msimg32 ole32 webpdecoder)
 if(MSVC)
     target_link_options(kickx_launcher PRIVATE "/MANIFEST:NO")
 endif()

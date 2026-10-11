@@ -7,7 +7,6 @@ import com.google.gson.JsonParser;
 import ravex.mcwrapper.MinecraftWrapper;
 
 import ravex.modules.Module;
-import ravex.manager.ModuleManager;
 import ravex.parameter.Parameter;
 
 import java.io.File;

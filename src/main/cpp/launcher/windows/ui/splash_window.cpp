@@ -56,6 +56,10 @@ SplashData g_splash;
 std::wstring iconPathSplash(const std::wstring& name) {
     wchar_t buf[MAX_PATH]; GetModuleFileNameW(nullptr, buf, MAX_PATH);
     std::wstring s = buf; size_t p = s.find_last_of(L"\\/"); if (p != std::wstring::npos) s = s.substr(0, p + 1);
+    if (!themeIconSubdir().empty()) {
+        std::wstring themed = s + L"icons\\" + themeIconSubdir() + name + L".png";
+        if (fileExists(themed)) return themed;
+    }
     std::wstring cand = s + L"icons\\" + name + L".png";
     if (fileExists(cand)) return cand;
     std::wstring cur = s;
@@ -232,14 +236,32 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
             if (!g_splash.bgBrush) g_splash.bgBrush = CreateSolidBrush(g_splash.theme.bg);
-            if (g_splash.bgBrush) FillRect(hdc, &ps.rcPaint, g_splash.bgBrush);
-            SetBkMode(hdc, TRANSPARENT);
-            drawSpinner(hdc, SPINNER_CX, SPINNER_CY, g_splash.animPhase);
-            if (g_splash.winLogo && g_splash.winLogo->GetLastStatus() == Gdiplus::Ok) {
-                Gdiplus::Graphics g(hdc);
-                g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-                g.DrawImage(g_splash.winLogo, 492, 172, 20, 20);
+            RECT crc; GetClientRect(hwnd, &crc);
+            // double-buffered paint: compose background + spinner + logo off-screen
+            // and blit once. Direct GDI+ repaints every 16 ms used to make the
+            // spinner dots visibly flicker.
+            HDC mem = CreateCompatibleDC(hdc);
+            HBITMAP memBmp = (mem && (crc.right > 0) && (crc.bottom > 0))
+                ? CreateCompatibleBitmap(hdc, crc.right, crc.bottom) : nullptr;
+            if (mem && memBmp) {
+                HGDIOBJ old = SelectObject(mem, memBmp);
+                FillRect(mem, &crc, g_splash.bgBrush);
+                SetBkMode(mem, TRANSPARENT);
+                drawSpinner(mem, SPINNER_CX, SPINNER_CY, g_splash.animPhase);
+                if (g_splash.winLogo && g_splash.winLogo->GetLastStatus() == Gdiplus::Ok) {
+                    Gdiplus::Graphics g(mem);
+                    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+                    g.DrawImage(g_splash.winLogo, 492, 172, 20, 20);
+                }
+                BitBlt(hdc, 0, 0, crc.right, crc.bottom, mem, 0, 0, SRCCOPY);
+                SelectObject(mem, old);
+            } else {
+                if (g_splash.bgBrush) FillRect(hdc, &ps.rcPaint, g_splash.bgBrush);
+                SetBkMode(hdc, TRANSPARENT);
+                drawSpinner(hdc, SPINNER_CX, SPINNER_CY, g_splash.animPhase);
             }
+            if (memBmp) DeleteObject(memBmp);
+            if (mem) DeleteDC(mem);
             EndPaint(hwnd, &ps);
             return 0;
         }

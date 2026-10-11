@@ -4,7 +4,6 @@ import ravex.utility.render.ColorUtility;
 import net.minecraft.client.gui.GuiGraphics;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.resources.Identifier;
-import ravex.gui.clickgui.ClickGUI;
 import ravex.modules.Module;
 import ravex.manager.ModuleManager;
 import ravex.utility.render.Render2DUtility;

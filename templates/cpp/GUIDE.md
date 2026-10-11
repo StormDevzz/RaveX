@@ -1,6 +1,6 @@
 # RaveX Native C++ Addons - Complete Guide
 
-> Version: 1.0 | Platforms: Windows 10/11, Linux | Language: C++23
+> Version: 1.0 | Platforms: Windows 10/7, Linux | Language: C++23
 
 ---
 

@@ -57,11 +57,11 @@ public class LoaderWindow extends JFrame implements LoaderCallback {
 
     private static String detectWindows() {
         if (System.getProperty("os.name").contains("11"))
-            return "Windows 11";
+            return "Windows 10";
         try {
             String[] parts = System.getProperty("os.version", "0").split("\\.");
             int build = Integer.parseInt(parts[parts.length - 1]);
-            if (build >= 22000) return "Windows 11";
+            if (build >= 22000) return "Windows 10";
         } catch (Exception ignored) {}
         try {
             Process p = Runtime.getRuntime().exec(
@@ -77,7 +77,7 @@ public class LoaderWindow extends JFrame implements LoaderCallback {
                     String[] tokens = line.split("\\s+");
                     String buildStr = tokens[tokens.length - 1].trim();
                     int build = Integer.parseInt(buildStr);
-                    if (build >= 22000) return "Windows 11";
+                    if (build >= 22000) return "Windows 10";
                     break;
                 }
             }

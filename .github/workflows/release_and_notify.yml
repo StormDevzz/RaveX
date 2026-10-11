@@ -127,6 +127,8 @@ jobs:
           New-Item -ItemType Directory -Force -Path "dist/launcher-windows" | Out-Null
           Copy-Item -Path "build/launcher-windows/Release/KickXSetup.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
           Copy-Item -Path "build/launcher-windows/KickXSetup.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
+          Copy-Item -Path "build/launcher-windows/Release/kickx_launcher.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
+          Copy-Item -Path "build/launcher-windows/kickx_launcher.exe" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
           Copy-Item -Path "src/main/cpp/launcher/windows/README.md" -Destination "dist/launcher-windows/" -Force -ErrorAction SilentlyContinue
           Get-ChildItem -Path "dist/launcher-windows" -Recurse | ForEach-Object { Write-Host $_.FullName }
 
@@ -322,10 +324,16 @@ jobs:
           # Prepare launcher artifacts for release
           echo "Preparing launcher artifacts..."
           LAUNCHER_FILES=""
+          # IMPORTANT: launcher archives must be versioned with the KickX launcher
+          # version from core/build_info.h.in - NOT with the RaveX mod version.
+          # They ship in the same release, but "1.4.9" is the mod, "1.1.4" is the launcher.
+          LAUNCHER_VERSION=$(sed -n 's/.*#define[[:space:]]*RAVEX_VERSION[[:space:]]*"\([^"]*\)".*/\1/p' src/main/cpp/launcher/windows/core/build_info.h.in | head -n1)
+          if [ -z "$LAUNCHER_VERSION" ]; then LAUNCHER_VERSION="unknown"; fi
+          echo "KickX Launcher version: $LAUNCHER_VERSION (RaveX mod: $VERSION)"
           if [ -d "dist/launcher-windows" ] && [ -n "$(ls -A dist/launcher-windows 2>/dev/null)" ]; then
             echo "Packaging Windows launcher..."
-            (cd dist/launcher-windows && zip -r ../KickX-Launcher-Windows-${VERSION}.zip . >/dev/null 2>&1) || (cd dist/launcher-windows && zip -r ../KickX-Launcher-Windows.zip . >/dev/null 2>&1) || true
-            if [ -f "dist/KickX-Launcher-Windows-${VERSION}.zip" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Windows-${VERSION}.zip"; echo "Windows: KickX-Launcher-Windows-${VERSION}.zip"; 
+            (cd dist/launcher-windows && zip -r ../KickX-Launcher-Windows-${LAUNCHER_VERSION}.zip . >/dev/null 2>&1) || (cd dist/launcher-windows && zip -r ../KickX-Launcher-Windows.zip . >/dev/null 2>&1) || true
+            if [ -f "dist/KickX-Launcher-Windows-${LAUNCHER_VERSION}.zip" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Windows-${LAUNCHER_VERSION}.zip"; echo "Windows: KickX-Launcher-Windows-${LAUNCHER_VERSION}.zip"; 
             elif [ -f "dist/KickX-Launcher-Windows.zip" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Windows.zip"; echo "Windows: KickX-Launcher-Windows.zip";
             else LAUNCHER_FILES="$LAUNCHER_FILES dist/launcher-windows/*"; echo "Windows: raw files"; fi
           else
@@ -335,8 +343,8 @@ jobs:
             echo "Packaging Linux launcher..."
             cp -v dist/launcher-linux/kickx_launcher dist/kickx-launcher-linux 2>/dev/null || true
             chmod +x dist/kickx-launcher-linux 2>/dev/null || true
-            tar -czf dist/KickX-Launcher-Linux-${VERSION}.tar.gz -C dist kickx-launcher-linux >/dev/null 2>&1 || tar -czf dist/KickX-Launcher-Linux.tar.gz -C dist/launcher-linux . >/dev/null 2>&1 || true
-            if [ -f "dist/KickX-Launcher-Linux-${VERSION}.tar.gz" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Linux-${VERSION}.tar.gz"; echo "Linux: KickX-Launcher-Linux-${VERSION}.tar.gz";
+            tar -czf dist/KickX-Launcher-Linux-${LAUNCHER_VERSION}.tar.gz -C dist kickx-launcher-linux >/dev/null 2>&1 || tar -czf dist/KickX-Launcher-Linux.tar.gz -C dist/launcher-linux . >/dev/null 2>&1 || true
+            if [ -f "dist/KickX-Launcher-Linux-${LAUNCHER_VERSION}.tar.gz" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Linux-${LAUNCHER_VERSION}.tar.gz"; echo "Linux: KickX-Launcher-Linux-${LAUNCHER_VERSION}.tar.gz";
             elif [ -f "dist/KickX-Launcher-Linux.tar.gz" ]; then LAUNCHER_FILES="$LAUNCHER_FILES dist/KickX-Launcher-Linux.tar.gz"; echo "Linux: KickX-Launcher-Linux.tar.gz";
             else LAUNCHER_FILES="$LAUNCHER_FILES dist/launcher-linux/kickx_launcher"; echo "Linux: raw binary"; fi
           else
@@ -344,6 +352,69 @@ jobs:
           fi
           echo "Launcher files:$LAUNCHER_FILES"
           echo "launcher_files=$LAUNCHER_FILES" >> $GITHUB_OUTPUT
+
+          # --- Verification: SHA256SUMS.txt + VirusTotal links + launcher version file ---
+          # Everything below is generated fresh for every release, so the hashes in
+          # the release description always match the files users actually download.
+          # LAUNCHER_VERSION comes from the packaging block above (build_info.h.in).
+          echo "Generating SHA-256 checksums and VirusTotal links..."
+          printf '%s' "$LAUNCHER_VERSION" > dist/kickx-version.txt
+
+          VERIFY_FILES=()
+          if [ -f "$JAR" ]; then VERIFY_FILES+=("$JAR"); fi
+          for f in \
+            "dist/KickX-Launcher-Windows-${LAUNCHER_VERSION}.zip" \
+            "dist/KickX-Launcher-Windows.zip" \
+            "dist/KickX-Launcher-Linux-${LAUNCHER_VERSION}.tar.gz" \
+            "dist/KickX-Launcher-Linux.tar.gz" \
+            "dist/launcher-windows/KickXSetup.exe" \
+            "dist/launcher-windows/kickx_launcher.exe" \
+            "dist/kickx-launcher-linux"; do
+            if [ -f "$f" ]; then VERIFY_FILES+=("$f"); fi
+          done
+
+          # Release notes = tracked notes + auto-generated verification appendix.
+          cp .github/RELEASE_NOTES.md dist/RELEASE_NOTES_FULL.md
+          {
+            echo ""
+            echo "## 🔐 File verification / Проверка файлов"
+            echo ""
+            echo "Every release automatically ships a \`SHA256SUMS.txt\` - compare the hash of your downloaded file against it:"
+            echo ""
+            echo "* Windows (PowerShell): \`Get-FileHash .\\<file> -Algorithm SHA256\`"
+            echo "* Linux: \`sha256sum -c SHA256SUMS.txt\`"
+            echo ""
+            echo "Each VirusTotal link opens the scan page for that exact file by its SHA-256 (KickX launcher and RaveX client)."
+            echo ""
+            echo "Каждый релиз автоматически содержит \`SHA256SUMS.txt\` — сверьте хеш скачанного файла с этим списком:"
+            echo ""
+            echo "* Windows (PowerShell): \`Get-FileHash .\\<file> -Algorithm SHA256\`"
+            echo "* Linux: \`sha256sum -c SHA256SUMS.txt\`"
+            echo ""
+            echo "Ссылка VirusTotal ведёт на страницу сканирования файла по его SHA-256 (KickX лаунчер и клиент RaveX)."
+            echo ""
+            echo "| File / Файл | SHA-256 | VirusTotal |"
+            echo "|---|---|---|"
+          } >> dist/RELEASE_NOTES_FULL.md
+
+          : > dist/SHA256SUMS.txt
+          for f in "${VERIFY_FILES[@]}"; do
+            h=$(sha256sum "$f" | cut -d' ' -f1)
+            b=$(basename "$f")
+            printf '%s  %s\n' "$h" "$b" >> dist/SHA256SUMS.txt
+            echo "| \`$b\` | \`$h\` | [virustotal.com](https://www.virustotal.com/gui/file/$h) |" >> dist/RELEASE_NOTES_FULL.md
+            echo "  $b  $h"
+          done
+
+          # Publish the raw executables as separate assets so their VirusTotal
+          # links point directly at the file a user can download and check.
+          # (Skipped when the raw-files fallback branch already attached them.)
+          EXTRA_ASSETS=()
+          if ls dist/KickX-Launcher-Windows*.zip >/dev/null 2>&1; then
+            if [ -f "dist/launcher-windows/KickXSetup.exe" ]; then EXTRA_ASSETS+=("dist/launcher-windows/KickXSetup.exe"); fi
+            if [ -f "dist/launcher-windows/kickx_launcher.exe" ]; then EXTRA_ASSETS+=("dist/launcher-windows/kickx_launcher.exe"); fi
+          fi
+          echo "extra_assets=${EXTRA_ASSETS[*]}"
           
           # Delete existing release & tag to clean up previous versions
           DELETE_STATUS="skipped"
@@ -359,8 +430,8 @@ jobs:
           
           # Create new release with compile artifact + launchers attached
           echo "Creating new release with launchers..."
-          echo "Files: $JAR $LAUNCHER_FILES"
-          if gh release create "$TAG" "$JAR" $LAUNCHER_FILES --title "RaveX $VERSION" --notes-file .github/RELEASE_NOTES.md --latest; then
+          echo "Files: $JAR $LAUNCHER_FILES ${EXTRA_ASSETS[*]} SHA256SUMS.txt kickx-version.txt"
+          if gh release create "$TAG" "$JAR" $LAUNCHER_FILES "${EXTRA_ASSETS[@]}" dist/SHA256SUMS.txt dist/kickx-version.txt --title "RaveX $VERSION" --notes-file dist/RELEASE_NOTES_FULL.md --latest; then
             echo "release_status=created" >> $GITHUB_OUTPUT
             echo "release_tag=$TAG" >> $GITHUB_OUTPUT
             echo "release_version=$VERSION" >> $GITHUB_OUTPUT
